@@ -229,6 +229,15 @@ namespace Anki {
   }
   
   template<typename T>
+  f32 Rectangle<T>::ComputeIOU(const Rectangle<T>& other) const
+  {
+    const T thisArea = Area();
+    const T otherArea = other.Area();
+    const T intersection = Intersect(other).Area();
+    return static_cast<f32>(intersection) / static_cast<f32>(thisArea + otherArea);
+  }
+  
+  template<typename T>
   bool Rectangle<T>::Contains(const Point<2,T>& point) const
   {
 #if ANKICORETECH_USE_OPENCV

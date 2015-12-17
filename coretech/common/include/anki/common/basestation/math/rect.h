@@ -50,11 +50,7 @@ namespace Anki {
     template<size_t NumPoints>
     Rectangle(const std::array<Point<2,T>,NumPoints>& points);
     
-#if ANKICORETECH_USE_OPENCV
-    using cv::Rect_<T>::area;
-#else
-    const float area() const { return 0.0f; }
-#endif
+    T Area() const { return width*height; }
     
     // (x,y) is the top left
     inline T GetX()      const;
@@ -80,6 +76,9 @@ namespace Anki {
     Rectangle<T> Intersect(const Rectangle<T>& other) const;
     
     bool Contains(const Point<2,T>& point) const;
+    
+    // Compute Intersection-over-Union (IOU) overlap score (on interval [0,1])
+    f32 ComputeIOU(const Rectangle<T>& other) const;
     
     // Return new rectangle scaled about the center of the current one
     Rectangle<T> Scale(const f32 scaleFactor) const;

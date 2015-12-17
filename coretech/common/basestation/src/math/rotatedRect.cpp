@@ -191,7 +191,7 @@ bool RotatedRectHelper::CheckBoundingRect(const std::vector<Point2f>& polygon,
 
   // if the area of the rectangle is less than minArea, update minArea
   // and bestRect
-  float area = boundingRect.area();
+  float area = boundingRect.Area();
   if(area < minArea) {
     minArea = area;
     bestRect = boundingRect;
