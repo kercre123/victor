@@ -53,8 +53,8 @@ static bool ProcessDrop(void) {
     }
 #endif
     
-    FeedDAC(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
-    EnableAudio(drop->droplet & audioDataValid);
+    DAC::Feed(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
+    DAC::EnableAudio(drop->droplet & audioDataValid);
 
     uint8_t *payload_data = (uint8_t*) drop->payload;
     totalDrops++;
@@ -67,10 +67,10 @@ static bool ProcessDrop(void) {
 
         switch (ebl.which) {
           case BOOTLOAD_RTIP:
-            EnterRecoveryMode();
+            SPI::EnterRecoveryMode();
             break ;
           case BOOTLOAD_BODY:
-            EnterBodyRecovery();
+            UART::EnterBodyRecovery();
             break ;
         }
         break;
@@ -82,7 +82,7 @@ static bool ProcessDrop(void) {
 
         //bud.data = ((bud.data & 0xFF00FF00) >> 8) | ((bud.data & 0x00FF00FF) << 8);
       
-        SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
+        UART::SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
         break;
       }
       case 0x22:
@@ -108,7 +108,7 @@ static bool ProcessDrop(void) {
   return false;
 }
 
-void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
+void Anki::Cozmo::HAL::SPI::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
   drop_tx.preamble = TO_WIFI_PREAMBLE;
 
   memcpy(drop_tx.payload, buf, buflen);
@@ -118,8 +118,8 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   
   // Send current state of body every frame (for the future)
   BodyState bodyState;
-  bodyState.state = recoveryMode;
-  bodyState.count = RecoveryStateUpdated;
+  bodyState.state = UART::recoveryMode;
+  bodyState.count = UART::RecoveryStateUpdated;
   
   // Copy to drop location
   memcpy(drop_addr, &bodyState, sizeof(bodyState));
@@ -132,7 +132,7 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
 }
 
-void Anki::Cozmo::HAL::EnterRecoveryMode(void) {
+void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   __disable_irq();
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
   static const uint32_t recovery_value = 0xCAFEBABE;
@@ -175,7 +175,7 @@ void DMA2_IRQHandler(void) {
         NVIC_SystemReset();
         break ;
       case 0x8002:
-        EnterRecoveryMode();
+        SPI::EnterRecoveryMode();
         break ;
       case 0x8004:
         __disable_irq();
@@ -192,7 +192,7 @@ void DMA3_IRQHandler(void) {
   DMA_CINT = 3;
 }
 
-void Anki::Cozmo::HAL::SPIInitDMA(void) {
+void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   // Disable DMA
   DMA_ERQ &= ~DMA_ERQ_ERQ3_MASK & ~DMA_ERQ_ERQ2_MASK;
 
@@ -246,7 +246,7 @@ inline uint16_t WaitForByte(void) {
 void SyncSPI(void) {
   // Syncronize SPI to WS
   __disable_irq();
-  Anki::Cozmo::HAL::DebugPrintf("Syncing to espressif clock... ");
+  Anki::Cozmo::HAL::UART::DebugPrintf("Syncing to espressif clock... ");
   
   for (;;) {
     // Flush SPI
@@ -275,11 +275,11 @@ void SyncSPI(void) {
     PORTE_PCR17 = PORT_PCR_MUX(0);    // SPI0_SCK (disabled)
   }
   
-  Anki::Cozmo::HAL::DebugPrintf("Done.\n\r");
+  Anki::Cozmo::HAL::UART::DebugPrintf("Done.\n\r");
   __enable_irq();
 }
 
-void Anki::Cozmo::HAL::SPIInit(void) {
+void Anki::Cozmo::HAL::SPI::Init(void) {
   // Turn on power to DMA, PORTC and SPI0
   SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
   SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK | SIM_SCGC5_PORTE_MASK;
@@ -311,6 +311,6 @@ void Anki::Cozmo::HAL::SPIInit(void) {
   // Clear all status flags
   SPI0_SR = SPI0_SR;
 
-  SPIInitDMA();
+  SPI::InitDMA();
   SyncSPI();
 }

@@ -41,7 +41,7 @@ static inline void TestPause(const int duration) {
   using namespace Anki::Cozmo::HAL;
 
   for (int i = duration * 20; i > 0; i--) {
-    WaitForSync();
+    UART::WaitForSync();
   }
 }
 

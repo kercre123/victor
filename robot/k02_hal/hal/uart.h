@@ -22,20 +22,23 @@ namespace Anki
   {
     namespace HAL
     {
-      void UartInit(void);
-      void UartTransmit(void);
+      namespace UART
+      {
+        void Init(void);
+        void Transmit(void);
 
-      void EnterBodyRecovery(void);
-      void SendRecoveryData(const uint8_t* data, int bytes);
+        void EnterBodyRecovery(void);
+        void SendRecoveryData(const uint8_t* data, int bytes);
 
-      void DebugInit(void);
-      void DebugPrintf(const char *format, ...);
-      void DebugPutc(char c);
-      void WaitForSync();
-      
-      extern volatile bool HeadDataReceived;
-      extern volatile uint16_t RecoveryStateUpdated;
-      extern volatile RECOVERY_STATE recoveryMode;
+        void DebugInit(void);
+        void DebugPrintf(const char *format, ...);
+        void DebugPutc(char c);
+        void WaitForSync();
+        
+        extern volatile bool HeadDataReceived;
+        extern volatile uint16_t RecoveryStateUpdated;
+        extern volatile RECOVERY_STATE recoveryMode;
+      }
     }
   }
 }
