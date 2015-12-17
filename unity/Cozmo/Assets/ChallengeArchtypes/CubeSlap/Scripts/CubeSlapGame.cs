@@ -13,7 +13,7 @@ namespace CubeSlap {
     public const string kPlayerWin = "PlayerWin";
     // Consts for determining the exact placement and forgiveness for cube location
     // Must be consistent for animations to work
-    public const float kCubePlaceDist = 70.0f;
+    public const float kCubePlaceDist = 80.0f;
     public const float kCubeLostDelay = 0.25f;
 
     private float _MinSlapDelay;
