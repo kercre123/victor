@@ -218,7 +218,10 @@ public abstract class GameBase : MonoBehaviour {
   public float Progress {
     get { return _Progress; }
     set {
-      _Progress = Mathf.Clamp(value, 0f, 1f);
+      if (value < 0 || value > 1) {
+        DAS.Warn(this, "Tried to set progress to value=" + value + " which is not in the range of 0 to 1! Clamping.");
+        _Progress = Mathf.Clamp(value, 0f, 1f);
+      }
       _Progress = value;
       _SharedMinigameViewInstance.SetProgress(_Progress);
     }

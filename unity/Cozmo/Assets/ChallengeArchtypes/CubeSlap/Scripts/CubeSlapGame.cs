@@ -45,6 +45,7 @@ namespace CubeSlap {
       _BaseSlapChance = config.StartingSlapChance;
       _MaxFakeouts = config.MaxFakeouts;
       _SuccessCount = 0;
+      NumSegments = _SuccessGoal;
       Progress = 0.0f;
       InitializeMinigameObjects();
     }
@@ -153,9 +154,9 @@ namespace CubeSlap {
 
     public void OnSuccess() {
       _SuccessCount++;
-      Progress = _SuccessCount / _SuccessGoal;
+      Progress = ((float)_SuccessCount / (float)_SuccessGoal);
       AnimationState animState = new AnimationState();
-      animState.Initialize("VeryIrritated", HandleAnimationDone);
+      animState.Initialize("MajorFail", HandleAnimationDone);
       _StateMachine.SetNextState(animState);
     }
 
