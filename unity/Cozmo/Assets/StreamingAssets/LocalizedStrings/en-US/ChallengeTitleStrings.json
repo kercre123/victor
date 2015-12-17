@@ -137,5 +137,14 @@
     },
     "cubeLifting01.description" : {
         "translation" : "Teach Cozmo how to lift a block by raising and lowering it in front of him."
+    },
+    "simonGame01.title" : {
+        "translation" : "Simon Says Challenge"
+    },
+    "simonGame01.subtitle" : {
+        "translation" : "Simon Says Challenge Subtitle"
+    },
+    "simonGame01.description" : {
+        "translation" : "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
     }
 }

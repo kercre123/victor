@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Simon {
 
@@ -9,16 +10,21 @@ namespace Simon {
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();
 
+    private SimonGameConfig _Config;
+    public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
+      _Config = (SimonGameConfig)minigameConfig;
       InitializeMinigameObjects();
     }
 
     // Use this for initialization
     protected void InitializeMinigameObjects() { 
       DAS.Info(this, "Game Created");
-
+      NumSegments = MaxSequenceLength;
+      MaxAttempts = _Config.MaxAttempts;
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new CozmoSetSimonState(), 2, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new CozmoSetSimonState(_Config.MinSequenceLength), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -30,7 +36,7 @@ namespace Simon {
 
     }
 
-    public void PickNewSequence() {
+    public void PickNewSequence(int sequenceLength) {
 
       // give cubes colors
       List<Color> colors = new List<Color>();
@@ -48,18 +54,10 @@ namespace Simon {
       }
 
       _CurrentIDSequence.Clear();
-      int sequenceLength = Random.Range(3, 5);
       for (int i = 0; i < sequenceLength; ++i) {
         int pickedID = -1;
         int pickIndex = Random.Range(0, CurrentRobot.LightCubes.Count);
-        int j = 0;
-        foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
-          if (j == pickIndex) {
-            pickedID = kvp.Key;
-            break;
-          }
-          ++j;
-        }
+        pickedID = CurrentRobot.LightCubes.ElementAt(pickIndex).Key;
         _CurrentIDSequence.Add(pickedID);
       }
     }

@@ -15,13 +15,13 @@ MonoBehaviour:
   _ChallengeID: SimonGame
   _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 1
-  _ChallengeTitleLocKey: SimonGame.title
-  _ChallengeSubtitleLocKey: SimonGame.subtitle
-  _ChallengeDescriptionLocKey: SimonGame.description
+  _ChallengeTitleLocKey: simonGame01.title
+  _ChallengeSubtitleLocKey: simonGame01.subtitle
+  _ChallengeDescriptionLocKey: simonGame01.description
   _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys:
     - StackTrainingChallenge01
     StatGateArray: []
-  MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}
+  MinigameConfig: {fileID: 11400000, guid: c343a5367e2654452b53acb74b64058e, type: 2}

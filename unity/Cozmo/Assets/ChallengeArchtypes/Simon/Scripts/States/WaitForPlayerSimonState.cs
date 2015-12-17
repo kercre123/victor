@@ -15,6 +15,7 @@ namespace Simon {
       base.Enter();
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
+      _GameInstance.ShowHowToPlaySlide("RepeatPattern");
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
     }
@@ -31,8 +32,25 @@ namespace Simon {
       LightCube.TappedAction -= OnBlockTapped;
     }
 
-    private void HandleOnAnimationDone(bool success) {
-      _StateMachine.SetNextState(new CozmoSetSimonState());
+    private void HandleOnWinAnimationDone(bool success) {
+      BlackoutLights();
+      if (_SequenceList.Count == _GameInstance.MaxSequenceLength) {
+        _GameInstance.RaiseMiniGameWin();
+        return;
+      }
+      _StateMachine.SetNextState(new CozmoSetSimonState(_SequenceList.Count + 1));
+    }
+
+    private void HandleOnLoseAnimationDone(bool success) {
+      BlackoutLights();
+      if (!_GameInstance.TryDecrementAttempts()) {
+        _GameInstance.RaiseMiniGameLose();
+        return;
+      }
+      _StateMachine.SetNextState(new CozmoSetSimonState(_SequenceList.Count));
+    }
+
+    private void BlackoutLights() {
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
         kvp.Value.SetFlashingLEDs(Color.black, uint.MaxValue, 0, 0);
       }
@@ -43,7 +61,7 @@ namespace Simon {
         kvp.Value.SetFlashingLEDs(Color.red, 100, 100, 0);
       }
       AnimationState animation = new AnimationState();
-      animation.Initialize(AnimationName.kShocked, HandleOnAnimationDone);
+      animation.Initialize(AnimationName.kShocked, HandleOnLoseAnimationDone);
       _StateMachine.SetNextState(animation);
     }
 
@@ -52,7 +70,7 @@ namespace Simon {
         kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, 100, 100, 0, 0);
       }
       AnimationState animation = new AnimationState();
-      animation.Initialize(AnimationName.kMajorWin, HandleOnAnimationDone);
+      animation.Initialize(AnimationName.kMajorWin, HandleOnWinAnimationDone);
       _StateMachine.SetNextState(animation);
     }
 
