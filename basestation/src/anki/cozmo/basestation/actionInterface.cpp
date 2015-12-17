@@ -162,7 +162,7 @@ namespace Anki {
         for(auto subAction : _subActions) {
           if(nullptr != (*subAction)) {
             (*subAction)->Cleanup(robot);
-            Util::SafeDelete(subAction);
+            Util::SafeDelete(*subAction);
           }
         }
         _subActions.clear();
