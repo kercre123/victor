@@ -90,7 +90,7 @@ public class RobotEngineManager : MonoBehaviour {
     DAS.AddTarget(new UnityDasTarget());
     #endif
   }
-  
+
 
   private void OnEnable() {
     DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
@@ -323,6 +323,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.CliffEvent:
       ReceivedSpecificMessage(message.CliffEvent);
+      break;
+    case G2U.MessageEngineToGame.Tag.DebugString:
+      ReceivedSpecificMessage(message.DebugString);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -617,6 +620,14 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.CliffEvent message) {
     if (OnCliffEvent != null) {
       OnCliffEvent(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DebugString message) {
+    if (CurrentRobot != null) {
+      if (CurrentRobot.CurrentBehaviorString != message.text) {
+        CurrentRobot.CurrentBehaviorString = message.text;
+      }
     }
   }
 

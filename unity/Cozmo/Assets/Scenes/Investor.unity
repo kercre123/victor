@@ -119,7 +119,7 @@ Transform:
   - {fileID: 1463034127}
   - {fileID: 1479198166}
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
 --- !u!1001 &667513731
 Prefab:
   m_ObjectHideFlags: 0
@@ -640,7 +640,57 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
+--- !u!1 &1905327664
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1905327666}
+  - 114: {fileID: 1905327665}
+  m_Layer: 0
+  m_Name: ScriptedSequenceManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1905327665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1905327664}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cf909c64d0b9446ea88f48bcd80805f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SequenceTextAssets:
+  - {fileID: 4900000, guid: 1d176bcc95ecb4192b4d0b72d7035f42, type: 3}
+  - {fileID: 4900000, guid: cd450454da0e24291afa000352473669, type: 3}
+  - {fileID: 4900000, guid: 6fc0487a9817d40a4844528eda09d145, type: 3}
+  - {fileID: 4900000, guid: c5fba53a389a74e4e8a5c55b0a2e121b, type: 3}
+  - {fileID: 4900000, guid: cda94c2912e514c34a129fa0da6a6c4c, type: 3}
+  - {fileID: 4900000, guid: 7bc60d7ef339e4c3587b1a79da646004, type: 3}
+  - {fileID: 4900000, guid: c7e8ea45a2b1d49628c1bd90d2ba93be, type: 3}
+  - {fileID: 4900000, guid: d23103e29b8c244948c9fd1ec319a29f, type: 3}
+  - {fileID: 4900000, guid: 92e0825a897f8427f9a10b6cb3562b42, type: 3}
+  - {fileID: 4900000, guid: 56dae1972236d49348719152052cf46e, type: 3}
+--- !u!4 &1905327666
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1905327664}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
 --- !u!4 &2007970426 stripped
 Transform:
   m_PrefabParentObject: {fileID: 461244, guid: 66c2fdefd291b416c94c699822cbd062, type: 2}
@@ -726,6 +776,8 @@ MonoBehaviour:
   _DevConnectDialog: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
   _HubWorldPrefab: {fileID: 11482156, guid: 0a14ae0a8099b4285a7bc241e2ba822e, type: 2}
   _IntroScriptedSequenceName: 
+  _RobotStateTextFieldPrefab: {fileID: 11455370, guid: 689e303582fa0435b8ce1a821c97d2cb,
+    type: 2}
 --- !u!4 &2072601120
 Transform:
   m_ObjectHideFlags: 0
