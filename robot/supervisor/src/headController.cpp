@@ -14,15 +14,6 @@ namespace HeadController {
 
     namespace {
       
-      // TODO: Ideally, this value should be calibrated
-#ifdef SIMULATOR
-      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(0);
-#elif defined(COZMO_ROBOT_3AA0)
-      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(-3);
-#else
-      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(2);
-#endif
-      
       // Used when calling SetDesiredAngle with just an angle:
       const f32 DEFAULT_START_ACCEL_FRAC = 0.1f;
       const f32 DEFAULT_END_ACCEL_FRAC   = 0.1f;
@@ -147,6 +138,18 @@ namespace HeadController {
     
     void ResetLowAnglePosition()
     {
+      // TODO: Ideally, this value is 0,
+      //       but it may need to be calibrated
+      Radians HEAD_CAL_OFFSET = 0;
+      switch (HAL::GetID()) {
+        case 0x3AA0:
+        case 0x3A94:
+          HEAD_CAL_OFFSET = DEG_TO_RAD(-3);
+          break;
+        default:
+          HEAD_CAL_OFFSET = DEG_TO_RAD(2);
+      }
+      
       currentAngle_ = MIN_HEAD_ANGLE + HEAD_CAL_OFFSET;
       HAL::MotorResetPosition(HAL::MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
