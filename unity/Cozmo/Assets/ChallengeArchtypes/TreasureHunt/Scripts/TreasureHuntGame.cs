@@ -6,9 +6,6 @@ namespace TreasureHunt {
 
   public class TreasureHuntGame : GameBase {
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     public Vector2 GoldPosition { get; set; }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
@@ -17,8 +14,6 @@ namespace TreasureHunt {
     }
 
     protected void InitializeMinigameObjects() {
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("TreasureHuntStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -104,11 +99,7 @@ namespace TreasureHunt {
       distance = Vector2.Distance(blockPosition, GoldPosition);
       return distance < 15.0f;
     }
-
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
-    }
-
+      
     protected override void CleanUpOnDestroy() {
     }
   }

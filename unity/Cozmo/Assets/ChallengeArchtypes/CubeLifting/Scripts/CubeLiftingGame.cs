@@ -7,8 +7,6 @@ namespace CubeLifting {
 
   public class CubeLiftingGame : GameBase {
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
     private CubeLiftingConfig _Config;
 
     [SerializeField]
@@ -34,8 +32,6 @@ namespace CubeLifting {
     }
 
     protected void InitializeMinigameObjects() {
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("CubeLiftingStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new FollowCubeUpDownState(_Config.Settings, 0), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -45,11 +41,7 @@ namespace CubeLifting {
       CurrentRobot.SetLiftHeight(0);
       CurrentRobot.SetHeadAngle(0);
     }
-
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
-    }
-
+      
     private void InitialCubesDone() {
       
     }

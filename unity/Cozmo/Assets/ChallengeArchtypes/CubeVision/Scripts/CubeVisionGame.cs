@@ -6,8 +6,6 @@ namespace VisionTraining {
 
   public class CubeVisionGame : GameBase {
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
     private float _LastTimeTargetSeen;
     private LightCube _CurrentTarget = null;
 
@@ -34,8 +32,6 @@ namespace VisionTraining {
     }
 
     protected void InitializeMinigameObjects() {
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 1, true, null);
       _StateMachine.SetNextState(initCubeState);
@@ -45,8 +41,8 @@ namespace VisionTraining {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
     }
 
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
+    protected override void Update() {
+      base.Update();
       if (_CurrentTarget == null) {
         _CurrentTarget = FindNewTarget();
       }

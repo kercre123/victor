@@ -15,6 +15,8 @@ public abstract class GameBase : MonoBehaviour {
   public event MiniGameQuitHandler OnMiniGameQuit;
 
   protected void RaiseMiniGameQuit() {
+    _StateMachine.Stop();
+
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
@@ -27,6 +29,8 @@ public abstract class GameBase : MonoBehaviour {
   public event MiniGameWinHandler OnMiniGameWin;
 
   public void RaiseMiniGameWin() {
+    _StateMachine.Stop();
+
     _WonChallenge = true;
     OpenChallengeEndedDialog();
   }
@@ -36,6 +40,8 @@ public abstract class GameBase : MonoBehaviour {
   public event MiniGameWinHandler OnMiniGameLose;
 
   public void RaiseMiniGameLose() {
+    _StateMachine.Stop();
+
     _WonChallenge = false;
     OpenChallengeEndedDialog();
   }
@@ -48,10 +54,13 @@ public abstract class GameBase : MonoBehaviour {
   private AlertView _ChallengeEndViewInstance;
   private bool _WonChallenge;
 
+  protected StateMachine _StateMachine = new StateMachine();
+
   [SerializeField]
   protected HowToPlaySlide[] _HowToPlayPrefabs;
 
   public void InitializeMinigame(ChallengeData challengeData) {
+    _StateMachine.SetGameRef(this);
     _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       false) as SharedMinigameView;
@@ -88,6 +97,13 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  protected virtual void Update() {
+    UpdateStateMachine();
+  }
+
+  protected virtual void UpdateStateMachine() {
+    _StateMachine.UpdateStateMachine();
+  }
   /// <summary>
   /// Clean up listeners and extra game objects. Called before the game is 
   /// destroyed when the player quits or the robot loses connection.

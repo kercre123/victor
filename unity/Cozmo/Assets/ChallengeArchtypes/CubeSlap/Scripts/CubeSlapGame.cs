@@ -19,9 +19,6 @@ namespace CubeSlap {
 
     private LightCube _CurrentTarget = null;
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       CubeSlapConfig config = minigameConfig as CubeSlapConfig;
       MaxAttempts = config.MaxAttempts;
@@ -34,9 +31,6 @@ namespace CubeSlap {
     }
 
     protected void InitializeMinigameObjects() {
-
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("CubeSlapStateMachine", _StateMachine);
 
       CurrentRobot.SetBehaviorSystem(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -52,10 +46,6 @@ namespace CubeSlap {
 
     private void InitialCubesDone() {
       _CurrentTarget = GetClosestAvailableBlock();
-    }
-
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
     }
 
     protected override void CleanUpOnDestroy() {

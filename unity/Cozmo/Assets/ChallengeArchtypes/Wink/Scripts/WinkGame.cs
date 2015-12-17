@@ -4,8 +4,6 @@ using System.Collections;
 namespace Wink {
   public class WinkGame : GameBase {
     
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
     private bool _WinkWaveCompleted = false;
     private float _WinkWaveAccumulator = 0.0f;
     private float _LastWaveMessageTime = 0.0f;
@@ -41,8 +39,6 @@ namespace Wink {
     }
 
     protected void InitializeMinigameObjects() {
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("WinkGameStateMachine", _StateMachine);
       _StateMachine.SetNextState(new WinkState());
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -53,8 +49,8 @@ namespace Wink {
       ShowHowToPlaySlide("WinkGameHelp01");
     }
 
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
+    protected override void Update() {
+      base.Update();
       _WinkWaveAccumulator = Mathf.Max(0.0f, _WinkWaveAccumulator - Time.deltaTime * 0.25f);
       if (_WinkWaveAccumulator > 0.6f) {
         _WinkWaveCompleted = true;
