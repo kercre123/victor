@@ -31,6 +31,50 @@ namespace Anki {
       Clear();
     }
     
+    Result ActionList::QueueAction(SlotHandle inSlot, QueueActionPosition inPosition,
+                                   IActionRunner* action, u8 numRetries)
+    {
+      switch(inPosition)
+      {
+        case QueueActionPosition::NOW:
+        {
+          QueueActionNow(inSlot, action, numRetries);
+          break;
+        }
+        case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
+        {
+          // Cancel all queued actions and make this action the next thing in it
+          Cancel();
+          QueueActionNext(inSlot, action, numRetries);
+          break;
+        }
+        case QueueActionPosition::NEXT:
+        {
+          QueueActionNext(inSlot, action, numRetries);
+          break;
+        }
+        case QueueActionPosition::AT_END:
+        {
+          QueueActionAtEnd(inSlot, action, numRetries);
+          break;
+        }
+        case QueueActionPosition::NOW_AND_RESUME:
+        {
+          QueueActionAtFront(inSlot, action, numRetries);
+          break;
+        }
+        default:
+        {
+          PRINT_NAMED_ERROR("CozmoGameImpl.QueueActionHelper.InvalidPosition",
+                            "Unrecognized 'position' %s for queuing action.",
+                            EnumToString(inPosition));
+          return RESULT_FAIL;
+        }
+      }
+      
+      return RESULT_OK;
+    } // QueueAction()
+    
     bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
     {
       bool found = false;
