@@ -60,8 +60,6 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
   
-  _previousIdleAnimation = robot.GetIdleAnimationName();
-
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
   if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
@@ -90,9 +88,6 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
 
     case State::HoldingHeadDown:
       if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= _holdHeadDownUntil) {
-        // restore idle animation
-        robot.SetIdleAnimation(_previousIdleAnimation);
-        
         StartTracking(robot); // puts us in Tracking state
       }
       break;
@@ -242,9 +237,6 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
                          groundPlaneDist,
                          timeToHold);
         
-        _previousIdleAnimation = robot.GetIdleAnimationName();
-        robot.SetIdleAnimation("NONE");
-        
         _state = State::HoldingHeadDown;
         SetStateName("HeadDown");
       }
@@ -264,12 +256,11 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
       // Queue action now will stop the tracking that's currently running
       robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveAction);
       
-      // TEMP:
-      PRINT_NAMED_INFO("BehaviorFollowMotion.DriveForward",
-                       "relHeadAngle = %fdeg, relBodyAngle = %fdeg, ground area %f",
-                       RAD_TO_DEG(relHeadAngle_rad.ToFloat()),
-                       RAD_TO_DEG(relBodyPanAngle_rad.ToFloat()),
-                       motionObserved.ground_area);
+      // PRINT_NAMED_DEBUG("BehaviorFollowMotion.DriveForward",
+      //                   "relHeadAngle = %fdeg, relBodyAngle = %fdeg, ground area %f",
+      //                   RAD_TO_DEG(relHeadAngle_rad.ToFloat()),
+      //                   RAD_TO_DEG(relBodyPanAngle_rad.ToFloat()),
+      //                   motionObserved.ground_area);
       
     } // else if(time to drive forward)
     

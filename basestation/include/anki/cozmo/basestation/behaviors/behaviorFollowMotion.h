@@ -61,7 +61,6 @@ private:
   bool        _initialReactionAnimPlayed = false;
   double      _lastInterruptTime_sec = std::numeric_limits<double>::lowest(); // Not min(), which is +ve!
   f32         _holdHeadDownUntil = -1.0f;
-  std::string _previousIdleAnimation;
   
   // Configuration parameters:
   // TODO: Read these from json config

@@ -72,7 +72,8 @@ namespace Anki {
       if(result != ActionResult::RUNNING) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
-                           "%s %s.", GetName().c_str(),
+                           "%s [%d] %s.", GetName().c_str(),
+                           _idTag,
                            (result==ActionResult::SUCCESS ? "succeeded" :
                             result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
         }
