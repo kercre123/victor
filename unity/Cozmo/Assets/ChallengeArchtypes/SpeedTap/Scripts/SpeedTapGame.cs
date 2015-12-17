@@ -12,8 +12,9 @@ namespace SpeedTap {
     public Color MatchColor;
 
     private int _CozmoScore;
-
     private int _PlayerScore;
+    private int _Rounds;
+    private int _HandPerRound;
 
     public event Action PlayerTappedBlockEvent;
 
@@ -44,12 +45,13 @@ namespace SpeedTap {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       InitializeMinigameObjects();
+      SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
+      _Rounds = speedTapConfig.Rounds;
+      _HandPerRound = speedTapConfig.HandsPerRound;
     }
 
     // Use this for initialization
     protected void InitializeMinigameObjects() { 
-      DAS.Info(this, "Game Created");
-
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -97,7 +99,6 @@ namespace SpeedTap {
     }
 
     private void BlockTapped(int blockID, int tappedTimes) {
-      DAS.Info(this, "Player Block Tapped.");
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
         if (PlayerTappedBlockEvent != null) {
           PlayerTappedBlockEvent();
