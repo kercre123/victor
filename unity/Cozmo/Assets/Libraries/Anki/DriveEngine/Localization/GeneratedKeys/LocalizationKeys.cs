@@ -42,6 +42,9 @@ public static class LocalizationKeys {
   public const string kCubeLifting01Title = "cubeLifting01.title";
   public const string kCubeLifting01Subtitle = "cubeLifting01.subtitle";
   public const string kCubeLifting01Description = "cubeLifting01.description";
+  public const string kCodeBreaker01Title = "codeBreaker01.title";
+  public const string kCodeBreaker01Subtitle = "codeBreaker01.subtitle";
+  public const string kCodeBreaker01Description = "codeBreaker01.description";
 
   #endregion
 
