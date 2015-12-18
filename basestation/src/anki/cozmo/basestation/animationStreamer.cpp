@@ -1188,39 +1188,17 @@ namespace Cozmo {
     
     bool anyFramesAdded = false;
     
-    /*
-    // Use procedural face
-    const ProceduralFace& lastFace = robot.GetLastProceduralFace();
-//    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
-    //const ProceduralFace& nextFace = robot.GetProceduralFace();
-    ProceduralFace nextFace(robot.GetProceduralFace());
-        
-    _nextLookAround_ms -= BS_TIME_STEP;
-    
-    bool faceSent = false;
-    if(nextFace.HasBeenSentToRobot() == false &&
-       lastFace.HasBeenSentToRobot() == true)
-    {
-      lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
-      if(RESULT_OK != lastResult) {
-        return lastResult;
-      }
-      
-      robot.MarkProceduralFaceAsSent();
-      faceSent = true;
-    }
-    
-    anyFramesAdded = faceSent;
-*/
-    
     // Don't start wiggling until we've been idling for a bit and make sure we
-    // picking or placing
+    // are not picking or placing
     if(_isLiveTwitchEnabled &&
        _timeSpentIdling_ms >= GET_PARAM(s32, TimeBeforeWiggleMotions_ms) &&
        !robot.IsPickingOrPlacing())
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0)
+      const bool wheelsAvailable = (!robot.IsMoving() &&
+                                    !robot.GetMoveComponent().IsAnimTrackLocked(AnimTrackFlag::BODY_TRACK));
+      const bool timeToMoveBody = (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0;
+      if(wheelsAvailable && timeToMoveBody)
       {
         _bodyMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementDurationMin_ms),
                                                    GET_PARAM(s32, BodyMovementDurationMax_ms));
@@ -1235,6 +1213,10 @@ namespace Cozmo {
           // If turning in place, look in the direction of the turn
           const s32 x = (speed < 0 ? -1.f : 1.f) * _rng.RandIntInRange(0, ProceduralFace::WIDTH/6);
           const s32 y = _rng.RandIntInRange(-ProceduralFace::HEIGHT/6, ProceduralFace::HEIGHT/6);
+#         if DEBUG_ANIMATION_STREAMING
+          PRINT_NAMED_DEBUG("AnimationStreamer.UpdateLiveAnimation.EyeLeadTurn",
+                            "Point turn eye shift (%d,%d)", x, y);
+#         endif
           robot.ShiftEyes(x, y, IKeyFrame::SAMPLE_LENGTH_MS);
         }
         
@@ -1259,7 +1241,11 @@ namespace Cozmo {
       }
       
       // If lift is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsLiftMoving() && (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0 && !robot.IsCarryingObject()) {
+      const bool liftIsAvailable = (!robot.IsLiftMoving() &&
+                                    robot.GetMoveComponent().IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK));
+      const bool timeToMoveLIft = (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0;
+      if(liftIsAvailable && timeToMoveLIft && !robot.IsCarryingObject())
+      {
         _liftMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementDurationMin_ms),
                                                    GET_PARAM(s32, LiftMovementDurationMax_ms));
 
@@ -1285,7 +1271,11 @@ namespace Cozmo {
       }
       
       // If head is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsHeadMoving() && (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0) {
+      const bool headIsAvailable = (!robot.IsHeadMoving() &&
+                                    robot.GetMoveComponent().IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK));
+      const bool timeToMoveHead = (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0;
+      if(headIsAvailable && timeToMoveHead)
+      {
         _headMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementDurationMin_ms),
                                                    GET_PARAM(s32, HeadMovementDurationMax_ms));
         const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
