@@ -12,6 +12,7 @@ namespace CodeBreaker {
       // Play an idle animation on Cozmo; will be inturrupted by 
       // other animations.
       _CurrentRobot.SetIdleAnimation("_LIVE_​");
+      _CurrentRobot.TurnOffAllLights();
     }
 
     public void HandleReadyButtonClicked() {

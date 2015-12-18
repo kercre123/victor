@@ -61,11 +61,16 @@ namespace CodeBreaker {
       }
     }
 
-    public void ShowGamePanel() {
+    public void ShowGamePanel(SubmitButtonClickedHandler submitButtonCallback) {
       GameObject gamePanelObject = ShowHowToPlaySlide(kGamePanelSlideName);
       _GamePanelSlide = gamePanelObject.GetComponent<CodeBreakerPanel>();
       if (_GamePanelSlide != null) {
-        
+        if (submitButtonCallback != null) {
+          _GamePanelSlide.OnSubmitButtonClicked += submitButtonCallback;
+        }
+        else {
+          DAS.Warn(this, "Tried to attach a null callback to the 'HowToPlay' slide!");
+        }
       }
       else {
         DAS.Error(this, "The " + kGamePanelSlideName + " slide in " + typeof(CodeBreakerGame).ToString()
@@ -73,21 +78,29 @@ namespace CodeBreaker {
       }
     }
 
-    public void DisableButton() {
+    public void DisableReadyButton() {
       if (_ReadySlide != null) {
         _ReadySlide.EnableButton(false);
       }
-      if (_GamePanelSlide != null) {
-        // TODO disable submit button
-      }
     }
 
-    public void SetButtonText(string text) {
+    public void SetReadyButtonText(string text) {
       if (_ReadySlide != null) {
         _ReadySlide.SetButtonText(text);
       }
-      if (_GamePanelSlide != null) {
-        // TODO disable submit button
+    }
+
+    public bool EnableSubmitButton {
+      get { 
+        if (_GamePanelSlide != null) {
+          return _GamePanelSlide.EnableButton; 
+        }
+        return false;
+      }
+      set {
+        if (_GamePanelSlide != null) {
+          _GamePanelSlide.EnableButton = value; 
+        }
       }
     }
 
@@ -128,6 +141,11 @@ namespace CodeBreaker {
     /// Cozmo. (Index 0 indicates the leftmost cube from Cozmo)
     /// </summary>
     public Color[] cubeColors;
+
+    public int NumCubes {
+      get { return cubeColors.Length; } 
+      set { }
+    }
 
     public override string ToString() {
       string str = "CubeCode: ";
