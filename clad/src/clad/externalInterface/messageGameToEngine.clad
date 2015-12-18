@@ -434,7 +434,9 @@ message SetLiftControllerGains {
 // SetSteeringControllerGains
 message SetSteeringControllerGains {
   float_32 k1,
-  float_32 k2
+  float_32 k2,
+  float_32 dockPathDistOffsetCap_mm,
+  float_32 dockPathAngularOffsetCap_rad
 }
 
 // SetRobotVolume

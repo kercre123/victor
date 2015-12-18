@@ -165,7 +165,7 @@ enum uint_8 ControllerChannel
   controller_wheel,
   controller_head,
   controller_lift,
-  controller_stearing
+  controller_steering
 }
 
 message ControllerGains

@@ -484,9 +484,9 @@ namespace Anki {
             LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case RobotInterface::controller_stearing:
+          case RobotInterface::controller_steering:
           {
-            SteeringController::SetGains(msg.kp, msg.ki); // Coopting structure
+            SteeringController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError); // Coopting structure
             break;
           }
           default:

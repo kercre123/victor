@@ -40,14 +40,6 @@ namespace Anki {
     
     
     // Parameters / Constants:
-    const float M_PER_MM = 0.001f;  /**< Meters per millimeter */
-    
-    // TODO: These constants are Drive-specific and should be provided at Init()
-    
-    //The gains for the steering controller
-    //Heading tracking gain K1, Crosstrack approach rate K2
-    const float DEFAULT_STEERING_K1 = 0.12f;
-    const float DEFAULT_STEERING_K2 = 12.f; //5.0f; //2.0f
 
     // Set maximum rotation speed
     void SetRotationSpeedLimit(f32 rad_per_s);
@@ -86,10 +78,9 @@ namespace Anki {
     // Same as above except that it doesn't stop turning. (i.e. no target angle)
     void ExecutePointTurn(f32 angularVel, f32 angularAccel);
     
-    
-    
-    //Steering controllers PD constants and the window size of the derivative
-    void SetGains(float k1, float k2);
+    //Steering controllers gains and caps for path offsets when docking
+    //(since cozmo can be fairly far off path when docking)
+    void SetGains(f32 k1, f32 k2, f32 dockPathDistOffsetCap_mm, f32 dockPathAngularOffsetCap_rad);
     
     // Function to init steering controller when we expect to feed it a discontinuous
     // follow line index so that it doesn't compare it to the previous follow line index.

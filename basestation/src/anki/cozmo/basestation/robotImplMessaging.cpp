@@ -745,8 +745,8 @@ void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
     {
       const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
       
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, 0.0f, 0.0f,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_stearing);
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, msg.dockPathDistOffsetCap_mm, msg.dockPathAngularOffsetCap_rad,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_steering);
     }));
 }
   
