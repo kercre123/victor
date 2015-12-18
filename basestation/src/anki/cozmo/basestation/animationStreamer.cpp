@@ -51,9 +51,8 @@ namespace Cozmo {
                        "Stopping streaming of animation '%s'.\n",
                        GetStreamingAnimationName().c_str());
 #     endif
-      
-      _streamingAnimation = nullptr;
-      return 0;
+
+      return SetStreamingAnimation(robot, nullptr);
     }
     
     return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops);
@@ -61,6 +60,11 @@ namespace Cozmo {
   
   u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops)
   {
+    if(nullptr != _streamingAnimation || nullptr == anim)
+    {
+      Abort(robot);
+    }
+    
     _streamingAnimation = anim;
     
     if(_streamingAnimation == nullptr) {
@@ -90,6 +94,45 @@ namespace Cozmo {
     }
   }
 
+  
+  void AnimationStreamer::Abort(Robot& robot)
+  {
+    if(nullptr != _streamingAnimation)
+    {
+      // Tell the robot to abort
+      robot.AbortAnimation();
+      
+      // We just cleared the robot's buffer, so there will not be a start or end
+      // available
+      _startOfAnimationSent = false;
+      _endOfAnimationSent = false;
+      
+      // If there are any face frames left, send the last one so we don't leave the face
+      // in a random state
+      auto & procFaceTrack  = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>();
+      const ProceduralFaceKeyFrame* kf = procFaceTrack.GetLastKeyFrame();
+      if(nullptr != kf) {
+
+        SendStartOfAnimation();
+        BufferFaceToSend(kf->GetFace());
+        SendEndOfAnimation(robot);
+
+      } else {
+        auto & faceImageTrack = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>();
+        FaceAnimationKeyFrame* kf = faceImageTrack.GetLastKeyFrame();
+        if(nullptr != kf) {
+          auto msg = kf->GetStreamMessage();
+          if(nullptr != msg)
+          {
+            SendStartOfAnimation();
+            BufferMessageToSend(kf->GetStreamMessage());
+            SendEndOfAnimation(robot);
+          }
+        }
+      }
+    }
+  } // Abort()
+  
   
   Result AnimationStreamer::SetIdleAnimation(const std::string &name)
   {
@@ -233,28 +276,29 @@ namespace Cozmo {
     return returnTag;
   }
   
-  void AnimationStreamer::RemovePersistentFaceLayer(u32 tag)
+  void AnimationStreamer::RemovePersistentFaceLayer(u32 tag, s32 duration)
   {
     for(auto layerIter = _faceLayers.begin(); layerIter != _faceLayers.end(); ++layerIter) {
       if(layerIter->tag == tag) {
         PRINT_NAMED_INFO("AnimationStreamer.RemovePersistentFaceLayer",
                          "Tag = %d (Layers remaining=%lu)", layerIter->tag, _faceLayers.size()-1);
         
-        // In case this layer was the last thing sent to the robot and there's nothing
-        // queued up to update the face, we need to add a layer that takes us back from
-        // where this persistent frame leaves off to no adjustment at all.
-        // (Currently, this is hardcoded to happen over 3 frames)
-        FaceTrack faceTrack;
-        faceTrack.SetIsLive(true);
-        ProceduralFaceKeyFrame firstFrame(layerIter->track.GetCurrentKeyFrame());
-        firstFrame.SetTriggerTime(0);
-        faceTrack.AddKeyFrame(std::move(firstFrame));
-        
-        ProceduralFaceKeyFrame lastFrame;
-        lastFrame.SetTriggerTime(IKeyFrame::SAMPLE_LENGTH_MS*3);
-        faceTrack.AddKeyFrame(std::move(lastFrame));
-        
-        AddFaceLayer(std::move(faceTrack));
+        if(duration > 0)
+        {
+          // Add a layer that takes us back from where this persistent frame leaves
+          // off to no adjustment at all.
+          FaceTrack faceTrack;
+          faceTrack.SetIsLive(true);
+          ProceduralFaceKeyFrame firstFrame(layerIter->track.GetCurrentKeyFrame());
+          firstFrame.SetTriggerTime(0);
+          faceTrack.AddKeyFrame(std::move(firstFrame));
+          
+          ProceduralFaceKeyFrame lastFrame;
+          lastFrame.SetTriggerTime(IKeyFrame::SAMPLE_LENGTH_MS*duration);
+          faceTrack.AddKeyFrame(std::move(lastFrame));
+          
+          AddFaceLayer(std::move(faceTrack));
+        }
         
         _faceLayers.erase(layerIter);
         return; // once found, stop looking immediately (there should be no more layers w/ this tag)
@@ -567,22 +611,33 @@ namespace Cozmo {
     if(faceUpdated) {
       // ...turn the final procedural face into an RLE-encoded image suitable for
       // streaming to the robot
-      AnimKeyFrame::FaceImage faceImageMsg;
       ProceduralFace procFace(robot.GetProceduralFace());
       procFace.SetParams(faceParams);
-      Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), faceImageMsg.image);
       
-      if(RESULT_OK != rleResult) {
-        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
-                          "Failed to get RLE frame from procedural face.");
-      } else {
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.UpdateFace",
-                         "Streaming ProceduralFaceKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(faceImageMsg)));
+#     if DEBUG_ANIMATION_STREAMING
+      {
+        using Param = ProceduralEyeParameter;
+        const ProceduralFace::WhichEye L = ProceduralFace::WhichEye::Left;
+        const ProceduralFace::WhichEye R = ProceduralFace::WhichEye::Right;
+
+        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.CombinedFaceParams",
+                          "Face: shift=(%.2f,%.2f) scale=(%.2f,%.2f), "
+                          "Left: shift=(%.2f,%.2f) scale=(%.2f,%.2f), "
+                          "Right: shift=(%.2f,%.2f) scale=(%.2f,%.2f)",
+                          faceParams.GetFacePosition().x(), faceParams.GetFacePosition().y(),
+                          faceParams.GetFaceScale().x(), faceParams.GetFaceScale().y(),
+                          faceParams.GetParameter(L, Param::EyeCenterX),
+                          faceParams.GetParameter(L, Param::EyeCenterY),
+                          faceParams.GetParameter(L, Param::EyeScaleX),
+                          faceParams.GetParameter(L, Param::EyeScaleY),
+                          faceParams.GetParameter(R, Param::EyeCenterX),
+                          faceParams.GetParameter(R, Param::EyeCenterY),
+                          faceParams.GetParameter(R, Param::EyeScaleX),
+                          faceParams.GetParameter(R, Param::EyeScaleY));
       }
+#     endif
+      
+      BufferFaceToSend(procFace);
       
       if (storeFace)
       {
@@ -591,6 +646,27 @@ namespace Cozmo {
       }
     }
   } // UpdateFace()
+  
+  
+  void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
+  {
+    AnimKeyFrame::FaceImage faceImageMsg;
+    Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), faceImageMsg.image);
+    
+    if(RESULT_OK != rleResult) {
+      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
+                        "Failed to get RLE frame from procedural face.");
+    } else {
+#     if DEBUG_ANIMATION_STREAMING
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateFace",
+                       "Streaming ProceduralFaceKeyFrame at t=%dms.",
+                       _streamingTime_ms - _startTime_ms);
+#     endif
+      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(faceImageMsg)));
+    }
+
+  }
+  
   
   Result AnimationStreamer::SendStartOfAnimation()
   {
@@ -1188,37 +1264,17 @@ namespace Cozmo {
     
     bool anyFramesAdded = false;
     
-    // Use procedural face
-    const ProceduralFace& lastFace = robot.GetLastProceduralFace();
-//    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
-    //const ProceduralFace& nextFace = robot.GetProceduralFace();
-    ProceduralFace nextFace(robot.GetProceduralFace());
-        
-    _nextLookAround_ms -= BS_TIME_STEP;
-    
-    bool faceSent = false;
-    if(nextFace.HasBeenSentToRobot() == false &&
-       lastFace.HasBeenSentToRobot() == true)
-    {
-      lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
-      if(RESULT_OK != lastResult) {
-        return lastResult;
-      }
-      
-      robot.MarkProceduralFaceAsSent();
-      faceSent = true;
-    }
-    
-    anyFramesAdded = faceSent;
-
     // Don't start wiggling until we've been idling for a bit and make sure we
-    // picking or placing
+    // are not picking or placing
     if(_isLiveTwitchEnabled &&
        _timeSpentIdling_ms >= GET_PARAM(s32, TimeBeforeWiggleMotions_ms) &&
        !robot.IsPickingOrPlacing())
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0)
+      const bool wheelsAvailable = (!robot.IsMoving() &&
+                                    !robot.GetMoveComponent().IsAnimTrackLocked(AnimTrackFlag::BODY_TRACK));
+      const bool timeToMoveBody = (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0;
+      if(wheelsAvailable && timeToMoveBody)
       {
         _bodyMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementDurationMin_ms),
                                                    GET_PARAM(s32, BodyMovementDurationMax_ms));
@@ -1233,6 +1289,10 @@ namespace Cozmo {
           // If turning in place, look in the direction of the turn
           const s32 x = (speed < 0 ? -1.f : 1.f) * _rng.RandIntInRange(0, ProceduralFace::WIDTH/6);
           const s32 y = _rng.RandIntInRange(-ProceduralFace::HEIGHT/6, ProceduralFace::HEIGHT/6);
+#         if DEBUG_ANIMATION_STREAMING
+          PRINT_NAMED_DEBUG("AnimationStreamer.UpdateLiveAnimation.EyeLeadTurn",
+                            "Point turn eye shift (%d,%d)", x, y);
+#         endif
           robot.ShiftEyes(x, y, IKeyFrame::SAMPLE_LENGTH_MS);
         }
         
@@ -1257,7 +1317,11 @@ namespace Cozmo {
       }
       
       // If lift is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsLiftMoving() && (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0 && !robot.IsCarryingObject()) {
+      const bool liftIsAvailable = (!robot.IsLiftMoving() &&
+                                    !robot.GetMoveComponent().IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK));
+      const bool timeToMoveLIft = (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0;
+      if(liftIsAvailable && timeToMoveLIft && !robot.IsCarryingObject())
+      {
         _liftMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementDurationMin_ms),
                                                    GET_PARAM(s32, LiftMovementDurationMax_ms));
 
@@ -1283,7 +1347,11 @@ namespace Cozmo {
       }
       
       // If head is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsHeadMoving() && (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0) {
+      const bool headIsAvailable = (!robot.IsHeadMoving() &&
+                                    !robot.GetMoveComponent().IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK));
+      const bool timeToMoveHead = (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0;
+      if(headIsAvailable && timeToMoveHead)
+      {
         _headMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementDurationMin_ms),
                                                    GET_PARAM(s32, HeadMovementDurationMax_ms));
         const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));

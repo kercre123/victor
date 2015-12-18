@@ -332,6 +332,12 @@ void TrackFaceAction::Cleanup(Robot& robot)
   robot.GetMoveComponent().UnSetTrackToFace();
 }
 
+void TrackFaceAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
+{
+  TrackFaceCompleted completion;
+  completion.faceID = static_cast<s32>(_faceID);
+  completionUnion.Set_trackFaceCompleted(std::move(completion));
+}
   
 bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)
 {

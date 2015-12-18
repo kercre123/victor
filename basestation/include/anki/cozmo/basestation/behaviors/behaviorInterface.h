@@ -176,7 +176,7 @@ namespace Cozmo {
     virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
     
-    Util::RandomGenerator& GetRNG();
+    Util::RandomGenerator& GetRNG() const;
     
   private:
     
@@ -217,7 +217,7 @@ namespace Cozmo {
     return InterruptInternal(_robot, currentTime_sec, isShortInterrupt);
   }
   
-  inline Util::RandomGenerator& IBehavior::GetRNG() {
+  inline Util::RandomGenerator& IBehavior::GetRNG() const {
     return sRNG;
   }
   

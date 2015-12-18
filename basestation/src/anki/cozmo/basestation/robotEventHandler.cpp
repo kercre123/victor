@@ -440,56 +440,6 @@ IActionRunner* CreateNewActionByType(Robot& robot,
   }
 }
   
-void RobotEventHandler::QueueActionHelper(const QueueActionPosition position, const u32 idTag, const u32 inSlot,
-                                          ActionList& actionList, IActionRunner* action, const u8 numRetries/* = 0*/)
-{
-  action->SetTag(idTag);
-  
-  QueueActionHelper(position, inSlot, actionList, action, numRetries);
-}
-
-void RobotEventHandler::QueueActionHelper(const QueueActionPosition position, const u32 inSlot,
-                                          ActionList& actionList, IActionRunner* action, const u8 numRetries/* = 0*/)
-{
-  switch(position)
-  {
-    case QueueActionPosition::NOW:
-    {
-      actionList.QueueActionNow(inSlot, action, numRetries);
-      break;
-    }
-    case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
-    {
-      // Cancel all queued actions and make this action the next thing in it
-      actionList.Cancel();
-      actionList.QueueActionNext(inSlot, action, numRetries);
-      break;
-    }
-    case QueueActionPosition::NEXT:
-    {
-      actionList.QueueActionNext(inSlot, action, numRetries);
-      break;
-    }
-    case QueueActionPosition::AT_END:
-    {
-      actionList.QueueActionAtEnd(inSlot, action, numRetries);
-      break;
-    }
-    case QueueActionPosition::NOW_AND_RESUME:
-    {
-      actionList.QueueActionAtFront(inSlot, action, numRetries);
-      break;
-    }
-    default:
-    {
-      PRINT_NAMED_ERROR("CozmoGameImpl.QueueActionHelper.InvalidPosition",
-                        "Unrecognized 'position' %s for queuing action.",
-                        EnumToString(position));
-      return;
-    }
-  }
-}
-  
 void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   RobotID_t robotID = 1; // We init the robotID to 1
@@ -624,7 +574,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
   }
   
   // Everything's ok and we have an action, so queue it
-  QueueActionHelper(QueueActionPosition::NOW, Robot::DriveAndManipulateSlot, robot.GetActionList(), newAction, numRetries);
+  robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, newAction, numRetries);
 }
   
 void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -641,7 +591,8 @@ void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterfac
   IActionRunner* action = CreateNewActionByType(*robot, msg.action);
   
   // Put the action in the given position of the specified queue:
-  QueueActionHelper(msg.position, msg.idTag, msg.inSlot, robot->GetActionList(), action, msg.numRetries);
+  action->SetTag(msg.idTag);
+  robot->GetActionList().QueueAction(msg.inSlot, msg.position, action, msg.numRetries);
 }
   
 void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -674,8 +625,8 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
   } // for each action/actionType
   
   // Put the action in the given position of the specified queue:
-  QueueActionHelper(msg.position, msg.idTag, msg.inSlot, robot->GetActionList(),
-                    compoundAction, msg.numRetries);
+  compoundAction->SetTag(msg.idTag);
+  robot->GetActionList().QueueAction(msg.inSlot, msg.position, compoundAction, msg.numRetries);
 }
   
 void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -701,7 +652,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
       
       // Put the block down right here
       IActionRunner* newAction = new PlaceObjectOnGroundAction();
-      QueueActionHelper(QueueActionPosition::NOW, Robot::DriveAndManipulateSlot, robot->GetActionList(), newAction);
+      robot->GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, newAction);
     }
     else {
       // In the normal case directly set the lift height
