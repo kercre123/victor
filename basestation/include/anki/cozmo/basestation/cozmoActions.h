@@ -1148,11 +1148,13 @@ namespace Anki {
       u32           _numLoops;
       bool          _startedPlaying;
       bool          _stoppedPlaying;
+      bool          _wasAborted;
       u8            _animTag;
       
       // For responding to AnimationStarted and AnimationEnded events
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
+      Signal::SmartHandle _abortSignalHandle;
       
     }; // class PlayAnimationAction
     

@@ -61,6 +61,15 @@ namespace Cozmo {
   
   u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops)
   {
+    if(nullptr != _streamingAnimation)
+    {
+      using namespace ExternalInterface;
+      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.Aborting",
+                          "Animation %s is interrupting animation %s",
+                          anim->GetName().c_str(), _streamingAnimation->GetName().c_str());
+      robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
+    }
+    
     _streamingAnimation = anim;
     
     if(_streamingAnimation == nullptr) {
