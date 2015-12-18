@@ -229,7 +229,7 @@ namespace Anki {
   }
   
   template<typename T>
-  f32 Rectangle<T>::ComputeIOU(const Rectangle<T>& other) const
+  f32 Rectangle<T>::ComputeOverlapScore(const Rectangle<T>& other) const
   {
     // Note that union = area1 + area2 - intersection!
     const T thisArea = Area();

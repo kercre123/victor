@@ -77,8 +77,8 @@ namespace Anki {
     
     bool Contains(const Point<2,T>& point) const;
     
-    // Compute Intersection-over-Union (IOU) overlap score (on interval [0,1])
-    f32 ComputeIOU(const Rectangle<T>& other) const;
+    // Compute Intersection-over-Union overlap score (on interval [0,1])
+    f32 ComputeOverlapScore(const Rectangle<T>& other) const;
     
     // Return new rectangle scaled about the center of the current one
     Rectangle<T> Scale(const f32 scaleFactor) const;

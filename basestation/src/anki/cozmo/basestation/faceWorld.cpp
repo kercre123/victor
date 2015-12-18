@@ -79,7 +79,7 @@ namespace Cozmo {
       Radians angleDiff;
       
       const auto & knownRect = knownFaceIter->second.face.GetRect();
-      const f32 currentIOU = face.GetRect().ComputeIOU(knownRect);
+      const f32 currentIOU = face.GetRect().ComputeOverlapScore(knownRect);
       if(currentIOU > IOU_threshold)
       {
         if(foundMatch) {
