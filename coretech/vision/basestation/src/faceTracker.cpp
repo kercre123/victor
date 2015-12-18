@@ -1165,10 +1165,7 @@ namespace Vision {
         {
           TrackedFace& existingFace = (*existingIter)->second;
           const Rectangle<f32>& existingRect = existingFace.GetRect();
-          const f32 intersectionArea = existingRect.Intersect(rect_f32).area();
-          const f32 unionArea = existingRect.area() + rect_f32.area() - intersectionArea;
-          const f32 IoU = intersectionArea / unionArea; // "intersection over union" score
-          
+          const f32 IoU = existingRect.ComputeIOU(rect_f32);
           if(IoU > intersectionOverUnionThreshold) {
             // Update existing face and remove it from additional checking for matches
             existingFace.SetRect(std::move(rect_f32));
@@ -1259,10 +1256,10 @@ namespace Vision {
                                 
       } else {
         // Otherwise, just use assumed fake eye locations
-        face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .25f*face.GetRect().GetWidth(),
-                                      face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
-        face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .25f*face.GetRect().GetWidth(),
-                                       face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+        face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .2f*face.GetRect().GetWidth(),
+                                      face.GetRect().GetYmid() - .12f*face.GetRect().GetHeight()));
+        face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .2f*face.GetRect().GetWidth(),
+                                       face.GetRect().GetYmid() - .12f*face.GetRect().GetHeight()));
       }
       
     }
