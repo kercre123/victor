@@ -22,7 +22,7 @@ namespace Selfie {
         _PickupTime += Time.deltaTime;
 
         // flash screen white before photo
-        if (_PickupTime > _SelfieGame.CountdownTimer - 0.2f) {
+        if (_PickupTime > _SelfieGame.CountdownTimer - 0.1f) {
           _SelfieGame.PrepareForPhoto();
         }
         if (_PickupTime > _SelfieGame.CountdownTimer) {

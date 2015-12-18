@@ -32,6 +32,12 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private HubWorldButton _HubWorldCompletedButtonPrefab;
 
+    [SerializeField]
+    private Button _SelfieAlbumViewButton;
+
+    [SerializeField]
+    private GameObject _SelfieAlbumViewPrefab;
+
     private List<RectTransform> _CompletedButtons = new List<RectTransform>();
 
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
@@ -178,6 +184,16 @@ namespace Cozmo.HubWorld {
 
       // Make sure we recieve events from the right camera
       _HubWorldCanvas.worldCamera = HubWorldCamera.Instance.WorldCamera;
+
+      _SelfieAlbumViewButton.gameObject.SetActive(false);
+      // Don't show the selfie album button unless the selfie challenge is complete
+      ChallengeStatePacket selfieChallenge;
+      if (_challengeStatesById.TryGetValue("SelfieGame01", out selfieChallenge)) {
+        if (selfieChallenge.currentState == ChallengeState.COMPLETED) {
+          _SelfieAlbumViewButton.gameObject.SetActive(true);
+          _SelfieAlbumViewButton.onClick.AddListener(HandleSelfieAlbumButtonClick);
+        }
+      }
     }
 
     private GameObject CreateLockedButton(ChallengeData challengeData) {
@@ -404,6 +420,11 @@ namespace Cozmo.HubWorld {
           _Tweeners.Clear();
         }
       }
+    }
+
+    private void HandleSelfieAlbumButtonClick() {
+      var selfieAlbum = UIManager.CreateUIElement(_SelfieAlbumViewPrefab);
+      UIManager.Instance.transform.SetParent(selfieAlbum.transform, false);
     }
 
     public void CloseView() {
