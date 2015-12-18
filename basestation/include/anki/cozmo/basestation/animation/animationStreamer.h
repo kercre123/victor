@@ -129,6 +129,10 @@ namespace Cozmo {
     
     void UpdateAmountToSend(Robot& robot);
     
+    // If we are currently streaming, kill it, and make sure not to leave a
+    // random face displayed (stream last face keyframe)
+    void Abort(Robot& robot);
+    
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
 
@@ -159,6 +163,8 @@ namespace Cozmo {
     bool HaveFaceLayersToSend();
     
     void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
+    
+    void BufferFaceToSend(const ProceduralFace& procFace);
     
     void KeepFaceAlive(Robot& robot);
     

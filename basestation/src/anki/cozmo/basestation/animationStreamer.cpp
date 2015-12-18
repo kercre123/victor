@@ -51,9 +51,8 @@ namespace Cozmo {
                        "Stopping streaming of animation '%s'.\n",
                        GetStreamingAnimationName().c_str());
 #     endif
-      
-      _streamingAnimation = nullptr;
-      return 0;
+
+      return SetStreamingAnimation(robot, nullptr);
     }
     
     return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops);
@@ -61,6 +60,11 @@ namespace Cozmo {
   
   u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops)
   {
+    if(nullptr != _streamingAnimation || nullptr == anim)
+    {
+      Abort(robot);
+    }
+    
     _streamingAnimation = anim;
     
     if(_streamingAnimation == nullptr) {
@@ -90,6 +94,45 @@ namespace Cozmo {
     }
   }
 
+  
+  void AnimationStreamer::Abort(Robot& robot)
+  {
+    if(nullptr != _streamingAnimation)
+    {
+      // Tell the robot to abort
+      robot.AbortAnimation();
+      
+      // We just cleared the robot's buffer, so there will not be a start or end
+      // available
+      _startOfAnimationSent = false;
+      _endOfAnimationSent = false;
+      
+      // If there are any face frames left, send the last one so we don't leave the face
+      // in a random state
+      auto & procFaceTrack  = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>();
+      const ProceduralFaceKeyFrame* kf = procFaceTrack.GetLastKeyFrame();
+      if(nullptr != kf) {
+
+        SendStartOfAnimation();
+        BufferFaceToSend(kf->GetFace());
+        SendEndOfAnimation(robot);
+
+      } else {
+        auto & faceImageTrack = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>();
+        FaceAnimationKeyFrame* kf = faceImageTrack.GetLastKeyFrame();
+        if(nullptr != kf) {
+          auto msg = kf->GetStreamMessage();
+          if(nullptr != msg)
+          {
+            SendStartOfAnimation();
+            BufferMessageToSend(kf->GetStreamMessage());
+            SendEndOfAnimation(robot);
+          }
+        }
+      }
+    }
+  } // Abort()
+  
   
   Result AnimationStreamer::SetIdleAnimation(const std::string &name)
   {
@@ -568,22 +611,33 @@ namespace Cozmo {
     if(faceUpdated) {
       // ...turn the final procedural face into an RLE-encoded image suitable for
       // streaming to the robot
-      AnimKeyFrame::FaceImage faceImageMsg;
       ProceduralFace procFace(robot.GetProceduralFace());
       procFace.SetParams(faceParams);
-      Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), faceImageMsg.image);
       
-      if(RESULT_OK != rleResult) {
-        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
-                          "Failed to get RLE frame from procedural face.");
-      } else {
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.UpdateFace",
-                         "Streaming ProceduralFaceKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(faceImageMsg)));
+#     if DEBUG_ANIMATION_STREAMING
+      {
+        using Param = ProceduralEyeParameter;
+        const ProceduralFace::WhichEye L = ProceduralFace::WhichEye::Left;
+        const ProceduralFace::WhichEye R = ProceduralFace::WhichEye::Right;
+
+        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.CombinedFaceParams",
+                          "Face: shift=(%.2f,%.2f) scale=(%.2f,%.2f), "
+                          "Left: shift=(%.2f,%.2f) scale=(%.2f,%.2f), "
+                          "Right: shift=(%.2f,%.2f) scale=(%.2f,%.2f)",
+                          faceParams.GetFacePosition().x(), faceParams.GetFacePosition().y(),
+                          faceParams.GetFaceScale().x(), faceParams.GetFaceScale().y(),
+                          faceParams.GetParameter(L, Param::EyeCenterX),
+                          faceParams.GetParameter(L, Param::EyeCenterY),
+                          faceParams.GetParameter(L, Param::EyeScaleX),
+                          faceParams.GetParameter(L, Param::EyeScaleY),
+                          faceParams.GetParameter(R, Param::EyeCenterX),
+                          faceParams.GetParameter(R, Param::EyeCenterY),
+                          faceParams.GetParameter(R, Param::EyeScaleX),
+                          faceParams.GetParameter(R, Param::EyeScaleY));
       }
+#     endif
+      
+      BufferFaceToSend(procFace);
       
       if (storeFace)
       {
@@ -592,6 +646,27 @@ namespace Cozmo {
       }
     }
   } // UpdateFace()
+  
+  
+  void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
+  {
+    AnimKeyFrame::FaceImage faceImageMsg;
+    Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), faceImageMsg.image);
+    
+    if(RESULT_OK != rleResult) {
+      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
+                        "Failed to get RLE frame from procedural face.");
+    } else {
+#     if DEBUG_ANIMATION_STREAMING
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateFace",
+                       "Streaming ProceduralFaceKeyFrame at t=%dms.",
+                       _streamingTime_ms - _startTime_ms);
+#     endif
+      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(faceImageMsg)));
+    }
+
+  }
+  
   
   Result AnimationStreamer::SendStartOfAnimation()
   {
