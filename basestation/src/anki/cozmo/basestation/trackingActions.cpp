@@ -13,6 +13,7 @@
 
 
 #include "anki/cozmo/basestation/trackingActions.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
@@ -89,12 +90,14 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
 {
   Radians absPanAngle = 0, absTiltAngle = 0;
   
+  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
   // See if there are new relative pan/tilt angles from the derived class
   if(GetAngles(robot, absPanAngle, absTiltAngle))
   {
     // Record latest update to avoid timing out
     if(_updateTimeout_sec > 0.) {
-      _lastUpdateTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _lastUpdateTime = currentTime;
     }
     
 #   if DEBUG_TRACKING_ACTIONS
@@ -108,8 +111,8 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > _tiltTolerance.ToFloat())
     {
       // Set speed/accel based on angle difference
-      const f32 MinSpeed = 20.f;
-      const f32 MaxSpeed = 40.f;
+      const f32 MinSpeed = 30.f;
+      const f32 MaxSpeed = 50.f;
       //const f32 MinAccel = 20.f;
       //const f32 MaxAccel = 40.f;
       
@@ -134,7 +137,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
       // Set speed/accel based on angle difference
-      const f32 MinSpeed = 10.f;
+      const f32 MinSpeed = 20.f;
       const f32 MaxSpeed = 80.f;
       //const f32 MinAccel = 30.f;
       //const f32 MaxAccel = 80.f;
@@ -151,9 +154,17 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
         return ActionResult::FAILURE_ABORT;
       }
     }
+    
+    if(_playSounds && currentTime > _nextSoundTime &&
+       (relPanAngle > _minAngleForSound || relTiltAngle > _minAngleForSound))
+    {
+      // TODO: Update with real animation name
+      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction("SoundWhileTracking"));
+      
+      _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
+    }
       
   } else if(_updateTimeout_sec > 0.) {
-    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
       PRINT_NAMED_INFO("ITrackAction.CheckIfDone.Timeout",
                        "No tracking angle update received in %f seconds, returning done.",
