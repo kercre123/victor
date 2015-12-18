@@ -124,7 +124,7 @@ def GetAudioJSON():
     return None
 
 #keeping this backwards compatible leads to some weird concatination.
-def GetMovementJSON():
+def GetMovementJSON(reset_movement_frames_array):
     global ANIM_FPS
     global DATA_NODE_NAME
     #Get a list of all the user defined attributes #dataNodeObject = "x:mech_all_ctrl"
@@ -162,7 +162,8 @@ def GetMovementJSON():
                 "Forward": round(keyframe_attr_data["FwdValues"][i]),
                 "Turn": round(keyframe_attr_data["TurnValues"][i]),
                 "Radius": round(keyframe_attr_data["RadiusValues"][i]),
-                "Time": keyframe_attr_data["TimesForward"][i]
+                "Time": keyframe_attr_data["TimesForward"][i],
+                "Reset": False
             }
         #if our scale has shorted a frame too much, ignore it.
         if( valid_count > 0):
@@ -170,14 +171,21 @@ def GetMovementJSON():
                 continue
         move_data_combined.append( valid_keyframe );
         valid_count = valid_count + 1
-
+    #Mark any frames that are just movement accumulation resets
+    if( reset_movement_frames_array is not None ):
+        for i in range(len(reset_movement_frames_array)):
+            for j in range(valid_count):
+                delta_time = abs(reset_movement_frames_array[i] - move_data_combined[j]["Time"])
+                print "Delta time is " + str(delta_time)
+                if( delta_time < 1.0):
+                    move_data_combined[j]["Reset"] = True
+    
     #TODO: error message if all are not keyed.
     if( len(move_data_combined) == 0):
         return None
     #Loop through all keyframes
     keyframe_count = len(move_data_combined)
     #The first keyframe always just inits things at 0
-    i = 1
     for i in range(keyframe_count-1):
         #skip the ending frames and go to the start of the next bookend, we process in pairs.
         if( ( i % 2) == 0 ):
@@ -194,10 +202,10 @@ def GetMovementJSON():
         fwd_delta = move_data_combined[i+1]["Forward"] - move_data_combined[i]["Forward"]
         turn_delta = move_data_combined[i+1]["Turn"] - move_data_combined[i]["Turn"]
         radius_delta = move_data_combined[i+1]["Radius"] - move_data_combined[i]["Radius"]
-        if( (fwd_delta == 0) and  
-            (move_data_combined[i+1]["Radius"] == 0) and
-            (turn_delta  == 0)):
+
+        if( move_data_combined[i+1]["Reset"] == True):
             #just an empty reset frame.
+            print "frame " + str(i) + " is empty reset"
             continue
         if( (fwd_delta  != 0) and  
             (move_data_combined[i+1]["Radius"]  == 0) and
@@ -289,6 +297,24 @@ def ExportAnkiAnim(item):
     #Check if we've set something before this session, use a maya.env var or force dialog
     VerifyAnkiExportPath()
 
+
+    #Because we want to reset the movement accumulation node randomly, and we use deltas instead of absolutes on those keyframes.
+    # we need to have a way to flag certain movements as a reset and thus empty.
+    move_accumulate_attributes = cmds.listAttr("x:moac_ctrl", inUse=True,visible = True,keyable=True)
+    reset_movement_frames_array = []
+    #Loop through all attributes
+    for currattr in move_accumulate_attributes:
+        Vs_ResetMovement = cmds.keyframe( "x:moac_ctrl", attribute = currattr, query=True, valueChange=True)
+        Ts_ResetMovement = cmds.keyframe( "x:moac_ctrl", attribute = currattr, query=True, timeChange=True)
+        if Vs_ResetMovement is None or Ts_ResetMovement is None:
+            continue
+        keyframe_count = len(Vs_ResetMovement)
+        for i in range(keyframe_count-1):
+            if(Vs_ResetMovement[i] != Vs_ResetMovement[i+1]):
+                reset_movement_frames_array.append(Ts_ResetMovement[i+1])
+    #Remove the dupes
+    list(set(reset_movement_frames_array))
+
     global ANIM_FPS
     global MAX_FRAMES
     global DATA_NODE_NAME
@@ -347,8 +373,7 @@ def ExportAnkiAnim(item):
             continue
         if Ts is None:
             continue
-       
-        i = 0;
+
         #Loop through all keyframes, the value is actually the next keyframe
         keyframe_count = len(Vs)
         for i in range(keyframe_count):
@@ -394,7 +419,7 @@ def ExportAnkiAnim(item):
     if( audio_json is not None):
         json_arr.extend(audio_json)
     #Grab the robot movement relative to the curve
-    movement_json_arr = GetMovementJSON()
+    movement_json_arr = GetMovementJSON(reset_movement_frames_array)
     if( movement_json_arr is not None):
         json_arr.extend(movement_json_arr)
     #Deletes the results layer the script created.
