@@ -242,7 +242,7 @@ namespace Anki {
       virtual void Reset() override final;
       
       // A random number generator all subclasses can share
-      Util::RandomGenerator _rng;
+      Util::RandomGenerator& GetRNG();
       
     private:
       
@@ -251,7 +251,12 @@ namespace Anki {
       f32           _timeoutTime;
       
     }; // class IAction
-       
+    
+    inline Util::RandomGenerator& IAction::GetRNG() {
+      static Util::RandomGenerator sRNG;
+      return sRNG;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki
 
