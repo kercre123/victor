@@ -32,10 +32,22 @@ namespace Anki {
    
     // Private namespace
     namespace {
+      
+      
+      //The gains for the steering controller
+      //Heading tracking gain K1, Crosstrack approach rate K2
+      const float DEFAULT_STEERING_K1 = 0.1f;
+      const float DEFAULT_STEERING_K2 = 10.f;
+      
       //Steering gains: Heading tracking gain K1, Crosstrack approach rate K2
       f32 K1_ = DEFAULT_STEERING_K1;
       f32 K2_ = DEFAULT_STEERING_K2;
-
+      
+      // Clipping of path offset fed into path follow controller.
+      // Used during docking only.
+      f32 PATH_DIST_OFFSET_CAP_MM = 20;
+      f32 PATH_ANGULAR_OFFSET_CAP_RAD = 0.5;
+      
       SteerMode currSteerMode_ = SM_PATH_FOLLOW;
       
       // Direct drive
@@ -80,11 +92,14 @@ namespace Anki {
     }
     
     //sets the steering controller constants
-    void SetGains(float k1, float k2)
+    void SetGains(f32 k1, f32 k2, f32 dockPathDistOffsetCap_mm, f32 dockPathAngularOffsetCap_rad)
     {
-      PRINT("New Steering gains: k1 %f, k2 %f\n", k1, k2);
+      PRINT("New Steering gains: k1 %f, k2 %f, dist_cap %f mm, ang_cap %f rad\n",
+            k1, k2, dockPathDistOffsetCap_mm, dockPathAngularOffsetCap_rad);
       K1_ = k1;
       K2_ = k2;
+      PATH_DIST_OFFSET_CAP_MM = dockPathDistOffsetCap_mm;
+      PATH_ANGULAR_OFFSET_CAP_RAD = dockPathAngularOffsetCap_rad;
     }
     
     
@@ -323,11 +338,11 @@ namespace Anki {
           //SetGains(DEFAULT_STEERING_K1, DEFAULT_STEERING_K2);
           if (DockingController::IsBusy()) {
             //SetGains(DEFAULT_STEERING_K1, 5.f);
-            fidx = CLIP(fidx, -5, 5);  // TODO: Loosen this up the closer we get to the block?????
-            pathRadErr = CLIP(pathRadErr, -0.2, 0.2);
+            fidx = CLIP(fidx, -PATH_DIST_OFFSET_CAP_MM, PATH_DIST_OFFSET_CAP_MM);  // TODO: Loosen this up the closer we get to the block?????
+            pathRadErr = CLIP(pathRadErr, -PATH_ANGULAR_OFFSET_CAP_RAD, PATH_ANGULAR_OFFSET_CAP_RAD);
           }
           
-          PERIODIC_PRINT(1000,"fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
+          //PERIODIC_PRINT(1000,"fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
           //PRINT("fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
 
         } else {
@@ -413,6 +428,7 @@ namespace Anki {
       
       // Stop the robot if not already
       if (SpeedController::GetUserCommandedDesiredVehicleSpeed() != 0) {
+        SpeedController::SetUserCommandedDeceleration(10000);
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
       }
 

@@ -13,6 +13,7 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "pathFollower.h"
+#include "imuFilter.h"
 
 
 #define DEBUG_DOCK_CONTROLLER 0
@@ -541,6 +542,19 @@ namespace Anki {
           // We already accomplished the dock. We're done!
           return;
         }
+        
+
+        // Ignore error signals received while turning "fast" since they're generated
+        // from a potentially warped marker due to rolling shutter.
+        //
+        // TODO: The better thing to do would be to not send the error the signal
+        //       from the engine in the first place by checking it against historical rotation speed.
+        //       (Doing it here for now because it's quicker and I don't want to trip the
+        //       no error signal received timeout.)
+        if (ABS(IMUFilter::GetRotationSpeed()) > 0.3) {
+          return;
+        }
+
         
 #if(RESET_LOC_ON_BLOCK_UPDATE)
         // Reset localization to zero buildup of localization error.

@@ -227,16 +227,19 @@ namespace Anki
 
     
     SegmentRangeStatus PathSegment::GetDistToSegment(const f32 x, const f32 y, const f32 angle,
-                                                    f32 &shortestDistanceToPath, f32 &radDiff) const
+                                                     f32 &shortestDistanceToPath, f32 &radDiff,
+                                                     f32 *distAlongSegmentFromClosestPointToEnd) const
     {
       SegmentRangeStatus res = OOR_NEAR_END;
       
       switch(type_) {
         case PST_LINE:
-          res = GetDistToLineSegment(x,y,angle,shortestDistanceToPath,radDiff);
+          res = GetDistToLineSegment(x,y,angle,shortestDistanceToPath,radDiff,
+                                     distAlongSegmentFromClosestPointToEnd);
           break;
         case PST_ARC:
-          res = GetDistToArcSegment(x,y,angle,shortestDistanceToPath,radDiff);
+          res = GetDistToArcSegment(x,y,angle,shortestDistanceToPath,radDiff,
+                                    distAlongSegmentFromClosestPointToEnd);
           break;
         case PST_POINT_TURN:
           // NOTE: This always returns IN_SEGMENT_RANGE since we can't know purely
@@ -253,8 +256,12 @@ namespace Anki
 
     
     SegmentRangeStatus PathSegment::GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
-                                                        f32 &shortestDistanceToPath, f32 &radDiff) const
+                                                         f32 &shortestDistanceToPath, f32 &radDiff,
+                                                         f32 *distAlongSegmentFromClosestPointToEnd) const
     {
+      SegmentRangeStatus segStatus = IN_SEGMENT_RANGE;
+      f32 distToEnd = 0;
+      
       const PathSegmentDef::s_line* seg = &(def_.line);
       
       f32 line_m_ = (seg->endPt_y - seg->startPt_y) / (seg->endPt_x - seg->startPt_x);
@@ -293,15 +300,20 @@ namespace Anki
         // Compute angle difference
         radDiff = (line_theta_ - angle).ToFloat();
         
+        // Compute distance to end of segment
+        distToEnd = ABS(seg->endPt_y - y);
+        
+        
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
         // and the robot is closer to the end point than it is to the start point,
         // then we've passed this segment and should go to next one
         if ( signbit(seg->startPt_y - y) == signbit(seg->endPt_y - y)) {
-            if (sqDistToStartPt > sqDistToEndPt) {
-              return OOR_NEAR_END;
-            } else {
-              return OOR_NEAR_START;
-            }
+          if (sqDistToStartPt > sqDistToEndPt) {
+            distToEnd = -distToEnd;
+            segStatus = OOR_NEAR_END;
+          } else {
+            segStatus = OOR_NEAR_START;
+          }
         }
         
       } else if (FLT_NEAR(line_m_, 0.f)) {
@@ -315,14 +327,18 @@ namespace Anki
         // Compute angle difference
         radDiff = (line_theta_ - angle).ToFloat();
         
+        // Compute distance to end of segment
+        distToEnd = ABS(seg->endPt_x - x);
+        
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
         // and the robot is closer to the end point than it is to the start point,
         // then we've passed this segment and should go to next one
         if ( signbit(seg->startPt_x - x) == signbit(seg->endPt_x - x)) {
           if (sqDistToStartPt > sqDistToEndPt) {
-            return OOR_NEAR_END;
+            distToEnd = -distToEnd;
+            segStatus = OOR_NEAR_END;
           } else {
-            return OOR_NEAR_START;
+            segStatus = OOR_NEAR_START;
           }
         }
         
@@ -354,6 +370,10 @@ namespace Anki
         // Compute angle difference
         radDiff = (line_theta_ - angle).ToFloat();
         
+        // Compute distance to end of segment
+        f32 dxToEnd = seg->endPt_x - x_intersect;
+        f32 dyToEnd = seg->endPt_y - y_intersect;
+        distToEnd = ABS( sqrtf(dxToEnd * dxToEnd + dyToEnd * dyToEnd) );
         
         // Did we pass the current segment?
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
@@ -362,20 +382,26 @@ namespace Anki
         if ( (signbit(seg->startPt_x - x_intersect) == signbit(seg->endPt_x - x_intersect))
             && (signbit(seg->startPt_y - y_intersect) == signbit(seg->endPt_y - y_intersect)) ) {
           if (sqDistToStartPt > sqDistToEndPt){
-            return OOR_NEAR_END;
+            distToEnd = -distToEnd;
+            segStatus = OOR_NEAR_END;
           } else {
-            return OOR_NEAR_START;
+            segStatus = OOR_NEAR_START;
           }
         }
       }
       
-      return IN_SEGMENT_RANGE;
+      if (distAlongSegmentFromClosestPointToEnd) {
+        *distAlongSegmentFromClosestPointToEnd = distToEnd;
+      }
+      
+      return segStatus;
     }
     
 
 
     SegmentRangeStatus PathSegment::GetDistToArcSegment(const f32 x, const f32 y, const f32 angle,
-                                                       f32 &shortestDistanceToPath, f32 &radDiff) const
+                                                        f32 &shortestDistanceToPath, f32 &radDiff,
+                                                        f32 *distAlongSegmentFromClosestPointToEnd) const
     {
       const PathSegmentDef::s_arc* seg = &(def_.arc);
       
@@ -393,14 +419,14 @@ namespace Anki
       f32 r = seg->radius;
       Anki::Radians startRad = seg->startRad;
       
-      // Line formed by circle center and robot pose
+      // Line formed by arc center and robot pose
       f32 dy = y - y_center;
       f32 dx = x - x_center;
       f32 m = dy / dx;
       f32 b = y - m*x;
       
       
-      // Find heading error
+      // Find error between current robot heading and the expected heading at the closest point on the arc
       bool movingCCW = seg->sweepRad >= 0;
       Anki::Radians theta_line = ATAN2_FAST(dy,dx); // angle of line from circle center to robot
       Anki::Radians theta_tangent = theta_line + Anki::Radians((movingCCW ? 1 : -1 ) * PIDIV2);
@@ -417,8 +443,8 @@ namespace Anki
         
       } else {
         
-        // Where does circle (x - x_center)^2 + (y - y_center)^2 = r^2 and y=mx+b intersect where y=mx+b represents
-        // the line between the circle center and the robot?
+        // Where does circle (x - x_center)^2 + (y - y_center)^2 = r^2 and y=mx+b intersect,
+        // where y=mx+b represents the line between the circle center and the robot?
         // (y - y_center)^2 == r^2 - (x - x_center)^2
         // y = sqrt(r^2 - (x - x_center)^2) + y_center
         //   = mx + b
@@ -471,6 +497,10 @@ namespace Anki
         shortestDistanceToPath *= -1;
       }
 
+      // Compute distance to end of segment
+      f32 distToEnd = ABS((Radians(seg->startRad + seg->sweepRad) - theta_line).ToFloat() * seg->radius);
+
+      
       // Did we pass the current segment?
       // Check if the angDiff exceeds the sweep angle.
       // Also check for transitions between -PI and +PI by checking if angDiff
@@ -479,12 +509,14 @@ namespace Anki
       f32 angDiff = (theta_line - startRad).ToFloat();
       if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad))) ||
           (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad))) ){
+        distToEnd = -distToEnd;
         segStatus = OOR_NEAR_END;
       }
 
       
       if (movingCCW) {
         if (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad)) {
+          distToEnd = -distToEnd;
           segStatus = OOR_NEAR_END;
         } else if (angDiff < 0 && angDiff > -0.5f*(2.f*PI-seg->sweepRad)) {
           segStatus = OOR_NEAR_START;
@@ -492,12 +524,17 @@ namespace Anki
           
       } else {
         if (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad)) {
+          distToEnd = -distToEnd;
           segStatus = OOR_NEAR_END;
         } else if (angDiff > 0 && angDiff < 0.5f*(2.f*PI-seg->sweepRad)) {
           segStatus = OOR_NEAR_START;
         }
       }
+      
 
+      if (distAlongSegmentFromClosestPointToEnd) {
+        *distAlongSegmentFromClosestPointToEnd = distToEnd;
+      }
       
 #if(DEBUG_PATH)
       CoreTechPrint("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);

@@ -1112,7 +1112,13 @@ namespace Anki {
       
       
       // Sending debug string to game and viz
-      SendDebugString("This is the engine debug string");
+      // TODO: This is just an example, but basically if the string hasn't changed
+      //       don't bother re-sending it.
+      static bool dbgStringSent = false;
+      if (!dbgStringSent) {
+        SendDebugString("This is the engine debug string");
+        dbgStringSent = true;
+      }
       
       
       return RESULT_OK;
