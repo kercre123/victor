@@ -146,5 +146,14 @@
     },
     "simonGame01.description" : {
         "translation" : "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
+    },
+    "selfieGame01.title" : {
+        "translation" : "Selfie Time"
+    },
+    "selfieGame01.subtitle" : {
+        "translation" : "Cozmo Loves Cameras"
+    },
+    "selfieGame01.description" : {
+        "translation" : "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
     }
 }

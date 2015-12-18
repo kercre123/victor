@@ -45,6 +45,8 @@ namespace Cozmo {
 
       private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
 
+      public CanvasGroup CurrentSlide { get { return _CurrentSlide; } }
+
       protected override void CleanUp() {
         foreach (IMinigameWidget widget in _ActiveWidgets) {
           widget.DestroyWidgetImmediately();
