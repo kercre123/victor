@@ -62,6 +62,7 @@ public:
   
   AudioController* GetAudioController() { return _audioController; }
   
+
 private:
   
   AudioController* _audioController = nullptr;
@@ -80,8 +81,6 @@ private:
                         const AudioEngine::AudioCallbackInfo& callbackInfo );
   
   void RegisterCladGameObjectsWithAudioController();
-  
-  AudioEngine::AudioCallbackFlag ConvertCallbackFlagType( const Anki::Cozmo::Audio::AudioCallbackFlag flags ) const;
   
   Anki::Cozmo::Audio::CallbackErrorType ConvertErrorCallbackType( const AudioEngine::AudioCallbackErrorType errorType ) const;
   

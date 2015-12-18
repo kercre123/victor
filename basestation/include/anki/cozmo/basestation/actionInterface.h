@@ -118,7 +118,7 @@ namespace Anki {
       // completion signal with an action finishes. Note that this public because
       // subclasses that are composed of other actions may want to make use of
       // the completion info of their constituent actions.
-      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const;
 
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }

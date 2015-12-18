@@ -1094,6 +1094,11 @@ namespace Anki {
     {
       return &idCard_;
     }
+    
+    u32 HAL::GetID()
+    {
+      return 0;
+    }
    
 
     void HAL::GetProximity(ProximityValues *prox)

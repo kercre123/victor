@@ -6,6 +6,8 @@ export ESPDIR=`pwd`
 # Clear the terminal so debugging builds is easier
 clear
 
+../tools/versionGenerator/versionGenerator.sh app/include/version.h
+
 # Generate clad source 
 cd ../clad
 if ! make -j4; then

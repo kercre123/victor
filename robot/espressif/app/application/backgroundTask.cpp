@@ -11,6 +11,7 @@ extern "C" {
 #include "client.h"
 #include "driver/i2spi.h"
 }
+#include "version.h"
 #include "face.h"
 #include "upgradeController.h"
 #include "animationController.h"
@@ -57,12 +58,13 @@ void WiFiFace(void)
       os_printf("WiFiFace couldn't read back config\r\n");
     }
     {
-      char scrollLines[9];
+      char scrollLines[11];
       unsigned int i;
-      for (i=0; i<((system_get_time()/2000000) % 4); i++) scrollLines[i] = '\n';
+      for (i=0; i<((system_get_time()/2000000) % 10); i++) scrollLines[i] = '\n';
       scrollLines[i] = 0;
-      Face::FacePrintf("%sSSID: %s\nPSK:  %s\nChan: %d\nStas: %d\n", scrollLines,
-                       ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num());
+      Face::FacePrintf("%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n", scrollLines,
+                       ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
+                       COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
     }
   }
 }

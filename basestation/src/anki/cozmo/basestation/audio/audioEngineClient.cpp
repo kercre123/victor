@@ -38,13 +38,18 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event,
                                                                 GameObjectType gameObject,
-                                                                AudioCallbackFlag callbackFlag,
-                                                                CallbackFunc* callback )
+                                                                CallbackFunc callback )
 {
   if ( nullptr != _messageHandler ) {
-    const CallbackIdType callbackId = AudioCallbackFlag::EventNone != callbackFlag ?
-    GetNewCallbackId() : kInvalidCallbackId;
-    const MessageAudioClient msg( PostAudioEvent( event, gameObject, callbackFlag, callbackId ) );
+    
+    const CallbackIdType callbackId = nullptr != callback ? GetNewCallbackId() : kInvalidCallbackId;
+    
+    // Store callback
+    if ( nullptr != callback ) {
+      _callbackMap.emplace( callbackId, callback );
+    }
+    // Post event
+    const MessageAudioClient msg( PostAudioEvent( event, gameObject, callbackId ) );
     _messageHandler->Broadcast( std::move( msg ) );
     return callbackId;
   }
@@ -61,6 +66,9 @@ void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( (StopAllAudioEvents( gameObject )) );
     _messageHandler->Broadcast( std::move( msg ) );
+  }
+  else {
+    PRINT_NAMED_WARNING("AudioEngineClient.StopAllEvents", "Message Handler is Null Can NOT Stop All Events");
   }
 }
 
@@ -105,7 +113,32 @@ void AudioEngineClient::PostParameter( ParameterType parameter,
 }
 
 
-// Private  
+// Private
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClient::HandleCallbackEvent( const AudioCallback& callbackMsg )
+{
+//  const CallbackIdType callbackId = static_cast<CallbackIdType>( callbackMsg.callbackId );
+  const auto& callbackIt = _callbackMap.find( static_cast<CallbackIdType>( callbackMsg.callbackId ) );
+  if ( callbackIt != _callbackMap.end() ) {
+    // Perfomr Callback Func
+    callbackIt->second( callbackMsg );
+    
+    // FIXME: Waiting to hear back from WWise if complete callback is allways called, if so remove callback check
+    // Delete if it is completed or there there is an error
+    AudioCallbackInfoTag callbackTag = callbackMsg.callbackInfo.GetTag();
+    if ( AudioCallbackInfoTag::callbackComplete == callbackTag ||
+         AudioCallbackInfoTag::callbackError == callbackTag )
+    {
+      _callbackMap.erase( callbackIt );
+    }
+  }
+  else {
+    // Received unexpected callback!
+    PRINT_NAMED_ERROR( "AudioEngineClient.HandleCallbackEvent", "Received Unexpected callbackId: %d Type %s",
+                       callbackMsg.callbackId, AudioCallbackInfoTagToString( callbackMsg.callbackInfo.GetTag() ) );
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType AudioEngineClient::GetNewCallbackId()
 {

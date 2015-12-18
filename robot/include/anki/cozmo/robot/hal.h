@@ -69,7 +69,6 @@ extern "C" {
 }
 #endif
 
-
 #if(STREAM_DEBUG_IMAGES)
 #undef DISABLE_PRINT_MACROS
 #define DISABLE_PRINT_MACROS 1
@@ -437,7 +436,7 @@ namespace Anki
 
       // Clear the currently animated face
       void FaceClear();
-      
+
       // Blink the eyes
       void FaceBlink();
 
@@ -524,6 +523,9 @@ namespace Anki
       };
 
       IDCard* GetIDCard();
+
+      // Returns the unique serial number of the robot
+      u32 GetID();
 
       // For board-level debugging only - read the comments in uart.cpp or find a better printf
       void BoardPrintf(const char *format, ...);

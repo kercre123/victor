@@ -101,21 +101,21 @@ namespace Anki {
       return result;
     }
     
-    void IActionRunner::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
+    void IActionRunner::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
       info.numObjects = 0;
       info.objectIDs.fill(-1);
-      completionInfo.Set_objectInteractionCompleted( std::move(info) );
+      completionUnion.Set_objectInteractionCompleted( std::move(info) );
     }
     
     void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
     {
-      ActionCompletedUnion completionInfo;
+      ActionCompletedUnion completionUnion;
 
-      GetCompletionUnion(robot, completionInfo);
+      GetCompletionUnion(robot, completionUnion);
       
-      robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo)));
+      robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionUnion)));
     }
     
     bool IActionRunner::RetriesRemain()
