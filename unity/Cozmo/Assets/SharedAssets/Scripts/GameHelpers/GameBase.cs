@@ -50,6 +50,8 @@ public abstract class GameBase : MonoBehaviour {
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
+  public SharedMinigameView SharedMinigameViewInstance { get { return _SharedMinigameViewInstance; } }
+
   protected ChallengeData _ChallengeData;
   private AlertView _ChallengeEndViewInstance;
   private bool _WonChallenge;
