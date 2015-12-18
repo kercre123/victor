@@ -233,28 +233,29 @@ namespace Cozmo {
     return returnTag;
   }
   
-  void AnimationStreamer::RemovePersistentFaceLayer(u32 tag)
+  void AnimationStreamer::RemovePersistentFaceLayer(u32 tag, s32 duration)
   {
     for(auto layerIter = _faceLayers.begin(); layerIter != _faceLayers.end(); ++layerIter) {
       if(layerIter->tag == tag) {
         PRINT_NAMED_INFO("AnimationStreamer.RemovePersistentFaceLayer",
                          "Tag = %d (Layers remaining=%lu)", layerIter->tag, _faceLayers.size()-1);
         
-        // In case this layer was the last thing sent to the robot and there's nothing
-        // queued up to update the face, we need to add a layer that takes us back from
-        // where this persistent frame leaves off to no adjustment at all.
-        // (Currently, this is hardcoded to happen over 3 frames)
-        FaceTrack faceTrack;
-        faceTrack.SetIsLive(true);
-        ProceduralFaceKeyFrame firstFrame(layerIter->track.GetCurrentKeyFrame());
-        firstFrame.SetTriggerTime(0);
-        faceTrack.AddKeyFrame(std::move(firstFrame));
-        
-        ProceduralFaceKeyFrame lastFrame;
-        lastFrame.SetTriggerTime(IKeyFrame::SAMPLE_LENGTH_MS*3);
-        faceTrack.AddKeyFrame(std::move(lastFrame));
-        
-        AddFaceLayer(std::move(faceTrack));
+        if(duration > 0)
+        {
+          // Add a layer that takes us back from where this persistent frame leaves
+          // off to no adjustment at all.
+          FaceTrack faceTrack;
+          faceTrack.SetIsLive(true);
+          ProceduralFaceKeyFrame firstFrame(layerIter->track.GetCurrentKeyFrame());
+          firstFrame.SetTriggerTime(0);
+          faceTrack.AddKeyFrame(std::move(firstFrame));
+          
+          ProceduralFaceKeyFrame lastFrame;
+          lastFrame.SetTriggerTime(IKeyFrame::SAMPLE_LENGTH_MS*duration);
+          faceTrack.AddKeyFrame(std::move(lastFrame));
+          
+          AddFaceLayer(std::move(faceTrack));
+        }
         
         _faceLayers.erase(layerIter);
         return; // once found, stop looking immediately (there should be no more layers w/ this tag)

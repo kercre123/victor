@@ -934,7 +934,7 @@ namespace Anki {
                            "Currently at %.1fdeg, on the way to %.1fdeg, within "
                            "half angle of %.1fdeg", currentAngle.getDegrees(),
                            _targetAngle.getDegrees(), _halfAngle.getDegrees());
-          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3);
           _eyeShiftRemoved = true;
         }
       }
@@ -1615,7 +1615,7 @@ namespace Anki {
                            "half angle of %.1fdeg", RAD_TO_DEG(robot.GetHeadAngle()),
                            _headAngle.getDegrees(), _halfAngle.getDegrees());
 
-          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3);
           _eyeShiftRemoved = true;
         }
       }

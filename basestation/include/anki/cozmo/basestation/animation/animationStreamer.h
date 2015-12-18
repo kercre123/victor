@@ -82,8 +82,10 @@ namespace Cozmo {
     // A handle/tag for the layer i s returned, which is needed for removal.
     u32 AddPersistentFaceLayer(FaceTrack&& faceTrack);
     
-    // Remove a previously-added persistent face layer using its tag
-    void RemovePersistentFaceLayer(u32 tag);
+    // Remove a previously-added persistent face layer using its tag.
+    // If duration > 0, that number of frames will be used to transition back
+    // to no adjustment
+    void RemovePersistentFaceLayer(u32 tag, s32 duration = 0);
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
