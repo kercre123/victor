@@ -466,6 +466,40 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
+  T Point<N,T>::GetMin(PointDimType* whichDim) const
+  {
+    PointDimType minDim = 0;
+    T retVal = this->operator[](minDim);
+    for(PointDimType i=1 ; i<N; ++i) {
+      if(this->operator[](i) < retVal) {
+        retVal = this->operator[](i);
+        minDim = i;
+      }
+    }
+    if(nullptr != whichDim) {
+      *whichDim = minDim;
+    }
+    return retVal;
+  }
+  
+  template<PointDimType N, typename T>
+  T Point<N,T>::GetMax(PointDimType* whichDim) const
+  {
+    PointDimType maxDim = 0;
+    T retVal = this->operator[](maxDim);
+    for(PointDimType i=1 ; i<N; ++i) {
+      if(this->operator[](i) > retVal) {
+        retVal = this->operator[](i);
+        maxDim = i;
+      }
+    }
+    if(nullptr != whichDim) {
+      *whichDim = maxDim;
+    }
+    return retVal;
+  }
+
+  template<PointDimType N, typename T>
   std::ostream& operator<<(std::ostream& out, const Point<N,T>& p)
   {
     for (PointDimType i=0; i<N; ++i) {

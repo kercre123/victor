@@ -66,6 +66,13 @@ namespace Cozmo {
     template<typename Return_t = Value_t> Return_t GetParam(Param_t whichParam);
     void SetParam(Param_t whichparam, Value_t newValue);
 
+    // Get a snapshot of all parameters
+    using ParamContainer = std::map<Param_t,Value_t>;
+    const ParamContainer& GetAllParams() const { return _params; }
+    
+    // Set all parameters at once, e.g. from a snapshot taken using GetAllParams()
+    void SetAllParams(const ParamContainer& allParams) { _params = allParams; }
+    
     // Accessors for valid ranges:
     // Note that derived classes can set these up in SetDefaultParams() as well.
     // If not provided for a particular Param_t, that parameter is assumed to take any
@@ -97,7 +104,7 @@ namespace Cozmo {
     void HandleSetParameters(const AnkiEvent<ExternalInterface::MessageGameToEngine>&event);
     
     // Storage for the actual params
-    std::map<Param_t, Value_t> _params;
+    ParamContainer _params;
     
     // Storage for ranges
     std::map<Param_t, Range> _ranges;

@@ -109,6 +109,9 @@ namespace Anki {
       Result     QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
       Result     QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
       
+      Result     QueueAction(SlotHandle atSlot, QueueActionPosition inPosition,
+                             IActionRunner* action, u8 numRetries = 0);
+      
       bool       IsEmpty() const;
       
       size_t     GetQueueLength(SlotHandle atSlot);

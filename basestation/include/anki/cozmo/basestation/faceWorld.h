@@ -51,12 +51,15 @@ namespace Cozmo {
     
     std::map<Vision::TrackedFace::ID_t, KnownFace> _knownFaces;
     
-    TimeStamp_t _deletionTimeout_ms = 3000;
+    TimeStamp_t _deletionTimeout_ms = 30000;
 
     Vision::TrackedFace::ID_t _idCtr = 0;
     
     Pose3d      _lastObservedFacePose;
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
+    
+    
+    void RemoveFaceByID(Vision::TrackedFace::ID_t faceID);
     
   }; // class FaceWorld
   

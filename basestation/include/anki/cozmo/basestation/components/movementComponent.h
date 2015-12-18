@@ -35,6 +35,7 @@ public:
   virtual ~MovementComponent() { }
   
   bool IsMovementTrackIgnored(AnimTrackFlag track) const;
+  bool IsAnimTrackLocked(AnimTrackFlag track) const;
   
   void LockAnimTracks(uint8_t tracks);
   void UnlockAnimTracks(uint8_t tracks);
