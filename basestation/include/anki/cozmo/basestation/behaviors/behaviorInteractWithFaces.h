@@ -138,6 +138,7 @@ namespace Cozmo {
     // are present, and +/- variability in seconds on that average.
     constexpr static float kMultiFaceInterestingDuration_sec = 2.5;
     constexpr static float kMultiFaceInterestingVariation_sec = 1;
+    f32 _currentMultiFaceInterestingDuration_sec = kMultiFaceInterestingDuration_sec;
     
     // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
     constexpr static float kFaceCooldownDuration_sec = 10;

@@ -399,16 +399,15 @@ namespace Cozmo {
         {
           // We're tracking multiple faces. See if it's time to switch focus to
           // a different face.
-          
-          const float interestingDurationThreshold = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec, kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
-        
-          if(watchingFaceDuration >= interestingDurationThreshold)
+          if(watchingFaceDuration >= _currentMultiFaceInterestingDuration_sec)
           {
             SwitchToDifferentFace(robot, faceID, currentTime_sec);
             
             PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchFaces",
                              "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
-                             watchingFaceDuration, interestingDurationThreshold);
+                             watchingFaceDuration, _currentMultiFaceInterestingDuration_sec);
+            
+            _currentMultiFaceInterestingDuration_sec = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec, kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
             break;
           }
         }
