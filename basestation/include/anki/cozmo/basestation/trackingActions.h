@@ -51,9 +51,13 @@ public:
   // Set to 0 to disable timeout (default).
   void SetUpdateTimeout(double timeout_sec) { _updateTimeout_sec = timeout_sec; }
   
-  // Set to true (default) to enable sounds while tracking
-  // TODO: Provide more control (which sounds to use, how often, ...?)
-  void EnableSound(bool tf) { _playSounds = tf; }
+
+  // Sound settings: which animation (should be sound only), how frequent, and
+  // minimum angle required to play sound. Use empty animation name for sound to
+  // disable. (Note that there *is* sound by default.)
+  void SetSound(const std::string& animName) { _turningSoundAnimation = animName; }
+  void SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec);
+  void SetMinAngleForSound(const Radians& angle) { _minAngleForSound = angle; }
   
   // Tracking will lock animation and movement for head and/or body, depending on Mode.
   virtual u8 GetAnimTracksToDisable() const override;
@@ -87,13 +91,18 @@ private:
   Radians  _panTolerance = POINT_TURN_ANGLE_TOL;
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
   
-  bool     _playSounds = true;
+  std::string _turningSoundAnimation = "ID_pokedA"; // TODO: update with real default animation name
   f32      _soundSpacingMin_sec = 2.f;
   f32      _soundSpacingMax_sec = 4.f;
   f32      _nextSoundTime = 0.f;
   Radians  _minAngleForSound = DEG_TO_RAD(3);
   
 }; // class ITrackAction
+  
+inline void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec) {
+  _soundSpacingMin_sec = spacingMin_sec;
+  _soundSpacingMax_sec = spacingMax_sec;
+}
   
 
 class TrackObjectAction : public ITrackAction

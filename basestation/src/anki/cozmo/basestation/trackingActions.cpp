@@ -155,11 +155,11 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       }
     }
     
-    if(_playSounds && currentTime > _nextSoundTime &&
+    // Play sound if it's time and either angle was big enough
+    if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime &&
        (relPanAngle > _minAngleForSound || relTiltAngle > _minAngleForSound))
     {
-      // TODO: Update with real animation name
-      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction("SoundWhileTracking"));
+      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation));
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
