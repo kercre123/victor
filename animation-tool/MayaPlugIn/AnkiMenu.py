@@ -18,6 +18,7 @@ kLongFlagName = "open_json"
 #something like ~/cozmo-game/lib/anki/products-cozmo-assets/animations
 g_AnkiExportPath = ""
 g_PrevMenuName = ""
+g_EndMsg = ""
 g_ProceduralFaceKeyFrames = []
 ANIM_FPS = 30
 MAX_FRAMES = 10000
@@ -98,26 +99,46 @@ def IsProceduralAttribute(currattr):
     return False
 
 def GetAudioJSON():
+    global g_EndMsg
     all_audio_clips = cmds.ls(type='audio')
     if( len(all_audio_clips) > 0):
         json_arr = []
+        #loop through the nodes, ones that start in the same frame are supposed to let the engine just select a sound.
+        audio_sorted_by_frame = {}
+
+        #Prints out too many dupes
+        #Actually write to json
         for audioNode in all_audio_clips:
             audioStart = cmds.sound(audioNode,query=True, offset=True)
             audioEnd = cmds.sound(audioNode,query=True, sourceEnd=True)
+            audio_frame_key = str(audioStart)
             audioFile = cmds.sound(audioNode,query=True, file=True)
             audioPathSplit = audioFile.split("/sounds/", 1)
             if( len(audioPathSplit) < 2 ):
                 print "ERROR: sound must be in the sounds directory"
                 continue
             audioFile = audioPathSplit[1]
-            audio_json = {         
-                            "audioName": [audioFile],
-                            "volume": 1.0,
-                            "triggerTime_ms": round(audioStart * 1000  / ANIM_FPS, 0),
-                            "durationTime_ms": round((audioEnd - audioStart) * 1000  / ANIM_FPS, 0),
-                            "Name": "RobotAudioKeyFrame"
-                        }
-            json_arr.append(audio_json)
+            if( audio_sorted_by_frame.has_key(audio_frame_key)):
+                audio_json = audio_sorted_by_frame[audio_frame_key]
+                audio_json["audioName"].append(audioFile)
+            else:
+                audio_json = {         
+                                "audioName": [audioFile],
+                                "volume": 1.0,
+                                "triggerTime_ms": round(audioStart * 1000  / ANIM_FPS, 0),
+                                "Name": "RobotAudioKeyFrame"
+                            }
+                audio_sorted_by_frame[audio_frame_key] = audio_json
+                json_arr.append(audio_json)
+            #For the investor demo mooly wants to make sure that nothing is overlapping so print a non-fatal warning
+            #cmds.warning("alsjfd")
+            for check_against in all_audio_clips:
+                if( audioNode != check_against):
+                    audioStart2 = cmds.sound(check_against,query=True, offset=True)
+                    #if the started on the same frame, that just means randomly select one of them
+                    if( audioStart2 != audioStart ):
+                        if( audioStart2 < audioEnd and audioStart2 > audioStart):
+                            g_EndMsg = g_EndMsg + check_against + " sound is overlapping with " + audioNode
         return json_arr
     else:
         print "No audio found"
@@ -318,6 +339,8 @@ def ExportAnkiAnim(item):
     global ANIM_FPS
     global MAX_FRAMES
     global DATA_NODE_NAME
+    global g_EndMsg
+    g_EndMsg = ""
     if( len( cmds.ls(DATA_NODE_NAME) ) == 0 ):
         print "ERROR: AnkiAnimExport: Must have " + DATA_NODE_NAME
         return
@@ -438,6 +461,10 @@ def ExportAnkiAnim(item):
     cmds.cmdFileOutput( o=g_AnkiExportPath + "/"+output_name +".json")
     print output_json
     cmds.cmdFileOutput( c=1 )
+
+    if( g_EndMsg != "" ):
+        cmds.confirmDialog(message=g_EndMsg, title="Anki Export Warning")
+
     return
 
 # Command
