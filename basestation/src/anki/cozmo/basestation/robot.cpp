@@ -1439,6 +1439,9 @@ namespace Anki {
       xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
       yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
       
+      //PRINT_NAMED_DEBUG("Robot.ShiftAndScaleEyes", "shift=(%.3f,%.3f) scale=(%.3f,%.3f)",
+      //                  xPix, yPix, xScale, yScale);
+      
       AnimationStreamer::FaceTrack faceTrack;
       
       if(duration_ms == 0) {
@@ -1509,7 +1512,7 @@ namespace Anki {
       }
       
       return layerTag;
-    }
+    } // ShiftAndScaleEyes()
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {

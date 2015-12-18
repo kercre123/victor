@@ -57,7 +57,7 @@ namespace Cozmo {
     
     void UpdateBaselineFace(Robot& robot, const Face* face);
     void RemoveFaceID(Face::ID_t faceID);
-    void UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face);
+    void UpdateRobotFace(Robot& robot);
     void PlayAnimation(Robot& robot, const std::string& animName, QueueActionPosition position);
     
     // Sets face tracking ID and queues TrackFaceAction "now".
@@ -66,9 +66,9 @@ namespace Cozmo {
     // Unsets face tracking ID and cancels last action tag. Also sets current state to Inactive.
     void StopTracking(Robot& robot);
     
-    // Remove last face from the set of _trackingFaces. If any left, pick the next random
+    // Remove current face from the set of _trackingFaces. If any left, pick the next random
     // one to track. If not, StopTracking (and go back to Inactive)
-    void TrackNextFace(Robot& robot, Face::ID_t lastFace, double currentTime_sec);
+    void TrackNextFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec);
     
     // Like TrackNextFace, but does not remove current face from list. Just switches
     // to a different face in the list. If the list only has one face in it, does nothing.
@@ -84,10 +84,6 @@ namespace Cozmo {
     
     State _currentState = State::Interrupted;
     State _resumeState  = State::Interrupted;
-    
-    Face::ID_t _trackedFaceID = Face::UnknownFace;
-    
-    ProceduralFace _lastProceduralFace, _crntProceduralFace;;
     
     f32 _baselineEyeHeight;
     f32 _baselineIntraEyeDistance;
@@ -107,19 +103,32 @@ namespace Cozmo {
     f32    _currentTilt = 0;
     u32    _tiltLayerTag = 0;
     
+    f32    _eyeDartSpacing = 0.f;
+    f32    _lastEyeDartTime = 0.f;
+    bool   _lookingAtLeftEye = true;
+    u32    _eyeDartLayerTag = 0;
     AnimationStreamer::ParamContainer _originalLiveIdleParams;
     
     struct FaceData
     {
       double _lastSeen_sec = 0;
       double _trackingStart_sec = 0;
+      double _cumulativeTrackingTime_sec = 0;
+      double _coolDownUntil_sec = 0;
       bool   _playedInitAnim = false;
     };
     
+    // ID of face we are currently tracking
+    Face::ID_t _trackedFaceID = Face::UnknownFace;
+    
+    // Set of available faces during tracking (for when multiple faces are visible, to do switching)
     std::set<Face::ID_t> _trackingFaces;
+    
+    // List of faces to choose from when not tracking
     std::list<Face::ID_t> _interestingFacesOrder;
+    
+    // Known face data
     std::unordered_map<Face::ID_t, FaceData> _interestingFacesData;
-    std::unordered_map<Face::ID_t, double> _cooldownFaces;
     
     // Length of time we'll allow the tracking action to go without an update
     // before completing and returning to Inactive state
@@ -130,7 +139,7 @@ namespace Cozmo {
     
     // Average length of time in seconds to watch one face when multiple faces
     // are present, and +/- variability in seconds on that average.
-    constexpr static float kMultiFaceInterestingDuration_sec = 2;
+    constexpr static float kMultiFaceInterestingDuration_sec = 2.5;
     constexpr static float kMultiFaceInterestingVariation_sec = 1;
     
     // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
@@ -160,11 +169,15 @@ namespace Cozmo {
     // too close
     constexpr static float kTooCloseScaredInterval_sec = 2;
     
-    // Amount to periodically tilt the robot's face while watching a face, and the spacing
+    // Amount to periodically tilt the robot's face while watching a face, and the time spacing
     // between tilts
     constexpr static float kTiltFaceAmount_deg = 5.f;
-    constexpr static float kTiltSpacingMin_sec = 3.f;
-    constexpr static float kTiltSpacingMax_sec = 6.f;
+    constexpr static float kTiltSpacingMin_sec = 0.f;
+    constexpr static float kTiltSpacingMax_sec = 0.f;
+    
+    // Min/max time between darting robot's focus between the current tracked face's eyes
+    constexpr static float kEyeDartSpacingMin_sec = 0.5f;
+    constexpr static float kEyeDartSpacingMax_sec = 1.5f;
     
   }; // BehaviorInteractWithFaces
   
