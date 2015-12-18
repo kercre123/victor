@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "anki/common/basestation/colorRGBA.h"
+#include "anki/common/basestation/exceptions.h"
 #include "clad/vizInterface/messageViz.h"
 #include <OpenGL/OpenGL.h>
 #include <plugins/physics.h>
@@ -37,8 +38,6 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizObjectMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::Quad,
     std::bind(&PhysVizController::ProcessVizQuadMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessage,
-    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::EraseObject,
     std::bind(&PhysVizController::ProcessVizEraseObjectMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::EraseQuad,
@@ -57,6 +56,15 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizShowObjectsMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SetVizOrigin,
             std::bind(&PhysVizController::ProcessVizSetOriginMessage, this, std::placeholders::_1));
+
+  // simple quad messages
+  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageBegin,
+    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageBegin, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessage,
+    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageEnd,
+    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageEnd, this, std::placeholders::_1));
+
 
   _server.StartListening((uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
 
@@ -275,7 +283,7 @@ void PhysVizController::Draw(int pass, const char *view)
     } // for each quad type
 
     // Draw simple quad vectors
-    for(const auto & quadVectorPerIdentifier : _simpleQuadVectorMap) {
+    for(const auto & quadVectorPerIdentifier : _simpleQuadVectorMapReady) {
       for(const auto & quadInVector : quadVectorPerIdentifier.second) {
 
         // Set color for the quad
@@ -356,19 +364,42 @@ void PhysVizController::ProcessVizQuadMessage(const AnkiEvent<VizInterface::Mess
   _quadMap[(int)payload.quadType][payload.quadID] = VizInterface::Quad(payload);
 }
 
+void PhysVizController::ProcessVizSimpleQuadVectorMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessageBegin();
+  PRINT("Processing SimpleQuadVectorMessageBegin '%s'\n", payload.identifier.c_str());
+
+  // clear the vector in Incoming
+  _simpleQuadVectorMapIncoming[payload.identifier].clear();
+}
+
 void PhysVizController::ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_SimpleQuadVectorMessage();
   PRINT("Processing SimpleQuadVectorMessage '%s' (quad count: %zu)\n",
     payload.identifier.c_str(), payload.quads.size());
-  
-  // erase entry or assign depending on whether the incoming vector has elements
-  if ( payload.quads.empty() ) {
-    _simpleQuadVectorMap.erase( payload.identifier );
-  } else {
-    // copy all quads into container to draw later
-    _simpleQuadVectorMap[payload.identifier] = payload.quads;
-  }
+
+  // ideally I would like to move vectors, but messages are const in case more listeners subscribe
+  SimpleQuadVector& dest = _simpleQuadVectorMapIncoming[payload.identifier];
+  //  dest.insert(
+  //      dest.end(),
+  //      std::make_move_iterator(payload.quads.begin()),
+  //      std::make_move_iterator(payload.quads.end())
+  //    );
+  const size_t kMaxQuads = 1024; // just to set a limit, no rationale on actual number
+  const size_t newSize = dest.size() + payload.quads.size();
+  CORETECH_ASSERT( newSize <= kMaxQuads );
+  dest.reserve( newSize );
+  dest.insert( dest.end(), payload.quads.begin(), payload.quads.end());
+}
+
+void PhysVizController::ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessageEnd();
+  PRINT("Processing SimpleQuadVectorMessageEnd '%s'\n", payload.identifier.c_str());
+
+  // swap the vectors from incoming - ready
+  std::swap(_simpleQuadVectorMapIncoming[payload.identifier], _simpleQuadVectorMapReady[payload.identifier]);
 }
 
 void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)

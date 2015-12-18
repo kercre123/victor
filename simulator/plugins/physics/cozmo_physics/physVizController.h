@@ -45,7 +45,9 @@ private:
 
   void ProcessVizObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizSimpleQuadVectorMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizAppendPathSegmentLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -116,7 +118,8 @@ private:
   
   // quad arrays injected by name instead of requiring one ID per quad
   using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
-  std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMap;
+  std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapReady;    // ready to draw
+  std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapIncoming; // incoming from the socket
 
   // Color map
   //using VizColorDef_t = std::unordered_map<uint32_t, VizInterface::DefineColor>;

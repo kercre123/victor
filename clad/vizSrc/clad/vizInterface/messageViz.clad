@@ -66,16 +66,26 @@ message Quad
 structure SimpleQuad
 {
   uint_32 color,
-  // float_32 coords[12], // XYZx4 (v0v1v2v3), where v0 is connected to v1 and v2
   float_32 sideSize,
   float_32 center[3],
 }
 
-// SimpleQuadVectorMessage
+// SimpleQuadVectorMessageBegin: we are about to send one or several messages with quads
+message SimpleQuadVectorMessageBegin
+{
+  string identifier,
+}
+
 message SimpleQuadVectorMessage
 {
   string identifier,
   SimpleQuad quads[uint_8],
+}
+
+// SimpleQuadVectorMessageBegin: we finished sending messages with quads for the given id
+message SimpleQuadVectorMessageEnd
+{
+  string identifier,
 }
 
 // VizCameraQuad

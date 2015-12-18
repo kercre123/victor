@@ -15,7 +15,7 @@ enum uint_32 VizConstants
   ALL_QUAD_TYPEs  = 0xffffffff,
   ALL_OBJECT_IDs  = 0xffffffff,
   OBJECT_ID_RANGE = 0xfffffffe,
-  MaxMessageSize = 4096, // i think the old value was 2600 (ds)
+  MaxMessageSize = 2848, // i think the old value was 2600 (ds)
 }
 
 enum uint_32 VizObjectType {
