@@ -3,6 +3,7 @@
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
+    _SkewFactor ("Skew Factor", Float) = 0.25
 
     // required for UI.Mask
     _StencilComp ("Stencil Comparison", Float) = 8
@@ -69,15 +70,20 @@
 			}
 			
 			sampler2D _MainTex;
+      float _SkewFactor;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
+        // do skew translation on uvs
         float2 uv = i.uv;
-                uv = float2(uv.x, (uv.y - 0.5) * (1 + uv.x * 0.25) + 0.5);
+                uv = float2(uv.x, (uv.y - 0.5) * (1 + uv.x * _SkewFactor) + 0.5);
 
-        if(uv.y < 0 || uv.y > 1) return fixed4(0,0,0,0);
+        // use linear falloff to nicely blend the very edges of the image
+        // to get a nice AA effect.
+        float alpha = saturate(min(uv.y * 500, (1 - uv.y) * 500));
 
 				fixed4 col = tex2D(_MainTex, uv) * i.color;
+        col.a *= alpha;
 				return col;
 			}
 			ENDCG
