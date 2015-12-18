@@ -6,9 +6,9 @@ public class SimpleObjectPool<T> where T : class {
   private readonly Func<T> _CreateFunction;
   private readonly Queue<T> _InactiveObjects;
   private readonly List<T> _ActiveObjects;
-  private readonly Action<T> _ResetFunction;
+  private readonly Action<T, bool> _ResetFunction;
 
-  public SimpleObjectPool(Func<T> createFunction, Action<T> resetFunction, int initialPoolCount) {
+  public SimpleObjectPool(Func<T> createFunction, Action<T, bool> resetFunction, int initialPoolCount) {
     this._CreateFunction = createFunction;
     this._ResetFunction = resetFunction;
     _InactiveObjects = new Queue<T>();
@@ -38,7 +38,7 @@ public class SimpleObjectPool<T> where T : class {
       throw new ArgumentNullException();
     }
     if (_ResetFunction != null) {
-      _ResetFunction(item);
+      _ResetFunction(item, false);
     }
     if (_ActiveObjects.Contains(item)) {
       _ActiveObjects.Remove(item);
@@ -53,6 +53,9 @@ public class SimpleObjectPool<T> where T : class {
     }
     else {
       item = _InactiveObjects.Dequeue();
+    }
+    if (_ResetFunction != null) {
+      _ResetFunction(item, true);
     }
     _ActiveObjects.Add(item);
     return item;

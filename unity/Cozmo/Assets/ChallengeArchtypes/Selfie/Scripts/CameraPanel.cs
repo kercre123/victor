@@ -31,7 +31,7 @@ public class CameraPanel : MonoBehaviour {
   void Update() {
     var size = CamDisplay.rectTransform.rect.size;
 
-    float imageRatio = Width / (float)Height;
+    float imageRatio = _CamTexture.width / (float)_CamTexture.height;
     float sizeRatio = size.x / size.y;
 
     Rect uvRect = new Rect();

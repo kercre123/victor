@@ -24,6 +24,7 @@ public class SelfieAlbumEntry : MonoBehaviour {
     _Texture = new Texture2D(1, 1,TextureFormat.RGB24, false);
     Image.texture = _Texture;
     Button.onClick.AddListener(HandleClick);
+    Image.gameObject.SetActive(false);
   }
 
 	void Update () {
@@ -38,6 +39,7 @@ public class SelfieAlbumEntry : MonoBehaviour {
 	}
 
   public void SetFilePath(string path) {
+    Image.gameObject.SetActive(true);
     Image.color = Color.clear;
     _FilePath = path;
     StartCoroutine(LoadImage());
