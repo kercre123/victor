@@ -269,6 +269,10 @@ namespace Anki {
       {
         PRINT("TestMode reset\n");
         
+        // Reset state and updateFunc
+        testMode_ = TM_NONE;
+        updateFunc = NULL;
+        
         // Stop animations that might be playing
         AnimationController::Clear();
         
@@ -307,6 +311,7 @@ namespace Anki {
       {
         if (!PickAndPlaceController::IsBusy()) {
           PRINT("PlaceBlockOnGround: %s\n", PickAndPlaceController::DidLastActionSucceed() ? "SUCCESS" : "FAILED");
+          Reset();
         }
         return RESULT_OK;
       }
@@ -438,6 +443,9 @@ namespace Anki {
           
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
+        } else if (pathStarted_ && !PathFollower::IsTraversingPath()) {
+          PRINT("PathFollowerTest COMPLETE\n");
+          Reset();
         }
         
         return RESULT_OK;
@@ -982,7 +990,7 @@ namespace Anki {
       Result LightTestUpdate()
       {
         if (!ledCycleTest_) {
-          Start(TM_NONE);
+          Reset();
           return RESULT_OK;
         }
         

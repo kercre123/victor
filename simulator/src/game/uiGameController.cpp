@@ -1216,11 +1216,13 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSteeringControllerGains(const f32 k1, const f32 k2)
+    void UiGameController::SendSteeringControllerGains(const f32 k1, const f32 k2, const f32 dockPathDistOffsetCap_mm, const f32 dockPathAngularOffsetCap_rad)
     {
       ExternalInterface::SetSteeringControllerGains m;
       m.k1 = k1;
       m.k2 = k2;
+      m.dockPathDistOffsetCap_mm = dockPathDistOffsetCap_mm;
+      m.dockPathAngularOffsetCap_rad = dockPathAngularOffsetCap_rad;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetSteeringControllerGains(m);
       SendMessage(message);

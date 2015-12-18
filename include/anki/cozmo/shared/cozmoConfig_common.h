@@ -22,7 +22,7 @@ const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
 
 // Head angle may exceed limits by this amount before
 // it is considered to be out of calibration.
-const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(2.0f);
+const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(3.f);
 
 // Safe head angle for the proximity sensors to be usable with the lift
 // either up or down
@@ -44,7 +44,7 @@ const f32 DRIVE_CENTER_OFFSET = 0.f;
 // drive the lift down that far. We also skip calibration in sim.
 const f32 LIFT_HEIGHT_LOWDOCK  = 32.f;
 const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
-const f32 LIFT_HEIGHT_CARRY    = 90.f;
+const f32 LIFT_HEIGHT_CARRY    = 92.f;
 const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
 
 // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
