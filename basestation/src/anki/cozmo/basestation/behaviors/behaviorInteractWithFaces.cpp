@@ -153,7 +153,7 @@ namespace Cozmo {
   
   bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
-    return !_interestingFacesOrder.empty() || !_trackingFaces.empty();
+    return !_interestingFacesOrder.empty();
   }
   
   void BehaviorInteractWithFaces::StartTracking(Robot& robot, const Face::ID_t faceID, double currentTime_sec)
@@ -199,9 +199,6 @@ namespace Cozmo {
     
     dataIter->second._trackingStart_sec = currentTime_sec;
     
-    _trackingFaces.insert(faceID);
-    
-    
     PRINT_NAMED_INFO("BehaviorInteractWithFaces.StartTracking",
                      "Will start tracking face %llu", faceID);
     _trackedFaceID = faceID;
@@ -235,7 +232,6 @@ namespace Cozmo {
     robot.GetActionList().Cancel(_trackActionTag);
     _trackActionTag = (u32)ActionConstants::INVALID_TAG;
     _currentState = State::Inactive;
-    _trackingFaces.clear();
     robot.GetAnimationStreamer().RemovePersistentFaceLayer(_tiltLayerTag);
     robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeDartLayerTag);
     
@@ -243,23 +239,30 @@ namespace Cozmo {
     robot.GetAnimationStreamer().SetAllParams(_originalLiveIdleParams);
   }
   
-  inline BehaviorInteractWithFaces::Face::ID_t BehaviorInteractWithFaces::GetRandIdHelper(const std::set<Face::ID_t>& faceList)
+  BehaviorInteractWithFaces::Face::ID_t BehaviorInteractWithFaces::GetRandIdHelper()
   {
-    assert(!faceList.empty());
-    s32 offset = GetRNG().RandIntInRange(0, static_cast<s32>(faceList.size()-1));
-    auto randIter = faceList.begin();
-    while(offset-- > 0) {
-      ++randIter;
-      assert(randIter != faceList.end());
+    // Add all faces other than the one we are currently tracking and ones that
+    // are on cooldown to the candidate list to choose next face from.
+    std::vector<Face::ID_t> candidateList;
+    for(auto & candidate : _interestingFacesData)
+    {
+      if(candidate.first != _trackedFaceID && candidate.second._coolDownUntil_sec == 0) {
+        candidateList.push_back(candidate.first);
+      }
     }
     
-    return *randIter;
+    if(candidateList.empty()) {
+      PRINT_NAMED_INFO("BehaviorInteractWithFaces.GetRandIdHelper.NoAvailableIDs",
+                       "Sticking with current face %llu", _trackedFaceID);
+      return _trackedFaceID;
+    }
+    
+    const s32 index = GetRNG().RandIntInRange(0, static_cast<s32>(candidateList.size()-1));
+    return candidateList[index];
   }
   
   void BehaviorInteractWithFaces::TrackNextFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec)
   {
-    _trackingFaces.erase(currentFace);
-    
     // We are switching away from tracking this face entirely, stop accumulating
     // total tracking time
     auto dataIter = _interestingFacesData.find(currentFace);
@@ -267,13 +270,13 @@ namespace Cozmo {
       dataIter->second._cumulativeTrackingTime_sec = 0.;
     }
     
-    if(_trackingFaces.empty()) {
+    if(_interestingFacesOrder.empty()) {
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace.NoMoreFaces",
                        "No more faces to track, switching to Inactive.");
       StopTracking(robot);
     } else {
       // Pick next face from those available to look at
-      Face::ID_t nextFace = GetRandIdHelper(_trackingFaces);
+      Face::ID_t nextFace = GetRandIdHelper();
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace",
                        "CurrentFace = %llu, NextFace = %llu", currentFace, nextFace);
       StartTracking(robot, nextFace, currentTime_sec);
@@ -284,7 +287,7 @@ namespace Cozmo {
   void BehaviorInteractWithFaces::SwitchToDifferentFace(Robot& robot, Face::ID_t currentFace,
                                                         double currentTime_sec)
   {
-    if(_trackingFaces.size() > 1 || _trackingFaces.count(currentFace)==0)
+    if(_interestingFacesOrder.size() > 1)
     {
       // Update cumulative tracking time for the current face before we switch
       // away from it
@@ -307,9 +310,7 @@ namespace Cozmo {
         }
       }
       
-      auto tempList(_trackingFaces);
-      tempList.erase(currentFace); // remove current face from consideration
-      Face::ID_t nextFace = GetRandIdHelper(tempList);
+      Face::ID_t nextFace = GetRandIdHelper();
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.SwitchToDifferentFace",
                        "CurrentFace = %llu, NextFace = %llu", currentFace, nextFace);
       StartTracking(robot, nextFace, currentTime_sec);
@@ -389,23 +390,12 @@ namespace Cozmo {
       {
         SetStateName("TrackingFace");
         
-        //auto faceID = robot.GetMoveComponent().GetTrackToFace();
         auto faceID = _trackedFaceID;
         
-        // If we aren't tracking something in the tracking list, something's wrong
-        if(_trackingFaces.count(faceID) == 0)
-        {
-          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.InvalidFace",
-                           "Face %lld is not in the set of tracking faces. "
-                           "Trying another.", faceID);
-          TrackNextFace(robot, faceID, currentTime_sec);
-          break;
-        }
-       
         // Check how long we've been watching this face
         auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
         
-        if(_trackingFaces.size() > 1)
+        if(_interestingFacesOrder.size() > 1)
         {
           // We're tracking multiple faces. See if it's time to switch focus to
           // a different face.
@@ -679,13 +669,6 @@ namespace Cozmo {
       }
     }
     
-    if(State::TrackingFace == _currentState)
-    {
-      // We are currently tracking. Update the list of faces to choose from while
-      // tracking
-      _trackingFaces.insert(faceID);
-    }
-    
   } // HandleRobotObservedFace()
   
   
@@ -718,7 +701,6 @@ namespace Cozmo {
       }
     }
     
-    _trackingFaces.erase(faceID);
   } // RemoveFaceID()
   
   

@@ -74,7 +74,7 @@ namespace Cozmo {
     // to a different face in the list. If the list only has one face in it, does nothing.
     void SwitchToDifferentFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec);
   
-    Face::ID_t GetRandIdHelper(const std::set<Face::ID_t>& faceList);
+    Face::ID_t GetRandIdHelper();
     
     enum class State {
       Inactive,
@@ -120,9 +120,6 @@ namespace Cozmo {
     
     // ID of face we are currently tracking
     Face::ID_t _trackedFaceID = Face::UnknownFace;
-    
-    // Set of available faces during tracking (for when multiple faces are visible, to do switching)
-    std::set<Face::ID_t> _trackingFaces;
     
     // List of faces to choose from when not tracking
     std::list<Face::ID_t> _interestingFacesOrder;
