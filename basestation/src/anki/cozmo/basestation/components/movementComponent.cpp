@@ -175,6 +175,11 @@ int MovementComponent::GetFlagIndex(uint8_t flag) const
   }
   return i;
 }
+  
+bool MovementComponent::IsAnimTrackLocked(AnimTrackFlag track) const
+{
+  return _animTrackLockCount[GetFlagIndex((uint8_t)track)] > 0;
+}
 
 void MovementComponent::LockAnimTracks(uint8_t tracks)
 {

@@ -61,6 +61,9 @@ public:
   // Get pointer to next keyframe. Returns nullptr if the track is on the last frame.
   FRAME_TYPE* GetNextKeyFrame();
   
+  // Get a pointer to the last KeyFrame in the track. Returns nullptr if track is at end.
+  FRAME_TYPE* GetLastKeyFrame();
+  
   // Move to next frame and delete the current one if it's marked "live".
   // Will not advance past end.
   void MoveToNextKeyFrame();
@@ -130,6 +133,16 @@ FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame()
   }
 }
 
+template<typename FRAME_TYPE>
+FRAME_TYPE* Track<FRAME_TYPE>::GetLastKeyFrame()
+{
+  if(_frames.empty()) {
+    return nullptr;
+  } else {
+    return &(_frames.back());
+  }
+}
+  
 template<typename FRAME_TYPE>
 Result Animations::Track<FRAME_TYPE>::AddKeyFrame(const FRAME_TYPE& keyFrame)
 {

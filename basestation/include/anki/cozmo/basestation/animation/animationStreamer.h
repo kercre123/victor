@@ -82,8 +82,10 @@ namespace Cozmo {
     // A handle/tag for the layer i s returned, which is needed for removal.
     u32 AddPersistentFaceLayer(FaceTrack&& faceTrack);
     
-    // Remove a previously-added persistent face layer using its tag
-    void RemovePersistentFaceLayer(u32 tag);
+    // Remove a previously-added persistent face layer using its tag.
+    // If duration > 0, that number of frames will be used to transition back
+    // to no adjustment
+    void RemovePersistentFaceLayer(u32 tag, s32 duration = 0);
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
@@ -127,6 +129,10 @@ namespace Cozmo {
     
     void UpdateAmountToSend(Robot& robot);
     
+    // If we are currently streaming, kill it, and make sure not to leave a
+    // random face displayed (stream last face keyframe)
+    void Abort(Robot& robot);
+    
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
 
@@ -157,6 +163,8 @@ namespace Cozmo {
     bool HaveFaceLayersToSend();
     
     void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
+    
+    void BufferFaceToSend(const ProceduralFace& procFace);
     
     void KeepFaceAlive(Robot& robot);
     
@@ -216,7 +224,7 @@ namespace Cozmo {
     bool           _isLiveTwitchEnabled  = false;
     s32            _nextBlink_ms         = 0;
     s32            _nextEyeDart_ms       = 0;
-    s32            _nextLookAround_ms    = 0;
+    //s32            _nextLookAround_ms    = 0;
     s32            _bodyMoveDuration_ms  = 0;
     s32            _liftMoveDuration_ms  = 0;
     s32            _headMoveDuration_ms  = 0;

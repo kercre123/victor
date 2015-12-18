@@ -68,7 +68,7 @@ namespace Anki {
       auto currentOccluderAtDistance = rectDepthPairs_.find(atDistance);
       if(currentOccluderAtDistance != rectDepthPairs_.end()) {
         // Already have an occluder at this distance.  Keep the larger one
-        if(occluder.area() > currentOccluderAtDistance->second.area()) {
+        if(occluder.Area() > currentOccluderAtDistance->second.Area()) {
           currentOccluderAtDistance->second = occluder;
         }
       } else {
@@ -92,7 +92,7 @@ namespace Anki {
         auto end = rectDepthPairs_.end();
         while(currentOccluder != end && atDistance > currentOccluder->first) {
           
-          if( boundingBox.Intersect(currentOccluder->second).area() > 0 ) {
+          if( boundingBox.Intersect(currentOccluder->second).Area() > 0 ) {
             // The bounding box intersects this occluder, and is thus occluded
             // by it.
             return true;
@@ -183,7 +183,7 @@ namespace Anki {
           // away than the specified distance
           CORETECH_ASSERT(atDistance < currentOccluder->first);
           
-          if(boundingBox.Intersect(currentOccluder->second).area() > 0) {
+          if(boundingBox.Intersect(currentOccluder->second).Area() > 0) {
             // If the quad's bounding box intersects the occluder, then the occluder is behind it
             return true;
           }
