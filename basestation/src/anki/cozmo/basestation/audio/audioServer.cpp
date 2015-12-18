@@ -79,11 +79,14 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
   // Decode Event Message
   const AudioEventID eventId = static_cast<AudioEventID>( message.audioEvent );
   const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
-  const AudioEngine::AudioCallbackFlag callbackFlags = ConvertCallbackFlagType( message.callbackFlag );
   const uint16_t callbackId = message.callbackId;
+  const AudioEngine::AudioCallbackFlag callbackFlags = (callbackId == 0) ?
+                                                        AudioEngine::AudioCallbackFlag::NoCallbacks :
+                                                        AudioEngine::AudioCallbackFlag::AllCallbacks;
+
   // Perform Event
   AudioPlayingID playingId = kInvalidAudioPlayingID;
-  if ( AudioEngine::AudioCallbackFlag::NoCallback != callbackFlags ) {
+  if ( AudioEngine::AudioCallbackFlag::NoCallbacks != callbackFlags ) {
     AudioCallbackContext* callbackContext = new AudioCallbackContext();
     // Set callback flags
     callbackContext->SetCallbackFlags( callbackFlags );
@@ -228,37 +231,37 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
       case AudioCallbackType::Duration:
       {
         const AudioDurationCallbackInfo& info = static_cast<const AudioDurationCallbackInfo&>( callbackInfo );
-        AudioCallbackDuration callbackInfo( info.duration,
+        AudioCallbackDuration callbackType( info.duration,
                                             info.estimatedDuration,
                                             info.audioNodeId,
                                             info.isStreaming );
-        callbackMsg.callbackInfo.Set_callbackDuration( std::move( callbackInfo ) );
+        callbackMsg.callbackInfo.Set_callbackDuration( std::move( callbackType ) );
       }
         break;
         
       case AudioCallbackType::Marker:
       {
         const AudioMarkerCallbackInfo& info = static_cast<const AudioMarkerCallbackInfo&>( callbackInfo );
-        AudioCallbackMarker callbackInfo( info.identifier,
+        AudioCallbackMarker callbackType( info.identifier,
                                           info.position,
                                           info.labelStr );
-        callbackMsg.callbackInfo.Set_callbackMarker( std::move( callbackInfo ) );
+        callbackMsg.callbackInfo.Set_callbackMarker( std::move( callbackType ) );
       }
         break;
         
       case AudioCallbackType::Complete:
       {
         const AudioCompletionCallbackInfo& info = static_cast<const AudioCompletionCallbackInfo&>( callbackInfo );
-        AudioCallbackComplete callbackInfo( static_cast<EventType>( info.eventId ) );
-        callbackMsg.callbackInfo.Set_callbackComplete( std::move( callbackInfo ) );
+        AudioCallbackComplete callbackType( static_cast<EventType>( info.eventId ) );
+        callbackMsg.callbackInfo.Set_callbackComplete( std::move( callbackType ) );
       }
         break;
         
       case AudioCallbackType::Error:
       {
         const AudioErrorCallbackInfo& info = static_cast<const AudioErrorCallbackInfo&>( callbackInfo );
-        AudioCallbackError callbackInfo( ConvertErrorCallbackType( info.error ) );
-        callbackMsg.callbackInfo.Set_callbackError( std::move( callbackInfo ) );
+        AudioCallbackError callbackType( ConvertErrorCallbackType( info.error ) );
+        callbackMsg.callbackInfo.Set_callbackError( std::move( callbackType ) );
       }
         break;
     }
@@ -285,25 +288,6 @@ void AudioServer::RegisterCladGameObjectsWithAudioController()
                          aGameObj, EnumToString(static_cast<GameObjectType>(aGameObj)) );
     }
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioCallbackFlag AudioServer::ConvertCallbackFlagType( const Anki::Cozmo::Audio::AudioCallbackFlag flags ) const
-{
-  AudioEngine::AudioCallbackFlag engineFlags = AudioEngine::AudioCallbackFlag::NoCallback;
-  
-  if ( ((uint8_t)AudioCallbackFlag::EventDuration & (uint8_t)flags) == (uint8_t)AudioCallbackFlag::EventDuration ) {
-    engineFlags =  (AudioEngine::AudioCallbackFlag)( engineFlags | AudioEngine::AudioCallbackFlag::Duration );
-  }
-  
-  if ( ((uint8_t)AudioCallbackFlag::EventMarker & (uint8_t)flags) == (uint8_t)AudioCallbackFlag::EventMarker ) {
-    engineFlags =  (AudioEngine::AudioCallbackFlag)( engineFlags | AudioEngine::AudioCallbackFlag::Marker );
-  }
-  
-  if ( ((uint8_t)AudioCallbackFlag::EventComplete & (uint8_t)flags) == (uint8_t)AudioCallbackFlag::EventComplete ) {
-    engineFlags =  (AudioEngine::AudioCallbackFlag)( engineFlags | AudioEngine::AudioCallbackFlag::Complete );
-  }
-  return engineFlags;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

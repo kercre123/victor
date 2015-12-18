@@ -39,9 +39,9 @@ RobotAudioClient::~RobotAudioClient()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( EventType event, AudioCallbackFlag callbackFlag )
+AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( EventType event )
 {
-  const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation, callbackFlag );
+  const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation );
   
   return callbackId;
 }

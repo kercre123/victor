@@ -27,7 +27,6 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
-#include <util/hashing/hashing.h>
 
 
 namespace Anki {
@@ -47,9 +46,10 @@ public:
   
   void SetMessageHandler( AudioEngineMessageHandler* messageHandler );
   
+  // Perform event
+  // Provide a callback lambda to get all event callbacks; Duration, Marker, Complete & Error.
   CallbackIdType PostEvent( EventType event,
                             GameObjectType gameObject = GameObjectType::Default,
-                            AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone,
                             CallbackFunc callback = nullptr );
   
   void StopAllEvents( GameObjectType gameObject = GameObjectType::Invalid );
@@ -75,16 +75,7 @@ protected:
   static constexpr CallbackIdType kInvalidCallbackId = 0;
   CallbackIdType _previousCallbackId = kInvalidCallbackId;
   
-  struct AudioCallbackBundle {
-    AudioCallbackFlag Flag = AudioCallbackFlag::EventNone;
-    CallbackFunc      Func = nullptr;
-    AudioCallbackBundle(AudioCallbackFlag flag, CallbackFunc func)
-    : Flag( flag )
-    , Func( func )
-    { }
-  };
-  
-  using CallbackMap = std::unordered_map< CallbackIdType, AudioCallbackBundle >;
+  using CallbackMap = std::unordered_map< CallbackIdType, CallbackFunc >;
   CallbackMap _callbackMap;
   
   void HandleCallbackEvent( const AudioCallback& callbackMsg );
