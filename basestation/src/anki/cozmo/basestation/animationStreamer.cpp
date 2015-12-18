@@ -111,6 +111,11 @@ namespace Cozmo {
       // Tell the robot to abort
       robot.AbortAnimation();
       
+      // Make sure end of animation gets sent
+      if(_startOfAnimationSent && !_endOfAnimationSent) {
+        SendEndOfAnimation(robot);
+      }
+      
       // We just cleared the robot's buffer, so there will not be a start or end
       // available
       _startOfAnimationSent = false;
