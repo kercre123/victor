@@ -343,7 +343,6 @@ namespace Anki
             // See if the current deceleration rate is sufficient to stop the robot at the end of the path
             u16 decel = SpeedController::GetUserCommandedDeceleration();
             s32 currSpeed = SpeedController::GetUserCommandedCurrentVehicleSpeed();
-            s32 currMeasSpeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
             f32 distToStopIfDecelNow = 0.5f*currSpeed*currSpeed / decel;
 
             // Is it time to start slowing down?
@@ -354,8 +353,8 @@ namespace Anki
               SpeedController::SetUserCommandedDeceleration(requiredDecel);
               SpeedController::SetUserCommandedDesiredVehicleSpeed(END_OF_PATH_TARGET_SPEED_MMPS);
               startedDecelOnSegment_ = true;
-              PRINT("PathFollower: Decel to end of segment %d (of %d) at %d mm/s^2 from speed of %d mm/s (meas %d mm/s) over %f mm\n",
-                    currPathSegment_, path_.GetNumSegments(), requiredDecel, currSpeed, currMeasSpeed, distToEnd);
+              //PRINT("PathFollower: Decel to end of segment %d (of %d) at %d mm/s^2 from speed of %d mm/s (meas %d mm/s) over %f mm\n",
+              //      currPathSegment_, path_.GetNumSegments(), requiredDecel, currSpeed, (s32)SpeedController::GetCurrentMeasuredVehicleSpeed(), distToEnd);
             }
           }
 #         if(DEBUG_PATH_FOLLOWER)
