@@ -37,7 +37,6 @@ namespace Anki
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
       {
-        buflen = 0;
         SPI::TransmitDrop(buf, buflen, eof);
         IMU::Manage();
         I2C::Enable();
@@ -45,9 +44,6 @@ namespace Anki
       }
     }
   }
-}
-extern "C" void HardFault_Handler(void) {
-  for(;;) ;
 }
 
 extern "C" const int __ESPRESSIF_SERIAL_NUMBER;
@@ -72,9 +68,7 @@ int main (void)
   DAC::Tone();
 
   // Wait for Espressif to boot
-  for (int i=0; i<2; ++i) {
-    MicroWait(1000000);
-  }
+  MicroWait(2000000);
 
   // Switch to 10MHz external reference to enable 100MHz clock
   MCG_C1 &= ~MCG_C1_IREFS_MASK;
