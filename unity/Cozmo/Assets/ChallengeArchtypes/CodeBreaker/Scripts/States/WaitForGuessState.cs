@@ -13,10 +13,24 @@ namespace CodeBreaker {
 
     private CubeCode _WinningCode;
     private CodeBreakerGame _Game;
-    private List<LightCube> _CubesInRow;
 
-    public WaitForGuessState(CubeCode winningCubeCode) {
+    private CubeState[] _TargetCubeStates;
+
+    private Color[] _ValidCodeColors;
+
+    public WaitForGuessState(CubeCode winningCubeCode, LightCube[] targetCubes) {
       _WinningCode = winningCubeCode;
+
+      // TODO
+      // Foreach cube create a cube state
+      _TargetCubeStates = new CubeState[targetCubes.Length];
+      for (int i = 0; i < targetCubes.Length; i++) {
+        _TargetCubeStates[i] = new CubeState();
+        _TargetCubeStates[i].cube = targetCubes[i];
+      }
+
+      // Add a listener to each cube
+      LightCube.TappedAction += OnBlockTapped;
     }
 
     public override void Enter() {
@@ -27,6 +41,13 @@ namespace CodeBreaker {
 
       _Game.ShowGamePanel(HandleSubmitButtonClicked);
       _Game.EnableSubmitButton = false;
+
+      _ValidCodeColors = _Game.ValidColors;
+      foreach (var cubeState in _TargetCubeStates) {
+        cubeState.cube.TurnLEDsOff();
+        cubeState.cube.SetLEDs(_ValidCodeColors[0]);
+        cubeState.currentColorIndex = 0;
+      }
     }
 
     private void HandleSubmitButtonClicked() {
@@ -42,6 +63,7 @@ namespace CodeBreaker {
       // --------------------------------
       // TODO: Potentially do a track to object? / tilt head / engine behavior for this instead
       // --------------------------------
+      // Make it a substate?
       bool didDrive = false;
       TryDriveTowardsClosestObject();
 
@@ -49,27 +71,24 @@ namespace CodeBreaker {
       // however, the submit button would flicker a lot because of his idle animation?
       bool shouldEnableSubmitButton = false;
       if (!didDrive) {
-        // TODO: Handle more than the required cubes (objects in background);
-        if (_CurrentRobot.VisibleObjects.Count == _WinningCode.NumCubes) {
-          List<LightCube> visibleCubes = GetVisibleLightCubes();
-          if (visibleCubes.Count == _WinningCode.NumCubes) {
-            float targetY = _WinningCode.NumCubes * CozmoUtil.kBlockLengthMM * 0.5f + kTargetAreaBuffer;
-            Vector3 testCubeCozmoPos;
-            bool cubesCloseToCozmo = true;
-            foreach (var cube in visibleCubes) {
-              testCubeCozmoPos = _CurrentRobot.WorldToCozmo(cube.WorldPosition);
-              // TODO: Depend on row check, no proximity check?
-              // is cube close enough to the center of cozmo's view?
-              if (!(testCubeCozmoPos.y <= targetY && testCubeCozmoPos.y >= -targetY
-                  && testCubeCozmoPos.z <= kCubeTooHighDistanceThreshold)) {
-                cubesCloseToCozmo = false;
-                break;
-              }
+        List<LightCube> visibleCubes = GetVisibleLightCubes();
+        if (visibleCubes.Count == _WinningCode.NumCubes) {
+          float targetY = _WinningCode.NumCubes * CozmoUtil.kBlockLengthMM * 0.5f + kTargetAreaBuffer;
+          Vector3 testCubeCozmoPos;
+          bool cubesCloseToCozmo = true;
+          foreach (var cube in visibleCubes) {
+            testCubeCozmoPos = _CurrentRobot.WorldToCozmo(cube.WorldPosition);
+            // TODO: Depend on a BETTER row check, no proximity check?
+            // is cube close enough to the center of cozmo's view?
+            if (!(testCubeCozmoPos.y <= targetY && testCubeCozmoPos.y >= -targetY
+                && testCubeCozmoPos.z <= kCubeTooHighDistanceThreshold)) {
+              cubesCloseToCozmo = false;
+              break;
             }
+          }
 
-            if (cubesCloseToCozmo && CheckRowAlignment(visibleCubes)) {
-              shouldEnableSubmitButton = true;
-            }
+          if (cubesCloseToCozmo && CheckRowAlignment(visibleCubes)) {
+            shouldEnableSubmitButton = true;
           }
         }
       }
@@ -77,11 +96,16 @@ namespace CodeBreaker {
       _Game.EnableSubmitButton = shouldEnableSubmitButton;
     }
 
-    private bool TryDriveTowardsClosestObject() {
+    public override void Exit() {
+      base.Exit();
 
+      LightCube.TappedAction -= OnBlockTapped;
+    }
+
+    private bool TryDriveTowardsClosestObject() {
       bool didDrive = true;
       // Grab the closest cube, if it's too close or too far, move away
-      float closestDistance = GetClosestObjectDistance(_CurrentRobot.VisibleObjects);
+      float closestDistance = GetClosestObjectDistance(_TargetCubeStates);
       if (closestDistance < kCubeTooCloseDistanceThreshold) {
         _CurrentRobot.DriveWheels(-kAdjustDistanceDriveMmps, -kAdjustDistanceDriveMmps);
       }
@@ -95,10 +119,10 @@ namespace CodeBreaker {
       return didDrive;
     }
 
-    private float GetClosestObjectDistance(List<ObservedObject> objs) {
+    private float GetClosestObjectDistance(CubeState[] cubeStates) {
       float distance = float.MaxValue;
-      foreach (var obj in objs) {
-        float d = Vector3.Distance(_CurrentRobot.WorldPosition, obj.WorldPosition);
+      foreach (var cubeState in cubeStates) {
+        float d = Vector3.Distance(_CurrentRobot.WorldPosition, cubeState.cube.WorldPosition);
         if (d < distance) {
           distance = d;
         }
@@ -109,9 +133,9 @@ namespace CodeBreaker {
     private List<LightCube> GetVisibleLightCubes() {
       // Get the cubes
       List<LightCube> visibleCubes = new List<LightCube>();
-      foreach (var obj in _CurrentRobot.VisibleObjects) {
-        if (obj is LightCube) {
-          visibleCubes.Add(obj as LightCube);
+      foreach (var obj in _TargetCubeStates) {
+        if (obj.cube.MarkersVisible) {
+          visibleCubes.Add(obj.cube);
         }
       }
       return visibleCubes;
@@ -129,6 +153,18 @@ namespace CodeBreaker {
         }
       }
       return isRow;
+    }
+
+    private void OnBlockTapped(int id, int times) {
+      // If the id matches change the index and color, depending on the number of times tapped
+      foreach (var cubeState in _TargetCubeStates) {
+        if (cubeState.cube.ID == id) {
+          cubeState.currentColorIndex += times;
+          cubeState.currentColorIndex %= _ValidCodeColors.Length;
+          cubeState.cube.SetLEDs(_ValidCodeColors[cubeState.currentColorIndex]);
+          break;
+        }
+      }
     }
   }
 }

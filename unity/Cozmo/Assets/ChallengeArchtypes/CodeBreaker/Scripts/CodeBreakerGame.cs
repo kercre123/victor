@@ -16,6 +16,14 @@ namespace CodeBreaker {
 
     private CodeBreakerGameConfig _Config;
 
+    public int NumCubesInCode {
+      get { return _Config.NumCubesInCode; }
+    }
+
+    public Color[] ValidColors {
+      get { return _ValidCodeColors; }
+    }
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       DAS.Info(this, "Game Created");
 
@@ -40,6 +48,7 @@ namespace CodeBreaker {
 
     protected override void CleanUpOnDestroy() {
       // Don't need to destroy slides because the SharedMinigameView will handle it
+      CurrentRobot.TurnOffAllLights();
     }
 
     #region UI
@@ -110,14 +119,14 @@ namespace CodeBreaker {
 
     public CubeCode GetRandomCode() {
       CubeCode code = new CubeCode();
-      code.cubeColors = new Color[_Config.NumCubesInCode];
-      for (int i = 0; i < code.cubeColors.Length; i++) {
-        code.cubeColors[i] = GetRandomColor();
+      code.cubeColorIndex = new int[_Config.NumCubesInCode];
+      for (int i = 0; i < code.cubeColorIndex.Length; i++) {
+        code.cubeColorIndex[i] = GetRandomColorIndex();
       }
       return code;
     }
 
-    private Color GetRandomColor() {
+    private int GetRandomColorIndex() {
       int maxColorIndex;
       if (_Config.NumCodeColors <= _ValidCodeColors.Length) {
         maxColorIndex = _Config.NumCodeColors - 1;
@@ -128,7 +137,7 @@ namespace CodeBreaker {
         maxColorIndex = _ValidCodeColors.Length - 1;
       }
       int colorIndex = Random.Range(0, maxColorIndex);
-      return _ValidCodeColors[colorIndex];
+      return colorIndex;
     }
 
     #endregion
@@ -140,19 +149,24 @@ namespace CodeBreaker {
     /// Colors the cubes should be from left to right according to 
     /// Cozmo. (Index 0 indicates the leftmost cube from Cozmo)
     /// </summary>
-    public Color[] cubeColors;
+    public int[] cubeColorIndex;
 
     public int NumCubes {
-      get { return cubeColors.Length; } 
+      get { return cubeColorIndex.Length; } 
       set { }
     }
 
     public override string ToString() {
       string str = "CubeCode: ";
-      for (int i = 0; i < cubeColors.Length; i++) {
-        str += i + "(" + cubeColors[i].ToString() + ") ";
+      for (int i = 0; i < cubeColorIndex.Length; i++) {
+        str += i + "(" + cubeColorIndex[i].ToString() + ") ";
       }
       return str;
     }
+  }
+
+  public class CubeState {
+    public LightCube cube;
+    public int currentColorIndex;
   }
 }
