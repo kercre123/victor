@@ -776,15 +776,18 @@ namespace Cozmo {
       _lastEyeDartTime = currentTime;
       _eyeDartSpacing = GetRNG().RandDblInRange(kEyeDartSpacingMin_sec, kEyeDartSpacingMax_sec);
     } // if(time to dart eyes)
-  
-    // Scale both eyes with distance
-    const f32 CloseScale = 0.6f;
-    const f32 FarScale   = 1.3f;
-    f32 distScale = CLIP((facePoseWrtCamera.GetTranslation().Length()-kTooCloseDistance_mm)/(kTooFarDistance_mm-kTooCloseDistance_mm)*(FarScale-CloseScale) + CloseScale, CloseScale, FarScale);
 
-    robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeDartLayerTag);
-    _eyeDartLayerTag = robot.ShiftAndScaleEyes(xPixShift, yPixShift,
-                                               distScale, distScale, 0, true);
+    // TODO: Try to get this to work well (scale eyes with distance)
+//    // Scale both eyes with distance
+//    const f32 CloseScale = 0.6f;
+//    const f32 FarScale   = 1.3f;
+//    f32 distScale = CLIP((facePoseWrtCamera.GetTranslation().Length()-kTooCloseDistance_mm)/(kTooFarDistance_mm-kTooCloseDistance_mm)*(FarScale-CloseScale) + CloseScale, CloseScale, FarScale);
+    const f32 distScale = 1.f; // TODO: remove
+    if(xPixShift != 0 || yPixShift != 0) { // TODO: remove
+      robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeDartLayerTag);
+      _eyeDartLayerTag = robot.ShiftAndScaleEyes(xPixShift, yPixShift,
+                                                 distScale, distScale, 0, true);
+    }
 
 #   if DO_FACE_MIMICKING
     ProceduralFace prevProcFace(proceduralFace);
