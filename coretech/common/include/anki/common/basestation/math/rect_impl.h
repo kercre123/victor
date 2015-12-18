@@ -19,6 +19,8 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 
+#include "util/logging/logging.h"
+
 namespace Anki {
   
   template<typename T>
@@ -235,7 +237,16 @@ namespace Anki {
     const T thisArea = Area();
     const T otherArea = other.Area();
     const T intersection = Intersect(other).Area();
-    return static_cast<f32>(intersection) / static_cast<f32>(thisArea + otherArea - intersection);
+    if(thisArea==0 || otherArea==0 || intersection==0) {
+      return 0.f;
+    }
+    const f32 denom = static_cast<f32>(thisArea + otherArea - intersection);
+    if(denom <= 0.f) {
+      PRINT_NAMED_ERROR("Rectangle.ComputeOverlapScore.InvalidDenom",
+                        "Area sum minus intersection should be strictly > 0, not %f", denom);
+      return 0.f;
+    }
+    return static_cast<f32>(intersection) / denom;
   }
   
   template<typename T>
