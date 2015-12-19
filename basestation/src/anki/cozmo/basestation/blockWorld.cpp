@@ -508,7 +508,7 @@ namespace Cozmo {
     }
     
     // This is a test - we would need to update objects when they move too
-    // _navMemoryMap->AddObstacleQuad(object->GetBoundingQuadXY());
+    _navMemoryMap->AddObstacleQuad(object->GetBoundingQuadXY());
     
     // TODO if an object with same ID exists, it will leak
     existingFamily[object->GetType()][object->GetID()] = object;

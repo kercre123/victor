@@ -12,11 +12,15 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
 namespace Anki {
 namespace Cozmo {
+
+CONSOLE_VAR(bool, kRenderNavMeshQuadTree, "NavMeshQuadTree", true);
+CONSOLE_VAR(bool, kRenderLastAddedQuad  , "NavMeshQuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTree::NavMeshQuadTree()
@@ -29,12 +33,12 @@ NavMeshQuadTree::NavMeshQuadTree()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::Draw() const
 {
-  if ( _gfxDirty )
+  if ( _gfxDirty && kRenderNavMeshQuadTree )
   {
     // ask root to add proper quads to be rendered
     VizManager::SimpleQuadVector quadVector;
     _root.AddQuadsToDraw(quadVector);
-    VizManager::getInstance()->DrawQuadVector("NavMemoryMap", quadVector); // TODO set proper name
+    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree", quadVector);
   
     _gfxDirty = false;
   }
@@ -43,6 +47,16 @@ void NavMeshQuadTree::Draw() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
 {
+  // render approx last quad added
+  if ( kRenderLastAddedQuad )
+  {
+    VizManager::SimpleQuadVector quadVector;
+    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
+    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
+    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::DARKGREEN, center, size));
+    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddClearQuad", quadVector);
+  }
+
   // if the root fully contains the quad, then delegate on it
   if ( _root.Contains( quad ) )
   {
@@ -71,6 +85,16 @@ void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::AddObstacle(const Quad2f& quad)
 {
+  // render approx last quad added
+  if ( kRenderLastAddedQuad )
+  {
+    VizManager::SimpleQuadVector quadVector;
+    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
+    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
+    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::ORANGE, center, size));
+    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddObstacle", quadVector);
+  }
+
   // if the root fully contains the quad, then delegate on it
   if ( _root.Contains( quad ) )
   {
@@ -99,13 +123,15 @@ void NavMeshQuadTree::AddObstacle(const Quad2f& quad)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::AddCliff(const Quad2f& quad)
 {
-//    // ask root to add proper quads to be rendered
-//    VizManager::SimpleQuadVector quadVector;
-//    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
-//    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
-//    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::RED, center, size));
-//
-//    VizManager::getInstance()->DrawQuadVector("xxx", quadVector); // TODO set proper name
+  // render approx last quad added
+  if ( kRenderLastAddedQuad )
+  {
+    VizManager::SimpleQuadVector quadVector;
+    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
+    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
+    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::YELLOW, center, size));
+    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddCliff", quadVector);
+  }
 
   // if the root fully contains the quad, then delegate on it
   if ( _root.Contains( quad ) )

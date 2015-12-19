@@ -171,6 +171,11 @@ void NavMeshQuadTreeNode::Merge()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::CanOverrideChildrenWithContent(EContentType contentType) const
 {
+  // cliff can override any other
+  if ( contentType == EContentType::Cliff ) {
+    return true;
+  }
+
   // if the node is a cliff, it can't be overridden
   if ( _contentType == EContentType::Cliff ) {
     return false;
