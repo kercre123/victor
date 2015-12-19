@@ -1112,7 +1112,13 @@ namespace Anki {
       
       
       // Sending debug string to game and viz
-      SendDebugString("This is the engine debug string");
+      // TODO: This is just an example, but basically if the string hasn't changed
+      //       don't bother re-sending it.
+      static bool dbgStringSent = false;
+      if (!dbgStringSent) {
+        SendDebugString("This is the engine debug string");
+        dbgStringSent = true;
+      }
       
       
       return RESULT_OK;
@@ -1439,6 +1445,9 @@ namespace Anki {
       xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
       yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
       
+      //PRINT_NAMED_DEBUG("Robot.ShiftAndScaleEyes", "shift=(%.3f,%.3f) scale=(%.3f,%.3f)",
+      //                  xPix, yPix, xScale, yScale);
+      
       AnimationStreamer::FaceTrack faceTrack;
       
       if(duration_ms == 0) {
@@ -1509,7 +1518,7 @@ namespace Anki {
       }
       
       return layerTag;
-    }
+    } // ShiftAndScaleEyes()
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {

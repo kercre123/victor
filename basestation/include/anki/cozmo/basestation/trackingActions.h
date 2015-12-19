@@ -125,6 +125,8 @@ public:
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_FACE; }
 
+  virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
+  
 protected:
   
   virtual ActionResult Init(Robot& robot) override;

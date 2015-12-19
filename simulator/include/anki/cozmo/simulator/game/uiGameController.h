@@ -220,7 +220,8 @@ protected:
     const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight);
   void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
   void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
-  void SendSteeringControllerGains(const f32 k1, const f32 k2);
+  void SendSteeringControllerGains(const f32 k1, const f32 k2,
+                                   const f32 dockPathDistOffsetCap_mm, const f32 dockPathAngularOffsetCap_rad);
   void SendSetRobotVolume(const f32 volume);
   void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);

@@ -130,6 +130,10 @@ namespace Anki {
     T Length(void) const;
     T LengthSq(void) const;
     
+    // Get Min/Max element (and optionally, which dimension)
+    T GetMin(PointDimType* whichDim = nullptr) const;
+    T GetMax(PointDimType* whichDim = nullptr) const;
+    
     // Makes the point into a unit vector from the origin, while
     // returning its original length. IMPORTANT: if the point was
     // originally the origin, it cannot be made into a unit vector
