@@ -26,8 +26,8 @@
 #include "anki/types.h"
 #include "messages.h"
 
-/// Send animation state message every 5ms = 5,000 us
-#define ANIM_STATE_INTERVAL 5000
+/// Send animation state message every 30ms = 30,000 us
+#define ANIM_STATE_INTERVAL 30000
 
 namespace Anki {
   namespace Cozmo {

@@ -2,12 +2,12 @@ extern "C" {
 #include "client.h"
 }
 #include "messages.h"
+#include "anki/cozmo/robot/esp.h"
+#include "anki/cozmo/robot/logging.h"
 #include "animationController.h"
 #include "rtip.h"
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "anki/cozmo/robot/esp.h"
-#include "anki/cozmo/robot/logging.h"
 
 namespace Anki {
   namespace Cozmo {

@@ -677,9 +677,9 @@ namespace Anki {
       {
         // Not used here
       }
-      void Process_radioConnected(const bool&)
+      void Process_radioConnected(const bool& wifi)
       {
-        // Not used here
+        HAL::RadioUpdateState(wifi, false);
       }
 
 // ----------- Send messages -----------------
@@ -911,9 +911,9 @@ namespace Anki {
     }
 
     namespace HAL {
-      bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable, const bool hot)
-      {
 #ifndef TARGET_K02
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+      {
         if (RadioIsConnected())
         {
           if (reliable)
@@ -940,13 +940,10 @@ namespace Anki {
         {
           return false;
         }
-#else
-        return false;
-#endif
       }
+#endif
 
 #ifndef SIMULATOR
-
       void FlashBlockIDs()
       {
         // THIS DOESN'T WORK FOR now

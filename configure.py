@@ -419,16 +419,9 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
     platforms_text = platforms_text.format(','.join(options.platforms).upper())
     
     print_header('RUNNING COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
-    
-    versionHeaderFile = os.path.join("robot","include","anki","cozmo","robot","version.h")
-    versionHeaderTool = os.path.join("robot","tools","versionGenerator","versionGenerator.sh")
-    
+        
     if options.command in ('generate', 'build', 'install', 'run'):
         install_dependencies(options)
-        # Generate version header
-        if not os.path.isfile(versionHeaderFile):
-            if subprocess.call([versionHeaderTool, versionHeaderFile]) != 0:
-                sys.exit("Couldn't generate version header.")
         # TODO: Generate CLAD
     
     for platform in options.platforms:
@@ -447,8 +440,6 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
                 print_status('Deleting generated folders (if empty)...')
             for folder in shared_generated_folders:
                 ankibuild.util.File.rmdir(folder)
-        if os.path.isfile(versionHeaderFile):
-            os.remove(versionHeaderFile)
         
         # TODO: Delete generated CLAD
     

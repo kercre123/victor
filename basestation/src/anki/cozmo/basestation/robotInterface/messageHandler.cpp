@@ -120,8 +120,10 @@ void MessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
   }
 
   RobotInterface::RobotToEngine message;
-  if (message.Unpack(packet.buffer, packet.bufferSize) != packet.bufferSize) {
-    PRINT_NAMED_ERROR("RobotMessageHandler.MessageUnpack", "Message unpack error");
+  const size_t unpackSize = message.Unpack(packet.buffer, packet.bufferSize);
+  if (unpackSize != packet.bufferSize) {
+    PRINT_NAMED_ERROR("RobotMessageHandler.MessageUnpack", "Message unpack error, tag %02x expecting %d but have %d",
+                      msgID, static_cast<int>(unpackSize), packet.bufferSize);
     return;
   }
 

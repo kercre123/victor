@@ -8,11 +8,13 @@
 #include "hal/portable.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 
 #include "uart.h"
 #include "oled.h"
 #include "spi.h"
 #include "dac.h"
+#include "wifi.h"
 #include "hal/i2c.h"
 #include "hal/imu.h"
 
@@ -89,14 +91,17 @@ int main (void)
   OLED::Init();
   UART::Init();
 
+  Anki::Cozmo::Robot::Init();
+
   CameraInit();
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
   //StartupSelfTest();
 
-  for(;;) {
+  do {
     // Wait for head body sync to occur
-    UART::WaitForSync() ;
-  }
+    UART::WaitForSync();
+    Anki::Cozmo::HAL::WiFi::Update();
+  } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
 }

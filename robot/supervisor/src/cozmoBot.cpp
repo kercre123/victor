@@ -246,13 +246,6 @@ namespace Anki {
         // until Nathan implements this the correct way.
         HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
 
-        // TBD - This should be moved to simulator just before step_MainExecution is called
-#ifndef ROBOT_HARDWARE
-        // If the hardware interface needs to be advanced (as in the case of
-        // a Webots simulation), do that first.
-        HAL::Step();
-#endif
-
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_ != 0) {
@@ -291,7 +284,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, LOC);
         Localization::Update();
-
+#endif
 
         //////////////////////////////////////////////////////////////
         // Communications
@@ -301,10 +294,13 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           PRINT("Robot radio is connected.\n");
           wasConnected_ = true;
+#ifndef TARGET_K02
           BackpackLightController::TurnOffAll();
+#endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           Messages::ResetInit();
+#ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
           SteeringController::ExecuteDirectDrive(0,0);
           LiftController::SetAngularVelocity(0);
@@ -315,9 +311,11 @@ namespace Anki {
           BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
           AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
           HAL::FaceClear();
+#endif
           wasConnected_ = false;
         }
 
+#ifndef TARGET_K02
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::ProcessBTLEMessages();
@@ -427,6 +425,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
+#endif
 
         Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
@@ -435,8 +434,6 @@ namespace Anki {
           Messages::SendRobotStateMsg();
           robotStateMessageCounter_ = 0;
         }
-#endif
-
 #endif
 
         // Print time profile stats

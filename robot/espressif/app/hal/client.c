@@ -162,6 +162,9 @@ void Receiver_OnConnectionRequest(ReliableConnection* conn)
   if (clientConnectionId == 0) // Not connected yet
   {
     ReliableTransport_FinishConnection(conn); // Accept the connection
+    clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
+    uint8_t msg[2] = {0xFC, true}; // FC is the tag for a radio connection state message to the robot
+    i2spiQueueMessage(msg, 2);
   }
   else // The engine is trying to reconnect
   {
@@ -173,9 +176,6 @@ void Receiver_OnConnectionRequest(ReliableConnection* conn)
 void Receiver_OnConnected(ReliableConnection* conn)
 {
   printf("Reliable transport connection completed\r\n");
-  clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
-  uint8_t msg[2] = {0xFC, true};
-  i2spiQueueMessage(msg, 2);
 }
 
 void Receiver_OnDisconnect(ReliableConnection* conn)
@@ -187,7 +187,7 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
   else
   {
-    uint8_t msg[2] = {0xFC, false};
+    uint8_t msg[2] = {0xFC, false}; // FC is the tag for a radio connection state message to the robot
     i2spiQueueMessage(msg, 2);
     os_free(clientConnection->dest);
     os_free(clientConnection);

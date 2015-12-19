@@ -30,7 +30,7 @@ AnimKeyFrame = Anki.Cozmo.AnimKeyFrame
 class CozmoCLI(IDataReceiver):
     "A class for managing the CLI REPL"
 
-    def __init__(self, unreliableTransport, robotAddress, statePrintInterval):
+    def __init__(self, unreliableTransport, robotAddress, statePrintInterval, printAll=False, stateIntervalStats=False):
         sys.stdout.write("Connecting to robot at: %s\n" % repr(robotAddress))
         unreliableTransport.OpenSocket()
         self.transport = ReliableTransport(unreliableTransport, self)
@@ -40,6 +40,11 @@ class CozmoCLI(IDataReceiver):
         self.input = input
         self.lastStatePrintTime = 0.0 if statePrintInterval > 0.0 else float('Inf')
         self.statePrintInterval = statePrintInterval
+        self.printAll = printAll
+        if stateIntervalStats:
+            self.lastStateRXTimes = [0.0, 0.0]
+        else:
+            self.lastStateRXTimes = None
 
     def __del__(self):
         self.transport.KillThread()
@@ -54,14 +59,23 @@ class CozmoCLI(IDataReceiver):
         sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
 
     def ReceiveData(self, buffer, sourceAddress):
+        now = time.time()
         msg = RobotInterface.RobotToEngine.unpack(buffer)
         if msg.tag == msg.Tag.printText:
             sys.stdout.write("ROBOT: " + msg.printText.text)
-        if msg.tag == msg.Tag.state:
-            now = time.time()
-            if now - self.lastStatePrintTime > self.statePrintInterval:
-                sys.stdout.write(repr(msg.state))
-                self.lastStatePrintTime = now
+        elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:
+            sys.stdout.write(repr(msg.state))
+            sys.stdout.write("\r\n")
+            sys.stdout.flush()
+            self.lastStatePrintTime = now
+        elif self.lastStateRXTimes is not None and msg.tag == msg.Tag.state:
+            sys.stdout.write("{0}: {1:0.2f}\r\n".format(msg.tag_name, msg.state.timestamp-self.lastStateRXTimes[0]))
+            self.lastStateRXTimes[0] = msg.state.timestamp
+        elif self.lastStateRXTimes is not None and msg.tag == msg.Tag.animState:
+            sys.stdout.write("{0}: {1:0.2f}ms\r\n".format(msg.tag_name, (msg.animState.timestamp-self.lastStateRXTimes[1])/1000.0))
+            self.lastStateRXTimes[1] = msg.animState.timestamp
+        elif self.printAll:
+            sys.stdout.write("{}\r\n".format(msg.tag_name))
         
 
     def send(self, msg):
@@ -194,10 +208,9 @@ class CozmoCLI(IDataReceiver):
 if __name__ == '__main__':
     transport = UDPTransport()
     #transport = UartSimRadio("com4", 115200)
-    if '-s' in sys.argv:
-        spi = 5.0
-    else:
-        spi = 0.0
-    cli = CozmoCLI(transport, ("172.31.1.1", ROBOT_PORT), spi)
+    spi = 5.0 if '-s' in sys.argv else 0.0
+    printAll = '-a' in sys.argv
+    stateIntervalStats = '-i' in sys.argv
+    cli = CozmoCLI(transport, ("172.31.1.1", ROBOT_PORT), spi, printAll, stateIntervalStats)
     cli.loop()
     cli.transport.KillThread()

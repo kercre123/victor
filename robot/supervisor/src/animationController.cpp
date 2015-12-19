@@ -197,7 +197,7 @@ namespace AnimationController {
     if (IsBufferFull()) msg.status |= IS_ANIM_BUFFER_FULL;
     if (_isPlaying) msg.status     |= IS_ANIMATING;
     msg.tag = GetCurrentTag();
-    if (clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
+    if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
     {
       return RESULT_OK;
     }

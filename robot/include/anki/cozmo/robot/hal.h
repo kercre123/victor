@@ -350,7 +350,7 @@ namespace Anki
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight);
 
-#     if SIMULATOR
+#     ifdef SIMULATOR
       u32 GetCameraStartTime();
       bool IsVideoEnabled();
 #     endif
@@ -478,10 +478,7 @@ namespace Anki
        * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable=true, const bool hot=false);
-
-// Work around until we get out of 4.0 / 4.1 coexistance
-#define clientSendMessage HAL::RadioSendMessage
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID, const bool reliable=true, const bool hot=false);
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS
