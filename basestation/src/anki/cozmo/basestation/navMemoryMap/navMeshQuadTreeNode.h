@@ -33,9 +33,9 @@ public:
   enum class EContentType {
     Subdivided,   // we are subdivided, so children hold more detailed info
     Unknown,      // no idea
-    UnkownClear,  // what we know about the quad is clear
-    Clear,        // we know the whole quad is clear
-    Obstacle,          // we know at least part of the quad has an obstacle
+    Clear,        // what we know about the node is clear (could be partial info)
+    Obstacle,     // we have seen an obstacle in part of the node
+    Cliff,        // we have seen a cliff in part of the node
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -69,7 +69,10 @@ public:
   bool AddClearQuad(const Quad2f& quad);
   
   // process an obstacle that affected this node's parent
-  void AddObstacle();
+  bool AddObstacle(const Quad2f& quad);
+
+  // process a cliff that affected this node's parent
+  bool AddCliff(const Quad2f& quad);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   void UpgradeToParent(const Point2f& direction);
@@ -86,19 +89,31 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   // subdivide/merge children
   void Subdivide();
   void Merge();
-  
-  // checks if all children are the same type, so that we can merge automatically
-  void TryAutoMerge();
-  
+
   // return true if this quad can subdivide
   bool CanSubdivide() const { return _maxDepth > 0; }
   
   // return true if this quad is already subdivided
   bool IsSubdivided() const { return !_children.empty(); }
+  
+  // returns true if this node can override children with the given content type (some changes in content
+  // type are not allowed to preserve information). This is a necessity now to prevent Cliffs from being
+  // removed by Clear. Note that eventually we have to support that since it's possible that the player
+  // actually covers the cliff with something transitable
+  bool CanOverrideChildrenWithContent(EContentType contentType) const;
+  
+  // checks if all children are the same type, if so it removes the children and merges back to a single parent
+  void TryAutoMerge();
+  
+  // helper for the specific add functions. It properly processes the quad down the tree for the given content
+  bool AddQuad(const Quad2f& quad, EContentType detectedContentType);
+  
+  // sets the content type to the detected one
+  void SetDetectedContentType(EContentType detectedContentType);
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

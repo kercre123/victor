@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -34,8 +35,6 @@ void NavMeshQuadTree::Draw() const
     VizManager::SimpleQuadVector quadVector;
     _root.AddQuadsToDraw(quadVector);
     VizManager::getInstance()->DrawQuadVector("NavMemoryMap", quadVector); // TODO set proper name
-
-    PRINT_NAMED_INFO("RSAM", "#quads : %zu", quadVector.size());
   
     _gfxDirty = false;
   }
@@ -47,7 +46,7 @@ void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
   // if the root fully contains the quad, then delegate on it
   if ( _root.Contains( quad ) )
   {
-    _gfxDirty = _root.AddClearQuad(quad);
+    _gfxDirty = _root.AddClearQuad(quad) || _gfxDirty;
   }
   else
   {
@@ -68,6 +67,71 @@ void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
     _root.AddClearQuad(quad);
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::AddObstacle(const Quad2f& quad)
+{
+  // if the root fully contains the quad, then delegate on it
+  if ( _root.Contains( quad ) )
+  {
+    _gfxDirty = _root.AddObstacle(quad) || _gfxDirty;
+  }
+  else
+  {
+    _gfxDirty = true;
+    
+    // Find in which direction we are expanding and upgrade root level in that direction
+    const Vec2f& direction = quad.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    _root.UpgradeToParent(direction);
+
+    // should be contained, otherwise more expansions as required. This can only happen if quad size is too small
+    // or direction is wrong
+    if ( !_root.Contains(quad) ) {
+      PRINT_NAMED_ERROR("NavMeshQuadTree.AddObstacle.InsufficientExpansion",
+        "Quad caused expansion, but expansion was not enough.");
+    }
+
+    // treat the quad after expansion
+    _root.AddObstacle(quad);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::AddCliff(const Quad2f& quad)
+{
+//    // ask root to add proper quads to be rendered
+//    VizManager::SimpleQuadVector quadVector;
+//    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
+//    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
+//    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::RED, center, size));
+//
+//    VizManager::getInstance()->DrawQuadVector("xxx", quadVector); // TODO set proper name
+
+  // if the root fully contains the quad, then delegate on it
+  if ( _root.Contains( quad ) )
+  {
+    _gfxDirty = _root.AddCliff(quad) || _gfxDirty;
+  }
+  else
+  {
+    _gfxDirty = true;
+    
+    // Find in which direction we are expanding and upgrade root level in that direction
+    const Vec2f& direction = quad.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    _root.UpgradeToParent(direction);
+
+    // should be contained, otherwise more expansions as required. This can only happen if quad size is too small
+    // or direction is wrong
+    if ( !_root.Contains(quad) ) {
+      PRINT_NAMED_ERROR("NavMeshQuadTree.AddCliff.InsufficientExpansion",
+        "Quad caused expansion, but expansion was not enough.");
+    }
+
+    // treat the quad after expansion
+    _root.AddCliff(quad);
+  }
+}
+
 
 
 } // namespace Cozmo

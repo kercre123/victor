@@ -28,10 +28,21 @@ void NavMemoryMap::Draw() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 void NavMemoryMap::AddClearQuad(const Quad2f& quad)
 {
   _navMesh.AddClearQuad(quad);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMap::AddObstacleQuad(const Quad2f& quad)
+{
+  _navMesh.AddObstacle(quad);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMap::AddCliffQuad(const Quad2f& quad)
+{
+  _navMesh.AddCliff(quad);
 }
 
 } // namespace Cozmo

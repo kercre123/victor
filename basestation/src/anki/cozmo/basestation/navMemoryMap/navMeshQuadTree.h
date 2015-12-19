@@ -46,7 +46,10 @@ public:
   void AddClearQuad(const Quad2f& quad);
   
   // notify the navmesh of an obstacle
-  void AddObstacle();
+  void AddObstacle(const Quad2f& quad);
+
+  // notify the navmesh of a cliff
+  void AddCliff(const Quad2f& quad);
 
 private:
 

@@ -378,7 +378,7 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     
     // Add cliff obstacle
     Pose3d cliffPose(cliffEvent.angle_rad, Z_AXIS_3D(), {cliffEvent.x_mm, cliffEvent.y_mm, 0}, GetWorldOrigin());
-    _blockWorld.AddProxObstacle(cliffPose);
+    _blockWorld.AddCliff(cliffPose);
     
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");

@@ -64,9 +64,11 @@ namespace Anki
       
       Result QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker);
 
-      // Adds a proximity obstacle (like cliffs and random objects detected in front of the robot with
-      // the IR sensor) at the given pose.
+      // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);
+      
+      // Adds a cliff (detected with cliff detector)
+      Result AddCliff(const Pose3d& p);
       
       //
       // Object Access
@@ -102,15 +104,6 @@ namespace Anki
       // Same as above, but only searches a given family of objects
       ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily);
       const ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
-      
-      // Store your own objects, with a handle you can use to refer to them.
-      // The BlockWorld ObjectID is returned.
-      // (This gives BlockWorld responsibility for the deleting as well.)
-      ObjectID AddObject(ObservableObject* object,
-                         ObjectFamily inFamily,
-                         long long userHandle);
-      ObservableObject* GetObjectByUserHandle(long long userHandle,
-                                              const ObjectFamily inFamily);
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension, relative to world origin!) and

@@ -38,6 +38,12 @@ public:
   
   // add a quad that is clear of obstacles
   virtual void AddClearQuad(const Quad2f& quad) override;
+
+  // add a quad representing an obstacle
+  virtual void AddObstacleQuad(const Quad2f& quad) override;
+  
+  // add a quad representing a cliff
+  virtual void AddCliffQuad(const Quad2f& quad) override;
   
 private:
 

@@ -306,14 +306,14 @@ void PhysVizController::Draw(int pass, const char *view)
             quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]+zPadding, // up R
             quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]+zPadding  // lo R
          );
-
-        // Restore default color
-        glColor4ub(::Anki::NamedColors::DEFAULT.r(),
-          ::Anki::NamedColors::DEFAULT.g(),
-          ::Anki::NamedColors::DEFAULT.b(),
-          ::Anki::NamedColors::DEFAULT.alpha());
       } // for each quadInVector
     } // for each vector in map
+
+    // Restore default color
+    glColor4ub(::Anki::NamedColors::DEFAULT.r(),
+      ::Anki::NamedColors::DEFAULT.g(),
+      ::Anki::NamedColors::DEFAULT.b(),
+      ::Anki::NamedColors::DEFAULT.alpha());
 
     glPopMatrix(); // global viz transform
     

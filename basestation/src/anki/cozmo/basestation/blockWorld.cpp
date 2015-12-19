@@ -489,9 +489,7 @@ namespace Cozmo {
   
   void BlockWorld::UpdateNavMemoryMap()
   {
-    if ( _navMemoryMap ) {
-      _navMemoryMap->AddClearQuad(_robot->GetBoundingQuadXY());
-    }
+    _navMemoryMap->AddClearQuad(_robot->GetBoundingQuadXY());
   }
   
   void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
@@ -508,6 +506,9 @@ namespace Cozmo {
         object->Identify();
       }
     }
+    
+    // This is a test - we would need to update objects when they move too
+    // _navMemoryMap->AddObstacleQuad(object->GetBoundingQuadXY());
     
     // TODO if an object with same ID exists, it will leak
     existingFamily[object->GetType()][object->GetID()] = object;
@@ -1819,7 +1820,27 @@ namespace Cozmo {
     }
     */
 
+    Result BlockWorld::AddCliff(const Pose3d& p)
+    {
+      {
+        // TODO this is not an actual detected size, so I just create an object only to ask a size
+        Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
+        Quad3f cliffquad
+        {
+          {+cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // up L
+          {-cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // lo L
+          {+cliffSize.x(), -cliffSize.y(), cliffSize.z()}, // up R
+          {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
+        };
+        p.ApplyTo(cliffquad, cliffquad);
+        _navMemoryMap->AddCliffQuad(cliffquad);
+      }
     
+      // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
+      // so that's nice
+      return AddProxObstacle(p);
+    }
+  
     Result BlockWorld::AddProxObstacle(const Pose3d& p)
     {
       TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();

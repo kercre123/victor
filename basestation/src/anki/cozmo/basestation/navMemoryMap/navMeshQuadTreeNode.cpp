@@ -63,102 +63,21 @@ Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::AddClearQuad(const Quad2f& quad)
 {
-  // we need to subdivide or fit within the clear quad, since this implementation doesn't keep partial
-  // info within a quad, that's what subquads would be for
-  ASSERT_NAMED( CanSubdivide() ||
-                ( FLT_LE(_size,(quad.GetMaxX()-quad.GetMinX())) && (FLT_LE(_size,quad.GetMaxY()-quad.GetMinY())) ),
-                "NavMeshQuadTreeNode.AddClearQuad.ClearQuadIsTooSmall");
+  const bool ret = AddQuad(quad, EContentType::Clear);
+  return ret;
+}
 
-  // if we are already clear, we won't gain new info, so we can skip
-  if ( _contentType == EContentType::Clear ) {
-    return false;
-  }
-  
-  // to check for changes
-  EContentType previousType = _contentType;
-  bool childChanged = false;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::AddObstacle(const Quad2f& quad)
+{
+  const bool ret = AddQuad(quad, EContentType::Obstacle);
+  return ret;
+}
 
-  // check if the quad affects us
-  const Quad2f& myQuad = MakeQuadXY();
-  if ( myQuad.Intersects(quad) )
-  {
-    // am I fully contained within the clear quad?
-    if ( quad.Contains(myQuad) )
-    {
-      // merge if subdivided
-      if ( IsSubdivided() ) {
-        Merge();
-      }
-      
-      // we are fully clear
-      _contentType = EContentType::Clear;
-    }
-    else
-    {
-      // see if we can subdivide
-      const bool wasSubdivided = IsSubdivided();
-      if ( !wasSubdivided && CanSubdivide() )
-      {
-        // do now
-        Subdivide();
-        
-        // we are subdivided
-        _contentType = EContentType::Subdivided;
-      }
-      
-      // if we have children, delegate on them
-      const bool isSubdivided = IsSubdivided();
-      if ( isSubdivided )
-      {
-        // ask children to add quad
-        for( auto& child : _children ) {
-          childChanged = child.AddClearQuad(quad) || childChanged;
-        }
-        
-        // try to automerge (if it does content type will changed from subdivided to something else)
-        TryAutoMerge();
-      }
-      else
-      {
-        // we can't subdivide more, flag as some degree of clear
-        EContentType newType = EContentType::Unknown;
-        switch(_contentType)
-        {
-          case EContentType::Subdivided:
-          {
-            // we can't be subdivided, given the code before
-            ASSERT_NAMED(false, "NavMeshQuadTreeNode.AddClearQuad.InvalidContentType");
-            break;
-          }
-          case EContentType::Unknown:
-          case EContentType::UnkownClear:
-          {
-            // part of us is not known, part is clear
-            newType = EContentType::UnkownClear;
-            break;
-          }
-          case EContentType::Clear:
-          {
-            // we are fully clear
-            newType = EContentType::Clear;
-            break;
-          }
-          case EContentType::Obstacle:
-          {
-            // we are not fully cleared, but part of us was obstacle in the past
-            newType = EContentType::Obstacle;
-            break;
-          }
-        }
-        
-        // set new type
-        ASSERT_NAMED(newType!=EContentType::Unknown, "NavMeshQuadTreeNode.AddClearQuad.UnexpectedNewType");
-        _contentType = newType;
-      }
-    }
-  }
-  
-  const bool ret = (_contentType != previousType) || childChanged;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::AddCliff(const Quad2f &quad)
+{
+  const bool ret = AddQuad(quad, EContentType::Cliff);
   return ret;
 }
 
@@ -209,13 +128,13 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
     ColorRGBA color =  Anki::NamedColors::WHITE;
     switch(_contentType)
     {
-      case EContentType::Subdivided : { color = Anki::NamedColors::BLACK;     break; }
+      case EContentType::Subdivided : { color = Anki::NamedColors::MAGENTA;   break; }
       case EContentType::Unknown    : { color = Anki::NamedColors::DARKGRAY;  break; }
-      case EContentType::UnkownClear: { color = Anki::NamedColors::DARKGREEN; break; }
+      case EContentType::Cliff      : { color = Anki::NamedColors::BLACK;     break; }
       case EContentType::Clear      : { color = Anki::NamedColors::GREEN;     break; }
       case EContentType::Obstacle   : { color = Anki::NamedColors::RED;       break; }
     }
-    color.SetAlpha(0.25f);
+    color.SetAlpha(0.75f);
     //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_maxDepth*100}, _size));
     quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _size));
   }
@@ -250,6 +169,26 @@ void NavMeshQuadTreeNode::Merge()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::CanOverrideChildrenWithContent(EContentType contentType) const
+{
+  // if the node is a cliff, it can't be overridden
+  if ( _contentType == EContentType::Cliff ) {
+    return false;
+  }
+
+  // ask children if they can
+  for ( const auto& child : _children )
+  {
+    const bool canOverrideChild = child.CanOverrideChildrenWithContent( contentType );
+    if ( !canOverrideChild ) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeNode::TryAutoMerge()
 {
   CORETECH_ASSERT(IsSubdivided());
@@ -279,10 +218,94 @@ void NavMeshQuadTreeNode::TryAutoMerge()
   {
     Merge();
     
-    // we are fully clear
-    _contentType = childType;
+    // we have the same type as the children
+    SetDetectedContentType( childType );
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, EContentType detectedContentType)
+{
+  // we need to subdivide or fit within the given quad, since this implementation doesn't keep partial
+  // info within nodes, that's what subquads would be for.
+  ASSERT_NAMED( CanSubdivide() ||
+                ( FLT_LE(_size,(quad.GetMaxX()-quad.GetMinX())) && (FLT_LE(_size,quad.GetMaxY()-quad.GetMinY())) ),
+                "NavMeshQuadTreeNode.AddQuad.InputQuadTooSmall");
+
+  // if we are already of the expected type, we won't gain any info, no need to process
+  if ( _contentType == detectedContentType ) {
+    return false;
+  }
+  
+  // to check for changes
+  EContentType previousType = _contentType;
+  bool childChanged = false;
+
+  // check if the quad affects us
+  const Quad2f& myQuad = MakeQuadXY();
+  if ( myQuad.Intersects(quad) )
+  {
+    // am I fully contained within the clear quad?
+    if ( quad.Contains(myQuad) && CanOverrideChildrenWithContent(detectedContentType) )
+    {
+      // merge if subdivided
+      if ( IsSubdivided() ) {
+        Merge();
+      }
+      
+      // we are fully the new type
+      SetDetectedContentType( detectedContentType );
+    }
+    else
+    {
+      // see if we can subdivide
+      const bool wasSubdivided = IsSubdivided();
+      if ( !wasSubdivided && CanSubdivide() )
+      {
+        // do now
+        Subdivide();
+        
+        // we are subdivided
+        SetDetectedContentType( EContentType::Subdivided );
+      }
+      
+      // if we have children, delegate on them
+      const bool isSubdivided = IsSubdivided();
+      if ( isSubdivided )
+      {
+        // ask children to add quad
+        for( auto& child : _children ) {
+          childChanged = child.AddQuad(quad, detectedContentType) || childChanged;
+        }
+        
+        // try to automerge (if it does, our content type will change from subdivided to the merged type)
+        TryAutoMerge();
+      }
+      else
+      {
+        SetDetectedContentType(detectedContentType);
+      }
+    }
+  }
+  
+  const bool ret = (_contentType != previousType) || childChanged;
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeNode::SetDetectedContentType(EContentType detectedContentType)
+{
+  // This is here temporarily to prevent Clear from overriding Cliffs. I need to think how we want to support
+  // cliffs directly under Cozmo
+  if ( _contentType == EContentType::Cliff )
+  {
+    return;
+  }
+
+  // this is where we can detect changes in content, for example new obstacles or things disappearing
+  _contentType = detectedContentType;
+}
+
 
 
 } // namespace Cozmo
