@@ -18,11 +18,10 @@ const int RX_OVERFLOW = 8;
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
-static transmissionWord spi_tx_buff[TX_SIZE];
-static union {
-  transmissionWord spi_tx_side[TX_SIZE];
-  DropToWiFi drop_tx ;
-};
+static transmissionWord spi_backbuff[2][TX_SIZE];
+
+static transmissionWord* spi_write_buff = spi_backbuff[0];
+static transmissionWord* spi_tx_buff = spi_backbuff[1];
 
 transmissionWord spi_rx_buff[RX_SIZE];
 
@@ -31,8 +30,6 @@ static int totalDrops = 0;
 static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
   static int pwmCmdCounter = 0;
-
-  I2C::Disable();
 
   // Process drop receive
   transmissionWord *target = spi_rx_buff;
@@ -108,28 +105,43 @@ static bool ProcessDrop(void) {
   return false;
 }
 
-void Anki::Cozmo::HAL::SPI::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
-  drop_tx.preamble = TO_WIFI_PREAMBLE;
+void Anki::Cozmo::HAL::SPI::StartDMA(void) {
+  // Start sending out junk
+  SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
+  DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
+  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+}
 
-  memcpy(drop_tx.payload, buf, buflen);
+void Anki::Cozmo::HAL::SPI::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
+  // Swap buffers
+  {
+    transmissionWord *tmp = spi_write_buff;
+    spi_write_buff = spi_tx_buff;
+    spi_tx_buff = tmp;
+  }
+
+  DropToWiFi *drop_tx = (DropToWiFi*) spi_write_buff;
+
+  drop_tx->preamble = TO_WIFI_PREAMBLE;
+
+  memcpy(drop_tx->payload, buf, buflen);
   
   // This is where a drop should be 
-  uint8_t *drop_addr = drop_tx.payload + buflen;
+  uint8_t *drop_addr = drop_tx->payload + buflen;
   
-  // Send current state of body every frame (for the future)
-  BodyState bodyState;
-  bodyState.state = UART::recoveryMode;
-  bodyState.count = UART::RecoveryStateUpdated;
-  
-  // Copy to drop location
-  memcpy(drop_addr, &bodyState, sizeof(bodyState));
-  drop_tx.payloadLen  = sizeof(BodyState);
+  {
+    // Send current state of body every frame (for the future)
+    BodyState bodyState;
+    bodyState.state = UART::recoveryMode;
+    bodyState.count = UART::RecoveryStateUpdated;
+    
+    // Copy to drop location
+    memcpy(drop_addr, &bodyState, sizeof(bodyState));
+    drop_tx->payloadLen  = sizeof(BodyState);
+  }
 
   static int eoftime = 0;
-  drop_tx.droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF) | bootloaderStatus;
-
-  SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
-  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+  drop_tx->droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF) | bootloaderStatus;
 }
 
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
@@ -149,6 +161,8 @@ void DMA2_IRQHandler(void) {
   static bool allowReset = true;
   static int droppedDrops = 0;
   
+  I2C::Disable();
+
   // Don't check for silence, we had a drop
   if (ProcessDrop()) {
     if (allowReset) {
@@ -186,8 +200,6 @@ void DMA2_IRQHandler(void) {
 
 extern "C"
 void DMA3_IRQHandler(void) {
-  memcpy(spi_tx_buff, spi_tx_side, sizeof(spi_tx_side));
-
   DMA_CDNE = DMA_CDNE_CDNE(3);
   DMA_CINT = 3;
 }
@@ -217,7 +229,6 @@ void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   // Configure transfer buffer
   DMAMUX_CHCFG3 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(15)); 
 
-  DMA_TCD3_SADDR          = (uint32_t)spi_tx_buff;
   DMA_TCD3_SOFF           = sizeof(transmissionWord);
   DMA_TCD3_SLAST          = -sizeof(spi_tx_buff);
 

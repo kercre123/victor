@@ -16,6 +16,7 @@ namespace Anki
         void TransmitDrop(const uint8_t* buf, int buflen, int eof);
         void InitDMA(void);
         void Init(void);
+        void StartDMA(void);
       }
     }
   }
