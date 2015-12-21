@@ -38,8 +38,6 @@ namespace CodeBreaker {
           _NumCorrectColor += Mathf.Min(kvp.Value, numGuessesOfWinningColor);
         }
       }
-
-      Debug.LogError("Code: " + _WinningCode.ToString() + "     Guess: " + guess.ToString());
     }
 
     public override void Enter() {
@@ -68,21 +66,33 @@ namespace CodeBreaker {
       if (_NumCorrectPosAndColor >= _WinningCode.NumCubes) {
         _CurrentRobot.SendAnimation(AnimationName.kMajorFail, HandleCozmoLoseAnimationFinished);
       }
-      else {
+      else if (game.AnyGuessesLeft()) {
         _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleTryAgainAnimationFinished);
+      }
+      else {
+        // Player lost
+        _CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandlePlayerLostAnimationFinished);
       }
     }
 
     private void HandleCozmoLoseAnimationFinished(bool success) {
+      PickCodeAgain();
+    }
+
+    private void HandleTryAgainAnimationFinished(bool success) {
+      _StateMachine.SetNextState(new WaitForGuessState(_WinningCode, _TargetCubeStates));
+    }
+
+    private void HandlePlayerLostAnimationFinished(bool success) {
+      PickCodeAgain();
+    }
+
+    private void PickCodeAgain() {
       LightCube[] lightCubes = new LightCube[_TargetCubeStates.Length];
       for (int i = 0; i < lightCubes.Length; i++) {
         lightCubes[i] = _TargetCubeStates[i].cube;
       }
       _StateMachine.SetNextState(new PickCodeState(lightCubes));
-    }
-
-    private void HandleTryAgainAnimationFinished(bool success) {
-      _StateMachine.SetNextState(new WaitForGuessState(_WinningCode, _TargetCubeStates));
     }
 
     private CubeCode CreateGuessFromCubeState(CubeState[] cubeStates) {
