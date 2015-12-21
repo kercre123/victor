@@ -164,5 +164,17 @@
     },
     "selfieGame01.description" : {
         "translation" : "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
+    },
+    "investorDemo.investorDemoFull" : {
+        "translation" : "Investor Demo Full"
+    },
+    "investorDemo.investorDemoCubes" : {
+        "translation" : "Investor Demo Cubes"
+    },
+    "investorDemo.investorDemoFaces" : {
+        "translation" : "Investor Demo Faces"
+    },
+    "investorDemo.investorDemoMotion" : {
+        "translation" : "Investor Demo Motion"
     }
 }
