@@ -24,6 +24,9 @@ namespace CodeBreaker {
       get { return _ValidCodeColors; }
     }
 
+    public Color CorrectPosAndColorBackpackColor;
+    public Color CorrectColorOnlyBackpackColor;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       DAS.Info(this, "Game Created");
 
@@ -48,7 +51,6 @@ namespace CodeBreaker {
 
     protected override void CleanUpOnDestroy() {
       // Don't need to destroy slides because the SharedMinigameView will handle it
-      CurrentRobot.TurnOffAllLights();
     }
 
     #region UI
@@ -159,7 +161,7 @@ namespace CodeBreaker {
     public override string ToString() {
       string str = "CubeCode: ";
       for (int i = 0; i < cubeColorIndex.Length; i++) {
-        str += i + "(" + cubeColorIndex[i].ToString() + ") ";
+        str += i + "(" + cubeColorIndex[i] + ") ";
       }
       return str;
     }

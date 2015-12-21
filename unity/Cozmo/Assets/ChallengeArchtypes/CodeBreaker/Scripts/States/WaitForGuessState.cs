@@ -18,16 +18,27 @@ namespace CodeBreaker {
 
     private Color[] _ValidCodeColors;
 
-    public WaitForGuessState(CubeCode winningCubeCode, LightCube[] targetCubes) {
-      _WinningCode = winningCubeCode;
+    #region State Upkeep
 
-      // TODO
+    public WaitForGuessState(CubeCode winningCubeCode, LightCube[] targetCubes) {
       // Foreach cube create a cube state
-      _TargetCubeStates = new CubeState[targetCubes.Length];
+      CubeState[] targetCubeStates = new CubeState[targetCubes.Length];
       for (int i = 0; i < targetCubes.Length; i++) {
-        _TargetCubeStates[i] = new CubeState();
-        _TargetCubeStates[i].cube = targetCubes[i];
+        targetCubeStates[i] = new CubeState();
+        targetCubeStates[i].cube = targetCubes[i];
+        targetCubeStates[i].currentColorIndex = 0;
       }
+
+      Initialize(winningCubeCode, targetCubeStates);
+    }
+
+    public WaitForGuessState(CubeCode winningCubeCode, CubeState[] targetCubeStates) {
+      Initialize(winningCubeCode, targetCubeStates);
+    }
+
+    private void Initialize(CubeCode winningCubeCode, CubeState[] targetCubeStates) {
+      _WinningCode = winningCubeCode;
+      _TargetCubeStates = targetCubeStates;
 
       // Add a listener to each cube
       LightCube.TappedAction += OnBlockTapped;
@@ -45,16 +56,8 @@ namespace CodeBreaker {
       _ValidCodeColors = _Game.ValidColors;
       foreach (var cubeState in _TargetCubeStates) {
         cubeState.cube.TurnLEDsOff();
-        cubeState.cube.SetLEDs(_ValidCodeColors[0]);
-        cubeState.currentColorIndex = 0;
+        cubeState.cube.SetLEDs(_ValidCodeColors[cubeState.currentColorIndex]);
       }
-    }
-
-    private void HandleSubmitButtonClicked() {
-      CubeCode guess = new CubeCode();
-
-      // TODO: Evaluate guess from cubes in row
-      _StateMachine.SetNextState(new EvaluateGuessState(_WinningCode, guess));
     }
 
     public override void Update() {
@@ -101,6 +104,31 @@ namespace CodeBreaker {
 
       LightCube.TappedAction -= OnBlockTapped;
     }
+
+    #endregion
+
+    #region Event handling
+
+    private void OnBlockTapped(int id, int times) {
+      // If the id matches change the index and color, depending on the number of times tapped
+      foreach (var cubeState in _TargetCubeStates) {
+        if (cubeState.cube.ID == id) {
+          cubeState.currentColorIndex += times;
+          cubeState.currentColorIndex %= _ValidCodeColors.Length;
+          cubeState.cube.SetLEDs(_ValidCodeColors[cubeState.currentColorIndex]);
+          break;
+        }
+      }
+    }
+
+    private void HandleSubmitButtonClicked() {
+      // TODO: Decrement guesses
+      // Update UI
+
+      _StateMachine.SetNextState(new EvaluateGuessState(_WinningCode, _TargetCubeStates));
+    }
+
+    #endregion
 
     private bool TryDriveTowardsClosestObject() {
       bool didDrive = true;
@@ -153,18 +181,6 @@ namespace CodeBreaker {
         }
       }
       return isRow;
-    }
-
-    private void OnBlockTapped(int id, int times) {
-      // If the id matches change the index and color, depending on the number of times tapped
-      foreach (var cubeState in _TargetCubeStates) {
-        if (cubeState.cube.ID == id) {
-          cubeState.currentColorIndex += times;
-          cubeState.currentColorIndex %= _ValidCodeColors.Length;
-          cubeState.cube.SetLEDs(_ValidCodeColors[cubeState.currentColorIndex]);
-          break;
-        }
-      }
     }
   }
 }
