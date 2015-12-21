@@ -1112,7 +1112,7 @@ namespace Anki {
       
       
       // Sending debug string to game and viz
-      char buffer [512];
+      char buffer [64];
       // So we can have an arbitrary number of data here that is likely to change want just hash it all together if anything changes without spamming
       snprintf(buffer, sizeof(buffer), "dbg: %s %s, L:%.2f, H:%.2f",behaviorChooserName, behaviorName.c_str(),GetLiftHeight(),GetHeadAngle());
       std::hash<std::string> hasher;
