@@ -27,6 +27,8 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGameTag.h"
 
 #include <iomanip>
 
@@ -870,8 +872,8 @@ namespace Anki {
       Radians newAngle(heading);
       newAngle += _targetAngle;
       if(_variability != 0) {
-        newAngle += _rng.RandDblInRange(-_variability.ToDouble(),
-                                        _variability.ToDouble());
+        newAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
+                                            _variability.ToDouble());
       }
       
       Pose3d rotatedPose;
@@ -1554,7 +1556,7 @@ namespace Anki {
       }
       
       if(_variability > 0) {
-        _headAngle += _rng.RandDblInRange(-_variability.ToDouble(),
+        _headAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
                                                        _variability.ToDouble());
         _headAngle = CLIP(_headAngle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
       }
@@ -1727,7 +1729,7 @@ namespace Anki {
       } else {
         _heightWithVariation = _height_mm;
         if(_variability > 0.f) {
-          _heightWithVariation += _rng.RandDblInRange(-_variability, _variability);
+          _heightWithVariation += GetRNG().RandDblInRange(-_variability, _variability);
         }
         _heightWithVariation = CLIP(_heightWithVariation, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
         
@@ -3334,9 +3336,12 @@ namespace Anki {
     {
       _startedPlaying = false;
       _stoppedPlaying = false;
+      _wasAborted     = false;
       _animTag = robot.PlayAnimation(_animName, _numLoops);
       
       using namespace RobotInterface;
+      using namespace ExternalInterface;
+      
       auto startLambda = [this](const AnkiEvent<RobotToEngine>& event)
       {
         if(this->_animTag == event.GetData().Get_animStarted().tag) {
@@ -3353,9 +3358,22 @@ namespace Anki {
         }
       };
       
+      auto cancelLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
+      {
+        if(this->_animTag == event.GetData().Get_AnimationAborted().tag) {
+          PRINT_NAMED_INFO("PlayAnimation.AbortAnimationHandler",
+                           "Animation tag %d was aborted from running in slot %d, probably "
+                           "by another animation in another slot.",
+                           this->_animTag, this->GetSlotHandle());
+          _wasAborted = true;
+        }
+      };
+      
       _startSignalHandle = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::animStarted, startLambda);
 
       _endSignalHandle   = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::animEnded,   endLambda);
+      
+      _abortSignalHandle = robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted, cancelLambda);
       
       if(_animTag != 0) {
         return ActionResult::SUCCESS;
@@ -3368,6 +3386,8 @@ namespace Anki {
     {
       if(_stoppedPlaying) {
         return ActionResult::SUCCESS;
+      } else if(_wasAborted) {
+        return ActionResult::FAILURE_ABORT;
       } else {
         return ActionResult::RUNNING;
       }

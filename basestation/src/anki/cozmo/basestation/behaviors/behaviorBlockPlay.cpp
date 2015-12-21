@@ -247,23 +247,34 @@ namespace Cozmo {
             // Otherwise, if had previously seen a valid face, turn to face its last known pose
             IActionRunner* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, DEG_TO_RAD(5), PI_F);
 
-            // if we also need to lower the lift, do it in parallel (this is the most common case)
-            if( moveLiftAction != nullptr) {
-              StartActing(robot,
-                          new CompoundActionParallel({moveLiftAction, lookAtFaceAction}),
-                          [this](ActionResult ret){ _hasValidLastKnownFacePose = false; });
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
+                                   "Moving to last face pose");
+
+            IActionRunner* actionToRun = lookAtFaceAction;
+
+            if( moveLiftAction != nullptr ) {
+              actionToRun = new CompoundActionParallel({moveLiftAction, lookAtFaceAction});
+            }
+
+            StartActing(robot,
+                        actionToRun,
+                        [this, &robot](ActionResult ret){
+                          _hasValidLastKnownFacePose = false;
+                          // make sure the head is at a high enough angle if we are holding something, so our
+                          // view isn't blocked
+                          if( robot.IsCarryingObject() && robot.GetHeadAngle() < DEG_TO_RAD(20.0f) ) {
+                            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                                   "BehaviorBlockPlay.TrackFace.RaiseHead",
+                                                   "Carrying object and head angle of %fdeg is too low",
+                                                   RAD_TO_DEG( robot.GetHeadAngle( )));
+                            StartActing(robot,
+                                        new MoveHeadToAngleAction( DEG_TO_RAD(25.0f) ));
+                          }
+                        });                          
+                          
               moveLiftAction = nullptr;
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
                                      "Moving to last face pose AND lowering lift");
-            }
-            else {
-              // otherwise just execute the look action
-              StartActing(robot,
-                          lookAtFaceAction,
-                          [this](ActionResult ret){ _hasValidLastKnownFacePose = false; });
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
-                                     "Moving to last face pose");
-            }
           } else {
 
             // There's no face visible.
@@ -702,7 +713,6 @@ namespace Cozmo {
 
     BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.SetState", "set state to '%s'", GetStateName().c_str());
   }
-  
 
 
   // TODO: Get color and on/off settings from config
@@ -1238,7 +1248,7 @@ namespace Cozmo {
         
         // queue this action in the animation slot to avoid stomping on tracking
         MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(targetHeight);
-        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
+        robot.GetActionList().QueueActionAtEnd(Robot::FaceAnimationSlot, liftAction);
       }
 
       
