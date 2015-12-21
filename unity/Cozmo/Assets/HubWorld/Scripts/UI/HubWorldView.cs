@@ -194,18 +194,16 @@ namespace Cozmo.HubWorld {
           _SelfieAlbumViewButton.onClick.AddListener(HandleSelfieAlbumButtonClick);
         }
       }
+      // Add a handful of asteroids
+      for (int i = 0; i < 10; i++) {
+        CreateRandomAsteroid();
+      }
     }
 
     private GameObject CreateLockedButton(ChallengeData challengeData) {
 
       // Create an asteroid for this challenge
-      var result = CreateRandomAsteroid();
-
-      // Add two more in random quadrants for funsies
-      for (int i = 0; i < 2; i++) {
-        CreateRandomAsteroid();
-      }
-      return result;
+      return CreateRandomAsteroid();
     }
 
     private GameObject CreateRandomAsteroid() {

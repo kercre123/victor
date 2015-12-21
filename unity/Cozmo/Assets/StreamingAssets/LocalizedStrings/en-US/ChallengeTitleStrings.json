@@ -176,5 +176,14 @@
     },
     "investorDemo.investorDemoMotion" : {
         "translation" : "Investor Demo Motion"
+    },
+    "codeBreaker01.title" : {
+        "translation" : "Cozmo Code Breaker"
+    },
+    "codeBreaker01.subtitle" : {
+        "translation" : "Guess the code!"
+    },
+    "codeBreaker01.description" : {
+        "translation" : "Cozmo will think of a code and you have a certain number of tries to get it right."
     }
 }
