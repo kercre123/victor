@@ -10,7 +10,8 @@ namespace CodeBreaker {
     public override void Enter() {
       base.Enter();
       CodeBreakerGame game = _StateMachine.GetGame() as CodeBreakerGame;
-      game.ShowHowToPlaySlide(HandleReadyButtonClicked);
+      game.ShowReadySlide(LocalizationKeys.kCodeBreakerTextHowToPlayLong, 
+        LocalizationKeys.kButtonReady, HandleReadyButtonClicked);
 
       // Play an idle animation on Cozmo; will be inturrupted by 
       // other animations.

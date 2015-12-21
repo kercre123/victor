@@ -138,6 +138,21 @@
     "codeBreaker.text.guessesLeft" : {
         "translation" : "Guesses Left: {0}"
     },
+    "codeBreaker.text.playerWins" : {
+        "translation" : "You win!"
+    },
+    "codeBreaker.text.cozmoWins" : {
+        "translation" : "Cozmo wins!"
+    },
+    "codeBreaker.text.howToPlayShort" : {
+        "translation" : "Tap Cube: Change color.
+        'Guess Code' will be green when the cubes are lined up.
+
+        BACKPACK LIGHTS: 
+        Green = A Cube is the correct color AND Position
+        Blue = A Cube is in the correct color, but the WRONG Position
+        Red = A Cube is in the WRONG color AND the WRONG Position"
+    },
     "codeBreaker.text.howToPlayLong" : {
         "translation" : "Guess Cozmo's Code before you run out of guesses!
         The Code is a number of cubes of different colors, arranged horizontally in a line in front of Cozmo.

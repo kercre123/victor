@@ -146,6 +146,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67699ac94677f4a95bb3859d1468d2e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _SlideText: {fileID: 11439900}
   _ReadyButton: {fileID: 11495548}
 --- !u!114 &11428038
 MonoBehaviour:
