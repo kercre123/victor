@@ -11,3 +11,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 243fd38adbe874a7fa1addae5e487405, type: 3}
   m_Name: SelfieGameChallenge_Config
   m_EditorClassIdentifier: 
+  CountdownTimer: 10

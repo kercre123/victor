@@ -172,7 +172,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Next
+  m_Text: NEXT
 --- !u!114 &11469786
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -185,6 +185,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 0
+  DimBackground: 0
   _NextButton: {fileID: 11419316}
   _CurrentActionText: {fileID: 11426408}
 --- !u!114 &11474892

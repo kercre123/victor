@@ -262,9 +262,9 @@ namespace Cozmo {
 
       #region How To Play Slides
 
-      public void ShowHowToPlaySlide(HowToPlaySlide slideData) {
+      public GameObject ShowHowToPlaySlide(HowToPlaySlide slideData) {
         if (slideData.slideName == _CurrentSlideName) {
-          return;
+          return _CurrentSlide.gameObject;
         }
 
         CanvasGroup slidePrefab = slideData.slidePrefab;
@@ -299,6 +299,8 @@ namespace Cozmo {
           100, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
         _SlideInTween.Join(_CurrentSlide.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
         _SlideInTween.Play();
+
+        return newSlideObj;
       }
 
       #endregion

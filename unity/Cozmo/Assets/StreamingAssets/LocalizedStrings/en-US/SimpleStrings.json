@@ -47,5 +47,8 @@
     },
     "button.continue" : {
         "translation" : "CONTINUE"
+    },
+    "button.ready" : {
+        "translation" : "READY"
     }
 }

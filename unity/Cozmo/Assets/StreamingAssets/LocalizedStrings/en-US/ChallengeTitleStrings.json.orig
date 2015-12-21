@@ -165,6 +165,7 @@
     "selfieGame01.description" : {
         "translation" : "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
     },
+<<<<<<< HEAD
     "minesweeper01.title" : {
         "translation" : "Minesweeper"
     },
@@ -173,7 +174,7 @@
     },
     "minesweeper01.description" : {
         "translation" : "These mines aren't going to sweep themselves."
-    },
+=======
     "investorDemo.investorDemoFull" : {
         "translation" : "Investor Demo Full"
     },
@@ -194,5 +195,6 @@
     },
     "codeBreaker01.description" : {
         "translation" : "Cozmo will think of a code and you have a certain number of tries to get it right."
+>>>>>>> master
     }
 }
