@@ -136,7 +136,7 @@ namespace Cozmo {
     
     // Average length of time in seconds to watch one face when multiple faces
     // are present, and +/- variability in seconds on that average.
-    constexpr static float kMultiFaceInterestingDuration_sec = 2.5;
+    constexpr static float kMultiFaceInterestingDuration_sec = 2.0;
     constexpr static float kMultiFaceInterestingVariation_sec = 1;
     f32 _currentMultiFaceInterestingDuration_sec = kMultiFaceInterestingDuration_sec;
     
