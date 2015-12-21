@@ -37,10 +37,10 @@ namespace Anki
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
       {
-        SPI::TransmitDrop(buf, buflen, eof);
-        IMU::Manage();
         I2C::Enable();
         UART::Transmit();
+        IMU::Manage();
+        SPI::TransmitDrop(buf, buflen, eof);
       }
     }
   }
