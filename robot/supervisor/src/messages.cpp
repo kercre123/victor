@@ -292,7 +292,8 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.action, msg.useManualSpeed);
+        PRINT("RECVD DockToBlock (action %d, speed %f, acccel %f, manualSpeed %d)\n",
+              msg.action, msg.speed_mmps, msg.accel_mmps2, msg.useManualSpeed);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle
         PickAndPlaceController::DockToBlock(msg.action,
@@ -354,13 +355,13 @@ namespace Anki {
       }
 
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
-        PRINT("Moving lift to %f (maxSpeed %f, duration %f)\n", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
+        //PRINT("Moving lift to %f (maxSpeed %f, duration %f)\n", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
       }
 
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
-        PRINT("Moving head to %f (maxSpeed %f, duration %f)\n", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
+        //PRINT("Moving head to %f (maxSpeed %f, duration %f)\n", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
       }
@@ -387,7 +388,7 @@ namespace Anki {
       }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
-        PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
+        //PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
         SteeringController::ExecutePointTurn(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
 
@@ -484,9 +485,9 @@ namespace Anki {
             LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case RobotInterface::controller_stearing:
+          case RobotInterface::controller_steering:
           {
-            SteeringController::SetGains(msg.kp, msg.ki); // Coopting structure
+            SteeringController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError); // Coopting structure
             break;
           }
           default:

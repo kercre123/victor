@@ -427,7 +427,7 @@ namespace Anki {
           }
 
           // Check for accel spike
-          if (!HeadController::IsMoving()) {
+          if (!HeadController::IsMoving() && !LiftController::IsMoving()) {
             const f32 peakAccelThresh = 4000.f;
             const u32 maxAccelPeakDuration_ms = 75;
             if (std::fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
