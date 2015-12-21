@@ -147,6 +147,15 @@
     "simonGame01.description" : {
         "translation" : "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
     },
+    "treasureHuntGame01.title" : {
+        "translation" : "Treasure Hunt Challenge"
+    },
+    "treasureHuntGame01.subtitle" : {
+        "translation" : "Treasure Hunt Challenge Subtitle"
+    },
+    "treasureHuntGame01.description" : {
+        "translation" : "Find the treasure!"
+    },
     "selfieGame01.title" : {
         "translation" : "Selfie Time"
     },
