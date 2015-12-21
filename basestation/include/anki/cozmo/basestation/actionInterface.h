@@ -242,7 +242,7 @@ namespace Anki {
       virtual void Reset() override final;
       
       // A random number generator all subclasses can share
-      Util::RandomGenerator& GetRNG();
+      Util::RandomGenerator& GetRNG() const;
       
     private:
       
@@ -252,7 +252,7 @@ namespace Anki {
       
     }; // class IAction
     
-    inline Util::RandomGenerator& IAction::GetRNG() {
+    inline Util::RandomGenerator& IAction::GetRNG() const {
       static Util::RandomGenerator sRNG;
       return sRNG;
     }
