@@ -9,9 +9,8 @@
 #include "anki/common/robot/benchmarking.h"
 
 #include "hal/i2c.h"
-#include "uart.h"
-#include "imu.h"
 #include "hardware.h"
+#include "spi.h"
 
 //#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
 //#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
@@ -118,6 +117,7 @@ namespace Anki
       volatile u8 eof_ = 0;
       
       void HALExec(u8* buf, int buflen, int eof);
+      void HALInit(void);
       
 #ifdef ENABLE_JPEG
       int JPEGStart(int quality);
@@ -193,10 +193,33 @@ namespace Anki
         DMA_TCD0_BITER_ELINKNO = 1; // Beginning major loop iteration (1 per interrupt)
         DMA_TCD0_DLASTSGA = -sizeof(dmaBuff_);    // Point back at start of buffer after each loop
 
-        // Hook DMA request 0 to HSYNC
+        // Hook DMA start request 0 to HSYNC
         const int DMAMUX_PORTA = 49;    // This is not in the .h files for some reason
         DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_CAM_HSYNC));     
         DMA_ERQ = DMA_ERQ_ERQ0_MASK;
+       
+        // Set up FTM IRQ to match hsync - must match gc0329.h timing!
+        static const uint16_t CLOCK_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;
+        static const uint16_t DISABLE_MOD = (uint16_t)(CLOCK_MOD * 0.5f);
+
+        SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
+        FTM2_SC = 0;    // Make sure timer is disabled
+
+        /* Not currently used
+        FTM2_C0V = 8 * (BUS_CLOCK / I2SPI_CLOCK) / 2; // 50% time disable I2C interrupt
+        FTM2_C0SC = FTM_CnSC_CHIE_MASK |
+                    //FTM_CnSC_ELSA_MASK |
+                    //FTM_CnSC_ELSB_MASK |
+                    //FTM_CnSC_MSA_MASK |
+                    FTM_CnSC_MSB_MASK ;
+        */
+
+        FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
+        FTM2_CNT = FTM2_CNTIN = 0; //8 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
+        FTM2_CNTIN = 0;
+        
+        FTM2_SYNCONF = FTM_SYNCONF_SWRSTCNT_MASK;
+        FTM2_SYNC = FTM_SYNC_SWSYNC_MASK;   // Force all registers to be loaded
       }
 
       // Initialize camera
@@ -240,59 +263,44 @@ extern "C"
 void DMA0_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
-  
+
   DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
   DMA_CINT = 0;   // Clear interrupt channel 0
-  
-  // XXX: Allow DMA0 to stabilize
-  static u8 countdown = 10;
-  if (countdown)
-  {
-    countdown--;
+
+  // The camera will send one entire frame (around 480 lines) at the wrong rate
+  // So let that frame pass before we attempt to synchronize
+  static u16 lineskip = 480;
+  if (lineskip--)
     return;
-  }
 
   // Shut off DMA IRQ - we'll use FTM IRQ from now on
   DMA_TCD0_CSR = 0;
-
-  // Set up FTM IRQ to match hsync - must match gc0329.h timing!
-  SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
-
-  static const uint16_t CLOCK_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;
-  static const uint16_t DISABLE_MOD = (uint16_t)(CLOCK_MOD * 0.5f);
   
-  FTM2_C0V = 8 * (BUS_CLOCK / I2SPI_CLOCK) / 2; // 50% time disable I2C interrupt
-  FTM2_C0SC = FTM_CnSC_CHIE_MASK |
-              //FTM_CnSC_ELSA_MASK |
-              //FTM_CnSC_ELSB_MASK |
-              //FTM_CnSC_MSA_MASK |
-              FTM_CnSC_MSB_MASK ;
-
-  FTM2_MOD = CLOCK_MOD;   // 168 bytes at I2S_CLOCK
-  FTM2_CNT = FTM2_CNTIN = 8 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
-  FTM2_CNTIN = 0;
-  
-  // Sync to falling edge
+  // Sync to falling edge of I2SPI word select
   while(~GPIOD_PDIR & (1 << 4)) ;
   while( GPIOD_PDIR & (1 << 4)) ;
 
+  // Turn on FTM right after sync
   FTM2_SC = FTM_SC_TOF_MASK |
-            FTM_SC_TOIE_MASK |
-            FTM_SC_CLKS(1) | // BUS_CLOCK
-            FTM_SC_PS(0);
+          FTM_SC_TOIE_MASK |
+          FTM_SC_CLKS(1) | // Select BUS_CLOCK - this enables counting
+          FTM_SC_PS(0);
 
-  DMA_ERQ &= ~DMA_ERQ_ERQ0_MASK; // TEMPORARLY DISABLE DMA
   timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
   NVIC_SetPriority(FTM2_IRQn, 1);
+  
+  // Now that we're synchronized, do rest of initialization
+  //HALInit();
 }
 
 extern "C"
 void FTM2_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
-  
+
   // THIS HAPPENS IN SPI.CPP FOR NOW UNTIL WE FIGURE OUT WHY THIS ISN'T FIRING
+  /*
   if (FTM2_C0SC & FTM_CnSC_CHF_MASK) {
     FTM2_C0SC &= ~FTM_CnSC_CHF_MASK;
     I2C::Disable();
@@ -300,7 +308,11 @@ void FTM2_IRQHandler(void)
   
   // Enable SPI DMA, Clear flag
   if (~FTM2_SC & FTM_SC_TOF_MASK) return ;
+  */
 
+  SPI::StartDMA();
+  
+  // Acknowledge timer interrupt now (we won't get time to later)
   FTM2_SC &= ~FTM_SC_TOF_MASK;
 
   static u16 line = 0;
@@ -319,29 +331,29 @@ void FTM2_IRQHandler(void)
   else
     vblank = 0;
   if (vblank > 3)
-    line = 956 + vblank;   // Set to start of vblank (adjusted for QVGA rate)
+    line = 478 + vblank;   // Set to start of vblank (adjusted for QVGA rate)
   dmaBuff_[0] = 1;
   
   HALExec(&buf[whichbuf][4], buflen, eof);
 
 #ifdef SERIAL_IMAGE
   static int pclkoffset = 0;
-  int hline = line >> 1;
-  if (!(line & 1))
+  int hline = line;
+  if (1) // !(line & 1))
   {
     // At 3mbaud, during 60% time, can send about 20 bytes per line, or 160x60
     if (hline < 480)
       for (int i = 0; i < 20; i++)
-        DebugPutc(dmaBuff_[((hline & 7) * 20 + i) * 16 + 3 + (pclkoffset >> 4)]);
+        UART::DebugPutc(dmaBuff_[((hline & 7) * 20 + i) * 16 + 3 + (pclkoffset >> 4)]);
     
     // Write header for start of next frame
     if (hline == 480)
     {
-      DebugPutc(0xBE);
-      DebugPutc(0xEF);
-      DebugPutc(0xF0);
-      DebugPutc(0xFF);
-      DebugPutc(0xBD);
+      UART::DebugPutc(0xBE);
+      UART::DebugPutc(0xEF);
+      UART::DebugPutc(0xF0);
+      UART::DebugPutc(0xFF);
+      UART::DebugPutc(0xBD);
       // pclkoffset++;
     }
   }
@@ -377,6 +389,6 @@ void FTM2_IRQHandler(void)
   
   // Advance through the lines
   line++;
-  if (line >= 1000)
+  if (line >= 496)
     line = 0;
 }

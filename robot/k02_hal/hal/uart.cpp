@@ -137,17 +137,13 @@ void Anki::Cozmo::HAL::UART::WaitForSync() {
   HeadDataReceived = false;
 }
 
-static inline void HUPFifo(void) {
-  UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
-  UART0->PFIFO &= ~UART_PFIFO_RXFE_MASK;
-  uint8_t c = UART0->D;
-  UART0->PFIFO |= UART_PFIFO_RXFE_MASK;
-}
-
 void Anki::Cozmo::HAL::UART::Transmit(void) { 
   // Attempt to clear out buffer overruns
   if (uart_mode != TRANSMIT_UNINITALIZED && UART0_S1 & UART_S1_OR_MASK) {
-    HUPFifo();
+    UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
+    UART0->PFIFO &= ~UART_PFIFO_RXFE_MASK;
+    uint8_t c = UART0->D;
+    UART0->PFIFO |= UART_PFIFO_RXFE_MASK;
   }
 
   switch (uart_mode) {
