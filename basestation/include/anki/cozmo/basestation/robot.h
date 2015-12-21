@@ -703,6 +703,9 @@ public:
     ActionList        _actionList;
     MovementComponent _movementComponent;
     VisionComponent   _visionComponent;
+  
+    // Hash to not spam debug messages
+    size_t            _lastDebugStringHash;
 
     // Path Following. There are two planners, only one of which can
     // be selected at a time
