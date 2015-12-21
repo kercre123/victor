@@ -175,7 +175,7 @@ namespace Anki {
 
     void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
     {
-      printf("HandleDebugString: %s", msg.text.c_str());
+      printf("HandleDebugString: %s\n", msg.text.c_str());
     }
     
     // ============== End of message handlers =================
@@ -1024,8 +1024,12 @@ namespace Anki {
                   if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                     f32 steer_k1 = root_->getField("steerK1")->getSFFloat();
                     f32 steer_k2 = root_->getField("steerK2")->getSFFloat();
-                    printf("New steering gains: k1 %f, k2 %f\n", steer_k1, steer_k2);
-                    SendSteeringControllerGains(steer_k1, steer_k2);
+                    f32 steerDistOffsetCap = root_->getField("steerDistOffsetCap_mm")->getSFFloat();
+                    f32 steerAngOffsetCap = root_->getField("steerAngOffsetCap_rad")->getSFFloat();
+                    printf("New steering gains: k1 %f, k2 %f, distOffsetCap %f, angOffsetCap %f\n",
+                           steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
+                    SendSteeringControllerGains(steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
+                    
                   } else {
                     
                     // Wheel gains

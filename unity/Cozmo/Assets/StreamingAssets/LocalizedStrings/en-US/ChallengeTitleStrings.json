@@ -155,5 +155,14 @@
     },
     "treasureHuntGame01.description" : {
         "translation" : "Find the treasure!"
+    },
+    "selfieGame01.title" : {
+        "translation" : "Selfie Time"
+    },
+    "selfieGame01.subtitle" : {
+        "translation" : "Cozmo Loves Cameras"
+    },
+    "selfieGame01.description" : {
+        "translation" : "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
     }
 }

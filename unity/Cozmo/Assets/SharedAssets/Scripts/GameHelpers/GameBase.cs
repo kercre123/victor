@@ -50,6 +50,8 @@ public abstract class GameBase : MonoBehaviour {
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
+  public SharedMinigameView SharedMinigameViewInstance { get { return _SharedMinigameViewInstance; } }
+
   protected ChallengeData _ChallengeData;
   private AlertView _ChallengeEndViewInstance;
   private bool _WonChallenge;
@@ -83,7 +85,6 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void OnDestroy() {
-    CleanUpOnDestroy();
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState();
     }
@@ -104,6 +105,7 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void UpdateStateMachine() {
     _StateMachine.UpdateStateMachine();
   }
+
   /// <summary>
   /// Clean up listeners and extra game objects. Called before the game is 
   /// destroyed when the player quits or the robot loses connection.
@@ -121,6 +123,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void CloseMinigameImmediately() {
+    CleanUpOnDestroy();
     Destroy(gameObject);
   }
 
@@ -128,11 +131,11 @@ public abstract class GameBase : MonoBehaviour {
     // Open confirmation dialog instead
     AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as AlertView;
     // Hook up callbacks
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue, HandleChallengeResultViewClosed);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
     alertView.TitleLocKey = _ChallengeData.ChallengeTitleLocKey;
     alertView.DescriptionLocKey = _WonChallenge ? LocalizationKeys.kLabelChallengeCompleted : LocalizationKeys.kLabelChallengeFailed;
     // Listen for dialog close
-    alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+    alertView.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
     return alertView;
   }
 
@@ -147,7 +150,7 @@ public abstract class GameBase : MonoBehaviour {
         OnMiniGameLose();
       }
     }
-    Destroy(gameObject);
+    CloseMinigameImmediately();
   }
 
   #region Default Quit button
