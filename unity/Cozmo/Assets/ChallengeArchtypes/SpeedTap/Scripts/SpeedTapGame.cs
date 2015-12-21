@@ -11,6 +11,8 @@ namespace SpeedTap {
     public LightCube PlayerBlock;
     public Color MatchColor;
 
+    public ISpeedTapRules Rules;
+
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
@@ -77,6 +79,7 @@ namespace SpeedTap {
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
+      Rules = GetRules(speedTapConfig.RuleSet);
     }
 
     // Use this for initialization
@@ -165,6 +168,13 @@ namespace SpeedTap {
         }
       }
       return farthest as LightCube;
+    }
+
+    private static ISpeedTapRules GetRules(SpeedTap.SpeedTapRuleSet ruleSet) {
+      switch (ruleSet) {
+      default:
+        return new DefaultSpeedTapRules();
+      }
     }
   }
 }
