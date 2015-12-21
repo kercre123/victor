@@ -119,6 +119,8 @@ namespace Anki {
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
+      
+      _lastDebugStringHash = 0;
 
       ReadAnimationDir();
       
