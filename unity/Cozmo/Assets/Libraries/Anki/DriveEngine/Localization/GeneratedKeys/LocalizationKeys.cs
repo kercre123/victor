@@ -141,6 +141,9 @@ public static class LocalizationKeys {
   public const string kCodeBreakerButtonGuessCode = "codeBreaker.button.guessCode";
   public const string kCodeBreakerButtonPickingCode = "codeBreaker.button.pickingCode";
   public const string kCodeBreakerTextGuessesLeft = "codeBreaker.text.guessesLeft";
+  public const string kCodeBreakerTextPlayerWins = "codeBreaker.text.playerWins";
+  public const string kCodeBreakerTextCozmoWins = "codeBreaker.text.cozmoWins";
+  public const string kCodeBreakerTextHowToPlayShort = "codeBreaker.text.howToPlayShort";
   public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
 
   #endregion
@@ -157,6 +160,7 @@ public static class LocalizationKeys {
   public const string kButtonYes = "button.yes";
   public const string kButtonNo = "button.no";
   public const string kButtonContinue = "button.continue";
+  public const string kButtonAgain = "button.again";
   public const string kButtonReady = "button.ready";
 
   #endregion

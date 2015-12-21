@@ -8,12 +8,19 @@ namespace CodeBreaker {
   public class CodeBreakerReadySlide : MonoBehaviour {
 
     [SerializeField]
+    private AnkiTextLabel _SlideText;
+
+    [SerializeField]
     private AnkiButton _ReadyButton;
 
     public event ReadyButtonClickedHandler OnReadyButtonClicked;
 
     private void Start() {
       _ReadyButton.onClick.AddListener(HandleReadyButtonClicked);
+    }
+
+    public void SetSlideText(string text) {
+      _SlideText.text = text;
     }
 
     public void SetButtonText(string text) {

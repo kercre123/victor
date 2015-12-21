@@ -58,15 +58,15 @@ namespace CodeBreaker {
 
     #region UI
 
-    public void ShowHowToPlaySlide(ReadyButtonClickedHandler readyButtonCallback) {
+    public void ShowReadySlide(string readySlideTextLocKey, string buttonTextLocKey, ReadyButtonClickedHandler readyButtonCallback) {
       GameObject howToPlaySlide = ShowHowToPlaySlide(kHowToPlaySlideName);
       _ReadySlide = howToPlaySlide.GetComponent<CodeBreakerReadySlide>();
       if (_ReadySlide != null) {
+        _ReadySlide.SetSlideText(Localization.Get(readySlideTextLocKey));
+        _ReadySlide.SetButtonText(Localization.Get(buttonTextLocKey));
+        _ReadySlide.EnableButton(true);
         if (readyButtonCallback != null) {
           _ReadySlide.OnReadyButtonClicked += readyButtonCallback;
-        }
-        else {
-          DAS.Warn(this, "Tried to attach a null callback to the 'HowToPlay' slide!");
         }
       }
       else {
@@ -79,6 +79,7 @@ namespace CodeBreaker {
       GameObject gamePanelObject = ShowHowToPlaySlide(kGamePanelSlideName);
       _GamePanelSlide = gamePanelObject.GetComponent<CodeBreakerPanel>();
       if (_GamePanelSlide != null) {
+        _GamePanelSlide.EnableButton = true;
         if (submitButtonCallback != null) {
           _GamePanelSlide.OnSubmitButtonClicked += submitButtonCallback;
         }
@@ -103,12 +104,6 @@ namespace CodeBreaker {
     public void DisableReadyButton() {
       if (_ReadySlide != null) {
         _ReadySlide.EnableButton(false);
-      }
-    }
-
-    public void SetReadyButtonText(string text) {
-      if (_ReadySlide != null) {
-        _ReadySlide.SetButtonText(text);
       }
     }
 
