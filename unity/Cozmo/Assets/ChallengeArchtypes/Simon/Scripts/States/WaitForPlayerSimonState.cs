@@ -38,7 +38,7 @@ namespace Simon {
         _GameInstance.RaiseMiniGameWin();
         return;
       }
-      _StateMachine.SetNextState(new CozmoSetSimonState(_SequenceList.Count + 1));
+      _StateMachine.SetNextState(new WaitForNextTurnState(_SequenceList.Count + 1));
     }
 
     private void HandleOnLoseAnimationDone(bool success) {
@@ -47,7 +47,7 @@ namespace Simon {
         _GameInstance.RaiseMiniGameLose();
         return;
       }
-      _StateMachine.SetNextState(new CozmoSetSimonState(_SequenceList.Count));
+      _StateMachine.SetNextState(new WaitForNextTurnState(_SequenceList.Count));
     }
 
     private void BlackoutLights() {

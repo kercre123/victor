@@ -28,7 +28,7 @@ namespace CodeBreaker {
     }
 
     public void EnableButton(bool enable) {
-      _ReadyButton.interactable = enable;
+      _ReadyButton.Interactable = enable;
     }
 
     private void HandleReadyButtonClicked() {

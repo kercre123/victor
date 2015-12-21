@@ -26,8 +26,8 @@ namespace CodeBreaker {
     }
 
     public bool EnableButton {
-      get { return _SubmitGuessButton.interactable; }
-      set { _SubmitGuessButton.interactable = value; }
+      get { return _SubmitGuessButton.Interactable; }
+      set { _SubmitGuessButton.Interactable = value; }
     }
 
     public void SetGuessesLeft(int guessesLeft) {

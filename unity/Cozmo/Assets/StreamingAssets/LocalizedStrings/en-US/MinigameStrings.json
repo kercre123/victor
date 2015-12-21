@@ -54,6 +54,9 @@
     "rotationTraining.title" : {
         "translation" : "Rotation Training"
     },
+    "simonGame.button" : {
+        "translation" : "Continue"
+    },
     "speedTap.title" : {
         "translation" : "Speed Tap"
     },

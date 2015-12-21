@@ -44,6 +44,7 @@ MonoBehaviour:
     slidePrefab: {fileID: 22581616, guid: 212fa9a0541b04228ab28808a53181b8, type: 2}
   - slideName: RepeatPattern
     slidePrefab: {fileID: 22581616, guid: 711511fb428484d35a044bfc4c5c88df, type: 2}
+  _GamePanelPrefab: {fileID: 11449678, guid: e9f1eaec7e850420cac3b5442661ddb9, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -72,6 +73,11 @@ Prefab:
       propertyPath: _HowToPlayPrefabs.Array.data[1].slidePrefab
       value: 
       objectReference: {fileID: 22581616, guid: 711511fb428484d35a044bfc4c5c88df,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _GamePanelPrefab
+      value: 
+      objectReference: {fileID: 11449678, guid: e9f1eaec7e850420cac3b5442661ddb9,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
