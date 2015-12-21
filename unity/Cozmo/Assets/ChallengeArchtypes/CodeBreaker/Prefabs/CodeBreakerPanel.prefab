@@ -227,7 +227,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
-    m_FontSize: 64
+    m_FontSize: 42
     m_FontStyle: 1
     m_BestFit: 0
     m_MinSize: 10
@@ -269,7 +269,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: buttonText
+  m_Text: '#codeBreaker.button.guessCode'
 --- !u!114 &11461068
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -382,7 +382,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'GUESSES: 99'
+  m_Text: FPO
 --- !u!114 &11495570
 MonoBehaviour:
   m_ObjectHideFlags: 1

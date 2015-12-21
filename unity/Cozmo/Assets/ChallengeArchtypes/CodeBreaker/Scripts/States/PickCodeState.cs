@@ -21,7 +21,7 @@ namespace CodeBreaker {
       _Code = game.GetRandomCode();
 
       // TODO: Play a think animation on Cozmo
-      _CurrentRobot.SendAnimation(AnimationName.kHeadDown, HandleAnimationDone);
+      _CurrentRobot.SendAnimation(AnimationName.kEnjoyPattern, HandleAnimationDone);
 
       foreach (var cube in _TargetCubes) {
         cube.SetFlashingLEDs(Color.white, 10, 0, 10);

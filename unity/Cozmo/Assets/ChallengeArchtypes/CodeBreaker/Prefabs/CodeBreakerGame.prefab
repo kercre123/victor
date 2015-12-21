@@ -51,6 +51,9 @@ MonoBehaviour:
   - {r: 1, g: .483999997, b: 0, a: 1}
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 1, g: 0, b: 1, a: 1}
+  CorrectPosAndColorBackpackColor: {r: 0, g: 1, b: 0, a: 1}
+  CorrectColorOnlyBackpackColor: {r: 0, g: 0, b: 1, a: 1}
+  NotCorrectColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -148,6 +151,42 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _ValidCodeColors.Array.data[5].a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: CorrectPosAndColorBackpackColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: CorrectPosAndColorBackpackColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: CorrectColorOnlyBackpackColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: CorrectColorOnlyBackpackColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: CorrectColorOnlyBackpackColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: NotCorrectColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: NotCorrectColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: CorrectColorOnlyBackpackColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: NotCorrectColor.r
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []

@@ -42,6 +42,15 @@ public static class LocalizationKeys {
   public const string kCubeLifting01Title = "cubeLifting01.title";
   public const string kCubeLifting01Subtitle = "cubeLifting01.subtitle";
   public const string kCubeLifting01Description = "cubeLifting01.description";
+  public const string kSimonGame01Title = "simonGame01.title";
+  public const string kSimonGame01Subtitle = "simonGame01.subtitle";
+  public const string kSimonGame01Description = "simonGame01.description";
+  public const string kTreasureHuntGame01Title = "treasureHuntGame01.title";
+  public const string kTreasureHuntGame01Subtitle = "treasureHuntGame01.subtitle";
+  public const string kTreasureHuntGame01Description = "treasureHuntGame01.description";
+  public const string kSelfieGame01Title = "selfieGame01.title";
+  public const string kSelfieGame01Subtitle = "selfieGame01.subtitle";
+  public const string kSelfieGame01Description = "selfieGame01.description";
   public const string kCodeBreaker01Title = "codeBreaker01.title";
   public const string kCodeBreaker01Subtitle = "codeBreaker01.subtitle";
   public const string kCodeBreaker01Description = "codeBreaker01.description";
@@ -125,6 +134,7 @@ public static class LocalizationKeys {
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
+  public const string kCodeBreakerButtonGuessCode = "codeBreaker.button.guessCode";
   public const string kCodeBreakerButtonPickingCode = "codeBreaker.button.pickingCode";
   public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
 

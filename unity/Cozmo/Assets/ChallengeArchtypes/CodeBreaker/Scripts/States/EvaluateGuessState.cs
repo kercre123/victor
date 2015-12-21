@@ -58,13 +58,30 @@ namespace CodeBreaker {
         _CurrentRobot.SetBackpackBarLED(ledToChange, game.CorrectColorOnlyBackpackColor);
       }
 
+      for (int i = 0; i < _WinningCode.NumCubes - (_NumCorrectColor + _NumCorrectPosAndColor); i++) {
+        ledToChange = GetNextLEDId(ledToChange);
+        _CurrentRobot.SetBackpackBarLED(ledToChange, game.NotCorrectColor);
+      }
+
       // Play animation
-      _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleThinkingAnimationFinished);
+      // TODO: Play reaction animation and leave current state based on game state
+      if (_NumCorrectPosAndColor >= _WinningCode.NumCubes) {
+        _CurrentRobot.SendAnimation(AnimationName.kMajorFail, HandleCozmoLoseAnimationFinished);
+      }
+      else {
+        _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleTryAgainAnimationFinished);
+      }
     }
 
-    void HandleThinkingAnimationFinished(bool success) {
+    private void HandleCozmoLoseAnimationFinished(bool success) {
+      LightCube[] lightCubes = new LightCube[_TargetCubeStates.Length];
+      for (int i = 0; i < lightCubes.Length; i++) {
+        lightCubes[i] = _TargetCubeStates[i].cube;
+      }
+      _StateMachine.SetNextState(new PickCodeState(lightCubes));
+    }
 
-      // TODO: Play reaction animation and leave current state based on game state
+    private void HandleTryAgainAnimationFinished(bool success) {
       _StateMachine.SetNextState(new WaitForGuessState(_WinningCode, _TargetCubeStates));
     }
 

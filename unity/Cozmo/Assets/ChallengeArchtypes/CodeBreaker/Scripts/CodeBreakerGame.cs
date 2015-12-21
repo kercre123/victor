@@ -26,6 +26,7 @@ namespace CodeBreaker {
 
     public Color CorrectPosAndColorBackpackColor;
     public Color CorrectColorOnlyBackpackColor;
+    public Color NotCorrectColor;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       DAS.Info(this, "Game Created");
