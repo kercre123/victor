@@ -97,7 +97,7 @@ struct DockingErrorSignal;
     
     // Vision system will switch to tracking when this marker is seen
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
-                          const f32                    markerWidth_mm,
+                          const Point2f&               markerSize_mm,
                           const Point2f&               imageCenter,
                           const f32                    radius,
                           const bool                   checkAngleX,

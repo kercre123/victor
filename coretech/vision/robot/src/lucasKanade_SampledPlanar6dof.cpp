@@ -207,14 +207,14 @@ namespace Anki
         const s32 numPyramidLevels,
         const Transformations::TransformType transformType,
         const s32 numFiducialSquareSamples,
-        const f32 fiducialSquareWidthFraction,
+        const Point2f& fiducialSquareThicknessFraction,
         const s32 maxSamplesAtBaseLevel,
         const s32 numSamplingRegions,
         const f32 focalLength_x,
         const f32 focalLength_y,
         const f32 camCenter_x,
         const f32 camCenter_y,
-        const f32 templateWidth_mm,
+        const Point2f& templateSize_mm,
         MemoryStack ccmMemory,
         MemoryStack &onchipScratch,
         MemoryStack offchipScratch)
@@ -235,11 +235,12 @@ namespace Anki
 
         // Create a canonical 3D template to use.
         Point3<f32> template3d[4];
-        const f32 templateHalfWidth = templateWidth_mm * 0.5f;
-        template3d[0] = Point3<f32>(-templateHalfWidth, -templateHalfWidth, 0.f);
-        template3d[1] = Point3<f32>(-templateHalfWidth,  templateHalfWidth, 0.f);
-        template3d[2] = Point3<f32>( templateHalfWidth, -templateHalfWidth, 0.f);
-        template3d[3] = Point3<f32>( templateHalfWidth,  templateHalfWidth, 0.f);
+        const f32 templateHalfWidth  = templateSize_mm.x * 0.5f;
+        const f32 templateHalfHeight = templateSize_mm.y * 0.5f;
+        template3d[0] = Point3<f32>(-templateHalfWidth, -templateHalfHeight, 0.f);
+        template3d[1] = Point3<f32>(-templateHalfWidth,  templateHalfHeight, 0.f);
+        template3d[2] = Point3<f32>( templateHalfWidth, -templateHalfHeight, 0.f);
+        template3d[3] = Point3<f32>( templateHalfWidth,  templateHalfHeight, 0.f);
         Array<f32> R = Array<f32>(3,3,onchipScratch); // TODO: which scratch?
 
         // No matter the orientation of the incoming quad, we are always
@@ -774,8 +775,10 @@ namespace Anki
             //const f32 derivMagnitude = (0.5f / 255.f) * contrast * templateQuadDiagonal; // NOTE: scale in numerator and denominator cancel
             const f32 derivMagnitude = (0.5f / 255.f) * contrast * scale;
 
-            const f32 innerTemplateWidth = (1.f - 2.f*fiducialSquareWidthFraction) * templateWidth_mm;
+            const f32 innerTemplateWidth = (1.f - 2.f*fiducialSquareThicknessFraction.x) * templateSize_mm.x;
+            const f32 innerTemplateHeight = (1.f - 2.f*fiducialSquareThicknessFraction.y) * templateSize_mm.y;
             const f32 innerTemplateHalfWidth = 0.5f * innerTemplateWidth;
+            const f32 innerTemplateHalfHeight = 0.5f * innerTemplateHeight;
 
             // Get pointers for the chunk of the samples corresponding to each
             // edge, so that we can loop over them simultaneously
@@ -791,8 +794,8 @@ namespace Anki
             // and "bottom" to point to the right)
             const f32 signFlip = -1.f;
 #else
-            const f32 outerInc = templateWidth_mm / static_cast<f32>(numFiducialSamplesPerEdge-1);
-            const f32 innerInc = innerTemplateWidth / static_cast<f32>(numFiducialSamplesPerEdge-1);
+            const f32 outerInc = 0.5f*(templateSize_mm.x + templateSize_mm.y) / static_cast<f32>(numFiducialSamplesPerEdge-1);
+            const f32 innerInc = 0.5f*(templateHalfWidth + innerTemplateHalfHeight) / static_cast<f32>(numFiducialSamplesPerEdge-1);
             const f32 signFlip = 1.f;
 #endif
             TemplateSample * restrict pOuterTop = this->templateSamplePyramid[iScale].Pointer(0);
@@ -964,27 +967,31 @@ namespace Anki
 
           s32 interiorStartIndex;
           s32 interiorGridSize;
-          f32 interiorHalfWidth;
+          f32 interiorHalfWidth, interiorHalfHeight;
 
           if(numFiducialSquareSamples > 0) {
             // Sample within fiducial, within neighboring interior gap, and the
             // rest from interior region
             interiorGridSize  = verifyGridSize - 4;
 
-            interiorHalfWidth = 0.5f*templateWidth_mm*(1.f - 4.f*fiducialSquareWidthFraction);
+            interiorHalfWidth  = 0.5f*templateSize_mm.x*(1.f - 4.f*fiducialSquareThicknessFraction.x);
+            interiorHalfHeight = 0.5f*templateSize_mm.y*(1.f - 4.f*fiducialSquareThicknessFraction.y);
 
-            const f32 fiducialSquareCenter = 0.5f * (1.f - fiducialSquareWidthFraction)*templateWidth_mm;
-            const f32 gapCenter = 0.5f * (1.f - 3.f*fiducialSquareWidthFraction)*templateWidth_mm;
-            const f32 gapSidesStart = 0.5f * (1.f - 4.f*fiducialSquareWidthFraction)*templateWidth_mm;
+            const Point2f fiducialSquareCenter(0.5f * (1.f - fiducialSquareThicknessFraction.y)*templateSize_mm.x,
+                                               0.5f * (1.f - fiducialSquareThicknessFraction.y)*templateSize_mm.y);
+            const Point2f gapCenter(0.5f * (1.f - 3.f*fiducialSquareThicknessFraction.x)*templateSize_mm.x,
+                                    0.5f * (1.f - 3.f*fiducialSquareThicknessFraction.y)*templateSize_mm.y);
+            const Point2f gapSidesStart(0.5f * (1.f - 4.f*fiducialSquareThicknessFraction.x)*templateSize_mm.x,
+                                        0.5f * (1.f - 4.f*fiducialSquareThicknessFraction.y)*templateSize_mm.y);
 
             // Top/Bottom Bars of the Square
             interiorStartIndex = 0;
             lastResult = CreateVerificationSamples(templateImage,
-              Linspace(-fiducialSquareCenter, fiducialSquareCenter, verifyGridSize),
+              Linspace(-fiducialSquareCenter.x, fiducialSquareCenter.x, verifyGridSize),
 #if SAMPLE_TOP_HALF_ONLY
-              Linspace(-fiducialSquareCenter, -fiducialSquareCenter, 1), // top line only
+              Linspace(-fiducialSquareCenter.y, -fiducialSquareCenter.y, 1), // top line only
 #else
-              Linspace(-fiducialSquareCenter, fiducialSquareCenter, 2),
+              Linspace(-fiducialSquareCenter.y, fiducialSquareCenter.y, 2),
 #endif
               verifyCoordScalarInv,
               interiorStartIndex,
@@ -996,11 +1003,11 @@ namespace Anki
 
             // Left/Right Bars of the Square
             lastResult = CreateVerificationSamples(templateImage,
-              Linspace(-fiducialSquareCenter, fiducialSquareCenter, 2),
+              Linspace(-fiducialSquareCenter.x, fiducialSquareCenter.x, 2),
 #if SAMPLE_TOP_HALF_ONLY
-              Linspace(-gapCenter, 0.f, verifyGridSize-2),
+              Linspace(-gapCenter.y, 0.f, verifyGridSize-2),
 #else
-              Linspace(-gapCenter, gapCenter, verifyGridSize-2),
+              Linspace(-gapCenter.y, gapCenter.y, verifyGridSize-2),
 #endif
               verifyCoordScalarInv,
               interiorStartIndex,
@@ -1012,11 +1019,11 @@ namespace Anki
 
             // Top/Bottom Bars of the Gap
             lastResult = CreateVerificationSamples(templateImage,
-              Linspace(-gapCenter, gapCenter, verifyGridSize-2),
+              Linspace(-gapCenter.x, gapCenter.x, verifyGridSize-2),
 #if SAMPLE_TOP_HALF_ONLY
-              Linspace(-gapCenter, -gapCenter, 1), // top line only
+              Linspace(-gapCenter.y, -gapCenter.y, 1), // top line only
 #else
-              Linspace(-gapCenter, gapCenter, 2),
+              Linspace(-gapCenter.y, gapCenter.y, 2),
 #endif
               verifyCoordScalarInv,
               interiorStartIndex,
@@ -1028,11 +1035,11 @@ namespace Anki
 
             // Left/Right Bars of the Gap
             lastResult = CreateVerificationSamples(templateImage,
-              Linspace(-gapCenter, gapCenter, 2),
+              Linspace(-gapCenter.x, gapCenter.x, 2),
 #if SAMPLE_TOP_HALF_ONLY
-              Linspace(-gapSidesStart, 0.f, verifyGridSize-1),
+              Linspace(-gapSidesStart.y, 0.f, verifyGridSize-1),
 #else
-              Linspace(-gapSidesStart, gapSidesStart, verifyGridSize-4),
+              Linspace(-gapSidesStart.y, gapSidesStart.y, verifyGridSize-4),
 #endif
               verifyCoordScalarInv,
               interiorStartIndex,
@@ -1044,6 +1051,7 @@ namespace Anki
           } else {
             // Use regular grid of samples
             interiorHalfWidth = scaleTemplateRegionPercent*templateHalfWidth;
+            interiorHalfHeight = scaleTemplateRegionPercent*templateHalfHeight;
             interiorGridSize  = verifyGridSize;
             interiorStartIndex = 0;
           }
@@ -1052,9 +1060,9 @@ namespace Anki
           lastResult = CreateVerificationSamples(templateImage,
             Linspace(-interiorHalfWidth, interiorHalfWidth, interiorGridSize),
 #if SAMPLE_TOP_HALF_ONLY
-            Linspace(-interiorHalfWidth, 0.f, interiorGridSize),
+            Linspace(-interiorHalfHeight, 0.f, interiorGridSize),
 #else
-            Linspace(-interiorHalfWidth, interiorHalfWidth, interiorGridSize),
+            Linspace(-interiorHalfHeight, interiorHalfHeight, interiorGridSize),
 #endif
             verifyCoordScalarInv,
             interiorStartIndex,

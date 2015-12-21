@@ -145,7 +145,7 @@ namespace Anki {
         numFiducialEdgeSamples        = 500;
         
         if(numFiducialEdgeSamples > 0) {
-          scaleTemplateRegionPercent    = 1.f - FIDUCIAL_SQUARE_WIDTH_FRACTION;
+          scaleTemplateRegionPercent    = 1.f - 0.5f*(FIDUCIAL_SQUARE_THICKNESS_FRACTION.x + FIDUCIAL_SQUARE_THICKNESS_FRACTION.y);
         } else {
           scaleTemplateRegionPercent = 1.1f;
         }

@@ -85,7 +85,7 @@ namespace Cozmo {
     void   SetModes(u32 modes) { _mode = modes; }
     
     // Accessors
-    f32 GetTrackingMarkerWidth();
+    const Point2f& GetTrackingMarkerSize();
     
     struct PoseData {
       TimeStamp_t      timeStamp;
@@ -112,14 +112,14 @@ namespace Cozmo {
     // If checkAngleX is true, then tracking will be considered as a failure if
     // the X angle is greater than TrackerParameters::MAX_BLOCK_DOCKING_ANGLE.
     Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                            const f32                  markerWidth_mm,
+                            const Point2f&             markerSize_mm,
                             const bool                 checkAngleX);
     
     // Same as above, except the robot will only start tracking the marker
     // if its observed centroid is within the specified radius (in pixels)
     // from the given image point.
     Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                            const f32                  markerWidth_mm,
+                            const Point2f&             markerSize_mm,
                             const Embedded::Point2f&   imageCenter,
                             const f32                  radius,
                             const bool                 checkAngleX,
@@ -290,7 +290,7 @@ namespace Cozmo {
     // Tracking marker related members
     struct MarkerToTrack {
       Anki::Vision::MarkerType  type;
-      f32                       width_mm;
+      Point2f                   size_mm;
       Embedded::Point2f         imageCenter;
       f32                       imageSearchRadius;
       bool                      checkAngleX;

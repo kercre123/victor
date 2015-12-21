@@ -58,7 +58,7 @@ namespace Anki {
     }
     
     
-    KnownMarker::KnownMarker(const Code& withCode, const Pose3d& atPose, const f32 size_mm)
+    KnownMarker::KnownMarker(const Code& withCode, const Pose3d& atPose, const Point2f& size_mm)
     : Marker(withCode)
     , _size(size_mm)
     , _lastObservedTime(0)
@@ -117,7 +117,12 @@ namespace Anki {
       Quad3f corners3dAtPose(KnownMarker::_canonicalCorners3d);
       
       // Scale to this marker's physical size:
-      corners3dAtPose *= _size;
+      for(auto & corner : corners3dAtPose) {
+        // NOTE: canonical corners in X-Z plane, so the "y" size corresponds to
+        // the canonical z axis
+        corner.x() *= _size.x();
+        corner.z() *= _size.y();
+      }
       
       // Transform the canonical corners to this new pose
       atPose.ApplyTo(corners3dAtPose, corners3dAtPose);

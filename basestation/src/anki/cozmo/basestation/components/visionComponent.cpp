@@ -136,7 +136,7 @@ namespace Cozmo {
  
   
   void VisionComponent::SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
-                        const f32                    markerWidth_mm,
+                        const Point2f&               markerSize_mm,
                         const Point2f&               imageCenter,
                         const f32                    radius,
                         const bool                   checkAngleX,
@@ -147,7 +147,7 @@ namespace Cozmo {
     if(_visionSystem != nullptr) {
       Embedded::Point2f pt(imageCenter.x(), imageCenter.y());
       Vision::MarkerType markerType = static_cast<Vision::MarkerType>(markerToTrack);
-      _visionSystem->SetMarkerToTrack(markerType, markerWidth_mm,
+      _visionSystem->SetMarkerToTrack(markerType, markerSize_mm,
                                       pt, radius, checkAngleX,
                                       postOffsetX_mm,
                                       postOffsetY_mm,

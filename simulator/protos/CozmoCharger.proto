@@ -12,7 +12,8 @@ PROTO CozmoCharger [
   field SFFloat rampLength     .044      # The ramp is the part that leads up to the platform
   field SFFloat rampWidthAtGround  .072
 
-  field SFFloat rampMarkerWidth 0.020
+  field SFFloat dockMarkerWidth  0.025
+  field SFFloat dockMarkerHeight 0.020
   
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
@@ -38,7 +39,8 @@ Robot {
         VisionMarker {
           #rotation 0 0 1 1.5708
           image "symbols/rampFront.png"
-          markerWidth IS rampMarkerWidth
+          markerWidth IS dockMarkerWidth
+          markerHeight IS dockMarkerHeight
         }
       ]
     }

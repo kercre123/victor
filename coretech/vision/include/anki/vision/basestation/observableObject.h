@@ -55,7 +55,7 @@ namespace Anki {
       // pose (relative to the object's origin), and the specfied size in mm
       Vision::KnownMarker const& AddMarker(const Marker::Code& withCode,
                                            const Pose3d&       atPose,
-                                           const f32           size_mm);
+                                           const Point2f&      size_mm);
       
       std::list<KnownMarker> const& GetMarkers() const {return _markers;}
       

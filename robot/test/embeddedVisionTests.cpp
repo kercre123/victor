@@ -3044,7 +3044,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   const u8 verify_maxPixelDifference = 30;
 
   const s32 numFiducialSquareSamples = 100;
-  const f32 fiducialSquareWidthFraction = 0.1f;
+  const Point2f fiducialSquareWidthFraction(0.1f, 0.1f);
 
   const s32 maxSamplesAtBaseLevel = 500;
   
@@ -3086,7 +3086,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
       HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
       HEAD_CAM_CALIB_CENTER_X,
       HEAD_CAM_CALIB_CENTER_Y,
-      DEFAULT_BLOCK_MARKER_WIDTH_MM,
+      Point2f(DEFAULT_BLOCK_MARKER_WIDTH_MM, DEFAULT_BLOCK_MARKER_WIDTH_MM),
       scratchCcm,
       scratchOnchip,
       scratchOffchip);

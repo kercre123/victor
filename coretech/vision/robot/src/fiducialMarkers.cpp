@@ -1118,7 +1118,7 @@ namespace Anki
             initQuad,
             initHomography,
             image,
-            FIDUCIAL_SQUARE_WIDTH_FRACTION,
+            FIDUCIAL_SQUARE_THICKNESS_FRACTION,
             refine_quadRefinementIterations,
             darkValue,
             brightValue,

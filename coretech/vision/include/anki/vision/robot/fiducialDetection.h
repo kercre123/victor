@@ -20,7 +20,8 @@ namespace Anki
   namespace Embedded
   {
     // TODO: make this into a parameter stored elsewhere?
-    const f32 FIDUCIAL_SQUARE_WIDTH_FRACTION = 0.1f;
+    //const f32 FIDUCIAL_SQUARE_WIDTH_FRACTION = 0.1f;
+    const Point2f FIDUCIAL_SQUARE_THICKNESS_FRACTION(0.1f, 0.1f);
     
     enum CornerMethod {
       CORNER_METHOD_LAPLACIAN_PEAKS = 0,
@@ -142,7 +143,7 @@ namespace Anki
       const Quadrilateral<f32>& initialQuad,
       const Array<f32>& initialHomography,
       const Array<u8> &image,
-      const f32 squareWidthFraction,
+      const Point2f& squareSizeFraction,
       const s32 maxIterations,
       const f32 darkValue,
       const f32 brightValue,
