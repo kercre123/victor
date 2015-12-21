@@ -5,11 +5,9 @@ using System.Linq;
 using System.ComponentModel;
 using Newtonsoft.Json;
 
-namespace ScriptedSequences
-{
+namespace ScriptedSequences {
   [System.Serializable]
-  public class ScriptedSequenceNode : IScriptedSequenceParent 
-	{
+  public class ScriptedSequenceNode : IScriptedSequenceParent {
     public string Name;
 
     public uint Id;
@@ -48,6 +46,15 @@ namespace ScriptedSequences
           #if DEBUG_SCRIPTED_SEQUENCES
           DAS.Debug(this, DebugName +" Is Now Complete!");
           #endif
+
+          for (int i = 0; i < Conditions.Count; i++) {
+            Conditions[i].IsEnabled = false;
+          }
+
+          for (int i = 0; i < ExitConditions.Count; i++) {
+            ExitConditions[i].IsEnabled = false;
+          }
+
           if (OnComplete != null) {
             OnComplete();
           }
@@ -63,6 +70,7 @@ namespace ScriptedSequences
     }
 
     private IAsyncToken _ActToken;
+
     [JsonIgnore]
     public bool IsActive { get { return _ActToken != null && !IsComplete; } }
 
@@ -115,8 +123,7 @@ namespace ScriptedSequences
       }
     }
 
-    public void TryEnable()
-    {      
+    public void TryEnable() {      
       #if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "TryEnable Called on " + DebugName);
       #endif
@@ -127,8 +134,7 @@ namespace ScriptedSequences
       IsEnabled = true;
     }
 
-    public void Reset()
-    {
+    public void Reset() {
       #if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "Reset Called on " + DebugName);
       #endif
@@ -143,30 +149,25 @@ namespace ScriptedSequences
       UpdateExitConditions(false);
     }
 
-    public ScriptedSequenceNode GetNode(uint id)
-    {
+    public ScriptedSequenceNode GetNode(uint id) {
       return _Parent.GetNode(id);
     }
 
-    public ScriptedSequence GetSequence()
-    {
+    public ScriptedSequence GetSequence() {
       return _Parent;
     }
 
-    private void HandlePreviousNodeComplete()
-    {
+    private void HandlePreviousNodeComplete() {
       IsEnabled = true;
     }
 
-    private void HandleConditionsChanged()
-    {
+    private void HandleConditionsChanged() {
       if (UpdateConditions(IsEnabled)) {
         Act();
       }
     }
 
-    private void HandleExitConditionsChanged()
-    {
+    private void HandleExitConditionsChanged() {
       if (UpdateExitConditions(IsActive)) {
         if (_ActToken != null) {
           _ActToken.Abort();
@@ -176,8 +177,7 @@ namespace ScriptedSequences
       }
     }
 
-    private bool UpdateConditions(bool enabled)
-    {
+    private bool UpdateConditions(bool enabled) {
       if (IsComplete || IsActive) {
         return false;
       }
@@ -192,8 +192,7 @@ namespace ScriptedSequences
       return lastMet;
     }
 
-    private bool UpdateExitConditions(bool active)
-    { 
+    private bool UpdateExitConditions(bool active) { 
       if (IsComplete) {
         return false;
       }
@@ -234,18 +233,17 @@ namespace ScriptedSequences
             return;
           }
           Succeeded = true;
-          if(ExitOnActionsComplete)
-          {
+          if (ExitOnActionsComplete) {
             IsComplete = true;
           }
         });
-      } else {
+      }
+      else {
         var token = SimpleAsyncToken.PessimisticReduce(actingTokens);
         _ActToken = token;
         token.Ready(result => {
           Succeeded = !result.Value.Any(x => !x.Success);
-          if(ExitOnActionsComplete)
-          {
+          if (ExitOnActionsComplete) {
             IsComplete = true;
           }
         });
