@@ -78,7 +78,7 @@ namespace Anki {
       constexpr static const f32 PlatformLength = 42.f;
       constexpr static const f32 Length         = SlopeLength + PlatformLength + WallWidth;
       constexpr static const f32 MarkerHeight   = 20.f;
-      constexpr static const f32 MarkerWidth    = 25.f;
+      constexpr static const f32 MarkerWidth    = 27.f;
       constexpr static const f32 MarkerZPosition   = 19.f; // along sloped surface (at angle below)
       constexpr static const f32 PreAscentDistance  = 100.f; // for ascending from bottom
       constexpr static const f32 RobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked
