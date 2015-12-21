@@ -213,7 +213,7 @@ namespace Cozmo {
     switch(_currentState)
     {
       case State::TrackingFace:
-      {        
+      {
         // If not already tracking face...
         if (robot.GetMoveComponent().GetTrackToFace() == Face::UnknownFace) {
           
@@ -331,26 +331,15 @@ namespace Cozmo {
         Vec3f diffVec = ComputeVectorBetween(obj->GetPose(), robot.GetPose());
         
         if (robot.IsCarryingObject()) {
-          
-          // Compute angle to object above horizon
-          f32 horDistToBlock = sqrtf(diffVec.x()*diffVec.x() + diffVec.y()*diffVec.y());
-          f32 viewAngle = atan2f(diffVec.z(), horDistToBlock);
-          
-          if (viewAngle < kTrackedObjectViewAngleThreshForRaisingCarriedBlock) {
-            // Raise block and look straight ahead
-            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.RaisingBlockToSeeOtherBlock",
-                             "trying to see block %d",
-                             _trackedObject.GetValue());
-            StartActing(robot,
-                        new CompoundActionParallel({
-                            new MoveLiftToHeightAction( LIFT_HEIGHT_CARRY ),
-                            new MoveHeadToAngleAction( 0 ) }) );
-            // robot.GetMoveComponent().MoveLiftToHeight(LIFT_HEIGHT_CARRY, 2, 5);
-            // robot.GetMoveComponent().MoveHeadToAngle(0, 2, 5);
-          }
+
+          PRINT_NAMED_WARNING("BehaviorBlockPlay.UpdateInternal.TrackingBlock.Error",
+                              "Should not be in TrackingBlock state while carrying block! bailing");
+          SetCurrState(State::TrackingFace);
+          break;
         }
-        else if( currentTime_sec > _trackedObjectStoppedMovingTime + 0.5f &&
-                 currentTime_sec < _trackedObjectStoppedMovingTime + 5.0f) {
+
+        if( currentTime_sec > _trackedObjectStoppedMovingTime + 0.5f &&
+            currentTime_sec < _trackedObjectStoppedMovingTime + 5.0f) {
           // if the block recently stopped moving, look down
           
           if( _lastObjectObservedTime + _lostBlockTimeToLookDown < currentTime_sec ) {
@@ -407,19 +396,20 @@ namespace Cozmo {
           break;
         }
         
+        if (robot.IsCarryingObject()) {
+          PRINT_NAMED_WARNING("BehaviorBlockPlay.UpdateInternal.InspecingBlock.Error",
+                              "Holding block while inspecting, this shouldn't happen! bailing");
+          SetCurrState(State::TrackingFace);
+          break;
+        }            
+
         // Check if it's sideways
         AxisName upAxis = obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
         if (upAxis == AxisName::Z_POS) {
-          if (robot.IsCarryingObject()) {
-            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PlacingBlock", "");
-            SetCurrState(State::PlacingBlock);
-            _objectToPlaceOn = _trackedObject;
-          } else {
-            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PickingUpBlock", "");
-            SetBlockLightState(robot, _trackedObject, BlockLightState::Upright);
-            SetCurrState(State::PickingUpBlock);
-            _objectToPickUp = _trackedObject;
-          }
+          PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PickingUpBlock", "");
+          SetBlockLightState(robot, _trackedObject, BlockLightState::Upright);
+          SetCurrState(State::PickingUpBlock);
+          _objectToPickUp = _trackedObject;
         } else {
           PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.RollingBlock", "UpAxis %c", AxisToChar(upAxis));
           SetCurrState(State::RollingBlock);
@@ -503,6 +493,54 @@ namespace Cozmo {
         }
         
         StartActing(robot, new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn, _motionProfile));
+        break;
+      }
+      case State::WaitingForBlock:
+      {
+        // we should be holding a block, waiting for the second one. If not, bail out of this state
+        if( ! robot.IsCarryingObject() ) {
+          PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.WaitingForBlock.NotCarrying",
+                           "robot should have been carrying block, but isn't. bailing");
+          SetCurrState(State::TrackingFace);
+          break;
+        }
+
+        // lift should be high, and face should be low
+        IActionRunner* actionToRun = nullptr;
+        if( robot.GetLiftHeight() < LIFT_HEIGHT_CARRY - 3.0f ) {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.UpdateInternal.WaitingForBlock.Lift",
+                                 "raising lift to look down for block");
+
+          actionToRun = new MoveLiftToHeightAction( LIFT_HEIGHT_CARRY );
+        }
+        if( ! NEAR( robot.GetHeadAngle(), 0.0f, DEG_TO_RAD(4) ) ) {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.UpdateInternal.WaitingForBlock.Head",
+                                 "lowering head to see block");
+          MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction( 0.0f );
+          if( actionToRun != nullptr ) {
+            actionToRun = new CompoundActionParallel({actionToRun, headAction});
+          }
+          else {
+            actionToRun = headAction;
+          }
+        }
+
+        if( actionToRun != nullptr ) {
+          StartActing(robot, actionToRun);
+          _waitForBlockStartTime = -1.0f;
+        }
+        else if( _waitForBlockStartTime < 0.0f ) {
+          _waitForBlockStartTime = currentTime_sec;
+        }
+        else if( currentTime_sec > _waitForBlockStartTime + _maxTimeToWaitForBlock ) {
+          PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.WaitingForBlock.WaitingTooLong",
+                           "We have waited %f seconds to see the block, but didn't, so giving up",
+                           currentTime_sec - _waitForBlockStartTime);
+          // TODO:(bn) sound here??
+          _waitForBlockStartTime = -1.0f;
+          SetCurrState(State::TrackingFace);
+        }
+        
         break;
       }
       case State::SearchingForMissingBlock:
@@ -703,6 +741,9 @@ namespace Cozmo {
       case State::PlacingBlock:
         SetStateName("PLACING");
         break;
+      case State::WaitingForBlock:
+        SetStateName("WAIT4BLOCK");
+        break;
       case State::SearchingForMissingBlock:
         SetStateName("SEARCHING");
         break;
@@ -798,6 +839,7 @@ namespace Cozmo {
       case State::TrackingFace:
       case State::TrackingBlock:
       case State::InspectingBlock:
+      case State::WaitingForBlock:
         _isActing = false;
         break;
       case State::RollingBlock:
@@ -1122,7 +1164,7 @@ namespace Cozmo {
     
     // Get height of the object.
     // Only track the block if it's above a certain height.
-    // Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
+    Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
 
     // If this is observed while tracking face, then switch to tracking this object
     if (_currentState == State::TrackingFace &&
@@ -1143,13 +1185,11 @@ namespace Cozmo {
                              "Switching from face to tracking object %d", _trackedObject.GetValue());
 
       _noFacesStartTime = -1.0; // reset face timeout
-      SetCurrState(State::TrackingBlock);
-      TrackObjectAction* action = new TrackObjectAction(_trackedObject);
-      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action); // will cancel face tracking 
       SetBlockLightState(robot, _trackedObject, BlockLightState::Visible);
      
       if( robot.IsCarryingObject() ) {
         PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
+        SetCurrState(State::WaitingForBlock);
       }
       else {
 #if DO_2001_MUSIC_GAG
@@ -1169,7 +1209,23 @@ namespace Cozmo {
 #else
         PlayAnimation(robot, "ID_react2block_01", false);
 #endif
+        
+        SetCurrState(State::TrackingBlock);
+        TrackObjectAction* action = new TrackObjectAction(_trackedObject);
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action); // will cancel face tracking 
       }
+    }
+
+    else if( _currentState == State::WaitingForBlock &&
+             _objectToPlaceOn != objectID && 
+             msg.markersVisible &&
+             robot.IsCarryingObject() &&
+             diffVec.z() < 0.75 * oObject->GetSize().z()) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StartPlacing",
+                             "Found block %d, placing on it",
+                             _objectToPlaceOn.GetValue());
+      _objectToPlaceOn = objectID;
+      SetCurrState(State::PlacingBlock);        
     }
     
     // BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleObject",
