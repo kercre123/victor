@@ -17,8 +17,6 @@ namespace SpeedTap {
     private bool _GotMatch = false;
     private bool _CozmoTapping = false;
 
-    Color[] colors = { Color.white, Color.green, Color.blue, Color.magenta };
-
     public override void Enter() {
       base.Enter();
       GameAudioClient.SetMusicState(MusicGroupStates.PLAYFUL);
@@ -109,27 +107,8 @@ namespace SpeedTap {
       _SpeedTapGame.RollingBlocks();
 
       float matchExperiment = UnityEngine.Random.value;
-      if (matchExperiment <= _MatchProbability) {
-        // Do match
-        _GotMatch = true;
-        int randColorIndex = ((int)(matchExperiment * 1000f)) % colors.Length;
-        _SpeedTapGame.MatchColor = colors[randColorIndex];
-        _SpeedTapGame.CozmoBlock.SetLEDs(CozmoPalette.ColorToUInt(_SpeedTapGame.MatchColor), 0, 0xFF);
-        _SpeedTapGame.PlayerBlock.SetLEDs(CozmoPalette.ColorToUInt(_SpeedTapGame.MatchColor), 0, 0xFF);
-      }
-      else {
-        // Do non-match
-        _GotMatch = false;
-        int playerColorIdx = ((int)(matchExperiment * 1000f)) % colors.Length;
-        int cozmoColorIdx = ((int)(matchExperiment * 3333f)) % colors.Length;
-        if (cozmoColorIdx == playerColorIdx) {
-          cozmoColorIdx = (cozmoColorIdx + 1) % colors.Length;
-        }
-        Color playerColor = colors[playerColorIdx];
-        Color cozmoColor = colors[cozmoColorIdx];
-        _SpeedTapGame.PlayerBlock.SetLEDs(CozmoPalette.ColorToUInt(playerColor), 0, 0xFF);
-        _SpeedTapGame.CozmoBlock.SetLEDs(CozmoPalette.ColorToUInt(cozmoColor), 0, 0xFF);
-      }
+      _GotMatch = matchExperiment < _MatchProbability;
+      _SpeedTapGame.Rules.SetLights(_GotMatch, _SpeedTapGame);
     }
 
   }
