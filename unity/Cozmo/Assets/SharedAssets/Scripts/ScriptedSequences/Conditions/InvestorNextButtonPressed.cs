@@ -24,7 +24,7 @@ namespace ScriptedSequences.Conditions {
 
     private void HandleOnButtonClicked() {
       GameObject investorNextButton = ObjectTagRegistryManager.Instance.GetObjectByTag("InvestorNextButton");
-      investorNextButton.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = "Waiting...";
+      investorNextButton.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = "WAITING";
       IsMet = true;
     }
   }
