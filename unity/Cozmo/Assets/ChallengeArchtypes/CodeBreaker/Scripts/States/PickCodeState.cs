@@ -18,6 +18,7 @@ namespace CodeBreaker {
       CodeBreakerGame game = _StateMachine.GetGame() as CodeBreakerGame;
       game.DisableReadyButton();
       game.SetReadyButtonText(Localization.Get(LocalizationKeys.kCodeBreakerButtonPickingCode));
+      game.ResetGuesses();
       _Code = game.GetRandomCode();
 
       // TODO: Play a think animation on Cozmo

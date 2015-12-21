@@ -52,6 +52,7 @@ namespace CodeBreaker {
 
       _Game.ShowGamePanel(HandleSubmitButtonClicked);
       _Game.EnableSubmitButton = false;
+      _Game.UpdateGuessesUI();
 
       _ValidCodeColors = _Game.ValidColors;
       foreach (var cubeState in _TargetCubeStates) {
@@ -101,7 +102,7 @@ namespace CodeBreaker {
 
     public override void Exit() {
       base.Exit();
-
+      _Game.RemoveSubmitButtonListener(HandleSubmitButtonClicked);
       LightCube.TappedAction -= OnBlockTapped;
     }
 
@@ -122,9 +123,7 @@ namespace CodeBreaker {
     }
 
     private void HandleSubmitButtonClicked() {
-      // TODO: Decrement guesses
-      // Update UI
-
+      _Game.UseGuess();
       _StateMachine.SetNextState(new EvaluateGuessState(_WinningCode, _TargetCubeStates));
     }
 

@@ -29,5 +29,11 @@ namespace CodeBreaker {
       get { return _SubmitGuessButton.interactable; }
       set { _SubmitGuessButton.interactable = value; }
     }
+
+    public void SetGuessesLeft(int guessesLeft) {
+      string localized = Localization.Get(LocalizationKeys.kCodeBreakerTextGuessesLeft);
+      localized = string.Format(Localization.GetCultureInfo(), localized, guessesLeft);
+      _GuessesLeftLabel.text = localized;
+    }
   }
 }

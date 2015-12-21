@@ -28,6 +28,8 @@ namespace CodeBreaker {
     public Color CorrectColorOnlyBackpackColor;
     public Color NotCorrectColor;
 
+    private int _NumGuessesLeft;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       DAS.Info(this, "Game Created");
 
@@ -90,6 +92,14 @@ namespace CodeBreaker {
       }
     }
 
+    public void RemoveSubmitButtonListener(SubmitButtonClickedHandler submitButtonCallback) {
+      if (_GamePanelSlide != null) {
+        if (submitButtonCallback != null) {
+          _GamePanelSlide.OnSubmitButtonClicked -= submitButtonCallback;
+        }
+      }
+    }
+
     public void DisableReadyButton() {
       if (_ReadySlide != null) {
         _ReadySlide.EnableButton(false);
@@ -141,6 +151,26 @@ namespace CodeBreaker {
       }
       int colorIndex = Random.Range(0, maxColorIndex);
       return colorIndex;
+    }
+
+    public void UseGuess() {
+      _NumGuessesLeft--;
+      UpdateGuessesUI();
+    }
+
+    public bool AnyGuessesLeft() {
+      return _NumGuessesLeft > 0;
+    }
+
+    public void ResetGuesses() {
+      _NumGuessesLeft = _Config.NumGuesses;
+      UpdateGuessesUI();
+    }
+
+    public void UpdateGuessesUI() {
+      if (_GamePanelSlide != null) {
+        _GamePanelSlide.SetGuessesLeft(_NumGuessesLeft);
+      }
     }
 
     #endregion

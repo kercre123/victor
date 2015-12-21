@@ -8,4 +8,7 @@ public class CodeBreakerGameConfig : MinigameConfigBase {
 
   [Range(2, 6)]
   public int NumCodeColors = 6;
+
+  [Range(1, 100)]
+  public int NumGuesses = 10;
 }

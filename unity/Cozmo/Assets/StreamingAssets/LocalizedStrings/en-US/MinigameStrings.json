@@ -135,6 +135,9 @@
     "codeBreaker.button.pickingCode" : {
         "translation" : "PICKING CODE..."
     },
+    "codeBreaker.text.guessesLeft" : {
+        "translation" : "Guesses Left: {0}"
+    },
     "codeBreaker.text.howToPlayLong" : {
         "translation" : "Guess Cozmo's Code before you run out of guesses!
         The Code is a number of cubes of different colors, arranged horizontally in a line in front of Cozmo.
