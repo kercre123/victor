@@ -172,6 +172,8 @@ namespace SpeedTap {
 
     private static ISpeedTapRules GetRules(SpeedTap.SpeedTapRuleSet ruleSet) {
       switch (ruleSet) {
+      case SpeedTap.SpeedTapRuleSet.NoRed:
+        return new NoRedSpeedTapRules();
       default:
         return new DefaultSpeedTapRules();
       }
