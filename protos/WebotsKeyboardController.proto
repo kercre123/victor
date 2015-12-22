@@ -41,6 +41,7 @@ PROTO WebotsKeyboardController [
   field SFFloat pathPointTurnSpeed_radPerSec 1.5
   field SFFloat pathPointTurnAccel_radPerSec2 10
   field SFFloat pathPointTurnDecel_radPerSec2 50
+  field SFFloat pathReverseSpeed_mmps 30
 
   # Docking speed/accel
   field SFFloat dockSpeed_mmps  100
