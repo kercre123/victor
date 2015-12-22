@@ -12,7 +12,7 @@ namespace FaceTracking {
     private float _UnseenForgivenessSeconds = 2.5f;
 
     #endregion
-    
+
     private FaceTrackingGame _GameInstance;
     private float _FirstUnseenTimestamp = -1;
 
@@ -46,10 +46,10 @@ namespace FaceTracking {
       _CurrentRobot.SetLiftHeight(0);
 
       _LeftEyeInnerPosition = _LeftEye.EyeCenter;
-      _LeftEyeOuterPosition = _LeftEye.EyeCenter + new Vector2(_LeftEye.EyeCenter.x-20f,_LeftEye.EyeCenter.y);
+      _LeftEyeOuterPosition = _LeftEye.EyeCenter + new Vector2(_LeftEye.EyeCenter.x - 20f, _LeftEye.EyeCenter.y);
 
       _RightEyeInnerPosition = _RightEye.EyeCenter;
-      _RightEyeOuterPosition = _RightEye.EyeCenter + new Vector2(_RightEye.EyeCenter.x+20f,_RightEye.EyeCenter.y);
+      _RightEyeOuterPosition = _RightEye.EyeCenter + new Vector2(_RightEye.EyeCenter.x + 20f, _RightEye.EyeCenter.y);
 
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
@@ -111,7 +111,7 @@ namespace FaceTracking {
         _RightEye.UpperLidY = 0.0f;
       }
       else {
-        _LeftEye.UpperLidY =  0.0f;
+        _LeftEye.UpperLidY = 0.0f;
       }
 
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
@@ -120,9 +120,7 @@ namespace FaceTracking {
     public void LoseFace() {
       if (_GameInstance.TryDecrementAttempts()) {
         _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kByeBye, HandleStateCompleteAnimationDone);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kByeBye, HandleStateCompleteAnimationDone));
       }
       else {
         // If you're out of attempts, fail the game

@@ -94,12 +94,11 @@ namespace FaceTracking {
         }
         _CurrentRobot.FacePose(_TargetFace);
       }
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kHappyA, HandleStateCompleteAnimationDone);
+
       if (_GameInstance.StepsCompleted == 0.0f) {
         _GameInstance.StepsCompleted += 0.333f;
       }
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kHappyA, HandleStateCompleteAnimationDone));
     }
 
     public void HandleStateCompleteAnimationDone(bool success) {

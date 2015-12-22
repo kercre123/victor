@@ -38,9 +38,7 @@ namespace FollowCube {
       float angleDelta = _CurrentRobot.PoseAngle - _RobotStartAngle;
       _GameInstance.Progress = (-angleDelta / _WinDistanceThreshold) * (1.0f / _GameInstance.NumSegments) + (3.0f / _GameInstance.NumSegments);
       if (angleDelta < -(_WinDistanceThreshold)) {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation));
       }
       else if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
         _LastSeenTargetTime = Time.time;
