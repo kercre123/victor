@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Anki.Cozmo.Audio;
 
 namespace CodeBreaker {
   public class CodeBreakerEndState : State {
@@ -18,6 +19,7 @@ namespace CodeBreaker {
     public override void Enter() {
       base.Enter();
 
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_04);
       _CurrentRobot.SendAnimation(_CozmoAnimationName, null);
 
       // Show slide

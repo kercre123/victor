@@ -1,15 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo.Audio;
 
 namespace CodeBreaker {
   public class WaitForGuessState : State {
     private const float kAdjustDistanceDriveMmps = 40f;
-    private const float kCubeTooCloseDistanceThreshold = 140f;
-    private const float kCubeTooFarDistanceThreshold = 190f;
+    private const float kCubeDistance = 150f;
+    private const float kCubetooCloseDistance = 100f;
     private const float kCubeTooHighDistanceThreshold = 50f;
-
+    private const float kDriveToCubeBuffer = 25f;
     private const float kTargetAreaBuffer = 25f;
+    private const float kSecondSinceLastCubeThreshold = 1f;
 
     private CubeCode _WinningCode;
     private CodeBreakerGame _Game;
@@ -17,6 +19,9 @@ namespace CodeBreaker {
     private CubeState[] _TargetCubeStates;
 
     private Color[] _ValidCodeColors;
+
+    private float _SecondsSinceLastCubeAdjust = 0f;
+    private bool _IsDrivingToPose = false;
 
     #region State Upkeep
 
@@ -49,6 +54,7 @@ namespace CodeBreaker {
 
       // TODO: Play intermittent "impatient" animation? Use mood manager?
       _CurrentRobot.SetIdleAnimation("_LIVE_");
+      SetConstrictedLiveAnimation();
 
       _Game.ShowGamePanel(HandleSubmitButtonClicked);
       _Game.EnableSubmitButton = false;
@@ -59,41 +65,34 @@ namespace CodeBreaker {
         cubeState.cube.TurnLEDsOff();
         cubeState.cube.SetLEDs(_ValidCodeColors[cubeState.currentColorIndex]);
       }
+      _SecondsSinceLastCubeAdjust = 0f;
     }
 
     public override void Update() {
       base.Update();
 
-      // --------------------------------
-      // TODO: Potentially do a track to object? / tilt head / engine behavior for this instead
-      // --------------------------------
-      // Make it a substate?
-      bool didDrive = false;
-      TryDriveTowardsClosestObject();
-
-      // For now always do this check; used to be on !didDrive
-      // however, the submit button would flicker a lot because of his idle animation?
+      if (!_IsDrivingToPose) {
+        _SecondsSinceLastCubeAdjust += Time.deltaTime;
+      }
       bool shouldEnableSubmitButton = false;
-      if (!didDrive) {
-        List<LightCube> visibleCubes = GetVisibleLightCubes();
-        if (visibleCubes.Count == _WinningCode.NumCubes) {
-          float targetY = _WinningCode.NumCubes * CozmoUtil.kBlockLengthMM * 0.5f + kTargetAreaBuffer;
-          Vector3 testCubeCozmoPos;
-          bool cubesCloseToCozmo = true;
-          foreach (var cube in visibleCubes) {
-            testCubeCozmoPos = _CurrentRobot.WorldToCozmo(cube.WorldPosition);
-            // TODO: Depend on a BETTER row check, no proximity check?
-            // is cube close enough to the center of cozmo's view?
-            if (!(testCubeCozmoPos.y <= targetY && testCubeCozmoPos.y >= -targetY
-                && testCubeCozmoPos.z <= kCubeTooHighDistanceThreshold)) {
-              cubesCloseToCozmo = false;
-              break;
-            }
+      List<LightCube> visibleCubes = GetVisibleLightCubes();
+      if (visibleCubes.Count > 1) {
+        // Drive towards midpoint of visible cubes
+        if (!_IsDrivingToPose) {
+          if (!TryDriveAwayFromTooCloseObject()
+              && _SecondsSinceLastCubeAdjust > kSecondSinceLastCubeThreshold) {
+            DriveTowardsCubeMidpoint(visibleCubes);
           }
 
-          if (cubesCloseToCozmo && CheckRowAlignment(visibleCubes)) {
-            shouldEnableSubmitButton = true;
+          if (visibleCubes.Count == _WinningCode.NumCubes) {
+            shouldEnableSubmitButton = ShouldEnableSubmitButton(visibleCubes);
           }
+        }
+      }
+      else if (visibleCubes.Count == 1) {
+        if (!_IsDrivingToPose && !TryDriveAwayFromTooCloseObject()
+            && _SecondsSinceLastCubeAdjust > kSecondSinceLastCubeThreshold) {
+          DriveToCube(visibleCubes[0]);
         }
       }
 
@@ -112,6 +111,7 @@ namespace CodeBreaker {
 
     private void OnBlockTapped(int id, int times) {
       // If the id matches change the index and color, depending on the number of times tapped
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
       foreach (var cubeState in _TargetCubeStates) {
         if (cubeState.cube.ID == id) {
           cubeState.currentColorIndex += times;
@@ -129,15 +129,12 @@ namespace CodeBreaker {
 
     #endregion
 
-    private bool TryDriveTowardsClosestObject() {
+    private bool TryDriveAwayFromTooCloseObject() {
       bool didDrive = true;
       // Grab the closest cube, if it's too close or too far, move away
       float closestDistance = GetClosestObjectDistance(_TargetCubeStates);
-      if (closestDistance < kCubeTooCloseDistanceThreshold) {
+      if (closestDistance < kCubetooCloseDistance) {
         _CurrentRobot.DriveWheels(-kAdjustDistanceDriveMmps, -kAdjustDistanceDriveMmps);
-      }
-      else if (closestDistance > kCubeTooFarDistanceThreshold && closestDistance != float.MaxValue) {
-        _CurrentRobot.DriveWheels(kAdjustDistanceDriveMmps, kAdjustDistanceDriveMmps);
       }
       else {
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
@@ -180,6 +177,83 @@ namespace CodeBreaker {
         }
       }
       return isRow;
+    }
+
+    private void SetConstrictedLiveAnimation() {
+      // set idle parameters
+      Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
+        Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementDurationMax_ms,
+        Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementStraightFraction,
+        Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
+        Anki.Cozmo.LiveIdleAnimationParameter.LiftHeightVariability_mm
+      };
+      float[] paramValues = {
+        3.0f,
+        0.2f,
+        5.0f,
+        0.0f
+      };
+
+      _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
+      _CurrentRobot.SetHeadAngle(0.0f);
+      _CurrentRobot.SetLiftHeight(0.0f);
+    }
+
+    private bool ShouldEnableSubmitButton(List<LightCube> visibleCubes) {
+      bool shouldEnableSubmitButton = false;
+      float targetY = _WinningCode.NumCubes * CozmoUtil.kBlockLengthMM * 0.5f + kTargetAreaBuffer;
+      Vector3 testCubeCozmoPos;
+      bool cubesCloseToCozmo = true;
+      foreach (var cube in visibleCubes) {
+        testCubeCozmoPos = _CurrentRobot.WorldToCozmo(cube.WorldPosition);
+        // TODO: Depend on a BETTER row check, no proximity check?
+        // is cube close enough to the center of cozmo's view?
+        if (!(testCubeCozmoPos.y <= targetY && testCubeCozmoPos.y >= -targetY
+            && testCubeCozmoPos.z <= kCubeTooHighDistanceThreshold)) {
+          cubesCloseToCozmo = false;
+          break;
+        }
+      }
+
+      if (cubesCloseToCozmo && CheckRowAlignment(visibleCubes)) {
+        shouldEnableSubmitButton = true;
+      }
+      return shouldEnableSubmitButton;
+    }
+
+    private void DriveTowardsCubeMidpoint(List<LightCube> visibleCubes) {
+      // Grab the world position midpoint of the cubes
+      Vector3 totalDistance = Vector3.zero;
+      foreach (var cube in visibleCubes) {
+        totalDistance += cube.WorldPosition;
+      }
+      Vector3 midpointPosition = totalDistance / visibleCubes.Count;
+
+      // Get the vector from Cozmo to that midpoint
+      Vector3 facingCubes = midpointPosition - _CurrentRobot.WorldPosition;
+      // Convert that vector to radians
+      Quaternion facingCubesQuaternion = Quaternion.LookRotation(facingCubes, Vector3.up);
+
+      Vector3 targetPosition = midpointPosition - (facingCubes.normalized * kCubeDistance);
+
+      if (Vector3.Distance(targetPosition, _CurrentRobot.WorldPosition) > kDriveToCubeBuffer) {
+        _CurrentRobot.GotoPose(targetPosition, facingCubesQuaternion, HandleMoveToCubeCallback);
+        _IsDrivingToPose = true;
+      }
+      else {
+        // Check again in a few seconds
+        _SecondsSinceLastCubeAdjust = 0f;
+      }
+    }
+
+    private void DriveToCube(ObservedObject cube) {
+      _CurrentRobot.GotoObject(cube, kCubeDistance, HandleMoveToCubeCallback);
+      _IsDrivingToPose = true;
+    }
+
+    private void HandleMoveToCubeCallback(bool success) {
+      _SecondsSinceLastCubeAdjust = 0f;
+      _IsDrivingToPose = false;
     }
   }
 }
