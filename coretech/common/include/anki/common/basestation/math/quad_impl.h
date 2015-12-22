@@ -354,7 +354,7 @@ namespace Anki {
   Quadrilateral<2,T> GetBoundingQuad(std::vector<Point<2,T> >& points)
   {
 #if ANKICORETECH_USE_OPENCV
-    cv::vector<cv::Point2f> cvPoints(points.size());
+    std::vector<cv::Point2f> cvPoints(points.size());
     for(s32 i_corner = 0; i_corner < points.size(); ++i_corner) {
       cvPoints[i_corner].x = static_cast<f32>(points[i_corner].x());
       cvPoints[i_corner].y = static_cast<f32>(points[i_corner].y());

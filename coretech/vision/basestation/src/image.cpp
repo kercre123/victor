@@ -14,9 +14,9 @@
 #include "anki/vision/basestation/image_impl.h"
 
 #if ANKICORETECH_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
 #endif
 
 namespace Anki {

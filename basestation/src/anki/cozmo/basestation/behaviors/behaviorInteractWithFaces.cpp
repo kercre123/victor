@@ -25,7 +25,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui.hpp>
 
 #include "clad/externalInterface/messageEngineToGame.h"
 

@@ -13,7 +13,7 @@
 #ifndef __Anki_Coretech_Vision_Basestation_ColorPixelTypes_H__
 #define __Anki_Coretech_Vision_Basestation_ColorPixelTypes_H__
 
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 
 namespace Anki {
 namespace Vision {

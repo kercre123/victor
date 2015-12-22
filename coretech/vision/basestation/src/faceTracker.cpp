@@ -56,8 +56,8 @@
 #  error Unknown FACE_TRACKER_PROVIDER set!
 #endif
 
-#include <opencv2/objdetect/objdetect.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/objdetect.hpp>
+#include <opencv2/highgui.hpp>
 
 #include <list>
 

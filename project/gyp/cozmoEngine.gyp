@@ -47,6 +47,7 @@
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
     ],
 
+    # Make sure these are always _after_ our opencv_includes!
     'webots_includes': [
       '<(webots_path)/include/controller/cpp',
       '<(webots_path)/include/ode',
@@ -358,8 +359,8 @@
             'type': 'shared_library',
             'include_dirs': [
               '../../include',
-              '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',
@@ -411,10 +412,10 @@
             'target_name': 'webotsCtrlViz',
             'type': 'executable',
             'include_dirs': [
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
               '../../include',
               '../../robot/include',
-              '<@(webots_includes)',
-              '<@(opencv_includes)',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -463,11 +464,11 @@
             'target_name': 'webotsCtrlRobot',
             'type': 'executable',
             'include_dirs': [
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
               '../../robot/include',
               '../../include',
               '../../simulator/include',
-              '<@(webots_includes)',
-              '<@(opencv_includes)',
             ],
             'dependencies': [
               '<(ce-cti_gyp_path):ctiCommonRobot',
@@ -653,8 +654,8 @@
             'type': 'shared_library',
             'include_dirs': [
               '../../include',
-              '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',
@@ -704,8 +705,8 @@
             'include_dirs': [
               '../../include',
               '../../robot/include',
-              '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',
@@ -754,11 +755,11 @@
             'target_name': 'webotsCtrlRobot',
             'type': 'executable',
             'include_dirs': [
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
               '../../robot/include',
               '../../include',
               '../../simulator/include',
-              '<@(webots_includes)',
-              '<@(opencv_includes)',
             ],
             'dependencies': [
               '<(ce-cti_gyp_path):ctiCommonRobot',

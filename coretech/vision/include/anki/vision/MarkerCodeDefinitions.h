@@ -3,6 +3,8 @@
 #ifndef ANKI_COZMO_VISIONMARKERTYPES_H
 #define ANKI_COZMO_VISIONMARKERTYPES_H
 
+#include <map>
+
 namespace Anki {
   namespace Vision {
 

@@ -74,11 +74,11 @@
       'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
     },
     'include_dirs': [
+      '<@(opencv_includes)',
       '<(matlabRootDir)/extern/include',
       '../../include',
       '<(coretechDir)/common/include',
       '<(coretechDir)/vision/include',
-      '<@(opencv_includes)',
     ],
     'libraries': [
       '<@(opencv_libs)',

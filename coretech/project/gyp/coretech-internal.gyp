@@ -196,7 +196,7 @@
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
             'LIBRARY_SEARCH_PATHS': [
-                '<@(opencv_lib_search_path_mac_release)',
+                '<@(opencv_lib_search_path_mac_debug)',
             ],
            },
           'defines': [

@@ -18,8 +18,8 @@
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 #include <vector>
 #include <functional>
 
