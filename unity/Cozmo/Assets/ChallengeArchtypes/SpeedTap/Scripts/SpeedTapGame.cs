@@ -50,7 +50,7 @@ namespace SpeedTap {
     }
 
     private void HandleRoundAnimationDone(bool success) {
-    
+      _StateMachine.SetNextState(new SpeedTapWaitForCubePlace());
     }
 
     private void CheckRounds() {
@@ -62,6 +62,7 @@ namespace SpeedTap {
         }
         else {
           _CozmoRoundsWon++;
+          _StateMachine.SetNextState(new SteerState(-30.0f, -30.0f, 0.8f, new AnimationState(AnimationName.kMajorWin, HandleRoundAnimationDone)));
         }
 
         int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
