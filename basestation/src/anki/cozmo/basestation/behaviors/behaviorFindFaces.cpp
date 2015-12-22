@@ -93,7 +93,7 @@ IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot, double current
     {
       if (_currentDriveActionID == (uint32_t)ActionConstants::INVALID_TAG)
       {
-        _lookPauseTimer = currentTime_sec + (GetRNG().RandDbl() * (kPauseMax - kPauseMin) + kPauseMin);
+        _lookPauseTimer = currentTime_sec + (GetRNG().RandDbl() * (kPauseMax_sec - kPauseMin_sec) + kPauseMin_sec);
         _currentState = State::PauseToSee;
       }
       return Status::Running;

@@ -50,17 +50,18 @@ private:
     PauseToSee
   };
   
+  // Min angle to move relative to current, in degrees
   constexpr static float kPanMin = 25;
-  
+  // Max angle to move relative to current, in degrees
   constexpr static float kPanMax = 80;
-  
+  // Min absolute angle to move head to, in degrees
   constexpr static float kTiltMin = 17;
-  
+  // Max absolute angle to move head to, in degrees
   constexpr static float kTiltMax = 23;
-  
-  constexpr static float kPauseMin = 1;
-  
-  constexpr static float kPauseMax = 3.5;
+  // Min time to pause after moving
+  constexpr static float kPauseMin_sec = 1;
+  // Max time to pause after moving
+  constexpr static float kPauseMax_sec = 3.5;
   
   State _currentState = State::Inactive;
   uint32_t _currentDriveActionID; // Init in cpp to not have constants include in header
