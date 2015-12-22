@@ -19,8 +19,7 @@
 
 #include <list>
 #include <set>
-
-#include "anki/common/constantsAndMacros.h"
+#include "util/math/constantsAndMacros.h"
 
 #include "anki/vision/basestation/visionMarker.h"
 

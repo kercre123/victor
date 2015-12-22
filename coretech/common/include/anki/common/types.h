@@ -23,7 +23,7 @@
 #define ANKICORETECH_COMMON_TYPES_H_
 
 #include <stdint.h>
-#include "anki/common/constantsAndMacros.h"
+#include "util/math/constantsAndMacros.h"
 
 typedef uint8_t  u8;
 typedef int8_t   s8;

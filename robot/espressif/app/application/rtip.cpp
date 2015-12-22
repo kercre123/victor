@@ -55,11 +55,11 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
       relayQueued += length;
       while (relayQueued > 2) // Have a header +
       {
-        const uint16 size = relayBuffer[0] | ((relayBuffer[1] & 0x3f) << 8);
+        const uint16 size = relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8);
         if (relayQueued >= size)
         {
-          const bool reliable = relayBuffer[1] & 0x80;
-          const bool hot      = relayBuffer[1] & 0x40;
+          const bool reliable = relayBuffer[1] & RTIP_CLAD_MSG_RELIABLE_FLAG;
+          const bool hot      = relayBuffer[1] & RTIP_CLAD_MSG_HOT_FLAG;
           if (clientSendMessage(relayBuffer + 2, size, 0, reliable, hot) == false) //<-- GLOBAL_INVALID_TAG = 0, fighting include nightmare
           {
             os_printf("ERROR: Couldn't relay message from RTIP over wifi\r\n");
