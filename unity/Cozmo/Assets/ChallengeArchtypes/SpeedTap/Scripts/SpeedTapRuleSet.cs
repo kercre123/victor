@@ -5,7 +5,8 @@ namespace SpeedTap {
   public enum SpeedTapRuleSet {
     Default,
     NoRed,
-    LightCountNoColor
+    LightCountNoColor,
+    LightCountSameColorNoTap
   }
 
   public interface ISpeedTapRules {
