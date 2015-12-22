@@ -90,6 +90,13 @@ public class MinesweeperGame : GameBase {
   }
 
   public bool TryRevealSpace(int row, int col) {
+    if (row < 0 || col < 0 || row >= Rows || col >= Columns) {
+      return false;
+    }
+    if (_GridStatus[row, col] == CellStatus.Visible) {
+      return _Grid[row, col] != kMine;
+    }
+
     bool result = true;
     if (_Grid[row, col] == kMine) {
       // we never want to trigger a mine on the very first guess
@@ -106,6 +113,20 @@ public class MinesweeperGame : GameBase {
     if (OnGridCellUpdated != null) {
       OnGridCellUpdated(row, col, _Grid[row, col], _GridStatus[row, col]);
     }
+
+    // if you hit a space that has no mines around it, expand
+    // all spaces adjacent and diagonal to it.
+    if (_Grid[row, col] == 0) {
+      TryRevealSpace(row + 1, col);
+      TryRevealSpace(row - 1, col);
+      TryRevealSpace(row, col + 1);
+      TryRevealSpace(row, col - 1);
+      TryRevealSpace(row + 1, col + 1);
+      TryRevealSpace(row - 1, col + 1);
+      TryRevealSpace(row + 1, col - 1);
+      TryRevealSpace(row - 1, col - 1);
+    }
+
     return result;
   }
 

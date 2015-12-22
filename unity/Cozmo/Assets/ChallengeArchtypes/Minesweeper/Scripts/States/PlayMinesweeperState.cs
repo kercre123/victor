@@ -37,34 +37,42 @@ namespace Minesweeper {
     }
 
     private bool FindClosestFreeSpace(int row, int col, out int newRow, out int newCol) {
-      int maxRadius = Mathf.Max(_Game.Rows, _Game.Columns);
 
-      int rowCount = _Game.Rows;
-      int colCount = _Game.Columns;
+      int bestDistance = int.MaxValue;
+      int mostKnownNeighbors = 0;
+      newRow = -1;
+      newCol = -1;
 
-      for (int i = 0; i < maxRadius; i++) {
-        for (int k = -1; k < 2; k += 2) {
-          int tr = i * k + row;
-          if (tr >= 0 && tr < rowCount) {
-            for (int j = 0; j < i; j++) {
-              for (int l = -1; l < 2; l += 2) {
-                int tc = j * l + col;
-
-                if (tc >= 0 && tc < colCount) {
-                  if (_Game.GridStatus[tr, tc] == MinesweeperGame.CellStatus.Hidden) {
-                    newRow = tr;
-                    newCol = tc;
-                    return true;
-                  }
+      for (int i = 0; i < _Game.Rows; i++) {
+        for (int j = 0; j < _Game.Columns; j++) {
+          if (_Game.GridStatus[i, j] == MinesweeperGame.CellStatus.Hidden) {
+            int neighbors = 0;
+            for (int x = Mathf.Max(0, i - 1); x < Mathf.Min(i + 2, _Game.Rows); x++) {
+              for (int y = Mathf.Max(0, j - 1); y < Mathf.Min(j + 2, _Game.Columns); y++) {
+                if (_Game.GridStatus[x, y] == MinesweeperGame.CellStatus.Visible) {
+                  neighbors += 10 - _Game.Grid[x, y];
                 }
+                else if (_Game.GridStatus[x, y] == MinesweeperGame.CellStatus.Flagged) {
+                  neighbors++;
+                }
+              }
+            }
+            if (neighbors >= mostKnownNeighbors) {
+              
+              int distance = Mathf.Abs(i - row) + Mathf.Abs(j - col);
+
+              if (neighbors > mostKnownNeighbors || distance < bestDistance) {
+                newRow = i;
+                newCol = j;
+                bestDistance = distance;
+                mostKnownNeighbors = neighbors;
               }
             }
           }
         }
       }
-      newRow = -1;
-      newCol = -1;
-      return false;
+
+      return (newRow != -1);
     }
 
     private void WinAnimationComplete(bool success) {
@@ -133,7 +141,7 @@ namespace Minesweeper {
         return;
       }
       _StartTime = Time.time;
-      _CurrentRobot.SetLiftHeight(1f);
+      _CurrentRobot.SetLiftHeight(0f);
     }
 
     public override void Update() {
