@@ -11,6 +11,7 @@ public class MinesweeperGame : GameBase {
   private MinesweeperConfig _Config;
 
   public const int kMine = -1;
+  public const float kCellWidth = 100f;
 
   private bool _FirstGuess;
 
@@ -79,9 +80,9 @@ public class MinesweeperGame : GameBase {
       } while(_Grid[row, col] == kMine);
       _Grid[row, col] = kMine;
       for (int j = Mathf.Max(row - 1, 0); j < Mathf.Min(row + 2, _Config.Rows); j++) {
-        for (int k = Mathf.Max(col - 1, 0); k <= Mathf.Min(col + 2, _Config.Columns); k++) {
-          if (_Grid[row, col] != kMine) {
-            _Grid[row, col]++;
+        for (int k = Mathf.Max(col - 1, 0); k < Mathf.Min(col + 2, _Config.Columns); k++) {
+          if (_Grid[j, k] != kMine) {
+            _Grid[j, k]++;
           }
         }
       }
@@ -109,6 +110,9 @@ public class MinesweeperGame : GameBase {
   }
 
   public void ToggleFlag(int row, int col) {
+    if (_GridStatus[row, col] == CellStatus.Visible) {
+      return;
+    }
     _GridStatus[row, col] = 
         _GridStatus[row, col] == CellStatus.Hidden ? 
            CellStatus.Flagged : 
@@ -116,6 +120,17 @@ public class MinesweeperGame : GameBase {
     if (OnGridCellUpdated != null) {
       OnGridCellUpdated(row, col, _Grid[row, col], _GridStatus[row, col]);
     }
+  }
+
+  public bool IsComplete() {    
+    for (int i = 0; i < _Config.Rows; i++) {
+      for (int j = 0; j < _Config.Columns; j++) {
+        if (_Grid[i, j] >= 0 && _GridStatus[i, j] != CellStatus.Visible) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   protected override void CleanUpOnDestroy() {

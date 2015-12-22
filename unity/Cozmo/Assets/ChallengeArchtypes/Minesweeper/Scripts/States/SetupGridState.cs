@@ -9,8 +9,6 @@ namespace Minesweeper {
     private int _CurrentIndex;
     private int[] _CubeIds;
 
-    private const float kCellWidth = 100f;
-
     private Vector3[] _CubePositions;
 
     private Vector3 _CenterPosition;
@@ -26,7 +24,8 @@ namespace Minesweeper {
 
       var game = (MinesweeperGame)_StateMachine.GetGame();
 
-      var topRightCorner = new Vector3(game.Rows / 2f, game.Columns / 2f, 0) * kCellWidth;
+      // add the extra one so our cube goes on the corner
+      var topRightCorner = new Vector3((game.Columns + 1) / 2f, (game.Rows + 1) / 2f, 0) * MinesweeperGame.kCellWidth;
       var bottomRightCorner = new Vector3(topRightCorner.x, -topRightCorner.y, 0);
       var topLeftCorner = -bottomRightCorner;
       var bottomLeftCorner = -topRightCorner;
@@ -45,8 +44,7 @@ namespace Minesweeper {
       _CurrentIndex++;
 
       if (_CurrentIndex >= _CubeIds.Length || _CurrentIndex >= _CubePositions.Length) {
-        // GOTO Play State
-        //_StateMachine.SetNextState();
+        _StateMachine.SetNextState(new PlayMinesweeperState());
         return;
       }
 
@@ -80,10 +78,10 @@ namespace Minesweeper {
 
       var rotation = Quaternion.Euler(0, 0, angle);
 
-      _CurrentRobot.GotoPose(_Center + delta - deltaNorm * 100f, rotation, HandleRotateComplete);
+      _CurrentRobot.GotoPose(_Center + delta - deltaNorm * 100f, rotation, HandleGoToPoseComplete);
     }
 
-    protected void HandleRotateComplete(bool success) {
+    protected void HandleGoToPoseComplete(bool success) {
       _StateMachine.SetNextState(new WaitForCubeState(_Position, _CubeId));
     }
   }
@@ -96,6 +94,9 @@ namespace Minesweeper {
     private float _InBoundsTime = 0f;
 
     private const float kPositionTolerance = 30f;
+
+    private static ProceduralEyeParameters _LeftEye = ProceduralEyeParameters.MakeDefaultLeftEye();
+    private static ProceduralEyeParameters _RightEye = ProceduralEyeParameters.MakeDefaultRightEye();
 
     public WaitForCubeState(Vector3 position, int cubeId) {
       _Bounds = new Bounds(position + Vector3.forward * 0.5f * CozmoUtil.kBlockLengthMM, Vector3.one * kPositionTolerance);
@@ -115,12 +116,23 @@ namespace Minesweeper {
         }
       }
       else {
+
+        var cozmoTarget = _CurrentRobot.WorldToCozmo(_Bounds.center);
+        var cozmoBlock = _CurrentRobot.WorldToCozmo(cube.WorldPosition);
+
+        Vector2 facePosition = (cozmoTarget - cozmoBlock) * 0.2f;
+
+        // guide the player using cozmo's face
+        _CurrentRobot.DisplayProceduralFace(0, new Vector2(facePosition.y, facePosition.x), Vector2.one, _LeftEye, _RightEye);
+
         _InBoundsTime = 0f;
         cube.SetLEDs(Color.red);
       }
     }
 
     private void HandleCubeTapped() {
+      var cube = _CurrentRobot.LightCubes[_CubeId];
+      cube.SetLEDs(Color.white);
       _StateMachine.PopState();
     }
   }

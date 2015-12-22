@@ -37,9 +37,6 @@ public class TapCubeState : State {
 
   public override void Exit() {
     base.Exit();
-    if (_CubeStateDone != null) {
-      _CubeStateDone();
-    }
     LightCube.TappedAction -= HandleTap;
   }
 }

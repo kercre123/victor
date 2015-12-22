@@ -17,6 +17,7 @@ public class MinesweeperGridElement : MonoBehaviour {
   public Button FlagButton;
 
   private static Color[] _Colors = new Color[]{
+    Color.white,
     Color.blue,
     Color.green,
     Color.red,
