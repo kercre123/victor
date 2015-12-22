@@ -23,6 +23,10 @@ namespace InvestorDemo {
       InitializeMinigameObjects();
     }
 
+    protected override void InitializeView(ChallengeData data) {
+      CreateDefaultQuitButton();
+    }
+
     protected void InitializeMinigameObjects() {
       CurrentRobot.SetRobotVolume(1.0f);
 

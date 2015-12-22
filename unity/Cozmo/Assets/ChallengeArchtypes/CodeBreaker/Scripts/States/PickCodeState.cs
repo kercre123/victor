@@ -16,15 +16,17 @@ namespace CodeBreaker {
 
       // Update the UI
       CodeBreakerGame game = _StateMachine.GetGame() as CodeBreakerGame;
+      game.ShowReadySlide(LocalizationKeys.kCodeBreakerTextHowToPlayLong, 
+        LocalizationKeys.kCodeBreakerButtonPickingCode, null);
       game.DisableReadyButton();
-      game.SetReadyButtonText(Localization.Get(LocalizationKeys.kCodeBreakerButtonPickingCode));
+      game.ResetGuesses();
       _Code = game.GetRandomCode();
 
       // TODO: Play a think animation on Cozmo
       _CurrentRobot.SendAnimation(AnimationName.kEnjoyPattern, HandleAnimationDone);
 
       foreach (var cube in _TargetCubes) {
-        cube.SetFlashingLEDs(Color.white, 10, 0, 10);
+        cube.SetFlashingLEDs(Color.white);
       }
     }
 

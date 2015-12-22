@@ -237,7 +237,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#codeBreaker.text.howToPlayLong'
+  m_Text: '#codeBreaker.text.howToPlayShort'
 --- !u!114 &11451376
 MonoBehaviour:
   m_ObjectHideFlags: 1
