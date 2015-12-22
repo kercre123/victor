@@ -7,6 +7,7 @@ namespace CodeBreaker {
   public class EvaluateGuessState : State {
     private CubeCode _WinningCode;
     private CubeState[] _TargetCubeStates;
+    private List<CubeState> _SortedCubeState;
     private int _NumCorrectPosAndColor;
     private int _NumCorrectColor;
 
@@ -14,7 +15,8 @@ namespace CodeBreaker {
       _WinningCode = winningCubeCode;
       _TargetCubeStates = targetCubeState;
 
-      CubeCode guess = CreateGuessFromCubeState(_TargetCubeStates);
+      _SortedCubeState = SortCubeState(_TargetCubeStates);
+      CubeCode guess = CreateGuessFromCubeState(_SortedCubeState);
 
       // Count the number of correct color and right position
       _NumCorrectPosAndColor = 0;
@@ -38,13 +40,17 @@ namespace CodeBreaker {
           _NumCorrectColor += Mathf.Min(kvp.Value, numGuessesOfWinningColor);
         }
       }
-
-      Debug.LogError("Code: " + _WinningCode.ToString() + "     Guess: " + guess.ToString());
     }
 
     public override void Enter() {
       base.Enter();
+      _CurrentRobot.SendAnimation(AnimationName.kHeadDown, HandleCozmoThinkAnimationFinished);
+      _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_FRONT, Color.white);
+      _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_MIDDLE, Color.white);
+      _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_BACK, Color.white);
+    }
 
+    private void HandleCozmoThinkAnimationFinished(bool success) {
       // Set backpack lights
       CodeBreakerGame game = _StateMachine.GetGame() as CodeBreakerGame;
       LEDId ledToChange = LEDId.NUM_BACKPACK_LEDS;
@@ -63,32 +69,32 @@ namespace CodeBreaker {
         _CurrentRobot.SetBackpackBarLED(ledToChange, game.NotCorrectColor);
       }
 
+      while (ledToChange != LEDId.LED_BACKPACK_BACK) {
+        ledToChange = GetNextLEDId(ledToChange);
+        _CurrentRobot.SetBackpackBarLED(ledToChange, Color.black);
+      }
+
       // Play animation
       // TODO: Play reaction animation and leave current state based on game state
       if (_NumCorrectPosAndColor >= _WinningCode.NumCubes) {
-        _CurrentRobot.SendAnimation(AnimationName.kMajorFail, HandleCozmoLoseAnimationFinished);
+        DisplayCorrectCode(_SortedCubeState, _WinningCode, game.ValidColors);
+        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kMajorFail, LocalizationKeys.kCodeBreakerTextPlayerWins));
       }
-      else {
+      else if (game.AnyGuessesLeft()) {
         _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleTryAgainAnimationFinished);
       }
-    }
-
-    private void HandleCozmoLoseAnimationFinished(bool success) {
-      LightCube[] lightCubes = new LightCube[_TargetCubeStates.Length];
-      for (int i = 0; i < lightCubes.Length; i++) {
-        lightCubes[i] = _TargetCubeStates[i].cube;
+      else {
+        // Player lost
+        DisplayCorrectCode(_SortedCubeState, _WinningCode, game.ValidColors);
+        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kMajorWin, LocalizationKeys.kCodeBreakerTextCozmoWins));
       }
-      _StateMachine.SetNextState(new PickCodeState(lightCubes));
     }
 
     private void HandleTryAgainAnimationFinished(bool success) {
       _StateMachine.SetNextState(new WaitForGuessState(_WinningCode, _TargetCubeStates));
     }
 
-    private CubeCode CreateGuessFromCubeState(CubeState[] cubeStates) {
-      CubeCode guess = new CubeCode();
-      guess.cubeColorIndex = new int[cubeStates.Length];
-
+    private List<CubeState> SortCubeState(CubeState[] cubeStates) {
       // Evaluate guess from cubes in row
       List<CubeState> sortedCubes = new List<CubeState>();
       while (sortedCubes.Count != cubeStates.Length) {
@@ -113,6 +119,12 @@ namespace CodeBreaker {
         }
       }
 
+      return sortedCubes;
+    }
+
+    private CubeCode CreateGuessFromCubeState(List<CubeState> sortedCubes) {
+      CubeCode guess = new CubeCode();
+      guess.cubeColorIndex = new int[sortedCubes.Count];
       for (int i = 0; i < sortedCubes.Count; i++) {
         guess.cubeColorIndex[i] = sortedCubes[i].currentColorIndex;
       }
@@ -154,6 +166,20 @@ namespace CodeBreaker {
         throw new System.NotImplementedException();
       }
       return nextLed;
+    }
+
+    private void DisplayCorrectCode(List<CubeState> sortedCubes, CubeCode winningCode, Color[] validColors) {
+      for (int i = 0; i < sortedCubes.Count; i++) {
+        sortedCubes[i].cube.SetFlashingLEDs(validColors[winningCode.cubeColorIndex[i]]);
+      }
+    }
+
+    private LightCube[] GetLightCubes() {
+      LightCube[] lightCubes = new LightCube[_TargetCubeStates.Length];
+      for (int i = 0; i < lightCubes.Length; i++) {
+        lightCubes[i] = _TargetCubeStates[i].cube;
+      }
+      return lightCubes;
     }
   }
 }

@@ -170,8 +170,14 @@ namespace SpeedTap {
       return farthest as LightCube;
     }
 
-    private static ISpeedTapRules GetRules(SpeedTap.SpeedTapRuleSet ruleSet) {
+    private static ISpeedTapRules GetRules(SpeedTapRuleSet ruleSet) {
       switch (ruleSet) {
+      case SpeedTapRuleSet.NoRed:
+        return new NoRedSpeedTapRules();
+      case SpeedTapRuleSet.LightCountSameColorNoTap:
+        return new LightCountSameColorNoTap();
+      case SpeedTapRuleSet.LightCountNoColor:
+        return new LightCountNoColorSpeedTapRules();
       default:
         return new DefaultSpeedTapRules();
       }

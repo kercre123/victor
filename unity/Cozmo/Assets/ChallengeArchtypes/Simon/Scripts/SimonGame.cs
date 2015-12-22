@@ -11,6 +11,7 @@ namespace Simon {
     private List<int> _CurrentIDSequence = new List<int>();
 
     private SimonGameConfig _Config;
+
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
@@ -24,16 +25,12 @@ namespace Simon {
       NumSegments = MaxSequenceLength;
       MaxAttempts = _Config.MaxAttempts;
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new CozmoSetSimonState(_Config.MinSequenceLength), 2, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new WaitForNextTurnState(_Config.MinSequenceLength), 2, true, null);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
-    }
-
-    private void InitialCubesDone() {
-
     }
 
     public void PickNewSequence(int sequenceLength) {

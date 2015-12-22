@@ -1180,7 +1180,7 @@ public class Robot : IDisposable {
     SetBackpackLED((int)ledId, colorUint);
   }
 
-  public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs, uint offDurationMs, uint transitionDurationMs) {
+  public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionDurationMs = 0) {
     uint colorUint = CozmoPalette.ColorToUInt(color);
     SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }
