@@ -160,6 +160,19 @@ namespace Vision {
   }
 #endif
  
+  Image& Image::Threshold(u8 value)
+  {
+    get_CvMat_() = get_CvMat_() > value;
+    return *this;
+  }
+  
+  Image  Image::Threshold(u8 value) const
+  {
+    Image thresholdedImage(*this);
+    return thresholdedImage.Threshold(value);
+  }
+
+  
   s32 Image::GetConnectedComponents(Array2d<s32>& labelImage,
                                     std::vector<std::vector< Point2<s32> > >& regionPoints) const
   {

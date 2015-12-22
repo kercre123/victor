@@ -10,10 +10,14 @@
  **/
 
 #include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/vision/basestation/image.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "util/logging/logging.h"
-#include "opencv2/highgui/highgui.hpp"
+
+#include <opencv2/highgui.hpp>
+
 #include <sys/stat.h>
 #include <errno.h>
 #include <dirent.h>
@@ -154,7 +158,7 @@ namespace Cozmo {
                   
                   // Read the image
                   const std::string fullFilename(fullDirName + PATH_SEPARATOR + frameEntry->d_name);
-                  cv::Mat img = cv::imread(fullFilename, CV_LOAD_IMAGE_GRAYSCALE);
+                  cv::Mat_<u8> img = cv::imread(fullFilename, CV_LOAD_IMAGE_GRAYSCALE);
                   
                   if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
@@ -204,7 +208,7 @@ namespace Cozmo {
     }
   }
   
-  Result FaceAnimationManager::AddImage(const std::string& animName, const cv::Mat& faceImg)
+  Result FaceAnimationManager::AddImage(const std::string& animName, const Vision::Image& faceImg)
   {
     AvailableAnim* anim = GetAnimationByName(animName);
     if(nullptr == anim) {
@@ -212,7 +216,7 @@ namespace Cozmo {
     }
     
     anim->rleFrames.push_back({});
-    CompressRLE(faceImg > 128, anim->rleFrames.back());
+    CompressRLE(faceImg.Threshold(128), anim->rleFrames.back());
     return RESULT_OK;
   }
 
@@ -266,17 +270,17 @@ namespace Cozmo {
     }
   } // GetFrame()
   
-  Result FaceAnimationManager::CompressRLE(const cv::Mat& img, std::vector<u8>& rleData)
+  Result FaceAnimationManager::CompressRLE(const Vision::Image& img, std::vector<u8>& rleData)
   {
     // Frame is in 8-bit RLE format:
     // 00xxxxxx   CLEAR COLUMN (x = count)
     // 01xxxxxx   REPEAT COLUMN (x = count)
     // 1xxxxxyy   RLE PATTERN (x = count, y = pattern)
     
-    if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
+    if(img.GetNumRows() != IMAGE_HEIGHT || img.GetNumCols() != IMAGE_WIDTH) {
       PRINT_NAMED_ERROR("FaceAnimationManager.CompressRLE",
                         "Expected %dx%d image but got %dx%d image",
-                        IMAGE_WIDTH, IMAGE_HEIGHT, img.cols, img.rows);
+                        IMAGE_WIDTH, IMAGE_HEIGHT, img.GetNumCols(), img.GetNumRows());
       return RESULT_FAIL;
     }
 
@@ -287,7 +291,7 @@ namespace Cozmo {
 
     // Convert image into 1bpp column major format
     for(s32 i=0; i<IMAGE_HEIGHT; i++) {
-      const u8* pixels = img.ptr(i);
+      const u8* pixels = img.GetRow(i);
       
       for(s32 j=0; j<IMAGE_WIDTH; j++) {
         if (!*(pixels++)) { continue ; }
@@ -354,12 +358,12 @@ namespace Cozmo {
   
   
   void FaceAnimationManager::DrawFaceRLE(const std::vector<u8>& rleData,
-                                         cv::Mat_<u8>& outImg)
+                                         Vision::Image& outImg)
   {
-    outImg.create(FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH);
+    outImg = Vision::Image(FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH);
     
     // Clear the display
-    outImg.setTo(0);
+    outImg.FillWith(0);
     
     uint64_t decodedImg[FaceAnimationManager::IMAGE_WIDTH];
     FaceDisplayDecode(rleData.data(), FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH, decodedImg);

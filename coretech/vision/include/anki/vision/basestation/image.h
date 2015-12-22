@@ -110,6 +110,10 @@ namespace Vision {
     // Reference counting assignment (does not copy):
     Image& operator= (const ImageBase<u8> &other);
     
+    // Sets all pixels > value to 255 and all values <= value to 0.
+    Image& Threshold(u8 value);
+    Image  Threshold(u8 value) const;
+    
     s32 GetConnectedComponents(Array2d<s32>& labelImage,
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
     

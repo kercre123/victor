@@ -2,8 +2,9 @@
 
 #include "anki/vision/basestation/trackedFace.h"
 
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
 namespace Anki {
 namespace Cozmo {
@@ -66,10 +67,10 @@ namespace Cozmo {
   } // GetTransformationMatrix()
 
   
-  void ProceduralFace::DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const
+  void ProceduralFace::DrawEye(WhichEye whichEye, Vision::Image& faceImg) const
   {
-    assert(faceImg.rows == ProceduralFace::HEIGHT &&
-           faceImg.cols == ProceduralFace::WIDTH);
+    assert(faceImg.GetNumRows() == ProceduralFace::HEIGHT &&
+           faceImg.GetNumCols() == ProceduralFace::WIDTH);
     
     const s32 eyeWidth  = NominalEyeWidth;
     const s32 eyeHeight = NominalEyeHeight;
@@ -213,22 +214,23 @@ namespace Cozmo {
     }
 
     // Draw eye
-    cv::fillConvexPoly(faceImg, eyePoly, 255, 4);
+    cv::fillConvexPoly(faceImg.get_CvMat_(), eyePoly, 255, 4);
     
     // Black out lids
     if(!upperLidPoly.empty()) {
-      cv::fillConvexPoly(faceImg, upperLidPoly, 0, 4);
+      cv::fillConvexPoly(faceImg.get_CvMat_(), upperLidPoly, 0, 4);
     }
     if(!lowerLidPoly.empty()) {
-      cv::fillConvexPoly(faceImg, lowerLidPoly, 0, 4);
+      cv::fillConvexPoly(faceImg.get_CvMat_(), lowerLidPoly, 0, 4);
     }
     
   } // DrawEye()
   
-  cv::Mat_<u8> ProceduralFace::GetFace() const
+  Vision::Image ProceduralFace::GetFace() const
   {
-    cv::Mat_<u8> faceImg(HEIGHT, WIDTH);
-    faceImg.setTo(0);
+    Vision::Image faceImg(HEIGHT,WIDTH);
+    
+    faceImg.FillWith(0);
     
     DrawEye(WhichEye::Left, faceImg);
     DrawEye(WhichEye::Right, faceImg);
@@ -242,12 +244,12 @@ namespace Cozmo {
                                                            static_cast<f32>(WIDTH)*0.5f,
                                                            static_cast<f32>(HEIGHT)*0.5f);
       
-      cv::warpAffine(faceImg, faceImg, W.get_CvMatx_(), cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
+      cv::warpAffine(faceImg.get_CvMat_(), faceImg.get_CvMat_(), W.get_CvMatx_(), cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
     }
 
     // Apply interlacing / scanlines at the end
     for(s32 i=_firstScanLine; i<HEIGHT; i+=2) {
-      faceImg.row(i).setTo(0);
+      memset(faceImg.GetRow(i), 0, WIDTH);
     }
 
     return faceImg;
