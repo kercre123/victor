@@ -12,6 +12,7 @@ namespace Minesweeper {
     public override void Enter() {
       base.Enter();
       _Game = (MinesweeperGame)_StateMachine.GetGame();
+      _Game.HideHowToPlaySlide();
       _Game.SetupPanel();
     }
 

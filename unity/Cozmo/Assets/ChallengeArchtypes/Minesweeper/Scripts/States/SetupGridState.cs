@@ -24,6 +24,8 @@ namespace Minesweeper {
 
       var game = (MinesweeperGame)_StateMachine.GetGame();
 
+      game.ShowHowToPlaySlide("SetupHelp");
+
       // add the extra one so our cube goes on the corner
       var topRightCorner = new Vector3((game.Columns + 1) / 2f, (game.Rows + 1) / 2f, 0) * MinesweeperGame.kCellWidth;
       var bottomRightCorner = new Vector3(topRightCorner.x, -topRightCorner.y, 0);
@@ -120,10 +122,10 @@ namespace Minesweeper {
         var cozmoTarget = _CurrentRobot.WorldToCozmo(_Bounds.center);
         var cozmoBlock = _CurrentRobot.WorldToCozmo(cube.WorldPosition);
 
-        Vector2 facePosition = (cozmoTarget - cozmoBlock) * 0.2f;
+        Vector2 facePosition = (cozmoTarget - cozmoBlock) * 0.25f;
 
         // guide the player using cozmo's face
-        _CurrentRobot.DisplayProceduralFace(0, new Vector2(facePosition.y, facePosition.x), Vector2.one, _LeftEye, _RightEye);
+        _CurrentRobot.DisplayProceduralFace(0, new Vector2(-facePosition.y, facePosition.x), Vector2.one, _LeftEye, _RightEye);
 
         _InBoundsTime = 0f;
         cube.SetLEDs(Color.red);
