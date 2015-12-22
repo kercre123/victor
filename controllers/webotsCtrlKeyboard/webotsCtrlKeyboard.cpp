@@ -17,7 +17,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorchooserTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
