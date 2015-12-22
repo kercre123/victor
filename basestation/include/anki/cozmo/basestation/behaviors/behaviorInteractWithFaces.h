@@ -154,7 +154,7 @@ namespace Cozmo {
     constexpr static float kTooFarDistance_mm = kCloseEnoughDistance_mm + kFaceBufferDistance_mm;
     
     // Distance to trigger Cozmo to get further away from the focused face
-    constexpr static float kTooCloseDistance_mm = 200;
+    constexpr static float kTooCloseDistance_mm = 260;
     
     // Maximum frequency that Cozmo should glance down when interacting with faces (could be longer if he has a stable
     // face to focus on; this interval shouln't interrupt his interaction)
