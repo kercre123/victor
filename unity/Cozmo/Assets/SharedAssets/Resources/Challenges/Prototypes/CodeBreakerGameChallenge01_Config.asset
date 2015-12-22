@@ -12,10 +12,5 @@ MonoBehaviour:
   m_Name: CodeBreakerGameChallenge01_Config
   m_EditorClassIdentifier: Assembly-CSharp::CodeBreakerGameConfig
   NumCubesInCode: 2
-  ValidCodeColors:
-  - {r: 1, g: 1, b: 1, a: 1}
-  - {r: 0, g: 0, b: 1, a: 1}
-  - {r: 1, g: 0, b: 0, a: 1}
-  - {r: 0, g: 1, b: 0, a: 1}
-  - {r: 1, g: 1, b: 0, a: 1}
-  - {r: 1, g: 0, b: 1, a: 0}
+  NumCodeColors: 6
+  NumGuesses: 5

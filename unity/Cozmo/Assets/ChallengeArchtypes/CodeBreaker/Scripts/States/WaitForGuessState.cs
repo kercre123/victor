@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo.Audio;
 
 namespace CodeBreaker {
   public class WaitForGuessState : State {
@@ -49,6 +50,22 @@ namespace CodeBreaker {
 
       // TODO: Play intermittent "impatient" animation? Use mood manager?
       _CurrentRobot.SetIdleAnimation("_LIVE_");
+      // set idle parameters
+      Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
+        Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementDurationMax_ms,
+        Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementStraightFraction,
+        Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
+        Anki.Cozmo.LiveIdleAnimationParameter.LiftHeightVariability_mm
+      };
+      float[] paramValues = {
+        3.0f,
+        0.2f,
+        5.0f,
+        0.0f
+      };
+      _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
+      _CurrentRobot.SetHeadAngle(0.0f);
+      _CurrentRobot.SetLiftHeight(0.0f);
 
       _Game.ShowGamePanel(HandleSubmitButtonClicked);
       _Game.EnableSubmitButton = false;
@@ -112,6 +129,7 @@ namespace CodeBreaker {
 
     private void OnBlockTapped(int id, int times) {
       // If the id matches change the index and color, depending on the number of times tapped
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
       foreach (var cubeState in _TargetCubeStates) {
         if (cubeState.cube.ID == id) {
           cubeState.currentColorIndex += times;

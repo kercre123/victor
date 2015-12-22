@@ -31,11 +31,20 @@ public static class AnimationName {
   public const string kSurprise = "ID_reactTppl_Surprise";
   public const string kThrustFwd = "ID_offCharger_thrustFwd";
   public const string kccGotcha = "ID_catCatch_gotcha";
-  public const string kHappyA = "ID_catCatch_happyA";
+  public const string kHappyA = "ID_catCatch_happyB";
   public const string kccMisch = "ID_catCatch_mischievous";
   public const string kreactToMotion = "ID_MotionFollow_ReactToMotion";
   public const string kByeBye = "ID_ByeBye";
 
   public const string kIdleBrickout = "ID_idle_brickout";
+  public const string kIdleHumming = "ID_idle_humming";
+
+  public const string kCelebration2 = "Celebration2";
+
+  public const string kShiver = "ID_test_shiver";
+  public const string kOpenEyesTwo = "ID_wake_openEyes";
+
+  public const string kCodeBreakerThinking = "MM_thinking";
+  public const string kCodeBreakerNewIdea = "MM_newIdea";
 }
 

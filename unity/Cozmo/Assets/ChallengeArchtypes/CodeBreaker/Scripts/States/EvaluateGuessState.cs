@@ -44,7 +44,7 @@ namespace CodeBreaker {
 
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation(AnimationName.kHeadDown, HandleCozmoThinkAnimationFinished);
+      _CurrentRobot.SendAnimation(AnimationName.kCodeBreakerThinking, HandleCozmoThinkAnimationFinished);
       _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_FRONT, Color.white);
       _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_MIDDLE, Color.white);
       _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_BACK, Color.white);
@@ -81,12 +81,37 @@ namespace CodeBreaker {
         _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kMajorFail, LocalizationKeys.kCodeBreakerTextPlayerWins));
       }
       else if (game.AnyGuessesLeft()) {
-        _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleTryAgainAnimationFinished);
+        if (_NumCorrectPosAndColor == _WinningCode.NumCubes - 1) {
+          // Player really close to winning; be sad
+          if (_NumCorrectColor >= _WinningCode.NumCubes * 0.5f) {
+            _CurrentRobot.SendAnimation(AnimationName.kSurprise, HandleTryAgainAnimationFinished);
+          }
+          else {
+            _CurrentRobot.SendAnimation(AnimationName.kShiver, HandleTryAgainAnimationFinished);
+          }
+        }
+        else if (_NumCorrectPosAndColor >= _WinningCode.NumCubes * 0.5f) {
+          // Player halfway there
+          if (_NumCorrectColor >= _WinningCode.NumCubes * 0.5f) {
+            _CurrentRobot.SendAnimation(AnimationName.kOpenEyesTwo, HandleTryAgainAnimationFinished);
+          }
+          else {
+            _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleTryAgainAnimationFinished);
+          }
+        }
+        else {
+          if (_NumCorrectColor >= _WinningCode.NumCubes * 0.5f) {
+            _CurrentRobot.SendAnimation(AnimationName.kHappyA, HandleTryAgainAnimationFinished);
+          }
+          else {
+            _CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleTryAgainAnimationFinished);
+          }
+        }
       }
       else {
         // Player lost
         DisplayCorrectCode(_SortedCubeState, _WinningCode, game.ValidColors);
-        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kMajorWin, LocalizationKeys.kCodeBreakerTextCozmoWins));
+        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kCelebration2, LocalizationKeys.kCodeBreakerTextCozmoWins));
       }
     }
 

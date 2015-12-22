@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo.Audio;
 
 namespace CodeBreaker {
   public class PickCodeState : State {
@@ -22,15 +23,21 @@ namespace CodeBreaker {
       game.ResetGuesses();
       _Code = game.GetRandomCode();
 
-      // TODO: Play a think animation on Cozmo
-      _CurrentRobot.SendAnimation(AnimationName.kEnjoyPattern, HandleAnimationDone);
+      // TODO: Turn towards the center of the cubes to emulate "thinking"
+      // Play a think animation on Cozmo
+      _CurrentRobot.SendAnimation(AnimationName.kCodeBreakerThinking, HandleThinkAnimationDone);
 
       foreach (var cube in _TargetCubes) {
         cube.SetFlashingLEDs(Color.white);
       }
     }
 
-    public void HandleAnimationDone(bool success) {
+    public void HandleThinkAnimationDone(bool success) {
+      _CurrentRobot.SendAnimation(AnimationName.kCodeBreakerNewIdea, HandleAhaAnimationDone);
+    }
+
+    public void HandleAhaAnimationDone(bool success) {
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_01);
       // Move on to the next state
       _StateMachine.SetNextState(new WaitForGuessState(_Code, _TargetCubes));
     }
