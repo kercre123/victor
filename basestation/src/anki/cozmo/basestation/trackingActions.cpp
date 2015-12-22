@@ -168,7 +168,8 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     // Play sound if it's time and either angle was big enough
     if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
-      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation));
+      // Queue sound to only play if nothing else is playing
+      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation, 1, false));
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }

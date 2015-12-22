@@ -67,7 +67,7 @@ namespace Cozmo {
                          "Already streaming %s, will not interrupt with %s",
                          _streamingAnimation->GetName().c_str(),
                          anim->GetName().c_str());
-        return 0;
+        return NotAnimatingTag;
       }
       
       using namespace ExternalInterface;
@@ -85,7 +85,7 @@ namespace Cozmo {
     _streamingAnimation = anim;
     
     if(_streamingAnimation == nullptr) {
-      return 0;
+      return NotAnimatingTag;
     } else {
       
       IncrementTagCtr(_tagCtr);
