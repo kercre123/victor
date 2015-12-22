@@ -269,23 +269,7 @@ namespace Cozmo {
 
         CanvasGroup slidePrefab = slideData.slidePrefab;
         // If a slide already exists, play a transition out tween on it
-        if (_CurrentSlide != null) {
-          // Set the instance to transition out slot
-          _TransitionOutSlide = _CurrentSlide;
-          _CurrentSlide = null;
-          _CurrentSlideName = null;
-
-          _SlideOutTween = DOTween.Sequence();
-          _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
-            -100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
-          _SlideOutTween.Join(_TransitionOutSlide.DOFade(0, 0.25f));
-
-          // At the end of the tween destroy the out slide
-          _SlideOutTween.OnComplete(() => {
-            Destroy(_TransitionOutSlide.gameObject);
-          });
-          _SlideOutTween.Play();
-        }
+        HideHowToPlaySlide();
 
         // Create the new slide underneath the container
         GameObject newSlideObj = UIManager.CreateUIElement(slidePrefab.gameObject, _HowToSlideContainer);
@@ -303,6 +287,26 @@ namespace Cozmo {
         return newSlideObj;
       }
 
+
+      public void HideHowToPlaySlide() {
+        if (_CurrentSlide != null) {
+          // Set the instance to transition out slot
+          _TransitionOutSlide = _CurrentSlide;
+          _CurrentSlide = null;
+          _CurrentSlideName = null;
+
+          _SlideOutTween = DOTween.Sequence();
+          _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
+            -100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
+          _SlideOutTween.Join(_TransitionOutSlide.DOFade(0, 0.25f));
+
+          // At the end of the tween destroy the out slide
+          _SlideOutTween.OnComplete(() => {
+            Destroy(_TransitionOutSlide.gameObject);
+          });
+          _SlideOutTween.Play();
+        }
+      }
       #endregion
     }
   }

@@ -306,6 +306,10 @@ public abstract class GameBase : MonoBehaviour {
     return slideObject;
   }
 
+  public void HideHowToPlaySlide() {
+    _SharedMinigameViewInstance.HideHowToPlaySlide();
+  }
+
   #endregion
 }
 

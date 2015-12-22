@@ -165,6 +165,15 @@
     "selfieGame01.description" : {
         "translation" : "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
     },
+    "minesweeper01.title" : {
+        "translation" : "Minesweeper"
+    },
+    "minesweeper01.subtitle" : {
+        "translation" : "Minesweeper Subtitle"
+    },
+    "minesweeper01.description" : {
+        "translation" : "These mines aren't going to sweep themselves."
+    },
     "investorDemo.investorDemoFull" : {
         "translation" : "Full"
     },
