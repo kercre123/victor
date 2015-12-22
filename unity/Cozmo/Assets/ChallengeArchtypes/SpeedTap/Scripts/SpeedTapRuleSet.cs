@@ -4,7 +4,8 @@ using System.Collections;
 namespace SpeedTap {
   public enum SpeedTapRuleSet {
     Default,
-    NoRed
+    NoRed,
+    LightCountNoColor
   }
 
   public interface ISpeedTapRules {

@@ -174,6 +174,8 @@ namespace SpeedTap {
       switch (ruleSet) {
       case SpeedTap.SpeedTapRuleSet.NoRed:
         return new NoRedSpeedTapRules();
+      case SpeedTapRuleSet.LightCountNoColor:
+        return new LightCountNoColorSpeedTapRules();
       default:
         return new DefaultSpeedTapRules();
       }
