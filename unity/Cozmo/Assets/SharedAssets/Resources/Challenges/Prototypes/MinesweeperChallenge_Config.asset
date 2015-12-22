@@ -11,6 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df40c0dab77ed40e2b27649a8d5cb222, type: 3}
   m_Name: MinesweeperChallenge_Config
   m_EditorClassIdentifier: 
-  Rows: 8
-  Columns: 8
-  Mines: 10
+  Rows: 5
+  Columns: 5
+  Mines: 6

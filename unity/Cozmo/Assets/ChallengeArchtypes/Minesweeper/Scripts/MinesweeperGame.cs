@@ -11,11 +11,12 @@ public class MinesweeperGame : GameBase {
   private MinesweeperConfig _Config;
 
   public const int kMine = -1;
-  public const float kCellWidth = 100f;
+  public const float kCellWidth = 45f;
 
   private bool _FirstGuess;
 
   private int[,] _Grid;
+
   public int[,] Grid { get { return _Grid; } }
 
   public enum CellStatus {
