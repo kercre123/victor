@@ -795,7 +795,7 @@ namespace Anki
             const f32 signFlip = -1.f;
 #else
             const f32 outerInc = 0.5f*(templateSize_mm.x + templateSize_mm.y) / static_cast<f32>(numFiducialSamplesPerEdge-1);
-            const f32 innerInc = 0.5f*(templateHalfWidth + innerTemplateHalfHeight) / static_cast<f32>(numFiducialSamplesPerEdge-1);
+            const f32 innerInc = 0.5f*(innerTemplateWidth + innerTemplateHeight) / static_cast<f32>(numFiducialSamplesPerEdge-1);
             const f32 signFlip = 1.f;
 #endif
             TemplateSample * restrict pOuterTop = this->templateSamplePyramid[iScale].Pointer(0);
@@ -812,22 +812,22 @@ namespace Anki
             f32 inner = -innerTemplateHalfWidth;
 
             // Top/Bottom Edges' Left Corners:
-            pOuterTop[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfWidth,
+            pOuterTop[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfHeight,
               -derivMagnitude, -derivMagnitude,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerTop[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfWidth,
+            pInnerTop[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfHeight,
               derivMagnitude, derivMagnitude,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
 
-            pOuterBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfWidth*signFlip,
+            pOuterBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfHeight*signFlip,
               -derivMagnitude, derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfWidth*signFlip,
+            pInnerBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfHeight*signFlip,
               derivMagnitude, -derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
@@ -860,22 +860,22 @@ namespace Anki
               iSample++, outer+=outerInc, inner += innerInc)
             {
               // Top / Bottom Edges
-              pOuterTop[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfWidth,
+              pOuterTop[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfHeight,
                 0.f, -derivMagnitude,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pInnerTop[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfWidth,
+              pInnerTop[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfHeight,
                 0.f, derivMagnitude,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pOuterBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfWidth*signFlip,
+              pOuterBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfHeight*signFlip,
                 0.f, derivMagnitude*signFlip,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pInnerBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfWidth*signFlip,
+              pInnerBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfHeight*signFlip,
                 0.f, -derivMagnitude*signFlip,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
@@ -904,22 +904,22 @@ namespace Anki
 
             // Top/Bottom Edges' Right Corners:
 
-            pInnerTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfWidth,
+            pInnerTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfHeight,
               -derivMagnitude, derivMagnitude,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
 
-            pOuterTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfWidth,
+            pOuterTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfHeight,
               derivMagnitude, -derivMagnitude,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfWidth*signFlip,
+            pInnerBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfHeight*signFlip,
               -derivMagnitude, -derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
 
-            pOuterBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfWidth*signFlip,
+            pOuterBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfHeight*signFlip,
               derivMagnitude, derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
@@ -977,7 +977,7 @@ namespace Anki
             interiorHalfWidth  = 0.5f*templateSize_mm.x*(1.f - 4.f*fiducialSquareThicknessFraction.x);
             interiorHalfHeight = 0.5f*templateSize_mm.y*(1.f - 4.f*fiducialSquareThicknessFraction.y);
 
-            const Point2f fiducialSquareCenter(0.5f * (1.f - fiducialSquareThicknessFraction.y)*templateSize_mm.x,
+            const Point2f fiducialSquareCenter(0.5f * (1.f - fiducialSquareThicknessFraction.x)*templateSize_mm.x,
                                                0.5f * (1.f - fiducialSquareThicknessFraction.y)*templateSize_mm.y);
             const Point2f gapCenter(0.5f * (1.f - 3.f*fiducialSquareThicknessFraction.x)*templateSize_mm.x,
                                     0.5f * (1.f - 3.f*fiducialSquareThicknessFraction.y)*templateSize_mm.y);
