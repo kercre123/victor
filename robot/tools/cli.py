@@ -6,7 +6,7 @@ Python command line interface for Robot over the network
 import sys, os, socket, threading, time, select, math, muencode
 
 if sys.version_info.major < 3:
-    sys.stdout.write("Python2.x is depricated\r\n")
+    sys.stdout.write("Python2.x is depricated{}".format(os.linesep))
 
 TOOLS_DIR = os.path.join("tools")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
@@ -31,7 +31,7 @@ class CozmoCLI(IDataReceiver):
     "A class for managing the CLI REPL"
 
     def __init__(self, unreliableTransport, robotAddress, statePrintInterval, printAll=False, stateIntervalStats=False):
-        sys.stdout.write("Connecting to robot at: %s\n" % repr(robotAddress))
+        sys.stdout.write("Connecting to robot at: {}{}".format(repr(robotAddress), os.linesep))
         unreliableTransport.OpenSocket()
         self.transport = ReliableTransport(unreliableTransport, self)
         self.robot = robotAddress
@@ -53,10 +53,10 @@ class CozmoCLI(IDataReceiver):
         raise Exception("CozmoCLI wasn't expecing a connection request")
 
     def OnConnected(self, sourceAddress):
-        sys.stdout.write("Connected to robot at %s\r\n" % repr(sourceAddress))
+        sys.stdout.write("Connected to robot at {}{}".format(repr(sourceAddress), os.linesep))
 
     def OnDisconnected(self, sourceAddress):
-        sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
+        sys.stdout.write("Lost connection to robot at {}{}".format(repr(sourceAddress), os.linesep))
 
     def ReceiveData(self, buffer, sourceAddress):
         now = time.time()
@@ -65,17 +65,17 @@ class CozmoCLI(IDataReceiver):
             sys.stdout.write("ROBOT: " + msg.printText.text)
         elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:
             sys.stdout.write(repr(msg.state))
-            sys.stdout.write("\r\n")
+            sys.stdout.write(os.linesep)
             sys.stdout.flush()
             self.lastStatePrintTime = now
         elif self.lastStateRXTimes is not None and msg.tag == msg.Tag.state:
-            sys.stdout.write("{0}: {1:0.2f}\r\n".format(msg.tag_name, msg.state.timestamp-self.lastStateRXTimes[0]))
+            sys.stdout.write("{0}: {1:0.2f}ms{2}".format(msg.tag_name, msg.state.timestamp-self.lastStateRXTimes[0], os.linesep))
             self.lastStateRXTimes[0] = msg.state.timestamp
         elif self.lastStateRXTimes is not None and msg.tag == msg.Tag.animState:
-            sys.stdout.write("{0}: {1:0.2f}ms\r\n".format(msg.tag_name, (msg.animState.timestamp-self.lastStateRXTimes[1])/1000.0))
+            sys.stdout.write("{0}: {1:0.2f}ms{2}".format(msg.tag_name, (msg.animState.timestamp-self.lastStateRXTimes[1])/1000.0, os.linesep))
             self.lastStateRXTimes[1] = msg.animState.timestamp
         elif self.printAll:
-            sys.stdout.write("{}\r\n".format(msg.tag_name))
+            sys.stdout.write("{}{}".format(msg.tag_name, os.linesep))
         
 
     def send(self, msg):
@@ -83,7 +83,7 @@ class CozmoCLI(IDataReceiver):
 
     def helpFtn(self, *args):
         "Prints out help text on CLI functions"
-        sys.stdout.write("TODO Implement help function :-(\r\n")
+        sys.stdout.write("TODO Implement help function :-(" + os.linesep)
         return True
 
     def exitFtn(self, *args):
@@ -98,9 +98,9 @@ class CozmoCLI(IDataReceiver):
         try:
             freq = float(eval(args[0]))
         except:
-            sys.stderr.write("tone requres a floating point frequencey argument\r\n")
+            sys.stderr.write("tone requres a floating point frequencey argument" + os.linesep)
             return False
-        sys.stdout.write("Tone frequency {:d}Hz\r\n".format(int(freq)))
+        sys.stdout.write("Tone frequency {:d}Hz{}".format(int(freq), os.linesep))
         try:
             duration = float(eval(args[1]))
         except:
@@ -152,11 +152,11 @@ class CozmoCLI(IDataReceiver):
         sentTime = SAMPLES_PER_MESSAGE / SAMPLES_PER_SECOND
         while sentTime < duration:
             sentTime += SAMPLES_PER_MESSAGE / SAMPLES_PER_SECOND
-            sys.stdout.write("{:f} ({:f})\r\n".format(sentTime, duration))
+            sys.stdout.write("{:f} ({:f}){}".format(sentTime, duration, os.linesep))
             self.send(RobotInterface.EngineToRobot(animAudioSample=AnimKeyFrame.AudioSample(tonerator.send(None))))
             buffersSent += 1
         self.send(RobotInterface.EngineToRobot(animEndOfAnimation=AnimKeyFrame.EndOfAnimation()))
-        sys.stdout.write("Sent {} buffers, {} total samples\r\n".format(buffersSent, buffersSent*SAMPLES_PER_MESSAGE))
+        sys.stdout.write("Sent {} buffers, {} total samples{}".format(buffersSent, buffersSent*SAMPLES_PER_MESSAGE, os.linesep))
         return True
 
     def REP(self):
@@ -172,13 +172,13 @@ class CozmoCLI(IDataReceiver):
             elif args[0] == 'tone':
                 return self.sendTone(*args[1:])
             elif not hasattr(RobotInterface.EngineToRobot, args[0]):
-                sys.stderr.write("Unrecognized command \"{}\", try \"help\"\r\n".format(args[0]))
+                sys.stderr.write("Unrecognized command \"{}\", try \"help\"{}".format(args[0], os.linesep))
                 return False
             else:
                 try:
                     params = [eval(a) for a in args[1:]]
                 except Exception as e:
-                    sys.stderr.write("Couldn't parse command arguments for '{}':\r\n\t{}\r\n".format(args[0], e))
+                    sys.stderr.write("Couldn't parse command arguments for '{0}':{2}\t{1}{2}".format(args[0], e, os.linesep))
                     return False
                 else:
                     t = getattr(RobotInterface.EngineToRobot.Tag, args[0])
@@ -186,7 +186,7 @@ class CozmoCLI(IDataReceiver):
                     try:
                         p = y(*params)
                     except Exception as e:
-                        sys.stderr.write("Couldn't create {0} message from params *{1}:\r\n\t{2}\r\n".format(args[0], repr(params), str(e)))
+                        sys.stderr.write("Couldn't create {0} message from params *{1}:{3}\t{2}{3}".format(args[0], repr(params), str(e), os.linesep))
                         return False
                     else:
                         m = RobotInterface.EngineToRobot(**{args[0]: p})
@@ -203,7 +203,7 @@ class CozmoCLI(IDataReceiver):
                 return
             else:
                 if ret not in (True, False, None):
-                    sys.stdout.write("\t%s\n" % str(ret))
+                    sys.stdout.write("\t{}{}".format(str(ret), os.linesep))
         
 if __name__ == '__main__':
     transport = UDPTransport()

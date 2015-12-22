@@ -9,7 +9,6 @@ import os.path
 import platform
 import sys
 import time
-import subprocess
 
 ENGINE_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
 
@@ -373,7 +372,9 @@ class EnginePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
+        print "******************HERE1"
         generate_gyp(self.gyp_dir, self.platform, self.options)
+        print "******************HERE2"
         ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
     def build(self):
@@ -419,7 +420,7 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
     platforms_text = platforms_text.format(','.join(options.platforms).upper())
     
     print_header('RUNNING COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
-        
+    
     if options.command in ('generate', 'build', 'install', 'run'):
         install_dependencies(options)
         # TODO: Generate CLAD
