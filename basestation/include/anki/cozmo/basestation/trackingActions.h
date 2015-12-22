@@ -57,7 +57,8 @@ public:
   // disable. (Note that there *is* sound by default.)
   void SetSound(const std::string& animName) { _turningSoundAnimation = animName; }
   void SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec);
-  void SetMinAngleForSound(const Radians& angle) { _minAngleForSound = angle; }
+  void SetMinPanAngleForSound(const Radians& angle) { _minPanAngleForSound = angle.getAbsoluteVal(); }
+  void SetMinTiltAngleForSound(const Radians& angle) { _minTiltAngleForSound = angle.getAbsoluteVal(); }
   
   // Tracking will lock animation and movement for head and/or body, depending on Mode.
   virtual u8 GetAnimTracksToDisable() const override;
@@ -95,7 +96,8 @@ private:
   f32      _soundSpacingMin_sec = 2.f;
   f32      _soundSpacingMax_sec = 4.f;
   f32      _nextSoundTime = 0.f;
-  Radians  _minAngleForSound = DEG_TO_RAD(3);
+  Radians  _minPanAngleForSound = DEG_TO_RAD(3);
+  Radians  _minTiltAngleForSound = DEG_TO_RAD(3);
   
 }; // class ITrackAction
   

@@ -3324,10 +3324,11 @@ namespace Anki {
 #pragma mark ---- PlayAnimationAction ----
     
     PlayAnimationAction::PlayAnimationAction(const std::string& animName,
-                                             const u32 numLoops)
+                                             u32 numLoops, bool interruptRunning)
     : _animName(animName)
     , _name("PlayAnimation" + animName + "Action")
     , _numLoops(numLoops)
+    , _interruptRunning(interruptRunning)
     {
       
     }
@@ -3337,7 +3338,11 @@ namespace Anki {
       _startedPlaying = false;
       _stoppedPlaying = false;
       _wasAborted     = false;
-      _animTag = robot.PlayAnimation(_animName, _numLoops);
+      _animTag = robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+      
+      if(_animTag == AnimationStreamer::NotAnimatingTag) {
+        return ActionResult::FAILURE_ABORT;
+      }
       
       using namespace RobotInterface;
       using namespace ExternalInterface;

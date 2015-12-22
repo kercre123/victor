@@ -106,6 +106,8 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
                      absPanAngle.getDegrees(), absTiltAngle.getDegrees());
 #   endif
     
+    bool angleLargeEnoughForSound = false;
+    
     // Tilt Head:
     const f32 relTiltAngle = std::abs((absTiltAngle - robot.GetHeadAngle()).ToFloat());
     if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > _tiltTolerance.ToFloat())
@@ -123,6 +125,10 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
       {
         return ActionResult::FAILURE_ABORT;
+      }
+      
+      if(relTiltAngle > _minTiltAngleForSound) {
+        angleLargeEnoughForSound = true;
       }
     }
     
@@ -153,13 +159,17 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
         return ActionResult::FAILURE_ABORT;
       }
+      
+      if(relPanAngle > _minPanAngleForSound) {
+        angleLargeEnoughForSound = true;
+      }
     }
     
     // Play sound if it's time and either angle was big enough
-    if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime &&
-       (relPanAngle > _minAngleForSound || relTiltAngle > _minAngleForSound))
+    if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
-      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation));
+      // Queue sound to only play if nothing else is playing
+      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation, 1, false));
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
