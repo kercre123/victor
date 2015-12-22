@@ -175,16 +175,16 @@
         "translation" : "These mines aren't going to sweep themselves."
     },
     "investorDemo.investorDemoFull" : {
-        "translation" : "Investor Demo Full"
+        "translation" : "Full"
     },
     "investorDemo.investorDemoCubes" : {
-        "translation" : "Investor Demo Cubes"
+        "translation" : "Cubes"
     },
     "investorDemo.investorDemoFaces" : {
-        "translation" : "Investor Demo Faces"
+        "translation" : "Faces"
     },
     "investorDemo.investorDemoMotion" : {
-        "translation" : "Investor Demo Motion"
+        "translation" : "Motion"
     },
     "codeBreaker01.title" : {
         "translation" : "Cozmo Code Breaker"
