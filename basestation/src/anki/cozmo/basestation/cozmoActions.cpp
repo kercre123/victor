@@ -948,7 +948,8 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
-                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                         "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                         GetTag(),
                          currentAngle.getDegrees(),
                          _targetAngle.getDegrees(),
                          _variability.getDegrees(),
@@ -961,7 +962,8 @@ namespace Anki {
       }
       else if( _turnStarted ) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
-                            "giving up since we stopped moving");
+                            "[%d] giving up since we stopped moving",
+                            GetTag());
         result = ActionResult::FAILURE_RETRY;
       }
 
@@ -1477,7 +1479,8 @@ namespace Anki {
       ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                          "Object with ID=%d no longer exists in the world.",
+                          "[%d] Object with ID=%d no longer exists in the world.",
+                          GetTag(),
                           _objectID.GetValue());
         return ActionResult::FAILURE_ABORT;
       }
@@ -1486,8 +1489,12 @@ namespace Anki {
       if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
       {
         PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                         "Object still exists, but not seen since %d (Current time = %d, will fail in %f (s))",
-                         lastObserved, robot.GetLastImageTimeStamp(), _waitToVerifyTime - currentTime);
+                         "[%d] Object still exists, but not seen since %d (stamp=%d, curr_s = %f, _waitTil_s = %f)",
+                         GetTag(),
+                         lastObserved,
+                         robot.GetLastImageTimeStamp(),
+                         currentTime,
+                         _waitToVerifyTime);
         actionRes = ActionResult::FAILURE_ABORT;
       }
       
@@ -1613,9 +1620,12 @@ namespace Anki {
         if(_inPosition || NEAR(Radians(robot.GetHeadAngle()) - _headAngle, 0.f, _halfAngle))
         {
           PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
-                           "Currently at %.1fdeg, on the way to %.1fdeg, within "
-                           "half angle of %.1fdeg", RAD_TO_DEG(robot.GetHeadAngle()),
-                           _headAngle.getDegrees(), _halfAngle.getDegrees());
+                           "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
+                           "half angle of %.1fdeg",
+                           GetTag(),
+                           RAD_TO_DEG(robot.GetHeadAngle()),
+                           _headAngle.getDegrees(),
+                           _halfAngle.getDegrees());
 
           robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3);
           _eyeShiftRemoved = true;
@@ -1629,7 +1639,8 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone",
-                         "Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
+                         "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
+                         GetTag(),
                          RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
       }
       
@@ -1732,40 +1743,40 @@ namespace Anki {
           _heightWithVariation += GetRNG().RandDblInRange(-_variability, _variability);
         }
         _heightWithVariation = CLIP(_heightWithVariation, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+      }
         
         
-        // Convert height tolerance to angle tolerance and make sure that it's larger
-        // than the tolerance that the liftController uses.
+      // Convert height tolerance to angle tolerance and make sure that it's larger
+      // than the tolerance that the liftController uses.
 
-        // Convert target height, height - tol, and height + tol to angles.
-        f32 heightLower = _heightWithVariation - _heightTolerance;
-        f32 heightUpper = _heightWithVariation + _heightTolerance;
-        f32 targetAngle = Robot::ConvertLiftHeightToLiftAngleRad(_heightWithVariation);
-        f32 targetAngleLower = Robot::ConvertLiftHeightToLiftAngleRad(heightLower);
-        f32 targetAngleUpper = Robot::ConvertLiftHeightToLiftAngleRad(heightUpper);
+      // Convert target height, height - tol, and height + tol to angles.
+      f32 heightLower = _heightWithVariation - _heightTolerance;
+      f32 heightUpper = _heightWithVariation + _heightTolerance;
+      f32 targetAngle = Robot::ConvertLiftHeightToLiftAngleRad(_heightWithVariation);
+      f32 targetAngleLower = Robot::ConvertLiftHeightToLiftAngleRad(heightLower);
+      f32 targetAngleUpper = Robot::ConvertLiftHeightToLiftAngleRad(heightUpper);
         
-        // Neither of the angular differences between targetAngle and its associated
-        // lower and upper tolerance limits should be smaller than LIFT_ANGLE_TOL.
-        // That is, unless the limits exceed the physical limits of the lift.
-        f32 minAngleDiff = std::numeric_limits<f32>::max();
-        if (heightLower > LIFT_HEIGHT_LOWDOCK) {
-          minAngleDiff = targetAngle - targetAngleLower;
-        }
-        if (heightUpper < LIFT_HEIGHT_CARRY) {
-          minAngleDiff = std::min(minAngleDiff, targetAngleUpper - targetAngle);
-        }
+      // Neither of the angular differences between targetAngle and its associated
+      // lower and upper tolerance limits should be smaller than LIFT_ANGLE_TOL.
+      // That is, unless the limits exceed the physical limits of the lift.
+      f32 minAngleDiff = std::numeric_limits<f32>::max();
+      if (heightLower > LIFT_HEIGHT_LOWDOCK) {
+        minAngleDiff = targetAngle - targetAngleLower;
+      }
+      if (heightUpper < LIFT_HEIGHT_CARRY) {
+        minAngleDiff = std::min(minAngleDiff, targetAngleUpper - targetAngle);
+      }
         
-        if (minAngleDiff < LIFT_ANGLE_TOL) {
-          // Tolerance is too small. Clip to be within range.
-          f32 desiredHeightLower = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle - LIFT_ANGLE_TOL);
-          f32 desiredHeightUpper = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle + LIFT_ANGLE_TOL);
-          f32 newHeightTolerance = std::max(_height_mm - desiredHeightLower, desiredHeightUpper - _height_mm);
+      if (minAngleDiff < LIFT_ANGLE_TOL) {
+        // Tolerance is too small. Clip to be within range.
+        f32 desiredHeightLower = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle - LIFT_ANGLE_TOL);
+        f32 desiredHeightUpper = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle + LIFT_ANGLE_TOL);
+        f32 newHeightTolerance = std::max(_height_mm - desiredHeightLower, desiredHeightUpper - _height_mm);
           
-          PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.TolTooSmall",
-                              "HeightTol %f mm == AngleTol %f rad near height of %f mm. Clipping tol to %f mm",
-                              _heightTolerance, minAngleDiff, _heightWithVariation, newHeightTolerance);
-          _heightTolerance = newHeightTolerance;
-        }
+        PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.TolTooSmall",
+                            "HeightTol %f mm == AngleTol %f rad near height of %f mm. Clipping tol to %f mm",
+                            _heightTolerance, minAngleDiff, _heightWithVariation, newHeightTolerance);
+        _heightTolerance = newHeightTolerance;
       }
       
       _inPosition = IsLiftInPosition(robot);
@@ -1805,8 +1816,9 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
-                         "Waiting for lift to get in position: %.1fmm vs. %.1fmm(+/-%.1f)",
-                         robot.GetLiftHeight(), _height_mm, _variability);
+                         "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",
+                         GetTag(),
+                         robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
       }
       
       return result;
