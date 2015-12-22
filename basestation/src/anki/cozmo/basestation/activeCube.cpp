@@ -298,23 +298,23 @@ namespace Anki {
         {
           case Vision::MARKER_1:
           case Vision::MARKER_LIGHTNINGBOLT_01:
-            _activeID = 0;
+            _activeID = kHardCodedActiveCubeID0;
             _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_1:
           case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
-            _activeID = 1;
+            _activeID = kHardCodedActiveCubeID1;
             _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
-            _activeID = 2;
+            _activeID = kHardCodedActiveCubeID2;
             _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_01:
-            _activeID = 3;
+            _activeID = kHardCodedActiveCubeID3;
             _identityState = ActiveIdentityState::Identified;
             break;
             
