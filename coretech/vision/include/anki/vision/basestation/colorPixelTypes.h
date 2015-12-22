@@ -147,6 +147,9 @@ namespace Vision {
 // "Register" our RGB/RGBA pixels as DataTypes with OpenCV
 namespace cv {
 
+  template<> class DataDepth<Anki::Vision::PixelRGB> { public: enum { value = CV_8UC3, fmt=(int)'u' }; };
+  template<> class DataDepth<Anki::Vision::PixelRGBA> { public: enum { value = CV_8UC4, fmt=(int)'u' }; };
+  
   template<> class cv::DataType<Anki::Vision::PixelRGB>
   {
   public:
