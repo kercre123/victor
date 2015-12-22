@@ -128,7 +128,7 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   }
   else
   {
-    panRads = DEG_TO_RAD(((kPanMax - kPanMin) * randomPan * -1.f) + kPanMin);
+    panRads = -DEG_TO_RAD(((kPanMax - kPanMin) * randomPan) + kPanMin);
   }
   
   float randomTilt = (float) GetRNG().RandDbl();
