@@ -36,6 +36,8 @@
 
 #define DO_2001_MUSIC_GAG 0
 
+#define HANNS_SPEED 0
+
 // TODO:(bn) when driving to the side or back of the cube to roll it, the position is really far off. Instead
 // of relying on the action (or maybe add this logic within the action?) plan to a pre-dock pose which is much
 // further away from the block, so it can adjust more naturally instead of having to back up and do weird
@@ -62,7 +64,19 @@ namespace Cozmo {
 
     // start with defaults
     _motionProfile = DEFAULT_PATH_MOTION_PROFILE;
-    
+
+#if HANNS_SPEED
+
+    _motionProfile.speed_mmps = 120.0f;
+    _motionProfile.accel_mmps2 = 200.0f;
+    _motionProfile.decel_mmps2 = 120.0f;
+    _motionProfile.pointTurnSpeed_rad_per_sec = 2.5f;
+    _motionProfile.pointTurnAccel_rad_per_sec2 = 8.0f;
+    _motionProfile.pointTurnDecel_rad_per_sec2 = 6.0f;
+    _motionProfile.dockSpeed_mmps = 120.0f;
+    _motionProfile.reverseSpeed_mmps = 50.0f;
+
+#else
     _motionProfile.speed_mmps = 60.0f;
     _motionProfile.accel_mmps2 = 200.0f;
     _motionProfile.decel_mmps2 = 200.0f;
@@ -70,7 +84,9 @@ namespace Cozmo {
     _motionProfile.pointTurnAccel_rad_per_sec2 = 100.0f;
     _motionProfile.pointTurnDecel_rad_per_sec2 = 100.0f;
     _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
-    
+    _motionProfile.reverseSpeed_mmps = 40.0f;
+#endif    
+
     SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
@@ -183,6 +199,13 @@ namespace Cozmo {
     }
     else {
       LiftShouldBeUnlocked(robot);
+    }
+
+    if( _currentState == State::TrackingFace ) {
+      BodyShouldBeUnlocked(robot);
+    }
+    else {
+      BodyShouldBeLocked(robot);
     }
 
     // hack to track object motion
@@ -621,6 +644,9 @@ namespace Cozmo {
   Result BehaviorBlockPlay::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     _interrupted = true;
+    HeadShouldBeUnlocked(robot);
+    LiftShouldBeUnlocked(robot);
+    BodyShouldBeUnlocked(robot);
     return RESULT_OK;
   }
   
@@ -1302,6 +1328,28 @@ namespace Cozmo {
 
       robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
       _lockedHead = false;
+    }
+  }
+
+  void BehaviorBlockPlay::BodyShouldBeLocked(Robot& robot)
+  {
+    if( ! _lockedBody ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
+                             "LOCKED");
+
+      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      _lockedBody = true;
+    }
+  }
+
+  void BehaviorBlockPlay::BodyShouldBeUnlocked(Robot& robot)
+  {
+    if( _lockedBody ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
+                             "UNLOCKED");
+
+      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      _lockedBody = false;
     }
   }
 

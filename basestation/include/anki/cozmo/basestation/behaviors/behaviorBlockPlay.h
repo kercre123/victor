@@ -203,6 +203,10 @@ namespace Cozmo {
     void HeadShouldBeLocked(Robot& robot);
     void HeadShouldBeUnlocked(Robot& robot);
 
+    bool _lockedBody = false;
+    void BodyShouldBeLocked(Robot& robot);
+    void BodyShouldBeUnlocked(Robot& robot);
+
     void IgnoreObject(Robot& robot, ObjectID objectID);
 
 
