@@ -2,7 +2,7 @@
 using System.Collections;
 using Anki.Cozmo.Audio;
 
-namespace Selfie { 
+namespace Selfie {
   public class PickupCozmoState : State {
 
     private float _PickupTime;
@@ -28,9 +28,7 @@ namespace Selfie {
         if (_PickupTime > _SelfieGame.CountdownTimer) {
           GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
           _SelfieGame.TakePhoto();
-          var animState = new AnimationState();
-          animState.Initialize(AnimationName.kMajorWin, HandleAnimationDone);
-          _StateMachine.SetNextState(animState);
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
         }
       }
       else {
@@ -41,8 +39,7 @@ namespace Selfie {
 
     }
 
-    private void HandleAnimationDone (bool success)
-    {
+    private void HandleAnimationDone(bool success) {
       _SelfieGame.RaiseMiniGameWin();
     }
 

@@ -20,9 +20,7 @@ namespace Minesweeper {
       base.Update();
 
       if (_Game.IsComplete()) {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kMajorWin, WinAnimationComplete);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, WinAnimationComplete));
       }
 
       var closestCell = _CurrentRobot.WorldPosition / MinesweeperGame.kCellWidth + new Vector3(_Game.Columns * 0.5f, _Game.Rows * 0.5f, 0);
@@ -114,7 +112,7 @@ namespace Minesweeper {
 
     private void HandleGoToPoseComplete(bool success) {
       _StateMachine.SetNextState(new DigHoleState(_Row, _Col));
-    }      
+    }
   }
 
   public class DigHoleState : State {
@@ -125,6 +123,7 @@ namespace Minesweeper {
     private int _LastMovedTime;
 
     private MinesweeperGame _Game;
+
     public DigHoleState(int row, int col) {
       _Row = row;
       _Col = col;
@@ -168,9 +167,7 @@ namespace Minesweeper {
 
     private void Dig() {
       if (!_Game.TryRevealSpace(_Row, _Col)) {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kShocked, LoseAnimationComplete);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, LoseAnimationComplete));
       }
       else {
         _StateMachine.PopState();

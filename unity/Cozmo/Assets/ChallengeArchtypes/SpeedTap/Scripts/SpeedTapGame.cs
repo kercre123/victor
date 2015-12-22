@@ -49,14 +49,20 @@ namespace SpeedTap {
       UpdateUI();
     }
 
+    private void HandleRoundAnimationDone(bool success) {
+      _StateMachine.SetNextState(new SteerState(50.0f, 50.0f, 0.8f, new SpeedTapWaitForCubePlace()));
+    }
+
     private void CheckRounds() {
       if (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound) {
 
         if (_PlayerScore > _CozmoScore) {
           _PlayerRoundsWon++;
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorFail, HandleRoundAnimationDone)));
         }
         else {
           _CozmoRoundsWon++;
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorWin, HandleRoundAnimationDone)));
         }
 
         int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);

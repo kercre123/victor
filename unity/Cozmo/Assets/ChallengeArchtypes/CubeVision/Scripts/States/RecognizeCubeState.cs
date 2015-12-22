@@ -43,9 +43,7 @@ namespace VisionTraining {
         }
       }
       else {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kShocked, HandleLoseAnimationDone);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleLoseAnimationDone));
         return;
       }
 
@@ -74,9 +72,7 @@ namespace VisionTraining {
       }
 
       if (_CubeInRectTime > 3.0f) {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDone);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleWinAnimationDone));
       }
     }
 

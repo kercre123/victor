@@ -23,9 +23,7 @@ namespace DockTraining {
     }
 
     private void PlayShockedAnimation() {
-      AnimationState animationState = new AnimationState();
-      animationState.Initialize(AnimationName.kShocked, HandleAnimationDone);
-      _StateMachine.SetNextState(animationState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleAnimationDone));
     }
 
     private void HandleAnimationDone(bool success) {

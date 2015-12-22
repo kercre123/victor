@@ -39,10 +39,7 @@ namespace FollowCube {
       float distance = Vector3.Dot(_CurrentRobot.WorldPosition - _RobotStartPosition, _CurrentRobot.Forward);
       _GameInstance.Progress = (distance / _WinDistanceThreshold) * (1.0f / _GameInstance.NumSegments);
       if (distance > _WinDistanceThreshold) {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
-        _StateMachine.SetNextState(animState);
-        Debug.Log("PLAY ENJOY PATTERN THING");
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation));
       }
       else if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
         _LastSeenTargetTime = Time.time;

@@ -8,7 +8,7 @@ public class AnimationState : State {
   private string _AnimationName;
   private AnimationDoneHandler _AnimationFinishedCallback;
 
-  public void Initialize(string animationName, AnimationDoneHandler animationFinishedCallback) {
+  public AnimationState(string animationName, AnimationDoneHandler animationFinishedCallback) {
     _AnimationName = animationName;
     _AnimationFinishedCallback = animationFinishedCallback;
   }

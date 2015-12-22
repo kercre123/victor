@@ -60,18 +60,15 @@ namespace Simon {
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
         kvp.Value.SetFlashingLEDs(Color.red, 100, 100, 0);
       }
-      AnimationState animation = new AnimationState();
-      animation.Initialize(AnimationName.kShocked, HandleOnLoseAnimationDone);
-      _StateMachine.SetNextState(animation);
+
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnLoseAnimationDone));
     }
 
     private void WinGame() {
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
         kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, 100, 100, 0, 0);
       }
-      AnimationState animation = new AnimationState();
-      animation.Initialize(AnimationName.kMajorWin, HandleOnWinAnimationDone);
-      _StateMachine.SetNextState(animation);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleOnWinAnimationDone));
     }
 
     private void OnBlockTapped(int id, int times) {
