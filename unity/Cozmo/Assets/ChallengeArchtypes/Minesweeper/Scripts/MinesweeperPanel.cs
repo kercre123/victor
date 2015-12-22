@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System.Linq;
 
 public class MinesweeperPanel : MonoBehaviour {
 
@@ -13,11 +14,20 @@ public class MinesweeperPanel : MonoBehaviour {
 
   public GameObject GridEntryPrefab;
 
+  public GameObject GridCornerPrefab;
+
   private MinesweeperGridElement[,] _GridElements;
 
   private MinesweeperGame _Game;
 
   private int _LastOrientation;
+
+  private Color[] _CornerColors = new Color[4] {
+    Color.magenta,
+    Color.green,
+    Color.cyan,
+    Color.yellow
+  };
 
   public void Initialize(MinesweeperGame game) {
     _Game = game;
@@ -42,6 +52,17 @@ public class MinesweeperPanel : MonoBehaviour {
 
         minesweeperElement.transform.SetParent(rowTransform, false);
       }
+    }
+
+    var cubeIds = _Game.CurrentRobot.LightCubes.Keys.ToArray();
+
+    for (int i = 0; i < Mathf.Min(cubeIds.Length, _CornerColors.Length); i++) {
+      _Game.CurrentRobot.LightCubes[cubeIds[i]].SetLEDs(_CornerColors[i]);
+
+      var cornerObject = GameObject.Instantiate<GameObject>(GridCornerPrefab);
+      var corner = cornerObject.GetComponent<MinesweeperCornerCube>();
+      corner.transform.SetParent(Grid, false);
+      corner.SetCorner((MinesweeperCornerCube.Corner)i, _CornerColors[i]);
     }
 
     RotateHandle.OnRotationUpdated += HandleRotation;

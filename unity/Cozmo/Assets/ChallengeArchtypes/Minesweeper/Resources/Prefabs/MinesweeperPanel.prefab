@@ -141,6 +141,7 @@ MonoBehaviour:
   RotateHandle: {fileID: 11466184}
   GridRowPrefab: {fileID: 123276, guid: 2369bc1b0ce62422daa53cba47e267a1, type: 2}
   GridEntryPrefab: {fileID: 197376, guid: cc2bd8b31353a4cc5b020e80786d57b1, type: 2}
+  GridCornerPrefab: {fileID: 188856, guid: 91c9904f596a646d482a50e1bd48830d, type: 2}
 --- !u!114 &11466184
 MonoBehaviour:
   m_ObjectHideFlags: 1
