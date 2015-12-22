@@ -49,11 +49,16 @@ namespace SpeedTap {
       UpdateUI();
     }
 
+    private void HandleRoundAnimationDone(bool success) {
+    
+    }
+
     private void CheckRounds() {
       if (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound) {
 
         if (_PlayerScore > _CozmoScore) {
           _PlayerRoundsWon++;
+          _StateMachine.SetNextState(new SteerState(-30.0f, -30.0f, 0.8f, new AnimationState(AnimationName.kMajorWin, HandleRoundAnimationDone)));
         }
         else {
           _CozmoRoundsWon++;

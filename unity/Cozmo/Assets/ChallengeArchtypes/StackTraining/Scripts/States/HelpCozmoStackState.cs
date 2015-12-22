@@ -170,18 +170,14 @@ namespace StackTraining {
     }
 
     private void HandleComplete() {
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kMajorWin, HandleWinComplete);
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleWinComplete));
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
         kvp.Value.SetFlashingLEDs(Color.white, 100, 100, 0);
       }
     }
 
     private void HandleFailed() {
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kShocked, HandleLoseComplete);
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleLoseComplete));
     }
 
     private void HandleWinComplete(bool success) {

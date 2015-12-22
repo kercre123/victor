@@ -18,9 +18,7 @@ namespace SpeedTap {
       base.Update();
       _DriveTime -= Time.deltaTime;
       if (_DriveTime < 0.0f) {
-        AnimationState animation = new AnimationState();
-        animation.Initialize(AnimationName.kTapCube, HandleTapDone);
-        _StateMachine.SetNextState(animation);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kTapCube, HandleTapDone));
       }
 
     }

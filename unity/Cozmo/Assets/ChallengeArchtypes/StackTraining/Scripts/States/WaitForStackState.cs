@@ -68,9 +68,7 @@ namespace StackTraining {
     }
 
     private void HandleComplete() {
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kEnjoyPattern, HandleRecognizeStack);
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kEnjoyPattern, HandleRecognizeStack));
     }
 
     private void HandleRecognizeStack(bool success) {

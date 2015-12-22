@@ -104,7 +104,7 @@ namespace CubeSlap {
         SlapRoll = 0.0f;
       }
       else {
-        SlapRoll = Random.Range(0.0f,1.0f);
+        SlapRoll = Random.Range(0.0f, 1.0f);
       }
       if (SlapRoll <= _CurrentSlapChance) {
         // Enter Animation State to attempt a pounce.
@@ -118,9 +118,7 @@ namespace CubeSlap {
         // attempt based on the max number of fakeouts.
         int rand = Random.Range(0, _FakeoutAnimations.Count);
         _CurrentSlapChance += ((1.0f - _BaseSlapChance) / _MaxFakeouts);
-        AnimationState animState = new AnimationState();
-        animState.Initialize(_FakeoutAnimations[rand], HandleFakeoutEnd);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(_FakeoutAnimations[rand], HandleFakeoutEnd));
       }
     }
 
@@ -155,16 +153,12 @@ namespace CubeSlap {
     public void OnSuccess() {
       _SuccessCount++;
       Progress = ((float)_SuccessCount / (float)_SuccessGoal);
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kMajorFail, HandleAnimationDone);
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
     }
 
     public void OnFailure() {
       TryDecrementAttempts();
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kMajorWin, HandleAnimationDone);
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
     }
 
     public void HandleAnimationDone(bool success) {
@@ -178,9 +172,7 @@ namespace CubeSlap {
       }
       else if (_SlapFlagThrown) {
         _SlapFlagThrown = false;
-        AnimationState animState = new AnimationState();
-        animState.Initialize(_RetractAnimation, HandleRetractDone);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(_RetractAnimation, HandleRetractDone));
       }
       else {
         _StateMachine.SetNextState(new SeekState());
@@ -192,7 +184,7 @@ namespace CubeSlap {
     }
 
     public float GetSlapDelay() {
-      return Random.Range(_MinSlapDelay,_MaxSlapDelay);
+      return Random.Range(_MinSlapDelay, _MaxSlapDelay);
     }
 
     public void ResetSlapChance() {
