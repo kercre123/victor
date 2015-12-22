@@ -1097,8 +1097,9 @@ namespace Anki
     {
       Result lastResult = RESULT_FAIL;
 
-      // Store initial homography in case we need to restore it later
-      const Array<f32> initHomography(homography);
+      // Store a copy of the initial homography in case we need to restore it later
+      Array<f32> initHomography(3,3,scratch);
+      initHomography.Set(homography);
       
       this->validity = UNKNOWN;
 
@@ -1132,7 +1133,7 @@ namespace Anki
             refine_quadRefinementMaxCornerChange,
             refine_quadRefinementMinCornerChange,
             this->corners,
-            homography,
+            this->homography,
             scratch)) != RESULT_OK)
           {
             // TODO: Don't fail? Just warn and keep original quad?

@@ -115,6 +115,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   FixedLengthList<VisionMarker> markers(maxMarkers, scratch0);
   
   markers.set_size(maxMarkers);
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f32> newArray(3, 3, scratch0);
+    markers[i].homography = newArray;
+  }
 
   {
     const Anki::Result result = DetectFiducialMarkers(

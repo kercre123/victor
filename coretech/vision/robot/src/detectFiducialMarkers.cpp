@@ -323,7 +323,8 @@ namespace Anki
             return lastResult;
           }
 
-          markers[iQuad] = VisionMarker(extractedQuads[iQuad], VisionMarker::UNKNOWN);
+          currentMarker.validity = VisionMarker::UNKNOWN;
+          currentMarker.corners.SetCast(extractedQuads[iQuad]);
 
           if(numericalFailure) {
             currentMarker.validity = VisionMarker::NUMERICAL_FAILURE;

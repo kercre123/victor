@@ -3559,7 +3559,13 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
 
   markers.set_size(maxMarkers);
-
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f32> newArray(3, 3, scratchCcm);
+    markers[i].homography = newArray;
+    ASSERT_TRUE(markers[i].homography.IsValid());
+    ASSERT_TRUE(markers[i].homography.get_size(0)==3 && markers[i].homography.get_size(1)==3);
+  } // for(s32 i=0; i<maximumSize; i++)
+  
   InitBenchmarking();
 
   {
@@ -3734,6 +3740,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
 
   markers.set_size(maxMarkers);
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f32> newArray(3, 3, scratchCcm);
+    markers[i].homography = newArray;
+  } // for(s32 i=0; i<maximumSize; i++)
 
   const s32 numRuns = 1;
   FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_integral(numRuns, scratchOffchip);
@@ -3844,14 +3854,12 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
   //ASSERT_TRUE(IssimpleFiducials_320x240Valid(image.Pointer(0,0), false));
 
   FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
-  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
 
   markers.set_size(maxMarkers);
-  homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f32> newArray(3, 3, scratchCcm);
-    homographies[i] = newArray;
+    markers[i].homography = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
   const s32 numRuns = 2;
@@ -3866,7 +3874,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
     const Result result_binomial = DetectFiducialMarkers(
       image640,
       markers,
-      homographies,
       false,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
@@ -3897,7 +3904,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
     const Result result_integral = DetectFiducialMarkers(
       image640,
       markers,
-      homographies,
       true,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
