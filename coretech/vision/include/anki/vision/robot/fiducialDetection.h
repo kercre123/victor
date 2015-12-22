@@ -59,7 +59,6 @@ namespace Anki
     Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<VisionMarker> &markers,
-      FixedLengthList<Array<f32> > &homographies,
       const FiducialDetectionParameters& params,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,

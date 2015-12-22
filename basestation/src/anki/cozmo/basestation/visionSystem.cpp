@@ -443,15 +443,7 @@ namespace Cozmo {
     Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory._markers;
     const s32 maxMarkers = markers.get_maximumSize();
     
-    FixedLengthList<Array<f32> > homographies(maxMarkers, _memory._ccmScratch);
-    
     markers.set_size(maxMarkers);
-    homographies.set_size(maxMarkers);
-    
-    for(s32 i=0; i<maxMarkers; i++) {
-      Array<f32> newArray(3, 3, _memory._ccmScratch);
-      homographies[i] = newArray;
-    }
     
     // TODO: Re-enable DebugStream for Basestation
     //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
@@ -491,7 +483,6 @@ namespace Cozmo {
     
     const Result result = DetectFiducialMarkers(grayscaleImage,
                                                 markers,
-                                                homographies,
                                                 embeddedParams,
                                                 _memory._ccmScratch,
                                                 _memory._onchipScratch,

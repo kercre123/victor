@@ -113,21 +113,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn(scratch3.IsValid(), "mexDetectFiducialMarkers", "Scratch3 could not be allocated");
 
   FixedLengthList<VisionMarker> markers(maxMarkers, scratch0);
-  FixedLengthList<Array<f32> > homographies(maxMarkers, scratch0);
-
+  
   markers.set_size(maxMarkers);
-  homographies.set_size(maxMarkers);
-
-  for(s32 i=0; i<maxMarkers; i++) {
-    Array<f32> newArray(3, 3, scratch0);
-    homographies[i] = newArray;
-  }
 
   {
     const Anki::Result result = DetectFiducialMarkers(
       image,
       markers,
-      homographies,
       params,
       scratch1,
       scratch2,

@@ -141,30 +141,34 @@ namespace Anki
       Vision::MarkerType markerType;
       f32 observedOrientation; //< In degrees. TODO: change to radians or discrete
       ValidityCode validity;
-
+      Array<f32> homography;
+      
+      // All the points on the fiducial used for quad refinement
       VisionMarker();
       VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity);
       VisionMarker(const Quadrilateral<f32> &corners, const ValidityCode validity);
 
-      Result RefineCorners(
-        const Array<u8> &image,
-        const Array<f32> &initHomography, const f32 minContrastRatio,
-        const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange, const f32 refine_quadRefinementMinCornerChange,
-        const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
-        Array<f32> &refinedHomography, u8 &meanGrayvalueThreshold, //< Computed for Extract()
-        MemoryStack scratch);
+      Result RefineCorners(const Array<u8> &image,
+                           const f32 minContrastRatio,
+                           const s32 refine_quadRefinementIterations,
+                           const s32 refine_numRefinementSamples,
+                           const f32 refine_quadRefinementMaxCornerChange,
+                           const f32 refine_quadRefinementMinCornerChange,
+                           const s32 quads_minQuadArea,
+                           const s32 quads_quadSymmetryThreshold,
+                           const s32 quads_minDistanceFromImageEdge,
+                           u8 &meanGrayvalueThreshold, //< Computed for Extract()
+                           MemoryStack scratch);
 
-      Result Extract(
-        const Array<u8> &image,
-        const Array<f32> &homography, const u8 meanGrayvalueThreshold, //< Computed by RefineCorners()
-        const f32 minContrastRatio,
-        MemoryStack scratch);
+      Result Extract(const Array<u8> &image,
+                     const u8 meanGrayvalueThreshold, //< Computed by RefineCorners()
+                     const f32 minContrastRatio,
+                     MemoryStack scratch);
 
-      Result ExtractExhaustive(
-        const VisionMarkerImages &allMarkerImages,
-        const Array<u8> &image,
-        MemoryStack fastScratch,
-        MemoryStack slowScratch);
+      Result ExtractExhaustive(const VisionMarkerImages &allMarkerImages,
+                               const Array<u8> &image,
+                               MemoryStack fastScratch,
+                               MemoryStack slowScratch);
 
       void Print() const;
 
@@ -211,10 +215,9 @@ namespace Anki
       //Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
       //  const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);
 
-      Result ComputeBrightDarkValues(const Array <u8> &image, const Array<f32> &homography,
-        const f32 minContrastRatio,
-        f32& brightValue, f32& darkValue,
-        bool& enoughContrast);
+      Result ComputeBrightDarkValues(const Array <u8> &image, const f32 minContrastRatio,
+                                     f32& brightValue, f32& darkValue,
+                                     bool& enoughContrast);
 
 #     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
       static NearestNeighborLibrary& GetNearestNeighborLibrary();
