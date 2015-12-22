@@ -35,6 +35,7 @@ namespace Cozmo {
   const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
   const f32 defaultDockSpeed_mmps = 100;
   const f32 defaultDockAccel_mmps2 = 200;
+  const f32 defaultReverseSpeed_mmps = 30;
   PathMotionProfile defaultMotionProfile(defaultPathSpeed_mmps,
                                          defaultPathAccel_mmps2,
                                          defaultPathDecel_mmps2,
@@ -42,7 +43,8 @@ namespace Cozmo {
                                          defaultPathPointTurnAccel_rad_per_sec2,
                                          defaultPathPointTurnDecel_rad_per_sec2,
                                          defaultDockSpeed_mmps,
-                                         defaultDockAccel_mmps2);
+                                         defaultDockAccel_mmps2,
+                                         defaultReverseSpeed_mmps);
 
 
   
