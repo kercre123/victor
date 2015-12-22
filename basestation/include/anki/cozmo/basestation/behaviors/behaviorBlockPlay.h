@@ -68,6 +68,7 @@ namespace Cozmo {
       RollingBlock,
       PickingUpBlock,
       PlacingBlock,
+      WaitingForBlock,
       SearchingForMissingBlock, // this is only entered if a block "disappears" on us
     };
     
@@ -138,6 +139,12 @@ namespace Cozmo {
 
     // if we are "searching" for a missing block, consider it found if it is seen after this time
     f32 _searchStartTime = 0.0f;
+
+    // if we are expecting a block, this is the time we started waiting to see it (not counting time to move
+    // the head / lift out of the way)
+    f32 _waitForBlockStartTime = 0.0f;
+
+    const f32 _maxTimeToWaitForBlock = 3.5f;
     
     Result _lastHandlerResult;
 
@@ -182,13 +189,19 @@ namespace Cozmo {
     const f32 _speedToDriveForwardWhileTracking = 90.0f;
     const f32 _highLiftHeight = 70.0f;
     const f32 _minHeadAngleforLiftUp_rads = DEG_TO_RAD(20.0f);
-    const f32 _lostBlockTimeToLookDown = 2.5f;
+    const f32 _lostBlockTimeToLookDown = 1.5f;
+    const f32 _waitForBlockHeadAngle_rads = DEG_TO_RAD(-10.0f);
+    const f32 _timetoInspectBlock = 0.3f;
     u32 _driveForwardActionTag = 0;
     bool _isDrivingForward = false;
 
     bool _lockedLift = false;
     void LiftShouldBeLocked(Robot& robot);
     void LiftShouldBeUnlocked(Robot& robot);
+
+    bool _lockedHead = false;
+    void HeadShouldBeLocked(Robot& robot);
+    void HeadShouldBeUnlocked(Robot& robot);
 
     void IgnoreObject(Robot& robot, ObjectID objectID);
 
