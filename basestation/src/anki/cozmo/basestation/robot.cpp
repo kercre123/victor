@@ -1385,10 +1385,12 @@ namespace Anki {
                                                                 useManualSpeed);
     }
     
-    u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
+    u8 Robot::PlayAnimation(const std::string& animName, u32 numLoops, bool interruptRunning)
     {
-      u8 tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops);
-      _lastPlayedAnimationId = animName;
+      u8 tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops, interruptRunning);
+      if(tag != AnimationStreamer::NotAnimatingTag) {
+        _lastPlayedAnimationId = animName;
+      }
       return tag;
     }
     
