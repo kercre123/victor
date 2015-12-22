@@ -178,10 +178,8 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
     
     // Limit linear speed based on direction-dependent max wheel speed
     f32 speed = lin_speed;
-    if (seg.GetTargetSpeed() > 0) {
-      speed = std::min((f32)actionParams.maxVelocity_mmps, lin_speed);
-    } else {
-      speed = std::min((f32)actionParams.maxReverseVelocity_mmps, lin_speed);
+    if (seg.GetTargetSpeed() < 0) {
+      speed = fabsf(motionProfile.reverseSpeed_mmps);
     }
     
     switch(seg.GetType()) {

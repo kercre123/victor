@@ -238,8 +238,9 @@ message PlaceObjectOnGround {
 message PlaceObjectOnGroundHere {
 }
 
-// ExecuteTestPlan
+// ExecuteTestPlans
 message ExecuteTestPlan {
+PathMotionProfile motionProf
 }
 
 // SelectNextObject

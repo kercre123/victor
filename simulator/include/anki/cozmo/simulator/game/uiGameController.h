@@ -208,7 +208,7 @@ protected:
   
   void SendTrackToObject(const u32 objectID, bool headOnly = false);
   void SendTrackToFace(const u32 faceID, bool headOnly = false);
-  void SendExecuteTestPlan();
+  void SendExecuteTestPlan(PathMotionProfile motionProf);
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();
