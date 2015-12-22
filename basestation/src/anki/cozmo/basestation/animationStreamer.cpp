@@ -111,7 +111,7 @@ namespace Cozmo {
     // Increment the tag counter and keep it from being one of the "special"
     // values used to indicate "not animating" or "idle animation"
     ++tag;
-    if(tag == AnimationStreamer::NotAnimatingTag || tag == AnimationStreamer::IdleAnimationTag) {
+    while(tag == AnimationStreamer::NotAnimatingTag || tag == AnimationStreamer::IdleAnimationTag) {
       ++tag;
     }
   }
