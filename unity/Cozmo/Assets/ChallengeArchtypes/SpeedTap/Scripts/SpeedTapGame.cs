@@ -50,9 +50,8 @@ namespace SpeedTap {
     }
 
     private void HandleRoundAnimationDone(bool success) {
-      CurrentRobot.SetHeadAngle(-1.0f);
-      CurrentRobot.SetLiftHeight(0.0f);
       _StateMachine.SetNextState(new SpeedTapWaitForCubePlace());
+      CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
 
     private void CheckRounds() {
