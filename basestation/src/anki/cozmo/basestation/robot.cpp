@@ -119,6 +119,8 @@ namespace Anki {
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
+      
+      _lastDebugStringHash = 0;
 
       ReadAnimationDir();
       
@@ -1112,12 +1114,16 @@ namespace Anki {
       
       
       // Sending debug string to game and viz
-      // TODO: This is just an example, but basically if the string hasn't changed
-      //       don't bother re-sending it.
-      static bool dbgStringSent = false;
-      if (!dbgStringSent) {
-        SendDebugString("This is the engine debug string");
-        dbgStringSent = true;
+      char buffer [128];
+      // So we can have an arbitrary number of data here that is likely to change want just hash it all together if anything changes without spamming
+      snprintf(buffer, sizeof(buffer), "dbg: %s:%s, L:%.2f, H:%.2f C:%d",behaviorChooserName, behaviorName.c_str(),
+               GetLiftHeight(),GetHeadAngle(),IsCarryingObject());
+      std::hash<std::string> hasher;
+      size_t curr_hash = hasher(std::string(buffer));
+      if( _lastDebugStringHash != curr_hash )
+      {
+        SendDebugString(buffer);
+        _lastDebugStringHash = curr_hash;
       }
       
       

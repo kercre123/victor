@@ -1059,7 +1059,9 @@ namespace Cozmo {
     // Wait a 1/2 second before running after we finish the last streaming animation
     // to help reduce stepping on the next animation's toes when we have things
     // sequenced.
-    if(_streamingAnimation == nullptr &&
+    
+    // _tagCtr check so we wait until we get one behavior until we start playing
+    if(_tagCtr > 0 && _streamingAnimation == nullptr &&
        (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f)))
     {
