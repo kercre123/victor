@@ -9,10 +9,8 @@
 #include "anki/common/robot/benchmarking.h"
 
 #include "hal/i2c.h"
-#include "uart.h"
-#include "imu.h"
 #include "hardware.h"
-#include "uart.h"
+#include "spi.h"
 
 //#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
 //#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
@@ -311,6 +309,8 @@ void FTM2_IRQHandler(void)
   // Enable SPI DMA, Clear flag
   if (~FTM2_SC & FTM_SC_TOF_MASK) return ;
   */
+
+  SPI::StartDMA();
   
   // Acknowledge timer interrupt now (we won't get time to later)
   FTM2_SC &= ~FTM_SC_TOF_MASK;

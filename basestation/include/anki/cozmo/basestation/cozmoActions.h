@@ -1129,7 +1129,8 @@ namespace Anki {
     {
     public:
       PlayAnimationAction(const std::string& animName,
-                          const u32 numLoops = 1);
+                          u32 numLoops = 1,
+                          bool interruptRunning = true);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
@@ -1148,11 +1149,14 @@ namespace Anki {
       u32           _numLoops;
       bool          _startedPlaying;
       bool          _stoppedPlaying;
+      bool          _wasAborted;
       u8            _animTag;
+      bool          _interruptRunning;
       
       // For responding to AnimationStarted and AnimationEnded events
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
+      Signal::SmartHandle _abortSignalHandle;
       
     }; // class PlayAnimationAction
     

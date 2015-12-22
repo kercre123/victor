@@ -42,7 +42,7 @@ namespace Cozmo {
     _liveAnimation.SetIsLive(true);
   }
 
-  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops, bool interruptRunning)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -55,11 +55,28 @@ namespace Cozmo {
       return SetStreamingAnimation(robot, nullptr);
     }
     
-    return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops);
+    return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops, interruptRunning);
   }
   
-  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops, bool interruptRunning)
   {
+    if(nullptr != _streamingAnimation)
+    {
+      if(nullptr != anim && !interruptRunning) {
+        PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.NotInterrupting",
+                         "Already streaming %s, will not interrupt with %s",
+                         _streamingAnimation->GetName().c_str(),
+                         anim->GetName().c_str());
+        return NotAnimatingTag;
+      }
+      
+      using namespace ExternalInterface;
+      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.Aborting",
+                          "Animation %s is interrupting animation %s",
+                          anim->GetName().c_str(), _streamingAnimation->GetName().c_str());
+      robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
+    }
+    
     if(nullptr != _streamingAnimation || nullptr == anim)
     {
       Abort(robot);
@@ -68,15 +85,10 @@ namespace Cozmo {
     _streamingAnimation = anim;
     
     if(_streamingAnimation == nullptr) {
-      return 0;
+      return NotAnimatingTag;
     } else {
       
-      // Increment the tag counter and keep it from being one of the "special"
-      // values used to indicate "not animating" or "idle animation"
-      ++_tagCtr;
-      while(_tagCtr == 0 || _tagCtr == IdleAnimationTag) {
-        ++_tagCtr;
-      }
+      IncrementTagCtr(_tagCtr);
     
       // Get the animation ready to play
       InitStream(robot, _streamingAnimation, _tagCtr);
@@ -94,6 +106,15 @@ namespace Cozmo {
     }
   }
 
+  void AnimationStreamer::IncrementTagCtr(u8& tag)
+  {
+    // Increment the tag counter and keep it from being one of the "special"
+    // values used to indicate "not animating" or "idle animation"
+    ++tag;
+    while(tag == AnimationStreamer::NotAnimatingTag || tag == AnimationStreamer::IdleAnimationTag) {
+      ++tag;
+    }
+  }
   
   void AnimationStreamer::Abort(Robot& robot)
   {
@@ -101,6 +122,11 @@ namespace Cozmo {
     {
       // Tell the robot to abort
       robot.AbortAnimation();
+      
+      // Make sure end of animation gets sent
+      if(_startOfAnimationSent && !_endOfAnimationSent) {
+        SendEndOfAnimation(robot);
+      }
       
       // We just cleared the robot's buffer, so there will not be a start or end
       // available
@@ -224,8 +250,6 @@ namespace Cozmo {
     return lastResult;
   }
   
-  // Initialize the static tag counter
-  u32 AnimationStreamer::FaceLayer::TagCtr = 0;
   
   Result AnimationStreamer::AddFaceLayer(FaceTrack&& faceTrack, TimeStamp_t delay_ms)
   {
@@ -233,8 +257,10 @@ namespace Cozmo {
     
     faceTrack.SetIsLive(true);
     
+    IncrementTagCtr(_layerTagCtr);
+    
     FaceLayer newLayer;
-    newLayer.tag = FaceLayer::TagCtr++;
+    newLayer.tag = _layerTagCtr;
     newLayer.track = faceTrack; // COPY the track in
     newLayer.track.Init();
     newLayer.startTime_ms = delay_ms;
@@ -256,8 +282,10 @@ namespace Cozmo {
   {
     faceTrack.SetIsLive(false); // don't want keyframes to delete as they play
     
+    IncrementTagCtr(_layerTagCtr);
+    
     FaceLayer newLayer;
-    newLayer.tag = FaceLayer::TagCtr++;
+    newLayer.tag = _layerTagCtr;
     newLayer.track = faceTrack;
     newLayer.track.Init();
     newLayer.startTime_ms = 0;
@@ -1031,7 +1059,9 @@ namespace Cozmo {
     // Wait a 1/2 second before running after we finish the last streaming animation
     // to help reduce stepping on the next animation's toes when we have things
     // sequenced.
-    if(_streamingAnimation == nullptr &&
+    
+    // _tagCtr check so we wait until we get one behavior until we start playing
+    if(_tagCtr > 0 && _streamingAnimation == nullptr &&
        (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f)))
     {
