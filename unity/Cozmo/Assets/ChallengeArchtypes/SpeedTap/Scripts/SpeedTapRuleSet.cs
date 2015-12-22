@@ -3,10 +3,13 @@ using System.Collections;
 
 namespace SpeedTap {
   public enum SpeedTapRuleSet {
-    Default
+    Default,
+    NoRed,
+    LightCountNoColor,
+    LightCountSameColorNoTap
   }
 
-  public interface ISpeedTapRules { 
+  public interface ISpeedTapRules {
     void SetLights(bool shouldTap, SpeedTapGame game);
   }
 }
