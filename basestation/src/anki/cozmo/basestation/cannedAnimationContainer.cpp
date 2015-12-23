@@ -64,7 +64,7 @@ namespace Cozmo {
     return animPtr;
   }
   
-  const Animation* CannedAnimationContainer::GetAnimation_Const(const std::string& name) const
+  const Animation* CannedAnimationContainer::GetAnimation(const std::string& name) const
   {
     const Animation* animPtr = nullptr;
     

@@ -53,8 +53,10 @@ public:
   
   // Const version of GetTrack
   template<class KeyFrameType>
-  const Animations::Track<KeyFrameType>& GetTrack_Const() const
+  const Animations::Track<KeyFrameType>& GetTrack() const
   {
+    // Normally I hate using const_cast, but GetTrack is a template function where the actual implementation
+    // is to have a different specialization for each type, in order to return the correct Track member.
     return const_cast<Animation*>(this)->GetTrack<KeyFrameType>();
   }
   

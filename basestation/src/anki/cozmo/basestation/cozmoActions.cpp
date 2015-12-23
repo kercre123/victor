@@ -3348,19 +3348,19 @@ namespace Anki {
         _alteredAnimation = std::unique_ptr<Animation>(new Animation(*ourAnimation));
         assert(_alteredAnimation);
         
-        bool useStreamingProcFace = !streamingAnimation->GetTrack_Const<ProceduralFaceKeyFrame>().IsEmpty();
+        bool useStreamingProcFace = !streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
         
         if (useStreamingProcFace)
         {
           // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
-          auto lastFrame = streamingAnimation->GetTrack_Const<ProceduralFaceKeyFrame>().GetLastKeyFrame();
+          auto lastFrame = streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
           ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
           _alteredAnimation->AddKeyFrame(frameCopy);
         }
         else
         {
           // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
-          auto lastFrame = streamingAnimation->GetTrack_Const<FaceAnimationKeyFrame>().GetLastKeyFrame();
+          auto lastFrame = streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
           FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
           _alteredAnimation->AddKeyFrame(frameCopy);
         }
@@ -3439,8 +3439,8 @@ namespace Anki {
       }
       
       // The streaming animation has no face tracks, so no need for alteration
-      if (streamingAnimation->GetTrack_Const<ProceduralFaceKeyFrame>().IsEmpty() &&
-          streamingAnimation->GetTrack_Const<FaceAnimationKeyFrame>().IsEmpty())
+      if (streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty() &&
+          streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty())
       {
         return false;
       }
@@ -3452,14 +3452,14 @@ namespace Anki {
       bool animHasInitialFaceFrame = false;
       if (nullptr != ourAnimation)
       {
-        auto procFaceTrack = ourAnimation->GetTrack_Const<ProceduralFaceKeyFrame>();
+        auto procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
         // If our track is not empty and starts at beginning
         if (!procFaceTrack.IsEmpty() && procFaceTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
         {
           animHasInitialFaceFrame = true;
         }
         
-        auto faceAnimTrack = ourAnimation->GetTrack_Const<FaceAnimationKeyFrame>();
+        auto faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
         // If our track is not empty and starts at beginning
         if (!faceAnimTrack.IsEmpty() && faceAnimTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
         {
