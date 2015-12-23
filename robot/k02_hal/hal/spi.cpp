@@ -12,6 +12,7 @@
 #include "dac.h"
 #include "oled.h"
 #include "i2c.h"
+#include "wifi.h"
 
 typedef uint16_t transmissionWord;
 const int RX_OVERFLOW = 8;
@@ -38,17 +39,9 @@ static bool ProcessDrop(void) {
     
     DropToRTIP* drop = (DropToRTIP*)target;
 
-#if 0
-    // THIS IS GARBAGE TEMPORARY CODE
-    static uint8_t OLED_ADDRESS_TEMPORARY = 0;
-    static uint32_t OLED_DATA_TEMPORARY = 0xFFFFFFFF;
-    OLED_DATA_TEMPORARY = (OLED_DATA_TEMPORARY >> 1) ^ ((OLED_DATA_TEMPORARY & 1) ? 0xedb88320 : 0);
-    OLED::FeedFace(OLED_ADDRESS_TEMPORARY++, (uint8_t*)&OLED_DATA_TEMPORARY);
-#else
     if (drop->droplet & screenDataValid) {
       OLED::FeedFace(drop->screenInd, drop->screenData);
     }
-#endif
     
     DAC::Feed(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
     DAC::EnableAudio(drop->droplet & audioDataValid);
@@ -56,47 +49,43 @@ static bool ProcessDrop(void) {
     uint8_t *payload_data = (uint8_t*) drop->payload;
     totalDrops++;
     
-    switch (*(payload_data++)) {
+    if (drop->payloadLen)
+    {
+      uint8_t *payload_data = (uint8_t*) drop->payload;
+      // Handle OTA related messages right here so it's harder to break them
+      switch (*payload_data)
+      {
       case DROP_EnterBootloader:
       {
         EnterBootloader ebl;
-        memcpy(&ebl, payload_data, sizeof(ebl));
-
-        switch (ebl.which) {
+          memcpy(&ebl, payload_data+1, sizeof(ebl));
+          switch (ebl.which)
+          {
           case BOOTLOAD_RTIP:
+            {
             SPI::EnterRecoveryMode();
-            break ;
+              break;
+            }
           case BOOTLOAD_BODY:
+            {
             UART::EnterBodyRecovery();
-            break ;
+              break;
         }
+          }
         break;
       }
       case DROP_BodyUpgradeData:
       {
         BodyUpgradeData bud;
-        memcpy(&bud, payload_data, sizeof(bud));
-
-        //bud.data = ((bud.data & 0xFF00FF00) >> 8) | ((bud.data & 0x00FF00FF) << 8);
-      
+          memcpy(&bud, payload_data+1, sizeof(bud));
         UART::SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
         break;
       }
-      case 0x22:
+        default:
       {
-        memcpy(g_dataToBody.motorPWM, payload_data, sizeof(int16_t)*4);
-        pwmCmdCounter = (7440/5); // 200ms worth of drops
-        break;
+          WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
       }
     }
-
-    if (pwmCmdCounter > 0)
-    {
-      pwmCmdCounter--;
-    }
-    if (pwmCmdCounter == 1)
-    {
-      memset(g_dataToBody.motorPWM, 0, sizeof(int16_t)*4);
     }
     
     return true;
@@ -123,25 +112,26 @@ void Anki::Cozmo::HAL::SPI::TransmitDrop(const uint8_t* buf, int buflen, int eof
   DropToWiFi *drop_tx = (DropToWiFi*) spi_write_buff;
 
   drop_tx->preamble = TO_WIFI_PREAMBLE;
+  drop_tx->droplet  = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0) | ToWiFi;
 
   memcpy(drop_tx->payload, buf, buflen);
   
   // This is where a drop should be 
   uint8_t *drop_addr = drop_tx->payload + buflen;
-  
+  const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - buflen;
+  if (remainingSpace > 0)
   {
-    // Send current state of body every frame (for the future)
-    BodyState bodyState;
-    bodyState.state = UART::recoveryMode;
-    bodyState.count = UART::RecoveryStateUpdated;
-    
-    // Copy to drop location
-    memcpy(drop_addr, &bodyState, sizeof(bodyState));
-    drop_tx->payloadLen  = sizeof(BodyState);
+    drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
+    if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(BodyState))) // Have nothing to send so transmit body state info
+    {
+      BodyState bodyState;
+      bodyState.state = UART::recoveryMode;
+      bodyState.count = UART::RecoveryStateUpdated;
+      memcpy(drop_addr, &bodyState, sizeof(BodyState));
+      drop_tx->payloadLen = sizeof(BodyState);
+      drop_tx->droplet |= bootloaderStatus;
+    }
   }
-
-  static int eoftime = 0;
-  drop_tx->droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF) | bootloaderStatus;
 }
 
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {

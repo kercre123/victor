@@ -15,6 +15,7 @@ extern "C" {
 #define ONCHIP
 
 #else // Not on Espressif
+#include <assert.h>
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/errorHandling.h"
 //#include "anki/common/robot/utilities_c.h"
@@ -196,7 +197,7 @@ namespace AnimationController {
     if (IsBufferFull()) msg.status |= IS_ANIM_BUFFER_FULL;
     if (_isPlaying) msg.status     |= IS_ANIMATING;
     msg.tag = GetCurrentTag();
-    if (clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
+    if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
     {
       return RESULT_OK;
     }
@@ -214,7 +215,7 @@ namespace AnimationController {
   static u32 GetFromBuffer(u8* data, u32 numBytes)
   {
     assert(numBytes < KEYFRAME_BUFFER_SIZE);
-    
+
     if(_currentBufferPos + numBytes < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current position to end of buffer to just
       // copy directly
@@ -424,12 +425,12 @@ namespace AnimationController {
       else
       {
 #ifdef TARGET_ESPRESSIF
-        if (!_playSilence) 
+        if (!_playSilence)
         {
           if (_audioReadInd == AUDIO_SAMPLE_SIZE-2) // XXX Temporary hack for EP1 compatibility until we can adjust the audio chunk size
           {
             GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP-1);
-            dest[MAX_AUDIO_BYTES_PER_DROP-1] = dest[MAX_AUDIO_BYTES_PER_DROP-2]; 
+            dest[MAX_AUDIO_BYTES_PER_DROP-1] = dest[MAX_AUDIO_BYTES_PER_DROP-2];
           }
           else
           {
@@ -509,11 +510,11 @@ namespace AnimationController {
           {
             GetFromBuffer(&msg);
             _currentTag = msg.animStartOfAnimation.tag;
-              
+
             RobotInterface::AnimationStarted msg;
             msg.tag = _currentTag;
             RobotInterface::SendMessage(msg);
-              
+
 #             if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
 #           endif
@@ -542,7 +543,7 @@ namespace AnimationController {
                 SteeringController::ExecuteDirectDrive(0, 0);
               #endif
             }
-            
+
             RobotInterface::AnimationEnded aem;
             aem.tag = _currentTag;
             RobotInterface::SendMessage(aem);

@@ -12,6 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_UTILITIES_C_H_
 #define _ANKICORETECHEMBEDDED_COMMON_UTILITIES_C_H_
 
+#include "anki/common/types.h"
 #include "anki/common/robot/config.h"
 
 #ifndef MAX

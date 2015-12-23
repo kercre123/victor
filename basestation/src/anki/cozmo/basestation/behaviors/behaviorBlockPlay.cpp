@@ -36,6 +36,8 @@
 
 #define DO_2001_MUSIC_GAG 0
 
+#define HANNS_SPEED 0
+
 // TODO:(bn) when driving to the side or back of the cube to roll it, the position is really far off. Instead
 // of relying on the action (or maybe add this logic within the action?) plan to a pre-dock pose which is much
 // further away from the block, so it can adjust more naturally instead of having to back up and do weird
@@ -62,7 +64,19 @@ namespace Cozmo {
 
     // start with defaults
     _motionProfile = DEFAULT_PATH_MOTION_PROFILE;
-    
+
+#if HANNS_SPEED
+
+    _motionProfile.speed_mmps = 120.0f;
+    _motionProfile.accel_mmps2 = 200.0f;
+    _motionProfile.decel_mmps2 = 120.0f;
+    _motionProfile.pointTurnSpeed_rad_per_sec = 2.5f;
+    _motionProfile.pointTurnAccel_rad_per_sec2 = 8.0f;
+    _motionProfile.pointTurnDecel_rad_per_sec2 = 6.0f;
+    _motionProfile.dockSpeed_mmps = 120.0f;
+    _motionProfile.reverseSpeed_mmps = 50.0f;
+
+#else
     _motionProfile.speed_mmps = 60.0f;
     _motionProfile.accel_mmps2 = 200.0f;
     _motionProfile.decel_mmps2 = 200.0f;
@@ -70,7 +84,9 @@ namespace Cozmo {
     _motionProfile.pointTurnAccel_rad_per_sec2 = 100.0f;
     _motionProfile.pointTurnDecel_rad_per_sec2 = 100.0f;
     _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
-    
+    _motionProfile.reverseSpeed_mmps = 40.0f;
+#endif    
+
     SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
@@ -185,6 +201,13 @@ namespace Cozmo {
       LiftShouldBeUnlocked(robot);
     }
 
+    if( _currentState == State::TrackingFace ) {
+      BodyShouldBeUnlocked(robot);
+    }
+    else {
+      BodyShouldBeLocked(robot);
+    }
+
     // hack to track object motion
     if( _trackedObject.IsSet() ) {
       ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_trackedObject);
@@ -287,6 +310,17 @@ namespace Cozmo {
               _noFacesStartTime = currentTime_sec;
             }
 
+            // also look up a bit in case the angle is too low
+            IActionRunner* moveHeadAction = new MoveHeadToAngleAction(DEG_TO_RAD(20.0f));
+
+            IActionRunner* actionToRun = moveHeadAction;
+
+            if( moveLiftAction != nullptr ) {
+              actionToRun = new CompoundActionParallel({moveLiftAction, moveHeadAction});
+            }
+
+            StartActing(robot, actionToRun);
+
             // HACK: don't abort if we are carrying an object, because we might get stuck
             if (currentTime_sec - _noFacesStartTime > 2.0f && !robot.IsCarryingObject()) {
               PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
@@ -347,8 +381,8 @@ namespace Cozmo {
           // if the block recently stopped moving, look down
           
           if( _lastObjectObservedTime + _lostBlockTimeToLookDown < currentTime_sec ) {
-            const float targetAngle = 0.0f;
-            if( robot.GetHeadAngle() > targetAngle + DEG_TO_RAD(5.0f) ) {
+            const float targetAngle = -7.5f;
+            if( robot.GetHeadAngle() > targetAngle + DEG_TO_RAD(3.0f) ) {
 
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.LookDownForBlock",
                                      "haven't seen block since %f (t=%f), looking down",
@@ -621,6 +655,9 @@ namespace Cozmo {
   Result BehaviorBlockPlay::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     _interrupted = true;
+    HeadShouldBeUnlocked(robot);
+    LiftShouldBeUnlocked(robot);
+    BodyShouldBeUnlocked(robot);
     return RESULT_OK;
   }
   
@@ -1302,6 +1339,28 @@ namespace Cozmo {
 
       robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
       _lockedHead = false;
+    }
+  }
+
+  void BehaviorBlockPlay::BodyShouldBeLocked(Robot& robot)
+  {
+    if( ! _lockedBody ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
+                             "LOCKED");
+
+      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      _lockedBody = true;
+    }
+  }
+
+  void BehaviorBlockPlay::BodyShouldBeUnlocked(Robot& robot)
+  {
+    if( _lockedBody ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
+                             "UNLOCKED");
+
+      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      _lockedBody = false;
     }
   }
 

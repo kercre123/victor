@@ -55,7 +55,6 @@ endef
 INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
-INCLUDES += -I ../../../../tools/anki-util/source/anki
 INCLUDES += -I ../../../generated/clad/robot
 INCLUDES += -I ../../../include
 INCLUDES += -I $(ESP_SRC_DIR)

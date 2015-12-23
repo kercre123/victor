@@ -12,6 +12,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_FLAGS_DECLARATIONS_H_
 #define _ANKICORETECHEMBEDDED_COMMON_FLAGS_DECLARATIONS_H_
 
+#include <float.h>
+#include "anki/common/types.h"
 #include "anki/common/robot/config.h"
 
 namespace Anki

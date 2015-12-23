@@ -369,7 +369,7 @@
               <MiscControls>--asm</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki;generated\clad\robot;sim_hal\transport</IncludePath>
+              <IncludePath>.\include;.\supervisor\src;.\arm_hal;.\arm_hal\lib;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;..\tools\anki-util\source\anki;generated\clad\robot;sim_hal\transport</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

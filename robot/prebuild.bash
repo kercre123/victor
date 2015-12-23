@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-cd clad
 export PATH=/usr/bin:$PATH
-make
+make cpplilib -C clad
+bash tools/versionGenerator/versionGenerator.sh include/anki/cozmo/robot/version.h

@@ -22,6 +22,7 @@ extern bool i2spiSynchronizedCallback(uint32 param);
 // Forward declaration
 bool    PumpAudioData(uint8_t* dest);
 uint8_t PumpScreenData(uint8_t* dest);
+bool    AcceptRTIPMessage(uint8_t* payload, uint8_t length);
 
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
@@ -110,7 +111,11 @@ void processDrop(DropToWiFi* drop)
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
   if (drop->droplet & bootloaderStatus) os_memcpy(&bodyBootloaderCode, drop->payload, 4);
-  // XXX do stuff with the rest of the payload
+  else if (drop->payloadLen > 0)
+  {
+    const uint8 jpegOffset = (drop->droplet & jpegLenMask) * 4;
+    AcceptRTIPMessage(drop->payload + jpegOffset, drop->payloadLen);
+  }
 }
 
 /** Fills a drop into the outgoing DMA buffers

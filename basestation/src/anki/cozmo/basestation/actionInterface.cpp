@@ -230,7 +230,9 @@ namespace Anki {
           if(result == ActionResult::SUCCESS) {
             if(IsMessageDisplayEnabled()) {
               PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
-                               "Preconditions for %s successfully met.", GetName().c_str());
+                               "Preconditions for %s [%d] successfully met.",
+                               GetName().c_str(),
+                               GetTag());
             }
             
             // If preconditions were successfully met, switch result to RUNNING

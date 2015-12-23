@@ -483,6 +483,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
+
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
       
     protected:
       virtual ActionResult Init(Robot& robot) override;

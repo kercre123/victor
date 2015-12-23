@@ -1,6 +1,7 @@
 #ifndef COZMO_ENGINE_CONFIG_H
 #define COZMO_ENGINE_CONFIG_H
 
+#include <math.h>
 #include "anki/common/types.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/pathMotionProfile.h"
@@ -126,6 +127,7 @@ namespace Anki {
     const f32 DEFAULT_PATH_ACCEL_MMPS2 = 200;
     const f32 DEFAULT_PATH_POINT_TURN_SPEED_RAD_PER_SEC = 2;
     const f32 DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2 = 100.f;
+    const f32 DEFAULT_PATH_REVERSE_SPEED_MMPS = 30;
   
     const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE(DEFAULT_PATH_SPEED_MMPS,
                                                         DEFAULT_PATH_ACCEL_MMPS2,
@@ -134,7 +136,8 @@ namespace Anki {
                                                         DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2,
                                                         DEFAULT_PATH_POINT_TURN_DECEL_RAD_PER_SEC2,
                                                         DEFAULT_DOCK_SPEED_MMPS,
-                                                        DEFAULT_DOCK_ACCEL_MMPS2);
+                                                        DEFAULT_DOCK_ACCEL_MMPS2,
+                                                        DEFAULT_PATH_REVERSE_SPEED_MMPS);
     
   } // namespace Cozmo
 } // namespace Anki

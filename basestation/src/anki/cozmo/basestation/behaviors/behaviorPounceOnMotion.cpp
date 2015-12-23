@@ -92,6 +92,7 @@ void BehaviorPounceOnMotion::HandleWhileNotRunning(const EngineToGameEvent& even
           gotPose = true;
           _numValidPouncePoses++;
           _lastValidPouncePoseTime = currTime;
+          _lastPoseDist = dist;
           PRINT_NAMED_INFO("BehaviorPounceOnMotion.GotPose", "got valid pose with dist = %f. Now have %d",
                            dist, _numValidPouncePoses);
         }
@@ -147,7 +148,7 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
           PRINT_NAMED_INFO("BehaviorPounceOnMotion.RelaxLift", "pounce animation complete, relaxing lift");
           robot.GetMoveComponent().EnableLiftPower(false); // TEMP: make sure this gets cleaned up
           _state = State::RelaxingLift;
-          const float relaxTime = 0.1f;
+          const float relaxTime = 0.15f;
           _stopRelaxingTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + relaxTime;
         }
         else if( _state == State::PlayingFinalReaction ) {
@@ -194,9 +195,24 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
   robot.SetIdleAnimation("NONE");
   
   _state = State::Pouncing;
-  IActionRunner* newAction = new PlayAnimationAction( _pounceAnimation );
-  _waitForActionTag = newAction->GetTag();
-  robot.GetActionList().QueueActionNow(0, newAction);
+  IActionRunner* animAction = new PlayAnimationAction( _pounceAnimation );
+
+  IActionRunner* actionToRun = animAction;
+
+  if( _lastPoseDist > _driveForwardUntilDist + 5.0f ) {
+
+    float distToDrive = _lastPoseDist - _driveForwardUntilDist;
+
+    PRINT_NAMED_INFO("BehaviorPounceOnMotion.SprintForward",
+                     "driving forward %fmm before playing pounce animation",
+                     distToDrive);
+    
+    IActionRunner* driveAction = new DriveStraightAction(distToDrive, 150.0f);
+    actionToRun = new CompoundActionSequential({driveAction, animAction});
+  }
+
+  _waitForActionTag = actionToRun->GetTag();
+  robot.GetActionList().QueueActionNow(0, actionToRun);
 
   return Result::RESULT_OK;
 }
@@ -204,18 +220,17 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
 void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
 {
   // Arbitrarily tuned for robot A0
-  const float liftHeightThresh = 36.5f;
+  const float liftHeightThresh = 37.5f;
   const float bodyAngleThresh = 0.025f;
 
   float robotBodyAngleDelta = robot.GetPitchAngle() - _prePouncePitch;
     
   // check the lift angle, after some time, transition state
-  // TEMP:  // TODO:(bn) do this
-  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %f (%f -> %f)",
+  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%f -> %f)",
                    robot.GetLiftHeight(),
-                   robotBodyAngleDelta,
-                   _prePouncePitch,
-                   robot.GetPitchAngle());
+                   RAD_TO_DEG(robotBodyAngleDelta),
+                   RAD_TO_DEG(_prePouncePitch),
+                   RAD_TO_DEG(robot.GetPitchAngle()));
 
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 

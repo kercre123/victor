@@ -72,6 +72,8 @@ public:
   void SetPanTolerance(const Radians& panThreshold);
   void SetTiltTolerance(const Radians& tiltThreshold);
 
+  void SetMaxHeadAngle(const Radians& maxHeadAngle_rads) { _maxHeadAngle = maxHeadAngle_rads; }
+
   virtual bool Interrupt() override final;
   
 protected:
@@ -91,14 +93,15 @@ private:
   double   _lastUpdateTime = 0.;
   Radians  _panTolerance = POINT_TURN_ANGLE_TOL;
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
+  Radians  _maxHeadAngle = MAX_HEAD_ANGLE;
   
-  std::string _turningSoundAnimation = "ID_pokedA"; // TODO: update with real default animation name
-  f32      _soundSpacingMin_sec = 2.f;
-  f32      _soundSpacingMax_sec = 4.f;
+  std::string _turningSoundAnimation = "ID_MotionTrack_TurnSmall";
+  f32      _soundSpacingMin_sec = 0.5f;
+  f32      _soundSpacingMax_sec = 1.0f;
   f32      _nextSoundTime = 0.f;
-  Radians  _minPanAngleForSound = DEG_TO_RAD(3);
-  Radians  _minTiltAngleForSound = DEG_TO_RAD(3);
-  
+  Radians  _minPanAngleForSound = DEG_TO_RAD(10);
+  Radians  _minTiltAngleForSound = DEG_TO_RAD(10);
+
 }; // class ITrackAction
   
 inline void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec) {

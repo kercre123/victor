@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/keyframe.h"
 #include "util/logging/logging.h"
+#include "anki/common/constantsAndMacros.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "adpcm.h"
