@@ -72,6 +72,8 @@ public:
   void SetPanTolerance(const Radians& panThreshold);
   void SetTiltTolerance(const Radians& tiltThreshold);
 
+  void SetMaxHeadAngle(const Radians& maxHeadAngle_rads) { _maxHeadAngle = maxHeadAngle_rads; }
+
   virtual bool Interrupt() override final;
   
 protected:
@@ -91,6 +93,7 @@ private:
   double   _lastUpdateTime = 0.;
   Radians  _panTolerance = POINT_TURN_ANGLE_TOL;
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
+  Radians  _maxHeadAngle = MAX_HEAD_ANGLE;
   
   std::string _turningSoundAnimation = "ID_MotionTrack_TurnSmall";
   f32      _soundSpacingMin_sec = 0.5f;

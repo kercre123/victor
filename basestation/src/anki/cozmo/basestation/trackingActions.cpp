@@ -95,6 +95,11 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
   // See if there are new relative pan/tilt angles from the derived class
   if(GetAngles(robot, absPanAngle, absTiltAngle))
   {
+
+    if( absTiltAngle > _maxHeadAngle ) {
+      absTiltAngle = _maxHeadAngle;
+    }
+    
     // Record latest update to avoid timing out
     if(_updateTimeout_sec > 0.) {
       _lastUpdateTime = currentTime;

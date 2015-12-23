@@ -66,12 +66,15 @@ private:
   // TODO: Read these from json config
   f32     _moveForwardDist_mm = 15.f;
   f32     _moveForwardSpeedIncrease = 2.f;
-  Radians _driveForwardTol = DEG_TO_RAD(3.f); // both pan/tilt less than this will result in drive forward
+  Radians _driveForwardTol = DEG_TO_RAD(5.f); // both pan/tilt less than this will result in drive forward
   f32     _minDriveFrowardGroundPlaneDist_mm = 93.1f;
   f32     _minGroundAreaToConsider = 0.1f;
   Radians _panAndTiltTol = DEG_TO_RAD(3.f);  // pan/tilt must be greater than this to actually turn
   double  _initialReactionWaitTime_sec = 20.f;
 
+  bool _lockedLift = false;
+  void LiftShouldBeLocked(Robot& robot);
+  void LiftShouldBeUnlocked(Robot& robot);
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   void HandleObservedMotion(const EngineToGameEvent& event, Robot& robot);
