@@ -16,7 +16,6 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
-#include "anki/cozmo/basestation/animation/animation.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
@@ -47,6 +46,7 @@ namespace Anki {
 
     // Forward Declarations:
     class Robot;
+    class Animation;
     
     class DriveToPoseAction : public IAction
     {

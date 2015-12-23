@@ -70,7 +70,7 @@ namespace Cozmo {
     
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
-      PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation.InvalidName",
+      PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation_Const.InvalidName",
                         "Animation requested for unknown animation '%s'.\n",
                         name.c_str());
     } else {
