@@ -129,8 +129,8 @@ namespace Anki {
       Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
       if (nullptr != neutralFaceAnim)
       {
-        auto frameIter = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
-        ProceduralFaceParams::SetResetData(frameIter->GetFace().GetParams());
+        auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
+        ProceduralFaceParams::SetResetData(frame->GetFace().GetParams());
       }
       else
       {

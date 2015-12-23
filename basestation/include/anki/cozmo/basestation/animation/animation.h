@@ -51,6 +51,13 @@ public:
   template<class KeyFrameType>
   Animations::Track<KeyFrameType>& GetTrack();
   
+  // Const version of GetTrack
+  template<class KeyFrameType>
+  const Animations::Track<KeyFrameType>& GetTrack_Const() const
+  {
+    return const_cast<Animation*>(this)->GetTrack<KeyFrameType>();
+  }
+  
   // Calls all tracks' Init() methods
   Result Init();
 

@@ -59,10 +59,13 @@ public:
   FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
   
   // Get pointer to next keyframe. Returns nullptr if the track is on the last frame.
-  FRAME_TYPE* GetNextKeyFrame();
+  const FRAME_TYPE* GetNextKeyFrame() const;
   
-  // Get a pointer to the last KeyFrame in the track. Returns nullptr if track is at end.
-  FRAME_TYPE* GetLastKeyFrame();
+  // Get a pointer to the first KeyFrame in the track. Returns nullptr if track is empty
+  const FRAME_TYPE* GetFirstKeyFrame() const;
+  
+  // Get a pointer to the last KeyFrame in the track. Returns nullptr if track is empty
+  const FRAME_TYPE* GetLastKeyFrame() const;
   
   // Move to next frame and delete the current one if it's marked "live".
   // Will not advance past end.
@@ -76,12 +79,10 @@ public:
   bool IsEmpty() const { return _frames.empty(); }
 
   void Clear() { _frames.clear(); _frameIter = _frames.end(); }
-  
-  using FrameList = std::list<FRAME_TYPE>;
-  typename FrameList::const_iterator GetKeyFrameBegin() const { return _frames.begin(); }
 
 private:
-
+  
+  using FrameList = std::list<FRAME_TYPE>;
   FrameList _frames;
   typename FrameList::iterator _frameIter;
   
@@ -119,7 +120,7 @@ void Track<FRAME_TYPE>::MoveToPrevKeyFrame()
 }
   
 template<typename FRAME_TYPE>
-FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame()
+const FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame() const
 {
   ASSERT_NAMED(_frameIter != _frames.end(), "Frame iterator should not be at end.");
   
@@ -134,7 +135,17 @@ FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame()
 }
 
 template<typename FRAME_TYPE>
-FRAME_TYPE* Track<FRAME_TYPE>::GetLastKeyFrame()
+const FRAME_TYPE* Track<FRAME_TYPE>::GetFirstKeyFrame() const
+{
+  if(_frames.empty()) {
+    return nullptr;
+  } else {
+    return &(_frames.front());
+  }
+}
+
+template<typename FRAME_TYPE>
+const FRAME_TYPE* Track<FRAME_TYPE>::GetLastKeyFrame() const
 {
   if(_frames.empty()) {
     return nullptr;

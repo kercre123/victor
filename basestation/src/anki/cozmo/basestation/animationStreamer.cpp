@@ -122,40 +122,6 @@ namespace Cozmo {
     {
       // Tell the robot to abort
       robot.AbortAnimation();
-      
-      // Make sure end of animation gets sent
-      if(_startOfAnimationSent && !_endOfAnimationSent) {
-        SendEndOfAnimation(robot);
-      }
-      
-      // We just cleared the robot's buffer, so there will not be a start or end
-      // available
-      _startOfAnimationSent = false;
-      _endOfAnimationSent = false;
-      
-      // If there are any face frames left, send the last one so we don't leave the face
-      // in a random state
-      auto & procFaceTrack  = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>();
-      const ProceduralFaceKeyFrame* kf = procFaceTrack.GetLastKeyFrame();
-      if(nullptr != kf) {
-
-        SendStartOfAnimation();
-        BufferFaceToSend(kf->GetFace());
-        SendEndOfAnimation(robot);
-
-      } else {
-        auto & faceImageTrack = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>();
-        FaceAnimationKeyFrame* kf = faceImageTrack.GetLastKeyFrame();
-        if(nullptr != kf) {
-          auto msg = kf->GetStreamMessage();
-          if(nullptr != msg)
-          {
-            SendStartOfAnimation();
-            BufferMessageToSend(kf->GetStreamMessage());
-            SendEndOfAnimation(robot);
-          }
-        }
-      }
     }
   } // Abort()
   
@@ -462,7 +428,7 @@ namespace Cozmo {
       {
         ProceduralFaceParams interpolatedParams;
         
-        ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
+        const ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
         if (nextFrame != nullptr) {
           if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms)) {
             // If it's time to play the next frame and the current frame at the same time, something's wrong!

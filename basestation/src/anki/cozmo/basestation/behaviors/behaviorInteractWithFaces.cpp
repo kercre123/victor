@@ -213,12 +213,12 @@ namespace Cozmo {
       // Store LiveIdle params so we can restore after tracking
       _originalLiveIdleParams = robot.GetAnimationStreamer().GetAllParams();
      
-      using Param = LiveIdleAnimationParameter;
+      //      using Param = LiveIdleAnimationParameter;
       //      robot.GetAnimationStreamer().SetParam(Param::EyeDartSpacingMinTime_ms, 0.f);
       //      robot.GetAnimationStreamer().SetParam(Param::EyeDartSpacingMaxTime_ms, 0.25f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMinScale, 1.f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxScale, 1.f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxDistance_pix,   0.f);
+      //      robot.GetAnimationStreamer().SetParam(Param::EyeDartMinScale, 1.f);
+      //      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxScale, 1.f);
+      //      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxDistance_pix,   0.f);
     }
     
     _currentState = State::TrackingFace;

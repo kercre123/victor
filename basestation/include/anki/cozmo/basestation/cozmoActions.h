@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/basestation/animation/animation.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
@@ -31,6 +32,8 @@
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/audio/audioParameterTypes.h"
+
+#include <memory>
 
 
 namespace Anki {
@@ -1159,6 +1162,12 @@ namespace Anki {
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
       Signal::SmartHandle _abortSignalHandle;
+      
+    private:
+      // For handling playing an altered copy of an animation
+      std::unique_ptr<Animation> _alteredAnimation;
+      
+      bool NeedsAlteredAnimation(Robot& robot) const;
       
     }; // class PlayAnimationAction
     

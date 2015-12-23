@@ -63,6 +63,22 @@ namespace Cozmo {
     
     return animPtr;
   }
+  
+  const Animation* CannedAnimationContainer::GetAnimation_Const(const std::string& name) const
+  {
+    const Animation* animPtr = nullptr;
+    
+    auto retVal = _animations.find(name);
+    if(retVal == _animations.end()) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation.InvalidName",
+                        "Animation requested for unknown animation '%s'.\n",
+                        name.c_str());
+    } else {
+      animPtr = &retVal->second;
+    }
+    
+    return animPtr;
+  }
 
   std::vector<std::string> CannedAnimationContainer::GetAnimationNames()
   {
