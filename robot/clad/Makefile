@@ -35,7 +35,7 @@ cpp: $(OUTPUT_H_AND_CPP)
 
 python: $(OUTPUT_PYTHON)
 
-%.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPPLITE) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
+%.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPPLITE) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH) $(CLAD_CPPLITE_SEND_HELPER)
 	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
 	if test -f $(OUTPUT_DIR)robot/$*.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*.h; fi
 	if test -f $(OUTPUT_DIR)robot/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)robot/$*.cpp; fi
@@ -52,6 +52,7 @@ python: $(OUTPUT_PYTHON)
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)robot/$*.py
 
 cpplilib: cpp
+	@rm -f $(OUTPUT_DIR)/clad.cpp
 	cd $(OUTPUT_DIR); find . -type f -iname '*.cpp' > cpps.list; awk '{ print "#include \"" $$0 "\"" }' <cpps.list >clad.cpp
 	@rm $(OUTPUT_DIR)cpps.list
 

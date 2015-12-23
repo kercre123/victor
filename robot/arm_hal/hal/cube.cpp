@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "lib/stm32f4xx.h"
+#include "anki/common/constantsAndMacros.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
@@ -56,12 +57,12 @@ namespace Anki
         static char cnt[4];
         char msg[512];
         char *wr = msg;
-        
+
         cnt[id]++;
-        
+
         for (int b = 0; b < 6; b++)
           wr += sprintf(wr, "%2x ", ((u8*)&g_dataToHead.cubeStatus)[b]);
-        
+
         for (int i = 0; i < 4; i++) {
           wr += sprintf(wr, "\n%2x:", cnt[i]);
           for (int b = 0; b < 6; b++) {
@@ -71,8 +72,8 @@ namespace Anki
 
         FacePrintf(msg);
       }
-        
-      
+
+
       void ManageCubes(void) {
         #ifndef OLD_CUBE_EXPERIMENT
         // LED status
@@ -88,7 +89,7 @@ namespace Anki
         }
 
         uint8_t id = g_dataToHead.cubeToUpdate;
-        
+
         if (id >= MAX_CUBES) {
           return ;
         }
@@ -96,7 +97,7 @@ namespace Anki
         uint8_t shocks = g_dataToHead.cubeStatus.shockCount;
         uint8_t count = shocks - g_AccelStatus[id].shockCount;
         memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
-        
+
         //DisplayStatus(id);
 
         if (count > 0 && count < 16) {
@@ -105,45 +106,45 @@ namespace Anki
           m.numTaps = count;
           m.objectID = id;
           RobotInterface::SendMessage(m);
-        }        
-        
-        
+        }
+
+
         // Detect if block moved from accel data
         const u8 START_MOVING_COUNT_THRESH = 5;  // Determines number of motion tics that much be observed before Moving msg is sent
         const u8 STOP_MOVING_COUNT_THRESH = 20;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
         static u8 movingTimeoutCtr[MAX_CUBES] = {0};
         static bool isMoving[MAX_CUBES] = {false};
         static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};
-        
+
         s8 ax = g_AccelStatus[id].x;
         s8 ay = g_AccelStatus[id].y;
         s8 az = g_AccelStatus[id].z;
-        
-        
+
+
         // Compute upAxis
         // Send ObjectMoved message if upAxis changes
         s8 maxAccelVal = 0;
         UpAxis upAxis = Unknown;
-        if (abs(ax) > maxAccelVal) {
+        if (ABS(ax) > maxAccelVal) {
           upAxis = ax > 0 ? XPositive : XNegative;
-          maxAccelVal = abs(ax);
+          maxAccelVal = ABS(ax);
         }
-        if (abs(ay) > maxAccelVal) {
+        if (ABS(ay) > maxAccelVal) {
           upAxis = ay > 0 ? YPositive : YNegative;
-          maxAccelVal = abs(ay);
+          maxAccelVal = ABS(ay);
         }
-        if (abs(az) > maxAccelVal) {
+        if (ABS(az) > maxAccelVal) {
           upAxis = az > 0 ? ZPositive : ZNegative;
-          maxAccelVal = abs(az);
+          maxAccelVal = ABS(az);
         }
         bool upAxisChanged = (prevUpAxis[id] != Unknown) && (prevUpAxis[id] != upAxis);
         prevUpAxis[id] = upAxis;
-        
-        
+
+
         // Compute acceleration due to movement
         s32 accSqrd = ax*ax + ay*ay + az*az;
         bool isMovingNow = !NEAR(accSqrd, 64*64, 500);  // 64 == 1g
-        
+
         if (isMovingNow) {
           if (movingTimeoutCtr[id] < STOP_MOVING_COUNT_THRESH) {
             ++movingTimeoutCtr[id];
@@ -151,7 +152,7 @@ namespace Anki
         } else if (movingTimeoutCtr[id] > 0) {
           --movingTimeoutCtr[id];
         }
-        
+
         if (upAxisChanged ||
             ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
           ObjectMoved m;
@@ -181,14 +182,14 @@ namespace Anki
         if (blockID >= MAX_CUBES) {
           return RESULT_FAIL;
         }
-       
+
         uint8_t *light  = g_LedStatus[blockID].ledStatus;
         uint32_t sum = 0;
         static const int order[] = {0,3,2,1};
-        
+
         for (int c = 0; c < NUM_BLOCK_LEDS; c++) {
           uint32_t color = lights[order[c]].onColor;
-          
+
           for (int ch = 24; ch > 0; ch -= 8) {
             uint8_t status = (color >> ch) & 0xFF;
             uint32_t bright = status;
@@ -198,9 +199,9 @@ namespace Anki
         }
 
         uint32_t sq_sum = isqrt(sum);
-        
+
         g_LedStatus[blockID].ledDark = (sq_sum & ~0xFF) ? 0 : (0x255 - sq_sum);
-        
+
         return RESULT_OK;
       }
     }

@@ -1,4 +1,5 @@
 // XXX: "spi.cpp" was a bad name for "spineport.cpp"
+#include <string.h>
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"

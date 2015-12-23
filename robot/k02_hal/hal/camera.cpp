@@ -1,12 +1,9 @@
 #include "anki/cozmo/robot/hal.h"
 #include "MK02F12810.h"
 
-#include "anki/common/robot/trig_fast.h"
 #include "hal/portable.h"
-
-#include "anki/cozmo/shared/cozmoConfig.h" // for calibration parameters
+#include <math.h>
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/benchmarking.h"
 
 #include "hal/i2c.h"
 #include "hardware.h"

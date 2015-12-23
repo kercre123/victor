@@ -49,12 +49,12 @@ namespace Anki {
       void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
 #endif
       Result Init();
-#ifdef TARGET_ESPRESSIF
+#if defined(TARGET_ESPRESSIF)
       extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
-#else
+#elif !defined(TARGET_K02)
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
-
+#endif
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
 
       void Process_anim(const RobotInterface::EngineToRobot& msg);
@@ -71,15 +71,23 @@ namespace Anki {
       // Sends robot state message, either the one passed in or the one
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
-#endif
+
+      // For sending trace message to basestation
+      int SendTrace(const RobotInterface::RtipTrace name, const int numParams, ...);
+
+      // va_list version
+      int SendTrace(const RobotInterface::LogLevel level, const RobotInterface::RtipTrace name, const int numParams, va_list vaList);
+
+#ifndef TARGET_K02
       // For sending text message to basestation
       int SendText(const char *format, ...);
 
       // va_list version
       int SendText(const char *format, va_list vaList);
-      
+
       // va_list version with level
       int SendText(const RobotInterface::LogLevel level, const char *format, va_list vaList);
+#endif
 
       // Returns whether or not init message was received from basestation
       bool ReceivedInit();
