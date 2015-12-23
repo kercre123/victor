@@ -20,6 +20,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#define DO_BACK_UP_AFTER_POUNCE 0
+
 namespace Anki {
 namespace Cozmo {
   
@@ -59,18 +61,29 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   
   _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
-  
+
+#if DO_BACK_UP_AFTER_POUNCE
+  if( _totalDriveForwardDist > 5.0f ) {
+    _state = State::BackingUp;
+    SetStateName("BackUp");
+  }
+#endif
+
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
   if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
     _initialReactionAnimPlayed = false;
-    _state = State::WaitingForFirstMotion;
-    SetStateName("Wait");
+    if( _state != State::BackingUp ) {
+      _state = State::WaitingForFirstMotion;
+      SetStateName("Wait");
+    }
   } else {
     _initialReactionAnimPlayed = true;
-    StartTracking(robot);
-    _state = State::Tracking;
-    SetStateName("Tracking");
+    if( _state != State::BackingUp ) {
+      StartTracking(robot);
+      _state = State::Tracking;
+      SetStateName("Tracking");
+    }
   }
   
   return Result::RESULT_OK;
@@ -79,11 +92,30 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
 IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   IBehavior::Status status = Status::Running;
-  
+
   switch(_state)
   {
     case State::Interrupted:
       status = Status::Complete;
+      break;
+
+    case State::BackingUp:
+      if( _backingUpAction == (u32)ActionConstants::INVALID_TAG ) {
+        float distToBackUp = _totalDriveForwardDist + _additionalBackupDist;
+        if( distToBackUp > _maxBackupDistance ) {
+          distToBackUp = _maxBackupDistance;
+        }
+
+        PRINT_NAMED_INFO("BehaviorFollowMotion.BackingUp",
+                         "driving backwards %fmm to reset position",
+                         distToBackUp);
+        
+        DriveStraightAction* backupAction = new DriveStraightAction(-distToBackUp, -_backupSpeed);
+        _backingUpAction = backupAction->GetTag();
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, backupAction);
+
+        _totalDriveForwardDist = 0.0f;
+      }
       break;
 
     case State::HoldingHeadDown:
@@ -94,6 +126,19 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
       break;
       
     case State::Tracking:
+    {
+      LiftShouldBeLocked(robot);
+
+      // keep the lift out of the FOV
+      if( !robot.IsLiftMoving() && robot.GetLiftHeight() > LIFT_HEIGHT_LOWDOCK + 6.0f ) {
+        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+        // use animation slot, since we know no one is using the lift
+        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
+      }
+      
+      break;
+    }
+    
     case State::DrivingForward:
       LiftShouldBeLocked(robot);
       break;
@@ -256,9 +301,12 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
              relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol )
     {
       // Move towards the motion since it's centered
-      DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm, DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
+      DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm,
+                                                                 DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
       driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
       _actionRunning = driveAction->GetTag();
+
+      _totalDriveForwardDist += _moveForwardDist_mm;
       
       _state = State::DrivingForward;
       SetStateName("DriveForward");
@@ -324,6 +372,20 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
     }
     
   } // if(completedAction.idTag == _actionRunning)
+
+  if( _state == State::BackingUp && completedAction.idTag == _backingUpAction ) {
+    _backingUpAction = 0;
+    PRINT_NAMED_INFO("BehaviorFollowMotion.BackupComplete", "");
+    if( _initialReactionAnimPlayed ) {
+      StartTracking(robot);
+      _state = State::Tracking;
+      SetStateName("Tracking");
+    }
+    else {
+      _state = State::WaitingForFirstMotion;
+      SetStateName("Wait");
+    }
+  }
   
 } // HandleCompletedAction()
 

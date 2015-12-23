@@ -148,7 +148,7 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
           PRINT_NAMED_INFO("BehaviorPounceOnMotion.RelaxLift", "pounce animation complete, relaxing lift");
           robot.GetMoveComponent().EnableLiftPower(false); // TEMP: make sure this gets cleaned up
           _state = State::RelaxingLift;
-          const float relaxTime = 0.1f;
+          const float relaxTime = 0.15f;
           _stopRelaxingTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + relaxTime;
         }
         else if( _state == State::PlayingFinalReaction ) {
@@ -226,12 +226,11 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
   float robotBodyAngleDelta = robot.GetPitchAngle() - _prePouncePitch;
     
   // check the lift angle, after some time, transition state
-  // TEMP:  // TODO:(bn) do this
-  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %f (%f -> %f)",
+  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%f -> %f)",
                    robot.GetLiftHeight(),
-                   robotBodyAngleDelta,
-                   _prePouncePitch,
-                   robot.GetPitchAngle());
+                   RAD_TO_DEG(robotBodyAngleDelta),
+                   RAD_TO_DEG(_prePouncePitch),
+                   RAD_TO_DEG(robot.GetPitchAngle()));
 
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 

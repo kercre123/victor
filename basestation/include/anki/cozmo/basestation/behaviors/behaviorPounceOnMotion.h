@@ -53,8 +53,10 @@ protected:
   int _numValidPouncePoses = 0;
 
   float _lastPoseDist = 0.0f;
-  const float _driveForwardUntilDist = 60.0f;
-  // TODO:(bn) I think there is some tolerance here that is hurting me
+  const float _driveForwardUntilDist = 70.0f;
+
+  float _backupAfterPounce = 200.0f;
+  float _backupSpeed = 80.0f;
   
 private:
 
