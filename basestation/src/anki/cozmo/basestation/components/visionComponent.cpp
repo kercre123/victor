@@ -519,6 +519,196 @@ namespace Cozmo {
                      "Terminated Robot VisionComponent::Processor thread");
   } // Processor()
   
+  
+  static f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
+  {
+    const Radians poseAngle1( p1.GetPose().GetRotationAngle<'Z'>() );
+    const Radians poseAngle2( p2.GetPose().GetRotationAngle<'Z'>() );
+    const f32 poseAngSpeed = std::abs((poseAngle1-poseAngle2).ToFloat()) / dt;
+    
+    return poseAngSpeed;
+  }
+  
+  static f32 ComputeHeadAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
+  {
+    const f32 headAngSpeed = std::abs((Radians(p1.GetHeadAngle()) - Radians(p2.GetHeadAngle())).ToFloat()) / dt;
+    return headAngSpeed;
+  }
+  
+  
+  Result VisionComponent::QueueObservedMarker(Robot& robot, const Vision::ObservedMarker& markerOrig)
+  {
+    Result lastResult = RESULT_OK;
+    
+    // Get historical robot pose at specified timestamp to get
+    // head angle and to attach as parent of the camera pose.
+    TimeStamp_t t;
+    RobotPoseStamp* p = nullptr;
+    HistPoseKey poseKey;
+    
+    lastResult = robot.GetPoseHistory()->ComputeAndInsertPoseAt(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
+    if(lastResult != RESULT_OK) {
+      PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
+                          "Time: %d, hist: %d to %d\n",
+                          markerOrig.GetTimeStamp(),
+                          robot.GetPoseHistory()->GetOldestTimeStamp(),
+                          robot.GetPoseHistory()->GetNewestTimeStamp());
+      return lastResult;
+    }
+    
+    // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded
+    // and this should be true
+    assert(markerOrig.GetTimeStamp() == t);
+    
+    if(!robot.IsPickingOrPlacing())
+    {
+      TimeStamp_t t_prev, t_next;
+      RobotPoseStamp p_prev, p_next;
+      
+      lastResult = robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
+                            "Could not get next/previous poses for t = %d, so "
+                            "cannot compute angular velocity. Ignoring marker.\n", t);
+        
+        // Don't return failure, but don't queue the marker either (since we
+        // couldn't check the angular velocity while seeing it
+        return RESULT_OK;
+      }
+      
+      //const f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = 45.f;
+      //const f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = 10.f;
+      
+      assert(t_prev < t);
+      assert(t_next > t);
+      const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
+      const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
+      const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
+      const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
+      const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
+      const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
+      
+      if(turnSpeedNext > _markerDetectionBodyTurnSpeedThreshold_radPerSec ||
+         turnSpeedPrev > _markerDetectionBodyTurnSpeedThreshold_radPerSec)
+      {
+        //          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+        //                              "Ignoring vision marker seen while turning with angular "
+        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+        //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
+        //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+        return RESULT_OK;
+      } else if(headSpeedNext > _markerDetectionHeadTurnSpeedThreshold_radPerSec ||
+                headSpeedPrev > _markerDetectionHeadTurnSpeedThreshold_radPerSec)
+      {
+        //          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+        //                              "Ignoring vision marker seen while head moving with angular "
+        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+        //                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
+        //                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+        return RESULT_OK;
+      }
+      
+    } // if(!_visionWhileMovingEnabled)
+    
+    // Update the marker's camera to use a pose from pose history, and
+    // create a new marker with the updated camera
+    assert(nullptr != p);
+    Vision::ObservedMarker marker(markerOrig.GetTimeStamp(), markerOrig.GetCode(),
+                                  markerOrig.GetImageCorners(),
+                                  robot.GetHistoricalCamera(*p, markerOrig.GetTimeStamp()),
+                                  markerOrig.GetUserHandle());
+    
+    // Queue the marker for processing by the blockWorld
+    robot.GetBlockWorld().QueueObservedMarker(poseKey, marker);
+    
+    /*
+    // React to the marker if there is a callback for it
+    auto reactionIter = _reactionCallbacks.find(marker.GetCode());
+    if(reactionIter != _reactionCallbacks.end()) {
+      // Run each reaction for this code, in order:
+      for(auto & reactionCallback : reactionIter->second) {
+        lastResult = reactionCallback(this, &marker);
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("Robot.Update.ReactionCallbackFailed",
+                              "Reaction callback failed for robot %d observing marker with code %d.\n",
+                              GetID(), marker.GetCode());
+        }
+      }
+    }
+    */
+    
+    // Visualize the marker in 3D
+    // TODO: disable this block when not debugging / visualizing
+    if(true){
+      
+      // Note that this incurs extra computation to compute the 3D pose of
+      // each observed marker so that we can draw in the 3D world, but this is
+      // purely for debug / visualization
+      u32 quadID = 0;
+      
+      // When requesting the markers' 3D corners below, we want them
+      // not to be relative to the object the marker is part of, so we
+      // will request them at a "canonical" pose (no rotation/translation)
+      const Pose3d canonicalPose;
+      
+      
+      // Block Markers
+      std::set<const ObservableObject*> const& blocks = robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Block).GetObjectsWithMarker(marker);
+      for(auto block : blocks) {
+        std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
+        
+        for(auto blockMarker : blockMarkers) {
+          
+          Pose3d markerPose;
+          Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                   blockMarker->Get3dCorners(canonicalPose),
+                                                                   markerPose);
+          if(poseResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
+                                "Could not estimate pose of block marker. Not visualizing.\n");
+          } else {
+            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+              VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+            } else {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                  "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
+            }
+          }
+        }
+      }
+      
+      
+      // Mat Markers
+      std::set<const ObservableObject*> const& mats = robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithMarker(marker);
+      for(auto mat : mats) {
+        std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
+        
+        for(auto matMarker : matMarkers) {
+          Pose3d markerPose;
+          Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                   matMarker->Get3dCorners(canonicalPose),
+                                                                   markerPose);
+          if(poseResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
+                                "Could not estimate pose of mat marker. Not visualizing.\n");
+          } else {
+            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+              VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
+            } else {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                  "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
+            }
+          }
+        }
+      }
+      
+    } // 3D marker visualization
+    
+    return lastResult;
+    
+  } // QueueObservedMarker()
+  
+  
   Result VisionComponent::UpdateVisionMarkers(Robot& robot)
   {
     Result lastResult = RESULT_OK;
@@ -527,7 +717,7 @@ namespace Cozmo {
       Vision::ObservedMarker visionMarker;
       while(true == _visionSystem->CheckMailbox(visionMarker)) {
         
-        lastResult = robot.QueueObservedMarker(visionMarker);
+        lastResult = QueueObservedMarker(robot, visionMarker);
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("VisionComponent.Update.FailedToQueueVisionMarker",
                             "Got VisionMarker message from vision processing thread but failed to queue it.");
