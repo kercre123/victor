@@ -3179,7 +3179,8 @@ namespace Anki {
     MountChargerAction::MountChargerAction(ObjectID chargerID, const bool useManualSpeed)
     : IDockAction(chargerID, useManualSpeed)
     {
-      
+      // Increase tolerance on pre-action pose
+      _preActionPoseAngleTolerance *= 2.f;
     }
     
     const std::string& MountChargerAction::GetName() const
