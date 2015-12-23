@@ -2,15 +2,15 @@
 #include "MK02F12810.h"
 
 #include "hal/portable.h"
-#include <math.h>
-#include "anki/common/robot/config.h"
 
 #include "hal/i2c.h"
-#include "hardware.h"
-#include "spi.h"
+#include "hal/hardware.h"
+#include "hal/spi.h"
+#include "hal/uart.h"
 
-//#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
+//#define ENABLE_JPEG     // Comment this out to troubleshoot timing problems caused by JPEG encoder
 //#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
+//#define ASCII_IMAGE     // Uncomment this to send an ASCII image for test purposes
 
 namespace Anki
 {
@@ -246,7 +246,7 @@ namespace Anki
           correctedExposure = 1.0f;
         } 
         
-        const u32 exposureU32 = (u32) floorf(correctedExposure * maxExposure + 0.5f);
+        //const u32 exposureU32 = (u32) floorf(correctedExposure * maxExposure + 0.5f);
         
         // Set exposure - let it get picked up during next vblank
       }
@@ -286,9 +286,6 @@ void DMA0_IRQHandler(void)
   timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
   NVIC_SetPriority(FTM2_IRQn, 1);
-  
-  // Now that we're synchronized, do rest of initialization
-  //HALInit();
 }
 
 extern "C"
@@ -314,7 +311,7 @@ void FTM2_IRQHandler(void)
 
   static u16 line = 0;
   static int last = 0;
-  
+
   CAMRAM static u8 buf[2][128];
   static u8 whichbuf = 0;
   static u8 buflen = 0;
@@ -330,9 +327,29 @@ void FTM2_IRQHandler(void)
   if (vblank > 3)
     line = 478 + vblank;   // Set to start of vblank (adjusted for QVGA rate)
   dmaBuff_[0] = 1;
-  
-  HALExec(&buf[whichbuf][4], buflen, eof);
 
+#ifdef ASCII_IMAGE
+  static u8 test[] = "\n======..........................................................................................";
+  static u8 hex[] = "0123456789abcdef";
+  
+  const int LINELEN = 96;
+  static u16 frame = 0;
+  test[2] = hex[frame & 15];
+  test[3] = hex[(line>>8) & 15]; 
+  test[4] = hex[(line>>4) & 15]; 
+  test[5] = hex[line & 15];  
+  if (line < 480) {
+    HALExec(test, LINELEN, 0);
+  } else if (line == 480) {
+    HALExec(test, LINELEN, 1);
+    frame++;
+  } else {
+    HALExec(test, 0, 0);
+  }
+#else
+  HALExec(&buf[whichbuf][4], buflen, eof);
+#endif
+  
 #ifdef SERIAL_IMAGE
   static int pclkoffset = 0;
   int hline = line;

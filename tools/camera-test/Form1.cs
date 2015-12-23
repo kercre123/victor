@@ -9,6 +9,7 @@ using System.IO;
 using System.Media;
 using System.Net.Sockets;
 using System.Net;
+using System.Globalization;
 
 namespace BlueCode
 {
@@ -407,6 +408,7 @@ namespace BlueCode
         IPEndPoint m_ep = null;
         byte[] m_udpBuffer = new byte[4096];
 
+        static int packetcount = 0;
         private void btnTCP_Click(object sender, EventArgs e)
         {
             try
@@ -416,6 +418,7 @@ namespace BlueCode
                 m_udp.Send(new byte[] { (byte)'0' }, 1);
                 //m_udp.Send(new byte[] { 18,  0, 0, 0, 0,  0, 0, 0, 0 }, 9);
                 m_udp.BeginReceive(new AsyncCallback(UdpReceive), null);
+                packetcount = 0;
             }
             catch (Exception x)
             {
@@ -423,12 +426,49 @@ namespace BlueCode
             }
         }
 
+        int expect = 0;
+        static int LINELEN = 96;
+        static byte[][] bufs = new byte[5000][];
         private void UdpReceive(IAsyncResult ar)
         {
             try
             {
-                Byte[] buf = m_udp.EndReceive(ar, ref m_ep);
-                receiveNoHeader(buf);
+                byte[] buf = m_udp.EndReceive(ar, ref m_ep);
+                packetcount++;
+                bufs[packetcount] = buf;
+
+                int start = 0;
+                while (start < buf.Length)
+                    if (buf[start++] == '\n')
+                        break;
+                while (start < buf.Length)
+                    if (buf[start++] == '=')
+                        break;
+                /*
+                for (int i = start - 2; i < buf.Length; i++)
+                    Console.Write(Convert.ToChar(buf[i]));
+                */
+                //Console.WriteLine(packetcount + ":" + (start-2) + "-" + buf.Length + " " + expect.ToString("x4"));
+                while (start+4 < buf.Length && buf[start-2] == '\n' && buf[start-1] == '=')
+                {
+                    byte[] val = new byte[4];
+                    Array.Copy(buf, start, val, 0, 4);
+                    String value = ASCIIEncoding.ASCII.GetString(val);
+                    int that = -1;
+                    int.TryParse(value, NumberStyles.AllowHexSpecifier, null, out that);
+                    if (expect != that)
+                    {
+                        Console.WriteLine("ERROR " + packetcount + ":" + (start-2) + "-" + buf.Length + " " + value + " != " + expect.ToString("x4"));
+                        if (that > 2)
+                            expect = that;
+                    }
+                    expect++;
+                    if ((expect & 0xfff) >= 0x1e1)
+                        expect = (expect + 0xe1f) & 0xffff;
+                    //Console.Write(expect.ToString("x4") + ".");
+                    start += LINELEN;
+                }
+                //receiveNoHeader(buf);
             }
             catch (Exception x)
             {
