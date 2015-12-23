@@ -27,10 +27,12 @@ namespace Simon {
     }
 
     private void SetSimonNodeBlink() {
-      _CurrentRobot.SendAnimation(AnimationName.kSeeOldPattern, HandleAnimationEnd);
+      LightCube currentCube = _Parent.GetCurrentTarget();
+      SimonGame game = _StateMachine.GetGame() as SimonGame;
+      string animation = game.GetCozmoAnimationForBlock(currentCube.ID);
+      _CurrentRobot.SendAnimation(animation, HandleAnimationEnd);
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _StartLightBlinkTime = Time.time;
-      LightCube currentCube = _Parent.GetCurrentTarget();
       _CubeLightColor = currentCube.Lights[0].OnColor;
       currentCube.TurnLEDsOff();
     }

@@ -100,7 +100,8 @@ namespace Simon {
       }
 
       _LastTappedTime = Time.time;
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
+      SimonGame game = _StateMachine.GetGame() as SimonGame;
+      GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(id));
       _IsTurning = true;
       _TargetCube = id;
       _TargetCubeColor = _CurrentRobot.LightCubes[_TargetCube].Lights[0].OnColor;
