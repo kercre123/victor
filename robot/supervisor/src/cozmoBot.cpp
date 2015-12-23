@@ -7,12 +7,12 @@
 #include "timeProfiler.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "liftController.h"
 #ifndef TARGET_K02
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "headController.h"
-#include "liftController.h"
 #include "testModeController.h"
 #include "localization.h"
 #include "pathFollower.h"

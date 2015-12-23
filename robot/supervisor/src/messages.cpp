@@ -16,6 +16,7 @@
 #include "anki/common/robot/array2d.h"
 #endif
 
+#include "liftController.h"
 #ifndef TARGET_K02
 #include "localization.h"
 #include "animationController.h"
@@ -23,7 +24,6 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#include "liftController.h"
 #include "headController.h"
 #include "imuFilter.h"
 #include "dockingController.h"
