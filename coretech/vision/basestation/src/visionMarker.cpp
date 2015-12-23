@@ -10,10 +10,13 @@
 #include "anki/vision/basestation/visionMarker.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "util/logging/logging.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
+
+#include <random>
 
 namespace Anki {
   namespace Vision{
@@ -261,13 +264,68 @@ namespace Anki {
       
     } // KnownMarker::IsVisibleFrom()
     
+#   define NUM_AVERAGE_POSES 0
+    
+#   if NUM_AVERAGE_POSES > 1
+    // TODO: Move these elsewhere?
+    static std::random_device rd;
+    static std::mt19937 rng(rd());
+    static std::normal_distribution<> normalDist(0,0.05);
+#   endif
     
     Result KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker,
                                              Pose3d& pose) const
     {
       const Camera& camera = obsMarker.GetSeenBy();
+
+#     if NUM_AVERAGE_POSES > 1
+      SmallMatrix<4, NUM_AVERAGE_POSES, f32> Q;
+      Vec3f T = 0.f;
+      
+      std::vector<Pose3d> posesToAverage(NUM_AVERAGE_POSES);
+      for(s32 i=0; i<NUM_AVERAGE_POSES; ++i)
+      {
+        Quad2f perturbedCorners(obsMarker.GetImageCorners());
+        for(auto & corner : perturbedCorners) {
+          corner.x() += normalDist(rng);
+          corner.y() += normalDist(rng);
+        }
+        
+        Result result = camera.ComputeObjectPose(perturbedCorners, _corners3d, pose);
+        if(RESULT_OK != result) {
+          return result;
+        }
+        
+        T += pose.GetTranslation();
+        
+        Q.SetColumn(i, pose.GetRotation().GetQuaternion());
+      }
+      
+      // Compute average translation
+      T /= static_cast<f32>(NUM_AVERAGE_POSES);
+      
+      // Compute average rotation, which is the eigenvector corresponding to the
+      // largest eigenvalue of QQ^T according to one of the responses in:
+      // http://stackoverflow.com/questions/12374087/average-of-multiple-quaternions
+      // which references: http://www.acsu.buffalo.edu/~johnc/ave_quat07.pdf
+      // TODO: Make pose averaging a method of Pose3d
+      cv::Mat_<f32> eigenvalues;
+      cv::Mat_<f32> cvEigenvectors;
+      cv::eigen(Q.get_CvMatx_() * Q.get_CvMatx_().t(), eigenvalues, cvEigenvectors);
+      
+      SmallMatrix<4,4,f32> eigenvectors(cvEigenvectors);
+      pose.SetRotation(UnitQuaternion<f32>(eigenvectors.GetRow(0)));
+      pose.SetTranslation(T);
+      
+      return RESULT_OK;
+      
+#     else 
+      
       return camera.ComputeObjectPose(obsMarker.GetImageCorners(), _corners3d, pose);
-    }
+      
+#     endif // if NUM_AVERAGE_POSES > 1
+      
+    } // EstimateObservedPose()
     
     
   } // namespace Vision
