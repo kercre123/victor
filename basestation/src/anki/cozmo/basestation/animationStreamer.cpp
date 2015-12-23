@@ -99,7 +99,7 @@ namespace Cozmo {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
                        "Will start streaming '%s' animation %d times with tag=%d.\n",
-                       name.c_str(), numLoops, _tagCtr);
+                       _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
 #     endif
     
       return _tagCtr;
@@ -122,6 +122,8 @@ namespace Cozmo {
     {
       // Tell the robot to abort
       robot.AbortAnimation();
+      _startOfAnimationSent = false;
+      _endOfAnimationSent = false;
     }
   } // Abort()
   
