@@ -16,7 +16,7 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.EnterCozmoBehaviorChooser, Assembly-CSharp",
-          "BehaviorChooser": "InvestorDemoFacesAndBlocks"
+          "BehaviorChooser": "InvestorDemoFacesOnly"
         },
         {
           "$type": "ScriptedSequences.Actions.PlayMusic, Assembly-CSharp",
