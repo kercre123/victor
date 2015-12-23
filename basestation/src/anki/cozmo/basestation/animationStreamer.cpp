@@ -77,9 +77,39 @@ namespace Cozmo {
       robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
     }
     
+    // If there's something already streaming or we're purposefully clearing the buffer, abort
     if(nullptr != _streamingAnimation || nullptr == anim)
     {
       Abort(robot);
+    }
+    
+    // If we're cancelling a current anim with no replacement, make use of the live animation track to insert a
+    // face keyframe from the end of the animation being cancelled
+    if (nullptr != _streamingAnimation && nullptr == anim)
+    {
+      bool streamingHasProcFace = !_streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
+      
+      // Only bother if the streaming animation has some kind of face track
+      if (streamingHasProcFace ||
+          !_streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty())
+      {
+        anim = &_liveAnimation;
+        
+        if (streamingHasProcFace)
+        {
+          // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
+          auto lastFrame = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
+          ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
+          anim->AddKeyFrameToBack(frameCopy);
+        }
+        else
+        {
+          // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
+          auto lastFrame = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
+          FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
+          anim->AddKeyFrameToBack(frameCopy);
+        }
+      }
     }
     
     _streamingAnimation = anim;
