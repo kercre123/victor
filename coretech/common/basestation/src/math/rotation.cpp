@@ -522,6 +522,13 @@ namespace Anki {
   }
   
   template<typename T>
+  UnitQuaternion<T>::UnitQuaternion(const Point<4, T>& vals)
+  : Point<4, T>(vals)
+  {
+    this->Normalize();
+  }
+  
+  template<typename T>
   UnitQuaternion<T>::UnitQuaternion(const T w, const T x, const T y, const T z)
   : Point<4,T>(w,x,y,z)
   {
