@@ -137,5 +137,62 @@
     },
     "cubeLifting01.description" : {
         "translation" : "Teach Cozmo how to lift a block by raising and lowering it in front of him."
+    },
+    "simonGame01.title" : {
+        "translation" : "Simon Says Challenge"
+    },
+    "simonGame01.subtitle" : {
+        "translation" : "Simon Says Challenge Subtitle"
+    },
+    "simonGame01.description" : {
+        "translation" : "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
+    },
+    "treasureHuntGame01.title" : {
+        "translation" : "Treasure Hunt Challenge"
+    },
+    "treasureHuntGame01.subtitle" : {
+        "translation" : "Treasure Hunt Challenge Subtitle"
+    },
+    "treasureHuntGame01.description" : {
+        "translation" : "Find the treasure!"
+    },
+    "selfieGame01.title" : {
+        "translation" : "Selfie Time"
+    },
+    "selfieGame01.subtitle" : {
+        "translation" : "Cozmo Loves Cameras"
+    },
+    "selfieGame01.description" : {
+        "translation" : "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
+    },
+    "minesweeper01.title" : {
+        "translation" : "Minesweeper"
+    },
+    "minesweeper01.subtitle" : {
+        "translation" : "Minesweeper Subtitle"
+    },
+    "minesweeper01.description" : {
+        "translation" : "These mines aren't going to sweep themselves."
+    },
+    "investorDemo.investorDemoFull" : {
+        "translation" : "Full"
+    },
+    "investorDemo.investorDemoCubes" : {
+        "translation" : "Cubes"
+    },
+    "investorDemo.investorDemoFaces" : {
+        "translation" : "Faces"
+    },
+    "investorDemo.investorDemoMotion" : {
+        "translation" : "Motion"
+    },
+    "codeBreaker01.title" : {
+        "translation" : "Cozmo Code Breaker"
+    },
+    "codeBreaker01.subtitle" : {
+        "translation" : "Guess the code!"
+    },
+    "codeBreaker01.description" : {
+        "translation" : "Cozmo will think of a code and you have a certain number of tries to get it right."
     }
 }

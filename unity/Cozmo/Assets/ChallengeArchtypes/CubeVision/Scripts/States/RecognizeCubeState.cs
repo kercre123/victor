@@ -9,6 +9,7 @@ namespace VisionTraining {
     private LightCube _CurrentTarget = null;
 
     private CubeVisionGame _GameInstance;
+    private bool _CubeInZoneAnimationPlayed = false;
 
     // don't use the rect constructor position because
     // it is top left and not center of the rect.
@@ -42,9 +43,7 @@ namespace VisionTraining {
         }
       }
       else {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kShocked, HandleLoseAnimationDone);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleLoseAnimationDone));
         return;
       }
 
@@ -63,13 +62,17 @@ namespace VisionTraining {
         _CubeInRectTime -= Time.deltaTime;
         if (_CubeInRectTime < 0.0f) {
           _CubeInRectTime = 0.0f;
+          _CubeInZoneAnimationPlayed = false;
         }
       }
 
+      if (_CubeInRectTime > 0.3f && _CubeInZoneAnimationPlayed == false) {
+        _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight);
+        _CubeInZoneAnimationPlayed = true;
+      }
+
       if (_CubeInRectTime > 3.0f) {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDone);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleWinAnimationDone));
       }
     }
 

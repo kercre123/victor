@@ -165,7 +165,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 497984, guid: 4c907f46693e946a28129e509372244a, type: 2}
       propertyPath: m_RootOrder
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 493810, guid: 4c907f46693e946a28129e509372244a, type: 2}
       propertyPath: m_RootOrder
@@ -219,7 +219,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 455644, guid: 10b98722b50e64795ba4fca1b6c186a2, type: 2}
       propertyPath: m_RootOrder
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 10b98722b50e64795ba4fca1b6c186a2, type: 2}
@@ -269,7 +269,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 411698, guid: 072b7b1665337441a8158a91a744cfd0, type: 2}
       propertyPath: m_RootOrder
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 072b7b1665337441a8158a91a744cfd0, type: 2}
@@ -315,7 +315,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 484612, guid: ba92aeb7b26da467d8d8cb93a48a834f, type: 2}
       propertyPath: m_RootOrder
-      value: 6
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ba92aeb7b26da467d8d8cb93a48a834f, type: 2}
@@ -361,7 +361,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 434442, guid: a8b040144e658400aa27dad0eddfa730, type: 2}
       propertyPath: m_RootOrder
-      value: 7
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a8b040144e658400aa27dad0eddfa730, type: 2}
@@ -453,7 +453,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 483464, guid: 1ab431f5047cb417f885bec7f259641f, type: 2}
       propertyPath: m_RootOrder
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 11479540, guid: 1ab431f5047cb417f885bec7f259641f, type: 2}
       propertyPath: audioSources.Array.data[0]
@@ -604,7 +604,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: .192156866, g: .301960796, b: .474509805, a: .0196078438}
+  m_BackGroundColor: {r: 0, g: .0514705852, b: .132352948, a: .259000003}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -682,7 +682,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 461244, guid: 66c2fdefd291b416c94c699822cbd062, type: 2}
       propertyPath: m_RootOrder
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 11432592, guid: 66c2fdefd291b416c94c699822cbd062, type: 2}
       propertyPath: configuration_
@@ -726,6 +726,8 @@ MonoBehaviour:
   _DevConnectDialog: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
   _HubWorldPrefab: {fileID: 11482156, guid: 0a14ae0a8099b4285a7bc241e2ba822e, type: 2}
   _IntroScriptedSequenceName: 
+  _RobotStateTextFieldPrefab: {fileID: 11455370, guid: 689e303582fa0435b8ce1a821c97d2cb,
+    type: 2}
 --- !u!4 &2072601120
 Transform:
   m_ObjectHideFlags: 0
@@ -775,7 +777,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 472660, guid: 96563fa7c044a44afa01f530712be672, type: 2}
       propertyPath: m_RootOrder
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 117198, guid: 96563fa7c044a44afa01f530712be672, type: 2}
       propertyPath: m_IsActive

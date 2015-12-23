@@ -235,6 +235,8 @@ public class Robot : IDisposable {
   private float _LiftHeightRequested;
   private float _LastLiftHeightRequestTime;
 
+  public string CurrentBehaviorString { get; set; }
+
   private U2G.DriveWheels DriveWheelsMessage;
   private U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHereMessage;
   private U2G.CancelAction CancelActionMessage;
@@ -459,6 +461,10 @@ public class Robot : IDisposable {
     SetBehaviorSystem(false);
     ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    SetIdleAnimation("NONE");
+    Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
+    float[] paramValues = { };
+    SetLiveIdleAnimationParameters(paramNames, paramValues, true);
     foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
       kvp.Value.SetLEDs(Color.black);
     }
@@ -659,6 +665,11 @@ public class Robot : IDisposable {
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
+
+    //TODO: We should be displaying whatever is on the face on the robot here, but
+    // we don't have access to that yet.
+    CozmoFace.DisplayProceduralFace(faceAngle, faceCenter, faceScale, leftEyeParams, rightEyeParams);
+
     DisplayProceduralFaceMessage.robotID = ID;
     DisplayProceduralFaceMessage.faceAngle = faceAngle;
     DisplayProceduralFaceMessage.faceCenX = faceCenter.x;
@@ -759,6 +770,10 @@ public class Robot : IDisposable {
   public void SendAnimation(string animName, RobotCallback callback = null) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
+    // TODO: We should be displaying what is actually on the robot, instead
+    // we are faking it.
+    CozmoFace.PlayAnimation(animName);
+
     PlayAnimationMessage.animationName = animName;
     PlayAnimationMessage.numLoops = 1;
     PlayAnimationMessage.robotID = this.ID;
@@ -776,11 +791,12 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues) {
+  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
 
     SetLiveIdleAnimationParametersMessage.paramNames = paramNames;
     SetLiveIdleAnimationParametersMessage.paramValues = paramValues;
     SetLiveIdleAnimationParametersMessage.robotID = 1;
+    SetLiveIdleAnimationParametersMessage.setUnspecifiedToDefault = setUnspecifiedToDefault;
 
     RobotEngineManager.Instance.Message.SetLiveIdleAnimationParameters = SetLiveIdleAnimationParametersMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -1128,6 +1144,8 @@ public class Robot : IDisposable {
   }
 
   public void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType) {
+    DAS.Debug(this, "ActivateBehaviorChooser: " + behaviorChooserType);
+
     ActivateBehaviorChooserMessage.behaviorChooserType = behaviorChooserType;
 
     RobotEngineManager.Instance.Message.ActivateBehaviorChooser = ActivateBehaviorChooserMessage;
@@ -1162,7 +1180,7 @@ public class Robot : IDisposable {
     SetBackpackLED((int)ledId, colorUint);
   }
 
-  public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs, uint offDurationMs, uint transitionDurationMs) {
+  public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionDurationMs = 0) {
     uint colorUint = CozmoPalette.ColorToUInt(color);
     SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }

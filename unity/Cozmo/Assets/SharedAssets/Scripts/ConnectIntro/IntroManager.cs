@@ -14,6 +14,10 @@ public class IntroManager : MonoBehaviour {
   [SerializeField]
   private string _IntroScriptedSequenceName;
 
+  [SerializeField]
+  private RobotStateTextField _RobotStateTextFieldPrefab;
+  private RobotStateTextField _RobotStateTextFieldInstance;
+
   private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
 
   void Start() {
@@ -34,6 +38,10 @@ public class IntroManager : MonoBehaviour {
       _IntroSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_IntroScriptedSequenceName);
       _IntroSequenceDoneToken.Ready(HandleIntroSequenceDone);
     }
+
+    if (_RobotStateTextFieldInstance == null && _RobotStateTextFieldPrefab != null) {
+      _RobotStateTextFieldInstance = UIManager.CreateUIElement(_RobotStateTextFieldPrefab).GetComponent<RobotStateTextField>();
+    }
   }
 
   private void HandleDisconnectedFromClient(DisconnectionReason obj) {
@@ -44,6 +52,10 @@ public class IntroManager : MonoBehaviour {
     }
 
     UIManager.CloseAllViewsImmediately();
+    if (_RobotStateTextFieldInstance != null) {
+      Destroy(_RobotStateTextFieldInstance.gameObject);
+    }
+
     ShowDevConnectDialog();
   }
 

@@ -5,9 +5,6 @@ using System.Linq;
 namespace StackTraining {
   public class StackTrainingGame : GameBase {
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     private int _BottomCubeId = -1;
     private int _TopCubeId = -1;
 
@@ -36,6 +33,7 @@ namespace StackTraining {
       var config = minigameConfig as StackTrainingConfig ?? new StackTrainingConfig();
 
       MaxAttempts = config.MaxAttempts;
+      NumSegments = 5;
 
       if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
         _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
@@ -51,8 +49,6 @@ namespace StackTraining {
     }
 
     protected void InitializeMinigameObjects() {
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("StackTrainingGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new WaitForStackState(), 2, true, null);
       _StateMachine.SetNextState(initCubeState);
@@ -62,10 +58,6 @@ namespace StackTraining {
 
       CurrentRobot.SetLiftHeight(0f);
       CurrentRobot.SetHeadAngle(0.15f);
-    }
-
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
     }
 
     protected override void CleanUpOnDestroy() {

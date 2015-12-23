@@ -37,10 +37,7 @@ namespace Anki {
           _RobotEngineManager = RobotEngineManager.Instance;
           // Setup Engine To Game callbacks
           if (null != _RobotEngineManager) {
-            _RobotEngineManager.ReceivedAudioCallbackDuration += HandleCallback;
-            _RobotEngineManager.ReceivedAudioCallbackMarker += HandleCallback;
-            _RobotEngineManager.ReceivedAudioCallbackComplete += HandleCallback;
-            _RobotEngineManager.ReceivedAudioCallbackError += HandleCallback;
+            _RobotEngineManager.ReceivedAudioCallback += HandleCallback;
             _IsInitialized = true;
           }
           else {
@@ -49,11 +46,7 @@ namespace Anki {
         }
 
         ~AudioClient() {
-          _RobotEngineManager.ReceivedAudioCallbackDuration -= HandleCallback;
-          _RobotEngineManager.ReceivedAudioCallbackMarker -= HandleCallback;
-          _RobotEngineManager.ReceivedAudioCallbackComplete -= HandleCallback;
-          _RobotEngineManager.ReceivedAudioCallbackError -= HandleCallback;
-
+          _RobotEngineManager.ReceivedAudioCallback -= HandleCallback;
           _RobotEngineManager = null;
           _IsInitialized = false;
         }
@@ -64,10 +57,14 @@ namespace Anki {
                                 Anki.Cozmo.Audio.GameObjectType gameObject,
                                 Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                 CallbackHandler handler = null) {
-          DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  gameObj: " +
+          DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  GameObj: " +
                     gameObject.ToString() + " CallbackFlag: " + callbackFlag);
           ushort playId = _GetPlayId();
-          PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObject, callbackFlag, playId);
+
+          // Only register for callbacks if a flag is set.
+          // Callbacks are only registered if callbackId != kInvalidPlayId
+          ushort callbackId = AudioCallbackFlag.EventNone == callbackFlag ? kInvalidPlayId : playId;
+          PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObject, callbackId);
           _RobotEngineManager.Message.PostAudioEvent = msg;
           _RobotEngineManager.SendMessage();
 
@@ -78,6 +75,14 @@ namespace Anki {
           }
 
           return playId;
+        }
+
+        // Pass in game object type to stop audio events on that game object, use Invalid to stop all audio
+        public void StopAllAudioEvents(Anki.Cozmo.Audio.GameObjectType gameObject = Anki.Cozmo.Audio.GameObjectType.Invalid) {
+          DAS.Debug("AudioController.StopAllAudioEvents", "GameObj: " + gameObject.ToString());
+          StopAllAudioEvents msg = new Anki.Cozmo.Audio.StopAllAudioEvents(gameObject);
+          _RobotEngineManager.Message.StopAllAudioEvents = msg;
+          _RobotEngineManager.SendMessage();
         }
 
         public void PostGameState(Anki.Cozmo.Audio.GameStateGroupType gameStateGroup,
@@ -101,8 +106,8 @@ namespace Anki {
                                   GameObjectType gameObject,
                                   int timeInMilliSeconds = 0,
                                   Anki.Cozmo.Audio.CurveType curve = CurveType.Linear) {
-          DAS.Debug("AudioController.PostAudioParameter", "Parameter: " + parameter.ToString() + " value: " + parameterValue +
-                    " gameObj: " + gameObject.ToString() + " timeInMilliSec: " + timeInMilliSeconds + " curve: " + curve);
+          DAS.Debug("AudioController.PostAudioParameter", "Parameter: " + parameter.ToString() + " Value: " + parameterValue +
+                    " GameObj: " + gameObject.ToString() + " TimeInMilliSec: " + timeInMilliSeconds + " Curve: " + curve);
           PostAudioParameter msg = new PostAudioParameter(parameter, parameterValue, gameObject, timeInMilliSeconds, curve);
           _RobotEngineManager.Message.PostAudioParameter = msg;
           _RobotEngineManager.SendMessage();
@@ -152,13 +157,17 @@ namespace Anki {
         private void PerformCallbackHandler(ushort playId, CallbackInfo info, bool? unregisterHandle = null) {
           CallbackBundle callbackBundle;
           if (_callbackDelegates.TryGetValue(playId, out callbackBundle)) {
-            callbackBundle.Handler(info);
+            // Only perform callback that the caller requested or an error
+            AudioCallbackFlag callbackType = info.CallbackType;
+            if (((callbackBundle.Flags & callbackType) == callbackType) || AudioCallbackFlag.EventError == callbackType) {
+              callbackBundle.Handler(info);
+            }
             // Auto unregister Event
-            // Unregister if caller requested event duration callback only or if this is the event complete callback.
-            // Note: Event Marker callbacks will always get complete callbacks which will unregister the handler.
+            // Unregister if callback handle if this is the completion or error callback
+            // FIXME: Waiting to hear back form WWise if Completeion callback is allways called after and error callback
             if (null == unregisterHandle) {
-              if ( (AudioCallbackFlag.EventComplete & info.CallbackType) == AudioCallbackFlag.EventComplete ||
-                  AudioCallbackFlag.EventDuration == callbackBundle.Flags) {
+              if ((AudioCallbackFlag.EventComplete & callbackType) == AudioCallbackFlag.EventComplete ||
+                  (AudioCallbackFlag.EventError & callbackType) == AudioCallbackFlag.EventError) {
                 UnregisterCallbackHandler(playId);
               }
             }
@@ -166,44 +175,11 @@ namespace Anki {
               UnregisterCallbackHandler(playId);
             }
           }
-          else {
-            DAS.Warn("AudioClient.PerformCallbackHandler", "Could not find Callback Handler for PlayId: " + playId.ToString());
-          }
         }
       
         // Handle message types
-        private void HandleCallback(AudioCallbackDuration message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback Duration " + message.ToString());
-          CallbackInfo info = new CallbackInfo(message);
-          if (null != OnAudioCallback) {
-            OnAudioCallback(info);
-          }
-          // Call back handle
-          PerformCallbackHandler(info.PlayId, info);
-        }
-
-        private void HandleCallback(AudioCallbackMarker message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback Marker " + message.ToString());
-          CallbackInfo info = new CallbackInfo(message);
-          if (null != OnAudioCallback) {
-            OnAudioCallback(info);
-          }
-          // Call back handle
-          PerformCallbackHandler(info.PlayId, info);
-        }
-
-        private void HandleCallback(AudioCallbackComplete message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback Complete " + message.ToString());
-          CallbackInfo info = new CallbackInfo(message);
-          if (null != OnAudioCallback) {
-            OnAudioCallback(info);
-          }
-          // Call back handle
-          PerformCallbackHandler(info.PlayId, info);
-        }
-
-        private void HandleCallback(AudioCallbackError message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback Error " + message.ToString());
+        private void HandleCallback(AudioCallback message) {
+          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback " + message.ToString());
           CallbackInfo info = new CallbackInfo(message);
           if (null != OnAudioCallback) {
             OnAudioCallback(info);
@@ -258,6 +234,9 @@ namespace Anki {
         public List<Anki.Cozmo.Audio.GameStateType> GetGameStates(Anki.Cozmo.Audio.GameStateGroupType stateGroup) {
           if (null == _GameStateTypes) {
             _GameStateTypes = new Dictionary<GameStateGroupType, List<GameStateType>>();
+            // FIXME This a temp solution to add group types
+            List<Anki.Cozmo.Audio.GameStateType> musicStates = Enum.GetValues(typeof(Anki.Cozmo.Audio.MusicGroupStates)).Cast<Anki.Cozmo.Audio.GameStateType>().ToList();
+            _GameStateTypes.Add(GameStateGroupType.Music, musicStates);
           }
 
           List<Anki.Cozmo.Audio.GameStateType> groupStates;

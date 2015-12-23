@@ -4,12 +4,12 @@ using System.Collections;
 namespace Wink {
   public class WinkGame : GameBase {
     
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
     private bool _WinkWaveCompleted = false;
     private float _WinkWaveAccumulator = 0.0f;
     private float _LastWaveMessageTime = 0.0f;
     private int _WaveSuccessCount = 0;
+    private int _GoalSuccessCount = 3;
+    public float TimeLimit = 7.0f;
 
     public enum WinkStatus {
       Left,
@@ -20,20 +20,25 @@ namespace Wink {
     private WinkStatus _WinkStatus = WinkStatus.Neutral;
 
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
-
+      WinkGameConfig config = minigameConfigData as WinkGameConfig;
+      TimeLimit = config.TimeLimit;
+      _GoalSuccessCount = config.WaveSuccessGoal;
+      MaxAttempts = config.MaxAttempts;
+      Progress = 0.0f;
       InitializeMinigameObjects();
     }
 
-    public void WaveSuccess() {
+    public bool WaveSuccess() {
       _WaveSuccessCount++;
-      if (_WaveSuccessCount > 3) {
+      Progress = ((float)_WaveSuccessCount / (float)_GoalSuccessCount);
+      if (_WaveSuccessCount >= _GoalSuccessCount) {
         RaiseMiniGameWin();
+        return true;
       }
+      return false;
     }
 
     protected void InitializeMinigameObjects() {
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("WinkGameStateMachine", _StateMachine);
       _StateMachine.SetNextState(new WinkState());
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -44,8 +49,8 @@ namespace Wink {
       ShowHowToPlaySlide("WinkGameHelp01");
     }
 
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
+    protected override void Update() {
+      base.Update();
       _WinkWaveAccumulator = Mathf.Max(0.0f, _WinkWaveAccumulator - Time.deltaTime * 0.25f);
       if (_WinkWaveAccumulator > 0.6f) {
         _WinkWaveCompleted = true;

@@ -31,16 +31,12 @@ namespace DockTraining {
       if (targetVisible) {
         _LastSeenTargetTime = Time.time;
         if (distance < 53.0f && relDot > 0.88f) {
-          AnimationState animState = new AnimationState();
-          animState.Initialize(AnimationName.kEnjoyLight, HandleWinAnimationDone);
-          _StateMachine.SetNextState(animState);
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kEnjoyLight, HandleWinAnimationDone));
         }
       }
       else {
         if (Time.time - _LastSeenTargetTime > 1.5f) {
-          AnimationState animState = new AnimationState();
-          animState.Initialize(AnimationName.kShocked, HandleLoseAnimationDone);
-          _StateMachine.SetNextState(animState);
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleLoseAnimationDone));
         }
       }
     }

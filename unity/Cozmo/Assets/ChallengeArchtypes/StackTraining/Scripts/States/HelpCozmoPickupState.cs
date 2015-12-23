@@ -44,13 +44,14 @@ namespace StackTraining {
 
         _Moving = true;
         _CurrentRobot.PickupObject(bottomCube, callback: (success) => {
-          if(success) {
+          if (success) {
             _Game.Progress = 0.8f;
             topCube.SetLEDs(Color.blue);
+            _Game.ShowHowToPlaySlide("TapCube2");
             _StateMachine.SetNextState(new TapCubeState(new HelpCozmoStackState(), topCube.ID));
           }
           else {
-            if(_Game.TryDecrementAttempts()) {
+            if (_Game.TryDecrementAttempts()) {
               _CurrentRobot.SetLiftHeight(0.0f);
             }
             else {
@@ -67,11 +68,9 @@ namespace StackTraining {
     }
 
     private void HandleFailed() {
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kShocked, HandleLoseComplete);
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleLoseComplete));
     }
-      
+
     private void HandleLoseComplete(bool success) {
       _Game.RaiseMiniGameLose();
     }

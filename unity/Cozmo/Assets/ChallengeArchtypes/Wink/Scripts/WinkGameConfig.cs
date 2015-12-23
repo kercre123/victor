@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class WinkGameConfig : MinigameConfigBase {
-
+namespace Wink {
+  public class WinkGameConfig : MinigameConfigBase {
+    public float TimeLimit;
+    public int MaxAttempts;
+    public int WaveSuccessGoal;
+  }
 }

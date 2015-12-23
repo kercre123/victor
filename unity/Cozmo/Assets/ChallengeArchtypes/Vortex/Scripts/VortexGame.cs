@@ -11,9 +11,6 @@ namespace Vortex {
     private VortexPanel _GamePanelPrefab;
     private VortexPanel _GamePanel;
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     class PlayerData {
       public int blockID;
       public Color color;
@@ -53,9 +50,6 @@ namespace Vortex {
 
     protected void InitializeMinigameObjects() {
       DAS.Info(this, "VortexGame::Start");
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("VortexStateMachine", _StateMachine);
-
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<VortexPanel>();
 
       _GamePanel.HandleSpinEnded = HandleSpinEnded;
@@ -72,10 +66,6 @@ namespace Vortex {
       _StateMachine.SetNextState(initCubeState);
 
       _RoundNumber = 0;
-    }
-
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
     }
 
     protected override void CleanUpOnDestroy() {

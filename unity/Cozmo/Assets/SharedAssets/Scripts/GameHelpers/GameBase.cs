@@ -15,6 +15,8 @@ public abstract class GameBase : MonoBehaviour {
   public event MiniGameQuitHandler OnMiniGameQuit;
 
   protected void RaiseMiniGameQuit() {
+    _StateMachine.Stop();
+
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
@@ -27,6 +29,8 @@ public abstract class GameBase : MonoBehaviour {
   public event MiniGameWinHandler OnMiniGameWin;
 
   public void RaiseMiniGameWin() {
+    _StateMachine.Stop();
+
     _WonChallenge = true;
     OpenChallengeEndedDialog();
   }
@@ -36,6 +40,8 @@ public abstract class GameBase : MonoBehaviour {
   public event MiniGameWinHandler OnMiniGameLose;
 
   public void RaiseMiniGameLose() {
+    _StateMachine.Stop();
+
     _WonChallenge = false;
     OpenChallengeEndedDialog();
   }
@@ -44,16 +50,22 @@ public abstract class GameBase : MonoBehaviour {
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
+  public SharedMinigameView SharedMinigameViewInstance { get { return _SharedMinigameViewInstance; } }
+
   protected ChallengeData _ChallengeData;
   private AlertView _ChallengeEndViewInstance;
   private bool _WonChallenge;
+
+  protected StateMachine _StateMachine = new StateMachine();
 
   [SerializeField]
   protected HowToPlaySlide[] _HowToPlayPrefabs;
 
   public void InitializeMinigame(ChallengeData challengeData) {
-    GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
-    _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
+    _StateMachine.SetGameRef(this);
+    _SharedMinigameViewInstance = UIManager.OpenView(
+      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
+      false) as SharedMinigameView;
 
     _ChallengeData = challengeData;
     _WonChallenge = false;
@@ -73,7 +85,6 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void OnDestroy() {
-    CleanUpOnDestroy();
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState();
     }
@@ -85,6 +96,14 @@ public abstract class GameBase : MonoBehaviour {
       _ChallengeEndViewInstance.CloseViewImmediately();
       _ChallengeEndViewInstance = null;
     }
+  }
+
+  protected virtual void Update() {
+    UpdateStateMachine();
+  }
+
+  protected virtual void UpdateStateMachine() {
+    _StateMachine.UpdateStateMachine();
   }
 
   /// <summary>
@@ -104,6 +123,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void CloseMinigameImmediately() {
+    CleanUpOnDestroy();
     Destroy(gameObject);
   }
 
@@ -111,11 +131,11 @@ public abstract class GameBase : MonoBehaviour {
     // Open confirmation dialog instead
     AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as AlertView;
     // Hook up callbacks
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue, HandleChallengeResultViewClosed);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
     alertView.TitleLocKey = _ChallengeData.ChallengeTitleLocKey;
     alertView.DescriptionLocKey = _WonChallenge ? LocalizationKeys.kLabelChallengeCompleted : LocalizationKeys.kLabelChallengeFailed;
     // Listen for dialog close
-    alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+    alertView.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
     return alertView;
   }
 
@@ -130,7 +150,7 @@ public abstract class GameBase : MonoBehaviour {
         OnMiniGameLose();
       }
     }
-    Destroy(gameObject);
+    CloseMinigameImmediately();
   }
 
   #region Default Quit button
@@ -201,7 +221,10 @@ public abstract class GameBase : MonoBehaviour {
   public float Progress {
     get { return _Progress; }
     set {
-      _Progress = Mathf.Clamp(value, 0f, 1f);
+      if (value < 0 || value > 1) {
+        DAS.Warn(this, "Tried to set progress to value=" + value + " which is not in the range of 0 to 1! Clamping.");
+        _Progress = Mathf.Clamp(value, 0f, 1f);
+      }
       _Progress = value;
       _SharedMinigameViewInstance.SetProgress(_Progress);
     }
@@ -247,12 +270,16 @@ public abstract class GameBase : MonoBehaviour {
 
   #region How To Play Slides
 
-  public void ShowHowToPlaySlide(string slideName) {
+  /// <summary>
+  /// Returns an instance of the slide created. Null if the creation failed.
+  /// </summary>]
+  public GameObject ShowHowToPlaySlide(string slideName) {
     // Search through the array for a slide of the same name
-    HowToPlaySlide foundSlide = null;
+    GameObject slideObject = null;
+    HowToPlaySlide foundSlideData = null;
     foreach (var slide in _HowToPlayPrefabs) {
       if (slide != null && slide.slideName == slideName) {
-        foundSlide = slide;
+        foundSlideData = slide;
         break;
       }
       else if (slide == null) {
@@ -262,9 +289,9 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     // If found, show that slide.
-    if (foundSlide != null) {
-      if (foundSlide.slidePrefab != null) {
-        _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlide);
+    if (foundSlideData != null) {
+      if (foundSlideData.slidePrefab != null) {
+        slideObject = _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlideData);
       }
       else {
         DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
@@ -275,6 +302,12 @@ public abstract class GameBase : MonoBehaviour {
       DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
       " list of slides! gameObject.name=" + gameObject.name);
     }
+
+    return slideObject;
+  }
+
+  public void HideHowToPlaySlide() {
+    _SharedMinigameViewInstance.HideHowToPlaySlide();
   }
 
   #endregion

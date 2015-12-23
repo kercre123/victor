@@ -25,21 +25,15 @@ namespace CubeLifting {
       if (!success) {
         var game = _StateMachine.GetGame();
         if (game.TryDecrementAttempts()) {
-          AnimationState animState = new AnimationState();
-          animState.Initialize(AnimationName.kSeeOldPattern, HandleLifeLostAnimationDone);
-          _StateMachine.SetNextState(animState);
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kSeeOldPattern, HandleLifeLostAnimationDone));
         }
         else {          
-          AnimationState animState = new AnimationState();
-          animState.Initialize(AnimationName.kShocked, HandleLoseAnimationDone);
-          _StateMachine.SetNextState(animState);
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleLoseAnimationDone));
         }
       }
       else {
         _CurrentRobot.LightCubes[_SelectedCubeId].TurnLEDsOff();
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDone);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleWinAnimationDone));
       }
     }
 

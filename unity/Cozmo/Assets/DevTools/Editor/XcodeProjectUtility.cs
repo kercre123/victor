@@ -5,6 +5,9 @@ using UnityEditor;
 using System;
 using System.Text.RegularExpressions;
 using System.Linq;
+using UnityEditor.Callbacks;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Xcode {
 
@@ -27,13 +30,16 @@ namespace Xcode {
       step++;
     }
 
+    [PostProcessBuild(1)]
+    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
+      if (target == BuildTarget.iOS) {
+        FixupCozmoIos();
+      }
+    }
+
     [MenuItem("Cozmo/Xcode/Fixup Cozmo_IOS Project")]
     public static void FixupCozmoIos() {
       try {
-
-        // use the same seed so the same files will give you the same guids
-        SetRandomSeed(0);
-
         XcodeProject proj = null;
 
         int step = 0;
@@ -214,30 +220,33 @@ namespace Xcode {
       // TODO: Add any FileTypes that I've missed
     };
 
-    private static System.Random _Random = new System.Random();
+    private static string CalculateMD5Hash(string input)
+    {
+      // step 1, calculate MD5 hash from input
+      MD5 md5 = System.Security.Cryptography.MD5.Create();
+      byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(input);
+      byte[] hash = md5.ComputeHash(inputBytes);
 
-    private static void SetRandomSeed(int seed) {
-      _Random = new System.Random(seed);
-    }
-
-    private static string NewGuid() {
-      const string alphabet = "0123456789ABCDEF";
-
-      char[] guid = new char[24];
-      for (int i = 0; i < 24; i++) {
-        guid[i] = alphabet[_Random.Next(alphabet.Length)];
+      // step 2, convert byte array to hex string
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < hash.Length; i++)
+      {
+        sb.Append(hash[i].ToString("X2"));
       }
-
-      return new string(guid);
+      return sb.ToString();
     }
 
-    private static FileId NewFileId(string name, string group = null) {
-      return new FileId() { Value = NewGuid(), FileName = name, Group = group };
+    private static string NewGuid(string key) {
+      return CalculateMD5Hash(key).Substring(0, 24);
     }
 
-    private static PBXGroup EnsureFolderExists(this XcodeProject project, string groupId, string relativePath) {
+    private static FileId NewFileId(string path, string name, string group = null) {
+      return new FileId() { Value = NewGuid(path + "%" + name +"%"+ group), FileName = name, Group = group };
+    }
 
-      string[] groupPath = relativePath.Split('/');
+    private static PBXGroup EnsureFolderExists(this XcodeProject project, string groupId, string folderPath, string relativePath) {
+
+      string[] groupPath = folderPath.Split('/');
 
       int index = 0;
       string lastFolderId = groupId;
@@ -253,7 +262,7 @@ namespace Xcode {
         var fileId = group.children.GetFileId(folder);
         if (fileId == null) { // Create a new folder
 
-          fileId = NewFileId(folder);
+          fileId = NewFileId(relativePath, folder);
           var newGroup = new PBXGroup() { name = folder, sourceTree = "<group>" };
 
           project.objects.PBXGroupSection.Add(new XcodeNamedVariable<FileId, PBXGroup> {
@@ -298,7 +307,8 @@ namespace Xcode {
 
       var projectRoot = project.objects.PBXProjectSection.Only().mainGroup;
 
-      var folderGroup = project.EnsureFolderExists(projectRoot.Value, projectFolderPath);
+      var relativePath = MakeRelativePath(projectFolderPath, projectRootPath);
+      var folderGroup = project.EnsureFolderExists(projectRoot.Value, projectFolderPath, relativePath);
 
       // this should be the folder which will get the contents of our folder
 
@@ -339,7 +349,9 @@ namespace Xcode {
 
       var projectRoot = project.objects.PBXProjectSection.Only().mainGroup;
 
-      var folderGroup = project.EnsureFolderExists(projectRoot.Value, Path.GetDirectoryName(projectPath));
+      var relativePath = MakeRelativePath(fileSystemPath, projectRootPath);
+
+      var folderGroup = project.EnsureFolderExists(projectRoot.Value, Path.GetDirectoryName(projectPath), relativePath);
 
       // this should be the folder which will get the contents of our folder
 
@@ -366,11 +378,12 @@ namespace Xcode {
         };
       }
 
-      var fileId = NewFileId(name);
+      var relativePath = MakeRelativePath(path, projectRootPath);
+      var fileId = NewFileId(relativePath, name);
 
       group.children.Add(fileId);
 
-      var fileReference = new PBXFileReference() { fileEncoding = fileType.FileEncoding, lastKnownFileType = fileType.LastKnownFileType, path = MakeRelativePath(path, projectRootPath), name = name, sourceTree = "<group>" };
+      var fileReference = new PBXFileReference() { fileEncoding = fileType.FileEncoding, lastKnownFileType = fileType.LastKnownFileType, path = relativePath, name = name, sourceTree = "<group>" };
 
       project.objects.PBXFileReferenceSection.Add(new XcodeNamedVariable<FileId, PBXFileReference>() {
         Name = fileId,
@@ -378,7 +391,7 @@ namespace Xcode {
       });
 
 
-      var buildFileId = NewFileId(name, fileType.Category.ToString());
+      var buildFileId = NewFileId(relativePath, name, fileType.Category.ToString());
       var buildFile = new PBXBuildFile() { fileRef = fileId };
 
       project.objects.PBXBuildFileSection.Add(new XcodeNamedVariable<FileId, PBXBuildFile>() {

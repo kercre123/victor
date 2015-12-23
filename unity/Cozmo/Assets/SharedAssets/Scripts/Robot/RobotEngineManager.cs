@@ -49,10 +49,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   #region Audio Callback events
 
-  public event Action<AudioCallbackDuration> ReceivedAudioCallbackDuration;
-  public event Action<AudioCallbackMarker> ReceivedAudioCallbackMarker;
-  public event Action<AudioCallbackComplete> ReceivedAudioCallbackComplete;
-  public event Action<AudioCallbackError> ReceivedAudioCallbackError;
+  public event Action<AudioCallback> ReceivedAudioCallback;
 
   #endregion
 
@@ -300,17 +297,8 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.ProgressionStats);
       break;
     // Audio Callbacks
-    case G2U.MessageEngineToGame.Tag.AudioCallbackDuration:
-      ReceivedSpecificMessage(message.AudioCallbackDuration);
-      break;
-    case G2U.MessageEngineToGame.Tag.AudioCallbackMarker:
-      ReceivedSpecificMessage(message.AudioCallbackMarker);
-      break;
-    case G2U.MessageEngineToGame.Tag.AudioCallbackComplete:
-      ReceivedSpecificMessage(message.AudioCallbackComplete);
-      break;
-    case G2U.MessageEngineToGame.Tag.AudioCallbackError:
-      ReceivedSpecificMessage(message.AudioCallbackError);
+    case G2U.MessageEngineToGame.Tag.AudioCallback:
+      ReceivedSpecificMessage(message.AudioCallback);
       break;
     case G2U.MessageEngineToGame.Tag.InitDebugConsoleVarMessage:
       ReceivedSpecificMessage(message.InitDebugConsoleVarMessage);
@@ -323,6 +311,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.CliffEvent:
       ReceivedSpecificMessage(message.CliffEvent);
+      break;
+    case G2U.MessageEngineToGame.Tag.DebugString:
+      ReceivedSpecificMessage(message.DebugString);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -491,7 +482,7 @@ public class RobotEngineManager : MonoBehaviour {
 
     if (actionType == RobotActionType.PLAY_ANIMATION) {
       if (RobotCompletedAnimation != null) {
-        RobotCompletedAnimation(success, message.completionInfo.animName);
+        RobotCompletedAnimation(success, message.completionInfo.animationCompleted.animationName);
       }
     }
 
@@ -589,34 +580,23 @@ public class RobotEngineManager : MonoBehaviour {
     Robots[message.robotID].UpdateInfo(message);
   }
 
-  // Audio Callback Messages
-  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackDuration message) {
-    if (ReceivedAudioCallbackDuration != null) {
-      ReceivedAudioCallbackDuration(message);
-    }
-  }
-
-  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackMarker message) {
-    if (ReceivedAudioCallbackMarker != null) {
-      ReceivedAudioCallbackMarker(message);
-    }
-  }
-
-  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackComplete message) {
-    if (ReceivedAudioCallbackComplete != null) {
-      ReceivedAudioCallbackComplete(message);
-    }
-  }
-
-  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackError message) {
-    if (ReceivedAudioCallbackComplete != null) {
-      ReceivedAudioCallbackError(message);
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallback message) {
+    if (ReceivedAudioCallback != null) {
+      ReceivedAudioCallback(message);
     }
   }
 
   private void ReceivedSpecificMessage(Anki.Cozmo.CliffEvent message) {
     if (OnCliffEvent != null) {
       OnCliffEvent(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DebugString message) {
+    if (CurrentRobot != null) {
+      if (CurrentRobot.CurrentBehaviorString != message.text) {
+        CurrentRobot.CurrentBehaviorString = message.text;
+      }
     }
   }
 

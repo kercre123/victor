@@ -18,6 +18,8 @@ namespace StackTraining {
       _Game = _StateMachine.GetGame() as StackTrainingGame;
       _Game.PickCubes();
       _Game.ShowHowToPlaySlide("MakeStack");
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-0.2f);
     }
 
     public override void Update() {
@@ -46,7 +48,7 @@ namespace StackTraining {
           if (!bottomCube.IsMoving && !topCube.IsMoving) {
             _StackTime += Time.deltaTime;
 
-            if (_StackTime > 3f) {
+            if (_StackTime > 2f) {
               HandleComplete();
             }
             return;
@@ -66,9 +68,7 @@ namespace StackTraining {
     }
 
     private void HandleComplete() {
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kEnjoyPattern, HandleRecognizeStack);
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kEnjoyPattern, HandleRecognizeStack));
     }
 
     private void HandleRecognizeStack(bool success) {

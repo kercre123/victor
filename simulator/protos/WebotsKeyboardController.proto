@@ -41,6 +41,7 @@ PROTO WebotsKeyboardController [
   field SFFloat pathPointTurnSpeed_radPerSec 1.5
   field SFFloat pathPointTurnAccel_radPerSec2 10
   field SFFloat pathPointTurnDecel_radPerSec2 50
+  field SFFloat pathReverseSpeed_mmps 30
 
   # Docking speed/accel
   field SFFloat dockSpeed_mmps  100
@@ -103,6 +104,8 @@ PROTO WebotsKeyboardController [
 
   field SFFloat steerK1 0.1
   field SFFloat steerK2 12
+  field SFFloat steerDistOffsetCap_mm 20
+  field SFFloat steerAngOffsetCap_rad 0.5
 
   # Vision system params
   field SFString streamResolution "CVGA"

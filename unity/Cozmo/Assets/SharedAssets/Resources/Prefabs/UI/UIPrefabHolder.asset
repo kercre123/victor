@@ -11,10 +11,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e25f62d4af0554b99974e01dee43a6c6, type: 3}
   m_Name: UIPrefabHolder
   m_EditorClassIdentifier: 
-  _FullScreenButtonPrefab: {fileID: 198404, guid: c847828b08544459a92bb1cbc24d3411,
+  _FullScreenButtonPrefab: {fileID: 151494, guid: f9f945bbe0c2a4469a9e59ccfe209d55,
     type: 2}
   _AlertViewPrefab: {fileID: 11464034, guid: 1c49983afe76142ff897b4cc22f9ef57, type: 2}
   _SharedMinigameViewPrefab: {fileID: 11492476, guid: f98f8a15834f84763adff953eafcb498,
     type: 2}
   _ChallengeEndViewPrefab: {fileID: 11495826, guid: 1b4135647dd7e4fb2bd98651dea5bac5,
+    type: 2}
+  _DefaultButtonPrefab: {fileID: 11483728, guid: 0de3c51819c924d1fb37bf88d22a2414,
     type: 2}

@@ -22,10 +22,10 @@
         "translation" : "Tap"
     },
     "button.quit" : {
-        "translation" : "Quit"
+        "translation" : "QUIT"
     },
     "button.startChallenge" : {
-        "translation" : "Start Challenge"
+        "translation" : "START"
     },
     "label.challengeCompleted" : {
         "translation" : "Challenge Completed"
@@ -40,12 +40,18 @@
         "translation" : "{0:P2} Complete"
     },
     "button.yes" : {
-        "translation" : "Yes"
+        "translation" : "YES"
     },
     "button.no" : {
-        "translation" : "No"
+        "translation" : "NO"
     },
     "button.continue" : {
-        "translation" : "Continue"
+        "translation" : "CONTINUE"
+    },
+    "button.again" : {
+        "translation" : "PLAY AGAIN"
+    },
+    "button.ready" : {
+        "translation" : "READY"
     }
 }

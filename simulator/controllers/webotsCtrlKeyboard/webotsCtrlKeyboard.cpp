@@ -17,7 +17,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorchooserTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
@@ -173,6 +173,11 @@ namespace Anki {
       _lastFace = msg;
     }
 
+    void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
+    {
+      printf("HandleDebugString: %s\n", msg.text.c_str());
+    }
+    
     // ============== End of message handlers =================
     
     
@@ -341,7 +346,8 @@ namespace Anki {
           const f32 pathPointTurnSpeed_radPerSec = root_->getField("pathPointTurnSpeed_radPerSec")->getSFFloat();
           const f32 pathPointTurnAccel_radPerSec2 = root_->getField("pathPointTurnAccel_radPerSec2")->getSFFloat();
           const f32 pathPointTurnDecel_radPerSec2 = root_->getField("pathPointTurnDecel_radPerSec2")->getSFFloat();
-          
+          const f32 pathReverseSpeed_mmps = root_->getField("pathReverseSpeed_mmps")->getSFFloat();
+
           pathMotionProfile_.speed_mmps = pathSpeed_mmps;
           pathMotionProfile_.accel_mmps2 = pathAccel_mmps2;
           pathMotionProfile_.decel_mmps2 = pathDecel_mmps2;
@@ -350,6 +356,7 @@ namespace Anki {
           pathMotionProfile_.pointTurnDecel_rad_per_sec2 = pathPointTurnDecel_radPerSec2;
           pathMotionProfile_.dockSpeed_mmps = dockSpeed_mmps;
           pathMotionProfile_.dockAccel_mmps2 = dockAccel_mmps2;
+          pathMotionProfile_.reverseSpeed_mmps = pathReverseSpeed_mmps;
           
           
           // For pickup or placeRel, specify whether or not you want to use the
@@ -797,7 +804,7 @@ namespace Anki {
                   }
 
                 } else {
-                  SendExecuteTestPlan();
+                  SendExecuteTestPlan(pathMotionProfile_);
                 }
                 break;
               }
@@ -1019,8 +1026,12 @@ namespace Anki {
                   if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                     f32 steer_k1 = root_->getField("steerK1")->getSFFloat();
                     f32 steer_k2 = root_->getField("steerK2")->getSFFloat();
-                    printf("New steering gains: k1 %f, k2 %f\n", steer_k1, steer_k2);
-                    SendSteeringControllerGains(steer_k1, steer_k2);
+                    f32 steerDistOffsetCap = root_->getField("steerDistOffsetCap_mm")->getSFFloat();
+                    f32 steerAngOffsetCap = root_->getField("steerAngOffsetCap_rad")->getSFFloat();
+                    printf("New steering gains: k1 %f, k2 %f, distOffsetCap %f, angOffsetCap %f\n",
+                           steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
+                    SendSteeringControllerGains(steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
+                    
                   } else {
                     
                     // Wheel gains

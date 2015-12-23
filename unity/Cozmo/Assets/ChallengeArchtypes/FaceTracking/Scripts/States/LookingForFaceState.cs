@@ -18,7 +18,7 @@ namespace FaceTracking {
       _GameInstance = _StateMachine.GetGame() as FaceTrackingGame;
       _GameInstance.MidCelebration = false;
       _TargetFace = null;
-      _CurrentRobot.SetHeadAngle(0.15f);
+      _CurrentRobot.SetHeadAngle(0.35f);
       _CurrentRobot.SetLiftHeight(0.0f);
       // Entering this state resets progress as you've lost Cozmo's attention
       _GameInstance.StepsCompleted = 0.0f;
@@ -67,7 +67,8 @@ namespace FaceTracking {
           if (Time.time - _FirstSeenTimestamp > _SeenHoldDelay) {
             FindFace();
           }
-        }else {
+        }
+        else {
           // If the current face is not valid and there are multiple, grab the closest one
           if (_CurrentRobot.Faces.Count > 1) {
             _TargetFace = _GameInstance.ClosestFace();
@@ -93,12 +94,11 @@ namespace FaceTracking {
         }
         _CurrentRobot.FacePose(_TargetFace);
       }
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kHappyA, HandleStateCompleteAnimationDone);
+
       if (_GameInstance.StepsCompleted == 0.0f) {
         _GameInstance.StepsCompleted += 0.333f;
       }
-      _StateMachine.SetNextState(animState);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kHappyA, HandleStateCompleteAnimationDone));
     }
 
     public void HandleStateCompleteAnimationDone(bool success) {

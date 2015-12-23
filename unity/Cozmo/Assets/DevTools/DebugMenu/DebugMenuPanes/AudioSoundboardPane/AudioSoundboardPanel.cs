@@ -31,6 +31,8 @@ namespace Anki {
         [SerializeField]
         private Button _PostAllButton;
         [SerializeField]
+        private Button _StopAllButton;
+        [SerializeField]
         private Button _PostEventButton;
         [SerializeField]
         private Button _PostGameStateButton;
@@ -65,6 +67,7 @@ namespace Anki {
             _PostRTPCParameter();
             _PostEvent();
           });
+          _StopAllButton.onClick.AddListener(_StopAllEvents);
           _PostEventButton.onClick.AddListener(_PostEvent);
           _PostGameStateButton.onClick.AddListener(_PostGameState);
           _PostSwitchStateButton.onClick.AddListener(_PostSwitchState);
@@ -179,13 +182,17 @@ namespace Anki {
           _AppendLogEvent("Post Event: " + selectedEvent.ToString() + " GameObj: " + selectedGameObj.ToString());
         }
 
+        private void _StopAllEvents() {
+          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+          _audioClient.StopAllAudioEvents(selectedGameObj);
+          _AppendLogEvent("Stop All GameObj GameObj: " + selectedGameObj.ToString());
+        }
+
         private void _PostGameState() {
           GameStateGroupType groupType = _audioClient.GetGameStateGroups()[_GameStateGroupDropdown.value];
-          GameStateType stateType = GameStateType.Invalid;
-          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
-
-          // TODO: Add PostGameState call
-          _AppendLogEvent("Post Game State: " + groupType.ToString() + " : " + stateType.ToString() + " GameObj: " + selectedGameObj.ToString());
+          GameStateType stateType = _audioClient.GetGameStates(groupType)[_GameStateTypeDropdown.value];
+          _audioClient.PostGameState(groupType, stateType);
+          _AppendLogEvent("Post Game State: " + groupType.ToString() + " : " + stateType.ToString());
         }
 
         private void _PostSwitchState() {

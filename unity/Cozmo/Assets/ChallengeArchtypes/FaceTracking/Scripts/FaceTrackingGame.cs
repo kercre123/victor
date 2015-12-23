@@ -15,9 +15,6 @@ namespace FaceTracking {
     private const string kMoveToOther = "MoveToOther";
     private const string kLeanInAlt = "LeanInFail";
     
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     public float TiltGoal { get; set; }
 
     public float DistanceMin { get; set; }
@@ -111,9 +108,6 @@ namespace FaceTracking {
 
     protected void InitializeMinigameObjects() {
       
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
-
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
 
@@ -130,8 +124,8 @@ namespace FaceTracking {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, false);
     }
 
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
+    protected override void Update() {
+      base.Update();
       if (Progress != StepsCompleted) {
         Progress = StepsCompleted;
       }

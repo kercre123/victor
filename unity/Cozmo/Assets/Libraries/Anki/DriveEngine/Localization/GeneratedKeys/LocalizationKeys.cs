@@ -42,6 +42,22 @@ public static class LocalizationKeys {
   public const string kCubeLifting01Title = "cubeLifting01.title";
   public const string kCubeLifting01Subtitle = "cubeLifting01.subtitle";
   public const string kCubeLifting01Description = "cubeLifting01.description";
+  public const string kSimonGame01Title = "simonGame01.title";
+  public const string kSimonGame01Subtitle = "simonGame01.subtitle";
+  public const string kSimonGame01Description = "simonGame01.description";
+  public const string kTreasureHuntGame01Title = "treasureHuntGame01.title";
+  public const string kTreasureHuntGame01Subtitle = "treasureHuntGame01.subtitle";
+  public const string kTreasureHuntGame01Description = "treasureHuntGame01.description";
+  public const string kSelfieGame01Title = "selfieGame01.title";
+  public const string kSelfieGame01Subtitle = "selfieGame01.subtitle";
+  public const string kSelfieGame01Description = "selfieGame01.description";
+  public const string kInvestorDemoInvestorDemoFull = "investorDemo.investorDemoFull";
+  public const string kInvestorDemoInvestorDemoCubes = "investorDemo.investorDemoCubes";
+  public const string kInvestorDemoInvestorDemoFaces = "investorDemo.investorDemoFaces";
+  public const string kInvestorDemoInvestorDemoMotion = "investorDemo.investorDemoMotion";
+  public const string kCodeBreaker01Title = "codeBreaker01.title";
+  public const string kCodeBreaker01Subtitle = "codeBreaker01.subtitle";
+  public const string kCodeBreaker01Description = "codeBreaker01.description";
 
   #endregion
 
@@ -59,9 +75,27 @@ public static class LocalizationKeys {
   public const string kIntroSequenceAriaIntroLine3 = "IntroSequence.AriaIntroLine3";
   public const string kIntroSequenceAriaUploadLine1 = "IntroSequence.AriaUploadLine1";
   public const string kIntroSequenceAriaUploadLine2 = "IntroSequence.AriaUploadLine2";
-  public const string kMotionDetectionIntroNode1 = "MotionDetectionIntro.Node 1";
-  public const string kMotionDetectionIntroNode2 = "MotionDetectionIntro.Node 2";
-  public const string kMotionDetectionIntroNode3 = "MotionDetectionIntro.Node 3";
+  public const string kMotionDetectionIntroAriaLine1 = "MotionDetectionIntro.AriaLine1";
+  public const string kMotionDetectionIntroAriaLine2 = "MotionDetectionIntro.AriaLine2";
+  public const string kMotionDetectionIntroCozmoLine1 = "MotionDetectionIntro.CozmoLine1";
+  public const string kFaceTrackingIntroAriaLine1 = "FaceTrackingIntro.AriaLine1";
+  public const string kFaceTrackingIntroCozmoLine1 = "FaceTrackingIntro.CozmoLine1";
+  public const string kCubeLiftingIntroAriaLine1 = "CubeLiftingIntro.AriaLine1";
+  public const string kCubeLiftingIntroCozmoLine1 = "CubeLiftingIntro.CozmoLine1";
+  public const string kCubeVisionIntroAriaLine1 = "CubeVisionIntro.AriaLine1";
+  public const string kCubeVisionIntroCozmoLine1 = "CubeVisionIntro.CozmoLine1";
+  public const string kDockTrainingIntroCozmoLine1 = "DockTrainingIntro.CozmoLine1";
+  public const string kDockTrainingIntroAriaLine1 = "DockTrainingIntro.AriaLine1";
+  public const string kFollowCubeIntroAriaLine1 = "FollowCubeIntro.AriaLine1";
+  public const string kFollowCubeIntroCozmoLine1 = "FollowCubeIntro.CozmoLine1";
+  public const string kStackTrainingIntroAriaLine1 = "StackTrainingIntro.AriaLine1";
+  public const string kStackTrainingIntroCozmoLine1 = "StackTrainingIntro.CozmoLine1";
+  public const string kTestConvoNode1 = "TestConvo.Node 1";
+  public const string kTestConvoNode2 = "TestConvo.Node 2";
+  public const string kTestConvoNode3 = "TestConvo.Node 3";
+  public const string kTestConvoNode4 = "TestConvo.Node 4";
+  public const string kTestConvoNode5 = "TestConvo.Node 5";
+  public const string kTestConvoNode6 = "TestConvo.Node 6";
 
   #endregion
 
@@ -82,6 +116,9 @@ public static class LocalizationKeys {
   public const string kSpeedTapTitle = "speedTap.title";
   public const string kSpeedTapSubtitle = "speedTap.subtitle";
   public const string kSpeedTapDescription = "speedTap.description";
+  public const string kSpeedTapRoundsText = "speedTap.roundsText";
+  public const string kSpeedTapRoundsWonCozmo = "speedTap.roundsWon.cozmo";
+  public const string kSpeedTapRoundsWonPlayer = "speedTap.roundsWon.player";
   public const string kSpeedTapScoreCozmo = "speedTap.score.cozmo";
   public const string kSpeedTapScorePlayer = "speedTap.score.player";
   public const string kTreasureHuntTitle = "treasureHunt.title";
@@ -95,9 +132,19 @@ public static class LocalizationKeys {
   public const string kVortexVortexWon = "vortex.vortexWon";
   public const string kPeekabooTitle = "peekaboo.title";
   public const string kPeekabooLabelPoints = "peekaboo.label.points";
+  public const string kCubeSlapTitle = "cubeSlap.title";
+  public const string kCubeSlapSubtitle = "cubeSlap.subtitle";
+  public const string kCubeSlapDescription = "cubeSlap.description";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
+  public const string kCodeBreakerButtonGuessCode = "codeBreaker.button.guessCode";
+  public const string kCodeBreakerButtonPickingCode = "codeBreaker.button.pickingCode";
+  public const string kCodeBreakerTextGuessesLeft = "codeBreaker.text.guessesLeft";
+  public const string kCodeBreakerTextPlayerWins = "codeBreaker.text.playerWins";
+  public const string kCodeBreakerTextCozmoWins = "codeBreaker.text.cozmoWins";
+  public const string kCodeBreakerTextHowToPlayShort = "codeBreaker.text.howToPlayShort";
+  public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
 
   #endregion
 
@@ -113,6 +160,8 @@ public static class LocalizationKeys {
   public const string kButtonYes = "button.yes";
   public const string kButtonNo = "button.no";
   public const string kButtonContinue = "button.continue";
+  public const string kButtonAgain = "button.again";
+  public const string kButtonReady = "button.ready";
 
   #endregion
 }
