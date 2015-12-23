@@ -2,7 +2,7 @@
 using UnityEngine;
 
 namespace Simon {
-  public class TurnToTargetState : State  {
+  public class TurnToTargetState : State {
 
     private CozmoSetSimonState _Parent;
 
@@ -19,22 +19,21 @@ namespace Simon {
     public override void Update() {
       base.Update();
 
-      if (TurnToTarget()) {
+      if (TurnToTarget(_Parent.GetCurrentTarget())) {
         _StateMachine.SetNextState(new BlinkLightsState());
       }
     }
 
-    private bool TurnToTarget() {
-      LightCube currentTarget = _Parent.GetCurrentTarget();
+    private bool TurnToTarget(LightCube currentTarget) {
       Vector3 robotToTarget = currentTarget.WorldPosition - _CurrentRobot.WorldPosition;
       float crossValue = Vector3.Cross(_CurrentRobot.Forward, robotToTarget).z;
       if (crossValue > 0.0f) {
-        _CurrentRobot.DriveWheels(-35.0f, 35.0f);
+        _CurrentRobot.DriveWheels(-SimonGame.kDriveWheelSpeed, SimonGame.kDriveWheelSpeed);
       }
       else {
-        _CurrentRobot.DriveWheels(35.0f, -35.0f);
+        _CurrentRobot.DriveWheels(SimonGame.kDriveWheelSpeed, -SimonGame.kDriveWheelSpeed);
       }
-      return Vector2.Dot(robotToTarget.normalized, _CurrentRobot.Forward) > 0.98f;
+      return Vector2.Dot(robotToTarget.normalized, _CurrentRobot.Forward) > SimonGame.kDotThreshold;
     }
   }
 }

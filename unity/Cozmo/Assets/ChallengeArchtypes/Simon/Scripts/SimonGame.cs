@@ -6,6 +6,8 @@ using System.Linq;
 namespace Simon {
 
   public class SimonGame : GameBase {
+    public const float kDriveWheelSpeed = 80f;
+    public const float kDotThreshold = 0.96f;
 
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();
