@@ -7,6 +7,7 @@ import json
 import math
 import os
 import time
+import ast
 from operator import itemgetter
 
 #To setup add "MAYA_PLUG_IN_PATH = <INSERT PATH TO COZMO GAME HERE>/cozmo-game/animation-tool/MayaPlugIn" in "~/Library/Preferences/Autodesk/maya/2016/Maya.env"
@@ -78,6 +79,58 @@ g_ProcFaceDict = {
 "RightEyeLowerLidAngle":{"cladName":"leftEye", "cladIndex":17}, 
 "Right_Eye_Lower_Lid_Bend":{"cladName":"leftEye", "cladIndex":18}, 
 }
+
+def SetCozmoClipData(data):
+    print "SetCozmoClipData"
+    print data
+    return
+
+def ShowClipUI(item):
+
+    clip_data_as_array = []
+    #Fetch or create the saved data
+    if cmds.objExists('CozmoClipData'):
+      cmds.select('CozmoClipData')
+      #Gets the "Before script" script as just a string, we process it in this script.
+      test_str = cmds.getAttr('CozmoClipData.b')
+      clip_data_as_array = ast.literal_eval(test_str)
+      print clip_data_as_array
+    else:
+      nodeName = cmds.scriptNode( bs='[{"s":1, "e":2, "n":"c1"},{"s":3, "e":4, "n":"t2"}]', n='CozmoClipData', stp='python')
+
+    #TODO: save out on UI close ( need to test creation again...)
+      '''#Modify the data in the scriptnode
+      nodeName = cmds.scriptNode( edit=True,
+                                bs='CozmoClipsArray = [{"Start":123, "End":321, "ClipName":"Clip1"},{"Start":1, "End":200, "ClipName":"MollyTest2"}]\ncmds.SetCozmoClipData(CozmoClipsArray)', 
+                                n='CozmoClipData', stp='python')'''
+
+    #Create the window
+    latestWindow = cmds.window()
+    cmds.frameLayout( label='Anki Anim Clips' )
+    cmds.rowLayout( numberOfColumns=4, columnWidth=[(1,200), (2,100), (3,100), (4,100)])
+    cmds.text( label='clip name')
+    cmds.text( label='start')
+    cmds.text( label='end')
+    cmds.text( label='active')
+    cmds.setParent('..') 
+    cmds.setParent('..') 
+
+    cmds.rowLayout( numberOfColumns=5,columnWidth=[(1,200), (2,100), (3,100), (4,100),(5,20)] )
+    #TODO: Dynamically create a thing for it
+    cmds.textField('clip_name',text="DEFAULT_CLIP_NAME")
+    cmds.intField('start_frame_clip',value=0)
+    cmds.intField('end_frame_clip',value=20)
+    cmds.checkBox('is_active',label="",value=True)
+    cmds.button('del',label="del")
+    cmds.setParent('..') 
+
+    cmds.separator()
+
+    cmds.button(label="Add Clip")
+    cmds.button(label="Export")
+
+    cmds.showWindow(latestWindow)
+    return
 
 def SetAnkiExportPath(item):
     #default to last temp file location
@@ -503,6 +556,7 @@ def initializePlugin(mobject):
         g_PrevMenuName = cmds.menu( label='Anki', parent='MayaWindow')
         cmds.menuItem( label='Export Anim', command=ExportAnkiAnim, ctrlModifier=True, keyEquivalent="e"  ) 
         cmds.menuItem( label='Set Export Path', command=SetAnkiExportPath, ctrlModifier=True, keyEquivalent="p"  ) 
+        cmds.menuItem( label='Set Clip Data', command=ShowClipUI, ctrlModifier=True, keyEquivalent="c"  ) 
     except:
         sys.stderr.write( "Failed to register command: %s\n" % kPluginCmdName )
         raise
