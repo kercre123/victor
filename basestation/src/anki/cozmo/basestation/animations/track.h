@@ -193,7 +193,15 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFra
   auto framePlaceIter = _frames.begin();
   while (framePlaceIter != _frames.end() && framePlaceIter->GetTriggerTime() <= desiredTrigger)
   {
-    framePlaceIter++;
+    // Don't put another key frame at the same time as an existing one
+    if (framePlaceIter->GetTriggerTime() == desiredTrigger)
+    {
+      PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.DuplicateTime",
+                        "There is already a frame at time %u in %s track.",
+                        desiredTrigger, keyFrame.GetClassName().c_str());
+      return RESULT_FAIL;
+    }
+    ++framePlaceIter;
   }
   
   _frames.insert(framePlaceIter, keyFrame);
