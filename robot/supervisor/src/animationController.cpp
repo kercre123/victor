@@ -54,7 +54,7 @@ namespace AnimationController {
     u8  _currentTag = 0;
 
     bool _isBufferStarved;
-    int _haveReceivedTerminationFrame;
+    u16 _haveReceivedTerminationFrame;
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
 
@@ -285,7 +285,7 @@ namespace AnimationController {
      }
     switch(msg.tag) {
       case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
-        _haveReceivedTerminationFrame++;
+        ++_haveReceivedTerminationFrame;
       case RobotInterface::EngineToRobot::Tag_animAudioSample:
       case RobotInterface::EngineToRobot::Tag_animAudioSilence:
         ++_numAudioFramesBuffered;
@@ -748,6 +748,7 @@ namespace AnimationController {
 
       if(terminatorFound) {
         _isPlaying = false;
+        assert(_haveReceivedTerminationFrame > 0);
         _haveReceivedTerminationFrame--;
         --_numAudioFramesBuffered;
         ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
