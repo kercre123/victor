@@ -310,6 +310,17 @@ namespace Cozmo {
               _noFacesStartTime = currentTime_sec;
             }
 
+            // also look up a bit in case the angle is too low
+            IActionRunner* moveHeadAction = new MoveHeadToAngleAction(DEG_TO_RAD(20.0f));
+
+            IActionRunner* actionToRun = moveHeadAction;
+
+            if( moveLiftAction != nullptr ) {
+              actionToRun = new CompoundActionParallel({moveLiftAction, moveHeadAction});
+            }
+
+            StartActing(robot, actionToRun);
+
             // HACK: don't abort if we are carrying an object, because we might get stuck
             if (currentTime_sec - _noFacesStartTime > 2.0f && !robot.IsCarryingObject()) {
               PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
@@ -370,8 +381,8 @@ namespace Cozmo {
           // if the block recently stopped moving, look down
           
           if( _lastObjectObservedTime + _lostBlockTimeToLookDown < currentTime_sec ) {
-            const float targetAngle = 0.0f;
-            if( robot.GetHeadAngle() > targetAngle + DEG_TO_RAD(5.0f) ) {
+            const float targetAngle = -7.5f;
+            if( robot.GetHeadAngle() > targetAngle + DEG_TO_RAD(3.0f) ) {
 
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.LookDownForBlock",
                                      "haven't seen block since %f (t=%f), looking down",

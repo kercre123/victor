@@ -1115,9 +1115,20 @@ namespace Anki {
       
       // Sending debug string to game and viz
       char buffer [128];
-      // So we can have an arbitrary number of data here that is likely to change want just hash it all together if anything changes without spamming
-      snprintf(buffer, sizeof(buffer), "dbg: %s:%s, L:%.2f, H:%.2f C:%d",behaviorChooserName, behaviorName.c_str(),
-               GetLiftHeight(),GetHeadAngle(),IsCarryingObject());
+      // So we can have an arbitrary number of data here that is likely to change want just hash it all
+      // together if anything changes without spamming
+      snprintf(buffer, sizeof(buffer),
+               "r:%c%c%c%c lock:%c%c%c %s:%s ",
+               IsLiftMoving() ? 'L' : ' ',
+               IsHeadMoving() ? 'H' : ' ',
+               IsMoving() ? 'B' : ' ',
+               IsCarryingObject() ? 'C' : ' ',
+               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'B' : ' ',
+               behaviorChooserName,
+               behaviorName.c_str());
+      
       std::hash<std::string> hasher;
       size_t curr_hash = hasher(std::string(buffer));
       if( _lastDebugStringHash != curr_hash )

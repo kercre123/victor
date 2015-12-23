@@ -87,17 +87,20 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
       break;
 
     case State::HoldingHeadDown:
+      LiftShouldBeLocked(robot);
       if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= _holdHeadDownUntil) {
         StartTracking(robot); // puts us in Tracking state
       }
       break;
       
-    case State::WaitingForFirstMotion:
     case State::Tracking:
     case State::DrivingForward:
-      // Nothing to do
+      LiftShouldBeLocked(robot);
       break;
-      
+
+    case State::WaitingForFirstMotion:
+      break;
+
   } // switch(_state)
   
   return status;
@@ -115,6 +118,8 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
   
   // Restore original vision modes
   robot.GetVisionComponent().SetModes(_originalVisionModes);
+
+  LiftShouldBeUnlocked(robot);
   
   _state = State::Interrupted;
   SetStateName("Interrupted");
@@ -125,6 +130,7 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
 void BehaviorFollowMotion::StartTracking(Robot& robot)
 {
   TrackMotionAction* action = new TrackMotionAction();
+  action->SetMaxHeadAngle( DEG_TO_RAD( 5.0f ) );
   _actionRunning = action->GetTag();
   
   robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
@@ -176,12 +182,16 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
                                            EmotionType::Excited, kEmotionChangeSmall,
                                            EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
       
-      // Turn to face the motion:
+      // Turn to face the motion, also drop the lift, and lock it from animations
       PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad,
                                                              relHeadAngle_rad,
                                                              false, false);
-      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, panTiltAction);
+      MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
       
+      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
+                                           new CompoundActionParallel({panTiltAction, liftAction}));
+      
+      LiftShouldBeLocked(robot);
       
       // If this is the first motion reaction, also play the first part of the
       // motion reaction animation, move the head back to the right tilt, and
@@ -267,8 +277,8 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
   } // if(_state == Tracking)
 
 } // HandleObservedMotion()
-  
 
+  
 void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event, Robot& robot)
 {
   auto const& completedAction = event.GetData().Get_RobotCompletedAction();
@@ -316,6 +326,23 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
   } // if(completedAction.idTag == _actionRunning)
   
 } // HandleCompletedAction()
+
+void BehaviorFollowMotion::LiftShouldBeLocked(Robot& robot)
+{
+  if( ! _lockedLift ) {
+    robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    _lockedLift = true;
+  }
+}
+
+void BehaviorFollowMotion::LiftShouldBeUnlocked(Robot& robot)
+{
+  if( _lockedLift ) {
+    robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    _lockedLift = false;
+  }
+}
+
   
 
 } // namespace Cozmo
