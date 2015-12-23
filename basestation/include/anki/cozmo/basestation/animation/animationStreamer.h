@@ -95,6 +95,7 @@ namespace Cozmo {
     bool IsIdleAnimating() const;
     
     const std::string GetStreamingAnimationName() const;
+    const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
     
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;

@@ -129,8 +129,8 @@ namespace Anki {
       Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
       if (nullptr != neutralFaceAnim)
       {
-        auto frameIter = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
-        ProceduralFaceParams::SetResetData(frameIter->GetFace().GetParams());
+        auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
+        ProceduralFaceParams::SetResetData(frame->GetFace().GetParams());
       }
       else
       {
@@ -1516,7 +1516,7 @@ namespace Anki {
                          std::isnan(x) || std::isnan(y)),
                        "Shift/scale values should be non-nan!");
           
-          faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
         }
       } else {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
@@ -1527,7 +1527,7 @@ namespace Anki {
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
         
-        faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, duration_ms));
+        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration_ms));
       }
       
       if(makePersistent) {

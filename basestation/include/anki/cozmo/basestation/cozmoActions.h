@@ -32,6 +32,8 @@
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 
+#include <memory>
+
 
 namespace Anki {
   
@@ -44,6 +46,7 @@ namespace Anki {
 
     // Forward Declarations:
     class Robot;
+    class Animation;
     
     class DriveToPoseAction : public IAction
     {
@@ -1159,6 +1162,12 @@ namespace Anki {
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
       Signal::SmartHandle _abortSignalHandle;
+      
+    private:
+      // For handling playing an altered copy of an animation
+      std::unique_ptr<Animation> _alteredAnimation;
+      
+      bool NeedsAlteredAnimation(Robot& robot) const;
       
     }; // class PlayAnimationAction
     

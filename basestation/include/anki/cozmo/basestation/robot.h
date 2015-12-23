@@ -675,6 +675,8 @@ public:
   
     Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
   
+    const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
+  
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;

@@ -55,7 +55,7 @@ namespace AnimationController {
     u8  _currentTag = 0;
 
     bool _isBufferStarved;
-    bool _haveReceivedTerminationFrame;
+    u16 _haveReceivedTerminationFrame;
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
 
@@ -173,7 +173,7 @@ namespace AnimationController {
 
     _numAudioFramesBuffered = 0;
 
-    _haveReceivedTerminationFrame = false;
+    _haveReceivedTerminationFrame = 0;
     _isPlaying = false;
     _isBufferStarved = false;
     _bufferFullMessagePrintedThisTick = false;
@@ -286,7 +286,7 @@ namespace AnimationController {
      }
     switch(msg.tag) {
       case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
-        _haveReceivedTerminationFrame = true;
+        ++_haveReceivedTerminationFrame;
       case RobotInterface::EngineToRobot::Tag_animAudioSample:
       case RobotInterface::EngineToRobot::Tag_animAudioSilence:
         ++_numAudioFramesBuffered;
@@ -334,7 +334,7 @@ namespace AnimationController {
 
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
+      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame > 0);
       if(ready) {
         _isPlaying = true;
         _isBufferStarved = false;
@@ -749,7 +749,8 @@ namespace AnimationController {
 
       if(terminatorFound) {
         _isPlaying = false;
-        _haveReceivedTerminationFrame = false;
+        assert(_haveReceivedTerminationFrame > 0);
+        _haveReceivedTerminationFrame--;
         --_numAudioFramesBuffered;
         ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
 #         if DEBUG_ANIMATION_CONTROLLER

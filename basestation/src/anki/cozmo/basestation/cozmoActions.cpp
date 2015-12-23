@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "util/random/randomGenerator.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -2035,7 +2036,7 @@ namespace Anki {
             squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
           }
           
-          squintLayer.AddKeyFrame(ProceduralFaceKeyFrame(squintFace, 0));
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 0));
           _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(squintLayer));
         }
       }
@@ -3350,7 +3351,42 @@ namespace Anki {
       _startedPlaying = false;
       _stoppedPlaying = false;
       _wasAborted     = false;
-      _animTag = robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+
+      if (NeedsAlteredAnimation(robot))
+      {
+        const Animation* streamingAnimation = robot.GetAnimationStreamer().GetStreamingAnimation();
+        const Animation* ourAnimation = robot.GetCannedAnimation(_animName);
+        
+        _alteredAnimation = std::unique_ptr<Animation>(new Animation(*ourAnimation));
+        assert(_alteredAnimation);
+        
+        bool useStreamingProcFace = !streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
+        
+        if (useStreamingProcFace)
+        {
+          // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
+          auto lastFrame = streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
+          ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
+          _alteredAnimation->AddKeyFrameByTime(frameCopy);
+        }
+        else
+        {
+          // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
+          auto lastFrame = streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
+          FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
+          _alteredAnimation->AddKeyFrameByTime(frameCopy);
+        }
+      }
+      
+      // If we've set our altered animation, use that
+      if (_alteredAnimation)
+      {
+        _animTag = robot.GetAnimationStreamer().SetStreamingAnimation(robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
+      }
+      else // do the normal thing
+      {
+        _animTag = robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+      }
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
         return ActionResult::FAILURE_ABORT;
@@ -3397,6 +3433,54 @@ namespace Anki {
       } else {
         return ActionResult::FAILURE_ABORT;
       }
+    }
+    
+    bool PlayAnimationAction::NeedsAlteredAnimation(Robot& robot) const
+    {
+      // Animations that don't interrupt never need to be altered
+      if (!_interruptRunning)
+      {
+        return false;
+      }
+      
+      const Animation* streamingAnimation = robot.GetAnimationStreamer().GetStreamingAnimation();
+      // Nothing is currently streaming so no need for alteration
+      if (nullptr == streamingAnimation)
+      {
+        return false;
+      }
+      
+      // The streaming animation has no face tracks, so no need for alteration
+      if (streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty() &&
+          streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty())
+      {
+        return false;
+      }
+      
+      // Now actually check our animation to see if we have an initial face frame
+      const Animation* ourAnimation = robot.GetCannedAnimation(_animName);
+      assert(ourAnimation);
+      
+      bool animHasInitialFaceFrame = false;
+      if (nullptr != ourAnimation)
+      {
+        auto procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
+        // If our track is not empty and starts at beginning
+        if (!procFaceTrack.IsEmpty() && procFaceTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
+        {
+          animHasInitialFaceFrame = true;
+        }
+        
+        auto faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
+        // If our track is not empty and starts at beginning
+        if (!faceAnimTrack.IsEmpty() && faceAnimTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
+        {
+          animHasInitialFaceFrame = true;
+        }
+      }
+      
+      // If we have an initial face frame, no need to alter the animation
+      return !animHasInitialFaceFrame;
     }
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
