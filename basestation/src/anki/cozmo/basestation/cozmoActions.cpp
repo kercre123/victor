@@ -679,6 +679,13 @@ namespace Anki {
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
         result = InitHelper(robot, object);
         
+        if(!_allowObjectPoseUpdates) {
+          // Disable object pose updates while driving by disabling their detection while moving at all
+          robot.GetVisionComponent().GetMarkerDetectionTurnSpeedThresholds(_origBodyTurnSpeedThresh,
+                                                                           _origHeadTurnSpeedThresh);
+          robot.GetVisionComponent().SetMarkerDetectionTurnSpeedThresholds(0.f, 0.f);
+        }
+        
       } // if/else object==nullptr
       
       return result;
@@ -739,8 +746,14 @@ namespace Anki {
     void DriveToObjectAction::Cleanup(Robot &robot)
     {
       _compoundAction.Cleanup(robot);
+      
+      if(!_allowObjectPoseUpdates) {
+        // Restore turn speed thresholds if we modified them
+        robot.GetVisionComponent().SetMarkerDetectionTurnSpeedThresholds(_origBodyTurnSpeedThresh,
+                                                                         _origHeadTurnSpeedThresh);
+      }
     }
-            
+    
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot,
@@ -3308,18 +3321,25 @@ namespace Anki {
     DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
                                                                const PathMotionProfile motionProfile,
                                                                const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToObjectAction(objectID,
-                              PreActionPose::ENTRY,
-                              motionProfile,
-                              0,
-                              false,
-                              0,
-                              useManualSpeed)})
     {
-      MountChargerAction* action = new MountChargerAction(objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
-      AddAction(action);
+      DriveToObjectAction* driveToObject = new DriveToObjectAction(objectID,
+                                                                   PreActionPose::ENTRY,
+                                                                   motionProfile,
+                                                                   0,
+                                                                   false,
+                                                                   0,
+                                                                   useManualSpeed);
+      
+      // Pre-action poses for chargers are far away, yielding crazy angle updates
+      // while driving, meaning we often don't think we've arrived. Let's just
+      // not update the charger's pose while driving and wait until we get where we're
+      // going to do the update.
+      driveToObject->SetAllowObjectPoseUpdates(false);
+      AddAction(driveToObject);
+      
+      MountChargerAction* mountChargerAction = new MountChargerAction(objectID, useManualSpeed);
+      mountChargerAction->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(mountChargerAction);
     }
     
 #pragma mark ---- PlayAnimationAction ----

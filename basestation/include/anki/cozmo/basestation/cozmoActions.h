@@ -160,6 +160,9 @@ namespace Anki {
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
       
+      // Set to false to disallow seeing markers while driving
+      void SetAllowObjectPoseUpdates(bool tf) { _allowObjectPoseUpdates = tf; }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -179,9 +182,12 @@ namespace Anki {
       f32                        _predockOffsetDistX_mm;
       bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
-      
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
+      
+      bool                       _allowObjectPoseUpdates = true;
+      f32                        _origBodyTurnSpeedThresh;
+      f32                        _origHeadTurnSpeedThresh;
       
       PathMotionProfile          _pathMotionProfile;
     }; // DriveToObjectAction
@@ -485,7 +491,7 @@ namespace Anki {
       // Max amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
       // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
+      virtual f32 GetWaitToVerifyTime() const { return 0.5f; }
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
