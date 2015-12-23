@@ -2024,7 +2024,7 @@ namespace Anki {
             squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
           }
           
-          squintLayer.AddKeyFrame(ProceduralFaceKeyFrame(squintFace, 0));
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 0));
           _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(squintLayer));
         }
       }
@@ -3355,21 +3355,21 @@ namespace Anki {
           // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
           auto lastFrame = streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
           ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
-          _alteredAnimation->AddKeyFrame(frameCopy);
+          _alteredAnimation->AddKeyFrameByTime(frameCopy);
         }
         else
         {
           // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
           auto lastFrame = streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
           FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
-          _alteredAnimation->AddKeyFrame(frameCopy);
+          _alteredAnimation->AddKeyFrameByTime(frameCopy);
         }
       }
       
       // If we've set our altered animation, use that
       if (_alteredAnimation)
       {
-        robot.GetAnimationStreamer().SetStreamingAnimation(robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
+        _animTag = robot.GetAnimationStreamer().SetStreamingAnimation(robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
       }
       else // do the normal thing
       {

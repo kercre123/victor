@@ -45,7 +45,10 @@ public:
 
   // For defining animations at runtime (e.g. live animation)
   template<class KeyFrameType>
-  Result AddKeyFrame(const KeyFrameType& kf);
+  Result AddKeyFrameToBack(const KeyFrameType& kf);
+  
+  template<class KeyFrameType>
+  Result AddKeyFrameByTime(const KeyFrameType& kf);
 
   // Get a track by KeyFrameType
   template<class KeyFrameType>
@@ -103,11 +106,23 @@ private:
 
 
 template<class KeyFrameType>
-Result Animation::AddKeyFrame(const KeyFrameType& kf)
+Result Animation::AddKeyFrameToBack(const KeyFrameType& kf)
 {
-  Result addResult = GetTrack<KeyFrameType>().AddKeyFrame(kf);
+  Result addResult = GetTrack<KeyFrameType>().AddKeyFrameToBack(kf);
   if(RESULT_OK != addResult) {
-    PRINT_NAMED_ERROR("Animiation.AddKeyFrame.Failed", "");
+    PRINT_NAMED_ERROR("Animiation.AddKeyFrameToBack.Failed", "");
+  }
+
+  return addResult;
+}
+
+
+template<class KeyFrameType>
+Result Animation::AddKeyFrameByTime(const KeyFrameType& kf)
+{
+  Result addResult = GetTrack<KeyFrameType>().AddKeyFrameByTime(kf);
+  if(RESULT_OK != addResult) {
+    PRINT_NAMED_ERROR("Animiation.AddKeyFrameByTime.Failed", "");
   }
 
   return addResult;

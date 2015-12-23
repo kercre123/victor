@@ -47,8 +47,10 @@ public:
   void SetIsLive(bool isLive) { _isLive = isLive; }
   bool IsLive() const { return _isLive; }
 
-  Result AddKeyFrame(const FRAME_TYPE& keyFrame);
-  Result AddKeyFrame(const Json::Value& jsonRoot);
+  Result AddKeyFrameToBack(const FRAME_TYPE& keyFrame);
+  Result AddKeyFrameToBack(const Json::Value& jsonRoot);
+  
+  Result AddKeyFrameByTime(const FRAME_TYPE& keyFrame);
 
   // Return the Streaming message for the current KeyFrame if it is time,
   // nullptr otherwise. Also returns nullptr if there are no KeyFrames
@@ -155,10 +157,10 @@ const FRAME_TYPE* Track<FRAME_TYPE>::GetLastKeyFrame() const
 }
   
 template<typename FRAME_TYPE>
-Result Animations::Track<FRAME_TYPE>::AddKeyFrame(const FRAME_TYPE& keyFrame)
+Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const FRAME_TYPE& keyFrame)
 {
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
-    PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.TooManyFrames",
+    PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.TooManyFrames",
       "There are already %lu frames in %s track. Refusing to add more.",
       _frames.size(), keyFrame.GetClassName().c_str());
     return RESULT_FAIL;
@@ -175,8 +177,36 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrame(const FRAME_TYPE& keyFrame)
 
   return RESULT_OK;
 }
+  
+template<typename FRAME_TYPE>
+Result Animations::Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFrame)
+{
+  if(_frames.size() > MAX_FRAMES_PER_TRACK) {
+    PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.TooManyFrames",
+      "There are already %lu frames in %s track. Refusing to add more.",
+      _frames.size(), keyFrame.GetClassName().c_str());
+    return RESULT_FAIL;
+  }
 
+  auto desiredTrigger = keyFrame.GetTriggerTime();
+  
+  auto framePlaceIter = _frames.begin();
+  while (framePlaceIter != _frames.end() && framePlaceIter->GetTriggerTime() <= desiredTrigger)
+  {
+    framePlaceIter++;
+  }
+  
+  _frames.insert(framePlaceIter, keyFrame);
 
+  // If we just added the first keyframe (e.g. after deleting the last remaining
+  // keyframe in a "Live" track), we need to reset the frameIter to point
+  // back to the beginning.
+  if(_frames.size() == 1) {
+    _frameIter = _frames.begin();
+  }
+
+  return RESULT_OK;
+}
 
 template<typename FRAME_TYPE>
 RobotInterface::EngineToRobot* Animations::Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms)
@@ -199,9 +229,9 @@ RobotInterface::EngineToRobot* Animations::Track<FRAME_TYPE>::GetCurrentStreamin
 
 
 template<typename FRAME_TYPE>
-Result Animations::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
+Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonRoot)
 {
-  Result lastResult = AddKeyFrame(FRAME_TYPE());
+  Result lastResult = AddKeyFrameToBack(FRAME_TYPE());
   if(RESULT_OK != lastResult) {
     return lastResult;
   }
@@ -214,7 +244,7 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
       ++nextToLastFrame;
 
       if(_frames.back().GetTriggerTime() <= nextToLastFrame->GetTriggerTime()) {
-        //PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.BadTriggerTime", "New keyframe must be after the last keyframe.");
+        //PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.BadTriggerTime", "New keyframe must be after the last keyframe.");
         _frames.pop_back();
         lastResult = RESULT_FAIL;
       }

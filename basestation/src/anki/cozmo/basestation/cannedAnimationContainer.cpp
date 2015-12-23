@@ -29,7 +29,7 @@ namespace Cozmo {
     Animation* anim = GetAnimation(FaceAnimationManager::ProceduralAnimName);
     assert(anim != nullptr);
     FaceAnimationKeyFrame kf(FaceAnimationManager::ProceduralAnimName);
-    if(RESULT_OK != anim->AddKeyFrame(kf))
+    if(RESULT_OK != anim->AddKeyFrameToBack(kf))
     {
       PRINT_NAMED_ERROR("CannedAnimationContainer.Constructor.AddProceduralFailed",
                         "Failed to add keyframe to procedural animation.");

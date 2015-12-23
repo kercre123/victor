@@ -724,7 +724,7 @@ namespace Cozmo {
       
       face.GetParams().SetFaceAngle(_currentTilt);
 
-      tiltTrack.AddKeyFrame(ProceduralFaceKeyFrame(face, 250));
+      tiltTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(face, 250));
       robot.GetAnimationStreamer().RemovePersistentFaceLayer(_tiltLayerTag);
       _tiltLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(tiltTrack));
       
