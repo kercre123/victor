@@ -9,7 +9,7 @@
 
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
-#include "anki/common/shared/velocityProfileGenerator.h"
+#include "velocityProfileGenerator.h"
 
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"

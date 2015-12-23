@@ -8,6 +8,9 @@
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "liftController.h"
+#ifndef SIMULATOR
+#include "anki/cozmo/robot/logging.h"
+#endif
 #ifndef TARGET_K02
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
@@ -98,8 +101,8 @@ namespace Anki {
 
       void StartMotorCalibrationRoutine()
       {
-#ifndef TARGET_K02
         LiftController::StartCalibrationRoutine();
+#ifndef TARGET_K02
         HeadController::StartCalibrationRoutine();
         SteeringController::ExecuteDirectDrive(0,0);
 #endif
@@ -110,22 +113,19 @@ namespace Anki {
       // Returns true when done.
       bool MotorCalibrationUpdate()
       {
-#ifndef TARGET_K02
         bool isDone = false;
 
-        if(
-           LiftController::IsCalibrated()
-           && HeadController::IsCalibrated()
-           ) {
+#ifdef TARGET_K02
+				if (LiftController::IsCalibrated()) return true;
+#else
+        if (LiftController::IsCalibrated() && HeadController::IsCalibrated())
+				{
           PRINT("Motors calibrated\n");
           IMUFilter::Reset();
           isDone = true;
         }
-
-        return isDone;
-#else
-        return true;
 #endif
+        return isDone;
       }
 
 
@@ -206,11 +206,11 @@ namespace Anki {
         lastResult = PickAndPlaceController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PickAndPlaceController init failed.\n");
-
+#endif
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "LiftController init failed.\n");
-
+#ifndef TARGET_K02
         lastResult = AnimationController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "AnimationController init failed.\n");
@@ -303,7 +303,9 @@ namespace Anki {
 #ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
           SteeringController::ExecuteDirectDrive(0,0);
+#endif
           LiftController::SetAngularVelocity(0);
+#ifndef TARGET_K02
           HeadController::SetAngularVelocity(0);
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
@@ -357,8 +359,9 @@ namespace Anki {
         }
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
+#endif
         LiftController::Update();
-
+#ifndef TARGET_K02
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();

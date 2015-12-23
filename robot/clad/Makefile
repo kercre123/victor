@@ -23,6 +23,7 @@ OUTPUT_H_AND_CPP=$(OUTPUT_H) $(OUTPUT_CPP)
 OUTPUT_PYTHON=$(patsubst %.clad, %.py, $(INPUT_FILES))
 ENGINE_TO_ROBOT_UNION:=./clad/robotInterface/messageEngineToRobot
 ROBOT_TO_ENGINE_UNION:=./clad/robotInterface/messageRobotToEngine
+LIGHT_CUBE_UNION:=./clad/robotInterface/lightCubeMessage
 
 vpath %.clad $(INPUT_DIR)
 vpath %.h $(OUTPUT_DIR)/robot/
@@ -32,7 +33,7 @@ vpath %.py $(OUTPUT_DIR_PYTHON)/robot/
 
 .PHONY: show clean
 
-all: cpp $(ENGINE_TO_ROBOT_UNION)_switch.def $(ENGINE_TO_ROBOT_UNION)_switch_group_anim.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
+all: fourzero lightCube
 
 cpp: $(OUTPUT_H_AND_CPP)
 
@@ -75,6 +76,14 @@ cpplilib: cpp
 	@rm -f $(OUTPUT_DIR)/clad.cpp
 	cd $(OUTPUT_DIR); find . -type f -iname '*.cpp' > cpps.list; awk '{ print "#include \"" $$0 "\"" }' <cpps.list >clad.cpp
 	@rm $(OUTPUT_DIR)cpps.list
+
+k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
+
+esp: cpp $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
+
+fourzero: cpp $(ENGINE_TO_ROBOT_UNION)_switch_group_anim.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
+
+lightCube: $(LIGHT_CUBE_UNION)_declarations.def $(LIGHT_CUBE_UNION)_send_helper.h $(LIGHT_CUBE_UNION)_switch.def
 
 show:
 	echo "*** input files ***"
