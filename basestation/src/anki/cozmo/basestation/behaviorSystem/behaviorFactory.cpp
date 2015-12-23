@@ -16,6 +16,7 @@
 
 // Behaviors:
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
@@ -124,6 +125,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::PounceOnMotion:
     {
       newBehavior = new BehaviorPounceOnMotion(robot, config);
+      break;
+    }
+    case BehaviorType::FindFaces:
+    {
+      newBehavior = new BehaviorFindFaces(robot, config);
       break;
     }
     case BehaviorType::Count:
