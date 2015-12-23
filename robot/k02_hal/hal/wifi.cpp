@@ -34,7 +34,11 @@ namespace Cozmo {
 namespace HAL {
   bool RadioSendMessage(const void* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
   {
-    if (RadioIsConnected())
+    if (!RadioIsConnected())
+    {
+      return true; // Not connected, message was sent to everyone listening
+    }
+    else
     {
       if (size > RTIP_MAX_CLAD_MSG_SIZE)
       {
@@ -59,10 +63,9 @@ namespace HAL {
           txWind = wind;
           return true;
         }
+        else return false;
       }
-      else return false;
     }
-    else return true; // Not connected, message was sent to everyone listening
   }
 
   bool RadioIsConnected()
