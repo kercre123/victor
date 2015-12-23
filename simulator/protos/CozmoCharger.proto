@@ -12,7 +12,7 @@ PROTO CozmoCharger [
   field SFFloat rampLength     .044      # The ramp is the part that leads up to the platform
   field SFFloat rampWidthAtGround  .072
 
-  field SFFloat dockMarkerWidth  0.025
+  field SFFloat dockMarkerWidth  0.027
   field SFFloat dockMarkerHeight 0.020
   
   field SFVec3f translation 0 0 0
