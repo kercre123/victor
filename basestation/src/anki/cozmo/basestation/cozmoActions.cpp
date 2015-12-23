@@ -983,7 +983,7 @@ namespace Anki {
     
     DriveStraightAction::DriveStraightAction(f32 dist_mm, f32 speed_mmps)
     : _dist_mm(dist_mm)
-    , _speed_mmps(std::abs(speed_mmps))
+    , _speed_mmps(speed_mmps)
     {
       
     }
