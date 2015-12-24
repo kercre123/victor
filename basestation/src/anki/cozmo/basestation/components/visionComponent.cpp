@@ -562,49 +562,72 @@ namespace Cozmo {
     
     if(!robot.IsPickingOrPlacing())
     {
+      const bool checkBody = _markerDetectionBodyTurnSpeedThreshold_radPerSec > 0.f;
+      const bool checkHead = _markerDetectionHeadTurnSpeedThreshold_radPerSec > 0.f;
+      
       TimeStamp_t t_prev, t_next;
       RobotPoseStamp p_prev, p_next;
+      f32 dtPrev_sec = 0.f;
+      f32 dtNext_sec = 0.f;
       
-      lastResult = robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
-                            "Could not get next/previous poses for t = %d, so "
-                            "cannot compute angular velocity. Ignoring marker.\n", t);
+      if(checkBody || checkHead)
+      {
+        lastResult = robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
+                              "Could not get next/previous poses for t = %d, so "
+                              "cannot compute angular velocity. Ignoring marker.", t);
+          
+          // Don't return failure, but don't queue the marker either (since we
+          // couldn't check the angular velocity while seeing it
+          return RESULT_OK;
+        }
         
-        // Don't return failure, but don't queue the marker either (since we
-        // couldn't check the angular velocity while seeing it
+        assert(t_prev < t);
+        assert(t_next > t);
+        dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
+        dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
+      }
+      
+      if(checkBody)
+      {
+        const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
+        const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
+        
+        if(turnSpeedNext > _markerDetectionBodyTurnSpeedThreshold_radPerSec ||
+           turnSpeedPrev > _markerDetectionBodyTurnSpeedThreshold_radPerSec)
+        {
+          PRINT_NAMED_INFO("VisionComponent.QueueObservedMarker.RobotBodyMoving",
+                           "Ignoring vision marker seen while turning with angular "
+                           "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)",
+                           RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
+                           RAD_TO_DEG(_markerDetectionBodyTurnSpeedThreshold_radPerSec));
+          return RESULT_OK;
+        }
+      } else if(robot.IsMoving()) {
+        PRINT_NAMED_INFO("VisionComponent.QueueObservedMarker.RobotBodyMoving",
+                         "Ignoring vision marker seen while turning b/c thresh = 0 deg/sec");
         return RESULT_OK;
       }
       
-      //const f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = 45.f;
-      //const f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = 10.f;
-      
-      assert(t_prev < t);
-      assert(t_next > t);
-      const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
-      const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
-      const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
-      const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
-      const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
-      const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
-      
-      if(turnSpeedNext > _markerDetectionBodyTurnSpeedThreshold_radPerSec ||
-         turnSpeedPrev > _markerDetectionBodyTurnSpeedThreshold_radPerSec)
+      if(checkHead)
       {
-        //          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-        //                              "Ignoring vision marker seen while turning with angular "
-        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-        //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
-        //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
-        return RESULT_OK;
-      } else if(headSpeedNext > _markerDetectionHeadTurnSpeedThreshold_radPerSec ||
-                headSpeedPrev > _markerDetectionHeadTurnSpeedThreshold_radPerSec)
-      {
-        //          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-        //                              "Ignoring vision marker seen while head moving with angular "
-        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-        //                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
-        //                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+        const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
+        const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
+        
+        if(headSpeedNext > _markerDetectionHeadTurnSpeedThreshold_radPerSec ||
+           headSpeedPrev > _markerDetectionHeadTurnSpeedThreshold_radPerSec)
+        {
+          PRINT_NAMED_INFO("VisionComponent.QueueObservedMarker.RobotHeadMoving",
+                           "Ignoring vision marker seen while head moving with angular "
+                           "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)",
+                           RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
+                           RAD_TO_DEG(_markerDetectionHeadTurnSpeedThreshold_radPerSec));
+          return RESULT_OK;
+        }
+      } else if(robot.IsHeadMoving()) {
+        PRINT_NAMED_INFO("VisionComponent.QueueObservedMarker.RobotHeadMoving",
+                         "Ignoring vision marker seen while head moving b/c thresh = 0 deg/sec");
         return RESULT_OK;
       }
       
