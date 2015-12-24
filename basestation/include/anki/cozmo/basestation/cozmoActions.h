@@ -163,6 +163,8 @@ namespace Anki {
       // Set to false to disallow seeing markers while driving
       void SetAllowObjectPoseUpdates(bool tf) { _allowObjectPoseUpdates = tf; }
       
+      void SetPreActionPoseAngleTolerance(const Radians& angle) { _preActionPoseAngleTolerance = angle; }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -184,7 +186,7 @@ namespace Anki {
       CompoundActionSequential   _compoundAction;
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
-      
+      Radians                    _preActionPoseAngleTolerance = DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE;
       bool                       _allowObjectPoseUpdates = true;
       f32                        _origBodyTurnSpeedThresh;
       f32                        _origHeadTurnSpeedThresh;
@@ -493,10 +495,11 @@ namespace Anki {
       // Max amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
       // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.5f; }
+      virtual f32 GetWaitToVerifyTime() const { return 1.f; }
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
+      TimeStamp_t          _lastImageTimeStampAtWaitStart;
       f32                  _waitToVerifyTime;
       
       

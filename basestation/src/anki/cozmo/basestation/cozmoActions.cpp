@@ -63,8 +63,10 @@ namespace Anki {
         const f32 preActionPoseDistThresh = objectDistance * std::sin(preActionPoseAngleTolerance.ToFloat());
         
         PRINT_NAMED_INFO("IDockAction.Init.DistThresh",
-                         "At a distance of %.1fmm, will use pre-dock pose distance threshold of %.1fmm",
-                         objectDistance, preActionPoseDistThresh);
+                         "At a distance of %.1fmm, will use pre-dock pose distance threshold of %.1fmm "
+                         "(angleTol=%.1fdeg)",
+                         objectDistance, preActionPoseDistThresh,
+                         preActionPoseAngleTolerance.getDegrees());
         
         return preActionPoseDistThresh;
       } else {
@@ -526,7 +528,7 @@ namespace Anki {
         Radians closestPoseAngle = M_PI;
         
         Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), object,
-                                                                            DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+                                                                            _preActionPoseAngleTolerance);
         
         preActionPoseDistThresh.z() = REACHABLE_PREDOCK_POSE_Z_THRESH_MM;
         for(auto & preActionPose : possiblePreActionPoses)
@@ -1461,11 +1463,8 @@ namespace Anki {
     
     ActionResult VisuallyVerifyObjectAction::CheckIfDone(Robot& robot)
     {
-
-      ActionResult actionRes = ActionResult::SUCCESS;
-      
       if (!_moveLiftToHeightActionDone) {
-        actionRes = _moveLiftToHeightAction.Update(robot);
+        ActionResult actionRes = _moveLiftToHeightAction.Update(robot);
         if (actionRes != ActionResult::SUCCESS) {
           if (actionRes != ActionResult::RUNNING) {
             PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.CompoundActionFailed",
@@ -1475,17 +1474,18 @@ namespace Anki {
         }
         _moveLiftToHeightActionDone = true;
       }
-
       
       // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
-      // TODO: Should this check if it's moving at all?
-      if (robot.IsHeadMoving()) {
-        _waitToVerifyTime = -1;
+      if (robot.IsHeadMoving() || robot.IsMoving()) {
+        PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.WaitingForMotion",
+                         "Waiting for head/body to stop moving.");
+        return ActionResult::RUNNING;
       }
       
       const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       if(_waitToVerifyTime < 0.f) {
         _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
+        _lastImageTimeStampAtWaitStart = robot.GetVisionComponent().GetLastProcessedImageTimeStamp();
       }
       
       // Verify that we can see the object we were interested in
@@ -1498,52 +1498,60 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
-      const TimeStamp_t lastObserved = object->GetLastObservedTime();
-      if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
-      {
-        PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                         "[%d] Object still exists, but not seen since %d (stamp=%d, curr_s = %f, _waitTil_s = %f)",
-                         GetTag(),
-                         lastObserved,
-                         robot.GetLastImageTimeStamp(),
-                         currentTime,
-                         _waitToVerifyTime);
-        actionRes = ActionResult::FAILURE_ABORT;
-      }
-      
-      if((actionRes != ActionResult::FAILURE_ABORT) && (_whichCode != Vision::Marker::ANY_CODE)) {
-        std::vector<const Vision::KnownMarker*> observedMarkers;
-        object->GetObservedMarkers(observedMarkers, robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS);
-        
-        bool markerWithCodeSeen = false;
-        for(auto marker : observedMarkers) {
-          if(marker->GetCode() == _whichCode) {
-            markerWithCodeSeen = true;
-            break;
-          }
-        }
-        
-        if(!markerWithCodeSeen) {
-          
-          std::string observedMarkerNames;
-          for(auto marker : observedMarkers) {
-            observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
-            observedMarkerNames += " ";
-          }
-          
-          PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.MarkerCodeNotSeen",
-                              "Object %d observed, but not expected marker: %s. Instead saw: %s",
-                              _objectID.GetValue(), Vision::MarkerTypeStrings[_whichCode], observedMarkerNames.c_str());
+      if(object->GetLastObservedTime() < _lastImageTimeStampAtWaitStart) {
+        // Haven't seen the object yet...
+        if(currentTime < _waitToVerifyTime) {
+          // ...and there's still time left
+          return ActionResult::RUNNING;
+        } else {
+          // ...and we're out of time
+          PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.Timeout",
+                           "[%d] Object still exists, but not seen since %d (stamp=%d, curr_s = %f, _waitTil_s = %f, lastProcImg=%d, imgTimeStampAtWaitStart=%d)",
+                           GetTag(),
+                           object->GetLastObservedTime(),
+                           robot.GetLastImageTimeStamp(),
+                           currentTime,
+                           _waitToVerifyTime,
+                           robot.GetVisionComponent().GetLastProcessedImageTimeStamp(),
+                           _lastImageTimeStampAtWaitStart);
+
           return ActionResult::FAILURE_ABORT;
         }
+      } else {
+        // Object seen!
+        
+        // Check if expected marker was seen, if one was specified
+        if(_whichCode != Vision::Marker::ANY_CODE)
+        {
+          std::vector<const Vision::KnownMarker*> observedMarkers;
+          object->GetObservedMarkers(observedMarkers, robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS);
+          
+          bool markerWithCodeSeen = false;
+          for(auto marker : observedMarkers) {
+            if(marker->GetCode() == _whichCode) {
+              markerWithCodeSeen = true;
+              break;
+            }
+          }
+          
+          if(!markerWithCodeSeen)
+          {
+            std::string observedMarkerNames;
+            for(auto marker : observedMarkers) {
+              observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
+              observedMarkerNames += " ";
+            }
+            
+            PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.MarkerCodeNotSeen",
+                                "Object %d observed, but not expected marker: %s. Instead saw: %s",
+                                _objectID.GetValue(), Vision::MarkerTypeStrings[_whichCode], observedMarkerNames.c_str());
+            return ActionResult::FAILURE_ABORT;
+          }
+        }
+        
+        return ActionResult::SUCCESS;
       }
-
-      if((currentTime < _waitToVerifyTime) && (actionRes != ActionResult::SUCCESS)) {
-        return ActionResult::RUNNING;
-      }
-      
-      return actionRes;
-    }
+    } // CheckIfDone()
 
     
 #pragma mark ---- MoveHeadToAngleAction ----
@@ -3205,7 +3213,7 @@ namespace Anki {
     : IDockAction(chargerID, useManualSpeed)
     {
       // Increase tolerance on pre-action pose
-      _preActionPoseAngleTolerance *= 2.f;
+      SetPreActionPoseAngleTolerance(DEG_TO_RAD(20));
     }
     
     const std::string& MountChargerAction::GetName() const
@@ -3347,6 +3355,7 @@ namespace Anki {
       // not update the charger's pose while driving and wait until we get where we're
       // going to do the update.
       driveToObject->SetAllowObjectPoseUpdates(false);
+      driveToObject->SetPreActionPoseAngleTolerance(DEG_TO_RAD(20.f));
       AddAction(driveToObject);
       
       MountChargerAction* mountChargerAction = new MountChargerAction(objectID, useManualSpeed);
