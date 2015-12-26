@@ -2,7 +2,9 @@
 #include "anki/cozmo/robot/hal.h"
 #include "radians.h"
 #include "velocityProfileGenerator.h"
+#ifndef SIMULATOR
 #include "anki/cozmo/robot/logging.h"
+#endif
 #include "messages.h"
 #include <math.h>
 
