@@ -15,7 +15,7 @@
 #include <math.h>
 #include "anki/common/robot/config.h"
 #include "anki/common/types.h"
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 #include "anki/common/robot/errorHandling.h"
 
 // For larger input values to atan, use approximations

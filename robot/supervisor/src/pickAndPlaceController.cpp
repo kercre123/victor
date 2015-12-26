@@ -8,7 +8,7 @@
 #include "localization.h"
 #include "imuFilter.h"
 #include "proxSensors.h"
-
+#include "trig_fast.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"

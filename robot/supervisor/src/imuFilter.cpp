@@ -14,7 +14,7 @@
  *
  **/
 
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 #include "imuFilter.h"
 #include <math.h>
 #include "headController.h"

@@ -19,7 +19,7 @@
 #include "messages.h"
 
 #include "velocityProfileGenerator.h"
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 
 #define DEBUG_STEERING_CONTROLLER 0
 
