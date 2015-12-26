@@ -107,25 +107,29 @@ static const uint8_t PMU_STATUS = 0x03;
 static const uint8_t ERR_REG = 0x02;
 static const uint8_t CHIP_ID = 0x00;
 
-static const uint8_t RANGE_2G = 0x03;   
+static const uint8_t RANGE_2G = 0x03;
 static const uint8_t INT_OPEN_DRAIN = 0x44;
 static const uint8_t RANGE_500DPS = 0x02;
 static const uint8_t BW_200 = 0x19;           // Maybe?
 
+static const float ACC_RANGE_CONST  = 9.58f;
+static const float GYRO_RANGE_CONST = 2.663E-4f;
+
+
 void Anki::Cozmo::HAL::IMU::Init(void) {
   // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
   I2C::WriteReg(ADDR_IMU, CMD, 0x10 + 1); // Power up accelerometer (normal mode)
-  MicroWait(4000);   // Datasheet says wait 4ms  
+  MicroWait(4000);   // Datasheet says wait 4ms
   I2C::WriteReg(ADDR_IMU, CMD, 0x10 + 1); // Power up accelerometer (normal mode)
   MicroWait(4000);   // Datasheet says wait 4ms
 
   I2C::WriteReg(ADDR_IMU, CMD, 0x14 + 1); // Power up gyroscope (normal mode)
   MicroWait(81000);   // Datasheet says wait 80ms
-  
+
 #ifdef IMU_DEBUG
   UART::DebugPrintf("IMU status after power up: %02x %02x %02x\n", I2C::ReadReg(ADDR_IMU, 0x0), I2C::ReadReg(ADDR_IMU, 0x2), I2C::ReadReg(ADDR_IMU, 0x3));
 #endif
-  
+
   I2C::WriteAndVerify(ADDR_IMU, ACC_RANGE, RANGE_2G);
   I2C::WriteAndVerify(ADDR_IMU, ACC_CONF, BW_200);
   I2C::WriteAndVerify(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
@@ -163,4 +167,19 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
 
 uint8_t Anki::Cozmo::HAL::IMU::ReadID(void) {
   return I2C::ReadReg(ADDR_IMU, 0);
+}
+
+void Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
+{
+  // Accelerometer uses 12 most significant bits - gyro uses all 16
+  #define ACC_CONVERT(raw)  (ACC_RANGE_CONST  * raw)
+  #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * raw)
+
+  // Don't know that any of these are correct, need to figure out axis
+  imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[0]);
+  imuData.rate_x = GYRO_CONVERT(IMU::IMUState.gyro[0]);
+  imuData.acc_y  = ACC_CONVERT(IMU::IMUState.acc[1]);
+  imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1]);
+  imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[2]);
+  imuData.rate_z = GYRO_CONVERT(IMU::IMUState.gyro[2]);
 }

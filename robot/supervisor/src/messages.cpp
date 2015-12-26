@@ -18,6 +18,7 @@
 
 #include "liftController.h"
 #include "headController.h"
+#include "imuFilter.h"
 #ifndef TARGET_K02
 #include "localization.h"
 #include "animationController.h"
@@ -25,7 +26,6 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#include "imuFilter.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
@@ -83,7 +83,11 @@ namespace Anki {
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
+				#ifdef TARGET_K02
+				#include "clad/robotInterface/messageEngineToRobot_switch.def"
+				#else
         #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
+				#endif
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
           if (msg.tag == lookForID_)
@@ -124,21 +128,19 @@ namespace Anki {
         Localization::GetCurrentMatPose(robotState_.pose.x, robotState_.pose.y, poseAngle);
         robotState_.pose.z = 0;
         robotState_.pose.angle = poseAngle.ToFloat();
+#endif
         robotState_.pose.pitch_angle = IMUFilter::GetPitch();
-
+#ifndef TARGET_K02
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
 
 #endif
         robotState_.headAngle  = HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
-#ifndef TARGET_K02
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
         robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
-
-        //ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
-
+#ifndef TARGET_K02
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
@@ -427,9 +429,7 @@ namespace Anki {
 
       void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
       {
-#ifndef TARGET_K02
         IMUFilter::RecordAndSend(msg.length_ms);
-#endif
       }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
@@ -605,9 +605,7 @@ namespace Anki {
 
       void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
       {
-#ifndef TARGET_K02
         IMUFilter::EnablePickupParalysis(msg.enable);
-#endif
       }
 
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)

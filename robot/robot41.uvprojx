@@ -542,6 +542,11 @@
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\motors.cpp</FilePath>
             </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\lights.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -601,6 +606,21 @@
               <FileName>headController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\headController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imuFilter.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\imuFilter.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>proxSensors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>trig_fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
             </File>
           </Files>
         </Group>
