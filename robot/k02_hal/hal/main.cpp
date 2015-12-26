@@ -37,6 +37,7 @@ namespace Anki
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
+      u32 GetID() { return 0; } ///< Stub for K02 for now, need to get this from Espressif Flash storage
 
       // This method is called at 7.5KHz (once per scan line)
       // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt

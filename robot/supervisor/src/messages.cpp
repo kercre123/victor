@@ -17,6 +17,7 @@
 #endif
 
 #include "liftController.h"
+#include "headController.h"
 #ifndef TARGET_K02
 #include "localization.h"
 #include "animationController.h"
@@ -24,7 +25,6 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#include "headController.h"
 #include "imuFilter.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
@@ -128,8 +128,8 @@ namespace Anki {
 
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
 
-        robotState_.headAngle  = HeadController::GetAngleRad();
 #endif
+        robotState_.headAngle  = HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
 #ifndef TARGET_K02
@@ -390,9 +390,7 @@ namespace Anki {
       }
 
       void Process_moveHead(const RobotInterface::MoveHead& msg) {
-#ifndef TARGET_K02
         HeadController::SetAngularVelocity(msg.speed_rad_per_sec);
-#endif
       }
 
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
@@ -403,16 +401,12 @@ namespace Anki {
 
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
         //PRINT("Moving head to %f (maxSpeed %f, duration %f)\n", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
-#ifndef TARGET_K02
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
-#endif
       }
 
       void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
-#ifndef TARGET_K02
         HeadController::SetAngleRad(msg.newAngle);
-#endif
       }
 
       void Process_setBodyAngle(const RobotInterface::SetBodyAngle& msg)
@@ -447,9 +441,9 @@ namespace Anki {
 
       void Process_stop(const RobotInterface::StopAllMotors& msg) {
         LiftController::SetAngularVelocity(0);
+        HeadController::SetAngularVelocity(0);
 #ifndef TARGET_K02
         SteeringController::ExecuteDirectDrive(0,0);
-        HeadController::SetAngularVelocity(0);
 #endif
       }
 
@@ -537,9 +531,7 @@ namespace Anki {
           }
           case RobotInterface::controller_head:
           {
-#ifndef TARGET_K02
             HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
-#endif
             break;
           }
           case RobotInterface::controller_lift:
@@ -662,10 +654,8 @@ namespace Anki {
       }
       void Process_animHeadAngle(const Anki::Cozmo::AnimKeyFrame::HeadAngle& msg)
       {
-#ifndef TARGET_K02
         HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
                                                 static_cast<f32>(msg.time_ms)*.001f);
-#endif
       }
       void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
       {

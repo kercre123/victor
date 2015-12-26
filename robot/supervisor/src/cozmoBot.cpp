@@ -8,6 +8,7 @@
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "liftController.h"
+#include "headController.h"
 #ifndef SIMULATOR
 #include "anki/cozmo/robot/logging.h"
 #endif
@@ -15,7 +16,6 @@
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
-#include "headController.h"
 #include "testModeController.h"
 #include "localization.h"
 #include "pathFollower.h"
@@ -102,8 +102,8 @@ namespace Anki {
       void StartMotorCalibrationRoutine()
       {
         LiftController::StartCalibrationRoutine();
-#ifndef TARGET_K02
         HeadController::StartCalibrationRoutine();
+#ifndef TARGET_K02
         SteeringController::ExecuteDirectDrive(0,0);
 #endif
       }
@@ -115,16 +115,14 @@ namespace Anki {
       {
         bool isDone = false;
 
-#ifdef TARGET_K02
-				if (LiftController::IsCalibrated()) return true;
-#else
         if (LiftController::IsCalibrated() && HeadController::IsCalibrated())
 				{
           PRINT("Motors calibrated\n");
+#ifndef TARGET_K02
           IMUFilter::Reset();
+#endif
           isDone = true;
         }
-#endif
         return isDone;
       }
 
@@ -305,8 +303,8 @@ namespace Anki {
           SteeringController::ExecuteDirectDrive(0,0);
 #endif
           LiftController::SetAngularVelocity(0);
-#ifndef TARGET_K02
           HeadController::SetAngularVelocity(0);
+#ifndef TARGET_K02
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           BackpackLightController::TurnOffAll();
@@ -357,9 +355,9 @@ namespace Anki {
           PRINT("Failed updating AnimationController. Clearing.\n");
           AnimationController::Clear();
         }
+#endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
-#endif
         LiftController::Update();
 #ifndef TARGET_K02
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);

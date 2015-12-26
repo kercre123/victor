@@ -597,6 +597,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\radians.cpp</FilePath>
             </File>
+            <File>
+              <FileName>headController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\headController.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
