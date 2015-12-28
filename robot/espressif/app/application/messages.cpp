@@ -21,7 +21,7 @@ namespace Anki {
       void ProcessMessage(u8* buffer, u16 bufferSize)
       {
         RobotInterface::EngineToRobot msg;
-        AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, "Messages: Received message too big! %02x[%d] > \n", buffer[0], bufferSize);
+        AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, "Messages", "Received message too big! %02x[%d] > %d", buffer[0], bufferSize, msg.MAX_SIZE);
         memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
         if (msg.tag < 0x80) // Message for RTIP not us
         {
@@ -29,7 +29,7 @@ namespace Anki {
         }
         else
         {
-          AnkiConditionalWarnAndReturn(msg.IsValid(), "Messages: Received invalid message: %02x[%d]\n", buffer[0], bufferSize);
+          AnkiConditionalWarnAndReturn(msg.IsValid(), "Messages", "Received invalid message: %02x[%d]", buffer[0], bufferSize);
           switch(msg.tag)
           {
             case RobotInterface::EngineToRobot::Tag_eraseFlash:
@@ -65,7 +65,7 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
             {
               if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
-                AnkiWarn("Messages: Failed to buffer a keyframe! Clearing Animation buffer!\n");
+                AnkiWarn("Messages", "Failed to buffer a keyframe! Clearing Animation buffer!\n");
                 AnimationController::Clear();
               }
               break;
@@ -87,7 +87,7 @@ namespace Anki {
             }
             default:
             {
-              AnkiWarn("Messages: Received message not expected here tag=%02x\n", msg.tag);
+              AnkiWarn("Messages", "Received message not expected here tag=%02x\n", msg.tag);
             }
           }
         }
@@ -127,7 +127,7 @@ namespace Anki {
     } // namespace Messages
     
     namespace RobotInterface {
-      int SendLog(const RobotInterface::LogLevel level, ...)
+      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...);
       {
         va_list argptr;
         va_start(argptr, level);
