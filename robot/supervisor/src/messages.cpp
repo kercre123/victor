@@ -791,31 +791,6 @@ namespace Anki {
         }
       }
 
-      int SendTrace(const RobotInterface::RtipTrace name, const int numParams, ...)
-      {
-        va_list argptr;
-        va_start(argptr, numParams);
-        SendTrace(RobotInterface::ANKI_LOG_LEVEL_PRINT, name, numParams, argptr);
-        va_end(argptr);
-        return 0;
-      }
-
-      int SendTrace(const RobotInterface::LogLevel level, const RobotInterface::RtipTrace name, const int numParams, va_list vaList)
-      {
-        const int np = numParams <= 15 ? numParams : 15;
-        RobotInterface::PrintTrace m;
-        m.name = name;
-        m.level = level;
-        for (m.value_length=0; m.value_length < np; m.value_length++)
-        {
-          m.value[m.value_length] = va_arg(vaList, int);
-        }
-
-        RobotInterface::SendMessage(m);
-
-        return np;
-      }
-
 #ifndef TARGET_K02
       int SendText(const char *format, ...)
       {
@@ -960,27 +935,42 @@ namespace Anki {
 
 
     namespace RobotInterface {
-      int SendLog(const RobotInterface::LogLevel level, ...)
+      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
       {
-#ifdef TARGET_K02
-        va_list argptr;
-        va_start(argptr, level);
-        const RobotInterface::RtipTrace name = va_arg(argptr, RobotInterface::RtipTrace);
-        const int numArgs = va_arg(argptr, int);
-        Messages::SendTrace(level, name, numArgs, argptr);
-        va_end(argptr);
+        static u32 missedMessages = 0;
+        PrintTrace m;
+        if (missedMessages > 0)
+        {
+          m.level = ANKI_LOG_LEVEL_WARN;
+          m.name  = 1;
+          m.stringId = 1;
+          m.value_length = 1;
+          m.value[0] = missedMessages + 1;
+        }
+        else
+        {
+          m.level = level;
+          m.name  = name;
+          m.stringId = formatId;
+          va_list argptr;
+          va_start(argptr, numArgs);
+          for (m.value_length=0; m.value_length < numArgs; m.value_length++)
+          {
+            m.value[m.value_length] = va_arg(argptr, int);
+          }
+          va_end(argptr);
+        }
+        if (SendMessage(m))
+        {
+          missedMessages = 0;
+        }
+        else
+        {
+          missedMessages++;
+        }
         return 0;
-#else
-        va_list argptr;
-        va_start(argptr, level);
-        const char* fmt = va_arg(argptr, const char*);
-        /*const int numArgs =*/ va_arg(argptr, int);
-        Messages::SendText(level, fmt, argptr);
-        va_end(argptr);
-        return 0;
-#endif
       }
-    }
+    } // namespace RobotInterface
 
     namespace HAL {
 #ifndef TARGET_K02

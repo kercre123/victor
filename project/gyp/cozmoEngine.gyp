@@ -498,6 +498,16 @@
                         '../../robot/tools/versionGenerator/versionGenerator.sh',
                         '<@(_outputs)'
                     ],
+                },
+                {
+                    'action_name': 'Anki_Logging_pre-processing',
+                    'inputs': [],
+                    'outputs': ['../../robot/AnkiLogStringTables.json'],
+                    'action': [
+                        '../../robot/tools/ankiLogPP.py', '--preprocessor', '--string-table',
+                        '--output', '<@(_outputs)',
+                        '../../robot/supervisor/src/', '../../robot/espressif/app/',
+                    ],
                 }
             ]
           }, # end controller Robot

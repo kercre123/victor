@@ -85,7 +85,7 @@ namespace Anki {
       
       #define AnkiConditionalErrorAndReturnValue(expression, returnValue, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if(!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, cmdId, nargs, ##__VA_ARGS__); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, ##__VA_ARGS__); \
           return returnValue; \
         }
 #else
@@ -96,15 +96,15 @@ namespace Anki {
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
-      #define AnkiWarn(nameId, nameString, fmtId, fmtString, ...) \
+      #define AnkiWarn(nameId, nameString, fmtId, fmtString, nargs, ...) \
       { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, ##__VA_ARGS__); }
 
-      #define AnkiConditionalWarn(espression, nameId, nameString, fmtId, fmtString, ...) \
+      #define AnkiConditionalWarn(espression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
           Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, ##__VA_ARGS__); \
         }
 
-      #define AnkiConditionalWarnAndReturn(expression, nameId, nameString, fmtId, fmtString, ...) \
+      #define AnkiConditionalWarnAndReturn(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
           Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, ##__VA_ARGS__); \
           return; \

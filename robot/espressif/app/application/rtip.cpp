@@ -30,9 +30,9 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
   const uint32_t timeSinceLastCall = now - lastCallTime;
   const uint32_t flushed = BYTES_PER_TICK * timeSinceLastCall / TICK_TIME;
   sentThisTick = flushed > sentThisTick ? 0 : sentThisTick - flushed;
-  AnkiConditionalErrorAndReturnValue((msg.Size() + sentThisTick) <= BYTES_PER_TICK,  false, "RTIP.SendMessage: Not enough buffer on RTIP\r\n");
-  AnkiConditionalErrorAndReturnValue(msg.Size() <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, "RTIP.SendMessage: Message too large for RTIP, %d > %d\r\n", msg.Size(), DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-  AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(msg.GetBuffer(), msg.Size()), false, "RTIP.SendMessage: Couldn't forward message to RTIP\r\n");
+  AnkiConditionalErrorAndReturnValue((msg.Size() + sentThisTick) <= BYTES_PER_TICK,  false, 3, "RTIP", 35, "SendMessage: Not enough buffer on RTIP\r\n", 0);
+  AnkiConditionalErrorAndReturnValue(msg.Size() <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, 3, "RTIP", 36, "SendMessage: Message too large for RTIP, %d > %d\r\n", 2, msg.Size(), DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+  AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(msg.GetBuffer(), msg.Size()), false, 3, "RTIP", 37, "SendMessage: Couldn't forward message to RTIP\r\n", 0);
   return true;
 }
 

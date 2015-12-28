@@ -126,6 +126,7 @@ class CoordinatedFile:
         "Write (modified) contents back out to file"
         fh = open(self.fileName, "w")
         fh.write(self.contents)
+        fh.truncate() # Nessisary under windows apparently
         fh.close()
         
     def insert(self, slice, newText):
@@ -192,6 +193,7 @@ class ParseParams:
                         preArgs.append(a)
                         if len(preArgs) == self.preArgs:
                             mangleStart = code.index + sum([len(pa) + 1 for pa in preArgs])
+                            if ch == ')': mangleStart -= 1
                     else:
                         args.append(a)
                     a = ""
@@ -228,6 +230,8 @@ class ParseParams:
             mangleEnd = mangleStart + sum([len(a)+1 for a in args[:5]])-1
             if nargs != numFormatArgs:
                 raise LogPPError("Format string \"{}\" expects {} arguments but have {}".format(fmt, numFormatArgs, nargs))
+            elif nargs > 12:
+                raise LogPPError("Too many var args to AnkiLogging macro")
             else:
                 if len(args) - 5 == nargs: # All good
                     return ParseInstance(mangleStart, mangleEnd, nameId, name, fmtId, fmt, nargs)
@@ -277,14 +281,15 @@ class ParseData:
                             self.pt[fpn] = self.parseFile(fpn)
                         else:
                             vPrint(2, "Skipping file \"{}\" because it doesn't have the logging include.".format(fpn))
-            self.nameTable  = {ASSERT_NAME_ID: "ASSERT"}
-            self.fmtTable   = {0: "Invalid format ID"}
+            self.nameTable  = {ASSERT_NAME_ID: "ASSERT", 1: "Messages"}
+            self.fmtTable   = {0: "Invalid format ID", 1: "RTIP missed %d traces", 2: "WiFi missed %d traces"}
             self.dirtyFiles = set()
     
     MACROS = {
         re.compile(r"AnkiEvent\s*\("): ParseParams(),
         re.compile(r"AnkiInfo\s*\("):  ParseParams(),
         re.compile(r"AnkiDebug\s*\("): ParseParams(),
+        re.compile(r"AnkiWarn\s*\("):  ParseParams(),
         re.compile(r"AnkiError\s*\("): ParseParams(),
         re.compile(r"AnkiConditionalError\s*\("): ParseParams(1),
         re.compile(r"AnkiConditionalErrorAndReturn\s*\("): ParseParams(1),

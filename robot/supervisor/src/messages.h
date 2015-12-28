@@ -72,12 +72,6 @@ namespace Anki {
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
 
-      // For sending trace message to basestation
-      int SendTrace(const RobotInterface::RtipTrace name, const int numParams, ...);
-
-      // va_list version
-      int SendTrace(const RobotInterface::LogLevel level, const RobotInterface::RtipTrace name, const int numParams, va_list vaList);
-
 #ifndef TARGET_K02
       // For sending text message to basestation
       int SendText(const char *format, ...);
