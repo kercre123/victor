@@ -15,7 +15,7 @@ set -e
 make esp -C ../clad -j4
 
 # Run the logging pre-processor
-../tools/ankiLogPP.py --preprocessor --string-table --output ../AnkiLogStringTables.json ../supervisor/src app
+../tools/ankiLogPP.py --preprocessor --string-table --output ../AnkiLogStringTables.json ../supervisor/src ../k02_hal app ../sim_hal
 
 # Build the Espressif app
 cd app

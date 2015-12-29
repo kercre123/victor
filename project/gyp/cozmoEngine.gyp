@@ -506,7 +506,7 @@
                     'action': [
                         '../../robot/tools/ankiLogPP.py', '--preprocessor', '--string-table',
                         '--output', '<@(_outputs)',
-                        '../../robot/supervisor/src/', '../../robot/espressif/app/',
+                        '../../robot/supervisor/src/', '../../robot/k02_hal/', '../../robot/espressif/app/', '../../robot/sim_hal'
                     ],
                 }
             ]
