@@ -110,7 +110,7 @@ void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
-  if (drop->droplet & bootloaderStatus) os_memcpy(&bodyBootloaderCode, drop->payload, 4);
+  if (unlikely(drop->droplet & bootloaderStatus)) os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, 4);
   else if (drop->payloadLen > 0)
   {
     const uint8 jpegOffset = (drop->droplet & jpegLenMask) * 4;
