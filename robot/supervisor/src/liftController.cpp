@@ -5,8 +5,10 @@
 #include "anki/common/robot/config.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#ifndef SIMULATOR
+#ifdef TARGET_K02
 #include "anki/cozmo/robot/logging.h"
+#else
+#include "anki/common/robot/errorHandling.h"
 #endif
 #include "messages.h"
 #include "radians.h"

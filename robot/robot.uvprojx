@@ -787,6 +787,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
             </File>
+            <File>
+              <FileName>trig_fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -891,11 +896,6 @@
               <FileName>radians.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>trig_fast.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\trig_fast.cpp</FilePath>
             </File>
             <File>
               <FileName>utilities_shared.cpp</FileName>
@@ -1789,6 +1789,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
             </File>
+            <File>
+              <FileName>trig_fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1893,11 +1898,6 @@
               <FileName>radians.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>trig_fast.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\trig_fast.cpp</FilePath>
             </File>
             <File>
               <FileName>utilities_shared.cpp</FileName>

@@ -380,6 +380,11 @@ LOCAL bool TaskOtaBody(uint32 param)
     {
       return true; // Just wait
     }
+    case STATE_NACK: // Last try failed, try again
+    {
+      os_printf("N");
+      // Fall through to next case
+    }
     case STATE_IDLE: // Ready to receive packet
     {
       if (bodyBootloaderCount != state->count) // Ready for another chunk
@@ -496,7 +501,7 @@ LOCAL bool TaskOtaBody(uint32 param)
     }
     default:
     {
-      AnkiError("UpgradeController", "Unexpected body bootloader state %d, %08x, aborting", bodyBootloaderState, bodyBootloaderCode);
+      os_printf("UpgradeController: Unexpected body bootloader state %d, %08x, aborting\r\n", bodyBootloaderState, bodyBootloaderCode);
     }
   }
   

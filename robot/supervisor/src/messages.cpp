@@ -18,6 +18,8 @@
 
 #include "liftController.h"
 #include "headController.h"
+#include "imuFilter.h"
+#include "backpackLightController.h"
 #ifndef TARGET_K02
 #include "localization.h"
 #include "animationController.h"
@@ -25,12 +27,10 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#include "imuFilter.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
-#include "backpackLightController.h"
 #include "blockLightController.h"
 #endif
 
@@ -83,7 +83,11 @@ namespace Anki {
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
+				#ifdef TARGET_K02
+				#include "clad/robotInterface/messageEngineToRobot_switch.def"
+				#else
         #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
+				#endif
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
           if (msg.tag == lookForID_)
@@ -124,29 +128,28 @@ namespace Anki {
         Localization::GetCurrentMatPose(robotState_.pose.x, robotState_.pose.y, poseAngle);
         robotState_.pose.z = 0;
         robotState_.pose.angle = poseAngle.ToFloat();
+#endif
         robotState_.pose.pitch_angle = IMUFilter::GetPitch();
-
+#ifndef TARGET_K02
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
 
 #endif
         robotState_.headAngle  = HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
-#ifndef TARGET_K02
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
         robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
-
-        //ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
-
+#ifndef TARGET_K02
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
+#endif
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
-
+#ifndef TARGET_K02
         // TODO: Make this a parameters somewhere?
         const f32 WHEEL_SPEED_STOPPED = 2.f;
         robotState_.status |= (HeadController::IsMoving() ||
@@ -427,9 +430,7 @@ namespace Anki {
 
       void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
       {
-#ifndef TARGET_K02
         IMUFilter::RecordAndSend(msg.length_ms);
-#endif
       }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
@@ -581,33 +582,29 @@ namespace Anki {
 #endif
       }
 
+#ifndef TARGET_K02
       // Group processor for all animation key frame messages
       void Process_anim(const RobotInterface::EngineToRobot& msg)
       {
-#ifndef TARGET_K02
         if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
           //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
           AnimationController::Clear();
         }
-#endif
       }
+#endif
 
       void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
       {
-#ifndef TARGET_K02
         for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
           BackpackLightController::SetParams((LEDId)i, msg.lights[i].onColor, msg.lights[i].offColor,
                                              msg.lights[i].onPeriod_ms, msg.lights[i].offPeriod_ms,
                                              msg.lights[i].transitionOnPeriod_ms, msg.lights[i].transitionOffPeriod_ms);
         }
-#endif
       }
 
       void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
       {
-#ifndef TARGET_K02
         IMUFilter::EnablePickupParalysis(msg.enable);
-#endif
       }
 
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)
@@ -709,11 +706,9 @@ namespace Anki {
       }
       void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
       {
-#ifndef TARGET_K02
         for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
           HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
         }
-#endif
       }
       void Process_animEndOfAnimation(const Anki::Cozmo::AnimKeyFrame::EndOfAnimation&)
       {

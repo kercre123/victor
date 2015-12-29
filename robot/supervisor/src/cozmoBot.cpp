@@ -9,11 +9,10 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "liftController.h"
 #include "headController.h"
-#ifndef SIMULATOR
-#include "anki/cozmo/robot/logging.h"
-#endif
-#ifndef TARGET_K02
 #include "imuFilter.h"
+#include "proxSensors.h"
+#include "backpackLightController.h"
+#ifndef TARGET_K02
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "testModeController.h"
@@ -23,9 +22,9 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "animationController.h"
-#include "proxSensors.h"
-#include "backpackLightController.h"
 #include "blockLightController.h"
+#else
+#include "anki/cozmo/robot/logging.h"
 #endif
 
 #ifdef SIMULATOR
@@ -118,9 +117,7 @@ namespace Anki {
         if (LiftController::IsCalibrated() && HeadController::IsCalibrated())
 				{
           PRINT("Motors calibrated\n");
-#ifndef TARGET_K02
           IMUFilter::Reset();
-#endif
           isDone = true;
         }
         return isDone;
@@ -168,7 +165,7 @@ namespace Anki {
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
-
+#endif
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "BackpackLightController init failed.\n");
@@ -195,7 +192,7 @@ namespace Anki {
          return RESULT_FAIL;
          }
          */
-
+#ifndef TARGET_K02
         lastResult = DockingController::Init();;
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "DockingController init failed.\n");
@@ -292,9 +289,7 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           PRINT("Robot radio is connected.\n");
           wasConnected_ = true;
-#ifndef TARGET_K02
           BackpackLightController::TurnOffAll();
-#endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           Messages::ResetInit();
@@ -304,11 +299,11 @@ namespace Anki {
 #endif
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
+          BackpackLightController::TurnOffAll();
+          BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
 #ifndef TARGET_K02
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
-          BackpackLightController::TurnOffAll();
-          BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
           AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
           HAL::FaceClear();
 #endif
@@ -319,7 +314,7 @@ namespace Anki {
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::ProcessBTLEMessages();
-
+#endif
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
@@ -327,7 +322,7 @@ namespace Anki {
         IMUFilter::Update();
         ProxSensors::Update();
 
-
+#ifndef TARGET_K02
         //////////////////////////////////////////////////////////////
         // Power management
         //////////////////////////////////////////////////////////////
@@ -359,12 +354,12 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
+        BackpackLightController::Update();
 #ifndef TARGET_K02
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
-        BackpackLightController::Update();
         BlockLightController::Update();
 
         //////////////////////////////////////////////////////////////
