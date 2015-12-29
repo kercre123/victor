@@ -17,7 +17,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "util/math/constantsAndMacros.h"
 #include "anki/common/types.h"
 #include "anki/common/robot/utilities_declarations.h"
-#include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities_c.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -87,7 +86,7 @@ namespace Anki
 
     template<typename Type> Type ApproximateExp(const Type exponent, const s32 numTerms)
     {
-      AnkiAssert(numTerms > 2);
+      assert(numTerms > 2);
 
       const Type exponentAbs = ABS(exponent);
 
