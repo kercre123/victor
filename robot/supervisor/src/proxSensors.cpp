@@ -63,8 +63,7 @@ namespace Anki {
             break;
 
           default:
-            AnkiError("ProxSensors.Update.BadLatestValue",
-                      "Got invalid/unhandled value for ProximityValues.latest.\n");
+            AnkiError( 9, "ProxSensors.Update.BadLatestValue", 76, "Got invalid/unhandled value for ProximityValues.latest.\n", 0);
             return RESULT_FAIL;
 
         } // switch(currProxVals.latest)

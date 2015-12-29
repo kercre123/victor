@@ -8,8 +8,6 @@
 #include <math.h>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "dockingController.h"
-#include "localization.h"
 #include "pathFollower.h"
 #include "speedController.h"
 #include "steeringController.h"
@@ -20,6 +18,11 @@
 
 #include "velocityProfileGenerator.h"
 #include "trig_fast.h"
+
+#ifndef TARGET_K02
+#include "localization.h"
+#include "dockingController.h"
+#endif
 
 #define DEBUG_STEERING_CONTROLLER 0
 
@@ -317,10 +320,11 @@ namespace Anki {
 
     void SetSteerMode(SteerMode mode)
     {
+#ifndef TARGET_K02
       if (mode != SM_PATH_FOLLOW) {
         PathFollower::ClearPath();
       }
-
+#endif
       currSteerMode_ = mode;
     }
 
@@ -328,6 +332,7 @@ namespace Anki {
     {
       f32 pathDistErr = 0, pathRadErr = 0;
       f32 fidx = INVALID_IDEAL_FOLLOW_LINE_IDX;
+#ifndef TARGET_K02
       if (PathFollower::IsTraversingPath()) {
         bool gotError = PathFollower::GetPathError(pathDistErr, pathRadErr);
 
@@ -349,7 +354,7 @@ namespace Anki {
           SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
         }
       }
-
+#endif
 
       //If we found a valid followline, let's run the controller
       if (fidx != INVALID_IDEAL_FOLLOW_LINE_IDX) {
@@ -447,6 +452,7 @@ namespace Anki {
 
     void ExecutePointTurn(f32 angularVel, f32 angularAccel)
     {
+#ifndef TARGET_K02
       isPointTurnWithTarget_ = false;
       ExecutePointTurn_Internal(angularVel, angularAccel);
 
@@ -459,7 +465,7 @@ namespace Anki {
                         maxAngularVel_,
                         angularAccel_,
                         CONTROL_DT);
-
+#endif
     }
 
     void ExitPointTurn()
@@ -471,6 +477,7 @@ namespace Anki {
 
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
     {
+#ifndef TARGET_K02
       isPointTurnWithTarget_ = true;
       ExecutePointTurn_Internal(maxAngularVel, angularAccel);
 
@@ -513,11 +520,13 @@ namespace Anki {
                         maxAngularVel_ > 0 ? POINT_TURN_TERMINAL_VEL_RAD_PER_S : -POINT_TURN_TERMINAL_VEL_RAD_PER_S,
                         destAngle,
                         CONTROL_DT);
+#endif
     }
 
     // Position-controlled point turn update
     void ManagePointTurn()
     {
+#ifndef TARGET_K02
       if (WheelController::AreWheelsMoving() && !startedPointTurn_) {
         f32 headingError = SpeedController::GetControllerCommandedVehicleSpeed() < 0 ? PI_F : 0;
         RunLineFollowControllerNL(0,headingError);
@@ -598,6 +607,7 @@ namespace Anki {
 #endif
         }
       }
+#endif
     }
 
 

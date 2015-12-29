@@ -13,15 +13,15 @@
 #include "proxSensors.h"
 #include "backpackLightController.h"
 #include "blockLightController.h"
-#ifndef TARGET_K02
-#include "pickAndPlaceController.h"
-#include "dockingController.h"
-#include "testModeController.h"
-#include "localization.h"
-#include "pathFollower.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
+#ifndef TARGET_K02
+#include "localization.h"
+#include "pickAndPlaceController.h"
+#include "dockingController.h"
+#include "pathFollower.h"
+#include "testModeController.h"
 #include "animationController.h"
 #else
 #include "anki/cozmo/robot/logging.h"
@@ -102,9 +102,7 @@ namespace Anki {
       {
         LiftController::StartCalibrationRoutine();
         HeadController::StartCalibrationRoutine();
-#ifndef TARGET_K02
         SteeringController::ExecuteDirectDrive(0,0);
-#endif
       }
 
 
@@ -283,15 +281,13 @@ namespace Anki {
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           Messages::ResetInit();
-#ifndef TARGET_K02
-          TestModeController::Start(TM_NONE);
           SteeringController::ExecuteDirectDrive(0,0);
-#endif
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
           BackpackLightController::TurnOffAll();
           BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
 #ifndef TARGET_K02
+          TestModeController::Start(TM_NONE);
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
@@ -361,6 +357,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // State Machine
         //////////////////////////////////////////////////////////////
+#endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, WHEELS);
         switch(mode_)
         {
@@ -369,11 +366,11 @@ namespace Anki {
             if(MotorCalibrationUpdate()) {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
+#ifndef TARGET_K02
               RobotInterface::RobotAvailable msg;
               msg.robotID = HAL::GetIDCard()->esn;
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
               RobotInterface::SendMessage(msg);
-
               // Start test mode
               if (DEFAULT_TEST_MODE != TM_NONE) {
                 if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
@@ -381,7 +378,7 @@ namespace Anki {
                   return RESULT_FAIL;
                 }
               }
-
+#endif
               mode_ = WAITING;
             }
 
@@ -404,6 +401,10 @@ namespace Anki {
         SteeringController::Manage();
         WheelController::Manage();
 
+        //////////////////////////////////////////////////////////////
+        // Cubes
+        //////////////////////////////////////////////////////////////
+
         MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
         Anki::Cozmo::HAL::ManageCubes();
 
@@ -411,7 +412,6 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
-#endif
 
         Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)

@@ -18,8 +18,6 @@
 #define COZMO_DOCKING_CONTROLLER_H_
 
 #include "anki/types.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
-#include "anki/common/robot/geometry_declarations.h"
 #include "clad/types/dockingSignals.h"
 
 
@@ -48,19 +46,19 @@ const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
 
 
 namespace Anki {
-  
+
   namespace Cozmo {
-    
+
     namespace DockingController {
 
       // TODO: Add if/when needed?
       Result Init();
-      
+
       Result Update();
-      
+
       // Returns true if robot is the process of looking for a block or docking to a block
       bool IsBusy();
-      
+
       // Returns true if last attempt to a block succeeded
       bool DidLastDockSucceed();
 
@@ -72,11 +70,11 @@ namespace Anki {
       //    in order to compute the absolute pose of the target at the current time.
       //    If t == 0 or HAL::GetTimeStamp(), it will use the robot's current pose.
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t = 0);
-      
+
       // Resets state machine and configures VisionSystem to track
       // appropriate block
       void ResetDocker();
-     
+
       // The robot will follow a docking path generated from an error signal to a marker
       // that it expects to be receiving from cozmo-engine immediately after this is called.
       // dockOffsetDistX: Distance along normal from block face that the robot should "dock" to.
@@ -89,7 +87,7 @@ namespace Anki {
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
                         const bool useManualSpeed = false,
                         const u32 pointOfNoReturnDistMM = 0);
-      
+
       // Goes to a pose such that if the robot were to lower a block that it was carrying once it
       // were in that pose, the block face facing the robot would be aligned with the pose specified
       // relative to the pose of the robot at the time "docking" started.
@@ -101,13 +99,13 @@ namespace Anki {
 
       // Returns the last computed pose of the marker based on docking error signal
       const Anki::Embedded::Pose2d& GetLastMarkerAbsPose();
-      
+
       // Returns the last docking error signal received
       void GetLastMarkerRelPose(f32 &x, f32 &y, f32 &angle);
-      
+
       // Sets the latest docking error signal message coming from engine
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg);
-      
+
     } // namespace DockingController
   } // namespace Cozmo
 } // namespace Anki

@@ -71,7 +71,7 @@ namespace AnimationController {
   Result Init()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
-    AnkiDebug("AnimationController", "Initializing");
+    AnkiDebug( 15, "AnimationController", 84, "Initializing", 0);
 #   endif
 
     _tracksToPlay = ENABLE_ALL_TRACKS;
@@ -154,7 +154,7 @@ namespace AnimationController {
   void Clear()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
-    AnkiDebug("AnimationController", "Clearing");
+    AnkiDebug( 15, "AnimationController", 85, "Clearing", 0);
 #   endif
 
     _numBytesPlayed += GetNumBytesInBuffer();
@@ -207,7 +207,7 @@ namespace AnimationController {
 
   static u32 GetFromBuffer(u8* data, u32 numBytes)
   {
-    AnkiAssert(numBytes < KEYFRAME_BUFFER_SIZE);
+    AnkiAssert(numBytes < KEYFRAME_BUFFER_SIZE, 86);
     
     if(_currentBufferPos + numBytes < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current position to end of buffer to just
@@ -249,17 +249,17 @@ namespace AnimationController {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
       if(!_bufferFullMessagePrintedThisTick) {
-        AnkiDebug("AnimationController", "BufferKeyFrame.BufferFull %d bytes available, %d needed.",
+        AnkiDebug( 15, "AnimationController", 87, "BufferKeyFrame.BufferFull %d bytes available, %d needed.", 2,
                   numBytesAvailable, numBytesNeeded);
         _bufferFullMessagePrintedThisTick = true;
       }
       return RESULT_FAIL;
     }
 #if DEBUG_ANIMATION_CONTROLLER > 1
-    AnkiDebug("AnimationController", "BufferKeyFrame, %d -> %d (%d)", numBytesNeeded, _lastBufferPos, numBytesAvailable);
+    AnkiDebug( 15, "AnimationController", 88, "BufferKeyFrame, %d -> %d (%d)", 3, numBytesNeeded, _lastBufferPos, numBytesAvailable);
 #endif
 
-    AnkiAssert(numBytesNeeded < KEYFRAME_BUFFER_SIZE);
+    AnkiAssert(numBytesNeeded < KEYFRAME_BUFFER_SIZE, 89);
 
     if(_lastBufferPos + numBytesNeeded < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current end position to end of buffer to just
@@ -287,7 +287,7 @@ namespace AnimationController {
         break;
     }
 
-    AnkiAssert(_lastBufferPos >= 0 && _lastBufferPos < KEYFRAME_BUFFER_SIZE);
+    AnkiAssert(_lastBufferPos >= 0 && _lastBufferPos < KEYFRAME_BUFFER_SIZE, 90);
 
     return RESULT_OK;
   }
@@ -318,7 +318,7 @@ namespace AnimationController {
       if (!ready) {
         if (!_isBufferStarved) {
           _isBufferStarved = true;
-          AnkiWarn("AnimationController", "IsReadyToPlay.BufferStarved");
+          AnkiWarn( 15, "AnimationController", 91, "IsReadyToPlay.BufferStarved", 0);
         }
       } else {
         _isBufferStarved = false;
@@ -337,7 +337,7 @@ namespace AnimationController {
       }
     }
 
-    //AnkiAssert(_currentFrame <= _lastFrame);
+    //AnkiAssert(_currentFrame <= _lastFrame, 92);
 
     return ready;
   } // IsReadyToPlay()
@@ -360,7 +360,7 @@ namespace AnimationController {
         // If the next message is not audio, then delete it until it is.
         while(msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
               msgID != RobotInterface::EngineToRobot::Tag_animAudioSample) {
-          AnkiWarn("AnimationController", "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead). Dumping message. (FYI AudioSample_ID = 0x%02x)", msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
+          AnkiWarn( 15, "AnimationController", 93, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead). Dumping message. (FYI AudioSample_ID = 0x%02x)", 2, msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
           GetFromBuffer(&msg);
           msgID = PeekBufferTag();
         }
@@ -408,7 +408,7 @@ namespace AnimationController {
           }
           default:
           {
-            AnkiWarn("AnimationController", "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", msgID);
+            AnkiWarn( 15, "AnimationController", 94, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
             Clear();
             return false;
           }
@@ -435,7 +435,7 @@ namespace AnimationController {
           --_numAudioFramesBuffered;
           ++_numAudioFramesPlayed;
 #         if DEBUG_ANIMATION_CONTROLLER
-          AnkiDebug("AnimationController", "Update()\tari = %d\tnafb = %d", _audioReadInd, _numAudioFramesBuffered);
+          AnkiDebug( 15, "AnimationController", 95, "Update()\tari = %d\tnafb = %d", 2, _audioReadInd, _numAudioFramesBuffered);
 #         endif
           _audioReadInd = 0;
           Update(); // Done with audio message, grab next thing from buffer
@@ -480,7 +480,7 @@ namespace AnimationController {
           // (Note that IsReadyToPlay() checks for there being at least _two_
           //  keyframes in the buffer, where a "keyframe" is considered an
           //  audio sample (or silence) or an end-of-animation indicator.)
-          AnkiWarn("AnimationController", "Ran out of animation buffer after getting audio/silence.");
+          AnkiWarn( 15, "AnimationController", 96, "Ran out of animation buffer after getting audio/silence.", 0);
           return RESULT_FAIL;
         }
 
@@ -508,14 +508,14 @@ namespace AnimationController {
             RobotInterface::SendMessage(msg);
 
 #             if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "StartOfAnimation w/ tag=%d", _currentTag);
+              AnkiDebug( 15, "AnimationController", 97, "StartOfAnimation w/ tag=%d", 1, _currentTag);
 #           endif
             break;
           }
           case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
           {
 #           if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "[t=%dms(%d)] hit EndOfAnimation",
+              AnkiDebug( 15, "AnimationController", 98, "[t=%dms(%d)] hit EndOfAnimation", 2,
                     _currentTime_ms, system_get_time());
 #           endif
             GetFromBuffer(&msg);
@@ -549,7 +549,7 @@ namespace AnimationController {
             GetFromBuffer(&msg);
             if(_tracksToPlay & HEAD_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec",
+              AnkiDebug( 15, "AnimationController", 99, "[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec", 4,
                     _currentTime_ms, system_get_time(),
                     msg.animHeadAngle.angle_deg, static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
 #               endif
@@ -569,7 +569,7 @@ namespace AnimationController {
             GetFromBuffer(&msg);
             if(_tracksToPlay & LIFT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "[t=%dms(%d)] requesting lift height of %dmm over %.2fsec",
+              AnkiDebug( 15, "AnimationController", 100, "[t=%dms(%d)] requesting lift height of %dmm over %.2fsec", 4,
                     _currentTime_ms, system_get_time(),
                     msg.animLiftHeight.height_mm, static_cast<f32>(msg.animLiftHeight.time_ms)*.001f);
 #               endif
@@ -591,7 +591,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "[t=%dms(%d)] setting backpack LEDs.",
+              AnkiDebug( 15, "AnimationController", 101, "[t=%dms(%d)] setting backpack LEDs.", 2,
                     _currentTime_ms, system_get_time());
 #               endif
 
@@ -613,7 +613,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & FACE_IMAGE_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "[t=%dms(%d)] setting face frame.",
+              AnkiDebug( 15, "AnimationController", 102, "[t=%dms(%d)] setting face frame.", 2,
                     _currentTime_ms, system_get_time());
 #               endif
 
@@ -634,7 +634,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & FACE_POS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "[t=%dms(%d)] setting face position to (%d,%d).",
+              AnkiDebug( 15, "AnimationController", 103, "[t=%dms(%d)] setting face position to (%d,%d).", 4,
                     _currentTime_ms, system_get_time(), msg.animFacePosition.xCen, msg.animFacePosition.yCen);
 #               endif
 
@@ -655,7 +655,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & BLINK_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "[t=%dms(%d)] Blinking.",
+              AnkiDebug( 15, "AnimationController", 104, "[t=%dms(%d)] Blinking.", 2,
                     _currentTime_ms, system_get_time());
 #               endif
 
@@ -683,7 +683,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug("AnimationController", "[t=%dms(%d)] setting body motion to radius=%d, speed=%d",
+              AnkiDebug( 15, "AnimationController", 105, "[t=%dms(%d)] setting body motion to radius=%d, speed=%d", 4,
                     _currentTime_ms, system_get_time(), msg.animBodyMotion.curvatureRadius_mm,
                     msg.animBodyMotion.speed);
 #               endif
@@ -727,7 +727,7 @@ namespace AnimationController {
 
           default:
           {
-            AnkiWarn("AnimationController", "Unexpected message type %d in animation buffer!", msgID);
+            AnkiWarn( 15, "AnimationController", 106, "Unexpected message type %d in animation buffer!", 1, msgID);
             return RESULT_FAIL;
           }
 
@@ -746,7 +746,7 @@ namespace AnimationController {
         --_numAudioFramesBuffered;
         ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
 #         if DEBUG_ANIMATION_CONTROLLER
-        AnkiDebug("AnimationController", "Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).",
+        AnkiDebug( 15, "AnimationController", 107, "Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).", 4,
               _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         _currentTag = 0;

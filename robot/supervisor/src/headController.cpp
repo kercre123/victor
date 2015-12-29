@@ -512,10 +512,9 @@ namespace HeadController {
                       const u16 period_ms, const s32 numLoops,
                       const f32 easeInFraction, const f32 easeOutFraction)
     {
-      //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, "HeadNodStart.WrongKeyFrameType", "\n");
+      //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, 12, "HeadNodStart.WrongKeyFrameType", 81, "\n", 0);
 
-      AnkiConditionalWarnAndReturn(enable_, "HeadController.StartNodding.Disabled",
-                                   "StartNodding() command ignored: HeadController is disabled.\n");
+      AnkiConditionalWarnAndReturn(enable_, 13, "HeadController.StartNodding.Disabled", 82, "StartNodding() command ignored: HeadController is disabled.\n", 0);
 
       //preNodAngle_ = GetAngleRad();
       nodLowAngle_  = lowAngle;
@@ -535,8 +534,7 @@ namespace HeadController {
 
     void StopNodding()
     {
-      AnkiConditionalWarnAndReturn(enable_, "HeadController.StopNodding.Disabled",
-                                   "StopNodding() command ignored: HeadController is disabled.\n");
+      AnkiConditionalWarnAndReturn(enable_, 14, "HeadController.StopNodding.Disabled", 83, "StopNodding() command ignored: HeadController is disabled.\n", 0);
 
       //SetDesiredAngle_internal(preNodAngle_);
       isNodding_ = false;

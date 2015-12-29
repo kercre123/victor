@@ -612,8 +612,7 @@ namespace Anki {
                         const u16 period_ms, const s32 numLoops,
                         const f32 easeInFraction, const f32 easeOutFraction)
       {
-        AnkiConditionalWarnAndReturn(enable_, "LiftController.StartNodding.Disabled",
-                                     "StartNodding() command ignored: LiftController is disabled.\n");
+        AnkiConditionalWarnAndReturn(enable_, 10, "LiftController.StartNodding.Disabled", 79, "StartNodding() command ignored: LiftController is disabled.\n", 0);
 
         //preNodHeight_  = GetHeightMM();
         nodLowHeight_  = lowHeight;
@@ -633,8 +632,7 @@ namespace Anki {
 
       void StopNodding()
       {
-        AnkiConditionalWarnAndReturn(enable_, "LiftController.StopNodding.Disabled",
-                                     "StopNodding() command ignored: LiftController is disabled.\n");
+        AnkiConditionalWarnAndReturn(enable_, 11, "LiftController.StopNodding.Disabled", 80, "StopNodding() command ignored: LiftController is disabled.\n", 0);
 
         //SetDesiredHeight_internal(preNodHeight_);
         isNodding_ = false;

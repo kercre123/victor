@@ -253,7 +253,7 @@ float asin_fast(float x)
 
 float atan2_fast(float y, float x)
 {
-  //AnkiAssert( !(y == 0 && x == 0)); Cleanup with K02 logging
+  //AnkiAssert( !(y == 0 && x == 0), 77); Cleanup with K02 logging
 
   if (x>0) {
     return atan_fast(y/x);
@@ -272,7 +272,7 @@ float atan2_fast(float y, float x)
 
 float atan2_acc(float y, float x)
 {
-  //AnkiAssert(y != 0 || x != 0); Cleanup with K02 logging
+  //AnkiAssert(y != 0 || x != 0, 78); Cleanup with K02 logging
 
   float arg = y/x;
   float atan_val = asinf( arg / sqrtf(arg*arg + 1));

@@ -38,9 +38,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/common/robot/utilities_c.h"
-
-
 #define DEBUG_SPEED_CONTROLLER 0
 
 namespace Anki {

@@ -1,6 +1,7 @@
 #include "messages.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoBot.h"
+#include <math.h>
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -21,13 +22,13 @@
 #include "imuFilter.h"
 #include "backpackLightController.h"
 #include "blockLightController.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "wheelController.h"
 #ifndef TARGET_K02
 #include "localization.h"
 #include "animationController.h"
 #include "pathFollower.h"
-#include "speedController.h"
-#include "steeringController.h"
-#include "wheelController.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
@@ -130,10 +131,7 @@ namespace Anki {
         robotState_.pose.angle = poseAngle.ToFloat();
 #endif
         robotState_.pose.pitch_angle = IMUFilter::GetPitch();
-#ifndef TARGET_K02
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
-
-#endif
         robotState_.headAngle  = HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
@@ -149,26 +147,27 @@ namespace Anki {
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
-#ifndef TARGET_K02
         // TODO: Make this a parameters somewhere?
         const f32 WHEEL_SPEED_STOPPED = 2.f;
         robotState_.status |= (HeadController::IsMoving() ||
                                LiftController::IsMoving() ||
                                fabs(robotState_.lwheel_speed_mmps) > WHEEL_SPEED_STOPPED ||
                                fabs(robotState_.rwheel_speed_mmps) > WHEEL_SPEED_STOPPED ? IS_MOVING : 0);
+#ifndef TARGET_K02
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
+#endif
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
         //robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
         //robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
+#ifndef TARGET_K02
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
+#endif
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
-        robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
-#endif
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -284,8 +283,8 @@ namespace Anki {
 #endif
 
       void Process_clearPath(const RobotInterface::ClearPath& msg) {
-#ifndef TARGET_K02
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+#ifndef TARGET_K02
         PathFollower::ClearPath();
         //SteeringController::ExecuteDirectDrive(0,0);
 #endif
@@ -374,8 +373,8 @@ namespace Anki {
         //      msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
 
         //PathFollower::ClearPath();
-        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
 #endif
+        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
       }
 
       void Process_driveCurvature(const RobotInterface::DriveWheelsCurvature& msg) {
@@ -414,11 +413,9 @@ namespace Anki {
 
       void Process_setBodyAngle(const RobotInterface::SetBodyAngle& msg)
       {
-#ifndef TARGET_K02
         SteeringController::ExecutePointTurn(msg.angle_rad, msg.max_speed_rad_per_sec,
                                              msg.accel_rad_per_sec2,
                                              msg.accel_rad_per_sec2, true);
-#endif
       }
 
       void Process_setCarryState(const CarryState& state)
@@ -435,17 +432,13 @@ namespace Anki {
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
         //PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
-#ifndef TARGET_K02
         SteeringController::ExecutePointTurn(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
-#endif
       }
 
       void Process_stop(const RobotInterface::StopAllMotors& msg) {
         LiftController::SetAngularVelocity(0);
         HeadController::SetAngularVelocity(0);
-#ifndef TARGET_K02
         SteeringController::ExecuteDirectDrive(0,0);
-#endif
       }
 
       void Process_startControllerTestMode(const StartControllerTestMode& msg)
@@ -524,10 +517,8 @@ namespace Anki {
         {
           case RobotInterface::controller_wheel:
           {
-#ifndef TARGET_K02
             WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError,
                                       msg.kp, msg.ki, msg.maxIntegralError);
-#endif
             break;
           }
           case RobotInterface::controller_head:
@@ -542,9 +533,7 @@ namespace Anki {
           }
           case RobotInterface::controller_steering:
           {
-#ifndef TARGET_K02
             SteeringController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError); // Coopting structure
-#endif
             break;
           }
           default:
@@ -654,7 +643,6 @@ namespace Anki {
       }
       void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
       {
-#ifndef TARGET_K02
         f32 leftSpeed=0, rightSpeed=0;
         if(msg.speed == 0) {
           // Stop
@@ -682,7 +670,6 @@ namespace Anki {
         }
 
         SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
-#endif
       }
       void Process_animLiftHeight(const Anki::Cozmo::AnimKeyFrame::LiftHeight& msg)
       {
