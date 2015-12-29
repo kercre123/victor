@@ -176,10 +176,10 @@ void Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
   #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * raw)
 
   // Don't know that any of these are correct, need to figure out axis
-  imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[0]);
-  imuData.rate_x = GYRO_CONVERT(IMU::IMUState.gyro[0]);
-  imuData.acc_y  = ACC_CONVERT(IMU::IMUState.acc[1]);
-  imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1]);
   imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[2]);
-  imuData.rate_z = GYRO_CONVERT(IMU::IMUState.gyro[2]);
+  imuData.rate_x = GYRO_CONVERT(IMU::IMUState.gyro[2]);
+  imuData.acc_y  = ACC_CONVERT(-IMU::IMUState.acc[1]);
+  imuData.rate_y = GYRO_CONVERT(-IMU::IMUState.gyro[1]);
+  imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0]);
+  imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0]);
 }
