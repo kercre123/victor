@@ -31,7 +31,7 @@ void CheckForUpgrades(void)
   const uint32 bodyCode  = i2spiGetBodyBootloaderCode();
   const uint16 bodyState = bodyCode & 0xffff;
   const uint16 bodyCount = bodyCode >> 16;
-  if (bodyState == STATE_IDLE && bodyCount > 10 && bodyCount < 100)
+  if (((bodyState == STATE_IDLE) || (bodyState == STATE_NACK)) && (bodyCount > 10 && bodyCount < 100))
   {
     UpgradeController::StartBodyUpgrade();
   }
@@ -67,6 +67,11 @@ void WiFiFace(void)
                        COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
     }
   }
+}
+
+void BootloaderDebugFace(void)
+{
+  Face::FacePrintf("RTIP: %04x\nBody: %08x", i2spiGetRtipBootloaderState(), i2spiGetBodyBootloaderCode());
 }
 
 /** The OS task which dispatches subtasks.
@@ -110,6 +115,7 @@ void Exec(os_event_t *event)
     case 3:
     {
       WiFiFace();
+      //BootloaderDebugFace();
       break;
     }
     // Add new "long execution" tasks as switch cases here.
