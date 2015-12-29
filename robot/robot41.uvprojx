@@ -547,6 +547,11 @@
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\lights.cpp</FilePath>
             </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\battery.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -621,6 +626,16 @@
               <FileName>trig_fast.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ledController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
           </Files>
         </Group>
