@@ -20,6 +20,7 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "backpackLightController.h"
+#include "blockLightController.h"
 #ifndef TARGET_K02
 #include "localization.h"
 #include "animationController.h"
@@ -31,7 +32,6 @@
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
-#include "blockLightController.h"
 #endif
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
@@ -629,9 +629,7 @@ namespace Anki {
 
       void Process_setCubeLights(const CubeLights& msg)
       {
-#ifndef TARGET_K02
         BlockLightController::SetLights(msg.objectID, msg.lights);
-#endif
       }
 
       void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
