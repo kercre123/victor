@@ -146,7 +146,7 @@ namespace Anki {
 #ifndef TARGET_K02
         lastResult = Messages::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 42, "Messages / Reliable Transport init failed.\n", 0);
-
+#endif
 
         lastResult = Localization::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 43, "Localization System init failed.\n", 0);
@@ -158,7 +158,7 @@ namespace Anki {
 
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 45, "PathFollower System init failed.\n", 0);
-#endif
+
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 46, "BackpackLightController init failed.\n", 0);
 
@@ -184,21 +184,19 @@ namespace Anki {
          return RESULT_FAIL;
          }
          */
-#ifndef TARGET_K02
         lastResult = DockingController::Init();;
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 47, "DockingController init failed.\n", 0);
 
         // Before liftController?!
         lastResult = PickAndPlaceController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 48, "PickAndPlaceController init failed.\n", 0);
-#endif
+
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 49, "LiftController init failed.\n", 0);
 #ifndef TARGET_K02
         lastResult = AnimationController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 50, "AnimationController init failed.\n", 0);
 #endif
-
         // Start calibration
         StartMotorCalibrationRoutine();
 
@@ -260,6 +258,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, TEST);
         TestModeController::Update();
+#endif
 
 
         //////////////////////////////////////////////////////////////
@@ -267,7 +266,6 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, LOC);
         Localization::Update();
-#endif
 
         //////////////////////////////////////////////////////////////
         // Communications
@@ -286,10 +284,10 @@ namespace Anki {
           HeadController::SetAngularVelocity(0);
           BackpackLightController::TurnOffAll();
           BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
-#ifndef TARGET_K02
-          TestModeController::Start(TM_NONE);
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
+#ifndef TARGET_K02
+          TestModeController::Start(TM_NONE);
           AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
           HAL::FaceClear();
 #endif
@@ -308,7 +306,6 @@ namespace Anki {
         IMUFilter::Update();
         ProxSensors::Update();
 
-#ifndef TARGET_K02
         //////////////////////////////////////////////////////////////
         // Power management
         //////////////////////////////////////////////////////////////
@@ -332,6 +329,7 @@ namespace Anki {
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
+#ifndef TARGET_K02
         if(AnimationController::Update() != RESULT_OK) {
           PRINT("Failed updating AnimationController. Clearing.\n");
           AnimationController::Clear();
@@ -342,22 +340,23 @@ namespace Anki {
         LiftController::Update();
         BackpackLightController::Update();
         BlockLightController::Update();
-#ifndef TARGET_K02
+
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
 
+#ifndef TARGET_K02
         //////////////////////////////////////////////////////////////
         // Audio Subsystem
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, AUDIO);
         Anki::Cozmo::HAL::AudioFill();
+#endif
 
         //////////////////////////////////////////////////////////////
         // State Machine
         //////////////////////////////////////////////////////////////
-#endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, WHEELS);
         switch(mode_)
         {

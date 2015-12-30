@@ -120,7 +120,6 @@ namespace Anki {
       void UpdateRobotStateMsg()
       {
         robotState_.timestamp = HAL::GetTimeStamp();
-#ifndef TARGET_K02
         Radians poseAngle;
 
         robotState_.pose_frame_id = Localization::GetPoseFrameId();
@@ -128,21 +127,20 @@ namespace Anki {
         Localization::GetCurrentMatPose(robotState_.pose.x, robotState_.pose.y, poseAngle);
         robotState_.pose.z = 0;
         robotState_.pose.angle = poseAngle.ToFloat();
-#endif
         robotState_.pose.pitch_angle = IMUFilter::GetPitch();
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
         robotState_.headAngle  = HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
+
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
         robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
-#ifndef TARGET_K02
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
-#endif
+
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
@@ -152,16 +150,12 @@ namespace Anki {
                                LiftController::IsMoving() ||
                                fabs(robotState_.lwheel_speed_mmps) > WHEEL_SPEED_STOPPED ||
                                fabs(robotState_.rwheel_speed_mmps) > WHEEL_SPEED_STOPPED ? IS_MOVING : 0);
-#ifndef TARGET_K02
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
-#endif
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
         //robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
         //robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
-#ifndef TARGET_K02
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
-#endif
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
@@ -192,10 +186,9 @@ namespace Anki {
         // Poor-man's time sync to basestation, for now.
         HAL::SetTimeStamp(msg.syncTime);
 
-#ifndef TARGET_K02
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
-
+#ifndef TARGET_K02
         // Reset number of bytes/audio frames played in animation buffer
         AnimationController::ClearNumBytesPlayed();
         AnimationController::ClearNumAudioFramesPlayed();
@@ -205,13 +198,14 @@ namespace Anki {
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
       {
-#ifndef TARGET_K02
         // Don't modify localization while running path following test.
         // The point of the test is to see how well it follows a path
         // assuming perfect localization.
+        #ifndef TARGET_K02
         if (TestModeController::GetMode() == TM_PATH_FOLLOW) {
           return;
         }
+        #endif
 
         // TODO: Double-check that size matches expected size?
 
@@ -234,23 +228,20 @@ namespace Anki {
               currentMatHeading.getDegrees(),
               Localization::GetPoseFrameId());
          */
-#endif
       } // ProcessAbsLocalizationUpdateMessage()
 
 
       void Process_dockingErrorSignal(const DockingErrorSignal& msg)
       {
-#ifndef TARGET_K02
         DockingController::SetDockingErrorSignalMessage(msg);
-#endif
       }
 
-#ifdef TARGET_K02
+#ifndef TARGET_K02
       extern "C" void ProcessMessage(u8* buffer, u16 bufferSize)
       {
          //XXX  "Implement ProcessMessage"
       }
-#else
+
       void ProcessBTLEMessages()
       {
         u32 dataLen;
@@ -283,46 +274,34 @@ namespace Anki {
 
       void Process_clearPath(const RobotInterface::ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-#ifndef TARGET_K02
         PathFollower::ClearPath();
         //SteeringController::ExecuteDirectDrive(0,0);
-#endif
       }
 
       void Process_appendPathSegArc(const RobotInterface::AppendPathSegmentArc& msg) {
-#ifndef TARGET_K02
         PathFollower::AppendPathSegment_Arc(0, msg.x_center_mm, msg.y_center_mm,
                                             msg.radius_mm, msg.startRad, msg.sweepRad,
                                             msg.speed.target, msg.speed.accel, msg.speed.decel);
-#endif
       }
 
       void Process_appendPathSegLine(const RobotInterface::AppendPathSegmentLine& msg) {
-#ifndef TARGET_K02
         PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm,
                                              msg.x_end_mm, msg.y_end_mm,
                                              msg.speed.target, msg.speed.accel, msg.speed.decel);
-#endif
       }
 
       void Process_appendPathSegPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
-#ifndef TARGET_K02
         PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
                                                   msg.speed.target, msg.speed.accel, msg.speed.decel, msg.useShortestDir);
-#endif
       }
 
       void Process_trimPath(const RobotInterface::TrimPath& msg) {
-#ifndef TARGET_K02
         PathFollower::TrimPath(msg.numPopFrontSegments, msg.numPopBackSegments);
-#endif
       }
 
       void Process_executePath(const RobotInterface::ExecutePath& msg) {
         PRINT("Starting path %d\n", msg.pathID);
-#ifndef TARGET_K02
         PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
-#endif
       }
 
       void Process_dockWithObject(const DockWithObject& msg)
@@ -330,31 +309,26 @@ namespace Anki {
         PRINT("RECVD DockToBlock (action %d, speed %f, acccel %f, manualSpeed %d)\n",
               msg.action, msg.speed_mmps, msg.accel_mmps2, msg.useManualSpeed);
 
-#ifndef TARGET_K02
         // Currently passing in default values for rel_x, rel_y, and rel_angle
         PickAndPlaceController::DockToBlock(msg.action,
                                             msg.speed_mmps,
                                             msg.accel_mmps2,
                                             0, 0, 0,
                                             msg.useManualSpeed);
-#endif
       }
 
       void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
       {
         //PRINT("Received PlaceOnGround message.\n");
-#ifndef TARGET_K02
         PickAndPlaceController::PlaceOnGround(msg.speed_mmps,
                                               msg.accel_mmps2,
                                               msg.rel_x_mm,
                                               msg.rel_y_mm,
                                               msg.rel_angle,
                                               msg.useManualSpeed);
-#endif
       }
 
       void Process_drive(const RobotInterface::DriveWheels& msg) {
-#ifndef TARGET_K02
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
           if (PathFollower::IsInManualSpeedMode()) {
@@ -372,7 +346,6 @@ namespace Anki {
         //      msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
 
         //PathFollower::ClearPath();
-#endif
         SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
       }
 
@@ -419,9 +392,7 @@ namespace Anki {
 
       void Process_setCarryState(const CarryState& state)
       {
-#ifndef TARGET_K02
         PickAndPlaceController::SetCarryState(state);
-#endif
       }
 
       void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
@@ -544,9 +515,7 @@ namespace Anki {
 
       void Process_abortDocking(const AbortDocking& msg)
       {
-#ifndef TARGET_K02
         DockingController::ResetDocker();
-#endif
       }
 
       void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
@@ -609,10 +578,8 @@ namespace Anki {
 
       void Process_flashObjectIDs(const  FlashObjectIDs& msg)
       {
-#ifndef TARGET_K02
         // Start flash pattern on blocks
         HAL::FlashBlockIDs();
-#endif
       }
 
       void Process_setCubeLights(const CubeLights& msg)

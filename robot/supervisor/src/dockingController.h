@@ -19,7 +19,7 @@
 
 #include "anki/types.h"
 #include "clad/types/dockingSignals.h"
-
+#include "localization_geometry.h"
 
 // Distance between the robot origin and the distance along the robot's x-axis
 // to the lift when it is in the low docking position.

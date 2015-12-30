@@ -4,6 +4,7 @@
 #include "imuFilter.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include <math.h>
 
 #define DEBUG_LOCALIZATION 0
 #define DEBUG_POSE_HISTORY 0
@@ -68,15 +69,19 @@ namespace Anki {
 
         PoseFrameID_t frameId_ = 0;
 
-
         // Pose history
         // Never need to erase elements, just overwrite with new data.
+#ifdef TARGET_K02
+        const u16 POSE_HISTORY_SIZE = 100/5; // 100ms of history devided by 5ms intervals
+#else
         const u16 POSE_HISTORY_SIZE = 300;
+#endif
         PoseStamp hist_[POSE_HISTORY_SIZE];
         u16 hStart_ = 0;
         u16 hEnd_ = 0;
         u16 hSize_ = 0;
 
+#ifndef TARGET_K02
         // MemoryStack for rotation matrices and operations on them
         const s32 SCRATCH_BUFFER_SIZE = 75*4 + 128;
         char scratchBuffer[SCRATCH_BUFFER_SIZE];
@@ -94,7 +99,7 @@ namespace Anki {
 
         Embedded::Point3<f32> keyPoseTrans;
         Embedded::Array<f32> keyPoseRot(3,3,scratch);
-
+  #endif
         // The time of the last keyframe that was used to update the robot's pose.
         // Using this to limit how often keyframes are used to compute the robot's
         // current pose so that we don't have to do multiple
@@ -111,6 +116,7 @@ namespace Anki {
         lastKeyframeUpdate_ = 0;
       }
 
+#ifndef TARGET_K02
       // Interpolates the pose at time targetTime which should be between historical pose1 time and historical pose2 time.
       // Puts result in history at index poseResult_idx.
       Result InterpolatePose(int pose1_idx, int pose2_idx, f32 targetTime, int poseResult_idx)
@@ -143,7 +149,7 @@ namespace Anki {
 
         return RESULT_OK;
       }
-
+#endif
 
       Result GetHistIdx(TimeStamp_t t, u16& idx)
       {
@@ -164,14 +170,21 @@ namespace Anki {
             idx = 0;
           }
 
+#ifdef TARGET_K02
+          if (hist_[idx].t >= t) {
+            return RESULT_OK;
+          }
+#else
           if (hist_[idx].t == t) {
             return RESULT_OK;
           } else if (hist_[idx].t > t) {
+
             // TODO: Does this interpolation really help that much?
             //       Poses in history are already really close together (5ms).
             //       Maybe just pick the closest pose?
             return InterpolatePose(prevIdx, idx, t, idx);
           }
+#endif
           prevIdx = idx;
         }
 
@@ -182,7 +195,10 @@ namespace Anki {
       {
         // Update frameID
         frameId_ = frameID;
-
+#ifdef TARGET_K02
+        SetCurrentMatPose(x, y, angle);
+        return RESULT_OK;
+#else
         u16 i;
         if (t == 0) {
           // If t==0, this is considered to be a command to just update the current pose
@@ -284,6 +300,7 @@ namespace Anki {
         lastKeyframeUpdate_ = HAL::GetTimeStamp();
 
         return RESULT_OK;
+#endif
       }
 
       void AddPoseToHist()

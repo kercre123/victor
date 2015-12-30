@@ -6,8 +6,8 @@
 #include "wheelController.h"
 #include "speedController.h"
 #include <assert.h>
-
-#include "anki/common/robot/utilities_c.h"
+#include <math.h>
+#include <float.h>
 #include "trig_fast.h"
 #include "velocityProfileGenerator.h"
 

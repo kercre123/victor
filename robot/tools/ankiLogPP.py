@@ -8,7 +8,7 @@ directory.
 In preprocessor mode, it finds AnkiLog macros and generates string IDs for the strings and modifies the macro calls to
 include the string IDs.
 
-In string table mode, it finds the files modified by the pre-processor mode and generates a JSON file containing the 
+In string table mode, it finds the files modified by the pre-processor mode and generates a JSON file containing the
 string tables nessisary to format data sent via the macros.
 
 Both modes may be run in one invocation.
@@ -28,6 +28,8 @@ DEFAULT_SOURCE_FILE_TYPES = ['.h', '.c', '.hpp', '.cpp']
 
 ASSERT_NAME_ID = 0 # All asserts have a name ID of 0
 
+MAX_VAR_ARGS = 12
+
 def vPrint(level, text, err=False):
     global verbosity
     if verbosity >= level:
@@ -40,7 +42,7 @@ def assertString(assertCondition, code):
 
 def looksLikeInt(s):
     return s.strip().isdigit()
-    
+
 def looksLikeString(s):
     x = s.strip()
     return x.startswith('"') and x.endswith('"')
@@ -69,23 +71,23 @@ class CoordinatedFile:
                 counter += len(l)
                 self.lineIndecies.append(counter)
             self.index = 0
-            
+
     def update(self, index=0, line=0):
         "Update the pointer by index and / or line"
         self.index = self.lineIndecies[line] + index
-        
+
     @property
     def line(self):
         "Get the line the index we are at"
         for l, count in enumerate(self.lineIndecies):
             if count > self.index:
                 return l-1
-        
+
     def __repr__(self):
         "A debugging representation of the state"
         l = self.line
         return "CoordinatedFile('{}' [line {}, char {}])".format(self.fileName, l, self.index - self.lineIndecies[l])
-        
+
     def __str__(self):
         "A nice format string showing were we are in the file"
         l = self.line
@@ -98,11 +100,11 @@ class CoordinatedFile:
             line = lines[l],
             dots = '.' * c
         )
-    
+
     def __getitem__(self, index):
         "Get an item relative to the current index in the file"
         return self.contents[index + self.index]
-    
+
     def __next__(self):
         "Get the next item in the file"
         ret = self.contents[self.index]
@@ -117,18 +119,18 @@ class CoordinatedFile:
         else:
             self.index += m.end()
             return True
-    
+
     def reset(self):
         "Reset the pointer to the begining"
         self.update(0)
-        
+
     def write(self):
         "Write (modified) contents back out to file"
         fh = open(self.fileName, "w")
         fh.write(self.contents)
         fh.truncate() # Nessisary under windows apparently
         fh.close()
-        
+
     def insert(self, slice, newText):
         "Replace the slice from start to end with newText and return the change in length"
         start, end = slice
@@ -230,7 +232,7 @@ class ParseParams:
             mangleEnd = mangleStart + sum([len(a)+1 for a in args[:5]])-1
             if nargs != numFormatArgs:
                 raise LogPPError("Format string \"{}\" expects {} arguments but have {}".format(fmt, numFormatArgs, nargs))
-            elif nargs > 12:
+            elif nargs > MAX_VAR_ARGS:
                 raise LogPPError("Too many var args to AnkiLogging macro")
             else:
                 if len(args) - 5 == nargs: # All good
@@ -240,8 +242,16 @@ class ParseParams:
         elif len(args) >= 2 and looksLikeString(args[0]) and looksLikeString(args[1]): # An unprocessed macro
             mangleEnd = mangleStart + len(args[0]) + 1 + len(args[1])
             nargs = len(args) - 2
-            return ParseInstance(mangleStart, mangleEnd, None, args[0].strip()[1:-1], None, args[1].strip()[1:-1], nargs)
-        else:   
+            name = args[0].strip()[1:-1]
+            fmt  = args[1].strip()[1:-1]
+            numFormatArgs = len(self.FORMATTER_KEY.findall(fmt))
+            if nargs != numFormatArgs:
+                raise LogPPError("Format string \"{}\" expects {} arguments but have {}".format(fmt, numFormatArgs, nargs))
+            elif nargs > MAX_VAR_ARGS:
+                raise LogPPError("Too many var args to AnkiLogging macro")
+            else:
+                return ParseInstance(mangleStart, mangleEnd, None, name, None, fmt, nargs)
+        else:
             vPrint(1, repr(args))
             raise LogPPError("Bad AnkiLogging macro arguments")
 
@@ -264,9 +274,9 @@ class AssertParseParams(ParseParams):
 
 class ParseData:
     "A class to collect the parsed data from a directory of source files"
-    
+
     INCLUDE_FILE_RE = re.compile(r'#include.+logging.h"')
-    
+
     def __init__(self, directories, sourceTypes):
         "Parse all files of type in sourceTypes"
         self.pt = {} # Parse table
@@ -284,7 +294,7 @@ class ParseData:
             self.nameTable  = {ASSERT_NAME_ID: "ASSERT", 1: "Messages"}
             self.fmtTable   = {0: "Invalid format ID", 1: "RTIP missed %d traces", 2: "WiFi missed %d traces"}
             self.dirtyFiles = set()
-    
+
     MACROS = {
         re.compile(r"AnkiEvent\s*\("): ParseParams(),
         re.compile(r"AnkiInfo\s*\("):  ParseParams(),
@@ -299,7 +309,7 @@ class ParseData:
         re.compile(r"AnkiConditionalWarnAndReturnValue\s*\("): ParseParams(2),
         re.compile(r"AnkiAssert\s*\("): AssertParseParams()
     }
-    
+
     def parseFile(self, file):
         "Parse a single file and return meta-data for it"
         vPrint(2, "Parsing file \"{}\"".format(file))
@@ -322,7 +332,7 @@ class ParseData:
         for i in range(1, len(instances)):
             assert instances[i-1].mangleEnd < instances[i].mangleStart
         return instances
-    
+
     def reconsile(self, shouldBeComplete=False, purge=False):
         "Reconsiles the string tables from all the input table"
         vPrint(1, "Reconsiling string tables." + (" Expecting complete" if shouldBeComplete else ""))
@@ -385,7 +395,7 @@ class ParseData:
                             self.fmtTable[i.fmtId] = i.fmt
                             fmtIdTable[i.fmt] = i.fmtId
                         self.dirtyFiles.add(fpn)
-    
+
     def doMangling(self):
         "Update all the files in the directory we're recursing over"
         vPrint(1, "Source files in need of update are: {}".format(', '.join(self.dirtyFiles)))
@@ -403,14 +413,14 @@ class ParseData:
                     insert = " {nameId:d}, \"{name:s}\", {fmtId:d}, \"{fmt:s}\", {nargs:d}".format(**inst.__dict__)
                     accumulatedOffset += code.insert(inst.getMangle(accumulatedOffset), insert)
             code.write()
-    
+
     def writeJSON(self, fileName):
         "Write string tables out to JSON file"
         encoder = json.JSONEncoder(indent=4)
         fh = open(fileName, "w")
         fh.write(encoder.encode({"nameTable": self.nameTable, "formatTable": self.fmtTable}))
         fh.close()
-    
+
 def main(argv):
     """Main entry point, allows specifying an alternate argv"""
     global verbosity
@@ -444,7 +454,7 @@ def main(argv):
         parse.doMangling()
     if args.string_table:
         parse.writeJSON(args.output)
-    
-    
+
+
 if __name__ == '__main__':
     main(sys.argv)

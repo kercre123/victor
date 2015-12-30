@@ -16,40 +16,32 @@ namespace Anki
   namespace Embedded
   {
 
-    template<typename Type> class Point
+    class Point2f
     {
     public:
-      Type x;
-      Type y;
+      float x, y;
 
-      Point();
+      Point2f();
 
-      Point(const Type x, const Type y);
+      Point2f(const float x, const float y);
 
-      Point(const Point<Type>& pt);
+      Point2f(const Point2f& pt);
 
-      bool operator== (const Point<Type> &point2) const;
+      bool operator== (const Point2f &point2) const;
 
-      Point<Type> operator+ (const Point<Type> &point2) const;
+      Point2f& operator*= (const float value);
+      Point2f& operator/= (const float value);
+      Point2f& operator+= (const Point2f &point2);
+      Point2f& operator-= (const Point2f &point2);
 
-      Point<Type> operator- (const Point<Type> &point2) const;
-
-      Point<Type> operator- () const;
-
-      Point<Type>& operator*= (const Type value);
-      Point<Type>& operator-= (const Type value);
-      Point<Type>& operator+= (const Point<Type> &point2);
-      Point<Type>& operator-= (const Point<Type> &point2);
-
-      Point<Type>& operator= (const Point<Type> &point2);
+      Point2f& operator= (const Point2f &point2);
 
       // The L2 (Euclidian) distance between this point and an input point.
-      f32 Dist(const Point<Type> &point2) const;
+      float Dist(const Point2f &point2) const;
 
-      f32 Length() const;
-    }; // class Point<Type>
-
-    typedef Point<float> Point2f;
+      // The L2 (Euclidian) distance between this point and the origin
+      float Length() const;
+    }; // class Point2f
 
     class Pose2d
     {
