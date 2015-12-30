@@ -3,7 +3,7 @@
 
 #include "radians.h"
 #include "anki/types.h"
-#include "anki/common/robot/geometry.h"
+#include "localization_geometry.h"
 
 namespace Anki {
   namespace Cozmo {

@@ -25,12 +25,11 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#ifndef TARGET_K02
 #include "localization.h"
-#include "animationController.h"
 #include "pathFollower.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
+#ifndef TARGET_K02
 #include "testModeController.h"
 #include "animationController.h"
 #endif

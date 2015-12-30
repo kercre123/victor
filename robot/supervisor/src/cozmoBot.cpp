@@ -16,12 +16,12 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#ifndef TARGET_K02
 #include "localization.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "pathFollower.h"
 #include "testModeController.h"
+#ifndef TARGET_K02
 #include "animationController.h"
 #else
 #include "anki/cozmo/robot/logging.h"

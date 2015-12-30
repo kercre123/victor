@@ -19,8 +19,8 @@
 #include "velocityProfileGenerator.h"
 #include "trig_fast.h"
 
-#ifndef TARGET_K02
 #include "localization.h"
+#ifndef TARGET_K02
 #include "dockingController.h"
 #endif
 
