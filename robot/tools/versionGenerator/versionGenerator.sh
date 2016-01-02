@@ -45,6 +45,5 @@ echo "static const unsigned int COZMO_VERSION_COMMIT = 0x$Commit;" >> $VersionFi
 echo "static const char* DAS_USER = \"$DasUser\";"                 >> $VersionFile
 echo "static const char* BUILD_DATE = \"$Date\";"                  >> $VersionFile
 
-
 echo "Cozmo FW version file generated"
 exit 0
