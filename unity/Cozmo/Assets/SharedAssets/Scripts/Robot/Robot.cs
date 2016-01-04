@@ -498,8 +498,6 @@ public class Robot : IDisposable {
     RightWheelSpeed = float.MaxValue;
     LiftHeight = float.MaxValue;
     BatteryPercent = float.MaxValue;
-    WorldPosition = Vector3.zero;
-    Rotation = Quaternion.identity;
     LocalBusyTimer = 0f;
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
