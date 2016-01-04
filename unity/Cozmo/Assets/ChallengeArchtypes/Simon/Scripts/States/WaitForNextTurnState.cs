@@ -20,6 +20,7 @@ namespace Simon {
     }
 
     private void HandleContinuePressed() {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.PLAYFUL);
       _StateMachine.SetNextState(new CozmoSetSimonState(_SequenceCount));
     }
 

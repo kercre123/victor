@@ -27,6 +27,7 @@ namespace SpeedTap {
       _LightsOn = false;
 
       _CurrentRobot.SetLiftHeight(1.0f);
+      _CurrentRobot.SetHeadAngle(-0.5f);
 
       _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
       RobotEngineManager.Instance.RobotCompletedAnimation += RobotCompletedTapAnimation;

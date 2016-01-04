@@ -21,6 +21,8 @@ public class InitialCubesState : State {
 
   public override void Enter() {
     base.Enter();
+    _CurrentRobot.SetHeadAngle(0f);
+    _CurrentRobot.SetLiftHeight(0f);
   }
 
   public override void Update() {

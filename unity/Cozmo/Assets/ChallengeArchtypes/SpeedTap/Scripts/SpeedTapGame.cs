@@ -106,6 +106,8 @@ namespace SpeedTap {
 
       CurrentRobot.SetLiftHeight(0.0f);
       CurrentRobot.SetHeadAngle(-1.0f);
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
     }
 
     protected override void CleanUpOnDestroy() {
