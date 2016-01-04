@@ -30,13 +30,18 @@ AnimKeyFrame = Anki.Cozmo.AnimKeyFrame
 class CozmoCLI(IDataReceiver):
     "A class for managing the CLI REPL"
 
-    def __init__(self, unreliableTransport, robotAddress, statePrintInterval, printAll=False, stateIntervalStats=False):
-        sys.stdout.write("Connecting to robot at: {}{}".format(repr(robotAddress), os.linesep))
-        unreliableTransport.OpenSocket()
-        self.transport = ReliableTransport(unreliableTransport, self)
+    def __init__(self, unreliableTransport, robotAddress, statePrintInterval, printAll=False, stateIntervalStats=False, dryRun=False):
         self.robot = robotAddress
-        self.transport.Connect(robotAddress)
-        self.transport.start()
+        if not dryRun:
+            sys.stdout.write("Connecting to robot at: {}{}".format(repr(robotAddress), os.linesep))
+            unreliableTransport.OpenSocket()
+            self.transport = ReliableTransport(unreliableTransport, self)
+
+            self.transport.Connect(robotAddress)
+            self.transport.start()
+        else:
+            sys.stdout.write("Dry run! (no robot connection){}".format(os.linesep))
+            self.transport = None
         self.input = input
         self.lastStatePrintTime = 0.0 if statePrintInterval > 0.0 else float('Inf')
         self.statePrintInterval = statePrintInterval
@@ -47,7 +52,8 @@ class CozmoCLI(IDataReceiver):
             self.lastStateRXTimes = None
 
     def __del__(self):
-        self.transport.KillThread()
+        if self.transport != None:
+            self.transport.KillThread()
 
     def OnConnectionRequest(self, sourceAddress):
         raise Exception("CozmoCLI wasn't expecing a connection request")
@@ -79,12 +85,85 @@ class CozmoCLI(IDataReceiver):
         
 
     def send(self, msg):
-        self.transport.SendData(True, False, self.robot, msg.pack())
+        if self.transport != None:
+            self.transport.SendData(True, False, self.robot, msg.pack())
+        else:
+            msg.pack()
+
+
+    def _helpFtnHelper(self, cmd, oneLine = False):
+        outgoingMessageType = RobotInterface.EngineToRobot
+
+        if not hasattr(outgoingMessageType, cmd):
+            sys.stdout.write("No message of type '{}'{}".format(cmd, os.linesep))
+            return False
+
+        msgTag = getattr(outgoingMessageType.Tag, cmd)
+        msgType = outgoingMessageType.typeByTag(msgTag)
+
+        # grab the arguments passed into the init function, excluding "self"
+        try:
+            args = msgType.__init__.__code__.co_varnames[1:]
+        except AttributeError:
+            # in case it's a primitive type like 'int'
+            #TODO: once we have enum to string, use that here and list possible values
+            args = [msgType.__name__]
+
+        defaults = []
+        try:
+            defaults = msgType.__init__.__defaults__
+        except AttributeError:
+            pass
+
+
+        if not oneLine:
+            print("{}: {} command".format(cmd, msgType.__name__))
+            print("usage: {} {}".format(cmd, ' '.join(args)))
+            if len(args) > 0:
+                print()
+
+            for argnum in range(len(args)):
+                arg = args[argnum]
+                if len(defaults) > argnum:
+                    defaultStr = "default = {}".format(defaults[argnum])
+                else:
+                    defaultStr = ""
+
+                typeStr = ""
+                try:
+                    doc = getattr(msgType, arg).__doc__
+                except AttributeError:
+                    pass
+                else:
+                    if doc:
+                        docSplit = doc.split()
+                        if len(docSplit) > 0:
+                            typeStr = docSplit[0]
+
+                    print("    {}: {} {}".format(arg, typeStr, defaultStr))
+        else:
+            print ("  {} {}".format(cmd, ' '.join(args)))
+
+        return True
 
     def helpFtn(self, *args):
         "Prints out help text on CLI functions"
-        sys.stdout.write("TODO Implement help function :-(" + os.linesep)
-        return True
+        if len(args) == 0:
+            print("type 'help command' to get help for command")
+            print("type 'list' to see a list of commands")
+            print("type 'exit' to exit")
+            print("type 'tone' to send a tone to the animation controller")
+            return True
+
+        return self._helpFtnHelper(args[0])
+
+    def listFtn(self):
+        "Lists available commands"
+        outgoingMessageType = RobotInterface.EngineToRobot
+        print("available commands (use help for more details):")
+        for cmd in outgoingMessageType._tags_by_name:
+            self._helpFtnHelper(cmd, oneLine = True)
+
 
     def exitFtn(self, *args):
         "Exit the REPL"
@@ -167,6 +246,8 @@ class CozmoCLI(IDataReceiver):
         else:
             if args[0] == 'help':
                 return self.helpFtn(*args[1:])
+            elif args[0] == 'list':
+                return self.listFtn()
             elif args[0] == 'exit':
                 return self.exitFtn(*args[1:])
             elif args[0] == 'tone':
@@ -204,13 +285,15 @@ class CozmoCLI(IDataReceiver):
             else:
                 if ret not in (True, False, None):
                     sys.stdout.write("\t{}{}".format(str(ret), os.linesep))
-        
+
 if __name__ == '__main__':
     transport = UDPTransport()
     #transport = UartSimRadio("com4", 115200)
     spi = 5.0 if '-s' in sys.argv else 0.0
     printAll = '-a' in sys.argv
     stateIntervalStats = '-i' in sys.argv
-    cli = CozmoCLI(transport, ("172.31.1.1", ROBOT_PORT), spi, printAll, stateIntervalStats)
+    dryRun = '-n' in sys.argv
+    cli = CozmoCLI(transport, ("172.31.1.1", ROBOT_PORT), spi, printAll, stateIntervalStats, dryRun)
     cli.loop()
-    cli.transport.KillThread()
+    del cli
+    # cli.transport.KillThread()
