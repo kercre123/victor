@@ -62,7 +62,7 @@ namespace AssemblyCSharpEditor {
       }
     }
 
-    [MenuItem("Cozmo/Challenges/Create Challenge Config")]
+    [MenuItem("Cozmo/Challenges/Create Challenge Config", false, 10)]
     public static void OpenMinigameConfigMenu() {
       // Get existing open window or if none, make a new one:
       MinigameConfigMenu window = (MinigameConfigMenu)EditorWindow.GetWindow(typeof(MinigameConfigMenu));

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 138730, guid: a104eb00efac94d83853d9d2c311e5c8, type: 2}
   _ChallengeID: WinkGameChallenge01
-  _EnableHubWorldChallenge: 1
-  _EnableDevWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
+  _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: winkGame01.title
   _ChallengeSubtitleLocKey: winkGame01.subtitle
   _ChallengeDescriptionLocKey: winkGame01.description

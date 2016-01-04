@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 128684, guid: 4e7853c55d2a44cab915b2cbb7aaa39c, type: 2}
   _ChallengeID: SelfieGame01
-  _EnableHubWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: selfieGame01.title
   _ChallengeSubtitleLocKey: selfieGame01.subtitle

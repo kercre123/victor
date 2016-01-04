@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 195338, guid: 4a6eac5af6e7f49ae8b4c05518bf6dfd, type: 2}
   _ChallengeID: TreasureHuntGame
-  _EnableHubWorldChallenge: 1
-  _EnableDevWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
+  _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: treasureHuntGame01.title
   _ChallengeSubtitleLocKey: treasureHuntGame01.subtitle
   _ChallengeDescriptionLocKey: treasureHuntGame01.description
