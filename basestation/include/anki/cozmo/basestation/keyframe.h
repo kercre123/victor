@@ -297,6 +297,10 @@ namespace Cozmo {
   {
   public:
     FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
+    FaceAnimationKeyFrame(const AnimKeyFrame::FaceImage& faceImageMsg, const std::string& faceAnimName = "")
+    : _animName(faceAnimName)
+    , _faceImageMsg(faceImageMsg)
+    { }
     
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
@@ -306,6 +310,9 @@ namespace Cozmo {
     }
 
     virtual bool IsDone() override;
+    
+    const std::string& GetName() const { return _animName; }
+    const AnimKeyFrame::FaceImage& GetFaceImage() const { return _faceImageMsg; }
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;

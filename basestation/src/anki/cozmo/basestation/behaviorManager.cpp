@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/investorDemoFacesAndBlocksBehaviorChooser.h"
+#include "anki/cozmo/basestation/investorDemoFacesChooser.h"
 #include "anki/cozmo/basestation/investorDemoMotionBehaviorChooser.h"
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
@@ -71,6 +72,10 @@ namespace Cozmo {
            }
            case BehaviorChooserType::Selection:
            {
+             // DEMO HACK: clean the idle animation here
+             // TODO:(bn) better way to do this
+             _robot.SetIdleAnimation("NONE");
+             
              SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
              break;
            }
@@ -90,6 +95,11 @@ namespace Cozmo {
              
              // BehaviorFactory& behaviorFactory = GetBehaviorFactory();
              // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+             break;
+           }
+           case BehaviorChooserType::InvestorDemoFacesOnly:
+           {
+             SetBehaviorChooser( new InvestorDemoFacesBehaviorChooser(_robot, config) );
              break;
            }
            default:

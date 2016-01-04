@@ -11,6 +11,7 @@ enum uint_8 BehaviorChooserType {
   Selection,
   InvestorDemoMotion,
   InvestorDemoFacesAndBlocks,
+  InvestorDemoFacesOnly,
   Count
 }
 

@@ -12,6 +12,7 @@
 
 #define TAP_THRESH 10
 #define ADV_CHANNEL 81
+#define CHANNEL_RATE 	HAL_NRF_1MBPS
 #define RADIO_PAYLOAD_LENGTH 17
 
 // Tests
@@ -102,8 +103,14 @@ void RunTests();
 
 // radio.c
 #ifdef COMPATIBILITY_MODE_4P0
+#define CHANNEL_4P0 	83
+#undef RADIO_PAYLOAD_LENGTH
+#undef CHANNEL_RATE
+#define RADIO_PAYLOAD_LENGTH 13
+#define CHANNEL_RATE 	HAL_NRF_250KBPS
 static const u8 code ADDRESS_4P0[5] = {0xB2, 0xC2, 0xC2, 0xC2, 0xC2}; // default
 #endif
+
 #ifdef EMULATE_BODY
 static const u8 code ADDRESS_X[5] =  {0xB2, 0xC2, 0xC2, 0xC2, 0xC2};
 #endif

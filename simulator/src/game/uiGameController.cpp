@@ -905,9 +905,10 @@ namespace Anki {
     }
     
     
-    void UiGameController::SendExecuteTestPlan()
+    void UiGameController::SendExecuteTestPlan(PathMotionProfile motionProf)
     {
       ExternalInterface::ExecuteTestPlan m;
+      m.motionProf = motionProf;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ExecuteTestPlan(m);
       SendMessage(message);

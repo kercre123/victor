@@ -119,6 +119,8 @@ namespace Anki {
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
+      
+      _lastDebugStringHash = 0;
 
       ReadAnimationDir();
       
@@ -127,8 +129,8 @@ namespace Anki {
       Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
       if (nullptr != neutralFaceAnim)
       {
-        auto frameIter = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
-        ProceduralFaceParams::SetResetData(frameIter->GetFace().GetParams());
+        auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
+        ProceduralFaceParams::SetResetData(frame->GetFace().GetParams());
       }
       else
       {
@@ -1117,12 +1119,27 @@ namespace Anki {
       
       
       // Sending debug string to game and viz
-      // TODO: This is just an example, but basically if the string hasn't changed
-      //       don't bother re-sending it.
-      static bool dbgStringSent = false;
-      if (!dbgStringSent) {
-        SendDebugString("This is the engine debug string");
-        dbgStringSent = true;
+      char buffer [128];
+      // So we can have an arbitrary number of data here that is likely to change want just hash it all
+      // together if anything changes without spamming
+      snprintf(buffer, sizeof(buffer),
+               "r:%c%c%c%c lock:%c%c%c %s:%s ",
+               IsLiftMoving() ? 'L' : ' ',
+               IsHeadMoving() ? 'H' : ' ',
+               IsMoving() ? 'B' : ' ',
+               IsCarryingObject() ? 'C' : ' ',
+               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'B' : ' ',
+               behaviorChooserName,
+               behaviorName.c_str());
+      
+      std::hash<std::string> hasher;
+      size_t curr_hash = hasher(std::string(buffer));
+      if( _lastDebugStringHash != curr_hash )
+      {
+        SendDebugString(buffer);
+        _lastDebugStringHash = curr_hash;
       }
       
       
@@ -1390,10 +1407,12 @@ namespace Anki {
                                                                 useManualSpeed);
     }
     
-    u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
+    u8 Robot::PlayAnimation(const std::string& animName, u32 numLoops, bool interruptRunning)
     {
-      u8 tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops);
-      _lastPlayedAnimationId = animName;
+      u8 tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops, interruptRunning);
+      if(tag != AnimationStreamer::NotAnimatingTag) {
+        _lastPlayedAnimationId = animName;
+      }
       return tag;
     }
     
@@ -1502,7 +1521,7 @@ namespace Anki {
                          std::isnan(x) || std::isnan(y)),
                        "Shift/scale values should be non-nan!");
           
-          faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
         }
       } else {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
@@ -1513,7 +1532,7 @@ namespace Anki {
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
         
-        faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, duration_ms));
+        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration_ms));
       }
       
       if(makePersistent) {
@@ -3191,7 +3210,6 @@ namespace Anki {
       
     Result Robot::AbortAnimation()
     {
-      _animationStreamer.SetStreamingAnimation(*this, "");
       return SendAbortAnimation();
     }
     

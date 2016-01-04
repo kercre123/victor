@@ -369,9 +369,9 @@
               <MiscControls>  --library_type=standardlib --diag_suppress=1296,186 
  --library_interface=armcc  
 </MiscControls>
-              <Define>COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
+              <Define>TARGET_K02,COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>.;supervisor/src;../coretech/common/include;../coretech/vision/include;../include;include;k02_hal/lib;k02_hal/;k02_hal/startup;k02_hal/lib/device;k02_hal/lib/drivers;k02_hal/lib/hal;generated/clad/robot;..\tools\anki-util\source\anki</IncludePath>
+              <IncludePath>.;supervisor/src;include;k02_hal/lib;k02_hal/;k02_hal/startup;k02_hal/lib/device;k02_hal/lib/drivers;k02_hal/lib/hal;generated/clad/robot;.\supervisor\src</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -532,6 +532,11 @@
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\test.cpp</FilePath>
             </File>
+            <File>
+              <FileName>wifi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\wifi.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -546,6 +551,31 @@
               <FileName>startup.c</FileName>
               <FileType>1</FileType>
               <FilePath>k02_hal/startup/startup.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>clad</GroupName>
+          <Files>
+            <File>
+              <FileName>clad.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\clad.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>supervisor</GroupName>
+          <Files>
+            <File>
+              <FileName>cozmoBot.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\cozmoBot.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messages.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\messages.cpp</FilePath>
             </File>
           </Files>
         </Group>

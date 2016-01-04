@@ -134,6 +134,19 @@ namespace Cozmo {
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE2));
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE4));
+      
+      if (nullptr != _robot)
+      {
+        // TODO: HACK: Manually clearing the LEDs on the active blocks here when the engine is getting set up.
+        // It isn't pretty, and it will likely change as block communication changes going forward, but for now
+        // this is as good a place as any to clear out the lights when starting up.
+        std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
+        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID0);
+        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID1);
+        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID2);
+        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID3);
+        // END_HACK
+      }
 
       
       //////////////////////////////////////////////////////////////////////////

@@ -20,6 +20,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#define DO_BACK_UP_AFTER_POUNCE 0
+
 namespace Anki {
 namespace Cozmo {
   
@@ -59,18 +61,29 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   
   _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
-  
+
+#if DO_BACK_UP_AFTER_POUNCE
+  if( _totalDriveForwardDist > 5.0f ) {
+    _state = State::BackingUp;
+    SetStateName("BackUp");
+  }
+#endif
+
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
   if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
     _initialReactionAnimPlayed = false;
-    _state = State::WaitingForFirstMotion;
-    SetStateName("Wait");
+    if( _state != State::BackingUp ) {
+      _state = State::WaitingForFirstMotion;
+      SetStateName("Wait");
+    }
   } else {
     _initialReactionAnimPlayed = true;
-    StartTracking(robot);
-    _state = State::Tracking;
-    SetStateName("Tracking");
+    if( _state != State::BackingUp ) {
+      StartTracking(robot);
+      _state = State::Tracking;
+      SetStateName("Tracking");
+    }
   }
   
   return Result::RESULT_OK;
@@ -79,25 +92,60 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
 IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   IBehavior::Status status = Status::Running;
-  
+
   switch(_state)
   {
     case State::Interrupted:
       status = Status::Complete;
       break;
 
+    case State::BackingUp:
+      if( _backingUpAction == (u32)ActionConstants::INVALID_TAG ) {
+        float distToBackUp = _totalDriveForwardDist + _additionalBackupDist;
+        if( distToBackUp > _maxBackupDistance ) {
+          distToBackUp = _maxBackupDistance;
+        }
+
+        PRINT_NAMED_INFO("BehaviorFollowMotion.BackingUp",
+                         "driving backwards %fmm to reset position",
+                         distToBackUp);
+        
+        DriveStraightAction* backupAction = new DriveStraightAction(-distToBackUp, -_backupSpeed);
+        _backingUpAction = backupAction->GetTag();
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, backupAction);
+
+        _totalDriveForwardDist = 0.0f;
+      }
+      break;
+
     case State::HoldingHeadDown:
+      LiftShouldBeLocked(robot);
       if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= _holdHeadDownUntil) {
         StartTracking(robot); // puts us in Tracking state
       }
       break;
       
-    case State::WaitingForFirstMotion:
     case State::Tracking:
-    case State::DrivingForward:
-      // Nothing to do
-      break;
+    {
+      LiftShouldBeLocked(robot);
+
+      // keep the lift out of the FOV
+      if( !robot.IsLiftMoving() && robot.GetLiftHeight() > LIFT_HEIGHT_LOWDOCK + 6.0f ) {
+        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+        // use animation slot, since we know no one is using the lift
+        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
+      }
       
+      break;
+    }
+    
+    case State::DrivingForward:
+      LiftShouldBeLocked(robot);
+      break;
+
+    case State::WaitingForFirstMotion:
+      break;
+
   } // switch(_state)
   
   return status;
@@ -115,6 +163,8 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
   
   // Restore original vision modes
   robot.GetVisionComponent().SetModes(_originalVisionModes);
+
+  LiftShouldBeUnlocked(robot);
   
   _state = State::Interrupted;
   SetStateName("Interrupted");
@@ -125,6 +175,7 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
 void BehaviorFollowMotion::StartTracking(Robot& robot)
 {
   TrackMotionAction* action = new TrackMotionAction();
+  action->SetMaxHeadAngle( DEG_TO_RAD( 5.0f ) );
   _actionRunning = action->GetTag();
   
   robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
@@ -176,12 +227,16 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
                                            EmotionType::Excited, kEmotionChangeSmall,
                                            EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
       
-      // Turn to face the motion:
+      // Turn to face the motion, also drop the lift, and lock it from animations
       PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad,
                                                              relHeadAngle_rad,
                                                              false, false);
-      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, panTiltAction);
+      MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
       
+      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
+                                           new CompoundActionParallel({panTiltAction, liftAction}));
+      
+      LiftShouldBeLocked(robot);
       
       // If this is the first motion reaction, also play the first part of the
       // motion reaction animation, move the head back to the right tilt, and
@@ -246,9 +301,12 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
              relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol )
     {
       // Move towards the motion since it's centered
-      DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm, DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
+      DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm,
+                                                                 DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
       driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
       _actionRunning = driveAction->GetTag();
+
+      _totalDriveForwardDist += _moveForwardDist_mm;
       
       _state = State::DrivingForward;
       SetStateName("DriveForward");
@@ -267,8 +325,8 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
   } // if(_state == Tracking)
 
 } // HandleObservedMotion()
-  
 
+  
 void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event, Robot& robot)
 {
   auto const& completedAction = event.GetData().Get_RobotCompletedAction();
@@ -314,8 +372,39 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
     }
     
   } // if(completedAction.idTag == _actionRunning)
+
+  if( _state == State::BackingUp && completedAction.idTag == _backingUpAction ) {
+    _backingUpAction = 0;
+    PRINT_NAMED_INFO("BehaviorFollowMotion.BackupComplete", "");
+    if( _initialReactionAnimPlayed ) {
+      StartTracking(robot);
+      _state = State::Tracking;
+      SetStateName("Tracking");
+    }
+    else {
+      _state = State::WaitingForFirstMotion;
+      SetStateName("Wait");
+    }
+  }
   
 } // HandleCompletedAction()
+
+void BehaviorFollowMotion::LiftShouldBeLocked(Robot& robot)
+{
+  if( ! _lockedLift ) {
+    robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    _lockedLift = true;
+  }
+}
+
+void BehaviorFollowMotion::LiftShouldBeUnlocked(Robot& robot)
+{
+  if( _lockedLift ) {
+    robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    _lockedLift = false;
+  }
+}
+
   
 
 } // namespace Cozmo

@@ -3,6 +3,7 @@
  *                          Physical Robot Geometry
  *
  **************************************************************************/
+#include "anki/common/constantsAndMacros.h"
 
 const f32 WHEEL_DIAMETER_MM  = 29.f;
 const f32 HALF_WHEEL_CIRCUM  = WHEEL_DIAMETER_MM * M_PI_2;

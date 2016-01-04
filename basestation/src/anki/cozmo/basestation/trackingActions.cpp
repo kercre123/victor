@@ -13,6 +13,7 @@
 
 
 #include "anki/cozmo/basestation/trackingActions.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
@@ -89,12 +90,19 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
 {
   Radians absPanAngle = 0, absTiltAngle = 0;
   
+  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
   // See if there are new relative pan/tilt angles from the derived class
   if(GetAngles(robot, absPanAngle, absTiltAngle))
   {
+
+    if( absTiltAngle > _maxHeadAngle ) {
+      absTiltAngle = _maxHeadAngle;
+    }
+    
     // Record latest update to avoid timing out
     if(_updateTimeout_sec > 0.) {
-      _lastUpdateTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _lastUpdateTime = currentTime;
     }
     
 #   if DEBUG_TRACKING_ACTIONS
@@ -103,13 +111,15 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
                      absPanAngle.getDegrees(), absTiltAngle.getDegrees());
 #   endif
     
+    bool angleLargeEnoughForSound = false;
+    
     // Tilt Head:
     const f32 relTiltAngle = std::abs((absTiltAngle - robot.GetHeadAngle()).ToFloat());
     if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > _tiltTolerance.ToFloat())
     {
       // Set speed/accel based on angle difference
-      const f32 MinSpeed = 20.f;
-      const f32 MaxSpeed = 40.f;
+      const f32 MinSpeed = 30.f;
+      const f32 MaxSpeed = 50.f;
       //const f32 MinAccel = 20.f;
       //const f32 MaxAccel = 40.f;
       
@@ -120,6 +130,10 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
       {
         return ActionResult::FAILURE_ABORT;
+      }
+      
+      if(relTiltAngle > _minTiltAngleForSound) {
+        angleLargeEnoughForSound = true;
       }
     }
     
@@ -134,7 +148,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
       // Set speed/accel based on angle difference
-      const f32 MinSpeed = 10.f;
+      const f32 MinSpeed = 20.f;
       const f32 MaxSpeed = 80.f;
       //const f32 MinAccel = 30.f;
       //const f32 MaxAccel = 80.f;
@@ -150,10 +164,22 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
         return ActionResult::FAILURE_ABORT;
       }
+      
+      if(relPanAngle > _minPanAngleForSound) {
+        angleLargeEnoughForSound = true;
+      }
+    }
+    
+    // Play sound if it's time and either angle was big enough
+    if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
+    {
+      // Queue sound to only play if nothing else is playing
+      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation, 1, false));
+      
+      _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
       
   } else if(_updateTimeout_sec > 0.) {
-    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
       PRINT_NAMED_INFO("ITrackAction.CheckIfDone.Timeout",
                        "No tracking angle update received in %f seconds, returning done.",

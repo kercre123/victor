@@ -1,9 +1,14 @@
+// Low-level driver for Bosch BMI160 combo gyro+accelerometer
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 #include "hal/i2c.h"
 #include "hal/imu.h"
+#include "hal/uart.h"
 #include "MK02F12810.h"
+#include <string.h>
 #include "anki/cozmo/robot/drop.h"
+
+//#define IMU_DEBUG   // Uncomment for low level debugging printed out the UART
 
 static const int IMU_UPDATE_FREQUENCY = 200; // 200hz (5ms)
 
@@ -108,6 +113,19 @@ static const uint8_t RANGE_500DPS = 0x02;
 static const uint8_t BW_200 = 0x19;           // Maybe?
 
 void Anki::Cozmo::HAL::IMU::Init(void) {
+  // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
+  I2C::WriteReg(ADDR_IMU, CMD, 0x10 + 1); // Power up accelerometer (normal mode)
+  MicroWait(4000);   // Datasheet says wait 4ms  
+  I2C::WriteReg(ADDR_IMU, CMD, 0x10 + 1); // Power up accelerometer (normal mode)
+  MicroWait(4000);   // Datasheet says wait 4ms
+
+  I2C::WriteReg(ADDR_IMU, CMD, 0x14 + 1); // Power up gyroscope (normal mode)
+  MicroWait(81000);   // Datasheet says wait 80ms
+  
+#ifdef IMU_DEBUG
+  UART::DebugPrintf("IMU status after power up: %02x %02x %02x\n", I2C::ReadReg(ADDR_IMU, 0x0), I2C::ReadReg(ADDR_IMU, 0x2), I2C::ReadReg(ADDR_IMU, 0x3));
+#endif
+  
   I2C::WriteAndVerify(ADDR_IMU, ACC_RANGE, RANGE_2G);
   I2C::WriteAndVerify(ADDR_IMU, ACC_CONF, BW_200);
   I2C::WriteAndVerify(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
@@ -119,6 +137,12 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
 static void copy_state(const void *data, int count) {
   using namespace Anki::Cozmo::HAL;
   memcpy(&IMU::IMUState, data, count);
+
+#ifdef IMU_DEBUG
+  for (int i = 0; i < sizeof(IMUData); i++)
+    UART::DebugPrintf("%02x ", ((uint8_t*) data)[i]);
+  UART::DebugPrintf("\n");
+#endif
 }
 
 void Anki::Cozmo::HAL::IMU::Manage(void) {

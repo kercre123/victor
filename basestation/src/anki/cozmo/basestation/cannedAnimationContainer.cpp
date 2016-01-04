@@ -29,7 +29,7 @@ namespace Cozmo {
     Animation* anim = GetAnimation(FaceAnimationManager::ProceduralAnimName);
     assert(anim != nullptr);
     FaceAnimationKeyFrame kf(FaceAnimationManager::ProceduralAnimName);
-    if(RESULT_OK != anim->AddKeyFrame(kf))
+    if(RESULT_OK != anim->AddKeyFrameToBack(kf))
     {
       PRINT_NAMED_ERROR("CannedAnimationContainer.Constructor.AddProceduralFailed",
                         "Failed to add keyframe to procedural animation.");
@@ -55,6 +55,22 @@ namespace Cozmo {
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation.InvalidName",
+                        "Animation requested for unknown animation '%s'.\n",
+                        name.c_str());
+    } else {
+      animPtr = &retVal->second;
+    }
+    
+    return animPtr;
+  }
+  
+  const Animation* CannedAnimationContainer::GetAnimation(const std::string& name) const
+  {
+    const Animation* animPtr = nullptr;
+    
+    auto retVal = _animations.find(name);
+    if(retVal == _animations.end()) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation_Const.InvalidName",
                         "Animation requested for unknown animation '%s'.\n",
                         name.c_str());
     } else {

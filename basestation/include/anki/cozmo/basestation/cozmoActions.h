@@ -32,6 +32,8 @@
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 
+#include <memory>
+
 
 namespace Anki {
   
@@ -44,6 +46,7 @@ namespace Anki {
 
     // Forward Declarations:
     class Robot;
+    class Animation;
     
     class DriveToPoseAction : public IAction
     {
@@ -477,6 +480,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
+
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
       
     protected:
       virtual ActionResult Init(Robot& robot) override;
@@ -1129,7 +1134,8 @@ namespace Anki {
     {
     public:
       PlayAnimationAction(const std::string& animName,
-                          const u32 numLoops = 1);
+                          u32 numLoops = 1,
+                          bool interruptRunning = true);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
@@ -1148,11 +1154,20 @@ namespace Anki {
       u32           _numLoops;
       bool          _startedPlaying;
       bool          _stoppedPlaying;
+      bool          _wasAborted;
       u8            _animTag;
+      bool          _interruptRunning;
       
       // For responding to AnimationStarted and AnimationEnded events
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
+      Signal::SmartHandle _abortSignalHandle;
+      
+    private:
+      // For handling playing an altered copy of an animation
+      std::unique_ptr<Animation> _alteredAnimation;
+      
+      bool NeedsAlteredAnimation(Robot& robot) const;
       
     }; // class PlayAnimationAction
     
