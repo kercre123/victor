@@ -10,6 +10,9 @@ namespace Simon {
     private IList<int> _SequenceList;
     private int _CurrentSequenceIndex = 0;
     private float _LastTappedTime;
+    private bool _IsTurning = false;
+    private int _TargetCube = -1;
+    private uint _TargetCubeColor;
 
     public override void Enter() {
       base.Enter();
@@ -18,6 +21,7 @@ namespace Simon {
       _GameInstance.ShowHowToPlaySlide("RepeatPattern");
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_01);
     }
 
     public override void Update() {
@@ -25,11 +29,25 @@ namespace Simon {
       if (_CurrentSequenceIndex == _SequenceList.Count) {
         WinGame();
       }
+      if (_IsTurning) {
+        _IsTurning = !TurnToTarget(_CurrentRobot.LightCubes[_TargetCube]);
+        if (!_IsTurning) {
+          _CurrentRobot.DriveWheels(0f, 0f);
+          _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
+          if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
+            _CurrentSequenceIndex++;
+          }
+          else {
+            LoseGame();
+          }
+        }
+      }
     }
 
     public override void Exit() {
       base.Exit();
       LightCube.TappedAction -= OnBlockTapped;
+      _CurrentRobot.DriveWheels(0f, 0f);
     }
 
     private void HandleOnWinAnimationDone(bool success) {
@@ -61,27 +79,45 @@ namespace Simon {
         kvp.Value.SetFlashingLEDs(Color.red, 100, 100, 0);
       }
 
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
       _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnLoseAnimationDone));
     }
 
     private void WinGame() {
+      _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
         kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, 100, 100, 0, 0);
       }
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
       _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleOnWinAnimationDone));
     }
 
     private void OnBlockTapped(int id, int times) {
-      if (Time.time - _LastTappedTime < 0.8f) {
+      _CurrentRobot.SetHeadAngle(Random.Range(-0.6f, 0f));
+      if (_IsTurning || Time.time - _LastTappedTime < 0.8f) {
         return;
       }
 
       _LastTappedTime = Time.time;
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
-      if (_SequenceList[_CurrentSequenceIndex] != id) {
-        LoseGame();
+      SimonGame game = _StateMachine.GetGame() as SimonGame;
+      GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(id));
+      _IsTurning = true;
+      _TargetCube = id;
+      _TargetCubeColor = _CurrentRobot.LightCubes[_TargetCube].Lights[0].OnColor;
+      _CurrentRobot.LightCubes[_TargetCube].TurnLEDsOff();
+    }
+
+    private bool TurnToTarget(LightCube currentTarget) {
+      Vector3 robotToTarget = currentTarget.WorldPosition - _CurrentRobot.WorldPosition;
+      float crossValue = Vector3.Cross(_CurrentRobot.Forward, robotToTarget).z;
+      if (crossValue > 0.0f) {
+        _CurrentRobot.DriveWheels(-SimonGame.kDriveWheelSpeed, SimonGame.kDriveWheelSpeed);
       }
-      _CurrentSequenceIndex++;
+      else {
+        _CurrentRobot.DriveWheels(SimonGame.kDriveWheelSpeed, -SimonGame.kDriveWheelSpeed);
+      }
+      return Vector2.Dot(robotToTarget.normalized, _CurrentRobot.Forward) > SimonGame.kDotThreshold;
     }
   }
 

@@ -108,7 +108,7 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.EnterCozmoBehaviorChooser, Assembly-CSharp",
-          "BehaviorChooser": "InvestorDemoFacesAndBlocks"
+          "BehaviorChooser": "InvestorDemoFacesOnly"
         }
       ],
       "ExitConditions": [

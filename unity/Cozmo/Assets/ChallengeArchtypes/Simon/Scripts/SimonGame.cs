@@ -6,9 +6,12 @@ using System.Linq;
 namespace Simon {
 
   public class SimonGame : GameBase {
+    public const float kDriveWheelSpeed = 80f;
+    public const float kDotThreshold = 0.96f;
 
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();
+    private Dictionary<int, SimonSound> _BlockIdToSound = new Dictionary<int, SimonSound>();
 
     private SimonGameConfig _Config;
 
@@ -31,6 +34,8 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
     }
 
     public void PickNewSequence(int sequenceLength) {
@@ -57,6 +62,24 @@ namespace Simon {
         pickedID = CurrentRobot.LightCubes.ElementAt(pickIndex).Key;
         _CurrentIDSequence.Add(pickedID);
       }
+
+      _BlockIdToSound.Clear();
+      int counter = 0;
+      string[] cozmoAnimationNames = { "SimonSays_Cube00", "SimonSays_Cube01" };
+      Anki.Cozmo.Audio.EventType[] playerAudio = { 
+        Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_02, 
+        Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_03
+      };
+      int smallestArrayLength = Mathf.Min(cozmoAnimationNames.Length, playerAudio.Length);
+      SimonSound sound;
+      foreach (var kvp in CurrentRobot.LightCubes) {
+        sound = new SimonSound();
+        sound.cozmoAnimationName = cozmoAnimationNames[counter];
+        sound.playerSoundName = playerAudio[counter];
+        _BlockIdToSound.Add(kvp.Key, sound);
+        counter++;
+        counter %= smallestArrayLength;
+      }
     }
 
     public IList<int> GetCurrentSequence() {
@@ -67,6 +90,27 @@ namespace Simon {
 
     }
 
+    public string GetCozmoAnimationForBlock(int blockId) {
+      string animationName = AnimationName.kSeeOldPattern;
+      SimonSound sound;
+      if (_BlockIdToSound.TryGetValue(blockId, out sound)) {
+        animationName = sound.cozmoAnimationName;
+      }
+      return animationName;
+    }
+
+    public Anki.Cozmo.Audio.EventType GetPlayerAudioForBlock(int blockId) {
+      Anki.Cozmo.Audio.EventType audioEvent = Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL;
+      SimonSound sound;
+      if (_BlockIdToSound.TryGetValue(blockId, out sound)) {
+        audioEvent = sound.playerSoundName;
+      }
+      return audioEvent;
+    }
   }
 
+  public class SimonSound {
+    public string cozmoAnimationName;
+    public Anki.Cozmo.Audio.EventType playerSoundName;
+  }
 }
