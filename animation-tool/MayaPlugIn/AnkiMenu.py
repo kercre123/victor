@@ -7,8 +7,9 @@ import json
 import math
 import os
 import time
-import ast
 from operator import itemgetter
+import ast
+from functools import partial
 
 #To setup add "MAYA_PLUG_IN_PATH = <INSERT PATH TO COZMO GAME HERE>/cozmo-game/animation-tool/MayaPlugIn" in "~/Library/Preferences/Autodesk/maya/2016/Maya.env"
 #In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load and auto-load and an Anki menu will appear on the main menu
@@ -16,6 +17,9 @@ from operator import itemgetter
 kPluginCmdName = "AnkiAnimExport"
 kShortFlagName = "oj"
 kLongFlagName = "open_json"
+
+
+
 #something like ~/cozmo-game/lib/anki/products-cozmo-assets/animations
 g_AnkiExportPath = ""
 g_PrevMenuName = ""
@@ -85,9 +89,25 @@ def SetCozmoClipData(data):
     print data
     return
 
-def ShowClipUI(item):
+g_ClipWindow = None
+def addButtonPress(*args):
+  print 'Button 1 was pushed.'
+  print "I was called with", len(args), "arguments:", args
 
-    clip_data_as_array = []
+  g_ClipWindow
+  return
+
+def delButtonPress(btn_id,*args):
+  print 'Button 2 was pushed.'
+  print "I was called with", len(args), "arguments:", args
+  print 'btn_id  ' + str(btn_id)
+  return
+
+def ShowClipUI(item):
+    global g_ClipWindow
+    #Test data
+    clip_data_as_array = [{"s":1, "e":2, "n":"c1"},{"s":3, "e":4, "n":"t2"}]
+    '''
     #Fetch or create the saved data
     if cmds.objExists('CozmoClipData'):
       cmds.select('CozmoClipData')
@@ -97,39 +117,45 @@ def ShowClipUI(item):
       print clip_data_as_array
     else:
       nodeName = cmds.scriptNode( bs='[{"s":1, "e":2, "n":"c1"},{"s":3, "e":4, "n":"t2"}]', n='CozmoClipData', stp='python')
-
+    '''
     #TODO: save out on UI close ( need to test creation again...)
-      '''#Modify the data in the scriptnode
+    '''#Modify the data in the scriptnode
       nodeName = cmds.scriptNode( edit=True,
                                 bs='CozmoClipsArray = [{"Start":123, "End":321, "ClipName":"Clip1"},{"Start":1, "End":200, "ClipName":"MollyTest2"}]\ncmds.SetCozmoClipData(CozmoClipsArray)', 
                                 n='CozmoClipData', stp='python')'''
-
+    
     #Create the window
-    latestWindow = cmds.window()
+    g_ClipWindow = cmds.window(title='Anki Anim Clips')
     cmds.frameLayout( label='Anki Anim Clips' )
-    cmds.rowLayout( numberOfColumns=4, columnWidth=[(1,200), (2,100), (3,100), (4,100)])
+    cmds.rowLayout( numberOfColumns=3, columnWidth=[(1,200), (2,100), (3,100)])
     cmds.text( label='clip name')
     cmds.text( label='start')
     cmds.text( label='end')
-    cmds.text( label='active')
     cmds.setParent('..') 
     cmds.setParent('..') 
 
-    cmds.rowLayout( numberOfColumns=5,columnWidth=[(1,200), (2,100), (3,100), (4,100),(5,20)] )
+    #cmds.rowColumnLayout( numberOfColumns=4,columnWidth=[(1,200), (2,100), (3,100),(4,20)] )
+    cmds.rowColumnLayout(numberOfColumns=1)
     #TODO: Dynamically create a thing for it
-    cmds.textField('clip_name',text="DEFAULT_CLIP_NAME")
-    cmds.intField('start_frame_clip',value=0)
-    cmds.intField('end_frame_clip',value=20)
-    cmds.checkBox('is_active',label="",value=True)
-    cmds.button('del',label="del")
+    btn_id = 0
+    for data in clip_data_as_array:
+        row_name = "anki_clip_row" + str(btn_id)
+        cmds.rowLayout( row_name,numberOfColumns=4, columnWidth=[(1,200), (2,100), (3,100),(4,20)])
+        cmds.textField(text=data["n"],width=150)
+        cmds.intField(value=data["s"])
+        cmds.intField(value=data["e"])
+        cmds.button(label="del", command=partial(delButtonPress,btn_id))
+        cmds.setParent('..') 
+        btn_id+=1
+
     cmds.setParent('..') 
 
     cmds.separator()
 
-    cmds.button(label="Add Clip")
+    cmds.button(label="Add Clip", command=addButtonPress)
     cmds.button(label="Export")
 
-    cmds.showWindow(latestWindow)
+    cmds.showWindow(g_ClipWindow)
     return
 
 def SetAnkiExportPath(item):
