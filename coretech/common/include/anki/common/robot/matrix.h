@@ -19,9 +19,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/errorHandling.h"
 
-#endif
-
-
 namespace Anki
 {
   namespace Embedded

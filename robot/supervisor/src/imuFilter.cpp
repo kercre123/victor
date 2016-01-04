@@ -267,9 +267,7 @@ namespace Anki {
       }
       void TurnOffIndicatorLight()
       {
-#ifndef TARGET_K02
         HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
-#endif
       }
 
       void StartPathFollowTest()
@@ -319,7 +317,6 @@ namespace Anki {
 
       void HandlePickupParalysis()
       {
-#ifndef TARGET_K02
         static bool wasParalyzed = false;
         if (enablePickupParalysis_) {
           if (IsPickedUp() && !wasParalyzed) {
@@ -341,7 +338,6 @@ namespace Anki {
           WheelController::Enable();
           wasParalyzed = false;
         }
-#endif
       }
 
 #ifndef TARGET_K02
@@ -410,7 +406,6 @@ namespace Anki {
           peakAccelStartTime = currTime;
           return;
         }
-#ifndef TARGET_K02
         // Only check for poke when wheels are not being driven
         if (!WheelController::AreWheelsMoving()) {
 
@@ -440,7 +435,7 @@ namespace Anki {
               peakAccelMaxTime = currTime;
             } else if (std::fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
               if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
-                PRINT("POKE DETECTED (ACCEL)\n");
+                AnkiEvent("POKE DETECTED (ACCEL)");
                 peakAccelStartTime = currTime;
                 lastPokeDetectTime = currTime;
 
@@ -458,7 +453,6 @@ namespace Anki {
           peakGyroStartTime = currTime;
           peakAccelStartTime = currTime;
         }
-#endif
       }
 
       void DetectFalling()
@@ -532,7 +526,6 @@ namespace Anki {
           }
 
         } else {
-#ifndef TARGET_K02
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
           if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
@@ -551,7 +544,6 @@ namespace Anki {
           } else {
             pdUnexpectedMotionCnt_ = 0;
           }
-#endif
 
           // Do conservative check for pickup.
           // Only when we're really sure it's moving!
@@ -637,12 +629,10 @@ namespace Anki {
       void DetectMotion()
       {
         u32 currTime = HAL::GetMicroCounter();
-#ifndef TARGET_K02
         // Are wheels being powered?
         if (WheelController::AreWheelsPowered()) {
           lastMotionDetectedTime_us = currTime;
         }
-#endif
         // Was motion detected by accel or gyro?
         for(u8 i=0; i<3; ++i) {
           // Check accelerometer

@@ -286,7 +286,7 @@ namespace Anki {
         // Open loop value to drive at desired speed
         f32 power = 0;
 
-#if defined(SIMULATOR) || defined(TARGET_K02)
+#if defined(SIMULATOR)
         power = desired_speed_rad_per_sec * 0.05;
 #else
         CarryState cs = PickAndPlaceController::GetCarryState();

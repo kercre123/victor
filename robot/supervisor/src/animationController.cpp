@@ -18,7 +18,6 @@ extern "C" {
 #include "anki/cozmo/robot/hal.h"
 #include "headController.h"
 #include "liftController.h"
-#include "localization.h"
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"

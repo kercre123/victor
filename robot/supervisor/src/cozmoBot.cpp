@@ -21,10 +21,9 @@
 #include "dockingController.h"
 #include "pathFollower.h"
 #include "testModeController.h"
+#include "anki/cozmo/robot/logging.h"
 #ifndef TARGET_K02
 #include "animationController.h"
-#else
-#include "anki/cozmo/robot/logging.h"
 #endif
 
 #ifdef SIMULATOR

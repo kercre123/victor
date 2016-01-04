@@ -147,11 +147,7 @@ namespace Anki {
 
 
         /////// Cliff detect reaction ///////
-#ifdef TARGET_K02
-        bool movingForward = false;
-#else
         bool movingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
-#endif
         if (_enableCliffDetect) {
           if (HAL::IsCliffDetected() &&
               !IMUFilter::IsPickedUp() &&
@@ -161,19 +157,17 @@ namespace Anki {
             // TODO (maybe): Check for cases where cliff detect should not stop motors
             // 1) Turning in place
             // 2) Driving over something (i.e. pitch is higher than some degrees).
-#ifndef TARGET_K02
             PRINT("Stopping due to cliff\n");
 
             // Stop all motors and animations
             PickAndPlaceController::Reset();
+#ifndef TARGET_K02
             AnimationController::Clear();
 #endif
             // Send cliff detected message to engine
             CliffEvent msg;
             Radians angle;
-#ifndef TARGET_K02
             Localization::GetCurrentMatPose(msg.x_mm, msg.y_mm, angle);
-#endif
             msg.detected = true;
             msg.angle_rad = angle.ToFloat();
             RobotInterface::SendMessage(msg);
