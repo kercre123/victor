@@ -21,7 +21,6 @@ MonoBehaviour:
   _ChallengeIcon: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
   _ChallengeKeyArt: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
   _ChallengeReqs:
-    ChallengeGateKeys:
-    - StackTrainingChallenge01
+    ChallengeGateKeys: []
     StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}

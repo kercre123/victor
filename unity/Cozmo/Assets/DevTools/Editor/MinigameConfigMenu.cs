@@ -40,7 +40,7 @@ namespace AssemblyCSharpEditor {
         if (!string.IsNullOrEmpty(path)) {
           var challengeDataInstance = ScriptableObject.CreateInstance(typeof(ChallengeData)) as ChallengeData;
           var configInstance = type != null ? ScriptableObject.CreateInstance(type) as MinigameConfigBase : null;
-            
+
           if (path.StartsWith(Application.dataPath) && path.Contains("Resources")) {
             path = "Assets" + path.Substring(Application.dataPath.Length);
             string path2 = path.Replace(".asset", "_Config.asset");
