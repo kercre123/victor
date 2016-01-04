@@ -187,12 +187,27 @@
         "translation" : "Motion"
     },
     "codeBreaker01.title" : {
-        "translation" : "Cozmo Code Breaker"
+      "translation" : "Cozmo Code Breaker"
     },
     "codeBreaker01.subtitle" : {
-        "translation" : "Guess the code!"
+      "translation" : "Guess the code!"
     },
     "codeBreaker01.description" : {
         "translation" : "Cozmo will think of a code and you have a certain number of tries to get it right."
+    },
+    "peekaboo.title": {
+        "translation": "Peek a Boo"
+    },
+    "peekaboo.label.points": {
+        "translation": "{0} Points"
+    },
+    "cubeSlap.title": {
+        "translation": "Cube Pounce"
+    },
+    "cubeSlap.subtitle": {
+        "translation": "Cube Pounce Subtitle"
+    },
+    "cubeSlap.description": {
+        "translation": "Cube Pounce Description"
     }
 }
