@@ -8,11 +8,11 @@
 #include "imuFilter.h"
 #include "anki/cozmo/robot/hal.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "localization.h"
 #ifdef TARGET_K02
 #include "anki/cozmo/robot/logging.h"
 #else
 #include "anki/common/robot/errorHandling.h"
-#include "localization.h"
 #endif
 
 

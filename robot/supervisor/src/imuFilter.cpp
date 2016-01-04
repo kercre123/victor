@@ -435,7 +435,7 @@ namespace Anki {
               peakAccelMaxTime = currTime;
             } else if (std::fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
               if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
-                AnkiEvent("POKE DETECTED (ACCEL)");
+                PRINT("POKE DETECTED (ACCEL)");
                 peakAccelStartTime = currTime;
                 lastPokeDetectTime = currTime;
 
