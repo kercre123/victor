@@ -11,6 +11,7 @@ namespace WhackAMole {
     public override void Enter() {
       base.Enter();
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
+      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
     }
 
     public override void Update() {

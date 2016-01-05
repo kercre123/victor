@@ -18,6 +18,7 @@ namespace WhackAMole {
         _WhackAMoleGame.SetUpCubes();
       }
       else {
+        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
         _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 5.0f, RobotArrives);
       }
     }
