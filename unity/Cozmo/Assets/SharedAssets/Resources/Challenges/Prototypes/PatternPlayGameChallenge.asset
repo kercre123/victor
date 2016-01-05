@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 123120, guid: f5aa50aecd5ed45918720eb6733779a2, type: 2}
   _ChallengeID: PatternPlayGame
-  _EnableHubWorldChallenge: 1
-  _EnableDevWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
+  _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: patternPlay.title
   _ChallengeSubtitleLocKey: patternPlay.subtitle
   _ChallengeDescriptionLocKey: patternPlay.description

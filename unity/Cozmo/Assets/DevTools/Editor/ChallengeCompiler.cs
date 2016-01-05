@@ -4,7 +4,7 @@ using System.Collections;
 using System.Linq;
 
 public class ChallengeCompiler {
-  [MenuItem("Cozmo/Challenges/Generate HubWorld Challenge List")]
+  [MenuItem("Cozmo/Challenges/Generate HubWorld Challenge List", false, 1)]
   public static void GenerateHubWorldChallengeList() {
     var assets = AssetDatabase.FindAssets(" t:ChallengeData");
 
@@ -24,7 +24,7 @@ public class ChallengeCompiler {
 
   }
 
-  [MenuItem("Cozmo/Challenges/Generate DevWorld Challenge List")]
+  [MenuItem("Cozmo/Challenges/Generate DevWorld Challenge List", false, 5)]
   public static void GenerateDevWorldChallengeList() {
     var assets = AssetDatabase.FindAssets(" t:ChallengeData");
 

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 140786, guid: 03fb339451e9b4313b31c8df939b3cfb, type: 2}
   _ChallengeID: VortexGame
-  _EnableHubWorldChallenge: 1
-  _EnableDevWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
+  _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: vortex.title
   _ChallengeSubtitleLocKey: vortex.subtitle
   _ChallengeDescriptionLocKey: vortex.description

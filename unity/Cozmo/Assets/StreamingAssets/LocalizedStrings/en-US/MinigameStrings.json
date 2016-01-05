@@ -108,21 +108,6 @@
   "vortex.vortexWon": {
     "translation": "{0} Won"
   },
-  "peekaboo.title": {
-    "translation": "Peek a Boo"
-  },
-  "peekaboo.label.points": {
-    "translation": "{0} Points"
-  },
-  "cubeSlap.title": {
-    "translation": "Cube Slap"
-  },
-  "cubeSlap.subtitle": {
-    "translation": "Cube Slap Subtitle"
-  },
-  "cubeSlap.description": {
-    "translation": "Cube Slap Description"
-  },
   "minigame.quitView.title": {
     "translation": "Return to Main Menu?"
   },

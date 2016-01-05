@@ -136,8 +136,10 @@ public class Robot : IDisposable {
   // in radians
   public float HeadAngle { get; private set; }
 
-  // in radians, from negative PI to positive PI
+  // robot yaw in radians, from negative PI to positive PI
   public float PoseAngle { get; private set; }
+
+  public float PitchAngle { get; private set; }
 
   // in mm/s
   public float LeftWheelSpeed { get; private set; }
@@ -264,7 +266,6 @@ public class Robot : IDisposable {
   private U2G.PlaceRelObject PlaceRelObjectMessage;
   private U2G.PlaceOnObject PlaceOnObjectMessage;
   private U2G.PlayAnimation PlayAnimationMessage;
-  private U2G.PlayAnimation[] PlayAnimationMessages;
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
@@ -371,9 +372,6 @@ public class Robot : IDisposable {
     PlaceRelObjectMessage = new U2G.PlaceRelObject();
     PlaceOnObjectMessage = new U2G.PlaceOnObject();
     PlayAnimationMessage = new U2G.PlayAnimation();
-    PlayAnimationMessages = new U2G.PlayAnimation[2];
-    PlayAnimationMessages[0] = new U2G.PlayAnimation();
-    PlayAnimationMessages[1] = new U2G.PlayAnimation();
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
     AlignWithObjectMessage = new U2G.AlignWithObject();
     ProgressionStatMessage = new U2G.ProgressionMessage();
@@ -498,8 +496,6 @@ public class Robot : IDisposable {
     RightWheelSpeed = float.MaxValue;
     LiftHeight = float.MaxValue;
     BatteryPercent = float.MaxValue;
-    WorldPosition = Vector3.zero;
-    Rotation = Quaternion.identity;
     LocalBusyTimer = 0f;
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
@@ -522,6 +518,7 @@ public class Robot : IDisposable {
   public void UpdateInfo(G2U.RobotState message) {
     HeadAngle = message.headAngle_rad;
     PoseAngle = message.poseAngle_rad;
+    PitchAngle = message.posePitch_rad;
     LeftWheelSpeed = message.leftWheelSpeed_mmps;
     RightWheelSpeed = message.rightWheelSpeed_mmps;
     LiftHeight = message.liftHeight_mm;
