@@ -9,7 +9,7 @@ namespace WhackAMole {
     public enum MoleState {
       NONE,
       SINGLE,
-      TOO_MANY
+      BOTH
     }
 
     public MoleState CubeState {
@@ -18,7 +18,7 @@ namespace WhackAMole {
           return MoleState.SINGLE;
         }
         else if (_CubeActiveA && _CubeActiveB) {
-          return MoleState.TOO_MANY;
+          return MoleState.BOTH;
         }
         else {
           return MoleState.NONE;
@@ -56,6 +56,10 @@ namespace WhackAMole {
 
       _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
 
+      SetUpCubes();
+    }
+
+    public void SetUpCubes() {
       // Set Buttons to Yellow until cubes are set up properly
       _GamePanel.CubeAButton.image.color = Color.yellow;
       _GamePanel.CubeBButton.image.color = Color.yellow;
@@ -110,7 +114,7 @@ namespace WhackAMole {
         }
         else {
           _GamePanel.CubeAButton.image.color = _CubeAColor;
-          CurrentRobot.LightCubes[_CubeAID].SetLEDs(_CubeBColor);
+          CurrentRobot.LightCubes[_CubeAID].SetLEDs(_CubeAColor);
         }
       }
       else {
@@ -134,17 +138,13 @@ namespace WhackAMole {
       }
 
       if (cubeLost) {
-        // Set Buttons to Yellow when we lose a cube
-        _GamePanel.CubeAButton.image.color = Color.yellow;
-        _GamePanel.CubeBButton.image.color = Color.yellow;
         // TODO: Use Confusion Animation transition to return to setup state.
-        InitialCubesState initCubeState = new InitialCubesState();
-        initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), 2, true, InitialCubesDone);
-        _StateMachine.SetNextState(initCubeState);
+        SetUpCubes();
       }
       else {
         // Upon entry, states listen to the MoleStateChanged Action, then change
-        // state based on current state.
+        // state based on current state. States themselves pick which cube to target
+        // when this action fires, assuming they aren't changing state.
         if (MoleStateChanged != null) {
           MoleStateChanged.Invoke(CubeState);
         }
