@@ -1,5 +1,7 @@
 // High speed DMA-driven face animation
 #include "lib/stm32f4xx.h"
+#include <stdarg.h>
+#include <string.h>
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "hal/portable.h"
@@ -275,8 +277,8 @@ namespace Anki
         EnqueueWrite(DATA, m_frame, sizeof(m_frame));
       }
 
-      #define CLEAR_ROW(x)      (0x00 | x)
-      #define COPY_ROW(x)       (0x40 | x)
+      #define CLEAR_COL(x)      (0x00 | x)
+      #define COPY_COL(x)       (0x40 | x)
       #define RLE_PATTERN(c, p) (0x80 | (c << 2) | p)
 
       void OLEDInit(void)
@@ -287,21 +289,35 @@ namespace Anki
         GPIO_RESET(GPIO_CMD, PIN_CMD);
         EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
 
+        /*
         // Draw "programmer art" face until we get real assets
         u8 face[] = {
-          CLEAR_ROW(24),
+          CLEAR_COL(24),
           RLE_PATTERN(12, 0),
           RLE_PATTERN(8, 3),
-          COPY_ROW(15),
+          COPY_COL(15),
           CLEAR_ROW(48),
           RLE_PATTERN(12, 0),
           RLE_PATTERN(8, 3),
-          COPY_ROW(15),
-          CLEAR_ROW(24)
+          COPY_COL(15),
+          CLEAR_COL(24)
         };
         FaceAnimate(face);
+        */
+
+        FaceClear();
       }
 
+      void FaceClear()
+      {
+        // Empty face
+        u8 face[] = {
+           CLEAR_COL(60),
+           CLEAR_COL(60),
+           CLEAR_COL(8)
+        };
+        FaceAnimate(face, 3);
+      }
 
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
@@ -309,12 +325,13 @@ namespace Anki
       // 00xxxxxx     CLEAR row (blank)
       // 01xxxxxx     COPY PREVIOUS ROW (repeat)
       // 1xxxxxyy     RLE 2-bit block
-      void FaceAnimate(u8* src)
+      void FaceAnimate(u8* src, const u16 length)
       {
         if (m_disableAnimate)
           return;
 
-        FaceDisplayDecode(src, ROWS, COLS, m_frame);
+          if (length == MAX_FACE_FRAME_SIZE) memcpy(m_frame, src, MAX_FACE_FRAME_SIZE);
+          else FaceDisplayDecode(src, ROWS, COLS, m_frame);
 
         SendFrame();
       }

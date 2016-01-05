@@ -47,18 +47,12 @@ protected:
   RobotManager& _robotManager;
   IExternalInterface* _externalInterface;
   std::vector<Signal::SmartHandle> _signalHandles;
-  
-  void QueueActionHelper(const QueueActionPosition position, const u32 idTag, const u32 inSlot,
-                         ActionList& actionList, IActionRunner* action, const u8 numRetries = 0);
-  
-  // Note this version does not include the idTag parameter
-  void QueueActionHelper(const QueueActionPosition position, const u32 inSlot,
-                         ActionList& actionList, IActionRunner* action, const u8 numRetries = 0);
-  
+    
   void HandleActionEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleEnableLiftPower(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleMoodEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);

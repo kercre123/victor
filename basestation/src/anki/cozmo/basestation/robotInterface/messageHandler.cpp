@@ -48,13 +48,17 @@ void MessageHandler::ProcessMessages()
 
 Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable, bool hot)
 {
-  Comms::OutgoingPacket p;
-  p.bufferSize = (uint32_t)msg.Pack(p.buffer, p.MAX_SIZE);
-  p.destId = robotId;
-  p.reliable = reliable;
-  p.hot = hot;
+  if (_isInitialized)
+  {
+    Comms::OutgoingPacket p;
+    p.bufferSize = (uint32_t)msg.Pack(p.buffer, p.MAX_SIZE);
+    p.destId = robotId;
+    p.reliable = reliable;
+    p.hot = hot;
 
-  return _channel->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
+    return _channel->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
+  }
+  return RESULT_FAIL;
 }
 
 void MessageHandler::Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message)
@@ -116,8 +120,10 @@ void MessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
   }
 
   RobotInterface::RobotToEngine message;
-  if (message.Unpack(packet.buffer, packet.bufferSize) != packet.bufferSize) {
-    PRINT_NAMED_ERROR("RobotMessageHandler.MessageUnpack", "Message unpack error");
+  const size_t unpackSize = message.Unpack(packet.buffer, packet.bufferSize);
+  if (unpackSize != packet.bufferSize) {
+    PRINT_NAMED_ERROR("RobotMessageHandler.MessageUnpack", "Message unpack error, tag %02x expecting %d but have %d",
+                      msgID, static_cast<int>(unpackSize), packet.bufferSize);
     return;
   }
 

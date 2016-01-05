@@ -25,29 +25,20 @@ namespace Anki {
     public:
       ICompoundAction(std::initializer_list<IActionRunner*> actions);
       
-      void AddAction(IActionRunner* action);
+      virtual void AddAction(IActionRunner* action);
       
-      void ClearActions();
       
       // Call any unfinished constituent actions' Cleanup() methods
       virtual void Cleanup(Robot& robot) override final;
+      
+      // First calls cleanup on any constituent actions and then removes them
+      // from this compound action completely.
+      void ClearActions(Robot& robot);
       
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
       
       virtual const std::string& GetName() const override { return _name; }
-      
-      // If any of the consituent actions lock a system, the compound action
-      // will also lock it -- *for the entire duration of the compound action*
-      // TODO: Maybe we only want this behavior for parallel actions and for sequential actions we want to lock/unlock as each constituent runs. Add that as needed...
-      virtual bool ShouldLockHead() const override;
-      virtual bool ShouldLockLift() const override;
-      virtual bool ShouldLockWheels() const override;
-      
-      // A compound action will disable the union of all tracks its constituent
-      // actions want locked *for the entire duration of the compound action*.
-      // TODO: Similar to above, we may only want this for parallel actions, not sequential
-      virtual u8 GetAnimTracksToDisable() const override;
       
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
       
@@ -72,6 +63,10 @@ namespace Anki {
       // Default is 0 (no delay).
       void SetDelayBetweenActions(f32 seconds);
       
+      // We want to override and not ignore any movement tracks ourselves; our constituent actions will
+      // ignore what they want to when running
+      virtual u8 GetMovementTracksToIgnore() const override { return 0; }
+      
     private:
       virtual void Reset() override;
       
@@ -94,6 +89,12 @@ namespace Anki {
     public:
       CompoundActionParallel();
       CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
+      
+      virtual void AddAction(IActionRunner* action) override;
+      
+      // This compound action will disable the union of all tracks its constituent
+      // actions want locked *for the entire duration of the compound action*.
+      virtual u8 GetAnimTracksToDisable() const override;
       
     protected:
       

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <unordered_map>
 
+
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
@@ -28,6 +29,7 @@ namespace Audio {
 class AudioController;
 class AudioClientConnection;
 struct PostAudioEvent;
+struct StopAllAudioEvents;
 struct PostAudioGameState;
 struct PostAudioSwitchState;
 struct PostAudioParameter;
@@ -35,6 +37,7 @@ struct AudioCallbackDuration;
 struct AudioCallbackMarker;
 struct AudioCallbackMarkerComplete;
 enum class AudioCallbackFlag : uint8_t;
+enum class CallbackErrorType : uint8_t;
   
 class AudioServer : public Util::noncopyable {
   
@@ -52,12 +55,14 @@ public:
   
   // Client Connection Deletgate Methods
   void ProcessMessage( const PostAudioEvent& message, ConnectionIdType connectionId );
+  void ProcessMessage( const StopAllAudioEvents& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioGameState& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioSwitchState& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioParameter& message, ConnectionIdType connectionId );
   
   AudioController* GetAudioController() { return _audioController; }
   
+
 private:
   
   AudioController* _audioController = nullptr;
@@ -65,19 +70,22 @@ private:
   using ClientConnectionMap = std::unordered_map< ConnectionIdType, AudioClientConnection* >;
   ClientConnectionMap _clientConnections;
   
-  
   uint8_t _previousClientConnectionId = 0;
   
   // Methods
   
   ConnectionIdType GetNewClientConnectionId();
   
-  AudioEngine::AudioCallbackFlag ConvertCallbackFlagType( Anki::Cozmo::Audio::AudioCallbackFlag flags );
-  
   void PerformCallback( ConnectionIdType connectionId,
                         uint16_t callbackId,
                         const AudioEngine::AudioCallbackInfo& callbackInfo );
+  
+  void RegisterCladGameObjectsWithAudioController();
+  
+  Anki::Cozmo::Audio::CallbackErrorType ConvertErrorCallbackType( const AudioEngine::AudioCallbackErrorType errorType ) const;
+  
 };
+
   
 } // Audio
 } // Cozmo

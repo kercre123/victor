@@ -39,6 +39,11 @@
 
 #define DEBUG_GRIPPER 0
 
+// Enable this to light up the backpack whenever a sound is being played
+// When this is on, HAL::SetLED() doesn't work.
+#define LIGHT_BACKPACK_DURING_SOUND 0
+
+
 #if BLUR_CAPTURED_IMAGES
 #include "opencv2/imgproc/imgproc.hpp"
 #endif
@@ -137,6 +142,11 @@ namespace Anki {
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
 
+      #if(LIGHT_BACKPACK_DURING_SOUND)
+      bool playingSound_ = false;
+      #endif
+
+      
       // Face display
       webots::Display* face_;
       const u32 DISPLAY_WIDTH = 128;
@@ -210,14 +220,7 @@ namespace Anki {
           }
         }
       }
-
-      void ClearFace()
-      {
-        face_->setColor(0);
-        face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-        face_->setColor(0x0000f0ff);
-      }
-
+      
       void FaceUpdate()
       {
         // Check if blinking
@@ -240,6 +243,14 @@ namespace Anki {
             // This means audio lags other tracks but the amount should be imperceptible.
             audioReadyForFrame_ = true;
           }
+          
+          #if(LIGHT_BACKPACK_DURING_SOUND)
+          if (playingSound_ && audioEndTime_ != 0) {
+            leds_[LED_BACKPACK_BACK]->set(0x00ff0000);
+          } else {
+            leds_[LED_BACKPACK_BACK]->set(0x0);
+          }
+          #endif
         }
       }
 
@@ -487,9 +498,9 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
       */
 
-      leds_[LED_BACKPACK_FRONT]   = webotRobot_.getLED("ledHealth0");
+      leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
-      leds_[LED_BACKPACK_BACK]  = webotRobot_.getLED("ledHealth2");
+      leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
       leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
       leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
 
@@ -497,7 +508,7 @@ namespace Anki {
       face_ = webotRobot_.getDisplay("face_display");
       assert(face_->getWidth() == DISPLAY_WIDTH);
       assert(face_->getHeight() == DISPLAY_HEIGHT);
-      ClearFace();
+      FaceClear();
 
       isInitialized = true;
       return RESULT_OK;
@@ -765,24 +776,24 @@ namespace Anki {
             case BlockMessages::LightCubeMessage::Tag_moved:
             {
               ObjectMoved m;
-              m.timestamp = HAL::GetTimeStamp();
               memcpy(m.GetBuffer(), lcm.moved.GetBuffer(), lcm.moved.Size());
+              m.timestamp = HAL::GetTimeStamp();
               RobotInterface::SendMessage(m);
               break;
             }
             case BlockMessages::LightCubeMessage::Tag_stopped:
             {
               ObjectStoppedMoving m;
-              m.timestamp = HAL::GetTimeStamp();
               memcpy(m.GetBuffer(), lcm.stopped.GetBuffer(), lcm.stopped.Size());
+              m.timestamp = HAL::GetTimeStamp();
               RobotInterface::SendMessage(m);
               break;
             }
             case BlockMessages::LightCubeMessage::Tag_tapped:
             {
               ObjectTapped m;
-              m.timestamp = HAL::GetTimeStamp();              
               memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
+              m.timestamp = HAL::GetTimeStamp();
               RobotInterface::SendMessage(m);
               break;
             }
@@ -918,11 +929,13 @@ namespace Anki {
                                     "NULL frame pointer provided to CameraGetFrame(), check "
                                     "to make sure the image allocation succeeded.\n");
 
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
       static u32 lastFrameTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
       u32 currentTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
       AnkiConditionalWarn(currentTime_ms - lastFrameTime_ms > headCam_->getSamplingPeriod(),
                           "SimHAL.CameraGetFrame",
                           "Image requested too soon -- new frame may not be ready yet.\n");
+#endif
 
       const u8* image = headCam_->getImage();
 
@@ -973,11 +986,13 @@ namespace Anki {
     };
 
     void HAL::SetLED(LEDId led_id, u32 color) {
+      #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
         leds_[led_id]->set(color);
       } else {
         PRINT("Unhandled LED %d\n", led_id);
       }
+      #endif
     }
 
     void HAL::SetHeadlights(bool state)
@@ -1006,16 +1021,27 @@ namespace Anki {
       }
       audioEndTime_ += AUDIO_FRAME_TIME_MS;
       audioReadyForFrame_ = false;
+      
+      #if(LIGHT_BACKPACK_DURING_SOUND)
+      playingSound_ = msg == nullptr ? false : true;
+      #endif
     }
 
+    void HAL::FaceClear()
+    {
+      face_->setColor(0);
+      face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+      face_->setColor(0x0000f0ff);
+    }
 
-    void HAL::FaceAnimate(u8* src)
+    void HAL::FaceAnimate(u8* src, const u16 length)
     {
       // Clear the display
-      ClearFace();
+      FaceClear();
 
-      // Decode face
-      FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
+      // Decode the image
+      if (length == MAX_FACE_FRAME_SIZE) memcpy(faceFrame_, src, MAX_FACE_FRAME_SIZE);
+      else FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
 
       // Draw face
       FaceMove(facePosX_, facePosY_);
@@ -1044,7 +1070,7 @@ namespace Anki {
       u8 w = DISPLAY_WIDTH - ABS(x);
       u8 h = DISPLAY_HEIGHT - ABS(y);
 
-      ClearFace();
+      FaceClear();
 
       for (u8 i = 0; i < w; ++i) {
         for (u8 j = 0; j < h; ++j) {
@@ -1063,13 +1089,18 @@ namespace Anki {
     void HAL::FaceBlink()
     {
       faceBlinkStartTime_ = GetTimeStamp();
-      ClearFace();
+      FaceClear();
     }
 
 
     HAL::IDCard* HAL::GetIDCard()
     {
       return &idCard_;
+    }
+    
+    u32 HAL::GetID()
+    {
+      return 0;
     }
    
 

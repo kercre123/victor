@@ -21,6 +21,8 @@
 #ifndef _ANKICORETECH_COMMON_POINT_IMPL_H_
 #define _ANKICORETECH_COMMON_POINT_IMPL_H_
 
+#include "util/math/constantsAndMacros.h"
+
 #include "anki/common/basestation/math/point.h"
 
 #include "anki/common/shared/radians.h"
@@ -321,6 +323,34 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
+  bool Point<N,T>::operator<= (const Point<N,T>& other) const
+  {
+    CORETECH_ASSERT(N>0);
+    bool retVal = this->data[0] <= other[0];
+    PointDimType i = 1;
+    while(retVal && i<N) {
+      retVal = this->data[i] <= other[i];
+      ++i;
+    }
+    
+    return retVal;
+  }
+  
+  template<PointDimType N, typename T>
+  bool Point<N,T>::operator>= (const Point<N,T>& other) const
+  {
+    CORETECH_ASSERT(N>0);
+    bool retVal = this->data[0] >= other[0];
+    PointDimType i = 1;
+    while(retVal && i<N) {
+      retVal = this->data[i] >= other[i];
+      ++i;
+    }
+    
+    return retVal;
+  }
+  
+  template<PointDimType N, typename T>
   bool Point<N,T>::operator==(const Point<N,T>& other) const
   {
     CORETECH_ASSERT(N>0);
@@ -437,6 +467,40 @@ namespace Anki {
     }
   }
   
+  template<PointDimType N, typename T>
+  T Point<N,T>::GetMin(PointDimType* whichDim) const
+  {
+    PointDimType minDim = 0;
+    T retVal = this->operator[](minDim);
+    for(PointDimType i=1 ; i<N; ++i) {
+      if(this->operator[](i) < retVal) {
+        retVal = this->operator[](i);
+        minDim = i;
+      }
+    }
+    if(nullptr != whichDim) {
+      *whichDim = minDim;
+    }
+    return retVal;
+  }
+  
+  template<PointDimType N, typename T>
+  T Point<N,T>::GetMax(PointDimType* whichDim) const
+  {
+    PointDimType maxDim = 0;
+    T retVal = this->operator[](maxDim);
+    for(PointDimType i=1 ; i<N; ++i) {
+      if(this->operator[](i) > retVal) {
+        retVal = this->operator[](i);
+        maxDim = i;
+      }
+    }
+    if(nullptr != whichDim) {
+      *whichDim = maxDim;
+    }
+    return retVal;
+  }
+
   template<PointDimType N, typename T>
   std::ostream& operator<<(std::ostream& out, const Point<N,T>& p)
   {

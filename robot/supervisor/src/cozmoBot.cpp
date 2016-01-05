@@ -1,18 +1,20 @@
-#include "anki/common/robot/config.h"
-#include "anki/common/shared/utilities_shared.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "anki/cozmo/robot/debug.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/powerMessages.h"
-#include "anki/cozmo/robot/debug.h"
+#include "timeProfiler.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "liftController.h"
+#include "headController.h"
 #include "imuFilter.h"
+#include "proxSensors.h"
+#include "backpackLightController.h"
+#ifndef TARGET_K02
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
-#include "headController.h"
-#include "liftController.h"
 #include "testModeController.h"
 #include "localization.h"
 #include "pathFollower.h"
@@ -20,12 +22,14 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "animationController.h"
-#include "proxSensors.h"
-#include "backpackLightController.h"
 #include "blockLightController.h"
-#include "timeProfiler.h"
+#else
+#include "anki/cozmo/robot/logging.h"
+#endif
 
-#include "anki/messaging/shared/utilMessaging.h"
+#ifdef SIMULATOR
+#include "anki/vision/CameraSettings.h"
+#endif
 
 ///////// TESTING //////////
 
@@ -37,7 +41,7 @@
 
 namespace Anki {
   namespace Cozmo {
-    
+
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
@@ -49,7 +53,7 @@ namespace Anki {
       }
     }
 #endif
-    
+
     namespace Robot {
 
       // "Private Member Variables"
@@ -98,7 +102,9 @@ namespace Anki {
       {
         LiftController::StartCalibrationRoutine();
         HeadController::StartCalibrationRoutine();
+#ifndef TARGET_K02
         SteeringController::ExecuteDirectDrive(0,0);
+#endif
       }
 
 
@@ -108,15 +114,12 @@ namespace Anki {
       {
         bool isDone = false;
 
-        if(
-           LiftController::IsCalibrated()
-           && HeadController::IsCalibrated()
-           ) {
+        if (LiftController::IsCalibrated() && HeadController::IsCalibrated())
+				{
           PRINT("Motors calibrated\n");
           IMUFilter::Reset();
           isDone = true;
         }
-
         return isDone;
       }
 
@@ -126,6 +129,7 @@ namespace Anki {
         Result lastResult = RESULT_OK;
 
         // Coretech setup
+#ifndef TARGET_K02
 #ifndef SIMULATOR
 #if(DIVERT_PRINT_TO_RADIO)
         SetCoreTechPrintFunctionPtr(Messages::SendText);
@@ -135,14 +139,14 @@ namespace Anki {
 #elif(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
         SetCoreTechPrintFunctionPtr(Messages::SendText);
 #endif
-
+#endif
         // HAL and supervisor init
 #ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
         lastResult = HAL::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "HAL init failed.\n");
 #endif
-
+#ifndef TARGET_K02
         lastResult = Messages::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Messages / Reliable Transport init failed.\n");
@@ -161,11 +165,11 @@ namespace Anki {
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
-
+#endif
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "BackpackLightController init failed.\n");
-        
+
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == RESULT_FAIL) {
@@ -188,7 +192,7 @@ namespace Anki {
          return RESULT_FAIL;
          }
          */
-
+#ifndef TARGET_K02
         lastResult = DockingController::Init();;
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "DockingController init failed.\n");
@@ -197,14 +201,15 @@ namespace Anki {
         lastResult = PickAndPlaceController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PickAndPlaceController init failed.\n");
-
+#endif
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "LiftController init failed.\n");
-
+#ifndef TARGET_K02
         lastResult = AnimationController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "AnimationController init failed.\n");
+#endif
 
         // Start calibration
         StartMotorCalibrationRoutine();
@@ -231,18 +236,11 @@ namespace Anki {
       {
         START_TIME_PROFILE(CozmoBotMain, TOTAL);
         START_TIME_PROFILE(CozmoBot, HAL);
-        
+
         // HACK: Manually setting timestamp here in mainExecution until
         // until Nathan implements this the correct way.
         HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
-        
-        // TBD - This should be moved to simulator just before step_MainExecution is called
-#ifndef ROBOT_HARDWARE
-        // If the hardware interface needs to be advanced (as in the case of
-        // a Webots simulation), do that first.
-        HAL::Step();
-#endif
-        
+
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_ != 0) {
@@ -252,14 +250,14 @@ namespace Anki {
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
           }
         }
- 
+
 
 /*
         // Test code for measuring number of mainExecution tics per second
         static u32 cnt = 0;
         static u32 startTime = 0;
         const u32 interval_seconds = 5;
-        
+
         if (++cnt == (200 * interval_seconds)) {
           u32 numTicsPerSec = (cnt * 1000000) / (cycleStartTime - startTime);
           PRINT("TicsPerSec %d\n", numTicsPerSec);
@@ -267,7 +265,8 @@ namespace Anki {
           cnt = 0;
         }
 */
-        
+
+#ifndef TARGET_K02
         //////////////////////////////////////////////////////////////
         // Test Mode
         //////////////////////////////////////////////////////////////
@@ -280,12 +279,12 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, LOC);
         Localization::Update();
-
+#endif
 
         //////////////////////////////////////////////////////////////
         // Communications
         //////////////////////////////////////////////////////////////
-        
+
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
           PRINT("Robot radio is connected.\n");
@@ -294,21 +293,28 @@ namespace Anki {
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           Messages::ResetInit();
+#ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
           SteeringController::ExecuteDirectDrive(0,0);
+#endif
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
-          PickAndPlaceController::Reset();
-          PickAndPlaceController::SetCarryState(CARRY_NONE);
           BackpackLightController::TurnOffAll();
           BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
+#ifndef TARGET_K02
+          PickAndPlaceController::Reset();
+          PickAndPlaceController::SetCarryState(CARRY_NONE);
+          AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
+          HAL::FaceClear();
+#endif
           wasConnected_ = false;
         }
 
+#ifndef TARGET_K02
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::ProcessBTLEMessages();
-
+#endif
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
@@ -316,7 +322,7 @@ namespace Anki {
         IMUFilter::Update();
         ProxSensors::Update();
 
-        
+#ifndef TARGET_K02
         //////////////////////////////////////////////////////////////
         // Power management
         //////////////////////////////////////////////////////////////
@@ -325,17 +331,17 @@ namespace Anki {
           ChargerEvent msg;
           msg.onCharger = _wasCharging = true;
           RobotInterface::SendMessage(msg);
-          
+
           // Stop whatever we were doing
           //AnimationController::Clear();
           //PickAndPlaceController::Reset();
-          
+
         } else if (!HAL::BatteryIsOnCharger() && _wasCharging) {
           ChargerEvent msg;
           msg.onCharger = _wasCharging = false;
           RobotInterface::SendMessage(msg);
         }
-        
+
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
@@ -344,15 +350,16 @@ namespace Anki {
           PRINT("Failed updating AnimationController. Clearing.\n");
           AnimationController::Clear();
         }
+#endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
-
+        BackpackLightController::Update();
+#ifndef TARGET_K02
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
-        BackpackLightController::Update();
         BlockLightController::Update();
 
         //////////////////////////////////////////////////////////////
@@ -360,7 +367,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, AUDIO);
         Anki::Cozmo::HAL::AudioFill();
-        
+
         //////////////////////////////////////////////////////////////
         // State Machine
         //////////////////////////////////////////////////////////////
@@ -406,14 +413,15 @@ namespace Anki {
         SpeedController::Manage();
         SteeringController::Manage();
         WheelController::Manage();
-        
+
         MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
         Anki::Cozmo::HAL::ManageCubes();
-        
+
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
+#endif
 
         Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
@@ -424,11 +432,6 @@ namespace Anki {
         }
 #endif
 
-// TBD - This should be moved to simulator just after step_MainExecution is called
-#ifndef ROBOT_HARDWARE
-        HAL::UpdateDisplay();
-#endif
-        
         // Print time profile stats
         END_TIME_PROFILE(CozmoBot);
         END_TIME_PROFILE(CozmoBotMain);
@@ -443,7 +446,7 @@ namespace Anki {
           avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
         }
         lastCycleStartTime_ = cycleStartTime;
-        
+
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
@@ -475,15 +478,15 @@ namespace Anki {
       Result step_LongExecution()
       {
         Result retVal = RESULT_OK;
-        
+
 #       ifdef SIMULATOR
-        
+
         if (!HAL::IsVideoEnabled()) {
           return retVal;
         }
 
         if (HAL::imageSendMode_ != Off) {
-        
+
           TimeStamp_t currentTime = HAL::GetTimeStamp();
 
           // This computation is based on Cyberbotics support's explaination for how to compute
@@ -525,12 +528,12 @@ namespace Anki {
               lastImageSentTime = currentImageTime;
             }
           } // if(lastImageSentTime != currentImageTime)
-          
-          
+
+
           if (HAL::imageSendMode_ == SingleShot) {
             HAL::imageSendMode_ = Off;
           }
-          
+
         } // if (HAL::imageSendMode_ != ISM_OFF)
 
 #       endif // ifdef SIMULATOR

@@ -67,25 +67,25 @@ namespace Cozmo {
       
       // Map from string name of frame to which track we want to store it in:
       if(frameName == HeadAngleKeyFrame::GetClassName()) {
-        addResult = _headTrack.AddKeyFrame(jsonFrame);
+        addResult = _headTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
-        addResult = _liftTrack.AddKeyFrame(jsonFrame);
+        addResult = _liftTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == FaceAnimationKeyFrame::GetClassName()) {
-        addResult = _faceAnimTrack.AddKeyFrame(jsonFrame);
+        addResult = _faceAnimTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == FacePositionKeyFrame::GetClassName()) {
-        addResult = _facePosTrack.AddKeyFrame(jsonFrame);
+        addResult = _facePosTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == DeviceAudioKeyFrame::GetClassName()) {
-        addResult = _deviceAudioTrack.AddKeyFrame(jsonFrame);
+        addResult = _deviceAudioTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == BlinkKeyFrame::GetClassName()) {
-        addResult = _blinkTrack.AddKeyFrame(jsonFrame);
+        addResult = _blinkTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == RobotAudioKeyFrame::GetClassName()) {
-        addResult = _robotAudioTrack.AddKeyFrame(jsonFrame);
+        addResult = _robotAudioTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
-        addResult = _backpackLightsTrack.AddKeyFrame(jsonFrame);
+        addResult = _backpackLightsTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == BodyMotionKeyFrame::GetClassName()) {
-        addResult = _bodyPosTrack.AddKeyFrame(jsonFrame);
+        addResult = _bodyPosTrack.AddKeyFrameToBack(jsonFrame);
       } else if(frameName == ProceduralFaceKeyFrame::GetClassName()) {
-        addResult = _proceduralFaceTrack.AddKeyFrame(jsonFrame);
+        addResult = _proceduralFaceTrack.AddKeyFrameToBack(jsonFrame);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
                           "Frame %d in '%s' animation has unrecognized name '%s'.",
@@ -156,26 +156,28 @@ namespace Cozmo {
   }
   
   /*
-  Result Animation::AddKeyFrame(const HeadAngleKeyFrame& kf)
+  Result Animation::AddKeyFrameToBack(const HeadAngleKeyFrame& kf)
   {
-    return _headTrack.AddKeyFrame(kf);
+    return _headTrack.AddKeyFrameToBack(kf);
   }
    */
   
   // Helper macro for running a given method of all tracks and combining the result
   // in the specified way. To just call a method, use ";" for COMBINE_WITH, or
   // use "&&" or "||" to combine into a single result.
-# define ALL_TRACKS(__METHOD__, __COMBINE_WITH__) \
-_headTrack.__METHOD__() __COMBINE_WITH__ \
-_liftTrack.__METHOD__() __COMBINE_WITH__ \
-_faceAnimTrack.__METHOD__() __COMBINE_WITH__ \
-_proceduralFaceTrack.__METHOD__() __COMBINE_WITH__ \
-_facePosTrack.__METHOD__() __COMBINE_WITH__ \
-_deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
-_robotAudioTrack.__METHOD__() __COMBINE_WITH__ \
-_backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
-_bodyPosTrack.__METHOD__() __COMBINE_WITH__ \
-_blinkTrack.__METHOD__()
+#define ALL_TRACKS(__METHOD__, __COMBINE_WITH__, ...) \
+_headTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_liftTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_faceAnimTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_proceduralFaceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_facePosTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_deviceAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_robotAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_backpackLightsTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_bodyPosTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_blinkTrack.__METHOD__(__VA_ARGS__)
+  
+  //# define ALL_TRACKS(__METHOD__, __ARG__, __COMBINE_WITH__) ALL_TRACKS_WITH_ARG(__METHOD__, void, __COMBINE_WITH__)
   
   Result Animation::Init()
   {
@@ -207,6 +209,11 @@ _blinkTrack.__METHOD__()
     return ALL_TRACKS(HasFramesLeft, ||);
   }
 
+  void Animation::SetIsLive(bool isLive)
+  {
+    _isLive = isLive;
+    ALL_TRACKS(SetIsLive, ;, isLive);
+  }
   
 } // namespace Cozmo
 } // namespace Anki

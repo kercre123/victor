@@ -16,7 +16,7 @@ static const int CLOCK_MOD = PERF_CLOCK / SAMPLE_RATE;
 
 static volatile uint16_t* DAC_WRITE = (volatile uint16_t*) &DAC0_DAT0L;
 
-void Anki::Cozmo::HAL::DACInit(void) {
+void Anki::Cozmo::HAL::DAC::Init(void) {
   #ifdef EP1_HEADBOARD
   SOURCE_SETUP(GPIO_AUDIO_STANDBY, SOURCE_AUDIO_STANDBY, SourceGPIO);
   GPIO_RESET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
@@ -50,7 +50,7 @@ void Anki::Cozmo::HAL::DACInit(void) {
   PDB0_SC |= PDB_SC_SWTRIG_MASK ;       // Trigger the PDB because why not
 }
 
-void Anki::Cozmo::HAL::EnableAudio(bool enable) {
+void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
   #ifdef EP1_HEADBOARD
   if (enable) {
     GPIO_SET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
@@ -71,7 +71,7 @@ static inline uint16_t MuLawDecompress(uint8_t byte) {
   return 0x7FF + ((byte & 0x80) ? -bits : bits);
 }
 
-void Anki::Cozmo::HAL::FeedDAC(uint8_t* samples, int length) {  
+void Anki::Cozmo::HAL::DAC::Feed(uint8_t* samples, int length) {  
   static int write_pointer = 0;
   
   while (length-- > 0) {
@@ -80,7 +80,7 @@ void Anki::Cozmo::HAL::FeedDAC(uint8_t* samples, int length) {
   }
 }
 
-void Anki::Cozmo::HAL::DACTone(void) {
+void Anki::Cozmo::HAL::DAC::Tone(void) {
   EnableAudio(true);
   for (int i = 0; i < 16; i++) {
     DAC_WRITE[i] = 0x100 + 0xFF * sinf(i * M_PI_2 / 16);

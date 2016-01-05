@@ -92,6 +92,7 @@ protected:
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
+  virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
   
   
   // Message senders
@@ -104,6 +105,7 @@ protected:
   void SendMoveLift(const f32 speed_rad_per_sec);
   void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
+  void SendEnableLiftPower(bool enable);
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode, u8 robotID);
@@ -205,7 +207,9 @@ protected:
                                 const bool usePreDockPose,
                                 const bool useManualSpeed = false);
   
-  void SendExecuteTestPlan();
+  void SendTrackToObject(const u32 objectID, bool headOnly = false);
+  void SendTrackToFace(const u32 faceID, bool headOnly = false);
+  void SendExecuteTestPlan(PathMotionProfile motionProf);
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();
@@ -217,7 +221,8 @@ protected:
     const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight);
   void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
   void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
-  void SendSteeringControllerGains(const f32 k1, const f32 k2);
+  void SendSteeringControllerGains(const f32 k1, const f32 k2,
+                                   const f32 dockPathDistOffsetCap_mm, const f32 dockPathAngularOffsetCap_rad);
   void SendSetRobotVolume(const f32 volume);
   void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
@@ -260,8 +265,9 @@ protected:
   
   const std::map<s32, Pose3d>& GetObjectPoseMap();
   
-  const ObservedObject& GetCurrentlyObservedObject() const;
+  const ObservedObject& GetLastObservedObject() const;
 
+  const Vision::TrackedFace::ID_t GetLastObservedFaceID() const;
   
   const std::unordered_set<std::string>& GetAvailableAnimations() const;
   u32 GetNumAvailableAnimations() const;
@@ -288,6 +294,7 @@ private:
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
+  void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
   
   void UpdateActualObjectPoses();
   

@@ -45,9 +45,18 @@ namespace Anki {
       
       Result   Update(Robot& robot);
       
-      Result   QueueNext(IActionRunner  *action,  u8 numRetries = 0);
-      Result   QueueAtEnd(IActionRunner *action, u8 numRetires = 0);
-      Result   QueueNow(IActionRunner   *action,   u8 numRetries = 0);
+      // Queue action to run right after the current action, before anything else in the queue
+      Result   QueueNext(IActionRunner    *action, u8 numRetries = 0);
+      
+      // Queue action to run after everything else currently in the queue
+      Result   QueueAtEnd(IActionRunner   *action, u8 numRetires = 0);
+      
+      // Cancel the current action and immediately run the new action, preserving rest of queue
+      Result   QueueNow(IActionRunner     *action, u8 numRetries = 0);
+      
+      // Stop current action and reset it, insert new action at the front, leaving
+      // current action in the queue to run fresh next (after this newly-inserted action)
+      Result   QueueAtFront(IActionRunner *action, u8 numRetries = 0);
       
       // Blindly clear the queue
       void     Clear();
@@ -60,6 +69,7 @@ namespace Anki {
       size_t   Length() const { return _queue.size(); }
       
       IActionRunner* GetCurrentAction();
+      const IActionRunner* GetCurrentAction() const;
       void           PopCurrentAction();
       
       void Print() const;
@@ -78,6 +88,8 @@ namespace Anki {
     public:
       using SlotHandle = s32;
       
+      static const SlotHandle UnknownSlot = -1;
+      
       ActionList();
       ~ActionList();
       
@@ -91,11 +103,14 @@ namespace Anki {
       
       // Queue an action into a specific slot. If that slot does not exist
       // (perhaps because it completed before this call) it will be created.
+      // These wrap correspondong QueueFoo() methods in ActionQueue.
       Result     QueueActionNext(SlotHandle  atSlot, IActionRunner* action, u8 numRetries = 0);
       Result     QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
-      
-      // Start doing the given action *now* -- cancels any currently-running action.
       Result     QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
+      
+      Result     QueueAction(SlotHandle atSlot, QueueActionPosition inPosition,
+                             IActionRunner* action, u8 numRetries = 0);
       
       bool       IsEmpty() const;
       
@@ -116,7 +131,10 @@ namespace Anki {
       
       // Returns true if actionName is the name of one of the actions that are currently
       // being executed.
-      bool       IsCurrAction(const std::string& actionName);
+      bool       IsCurrAction(const std::string& actionName) const;
+
+      // Returns true if the passed in action tag matches the action currently playing in the given slot
+      bool       IsCurrAction(u32 idTag, SlotHandle fromSlot) const;
 
       
     protected:
@@ -141,6 +159,11 @@ namespace Anki {
     inline Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
       return _queues[atSlot].QueueNow(action, numRetries);
+    }
+    
+    inline Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      return _queues[atSlot].QueueAtFront(action, numRetries);
     }
     
     inline size_t ActionList::GetQueueLength(SlotHandle atSlot)

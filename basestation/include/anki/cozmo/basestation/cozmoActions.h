@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
@@ -24,6 +25,15 @@
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/pathMotionProfile.h"
+// Audio
+#include "clad/audio/audioEventTypes.h"
+#include "clad/audio/audioGameObjectTypes.h"
+#include "clad/audio/audioStateTypes.h"
+#include "clad/audio/audioSwitchTypes.h"
+#include "clad/audio/audioParameterTypes.h"
+
+#include <memory>
+
 
 namespace Anki {
   
@@ -36,6 +46,7 @@ namespace Anki {
 
     // Forward Declarations:
     class Robot;
+    class Animation;
     
     class DriveToPoseAction : public IAction
     {
@@ -68,12 +79,23 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
+      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
+      virtual u8 GetMovementTracksToIgnore() const override
+      {
+        u8 ignoredTracks = (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK;
+        if (!_useManualSpeed)
+        {
+          ignoredTracks |= ((uint8_t)AnimTrackFlag::BODY_TRACK);
+        }
+        return ignoredTracks;
+      }
+      
+
     protected:
 
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot &robot) override;
-      virtual void Reset() override;
       
       Result SetGoal(const Pose3d& pose);
       Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
@@ -83,9 +105,6 @@ namespace Anki {
       Result SetGoals(const std::vector<Pose3d>& poses, const Point3f& distThreshold, const Radians& angleThreshold);
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
-      
-      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
-      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       bool     _startedTraversingPath = false;
       
@@ -155,7 +174,6 @@ namespace Anki {
                                     bool& alreadyInPosition);
       
       virtual void Cleanup(Robot &robot) override;
-      virtual void Reset() override;
       
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
@@ -225,13 +243,16 @@ namespace Anki {
       bool IsBodyInPosition(const Robot& robot, Radians& currentAngle) const;
       
       bool    _inPosition = false;
+      bool    _turnStarted = false;
       Radians _targetAngle;
-      Radians _angleTolerance = DEG_TO_RAD(5);
+      Radians _angleTolerance = POINT_TURN_ANGLE_TOL;
       Radians _variability = 0;
       bool    _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = 50.f;
       f32     _accel_radPerSec2 = 10.f;
       u32     _eyeShiftTag = 0;
+      bool    _eyeShiftRemoved = false;
+      Radians _halfAngle = 0.f;
       
     }; // class TurnInPlaceAction
     
@@ -275,7 +296,7 @@ namespace Anki {
     class MoveHeadToAngleAction : public IAction
     {
     public:
-      MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance = DEG_TO_RAD(2.f),
+      MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance = HEAD_ANGLE_TOL,
                             const Radians& variability = 0);
       
       virtual const std::string& GetName() const override { return _name; }
@@ -309,7 +330,9 @@ namespace Anki {
       f32         _accel_radPerSec2   = 20.f;
       
       u32         _eyeShiftTag = 0;
-
+      bool        _eyeShiftRemoved = false;
+      Radians     _halfAngle;
+      
     };  // class MoveHeadToAngleAction
     
     // Set the lift to specified height with a given tolerance. Note that settign
@@ -333,6 +356,12 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
+
+      // how long this action should take (which, in turn, effects lift speed)
+      void SetDuration(float duration_sec) { _duration = duration_sec; }
+      
+      void SetMaxLiftSpeed(float speedRadPerSec) { _maxLiftSpeedRadPerSec = speedRadPerSec; }
+      void SetLiftAccel(float accelRadPerSec2) { _liftAccelRacPerSec2 = accelRadPerSec2; }
       
     protected:
       
@@ -346,13 +375,16 @@ namespace Anki {
       
       bool IsLiftInPosition(const Robot& robot) const;
       
-      f32          _height_mm;
-      f32          _heightTolerance;
-      f32          _variability;
-      f32          _heightWithVariation;
+      f32         _height_mm;
+      f32         _heightTolerance;
+      f32         _variability;
+      f32         _heightWithVariation;
+      f32         _duration = 0.0f; // 0 means "as fast as it can"
+      f32         _maxLiftSpeedRadPerSec = 10.0f;
+      f32         _liftAccelRacPerSec2 = 20.0f;
       
-      std::string  _name;
-      bool         _inPosition;
+      std::string _name;
+      bool        _inPosition;
       
     }; // class MoveLiftToHeightAction
     
@@ -378,15 +410,15 @@ namespace Anki {
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxPanSpeed(f32 maxSpeed_radPerSec)        { _maxPanSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
-      void SetPanTolerance(const Radians& angleTol_rad)  { _panAngleTol = angleTol_rad.getAbsoluteVal(); }
+      void SetPanTolerance(const Radians& angleTol_rad);
       void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetTiltAccel(f32 accel_radPerSec2)            { _tiltAccel_radPerSec2 = accel_radPerSec2; }
-      void SetTiltTolerance(const Radians& angleTol_rad) { _tiltAngleTol = angleTol_rad.getAbsoluteVal(); }
+      void SetTiltTolerance(const Radians& angleTol_rad);
 
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Reset() override;
+      virtual void Cleanup(Robot& robot) override;
       
       void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
@@ -416,7 +448,7 @@ namespace Anki {
     class FacePoseAction : public PanAndTiltAction
     {
     public:
-      // Note that the rotation in formation in pose will be ignored
+      // Note that the rotation information in pose will be ignored
       FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle);
       
       virtual const std::string& GetName() const override;
@@ -448,11 +480,12 @@ namespace Anki {
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
+
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
       
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual bool ShouldLockWheels() const override { return true; }
       
       // Max amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
@@ -493,18 +526,20 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
+      
+      // We don't want to ignore movement commands for Body during FaceObjectAction
+      virtual u8 GetMovementTracksToIgnore() const override
+      {
+        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+      }
       
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Reset() override;
       
       virtual Radians GetHeadAngle(f32 heightDiff) override;
-      
-      // Override to allow wheel control while facing the object
-      virtual bool ShouldLockWheels() const override { return false; }
       
       bool                 _facePoseCompoundActionDone;
       
@@ -523,20 +558,39 @@ namespace Anki {
     {
     public:
       IDockAction(ObjectID objectID,
-                  const bool useManualSpeed = false,
-                  const f32 placementOffsetX_mm = 0,
-                  const f32 placementOffsetY_mm = 0,
-                  const f32 placementOffsetAngle_rad = 0,
-                  const bool placeObjectOnGround = false);
+                  const bool useManualSpeed = false);
       
-      virtual ~IDockAction();
+      virtual ~IDockAction() { }
       
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
+
+      // Set docking speed and acceleration
+      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
+      void SetSpeed(f32 speed_mmps);
+      void SetAccel(f32 accel_mmps2);
+      
+      // Set placement offset relative to marker
+      void SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad);
+      
+      // Set whether or not to place carried object on ground
+      void SetPlaceOnGround(bool placeOnGround);
+      
       
       virtual u8 GetAnimTracksToDisable() const override {
         return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
+      }
+      
+      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
+      virtual u8 GetMovementTracksToIgnore() const override
+      {
+        u8 ignoredTracks = (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK;
+        if (!_useManualSpeed)
+        {
+          ignoredTracks |= ((uint8_t)AnimTrackFlag::BODY_TRACK);
+        }
+        return ignoredTracks;
       }
       
     protected:
@@ -559,28 +613,29 @@ namespace Anki {
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       virtual ActionResult Verify(Robot& robot) = 0;
       
-      virtual void Reset() override;
-      
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
-      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
-      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
-      
       ObjectID                   _dockObjectID;
       DockAction                 _dockAction;
-      const Vision::KnownMarker* _dockMarker;
-      const Vision::KnownMarker* _dockMarker2;
-      Radians                    _preActionPoseAngleTolerance;
-      f32                        _waitToVerifyTime;
-      bool                       _wasPickingOrPlacing;
-      bool                       _useManualSpeed;
-      FaceObjectAction*          _faceAndVerifyAction;
-      f32                        _placementOffsetX_mm;
-      f32                        _placementOffsetY_mm;
-      f32                        _placementOffsetAngle_rad;
-      bool                       _placeObjectOnGroundIfCarrying;
+      const Vision::KnownMarker* _dockMarker                     = nullptr;
+      const Vision::KnownMarker* _dockMarker2                    = nullptr;
+      Radians                    _preActionPoseAngleTolerance    = DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE;
+      f32                        _waitToVerifyTime               = -1;
+      bool                       _wasPickingOrPlacing            = false;
+      bool                       _useManualSpeed                 = false;
+      IActionRunner*             _faceAndVerifyAction            = nullptr;
+      f32                        _placementOffsetX_mm            = 0;
+      f32                        _placementOffsetY_mm            = 0;
+      f32                        _placementOffsetAngle_rad       = 0;
+      bool                       _placeObjectOnGroundIfCarrying  = false;
+      f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
+      f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
+      
+    private:
+      
       u32                        _squintLayerTag;
+      
     }; // class IDockAction
 
     
@@ -589,7 +644,7 @@ namespace Anki {
     {
     public:
       AlignWithObjectAction(ObjectID objectID,
-                            f32 distanceFromMarker_mm,
+                            const f32 distanceFromMarker_mm,
                             const bool useManualSpeed = false);
       virtual ~AlignWithObjectAction();
       
@@ -599,15 +654,13 @@ namespace Anki {
       
     protected:
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
 
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
       virtual ActionResult Verify(Robot& robot) override;
-      
-      virtual void Reset() override;
       
     }; // class AlignWithObjectAction
     
@@ -618,7 +671,6 @@ namespace Anki {
     public:
       PickupObjectAction(ObjectID objectID,
                          const bool useManualSpeed = false);
-      virtual ~PickupObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -628,15 +680,13 @@ namespace Anki {
       
     protected:
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
       virtual ActionResult Verify(Robot& robot) override;
-      
-      virtual void Reset() override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -649,10 +699,9 @@ namespace Anki {
     {
     public:
       PlaceRelObjectAction(ObjectID objectID,
-                           const bool placeOnGround = false,                           
+                           const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const bool useManualSpeed = false);
-      virtual ~PlaceRelObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -662,15 +711,13 @@ namespace Anki {
       
     protected:
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
       virtual ActionResult Verify(Robot& robot) override;
-      
-      virtual void Reset() override;
       
       // For verifying if we successfully picked up the object
       //Pose3d _dockObjectOrigPose;
@@ -680,7 +727,7 @@ namespace Anki {
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
       
-      IActionRunner*             _placementVerifyAction;
+      IActionRunner*             _placementVerifyAction = nullptr;
       bool                       _verifyComplete; // used in PLACE modes
       
     }; // class PlaceRelObjectAction
@@ -693,7 +740,6 @@ namespace Anki {
     public:
       RollObjectAction(ObjectID objectID,
                        const bool useManualSpeed = false);
-      virtual ~RollObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -702,7 +748,7 @@ namespace Anki {
       virtual RobotActionType GetType() const override;
 
       // Override completion signal to fill in information about rolled objects
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
 
     protected:
       
@@ -712,14 +758,12 @@ namespace Anki {
       
       virtual ActionResult Verify(Robot& robot) override;
       
-      virtual void Reset() override;
-
       // For verifying if we successfully rolled the object
       Pose3d _dockObjectOrigPose;
       
-      const Vision::KnownMarker* _expectedMarkerPostRoll;
+      const Vision::KnownMarker* _expectedMarkerPostRoll = nullptr;
       
-      IActionRunner*             _rollVerifyAction;
+      IActionRunner*             _rollVerifyAction = nullptr;
       
     }; // class RollObjectAction
     
@@ -729,8 +773,7 @@ namespace Anki {
     {
     public:
       PopAWheelieAction(ObjectID objectID,
-                       const bool useManualSpeed = false);
-      virtual ~PopAWheelieAction();
+                        const bool useManualSpeed = false);
       
       virtual const std::string& GetName() const override;
       
@@ -739,7 +782,7 @@ namespace Anki {
       virtual RobotActionType GetType() const override;
       
       // Override completion signal to fill in information about rolled objects
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
     protected:
       
@@ -748,8 +791,6 @@ namespace Anki {
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
       virtual ActionResult Verify(Robot& robot) override;
-      
-     // virtual void Reset() override;
       
     }; // class PopAWheelieAction
 
@@ -776,8 +817,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::ALIGN_WITH_OBJECT; }
       
       // Use AlignWithObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionUnion);
       }
       
     };
@@ -803,8 +844,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use PickupObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionUnion);
       }
       
     };
@@ -830,8 +871,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use PlaceRelObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionUnion);
       }
       
     };
@@ -864,8 +905,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use PlaceRelObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionUnion);
       }
       
     };
@@ -890,8 +931,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use RollObjectAction's completion signal
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionUnion);
       }
       
     };
@@ -914,8 +955,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use RollObjectAction's completion signal
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionUnion);
       }
       
     };
@@ -925,7 +966,6 @@ namespace Anki {
     public:
       
       PlaceObjectOnGroundAction();
-      virtual ~PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
@@ -936,14 +976,13 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Reset() override;
       
       // Need longer than default for check if done:
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
       
       ObjectID                    _carryingObjectID;
-      const Vision::KnownMarker*  _carryObjectMarker;
-      FaceObjectAction*           _faceAndVerifyAction;
+      const Vision::KnownMarker*  _carryObjectMarker = nullptr;
+      IActionRunner*              _faceAndVerifyAction = nullptr;
       
     }; // class PlaceObjectOnGroundAction
     
@@ -969,7 +1008,8 @@ namespace Anki {
     class CrossBridgeAction : public IDockAction
     {
     public:
-      CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
+      CrossBridgeAction(ObjectID bridgeID,
+                        const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::CROSS_BRIDGE; }
@@ -993,7 +1033,8 @@ namespace Anki {
     class AscendOrDescendRampAction : public IDockAction
     {
     public:
-      AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
+      AscendOrDescendRampAction(ObjectID rampID,
+                                const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::ASCEND_OR_DESCEND_RAMP; }
@@ -1016,7 +1057,8 @@ namespace Anki {
     class MountChargerAction : public IDockAction
     {
     public:
-      MountChargerAction(ObjectID chargerID, const bool useManualSpeed);
+      MountChargerAction(ObjectID chargerID,
+                         const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::MOUNT_CHARGER; }
@@ -1042,25 +1084,22 @@ namespace Anki {
     {
     public:
       TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
-      virtual ~TraverseObjectAction();
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TRAVERSE_OBJECT; }
       
-      virtual void Cleanup(Robot& robot) override {
-        if(_chosenAction != nullptr) {
-          _chosenAction->Cleanup(robot);
-        }
-      }
+      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
       
     protected:
       
       // Update will just call the chosenAction's implementation
       virtual ActionResult UpdateInternal(Robot& robot) override;
-      virtual void Reset() override;
+      virtual void Reset() override { }
       
       ObjectID       _objectID;
-      IActionRunner* _chosenAction;
+      IActionRunner* _chosenAction = nullptr;
+      f32            _speed_mmps;
+      f32            _accel_mmps2;
       bool           _useManualSpeed;
       
     }; // class TraverseObjectAction
@@ -1072,19 +1111,7 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(const ObjectID& objectID,
                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
-                                     const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::ENTRY,
-                                motionProfile,
-                                0,
-                                false,
-                                0,
-                                useManualSpeed),
-        new TraverseObjectAction(objectID, useManualSpeed)})
-      {
-        
-      }
+                                     const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
       
@@ -1095,19 +1122,7 @@ namespace Anki {
     public:
       DriveToAndMountChargerAction(const ObjectID& objectID,
                                    const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
-                                   const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::ENTRY,
-                                motionProfile,
-                                0,
-                                false,
-                                0,
-                                useManualSpeed),
-        new MountChargerAction(objectID, useManualSpeed)})
-      {
-        
-      }
+                                   const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_MOUNT_CHARGER; }
       
@@ -1119,12 +1134,13 @@ namespace Anki {
     {
     public:
       PlayAnimationAction(const std::string& animName,
-                          const u32 numLoops = 1);
+                          u32 numLoops = 1,
+                          bool interruptRunning = true);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
     protected:
       
@@ -1137,27 +1153,67 @@ namespace Anki {
       std::string   _name;
       u32           _numLoops;
       bool          _startedPlaying;
+      bool          _stoppedPlaying;
+      bool          _wasAborted;
       u8            _animTag;
+      bool          _interruptRunning;
+      
+      // For responding to AnimationStarted and AnimationEnded events
+      Signal::SmartHandle _startSignalHandle;
+      Signal::SmartHandle _endSignalHandle;
+      Signal::SmartHandle _abortSignalHandle;
+      
+    private:
+      // For handling playing an altered copy of an animation
+      std::unique_ptr<Animation> _alteredAnimation;
+      
+      bool NeedsAlteredAnimation(Robot& robot) const;
       
     }; // class PlayAnimationAction
     
     
-    class PlaySoundAction : public IAction
+    class DeviceAudioAction : public IAction
     {
     public:
-      PlaySoundAction(const std::string& soundName);
+      // Play Audio Event
+      // TODO: Add bool to set if caller want's to block "wait" until audio is completed
+      DeviceAudioAction(const Audio::EventType event,
+                        const Audio::GameObjectType gameObj,
+                        const bool waitUntilDone = false);
+      
+      // Stop All Events on Game Object, pass in Invalid to stop all audio
+      DeviceAudioAction(const Audio::GameObjectType gameObj);
+      
+      // Change Music state
+      DeviceAudioAction(const Audio::MusicGroupStates state);
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::PLAY_SOUND; }
+      virtual RobotActionType GetType() const override { return RobotActionType::DEVICE_AUDIO; }
       
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
+
     protected:
       
+      virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
-      std::string _soundName;
-      std::string _name;
+      enum class AudioActionType : uint8_t {
+        Event = 0,
+        StopEvents,
+        SetState,
+      };
       
-    }; // class PlaySoundAction
+      AudioActionType           _actionType;
+      std::string               _name;
+      bool                      _isCompleted    = false;
+      bool                      _waitUntilDone  = false;
+      Audio::EventType          _event          = Audio::EventType::Invalid;
+      Audio::GameObjectType     _gameObj        = Audio::GameObjectType::Invalid;
+      Audio::GameStateGroupType _stateGroup     = Audio::GameStateGroupType::Invalid;
+      Audio::GameStateType      _state          = Audio::GameStateType::Invalid;
+      
+    }; // class PlayAudioAction
+    
     
     // Waits for a specified amount of time in seconds, from the time the action
     // is begun. Returns RUNNING while waiting and SUCCESS when the time has

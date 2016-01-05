@@ -210,10 +210,10 @@ ProceduralFaceParams& ProceduralFaceParams::Combine(const ProceduralFaceParams& 
 }
 
   
-ProceduralFaceParams::Value ProceduralFaceParams::Clip(Parameter param, Value value) const
+ProceduralFaceParams::Value ProceduralFaceParams::Clip(WhichEye eye, Parameter param, Value newValue) const
 {
 # define POS_INF std::numeric_limits<Value>::max()
-# define NEG_INF std::numeric_limits<Value>::min()
+# define NEG_INF std::numeric_limits<Value>::lowest()
   
   static const std::map<Parameter, std::pair<Value,Value>> LimitsLUT = {
     {Parameter::LowerLidAngle,      {-45,   45}},
@@ -235,21 +235,27 @@ ProceduralFaceParams::Value ProceduralFaceParams::Clip(Parameter param, Value va
   };
   
   auto limitsIter = LimitsLUT.find(param);
-  if(limitsIter == LimitsLUT.end()) {
-    // No limits specified for this parameter
-    return value;
-  } else {
+  if(limitsIter != LimitsLUT.end())
+  {
     const Value MinVal = limitsIter->second.first;
     const Value MaxVal = limitsIter->second.second;
-    if(value < MinVal) {
-      ClipWarnFcn(EnumToString(param), value, MinVal, MaxVal);
-      return MinVal;
-    } else if(value > MaxVal) {
-      ClipWarnFcn(EnumToString(param), value, MinVal, MaxVal);
-      return MaxVal;
+    if(newValue < MinVal) {
+      ClipWarnFcn(EnumToString(param), newValue, MinVal, MaxVal);
+      newValue = MinVal;
+    } else if(newValue > MaxVal) {
+      ClipWarnFcn(EnumToString(param), newValue, MinVal, MaxVal);
+      newValue = MaxVal;
     }
-    return value;
   }
+  
+  if(std::isnan(newValue)) {
+    PRINT_NAMED_WARNING("ProceduralFaceParams.Clip.NaN",
+                        "Returning original value instead of NaN for %s",
+                        EnumToString(param));
+    newValue = GetParameter(eye, param);
+  }
+  
+  return newValue;
   
 # undef POS_INF
 # undef NEG_INF

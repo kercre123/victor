@@ -35,20 +35,23 @@
 /// Number of usable bytes on the I2SPI bus for drops from RTIP to WiFi
 #define DROP_TO_WIFI_SIZE (100)
 /// Number of usable bytes on the I2SPI bus for drops from WiFi to the RTIP
-#define DROP_TO_RTIP_SIZE (80)
+#define DROP_TO_RTIP_SIZE (DROP_PREAMBLE_SIZE + MAX_AUDIO_BYTES_PER_DROP + 1 + MAX_SCREEN_BYTES_PER_DROP + 1 + DROP_TO_RTIP_MAX_VAR_PAYLOAD + 1)
 /// Number of bytes of drop prefix
 #define DROP_PREAMBLE_SIZE sizeof(preambleType)
 /// Preamble for drops from WiFi to RTIP
 /// Preamble for drops from RTIP to WiFi
 
 /// Number of samples of audio data delivered to the RTIP each drop.
-#define MAX_AUDIO_BYTES_PER_DROP 4
+#define MAX_AUDIO_BYTES_PER_DROP 3
 /// Number of bytes of SCREEN data to the RTIP each drop
 #define MAX_SCREEN_BYTES_PER_DROP 4
 
+/// What fraction of the time to send screen data
+#define TX_SCREEN_DATA_EVERY (2)
+#define TX_SCREEN_DATA_OUTOF (3)
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_TO_RTIP_SIZE - DROP_PREAMBLE_SIZE - MAX_AUDIO_BYTES_PER_DROP - MAX_SCREEN_BYTES_PER_DROP - 1 - 1)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (64)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,
@@ -61,7 +64,8 @@ typedef uint16_t preambleType;
 typedef struct
 {
   preambleType preamble; ///< Synchronization Preamble indicating drop destination
-  uint8_t  audioData[MAX_AUDIO_BYTES_PER_DROP]; ///< Isochronous audio data
+  uint8_t  audioData[MAX_AUDIO_BYTES_PER_DROP];   ///< Isochronous audio data
+  uint8_t  screenInd;                             ///< Where in the screen memory to write the data
   uint8_t  screenData[MAX_SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
   uint8_t  payloadLen;                            ///< Number of data bytes in payload
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data
@@ -103,6 +107,14 @@ typedef enum
 } Droplet;
 
 #define JPEG_LENGTH(i) (((i+3) >> 2)&jpegLenMask)
+
+typedef enum 
+{
+  RTIP_MAX_CLAD_MSG_SIZE      = 253,  ///< Largest message payload we can possibly send to from RTIP to WiFi
+  RTIP_CLAD_MSG_RELIABLE_FLAG = 0x80, ///< Bit in length high byte used for flaging the message should be reliable
+  RTIP_CLAD_MSG_HOT_FLAG      = 0x40, ///< Bit in length high byte used for flagging the message should be sent hot
+  RTIP_CLAD_SIZE_HIGH_MASK    = 0x3f, ///< Mask on the length high byte for flags
+} CLADtoWiFiPipeFlags;
 
 /// RTIP to WiFi state update message
 typedef struct

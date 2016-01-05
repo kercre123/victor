@@ -21,6 +21,7 @@
 #include <util/logging/logging.h>
 #include <unordered_map>
 
+
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
@@ -32,6 +33,9 @@ AudioServer::AudioServer( AudioController* audioController ) :
   _audioController( audioController )
 {
   ASSERT_NAMED( nullptr != _audioController, "AudioServer Audio Controller is NULL");
+
+  // Register CLAD Game Objects
+  RegisterCladGameObjectsWithAudioController();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -74,19 +78,22 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
 {
   // Decode Event Message
   const AudioEventID eventId = static_cast<AudioEventID>( message.audioEvent );
-  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObjectId );
-  const AudioEngine::AudioCallbackFlag callbackFlags = ConvertCallbackFlagType( message.callbackFlag );
+  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   const uint16_t callbackId = message.callbackId;
+  const AudioEngine::AudioCallbackFlag callbackFlags = (callbackId == 0) ?
+                                                        AudioEngine::AudioCallbackFlag::NoCallbacks :
+                                                        AudioEngine::AudioCallbackFlag::AllCallbacks;
+
   // Perform Event
   AudioPlayingID playingId = kInvalidAudioPlayingID;
-  if ( AudioEngine::AudioCallbackFlag::NoCallback != callbackFlags ) {
+  if ( AudioEngine::AudioCallbackFlag::NoCallbacks != callbackFlags ) {
     AudioCallbackContext* callbackContext = new AudioCallbackContext();
     // Set callback flags
     callbackContext->SetCallbackFlags( callbackFlags );
     // Register callbacks for event
     callbackContext->SetEventCallbackFunc( [this, connectionId, callbackId]
                                            ( const AudioCallbackContext* thisContext,
-                                             const AudioCallbackInfo& callbackInfo )
+                                             const AudioEngine::AudioCallbackInfo& callbackInfo )
     {
       PerformCallback( connectionId, callbackId, callbackInfo );
     } );
@@ -99,8 +106,15 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
   
   if ( playingId == kInvalidAudioPlayingID ) {
     PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Play Event %s on GameObject %d",
-                       EnumToString( message.audioEvent ), message.gameObjectId );
+                       EnumToString( message.audioEvent ), message.gameObject );
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioServer::ProcessMessage( const StopAllAudioEvents& message, ConnectionIdType connectionId )
+{
+  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
+  _audioController->StopAllAudioEvents( objectId );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -123,12 +137,13 @@ void AudioServer::ProcessMessage( const PostAudioSwitchState& message, Connectio
   // Decode Switch State Message
   const AudioSwitchGroupId groupId = static_cast<AudioStateGroupId>( message.switchStateGroup);
   const AudioSwitchStateId stateId = static_cast<AudioSwitchStateId>( message.switchState );
-  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObjectId );
+  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   // Perform Switch State
   const bool success = _audioController->SetSwitchState( groupId, stateId, objectId );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set Switch State %s : %s on GameObject %d",
-                       EnumToString( message.switchStateGroup ), EnumToString( message.switchState ), message.gameObjectId );
+    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set Switch State %s : %s on GameObject %s",
+                       EnumToString( message.switchStateGroup ), EnumToString( message.switchState ),
+                       EnumToString( message.gameObject ) );
   }
 }
 
@@ -138,7 +153,7 @@ void AudioServer::ProcessMessage( const PostAudioParameter& message, ConnectionI
   // Decode Parameter Message
   const AudioParameterId parameterId = static_cast<AudioParameterId>( message.parameter );
   const AudioRTPCValue value = static_cast<AudioRTPCValue>( message.parameterValue );
-  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObjectId );
+  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   const AudioTimeMs duration = static_cast<AudioTimeMs>( message.timeInMilliSeconds );
   
   // Translate Curve Enum types
@@ -170,9 +185,9 @@ void AudioServer::ProcessMessage( const PostAudioParameter& message, ConnectionI
   const bool success = _audioController->SetParameter( parameterId, value, objectId, duration, curve );
   if ( !success ) {
     PRINT_NAMED_ERROR( "AudioServer.ProcessMessage",
-                       "Unable To Set Parameter %s to Value %f on GameObject %d with duration %d milliSeconds with \
+                       "Unable To Set Parameter %s to Value %f on GameObject %s with duration %d milliSeconds with \
                        curve type %s",
-                       EnumToString( message.parameter ), message.parameterValue, message.gameObjectId,
+                       EnumToString( message.parameter ), message.parameterValue, EnumToString( message.gameObject ),
                        message.timeInMilliSeconds, EnumToString( message.curve ) );
   }
 }
@@ -192,25 +207,6 @@ AudioServer::ConnectionIdType AudioServer::GetNewClientConnectionId()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioCallbackFlag AudioServer::ConvertCallbackFlagType( Anki::Cozmo::Audio::AudioCallbackFlag flags )
-{
-  AudioEngine::AudioCallbackFlag engineFlags = AudioEngine::AudioCallbackFlag::NoCallback;
-  
-  if ( ((uint8_t)AudioCallbackFlag::EventDuration & (uint8_t)flags) == (uint8_t)AudioCallbackFlag::EventDuration ) {
-    engineFlags =  (AudioEngine::AudioCallbackFlag)( engineFlags | AudioEngine::AudioCallbackFlag::Duration );
-  }
-  
-  if ( ((uint8_t)AudioCallbackFlag::EventMarker & (uint8_t)flags) == (uint8_t)AudioCallbackFlag::EventMarker ) {
-    engineFlags =  (AudioEngine::AudioCallbackFlag)( engineFlags | AudioEngine::AudioCallbackFlag::Marker );
-  }
-  
-  if ( ((uint8_t)AudioCallbackFlag::EventComplete & (uint8_t)flags) == (uint8_t)AudioCallbackFlag::EventComplete ) {
-    engineFlags =  (AudioEngine::AudioCallbackFlag)( engineFlags | AudioEngine::AudioCallbackFlag::Complete );
-  }
-  return engineFlags;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioServer::PerformCallback( ConnectionIdType connectionId,
                                    uint16_t callbackId,
                                    const AudioEngine::AudioCallbackInfo& callbackInfo )
@@ -222,42 +218,99 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
   if ( nullptr != connection ) {
     using namespace AudioEngine;
     
+    AudioCallback callbackMsg;
+    callbackMsg.callbackId = callbackId;
+    
     switch ( callbackInfo.callbackType ) {
+        
+      case AudioEngine::AudioCallbackType::Invalid:
+        // Do nothing
+        PRINT_NAMED_ERROR( "AudioServer.PerformCallback", "Invalid Callback" );
+        break;
+        
       case AudioCallbackType::Duration:
       {
         const AudioDurationCallbackInfo& info = static_cast<const AudioDurationCallbackInfo&>( callbackInfo );
-        AudioCallbackDuration msg( callbackId,
-                                   info.duration,
-                                   info.estimatedDuration,
-                                   info.audioNodeId,
-                                   info.isStreaming );
-        connection->PostCallback( msg );
+        AudioCallbackDuration callbackType( info.duration,
+                                            info.estimatedDuration,
+                                            info.audioNodeId,
+                                            info.isStreaming );
+        callbackMsg.callbackInfo.Set_callbackDuration( std::move( callbackType ) );
       }
         break;
-
+        
       case AudioCallbackType::Marker:
       {
         const AudioMarkerCallbackInfo& info = static_cast<const AudioMarkerCallbackInfo&>( callbackInfo );
-        AudioCallbackMarker msg( callbackId,
-                                 info.identifier,
-                                 info.position,
-                                 info.labelStr );
-        connection->PostCallback( msg );
+        AudioCallbackMarker callbackType( info.identifier,
+                                          info.position,
+                                          info.labelStr );
+        callbackMsg.callbackInfo.Set_callbackMarker( std::move( callbackType ) );
       }
         break;
-
+        
       case AudioCallbackType::Complete:
       {
-        AudioCallbackComplete msg( callbackId );
-        connection->PostCallback( msg );
+        const AudioCompletionCallbackInfo& info = static_cast<const AudioCompletionCallbackInfo&>( callbackInfo );
+        AudioCallbackComplete callbackType( static_cast<EventType>( info.eventId ) );
+        callbackMsg.callbackInfo.Set_callbackComplete( std::move( callbackType ) );
       }
         break;
-
-      default:
-        PRINT_NAMED_ERROR("AudioServer.PerformCallback", "Unknown Callback Type %d", callbackInfo.callbackType );
+        
+      case AudioCallbackType::Error:
+      {
+        const AudioErrorCallbackInfo& info = static_cast<const AudioErrorCallbackInfo&>( callbackInfo );
+        AudioCallbackError callbackType( ConvertErrorCallbackType( info.error ) );
+        callbackMsg.callbackInfo.Set_callbackError( std::move( callbackType ) );
+      }
         break;
     }
+    
+    if (AudioCallbackInfo::Tag::INVALID != callbackMsg.callbackInfo.GetTag()) {
+      connection->PostCallback( std::move( callbackMsg ) );
+    }
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioServer::RegisterCladGameObjectsWithAudioController()
+{
+  // Enumerate through GameObjectType Enums
+  for ( uint32_t aGameObj = static_cast<uint32_t>(GameObjectType::Default);
+        aGameObj < static_cast<uint32_t>(GameObjectType::End);
+        ++aGameObj) {
+    // Register GameObjectType
+    bool success = _audioController->RegisterGameObject( static_cast<AudioGameObject>(aGameObj),
+                                                         std::string(EnumToString(static_cast<GameObjectType>(aGameObj)) ));
+    if (!success) {
+      PRINT_NAMED_ERROR( "AudioServer.RegisterCladGameObjectsWithAudioController",
+                         "Registering GameObjectId: %ul - %s was unsuccessful",
+                         aGameObj, EnumToString(static_cast<GameObjectType>(aGameObj)) );
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Anki::Cozmo::Audio::CallbackErrorType AudioServer::ConvertErrorCallbackType( const AudioEngine::AudioCallbackErrorType errorType ) const
+{
+  CallbackErrorType error = CallbackErrorType::Invalid;
+  
+  switch ( errorType ) {
+      
+    case AudioEngine::AudioCallbackErrorType::Invalid:
+      // Do nothing
+      break;
+      
+    case AudioEngine::AudioCallbackErrorType::EventFailed:
+      error = CallbackErrorType::EventFailed;
+      break;
+      
+    case AudioEngine::AudioCallbackErrorType::Starvation:
+      error = CallbackErrorType::Starvation;
+      break;
+  }
+  
+  return error;
 }
 
   

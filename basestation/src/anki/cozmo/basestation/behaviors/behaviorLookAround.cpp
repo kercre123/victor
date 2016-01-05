@@ -38,7 +38,7 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _moveAreaCenter(robot.GetPose())
 {
-  _name = "LookAround";
+  SetDefaultName("LookAround");
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
@@ -46,9 +46,12 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
     EngineToGameTag::RobotPutDown
   }});
 
-  // Boredom and loneliness -> LookAround
-  AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
-  AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
+  if (GetEmotionScorerCount() == 0)
+  {
+    // Boredom and loneliness -> LookAround
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
+  }
 }
   
 BehaviorLookAround::~BehaviorLookAround()
@@ -142,7 +145,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
     }
     case State::StartLooking:
     {
-      IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
+      IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
       _actionsInProgress.insert(moveHeadAction->GetTag());
       robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
       
@@ -191,7 +194,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
       // If we queued up some face object actions, add a move head action at the end to go back to normal
       if (queuedFaceObjectAction)
       {
-        IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
+        IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
         _actionsInProgress.insert(moveHeadAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
       }

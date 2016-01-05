@@ -29,19 +29,27 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
   ASSERT_NAMED(nullptr != messageHandler, "Can NOT set message handler to NULL");
   // Subscribe to Audio Messages
   _messageHandler = messageHandler;
-  auto callback = std::bind( &AudioEngineClient::HandleEvents, this, std::placeholders::_1 );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackDuration, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackMarker, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackComplete, callback ) );
+  auto callback = [this]( const AnkiEvent<MessageAudioClient>& event ) {
+    HandleCallbackEvent( event.GetData().Get_AudioCallback() );
+  };
+  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallback, callback ) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event, uint16_t gameObjectId, AudioCallbackFlag callbackFlag )
+AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event,
+                                                                GameObjectType gameObject,
+                                                                CallbackFunc callback )
 {
   if ( nullptr != _messageHandler ) {
-    const CallbackIdType callbackId = AudioCallbackFlag::EventNone != callbackFlag ?
-    GetNewCallbackId() : kInvalidCallbackId;
-    const MessageAudioClient msg( PostAudioEvent( event, gameObjectId, callbackFlag, callbackId ) );
+    
+    const CallbackIdType callbackId = nullptr != callback ? GetNewCallbackId() : kInvalidCallbackId;
+    
+    // Store callback
+    if ( nullptr != callback ) {
+      _callbackMap.emplace( callbackId, callback );
+    }
+    // Post event
+    const MessageAudioClient msg( PostAudioEvent( event, gameObject, callbackId ) );
     _messageHandler->Broadcast( std::move( msg ) );
     return callbackId;
   }
@@ -50,6 +58,18 @@ AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event,
   }
   
   return kInvalidCallbackId;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
+{
+  if ( nullptr != _messageHandler ) {
+    const MessageAudioClient msg( (StopAllAudioEvents( gameObject )) );
+    _messageHandler->Broadcast( std::move( msg ) );
+  }
+  else {
+    PRINT_NAMED_WARNING("AudioEngineClient.StopAllEvents", "Message Handler is Null Can NOT Stop All Events");
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -65,10 +85,10 @@ void AudioEngineClient::PostGameState( GameStateGroupType gameStateGroup, GameSt
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, uint16_t gameObjectId )
+void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioSwitchState( switchStateGroup, switchState, gameObjectId ));
+    const MessageAudioClient msg( PostAudioSwitchState( switchStateGroup, switchState, gameObject ) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -79,12 +99,12 @@ void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::PostParameter( ParameterType parameter,
                                        float parameterValue,
-                                       uint16_t gameObjectId,
+                                       GameObjectType gameObject,
                                        int32_t timeInMilliSeconds,
                                        CurveType curve ) const
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObjectId, timeInMilliSeconds, curve) );
+    const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObject, timeInMilliSeconds, curve) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -95,62 +115,30 @@ void AudioEngineClient::PostParameter( ParameterType parameter,
 
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
+void AudioEngineClient::HandleCallbackEvent( const AudioCallback& callbackMsg )
 {
-  PRINT_NAMED_INFO("HandleEvents.HandleEvents",
-                   "Handle game event of type %s !",
-                   MessageAudioClientTagToString(event.GetData().GetTag()) );
-  
-  switch ( event.GetData().GetTag() ) {
-      
-    case MessageAudioClientTag::AudioCallbackDuration:
+//  const CallbackIdType callbackId = static_cast<CallbackIdType>( callbackMsg.callbackId );
+  const auto& callbackIt = _callbackMap.find( static_cast<CallbackIdType>( callbackMsg.callbackId ) );
+  if ( callbackIt != _callbackMap.end() ) {
+    // Perfomr Callback Func
+    callbackIt->second( callbackMsg );
+    
+    // FIXME: Waiting to hear back from WWise if complete callback is allways called, if so remove callback check
+    // Delete if it is completed or there there is an error
+    AudioCallbackInfoTag callbackTag = callbackMsg.callbackInfo.GetTag();
+    if ( AudioCallbackInfoTag::callbackComplete == callbackTag ||
+         AudioCallbackInfoTag::callbackError == callbackTag )
     {
-      // Handle Duration Callback
-      const AudioCallbackDuration& callbackMsg = event.GetData().Get_AudioCallbackDuration();
-      HandleCallbackEvent( callbackMsg );
-    }
-      break;
-      
-    case MessageAudioClientTag::AudioCallbackMarker:
-    {
-      // Handle Marker Callback
-      const AudioCallbackMarker& callbackMsg = event.GetData().Get_AudioCallbackMarker();
-      HandleCallbackEvent( callbackMsg );
-    }
-      break;
-      
-    case MessageAudioClientTag::AudioCallbackComplete:
-    {
-      // Handle Complete Callback
-      const AudioCallbackComplete& callbackMsg = event.GetData().Get_AudioCallbackComplete();
-      HandleCallbackEvent( callbackMsg );
-    }
-      break;
-      
-    default:
-    {
-      PRINT_NAMED_ERROR( "HandleEvents.HandleEvents",
-                        "Subscribed to unhandled event of type %s !",
-                        MessageAudioClientTagToString(event.GetData().GetTag()) );
+      _callbackMap.erase( callbackIt );
     }
   }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleCallbackEvent( const AudioCallbackDuration& callbackMsg )
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleCallbackEvent( const AudioCallbackMarker& callbackMsg )
-{
+  else {
+    // Received unexpected callback!
+    PRINT_NAMED_ERROR( "AudioEngineClient.HandleCallbackEvent", "Received Unexpected callbackId: %d Type %s",
+                       callbackMsg.callbackId, AudioCallbackInfoTagToString( callbackMsg.callbackInfo.GetTag() ) );
+  }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleCallbackEvent( const AudioCallbackComplete& callbackMsg )
-{
-} 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType AudioEngineClient::GetNewCallbackId()
 {

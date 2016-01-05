@@ -130,10 +130,7 @@ namespace Vision {
         {
           TrackedFace& existingFace = (*existingIter)->second;
           const Rectangle<f32>& existingRect = existingFace.GetRect();
-          const f32 intersectionArea = existingRect.Intersect(rect_f32).area();
-          const f32 unionArea = existingRect.area() + rect_f32.area() - intersectionArea;
-          const f32 IoU = intersectionArea / unionArea; // "intersection over union" score
-          
+          const f32 IoU = existingRect.ComputeOverlapScore(rect_f32);
           if(IoU > intersectionOverUnionThreshold) {
             // Update existing face and remove it from additional checking for matches
             existingFace.SetRect(std::move(rect_f32));

@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
+#define CozmoPlugInDebugLogs 0
 
 namespace AudioEngine {
   class AudioEngineController;
@@ -60,6 +61,10 @@ public:
   AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
                                               AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
                                               AudioEngine::AudioCallbackContext* callbackContext = nullptr );
+
+  // Stops playing all sounds on the specified game object
+  // + If AudioGameObject::Invalid is specified, then ALL audio will be stopped
+  void StopAllAudioEvents( AudioEngine::AudioGameObject gameObject = AudioEngine::kInvalidAudioGameObject );
   
   bool SetState( AudioEngine::AudioStateGroupId stateGroupId,
                  AudioEngine::AudioStateId stateId ) const;
@@ -77,8 +82,11 @@ public:
   // Get Audio Buffer Obj for robot
   RobotAudioBuffer* GetRobotAudioBuffer() { return _robotAudioBuffer; }
   
-  // TODO: Add / Remove GameObj.
-  
+  // Register Game Objects
+  // Note Game Object Ids must be unique
+  bool RegisterGameObject( AudioEngine::AudioGameObject gameObjectId,  std::string gameObjectName );
+
+  // TODO: Add RemoveRegisterGameObject()
   
   // TEMP: Set Cozmo Speaker Volumes
   void StartUpSetDefaults();
@@ -106,6 +114,31 @@ private:
   
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   void ClearGarbageCollector();
+  
+  // Debug Cozmo PlugIn Logs
+#if CozmoPlugInDebugLogs
+  enum class LogEnumType {
+    Post,
+    CreatePlugIn,
+    DestoryPlugIn,
+    Update,
+  };
+  
+  struct TimeLog {
+    LogEnumType LogType;
+    std::string Msg;
+    unsigned long long int TimeInNanoSec;
+    
+    TimeLog(LogEnumType logType, std::string msg, unsigned long long int timeInNanoSec) :
+    LogType(logType),
+    Msg(msg),
+    TimeInNanoSec(timeInNanoSec)
+    {
+    }
+  };
+  std::vector<TimeLog> _plugInLog;
+  void PrintPlugInLog();
+#endif
   
 };
 

@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
@@ -54,6 +55,8 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::FaceObject,
       ExternalInterface::MessageGameToEngineTag::FacePose,
       ExternalInterface::MessageGameToEngineTag::TurnInPlace,
+      ExternalInterface::MessageGameToEngineTag::TrackToObject,
+      ExternalInterface::MessageGameToEngineTag::TrackToFace
     };
     
     // Subscribe to desired events
@@ -73,6 +76,10 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     // Custom handler for SetLiftHeight
     auto setLiftHeightCallback = std::bind(&RobotEventHandler::HandleSetLiftHeight, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
+    
+    // Custom handler for EnableLiftPower
+    auto enableLiftPowerCallback = std::bind(&RobotEventHandler::HandleEnableLiftPower, this, std::placeholders::_1);
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::EnableLiftPower, enableLiftPowerCallback));
     
     // Custom handler for DisplayProceduralFace
     auto dispProcFaceCallback = std::bind(&RobotEventHandler::HandleDisplayProceduralFace, this, std::placeholders::_1);
@@ -145,6 +152,7 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
                                          msg.useManualSpeed);
   } else {
     PickupObjectAction* action = new PickupObjectAction(selectedObjectID, msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -256,6 +264,7 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
                                        msg.useManualSpeed);
   } else {
     RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -279,6 +288,7 @@ IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface:
                                         msg.useManualSpeed);
   } else {
     PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID, msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -294,7 +304,9 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
                                               msg.motionProf,
                                               msg.useManualSpeed);
   } else {
-    return new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
+    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
+    traverseAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    return traverseAction;
   }
 }
   
@@ -307,7 +319,9 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
                                             msg.motionProf,
                                             msg.useManualSpeed);
   } else {
-    return new MountChargerAction(selectedObjectID, msg.useManualSpeed);
+    MountChargerAction* chargerAction = new MountChargerAction(selectedObjectID, msg.useManualSpeed);
+    chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    return chargerAction;
   }
 }
 
@@ -336,6 +350,30 @@ IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::Fa
                             Radians(facePose.maxTurnAngle));
 }
   
+IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
+{
+  TrackFaceAction* action = new TrackFaceAction(trackFace.faceID);
+  
+  // TODO: Support body-only mode
+  if(trackFace.headOnly) {
+    action->SetMode(ITrackAction::Mode::HeadOnly);
+  }
+  
+  return action;
+}
+  
+IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
+{
+  TrackObjectAction* action = new TrackObjectAction(trackObject.objectID);
+  
+  // TODO: Support body-only mode
+  if(trackObject.headOnly) {
+    action->SetMode(ITrackAction::Mode::HeadOnly);
+  }
+  
+  return action;
+}
+
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
 {
@@ -391,6 +429,11 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::alignWithObject:
       return GetDriveToAlignWithObjectActionHelper(robot, actionUnion.Get_alignWithObject());
 
+    case RobotActionUnionTag::trackFace:
+      return GetTrackFaceActionHelper(robot, actionUnion.Get_trackFace());
+      
+    case RobotActionUnionTag::trackObject:
+      return GetTrackObjectActionHelper(robot, actionUnion.Get_trackObject());
       
       // TODO: Add cases for other actions
       
@@ -398,50 +441,6 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       PRINT_NAMED_ERROR("RobotEventHandler.CreateNewActionByType.InvalidActionTag",
                         "Failed to create an action for the given actionTag.");
       return nullptr;
-  }
-}
-  
-void RobotEventHandler::QueueActionHelper(const QueueActionPosition position, const u32 idTag, const u32 inSlot,
-                                          ActionList& actionList, IActionRunner* action, const u8 numRetries/* = 0*/)
-{
-  action->SetTag(idTag);
-  
-  QueueActionHelper(position, inSlot, actionList, action, numRetries);
-}
-
-void RobotEventHandler::QueueActionHelper(const QueueActionPosition position, const u32 inSlot,
-                                          ActionList& actionList, IActionRunner* action, const u8 numRetries/* = 0*/)
-{
-  switch(position)
-  {
-    case QueueActionPosition::NOW:
-    {
-      actionList.QueueActionNow(inSlot, action, numRetries);
-      break;
-    }
-    case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
-    {
-      // Cancel all queued actions and make this action the next thing in it
-      actionList.Cancel();
-      actionList.QueueActionNext(inSlot, action, numRetries);
-      break;
-    }
-    case QueueActionPosition::NEXT:
-    {
-      actionList.QueueActionNext(inSlot, action, numRetries);
-      break;
-    }
-    case QueueActionPosition::AT_END:
-    {
-      actionList.QueueActionAtEnd(inSlot, action, numRetries);
-      break;
-    }
-    default:
-    {
-      PRINT_NAMED_ERROR("CozmoGameImpl.QueueActionHelper.InvalidPosition",
-                        "Unrecognized 'position' for queuing action.\n");
-      return;
-    }
   }
 }
   
@@ -556,6 +555,17 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
                                         event.GetData().Get_TurnInPlace().isAbsolute);
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::TrackToFace:
+    {
+      newAction = GetTrackFaceActionHelper(robot, event.GetData().Get_TrackToFace());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::TrackToObject:
+    {
+      newAction = GetTrackObjectActionHelper(robot, event.GetData().Get_TrackToObject());
+      break;
+    }
+    
     default:
     {
       PRINT_STREAM_ERROR("RobotEventHandler.HandleEvents",
@@ -568,7 +578,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
   }
   
   // Everything's ok and we have an action, so queue it
-  QueueActionHelper(QueueActionPosition::AT_END, Robot::DriveAndManipulateSlot, robot.GetActionList(), newAction, numRetries);
+  robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, newAction, numRetries);
 }
   
 void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -585,7 +595,8 @@ void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterfac
   IActionRunner* action = CreateNewActionByType(*robot, msg.action);
   
   // Put the action in the given position of the specified queue:
-  QueueActionHelper(msg.position, msg.idTag, msg.inSlot, robot->GetActionList(), action, msg.numRetries);
+  action->SetTag(msg.idTag);
+  robot->GetActionList().QueueAction(msg.inSlot, msg.position, action, msg.numRetries);
 }
   
 void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -618,8 +629,8 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
   } // for each action/actionType
   
   // Put the action in the given position of the specified queue:
-  QueueActionHelper(msg.position, msg.idTag, msg.inSlot, robot->GetActionList(),
-                    compoundAction, msg.numRetries);
+  compoundAction->SetTag(msg.idTag);
+  robot->GetActionList().QueueAction(msg.inSlot, msg.position, compoundAction, msg.numRetries);
 }
   
 void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -634,7 +645,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     return;
   }
   
-  if(robot->GetMoveComponent().IsLiftLocked()) {
+  if(robot->GetMoveComponent().IsMovementTrackIgnored(AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
                      "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
   } else {
@@ -645,7 +656,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
       
       // Put the block down right here
       IActionRunner* newAction = new PlaceObjectOnGroundAction();
-      QueueActionHelper(QueueActionPosition::AT_END, Robot::DriveAndManipulateSlot, robot->GetActionList(), newAction);
+      robot->GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, newAction);
     }
     else {
       // In the normal case directly set the lift height
@@ -653,6 +664,28 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     }
   }
 }
+
+void RobotEventHandler::HandleEnableLiftPower(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  // TODO: get RobotID in a non-hack way
+  RobotID_t robotID = 1;
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    return;
+  }
+  
+  if(robot->GetMoveComponent().IsMovementTrackIgnored(AnimTrackFlag::LIFT_TRACK)) {
+    PRINT_NAMED_INFO("RobotEventHandler.HandleEnableLiftPower.LiftLocked",
+                     "Ignoring ExternalInterface::EnableLiftPower while lift is locked.");
+  } else {
+    const ExternalInterface::EnableLiftPower& msg = event.GetData().Get_EnableLiftPower();
+    robot->GetMoveComponent().EnableLiftPower(msg.enable);
+  }
+}
+
   
 void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {

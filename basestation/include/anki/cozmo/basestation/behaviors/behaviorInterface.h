@@ -33,6 +33,7 @@ namespace Anki {
 namespace Cozmo {
   
   // Forward declarations
+  class IReactionaryBehavior;
   class MoodManager;
   class Robot;
   class Reward;
@@ -45,14 +46,24 @@ namespace Cozmo {
   // Base Behavior Interface specification
   class IBehavior
   {
+  protected:
+    
+    // Enforce creation through BehaviorFactory
+    friend class BehaviorFactory;
+
+    // Can't create a public IBehavior, but derived classes must pass a robot
+    // reference into this protected constructor.
+    IBehavior(Robot& robot, const Json::Value& config);
+    
+    virtual ~IBehavior();
+    
   public:
+    
     enum class Status {
       Failure,
       Running,
       Complete
     };
-    
-    virtual ~IBehavior() { }
     
     // BehaviorManager uses SetIsRunning() when it starts or stops a behavior.
     // IsRunning() allows querying from inside a subclass to do things differently
@@ -83,8 +94,8 @@ namespace Cozmo {
     // as quickly as possible.
     Result Interrupt(double currentTime_sec, bool isShortInterrupt);
     
-    virtual const std::string& GetName() const { return _name; }
-    virtual const std::string& GetStateName() const { return _stateName; }
+    const std::string& GetName() const { return _name; }
+    const std::string& GetStateName() const { return _stateName; }
     
     // EvaluateEmotionScore is a score directly based on the given emotion rules
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
@@ -99,6 +110,10 @@ namespace Cozmo {
 
     void ClearEmotionScorers()                         { _emotionScorers.clear(); }
     void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }
+    size_t GetEmotionScorerCount() const { return _emotionScorers.size(); }
+    const EmotionScorer& GetEmotionScorer(size_t index) const { return _emotionScorers[index]; }
+    
+    bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
     // Some behaviors are short interruptions that can resume directly to previous behavior
     virtual bool IsShortInterruption() const { return false; }
@@ -107,15 +122,21 @@ namespace Cozmo {
     // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
     static const ActionList::SlotHandle sActionSlot;
     
+    virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
+    
   protected:
+    
+    // Going forward we don't want names being set arbitrarily (they can come from data etc.)
+    void DEMO_HACK_SetName(const char* inName) { _name = inName; }
+    // Only sets the name if it's currenty the base default name
+    inline void SetDefaultName(const char* inName);
+    inline void SetStateName(const std::string& inName) { _stateName = inName; }
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) = 0;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) = 0;
     virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) = 0;
     
-    // Can't create a public IBehavior, but derived classes must pass a robot
-    // reference into this protected constructor.
-    IBehavior(Robot& robot, const Json::Value& config);
+    bool ReadFromJson(const Json::Value& config);
     
     // Convenience aliases
     using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
@@ -155,21 +176,24 @@ namespace Cozmo {
     virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
     
-    Util::RandomGenerator& GetRNG();
-    
-    std::string _name = "no_name";
-    std::string _stateName = "";
-    
-    std::vector<EmotionScorer> _emotionScorers;
+    Util::RandomGenerator& GetRNG() const;
     
   private:
+    
+    std::string _name;
+    std::string _stateName = "";
+    
+    static const char* kBaseDefaultName;
+    
+    // A random number generator for all behaviors to share
+    static Util::RandomGenerator sRNG;
+    
+    std::vector<EmotionScorer> _emotionScorers;
     
     Robot& _robot;
     
     bool _isRunning;
-    
-    // A random number generator for all behaviors to share
-    static Util::RandomGenerator sRNG;
+    bool _isOwnedByFactory;
 
     std::vector<::Signal::SmartHandle> _eventHandles;
     
@@ -193,8 +217,16 @@ namespace Cozmo {
     return InterruptInternal(_robot, currentTime_sec, isShortInterrupt);
   }
   
-  inline Util::RandomGenerator& IBehavior::GetRNG() {
+  inline Util::RandomGenerator& IBehavior::GetRNG() const {
     return sRNG;
+  }
+  
+  inline void IBehavior::SetDefaultName(const char* inName)
+  {
+    if (_name == kBaseDefaultName)
+    {
+      _name = inName;
+    }
   }
   
   template<class EventType>
@@ -212,9 +244,13 @@ namespace Cozmo {
   
   class IReactionaryBehavior : public IBehavior
   {
-  public:
+  protected:
     
+    // Enforce creation through BehaviorFactory
     IReactionaryBehavior(Robot& robot, const Json::Value& config) : IBehavior(robot, config) { }
+    virtual ~IReactionaryBehavior() {}
+    
+  public:
     
     virtual const std::set<EngineToGameTag>& GetEngineToGameTags() const { return _engineToGameTags; }
     virtual const std::set<GameToEngineTag>& GetGameToEngineTags() const { return _gameToEngineTags; }
@@ -222,6 +258,8 @@ namespace Cozmo {
     // Subscribe to tags that should immediately trigger this behavior
     void SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags);
     void SubscribeToTriggerTags(std::set<GameToEngineTag>&& tags);
+    
+    virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
     
   protected:
     std::set<EngineToGameTag> _engineToGameTags;

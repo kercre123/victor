@@ -31,12 +31,9 @@
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/utilities_c.h"
 #include "anki/types.h"
-#include "anki/vision/CameraSettings.h"
+#include "anki/common/robot/config.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
@@ -53,7 +50,11 @@
 
 // Disables PRINT macros entirely.
 // When 1, overrides all of the above macros.
+#ifdef TARGET_K02
+#define DISABLE_PRINT_MACROS 1
+#else
 #define DISABLE_PRINT_MACROS 0
+#endif
 
 // Enable to stream debug images via UART to Pete's tool.
 // This disables PRINT macros so they don't disrupt the stream of debug and image data.
@@ -68,7 +69,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
 
 #if(STREAM_DEBUG_IMAGES)
 #undef DISABLE_PRINT_MACROS
@@ -350,7 +350,7 @@ namespace Anki
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight);
 
-#     if SIMULATOR
+#     ifdef SIMULATOR
       u32 GetCameraStartTime();
       bool IsVideoEnabled();
 #     endif
@@ -428,12 +428,15 @@ namespace Anki
       //  1-63 draw N full lines (N*128 pixels) of black or blue
       //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
       // The decoder starts out drawing black, and inverts the color on every byte >= 64
-      void FaceAnimate(u8* frame);
+      void FaceAnimate(u8* frame, const u16 length);
 
       // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
       // This position is relative to the animation displayed when FaceAnimate() was
       // last called.
       void FaceMove(s32 x, s32 y);
+
+      // Clear the currently animated face
+      void FaceClear();
 
       // Blink the eyes
       void FaceBlink();
@@ -475,10 +478,7 @@ namespace Anki
        * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable=true, const bool hot=false);
-
-// Work around until we get out of 4.0 / 4.1 coexistance
-#define clientSendMessage HAL::RadioSendMessage
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID, const bool reliable=true, const bool hot=false);
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS
@@ -521,6 +521,9 @@ namespace Anki
       };
 
       IDCard* GetIDCard();
+
+      // Returns the unique serial number of the robot
+      u32 GetID();
 
       // For board-level debugging only - read the comments in uart.cpp or find a better printf
       void BoardPrintf(const char *format, ...);

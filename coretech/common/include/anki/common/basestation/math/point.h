@@ -119,6 +119,8 @@ namespace Anki {
     bool operator< (const Point<N,T>& other) const; // all elements less than
     bool operator> (const Point<N,T>& other) const; // all elements greater than
     bool operator==(const Point<N,T>& other) const; // all elements equal
+    bool operator<=(const Point<N,T>& other) const; // all elements less than or equal
+    bool operator>=(const Point<N,T>& other) const; // all elements greater than or equal
     
     // Absolute value of each element
     Point<N,T>  GetAbs() const;
@@ -127,6 +129,10 @@ namespace Anki {
     // Return length (squared) of the vector from the origin to the point
     T Length(void) const;
     T LengthSq(void) const;
+    
+    // Get Min/Max element (and optionally, which dimension)
+    T GetMin(PointDimType* whichDim = nullptr) const;
+    T GetMax(PointDimType* whichDim = nullptr) const;
     
     // Makes the point into a unit vector from the origin, while
     // returning its original length. IMPORTANT: if the point was
@@ -183,6 +189,9 @@ namespace Anki {
     Y_POS =  2,
     Z_POS =  3
   };
+
+  // returns single character axis for AxisName (ignoring sign)
+  char AxisToChar(AxisName axis);
 
   // Helper for compile-time conversion from character axis ('X', 'Y', or 'Z')
   // to index (0, 1, or 2, respectively). Any other character for AXIS will fail

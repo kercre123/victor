@@ -9,7 +9,9 @@
 #define COUNT_PER_MS (8389)
 
 // Initialize the RTC peripheral
-void TimerInit();
+namespace Timer {
+  void Init();
+}
 
 // Get the counter - with each tick being ~120 ns (see COUNT_PER_MS)
 // XXX: Mike observed the counter jumping back, sometimes.  Is it still happening?

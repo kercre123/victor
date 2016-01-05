@@ -701,7 +701,17 @@ namespace Anki {
     {
       return (poses_.empty() ? 0 : poses_.rbegin()->first);
     }
-    
+
+    TimeStamp_t RobotPoseHistory::GetOldestVisionOnlyTimeStamp() const
+    {
+      return (visPoses_.empty() ? 0 : visPoses_.begin()->first);
+    }
+
+    TimeStamp_t RobotPoseHistory::GetNewestVisionOnlyTimeStamp() const
+    {
+      return (visPoses_.empty() ? 0 : visPoses_.rbegin()->first);
+    }
+
     void RobotPoseHistory::Print() const
     {
       // Create merged map of all poses

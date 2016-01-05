@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 enum TRANSFER_MODE {
+  TRANSMIT_UNINITALIZED,
   TRANSMIT_RECEIVE,
   TRANSMIT_SEND,
   TRANSMIT_RECOVERY
@@ -24,10 +25,10 @@ static union {
   uint32_t  rx_source;
 };
 
-volatile RECOVERY_STATE Anki::Cozmo::HAL::recoveryMode = STATE_UNKNOWN;
+volatile RECOVERY_STATE Anki::Cozmo::HAL::UART::recoveryMode = STATE_UNKNOWN;
 
-volatile bool Anki::Cozmo::HAL::HeadDataReceived = false;
-volatile uint16_t Anki::Cozmo::HAL::RecoveryStateUpdated = 0;
+volatile bool Anki::Cozmo::HAL::UART::HeadDataReceived = false;
+volatile uint16_t Anki::Cozmo::HAL::UART::RecoveryStateUpdated = 0;
 
 static TRANSFER_MODE uart_mode;
 
@@ -42,30 +43,10 @@ static int rec_count = 0;
 static int rec_first = 0;
 static int rec_last = 0;
 
-void Anki::Cozmo::HAL::UartInit() {
-  // Enable clocking to the UART and PORTD
-  SIM_SOPT5 &= ~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART0RXSRC_MASK);
-  SIM_SOPT5 |= SIM_SOPT5_UART0TXSRC(0) | SIM_SOPT5_UART0RXSRC(0);
-
-  SIM_SCGC4 |= SIM_SCGC4_UART0_MASK;
-
-  // Enable UART for this shiz
-  UART0_BDL = UART_BDL_SBR(BAUD_SBR(spine_baud_rate));
-  UART0_BDH = 0;
-
-  UART0_C1 = 0; // 8 bit, 1 bit stop no parity (single wire)
-  UART0_S2 |= UART_S2_RXINV_MASK;
-  UART0_C3 = UART_C3_TXINV_MASK;
-  UART0_C4 = UART_C4_BRFA(BAUD_BRFA(spine_baud_rate));
-
-  UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(2) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(2) ;
-  UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
-
+void Anki::Cozmo::HAL::UART::Init() {
   g_dataToBody.source = (uint32_t)SPI_SOURCE_HEAD;
 
-  //MicroWait(1000);
-
-  transmit_mode(TRANSMIT_RECEIVE);
+  transmit_mode(TRANSMIT_UNINITALIZED);
 }
 
 inline void transmit_mode(TRANSFER_MODE mode) { 
@@ -97,24 +78,19 @@ inline void transmit_mode(TRANSFER_MODE mode) {
       PORTD_PCR7 = PORT_PCR_MUX(0);
       UART0_C2 = UART_C2_RE_MASK;
       break ;
+    default:
+      break ;
   }
-  
+
   uart_mode = mode;
   txRxIndex = 0;
 }
 
-static inline void HUPFifo(void) {
-  UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
-  UART0->PFIFO &= ~UART_PFIFO_RXFE_MASK;
-  uint8_t c = UART0->D;
-  UART0->PFIFO |= UART_PFIFO_RXFE_MASK;
-}
-
-void Anki::Cozmo::HAL::EnterBodyRecovery(void) {
+void Anki::Cozmo::HAL::UART::EnterBodyRecovery(void) {
   enter_recovery = true;
 }
 
-void Anki::Cozmo::HAL::SendRecoveryData(const uint8_t* data, int bytes) {
+void Anki::Cozmo::HAL::UART::SendRecoveryData(const uint8_t* data, int bytes) {
   while (bytes-- > 0 && rec_count < sizeof(recovery_fifo)) {
     recovery_fifo[rec_last++] = *(data++);
     
@@ -147,13 +123,13 @@ static bool TransmitRecoveryData(void) {
 }
 
 static void ChangeRecoveryState(RECOVERY_STATE mode) {
-  using namespace Anki::Cozmo::HAL;
+  using namespace Anki::Cozmo::HAL::UART;
 
   RecoveryStateUpdated++;
   recoveryMode = mode;
 }
 
-void Anki::Cozmo::HAL::WaitForSync() {
+void Anki::Cozmo::HAL::UART::WaitForSync() {
   while (recoveryMode != STATE_RUNNING || !HeadDataReceived) {
     __asm { WFI }
   }
@@ -161,13 +137,37 @@ void Anki::Cozmo::HAL::WaitForSync() {
   HeadDataReceived = false;
 }
 
-void Anki::Cozmo::HAL::UartTransmit(void) { 
+void Anki::Cozmo::HAL::UART::Transmit(void) { 
   // Attempt to clear out buffer overruns
-  if (UART0_S1 & UART_S1_OR_MASK) {
-    HUPFifo();
+  if (uart_mode != TRANSMIT_UNINITALIZED && UART0_S1 & UART_S1_OR_MASK) {
+    UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
+    UART0->PFIFO &= ~UART_PFIFO_RXFE_MASK;
+    uint8_t c = UART0->D;
+    UART0->PFIFO |= UART_PFIFO_RXFE_MASK;
   }
 
   switch (uart_mode) {
+    case TRANSMIT_UNINITALIZED:
+      // Enable clocking to the UART and PORTD
+      SIM_SOPT5 &= ~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART0RXSRC_MASK);
+      SIM_SOPT5 |= SIM_SOPT5_UART0TXSRC(0) | SIM_SOPT5_UART0RXSRC(0);
+
+      SIM_SCGC4 |= SIM_SCGC4_UART0_MASK;
+
+      // Enable UART for this shiz
+      UART0_BDL = UART_BDL_SBR(BAUD_SBR(spine_baud_rate));
+      UART0_BDH = 0;
+
+      UART0_C1 = 0; // 8 bit, 1 bit stop no parity (single wire)
+      UART0_S2 |= UART_S2_RXINV_MASK;
+      UART0_C3 = UART_C3_TXINV_MASK;
+      UART0_C4 = UART_C4_BRFA(BAUD_BRFA(spine_baud_rate));
+
+      UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(2) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(2) ;
+      UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
+
+      transmit_mode(TRANSMIT_RECEIVE);
+      break ;
     case TRANSMIT_RECEIVE:
       while (UART0_RCFIFO) {
         txRxBuffer[txRxIndex] = UART0_D;

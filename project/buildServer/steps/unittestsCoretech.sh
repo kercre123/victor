@@ -1,4 +1,6 @@
+#!/usr/bin/env bash
 set -e
+set -x
 TESTNAME=cti
 PROJECTNAME=coretech-internal
 PROJECTROOT=

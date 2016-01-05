@@ -8,7 +8,9 @@ namespace Cozmo {
 
 message DockWithObject
 {
-  float_32 horizontalOffset_mm, // Offset wrt to docking object. Don't know if this will work yet.
+  float_32   horizontalOffset_mm, // Offset wrt to docking object. Don't know if this will work yet.
+  float_32   speed_mmps,          // Docking speed/accel only used if useManualSpeed == false
+  float_32   accel_mmps2,
   DockAction action,
   bool       useManualSpeed,
 }
@@ -22,6 +24,8 @@ message PlaceObjectOnGround
   float_32 rel_x_mm,  // Distance of object face center in forward axis
   float_32 rel_y_mm,  // Distance of object face center in horizontal axis. (Left of robot is +ve)
   float_32 rel_angle, // Angle between of object face normal and robot. (Block normal pointing right of robot is +ve)
+  float_32 speed_mmps,// Docking speed/accel only used if useManualSpeed == false
+  float_32 accel_mmps2,
   bool     useManualSpeed,
 }
 

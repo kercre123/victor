@@ -124,6 +124,12 @@ message SetLiftHeight {
     float_32 duration_sec
 }
 
+// EnableLiftPower
+message EnableLiftPower {
+    bool enable
+}
+
+
 // SetHeadAngle
 message SetHeadAngle {
     float_32 angle_rad,
@@ -139,6 +145,17 @@ message SetHeadAngle {
 //   Use objectID = u32_MAX to disable tracking.
 message TrackToObject {
     uint_32 objectID,
+    uint_8  robotID,
+    bool    headOnly
+}
+
+// TrackToFace
+//   Robot will automatically adjust head and body angle to look at this face ID, if it
+//   is observed. Sending SetHeadAngle message (above) will disable this behavior.
+//   Set headOnly to true to only use the head and not turn the body.
+//   Use objectID = u32_MAX to disable tracking.
+message TrackToFace {
+    uint_32 faceID,
     uint_8  robotID,
     bool    headOnly
 }
@@ -227,8 +244,9 @@ message PlaceObjectOnGround {
 message PlaceObjectOnGroundHere {
 }
 
-// ExecuteTestPlan
+// ExecuteTestPlans
 message ExecuteTestPlan {
+PathMotionProfile motionProf
 }
 
 // SelectNextObject
@@ -423,7 +441,9 @@ message SetLiftControllerGains {
 // SetSteeringControllerGains
 message SetSteeringControllerGains {
   float_32 k1,
-  float_32 k2
+  float_32 k2,
+  float_32 dockPathDistOffsetCap_mm,
+  float_32 dockPathAngularOffsetCap_rad
 }
 
 // SetRobotVolume
@@ -541,7 +561,8 @@ message DisplayProceduralFace {
 message SetLiveIdleAnimationParameters {
   LiveIdleAnimationParameter   paramNames[uint_8],
   float_32                     paramValues[uint_8], // must be same length as paramNames
-  uint_8                       robotID
+  uint_8                       robotID,
+  bool                         setUnspecifiedToDefault = 0
 }
 
 // VisualizeQuad
@@ -585,7 +606,9 @@ union RobotActionUnion {
   PopAWheelie        popAWheelie,
   SetLiftHeight      setLiftHeight,
   SetHeadAngle       setHeadAngle,
-  TurnInPlace        turnInPlace
+  TurnInPlace        turnInPlace,
+  TrackToFace        trackFace,
+  TrackToObject      trackObject
 }
 
 // QueueSingleAction

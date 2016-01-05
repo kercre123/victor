@@ -1,6 +1,8 @@
 #include "lib/stm32f4xx.h"
+#include <float.h>
+#include <math.h>
 #include "anki/cozmo/robot/hal.h"
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 #include "hal/portable.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h" // for calibration parameters
@@ -21,68 +23,64 @@ namespace Anki
 {
   namespace Cozmo
   {
-    
-#ifdef COZMO_ROBOT_3A99
-    // Calibration values from August 11, 2015 - on headboard with SSID 3a99
-    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 273.316765624f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 274.838250766f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 199.638842523f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 160.682934109f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.03956f,
-      -0.08955f,
-      0.00044f,
-      0.00188f
-    };
-#elif defined(COZMO_ROBOT_3A94)
-    // Calibration values from Oct 26, 2015 - on headboard with SSID 3a94
-    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 278.116827643f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 278.911858028f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 192.335473712f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 159.149178809f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.09793295f,
-      -0.32495782f,
-      0.00181705f,
-      -0.00264056f
-    };
-#elif defined(COZMO_ROBOT_3AA0)
-    // Calibration values from Oct 14, 2015 - on headboard with SSID 3aa0
-    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 274.291991607f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 276.143080182f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 191.448668019f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 150.948649329f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.21464833f,
-      -0.92671181f,
-      0.00176247f,
-      -0.00123075f
-    };    
-#elif defined(COZMO_ROBOT_BRYONSHEAD)
-    // Calibration values from Dec 4, 2015 - on 4.0 robot headboard with SSID BryonsHead
-    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 277.822223821f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 279.547362811f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 203.035206475f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 144.106481143f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.192541876f,
-      -0.708972973f,
-      -0.000604805681f,
-      -0.000706399739f
-    };
-#else
-#error Need to define which robot. (e.g. COZMO_ROBOT_3A94)
-#endif
-    
-    
+
+    // private namespace
+    namespace {
+      const u16 HEAD_CAM_CALIB_WIDTH  = 400;
+      const u16 HEAD_CAM_CALIB_HEIGHT = 296;
+
+      static HAL::CameraInfo camCal_3A94 = {
+        278.116827643f,  // focalLength_x
+        278.911858028f,  // focalLength_y
+        192.335473712f,  // center_x
+        159.149178809f,  // center_y
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+
+      static HAL::CameraInfo camCal_3A99 = {
+        273.316765624f,
+        274.838250766f,
+        199.638842523f,
+        160.682934109f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+
+      static HAL::CameraInfo camCal_3AA0 = {
+        274.291991607f,
+        276.143080182f,
+        191.448668019f,
+        150.948649329f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+
+      static HAL::CameraInfo camCal_3AA7 = {
+        277.967971768f,
+        280.139456164f,
+        199.567887592f,
+        151.843694566f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+      
+      static HAL::CameraInfo camCal_0040 = {
+        278.097576248f,
+        279.784530486f,
+        206.263281121f,
+        150.982344827f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+    }
+
+
     namespace HAL
     {
       // For headboard 4.0
@@ -101,13 +99,13 @@ namespace Anki
       GPIO_PIN_SOURCE(XCLK, GPIOA, 3);
       GPIO_PIN_SOURCE(RESET_N, GPIOA, 8);  // Hacked onto TP1 in 4.0
       GPIO_PIN_SOURCE(PWDN, GPIOE, 2);
-      
+
       // GPIO_PIN_SOURCE(FSIN, GPIOA, 1);  // Not connected in 4.0
 
       const u32 DCMI_TIMEOUT_MAX = 10000;
 
       const u8 I2C_ADDR = 0x3C;        // Address for GC2145
-      
+
       unsigned short m_camScript[] =
         {
 0xfe, 0xf0,
@@ -130,7 +128,7 @@ namespace Anki
 0x0a, 0x00,
 0x0b, 0x00,
 0x0c, 0x00,
-          
+
 0x0d, 0x04,   // Physical window height
 0x0e, 0xc0,
 
@@ -342,7 +340,7 @@ namespace Anki
 0x23, 0xf5,
 0x24, 0xf9,
 0x25, 0xff,
-/////auto gamma///// 
+/////auto gamma/////
 0xfe, 0x02,
 0x26, 0x0f,
 0x27, 0x14,
@@ -394,9 +392,9 @@ namespace Anki
 0x3b, 0xff,
 	*/
 
-	///////////////////////////////////////////////      
-	///////////   YCP       ///////////////////////  
-	///////////////////////////////////////////////  
+	///////////////////////////////////////////////
+	///////////   YCP       ///////////////////////
+	///////////////////////////////////////////////
 0xfe, 0x02,
 0xd1, 0x30,
 0xd2, 0x30,
@@ -468,7 +466,7 @@ namespace Anki
 0xa9, 0x77,
 0xa1, 0x80,
 0xa2, 0x80,
-	
+
 0xfe, 0x01,
 0xdf, 0x00,
 0xdc, 0x80,
@@ -486,7 +484,7 @@ namespace Anki
 	/////////////////////////////////////////////////
 	/////////////    AWB     ////////////////////////
 	/////////////////////////////////////////////////
-#if 1  ///pheobe_cao 
+#if 1  ///pheobe_cao
 	0xfe , 0x01,
 	0x4f , 0x00,
 	0x4f , 0x00,
@@ -531,7 +529,7 @@ namespace Anki
 	0x4c , 0x01,//D50
 	0x4d , 0x6e,
 	0x4e , 0x03,
-	0x4c , 0x01, 
+	0x4c , 0x01,
 	0x4d , 0x8e,
 	0x4e , 0x03,
 	0x4c , 0x01,
@@ -597,14 +595,14 @@ namespace Anki
 	0x4c , 0x01,
 	0x4d , 0x8a,
 	0x4e , 0x03,
-									   
+
 		//0x4c , 0x02,
 		//0x4d , 0x2b,
 		//0x4e , 0x03,
 		//0x4c , 0x02,
 		//0x4d , 0x4b,
 		//0x4e , 0x03,
-		
+
 	0x4c , 0x01, // CWF
 	0x4d , 0xaa,
 	0x4e , 0x04,
@@ -650,7 +648,7 @@ namespace Anki
 	0x4c , 0x02,
 	0x4d , 0x0a,
 	0x4e , 0x05,
-		
+
 	0x4c , 0x02,
 	0x4d , 0x8b,
 	0x4e , 0x06,
@@ -696,7 +694,7 @@ namespace Anki
 	0x4c , 0x02,
 	0x4d , 0xe9,
 	0x4e , 0x07,
-		
+
 	0x4f , 0x01,
 	0x50 , 0x80,
 	0x51 , 0xa8,
@@ -713,7 +711,7 @@ namespace Anki
 	0x63 , 0x86,
 	0x64 , 0xc0,
 	0x65 , 0x04,
-		
+
 	0x67 , 0xa8,
 	0x68 , 0xb0,
 	0x69 , 0x00,
@@ -735,7 +733,7 @@ namespace Anki
 	0x78 , 0xa0,
 	0x79 , 0x5e,
 	0x7a , 0x54,
-	0x7b , 0x55,										
+	0x7b , 0x55,
 	0xfe , 0x00,
 #endif
 
@@ -872,7 +870,7 @@ namespace Anki
 0x4d, 0x88,
 0x4e, 0x07,
 0x4f, 0x01,
-0x50, 0x80, 
+0x50, 0x80,
 0x51, 0xa8,
 0x52, 0x57,
 0x53, 0x38,
@@ -891,21 +889,21 @@ namespace Anki
 0x68, 0xb0,
 0x69, 0x00,
 0x6a, 0xa4,
-0x6b, 0xb0, 
-0x6c, 0xb2, 
-0x6d, 0xac, 
-0x6e, 0x60, 
+0x6b, 0xb0,
+0x6c, 0xb2,
+0x6d, 0xac,
+0x6e, 0x60,
 0x6f, 0x15,
-0x73, 0x0f, 
-0x70, 0x10, 
-0x71, 0xe8, 
-0x72, 0xc0, 
-0x74, 0x01, 
-0x75, 0x01, 
-0x7f, 0x08, 
-0x76, 0x70, 
-0x77, 0x58, 
-0x78, 0xa0, 
+0x73, 0x0f,
+0x70, 0x10,
+0x71, 0xe8,
+0x72, 0xc0,
+0x74, 0x01,
+0x75, 0x01,
+0x7f, 0x08,
+0x76, 0x70,
+0x77, 0x58,
+0x78, 0xa0,
 0xfe, 0x00,
 #endif
 	//////////////////////////////////////////
@@ -931,7 +929,7 @@ namespace Anki
 0xe3, 0xf0,
 0xe4, 0x45,
 0xe5, 0xe8,
-	
+
 	///////output//////////////////////////
 0xfe, 0x00,
 0xf2, 0x0f,
@@ -966,8 +964,8 @@ namespace Anki
 
 	0xfe , 0x00,
 	0xfa , 0x00,
-	0xfd , 0x01, 
-	//// crop window              
+	0xfd , 0x01,
+	//// crop window
 	0xfe , 0x00,
 	0x99 , 0x22,  // 1/2 subsample for 800x600 to 400x300
 	0x9a , 0x06,  // Subsample mode - smooth chroma, average neighbors
@@ -976,31 +974,31 @@ namespace Anki
 	0x9d , 0x00,
 	0x9e , 0x00,
 	0x9f , 0x00,
-	0xa0 , 0x00,  
+	0xa0 , 0x00,
 	0xa1 , 0x00,
 	0xa2  ,0x00,
-	
+
 	0x90 , 0x01, // Crop out window
 	0x91 , 0x00,
 	0x92 , 0x00,
 	0x93 , 0x00,
 	0x94 , 0x00,
-	
+
 	0x95 , 0x01,  // Output window height
-	0x96 , 0x28,  // NDM - this is 296 to stay divisible by 8 
-  
+	0x96 , 0x28,  // NDM - this is 296 to stay divisible by 8
+
 	0x97 , 0x01,
 	0x98 , 0x90,
 
-	//// AWB                      
+	//// AWB
 	0xfe , 0x00,
-	0xec , 0x01, 
+	0xec , 0x01,
 	0xed , 0x02,
 	0xee , 0x30,
 	0xef , 0x48,
 	0xfe , 0x01,
-	0x74 , 0x00, 
-	//// AEC                      
+	0x74 , 0x00,
+	//// AEC
 	0xfe , 0x01,
 	0x01 , 0x04,
 	0x02 , 0x60,
@@ -1010,16 +1008,16 @@ namespace Anki
 	0x06 , 0x4c,
 	0x07 , 0x14,
 	0x08 , 0x36,
-	
-	0x0a , 0xc0, 
+
+	0x0a , 0xc0,
 	0x21 , 0x14,
 	0xfe , 0x00,
-  
+
   // Comment these lines out to enable auto-exposure
   0xb6 , 0x00,  // P0: AEC off
   0x03 , 0x02,  // P0: Exposure MSB
   0x04 , 0x40,  // P0: Exposure LSB
-  
+
           0, 0
         };
 
@@ -1036,13 +1034,13 @@ namespace Anki
       const int BUFFER_SIZE = TOTAL_COLS * BUFFER_ROWS * BYTES_PER_PIX;  // 8 rows of YUYV (2 bytes each)
       ONCHIP u8 m_buffer[2][BUFFER_SIZE];   // Double buffer
       volatile int m_readyBuffer = 1, m_readyRow = -8;
-     
+
       // Get raw data from the camera
       u8* CamGetRaw() { return m_buffer[m_readyBuffer]; }
       int CamGetReadyRow() { return m_readyRow; }
 
       void UARTPutHex(u8 c);
-      
+
       // For self-test purposes only.
       static void CamSetPulls(GPIO_TypeDef* GPIOx, u32 pin, int index)
       {
@@ -1068,9 +1066,9 @@ namespace Anki
         CamSetPulls(GPIO_D5, PIN_D5, pullup & 32);
         CamSetPulls(GPIO_D6, PIN_D6, pullup & 64);
         CamSetPulls(GPIO_D7, PIN_D7, pullup & 128);
-        
+
         MicroWait(25);
-        
+
         return
           CamGetPulls(GPIO_D0, PIN_D0, 0) |
           CamGetPulls(GPIO_D1, PIN_D1, 1) |
@@ -1083,7 +1081,7 @@ namespace Anki
       }
 
       volatile int m_test = 0;
-      
+
       void GC2145Init()
       {
         m_exposure = u32_MAX;
@@ -1104,8 +1102,8 @@ namespace Anki
         I2CInit();
         I2CRead(I2C_ADDR, 0xf0);
         I2CRead(I2C_ADDR, 0xf1);
-        
-        // Write the configuration registers        
+
+        // Write the configuration registers
         unsigned short* p = m_camScript;
         while (*p) {
           I2CWrite(I2C_ADDR, p[0], p[1]);
@@ -1131,7 +1129,7 @@ namespace Anki
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
         DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_Init(DMA2_Stream1, &DMA_InitStructure);
-        
+
         // Set up double buffering
         DMA_DoubleBufferModeConfig(DMA2_Stream1, (u32)m_buffer[1], DMA_Memory_0);
         DMA_DoubleBufferModeCmd(DMA2_Stream1, ENABLE);
@@ -1146,9 +1144,9 @@ namespace Anki
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
-        
+
         __disable_irq();
-        
+
         // Wait for VSYNC before enabling capture
         while ((GPIO_READ(GPIO_VSYNC) & PIN_VSYNC))
           ;
@@ -1156,15 +1154,15 @@ namespace Anki
           ;
         while ((GPIO_READ(GPIO_VSYNC) & PIN_VSYNC))
           ;
-        
+
         for (int i = 0; i < 4; i++)
         {
           while (!(GPIO_READ(GPIO_HSYNC) & PIN_HSYNC))
             ;
           while ((GPIO_READ(GPIO_HSYNC) & PIN_HSYNC))
-            ;          
+            ;
         }
-        
+
         // Enable DMA
         DMA_Cmd(DMA2_Stream1, ENABLE);
 
@@ -1173,7 +1171,7 @@ namespace Anki
 
         // Enable the DCMI peripheral to capture frames from vsync
         DCMI_CaptureCmd(ENABLE);
-        
+
         __enable_irq();
       }
 
@@ -1189,10 +1187,10 @@ namespace Anki
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
         RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
-        
+
         // TODO: Check that the GPIOs are okay
         //for (u8 i = 1; i; i <<= 1)
-        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));        
+        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));
 
         // Configure the pins for DCMI in AF mode
         GPIO_PinAFConfig(GPIO_D0, SOURCE_D0, GPIO_AF_DCMI);
@@ -1232,7 +1230,7 @@ namespace Anki
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_Pin = PIN_PWDN;
         GPIO_Init(GPIO_PWDN, &GPIO_InitStructure);
-        
+
         GPIO_RESET(GPIO_RESET_N, PIN_RESET_N);  // RESET_N starts low
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_Pin = PIN_RESET_N;
@@ -1276,25 +1274,25 @@ namespace Anki
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
       {
         //TODO: vignetting correction
-        
+
         const f32 maxExposure = 0xf00; // Determined empirically
-        
+
         f32 correctedExposure = exposure;
-        
+
         if(exposure < 0.0f)
         {
           correctedExposure = 0;
         } else if(exposure > 1.0f)
         {
           correctedExposure = 1.0f;
-        } 
-        
+        }
+
         const u32 exposureU32 = (u32) floorf(correctedExposure * maxExposure + 0.5f);
-        
+
         if (m_exposure != exposureU32)
         {
           m_exposure = exposureU32;
-          
+
           //CamWrite(0x3501, (exposureU32 >> 8) & 0xFF);
           MicroWait(100);
           //CamWrite(0x3502, exposureU32 & 0xFF);
@@ -1311,25 +1309,28 @@ namespace Anki
 
         // Wait until the frame has completed (based on DMA_FLAG_TCIF1)
         while (!m_isEOF)
-        {  
+        {
         }
-        
+
         return;
       }
 
       const CameraInfo* GetHeadCamInfo(void)
       {
-        static CameraInfo s_headCamInfo = {
-          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
-          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-          HEAD_CAM_CALIB_CENTER_X,
-          HEAD_CAM_CALIB_CENTER_Y,
-          0.f,
-          HEAD_CAM_CALIB_HEIGHT,
-          HEAD_CAM_CALIB_WIDTH
-        };
-
-        return &s_headCamInfo;
+        switch(GetID())
+        {
+          case 0x3A94:
+            return &camCal_3A94;
+          case 0x3A99:
+            return &camCal_3A99;
+          case 0x3AA0:
+            return &camCal_3AA0;
+          case 0x3AA7:
+            return &camCal_3AA7;
+          case 0x0040:
+          default:
+            return &camCal_0040;
+        }
       }
     }
   }

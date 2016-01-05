@@ -19,6 +19,8 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 
+#include "util/logging/logging.h"
+
 namespace Anki {
   
   template<typename T>
@@ -226,6 +228,25 @@ namespace Anki {
 #else
     CORETECH_THROW("Rectangle::Intersect() currently relies on OpenCV.");
 #endif    
+  }
+  
+  template<typename T>
+  f32 Rectangle<T>::ComputeOverlapScore(const Rectangle<T>& other) const
+  {
+    // Note that union = area1 + area2 - intersection!
+    const T thisArea = Area();
+    const T otherArea = other.Area();
+    const T intersection = Intersect(other).Area();
+    if(thisArea==0 || otherArea==0 || intersection==0) {
+      return 0.f;
+    }
+    const f32 denom = static_cast<f32>(thisArea + otherArea - intersection);
+    if(denom <= 0.f) {
+      PRINT_NAMED_ERROR("Rectangle.ComputeOverlapScore.InvalidDenom",
+                        "Area sum minus intersection should be strictly > 0, not %f", denom);
+      return 0.f;
+    }
+    return static_cast<f32>(intersection) / denom;
   }
   
   template<typename T>

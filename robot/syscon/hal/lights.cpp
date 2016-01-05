@@ -4,8 +4,14 @@
 
 #include "debug.h"
 
+#include "rtos.h"
 #include "hardware.h"
 #include "hal/portable.h"
+
+#include "anki/cozmo/robot/spineData.h"
+
+extern GlobalDataToHead g_dataToHead;
+extern GlobalDataToBody g_dataToBody;
 
 /*
 NOTE: COMPARE0-3 seemed super twitchy so I decided against using it.
@@ -70,9 +76,13 @@ void Lights::init()
 
   NVIC_SetPriority(RTC1_IRQn, 3);
   NVIC_EnableIRQ(RTC1_IRQn);
+
+  RTOS::schedule(Lights::manage, CYCLES_MS(5.0f), &g_dataToBody.backpackColors);
 }
 
 extern "C" void RTC1_IRQHandler() {
+  #ifndef RADIO_TIMING_TEST
+
   static uint8_t pwm[numLights];
   static int divider = 0;
 
@@ -86,9 +96,6 @@ extern "C" void RTC1_IRQHandler() {
   else
     divider = 0;
   
-  #ifdef RADIO_TIMING_TEST
-  return ;
-  #endif
   // Blacken everything out
   lights_off();
 
@@ -109,16 +116,19 @@ extern "C" void RTC1_IRQHandler() {
   }
   
   channel = (channel + 1) % numCharlieChannels;
+  #endif
 }
 
-void Lights::manage(volatile uint32_t *clr)
+void Lights::manage(void *clr)
 {
   uint8_t *in_colors = (uint8_t*) clr;
 
+  // This is a packed structure now channels are 1-11, channel 0 is unused  
   int pos = 0;
-  for (int i = 0; i < numCharlieChannels; i++, in_colors++) {
-    for (int b = 0; b < numLightsPerChannel; b++)
-      colors[pos++] = AdjustTable[*(in_colors++)] & colorMask;
-      ;
+  for (int x = 0; x < numCharlieChannels; x++) {
+    for (int i = 0; i < numLightsPerChannel; i++) {
+      colors[pos++] = AdjustTable[*(in_colors++)];
+    }
+    in_colors++;
   }
 }

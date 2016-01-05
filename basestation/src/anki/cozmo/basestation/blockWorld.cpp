@@ -131,6 +131,19 @@ namespace Cozmo {
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE2));
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE4));
+      
+      if (nullptr != _robot)
+      {
+        // TODO: HACK: Manually clearing the LEDs on the active blocks here when the engine is getting set up.
+        // It isn't pretty, and it will likely change as block communication changes going forward, but for now
+        // this is as good a place as any to clear out the lights when starting up.
+        std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
+        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID0);
+        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID1);
+        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID2);
+        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID3);
+        // END_HACK
+      }
 
       
       //////////////////////////////////////////////////////////////////////////
@@ -522,9 +535,17 @@ namespace Cozmo {
         // Store pointers to any existing objects that overlap with this one
         //std::vector<ObservableObject*> overlappingObjects;
         //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        
+        // Override the default filter function to intentionally consider objects
+        // that are unknown here. Otherwise, we'd never be able to match new
+        // observations to existing objects whose pose has been set to unknown!
+        BlockWorldFilter filter;
+        filter.SetFilterFcn([] (ObservableObject*) { return true; });
+
         ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
                                                                      objSeen->GetSameDistanceTolerance(),
-                                                                     objSeen->GetSameAngleTolerance());
+                                                                     objSeen->GetSameAngleTolerance(),
+                                                                     filter);
         
         // If this is the object we're carrying, do nothing and continue to the next observed object
         if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
@@ -925,131 +946,6 @@ namespace Cozmo {
       
     } // AddAndUpdateObjects()
   
-  
-    Result BlockWorld::UpdateTrackToObject()
-    {
-      if(!_robot->GetMoveComponent().GetTrackToObject().IsSet()) {
-        // Nothing to do if the robot isn't set to track anything
-        return RESULT_OK;
-      }
-      
-      const ObservableObject* trackToObject = GetObjectByID(_robot->GetMoveComponent().GetTrackToObject());
-      if(nullptr == trackToObject) {
-        PRINT_NAMED_ERROR("BlockWorld.Update.InvalidTrackToObject",
-                          "Robot's track to object, ID=%d, does not exist",
-                          _robot->GetMoveComponent().GetTrackToObject().GetValue());
-        return RESULT_FAIL;
-      }
-      
-      const ObservableObject* observedObject = nullptr;
-      static Pose3d lastTrackToPose = trackToObject->GetPose();
-      
-      std::list<ObservableObject*> matchingObjects;
-      for(auto object : _currentObservedObjects) {
-        if(object->GetType() == trackToObject->GetType()) {
-          matchingObjects.push_back(object);
-        }
-      }
-      
-      if(matchingObjects.empty()) {
-        // Nothing to do: there are current observed objects, but none of them
-        // match the type of the object we're tracking
-        return RESULT_OK;
-      } else if(matchingObjects.size() == 1) {
-        // Special case: only one matching type. Just use that one
-        observedObject = matchingObjects.front();
-      } else if(matchingObjects.size() > 1) {
-        // Multiple objects of the TrackTo type seen simultaneously. Find
-        // the closest one to the last known position of the track-to object
-        // and use it (Not sure this is exactly what we want: we might want to
-        // use the last tracked position...)
-        f32 minDist = std::numeric_limits<f32>::max();
-        
-        for(auto matchingObject : matchingObjects) {
-          f32 dist = ComputeDistanceBetween(matchingObject->GetPose(), lastTrackToPose);
-          if(dist < minDist) {
-            observedObject = matchingObject;
-            minDist = dist;
-          }
-        }
-      } // if(num matching objects == 1 or > 1)
-      
-      ASSERT_NAMED(nullptr != observedObject, "ObservedObject should be non-null by now");
-      lastTrackToPose = observedObject->GetPose();
-      
-      // Find the observed marker closest to the robot and use that as the one we
-      // track to
-      std::vector<const Vision::KnownMarker*> observedMarkers;
-      observedObject->GetObservedMarkers(observedMarkers, observedObject->GetLastObservedTime());
-      
-      if(observedMarkers.empty()) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
-                          "No markers on observed object %d marked as observed since time %d, "
-                          "expecting at least one.",
-                          observedObject->GetID().GetValue(), observedObject->GetLastObservedTime());
-        return RESULT_FAIL;
-      }
-      
-      const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
-      
-      const Vision::KnownMarker* closestMarker = nullptr;
-      f32 minDistSq = std::numeric_limits<f32>::max();
-      f32 xDist = 0.f, yDist = 0.f, zDist = 0.f;
-      
-      for(auto marker : observedMarkers) {
-        Pose3d markerPose;
-        if(false == marker->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), markerPose)) {
-          PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
-                            "Could not get pose of observed marker w.r.t. world for head tracking.\n");
-          return RESULT_FAIL;
-        }
-        
-        const f32 xDist_crnt = markerPose.GetTranslation().x() - robotTrans.x();
-        const f32 yDist_crnt = markerPose.GetTranslation().y() - robotTrans.y();
-        
-        const f32 currentDistSq = xDist_crnt*xDist_crnt + yDist_crnt*yDist_crnt;
-        if(currentDistSq < minDistSq) {
-          closestMarker = marker;
-          minDistSq = currentDistSq;
-          xDist = xDist_crnt;
-          yDist = yDist_crnt;
-          
-          // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
-          // NOTE: This isn't perfectly accurate since it doesn't take into account the
-          // the head angle and is simply using the neck joint (which should also
-          // probably be queried from the robot instead of using the constant here)
-          zDist = markerPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
-        }
-        
-      } // For all markers
-      
-      if(closestMarker == nullptr) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject", "No closest marker found!\n");
-        return RESULT_FAIL;
-      } else {
-        const f32 minDist = std::sqrt(minDistSq);
-        const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
-        f32 bodyPanAngle_rad = 0.f;
-          
-        if(false == _robot->GetMoveComponent().IsTrackingWithHeadOnly()) {
-          // Also rotate ("pan") body:
-          bodyPanAngle_rad = std::atan2(yDist, xDist);
-        }
-        
-        PanAndTiltAction* action = new PanAndTiltAction(bodyPanAngle_rad, headAngle, true, true);
-        action->EnableMessageDisplay(false);
-        
-        // TODO: Expose / tune these parameters to get the appropriate amount of eye tracking vs. movement
-        action->SetPanTolerance(DEG_TO_RAD(5));
-        action->SetTiltTolerance(DEG_TO_RAD(5));
-        
-        // TODO: Expose / tune PanAndTilt speed/accel as needed
-        
-        _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-      }
-      
-      return RESULT_OK;
-    } // UpdateTrackToObject()
   
     u32 BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
     {
@@ -2152,13 +2048,7 @@ namespace Cozmo {
       if(_currentObservedObjects.empty()) {
         // If we didn't see/update anything, send a signal saying so
         _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
-      } else {
-        // See if the type of object the robot is tracking to got updated
-        Result trackResult = UpdateTrackToObject();
-        if(RESULT_OK != trackResult) {
-          PRINT_NAMED_WARNING("BlockWorld.Update.UpdateTrackToFailed", "");
-        }
-      }
+      } 
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
       
@@ -2187,7 +2077,8 @@ namespace Cozmo {
               
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
                  !object->IsBeingCarried() &&
-                 !object->IsPoseStateUnknown())
+                 !object->IsPoseStateUnknown() &&
+                 object->GetID() != _robot->GetDockObject())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.
@@ -2345,15 +2236,6 @@ namespace Cozmo {
           _selectedObject.UnSet();
         }
         
-        if(_robot->GetMoveComponent().GetTrackToObject() == object->GetID()) {
-          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
-                           "Clearing %s object %d which robot %d is currently tracking its head to.",
-                           ObjectTypeToString(object->GetType()),
-                           object->GetID().GetValue(),
-                           _robot->GetID());
-          _robot->GetMoveComponent().DisableTrackToObject();
-        }
-        
         object->SetPoseState(ObservableObject::PoseState::Unknown);
         
         // Notify any listeners that this object no longer has a valid Pose
@@ -2377,17 +2259,35 @@ namespace Cozmo {
   {
     ObservableObject* matchingObject = nullptr;
     
-    for(auto & objectsByFamily : _existingObjects) {
-      if(filter.ConsiderFamily(objectsByFamily.first)) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          if(filter.ConsiderType(objectsByType.first)) {
-            for(auto & objectsByID : objectsByType.second) {
-              if(filter.ConsiderObject(objectsByID.second))
-              {
-                if(findFcn(objectsByID.second, matchingObject)) {
-                  matchingObject = objectsByID.second;
-                  if(returnFirstFound) {
-                    return matchingObject;
+    if(filter.IsOnlyConsideringLatestUpdate()) {
+      
+      for(auto candidate : _currentObservedObjects) {
+        if(filter.ConsiderFamily(candidate->GetFamily()) &&
+           filter.ConsiderType(candidate->GetType()) &&
+           filter.ConsiderObject(candidate))
+        {
+          if(findFcn(candidate, matchingObject)) {
+            matchingObject = candidate;
+            if(returnFirstFound) {
+              return matchingObject;
+            }
+          }
+        }
+      }
+      
+    } else {
+      for(auto & objectsByFamily : _existingObjects) {
+        if(filter.ConsiderFamily(objectsByFamily.first)) {
+          for(auto & objectsByType : objectsByFamily.second) {
+            if(filter.ConsiderType(objectsByType.first)) {
+              for(auto & objectsByID : objectsByType.second) {
+                if(filter.ConsiderObject(objectsByID.second))
+                {
+                  if(findFcn(objectsByID.second, matchingObject)) {
+                    matchingObject = objectsByID.second;
+                    if(returnFirstFound) {
+                      return matchingObject;
+                    }
                   }
                 }
               }
@@ -2509,17 +2409,15 @@ namespace Cozmo {
   
     ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                             const Vec3f& distThreshold,
-                                                            const Radians& angleThreshold)
+                                                            const Radians& angleThreshold,
+                                                            const BlockWorldFilter& filterIn)
     {
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
       // Don't check the object we're using as the comparison
-      BlockWorldFilter filter;
+      BlockWorldFilter filter(filterIn);
       filter.AddIgnoreID(object.GetID());
-      
-      // We override the default filter function to intentionally consider objects that are unknown here
-      filter.SetFilterFcn([] (ObservableObject*) { return true; });
       
       FindFcn findLambda = [&object,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
       {
@@ -2536,8 +2434,36 @@ namespace Cozmo {
       
       ObservableObject* closestObject = FindObjectHelper(findLambda, filter);
       return closestObject;
-    }
-    
+    } // FindClosestMatchingObject(given object)
+  
+    ObservableObject* BlockWorld::FindClosestMatchingObject(ObjectType withType,
+                                                            const Pose3d& pose,
+                                                            const Vec3f& distThreshold,
+                                                            const Radians& angleThreshold,
+                                                            const BlockWorldFilter& filter)
+    {
+      Vec3f closestDist(distThreshold);
+      Radians closestAngle(angleThreshold);
+      
+      FindFcn findLambda = [withType,&pose,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
+      {
+        Vec3f Tdiff;
+        Radians angleDiff;
+        if(current->GetType() == withType &&
+           current->GetPose().IsSameAs(pose, closestDist, closestAngle, Tdiff, angleDiff))
+        {
+          closestDist = Tdiff.GetAbs();
+          closestAngle = angleDiff.getAbsoluteVal();
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      ObservableObject* closestObject = FindObjectHelper(findLambda, filter);
+      return closestObject;
+    } // FindClosestMatchingObject(given pose)
+  
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
       if(_canDeleteObjects) {

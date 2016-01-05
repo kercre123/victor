@@ -5,7 +5,7 @@
 
 
 #include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/rtipTraces.clad"
+#include "clad/types/robotLogging.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
@@ -19,40 +19,6 @@ namespace RobotInterface {
 
 /// *************** RTIP to Engine messages ******************************* ///
 
-message PrintTraceInt
-{
-  int_32    value,
-  RtipTrace name,
-}
-
-message PrintTraceDouble
-{
-  float_64  value,
-  RtipTrace name,
-}
-
-message MainCycleTimeError
-{
-  uint_32 numMainTooLongErrors,
-  uint_32 avgMainTooLateTime,
-  uint_32 numMainTooLateErrors,
-  uint_32 avgMainTooLongTime,
-}
-
-message DataDump
-{
-  uint_32 id,
-  uint_8  data[uint_8],
-}
-
-message TimeProfileStat
-{
-  uint_32 avg,
-  uint_32 max,
-  bool    isHeader,
-  string  profName,
-}
-
 message SyncTimeAck
 {
 }
@@ -64,17 +30,24 @@ message RobotPoked
 
 /// *************** WiFi to Engine messages ******************************* ///
 
-message PrintText
-{
-  string text
-}
-
 message AnimationState
 {
   uint_32 timestamp,
   int_32  numAnimBytesPlayed,
+  int_32  numAudioFramesPlayed,
   RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
   uint_8 tag,
+}
+
+// These two messages bookend animations as they are played on the robot
+message AnimationStarted
+{
+  uint_8 tag
+}
+
+message AnimationEnded
+{
+  uint_8 tag
 }
 
 message CameraCalibration
@@ -110,8 +83,7 @@ message FlashWriteAcknowledge
 union RobotToEngine {
   // From RTIP 0x01 to 0x7F
   RobotState                 state                  = 0x01,
-  PrintTraceInt              traceInt               = 0x02,
-  PrintTraceDouble           traceDbl               = 0x03,
+  PrintTrace                 trace                  = 0x02,
   MainCycleTimeError         mainCycleTimeError     = 0x04,
   GoalPose                   goalPose               = 0x05,
   ObjectMoved                activeObjectMoved      = 0x06,
@@ -139,6 +111,8 @@ union RobotToEngine {
   CameraCalibration          cameraCalibration      = 0x83,
   RobotAvailable             robotAvailable         = 0x84,
   FlashWriteAcknowledge      flashWriteAck          = 0x85,
+  AnimationStarted           animStarted            = 0x86,
+  AnimationEnded             animEnded              = 0x87,
 }
 
 

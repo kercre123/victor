@@ -1,41 +1,55 @@
 
+#include "clad/audio/audioEventTypes.clad"
+
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
 
-// TODO: Add Error Type
-enum uint_32 CallbackErrorType
+structure AudioCallbackDuration
 {
-  Invalid = 0,
+  float_32  duration           = 0.0,
+  float_32  estimatedDuration  = 0.0,
+  uint_32   audioNodeId        = 0,
+  bool      isStreaming        = 0
 }
 
-message AudioCallbackDuration
+structure AudioCallbackMarker
 {
-  uint_16 callbackId            = 0,
-  float_32   duration           = 0.0,
-  float_32   estimatedDuration  = 0.0,
-  uint_32 audioNodeId           = 0,
-  bool    isStreaming           = 0
-}
-
-message AudioCallbackMarker
-{
-  uint_16 callbackId  = 0,
   uint_32 identifier  = 0,
   uint_32 position    = 0,
   string  labelTitle
 }
 
-message AudioCallbackComplete
+structure AudioCallbackComplete
 {
-  uint_16 callbackId = 0
+  EventType eventType,
 }
 
-message AudioCallbackError
+enum uint_8 CallbackErrorType
+{
+  Invalid = 0,
+  EventFailed,
+  Starvation
+}
+
+structure AudioCallbackError
+{
+  CallbackErrorType callbackError,
+}
+
+union AudioCallbackInfo
+{
+  AudioCallbackDuration   callbackDuration,
+  AudioCallbackMarker     callbackMarker,
+  AudioCallbackComplete   callbackComplete,
+  AudioCallbackError      callbackError,
+}
+
+message AudioCallback
 {
   uint_16 callbackId = 0,
-  CallbackErrorType callbackError,
+  AudioCallbackInfo callbackInfo,
 }
 
 }

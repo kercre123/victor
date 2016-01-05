@@ -31,6 +31,50 @@ namespace Anki {
       Clear();
     }
     
+    Result ActionList::QueueAction(SlotHandle inSlot, QueueActionPosition inPosition,
+                                   IActionRunner* action, u8 numRetries)
+    {
+      switch(inPosition)
+      {
+        case QueueActionPosition::NOW:
+        {
+          QueueActionNow(inSlot, action, numRetries);
+          break;
+        }
+        case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
+        {
+          // Cancel all queued actions and make this action the next thing in it
+          Cancel();
+          QueueActionNext(inSlot, action, numRetries);
+          break;
+        }
+        case QueueActionPosition::NEXT:
+        {
+          QueueActionNext(inSlot, action, numRetries);
+          break;
+        }
+        case QueueActionPosition::AT_END:
+        {
+          QueueActionAtEnd(inSlot, action, numRetries);
+          break;
+        }
+        case QueueActionPosition::NOW_AND_RESUME:
+        {
+          QueueActionAtFront(inSlot, action, numRetries);
+          break;
+        }
+        default:
+        {
+          PRINT_NAMED_ERROR("CozmoGameImpl.QueueActionHelper.InvalidPosition",
+                            "Unrecognized 'position' %s for queuing action.",
+                            EnumToString(inPosition));
+          return RESULT_FAIL;
+        }
+      }
+      
+      return RESULT_OK;
+    } // QueueAction()
+    
     bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
     {
       bool found = false;
@@ -134,17 +178,35 @@ namespace Anki {
       return currentSlot;
     }
     
-    bool ActionList::IsCurrAction(const std::string& actionName)
+    bool ActionList::IsCurrAction(const std::string& actionName) const
     {
       for(auto queueIter = _queues.begin(); queueIter != _queues.end();  ++queueIter)
       {
+        if (nullptr == queueIter->second.GetCurrentAction()) {
+          return false;
+        }
         if (queueIter->second.GetCurrentAction()->GetName() == actionName) {
           return true;
         }
       }
       return false;
     }
-    
+
+    bool ActionList::IsCurrAction(u32 idTag, SlotHandle fromSlot) const
+    {
+      const auto qIter = _queues.find(fromSlot);
+      if( qIter == _queues.end() ) {
+        // can't be playing if the slot doesn't exist
+        return false;
+      }
+
+      if( nullptr == qIter->second.GetCurrentAction() ) {
+        return false;
+      }
+
+      return qIter->second.GetCurrentAction()->GetTag() == idTag;
+    }
+
 #pragma mark ---- ActionQueue ----
     
     ActionQueue::ActionQueue()
@@ -215,12 +277,46 @@ namespace Anki {
         return QueueAtEnd(action, numRetries);
         
       } else {
-        
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
         _queue.front()->Cancel();
         return QueueNext(action, numRetries);
       }
+    }
+    
+    Result ActionQueue::QueueAtFront(IActionRunner* action, u8 numRetries)
+    {
+      if(action == nullptr) {
+        PRINT_NAMED_ERROR("ActionQueue.QueueAFront.NullActionPointer",
+                          "Refusing to queue a null action pointer.\n");
+        return RESULT_FAIL;
+      }
+      
+      Result result = RESULT_OK;
+      
+      if(_queue.empty()) {
+        // Nothing in the queue, so this is the same as QueueAtEnd
+        result = QueueAtEnd(action, numRetries);
+      } else {
+        // Try to interrupt whatever is running and put this new action in front of it
+        if(_queue.front()->Interrupt()) {
+          // Current front action is interruptible. Reset it so it's ready to be
+          // re-run and put the new action in front of it in the queue.
+          PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
+                           "Interrupting %s to put %s in front of it.",
+                           _queue.front()->GetName().c_str(),
+                           action->GetName().c_str());
+          _queue.front()->Reset();
+          action->SetNumRetries(numRetries);
+          _queue.push_front(action);
+        } else {
+          // Current front action is not interruptible, so just use QueueNow and
+          // cancel it
+          result = QueueNow(action, numRetries);
+        }
+      }
+      
+      return result;
     }
     
     Result ActionQueue::QueueAtEnd(IActionRunner *action, u8 numRetries)
@@ -294,7 +390,16 @@ namespace Anki {
       
       return _queue.front();
     }
-    
+
+    const IActionRunner* ActionQueue::GetCurrentAction() const
+    {
+      if(_queue.empty()) {
+        return nullptr;
+      }
+      
+      return _queue.front();
+    }
+
     void ActionQueue::PopCurrentAction()
     {
       if(!IsEmpty()) {

@@ -10,13 +10,17 @@
  *
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+
+#define DO_BACK_UP_AFTER_POUNCE 0
 
 namespace Anki {
 namespace Cozmo {
@@ -30,7 +34,7 @@ static std::vector<std::string> _animReactions = {
 BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  _name = "FollowMotion";
+  SetDefaultName("FollowMotion");
 
   SubscribeToTags({{
     EngineToGameTag::RobotObservedMotion,
@@ -50,8 +54,6 @@ float BehaviorFollowMotion::EvaluateScoreInternal(const Robot& robot, double cur
 
 Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
-  _interrupted = false;
-  
   // Store whatever modes the vision system was using so we can restore once this
   // behavior completes
   // NOTE: if vision modes are enabled _while_ this behavior is running, they will be
@@ -59,138 +61,351 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   
   _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
-  
-  // Do the initial reaction for first motion each time we restart this behavior
-  _initialReactionAnimPlayed = false;
 
+#if DO_BACK_UP_AFTER_POUNCE
+  if( _totalDriveForwardDist > 5.0f ) {
+    _state = State::BackingUp;
+    SetStateName("BackUp");
+  }
+#endif
+
+  // Do the initial reaction for first motion each time we restart this behavior
+  // (but only if it's been long enough since last interruption)
+  if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
+    _initialReactionAnimPlayed = false;
+    if( _state != State::BackingUp ) {
+      _state = State::WaitingForFirstMotion;
+      SetStateName("Wait");
+    }
+  } else {
+    _initialReactionAnimPlayed = true;
+    if( _state != State::BackingUp ) {
+      StartTracking(robot);
+      _state = State::Tracking;
+      SetStateName("Tracking");
+    }
+  }
+  
   return Result::RESULT_OK;
 }
 
 IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double currentTime_sec)
 {
-  if(_interrupted) {
-    // Restore original vision modes
-    robot.GetVisionComponent().SetModes(_originalVisionModes);
-    return Status::Complete;
-  } else {
-    return Status::Running;
-  }
+  IBehavior::Status status = Status::Running;
+
+  switch(_state)
+  {
+    case State::Interrupted:
+      status = Status::Complete;
+      break;
+
+    case State::BackingUp:
+      if( _backingUpAction == (u32)ActionConstants::INVALID_TAG ) {
+        float distToBackUp = _totalDriveForwardDist + _additionalBackupDist;
+        if( distToBackUp > _maxBackupDistance ) {
+          distToBackUp = _maxBackupDistance;
+        }
+
+        PRINT_NAMED_INFO("BehaviorFollowMotion.BackingUp",
+                         "driving backwards %fmm to reset position",
+                         distToBackUp);
+        
+        DriveStraightAction* backupAction = new DriveStraightAction(-distToBackUp, -_backupSpeed);
+        _backingUpAction = backupAction->GetTag();
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, backupAction);
+
+        _totalDriveForwardDist = 0.0f;
+      }
+      break;
+
+    case State::HoldingHeadDown:
+      LiftShouldBeLocked(robot);
+      if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= _holdHeadDownUntil) {
+        StartTracking(robot); // puts us in Tracking state
+      }
+      break;
+      
+    case State::Tracking:
+    {
+      LiftShouldBeLocked(robot);
+
+      // keep the lift out of the FOV
+      if( !robot.IsLiftMoving() && robot.GetLiftHeight() > LIFT_HEIGHT_LOWDOCK + 6.0f ) {
+        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+        // use animation slot, since we know no one is using the lift
+        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
+      }
+      
+      break;
+    }
+    
+    case State::DrivingForward:
+      LiftShouldBeLocked(robot);
+      break;
+
+    case State::WaitingForFirstMotion:
+      break;
+
+  } // switch(_state)
+  
+  return status;
 }
 
 Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
-  _actionRunning = 0;
-  _interrupted = true;
+  robot.GetActionList().Cancel(_actionRunning);
+  
+  _actionRunning = (u32)ActionConstants::INVALID_TAG;
+  _lastInterruptTime_sec = currentTime_sec;
+  _holdHeadDownUntil = -1.0f;
+
+  PRINT_NAMED_DEBUG("BehaviorFollowMotion.InterruptInternal", "restoring original vision modes");
+  
+  // Restore original vision modes
+  robot.GetVisionComponent().SetModes(_originalVisionModes);
+
+  LiftShouldBeUnlocked(robot);
+  
+  _state = State::Interrupted;
+  SetStateName("Interrupted");
+  
   return Result::RESULT_OK;
 }
-
+  
+void BehaviorFollowMotion::StartTracking(Robot& robot)
+{
+  TrackMotionAction* action = new TrackMotionAction();
+  action->SetMaxHeadAngle( DEG_TO_RAD( 5.0f ) );
+  _actionRunning = action->GetTag();
+  
+  robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+  
+  _state = State::Tracking;
+  SetStateName("Tracking");
+}
+ 
+  
 void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch (event.GetData().GetTag())
   {
     case MessageEngineToGameTag::RobotObservedMotion:
-    {
-      const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
-      
-      // Ignore motion while an action is running
-      if(_actionRunning == 0 && motionObserved.img_area > 0)
-      {
-        const Point2f motionCentroid(motionObserved.img_x, motionObserved.img_y);
-        
-        // Robot gets more happy/excited and less calm when he sees motion.
-        // (May not want to do this every time he sees motion, since it'll increase
-        //  pretty fast)
-        robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
-                                             EmotionType::Excited, kEmotionChangeSmall,
-                                             EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
-        
-        // Turn to face the motion:
-        // Convert image positions to desired relative angles
-        const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
-        const Radians relHeadAngle_rad    = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
-        const Radians relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
-        
-        PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.Motion",
-                         "Motion area=%d, centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
-                         motionObserved.img_area,
-                         motionCentroid.x(), motionCentroid.y(),
-                         relHeadAngle_rad.getDegrees(), relBodyPanAngle_rad.getDegrees());
-        
-        IAction* action = nullptr;
-        
-        if(relHeadAngle_rad.getAbsoluteVal() < _driveForwardTol &&
-           relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol)
-        {
-          // Move towards the motion since it's centered
-          DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm, DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
-          driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
-          
-          action = driveAction;
-          
-        } else {
-          PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad, relHeadAngle_rad,
-                                                                 false, false);
-          panTiltAction->SetPanTolerance(_panAndTiltTol);
-          panTiltAction->SetTiltTolerance(_panAndTiltTol);
-          action = panTiltAction;
-        }
-        
-        ASSERT_NAMED(nullptr != action, "Action pointer should not be null at this point");
-        
-        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-        
-        if(!_initialReactionAnimPlayed) {
-          const Radians finalHeadAngle = robot.GetHeadAngle() + relHeadAngle_rad;
-          
-          PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.FirstMotion",
-                           "Queuing first motion reaction animation and head tilt back to %.1fdeg",
-                           finalHeadAngle.getDegrees());
-          
-          // If this is the first motion reaction, also play the first part of the
-          // motion reaction animation, move the head back to the right tilt, and
-          // then play the second half of the animation to open the eyes back up
-          CompoundActionSequential* compoundAction = new CompoundActionSequential({
-            new PlayAnimationAction("ID_MotionFollow_ReactToMotion"),
-            new MoveHeadToAngleAction(finalHeadAngle, _panAndTiltTol),
-            new PlayAnimationAction("ID_MotionFollow_ReactToMotion_end")
-          });
-          
-          // Wait for the last action to finish in this case
-          _actionRunning = compoundAction->GetTag();
-          
-          robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, compoundAction);
-        } else {
-          _actionRunning = action->GetTag();
-        }
-        
-        ASSERT_NAMED(_actionRunning != 0, "Expecting action tag to be non-zero!");
-      }
+      HandleObservedMotion(event, robot);
       break;
-    }
       
     case MessageEngineToGameTag::RobotCompletedAction:
-    {
-      auto const& completedAction = event.GetData().Get_RobotCompletedAction();
-      
-      // If the action we were running completes, allow us to respond to motion again
-      if(completedAction.idTag == _actionRunning) {
-        _actionRunning = 0;
-        
-        if(completedAction.actionType == RobotActionType::COMPOUND) {
-          _initialReactionAnimPlayed = true;
-        }
-      }
-      
+      HandleCompletedAction(event, robot);
       break;
-    }
       
     default:
     {
       PRINT_NAMED_ERROR("BehaviorFollowMotion.HandleMotionEvent.UnknownEvent",
                         "Reached unknown state %hhu.", event.GetData().GetTag());
     }
+  } // switch(event type)
+} // HandeWhileRunning()
+
+  
+void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, Robot& robot)
+
+{
+  const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
+  
+  // Convert image positions to desired relative angles
+  const Point2f motionCentroid(motionObserved.img_x, motionObserved.img_y);
+  
+  // Compute the relative pan and tilt angles to put the centroid in the center of the image
+  Radians relHeadAngle_rad = 0, relBodyPanAngle_rad = 0;
+  robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relBodyPanAngle_rad, relHeadAngle_rad);
+  
+  if(State::WaitingForFirstMotion == _state && _actionRunning==0 && motionObserved.img_area > 0)
+  {
+    if(!_initialReactionAnimPlayed)
+    {
+      // Robot gets more happy/excited and less calm when he sees motion.
+      robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
+                                           EmotionType::Excited, kEmotionChangeSmall,
+                                           EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
+      
+      // Turn to face the motion, also drop the lift, and lock it from animations
+      PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad,
+                                                             relHeadAngle_rad,
+                                                             false, false);
+      MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+      
+      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
+                                           new CompoundActionParallel({panTiltAction, liftAction}));
+      
+      LiftShouldBeLocked(robot);
+      
+      // If this is the first motion reaction, also play the first part of the
+      // motion reaction animation, move the head back to the right tilt, and
+      // then play the second half of the animation to open the eyes back up
+      const Radians finalHeadAngle = robot.GetHeadAngle() + relHeadAngle_rad;
+      
+      PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.FirstMotion",
+                       "Queuing first motion reaction animation and head tilt back to %.1fdeg",
+                       finalHeadAngle.getDegrees());
+      
+      CompoundActionSequential* compoundAction = new CompoundActionSequential({
+        new PlayAnimationAction("ID_MotionFollow_ReactToMotion"),
+        new MoveHeadToAngleAction(finalHeadAngle, _panAndTiltTol),
+        new PlayAnimationAction("ID_MotionFollow_ReactToMotion_end")
+      });
+      
+      // Wait for the animation to complete
+      _actionRunning = compoundAction->GetTag();
+      
+      robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, compoundAction);
+    }
+  }
+  
+  else if(State::Tracking == _state)
+  {
+    PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.Motion",
+                     "Motion area=%d, centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
+                     motionObserved.img_area,
+                     motionCentroid.x(), motionCentroid.y(),
+                     relHeadAngle_rad.getDegrees(), relBodyPanAngle_rad.getDegrees());
+    
+    const bool inGroundPlane = motionObserved.ground_area > _minGroundAreaToConsider;
+    
+    if(inGroundPlane)
+    {
+      const float robotOffsetX = motionObserved.ground_x;
+      const float robotOffsetY = motionObserved.ground_y;
+      const float groundPlaneDist = std::sqrt( std::pow( robotOffsetX, 2 ) +
+                                              std::pow( robotOffsetY, 2) );
+      const bool belowMinGroundPlaneDist = groundPlaneDist < _minDriveFrowardGroundPlaneDist_mm;
+      
+      if( belowMinGroundPlaneDist ) {
+        const float timeToHold = 1.25f;
+        _holdHeadDownUntil = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + timeToHold;
+        MoveHeadToAngleAction* action = new MoveHeadToAngleAction(MIN_HEAD_ANGLE);
+        
+        // Note that queuing action "now" will cancel the tracking action
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+        
+        PRINT_NAMED_INFO("BehaviorFollowMotion.HoldingHeadLow",
+                         "got %f of image with dist %f, holding head at min angle for %f sec",
+                         motionObserved.ground_area,
+                         groundPlaneDist,
+                         timeToHold);
+        
+        _state = State::HoldingHeadDown;
+        SetStateName("HeadDown");
+      }
+    } // if(motion in ground plane)
+    
+    else if (relHeadAngle_rad.getAbsoluteVal() < _driveForwardTol &&
+             relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol )
+    {
+      // Move towards the motion since it's centered
+      DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm,
+                                                                 DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
+      driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
+      _actionRunning = driveAction->GetTag();
+
+      _totalDriveForwardDist += _moveForwardDist_mm;
+      
+      _state = State::DrivingForward;
+      SetStateName("DriveForward");
+      
+      // Queue action now will stop the tracking that's currently running
+      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveAction);
+      
+      // PRINT_NAMED_DEBUG("BehaviorFollowMotion.DriveForward",
+      //                   "relHeadAngle = %fdeg, relBodyAngle = %fdeg, ground area %f",
+      //                   RAD_TO_DEG(relHeadAngle_rad.ToFloat()),
+      //                   RAD_TO_DEG(relBodyPanAngle_rad.ToFloat()),
+      //                   motionObserved.ground_area);
+      
+    } // else if(time to drive forward)
+    
+  } // if(_state == Tracking)
+
+} // HandleObservedMotion()
+
+  
+void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event, Robot& robot)
+{
+  auto const& completedAction = event.GetData().Get_RobotCompletedAction();
+  
+  // If the action we were running completes, allow us to respond to motion again
+  if(completedAction.idTag == _actionRunning) {
+    _actionRunning = 0;
+    
+    switch(_state)
+    {
+      case State::WaitingForFirstMotion:
+        ASSERT_NAMED(completedAction.actionType == RobotActionType::COMPOUND,
+                     "Expecting completed action to be compound when WaitingForFirstMotion");
+        _initialReactionAnimPlayed = true;
+        StartTracking(robot);
+        _state = State::Tracking;
+        SetStateName("Tracking");
+        break;
+        
+      case State::Tracking:
+        PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.TrackingCompleted",
+                         "Tracking action completed, marking behavior as interruped.");
+        _state = State::Interrupted;
+        SetStateName("Interrupted");
+        break;
+        
+      case State::HoldingHeadDown:
+        if( completedAction.actionType != RobotActionType::MOVE_HEAD_TO_ANGLE ){
+          PRINT_NAMED_WARNING("BehaviorFollowMotion.HandleWhileRunning.HoldingHeadDown.InvalidAction",
+                              "Expecting completed action to be MoveHeadToAngle, instead got %s",
+                              RobotActionTypeToString(completedAction.actionType));
+        }
+        // Nothing to do: we transition out of this state once timer elapses
+        break;
+        
+      case State::DrivingForward:
+        ASSERT_NAMED(completedAction.actionType == RobotActionType::DRIVE_STRAIGHT, "Expecting completed action to be DriveStraight when in state DrivingForward");
+        StartTracking(robot);
+        break;
+        
+      default:
+        break;
+    }
+    
+  } // if(completedAction.idTag == _actionRunning)
+
+  if( _state == State::BackingUp && completedAction.idTag == _backingUpAction ) {
+    _backingUpAction = 0;
+    PRINT_NAMED_INFO("BehaviorFollowMotion.BackupComplete", "");
+    if( _initialReactionAnimPlayed ) {
+      StartTracking(robot);
+      _state = State::Tracking;
+      SetStateName("Tracking");
+    }
+    else {
+      _state = State::WaitingForFirstMotion;
+      SetStateName("Wait");
+    }
+  }
+  
+} // HandleCompletedAction()
+
+void BehaviorFollowMotion::LiftShouldBeLocked(Robot& robot)
+{
+  if( ! _lockedLift ) {
+    robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    _lockedLift = true;
   }
 }
+
+void BehaviorFollowMotion::LiftShouldBeUnlocked(Robot& robot)
+{
+  if( _lockedLift ) {
+    robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    _lockedLift = false;
+  }
+}
+
+  
 
 } // namespace Cozmo
 } // namespace Anki

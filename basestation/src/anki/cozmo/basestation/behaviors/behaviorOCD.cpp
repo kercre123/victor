@@ -38,7 +38,7 @@ namespace Cozmo {
   , _lastNewBlockObservedTime(0)
   , _inactionStartTime(0)
   {
-    _name = "OCD";
+    SetDefaultName("OCD");
     
     SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
@@ -48,9 +48,12 @@ namespace Cozmo {
       EngineToGameTag::BlockPlaced
     }});
     
-    // Primarily Boredom and then loneliness -> OCD
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.8f}, {0.2f, 0.5f}, {1.0f, 0.3f}}), false));
-    AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.2f, 0.8f}, {1.0f, 0.6f}}), false));
+    if (GetEmotionScorerCount() == 0)
+    {
+      // Primarily Boredom and then loneliness -> OCD
+      AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.8f}, {0.2f, 0.5f}, {1.0f, 0.3f}}), false));
+      AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.2f, 0.8f}, {1.0f, 0.6f}}), false));
+    }
   }
   
 #pragma mark -
@@ -277,37 +280,37 @@ namespace Cozmo {
   
   void BehaviorOCD::UpdateName()
   {
-    _stateName = "";
     switch(_currentArrangement)
     {
       case Arrangement::Line:
-        _stateName += "LINE";
+        SetStateName("LINE");
         break;
         
       case Arrangement::StacksOfTwo:
-        _stateName += "STACKS_OF_TWO";
+        SetStateName("STACKS_OF_TWO");
         break;
         
       default:
         PRINT_NAMED_ERROR("BehaviorOCD.UpdateName.InvalidArrangment", "");
+        SetStateName("");
     }
     
     switch(_currentState)
     {
       case State::PickingUpBlock:
-        _stateName += "-PICKING";
+        SetStateName(GetStateName() + "-PICKING");
         break;
         
       case State::PlacingBlock:
-        _stateName += "-PLACING";
+        SetStateName(GetStateName() + "-PLACING");
         break;
         
       case State::Animating:
-        _stateName += "-Animating";
+        SetStateName(GetStateName() + "-Animating");
         break;
         
       case State::FaceDisturbedBlock:
-        _stateName += "-FaceBlock";
+        SetStateName(GetStateName() + "-FaceBlock");
         break;
         
       default:
@@ -1176,7 +1179,10 @@ namespace Cozmo {
         switch(msg.actionType) {
           case RobotActionType::PLAY_ANIMATION:
             if (_animActionTags.count(msg.idTag) > 0) {
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleted", "%s (result %d)", msg.completionInfo.animName.c_str(), msg.result);
+
+              ASSERT_NAMED( msg.completionInfo.GetTag() ==  ActionCompletedUnionTag::animationCompleted, "");
+              
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleted", "%s (result %d)", msg.completionInfo.Get_animationCompleted().animationName.c_str(), msg.result);
               
               // Erase this animation action and resume pickOrPlace if there are no more animations pending
               _animActionTags.erase(msg.idTag);

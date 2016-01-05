@@ -10,12 +10,15 @@ namespace Cozmo {
 // path should be modified or traversed.
 // TODO: Include path wonkification parameters
 structure PathMotionProfile {
-    float_32     speed_mmps,
-    float_32     accel_mmps2,
-    float_32     decel_mmps2,
-    float_32     pointTurnSpeed_rad_per_sec,
-    float_32     pointTurnAccel_rad_per_sec2,
-    float_32     pointTurnDecel_rad_per_sec2
+    float_32     speed_mmps = 60.0,
+    float_32     accel_mmps2 = 200.0,
+    float_32     decel_mmps2 = 200.0,
+    float_32     pointTurnSpeed_rad_per_sec = 2.0,
+    float_32     pointTurnAccel_rad_per_sec2 = 100.0,
+    float_32     pointTurnDecel_rad_per_sec2 = 100.0,
+    float_32     dockSpeed_mmps = 100.0,
+    float_32     dockAccel_mmps2 = 200.0,
+    float_32     reverseSpeed_mmps = 30.0
 }
 
 } // namespace Cozmo

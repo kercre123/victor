@@ -84,7 +84,7 @@ namespace Anki {
       std::unordered_map<std::string, AvailableSound> _availableRobotSounds;
 
       // Buffer of data from file last referenced by GetSoundBuffer()
-      static const u32 MAX_SOUND_BUFFER_SIZE = 500000; // 500000 ~= 10s audio
+      static const u32 MAX_SOUND_BUFFER_SIZE = 1000000; // 1000000 ~= 20s audio
       std::string _currOpenSoundFileName;
       FILE* _currOpenSoundFilePtr;
       u32 _currOpenSoundNumSamples;

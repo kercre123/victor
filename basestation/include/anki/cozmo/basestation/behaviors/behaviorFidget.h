@@ -20,10 +20,17 @@ namespace Cozmo {
   
   class BehaviorFidget : public IBehavior
   {
-  public:
+  private:
     
+    // Enforce creation through BehaviorFactory
+    friend class BehaviorFactory;
     BehaviorFidget(Robot& robot, const Json::Value& config);
     virtual ~BehaviorFidget();
+    
+    // TODO REMOVE THIS HACK! This is temporarily being overridde for the investor demo
+    virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override { return 0.01f; }
+
+  public:
     
     virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return true; }
     
@@ -33,26 +40,29 @@ namespace Cozmo {
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
     virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
     
-  private:
+    virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     
-    enum class FidgetType {
-      HeadTwitch = 0,
-      LiftWiggle,
-      LiftTap,
-      TurnInPlace,
-      Yawn,
-      Sneeze,
-      Stretch,
-      
-      NumFidgets
-    };
+  private:
     
     using MakeFidgetAction = std::function<IActionRunner*()>;
     
-    void AddFidget(const std::string& name, MakeFidgetAction fcn, s32 frequency);
+    struct FidgetData
+    {
+      std::string _name;
+      MakeFidgetAction _function;
+      int32_t _frequency;
+      bool _mustComplete;
+      float _minTimeBetween_sec;
+      double _lastTimeUsed_sec;
+    };
     
-    // Mapping from "probability" to a name paired with an action creator
-    std::map<s32, std::pair<std::string, MakeFidgetAction> > _fidgets;
+    void AddFidget(const std::string& name,
+                   MakeFidgetAction fcn,
+                   s32 frequency,
+                   float minTimeBetween = 0,
+                   bool mustComplete = false);
+    
+    std::vector<FidgetData> _fidgets;
     
     bool _interrupted;
     
@@ -61,7 +71,8 @@ namespace Cozmo {
     
     f32 _minWait_sec, _maxWait_sec;
     
-    s32 _totalProb;
+    uint32_t _queuedActionTag;
+    bool _currentActionMustComplete = false;
     
   }; // class BehaviorFidget
 

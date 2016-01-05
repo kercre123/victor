@@ -12,6 +12,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
 #define _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
 
+#include <string.h>
+#include <stdio.h>
+
 #include "anki/common/robot/array2d_declarations.h"
 
 #include "anki/common/robot/utilities.h"

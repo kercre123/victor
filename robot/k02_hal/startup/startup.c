@@ -57,49 +57,6 @@
  *END**************************************************************************/
 void init_data_bss(void)
 {
-    uint32_t n; 
-    
-    // NOTE: VTOR is configured in the bootloader
-
-#if !defined(__CC_ARM) && !defined(__ICCARM__)
-    
-    /* Declare pointers for various data sections. These pointers
-     * are initialized using values pulled in from the linker file */
-    uint8_t * data_ram, * data_rom, * data_rom_end;
-    uint8_t * bss_start, * bss_end;
-
-    /* Get the addresses for the .data section (initialized data section) */
-#if defined(__GNUC__)
-    extern uint32_t __DATA_ROM[];
-    extern uint32_t __DATA_RAM[];
-    extern char __DATA_END[];
-    data_ram = (uint8_t *)__DATA_RAM;
-    data_rom = (uint8_t *)__DATA_ROM;
-    data_rom_end  = (uint8_t *)__DATA_END;
-    n = data_rom_end - data_rom;
-#endif
-
-    /* Copy initialized data from ROM to RAM */
-    while (n--)
-    {
-        *data_ram++ = *data_rom++;
-    }   
-    
-    /* Get the addresses for the .bss section (zero-initialized data) */
-#if defined(__GNUC__)
-    extern char __START_BSS[];
-    extern char __END_BSS[];
-    bss_start = (uint8_t *)__START_BSS;
-    bss_end = (uint8_t *)__END_BSS;
-#endif
-		
-    /* Clear the zero-initialized data section */
-    n = bss_end - bss_start;
-    while(n--)
-    {
-        *bss_start++ = 0;
-    }
-#endif /* !__CC_ARM && !__ICCARM__*/
 }
 
 /*******************************************************************************

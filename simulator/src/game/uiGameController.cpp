@@ -39,10 +39,12 @@ namespace Anki {
         
         ExternalInterface::RobotState _robotStateMsg;
         
-        UiGameController::ObservedObject _currentlyObservedObject;
+        UiGameController::ObservedObject _lastObservedObject;
         std::map<s32, std::pair<ObjectFamily, ObjectType> > _objectIDToFamilyTypeMap;
         std::map<ObjectFamily, std::map<ObjectType, std::vector<s32> > > _objectFamilyToTypeToIDMap;
         std::map<s32, Pose3d> _objectIDToPoseMap;
+        
+        Vision::TrackedFace::ID_t _lastObservedFaceID;
         
         std::unordered_set<std::string> _availableAnimations;
         
@@ -104,11 +106,11 @@ namespace Anki {
       
       // TODO: Move this to WebotsKeyboardController?
       const f32 area = msg.img_width * msg.img_height;
-      _currentlyObservedObject.family = msg.objectFamily;
-      _currentlyObservedObject.type   = msg.objectType;
-      _currentlyObservedObject.id     = msg.objectID;
-      _currentlyObservedObject.isActive = msg.isActive;
-      _currentlyObservedObject.area   = area;
+      _lastObservedObject.family = msg.objectFamily;
+      _lastObservedObject.type   = msg.objectType;
+      _lastObservedObject.id     = msg.objectID;
+      _lastObservedObject.isActive = msg.isActive;
+      _lastObservedObject.area   = area;
 
       
       HandleRobotObservedObject(msg);
@@ -116,12 +118,14 @@ namespace Anki {
     
     void UiGameController::HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg)
     {
+      _lastObservedFaceID = msg.faceID;
+      
       HandleRobotObservedFace(msg);
     }
     
     void UiGameController::HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg)
     {
-      _currentlyObservedObject.Reset();
+      _lastObservedObject.Reset();
       
       HandleRobotObservedNothing(msg);
     }
@@ -187,34 +191,45 @@ namespace Anki {
       {
         case RobotActionType::PICKUP_OBJECT_HIGH:
         case RobotActionType::PICKUP_OBJECT_LOW:
+        {
+          const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
           printf("Robot %d %s picking up stack of %d objects with IDs: ",
                  msg.robotID, ActionResultToString(msg.result),
-                 msg.completionInfo.numObjects);
-          for(int i=0; i<msg.completionInfo.numObjects; ++i) {
-            printf("%d ", msg.completionInfo.objectIDs[i]);
+                 info.numObjects);
+          for(int i=0; i<info.numObjects; ++i) {
+            printf("%d ", info.objectIDs[i]);
           }
           printf("[Tag=%d]\n", msg.idTag);
+        }
           break;
           
         case RobotActionType::PLACE_OBJECT_HIGH:
         case RobotActionType::PLACE_OBJECT_LOW:
+        {
+          const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
           printf("Robot %d %s placing stack of %d objects with IDs: ",
                  msg.robotID, ActionResultToString(msg.result),
-                 msg.completionInfo.numObjects);
-          for(int i=0; i<msg.completionInfo.numObjects; ++i) {
-            printf("%d ", msg.completionInfo.objectIDs[i]);
+                 info.numObjects);
+          for(int i=0; i<info.numObjects; ++i) {
+            printf("%d ", info.objectIDs[i]);
           }
           printf("[Tag=%d]\n", msg.idTag);
+        }
           break;
 
         case RobotActionType::PLAY_ANIMATION:
+        {
+          const AnimationCompleted info = msg.completionInfo.Get_animationCompleted();
           PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d finished playing animation %s. [Tag=%d]",
-                 msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
+                 msg.robotID, info.animationName.c_str(), msg.idTag);
+        }
           break;
           
         default:
+        {
           PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d completed action with type=%d and tag=%d: %s.",
                  msg.robotID, msg.actionType, msg.idTag, ActionResultToString(msg.result));
+        }
       }
       
       HandleRobotCompletedAction(msg);
@@ -260,6 +275,12 @@ namespace Anki {
       HandleAnimationAvailable(msg);
     }
     
+    void UiGameController::HandleDebugStringBase(ExternalInterface::DebugString const& msg)
+    {
+      PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
+      HandleDebugString(msg);
+    }
+    
     // ===== End of message handler callbacks ====
     
   
@@ -272,7 +293,7 @@ namespace Anki {
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
       _robotPoseActual.SetRotation(0, Z_AXIS_3D());
       
-      _currentlyObservedObject.Reset();
+      _lastObservedObject.Reset();
     }
     
     UiGameController::~UiGameController()
@@ -361,6 +382,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::DebugString:
+            HandleDebugStringBase(message.Get_DebugString());
             break;
           default:
             // ignore
@@ -724,6 +748,15 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendEnableLiftPower(bool enable)
+    {
+      ExternalInterface::EnableLiftPower m;
+      m.enable = enable;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_EnableLiftPower(m);
+      SendMessage(message);
+    }
+    
     void UiGameController::SendStopAllMotors()
     {
       ExternalInterface::StopAllMotors m;
@@ -855,9 +888,36 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendExecuteTestPlan()
+    
+    void UiGameController::SendTrackToObject(const u32 objectID, bool headOnly)
+    {
+      ExternalInterface::TrackToObject m;
+      m.robotID = 1;
+      m.objectID = objectID;
+      m.headOnly = headOnly;
+      
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_TrackToObject(m);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendTrackToFace(const u32 faceID, bool headOnly)
+    {
+      ExternalInterface::TrackToFace m;
+      m.robotID = 1;
+      m.faceID = faceID;
+      m.headOnly = headOnly;
+      
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_TrackToFace(m);
+      SendMessage(message);
+    }
+    
+    
+    void UiGameController::SendExecuteTestPlan(PathMotionProfile motionProf)
     {
       ExternalInterface::ExecuteTestPlan m;
+      m.motionProf = motionProf;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ExecuteTestPlan(m);
       SendMessage(message);
@@ -1166,11 +1226,13 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSteeringControllerGains(const f32 k1, const f32 k2)
+    void UiGameController::SendSteeringControllerGains(const f32 k1, const f32 k2, const f32 dockPathDistOffsetCap_mm, const f32 dockPathAngularOffsetCap_rad)
     {
       ExternalInterface::SetSteeringControllerGains m;
       m.k1 = k1;
       m.k2 = k2;
+      m.dockPathDistOffsetCap_mm = dockPathDistOffsetCap_mm;
+      m.dockPathAngularOffsetCap_rad = dockPathAngularOffsetCap_rad;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetSteeringControllerGains(m);
       SendMessage(message);
@@ -1486,9 +1548,14 @@ namespace Anki {
       return _objectIDToPoseMap;
     }
     
-    const UiGameController::ObservedObject& UiGameController::GetCurrentlyObservedObject() const
+    const UiGameController::ObservedObject& UiGameController::GetLastObservedObject() const
     {
-      return _currentlyObservedObject;
+      return _lastObservedObject;
+    }
+    
+    const Vision::TrackedFace::ID_t UiGameController::GetLastObservedFaceID() const
+    {
+      return _lastObservedFaceID;
     }
     
     const std::unordered_set<std::string>& UiGameController::GetAvailableAnimations() const

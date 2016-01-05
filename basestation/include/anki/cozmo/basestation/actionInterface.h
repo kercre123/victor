@@ -18,6 +18,8 @@
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
+#include "anki/cozmo/basestation/actionContainers.h"
+
 #include "clad/types/actionTypes.h"
 
 #include "util/random/randomGenerator.h"
@@ -54,7 +56,7 @@ namespace Anki {
       // Tags can be used to identify specific actions. A unique tag is assigned
       // at construction, or it can be overridden with SetTag(). The Tag is
       // returned in the ActionCompletion signal as well.
-      void SetTag(u32 tag) { _idTag = tag; }
+      void SetTag(u32 tag);
       u32  GetTag() const  { return _idTag; }
       
       // Derived classes can implement any required cleanup by overriding this
@@ -88,34 +90,48 @@ namespace Anki {
       // in Reset() as well.
       virtual void Reset() = 0;
       
+      // If this method returns true, then it means the derived class is interruptible,
+      // can safely re-queued using "NOW_AND_RESUME", and will pick back up safely
+      // after the newly-queued action completes. Otherwise, this action will just
+      // be cancelled when NOW_AND_RESUME is used.
+      virtual bool Interrupt() { return false; }
+      
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
-      
-      // Override these to have the action allow the robot to move certain
-      // subsystems while the action executes. I.e., by default actions
-      // will lockout all control of the robot.
-      virtual bool ShouldLockHead() const   { return true; }
-      virtual bool ShouldLockLift() const   { return true; }
-      virtual bool ShouldLockWheels() const { return true; }
       
       // Override to have the action disable any animation tracks that may have
       // already been streamed and are in the robot's buffer, so they don't
       // interfere with the action. Note: uses the bits defined by AnimTrackFlag.
       virtual u8 GetAnimTracksToDisable() const { return 0; }
       
+      // Override these to have the action allow the robot to move certain
+      // subsystems while the action executes. I.e., by default actions
+      // will lockout all control of the robot, and extra movement commands are ignored.
+      // Note: uses the bits defined by AnimTrackFlag.
+      virtual u8 GetMovementTracksToIgnore() const;
+      
       // Used (e.g. in initialization of CompoundActions) to specify that a
-      // consituent action is part of a compound action
-      void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
+      // consituent action should not try to lock or unlock tracks it uses
+      void SetSuppressTrackLocking(bool tf) { _suppressTrackLocking = tf; }
 
       // Override this to fill in the ActionCompletedStruct emitted as part of the
       // completion signal with an action finishes. Note that this public because
       // subclasses that are composed of other actions may want to make use of
       // the completion info of their constituent actions.
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const;
 
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
       bool IsMessageDisplayEnabled() const { return _displayMessages; }
+      
+      void SetEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
+      bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
+      
+      // Keep track of which ActionList "slot" an action is in. For example,
+      // this will let an action queue a subsequent action in its same slot.
+      // The ActionList will set this automatically when queuing an action.
+      void SetSlotHandle(ActionList::SlotHandle inSlot) { _inSlot = inSlot; }
+      ActionList::SlotHandle GetSlotHandle() const { return _inSlot; }
       
     protected:
       
@@ -126,23 +142,38 @@ namespace Anki {
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
       
+      // "Register" an action created/used by a derived class so that its
+      // Cleanup gets called as needed, and it gets deleted as needed.
+      // If this action's cleanup gets called, all registered sub actions'
+      // cleanup methods get called. Also, just before Init(), in case the
+      // action is reset and run again.
+      void RegisterSubAction(IActionRunner* &subAction);
+
+      // Call cleanup on any registered sub actions and then delete them
+      void ClearSubActions(Robot& robot);
+      
     private:
+      
+      std::list<IActionRunner**>  _subActions;
       
       // This is called when the action stops running, as long as it is not
       // marked as being part of a compound action. This calls the overload-able
-      // GetCompletionStruct() method above.
+      // GetCompletionUnion() method above.
       void EmitCompletionSignal(Robot& robot, ActionResult result) const;
 
       u8            _numRetriesRemaining = 0;
       
       std::string   _statusMsg;
       
-      bool          _isPartOfCompoundAction = false;
+      bool          _suppressTrackLocking   = false;
       bool          _isRunning              = false;
       bool          _isCancelled            = false;
       bool          _displayMessages        = true;
+      bool          _emitCompletionSignal   = true;
       
       u32           _idTag;
+      
+      ActionList::SlotHandle _inSlot = ActionList::UnknownSlot;
       
       static u32    sTagCounter;
       
@@ -208,10 +239,10 @@ namespace Anki {
       // Before giving up on entire action. Optional: default is 30 seconds
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
       
-      virtual void Reset() override;
+      virtual void Reset() override final;
       
       // A random number generator all subclasses can share
-      Util::RandomGenerator _rng;
+      Util::RandomGenerator& GetRNG() const;
       
     private:
       
@@ -220,7 +251,12 @@ namespace Anki {
       f32           _timeoutTime;
       
     }; // class IAction
-       
+    
+    inline Util::RandomGenerator& IAction::GetRNG() const {
+      static Util::RandomGenerator sRNG;
+      return sRNG;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki
 

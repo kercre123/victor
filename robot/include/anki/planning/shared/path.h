@@ -2,7 +2,7 @@
 #define PATH_H_
 
 #include "anki/types.h"
-
+#include <stddef.h>
 
 // The robot has limited memory for paths, so hold fewer segments at a
 // time on the robot. The basestation will dole out the path bit by
@@ -118,7 +118,8 @@ namespace Anki
       void Print() const;
 
       SegmentRangeStatus GetDistToSegment(const f32 x, const f32 y, const f32 angle,
-                                         f32 &shortestDistanceToPath, f32 &radDiff) const;
+                                         f32 &shortestDistanceToPath, f32 &radDiff,
+                                         f32 *distAlongSegmentFromClosestPointToEnd = NULL) const;
       
       PathSegmentType GetType() const {return type_;}
       PathSegmentDef& GetDef() {return def_;}
@@ -134,10 +135,12 @@ namespace Anki
 
     private:
       SegmentRangeStatus GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
-                                             f32 &shortestDistanceToPath, f32 &radDiff) const;
+                                             f32 &shortestDistanceToPath, f32 &radDiff,
+                                             f32 *distAlongSegmentFromClosestPointToEnd = NULL) const;
       
       SegmentRangeStatus GetDistToArcSegment(const f32 x, const f32 y, const f32 angle,
-                                            f32 &shortestDistanceToPath, f32 &radDiff) const;
+                                            f32 &shortestDistanceToPath, f32 &radDiff,
+                                            f32 *distAlongSegmentFromClosestPointToEnd = NULL) const;
 
       SegmentRangeStatus GetDistToPointTurnSegment(const f32 x, const f32 y, const f32 angle,
                                                    f32 &shortestDistanceToPath, f32 &radDiff) const;

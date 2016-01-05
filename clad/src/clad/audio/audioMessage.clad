@@ -1,6 +1,7 @@
 
 #include "clad/audio/audioMessageTypes.clad"
 #include "clad/audio/audioEventTypes.clad"
+#include "clad/audio/audioGameObjectTypes.clad"
 #include "clad/audio/audioStateTypes.clad"
 #include "clad/audio/audioSwitchTypes.clad"
 #include "clad/audio/audioParameterTypes.clad"
@@ -13,32 +14,36 @@ namespace Audio {
 
 message PostAudioEvent
 {
-  EventType audioEvent,
-  uint_16 gameObjectId = 0,
-  AudioCallbackFlag callbackFlag,
-  uint_16 callbackId = 0
+  EventType         audioEvent,
+  GameObjectType    gameObject,
+  uint_16           callbackId = 0  // Send all callbacks if this is NOT == 0
+}
+
+message StopAllAudioEvents
+{
+  GameObjectType  gameObject,
 }
 
 message PostAudioGameState
 {
-  GameStateGroupType gameStateGroup,
-  GameStateType gameState,
+  GameStateGroupType  gameStateGroup,
+  GameStateType       gameState,
 }
 
 message PostAudioSwitchState
 {
-  SwitchStateGroupType switchStateGroup,
-  SwitchStateType switchState,
-  uint_16 gameObjectId = 0,
+  SwitchStateGroupType  switchStateGroup,
+  SwitchStateType       switchState,
+  GameObjectType        gameObject,
 }
 
 message PostAudioParameter
 {
-  ParameterType parameter,
-  float_32 parameterValue   = 0.0,
-  uint_16 gameObjectId      = 0,
-  int_32 timeInMilliSeconds = 0,
-  CurveType curve,
+  ParameterType   parameter,
+  float_32        parameterValue      = 0.0,
+  GameObjectType  gameObject,
+  int_32          timeInMilliSeconds  = 0,
+  CurveType       curve,
 }
 
 

@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include <util/helpers/templateHelpers.h>
 
 
 namespace Anki {
@@ -67,8 +68,8 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 CozmoEngineHostImpl::~CozmoEngineHostImpl()
 {
   delete(&_robotMsgHandler);
-  delete _keywordRecognizer;
-  _keywordRecognizer = nullptr;
+  Util::SafeDelete(_keywordRecognizer);
+  Util::SafeDelete(_audioServer);
 }
 
 Result CozmoEngineHostImpl::InitInternal()

@@ -17,7 +17,7 @@
 #include "animationController.h"
 #include "backpackLightController.h"
 
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -269,6 +269,10 @@ namespace Anki {
       {
         PRINT("TestMode reset\n");
         
+        // Reset state and updateFunc
+        testMode_ = TM_NONE;
+        updateFunc = NULL;
+        
         // Stop animations that might be playing
         AnimationController::Clear();
         
@@ -294,7 +298,12 @@ namespace Anki {
         PRINT("\n==== Starting PlaceBlockOnGroundTest (xOffset %d mm, yOffset %d mm, angleOffset %d degrees) =====\n",
               x_offset_mm, y_offset_mm, angle_offset_degrees);
         ticCnt_ = 0;
-        PickAndPlaceController::PlaceOnGround(x_offset_mm, y_offset_mm, DEG_TO_RAD_F32(angle_offset_degrees), false);
+        PickAndPlaceController::PlaceOnGround(50,
+                                              100,
+                                              x_offset_mm,
+                                              y_offset_mm,
+                                              DEG_TO_RAD_F32(angle_offset_degrees),
+                                              false);
         return RESULT_OK;
       }
       
@@ -302,6 +311,7 @@ namespace Anki {
       {
         if (!PickAndPlaceController::IsBusy()) {
           PRINT("PlaceBlockOnGround: %s\n", PickAndPlaceController::DidLastActionSucceed() ? "SUCCESS" : "FAILED");
+          Reset();
         }
         return RESULT_OK;
       }
@@ -433,6 +443,9 @@ namespace Anki {
           
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
+        } else if (pathStarted_ && !PathFollower::IsTraversingPath()) {
+          PRINT("PathFollowerTest COMPLETE\n");
+          Reset();
         }
         
         return RESULT_OK;
@@ -977,7 +990,7 @@ namespace Anki {
       Result LightTestUpdate()
       {
         if (!ledCycleTest_) {
-          Start(TM_NONE);
+          Reset();
           return RESULT_OK;
         }
         
@@ -1023,7 +1036,7 @@ namespace Anki {
           0 };
 
         // Draw face
-        HAL::FaceAnimate(faceFrame);
+        HAL::FaceAnimate(faceFrame, sizeof(faceFrame));
         
         return RESULT_OK;
       }

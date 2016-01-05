@@ -1,4 +1,5 @@
 #include "lib/stm32f4xx.h"
+#include <string.h>
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "portable.h"

@@ -42,9 +42,8 @@ INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
 INCLUDES += -I ../../../espressif_bootloader
 INCLUDES += -I ../../../include
-INCLUDES += -I ../../../../tools/anki-util/source/anki
 INCLUDES += -I ../../../generated/clad/robot
-INCLUDES += -I ../../../supervisor/esp_src
+INCLUDES += -I ../../../supervisor/src
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

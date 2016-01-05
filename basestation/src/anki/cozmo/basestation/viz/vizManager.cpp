@@ -578,15 +578,15 @@ namespace Anki {
     {
       SendMessage(VizInterface::MessageViz(VizInterface::DockingErrorSignal(x_dist, y_dist, angle)));
     }
-    
 
     void VizManager::SendRobotState(const RobotState &msg,
                                     const s32 numAnimBytesFree,
+                                    const s32 numAnimAudioFramesFree,
                                     const u8 videoFrameRateHz,
                                     const u8 imageProcFrameRateHz,
                                     const u8 animTag)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, videoFrameRateHz, imageProcFrameRateHz, animTag)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, animTag)));
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)

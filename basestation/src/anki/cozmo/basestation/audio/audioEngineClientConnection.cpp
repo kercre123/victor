@@ -29,6 +29,7 @@ AudioEngineClientConnection::AudioEngineClientConnection( AudioEngineMessageHand
   // Subscribe to Connection Side Messages
   auto callback = std::bind(&AudioEngineClientConnection::HandleEvents, this, std::placeholders::_1);
   _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioEvent, callback ) );
+  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::StopAllAudioEvents, callback ) );
   _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioGameState, callback ) );
   _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioSwitchState, callback ) );
   _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioParameter, callback ) );
@@ -41,25 +42,12 @@ AudioEngineClientConnection::~AudioEngineClientConnection()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::PostCallback( const AudioCallbackDuration& callbackMessage ) const
+void AudioEngineClientConnection::PostCallback( const AudioCallback& callbackMessage ) const
 {
-  const MessageAudioClient msg(( AudioCallbackDuration( callbackMessage ) ));
+  const MessageAudioClient msg(( AudioCallback( callbackMessage ) ));
   _messageHandler->Broadcast( std::move( msg ) );
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::PostCallback( const AudioCallbackMarker& callbackMessage ) const
-{
-  const MessageAudioClient msg(( AudioCallbackMarker( callbackMessage ) ));
-  _messageHandler->Broadcast( std::move( msg ) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::PostCallback( const AudioCallbackComplete& callbackMessage ) const
-{
-  const MessageAudioClient msg(( AudioCallbackComplete( callbackMessage ) ));
-  _messageHandler->Broadcast( std::move( msg ) );
-}
 
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,6 +61,10 @@ void AudioEngineClientConnection::HandleEvents(const AnkiEvent<MessageAudioClien
       
     case MessageAudioClientTag::PostAudioEvent:
       HandleMessage( event.GetData().Get_PostAudioEvent() );
+      break;
+      
+    case MessageAudioClientTag::StopAllAudioEvents:
+      HandleMessage( event.GetData().Get_StopAllAudioEvents() );
       break;
       
     case MessageAudioClientTag::PostAudioGameState:

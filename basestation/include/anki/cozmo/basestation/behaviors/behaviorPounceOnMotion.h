@@ -21,9 +21,13 @@ namespace Cozmo {
 
 class BehaviorPounceOnMotion : public IBehavior
 {
-public:
-
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPounceOnMotion(Robot& robot, const Json::Value& config);
+  
+public:
 
   // checks if the motion is within pouncing distance
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
@@ -40,13 +44,19 @@ protected:
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
 
-  float _maxPounceDist = 70.0f;
+  float _maxPounceDist = 101.0f;
   float _minGroundAreaForPounce = 0.01f;
   float _maxTimeBetweenPoses = 4.0f;
   
   float _prePouncePitch = 0.0f;
   float _lastValidPouncePoseTime = 0.0f;
   int _numValidPouncePoses = 0;
+
+  float _lastPoseDist = 0.0f;
+  const float _driveForwardUntilDist = 70.0f;
+
+  float _backupAfterPounce = 200.0f;
+  float _backupSpeed = 80.0f;
   
 private:
 
@@ -63,6 +73,8 @@ private:
   u32 _waitForActionTag = 0;
 
   float _stopRelaxingTime = 0.0f;
+
+  std::string _previousIdleAnimation;
   
   void CheckPounceResult(Robot& robot);
 

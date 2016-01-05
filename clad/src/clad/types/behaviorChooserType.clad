@@ -8,7 +8,11 @@ namespace Cozmo {
 
 enum uint_8 BehaviorChooserType {
   Demo,
-  Selection
+  Selection,
+  InvestorDemoMotion,
+  InvestorDemoFacesAndBlocks,
+  InvestorDemoFacesOnly,
+  Count
 }
 
 } // namespace Cozmo

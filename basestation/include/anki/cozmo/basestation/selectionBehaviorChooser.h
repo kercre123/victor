@@ -46,7 +46,7 @@ protected:
   Json::Value _config;
   std::vector<Signal::SmartHandle> _eventHandlers;
   IBehavior* _selectedBehavior = nullptr;
-  BehaviorNone* _behaviorNone = nullptr;
+  IBehavior* _behaviorNone = nullptr;
   
   void HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   

@@ -21,8 +21,13 @@ namespace Cozmo {
 
 class BehaviorReactToCliff : public IReactionaryBehavior
 {
-public:
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToCliff(Robot& robot, const Json::Value& config);
+  
+public:
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
   

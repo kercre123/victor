@@ -178,7 +178,10 @@ namespace Anki {
       
       TimeStamp_t GetOldestTimeStamp() const;
       TimeStamp_t GetNewestTimeStamp() const;
-      
+
+      TimeStamp_t GetOldestVisionOnlyTimeStamp() const;
+      TimeStamp_t GetNewestVisionOnlyTimeStamp() const;
+
       // Prints the entire history
       void Print() const;
       

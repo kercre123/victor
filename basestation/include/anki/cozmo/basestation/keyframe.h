@@ -53,10 +53,8 @@ namespace Cozmo {
     //IKeyFrame(const Json::Value& root);
     ~IKeyFrame();
     
-    bool IsValid() const { return _isValid; }
-    
     // Returns true if current time has reached frame's "trigger" time, relative
-    // to the given start time, or if this has been set as a "Live" keyframe
+    // to the given start time
     bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
     
     // Returns the time to trigger whatever change is implied by the KeyFrame
@@ -69,11 +67,6 @@ namespace Cozmo {
     // Set all members from Json. Calls virtual SetMembersFromJson() method so
     // subclasses can specify how to populate their members.
     Result DefineFromJson(const Json::Value &json);
-    
-    // The trigger time for "live" keyframes is irrelevant; they are always
-    // ready to play.
-    bool IsLive() const { return _isLive; }
-    void SetIsLive(bool tf) { _isLive = tf; }
     
     // Fill some kind of message for streaming and return it. Return nullptr
     // if not available.
@@ -98,9 +91,7 @@ namespace Cozmo {
     // A random number generator for all keyframes to share (for adding variability)
     static Util::RandomGenerator sRNG;
 
-    TimeStamp_t   _triggerTime_ms;
-    bool          _isValid;
-    bool          _isLive;
+    TimeStamp_t   _triggerTime_ms = 0;
     
   }; // class IKeyFrame
   
@@ -208,6 +199,17 @@ namespace Cozmo {
     }
 
     const std::string& GetSoundName() const;
+    
+    // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
+    struct AudioRef {
+      std::string name;
+      s32 numSamples;
+      f32 volume;
+      // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
+      Audio::EventType audioEvent = Audio::EventType::Invalid;
+    };
+    
+    const AudioRef& GetAudioRef() const;
 
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
@@ -216,12 +218,6 @@ namespace Cozmo {
     
     Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
     
-    struct AudioRef {
-      std::string name;
-      s32 numSamples;
-      f32 volume;
-    };
-
     std::vector<AudioRef> _audioReferences;
 
     s32 _selectedAudioIndex;
@@ -245,8 +241,7 @@ namespace Cozmo {
     
     struct AudioRef {
       Audio::EventType audioEvent;
-      f32              volume;
-      // TODO: Any other parameters that need to be communicated to AudioManager?
+      // TODO: We can add other audio controlls to animation data - JMR
     };
     
     const AudioRef& GetAudioRef() const;
@@ -256,7 +251,7 @@ namespace Cozmo {
     
   private:
     
-    Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
+    Result AddAudioRef(const Audio::EventType event);
 
     std::vector<AudioRef> _audioReferences;
     
@@ -302,6 +297,10 @@ namespace Cozmo {
   {
   public:
     FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
+    FaceAnimationKeyFrame(const AnimKeyFrame::FaceImage& faceImageMsg, const std::string& faceAnimName = "")
+    : _animName(faceAnimName)
+    , _faceImageMsg(faceImageMsg)
+    { }
     
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
@@ -311,6 +310,9 @@ namespace Cozmo {
     }
 
     virtual bool IsDone() override;
+    
+    const std::string& GetName() const { return _animName; }
+    const AnimKeyFrame::FaceImage& GetFaceImage() const { return _faceImageMsg; }
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;

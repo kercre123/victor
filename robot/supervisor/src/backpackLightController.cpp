@@ -24,9 +24,26 @@ namespace BackpackLightController {
   
   namespace {
     
-    //LEDId       _ledLUT[NUM_LEDS];
+    // User-defined light params
+    LightState  _ledParams[NUM_BACKPACK_LEDS];
     
-    LightState _ledParams[NUM_BACKPACK_LEDS];
+    // Light params when charging
+    LightState  _chargingParams[NUM_BACKPACK_LEDS];
+
+    // Light when charged
+    LightState  _chargedParams[NUM_BACKPACK_LEDS];
+
+    // Voltage at which it is considered charged
+    // TODO: Should there be a HAL::IsFastCharging()?
+    const u8 CHARGED_BATT_VOLTAGE_10x = 46;
+    
+    // Number of cycles it must be detected as charged or not charged before it switches over
+    const s32 LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD = 200;
+    s32 _isChargedCount = 0;
+    
+    // The current LED params being played
+    LightState* _currParams = _ledParams;
+    
     bool       _enable;
   };
   
@@ -42,14 +59,6 @@ namespace BackpackLightController {
   
   Result Init()
   {
-    /*
-    _ledLUT[0] = LEDId::LED_BACKPACK_LEFT;
-    _ledLUT[1] = LEDId::LED_BACKPACK_RIGHT;
-    _ledLUT[2] = LEDId::LED_BACKPACK_BACK;
-    _ledLUT[3] = LEDId::LED_BACKPACK_FRONT;
-    _ledLUT[4] = LEDId::LED_BACKPACK_MIDDLE;
-    */
-    
     for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
       _ledParams[i].onColor = 0;
       _ledParams[i].offColor = 0;
@@ -57,7 +66,107 @@ namespace BackpackLightController {
     }
     _enable = true;
     
+    // Initial power on lights
+    LightState *p = &_ledParams[LED_BACKPACK_BACK];
+    p->onColor = 0x00ff0000;
+    p->offColor = 0x00880000;
+    p->onPeriod_ms = 500;
+    p->offPeriod_ms = 500;
+    p->transitionOnPeriod_ms = 4500;
+    p->transitionOffPeriod_ms = 4500;
+
+    
+    // Set charging light params
+    p = &_chargingParams[LED_BACKPACK_BACK];
+    p->onColor = 0x00ff0000;
+    p->offColor = 0x0;
+    p->onPeriod_ms = 1000;
+    p->offPeriod_ms = 200;
+    p->transitionOnPeriod_ms = 200;
+    p->transitionOffPeriod_ms = 200;
+    p->state = LED_STATE_OFF;
+    
+    _chargingParams[LED_BACKPACK_MIDDLE] = _chargingParams[LED_BACKPACK_BACK];
+    p = &_chargingParams[LED_BACKPACK_MIDDLE];
+    p->onPeriod_ms = 600;
+    p->offPeriod_ms = 200;
+    p->transitionOnPeriod_ms = 600;
+
+    _chargingParams[LED_BACKPACK_FRONT] = _chargingParams[LED_BACKPACK_BACK];
+    p = &_chargingParams[LED_BACKPACK_FRONT];
+    p->onPeriod_ms = 200;
+    p->offPeriod_ms = 200;
+    p->transitionOnPeriod_ms = 1000;
+
+    
+    // Set charged light params
+    p = &_chargedParams[LED_BACKPACK_BACK];
+    p->onColor = 0x00ff0000;
+    p->offColor = 0x00660000;
+    p->onPeriod_ms = 1000;
+    p->offPeriod_ms = 10;
+    p->transitionOnPeriod_ms = 1000;
+    p->transitionOffPeriod_ms = 1000;
+    p->state = LED_STATE_OFF;
+    
+    _chargedParams[LED_BACKPACK_MIDDLE] = _chargedParams[LED_BACKPACK_BACK];
+    _chargedParams[LED_BACKPACK_FRONT] = _chargedParams[LED_BACKPACK_BACK];
+    
     return RESULT_OK;
+  }
+  
+  
+  // Assumes p is a pointer to a set of backpack LightStates
+  // and turns them all off.
+  void SetAllLightsOff(LightState* p)
+  {
+    for (u8 i = 0; i < NUM_BACKPACK_LEDS; ++i) {
+      p[i].state = LED_STATE_OFF;
+    }
+  }
+  
+  // Set which light parameters are to be displayed based on onCharger status.
+  // NOTE: While on charger, backpack lights can be set, but they won't show
+  //       until the robot comes off the charger. This may or may not be what we want.
+  void SetCurrParams()
+  {
+    bool isCharged = HAL::BatteryGetVoltage10x() >= CHARGED_BATT_VOLTAGE_10x;
+
+    // Hysteresis on charging light pattern
+    if (HAL::BatteryIsOnCharger()) {
+      if (isCharged) {
+        if (_isChargedCount < LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD ) {
+          ++_isChargedCount;
+        }
+      } else {
+        if (_isChargedCount > -LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD) {
+          --_isChargedCount;
+        }
+      }
+    } else {
+      _isChargedCount = 0;
+    }
+    
+    if (HAL::BatteryIsOnCharger()) {
+      if ((_currParams != _chargingParams) && _isChargedCount <= 0)
+      {
+        // Reset current lights and switch to charging lights
+        SetAllLightsOff(_currParams);
+        _currParams = _chargingParams;
+      }
+      else if ((_currParams != _chargedParams) && _isChargedCount > 0)
+      {
+        // Reset current lights and switch to charged lights
+        SetAllLightsOff(_currParams);
+        _currParams = _chargedParams;
+      }
+    }
+    else if (!HAL::BatteryIsOnCharger() && _currParams != _ledParams)
+    {
+      // Reset current lights and switch to user-defined lights
+      SetAllLightsOff(_currParams);
+      _currParams = _ledParams;
+    }
   }
   
   Result Update()
@@ -66,12 +175,14 @@ namespace BackpackLightController {
       return RESULT_OK;
     }
     
+    SetCurrParams();
+    
     TimeStamp_t currentTime = HAL::GetTimeStamp();
     
     for(int i=0; i<NUM_BACKPACK_LEDS; ++i)
     {
       u32 newColor;
-      const bool colorUpdated = GetCurrentLEDcolor(_ledParams[i], currentTime, newColor);
+      const bool colorUpdated = GetCurrentLEDcolor(_currParams[i], currentTime, newColor);
       if(colorUpdated) {
         HAL::SetLED((LEDId)i, (newColor>>8)); // Shift color to remove alpha bits
       }

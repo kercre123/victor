@@ -6,12 +6,10 @@ export ESPDIR=`pwd`
 # Clear the terminal so debugging builds is easier
 clear
 
-# Generate clad source 
-cd ../clad
-if ! make -j4; then
-  exit
-fi
-cd -
+../tools/versionGenerator/versionGenerator.sh app/include/version.h
+
+# Generate clad source
+make esp -C ../clad -j4
 
 # Build the Espressif app
 cd app

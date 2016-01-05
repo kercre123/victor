@@ -55,15 +55,15 @@ static const uint64_t BIT_EXPAND[] = {
 // @param outImg - a pointer to the decoded image optimized for display on the robot.
 //                 One bit/pixel, column-major ordering.
 // Frame is in 8-bit RLE format:
-// 00xxxxxx     CLEAR row (blank)
-// 01xxxxxx     COPY PREVIOUS ROW (repeat)
+// 00xxxxxx     CLEAR COL (blank)
+// 01xxxxxx     COPY PREVIOUS COL (repeat)
 // 1xxxxxyy     RLE 2-bit block
 void FaceDisplayDecode(const uint8_t * inImg, const uint8_t numRows, const uint8_t numCols, uint64_t* outImg)
 {
   uint64_t *frame = outImg;
   
   for (int x = 0; x < numCols; ) {
-    // Full row treatment
+    // Full column treatment
     if (~*inImg & 0x80) {
       uint8_t op = *(inImg++);
       int rle = (op & 0x3F) + 1;

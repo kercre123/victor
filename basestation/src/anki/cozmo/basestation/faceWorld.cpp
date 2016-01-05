@@ -7,6 +7,9 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#define USE_POSE_FOR_ID 1
+
+
 namespace Anki {
 namespace Cozmo {
   
@@ -24,41 +27,21 @@ namespace Cozmo {
     
   }
   
-  Result FaceWorld::UpdateFaceTracking(const Vision::TrackedFace& face)
+  void FaceWorld::RemoveFaceByID(Vision::TrackedFace::ID_t faceID)
   {
-    const Vec3f& robotTrans = _robot.GetPose().GetTranslation();
+    auto knownFaceIter = _knownFaces.find(faceID);
     
-    Pose3d headPose;
-    if(false == face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPose)) {
-      PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
-                        "Could not get pose of observed marker w.r.t. world for head tracking.\n");
-      return RESULT_FAIL;
+    if(knownFaceIter != _knownFaces.end())
+    {
+      PRINT_NAMED_INFO("FaceWorld.RemoveFaceByID",
+                       "Removing face %llu", faceID);
+      
+      using namespace ExternalInterface;
+      _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceID, _robot.GetID())));
+      VizManager::getInstance()->EraseVizObject(knownFaceIter->second.vizHandle);
+      _knownFaces.erase(knownFaceIter);
     }
-    
-    const f32 xDist = headPose.GetTranslation().x() - robotTrans.x();
-    const f32 yDist = headPose.GetTranslation().y() - robotTrans.y();
-    
-    const f32 minDist = std::sqrt(xDist*xDist + yDist*yDist);
-  
-    // NOTE: This isn't perfectly accurate since it doesn't take into account the
-    // the head angle and is simply using the neck joint (which should also
-    // probably be queried from the robot instead of using the constant here)
-    const f32 zDist = headPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
-    
-    const Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
-    const Radians panAngle = std::atan2(yDist, xDist);
-    
-    static const Radians minHeadAngle(DEG_TO_RAD(1.f));
-    static const Radians minBodyAngle(DEG_TO_RAD(1.f));
-    
-    PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
-    action->EnableMessageDisplay(false);
-    action->SetPanTolerance(minBodyAngle);
-    action->SetTiltTolerance(minHeadAngle);
-    _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-                                          
-    return RESULT_OK;
-  } // UpdateFaceTracking()
+  }
   
   Result FaceWorld::AddOrUpdateFace(Vision::TrackedFace& face)
   {
@@ -77,80 +60,117 @@ namespace Cozmo {
     face.SetHeadPose(headPose);
 
     static const Point3f humanHeadSize{148.f, 225.f, 195.f};
-    static const bool usePoseToMatchIDs = true; // if true, ignores IDs from face tracker
     
     KnownFace* knownFace = nullptr;
-    
-    if(usePoseToMatchIDs) {
+
+#   if USE_POSE_FOR_ID
+    bool foundMatch = false;
+
+    // Look through known faces and compare pose and image rectangles:
+    f32 IOU_threshold = 0.5f;
+    Vec3f closestTdiff(100.f); // humanHeadSize*0.75f);
+    Radians closestAngleDiff(DEG_TO_RAD(45));
+    for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); ++knownFaceIter)
+    {
       
-      // Look through known faces and compare pose:
-      bool foundMatch = false;
-      for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); ++knownFaceIter)
+      // Note we're using really loose thresholds for checking pose sameness
+      // since our ability to accurately localize face's 3D pose is limited.
+      Vec3f Tdiff;
+      Radians angleDiff;
+      
+      const auto & knownRect = knownFaceIter->second.face.GetRect();
+      const f32 currentIOU = face.GetRect().ComputeOverlapScore(knownRect);
+      if(currentIOU > IOU_threshold)
       {
-        // Note we're using really loose thresholds for checking pose sameness
-        // since our ability to accurately localize face's 3D pose is limited.
-        if(knownFaceIter->second.face.GetHeadPose().IsSameAs(face.GetHeadPose(),
-                                                             humanHeadSize,
-                                                             DEG_TO_RAD(90)))
-        {
-          knownFace = &knownFaceIter->second;
-          
-          const Vision::TrackedFace::ID_t matchedID = knownFace->face.GetID();
-          //PRINT_NAMED_INFO("FaceWorld.UpdateFace.UpdatingKnownFace",
-          //                 "Updating face with ID=%lld from t=%d to %d",
-          //                 matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp());
-          knownFace->face = face;
-          knownFace->face.SetID(matchedID);
-          foundMatch = true;
-          break;
+        if(foundMatch) {
+          // If we had already found a match, delete the last one, because this
+          // new face matches multiple existing faces
+          assert(nullptr != knownFace);
+          RemoveFaceByID(knownFace->face.GetID());
         }
+        
+        IOU_threshold = currentIOU;
+        foundMatch = true;
+        knownFace = &knownFaceIter->second;
       }
-      
-      // Didn't find a match based on pose, so add a new face with a new ID:
-      if(!foundMatch) {
-        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
-                         "Added new face with ID=%lld at t=%d.", _idCtr, face.GetTimeStamp());
-        face.SetID(_idCtr); // Use our own ID here for the new face
-        auto insertResult = _knownFaces.insert({_idCtr, face});
-        if(insertResult.second == false) {
-          PRINT_NAMED_ERROR("FaceWorld.UpdateFace.ExistingID",
-                            "Did not find a match by pose, but ID %lld already in use.",
-                            _idCtr);
-          return RESULT_FAIL;
+      else if(knownFaceIter->second.face.GetHeadPose().IsSameAs(face.GetHeadPose(),
+                                                                closestTdiff,
+                                                                closestAngleDiff,
+                                                                Tdiff, angleDiff))
+      {
+        if(foundMatch) {
+          // If we had already found a match, delete the last one, because this
+          // new face matches multiple existing faces
+          assert(nullptr != knownFace);
+          RemoveFaceByID(knownFace->face.GetID());
         }
-        knownFace = &insertResult.first->second;
-        ++_idCtr;
+        
+        closestTdiff = Tdiff.GetAbs().GetMax(); // max should still be less than previous closestTdiff
+        closestAngleDiff = angleDiff.getAbsoluteVal();
+        knownFace = &knownFaceIter->second;
+        foundMatch = true;
       }
-      
-    } else { // Use ID coming from face tracker / recognizer
-      auto insertResult = _knownFaces.insert({face.GetID(), face});
-      
-      if(insertResult.second) {
-        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace", "Added new face with ID=%lld at t=%d.", face.GetID(), face.GetTimeStamp());
-      } else {
-        // Update the existing face:
-        insertResult.first->second = face;
-      }
-      
-      knownFace = &insertResult.first->second;
+    } // for each known face
+    
+    if(foundMatch) {
+      const Vision::TrackedFace::ID_t matchedID = knownFace->face.GetID();
+      //PRINT_NAMED_INFO("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
+      //                 "Updating face with ID=%lld from t=%d to %d",
+      //                 matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp());
+      knownFace->face = face;
+      knownFace->face.SetID(matchedID);
     }
+    
+    // Didn't find a match based on pose, so add a new face with a new ID:
+    else {
+      PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
+                       "Added new face with ID=%lld at t=%d.", _idCtr, face.GetTimeStamp());
+      face.SetID(_idCtr); // Use our own ID here for the new face
+      auto insertResult = _knownFaces.insert({_idCtr, face});
+      if(insertResult.second == false) {
+        PRINT_NAMED_ERROR("FaceWorld.UpdateFace.ExistingID",
+                          "Did not find a match by pose, but ID %lld already in use.",
+                          _idCtr);
+        return RESULT_FAIL;
+      }
+      knownFace = &insertResult.first->second;
+      ++_idCtr;
+    }
+      
+#   else // USE_POSE_FOR_ID==0
+      
+    auto insertResult = _knownFaces.insert({face.GetID(), face});
+    
+    if(insertResult.second) {
+      PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace", "Added new face with ID=%lld at t=%d.", face.GetID(), face.GetTimeStamp());
+    } else {
+      // Update the existing face:
+      insertResult.first->second = face;
+    }
+    
+    knownFace = &insertResult.first->second;
+  
+#   endif // if USE_POSE_FOR_ID
     
     // By now, we should have either created a new face or be pointing at an
     // existing one!
     assert(knownFace != nullptr);
+    
+    // Update the last observed face pose.
+    // If more than one was observed in the same timestamp then take the closest one.
+    if ((_lastObservedFaceTimeStamp != knownFace->face.GetTimeStamp()) ||
+       (ComputeDistanceBetween(_robot.GetPose(), _lastObservedFacePose) >
+        ComputeDistanceBetween(_robot.GetPose(), knownFace->face.GetHeadPose()))) {
+      _lastObservedFacePose = knownFace->face.GetHeadPose();
+      _lastObservedFaceTimeStamp = knownFace->face.GetTimeStamp();
+    }
     
     // Draw 3D face
     knownFace->vizHandle = VizManager::getInstance()->DrawHumanHead(1+static_cast<u32>(knownFace->face.GetID()),
                                                                    humanHeadSize,
                                                                    knownFace->face.GetHeadPose(),
                                                                    ::Anki::NamedColors::GREEN);
-    
-    if((_robot.GetMoveComponent().GetTrackToFace() != Vision::TrackedFace::UnknownFace) &&
-       (_robot.GetMoveComponent().GetTrackToFace() == knownFace->face.GetID()))
-    {
-      UpdateFaceTracking(knownFace->face);
-    }
-    
+        
     // Send out an event about this face being observed
     using namespace ExternalInterface;
     const Vec3f& trans = knownFace->face.GetHeadPose().GetTranslation();
@@ -175,19 +195,20 @@ namespace Cozmo {
     // Delete any faces we haven't seen in awhile
     for(auto faceIter = _knownFaces.begin(); faceIter != _knownFaces.end(); )
     {
-      if(_robot.GetLastImageTimeStamp() > _deletionTimeout_ms + faceIter->second.face.GetTimeStamp()) {
+      Vision::TrackedFace& face = faceIter->second.face;
+      
+      if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > _deletionTimeout_ms + face.GetTimeStamp()) {
         
-        PRINT_NAMED_INFO("FaceWorld.Update.DeletingFace",
+        PRINT_NAMED_INFO("FaceWorld.Update.DeletingOldFace",
                          "Removing face %llu at t=%d, because it hasn't been seen since t=%d.",
                          faceIter->first, _robot.GetLastImageTimeStamp(),
                          faceIter->second.face.GetTimeStamp());
         
         using namespace ExternalInterface;
-        _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceIter->second.face.GetID(), _robot.GetID())));
+        _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(face.GetID(), _robot.GetID())));
         
         VizManager::getInstance()->EraseVizObject(faceIter->second.vizHandle);
         faceIter = _knownFaces.erase(faceIter);
-
       } else {
         ++faceIter;
       }
@@ -206,6 +227,36 @@ namespace Cozmo {
     }
   }
 
+
+  std::vector<Vision::TrackedFace::ID_t> FaceWorld::GetKnownFaceIDs() const
+  {
+    std::vector<Vision::TrackedFace::ID_t> faceIDs;
+    for (auto pair : _knownFaces) {
+      faceIDs.push_back(pair.first);
+    }
+    return faceIDs;
+  }
+  
+  std::map<TimeStamp_t, Vision::TrackedFace::ID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
+  {
+    std::map<TimeStamp_t, Vision::TrackedFace::ID_t> faceIDs;
+    for (auto pair : _knownFaces) {
+      if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
+        faceIDs.insert(std::pair<TimeStamp_t, Vision::TrackedFace::ID_t>(pair.first, pair.second.face.GetTimeStamp()));
+      }
+    }
+    return faceIDs;
+  }
+  
+  
+  TimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& p)
+  {
+    if (_lastObservedFaceTimeStamp > 0) {
+      p = _lastObservedFacePose;
+    }
+    
+    return _lastObservedFaceTimeStamp;
+  }
   
 } // namespace Cozmo
 } // namespace Anki

@@ -1,9 +1,9 @@
 /*
  * File:          webotsCtrlRobot.cpp
  * Date:
- * Description:   
- * Author:        
- * Modifications: 
+ * Description:
+ * Author:
+ * Modifications:
  */
 
 /*
@@ -35,34 +35,37 @@ int main(int argc, char **argv)
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
     return -1;
   }
-  
-  
+
+
 #if(FREE_DRIVE_DUBINS_TEST || ENABLE_KEYBOARD_CONTROL)
   Sim::KeyboardController::Enable();
 #endif
-  
+
   Sim::OverlayDisplay::Init();
-  
+
+  HAL::Step();
   while(Robot::step_MainExecution() == Anki::RESULT_OK)
   {
+    HAL::UpdateDisplay();
     if( Robot::step_LongExecution() == Anki::RESULT_FAIL ) {
       fprintf(stdout, "step_LongExecution failed.\n");
       break;
     }
-      
+
     if(Sim::KeyboardController::IsEnabled() && TestModeController::GetMode() == TM_NONE) {
       Sim::KeyboardController::ProcessKeystroke();
-    }      
+    }
+    HAL::Step();      
   }
-  
+
   /* Enter your cleanup code here */
   //DisableKeyboardController();
   //wb_camera_disable(cam_head);
   //wb_camera_disable(cam_lift);
   //wb_camera_disable(cam_down);
-  
+
   /* This is necessary to cleanup webots resources */
   //wb_robot_cleanup();
-  
+
   return 0;
 }

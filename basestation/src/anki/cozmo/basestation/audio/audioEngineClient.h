@@ -20,10 +20,14 @@
 #include <util/signals/simpleSignal.hpp>
 #include "clad/audio/audioMessageTypes.h"
 #include "clad/audio/audioEventTypes.h"
+#include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 #include <vector>
+#include <unordered_map>
+#include <functional>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -31,32 +35,37 @@ namespace Audio {
   
 class AudioEngineMessageHandler;
 class MessageAudioClient;
-// Callback Structs
-struct AudioCallbackDuration;
-struct AudioCallbackMarker;
-struct AudioCallbackComplete;
+struct AudioCallback;
   
 class AudioEngineClient : Util::noncopyable
 {
 public:
   
   using CallbackIdType = uint16_t;
+  using CallbackFunc = std::function< void ( AudioCallback callback ) >;
   
   void SetMessageHandler( AudioEngineMessageHandler* messageHandler );
   
+  // Perform event
+  // Provide a callback lambda to get all event callbacks; Duration, Marker, Complete & Error.
   CallbackIdType PostEvent( EventType event,
-                            uint16_t gameObjectId,
-                            AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
-
-  void PostGameState( GameStateGroupType gameStateGroup, GameStateType gameState );
+                            GameObjectType gameObject = GameObjectType::Default,
+                            CallbackFunc callback = nullptr );
   
-  void PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, uint16_t gameObjectId );
+  void StopAllEvents( GameObjectType gameObject = GameObjectType::Invalid );
+
+  void PostGameState( GameStateGroupType gameStateGroup,
+                      GameStateType gameState );
+  
+  void PostSwitchState( SwitchStateGroupType switchStateGroup,
+                        SwitchStateType switchState,
+                        GameObjectType gameObject = GameObjectType::Default );
   
   void PostParameter( ParameterType parameter,
                       float parameterValue,
-                      uint16_t gameObjectId,
-                      int32_t timeInMilliSeconds,
-                      CurveType curve ) const;
+                      GameObjectType gameObject = GameObjectType::Default,
+                      int32_t timeInMilliSeconds = 0,
+                      CurveType curve = CurveType::Linear ) const;
   
 protected:
   
@@ -66,11 +75,10 @@ protected:
   static constexpr CallbackIdType kInvalidCallbackId = 0;
   CallbackIdType _previousCallbackId = kInvalidCallbackId;
   
-  void HandleEvents( const AnkiEvent<MessageAudioClient>& event );
+  using CallbackMap = std::unordered_map< CallbackIdType, CallbackFunc >;
+  CallbackMap _callbackMap;
   
-  virtual void HandleCallbackEvent( const AudioCallbackDuration& callbackMsg );
-  virtual void HandleCallbackEvent( const AudioCallbackMarker& callbackMsg );
-  virtual void HandleCallbackEvent( const AudioCallbackComplete& callbackMsg );
+  void HandleCallbackEvent( const AudioCallback& callbackMsg );
   
   CallbackIdType GetNewCallbackId();
   

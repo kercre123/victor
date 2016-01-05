@@ -36,9 +36,6 @@ namespace Anki {
     Util::RandomGenerator IKeyFrame::sRNG;
     
     IKeyFrame::IKeyFrame()
-    : _triggerTime_ms(0)
-    , _isValid(false)
-    , _isLive(false)
     {
       
     }
@@ -63,10 +60,6 @@ namespace Anki {
         lastResult = RESULT_FAIL;
       } else {
         _triggerTime_ms = json["triggerTime_ms"].asUInt();
-        
-        // Only way to set isValid=true is that SetMembersFromJson succeeded and
-        // triggerTime was found:
-        _isValid = true;
       }
       
       if(lastResult == RESULT_OK) {
@@ -114,7 +107,7 @@ return RESULT_FAIL; \
       // Add variability:
       if(_angleVariability_deg > 0) {
         _streamHeadMsg.angle_deg = static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
-                                                                       _angle_deg + _angleVariability_deg));
+                                                                           _angle_deg + _angleVariability_deg));
       } else {
         _streamHeadMsg.angle_deg = _angle_deg;
       }
@@ -370,7 +363,7 @@ return RESULT_FAIL; \
       static const std::string unknownName("UNKNOWN");
       if(_selectedAudioIndex<0 || _audioReferences.empty()) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetSoundName.InvalidState",
-                          "KeyFrame not initialzed with selected sound name yet.\n");
+                          "KeyFrame not initialized with selected sound name yet.\n");
         return unknownName;
       }
       
@@ -434,42 +427,6 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
-#   else // (if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO==0)
-    
-    Result RobotAudioKeyFrame::AddAudioRef(const std::string& name, const f32 volume)
-    {
-      // TODO: Compute number of samples for this audio ID
-      // TODO: Catch failure if ID is invalid
-      // _numSamples = wwise::GetNumSamples(_idMsg.audioID, SAMPLE_SIZE);
-      
-      // Make sure this is a valid sound name
-      // TODO: Query AudioManager and get actual Audio::EventType from name
-      _audioReferences.push_back({.audioEvent = Audio::EventType::Invalid, .volume = volume});
-      
-      return RESULT_OK;
-    }
-    
-    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
-    {
-      if(_audioReferences.empty()) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
-                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        static const AudioRef InvalidRef{.audioEvent = Audio::EventType::Invalid, .volume = 0.f};
-        return InvalidRef;
-      }
-      
-      // Select one of the audio names to play
-      size_t selectedAudioIndex = 0;
-      if(_audioReferences.size()>1) {
-        // If there are more than one audio references
-        selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
-      }
-      
-      return _audioReferences[selectedAudioIndex];
-    }
-    
-#   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-    
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
       // Get volume
@@ -500,6 +457,90 @@ return RESULT_FAIL; \
       
       return RESULT_OK;
     }
+    
+    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
+    {
+      if(_audioReferences.empty()) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
+                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
+        static const AudioRef InvalidRef{};
+        return InvalidRef;
+      }
+      
+      // Select one of the audio names to play
+      size_t selectedAudioIndex = 0;
+      if(_audioReferences.size()>1) {
+        // If there are more than one audio references
+        selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
+      }
+      
+      return _audioReferences[selectedAudioIndex];
+    }
+    
+#   else // (if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO==0)
+    
+    Result RobotAudioKeyFrame::AddAudioRef(const Audio::EventType event)
+    {
+      // TODO: Need a way to verify the event is valid while loading animation metadata - JMR
+      _audioReferences.push_back({.audioEvent = event});
+      
+      return RESULT_OK;
+    }
+    
+    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
+    {
+      if(_audioReferences.empty()) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
+                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
+        static const AudioRef InvalidRef{.audioEvent = Audio::EventType::Invalid};
+        return InvalidRef;
+      }
+      
+      // Select one of the audio names to play
+      size_t selectedAudioIndex = 0;
+      if(_audioReferences.size()>1) {
+        // If there are more than one audio references
+        selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
+      }
+      
+      return _audioReferences[selectedAudioIndex];
+    }
+    
+    
+    Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      // Get volume
+      f32 volume = 1.0;
+      JsonTools::GetValueOptional(jsonRoot, "volume", volume);
+      
+      
+      if(!jsonRoot.isMember("audioName")) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.MissingAudioName",
+                          "No 'audioName' field in Json frame.\n");
+        return RESULT_FAIL;
+      }
+      
+      const Json::Value& jsonAudioNames = jsonRoot["audioEventId"];
+      if(jsonAudioNames.isArray()) {
+        for(s32 i=0; i<jsonAudioNames.size(); ++i) {
+          // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
+          Result addResult = AddAudioRef( static_cast<Audio::EventType>( jsonAudioNames[i].asUInt64() ));
+          if(addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      } else {
+        // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
+        Result addResult = AddAudioRef( static_cast<Audio::EventType>( jsonAudioNames.asUInt64() ));
+        if(addResult != RESULT_OK) {
+          return addResult;
+        }
+      }
+      
+      return RESULT_OK;
+    }
+    
+#   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
     
 #pragma mark -
 #pragma mark DeviceAudioKeyFrame

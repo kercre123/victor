@@ -24,8 +24,13 @@ namespace Cozmo {
 
 class BehaviorFollowMotion : public IBehavior
 {
-public:
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorFollowMotion(Robot& robot, const Json::Value& config);
+  
+public:
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
 
@@ -39,19 +44,51 @@ protected:
 
 private:
   
-  bool _interrupted = false;
-  u32  _actionRunning = 0;
-  u8   _originalVisionModes = 0;
+  void StartTracking(Robot& robot);
   
+  enum class State : u8 {
+    BackingUp,
+    WaitingForFirstMotion,      
+    Tracking,
+    HoldingHeadDown,
+    DrivingForward,
+    Interrupted
+  };
+  
+  // Internal state of the behavior:
+  State       _state;
+  u32         _actionRunning = (u32)ActionConstants::INVALID_TAG;
+  u32         _backingUpAction = (u32)ActionConstants::INVALID_TAG;
+  u8          _originalVisionModes = 0;
+  bool        _initialReactionAnimPlayed = false;
+  double      _lastInterruptTime_sec = std::numeric_limits<double>::lowest(); // Not min(), which is +ve!
+  f32         _holdHeadDownUntil = -1.0f;
+  
+  // Configuration parameters:
   // TODO: Read these from json config
   f32     _moveForwardDist_mm = 15.f;
   f32     _moveForwardSpeedIncrease = 2.f;
-  Radians _driveForwardTol = DEG_TO_RAD(3.f); // both pan/tilt less than this will result in drive forward
+  Radians _driveForwardTol = DEG_TO_RAD(5.f); // both pan/tilt less than this will result in drive forward
+  f32     _minDriveFrowardGroundPlaneDist_mm = 105.0f;
+  f32     _minGroundAreaToConsider = 0.1f;
   Radians _panAndTiltTol = DEG_TO_RAD(3.f);  // pan/tilt must be greater than this to actually turn
-  bool    _initialReactionAnimPlayed;
+  double  _initialReactionWaitTime_sec = 20.f;
+
+  // tracks how far we've driven forward in this behavior
+  f32 _totalDriveForwardDist = 0.0f;
+  f32 _additionalBackupDist = 20.0f;
+  f32 _maxBackupDistance = 250.0f;
+  f32 _backupSpeed = 80.0f;
+  
+  
+  bool _lockedLift = false;
+  void LiftShouldBeLocked(Robot& robot);
+  void LiftShouldBeUnlocked(Robot& robot);
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-
+  void HandleObservedMotion(const EngineToGameEvent& event, Robot& robot);
+  void HandleCompletedAction(const EngineToGameEvent& event, Robot& robot);
+  
 }; // class BehaviorFollowMotion
   
 

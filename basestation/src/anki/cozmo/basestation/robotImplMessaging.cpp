@@ -75,8 +75,11 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   // lambda for some simple message handling
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::animState,
      [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-       _numAnimationBytesPlayed = message.GetData().Get_animState().numAnimBytesPlayed;
-       _animationTag = message.GetData().Get_animState().tag;
+       if (_timeSynced) {
+         _numAnimationBytesPlayed = message.GetData().Get_animState().numAnimBytesPlayed;
+         _numAnimationAudioFramesPlayed = message.GetData().Get_animState().numAudioFramesPlayed;
+         _animationTag = message.GetData().Get_animState().tag;
+       }
      }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseStarted,
     [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
@@ -605,14 +608,17 @@ void Robot::HandleMessage(const ExternalInterface::SetIdleAnimation& msg)
 template<>
 void Robot::HandleMessage(const ExternalInterface::ReplayLastAnimation& msg)
 {
-  _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
+  _animationStreamer.SetStreamingAnimation(*this, _lastPlayedAnimationId, msg.numLoops);
 }
 
 template<>
 void Robot::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
 {
   Planning::Path p;
-  _longPathPlanner->GetTestPath(GetPose(), p);
+
+  PathMotionProfile motionProfile(msg.motionProf);
+
+  _longPathPlanner->GetTestPath(GetPose(), p, &motionProfile);
   ExecutePath(p);
 }
 
@@ -732,8 +738,8 @@ void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
     {
       const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
       
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, 0.0f, 0.0f,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_stearing);
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, msg.dockPathDistOffsetCap_mm, msg.dockPathAngularOffsetCap_rad,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_steering);
     }));
 }
   

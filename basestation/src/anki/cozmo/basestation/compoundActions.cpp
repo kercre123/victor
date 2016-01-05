@@ -62,59 +62,19 @@ namespace Anki {
       // compound action in which they are included
       action->EnableMessageDisplay(IsMessageDisplayEnabled());
       
+      // As part of a compound action this should not emit completion
+      action->SetEmitCompletionSignal(false);
+      
       _actions.emplace_back(false, action);
-      _actions.back().second->SetIsPartOfCompoundAction(true);
       _name += action->GetName();
       _name += "]";
     }
     
-    void ICompoundAction::ClearActions()
+    void ICompoundAction::ClearActions(Robot& robot)
     {
+      Cleanup(robot);
       _actions.clear();
       Reset();
-    }
-    
-    bool ICompoundAction::ShouldLockHead() const
-    {
-      auto actionIter = _actions.begin();
-      while(actionIter != _actions.end()) {
-        if(actionIter->second->ShouldLockHead()) {
-          return true;
-        }
-      }
-      return false;
-    }
-    
-    bool ICompoundAction::ShouldLockLift() const
-    {
-      auto actionIter = _actions.begin();
-      while(actionIter != _actions.end()) {
-        if(actionIter->second->ShouldLockLift()) {
-          return true;
-        }
-      }
-      return false;
-    }
-    
-    bool ICompoundAction::ShouldLockWheels() const
-    {
-      auto actionIter = _actions.begin();
-      while(actionIter != _actions.end()) {
-        if(actionIter->second->ShouldLockWheels()) {
-          return true;
-        }
-        ++actionIter;
-      }
-      return false;
-    }
-
-    u8 ICompoundAction::GetAnimTracksToDisable() const
-    {
-      u8 whichTracks = 0;
-      for(auto & action : _actions) {
-        whichTracks |= action.second->GetAnimTracksToDisable();
-      }
-      return whichTracks;
     }
     
     void ICompoundAction::Cleanup(Robot& robot)
@@ -221,6 +181,11 @@ namespace Anki {
                     subResult = ActionResult::RUNNING;
                   }
                 }
+              }
+              else {
+                // this sub-action finished, but we still have others that we are waiting to run, probably due
+                // to delay between actions, so return running
+                return ActionResult::RUNNING;
               }
               
               return subResult;
@@ -341,6 +306,21 @@ namespace Anki {
       
       return result;
     } // CompoundActionParallel::Update()
+    
+    u8 CompoundActionParallel::GetAnimTracksToDisable() const
+    {
+      u8 whichTracks = 0;
+      for(auto & action : _actions) {
+        whichTracks |= action.second->GetAnimTracksToDisable();
+      }
+      return whichTracks;
+    }
+    
+    void CompoundActionParallel::AddAction(IActionRunner* action)
+    {
+      action->SetSuppressTrackLocking(true);
+      ICompoundAction::AddAction(action);
+    }
     
   } // namespace Cozmo
 } // namespace Anki

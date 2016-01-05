@@ -38,6 +38,7 @@ namespace Cozmo {
   class IBehavior;
   class IReactionaryBehavior;
   class IBehaviorChooser;
+  class BehaviorFactory;
   class Reward;
   class Robot;
   
@@ -83,6 +84,11 @@ namespace Cozmo {
     const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
 
     const IBehaviorChooser* GetBehaviorChooser() const { return _behaviorChooser; }
+    
+    const BehaviorFactory& GetBehaviorFactory() const { assert(_behaviorFactory); return *_behaviorFactory; }
+          BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
+    
+    IBehavior* LoadBehaviorFromJson(const Json::Value& behaviorJson);
 
   private:
     
@@ -93,8 +99,11 @@ namespace Cozmo {
     
     void   SwitchToNextBehavior(double currentTime_sec);
     Result InitNextBehaviorHelper(float currentTime_sec);
-    void   SetupBehaviorChooser(const Json::Value &config);
+    void   SetupOctDemoBehaviorChooser(const Json::Value &config);
     void   AddReactionaryBehavior(IReactionaryBehavior* behavior);
+    
+    // Factory creates and tracks data-driven behaviors etc
+    BehaviorFactory* _behaviorFactory;
     
     // How we store and choose next behavior
     IBehaviorChooser* _behaviorChooser = nullptr;

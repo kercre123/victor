@@ -13,17 +13,12 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
-#include "anki/cozmo/basestation/investorDemoBehaviorChooser.h"
+#include "anki/cozmo/basestation/investorDemoFacesAndBlocksBehaviorChooser.h"
+#include "anki/cozmo/basestation/investorDemoFacesChooser.h"
+#include "anki/cozmo/basestation/investorDemoMotionBehaviorChooser.h"
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
-#include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
-#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -38,8 +33,6 @@
 
 #define DEBUG_BEHAVIOR_MGR 0
 
-#define INVESTOR_DEMO 1
-
 namespace Anki {
 namespace Cozmo {
   
@@ -48,6 +41,7 @@ namespace Cozmo {
   : _isInitialized(false)
   , _forceReInit(false)
   , _robot(robot)
+  , _behaviorFactory(new BehaviorFactory())
   , _minBehaviorTime_sec(1)
   {
 
@@ -61,7 +55,7 @@ namespace Cozmo {
     
     // TODO: Only load behaviors specified by Json?
     
-    SetupBehaviorChooser(config);
+    SetupOctDemoBehaviorChooser(config);
     
     if (_robot.HasExternalInterface())
     {
@@ -73,16 +67,49 @@ namespace Cozmo {
          {
            case BehaviorChooserType::Demo:
            {
-             SetupBehaviorChooser(config);
+             SetupOctDemoBehaviorChooser(config);
              break;
            }
            case BehaviorChooserType::Selection:
            {
+             // DEMO HACK: clean the idle animation here
+             // TODO:(bn) better way to do this
+             _robot.SetIdleAnimation("NONE");
+             
              SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
              break;
            }
-           default:
+           case BehaviorChooserType::InvestorDemoMotion:
+           {
+             SetBehaviorChooser( new InvestorDemoMotionBehaviorChooser(_robot, config) );
+
+             // BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
+             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
              break;
+           }
+           case BehaviorChooserType::InvestorDemoFacesAndBlocks:
+           {
+             SetBehaviorChooser( new InvestorDemoFacesAndBlocksBehaviorChooser(_robot, config) );
+             
+             // BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+             break;
+           }
+           case BehaviorChooserType::InvestorDemoFacesOnly:
+           {
+             SetBehaviorChooser( new InvestorDemoFacesBehaviorChooser(_robot, config) );
+             break;
+           }
+           default:
+           {
+             PRINT_NAMED_WARNING("BehaviorManager.ActivateBehaviorChooser.InvalidChooser",
+                                 "don't know how to create a chooser of type '%s'",
+                                 BehaviorChooserTypeToString(
+                                   event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType));
+             break;
+           }
          }
        }));
     }
@@ -93,17 +120,14 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
+  void BehaviorManager::SetupOctDemoBehaviorChooser(const Json::Value &config)
   {
-#if INVESTOR_DEMO
-    SetBehaviorChooser( new InvestorDemoBehaviorChooser(_robot, config) );
-#else
     SetBehaviorChooser( new DemoBehaviorChooser(_robot, config) );
-#endif
     
-    AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
-    AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
-    AddReactionaryBehavior(new BehaviorReactToPoke(_robot, config));
+    BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+    AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -147,6 +171,7 @@ namespace Cozmo {
   BehaviorManager::~BehaviorManager()
   {
     Util::SafeDelete(_behaviorChooser);
+    Util::SafeDelete(_behaviorFactory);
   }
   
   void BehaviorManager::SwitchToNextBehavior(double currentTime_sec)
@@ -335,12 +360,28 @@ namespace Cozmo {
   
   void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   {
-    // These behavior pointers are going to be invalidated, so clear them
-    _currentBehavior = _nextBehavior = _forceSwitchBehavior = nullptr;
+    // These behavior pointers are going to be invalidated, so clear them. Leave current behavior, since it
+    // lives in the factory and doesn't get deleted
+    // TEMP: // TODO:(bn) ask Wesley about this
+    
+    _nextBehavior = _forceSwitchBehavior = nullptr;
     _resumeBehavior = nullptr;
+
+    if( _behaviorChooser != nullptr ) {
+      PRINT_NAMED_INFO("BehaviorManager.SetBehaviorChooser.DeleteOld",
+                       "deleting behavior chooser '%s'",
+                       _behaviorChooser->GetName());
+    }
+    
     Util::SafeDelete(_behaviorChooser);
     
     _behaviorChooser = newChooser;
+  }
+  
+  IBehavior* BehaviorManager::LoadBehaviorFromJson(const Json::Value& behaviorJson)
+  {
+    IBehavior* newBehavior = _behaviorFactory->CreateBehavior(behaviorJson, _robot);
+    return newBehavior;
   }
   
 } // namespace Cozmo

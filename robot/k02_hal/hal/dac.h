@@ -4,10 +4,12 @@
 namespace Anki {
   namespace Cozmo {
     namespace HAL {
-      void DACInit(void);
-      void DACTone(void);
-      void EnableAudio(bool enable);
-      void FeedDAC(uint8_t* samples, int length);
+      namespace DAC {
+        void Init(void);
+        void Tone(void);
+        void EnableAudio(bool enable);
+        void Feed(uint8_t* samples, int length);
+      }
     }
   }
 }

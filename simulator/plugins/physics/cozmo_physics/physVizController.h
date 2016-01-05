@@ -71,7 +71,20 @@ private:
 
   AnkiEventMgr<VizInterface::MessageViz> _eventMgr;
 
-
+  struct PathPoint {
+    float x;
+    float y;
+    float z;
+    bool isStartOfSegment;
+    
+    PathPoint(float x, float y, float z, bool isStartOfSegment = false){
+      this->x = x;
+      this->y = y;
+      this->z = z;
+      this->isStartOfSegment = isStartOfSegment;
+    }
+  };
+  
 
   // Types for paths
   //using PathVertex_t = std::vector<float>;
@@ -80,7 +93,7 @@ private:
   //
   //// Map of all paths indexed by robotID and pathID
   //PathMap_t pathMap_;
-  std::unordered_map<uint32_t, std::vector<std::vector<float> > > _pathMap;
+  std::unordered_map<uint32_t, std::vector<PathPoint> > _pathMap;
 
   // Map of pathID to colorID
   std::unordered_map<uint32_t, uint32_t> _pathColorMap;

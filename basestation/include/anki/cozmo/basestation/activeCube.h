@@ -134,6 +134,11 @@ namespace Cozmo {
 
     const LEDstate& GetLEDState(s32 whichLED) const;
     
+    static constexpr int kHardCodedActiveCubeID0 = 0;
+    static constexpr int kHardCodedActiveCubeID1 = 1;
+    static constexpr int kHardCodedActiveCubeID2 = 2;
+    static constexpr int kHardCodedActiveCubeID3 = 3;
+    
   protected:
     
     s32 _activeID;

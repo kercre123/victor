@@ -14,6 +14,7 @@
 #ifndef VIZ_MANAGER_H
 #define VIZ_MANAGER_H
 
+#include "util/math/constantsAndMacros.h"
 #include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/polygon.h"
@@ -57,7 +58,8 @@ namespace Anki {
         LOCALIZED_TO,
         WORLD_ORIGIN,
         VISION_MODE,
-        BEHAVIOR_STATE
+        BEHAVIOR_STATE,
+        DEBUG_STRING
       } TextLabelType;
       
       using Handle_t = u32;
@@ -343,6 +345,7 @@ namespace Anki {
       
       void SendRobotState(const RobotState &msg,
                           const s32 numAnimBytesFree,
+                          const s32 numAnimAudioFramesFree,
                           const u8 videoFrameRateHz,
                           const u8 imageProcFrameRateHz,
                           const u8 animTag);

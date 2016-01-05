@@ -11,7 +11,7 @@
 
 #include "uart.h"
 
-void Anki::Cozmo::HAL::DebugInit() {
+void Anki::Cozmo::HAL::UART::DebugInit() {
   // Enable clocking to the UART
   SIM_SOPT5 &= ~(SIM_SOPT5_UART1TXSRC_MASK | SIM_SOPT5_UART1RXSRC_MASK);
   SIM_SOPT5 |= SIM_SOPT5_UART1TXSRC(0) | SIM_SOPT5_UART1RXSRC(0);
@@ -34,13 +34,13 @@ void Anki::Cozmo::HAL::DebugInit() {
   UART1_CFIFO = UART_CFIFO_TXFLUSH_MASK;
 }
 
-void Anki::Cozmo::HAL::DebugPutc(char c)
+void Anki::Cozmo::HAL::UART::DebugPutc(char c)
 {
   while (UART1_TCFIFO) ;  // Wait for FIFO to empty
   UART1_D = c;
 }
 
-void Anki::Cozmo::HAL::DebugPrintf(const char *format, ...)
+void Anki::Cozmo::HAL::UART::DebugPrintf(const char *format, ...)
 {
   char buffer[512];
   

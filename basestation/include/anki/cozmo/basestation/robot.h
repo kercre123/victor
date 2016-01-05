@@ -89,6 +89,7 @@ enum class ERobotDriveToPoseStatus {
 namespace Cozmo {
   
 // Forward declarations:
+class BehaviorFactory;
 class IPathPlanner;
 class MatPiece;
 class MoodManager;
@@ -239,6 +240,7 @@ public:
     const f32              GetHeadAngle()    const;
     const f32              GetLiftAngle()    const;
     const Pose3d&          GetLiftPose()     const { return _liftPose; }  // At current lift position!
+    const Pose3d&          GetLiftBasePose() const { return _liftBasePose; }
     const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
     const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
     Pose3d                 GetCameraPose(f32 atAngle) const;
@@ -260,6 +262,10 @@ public:
     
     // Return current height of lift's gripper
     f32 GetLiftHeight() const;
+  
+    // Conversion functions between lift height and angle
+    static f32 ConvertLiftHeightToLiftAngleRad(f32 height_mm);
+    static f32 ConvertLiftAngleToLiftHeightMM(f32 angle_rad);
   
     // Get pitch angle of robot
     f32 GetPitchAngle();
@@ -345,19 +351,23 @@ public:
     // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
     // the expected marker on the end of the bridge. Otherwise, it is ignored.
     Result DockWithObject(const ObjectID objectID,
-                              const Vision::KnownMarker* marker,
-                              const Vision::KnownMarker* marker2,
-                              const DockAction dockAction,
-                              const u16 image_pixel_x,
-                              const u16 image_pixel_y,
-                              const u8 pixel_radius,
-                              const f32 placementOffsetX_mm = 0,
-                              const f32 placementOffsetY_mm = 0,
-                              const f32 placementOffsetAngle_rad = 0,
-                              const bool useManualSpeed = false);
-    
+                          const f32 speed_mmps,
+                          const f32 accel_mmps2,
+                          const Vision::KnownMarker* marker,
+                          const Vision::KnownMarker* marker2,
+                          const DockAction dockAction,
+                          const u16 image_pixel_x,
+                          const u16 image_pixel_y,
+                          const u8 pixel_radius,
+                          const f32 placementOffsetX_mm = 0,
+                          const f32 placementOffsetY_mm = 0,
+                          const f32 placementOffsetAngle_rad = 0,
+                          const bool useManualSpeed = false);
+  
     // Same as above but without specifying image location for marker
     Result DockWithObject(const ObjectID objectID,
+                          const f32 speed_mmps,
+                          const f32 accel_mmps2,
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
                           const DockAction dockAction,
@@ -413,6 +423,8 @@ public:
     ActionList& GetActionList() { return _actionList; }
   
     static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
+    static const ActionList::SlotHandle FaceAnimationSlot = 1;
+    static const ActionList::SlotHandle SoundSlot = 2;
   
     // Send a message to the robot to place whatever it is carrying on the
     // ground right where it is. Returns RESULT_FAIL if robot is not carrying
@@ -424,12 +436,15 @@ public:
     
     // Plays specified animation numLoops times.
     // If numLoops == 0, animation repeats forever.
+    // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Returns the streaming tag, so you can find out when it is done.
-    u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1);
-    
+    u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
+  
     // Set the animation to be played when no other animation has been specified.
     // Use the empty string to disable idle animation.
     Result SetIdleAnimation(const std::string& animName);
+
+    const std::string& GetIdleAnimationName() const;
     
     // Returns name of currently streaming animation. Does not include idle animation.
     // Returns "" if no non-idle animation is streaming.
@@ -440,13 +455,18 @@ public:
     void SetProceduralFace(const ProceduralFace& face);
     void MarkProceduralFaceAsSent();
     
-    // Returns the number of animation bytes played on the robot since
+    // Returns the number of animation bytes or audio frames played on the robot since
     // it was initialized with SyncTime.
     s32 GetNumAnimationBytesPlayed() const;
-    
-    // Returns a reference to a count of the total number of bytes streamed to the robot.
-    s32 GetNumAnimationBytesStreamed();
+    s32 GetNumAnimationAudioFramesPlayed() const;
+  
+    // Returns a reference to a count of the total number of bytes or audio frames
+    // streamed to the robot.
+    s32 GetNumAnimationBytesStreamed() const;
+    s32 GetNumAnimationAudioFramesStreamed() const;
+  
     void IncrementNumAnimationBytesStreamed(s32 num);
+    void IncrementNumAnimationAudioFramesStreamed(s32 num);
   
     // Tell the animation streamer to move the eyes by this x,y amount over the
     // specified duration (layered on top of any other animation that's playing).
@@ -454,6 +474,10 @@ public:
     // caller's responsibility to remove that layer using the returned tag.
     // (Otherwise - when makePersistent=false - the tag is 0 and can be ignored.)
     u32 ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent = false);
+  
+    // Same as above, but shifts and scales
+    u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
+                          TimeStamp_t duration_ms, bool makePersistent = false);
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
@@ -464,14 +488,15 @@ public:
     // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
-    
-    Result StopAnimation();
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
 
     // Read the animations in a dir
     void ReadAnimationDir();
+  
+    // Load in all data-driven behaviors
+    void LoadBehaviors();
 
     // Returns true if the robot is currently playing an animation, according
     // to most recent state message. NOTE: Will also be true if the animation
@@ -607,21 +632,32 @@ public:
     // Send a message to the physical robot
     Result SendMessage(const RobotInterface::EngineToRobot& message,
                        bool reliable = true, bool hot = false) const;
-    
+  
+  
+    // Sends debug string out to game and viz
+    Result SendDebugString(const char *format, ...);
+  
     // =========  Events  ============
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
     bool HasExternalInterface() const { return _externalInterface != nullptr; }
     IExternalInterface* GetExternalInterface() {
-      ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
+      ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface;
+    }
+    RobotInterface::MessageHandler* GetRobotMessageHandler() {
+      ASSERT_NAMED(_msgHandler != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _msgHandler;
+    }
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
-    MoodManager& GetMoodManager() { assert(_moodManager); return *_moodManager; }
-    const MoodManager& GetMoodManager() const {  assert(_moodManager); return *_moodManager; }
+    const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
+          MoodManager& GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+
+    const BehaviorFactory& GetBehaviorFactory() const { return _behaviorMgr.GetBehaviorFactory(); }
+          BehaviorFactory& GetBehaviorFactory()       { return _behaviorMgr.GetBehaviorFactory(); }
   
     inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
     inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }
@@ -636,6 +672,8 @@ public:
     bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
   
     Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
+  
+    const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   
   protected:
     IExternalInterface* _externalInterface;
@@ -667,6 +705,9 @@ public:
     ActionList        _actionList;
     MovementComponent _movementComponent;
     VisionComponent   _visionComponent;
+  
+    // Hash to not spam debug messages
+    size_t            _lastDebugStringHash;
 
     // Path Following. There are two planners, only one of which can
     // be selected at a time
@@ -818,9 +859,11 @@ public:
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed   = 0;
-    s32 _numAnimationBytesStreamed = 0;
-    u8  _animationTag              = 0;
+    s32 _numAnimationBytesPlayed         = 0;
+    s32 _numAnimationBytesStreamed       = 0;
+    s32 _numAnimationAudioFramesPlayed   = 0;
+    s32 _numAnimationAudioFramesStreamed = 0;
+    u8  _animationTag                    = 0;
     
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;
@@ -959,12 +1002,24 @@ inline s32 Robot::GetNumAnimationBytesPlayed() const {
   return _numAnimationBytesPlayed;
 }
 
-inline s32 Robot::GetNumAnimationBytesStreamed() {
+inline s32 Robot::GetNumAnimationBytesStreamed() const {
   return _numAnimationBytesStreamed;
 }
 
+inline s32 Robot::GetNumAnimationAudioFramesPlayed() const {
+  return _numAnimationAudioFramesPlayed;
+}
+  
+inline s32 Robot::GetNumAnimationAudioFramesStreamed() const {
+  return _numAnimationAudioFramesStreamed;
+}
+  
 inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
   _numAnimationBytesStreamed += num;
+}
+  
+inline void Robot::IncrementNumAnimationAudioFramesStreamed(s32 num) {
+  _numAnimationAudioFramesStreamed += num;
 }
 
 inline f32 Robot::GetLocalizedToDistanceSq() const {

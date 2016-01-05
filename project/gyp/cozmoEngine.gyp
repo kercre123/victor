@@ -448,7 +448,7 @@
                       'action': [
                         'ln',
                         '-s',
-                        '-h',
+                        '-n',
                         '-f',
                         '<(face_library_lib_path)',
                         '../../simulator/controllers/webotsCtrlViz/',
@@ -487,6 +487,19 @@
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
+            'actions': [
+                {
+                    'action_name': 'generate_version_include',
+                    'inputs': [],
+                    'outputs': [
+                        '../../robot/include/anki/cozmo/robot/version.h'
+                    ],
+                    'action': [
+                        '../../robot/tools/versionGenerator/versionGenerator.sh',
+                        '<@(_outputs)'
+                    ],
+                }
+            ]
           }, # end controller Robot
 
           {
@@ -556,7 +569,7 @@
                   'ln',
                   '-s',
                   '-f',
-                  '-h',
+                  '-n',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -573,7 +586,7 @@
                   'ln',
                   '-s',
                   '-f',
-                  '-h',
+                  '-n',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -590,12 +603,12 @@
                   'ln',
                   '-s',
                   '-f',
-                  '-h',
+                  '-n',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
               },
-              {
+	      {
                 'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
                 'inputs': [ ],
                 'outputs': [ ],
@@ -604,7 +617,7 @@
                     'action': [
                       'ln',
                       '-s',
-                      '-h',
+                      '-n',
                       '-f',
                       '<(face_library_lib_path)',
                       '<(PRODUCT_DIR)/',
@@ -739,7 +752,7 @@
                       'action': [
                         'ln',
                         '-s',
-                        '-h',
+                        '-n',
                         '-f',
                         '<(face_library_lib_path)',
                         '../../simulator/controllers/webotsCtrlViz/',
@@ -839,7 +852,7 @@
                   'ln',
                   '-s',
                   '-f',
-                  '-h',
+                  '-n',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -856,7 +869,7 @@
                   'ln',
                   '-s',
                   '-f',
-                  '-h',
+                  '-n',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -873,7 +886,7 @@
                   'ln',
                   '-s',
                   '-f',
-                  '-h',
+                  '-n',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -887,7 +900,7 @@
                     'action': [
                       'ln',
                       '-s',
-                      '-h',
+                      '-n',
                       '-f',
                       '<(face_library_lib_path)',
                       '<(PRODUCT_DIR)/',

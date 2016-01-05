@@ -81,6 +81,10 @@ namespace Cozmo {
                         msg.paramNames.size(), msg.paramValues.size());
     } else {
       
+      if(msg.setUnspecifiedToDefault) {
+        SetDefaultParams();
+      }
+      
       for(size_t i=0; i<msg.paramNames.size(); ++i) {
         SetParam(msg.paramNames[i], msg.paramValues[i]);
       }
@@ -96,7 +100,7 @@ namespace Cozmo {
     if(rangeIter != _ranges.end()) {
       return rangeIter->second;
     } else {
-      static const Range fullRange(std::numeric_limits<Value_t>::min(),
+      static const Range fullRange(std::numeric_limits<Value_t>::lowest(),
                                    std::numeric_limits<Value_t>::max());
       return fullRange;
     }

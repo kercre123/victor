@@ -30,7 +30,7 @@ static std::vector<std::string> _animReactions = {
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
 {
-  _name = "ReactToCliff";
+  SetDefaultName("ReactToCliff");
 
   // These are the tags that should trigger this behavior to be switched to immediately
   SubscribeToTriggerTags({

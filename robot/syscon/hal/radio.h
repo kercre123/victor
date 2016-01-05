@@ -5,7 +5,7 @@
 
 namespace Radio {
   void init();
-  void manage();
+  void manage(void* userdata = NULL);
   void discover();
 }
 

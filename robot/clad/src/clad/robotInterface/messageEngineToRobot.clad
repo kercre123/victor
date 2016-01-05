@@ -165,7 +165,7 @@ enum uint_8 ControllerChannel
   controller_wheel,
   controller_head,
   controller_lift,
-  controller_stearing
+  controller_steering
 }
 
 message ControllerGains
@@ -261,6 +261,7 @@ union EngineToRobot
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   
   // WiFi to RTIP messages, not actually sent by engine
+  bool                          radioConnected              = 0xFC,
   uint_32                       bodyUpgradeData             = 0xFD,
   EnterBootloader               enterBootloader             = 0xFE,
 }

@@ -446,7 +446,7 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.videoFrameRateHz, payload.imageProcFrameRateHz);
   DrawText(VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "AnimBufFree: %d", payload.numAnimBytesFree);
+  sprintf(txt, "AnimBytesFree[AF]: %d[%d]", payload.numAnimBytesFree, payload.numAnimAudioFramesFree);
   DrawText(VizTextLabelType::TEXT_LABEL_ANIM_BUFFER, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Status: %5s %5s %7s %5s",
