@@ -15,6 +15,11 @@ namespace WhackAMole {
 
     public override void Update() {
       base.Update();
+      if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.NONE) {
+        // A cube has been tapped, start chase. If more than one cube is
+        // active, Chase will handle moving to Panic.
+        _StateMachine.SetNextState(new WhackAMoleChase());
+      }
     }
 
     public override void Exit() {

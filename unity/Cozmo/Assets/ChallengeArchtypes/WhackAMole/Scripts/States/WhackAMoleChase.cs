@@ -7,6 +7,7 @@ namespace WhackAMole {
   // Changes to Panic state if Both cubes are active.
   // Plays Celebration and deactivates cube before returning to Idle state if
   // Cozmo successfully arrives at target.
+  // If Cozmo loses track of their target, reset and return to Idle.
   public class WhackAMoleChase : State {
     private WhackAMoleGame _WhackAMoleGame;
 
@@ -22,6 +23,12 @@ namespace WhackAMole {
     }
 
     public void RobotArrives(bool success) {
+      LightCube cube;
+      if (success) {
+        if (_CurrentRobot.LightCubes.TryGetValue(_WhackAMoleGame.CurrentTarget.ID, out cube)) {
+          
+        }
+      }
     }
 
     public override void Update() {

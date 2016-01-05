@@ -92,20 +92,31 @@ namespace WhackAMole {
         _GamePanel.CubeBButton.onClick.RemoveAllListeners();
         _GamePanel.CubeAButton.onClick.AddListener(() => {
           _CubeActiveA = !_CubeActiveA;
-          UpdateCubeState();
+          ChangeTarget(_CubeAID);
+          UpdateCubeLights();
         });
         _GamePanel.CubeBButton.onClick.AddListener(() => {
           _CubeActiveB = !_CubeActiveB;
-          UpdateCubeState();
+          ChangeTarget(_CubeBID);
+          UpdateCubeLights();
         });
-        UpdateCubeState();
+        UpdateCubeLights();
       }
       else {
         Debug.LogError("Cubes are NOT set up properly. Could not find an A and B cube for whack a mole.");
       }
     }
 
-    private void UpdateCubeState() {
+    private void ChangeTarget(int ID) {
+      LightCube cube;
+      // Sets the target if its a valid light cube, otherwise we will
+      // return to the setup phase once Cube Lights Update again
+      if (CurrentRobot.LightCubes.TryGetValue(ID, out cube)) {
+        CurrentTarget = cube;
+      }
+    }
+
+    private void UpdateCubeLights() {
       bool cubeLost = false;
       if (CurrentRobot.LightCubes.ContainsKey(_CubeAID)) {
         if (_CubeActiveA) {
