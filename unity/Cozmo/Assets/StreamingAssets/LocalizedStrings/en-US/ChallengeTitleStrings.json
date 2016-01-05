@@ -209,5 +209,41 @@
     },
     "cubeSlap.description": {
         "translation": "Cube Pounce Description"
+    },
+    "speedTap.title": {
+        "translation": "Speed Tap"
+    },
+    "speedTap.subtitle": {
+        "translation": "Speed Tap Subtitle"
+    },
+    "speedTap.description": {
+        "translation": "tap same color"
+    },
+    "speedTapLightCount.title": {
+        "translation": "Speed Tap Light Count"
+    },
+    "speedTapLightCount.subtitle": {
+        "translation": "Speed Tap Subtitle"
+    },
+    "speedTapLightCount.description": {
+        "translation": "Tap same light count"
+    },
+    "speedTapLightCountSameColorNoTap.title": {
+        "translation": "Speed Tap Count Same Color No Tap"
+    },
+    "speedTapLightCountSameColorNoTap.subtitle": {
+        "translation": "Speed Tap Subtitle"
+    },
+    "speedTapLightCountSameColorNoTap.description": {
+        "translation": "Tap the same count, but if it is same color do not tap."
+    },
+    "speedTapNoRed.title": {
+        "translation": "Speed Tap No Red"
+    },
+    "speedTapNoRed.subtitle": {
+        "translation": "Speed Tap Subtitle"
+    },
+    "speedTapNoRed.description": {
+        "translation": "Tap same color, unless it is red then don't tap"
     }
 }

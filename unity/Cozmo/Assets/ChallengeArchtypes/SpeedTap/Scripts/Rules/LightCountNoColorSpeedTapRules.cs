@@ -9,6 +9,8 @@ namespace SpeedTap {
       if (shouldTap) {
         // Do match
         int lightCount = UnityEngine.Random.Range(1, 5);
+        game.CozmoBlock.SetLEDs(Color.black);
+        game.PlayerBlock.SetLEDs(Color.black);
         for (int i = 0; i < lightCount; ++i) {
           game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
           game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
@@ -23,6 +25,9 @@ namespace SpeedTap {
         if (lightCountPlayer == lightCountCozmo) {
           lightCountPlayer = (lightCountPlayer + 1) % 5;
         }
+
+        game.CozmoBlock.SetLEDs(Color.black);
+        game.PlayerBlock.SetLEDs(Color.black);
 
         for (int i = 0; i < lightCountPlayer; ++i) {
           game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
