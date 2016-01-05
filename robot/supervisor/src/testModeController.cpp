@@ -17,7 +17,7 @@
 #include "animationController.h"
 #include "backpackLightController.h"
 
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -1036,7 +1036,7 @@ namespace Anki {
           0 };
 
         // Draw face
-        HAL::FaceAnimate(faceFrame);
+        HAL::FaceAnimate(faceFrame, sizeof(faceFrame));
         
         return RESULT_OK;
       }

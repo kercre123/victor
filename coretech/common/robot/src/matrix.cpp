@@ -12,6 +12,28 @@ For internal use only. No part of this code may be used without a signed non-dis
 namespace Anki {
   namespace Embedded {
     namespace Matrix {
+      
+      float atan2(float y, float x)
+      {
+        AnkiAssert(y != 0 || x != 0);
+
+        float arg = y/x;
+        float atan_val = asinf( arg / sqrtf(arg*arg + 1));
+
+        if (x > 0) {
+          return atan_val;
+        } else if (y >= 0 && x < 0) {
+          return atan_val + PI_F;
+        } else if (y < 0 && x < 0) {
+          return atan_val - PI_F;
+        } else if (y > 0 && x == 0) {
+          return PIDIV2_F;
+        }
+        //else if (y < 0 && x == 0) {
+        return -PIDIV2_F;
+        //}
+      }
+      
       Result GetEulerAngles(const Array<f32>& R,
         f32& angle_x, f32& angle_y, f32& angle_z)
       {
@@ -24,16 +46,16 @@ namespace Anki {
           angle_z = 0.f;
           if(R[2][0] > 0) { // R(2,0) = +1
             angle_y = M_PI_2;
-            angle_x = atan2_acc(R[0][1], R[0][2]);
+            angle_x = atan2(R[0][1], R[0][2]);
           } else { // R(2,0) = -1
             angle_y = -M_PI_2;
-            angle_x = atan2_acc(-R[0][1], -R[0][2]);
+            angle_x = atan2(-R[0][1], -R[0][2]);
           }
         } else {
           angle_y = asinf(R[2][0]);
           const f32 inv_cy = 1.f / cosf(angle_y);
-          angle_x = atan2_acc(-R[2][1]*inv_cy, R[2][2]*inv_cy);
-          angle_z = atan2_acc(-R[1][0]*inv_cy, R[0][0]*inv_cy);
+          angle_x = atan2(-R[2][1]*inv_cy, R[2][2]*inv_cy);
+          angle_z = atan2(-R[1][0]*inv_cy, R[0][0]*inv_cy);
         }
 
         return RESULT_OK;

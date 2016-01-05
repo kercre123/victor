@@ -583,6 +583,10 @@ namespace Cozmo {
       faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, faceParams, true);
     }
     
+    // Keep track of the face params after using the anim track because that's what we want to store off afterward,
+    // not the face after being adjusted by layers.
+    const ProceduralFaceParams animatedFaceParams = faceParams;
+    
 #   if DEBUG_ANIMATION_STREAMING
     if(!_faceLayers.empty()) {
       PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.ApplyingFaceLayers",
@@ -667,7 +671,8 @@ namespace Cozmo {
       
       if (storeFace)
       {
-        // Also store the updated face in the robot
+        // Also store the updated face in the robot using params prior to face layer application
+        procFace.SetParams(animatedFaceParams);
         robot.SetProceduralFace(procFace);
       }
     }
