@@ -68,6 +68,16 @@ namespace Anki
         HEAD_CAM_CALIB_HEIGHT,
         HEAD_CAM_CALIB_WIDTH
       };
+      
+      static HAL::CameraInfo camCal_0040 = {
+        278.097576248f,
+        279.784530486f,
+        206.263281121f,
+        150.982344827f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
     }
 
 
@@ -1316,8 +1326,10 @@ namespace Anki
           case 0x3AA0:
             return &camCal_3AA0;
           case 0x3AA7:
-          default:
             return &camCal_3AA7;
+          case 0x0040:
+          default:
+            return &camCal_0040;
         }
       }
     }

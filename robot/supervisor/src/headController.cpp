@@ -141,6 +141,7 @@ namespace HeadController {
       switch (HAL::GetID()) {
         case 0x3AA0:
         case 0x3A94:
+        case 0x40:
           HEAD_CAL_OFFSET = DEG_TO_RAD(-3);
           break;
         default:
