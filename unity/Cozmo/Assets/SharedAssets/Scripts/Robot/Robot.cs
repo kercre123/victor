@@ -264,7 +264,6 @@ public class Robot : IDisposable {
   private U2G.PlaceRelObject PlaceRelObjectMessage;
   private U2G.PlaceOnObject PlaceOnObjectMessage;
   private U2G.PlayAnimation PlayAnimationMessage;
-  private U2G.PlayAnimation[] PlayAnimationMessages;
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
@@ -371,9 +370,6 @@ public class Robot : IDisposable {
     PlaceRelObjectMessage = new U2G.PlaceRelObject();
     PlaceOnObjectMessage = new U2G.PlaceOnObject();
     PlayAnimationMessage = new U2G.PlayAnimation();
-    PlayAnimationMessages = new U2G.PlayAnimation[2];
-    PlayAnimationMessages[0] = new U2G.PlayAnimation();
-    PlayAnimationMessages[1] = new U2G.PlayAnimation();
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
     AlignWithObjectMessage = new U2G.AlignWithObject();
     ProgressionStatMessage = new U2G.ProgressionMessage();
