@@ -1146,6 +1146,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Cleanup(Robot& robot) override;
       
       //AnimationID_t _animID;
       std::string   _animName;

@@ -3494,6 +3494,14 @@ namespace Anki {
       }
     }
     
+    void PlayAnimationAction::Cleanup(Robot& robot)
+    {
+      // Abort anything that shouldn't still be running
+      if(_wasAborted) {
+        robot.GetAnimationStreamer().SetStreamingAnimation(robot, nullptr);
+      }
+    }
+    
     void PlayAnimationAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       AnimationCompleted info;
