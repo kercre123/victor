@@ -1178,17 +1178,12 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
 
-    Result HAL::SetBlockLight(const u32 blockID, const LightState* lights)
+    Result HAL::SetBlockLight(const u32 blockID, const u16* colors)
     {
       BlockMessages::LightCubeMessage m;
       m.tag = BlockMessages::LightCubeMessage::Tag_setCubeLights;
       for (int i=0; i<NUM_CUBE_LEDS; ++i) {
-        m.setCubeLights.lights[i].onColor = lights[i].onColor;
-        m.setCubeLights.lights[i].offColor = lights[i].offColor;
-        m.setCubeLights.lights[i].onPeriod_ms = lights[i].onPeriod_ms;
-        m.setCubeLights.lights[i].offPeriod_ms = lights[i].offPeriod_ms;
-        m.setCubeLights.lights[i].transitionOnPeriod_ms = lights[i].transitionOnPeriod_ms;
-        m.setCubeLights.lights[i].transitionOffPeriod_ms = lights[i].transitionOffPeriod_ms;
+        m.setCubeLights.lights[i].onColor = colors[i];
       }
       m.setCubeLights.objectID = blockID;
 

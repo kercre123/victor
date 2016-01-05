@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 #include <webots/Supervisor.hpp>
 #include <webots/Receiver.hpp>
@@ -73,6 +74,7 @@ namespace Anki {
         
         webots::LED* led_[NUM_CUBE_LEDS];
         LightState ledParams_[NUM_CUBE_LEDS];
+        TimeStamp_t ledPhases_[NUM_CUBE_LEDS];
         
         UpAxis currentUpAxis_;
         
@@ -141,32 +143,12 @@ namespace Anki {
         
         // See if the message is actually changing anything about the block's current
         // state. If not, don't update anything.
-        bool isDifferent = false;
-        for(int i=0; i<NUM_CUBE_LEDS && !isDifferent; ++i) {
-          isDifferent = (ledParams_[i].onColor  != msg.lights[i].onColor  ||
-                         ledParams_[i].offColor != msg.lights[i].offColor ||
-                         ledParams_[i].onPeriod_ms  != msg.lights[i].onPeriod_ms ||
-                         ledParams_[i].offPeriod_ms != msg.lights[i].offPeriod_ms ||
-                         ledParams_[i].transitionOffPeriod_ms != msg.lights[i].transitionOffPeriod_ms ||
-                         ledParams_[i].transitionOnPeriod_ms  != msg.lights[i].transitionOnPeriod_ms);
-        }
-        
-        if(isDifferent) {
-          for(int i=0; i<NUM_CUBE_LEDS; ++i) {
-            ledParams_[i].onColor  = msg.lights[i].onColor;
-            ledParams_[i].offColor = msg.lights[i].offColor;
-            ledParams_[i].onPeriod_ms = msg.lights[i].onPeriod_ms;
-            ledParams_[i].offPeriod_ms = msg.lights[i].offPeriod_ms;
-            ledParams_[i].transitionOffPeriod_ms = msg.lights[i].transitionOffPeriod_ms;
-            ledParams_[i].transitionOnPeriod_ms  = msg.lights[i].transitionOnPeriod_ms;
-            
-            ledParams_[i].nextSwitchTime = 0; // force immediate upate
-            ledParams_[i].state = LED_STATE_OFF;
-          }
+        if(memcmp(ledParams_, msg.lights, sizeof(ledParams_))) {
+          memcpy(ledParams_, msg.lights, sizeof(ledParams_));
+          for (int i=0; i<NUM_CUBE_LEDS; ++i) ledPhases_[i] = 0;
         } else {
           //printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
         }
-        
         
         // Set lights immediately
         for (u32 i=0; i<NUM_CUBE_LEDS; ++i) {
@@ -371,9 +353,12 @@ namespace Anki {
       {
         for(int i=0; i<NUM_CUBE_LEDS; ++i)
         {
-          u32 newColor;
-          const bool colorUpdated = GetCurrentLEDcolor(ledParams_[i], currentTime, newColor);
+          u16 newEncodedColor;
+          const bool colorUpdated = GetCurrentLEDcolor(ledParams_[i], currentTime, ledPhases_[i], newEncodedColor);
           if(colorUpdated) {
+            const u32 newColor = ((newEncodedColor & LED_ENC_RED) << (16 - 10)) |
+                                 ((newEncodedColor & LED_ENC_GRN) << ( 8 -  5)) |
+                                 ((newEncodedColor & LED_ENC_BLU) << ( 0 -  0));
             SetLED_helper(ledIndexLUT[currentUpAxis_][i], newColor);
           }
         } // for each LED

@@ -1,0 +1,20 @@
+/** @file Simple macros / functions for converting wide LED blink parameters to encoded ones for the robot
+ * @author Daniel Casner <daniel@anki.com>
+ * @date January 5th 2016
+ * @copyright Anki Inc. 2016
+ */
+#ifndef _COZMO_BASESTATION_LED_ENCODING_H_
+#define _COZMO_BASESTATION_LED_ENCODING_H_
+
+#include "clad/types/ledTypes.h"
+
+/// Converts 32 bit color to 16 bit
+#define ENCODED_COLOR(color)   (color & (u32)Anki::Cozmo::LEDColor::LED_IR ? (u16)Anki::Cozmo::LEDColorEncoded::LED_ENC_IR : 0) | \
+                             (((color & (u32)Anki::Cozmo::LEDColor::LED_RED)   >> (16 + 3)) << 10) | \
+                             (((color & (u32)Anki::Cozmo::LEDColor::LED_GREEN) >> ( 8 + 3)) <<  5) | \
+                             (((color & (u32)Anki::Cozmo::LEDColor::LED_BLUE)  >> ( 0 + 3)) <<  0)
+
+/// Convert MS to LED FRAMES
+#define MS_TO_LED_FRAMES(ms) (((ms)+29)/30)
+
+#endif
