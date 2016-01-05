@@ -10,25 +10,36 @@ namespace WhackAMole {
   // If Cozmo loses track of their target, reset and return to Idle.
   public class WhackAMoleChase : State {
     private WhackAMoleGame _WhackAMoleGame;
+    private LightCube lastChasedCube;
 
     public override void Enter() {
       base.Enter();
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
-      if (_WhackAMoleGame.CurrentTarget == null) {
-        _WhackAMoleGame.SetUpCubes();
-      }
-      else {
-        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-        _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 5.0f, RobotArrives);
-      }
+      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      lastChasedCube = _WhackAMoleGame.CurrentTarget;
+      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 5.0f, RobotArrives);
+      _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
     }
 
     public void RobotArrives(bool success) {
       LightCube cube;
       if (success) {
         if (_CurrentRobot.LightCubes.TryGetValue(_WhackAMoleGame.CurrentTarget.ID, out cube)) {
-          
+          _WhackAMoleGame.ToggleCube(cube.ID);
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
         }
+      }
+    }
+
+    void HandleAnimationDone(bool success) {
+      if (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.NONE) {
+        // A cube has been tapped, start chase. If more than one cube is
+        // active, Chase will handle moving to Panic.
+        _StateMachine.SetNextState(new WhackAMoleIdle());
+      }
+      else (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.SINGLE) {
+        if (_WhackAMoleGame.CurrentTarget.ID )
+        _StateMachine.SetNextState(new WhackAMoleChase());
       }
     }
 
@@ -36,8 +47,24 @@ namespace WhackAMole {
       base.Update();
     }
 
+    void HandleMoleStateChange(WhackAMoleGame.MoleState state) {
+      if (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.NONE) {
+        // A cube has been tapped, start chase. If more than one cube is
+        // active, Chase will handle moving to Panic.
+        _StateMachine.SetNextState(new WhackAMoleConfusion());
+      }
+      else if (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.BOTH) {
+        _StateMachine.SetNextState(new WhackAMolePanic());
+      }
+      else if (lastChasedCube.ID != _WhackAMoleGame.CurrentTarget.ID) {
+        lastChasedCube = _WhackAMoleGame.CurrentTarget;
+        _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 5.0f, RobotArrives);
+      }
+    }
+
     public override void Exit() {
       base.Exit();
+      _WhackAMoleGame.MoleStateChanged -= HandleMoleStateChange;
     }
   }
 }

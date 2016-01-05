@@ -91,13 +91,11 @@ namespace WhackAMole {
         _GamePanel.CubeAButton.onClick.RemoveAllListeners();
         _GamePanel.CubeBButton.onClick.RemoveAllListeners();
         _GamePanel.CubeAButton.onClick.AddListener(() => {
-          _CubeActiveA = !_CubeActiveA;
-          ChangeTarget(_CubeAID);
+          ToggleCube(_CubeAID);
           UpdateCubeLights();
         });
         _GamePanel.CubeBButton.onClick.AddListener(() => {
-          _CubeActiveB = !_CubeActiveB;
-          ChangeTarget(_CubeBID);
+          ToggleCube(_CubeBID);
           UpdateCubeLights();
         });
         UpdateCubeLights();
@@ -107,12 +105,49 @@ namespace WhackAMole {
       }
     }
 
-    private void ChangeTarget(int ID) {
+    public void ToggleCube(int ID) {
       LightCube cube;
-      // Sets the target if its a valid light cube, otherwise we will
-      // return to the setup phase once Cube Lights Update again
+      bool isNewTarget = false;
       if (CurrentRobot.LightCubes.TryGetValue(ID, out cube)) {
-        CurrentTarget = cube;
+        if (ID == _CubeAID) {
+          _CubeActiveA = !_CubeActiveA;
+          isNewTarget = _CubeActiveA;
+        }
+        else if (ID == _CubeBID) {
+          _CubeActiveB = !_CubeActiveB;
+          isNewTarget = _CubeActiveB;
+        }
+        else {
+          CurrentTarget = null;
+          Debug.LogError("Attempting to Toggle an Invalid Cube, ID not found.");
+          return;
+        }
+
+        // If turning on a new cube, set it to the primary target.
+        if (isNewTarget) {
+          CurrentTarget = cube;
+        }
+        else {
+          // If 
+          if (CubeState == MoleState.NONE) {
+            CurrentTarget = null;
+          }
+          else if (CubeState == MoleState.SINGLE) {
+            if (ID == _CubeAID) {
+              if (CurrentRobot.LightCubes.TryGetValue(_CubeBID, out cube)) {
+                CurrentTarget = cube;
+              }
+            }
+            else {
+              if (CurrentRobot.LightCubes.TryGetValue(_CubeBID, out cube)) {
+                CurrentTarget = cube;
+              }
+            }
+          }
+        }
+      }
+      else {
+        Debug.LogError("Attempting to Toggle an Invalid Cube, Cube not found.");
       }
     }
 
