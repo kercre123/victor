@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 151062, guid: 0f1755fd3cdb04aef81573918b61d488, type: 2}
   _ChallengeID: Minesweeper01
-  _EnableHubWorldChallenge: 0
+  _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: minesweeper01.title
   _ChallengeSubtitleLocKey: minesweeper01.subtitle
