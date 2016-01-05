@@ -57,13 +57,6 @@ namespace Face {
     return RESULT_OK;
   }
   
-  void Update(AnimKeyFrame::FaceImage img)
-  {
-    if (_textMode) return; // Ignore when in text mode
-    
-    FaceDisplayDecode(img.image, ROWS, COLS, m_frame);
-  }
-  
   void Move(s8 xCenter, s8 yCenter)
   {
     // Stub, probably to be deleted later
@@ -144,7 +137,22 @@ namespace Face {
     memset(m_frame, 0, sizeof(m_frame));
   }
   
-  
 } // Face
+
+namespace HAL {
+  void FaceAnimate(u8* image, const u16 length)
+  {
+    if (Face::_textMode) return; // Ignore when in text mode
+    else if (length == MAX_FACE_FRAME_SIZE) // If it's this size, it's raw
+    {
+      memcpy(Face::m_frame, image, MAX_FACE_FRAME_SIZE);
+    }
+    else
+    {
+      FaceDisplayDecode(image, ROWS, COLS, Face::m_frame);
+    }
+  }
+}
+
 } // Cozmo
 } // Anki

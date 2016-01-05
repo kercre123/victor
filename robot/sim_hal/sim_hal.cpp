@@ -1034,13 +1034,14 @@ namespace Anki {
       face_->setColor(0x0000f0ff);
     }
 
-    void HAL::FaceAnimate(u8* src)
+    void HAL::FaceAnimate(u8* src, const u16 length)
     {
       // Clear the display
       FaceClear();
 
-      // Decode face
-      FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
+      // Decode the image
+      if (length == MAX_FACE_FRAME_SIZE) memcpy(faceFrame_, src, MAX_FACE_FRAME_SIZE);
+      else FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
 
       // Draw face
       FaceMove(facePosX_, facePosY_);
