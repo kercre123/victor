@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 186758, guid: ee6cd99ec016246b795500b6e2ee67d7, type: 2}
   _ChallengeID: StackTrainingChallenge01
-  _EnableHubWorldChallenge: 1
-  _EnableDevWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
+  _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: stackTraining01.title
   _ChallengeSubtitleLocKey: stackTraining01.subtitle
   _ChallengeDescriptionLocKey: stackTraining01.description

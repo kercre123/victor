@@ -118,8 +118,11 @@ internal class LocalizationDictionaryConverter : CustomCreationConverter<Localiz
 public static class LocalizationEditorUtility {
 
   private static readonly Dictionary<string, LocalizationDictionary> _LocalizationDictionaries = new Dictionary<string, LocalizationDictionary>();
+  private static string[] _LocalizationFiles = new string[0];
 
   private const string kLocalizationFolder = "Assets/StreamingAssets/LocalizedStrings/en-US/";
+
+  public static string[] LocalizationFiles { get { return _LocalizationFiles; } }
 
   public static LocalizationDictionary CreateLocalizationDictionary() {
     return new LocalizationDictionary() {
@@ -163,8 +166,9 @@ public static class LocalizationEditorUtility {
     foreach (var file in Directory.GetFiles(kLocalizationFolder, "*.json")) {
       _LocalizationDictionaries[Path.GetFileNameWithoutExtension(file)] = JsonConvert.DeserializeObject<LocalizationDictionary>(File.ReadAllText(file));
     }
-  }
 
+    _LocalizationFiles = _LocalizationDictionaries.Keys.ToArray();
+  }
 
   public static string GetTranslation(string fileName, string key) {
     LocalizationDictionary dict;
@@ -174,6 +178,20 @@ public static class LocalizationEditorUtility {
         return entry.Translation;
       }
     }
+    return string.Empty;      
+  }
+
+  // find key in any file
+  public static string GetTranslation(string key, out string fileName) {
+    foreach(var kvp in _LocalizationDictionaries) {
+      var dict = kvp.Value;
+      fileName = kvp.Key;
+      LocalizationDictionaryEntry entry;
+      if (dict.Translations.TryGetValue(key, out entry)) {
+        return entry.Translation;
+      }
+    }
+    fileName = string.Empty;
     return string.Empty;      
   }
 

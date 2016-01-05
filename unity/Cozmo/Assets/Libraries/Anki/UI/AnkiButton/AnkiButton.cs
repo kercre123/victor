@@ -16,7 +16,7 @@ namespace Anki {
       [SerializeField]
       private bool _Interactable = true;
 
-      public bool interactable {
+      public bool Interactable {
         get { return _Interactable; }
         set { 
           if (value != _Interactable) {
@@ -212,9 +212,7 @@ namespace Anki {
           return;
         }
 
-        // TODO: Audio
-        //DAS.Debug("AnkiButton", string.Format("Playing {0} sound", _UISoundEvent));
-        //AudioController.PostUIButtonAudioEvent(_UISoundEvent);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
       }
 
       private void UpdateVisuals() {

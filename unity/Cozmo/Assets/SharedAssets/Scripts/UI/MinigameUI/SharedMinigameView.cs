@@ -262,13 +262,33 @@ namespace Cozmo {
 
       #region How To Play Slides
 
-      public void ShowHowToPlaySlide(HowToPlaySlide slideData) {
+      public GameObject ShowHowToPlaySlide(HowToPlaySlide slideData) {
         if (slideData.slideName == _CurrentSlideName) {
-          return;
+          return _CurrentSlide.gameObject;
         }
 
         CanvasGroup slidePrefab = slideData.slidePrefab;
         // If a slide already exists, play a transition out tween on it
+        HideHowToPlaySlide();
+
+        // Create the new slide underneath the container
+        GameObject newSlideObj = UIManager.CreateUIElement(slidePrefab.gameObject, _HowToSlideContainer);
+        _CurrentSlide = newSlideObj.GetComponent<CanvasGroup>();
+        _CurrentSlide.alpha = 0;
+        _CurrentSlideName = slideData.slideName;
+
+        // Play a transition in tween on it
+        _SlideInTween = DOTween.Sequence();
+        _SlideInTween.Append(_CurrentSlide.transform.DOLocalMoveX(
+          100, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
+        _SlideInTween.Join(_CurrentSlide.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
+        _SlideInTween.Play();
+
+        return newSlideObj;
+      }
+
+
+      public void HideHowToPlaySlide() {
         if (_CurrentSlide != null) {
           // Set the instance to transition out slot
           _TransitionOutSlide = _CurrentSlide;
@@ -286,21 +306,7 @@ namespace Cozmo {
           });
           _SlideOutTween.Play();
         }
-
-        // Create the new slide underneath the container
-        GameObject newSlideObj = UIManager.CreateUIElement(slidePrefab.gameObject, _HowToSlideContainer);
-        _CurrentSlide = newSlideObj.GetComponent<CanvasGroup>();
-        _CurrentSlide.alpha = 0;
-        _CurrentSlideName = slideData.slideName;
-
-        // Play a transition in tween on it
-        _SlideInTween = DOTween.Sequence();
-        _SlideInTween.Append(_CurrentSlide.transform.DOLocalMoveX(
-          100, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
-        _SlideInTween.Join(_CurrentSlide.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
-        _SlideInTween.Play();
       }
-
       #endregion
     }
   }

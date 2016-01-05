@@ -12,7 +12,7 @@ public class InitialCubesState : State {
 
   CubeStateDone _CubeStateDone = null;
 
-  public void InitialCubeRequirements(State nextState, int cubesRequired, bool cubesMustBeVisible, CubeStateDone cubeStateDone) {
+  public void InitialCubeRequirements(State nextState, int cubesRequired, bool cubesMustBeVisible, CubeStateDone cubeStateDone = null) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
     _CubeStateDone = cubeStateDone;
@@ -21,6 +21,8 @@ public class InitialCubesState : State {
 
   public override void Enter() {
     base.Enter();
+    _CurrentRobot.SetHeadAngle(0f);
+    _CurrentRobot.SetLiftHeight(0f);
   }
 
   public override void Update() {

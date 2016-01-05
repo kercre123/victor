@@ -51,7 +51,7 @@ namespace MotionDetection {
       _RightEyeOuterPosition = _RightEye.EyeCenter + Vector2.one * 20f;
 
     }
-      
+
     public override void Enter() {
       base.Enter();
       _CurrentRobot.SetLiftHeight(0.0f);
@@ -59,7 +59,7 @@ namespace MotionDetection {
 
       RobotEngineManager.Instance.OnObservedMotion += OnMotionDetected;
     }
-      
+
     public override void Update() {
       base.Update();
 
@@ -82,9 +82,7 @@ namespace MotionDetection {
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
 
       if (MotionInBoxForRequiredTime()) {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDoneHandler);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleWinAnimationDoneHandler));
       }
     }
 

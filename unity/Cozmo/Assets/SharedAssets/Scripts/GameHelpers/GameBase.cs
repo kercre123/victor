@@ -69,6 +69,8 @@ public abstract class GameBase : MonoBehaviour {
 
     _ChallengeData = challengeData;
     _WonChallenge = false;
+ 
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.PLAYFUL);
     Initialize(challengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
@@ -123,6 +125,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void CloseMinigameImmediately() {
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
     CleanUpOnDestroy();
     Destroy(gameObject);
   }
@@ -270,12 +273,16 @@ public abstract class GameBase : MonoBehaviour {
 
   #region How To Play Slides
 
-  public void ShowHowToPlaySlide(string slideName) {
+  /// <summary>
+  /// Returns an instance of the slide created. Null if the creation failed.
+  /// </summary>]
+  public GameObject ShowHowToPlaySlide(string slideName) {
     // Search through the array for a slide of the same name
-    HowToPlaySlide foundSlide = null;
+    GameObject slideObject = null;
+    HowToPlaySlide foundSlideData = null;
     foreach (var slide in _HowToPlayPrefabs) {
       if (slide != null && slide.slideName == slideName) {
-        foundSlide = slide;
+        foundSlideData = slide;
         break;
       }
       else if (slide == null) {
@@ -285,9 +292,9 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     // If found, show that slide.
-    if (foundSlide != null) {
-      if (foundSlide.slidePrefab != null) {
-        _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlide);
+    if (foundSlideData != null) {
+      if (foundSlideData.slidePrefab != null) {
+        slideObject = _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlideData);
       }
       else {
         DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
@@ -298,6 +305,12 @@ public abstract class GameBase : MonoBehaviour {
       DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
       " list of slides! gameObject.name=" + gameObject.name);
     }
+
+    return slideObject;
+  }
+
+  public void HideHowToPlaySlide() {
+    _SharedMinigameViewInstance.HideHowToPlaySlide();
   }
 
   #endregion

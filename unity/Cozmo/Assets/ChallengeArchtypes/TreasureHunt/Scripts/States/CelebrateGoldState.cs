@@ -8,6 +8,7 @@ namespace TreasureHunt {
     public override void Enter() {
       base.Enter();
       _CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleAnimationDone);
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
 
     void HandleAnimationDone(bool success) {

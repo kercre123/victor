@@ -1,132 +1,135 @@
 {
-    "smartling": {
-        "translate_paths": [
-            "*/translation"
-        ],
-        "variants_enabled": true,
-        "translate_mode": "custom",
-        "placeholder_format_custom": [
-            "%%[^%]+?%%",
-            "%[^%]+?%",
-            "##[^#]+?##",
-            "__[^_]+?__",
-            "[$]\\{[^\\}\\{]+?\\}",
-            "\\{\\{[^\\}\\{]+?\\}\\}",
-            "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-        ],
-        "source_key_paths": [
-            "/{*}"
-        ]
-    },
-    "askCozmo.title" : {
-        "translation" : "Ask Cozmo"
-    },
-    "askCozmo.button" : {
-        "translation" : "GIVE ME ANSWER"
-    },
-    "dockTraining.title" : {
-        "translation" : "Dock Training"
-    },
-    "followCube.title" : {
-        "translation" : "Follow Cube Training"
-    },
-    "followCube.label.attempts" : {
-        "translation" : "Lives: {0}"
-    },
-    "patternPlay.title" : {
-        "translation" : "Pattern Play"
-    },
-    "patternPlay.subtitle" : {
-        "translation" : "Pattern Play Subtitle"
-    },
-    "patternPlay.description" : {
-        "translation" : "Pattern Play Description"
-    },
-    "patternPlay.button.openCollection" : {
-        "translation" : "Open Memory Banks"
-    },
-    "patternPlay.discoverView.okButton" : {
-        "translation" : "Save Pattern"
-    },
-    "patternPlay.discoverView.title" : {
-        "translation" : "NEW PATTERN DISCOVERED!"
-    },
-    "rotationTraining.title" : {
-        "translation" : "Rotation Training"
-    },
-    "speedTap.title" : {
-        "translation" : "Speed Tap"
-    },
-    "speedTap.subtitle" : {
-        "translation" : "Speed Tap Subtitle"
-    },
-    "speedTap.description" : {
-        "translation" : "Speed Tap Description"
-    },
-    "speedTap.roundsText" : {
-        "translation" : "Round: {0:N0}/{1:N0}"
-    },
-    "speedTap.roundsWon.cozmo" : {
-        "translation" : "cozmo rounds won: {0:N0}"
-    },
-    "speedTap.roundsWon.player" : {
-        "translation" : "player rounds won: {0:N0}"
-    },
-    "speedTap.score.cozmo" : {
-        "translation" : "cozmo score: {0:N0}"
-    },
-    "speedTap.score.player" : {
-        "translation" : "player score: {0:N0}"
-    },
-    "treasureHunt.title" : {
-        "translation" : "Treasure Hunt"
-    },
-    "visionTraining.title" : {
-        "translation" : "Vision Training"
-    },
-    "vortex.title" : {
-        "translation" : "Vortex"
-    },
-    "vortex.subtitle" : {
-        "translation" : "Vortex Subtitle"
-    },
-    "vortex.description" : {
-        "translation" : "Vortex Description"
-    },
-    "vortex.spinButton" : {
-        "translation" : "Spin"
-    },
-    "vortex.replayButton" : {
-        "translation" : "Replay"
-    },
-    "vortex.vortexStatus" : {
-        "translation" : "Round: {0:D}"
-    },
-    "vortex.vortexWon" : {
-        "translation" : "{0} Won"
-    },
-    "peekaboo.title" : {
-        "translation" : "Peek a Boo"
-    },
-    "peekaboo.label.points" : {
-        "translation" : "{0} Points"
-    },
-    "cubeSlap.title" : {
-        "translation" : "Cube Slap"
-    },
-    "cubeSlap.subtitle" : {
-        "translation" : "Cube Slap Subtitle"
-    },
-    "cubeSlap.description" : {
-        "translation" : "Cube Slap Description"
-    },
-    "minigame.quitView.title" : {
-        "translation" : "Return to Main Menu?"
-    },
-    "minigame.quitView.description" : {
-        "translation" : "Any progress in this game will be lost. Are you sure?"
-    },
-    "minigame.progressBar.defaultLabel" : {
-        "translation" : "Challenge Progress"
-    }
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "askCozmo.title": {
+    "translation": "Ask Cozmo"
+  },
+  "askCozmo.button": {
+    "translation": "GIVE ME ANSWER"
+  },
+  "dockTraining.title": {
+    "translation": "Dock Training"
+  },
+  "followCube.title": {
+    "translation": "Follow Cube Training"
+  },
+  "followCube.label.attempts": {
+    "translation": "Lives: {0}"
+  },
+  "patternPlay.title": {
+    "translation": "Pattern Play"
+  },
+  "patternPlay.subtitle": {
+    "translation": "Pattern Play Subtitle"
+  },
+  "patternPlay.description": {
+    "translation": "Pattern Play Description"
+  },
+  "patternPlay.button.openCollection": {
+    "translation": "Open Memory Banks"
+  },
+  "patternPlay.discoverView.okButton": {
+    "translation": "Save Pattern"
+  },
+  "patternPlay.discoverView.title": {
+    "translation": "NEW PATTERN DISCOVERED!"
+  },
+  "rotationTraining.title": {
+    "translation": "Rotation Training"
+  },
+  "simonGame.button": {
+    "translation": "Continue"
+  },
+  "speedTap.roundsText": {
+    "translation": "Round: {0:N0}/{1:N0}"
+  },
+  "speedTap.roundsWon.cozmo": {
+    "translation": "cozmo rounds won: {0:N0}"
+  },
+  "speedTap.roundsWon.player": {
+    "translation": "player rounds won: {0:N0}"
+  },
+  "speedTap.score.cozmo": {
+    "translation": "cozmo score: {0:N0}"
+  },
+  "speedTap.score.player": {
+    "translation": "player score: {0:N0}"
+  },
+  "treasureHunt.title": {
+    "translation": "Treasure Hunt"
+  },
+  "visionTraining.title": {
+    "translation": "Vision Training"
+  },
+  "vortex.title": {
+    "translation": "Vortex"
+  },
+  "vortex.subtitle": {
+    "translation": "Vortex Subtitle"
+  },
+  "vortex.description": {
+    "translation": "Vortex Description"
+  },
+  "vortex.spinButton": {
+    "translation": "Spin"
+  },
+  "vortex.replayButton": {
+    "translation": "Replay"
+  },
+  "vortex.vortexStatus": {
+    "translation": "Round: {0:D}"
+  },
+  "vortex.vortexWon": {
+    "translation": "{0} Won"
+  },
+  "minigame.quitView.title": {
+    "translation": "Return to Main Menu?"
+  },
+  "minigame.quitView.description": {
+    "translation": "Any progress in this game will be lost. Are you sure?"
+  },
+  "minigame.progressBar.defaultLabel": {
+    "translation": "Challenge Progress"
+  },
+  "codeBreaker.button.guessCode": {
+    "translation": "GUESS CODE"
+  },
+  "codeBreaker.button.pickingCode": {
+    "translation": "PICKING CODE..."
+  },
+  "codeBreaker.text.guessesLeft": {
+    "translation": "Guesses Left: {0}"
+  },
+  "codeBreaker.text.playerWins": {
+    "translation": "You win!"
+  },
+  "codeBreaker.text.cozmoWins": {
+    "translation": "Cozmo wins!"
+  },
+  "codeBreaker.text.howToPlayShort": {
+    "translation": "Tap Cube: Change color.\n        'Guess Code' will be green when the cubes are lined up.\n\n        BACKPACK LIGHTS: \n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
+  },
+  "codeBreaker.text.howToPlayLong": {
+    "translation": "Guess Cozmo's Code before you run out of guesses!\n        The Code is a number of cubes of different colors, arranged horizontally in a line in front of Cozmo.\n        1. Cozmo will pick a code.\n        2. Tap a Cube to change the Cube's color.\n        3. Arrange the cubes in a line in front of Cozmo.\n        4. Tap 'Guess Code' when you're ready to guess.\n        5. Cozmo will display lights on his back to let you know correctness:\n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
+  },
+  "motionDetectionHelp01": {
+    "translation": "Wave in the center of Cozmo's view"
+  }
 }

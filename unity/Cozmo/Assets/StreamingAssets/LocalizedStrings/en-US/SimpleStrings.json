@@ -47,5 +47,11 @@
     },
     "button.continue" : {
         "translation" : "CONTINUE"
+    },
+    "button.again" : {
+        "translation" : "PLAY AGAIN"
+    },
+    "button.ready" : {
+        "translation" : "READY"
     }
 }

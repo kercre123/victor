@@ -11,6 +11,8 @@ namespace SpeedTap {
     public LightCube PlayerBlock;
     public Color MatchColor;
 
+    public ISpeedTapRules Rules;
+
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
@@ -47,14 +49,20 @@ namespace SpeedTap {
       UpdateUI();
     }
 
+    private void HandleRoundAnimationDone(bool success) {
+      _StateMachine.SetNextState(new SteerState(50.0f, 50.0f, 0.8f, new SpeedTapWaitForCubePlace()));
+    }
+
     private void CheckRounds() {
       if (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound) {
 
         if (_PlayerScore > _CozmoScore) {
           _PlayerRoundsWon++;
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorFail, HandleRoundAnimationDone)));
         }
         else {
           _CozmoRoundsWon++;
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorWin, HandleRoundAnimationDone)));
         }
 
         int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
@@ -77,6 +85,7 @@ namespace SpeedTap {
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
+      Rules = GetRules(speedTapConfig.RuleSet);
     }
 
     // Use this for initialization
@@ -97,6 +106,8 @@ namespace SpeedTap {
 
       CurrentRobot.SetLiftHeight(0.0f);
       CurrentRobot.SetHeadAngle(-1.0f);
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
     }
 
     protected override void CleanUpOnDestroy() {
@@ -165,6 +176,19 @@ namespace SpeedTap {
         }
       }
       return farthest as LightCube;
+    }
+
+    private static ISpeedTapRules GetRules(SpeedTapRuleSet ruleSet) {
+      switch (ruleSet) {
+      case SpeedTapRuleSet.NoRed:
+        return new NoRedSpeedTapRules();
+      case SpeedTapRuleSet.LightCountSameColorNoTap:
+        return new LightCountSameColorNoTap();
+      case SpeedTapRuleSet.LightCountNoColor:
+        return new LightCountNoColorSpeedTapRules();
+      default:
+        return new DefaultSpeedTapRules();
+      }
     }
   }
 }

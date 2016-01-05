@@ -103,21 +103,15 @@ namespace CubeLifting {
         var game = _StateMachine.GetGame();
 
         if (game.TryDecrementAttempts()) {
-          AnimationState animState = new AnimationState();
-          animState.Initialize(AnimationName.kSeeOldPattern, HandleLifeLostAnimationDone);
-          _StateMachine.SetNextState(animState);
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kSeeOldPattern, HandleLifeLostAnimationDone));
         }
-        else {          
-          AnimationState animState = new AnimationState();
-          animState.Initialize(AnimationName.kShocked, HandleLoseAnimationDone);
-          _StateMachine.SetNextState(animState);
+        else {
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleLoseAnimationDone));
         }
         return; 
       }
 
       if (ReachedMoveEnd()) {
-        AnimationState animState = new AnimationState();
-
         AnimationState.AnimationDoneHandler callback = null;
         if (_Settings == null || _Index + 1 >= _Settings.Count) {
           callback = HandleFinalStateCompleteAnimationDone;
@@ -125,9 +119,7 @@ namespace CubeLifting {
         else {
           callback = HandleStateCompleteAnimationDone;
         }
-
-        animState.Initialize(AnimationName.kEnjoyLight, callback);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kEnjoyLight, callback));
       }
     }
 

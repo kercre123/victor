@@ -12,18 +12,10 @@ MonoBehaviour:
   m_Name: DevChallengeList
   m_EditorClassIdentifier: 
   ChallengeData:
-  - {fileID: 11400000, guid: ebc63268b2739454290334ffb9db53e2, type: 2}
-  - {fileID: 11400000, guid: ae1ac1eb6c66e4fa09c558602ce3bba7, type: 2}
-  - {fileID: 11400000, guid: bf66c518b69254d9f9a45052b6e69cb0, type: 2}
-  - {fileID: 11400000, guid: 4f19e36499cda4796a81715330fd9d6f, type: 2}
-  - {fileID: 11400000, guid: c77d38e1f640a482786af6a7faa269d6, type: 2}
-  - {fileID: 11400000, guid: 53255efbfa23b42369c3443f7f65197f, type: 2}
-  - {fileID: 11400000, guid: c3e27e22c12b14afc862fafc9fe63a0a, type: 2}
-  - {fileID: 11400000, guid: 1e0755fa808244c82927d09e3d71b5cb, type: 2}
   - {fileID: 11400000, guid: 83404e274f1bb4124b2e2a43f6192d8a, type: 2}
+  - {fileID: 11400000, guid: 2f76149c3fba543f3bf29bc75e1c6dc1, type: 2}
   - {fileID: 11400000, guid: d44689b385ee54da18f236c954649c67, type: 2}
   - {fileID: 11400000, guid: fe38c4b3b51f0481c95cebf7e387114c, type: 2}
+  - {fileID: 11400000, guid: 13ed8b29577ad4b43a5ad77a93b04379, type: 2}
   - {fileID: 11400000, guid: c699e9cf12d854898ac333505f6adef3, type: 2}
   - {fileID: 11400000, guid: 42702cbdf4c0c418a84f8792f3062612, type: 2}
-  - {fileID: 11400000, guid: e52f95d86b1804ad6aff0d89141da959, type: 2}
-  - {fileID: 11400000, guid: 13ed8b29577ad4b43a5ad77a93b04379, type: 2}

@@ -19,16 +19,12 @@ namespace Wink {
       base.Update();
       if (_WinkGame.GetWinkCompleted()) {
         // Success if we trigger motion detection and get Cozmo's attention.
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kMajorWin, OnAnimationFinished);
         _WinkSuccess = true;
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, OnAnimationFinished));
       }
       else if (Time.time - _EnterWinkStateTime > _WinkGame.TimeLimit) {
         // Failure if motion is not detected within time frame.
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kShocked, OnAnimationFinished);
-        _StateMachine.SetNextState(animState);
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, OnAnimationFinished));
       }
     }
 
