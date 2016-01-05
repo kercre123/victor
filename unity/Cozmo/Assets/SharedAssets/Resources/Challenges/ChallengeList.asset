@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Name: ChallengeList
   m_EditorClassIdentifier: 
   ChallengeData:
+  - {fileID: 11400000, guid: 2f76149c3fba543f3bf29bc75e1c6dc1, type: 2}
   - {fileID: 11400000, guid: d44689b385ee54da18f236c954649c67, type: 2}
   - {fileID: 11400000, guid: c699e9cf12d854898ac333505f6adef3, type: 2}
   - {fileID: 11400000, guid: 42702cbdf4c0c418a84f8792f3062612, type: 2}
+  - {fileID: 11400000, guid: f4dd6d4c7e64d4f15a0bf1747895edd1, type: 2}
