@@ -2,7 +2,7 @@
 using System.Collections;
 
 namespace WhackAMole {
-  // TODO: In this state, perform basic idle behaviors until the mole state becomes
+  // In this state, perform basic idle behaviors until the mole state becomes
   // not equal to NONE. Then enter Chase state. Should only enter this state when
   // both cubes are inactive.
   public class WhackAMoleIdle : State {

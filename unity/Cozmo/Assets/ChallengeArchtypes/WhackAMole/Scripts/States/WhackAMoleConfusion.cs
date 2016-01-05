@@ -28,7 +28,7 @@ namespace WhackAMole {
       }
       else {
         if (Time.time - _ConfusionStartTimestamp > _ConfusionTimeout) {
-          _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kHeadDown, HandleAnimationDone));
         }
       }
     }

@@ -11,5 +11,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 128bb70a7ceb84c24a0de684f732f728, type: 3}
   m_Name: WhackAMoleGameChallenge_Config
   m_EditorClassIdentifier: 
-  MaxPanicTime: 0
-  MaxConfusionTime: 0
+  MaxPanicTime: 10
+  MaxConfusionTime: 8
+  MaxPanicInterval: 3
+  PanicDecayMin: .0500000007
+  PanicDecayMax: .150000006

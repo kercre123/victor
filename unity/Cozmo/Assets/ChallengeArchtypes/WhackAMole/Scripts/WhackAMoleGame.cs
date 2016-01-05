@@ -33,7 +33,11 @@ namespace WhackAMole {
     private WhackAMolePanel _GamePanel;
 
     public float MaxPanicTime;
+    public float MaxPanicInterval;
     public float MaxConfuseTime;
+    public float PanicDecayMin;
+    public float PanicDecayMax;
+
 
     [SerializeField]
     private Color _CubeAColor = Color.green;
@@ -48,11 +52,16 @@ namespace WhackAMole {
     private bool _CubeActiveA = false;
 
     public LightCube CurrentTarget = null;
+    public Dictionary<int,LightCube> ActivatedCubes;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       WhackAMoleGameConfig config = minigameConfig as WhackAMoleGameConfig;
       MaxPanicTime = config.MaxPanicTime;
       MaxConfuseTime = config.MaxConfusionTime;
+      MaxPanicInterval = config.MaxPanicInterval;
+      PanicDecayMin = config.PanicDecayMin;
+      PanicDecayMax = config.PanicDecayMax;
+      ActivatedCubes = new Dictionary<int, LightCube>();
 
       _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
 
@@ -73,6 +82,7 @@ namespace WhackAMole {
       bool bDone = false;
       _CubeActiveA = false;
       _CubeActiveB = false;
+      ActivatedCubes.Clear();
       // Look through Visible objects to find 2 light cubes, set one to cubeA, the other
       // to cubeB. Track these IDs, if they are ever confirmed as no longer available, return
       // to cube setup state.
@@ -99,6 +109,7 @@ namespace WhackAMole {
           UpdateCubeLights();
         });
         UpdateCubeLights();
+        _StateMachine.SetNextState(new WhackAMoleIdle());
       }
       else {
         Debug.LogError("Cubes are NOT set up properly. Could not find an A and B cube for whack a mole.");
@@ -126,20 +137,25 @@ namespace WhackAMole {
         // If turning on a new cube, set it to the primary target.
         if (isNewTarget) {
           CurrentTarget = cube;
+          if (!ActivatedCubes.ContainsKey(cube.ID)) {
+            ActivatedCubes.Add(cube.ID,cube);
+          }
         }
         else {
-          // If 
-          if (CubeState == MoleState.NONE) {
-            CurrentTarget = null;
+          // If the cube was turned off, set other cube to target or 
+          // leave target null
+          if (ActivatedCubes.ContainsKey(cube.ID)) {
+            ActivatedCubes.Remove(cube.ID);
           }
-          else if (CubeState == MoleState.SINGLE) {
+          CurrentTarget = null;
+          if (CubeState == MoleState.SINGLE) {
             if (ID == _CubeAID) {
-              if (CurrentRobot.LightCubes.TryGetValue(_CubeBID, out cube)) {
+              if (ActivatedCubes.TryGetValue(_CubeBID, out cube)) {
                 CurrentTarget = cube;
               }
             }
             else {
-              if (CurrentRobot.LightCubes.TryGetValue(_CubeBID, out cube)) {
+              if (ActivatedCubes.TryGetValue(_CubeAID, out cube)) {
                 CurrentTarget = cube;
               }
             }

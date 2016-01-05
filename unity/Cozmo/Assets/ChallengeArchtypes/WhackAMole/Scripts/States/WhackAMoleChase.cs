@@ -2,12 +2,12 @@
 using System.Collections;
 
 namespace WhackAMole {
-  // TODO: Chase after the current target, changes to confused state if 
+  // Chase after the current target, changes to confused state if 
   // no cubes are active.
   // Changes to Panic state if Both cubes are active.
   // Plays Celebration and deactivates cube before returning to Idle state if
   // Cozmo successfully arrives at target.
-  // If Cozmo loses track of their target, reset and return to Idle.
+  // If Cozmo loses track of their target, enter confused state.
   public class WhackAMoleChase : State {
     private WhackAMoleGame _WhackAMoleGame;
     private LightCube lastChasedCube;
@@ -27,18 +27,20 @@ namespace WhackAMole {
         if (_CurrentRobot.LightCubes.TryGetValue(_WhackAMoleGame.CurrentTarget.ID, out cube)) {
           _WhackAMoleGame.ToggleCube(cube.ID);
           _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
+          return;
         }
       }
+      _StateMachine.SetNextState(new WhackAMoleConfusion());
     }
 
     void HandleAnimationDone(bool success) {
       if (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.NONE) {
-        // A cube has been tapped, start chase. If more than one cube is
-        // active, Chase will handle moving to Panic.
+        // Return to Idle if all cubes are off.
         _StateMachine.SetNextState(new WhackAMoleIdle());
       }
-      else (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.SINGLE) {
-        if (_WhackAMoleGame.CurrentTarget.ID )
+      else {
+        // A cube has been tapped, start chase. If more than one cube is
+        // active, Chase will handle moving to Panic.
         _StateMachine.SetNextState(new WhackAMoleChase());
       }
     }
