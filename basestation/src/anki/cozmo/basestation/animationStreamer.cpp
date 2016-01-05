@@ -205,11 +205,6 @@ namespace Cozmo {
   
   Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, u8 withTag)
   {
-    if( _startOfAnimationSent && ! _endOfAnimationSent ) {
-      // stop the animation if we are in the middle of one
-      SendEndOfAnimation(robot);
-    }
-    
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
     {
@@ -1148,10 +1143,7 @@ namespace Cozmo {
     {
       if(HaveFaceLayersToSend()) {
         lastResult = StreamFaceLayersOrAudio(robot);
-      } else if(_startOfAnimationSent && !_endOfAnimationSent) {
-        SendEndOfAnimation(robot);
       }
-      
     }
     
     return lastResult;
@@ -1295,8 +1287,6 @@ namespace Cozmo {
     
     Result lastResult = RESULT_OK;
     
-    bool anyFramesAdded = false;
-    
     // Don't start wiggling until we've been idling for a bit and make sure we
     // are not picking or placing
     if(_isLiveTwitchEnabled &&
@@ -1340,8 +1330,6 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         
-        anyFramesAdded = true;
-        
         _bodyMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementSpacingMin_ms),
                                                   GET_PARAM(s32, BodyMovementSpacingMax_ms));
         
@@ -1370,8 +1358,6 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         
-        anyFramesAdded = true;
-        
         _liftMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementSpacingMin_ms),
                                                   GET_PARAM(s32, LiftMovementSpacingMax_ms));
         
@@ -1399,8 +1385,6 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         
-        anyFramesAdded = true;
-        
         _headMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementSpacingMin_ms),
                                                   GET_PARAM(s32, HeadMovementSpacingMax_ms));
         
@@ -1409,13 +1393,6 @@ namespace Cozmo {
       }
       
     } // if(_isLiveTwitchEnabled && _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
-    
-    if(anyFramesAdded) {
-      // If we add a keyframe after initialization (at which time this animation
-      // could have been empty), make sure to mark that we haven't yet sent
-      // end of animation.
-      _endOfAnimationSent = false;
-    }
     
     return lastResult;
 #   undef GET_PARAM
