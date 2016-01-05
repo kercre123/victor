@@ -108,7 +108,6 @@ void RunTests();
 
 // radio.c
 #ifdef COMPATIBILITY_MODE_4P0
-#define CHANNEL_4P0 	83
 #undef RADIO_PAYLOAD_LENGTH
 #undef CHANNEL_RATE
 #define RADIO_PAYLOAD_LENGTH 13
@@ -119,8 +118,13 @@ Cube PCB Num      ID
 2                 0xB3
 3                 0xB2
 4                 0xB5
+A = 84
+B = 83
+C = 82
+D = 81
 */
-#define BLOCK_ID 0xB4
+#define BLOCK_ID 0xA2
+#define CHANNEL_4P0 	84
 static const u8 code ADDRESS_4P0[5] = {BLOCK_ID, 0xC2, 0xC2, 0xC2, 0xC2}; // default
 #endif
 
