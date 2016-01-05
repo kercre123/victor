@@ -510,8 +510,14 @@ namespace Anki {
                 
               case (s32)'Z':
               {
-                commandedLiftSpeed -= liftSpeed;
-                movingLift = true;
+                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                  static bool liftPowerEnable = false;
+                  SendEnableLiftPower(liftPowerEnable);
+                  liftPowerEnable = !liftPowerEnable;
+                } else {
+                  commandedLiftSpeed -= liftSpeed;
+                  movingLift = true;
+                }
                 break;
               }
                 
