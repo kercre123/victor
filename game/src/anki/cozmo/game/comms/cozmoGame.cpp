@@ -415,6 +415,7 @@ namespace Cozmo {
                 msg.pose_z = robot->GetPose().GetTranslation().z();
                 
                 msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
+                msg.posePitch_rad = robot->GetPitchAngle();
                 const UnitQuaternion<float>& q = robot->GetPose().GetRotation().GetQuaternion();
                 msg.pose_qw = q.w();
                 msg.pose_qx = q.x();
