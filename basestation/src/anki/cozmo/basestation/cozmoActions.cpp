@@ -3496,9 +3496,11 @@ namespace Anki {
     
     void PlayAnimationAction::Cleanup(Robot& robot)
     {
-      // Abort anything that shouldn't still be running
-      if(robot.IsAnimating()) {
-        robot.AbortAnimation();
+      // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
+      // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
+      // to clean up
+      if(!_stoppedPlaying && !_wasAborted) {
+        robot.GetAnimationStreamer().SetStreamingAnimation(robot, nullptr);
       }
     }
     
