@@ -1,9 +1,12 @@
 #include "headController.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/common/robot/utilities_c.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/shared/velocityProfileGenerator.h"
+#include "radians.h"
+#include "velocityProfileGenerator.h"
+#ifdef TARGET_K02
+#include "anki/cozmo/robot/logging.h"
+#else
 #include "anki/common/robot/errorHandling.h"
+#endif
 #include "messages.h"
 #include <math.h>
 

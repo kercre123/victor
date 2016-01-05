@@ -14,7 +14,7 @@
  *
  **/
 
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 #include "imuFilter.h"
 #include <math.h>
 #include "headController.h"
@@ -260,23 +260,31 @@ namespace Anki {
 
       void TurnOnIndicatorLight()
       {
+#ifndef TARGET_K02
         TestModeController::Start(TM_NONE);
+#endif
         HAL::SetLED(INDICATOR_LED_ID, LED_RED);
       }
       void TurnOffIndicatorLight()
       {
+#ifndef TARGET_K02
         HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
+#endif
       }
 
       void StartPathFollowTest()
       {
+        #ifndef TARGET_K02
         TestModeController::Start(TM_PATH_FOLLOW);
+        #endif
         TurnOffIndicatorLight();
       }
 
       void StartLiftTest()
       {
+        #ifndef TARGET_K02
         TestModeController::Start(TM_LIFT);
+        #endif
         TurnOffIndicatorLight();
       }
 
@@ -311,6 +319,7 @@ namespace Anki {
 
       void HandlePickupParalysis()
       {
+#ifndef TARGET_K02
         static bool wasParalyzed = false;
         if (enablePickupParalysis_) {
           if (IsPickedUp() && !wasParalyzed) {
@@ -332,10 +341,10 @@ namespace Anki {
           WheelController::Enable();
           wasParalyzed = false;
         }
-
+#endif
       }
 
-
+#ifndef TARGET_K02
       void ToggleDisplayGeneralInfo()
       {
         static bool infoDisplayed = false;
@@ -364,15 +373,17 @@ namespace Anki {
 
         infoDisplayed = !infoDisplayed;
       }
-
+#endif
 
       void Reset()
       {
         rot_ = 0;
         rotSpeed_ = 0;
+#ifndef TARGET_K02
         // Event callback functions
         // TODO: This should probably go somewhere else
         eventActivationCallbacks[UPSIDE_DOWN] = ToggleDisplayGeneralInfo;
+#endif
 
         //eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
         //eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
@@ -399,7 +410,7 @@ namespace Anki {
           peakAccelStartTime = currTime;
           return;
         }
-
+#ifndef TARGET_K02
         // Only check for poke when wheels are not being driven
         if (!WheelController::AreWheelsMoving()) {
 
@@ -443,11 +454,11 @@ namespace Anki {
             peakAccelStartTime = currTime;
           }
 
-
         } else {
           peakGyroStartTime = currTime;
           peakAccelStartTime = currTime;
         }
+#endif
       }
 
       void DetectFalling()
@@ -521,7 +532,7 @@ namespace Anki {
           }
 
         } else {
-
+#ifndef TARGET_K02
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
           if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
@@ -540,7 +551,7 @@ namespace Anki {
           } else {
             pdUnexpectedMotionCnt_ = 0;
           }
-
+#endif
 
           // Do conservative check for pickup.
           // Only when we're really sure it's moving!
@@ -626,12 +637,12 @@ namespace Anki {
       void DetectMotion()
       {
         u32 currTime = HAL::GetMicroCounter();
-
+#ifndef TARGET_K02
         // Are wheels being powered?
         if (WheelController::AreWheelsPowered()) {
           lastMotionDetectedTime_us = currTime;
         }
-
+#endif
         // Was motion detected by accel or gyro?
         for(u8 i=0; i<3; ++i) {
           // Check accelerometer
