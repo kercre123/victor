@@ -77,6 +77,10 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     auto setLiftHeightCallback = std::bind(&RobotEventHandler::HandleSetLiftHeight, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
     
+    // Custom handler for EnableLiftPower
+    auto enableLiftPowerCallback = std::bind(&RobotEventHandler::HandleEnableLiftPower, this, std::placeholders::_1);
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::EnableLiftPower, enableLiftPowerCallback));
+    
     // Custom handler for DisplayProceduralFace
     auto dispProcFaceCallback = std::bind(&RobotEventHandler::HandleDisplayProceduralFace, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
@@ -660,6 +664,28 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     }
   }
 }
+
+void RobotEventHandler::HandleEnableLiftPower(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  // TODO: get RobotID in a non-hack way
+  RobotID_t robotID = 1;
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    return;
+  }
+  
+  if(robot->GetMoveComponent().IsMovementTrackIgnored(AnimTrackFlag::LIFT_TRACK)) {
+    PRINT_NAMED_INFO("RobotEventHandler.HandleEnableLiftPower.LiftLocked",
+                     "Ignoring ExternalInterface::EnableLiftPower while lift is locked.");
+  } else {
+    const ExternalInterface::EnableLiftPower& msg = event.GetData().Get_EnableLiftPower();
+    robot->GetMoveComponent().EnableLiftPower(msg.enable);
+  }
+}
+
   
 void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {

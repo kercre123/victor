@@ -748,6 +748,15 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendEnableLiftPower(bool enable)
+    {
+      ExternalInterface::EnableLiftPower m;
+      m.enable = enable;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_EnableLiftPower(m);
+      SendMessage(message);
+    }
+    
     void UiGameController::SendStopAllMotors()
     {
       ExternalInterface::StopAllMotors m;
