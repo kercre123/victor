@@ -554,8 +554,8 @@ namespace Anki {
       {
         for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
           BackpackLightController::SetParams((LEDId)i, msg.lights[i].onColor, msg.lights[i].offColor,
-                                             msg.lights[i].onPeriod_ms, msg.lights[i].offPeriod_ms,
-                                             msg.lights[i].transitionOnPeriod_ms, msg.lights[i].transitionOffPeriod_ms);
+                                             msg.lights[i].onFrames, msg.lights[i].offFrames,
+                                             msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
         }
       }
 
