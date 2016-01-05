@@ -55,6 +55,8 @@ namespace Anki {
        * @return True if sucessfully queued, false otherwise
        */
       bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable=true, const bool hot=false);
+      
+      void FaceAnimate(u8* frame, const u16 length);
     }
   }
 }
