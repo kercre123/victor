@@ -424,6 +424,7 @@ public:
   
     static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
     static const ActionList::SlotHandle FaceAnimationSlot = 1;
+    static const ActionList::SlotHandle SoundSlot = 2;
   
     // Send a message to the robot to place whatever it is carrying on the
     // ground right where it is. Returns RESULT_FAIL if robot is not carrying
@@ -435,9 +436,10 @@ public:
     
     // Plays specified animation numLoops times.
     // If numLoops == 0, animation repeats forever.
+    // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Returns the streaming tag, so you can find out when it is done.
-    u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1);
-    
+    u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
+  
     // Set the animation to be played when no other animation has been specified.
     // Use the empty string to disable idle animation.
     Result SetIdleAnimation(const std::string& animName);
@@ -486,8 +488,6 @@ public:
     // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
-    
-    Result StopAnimation();
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
@@ -673,6 +673,8 @@ public:
   
     Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
   
+    const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
+  
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -703,6 +705,9 @@ public:
     ActionList        _actionList;
     MovementComponent _movementComponent;
     VisionComponent   _visionComponent;
+  
+    // Hash to not spam debug messages
+    size_t            _lastDebugStringHash;
 
     // Path Following. There are two planners, only one of which can
     // be selected at a time

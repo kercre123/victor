@@ -42,7 +42,7 @@ namespace Cozmo {
     _liveAnimation.SetIsLive(true);
   }
 
-  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops, bool interruptRunning)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -55,28 +55,70 @@ namespace Cozmo {
       return SetStreamingAnimation(robot, nullptr);
     }
     
-    return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops);
+    return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops, interruptRunning);
   }
   
-  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops, bool interruptRunning)
   {
+    if(nullptr != _streamingAnimation)
+    {
+      if(nullptr != anim && !interruptRunning) {
+        PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.NotInterrupting",
+                         "Already streaming %s, will not interrupt with %s",
+                         _streamingAnimation->GetName().c_str(),
+                         anim->GetName().c_str());
+        return NotAnimatingTag;
+      }
+      
+      using namespace ExternalInterface;
+      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.Aborting",
+                          "Animation %s is interrupting animation %s",
+                          anim->GetName().c_str(), _streamingAnimation->GetName().c_str());
+      robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
+    }
+    
+    // If there's something already streaming or we're purposefully clearing the buffer, abort
     if(nullptr != _streamingAnimation || nullptr == anim)
     {
       Abort(robot);
     }
     
+    // If we're cancelling a current anim with no replacement, make use of the live animation track to insert a
+    // face keyframe from the end of the animation being cancelled
+    if (nullptr != _streamingAnimation && nullptr == anim)
+    {
+      bool streamingHasProcFace = !_streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
+      
+      // Only bother if the streaming animation has some kind of face track
+      if (streamingHasProcFace ||
+          !_streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty())
+      {
+        anim = &_liveAnimation;
+        
+        if (streamingHasProcFace)
+        {
+          // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
+          auto lastFrame = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
+          ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
+          anim->AddKeyFrameToBack(frameCopy);
+        }
+        else
+        {
+          // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
+          auto lastFrame = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
+          FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
+          anim->AddKeyFrameToBack(frameCopy);
+        }
+      }
+    }
+    
     _streamingAnimation = anim;
     
     if(_streamingAnimation == nullptr) {
-      return 0;
+      return NotAnimatingTag;
     } else {
       
-      // Increment the tag counter and keep it from being one of the "special"
-      // values used to indicate "not animating" or "idle animation"
-      ++_tagCtr;
-      while(_tagCtr == 0 || _tagCtr == IdleAnimationTag) {
-        ++_tagCtr;
-      }
+      IncrementTagCtr(_tagCtr);
     
       // Get the animation ready to play
       InitStream(robot, _streamingAnimation, _tagCtr);
@@ -87,13 +129,22 @@ namespace Cozmo {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
                        "Will start streaming '%s' animation %d times with tag=%d.\n",
-                       name.c_str(), numLoops, _tagCtr);
+                       _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
 #     endif
     
       return _tagCtr;
     }
   }
 
+  void AnimationStreamer::IncrementTagCtr(u8& tag)
+  {
+    // Increment the tag counter and keep it from being one of the "special"
+    // values used to indicate "not animating" or "idle animation"
+    ++tag;
+    while(tag == AnimationStreamer::NotAnimatingTag || tag == AnimationStreamer::IdleAnimationTag) {
+      ++tag;
+    }
+  }
   
   void AnimationStreamer::Abort(Robot& robot)
   {
@@ -101,35 +152,8 @@ namespace Cozmo {
     {
       // Tell the robot to abort
       robot.AbortAnimation();
-      
-      // We just cleared the robot's buffer, so there will not be a start or end
-      // available
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
-      
-      // If there are any face frames left, send the last one so we don't leave the face
-      // in a random state
-      auto & procFaceTrack  = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>();
-      const ProceduralFaceKeyFrame* kf = procFaceTrack.GetLastKeyFrame();
-      if(nullptr != kf) {
-
-        SendStartOfAnimation();
-        BufferFaceToSend(kf->GetFace());
-        SendEndOfAnimation(robot);
-
-      } else {
-        auto & faceImageTrack = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>();
-        FaceAnimationKeyFrame* kf = faceImageTrack.GetLastKeyFrame();
-        if(nullptr != kf) {
-          auto msg = kf->GetStreamMessage();
-          if(nullptr != msg)
-          {
-            SendStartOfAnimation();
-            BufferMessageToSend(kf->GetStreamMessage());
-            SendEndOfAnimation(robot);
-          }
-        }
-      }
     }
   } // Abort()
   
@@ -181,11 +205,6 @@ namespace Cozmo {
   
   Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, u8 withTag)
   {
-    if( _startOfAnimationSent && ! _endOfAnimationSent ) {
-      // stop the animation if we are in the middle of one
-      SendEndOfAnimation(robot);
-    }
-    
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
     {
@@ -224,8 +243,6 @@ namespace Cozmo {
     return lastResult;
   }
   
-  // Initialize the static tag counter
-  u32 AnimationStreamer::FaceLayer::TagCtr = 0;
   
   Result AnimationStreamer::AddFaceLayer(FaceTrack&& faceTrack, TimeStamp_t delay_ms)
   {
@@ -233,8 +250,10 @@ namespace Cozmo {
     
     faceTrack.SetIsLive(true);
     
+    IncrementTagCtr(_layerTagCtr);
+    
     FaceLayer newLayer;
-    newLayer.tag = FaceLayer::TagCtr++;
+    newLayer.tag = _layerTagCtr;
     newLayer.track = faceTrack; // COPY the track in
     newLayer.track.Init();
     newLayer.startTime_ms = delay_ms;
@@ -256,8 +275,10 @@ namespace Cozmo {
   {
     faceTrack.SetIsLive(false); // don't want keyframes to delete as they play
     
+    IncrementTagCtr(_layerTagCtr);
+    
     FaceLayer newLayer;
-    newLayer.tag = FaceLayer::TagCtr++;
+    newLayer.tag = _layerTagCtr;
     newLayer.track = faceTrack;
     newLayer.track.Init();
     newLayer.startTime_ms = 0;
@@ -291,11 +312,11 @@ namespace Cozmo {
           faceTrack.SetIsLive(true);
           ProceduralFaceKeyFrame firstFrame(layerIter->track.GetCurrentKeyFrame());
           firstFrame.SetTriggerTime(0);
-          faceTrack.AddKeyFrame(std::move(firstFrame));
+          faceTrack.AddKeyFrameToBack(std::move(firstFrame));
           
           ProceduralFaceKeyFrame lastFrame;
           lastFrame.SetTriggerTime(IKeyFrame::SAMPLE_LENGTH_MS*duration);
-          faceTrack.AddKeyFrame(std::move(lastFrame));
+          faceTrack.AddKeyFrameToBack(std::move(lastFrame));
           
           AddFaceLayer(std::move(faceTrack));
         }
@@ -434,7 +455,7 @@ namespace Cozmo {
       {
         ProceduralFaceParams interpolatedParams;
         
-        ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
+        const ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
         if (nextFrame != nullptr) {
           if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms)) {
             // If it's time to play the next frame and the current frame at the same time, something's wrong!
@@ -531,7 +552,7 @@ namespace Cozmo {
         TimeStamp_t timeInc;
         moreBlinkFrames = blinkFace.GetNextBlinkFrame(timeInc);
         totalOffset += timeInc;
-        faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(blinkFace, totalOffset));
+        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(blinkFace, totalOffset));
       } while(moreBlinkFrames);
       
       AddFaceLayer(std::move(faceTrack));
@@ -556,6 +577,10 @@ namespace Cozmo {
       // actually replace what's on the face.
       faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, faceParams, true);
     }
+    
+    // Keep track of the face params after using the anim track because that's what we want to store off afterward,
+    // not the face after being adjusted by layers.
+    const ProceduralFaceParams animatedFaceParams = faceParams;
     
 #   if DEBUG_ANIMATION_STREAMING
     if(!_faceLayers.empty()) {
@@ -641,7 +666,8 @@ namespace Cozmo {
       
       if (storeFace)
       {
-        // Also store the updated face in the robot
+        // Also store the updated face in the robot using params prior to face layer application
+        procFace.SetParams(animatedFaceParams);
         robot.SetProceduralFace(procFace);
       }
     }
@@ -1031,7 +1057,9 @@ namespace Cozmo {
     // Wait a 1/2 second before running after we finish the last streaming animation
     // to help reduce stepping on the next animation's toes when we have things
     // sequenced.
-    if(_streamingAnimation == nullptr &&
+    
+    // _tagCtr check so we wait until we get one behavior until we start playing
+    if(_tagCtr > 0 && _streamingAnimation == nullptr &&
        (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f)))
     {
@@ -1115,10 +1143,7 @@ namespace Cozmo {
     {
       if(HaveFaceLayersToSend()) {
         lastResult = StreamFaceLayersOrAudio(robot);
-      } else if(_startOfAnimationSent && !_endOfAnimationSent) {
-        SendEndOfAnimation(robot);
       }
-      
     }
     
     return lastResult;
@@ -1205,7 +1230,7 @@ namespace Cozmo {
       proceduralFace.GetParams().Interpolate(lastFace.GetParams(), nextFace.GetParams(), blendFraction, useSaccades);
       
       // Add this procedural face as a keyframe in the live animation
-      if(RESULT_OK != liveAnimation.AddKeyFrame(ProceduralFaceKeyFrame(proceduralFace))) {
+      if(RESULT_OK != liveAnimation.AddKeyFrameToBack(ProceduralFaceKeyFrame(proceduralFace))) {
         PRINT_NAMED_ERROR("AnimationStreamer.StreamProceduralFace.AddFrameFailed", "");
         return RESULT_FAIL;
       }
@@ -1262,8 +1287,6 @@ namespace Cozmo {
     
     Result lastResult = RESULT_OK;
     
-    bool anyFramesAdded = false;
-    
     // Don't start wiggling until we've been idling for a bit and make sure we
     // are not picking or placing
     if(_isLiveTwitchEnabled &&
@@ -1302,12 +1325,10 @@ namespace Cozmo {
                          speed, curvature, _bodyMoveDuration_ms);
 #       endif
         
-        if(RESULT_OK != _liveAnimation.AddKeyFrame(BodyMotionKeyFrame(speed, curvature, _bodyMoveDuration_ms))) {
+        if(RESULT_OK != _liveAnimation.AddKeyFrameToBack(BodyMotionKeyFrame(speed, curvature, _bodyMoveDuration_ms))) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddBodyMotionKeyFrameFailed", "");
           return RESULT_FAIL;
         }
-        
-        anyFramesAdded = true;
         
         _bodyMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementSpacingMin_ms),
                                                   GET_PARAM(s32, BodyMovementSpacingMax_ms));
@@ -1332,12 +1353,10 @@ namespace Cozmo {
         LiftHeightKeyFrame kf(GET_PARAM(u8, LiftHeightMean_mm),
                               GET_PARAM(u8, LiftHeightVariability_mm),
                               _liftMoveDuration_ms);
-        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+        if(RESULT_OK != _liveAnimation.AddKeyFrameToBack(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddLiftHeightKeyFrameFailed", "");
           return RESULT_FAIL;
         }
-        
-        anyFramesAdded = true;
         
         _liftMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementSpacingMin_ms),
                                                   GET_PARAM(s32, LiftMovementSpacingMax_ms));
@@ -1361,12 +1380,10 @@ namespace Cozmo {
                          "duration=%d", _headMoveDuration_ms);
 #       endif
         HeadAngleKeyFrame kf(currentAngle_deg, GET_PARAM(u8, HeadAngleVariability_deg), _headMoveDuration_ms);
-        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+        if(RESULT_OK != _liveAnimation.AddKeyFrameToBack(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddHeadAngleKeyFrameFailed", "");
           return RESULT_FAIL;
         }
-        
-        anyFramesAdded = true;
         
         _headMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementSpacingMin_ms),
                                                   GET_PARAM(s32, HeadMovementSpacingMax_ms));
@@ -1376,13 +1393,6 @@ namespace Cozmo {
       }
       
     } // if(_isLiveTwitchEnabled && _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
-    
-    if(anyFramesAdded) {
-      // If we add a keyframe after initialization (at which time this animation
-      // could have been empty), make sure to mark that we haven't yet sent
-      // end of animation.
-      _endOfAnimationSent = false;
-    }
     
     return lastResult;
 #   undef GET_PARAM

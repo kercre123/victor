@@ -65,6 +65,7 @@ message RobotState {
     float_32 pose_y,
     float_32 pose_z,
     float_32 poseAngle_rad,    // heading in X-Y plane
+    float_32 posePitch_rad,    // robot pitch angle
     float_32 pose_qw,          // full 3d rotation as a quaternion
     float_32 pose_qx,          //  "
     float_32 pose_qy,          //  "
@@ -251,7 +252,13 @@ message StopSound {
 ///////////////////////////////////////////////////////////////////////////////
 
 message AnimationAvailable {
-string animName
+  string animName
+}
+
+// Broadcast by AnimationStreamer when a new streaming animation is requested
+// before the last one finished.
+message AnimationAborted {
+  uint_32 tag
 }
 
 ///////////////////////////////////////////////////////////////////////////////

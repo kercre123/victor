@@ -23,6 +23,7 @@
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/robot/config.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -283,7 +284,11 @@ namespace Cozmo {
 
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionComponent.SetNextImage.PoseHistoryFail",
-                          "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
+                          "Unable to get computed pose at image timestamp of %d. (have %zu from %d:%d)\n",
+                          image.GetTimestamp(),
+                          robot.GetPoseHistory()->GetNumVisionPoses(),
+                          robot.GetPoseHistory()->GetOldestVisionOnlyTimeStamp(),
+                          robot.GetPoseHistory()->GetNewestVisionOnlyTimeStamp());
         return lastResult;
       }
       
@@ -391,9 +396,12 @@ namespace Cozmo {
       // Get the robot origin w.r.t. the camera position with the camera at
       // the current head angle
       Pose3d robotPoseWrtCamera;
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
       bool result = robotPose.GetWithRespectTo(robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
       assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
-      
+#else
+      robotPose.GetWithRespectTo(robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
+#endif
       const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
       const Vec3f&            T = robotPoseWrtCamera.GetTranslation();
       

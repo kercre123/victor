@@ -20,6 +20,7 @@ enum uint_8 BehaviorType {
   PlayAnim,
   UnityDriven,
   PounceOnMotion,
+  FindFaces,
 
   Count
 }

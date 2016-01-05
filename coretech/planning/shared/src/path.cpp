@@ -4,6 +4,7 @@
 #include "util/math/constantsAndMacros.h"
 #include <assert.h>
 #include <math.h>
+#include <float.h>
 #include <string.h>
 
 #define DEBUG_PATH 0
@@ -17,9 +18,8 @@
 #elif defined CORETECH_ROBOT
 #define DEBUG_PATH_APPEND 0
 #include "anki/common/robot/utilities_c.h"
-#include "anki/common/robot/trig_fast.h"
-#define ATAN2_FAST(y,x) atan2_fast(y,x)
-#define ATAN2_ACC(y,x) atan2_acc(y,x)
+#define ATAN2_FAST(y,x) atan2(y,x)
+#define ATAN2_ACC(y,x) atan2(y,x)
 #endif
 
 

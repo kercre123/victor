@@ -27,6 +27,7 @@ static I2C_Queue i2c_queue[MAX_QUEUE];
 static int _fifo_start;
 static int _fifo_end;
 static int _fifo_count;
+static bool enabled = false;
 
 static bool _active = false;
 static bool _reselected = false;
@@ -83,7 +84,7 @@ void Anki::Cozmo::HAL::I2C::Init()
                 PORT_PCR_DSE_MASK;  //I2C0_SCL
 
   // Configure i2c
-  I2C0_F  = I2C_F_ICR(0x1B);
+  I2C0_F  = I2C_F_ICR(0x1A);
   I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK | I2C_C1_MST_MASK;
   
   // Enable IRQs
@@ -92,10 +93,12 @@ void Anki::Cozmo::HAL::I2C::Init()
 }
 
 void Anki::Cozmo::HAL::I2C::Enable(void) {
+  enabled = true;
   NVIC_EnableIRQ(I2C0_IRQn);
 }
 
 void Anki::Cozmo::HAL::I2C::Disable(void) {
+  enabled = false;
   NVIC_DisableIRQ(I2C0_IRQn);
 }
 
@@ -133,7 +136,7 @@ void Anki::Cozmo::HAL::I2C::WriteAndVerify(uint8_t slave, uint8_t addr, uint8_t 
   WriteReg(slave, addr, data);
   resp = ReadReg(slave, addr);
   
-  //while (resp != data) ;
+  while (resp != data) ;
 }
 
 // This should only be used during 
@@ -149,7 +152,8 @@ static bool Enqueue(uint8_t slave, const uint8_t *bytes, int len, i2c_callback c
     return false;
   }
 
-  Disable();
+  bool unsafe = enabled;
+  if (unsafe) Disable();
   I2C_Queue *active = &i2c_queue[_fifo_start];
   if (++_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
   
@@ -164,7 +168,7 @@ static bool Enqueue(uint8_t slave, const uint8_t *bytes, int len, i2c_callback c
   if (!_active) {
     start_transaction();
   }
-  Enable();
+  if (unsafe) Enable();
   
   return true;
 }

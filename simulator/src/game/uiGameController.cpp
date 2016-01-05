@@ -748,6 +748,15 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendEnableLiftPower(bool enable)
+    {
+      ExternalInterface::EnableLiftPower m;
+      m.enable = enable;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_EnableLiftPower(m);
+      SendMessage(message);
+    }
+    
     void UiGameController::SendStopAllMotors()
     {
       ExternalInterface::StopAllMotors m;
@@ -905,9 +914,10 @@ namespace Anki {
     }
     
     
-    void UiGameController::SendExecuteTestPlan()
+    void UiGameController::SendExecuteTestPlan(PathMotionProfile motionProf)
     {
       ExternalInterface::ExecuteTestPlan m;
+      m.motionProf = motionProf;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ExecuteTestPlan(m);
       SendMessage(message);

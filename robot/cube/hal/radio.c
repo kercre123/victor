@@ -74,10 +74,10 @@ void InitPRX()
   // Set address
   hal_nrf_set_address(HAL_NRF_PIPE1, radioStruct.ADDRESS_RX_PTR);
   // Set datarate
-  hal_nrf_set_datarate(HAL_NRF_1MBPS);
+  hal_nrf_set_datarate(CHANNEL_RATE);
   // Set channel
   hal_nrf_set_rf_channel(radioStruct.COMM_CHANNEL);
-  // Set radioPayload width to 17 bytes
+  // Set radioPayload width
   hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, RADIO_PAYLOAD_LENGTH);
   // Flush RX FIFO
   hal_nrf_flush_rx();
@@ -148,6 +148,9 @@ void ReceiveData(u8 timerMsbTimeout)
   u8 addr[5];
   u8 i;
   #endif
+  #ifdef SNIFFER
+  u8 i;
+  #endif
   
   // Get timer MSB
   now = TH0;
@@ -177,8 +180,23 @@ void ReceiveData(u8 timerMsbTimeout)
       cumMissedPacketCount++; 
       radioBusy = false; // exit loop
     }
+    #ifdef SNIFFER  
+    WDSV = 0; // 2 seconds // TODO: update this value // TODO add a macro for watchdog
+    WDSV = 1; 
+    #endif
   }
- 
+  #ifdef SNIFFER  
+  if(gDataReceived)
+  {
+  for(i=0; i<RADIO_PAYLOAD_LENGTH; i++)
+  {
+    PutHex(radioPayload[i]);
+    PutChar(' ');
+  }
+  PutString("\r\n");
+  }
+  #endif 
+  
   // Power down radio
   PowerDownRadio();
 }
@@ -199,7 +217,7 @@ void InitPTX()
   EA = 1U;
   hal_nrf_set_operation_mode(HAL_NRF_PTX);
   // Set datarate
-  hal_nrf_set_datarate(HAL_NRF_1MBPS);
+  hal_nrf_set_datarate(CHANNEL_RATE);
   // Turn off auto-retransmit
   hal_nrf_set_auto_retr(0, 0);
   // Set power

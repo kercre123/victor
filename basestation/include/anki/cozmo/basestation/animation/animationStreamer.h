@@ -53,6 +53,7 @@ namespace Cozmo {
   public:
     static const std::string LiveAnimation;
     static const std::string AnimToolAnimation;
+    static const u8          NotAnimatingTag  = 0;
     static const u8          IdleAnimationTag = 255;
     
     AnimationStreamer(IExternalInterface* externalInterface, CannedAnimationContainer& container, Audio::RobotAudioClient& audioClient);
@@ -62,9 +63,9 @@ namespace Cozmo {
     // Returns a tag you can use to monitor whether the robot is done playing this
     // animation.
     // Actual streaming occurs on calls to Update().
-    u8 SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops = 1);
+    u8 SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
     
-    u8 SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops = 1);
+    u8 SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
     
     // Sets the "idle" animation that will be streamed (in a loop) when no other
     // animation is streaming. Use empty string ("") to disable.
@@ -94,6 +95,7 @@ namespace Cozmo {
     bool IsIdleAnimating() const;
     
     const std::string GetStreamingAnimationName() const;
+    const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
     
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;
@@ -148,8 +150,7 @@ namespace Cozmo {
       TimeStamp_t streamTime_ms;
       bool        isPersistent;
       bool        sentOnce;
-      u32         tag;
-      static u32  TagCtr;
+      u8          tag;
     };
     std::list<FaceLayer> _faceLayers;
     
@@ -171,11 +172,14 @@ namespace Cozmo {
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
     Result StreamFaceLayersOrAudio(Robot& robot);
     
+    static void IncrementTagCtr(u8& tag);
+    
     bool _isIdling = false;
     
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
     u8  _tagCtr   = 0;
+    u8  _layerTagCtr = 0;
     
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;

@@ -1,5 +1,5 @@
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 #include "dockingController.h"
 #include "headController.h"
 #include "liftController.h"

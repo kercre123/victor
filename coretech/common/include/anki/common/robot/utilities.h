@@ -12,10 +12,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 #define _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 
+#include <math.h>
+#include <float.h>
+#include "util/math/constantsAndMacros.h"
+#include "anki/common/types.h"
 #include "anki/common/robot/utilities_declarations.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities_c.h"
-#include "anki/common/robot/trig_fast.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"

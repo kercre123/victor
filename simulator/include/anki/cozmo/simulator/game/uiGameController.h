@@ -105,6 +105,7 @@ protected:
   void SendMoveLift(const f32 speed_rad_per_sec);
   void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
+  void SendEnableLiftPower(bool enable);
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode, u8 robotID);
@@ -208,7 +209,7 @@ protected:
   
   void SendTrackToObject(const u32 objectID, bool headOnly = false);
   void SendTrackToFace(const u32 faceID, bool headOnly = false);
-  void SendExecuteTestPlan();
+  void SendExecuteTestPlan(PathMotionProfile motionProf);
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();

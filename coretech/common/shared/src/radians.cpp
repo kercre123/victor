@@ -12,6 +12,7 @@
 **/
 
 #include <assert.h>
+#include <math.h>
 #include "anki/common/types.h"
 #include "anki/common/shared/radians.h"
 

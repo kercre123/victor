@@ -369,7 +369,7 @@
               <MiscControls>--asm</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki;generated\clad\robot;sim_hal\transport</IncludePath>
+              <IncludePath>.\include;.\supervisor\src;.\arm_hal;.\arm_hal\lib;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;..\tools\anki-util\source\anki;generated\clad\robot;sim_hal\transport</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -782,6 +782,16 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
+            <File>
+              <FileName>velocityProfileGenerator.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>trig_fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -888,19 +898,9 @@
               <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
             </File>
             <File>
-              <FileName>trig_fast.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\trig_fast.cpp</FilePath>
-            </File>
-            <File>
               <FileName>utilities_shared.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>velocityProfileGenerator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
             <File>
               <FileName>memory.cpp</FileName>
@@ -1784,6 +1784,16 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
+            <File>
+              <FileName>velocityProfileGenerator.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>trig_fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1890,19 +1900,9 @@
               <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
             </File>
             <File>
-              <FileName>trig_fast.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\trig_fast.cpp</FilePath>
-            </File>
-            <File>
               <FileName>utilities_shared.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>velocityProfileGenerator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
             <File>
               <FileName>memory.cpp</FileName>

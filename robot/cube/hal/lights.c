@@ -5,12 +5,21 @@
 
 #define GAMMA_CORRECT(x)           ((x)*(x) >> 8)
 
+#ifndef COMPATIBILITY_MODE_4P0
 #define NUM_LEDS      17
+#else
+#define NUM_LEDS      13
+#endif
 #define DARK_BYTE     NUM_LEDS-1
 #define NUM_LED_PINS
 
 static const u8 code ledPins[NUM_LED_PINS] = {1<<1, 1<<6, 1<<5, 1<<7, 1<<0, 1<<1};
-static volatile u8 ledValues[NUM_LEDS] = {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0,0, 128};
+static volatile u8 ledValues[NUM_LEDS] = 
+ {0,0,0, 0,0,0, 0,0,0, 0,0,0, 
+#ifndef COMPATIBILITY_MODE_4P0
+	0,0,0,0,
+#endif
+	128};
 static volatile u8 gCurrentLed = 0;
 
 struct s_led {
@@ -20,12 +29,18 @@ struct s_led {
   u8 cathode_port : 1;  
 };
 
+// NOTE:  These lights are ordered to match the orientation of the codes
+// Codes are oriented relative to the screw (ask Vance/ME for more details)
 const struct s_led code s_leds[NUM_LEDS] = 
-{
+{  
+  {3, 0, 5, 1}, // R4
+  {3, 0, 2, 0}, // G4
+  {3, 0, 1, 0}, // B4
+
   {0, 0, 4, 1}, // R1
   {0, 0, 1, 0}, // G1
   {0, 0, 2, 0}, // B1
-  
+    
   {1, 0, 4, 1}, // R2
   {1, 0, 0, 0}, // G2
   {1, 0, 3, 0}, // B2
@@ -33,17 +48,15 @@ const struct s_led code s_leds[NUM_LEDS] =
   {2, 0, 5, 1}, // R3
   {2, 0, 0, 0}, // G3
   {2, 0, 3, 0}, // B3
-  
-  {3, 0, 5, 1}, // R4
-  {3, 0, 2, 0}, // G4
-  {3, 0, 1, 0}, // B4
-  
+
+#ifndef COMPATIBILITY_MODE_4P0
   {4, 1, 0, 0}, // IR1
   {4, 1, 1, 0}, // IR2 
   
   {5, 1, 2, 0}, // IR3
   {5, 1, 3, 0}, // IR4
-  
+#endif
+	
   {0, 0, 0, 0}  // Dark
 };
 

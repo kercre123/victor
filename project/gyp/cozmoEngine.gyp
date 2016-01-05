@@ -487,6 +487,19 @@
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
+            'actions': [
+                {
+                    'action_name': 'generate_version_include',
+                    'inputs': [],
+                    'outputs': [
+                        '../../robot/include/anki/cozmo/robot/version.h'
+                    ],
+                    'action': [
+                        '../../robot/tools/versionGenerator/versionGenerator.sh',
+                        '<@(_outputs)'
+                    ],
+                }
+            ]
           }, # end controller Robot
 
           {

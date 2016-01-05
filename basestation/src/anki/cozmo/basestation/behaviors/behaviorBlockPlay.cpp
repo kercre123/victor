@@ -36,6 +36,8 @@
 
 #define DO_2001_MUSIC_GAG 0
 
+#define HANNS_SPEED 0
+
 // TODO:(bn) when driving to the side or back of the cube to roll it, the position is really far off. Instead
 // of relying on the action (or maybe add this logic within the action?) plan to a pre-dock pose which is much
 // further away from the block, so it can adjust more naturally instead of having to back up and do weird
@@ -62,7 +64,19 @@ namespace Cozmo {
 
     // start with defaults
     _motionProfile = DEFAULT_PATH_MOTION_PROFILE;
-    
+
+#if HANNS_SPEED
+
+    _motionProfile.speed_mmps = 120.0f;
+    _motionProfile.accel_mmps2 = 200.0f;
+    _motionProfile.decel_mmps2 = 120.0f;
+    _motionProfile.pointTurnSpeed_rad_per_sec = 2.5f;
+    _motionProfile.pointTurnAccel_rad_per_sec2 = 8.0f;
+    _motionProfile.pointTurnDecel_rad_per_sec2 = 6.0f;
+    _motionProfile.dockSpeed_mmps = 120.0f;
+    _motionProfile.reverseSpeed_mmps = 50.0f;
+
+#else
     _motionProfile.speed_mmps = 60.0f;
     _motionProfile.accel_mmps2 = 200.0f;
     _motionProfile.decel_mmps2 = 200.0f;
@@ -70,7 +84,9 @@ namespace Cozmo {
     _motionProfile.pointTurnAccel_rad_per_sec2 = 100.0f;
     _motionProfile.pointTurnDecel_rad_per_sec2 = 100.0f;
     _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
-    
+    _motionProfile.reverseSpeed_mmps = 40.0f;
+#endif    
+
     SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
@@ -92,8 +108,10 @@ namespace Cozmo {
     const bool alreadyRunning = _currentState != State::TrackingFace;    
     const bool hasSeenFace = _faceID != Face::UnknownFace || _hasValidLastKnownFacePose;
     const bool hasObject = _trackedObject.IsSet();
+    const bool isDoingSomething = _isActing || !_animActionTags.empty();
 
-    bool ret = alreadyRunning || holdingBlock || (hasSeenFace && hasObject);
+
+    bool ret = alreadyRunning || holdingBlock || isDoingSomething || (hasSeenFace && hasObject);
 
     // static bool wasTrue = false;
     // if(ret) {
@@ -150,6 +168,7 @@ namespace Cozmo {
         SetCurrState(State::TrackingFace);
       }
     } else if (_objectToPickUp.IsSet()) {
+      _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timetoInspectBlock;
       SetCurrState(State::InspectingBlock);
     } else {
       SetCurrState(State::TrackingFace);
@@ -173,6 +192,20 @@ namespace Cozmo {
          it != _objectsToTurnOffLights.end();
          it = _objectsToTurnOffLights.erase(it) ) {
       SetBlockLightState(robot, *it, BlockLightState::None);
+    }
+
+    if( robot.IsCarryingObject() ) {
+      LiftShouldBeLocked(robot);
+    }
+    else {
+      LiftShouldBeUnlocked(robot);
+    }
+
+    if( _currentState == State::TrackingFace ) {
+      BodyShouldBeUnlocked(robot);
+    }
+    else {
+      BodyShouldBeLocked(robot);
     }
 
     // hack to track object motion
@@ -203,17 +236,11 @@ namespace Cozmo {
     if (_isActing || !_animActionTags.empty()) {
       return Status::Running;
     }
-
-
-    // check lift animation lock
-    if( _currentState != State::TrackingBlock || robot.IsCarryingObject() ) {
-      LiftShouldBeUnlocked(robot);
-    }
     
     switch(_currentState)
     {
       case State::TrackingFace:
-      {        
+      {
         // If not already tracking face...
         if (robot.GetMoveComponent().GetTrackToFace() == Face::UnknownFace) {
           
@@ -247,23 +274,34 @@ namespace Cozmo {
             // Otherwise, if had previously seen a valid face, turn to face its last known pose
             IActionRunner* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, DEG_TO_RAD(5), PI_F);
 
-            // if we also need to lower the lift, do it in parallel (this is the most common case)
-            if( moveLiftAction != nullptr) {
-              StartActing(robot,
-                          new CompoundActionParallel({moveLiftAction, lookAtFaceAction}),
-                          [this](ActionResult ret){ _hasValidLastKnownFacePose = false; });
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
+                                   "Moving to last face pose");
+
+            IActionRunner* actionToRun = lookAtFaceAction;
+
+            if( moveLiftAction != nullptr ) {
+              actionToRun = new CompoundActionParallel({moveLiftAction, lookAtFaceAction});
+            }
+
+            StartActing(robot,
+                        actionToRun,
+                        [this, &robot](ActionResult ret){
+                          _hasValidLastKnownFacePose = false;
+                          // make sure the head is at a high enough angle if we are holding something, so our
+                          // view isn't blocked
+                          if( robot.IsCarryingObject() && robot.GetHeadAngle() < DEG_TO_RAD(20.0f) ) {
+                            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                                   "BehaviorBlockPlay.TrackFace.RaiseHead",
+                                                   "Carrying object and head angle of %fdeg is too low",
+                                                   RAD_TO_DEG( robot.GetHeadAngle( )));
+                            StartActing(robot,
+                                        new MoveHeadToAngleAction( DEG_TO_RAD(25.0f) ));
+                          }
+                        });                          
+                          
               moveLiftAction = nullptr;
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
                                      "Moving to last face pose AND lowering lift");
-            }
-            else {
-              // otherwise just execute the look action
-              StartActing(robot,
-                          lookAtFaceAction,
-                          [this](ActionResult ret){ _hasValidLastKnownFacePose = false; });
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
-                                     "Moving to last face pose");
-            }
           } else {
 
             // There's no face visible.
@@ -271,6 +309,17 @@ namespace Cozmo {
             if (_noFacesStartTime <= 0) {
               _noFacesStartTime = currentTime_sec;
             }
+
+            // also look up a bit in case the angle is too low
+            IActionRunner* moveHeadAction = new MoveHeadToAngleAction(DEG_TO_RAD(20.0f));
+
+            IActionRunner* actionToRun = moveHeadAction;
+
+            if( moveLiftAction != nullptr ) {
+              actionToRun = new CompoundActionParallel({moveLiftAction, moveHeadAction});
+            }
+
+            StartActing(robot, actionToRun);
 
             // HACK: don't abort if we are carrying an object, because we might get stuck
             if (currentTime_sec - _noFacesStartTime > 2.0f && !robot.IsCarryingObject()) {
@@ -320,31 +369,20 @@ namespace Cozmo {
         Vec3f diffVec = ComputeVectorBetween(obj->GetPose(), robot.GetPose());
         
         if (robot.IsCarryingObject()) {
-          
-          // Compute angle to object above horizon
-          f32 horDistToBlock = sqrtf(diffVec.x()*diffVec.x() + diffVec.y()*diffVec.y());
-          f32 viewAngle = atan2f(diffVec.z(), horDistToBlock);
-          
-          if (viewAngle < kTrackedObjectViewAngleThreshForRaisingCarriedBlock) {
-            // Raise block and look straight ahead
-            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.RaisingBlockToSeeOtherBlock",
-                             "trying to see block %d",
-                             _trackedObject.GetValue());
-            StartActing(robot,
-                        new CompoundActionParallel({
-                            new MoveLiftToHeightAction( LIFT_HEIGHT_CARRY ),
-                            new MoveHeadToAngleAction( 0 ) }) );
-            // robot.GetMoveComponent().MoveLiftToHeight(LIFT_HEIGHT_CARRY, 2, 5);
-            // robot.GetMoveComponent().MoveHeadToAngle(0, 2, 5);
-          }
+
+          PRINT_NAMED_WARNING("BehaviorBlockPlay.UpdateInternal.TrackingBlock.Error",
+                              "Should not be in TrackingBlock state while carrying block! bailing");
+          SetCurrState(State::TrackingFace);
+          break;
         }
-        else if( currentTime_sec > _trackedObjectStoppedMovingTime + 0.5f &&
-                 currentTime_sec < _trackedObjectStoppedMovingTime + 5.0f) {
+
+        if( currentTime_sec > _trackedObjectStoppedMovingTime + 0.5f &&
+            currentTime_sec < _trackedObjectStoppedMovingTime + 5.0f) {
           // if the block recently stopped moving, look down
           
           if( _lastObjectObservedTime + _lostBlockTimeToLookDown < currentTime_sec ) {
-            const float targetAngle = 0.0f;
-            if( robot.GetHeadAngle() > targetAngle + DEG_TO_RAD(5.0f) ) {
+            const float targetAngle = -7.5f;
+            if( robot.GetHeadAngle() > targetAngle + DEG_TO_RAD(3.0f) ) {
 
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.LookDownForBlock",
                                      "haven't seen block since %f (t=%f), looking down",
@@ -380,8 +418,7 @@ namespace Cozmo {
           PlayAnimation(robot, "ID_react2block_02", false); 
 
           // hold a bit before making a decision about the block
-          const float inspectTime = 0.3f;
-          _holdUntilTime = currentTime_sec + inspectTime;
+          _holdUntilTime = currentTime_sec + _timetoInspectBlock;
         }
         
         break;
@@ -396,19 +433,20 @@ namespace Cozmo {
           break;
         }
         
+        if (robot.IsCarryingObject()) {
+          PRINT_NAMED_WARNING("BehaviorBlockPlay.UpdateInternal.InspecingBlock.Error",
+                              "Holding block while inspecting, this shouldn't happen! bailing");
+          SetCurrState(State::TrackingFace);
+          break;
+        }            
+
         // Check if it's sideways
         AxisName upAxis = obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
         if (upAxis == AxisName::Z_POS) {
-          if (robot.IsCarryingObject()) {
-            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PlacingBlock", "");
-            SetCurrState(State::PlacingBlock);
-            _objectToPlaceOn = _trackedObject;
-          } else {
-            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PickingUpBlock", "");
-            SetBlockLightState(robot, _trackedObject, BlockLightState::Upright);
-            SetCurrState(State::PickingUpBlock);
-            _objectToPickUp = _trackedObject;
-          }
+          PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PickingUpBlock", "");
+          SetBlockLightState(robot, _trackedObject, BlockLightState::Upright);
+          SetCurrState(State::PickingUpBlock);
+          _objectToPickUp = _trackedObject;
         } else {
           PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.RollingBlock", "UpAxis %c", AxisToChar(upAxis));
           SetCurrState(State::RollingBlock);
@@ -494,6 +532,54 @@ namespace Cozmo {
         StartActing(robot, new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn, _motionProfile));
         break;
       }
+      case State::WaitingForBlock:
+      {
+        // we should be holding a block, waiting for the second one. If not, bail out of this state
+        if( ! robot.IsCarryingObject() ) {
+          PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.WaitingForBlock.NotCarrying",
+                           "robot should have been carrying block, but isn't. bailing");
+          SetCurrState(State::TrackingFace);
+          break;
+        }
+
+        // lift should be high, and face should be low
+        IActionRunner* actionToRun = nullptr;
+        if( robot.GetLiftHeight() < LIFT_HEIGHT_CARRY - 3.0f ) {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.UpdateInternal.WaitingForBlock.Lift",
+                                 "raising lift to look down for block");
+
+          actionToRun = new MoveLiftToHeightAction( LIFT_HEIGHT_CARRY );
+        }
+        if( ! NEAR( robot.GetHeadAngle(), _waitForBlockHeadAngle_rads, DEG_TO_RAD(4.0f) ) ) {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.UpdateInternal.WaitingForBlock.Head",
+                                 "lowering head to see block");
+          MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction( _waitForBlockHeadAngle_rads );
+          if( actionToRun != nullptr ) {
+            actionToRun = new CompoundActionParallel({actionToRun, headAction});
+          }
+          else {
+            actionToRun = headAction;
+          }
+        }
+
+        if( actionToRun != nullptr ) {
+          StartActing(robot, actionToRun);
+          _waitForBlockStartTime = -1.0f;
+        }
+        else if( _waitForBlockStartTime < 0.0f ) {
+          _waitForBlockStartTime = currentTime_sec;
+        }
+        else if( currentTime_sec > _waitForBlockStartTime + _maxTimeToWaitForBlock ) {
+          PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.WaitingForBlock.WaitingTooLong",
+                           "We have waited %f seconds to see the block, but didn't, so giving up",
+                           currentTime_sec - _waitForBlockStartTime);
+          // TODO:(bn) sound here??
+          _waitForBlockStartTime = -1.0f;
+          SetCurrState(State::TrackingFace);
+        }
+        
+        break;
+      }
       case State::SearchingForMissingBlock:
       {
         // first face the block object (where we think it is, if we know), then look a bit to the left and
@@ -569,6 +655,9 @@ namespace Cozmo {
   Result BehaviorBlockPlay::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     _interrupted = true;
+    HeadShouldBeUnlocked(robot);
+    LiftShouldBeUnlocked(robot);
+    BodyShouldBeUnlocked(robot);
     return RESULT_OK;
   }
   
@@ -692,6 +781,9 @@ namespace Cozmo {
       case State::PlacingBlock:
         SetStateName("PLACING");
         break;
+      case State::WaitingForBlock:
+        SetStateName("WAIT4BLOCK");
+        break;
       case State::SearchingForMissingBlock:
         SetStateName("SEARCHING");
         break;
@@ -702,7 +794,6 @@ namespace Cozmo {
 
     BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.SetState", "set state to '%s'", GetStateName().c_str());
   }
-  
 
 
   // TODO: Get color and on/off settings from config
@@ -788,6 +879,7 @@ namespace Cozmo {
       case State::TrackingFace:
       case State::TrackingBlock:
       case State::InspectingBlock:
+      case State::WaitingForBlock:
         _isActing = false;
         break;
       case State::RollingBlock:
@@ -807,8 +899,7 @@ namespace Cozmo {
               PlayAnimation(robot, "ID_rollBlock_succeed");
 
               // hold a bit before making a decision about the block
-              const float inspectTime = 0.3f;
-              _holdUntilTime = currentTime_sec + inspectTime;
+              _holdUntilTime = currentTime_sec + _timetoInspectBlock;
 
               _isActing = false;
               break;
@@ -840,6 +931,7 @@ namespace Cozmo {
                                  "failed roll with FAILURE_RETRY,trying again");
           // go back to inspecting so we know if we need to do a roll or a pickup
           SetCurrState(State::InspectingBlock);
+          _holdUntilTime = currentTime_sec + _timetoInspectBlock;
           _isActing = false;
 
         } else {
@@ -875,6 +967,7 @@ namespace Cozmo {
               
               // We failed to pick up or place the last block, try again, and check if we need to roll or not
               SetCurrState(State::InspectingBlock);
+              _holdUntilTime = currentTime_sec + _timetoInspectBlock;
               _isActing = false;
               break;
 
@@ -899,6 +992,7 @@ namespace Cozmo {
                                  "failed pickup, trying again");
           PlayAnimation(robot, "ID_rollBlock_fail_01"); // TODO:(bn) different one?
           SetCurrState(State::InspectingBlock);
+          _holdUntilTime = currentTime_sec + _timetoInspectBlock;
           _isActing = false;
 
         } else {
@@ -988,6 +1082,9 @@ namespace Cozmo {
                              _lastObjectObservedTime,
                              _searchStartTime);
             SetCurrState(_missingBlockFoundState);
+            if( _missingBlockFoundState == State::InspectingBlock ) {
+              _holdUntilTime = currentTime_sec + _timetoInspectBlock;
+            }
           }
         }
         
@@ -1112,7 +1209,7 @@ namespace Cozmo {
     
     // Get height of the object.
     // Only track the block if it's above a certain height.
-    // Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
+    Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
 
     // If this is observed while tracking face, then switch to tracking this object
     if (_currentState == State::TrackingFace &&
@@ -1133,13 +1230,16 @@ namespace Cozmo {
                              "Switching from face to tracking object %d", _trackedObject.GetValue());
 
       _noFacesStartTime = -1.0; // reset face timeout
-      SetCurrState(State::TrackingBlock);
-      TrackObjectAction* action = new TrackObjectAction(_trackedObject);
-      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action); // will cancel face tracking 
       SetBlockLightState(robot, _trackedObject, BlockLightState::Visible);
      
       if( robot.IsCarryingObject() ) {
-        PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
+        // look at the block, then react to it
+        StartActing(robot,
+                    new FacePoseAction(oObject->GetPose(), DEG_TO_RAD(5), PI_F),
+                    [this,&robot](ActionResult ret){
+                      PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
+                    });
+        SetCurrState(State::WaitingForBlock);
       }
       else {
 #if DO_2001_MUSIC_GAG
@@ -1159,7 +1259,23 @@ namespace Cozmo {
 #else
         PlayAnimation(robot, "ID_react2block_01", false);
 #endif
+        
+        SetCurrState(State::TrackingBlock);
+        TrackObjectAction* action = new TrackObjectAction(_trackedObject);
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action); // will cancel face tracking 
       }
+    }
+
+    else if( _currentState == State::WaitingForBlock &&
+             _objectToPlaceOn != objectID && 
+             msg.markersVisible &&
+             robot.IsCarryingObject() &&
+             diffVec.z() < 0.75 * oObject->GetSize().z()) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StartPlacing",
+                             "Found block %d, placing on it",
+                             _objectToPlaceOn.GetValue());
+      _objectToPlaceOn = objectID;
+      SetCurrState(State::PlacingBlock);        
     }
     
     // BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleObject",
@@ -1204,6 +1320,50 @@ namespace Cozmo {
     }
   }
 
+  void BehaviorBlockPlay::HeadShouldBeLocked(Robot& robot)
+  {
+    if( ! _lockedHead ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockHead",
+                             "LOCKED");
+
+      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
+      _lockedHead = true;
+    }
+  }
+
+  void BehaviorBlockPlay::HeadShouldBeUnlocked(Robot& robot)
+  {
+    if( _lockedHead ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockHead",
+                             "UNLOCKED");
+
+      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
+      _lockedHead = false;
+    }
+  }
+
+  void BehaviorBlockPlay::BodyShouldBeLocked(Robot& robot)
+  {
+    if( ! _lockedBody ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
+                             "LOCKED");
+
+      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      _lockedBody = true;
+    }
+  }
+
+  void BehaviorBlockPlay::BodyShouldBeUnlocked(Robot& robot)
+  {
+    if( _lockedBody ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
+                             "UNLOCKED");
+
+      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      _lockedBody = false;
+    }
+  }
+
 
   void BehaviorBlockPlay::TrackBlockWithLift(Robot& robot, const Pose3d& objectPose)
   {
@@ -1219,16 +1379,11 @@ namespace Cozmo {
           liftToObjectPose.GetTranslation().x() <= _maxObjectDistToMoveLift) {
         if( std::abs(sideAngle) < _minTrackingAngleToMove_rads ) {
           targetHeight = _highLiftHeight;
-          LiftShouldBeLocked(robot);
         }
         else {
           // within range, but bad angle, so leave the lift where it is and let the tracking controller turn us
           targetHeight = robot.GetLiftHeight();
         }
-      }
-      else {
-        // far away, or too low, so lower the lift and let idle take control again
-        LiftShouldBeUnlocked(robot);
       }
 
       if( ! NEAR( robot.GetLiftHeight(), targetHeight, 5.0f ) ) {
@@ -1238,7 +1393,7 @@ namespace Cozmo {
         
         // queue this action in the animation slot to avoid stomping on tracking
         MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(targetHeight);
-        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
+        robot.GetActionList().QueueActionAtEnd(Robot::FaceAnimationSlot, liftAction);
       }
 
       

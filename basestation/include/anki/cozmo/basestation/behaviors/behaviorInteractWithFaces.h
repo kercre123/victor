@@ -136,7 +136,7 @@ namespace Cozmo {
     
     // Average length of time in seconds to watch one face when multiple faces
     // are present, and +/- variability in seconds on that average.
-    constexpr static float kMultiFaceInterestingDuration_sec = 2.5;
+    constexpr static float kMultiFaceInterestingDuration_sec = 2.0;
     constexpr static float kMultiFaceInterestingVariation_sec = 1;
     f32 _currentMultiFaceInterestingDuration_sec = kMultiFaceInterestingDuration_sec;
     
@@ -154,7 +154,7 @@ namespace Cozmo {
     constexpr static float kTooFarDistance_mm = kCloseEnoughDistance_mm + kFaceBufferDistance_mm;
     
     // Distance to trigger Cozmo to get further away from the focused face
-    constexpr static float kTooCloseDistance_mm = 200;
+    constexpr static float kTooCloseDistance_mm = 260;
     
     // Maximum frequency that Cozmo should glance down when interacting with faces (could be longer if he has a stable
     // face to focus on; this interval shouln't interrupt his interaction)

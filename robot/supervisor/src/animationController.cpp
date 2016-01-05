@@ -15,6 +15,7 @@ extern "C" {
 #define ONCHIP
 
 #else // Not on Espressif
+#include <assert.h>
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/errorHandling.h"
 //#include "anki/common/robot/utilities_c.h"
@@ -54,7 +55,7 @@ namespace AnimationController {
     u8  _currentTag = 0;
 
     bool _isBufferStarved;
-    bool _haveReceivedTerminationFrame;
+    u16 _haveReceivedTerminationFrame;
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
 
@@ -172,7 +173,7 @@ namespace AnimationController {
 
     _numAudioFramesBuffered = 0;
 
-    _haveReceivedTerminationFrame = false;
+    _haveReceivedTerminationFrame = 0;
     _isPlaying = false;
     _isBufferStarved = false;
     _bufferFullMessagePrintedThisTick = false;
@@ -196,7 +197,7 @@ namespace AnimationController {
     if (IsBufferFull()) msg.status |= IS_ANIM_BUFFER_FULL;
     if (_isPlaying) msg.status     |= IS_ANIMATING;
     msg.tag = GetCurrentTag();
-    if (clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
+    if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
     {
       return RESULT_OK;
     }
@@ -214,7 +215,7 @@ namespace AnimationController {
   static u32 GetFromBuffer(u8* data, u32 numBytes)
   {
     assert(numBytes < KEYFRAME_BUFFER_SIZE);
-    
+
     if(_currentBufferPos + numBytes < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current position to end of buffer to just
       // copy directly
@@ -285,7 +286,7 @@ namespace AnimationController {
      }
     switch(msg.tag) {
       case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
-        _haveReceivedTerminationFrame = true;
+        ++_haveReceivedTerminationFrame;
       case RobotInterface::EngineToRobot::Tag_animAudioSample:
       case RobotInterface::EngineToRobot::Tag_animAudioSilence:
         ++_numAudioFramesBuffered;
@@ -333,7 +334,7 @@ namespace AnimationController {
 
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
+      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame > 0);
       if(ready) {
         _isPlaying = true;
         _isBufferStarved = false;
@@ -424,12 +425,12 @@ namespace AnimationController {
       else
       {
 #ifdef TARGET_ESPRESSIF
-        if (!_playSilence) 
+        if (!_playSilence)
         {
           if (_audioReadInd == AUDIO_SAMPLE_SIZE-2) // XXX Temporary hack for EP1 compatibility until we can adjust the audio chunk size
           {
             GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP-1);
-            dest[MAX_AUDIO_BYTES_PER_DROP-1] = dest[MAX_AUDIO_BYTES_PER_DROP-2]; 
+            dest[MAX_AUDIO_BYTES_PER_DROP-1] = dest[MAX_AUDIO_BYTES_PER_DROP-2];
           }
           else
           {
@@ -509,11 +510,11 @@ namespace AnimationController {
           {
             GetFromBuffer(&msg);
             _currentTag = msg.animStartOfAnimation.tag;
-              
+
             RobotInterface::AnimationStarted msg;
             msg.tag = _currentTag;
             RobotInterface::SendMessage(msg);
-              
+
 #             if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
 #           endif
@@ -542,7 +543,7 @@ namespace AnimationController {
                 SteeringController::ExecuteDirectDrive(0, 0);
               #endif
             }
-            
+
             RobotInterface::AnimationEnded aem;
             aem.tag = _currentTag;
             RobotInterface::SendMessage(aem);
@@ -624,11 +625,7 @@ namespace AnimationController {
                     _currentTime_ms, system_get_time());
 #               endif
 
-              #ifdef TARGET_ESPRESSIF
-                Face::Update(msg.animFaceImage);
-              #else
-                HAL::FaceAnimate(msg.animFaceImage.image);
-              #endif
+              HAL::FaceAnimate(msg.animFaceImage.image, msg.animFaceImage.image_length);
 
               _tracksInUse |= FACE_IMAGE_TRACK;
             }
@@ -748,7 +745,8 @@ namespace AnimationController {
 
       if(terminatorFound) {
         _isPlaying = false;
-        _haveReceivedTerminationFrame = false;
+        assert(_haveReceivedTerminationFrame > 0);
+        _haveReceivedTerminationFrame--;
         --_numAudioFramesBuffered;
         ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
 #         if DEBUG_ANIMATION_CONTROLLER

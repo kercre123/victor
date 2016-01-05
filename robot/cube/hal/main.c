@@ -91,7 +91,9 @@ void MainLoop()
   radioPayload[3] = tapCount;
   radioPayload[4] = cumMissedPacketCount;
   radioPayload[5] = packetCount++;
-
+  #ifdef COMPATIBILITY_MODE_4P0
+  radioPayload[6] = BLOCK_ID;
+  #endif
   // Respond with accelerometer data
   TransmitData();
   
@@ -173,7 +175,6 @@ void InitializeMainLoop()
 }
 
 
-
 void main(void)
 {
   #ifdef EMULATE_BODY
@@ -193,7 +194,9 @@ void main(void)
   }
   
   // Run tests
+  #ifndef USE_EVAL_BOARD
   RunTests();
+  #endif
   
   #ifndef EMULATE_BODY
   // Initialize watchdog watchdog
@@ -201,10 +204,9 @@ void main(void)
   WDSV = 1;  
   #endif
   
-   #ifdef USE_UART
+  #ifdef USE_UART
   InitUart();
   #endif
-
   
   // Initalize Radio Timer 
   InitTimer0();
@@ -213,8 +215,11 @@ void main(void)
   #ifndef EMULATE_BODY
   // Cube radio state machine
   #ifdef COMPATIBILITY_MODE_4P0
+	#ifndef USE_EVAL_BOARD
+  InitAcc();
+  #endif // USE_EVAL_BOARD
   gCubeState = eSync;
-  radioStruct.COMM_CHANNEL = 74;
+  radioStruct.COMM_CHANNEL = CHANNEL_4P0;
   radioStruct.RADIO_INTERVAL_DELAY = 0xB6; // RADIO_INTERVAL_DELAY
   radioStruct.ADDRESS_TX_PTR = ADDRESS_4P0; // ADDRESS_TX_PTR 
   radioStruct.ADDRESS_RX_PTR = ADDRESS_4P0; // ADDRESS_RX_PTR
@@ -223,7 +228,19 @@ void main(void)
   TR0 = 1; // Start timer
   #else
   gCubeState = eAdvertise;
-  #endif
+  #endif // EMULATE_BODY
+
+  #ifdef SNIFFER
+    PutString("Sniffing cube to robot packets...\r\n");
+ 
+  while(1)
+  {
+    // Reset Payload
+    simple_memset(radioPayload, 0, sizeof(radioPayload));  
+    // Receive data
+    ReceiveData(0); 
+  }
+  #endif //SNIFFER
 
   while(1)
   {
@@ -251,8 +268,8 @@ void main(void)
       
       case eSync:
         // Listen for up to 150ms
-        LightOn(debugLedAdvertise); // advertising light on
-        if(ReceiveDataSync(3)) // 3x50mx ticks = 150ms
+        //LightOn(test ? debugLedAdvertise : debugLedI2CError); // advertising light on
+        if(ReceiveDataSync(3)) // 3x50ms ticks = 150ms
         {
           // Initialize accelerometer, lights, etc
           gCubeState = eInitializeMain;
@@ -298,7 +315,7 @@ void main(void)
         gCubeState = eAdvertise;
     }
   }
-  #else
+  #else		// EMULATE_BODY
   InitUart();
 
   gDataReceived = false;

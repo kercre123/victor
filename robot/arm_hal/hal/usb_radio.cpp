@@ -10,6 +10,7 @@
  *
  */
 
+#include <string.h>
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 
@@ -144,7 +145,7 @@ namespace Anki {
               recvBufSize_ = 0;
               return retVal;
             }
-            
+
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
               // Copy message contents to buffer
               std::memcpy((void*)buffer, recvBuf_ + headerSize + 4, dataLen);

@@ -1,5 +1,7 @@
 // High speed DMA-driven face animation
 #include "lib/stm32f4xx.h"
+#include <stdarg.h>
+#include <string.h>
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "hal/portable.h"
@@ -286,7 +288,7 @@ namespace Anki
         // Init sequence for 128x64 OLED module
         GPIO_RESET(GPIO_CMD, PIN_CMD);
         EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
-        
+
         /*
         // Draw "programmer art" face until we get real assets
         u8 face[] = {
@@ -300,12 +302,12 @@ namespace Anki
           COPY_COL(15),
           CLEAR_COL(24)
         };
-        FaceAnimate(face);        
+        FaceAnimate(face);
         */
 
-        FaceClear();        
+        FaceClear();
       }
-      
+
       void FaceClear()
       {
         // Empty face
@@ -314,7 +316,7 @@ namespace Anki
            CLEAR_COL(60),
            CLEAR_COL(8)
         };
-        FaceAnimate(face);
+        FaceAnimate(face, 3);
       }
 
       // Update the face to the next frame of an animation
@@ -323,12 +325,13 @@ namespace Anki
       // 00xxxxxx     CLEAR row (blank)
       // 01xxxxxx     COPY PREVIOUS ROW (repeat)
       // 1xxxxxyy     RLE 2-bit block
-      void FaceAnimate(u8* src)
+      void FaceAnimate(u8* src, const u16 length)
       {
         if (m_disableAnimate)
           return;
 
-        FaceDisplayDecode(src, ROWS, COLS, m_frame);
+          if (length == MAX_FACE_FRAME_SIZE) memcpy(m_frame, src, MAX_FACE_FRAME_SIZE);
+          else FaceDisplayDecode(src, ROWS, COLS, m_frame);
 
         SendFrame();
       }

@@ -124,6 +124,12 @@ message SetLiftHeight {
     float_32 duration_sec
 }
 
+// EnableLiftPower
+message EnableLiftPower {
+    bool enable
+}
+
+
 // SetHeadAngle
 message SetHeadAngle {
     float_32 angle_rad,
@@ -238,8 +244,9 @@ message PlaceObjectOnGround {
 message PlaceObjectOnGroundHere {
 }
 
-// ExecuteTestPlan
+// ExecuteTestPlans
 message ExecuteTestPlan {
+PathMotionProfile motionProf
 }
 
 // SelectNextObject

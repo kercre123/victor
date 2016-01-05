@@ -22,11 +22,14 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "util/random/randomGenerator.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGameTag.h"
 
 #include <iomanip>
 
@@ -870,8 +873,8 @@ namespace Anki {
       Radians newAngle(heading);
       newAngle += _targetAngle;
       if(_variability != 0) {
-        newAngle += _rng.RandDblInRange(-_variability.ToDouble(),
-                                        _variability.ToDouble());
+        newAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
+                                            _variability.ToDouble());
       }
       
       Pose3d rotatedPose;
@@ -946,7 +949,8 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
-                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                         "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                         GetTag(),
                          currentAngle.getDegrees(),
                          _targetAngle.getDegrees(),
                          _variability.getDegrees(),
@@ -959,7 +963,8 @@ namespace Anki {
       }
       else if( _turnStarted ) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
-                            "giving up since we stopped moving");
+                            "[%d] giving up since we stopped moving",
+                            GetTag());
         result = ActionResult::FAILURE_RETRY;
       }
 
@@ -979,7 +984,7 @@ namespace Anki {
     
     DriveStraightAction::DriveStraightAction(f32 dist_mm, f32 speed_mmps)
     : _dist_mm(dist_mm)
-    , _speed_mmps(std::abs(speed_mmps))
+    , _speed_mmps(speed_mmps)
     {
       
     }
@@ -1475,7 +1480,8 @@ namespace Anki {
       ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                          "Object with ID=%d no longer exists in the world.",
+                          "[%d] Object with ID=%d no longer exists in the world.",
+                          GetTag(),
                           _objectID.GetValue());
         return ActionResult::FAILURE_ABORT;
       }
@@ -1484,8 +1490,12 @@ namespace Anki {
       if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
       {
         PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                         "Object still exists, but not seen since %d (Current time = %d, will fail in %f (s))",
-                         lastObserved, robot.GetLastImageTimeStamp(), _waitToVerifyTime - currentTime);
+                         "[%d] Object still exists, but not seen since %d (stamp=%d, curr_s = %f, _waitTil_s = %f)",
+                         GetTag(),
+                         lastObserved,
+                         robot.GetLastImageTimeStamp(),
+                         currentTime,
+                         _waitToVerifyTime);
         actionRes = ActionResult::FAILURE_ABORT;
       }
       
@@ -1554,7 +1564,7 @@ namespace Anki {
       }
       
       if(_variability > 0) {
-        _headAngle += _rng.RandDblInRange(-_variability.ToDouble(),
+        _headAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
                                                        _variability.ToDouble());
         _headAngle = CLIP(_headAngle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
       }
@@ -1611,9 +1621,12 @@ namespace Anki {
         if(_inPosition || NEAR(Radians(robot.GetHeadAngle()) - _headAngle, 0.f, _halfAngle))
         {
           PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
-                           "Currently at %.1fdeg, on the way to %.1fdeg, within "
-                           "half angle of %.1fdeg", RAD_TO_DEG(robot.GetHeadAngle()),
-                           _headAngle.getDegrees(), _halfAngle.getDegrees());
+                           "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
+                           "half angle of %.1fdeg",
+                           GetTag(),
+                           RAD_TO_DEG(robot.GetHeadAngle()),
+                           _headAngle.getDegrees(),
+                           _halfAngle.getDegrees());
 
           robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3);
           _eyeShiftRemoved = true;
@@ -1627,7 +1640,8 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone",
-                         "Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
+                         "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
+                         GetTag(),
                          RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
       }
       
@@ -1727,43 +1741,43 @@ namespace Anki {
       } else {
         _heightWithVariation = _height_mm;
         if(_variability > 0.f) {
-          _heightWithVariation += _rng.RandDblInRange(-_variability, _variability);
+          _heightWithVariation += GetRNG().RandDblInRange(-_variability, _variability);
         }
         _heightWithVariation = CLIP(_heightWithVariation, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+      }
         
         
-        // Convert height tolerance to angle tolerance and make sure that it's larger
-        // than the tolerance that the liftController uses.
+      // Convert height tolerance to angle tolerance and make sure that it's larger
+      // than the tolerance that the liftController uses.
 
-        // Convert target height, height - tol, and height + tol to angles.
-        f32 heightLower = _heightWithVariation - _heightTolerance;
-        f32 heightUpper = _heightWithVariation + _heightTolerance;
-        f32 targetAngle = Robot::ConvertLiftHeightToLiftAngleRad(_heightWithVariation);
-        f32 targetAngleLower = Robot::ConvertLiftHeightToLiftAngleRad(heightLower);
-        f32 targetAngleUpper = Robot::ConvertLiftHeightToLiftAngleRad(heightUpper);
+      // Convert target height, height - tol, and height + tol to angles.
+      f32 heightLower = _heightWithVariation - _heightTolerance;
+      f32 heightUpper = _heightWithVariation + _heightTolerance;
+      f32 targetAngle = Robot::ConvertLiftHeightToLiftAngleRad(_heightWithVariation);
+      f32 targetAngleLower = Robot::ConvertLiftHeightToLiftAngleRad(heightLower);
+      f32 targetAngleUpper = Robot::ConvertLiftHeightToLiftAngleRad(heightUpper);
         
-        // Neither of the angular differences between targetAngle and its associated
-        // lower and upper tolerance limits should be smaller than LIFT_ANGLE_TOL.
-        // That is, unless the limits exceed the physical limits of the lift.
-        f32 minAngleDiff = std::numeric_limits<f32>::max();
-        if (heightLower > LIFT_HEIGHT_LOWDOCK) {
-          minAngleDiff = targetAngle - targetAngleLower;
-        }
-        if (heightUpper < LIFT_HEIGHT_CARRY) {
-          minAngleDiff = std::min(minAngleDiff, targetAngleUpper - targetAngle);
-        }
+      // Neither of the angular differences between targetAngle and its associated
+      // lower and upper tolerance limits should be smaller than LIFT_ANGLE_TOL.
+      // That is, unless the limits exceed the physical limits of the lift.
+      f32 minAngleDiff = std::numeric_limits<f32>::max();
+      if (heightLower > LIFT_HEIGHT_LOWDOCK) {
+        minAngleDiff = targetAngle - targetAngleLower;
+      }
+      if (heightUpper < LIFT_HEIGHT_CARRY) {
+        minAngleDiff = std::min(minAngleDiff, targetAngleUpper - targetAngle);
+      }
         
-        if (minAngleDiff < LIFT_ANGLE_TOL) {
-          // Tolerance is too small. Clip to be within range.
-          f32 desiredHeightLower = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle - LIFT_ANGLE_TOL);
-          f32 desiredHeightUpper = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle + LIFT_ANGLE_TOL);
-          f32 newHeightTolerance = std::max(_height_mm - desiredHeightLower, desiredHeightUpper - _height_mm);
+      if (minAngleDiff < LIFT_ANGLE_TOL) {
+        // Tolerance is too small. Clip to be within range.
+        f32 desiredHeightLower = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle - LIFT_ANGLE_TOL);
+        f32 desiredHeightUpper = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle + LIFT_ANGLE_TOL);
+        f32 newHeightTolerance = std::max(_height_mm - desiredHeightLower, desiredHeightUpper - _height_mm);
           
-          PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.TolTooSmall",
-                              "HeightTol %f mm == AngleTol %f rad near height of %f mm. Clipping tol to %f mm",
-                              _heightTolerance, minAngleDiff, _heightWithVariation, newHeightTolerance);
-          _heightTolerance = newHeightTolerance;
-        }
+        PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.TolTooSmall",
+                            "HeightTol %f mm == AngleTol %f rad near height of %f mm. Clipping tol to %f mm",
+                            _heightTolerance, minAngleDiff, _heightWithVariation, newHeightTolerance);
+        _heightTolerance = newHeightTolerance;
       }
       
       _inPosition = IsLiftInPosition(robot);
@@ -1803,8 +1817,9 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
-                         "Waiting for lift to get in position: %.1fmm vs. %.1fmm(+/-%.1f)",
-                         robot.GetLiftHeight(), _height_mm, _variability);
+                         "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",
+                         GetTag(),
+                         robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
       }
       
       return result;
@@ -2021,7 +2036,7 @@ namespace Anki {
             squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
           }
           
-          squintLayer.AddKeyFrame(ProceduralFaceKeyFrame(squintFace, 0));
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 0));
           _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(squintLayer));
         }
       }
@@ -3322,10 +3337,11 @@ namespace Anki {
 #pragma mark ---- PlayAnimationAction ----
     
     PlayAnimationAction::PlayAnimationAction(const std::string& animName,
-                                             const u32 numLoops)
+                                             u32 numLoops, bool interruptRunning)
     : _animName(animName)
     , _name("PlayAnimation" + animName + "Action")
     , _numLoops(numLoops)
+    , _interruptRunning(interruptRunning)
     {
       
     }
@@ -3334,9 +3350,51 @@ namespace Anki {
     {
       _startedPlaying = false;
       _stoppedPlaying = false;
-      _animTag = robot.PlayAnimation(_animName, _numLoops);
+      _wasAborted     = false;
+
+      if (NeedsAlteredAnimation(robot))
+      {
+        const Animation* streamingAnimation = robot.GetAnimationStreamer().GetStreamingAnimation();
+        const Animation* ourAnimation = robot.GetCannedAnimation(_animName);
+        
+        _alteredAnimation = std::unique_ptr<Animation>(new Animation(*ourAnimation));
+        assert(_alteredAnimation);
+        
+        bool useStreamingProcFace = !streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
+        
+        if (useStreamingProcFace)
+        {
+          // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
+          auto lastFrame = streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
+          ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
+          _alteredAnimation->AddKeyFrameByTime(frameCopy);
+        }
+        else
+        {
+          // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
+          auto lastFrame = streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
+          FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
+          _alteredAnimation->AddKeyFrameByTime(frameCopy);
+        }
+      }
+      
+      // If we've set our altered animation, use that
+      if (_alteredAnimation)
+      {
+        _animTag = robot.GetAnimationStreamer().SetStreamingAnimation(robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
+      }
+      else // do the normal thing
+      {
+        _animTag = robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+      }
+      
+      if(_animTag == AnimationStreamer::NotAnimatingTag) {
+        return ActionResult::FAILURE_ABORT;
+      }
       
       using namespace RobotInterface;
+      using namespace ExternalInterface;
+      
       auto startLambda = [this](const AnkiEvent<RobotToEngine>& event)
       {
         if(this->_animTag == event.GetData().Get_animStarted().tag) {
@@ -3353,9 +3411,22 @@ namespace Anki {
         }
       };
       
+      auto cancelLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
+      {
+        if(this->_animTag == event.GetData().Get_AnimationAborted().tag) {
+          PRINT_NAMED_INFO("PlayAnimation.AbortAnimationHandler",
+                           "Animation tag %d was aborted from running in slot %d, probably "
+                           "by another animation in another slot.",
+                           this->_animTag, this->GetSlotHandle());
+          _wasAborted = true;
+        }
+      };
+      
       _startSignalHandle = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::animStarted, startLambda);
 
       _endSignalHandle   = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::animEnded,   endLambda);
+      
+      _abortSignalHandle = robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted, cancelLambda);
       
       if(_animTag != 0) {
         return ActionResult::SUCCESS;
@@ -3364,10 +3435,60 @@ namespace Anki {
       }
     }
     
+    bool PlayAnimationAction::NeedsAlteredAnimation(Robot& robot) const
+    {
+      // Animations that don't interrupt never need to be altered
+      if (!_interruptRunning)
+      {
+        return false;
+      }
+      
+      const Animation* streamingAnimation = robot.GetAnimationStreamer().GetStreamingAnimation();
+      // Nothing is currently streaming so no need for alteration
+      if (nullptr == streamingAnimation)
+      {
+        return false;
+      }
+      
+      // The streaming animation has no face tracks, so no need for alteration
+      if (streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty() &&
+          streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty())
+      {
+        return false;
+      }
+      
+      // Now actually check our animation to see if we have an initial face frame
+      const Animation* ourAnimation = robot.GetCannedAnimation(_animName);
+      assert(ourAnimation);
+      
+      bool animHasInitialFaceFrame = false;
+      if (nullptr != ourAnimation)
+      {
+        auto procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
+        // If our track is not empty and starts at beginning
+        if (!procFaceTrack.IsEmpty() && procFaceTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
+        {
+          animHasInitialFaceFrame = true;
+        }
+        
+        auto faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
+        // If our track is not empty and starts at beginning
+        if (!faceAnimTrack.IsEmpty() && faceAnimTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
+        {
+          animHasInitialFaceFrame = true;
+        }
+      }
+      
+      // If we have an initial face frame, no need to alter the animation
+      return !animHasInitialFaceFrame;
+    }
+    
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
       if(_stoppedPlaying) {
         return ActionResult::SUCCESS;
+      } else if(_wasAborted) {
+        return ActionResult::FAILURE_ABORT;
       } else {
         return ActionResult::RUNNING;
       }
@@ -3375,9 +3496,11 @@ namespace Anki {
     
     void PlayAnimationAction::Cleanup(Robot& robot)
     {
-      // Abort anything that shouldn't still be running
-      if(robot.IsAnimating()) {
-        robot.AbortAnimation();
+      // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
+      // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
+      // to clean up
+      if(!_stoppedPlaying && !_wasAborted) {
+        robot.GetAnimationStreamer().SetStreamingAnimation(robot, nullptr);
       }
     }
     

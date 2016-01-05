@@ -12,17 +12,17 @@
 #include "dac.h"
 #include "oled.h"
 #include "i2c.h"
+#include "wifi.h"
 
 typedef uint16_t transmissionWord;
 const int RX_OVERFLOW = 8;
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
-static transmissionWord spi_tx_buff[TX_SIZE];
-static union {
-  transmissionWord spi_tx_side[TX_SIZE];
-  DropToWiFi drop_tx ;
-};
+static transmissionWord spi_backbuff[2][TX_SIZE];
+
+static transmissionWord* spi_write_buff = spi_backbuff[0];
+static transmissionWord* spi_tx_buff = spi_backbuff[1];
 
 transmissionWord spi_rx_buff[RX_SIZE];
 
@@ -32,8 +32,6 @@ static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
   static int pwmCmdCounter = 0;
 
-  I2C::Disable();
-
   // Process drop receive
   transmissionWord *target = spi_rx_buff;
   for (int i = 0; i < RX_OVERFLOW; i++, target++) {
@@ -41,17 +39,9 @@ static bool ProcessDrop(void) {
     
     DropToRTIP* drop = (DropToRTIP*)target;
 
-#if 0
-    // THIS IS GARBAGE TEMPORARY CODE
-    static uint8_t OLED_ADDRESS_TEMPORARY = 0;
-    static uint32_t OLED_DATA_TEMPORARY = 0xFFFFFFFF;
-    OLED_DATA_TEMPORARY = (OLED_DATA_TEMPORARY >> 1) ^ ((OLED_DATA_TEMPORARY & 1) ? 0xedb88320 : 0);
-    OLED::FeedFace(OLED_ADDRESS_TEMPORARY++, (uint8_t*)&OLED_DATA_TEMPORARY);
-#else
     if (drop->droplet & screenDataValid) {
       OLED::FeedFace(drop->screenInd, drop->screenData);
     }
-#endif
     
     DAC::Feed(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
     DAC::EnableAudio(drop->droplet & audioDataValid);
@@ -59,47 +49,43 @@ static bool ProcessDrop(void) {
     uint8_t *payload_data = (uint8_t*) drop->payload;
     totalDrops++;
     
-    switch (*(payload_data++)) {
+    if (drop->payloadLen)
+    {
+      uint8_t *payload_data = (uint8_t*) drop->payload;
+      // Handle OTA related messages right here so it's harder to break them
+      switch (*payload_data)
+      {
       case DROP_EnterBootloader:
       {
         EnterBootloader ebl;
-        memcpy(&ebl, payload_data, sizeof(ebl));
-
-        switch (ebl.which) {
+          memcpy(&ebl, payload_data+1, sizeof(ebl));
+          switch (ebl.which)
+          {
           case BOOTLOAD_RTIP:
+            {
             SPI::EnterRecoveryMode();
-            break ;
+              break;
+            }
           case BOOTLOAD_BODY:
+            {
             UART::EnterBodyRecovery();
-            break ;
+              break;
         }
+          }
         break;
       }
       case DROP_BodyUpgradeData:
       {
         BodyUpgradeData bud;
-        memcpy(&bud, payload_data, sizeof(bud));
-
-        //bud.data = ((bud.data & 0xFF00FF00) >> 8) | ((bud.data & 0x00FF00FF) << 8);
-      
+          memcpy(&bud, payload_data+1, sizeof(bud));
         UART::SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
         break;
       }
-      case 0x22:
+        default:
       {
-        memcpy(g_dataToBody.motorPWM, payload_data, sizeof(int16_t)*4);
-        pwmCmdCounter = (7440/5); // 200ms worth of drops
-        break;
+          WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
       }
     }
-
-    if (pwmCmdCounter > 0)
-    {
-      pwmCmdCounter--;
-    }
-    if (pwmCmdCounter == 1)
-    {
-      memset(g_dataToBody.motorPWM, 0, sizeof(int16_t)*4);
     }
     
     return true;
@@ -108,28 +94,44 @@ static bool ProcessDrop(void) {
   return false;
 }
 
-void Anki::Cozmo::HAL::SPI::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
-  drop_tx.preamble = TO_WIFI_PREAMBLE;
+void Anki::Cozmo::HAL::SPI::StartDMA(void) {
+  // Start sending out junk
+  SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
+  DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
+  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+}
 
-  memcpy(drop_tx.payload, buf, buflen);
+void Anki::Cozmo::HAL::SPI::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
+  // Swap buffers
+  {
+    transmissionWord *tmp = spi_write_buff;
+    spi_write_buff = spi_tx_buff;
+    spi_tx_buff = tmp;
+  }
+
+  DropToWiFi *drop_tx = (DropToWiFi*) spi_write_buff;
+
+  drop_tx->preamble = TO_WIFI_PREAMBLE;
+  drop_tx->droplet  = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0) | ToWiFi;
+
+  memcpy(drop_tx->payload, buf, buflen);
   
   // This is where a drop should be 
-  uint8_t *drop_addr = drop_tx.payload + buflen;
-  
-  // Send current state of body every frame (for the future)
-  BodyState bodyState;
-  bodyState.state = UART::recoveryMode;
-  bodyState.count = UART::RecoveryStateUpdated;
-  
-  // Copy to drop location
-  memcpy(drop_addr, &bodyState, sizeof(bodyState));
-  drop_tx.payloadLen  = sizeof(BodyState);
-
-  static int eoftime = 0;
-  drop_tx.droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF) | bootloaderStatus;
-
-  SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
-  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+  uint8_t *drop_addr = drop_tx->payload + buflen;
+  const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - buflen;
+  if (remainingSpace > 0)
+  {
+    drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
+    if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(BodyState))) // Have nothing to send so transmit body state info
+    {
+      BodyState bodyState;
+      bodyState.state = UART::recoveryMode;
+      bodyState.count = UART::RecoveryStateUpdated;
+      memcpy(drop_addr, &bodyState, sizeof(BodyState));
+      drop_tx->payloadLen = sizeof(BodyState);
+      drop_tx->droplet |= bootloaderStatus;
+    }
+  }
 }
 
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
@@ -149,6 +151,8 @@ void DMA2_IRQHandler(void) {
   static bool allowReset = true;
   static int droppedDrops = 0;
   
+  I2C::Disable();
+
   // Don't check for silence, we had a drop
   if (ProcessDrop()) {
     if (allowReset) {
@@ -186,8 +190,6 @@ void DMA2_IRQHandler(void) {
 
 extern "C"
 void DMA3_IRQHandler(void) {
-  memcpy(spi_tx_buff, spi_tx_side, sizeof(spi_tx_side));
-
   DMA_CDNE = DMA_CDNE_CDNE(3);
   DMA_CINT = 3;
 }
@@ -217,7 +219,6 @@ void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   // Configure transfer buffer
   DMAMUX_CHCFG3 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(15)); 
 
-  DMA_TCD3_SADDR          = (uint32_t)spi_tx_buff;
   DMA_TCD3_SOFF           = sizeof(transmissionWord);
   DMA_TCD3_SLAST          = -sizeof(spi_tx_buff);
 
