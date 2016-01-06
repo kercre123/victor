@@ -307,7 +307,7 @@ namespace Anki {
       
       // helper to create SimpleQuads from Color and coordinates/size in millimeters. Note SimpleQuad uses floats
       template <typename T>
-      VizInterface::SimpleQuad MakeSimpleQuad(const ColorRGBA& color, const Point<3, T>& centerMM, T sideSizeMM);
+      static VizInterface::SimpleQuad MakeSimpleQuad(const ColorRGBA& color, const Point<3, T>& centerMM, T sideSizeMM);
       
       // ==== Circle functions =====
       template<typename T>
