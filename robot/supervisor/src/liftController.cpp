@@ -73,13 +73,6 @@ namespace Anki {
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 4.f;
 
-        // Open loop gain
-        // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
-        const f32 SPEED_TO_POWER_OL_GAIN_UP = 0.0702f;
-        const f32 BASE_POWER_UP[NUM_CARRY_STATES] = {0.1455f, 0.3082f, 0.37f}; // 0.3082 and 0.37f are guesstimates
-        const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.0753f;
-        const f32 BASE_POWER_DOWN[NUM_CARRY_STATES] = {0.0412f, 0.f, 0.f};
-
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
 #endif
@@ -294,25 +287,6 @@ namespace Anki {
         return currentAngle_.ToFloat();
       }
 
-      f32 ComputeOpenLoopPower(f32 desired_speed_rad_per_sec)
-      {
-        // Open loop value to drive at desired speed
-        f32 power = 0;
-
-#if defined(SIMULATOR) || defined(TARGET_K02)
-        power = desired_speed_rad_per_sec * 0.05;
-#else
-        CarryState cs = PickAndPlaceController::GetCarryState();
-        if (desired_speed_rad_per_sec > 0) {
-          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_UP + BASE_POWER_UP[cs];
-        } else {
-          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_DOWN - BASE_POWER_DOWN[cs];
-        }
-#endif
-
-        return power;
-      }
-
       void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
         maxSpeedRad_ = ABS(max_speed_rad_per_sec);
@@ -339,9 +313,6 @@ namespace Anki {
 
       void SetAngularVelocity(const f32 rad_per_sec)
       {
-        //power_ = ComputeOpenLoopPower(rad_per_sec);
-        //HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
-
         // Command a target height based on the sign of the desired speed
         f32 targetHeight = 0;
         if (rad_per_sec > 0) {
