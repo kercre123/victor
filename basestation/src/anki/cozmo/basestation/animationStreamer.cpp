@@ -73,7 +73,8 @@ namespace Cozmo {
       using namespace ExternalInterface;
       PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.Aborting",
                           "Animation %s is interrupting animation %s",
-                          anim->GetName().c_str(), _streamingAnimation->GetName().c_str());
+                          anim != nullptr ? anim->GetName().c_str() : "NULL",
+                          _streamingAnimation->GetName().c_str());
       robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
     }
     
