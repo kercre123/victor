@@ -19,13 +19,15 @@ namespace WhackAMole {
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       _LastCubeTarget = _WhackAMoleGame.CurrentTarget;
       Debug.Log(string.Format("Chase - Start Targeting Cube {0}", _LastCubeTarget.ID));
-      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,50f,RobotArrives);
-      //_CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,false,false,0,RobotArrives);
+      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,85f,RobotArrives);
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
     }
 
     public void RobotArrives(bool success) {
       LightCube cube;
+      if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.SINGLE) {
+        return;
+      }
       if (success) {
         if (_WhackAMoleGame.ActivatedCubes.TryGetValue(_WhackAMoleGame.CurrentTarget.ID, out cube)) {
           _WhackAMoleGame.ToggleCube(cube.ID);
@@ -35,16 +37,11 @@ namespace WhackAMole {
       else {
 
         if (_WhackAMoleGame.CurrentTarget == null) {
-          // Don't give up cozmo!
-          foreach (KeyValuePair<int,LightCube> kVp in _WhackAMoleGame.ActivatedCubes) {
-            _WhackAMoleGame.CurrentTarget = kVp.Value;
-            Debug.Log(string.Format("Chase - Now Target Cube {0}", kVp.Key));
-            break;
-          }
-        }
-        if (_WhackAMoleGame.CurrentTarget != null){
-          _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,50f,RobotArrives);
-         // _CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,false,false,0,RobotArrives);
+          _StateMachine.SetNextState(new WhackAMoleConfusion());
+          
+        }else {
+          // Attempt to offset self
+          _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 85f, RobotArrives);
         }
       }
     }
@@ -76,6 +73,7 @@ namespace WhackAMole {
 
     public override void Exit() {
       base.Exit();
+      _CurrentRobot.CancelCallback(RobotArrives);
       _WhackAMoleGame.MoleStateChanged -= HandleMoleStateChange;
     }
   }

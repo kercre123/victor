@@ -23,8 +23,8 @@ namespace WhackAMole {
       _PanicInterval = _WhackAMoleGame.MaxPanicInterval;
       _PanicStartTimestamp = Time.time;
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
-      //_CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,true,false,0);
-      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,75f);
+      _CurrentRobot.SetLiftHeight(1.0f);
+      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,0f);
     }
 
     public override void Update() {
@@ -34,11 +34,14 @@ namespace WhackAMole {
       }
 
       if (Time.time - _PanicStartTimestamp > _PanicTimeout) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kIdleHumming, HandleAnimationDone));
+        //_WhackAMoleGame.DeactivateAllCubes();
+        //_StateMachine.SetNextState(new WhackAMoleIdle());
         return;
       }
       // Check timestamps for Panic Target Switching and Timeout
       if (Time.time - _PanicIntervalTimestamp > _PanicInterval) {
+        _CurrentRobot.SetLiftHeight(Random.Range(0.0f,1.0f));
         PanicTargetSwitch(true);
       }
     }
@@ -46,8 +49,14 @@ namespace WhackAMole {
     // Reset the interval with decay as Cozmo panics more.
     // TODO: Factor this into the Mood System?
     private void PanicTargetSwitch(bool success) {
+      if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.BOTH) {
+        return;
+      }
       _PanicIntervalTimestamp = -1;
-      _PanicInterval = _PanicInterval - (_PanicInterval * Random.Range(_WhackAMoleGame.PanicDecayMin, _WhackAMoleGame.PanicDecayMax));
+      _PanicInterval = _PanicInterval - (Random.Range(_WhackAMoleGame.PanicDecayMin, _WhackAMoleGame.PanicDecayMax));
+      if (_PanicInterval <= _WhackAMoleGame.PanicDecayMin) {
+        _PanicInterval = _WhackAMoleGame.PanicDecayMin;
+      }
       int curr;
       if (_WhackAMoleGame.CurrentTarget != null) {
         curr = _WhackAMoleGame.CurrentTarget.ID;
@@ -59,14 +68,14 @@ namespace WhackAMole {
         if (kVp.Key != curr) {
           _WhackAMoleGame.CurrentTarget = kVp.Value;
           Debug.Log(string.Format("Panic - Now Target Cube {0}", kVp.Key));
-          _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,75f);
-          //_CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,true,false,0);
+          _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,0f);
           return;
         }
       }
     }
 
     void HandleAnimationDone(bool success) {
+      Debug.Log("Panic Animation Done, Deactivate all Cubes and return to idle.");
       _WhackAMoleGame.DeactivateAllCubes();
       _StateMachine.SetNextState(new WhackAMoleIdle());
     }

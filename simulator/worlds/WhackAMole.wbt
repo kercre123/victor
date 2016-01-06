@@ -31,11 +31,11 @@ CozmoMat {
   ySize 1.5
 }
 LightCube {
-  translation 0.430004 -0.0650072 0.0219927
+  translation 0.390004 -0.0850071 0.0219926
   rotation -1.83703e-06 -1.83704e-06 1 -1.5708
 }
 LightCube {
-  translation 0.408751 0.0789322 0.0219932
+  translation 0.388751 0.0989323 0.0219933
   rotation -1.83703e-06 -1.83704e-06 1 -1.5708
   ID 2
 }
@@ -45,21 +45,13 @@ DEF Cozmo_1 CozmoBot {
   hidden position_0_2 -0.0100107
   hidden linearVelocity_0 6.55919e-17 -1.20381e-11 3.49338e-16
   hidden angularVelocity_0 1.65153e-14 -1.89281e-14 -2.37303e-11
-  hidden translation_8 -1.35849e-08 -1.40594e-12 -3.81746e-07
-  hidden rotation_8 3.8715e-13 1 -3.62454e-12 0.0013255
   hidden linearVelocity_8 2.93953e-15 -1.23668e-11 9.83972e-15
   hidden angularVelocity_8 1.66593e-14 -3.59318e-12 -2.37302e-11
-  hidden translation_24 7.41554e-10 -1.56114e-13 -7.1745e-08
-  hidden rotation_24 -2.73333e-10 1 -1.34096e-09 5.00364e-06
   hidden position_24_0 -0.0100043
   hidden linearVelocity_24 -1.33561e-13 -1.23639e-11 3.48148e-13
   hidden angularVelocity_24 1.66949e-14 -3.38319e-12 -2.37302e-11
-  hidden translation_25 7.40707e-10 -5.74601e-14 -4.48777e-08
-  hidden rotation_25 1.70969e-10 1 2.95196e-12 -2.88949e-06
   hidden linearVelocity_25 -4.31893e-14 -1.31129e-11 -1.08784e-13
   hidden angularVelocity_25 1.64897e-14 9.22292e-12 -2.37303e-11
-  hidden translation_27 -7.37971e-10 -1.56122e-13 -1.32919e-08
-  hidden rotation_27 -1.98896e-10 1 -9.75329e-10 6.87115e-06
   hidden position_27_0 -0.0100073
   hidden linearVelocity_27 -2.26935e-15 -1.23636e-11 -5.10283e-14
   hidden angularVelocity_27 1.66411e-14 1.72964e-12 -2.37303e-11
