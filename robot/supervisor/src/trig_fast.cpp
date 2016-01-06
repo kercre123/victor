@@ -17,11 +17,7 @@
 #include "anki/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "trig_fast.h"
-#ifdef TARGET_K02
 #include "anki/cozmo/robot/logging.h"
-#else
-#include "anki/common/robot/errorHandling.h"
-#endif
 
 // For larger input values to atan, use approximations
 // at fixed steps. (Essentially extends the LUT with courser

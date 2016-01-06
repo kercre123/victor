@@ -412,9 +412,9 @@ namespace Anki {
           // Check for a gyro rotation spike
           const f32 peakGyroThresh = 4.f;
           const u32 maxGyroPeakDuration_ms = 75;
-          if (std::fabsf(gyro_robot_frame_filt[2]) > peakGyroThresh) {
+          if (fabsf(gyro_robot_frame_filt[2]) > peakGyroThresh) {
             peakGyroMaxTime = currTime;
-          } else if (std::fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
+          } else if (fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
             if ((peakGyroMaxTime > peakGyroStartTime) && (peakGyroMaxTime - peakGyroStartTime < maxGyroPeakDuration_ms)) {
               PRINT("POKE DETECTED (GYRO)\n");
               peakGyroStartTime = currTime;
@@ -431,9 +431,9 @@ namespace Anki {
           if (!HeadController::IsMoving() && !LiftController::IsMoving()) {
             const f32 peakAccelThresh = 4000.f;
             const u32 maxAccelPeakDuration_ms = 75;
-            if (std::fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
+            if (fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
               peakAccelMaxTime = currTime;
-            } else if (std::fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
+            } else if (fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
               if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
                 PRINT("POKE DETECTED (ACCEL)");
                 peakAccelStartTime = currTime;

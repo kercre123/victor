@@ -1,4 +1,8 @@
 #include "anki/cozmo/robot/hal.h"
+#ifndef TARGET_K02
+#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/matrix.h"
+#endif
 #include "localization.h"
 #include "pickAndPlaceController.h"
 #include "imuFilter.h"

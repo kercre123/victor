@@ -797,31 +797,31 @@ namespace Anki {
 
 
 #     ifdef SIMULATOR
-      Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime)
+      Result CompressAndSendImage(const u8* img, const s32 captureHeight, const s32 captureWidth, const TimeStamp_t captureTime)
       {
         ImageChunk m;
 
-        switch(img.get_size(0)) {
+        switch(captureHeight) {
           case 240:
-            AnkiConditionalErrorAndReturnValue(img.get_size(1)==320*3, RESULT_FAIL, "CompressAndSendImage",
-                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            AnkiConditionalErrorAndReturnValue(captureWidth==320*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
             m.resolution = QVGA;
             break;
 
           case 296:
-            AnkiConditionalErrorAndReturnValue(img.get_size(1)==400*3, RESULT_FAIL, "CompressAndSendImage",
-                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            AnkiConditionalErrorAndReturnValue(captureWidth==400*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
             m.resolution = CVGA;
             break;
 
           case 480:
-            AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
-                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            AnkiConditionalErrorAndReturnValue(captureWidth==640*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
             m.resolution = VGA;
             break;
 
           default:
-            AnkiError("CompressAndSendImage", "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            AnkiError("CompressAndSendImage", "Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
             return RESULT_FAIL;
         }
 
@@ -831,7 +831,7 @@ namespace Anki {
         };
 
         cv::Mat cvImg;
-        cvImg = cv::Mat(img.get_size(0), img.get_size(1)/3, CV_8UC3, const_cast<void*>(img.get_buffer()));
+        cvImg = cv::Mat(captureHeight, captureWidth/3, CV_8UC3, (void*)img);
         cvtColor(cvImg, cvImg, CV_BGR2RGB);
 
         cv::vector<u8> compressedBuffer;

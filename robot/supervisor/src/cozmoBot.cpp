@@ -24,10 +24,12 @@
 #include "anki/cozmo/robot/logging.h"
 #ifndef TARGET_K02
 #include "animationController.h"
+#include "anki/common/shared/utilities_shared.h"
 #endif
 
 #ifdef SIMULATOR
 #include "anki/vision/CameraSettings.h"
+#include <math.h>
 #endif
 
 ///////// TESTING //////////
@@ -482,7 +484,7 @@ namespace Anki {
           // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
           // (The available frame is still one frame behind? I.e. we are just *about* to capture
           //  the next one?)
-          TimeStamp_t currentImageTime = std::floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
+          TimeStamp_t currentImageTime = floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
 
           // Keep up with the capture time of the last image we sent
           static TimeStamp_t lastImageSentTime = 0;
@@ -496,25 +498,17 @@ namespace Anki {
 
             static const int bufferSize = 1000000;
             static u8 buffer[bufferSize];
-            Embedded::MemoryStack scratch(buffer, bufferSize);
-            Embedded::Array<u8> image(captureHeight, captureWidth,
-                                      scratch, Embedded::Flags::Buffer(false,false,false));
 
-            HAL::CameraGetFrame(reinterpret_cast<u8*>(image.get_buffer()),
+            HAL::CameraGetFrame(buffer,
                                 HAL::captureResolution_, false);
-            if(!image.IsValid()) {
-              retVal = RESULT_FAIL;
-            } else {
+            // Send the image, with its actual capture time (not the current system time)
+            Messages::CompressAndSendImage(buffer, captureHeight, captureWidth, currentImageTime);
 
-              // Send the image, with its actual capture time (not the current system time)
-              Messages::CompressAndSendImage(image, currentImageTime);
+            //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
+            //      robotState.timestamp, currentImageTime);
 
-              //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
-              //      robotState.timestamp, currentImageTime);
-
-              // Mark that we've already sent the image for the current time
-              lastImageSentTime = currentImageTime;
-            }
+            // Mark that we've already sent the image for the current time
+            lastImageSentTime = currentImageTime;
           } // if(lastImageSentTime != currentImageTime)
 
 

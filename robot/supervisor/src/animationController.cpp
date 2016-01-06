@@ -1,3 +1,4 @@
+#include "anki/cozmo/robot/hal.h"
 #include "animationController.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -12,10 +13,9 @@ extern "C" {
   #include "anki/cozmo/robot/drop.h"
 }
 #define ONCHIP
-
 #else // Not on Espressif
 #include <assert.h>
-#include "anki/cozmo/robot/hal.h"
+#include <string.h>
 #include "headController.h"
 #include "liftController.h"
 #include "wheelController.h"

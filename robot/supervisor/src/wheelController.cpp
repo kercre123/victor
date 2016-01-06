@@ -339,8 +339,8 @@ namespace Anki {
 
     bool AreWheelsMoving()
     {
-      return (std::fabsf(filterWheelSpeedL_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S) ||
-             (std::fabsf(filterWheelSpeedR_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S);
+      return (fabsf(filterWheelSpeedL_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S) ||
+             (fabsf(filterWheelSpeedR_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S);
     }
 
     void ResetIntegralGainSums(void)
