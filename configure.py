@@ -109,9 +109,16 @@ def parse_game_arguments():
     parser.add_argument(
         '--provision-profile',
         metavar='string',
-        default='Cozmo',
+        default=None,
         required=False,
         help='Provide the mobile provisioning profile name for signing')
+
+    parser.add_argument(
+            '--use-keychain',
+            metavar='string',
+            default=None,
+            required=False,
+            help='Provide the keychain to look for the signing cert.')
 
     parser.add_argument(
         '--do-not-check-dependencies',
@@ -146,22 +153,29 @@ class GamePlatformConfiguration(object):
         self.config_path = os.path.join(self.platform_output_dir, '{0}.xcconfig'.format(self.platform))
 
         self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
-
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
                                                          'CozmoUnity_{0}.xcodeproj'.format(self.platform.upper()))
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
-
             try:
-                tmp_pp = CERT_ROOT + '/' + self.options.provision_profile + '.mobileprovision'
-                self.provision_profile_uuid = subprocess.check_output(
-                    '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True)
-                self.codesign_identity = subprocess.check_output(
-                    '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True)
+                if self.options.provision_profile is not None:
+                    tmp_pp = os.path.join(CERT_ROOT, self.options.provision_profile + '.mobileprovision')
+                    self.provision_profile_uuid = subprocess.check_output(
+                        '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True).strip()
+                    self.codesign_identity = subprocess.check_output(
+                        '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True).strip()
+                else:
+                    self.provision_profile_uuid = None
+                    self.codesign_identity = "iPhone Developer"
+                if self.options.use_keychain is not None:
+                    self.other_cs_flags = '--keychain ' + self.options.use_keychain
+                else:
+                    self.other_cs_flags = None
             except TypeError or AttributeError:
-                self.provision_profile_uuid = ''
+                self.provision_profile_uuid = None
                 self.codesign_identity = "iPhone Developer"
+                self.other_cs_flags = None
 
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
 
@@ -239,10 +253,14 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
                 'ANKI_BUILD_TARGET={0}'.format(self.platform),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
-                'PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid),
-                'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
-                'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
-                '']
+                'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path)]
+
+            if self.other_cs_flags is not None:
+                xcconfig += ['OTHER_CODE_SIGN_FLAGS="{0}"'.format(self.other_cs_flags)]
+            if self.provision_profile_uuid is not None:
+                xcconfig += ['PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid)]
+            xcconfig += ['CODE_SIGN_IDENTITY="{0}"'.format(self.codesign_identity)]
+            xcconfig += ['']
 
             ankibuild.util.File.mkdir_p(self.unity_build_dir)
             ankibuild.util.File.ln_s(self.platform_output_dir, self.unity_output_symlink)
@@ -270,13 +288,30 @@ class GamePlatformConfiguration(object):
             else:
                 buildaction = 'build'
 
-            ankibuild.xcode.build(
-                buildaction=buildaction,
-                workspace=self.workspace_path,
-                scheme=self.scheme,
-                platform=self.platform,
-                configuration=self.options.configuration,
-                simulator=self.options.simulator)
+            # Other cs flags and codesigning identity have default values that will work no matter what.
+            try:
+                ankibuild.xcode.build(
+                    buildaction=buildaction,
+                    workspace=self.workspace_path,
+                    scheme=self.scheme,
+                    platform=self.platform,
+                    configuration=self.options.configuration,
+                    simulator=self.options.simulator,
+                    other_code_sign_flags=self.other_cs_flags,
+                    provision_profile=self.provision_profile_uuid,
+                    code_sign_identity=self.codesign_identity)
+            except AttributeError:
+                ankibuild.xcode.build(
+                    buildaction=buildaction,
+                    workspace=self.workspace_path,
+                    scheme=self.scheme,
+                    platform=self.platform,
+                    configuration=self.options.configuration,
+                    simulator=self.options.simulator)
+
+
+
+
 
     def run(self):
         if self.options.verbose:
