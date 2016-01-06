@@ -232,5 +232,5 @@ void user_init(void)
 
   // Register callbacks
   system_init_done_cb(&system_init_done);
-  wifi_set_event_handler_cb(wifi_event_callback);
+  //wifi_set_event_handler_cb(wifi_event_callback);
 }

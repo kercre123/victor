@@ -139,6 +139,10 @@ bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const b
 
 bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 {
+  const esp_udp* const dest = (esp_udp*)clientConnection->dest;
+  os_memcpy(socket->proto.udp->remote_ip, dest->remote_ip, 4);
+  socket->proto.udp->remote_port = dest->remote_port;
+  
 #ifdef DEBUG_CLIENT
   printf("clientQueuePacket to %d.%d.%d.%d:%d\r\n", socket->proto.udp->remote_ip[0], socket->proto.udp->remote_ip[1],
                     socket->proto.udp->remote_ip[2], socket->proto.udp->remote_ip[3], socket->proto.udp->remote_port);
