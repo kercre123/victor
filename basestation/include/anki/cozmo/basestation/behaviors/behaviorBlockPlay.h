@@ -189,7 +189,7 @@ namespace Cozmo {
     const f32 _speedToDriveForwardWhileTracking = 90.0f;
     const f32 _highLiftHeight = 70.0f;
     const f32 _minHeadAngleforLiftUp_rads = DEG_TO_RAD(20.0f);
-    const f32 _lostBlockTimeToLookDown = 1.5f;
+    const f32 _lostBlockTimeToLookDown = 1.2f;
     const f32 _waitForBlockHeadAngle_rads = DEG_TO_RAD(-10.0f);
     const f32 _timetoInspectBlock = 0.3f;
     u32 _driveForwardActionTag = 0;
