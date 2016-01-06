@@ -50,6 +50,8 @@ void MotorsUpdate(void* userdata) {
     {
       Motors::setPower(i, g_dataToBody.motorPWM[i]);
     }
+
+    Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
   }
 }
 
@@ -57,13 +59,11 @@ int main(void)
 {
   // Initialize our scheduler
   RTOS::init();
-  RTOS::schedule(MotorsUpdate);   // This is our periodic PWM update
 
   // Initialize the hardware peripherals
   Battery::init();
   Timer::Init();
   Motors::init();
-  Head::init();
   Lights::init();
   Random::init();
   //Radio::init();
@@ -71,6 +71,10 @@ int main(void)
 
   // Let the test fixtures run, if nessessary
   TestFixtures::run();
+
+  // Only use Head/body if tests are not enabled
+  Head::init();
+  RTOS::schedule(MotorsUpdate);   
   
   // Start the scheduler
   RTOS::run();
