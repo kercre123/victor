@@ -32,6 +32,7 @@ namespace WhackAMole {
     }
 
     void HandleMoleStateChange(WhackAMoleGame.MoleState state) {
+      Debug.Log(string.Format("Confusion - Mole State Changed to {0}", state));
       if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.NONE) {
         // A cube has been tapped, start chase. If more than one cube is
         // active, Chase will handle moving to Panic.

@@ -14,11 +14,11 @@ namespace WhackAMole {
 
     public MoleState CubeState {
       get {
-        if (_CubeActiveA || _CubeActiveB) {
-          return MoleState.SINGLE;
-        }
-        else if (_CubeActiveA && _CubeActiveB) {
+        if (_CubeActiveA && _CubeActiveB) {
           return MoleState.BOTH;
+        }
+        else if (_CubeActiveA || _CubeActiveB) {
+          return MoleState.SINGLE;
         }
         else {
           return MoleState.NONE;
@@ -72,8 +72,6 @@ namespace WhackAMole {
     }
 
     public void SetUpCubes() {
-
-      CurrentRobot.SetHeadAngle(-1.0f);
       // Set Buttons to Yellow until cubes are set up properly
       _GamePanel.CubeAButton.image.color = Color.yellow;
       _GamePanel.CubeBButton.image.color = Color.yellow;
@@ -107,11 +105,9 @@ namespace WhackAMole {
         _GamePanel.CubeBButton.onClick.RemoveAllListeners();
         _GamePanel.CubeAButton.onClick.AddListener(() => {
           ToggleCube(_CubeAID);
-          UpdateCubeLights();
         });
         _GamePanel.CubeBButton.onClick.AddListener(() => {
           ToggleCube(_CubeBID);
-          UpdateCubeLights();
         });
         UpdateCubeLights();
       }
@@ -120,17 +116,28 @@ namespace WhackAMole {
       }
     }
 
+    public void DeactivateAllCubes() {
+      _CubeActiveA = false;
+      _CubeActiveB = false;
+      CurrentTarget = null;
+      ActivatedCubes.Clear();
+      UpdateCubeLights();
+    }
+
     public void ToggleCube(int ID) {
       LightCube cube;
       bool isNewTarget = false;
       if (CurrentRobot.LightCubes.TryGetValue(ID, out cube)) {
+        // Identify which cube it is and toggle active state.
         if (ID == _CubeAID) {
           _CubeActiveA = !_CubeActiveA;
           isNewTarget = _CubeActiveA;
+          Debug.Log(string.Format("Cube {0} set to {1}", ID, _CubeActiveA));
         }
         else if (ID == _CubeBID) {
           _CubeActiveB = !_CubeActiveB;
           isNewTarget = _CubeActiveB;
+          Debug.Log(string.Format("Cube {0} set to {1}", ID, _CubeActiveB));
         }
         else {
           CurrentTarget = null;
@@ -165,6 +172,7 @@ namespace WhackAMole {
             }
           }
         }
+        UpdateCubeLights();
       }
       else {
         Debug.LogError("Attempting to Toggle an Invalid Cube, Cube not found.");
@@ -205,6 +213,7 @@ namespace WhackAMole {
 
       if (cubeLost) {
         // TODO: Use Confusion Animation transition to return to setup state.
+        Debug.LogWarning("Cubes lost, set up again");
         SetUpCubes();
       }
       else {
@@ -212,6 +221,7 @@ namespace WhackAMole {
         // state based on current state. States themselves pick which cube to target
         // when this action fires, assuming they aren't changing state.
         if (MoleStateChanged != null) {
+          Debug.Log("Invoke Mole State Changed");
           MoleStateChanged.Invoke(CubeState);
         }
       }

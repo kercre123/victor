@@ -19,12 +19,12 @@ namespace WhackAMole {
       base.Enter();
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-      _CurrentRobot.SetLiftHeight(1.0f);
       _PanicTimeout = _WhackAMoleGame.MaxPanicTime;
       _PanicInterval = _WhackAMoleGame.MaxPanicInterval;
       _PanicStartTimestamp = Time.time;
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
-      _CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,false,false,0,PanicTargetSwitch);
+      //_CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,true,false,0);
+      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,75f);
     }
 
     public override void Update() {
@@ -33,12 +33,13 @@ namespace WhackAMole {
         _PanicIntervalTimestamp = Time.time;
       }
 
+      if (Time.time - _PanicStartTimestamp > _PanicTimeout) {
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
+        return;
+      }
       // Check timestamps for Panic Target Switching and Timeout
       if (Time.time - _PanicIntervalTimestamp > _PanicInterval) {
         PanicTargetSwitch(true);
-      }
-      if (Time.time - _PanicStartTimestamp > _PanicTimeout) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
       }
     }
 
@@ -57,16 +58,21 @@ namespace WhackAMole {
       foreach (KeyValuePair<int, LightCube> kVp in _WhackAMoleGame.ActivatedCubes) {
         if (kVp.Key != curr) {
           _WhackAMoleGame.CurrentTarget = kVp.Value;
-          _CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,false,false,0,PanicTargetSwitch);
+          Debug.Log(string.Format("Panic - Now Target Cube {0}", kVp.Key));
+          _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,75f);
+          //_CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,true,false,0);
           return;
         }
       }
     }
 
     void HandleAnimationDone(bool success) {
-      _WhackAMoleGame.SetUpCubes();
+      _WhackAMoleGame.DeactivateAllCubes();
+      _StateMachine.SetNextState(new WhackAMoleIdle());
     }
+
     void HandleMoleStateChange(WhackAMoleGame.MoleState state) {
+      Debug.Log(string.Format("Panic - Mole State Changed to {0}", state));
       if (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.NONE) {
         // A cube has been tapped, start chase. If more than one cube is
         // active, Chase will handle moving to Panic.
