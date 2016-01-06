@@ -7,12 +7,14 @@
 #include "timeProfiler.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#ifndef TARGET_K02
+#include "liftController.h"
+#include "headController.h"
 #include "imuFilter.h"
+#include "proxSensors.h"
+#include "backpackLightController.h"
+#ifndef TARGET_K02
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
-#include "headController.h"
-#include "liftController.h"
 #include "testModeController.h"
 #include "localization.h"
 #include "pathFollower.h"
@@ -20,9 +22,9 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "animationController.h"
-#include "proxSensors.h"
-#include "backpackLightController.h"
 #include "blockLightController.h"
+#else
+#include "anki/cozmo/robot/logging.h"
 #endif
 
 #ifdef SIMULATOR
@@ -98,9 +100,9 @@ namespace Anki {
 
       void StartMotorCalibrationRoutine()
       {
-#ifndef TARGET_K02
         LiftController::StartCalibrationRoutine();
         HeadController::StartCalibrationRoutine();
+#ifndef TARGET_K02
         SteeringController::ExecuteDirectDrive(0,0);
 #endif
       }
@@ -110,22 +112,15 @@ namespace Anki {
       // Returns true when done.
       bool MotorCalibrationUpdate()
       {
-#ifndef TARGET_K02
         bool isDone = false;
 
-        if(
-           LiftController::IsCalibrated()
-           && HeadController::IsCalibrated()
-           ) {
+        if (LiftController::IsCalibrated() && HeadController::IsCalibrated())
+				{
           PRINT("Motors calibrated\n");
           IMUFilter::Reset();
           isDone = true;
         }
-
         return isDone;
-#else
-        return true;
-#endif
       }
 
 
@@ -170,7 +165,7 @@ namespace Anki {
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
-
+#endif
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "BackpackLightController init failed.\n");
@@ -197,7 +192,7 @@ namespace Anki {
          return RESULT_FAIL;
          }
          */
-
+#ifndef TARGET_K02
         lastResult = DockingController::Init();;
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "DockingController init failed.\n");
@@ -206,11 +201,11 @@ namespace Anki {
         lastResult = PickAndPlaceController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PickAndPlaceController init failed.\n");
-
+#endif
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "LiftController init failed.\n");
-
+#ifndef TARGET_K02
         lastResult = AnimationController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "AnimationController init failed.\n");
@@ -294,21 +289,21 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           PRINT("Robot radio is connected.\n");
           wasConnected_ = true;
-#ifndef TARGET_K02
           BackpackLightController::TurnOffAll();
-#endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           Messages::ResetInit();
 #ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
           SteeringController::ExecuteDirectDrive(0,0);
+#endif
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
-          PickAndPlaceController::Reset();
-          PickAndPlaceController::SetCarryState(CARRY_NONE);
           BackpackLightController::TurnOffAll();
           BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
+#ifndef TARGET_K02
+          PickAndPlaceController::Reset();
+          PickAndPlaceController::SetCarryState(CARRY_NONE);
           AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
           HAL::FaceClear();
 #endif
@@ -319,7 +314,7 @@ namespace Anki {
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::ProcessBTLEMessages();
-
+#endif
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
@@ -327,7 +322,7 @@ namespace Anki {
         IMUFilter::Update();
         ProxSensors::Update();
 
-
+#ifndef TARGET_K02
         //////////////////////////////////////////////////////////////
         // Power management
         //////////////////////////////////////////////////////////////
@@ -355,15 +350,16 @@ namespace Anki {
           PRINT("Failed updating AnimationController. Clearing.\n");
           AnimationController::Clear();
         }
+#endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
-
+        BackpackLightController::Update();
+#ifndef TARGET_K02
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
-        BackpackLightController::Update();
         BlockLightController::Update();
 
         //////////////////////////////////////////////////////////////

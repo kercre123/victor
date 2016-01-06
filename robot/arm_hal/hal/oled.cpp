@@ -316,7 +316,7 @@ namespace Anki
            CLEAR_COL(60),
            CLEAR_COL(8)
         };
-        FaceAnimate(face);
+        FaceAnimate(face, 3);
       }
 
       // Update the face to the next frame of an animation
@@ -325,12 +325,13 @@ namespace Anki
       // 00xxxxxx     CLEAR row (blank)
       // 01xxxxxx     COPY PREVIOUS ROW (repeat)
       // 1xxxxxyy     RLE 2-bit block
-      void FaceAnimate(u8* src)
+      void FaceAnimate(u8* src, const u16 length)
       {
         if (m_disableAnimate)
           return;
 
-        FaceDisplayDecode(src, ROWS, COLS, m_frame);
+          if (length == MAX_FACE_FRAME_SIZE) memcpy(m_frame, src, MAX_FACE_FRAME_SIZE);
+          else FaceDisplayDecode(src, ROWS, COLS, m_frame);
 
         SendFrame();
       }

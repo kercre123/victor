@@ -14,7 +14,7 @@
  *
  **/
 
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
 #include "imuFilter.h"
 #include <math.h>
 #include "headController.h"
@@ -260,23 +260,31 @@ namespace Anki {
 
       void TurnOnIndicatorLight()
       {
+#ifndef TARGET_K02
         TestModeController::Start(TM_NONE);
+#endif
         HAL::SetLED(INDICATOR_LED_ID, LED_RED);
       }
       void TurnOffIndicatorLight()
       {
+#ifndef TARGET_K02
         HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
+#endif
       }
 
       void StartPathFollowTest()
       {
+        #ifndef TARGET_K02
         TestModeController::Start(TM_PATH_FOLLOW);
+        #endif
         TurnOffIndicatorLight();
       }
 
       void StartLiftTest()
       {
+        #ifndef TARGET_K02
         TestModeController::Start(TM_LIFT);
+        #endif
         TurnOffIndicatorLight();
       }
 
@@ -311,6 +319,7 @@ namespace Anki {
 
       void HandlePickupParalysis()
       {
+#ifndef TARGET_K02
         static bool wasParalyzed = false;
         if (enablePickupParalysis_) {
           if (IsPickedUp() && !wasParalyzed) {
@@ -332,10 +341,10 @@ namespace Anki {
           WheelController::Enable();
           wasParalyzed = false;
         }
-
+#endif
       }
 
-
+#ifndef TARGET_K02
       void ToggleDisplayGeneralInfo()
       {
         static bool infoDisplayed = false;
@@ -364,15 +373,17 @@ namespace Anki {
 
         infoDisplayed = !infoDisplayed;
       }
-
+#endif
 
       void Reset()
       {
         rot_ = 0;
         rotSpeed_ = 0;
+#ifndef TARGET_K02
         // Event callback functions
         // TODO: This should probably go somewhere else
         eventActivationCallbacks[UPSIDE_DOWN] = ToggleDisplayGeneralInfo;
+#endif
 
         //eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
         //eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
@@ -399,7 +410,7 @@ namespace Anki {
           peakAccelStartTime = currTime;
           return;
         }
-
+#ifndef TARGET_K02
         // Only check for poke when wheels are not being driven
         if (!WheelController::AreWheelsMoving()) {
 
@@ -443,11 +454,11 @@ namespace Anki {
             peakAccelStartTime = currTime;
           }
 
-
         } else {
           peakGyroStartTime = currTime;
           peakAccelStartTime = currTime;
         }
+#endif
       }
 
       void DetectFalling()
@@ -477,7 +488,7 @@ namespace Anki {
 
 
       bool MotionDetected() {
-        return (lastMotionDetectedTime_us + MOTION_DETECT_TIMEOUT_US) > HAL::GetMicroCounter();
+        return (lastMotionDetectedTime_us + MOTION_DETECT_TIMEOUT_US) >= HAL::GetMicroCounter();
       }
 
       // Robot pickup detector
@@ -521,10 +532,12 @@ namespace Anki {
           }
 
         } else {
-
+#ifndef TARGET_K02
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
-          if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
+          if (!WheelController::AreWheelsPowered()
+              && !HeadController::IsMoving() && HeadController::IsInPosition()
+              && !LiftController::IsMoving() && LiftController::IsInPosition()) {
             if (CheckUnintendedAcceleration()
                 || ABS(gyro_robot_frame_filt[0]) > 5.f
                 || ABS(gyro_robot_frame_filt[1]) > 5.f
@@ -540,7 +553,7 @@ namespace Anki {
           } else {
             pdUnexpectedMotionCnt_ = 0;
           }
-
+#endif
 
           // Do conservative check for pickup.
           // Only when we're really sure it's moving!
@@ -626,12 +639,12 @@ namespace Anki {
       void DetectMotion()
       {
         u32 currTime = HAL::GetMicroCounter();
-
-        // Are wheels being powered?
-        if (WheelController::AreWheelsPowered()) {
+#ifndef TARGET_K02
+        // Are wheels or head being powered?
+        if (WheelController::AreWheelsPowered() || !HeadController::IsInPosition()) {
           lastMotionDetectedTime_us = currTime;
         }
-
+#endif
         // Was motion detected by accel or gyro?
         for(u8 i=0; i<3; ++i) {
           // Check accelerometer
@@ -648,6 +661,22 @@ namespace Anki {
         }
       }
 
+      void UpdatePitch()
+      {
+        f32 headAngle = HeadController::GetAngleRad();
+        
+        // If not moving then reset pitch angle with accelerometer.
+        // Otherwise, update it with gyro.
+        if (!MotionDetected()) {
+          pitch_ = atan2(accel_filt[0], accel_filt[2]) - headAngle;
+        } else if (HeadController::IsInPosition() && !HeadController::IsMoving()) {
+          f32 dAngle = -gyro_robot_frame_filt[1] * CONTROL_DT;
+          pitch_ += dAngle;
+        }
+        
+        //PERIODIC_PRINT(50, "Pitch %f deg\n", RAD_TO_DEG_F32(pitch_));
+      }
+      
       Result Update()
       {
         Result retVal = RESULT_OK;
@@ -706,9 +735,6 @@ namespace Anki {
         accel_filt[1] = imu_data_.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
         accel_filt[2] = imu_data_.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
         //printf("accel: %f %f %f\n", accel_filt[0], accel_filt[1], accel_filt[2]);
-        pitch_ = atan2(accel_filt[0], accel_filt[2]) - headAngle;
-
-        //PERIODIC_PRINT(50, "Pitch %f\n", RAD_TO_DEG_F32(pitch_));
 
         // Compute accelerations in robot frame
         const f32 xzAccelMagnitude = sqrtf(accel_filt[0]*accel_filt[0] + accel_filt[2]*accel_filt[2]);
@@ -769,6 +795,7 @@ namespace Anki {
 #endif
 
         DetectMotion();
+        UpdatePitch();
 
         // XY-plane rotation rate is robot frame z-axis rotation rate
         rotSpeed_ = gyro_robot_frame_filt[2];

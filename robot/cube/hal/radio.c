@@ -148,6 +148,9 @@ void ReceiveData(u8 timerMsbTimeout)
   u8 addr[5];
   u8 i;
   #endif
+  #ifdef SNIFFER
+  u8 i;
+  #endif
   
   // Get timer MSB
   now = TH0;
@@ -177,8 +180,23 @@ void ReceiveData(u8 timerMsbTimeout)
       cumMissedPacketCount++; 
       radioBusy = false; // exit loop
     }
+    #ifdef SNIFFER  
+    WDSV = 0; // 2 seconds // TODO: update this value // TODO add a macro for watchdog
+    WDSV = 1; 
+    #endif
   }
- 
+  #ifdef SNIFFER  
+  if(gDataReceived)
+  {
+  for(i=0; i<RADIO_PAYLOAD_LENGTH; i++)
+  {
+    PutHex(radioPayload[i]);
+    PutChar(' ');
+  }
+  PutString("\r\n");
+  }
+  #endif 
+  
   // Power down radio
   PowerDownRadio();
 }

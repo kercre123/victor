@@ -625,11 +625,7 @@ namespace AnimationController {
                     _currentTime_ms, system_get_time());
 #               endif
 
-              #ifdef TARGET_ESPRESSIF
-                Face::Update(msg.animFaceImage);
-              #else
-                HAL::FaceAnimate(msg.animFaceImage.image);
-              #endif
+              HAL::FaceAnimate(msg.animFaceImage.image, msg.animFaceImage.image_length);
 
               _tracksInUse |= FACE_IMAGE_TRACK;
             }

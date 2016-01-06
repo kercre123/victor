@@ -488,8 +488,6 @@ public:
     // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
-    
-    Result StopAnimation();
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);

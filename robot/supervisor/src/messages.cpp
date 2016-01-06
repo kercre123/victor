@@ -16,6 +16,10 @@
 #include "anki/common/robot/array2d.h"
 #endif
 
+#include "liftController.h"
+#include "headController.h"
+#include "imuFilter.h"
+#include "backpackLightController.h"
 #ifndef TARGET_K02
 #include "localization.h"
 #include "animationController.h"
@@ -23,14 +27,10 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#include "liftController.h"
-#include "headController.h"
-#include "imuFilter.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
-#include "backpackLightController.h"
 #include "blockLightController.h"
 #endif
 
@@ -83,7 +83,11 @@ namespace Anki {
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
-        #include "clad/robotInterface/messageEngineToRobot_switch.def"
+				#ifdef TARGET_K02
+				#include "clad/robotInterface/messageEngineToRobot_switch.def"
+				#else
+        #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
+				#endif
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
           if (msg.tag == lookForID_)
@@ -124,28 +128,28 @@ namespace Anki {
         Localization::GetCurrentMatPose(robotState_.pose.x, robotState_.pose.y, poseAngle);
         robotState_.pose.z = 0;
         robotState_.pose.angle = poseAngle.ToFloat();
+#endif
         robotState_.pose.pitch_angle = IMUFilter::GetPitch();
-
+#ifndef TARGET_K02
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
 
+#endif
         robotState_.headAngle  = HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
-
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
         robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
-
-        //ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
-
+#ifndef TARGET_K02
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
+#endif
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
-
+#ifndef TARGET_K02
         // TODO: Make this a parameters somewhere?
         const f32 WHEEL_SPEED_STOPPED = 2.f;
         robotState_.status |= (HeadController::IsMoving() ||
@@ -385,37 +389,27 @@ namespace Anki {
       }
 
       void Process_moveLift(const RobotInterface::MoveLift& msg) {
-#ifndef TARGET_K02
         LiftController::SetAngularVelocity(msg.speed_rad_per_sec);
-#endif
       }
 
       void Process_moveHead(const RobotInterface::MoveHead& msg) {
-#ifndef TARGET_K02
         HeadController::SetAngularVelocity(msg.speed_rad_per_sec);
-#endif
       }
 
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
         //PRINT("Moving lift to %f (maxSpeed %f, duration %f)\n", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
-#ifndef TARGET_K02
         LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
-#endif
       }
 
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
         //PRINT("Moving head to %f (maxSpeed %f, duration %f)\n", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
-#ifndef TARGET_K02
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
-#endif
       }
 
       void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
-#ifndef TARGET_K02
         HeadController::SetAngleRad(msg.newAngle);
-#endif
       }
 
       void Process_setBodyAngle(const RobotInterface::SetBodyAngle& msg)
@@ -436,9 +430,7 @@ namespace Anki {
 
       void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
       {
-#ifndef TARGET_K02
         IMUFilter::RecordAndSend(msg.length_ms);
-#endif
       }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
@@ -449,10 +441,10 @@ namespace Anki {
       }
 
       void Process_stop(const RobotInterface::StopAllMotors& msg) {
-#ifndef TARGET_K02
-        SteeringController::ExecuteDirectDrive(0,0);
         LiftController::SetAngularVelocity(0);
         HeadController::SetAngularVelocity(0);
+#ifndef TARGET_K02
+        SteeringController::ExecuteDirectDrive(0,0);
 #endif
       }
 
@@ -528,13 +520,14 @@ namespace Anki {
       } // ProcessImageRequestMessage()
 
       void Process_setControllerGains(const Anki::Cozmo::RobotInterface::ControllerGains& msg) {
-#ifndef TARGET_K02
         switch (msg.controller)
         {
           case RobotInterface::controller_wheel:
           {
+#ifndef TARGET_K02
             WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError,
                                       msg.kp, msg.ki, msg.maxIntegralError);
+#endif
             break;
           }
           case RobotInterface::controller_head:
@@ -549,7 +542,9 @@ namespace Anki {
           }
           case RobotInterface::controller_steering:
           {
+#ifndef TARGET_K02
             SteeringController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError); // Coopting structure
+#endif
             break;
           }
           default:
@@ -557,7 +552,6 @@ namespace Anki {
             PRINT("SetControllerGains invalid controller: %d\n", msg.controller);
           }
         }
-#endif
       }
 
       void Process_abortDocking(const AbortDocking& msg)
@@ -588,44 +582,38 @@ namespace Anki {
 #endif
       }
 
+#ifndef TARGET_K02
       // Group processor for all animation key frame messages
       void Process_anim(const RobotInterface::EngineToRobot& msg)
       {
-#ifndef TARGET_K02
         if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
           //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
           AnimationController::Clear();
         }
-#endif
       }
+#endif
 
       void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
       {
-#ifndef TARGET_K02
         for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
           BackpackLightController::SetParams((LEDId)i, msg.lights[i].onColor, msg.lights[i].offColor,
                                              msg.lights[i].onPeriod_ms, msg.lights[i].offPeriod_ms,
                                              msg.lights[i].transitionOnPeriod_ms, msg.lights[i].transitionOffPeriod_ms);
         }
-#endif
       }
 
       void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
       {
-#ifndef TARGET_K02
         IMUFilter::EnablePickupParalysis(msg.enable);
-#endif
       }
 
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)
       {
-#ifndef TARGET_K02
         if (msg.enable) {
           LiftController::Enable();
         } else {
           LiftController::Disable();
         }
-#endif
       }
 
 
@@ -650,6 +638,85 @@ namespace Anki {
       {
         // TODO: need to add this hal.h and implement
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
+      }
+
+      // ---------- Animation Key frame messages -----------
+      void Process_animBlink(const Anki::Cozmo::AnimKeyFrame::Blink& msg)
+      {
+        // Hangled by the Espressif
+      }
+      void Process_animFaceImage(const Anki::Cozmo::AnimKeyFrame::FaceImage& msg)
+      {
+        // Handled by the Espressif
+      }
+      void Process_animHeadAngle(const Anki::Cozmo::AnimKeyFrame::HeadAngle& msg)
+      {
+        HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
+                                                static_cast<f32>(msg.time_ms)*.001f);
+      }
+      void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
+      {
+#ifndef TARGET_K02
+        f32 leftSpeed=0, rightSpeed=0;
+        if(msg.speed == 0) {
+          // Stop
+          leftSpeed = 0.f;
+          rightSpeed = 0.f;
+        } else if(msg.curvatureRadius_mm == s16_MAX ||
+                  msg.curvatureRadius_mm == s16_MIN) {
+          // Drive straight
+          leftSpeed  = static_cast<f32>(msg.speed);
+          rightSpeed = static_cast<f32>(msg.speed);
+        } else if(msg.curvatureRadius_mm == 0) {
+          SteeringController::ExecutePointTurn(DEG_TO_RAD_F32(msg.speed), 50);
+          return;
+
+        } else {
+          // Drive an arc
+
+          //if speed is positive, the left wheel should turn slower, so
+          // it becomes the INNER wheel
+          leftSpeed = static_cast<f32>(msg.speed) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+
+          //if speed is positive, the right wheel should turn faster, so
+          // it becomes the OUTER wheel
+          rightSpeed = static_cast<f32>(msg.speed) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+        }
+
+        SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
+#endif
+      }
+      void Process_animLiftHeight(const Anki::Cozmo::AnimKeyFrame::LiftHeight& msg)
+      {
+        LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
+                                         static_cast<f32>(msg.time_ms)*.001f);
+
+      }
+      void Process_animAudioSample(const Anki::Cozmo::AnimKeyFrame::AudioSample&)
+      {
+        // Handled on the Espressif
+      }
+      void Process_animAudioSilence(const Anki::Cozmo::AnimKeyFrame::AudioSilence&)
+      {
+        // Handled on the Espressif
+      }
+      void Process_animFacePosition(const Anki::Cozmo::AnimKeyFrame::FacePosition&)
+      {
+        // Handled on the Espressif
+      }
+      void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
+      {
+        for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
+          HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
+        }
+      }
+      void Process_animEndOfAnimation(const Anki::Cozmo::AnimKeyFrame::EndOfAnimation&)
+      {
+        // Handled on the Espressif
+      }
+      void Process_animStartOfAnimation(const Anki::Cozmo::AnimKeyFrame::StartOfAnimation&)
+      {
+        // Handled on the Espressif
       }
 
       // ---------- Firmware over the air stubs for espressif -----------

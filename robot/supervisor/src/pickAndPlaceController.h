@@ -19,18 +19,16 @@
 #define COZMO_PICK_AND_PLACE_CONTROLLER_H_
 
 #include "anki/types.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
-#include "anki/common/robot/geometry_declarations.h"
 #include "clad/types/dockingSignals.h"
 
 namespace Anki {
   namespace Cozmo {
-    
+
     // Forward declaration
     namespace VisionSystem {
       class MarkerCode;
     }
-    
+
     namespace PickAndPlaceController {
 
       typedef enum {
@@ -53,20 +51,20 @@ namespace Anki {
         BACKUP_ON_CHARGER,
         DRIVE_FORWARD
       } Mode;
-      
+
       Result Init();
 
       Result Update();
-      
+
       Mode GetMode();
-      
+
       bool IsBusy();
       bool IsCarryingBlock();
       bool DidLastActionSucceed();
 
       void SetCarryState(CarryState state);
       CarryState GetCarryState();
-      
+
       // Starts the docking process, relying on the relative pose of the marker to be
       // transmitted from cozmo-engine immediately after calling this. (Except for DA_PLACE_LOW_BLIND)
       // If DA_PLACE_LOW_BLIND, rel_* parameters are wrt to current robot pose. Otherwise, rel_* params
@@ -78,7 +76,7 @@ namespace Anki {
                        const f32 rel_y = 0,
                        const f32 rel_angle = 0,
                        const bool useManualSpeed = false);
-      
+
       // Places block on ground and backs out.
       void PlaceOnGround(const f32 speed_mmps,
                          const f32 accel_mmps2,
@@ -86,10 +84,10 @@ namespace Anki {
                          const f32 rel_y,
                          const f32 rel_angle,
                          const bool useManualSpeed);
-      
+
       // Abort whatever pick or place action we're currently doing
       void Reset();
-      
+
     } // namespace PickAndPlaceController
   } // namespace Cozmo
 } // namespace Anki
