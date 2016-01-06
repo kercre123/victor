@@ -277,7 +277,7 @@ return RESULT_FAIL; \
     
     Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      _procFace.GetParams().SetFromJson(jsonRoot);
+      _procFace.SetFromJson(jsonRoot);
       Reset();
       return RESULT_OK;
     }
@@ -337,15 +337,15 @@ return RESULT_FAIL; \
     }
      */
     
-    ProceduralFaceParams ProceduralFaceKeyFrame::GetInterpolatedFaceParams(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms)
+    ProceduralFace ProceduralFaceKeyFrame::GetInterpolatedFaceParams(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms)
     {
       // The interpolation fraction is how far along in time we are from this frame's
       // trigger time (which currentTime was initialized to) and the next frame's
       // trigger time.
       const f32 fraction = std::min(1.f, static_cast<f32>(currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
       
-      ProceduralFaceParams interpParams;
-      interpParams.Interpolate(_procFace.GetParams(), nextFrame._procFace.GetParams(), fraction);
+      ProceduralFace interpParams;
+      interpParams.Interpolate(_procFace, nextFrame._procFace, fraction);
       
       return interpParams;
     }

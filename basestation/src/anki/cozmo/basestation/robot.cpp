@@ -126,7 +126,7 @@ namespace Anki {
       if (nullptr != neutralFaceAnim)
       {
         auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
-        ProceduralFaceParams::SetResetData(frame->GetFace().GetParams());
+        ProceduralFace::SetResetData(frame->GetFace());
       }
       else
       {
@@ -1452,14 +1452,13 @@ namespace Anki {
         const f32 sinAngle = yPix * divisor;
         
         ProceduralFace procFace;
-        ProceduralFaceParams& faceParams = procFace.GetParams();
         
         TimeStamp_t t=0;
         for(auto frac : {0.666667f, 0.888889f, 1.f})
         {
           const f32 x = frac * dist * cosAngle;
           const f32 y = frac * dist * sinAngle;
-          faceParams.SetFacePosition(Point2f(x,y));
+          procFace.SetFacePosition(Point2f(x,y));
           
           // Scale "further" eye down a little and "closer" eye up a little
           const f32 MaxScaleAdj = 0.25f;
@@ -1475,13 +1474,13 @@ namespace Anki {
 
           const f32 scaleY = (frac*(yScale-1.f)+1.f) - std::abs(y) / (0.5f * ProceduralFace::HEIGHT) * 0.2f;
           
-          faceParams.SetParameter(ProceduralFace::WhichEye::Left,
-                                  ProceduralEyeParameter::EyeScaleY, leftScaleY * scaleY);
-          faceParams.SetParameter(ProceduralFace::WhichEye::Right,
-                                  ProceduralEyeParameter::EyeScaleY, rightScaleY * scaleY);
+          procFace.SetParameter(ProceduralFace::WhichEye::Left,
+                                ProceduralEyeParameter::EyeScaleY, leftScaleY * scaleY);
+          procFace.SetParameter(ProceduralFace::WhichEye::Right,
+                                ProceduralEyeParameter::EyeScaleY, rightScaleY * scaleY);
           
           const f32 scaleX = frac*(xScale-1.f)+1.f;
-          faceParams.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, scaleX);
+          procFace.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, scaleX);
           
           ASSERT_NAMED(!(std::isnan(leftScaleY) || std::isnan(rightScaleY) ||
                          std::isnan(scaleY) || std::isnan(scaleX) ||
@@ -1494,10 +1493,9 @@ namespace Anki {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
         
         ProceduralFace procFace;
-        ProceduralFaceParams& params = procFace.GetParams();
-        params.SetFacePosition({xPix, yPix});
-        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
-        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
+        procFace.SetFacePosition({xPix, yPix});
+        procFace.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
+        procFace.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
         
         faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration_ms));
       }

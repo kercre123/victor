@@ -158,7 +158,7 @@ namespace Cozmo {
     // ready to play) into the passed-in procedural face params.
     bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                       ProceduralFaceParams& faceParams,
+                       ProceduralFace& faceParams,
                        bool shouldReplace);
     
     bool HaveFaceLayersToSend();

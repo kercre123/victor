@@ -2033,7 +2033,7 @@ namespace Anki {
           
           const f32 DockSquintScaleY = 0.5f;
           for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-            squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
+            squintFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
           }
           
           squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 0));
