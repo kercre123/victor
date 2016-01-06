@@ -121,10 +121,12 @@ namespace Cozmo {
     
     void InitState(const Robot& robot);
     void SetCurrState(State s);
+    void UpdateStateName();
     void PlayAnimation(Robot& robot, const std::string& animName, bool sequential = true);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
 
-    using ActionResultCallback = std::function<void(ActionResult result)>;
+    // returns true if the callback handled the action, false if we should continue to handle it in HandleActionCompleted
+    using ActionResultCallback = std::function<bool(ActionResult result)>;
     
     void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
     

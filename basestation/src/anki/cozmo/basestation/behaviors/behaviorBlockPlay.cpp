@@ -188,6 +188,8 @@ namespace Cozmo {
       return Status::Complete;
     }
 
+    UpdateStateName();
+    
     for( auto it = _objectsToTurnOffLights.begin();
          it != _objectsToTurnOffLights.end();
          it = _objectsToTurnOffLights.erase(it) ) {
@@ -296,7 +298,9 @@ namespace Cozmo {
                                                    RAD_TO_DEG( robot.GetHeadAngle( )));
                             StartActing(robot,
                                         new MoveHeadToAngleAction( DEG_TO_RAD(25.0f) ));
+                            return true;
                           }
+                          return false;
                         });                          
                           
               moveLiftAction = nullptr;
@@ -304,6 +308,8 @@ namespace Cozmo {
                                      "Moving to last face pose AND lowering lift");
           } else {
 
+            // TEMP: don't let face tracking look into the cube // TODO:(bn) 
+            
             // There's no face visible.
             // Wait a few seconds for a face to appear, otherwise quit.
             if (_noFacesStartTime <= 0) {
@@ -528,6 +534,9 @@ namespace Cozmo {
           SetCurrState(State::TrackingFace);
           break;
         }
+
+        PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PlacingBlock.Place",
+                         "Executing place object action");
         
         StartActing(robot, new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn, _motionProfile));
         break;
@@ -760,39 +769,59 @@ namespace Cozmo {
   void BehaviorBlockPlay::SetCurrState(State s)
   {
     _currentState = s;
-    
+
+    UpdateStateName();
+
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.SetState",
+                           "set state to '%s'", GetStateName().c_str());
+  }
+
+  void BehaviorBlockPlay::UpdateStateName()
+  {
+    std::string name;
     switch(_currentState)
     {
       case State::TrackingFace:
-        SetStateName("FACETRACK");
+        name = "FACETRACK";
         break;
       case State::TrackingBlock:
-        SetStateName("BLOCKTRACK");
+        name = "BLOCKTRACK";
         break;
       case State::InspectingBlock:
-        SetStateName("INSPECTING");
+        name = "INSPECTING";
         break;
       case State::RollingBlock:
-        SetStateName("ROLLING");
+        name = "ROLLING";
         break;
       case State::PickingUpBlock:
-        SetStateName("PICKING");
+        name = "PICKING";
         break;
       case State::PlacingBlock:
-        SetStateName("PLACING");
+        name = "PLACING";
         break;
       case State::WaitingForBlock:
-        SetStateName("WAIT4BLOCK");
+        name = "WAIT4BLOCK";
         break;
       case State::SearchingForMissingBlock:
-        SetStateName("SEARCHING");
+        name = "SEARCHING";
         break;
       default:
         PRINT_NAMED_WARNING("BehaviorBlockPlay.SetCurrState.InvalidState", "");
-        SetStateName("");
+        break;
     }
 
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.SetState", "set state to '%s'", GetStateName().c_str());
+    if( _isActing ) {
+      name += '*';
+    }
+    else {
+      name += ' ';
+    }
+
+    if( ! _animActionTags.empty() ) {
+      name += std::to_string(_animActionTags.size());
+    }
+
+    SetStateName(name);
   }
 
 
@@ -871,7 +900,9 @@ namespace Cozmo {
     }
 
     if( _actionResultCallback ) {
-      _actionResultCallback(msg.result);
+      if( _actionResultCallback(msg.result) ) {
+        return lastResult;
+      }
     }
     
     switch(_currentState)
@@ -1013,9 +1044,11 @@ namespace Cozmo {
           switch(msg.actionType) {
               
             case RobotActionType::PLACE_OBJECT_HIGH:
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.PlacementSuccessful",
-                               "Placed object %d on object %d",
-                               _objectToPickUp.GetValue(), _objectToPlaceOn.GetValue());
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                     "BehaviorBlockPlay.HandleActionCompleted.PlacementSuccessful",
+                                     "Placed object %d on object %d",
+                                     _objectToPickUp.GetValue(),
+                                     _objectToPlaceOn.GetValue());
               
               SetBlockLightState(robot, _objectToPlaceOn, BlockLightState::Complete);
               SetBlockLightState(robot, _objectToPickUp, BlockLightState::Complete);
@@ -1046,10 +1079,42 @@ namespace Cozmo {
               break;
           }
         } else {
-          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure", "Trying again");
-          // We failed to place the last block, try again
-          SetCurrState(State::PlacingBlock);
-          _isActing = false;
+
+          bool wasDockAttempt = msg.actionType == RobotActionType::PLACE_OBJECT_HIGH &&
+            msg.completionInfo.Get_objectInteractionCompleted().attemptedDock;
+          
+          if( wasDockAttempt ) {
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                   "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
+                                   "dock fail, backing up to try again");          
+          
+            _objectToPlaceOn.UnSet();
+            _objectToPickUp.UnSet();
+            _trackedObject.UnSet();
+
+            const float failureBackupDist = 70.0f;
+            const float failureBackupSpeed = 80.0f;
+
+            PlayAnimation(robot, "ID_rollBlock_fail_01");
+
+            // back up and drop the block, then re-init to start over          
+            StartActing(robot,
+                        new CompoundActionSequential({
+                            new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
+                            new PlaceObjectOnGroundAction()}),
+                        [this,&robot](ActionResult ret){
+                          InitState(robot);
+                          return true;
+                        });
+          }
+          else {
+            // TODO:(bn) "soft fail" sound here?
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                   "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
+                                   "pre-dock fail, trying again");
+            SetCurrState(State::PlacingBlock);
+            _isActing = false;
+          }
         }
         break;
       } // case PlacingBlock
@@ -1238,6 +1303,7 @@ namespace Cozmo {
                     new FacePoseAction(oObject->GetPose(), DEG_TO_RAD(5), PI_F),
                     [this,&robot](ActionResult ret){
                       PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
+                      return false;
                     });
         SetCurrState(State::WaitingForBlock);
       }
@@ -1267,14 +1333,15 @@ namespace Cozmo {
     }
 
     else if( _currentState == State::WaitingForBlock &&
+             ! _isActing && 
              _objectToPlaceOn != objectID && 
              msg.markersVisible &&
              robot.IsCarryingObject() &&
              diffVec.z() < 0.75 * oObject->GetSize().z()) {
+      _objectToPlaceOn = objectID;
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StartPlacing",
                              "Found block %d, placing on it",
                              _objectToPlaceOn.GetValue());
-      _objectToPlaceOn = objectID;
       SetCurrState(State::PlacingBlock);        
     }
     
@@ -1539,13 +1606,14 @@ namespace Cozmo {
       }
     }
     
+    PlayAnimationAction* animAction = new PlayAnimationAction(animName.c_str());
+
     BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                            "BehaviorBlockPlay.PlayAnimation",
-                           "%s %s",
+                           "[%d] %s %s",
+                           animAction->GetTag(),
                            animName.c_str(),
                            sequential ? "sequentially" : "in parallel");
-    
-    PlayAnimationAction* animAction = new PlayAnimationAction(animName.c_str());
 
     if( sequential ) {
       _animActionTags[animAction->GetTag()] = animName;
