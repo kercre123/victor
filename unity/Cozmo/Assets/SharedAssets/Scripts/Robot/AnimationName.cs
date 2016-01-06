@@ -3,6 +3,7 @@
 public static class AnimationName {
 
   public const string kTapCube = "tapCube";
+  public const string kSpeedTapFake = "speedTapFakeOut1";
   public const string kFinishTapCubeWin = "finishTapCubeWin";
   public const string kFinishTabCubeLose = "finishTapCubeLose";
 
