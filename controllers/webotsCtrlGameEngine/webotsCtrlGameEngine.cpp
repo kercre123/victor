@@ -125,14 +125,6 @@ int main(int argc, char **argv)
     config[AnkiUtil::kP_AS_HOST] = true;
   }
   
-  // Get engine playback mode mode
-  CozmoGame::PlaybackMode playbackMode = CozmoGame::LIVE_SESSION_NO_RECORD;
-  int pmInt;
-  if(JsonTools::GetValueOptional(config, AnkiUtil::kP_ENGINE_PLAYBACK_MODE, pmInt)) {
-    playbackMode = (CozmoGame::PlaybackMode)pmInt;
-    assert(playbackMode <= CozmoGame::PLAYBACK_SESSION);
-  } 
-
   int numUIDevicesToWaitFor = 1;
 #ifndef NO_WEBOTS
   webots::Field* numUIsField = basestationController.getSelf()->getField("numUIDevicesToWaitFor");
@@ -143,18 +135,9 @@ int main(int argc, char **argv)
   }
 #endif
   
-  if (playbackMode != CozmoGame::PLAYBACK_SESSION) {
-    
-    // Wait for at least one robot and UI device to connect
-    config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 1;
-    config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = numUIDevicesToWaitFor;
-    
-  } else {
-    
-    config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
-    config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
-    
-  } // if (bm != BM_PLAYBACK_SESSION)
+  
+  config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
+  config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
   
   // Initialize the API
   CozmoAPI myCozmo;
