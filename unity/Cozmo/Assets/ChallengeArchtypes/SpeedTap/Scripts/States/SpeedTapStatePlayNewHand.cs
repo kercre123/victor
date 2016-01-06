@@ -47,7 +47,7 @@ namespace SpeedTap {
             }
           }
         }
-        else if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.75f) {
+        else if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.25f) {
           if (!_CozmoTapping) {
             _CurrentRobot.SendAnimation(AnimationName.kSpeedTapFake);
             _CozmoTapping = true;
