@@ -42,6 +42,10 @@ namespace Anki {
         // like to be after backing out
         const f32 BACKOUT_DISTANCE_MM = 75.f;
         const f32 BACKOUT_SPEED_MMPS = 60;
+        
+        // Max amount of time to wait for lift to get into position before backing out.
+        // Used for high placement only when the lift tends to get stuck due to block friction.
+        const u32 START_BACKOUT_TIMEOUT_MS = 500;
 
         const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
         const f32 ON_RAMP_ANGLE_THRESH = 0.15;
@@ -429,6 +433,7 @@ namespace Anki {
               case DA_PLACE_HIGH:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                transitionTime_ = HAL::GetTimeStamp() + START_BACKOUT_TIMEOUT_MS;
                 break;
               }
               case DA_ROLL_LOW:
@@ -474,7 +479,8 @@ namespace Anki {
             }
             break;
           case MOVING_LIFT_POSTDOCK:
-            if (LiftController::IsInPosition()) {
+            if (LiftController::IsInPosition() ||
+                (transitionTime_ > 0 && transitionTime_ < HAL::GetTimeStamp())) {
               LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
 
               // Backup after picking or placing,
@@ -737,7 +743,7 @@ namespace Anki {
         useManualSpeed_ = useManualSpeed;
 
         relMarkerX_ = -1.f;
-
+        transitionTime_ = 0;
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
 
