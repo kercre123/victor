@@ -6,7 +6,9 @@ namespace WhackAMole {
     public float MaxPanicTime;
     public float MaxConfusionTime;
     public float MaxPanicInterval;
+    [Range(0f,1f)]
     public float PanicDecayMin;
+    [Range(0f,1f)]
     public float PanicDecayMax;
   }
 }

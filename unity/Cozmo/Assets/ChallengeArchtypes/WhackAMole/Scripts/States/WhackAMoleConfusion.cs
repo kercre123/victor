@@ -17,19 +17,13 @@ namespace WhackAMole {
       _ConfusionTimeout = _WhackAMoleGame.MaxConfuseTime;
       _ConfusionStartTimestamp = Time.time;
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
     }
 
     public override void Update() {
       base.Update();
-      if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.NONE) {
-        // A cube has been tapped, start chase. If more than one cube is
-        // active, Chase will handle moving to Panic.
-        _StateMachine.SetNextState(new WhackAMoleChase());
-      }
-      else {
-        if (Time.time - _ConfusionStartTimestamp > _ConfusionTimeout) {
-          _StateMachine.SetNextState(new AnimationState(AnimationName.kHeadDown, HandleAnimationDone));
-        }
+      if (Time.time - _ConfusionStartTimestamp > _ConfusionTimeout) {
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kHeadDown, HandleAnimationDone));
       }
     }
 
@@ -37,8 +31,17 @@ namespace WhackAMole {
       _StateMachine.SetNextState(new WhackAMoleIdle());
     }
 
+    void HandleMoleStateChange(WhackAMoleGame.MoleState state) {
+      if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.NONE) {
+        // A cube has been tapped, start chase. If more than one cube is
+        // active, Chase will handle moving to Panic.
+        _StateMachine.SetNextState(new WhackAMoleChase());
+      }
+    }
+
     public override void Exit() {
       base.Exit();
+      _WhackAMoleGame.MoleStateChanged -= HandleMoleStateChange;
     }
   }
 }

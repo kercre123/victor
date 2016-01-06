@@ -53,10 +53,13 @@ MonoBehaviour:
   _WhackAMolePanelPrefab: {fileID: 11416464, guid: 4c27a396e83474ab48e1ac62e3361e31,
     type: 2}
   MaxPanicTime: 0
+  MaxPanicInterval: 0
   MaxConfuseTime: 0
-  _CubeAColor: {r: 0, g: 1, b: 0, a: 0}
-  _CubeBColor: {r: 0, g: 0, b: 1, a: 0}
-  _ActiveColor: {r: 1, g: 0, b: 0, a: 0}
+  PanicDecayMin: 0
+  PanicDecayMax: 0
+  _CubeAColor: {r: 0, g: 1, b: 0, a: 1}
+  _CubeBColor: {r: 0, g: 0, b: 1, a: 1}
+  _ActiveColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -200,6 +203,18 @@ Prefab:
       value: 
       objectReference: {fileID: 11416464, guid: 4c27a396e83474ab48e1ac62e3361e31,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _CubeAColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeBColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _ActiveColor.a
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 141604}

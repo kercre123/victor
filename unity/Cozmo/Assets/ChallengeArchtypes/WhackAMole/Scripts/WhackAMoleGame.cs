@@ -65,10 +65,15 @@ namespace WhackAMole {
 
       _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
 
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       SetUpCubes();
     }
 
     public void SetUpCubes() {
+
+      CurrentRobot.SetHeadAngle(-1.0f);
       // Set Buttons to Yellow until cubes are set up properly
       _GamePanel.CubeAButton.image.color = Color.yellow;
       _GamePanel.CubeBButton.image.color = Color.yellow;
@@ -109,7 +114,6 @@ namespace WhackAMole {
           UpdateCubeLights();
         });
         UpdateCubeLights();
-        _StateMachine.SetNextState(new WhackAMoleIdle());
       }
       else {
         Debug.LogError("Cubes are NOT set up properly. Could not find an A and B cube for whack a mole.");

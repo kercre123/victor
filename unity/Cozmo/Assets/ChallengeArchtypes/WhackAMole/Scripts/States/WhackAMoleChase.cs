@@ -10,39 +10,35 @@ namespace WhackAMole {
   // If Cozmo loses track of their target, enter confused state.
   public class WhackAMoleChase : State {
     private WhackAMoleGame _WhackAMoleGame;
-    private LightCube lastChasedCube;
+    private LightCube _LastCubeTarget;
 
     public override void Enter() {
       base.Enter();
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-      lastChasedCube = _WhackAMoleGame.CurrentTarget;
-      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 5.0f, RobotArrives);
+      _LastCubeTarget = _WhackAMoleGame.CurrentTarget;
+      _CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,false,false,0,RobotArrives);
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
     }
 
     public void RobotArrives(bool success) {
       LightCube cube;
       if (success) {
-        if (_CurrentRobot.LightCubes.TryGetValue(_WhackAMoleGame.CurrentTarget.ID, out cube)) {
+        if (_WhackAMoleGame.ActivatedCubes.TryGetValue(_WhackAMoleGame.CurrentTarget.ID, out cube)) {
+          _WhackAMoleGame.MoleStateChanged -= HandleMoleStateChange;
           _WhackAMoleGame.ToggleCube(cube.ID);
           _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
-          return;
         }
       }
-      _StateMachine.SetNextState(new WhackAMoleConfusion());
+      else {
+        if (_WhackAMoleGame.CurrentTarget != null) {
+          _CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,false,false,0,RobotArrives);
+        }
+      }
     }
 
     void HandleAnimationDone(bool success) {
-      if (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.NONE) {
-        // Return to Idle if all cubes are off.
-        _StateMachine.SetNextState(new WhackAMoleIdle());
-      }
-      else {
-        // A cube has been tapped, start chase. If more than one cube is
-        // active, Chase will handle moving to Panic.
-        _StateMachine.SetNextState(new WhackAMoleChase());
-      }
+      _StateMachine.SetNextState(new WhackAMoleIdle());
     }
 
     public override void Update() {
@@ -58,9 +54,9 @@ namespace WhackAMole {
       else if (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.BOTH) {
         _StateMachine.SetNextState(new WhackAMolePanic());
       }
-      else if (lastChasedCube.ID != _WhackAMoleGame.CurrentTarget.ID) {
-        lastChasedCube = _WhackAMoleGame.CurrentTarget;
-        _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 5.0f, RobotArrives);
+      else if (_LastCubeTarget.ID != _WhackAMoleGame.CurrentTarget.ID) {
+        _LastCubeTarget = _WhackAMoleGame.CurrentTarget;
+        _CurrentRobot.PickupObject(_WhackAMoleGame.CurrentTarget,true,false,false,0,RobotArrives);
       }
     }
 
