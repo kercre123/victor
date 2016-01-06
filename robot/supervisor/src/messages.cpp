@@ -11,6 +11,7 @@
 #include "../sim_hal/transport/IReceiver.h"
 #include "../sim_hal/transport/reliableTransport.h"
 #include "anki/vision/CameraSettings.h"
+#include <string.h>
 #endif
 
 #ifdef SIMULATOR

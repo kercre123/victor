@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #ifndef TARGET_K02
+#include <assert.h>
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/matrix.h"
 #endif
