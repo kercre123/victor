@@ -50,6 +50,8 @@ void MotorsUpdate(void* userdata) {
     {
       Motors::setPower(i, g_dataToBody.motorPWM[i]);
     }
+
+    Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
   }
 }
 
