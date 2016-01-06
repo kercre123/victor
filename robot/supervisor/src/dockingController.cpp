@@ -3,7 +3,6 @@
 #include "dockingController.h"
 #include "headController.h"
 #include "liftController.h"
-
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"

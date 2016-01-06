@@ -1,8 +1,7 @@
 #ifndef LOCALIZATION_H
 #define LOCALIZATION_H
-#ifdef TARGET_K02
 #include "localization_geometry.h"
-#else
+#ifndef TARGET_K02
 #include "anki/common/robot/array2d_declarations.h"
 #include "anki/common/robot/geometry_declarations.h"
 #endif

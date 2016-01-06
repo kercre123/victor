@@ -19,12 +19,7 @@
 
 #include "anki/types.h"
 #include "clad/types/dockingSignals.h"
-#ifdef TARGET_K02
 #include "localization_geometry.h"
-#else
-#include "anki/common/robot/array2d_declarations.h"
-#include "anki/common/robot/geometry_declarations.h"
-#endif
 // Distance between the robot origin and the distance along the robot's x-axis
 // to the lift when it is in the low docking position.
 #ifdef SIMULATOR

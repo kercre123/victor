@@ -355,10 +355,10 @@ namespace Anki
         // Note the initial corners for the transformation are the 3D template
         // corners, since the transformation in this case maps the 3D corners
         // into the image plane
-        Quadrilateral<f32> initCorners(Point2f(template3d[0].x, template3d[0].y),
-          Point2f(template3d[1].x, template3d[1].y),
-          Point2f(template3d[2].x, template3d[2].y),
-          Point2f(template3d[3].x, template3d[3].y));
+        Quadrilateral<f32> initCorners(Point<float>(template3d[0].x, template3d[0].y),
+          Point<float>(template3d[1].x, template3d[1].y),
+          Point<float>(template3d[2].x, template3d[2].y),
+          Point<float>(template3d[3].x, template3d[3].y));
 
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE,
           initCorners, initialHomography, centerOffset,
