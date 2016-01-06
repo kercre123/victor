@@ -19,6 +19,7 @@ namespace Cozmo {
   class FaceWorld
   {
   public:
+    static const s32 MinTimesToSeeFace = 4;
     
     FaceWorld(Robot& robot);
     
@@ -45,21 +46,24 @@ namespace Cozmo {
     struct KnownFace {
       Vision::TrackedFace      face;
       VizManager::Handle_t     vizHandle;
+      s32                      numTimesObserved = 0;
 
       KnownFace(Vision::TrackedFace& faceIn);
     };
     
     std::map<Vision::TrackedFace::ID_t, KnownFace> _knownFaces;
+    using KnownFaceIter = std::map<Vision::TrackedFace::ID_t, KnownFace>::iterator;
     
     TimeStamp_t _deletionTimeout_ms = 30000;
 
-    Vision::TrackedFace::ID_t _idCtr = 0;
+    //Vision::TrackedFace::ID_t _idCtr = 0;
     
     Pose3d      _lastObservedFacePose;
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
     
     
     void RemoveFaceByID(Vision::TrackedFace::ID_t faceID);
+    void RemoveFace(KnownFaceIter& faceIter);
     
   }; // class FaceWorld
   

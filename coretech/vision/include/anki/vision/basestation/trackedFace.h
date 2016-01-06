@@ -126,12 +126,12 @@ namespace Vision {
     
   private:
     
-    ID_t _id;
-    std::string _name;
+    ID_t           _id;
+    std::string    _name;
     
-    float _score;
-    bool _isBeingTracked;
-    TimeStamp_t _timestamp;
+    float          _score;
+    bool           _isBeingTracked;
+    TimeStamp_t    _timestamp;
     
     Rectangle<f32> _rect;
     

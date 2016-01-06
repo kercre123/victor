@@ -60,6 +60,7 @@ namespace Vision {
     
     Result Init();
     Result RegisterNewUser(HFEATURE& hFeature);
+    Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
     
     bool _isInitialized = false;
     
@@ -71,6 +72,8 @@ namespace Vision {
                   "MaxAlbumFaces should be between 1 and 1000 for OKAO Library.");
     static_assert(MaxAlbumDataPerFace > 1 && MaxAlbumDataPerFace <= 10,
                   "MaxAlbumDataPerFace should be between 1 and 10 for OKAO Library.");
+    
+    INT32 _lastRegisteredUserID = 0;
     
     std::list<TrackedFace> _faces;
     
@@ -309,18 +312,71 @@ namespace Vision {
       return RESULT_FAIL;
     }
 
-    okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, numUsersInAlbum, 0);
+    // Find unused ID
+    BOOL isRegistered = true;
+    while(isRegistered)
+    {
+      ++_lastRegisteredUserID;
+      
+      okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _lastRegisteredUserID, 0, &isRegistered);
+      
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.RegisterNewUser.IsRegisteredCheckFailed",
+                          "Failed to determine if user ID %d is already registered",
+                          numUsersInAlbum);
+        return RESULT_FAIL;
+      }
+    }
+    
+    okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, _lastRegisteredUserID, 0);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.RegisterNewUser.RegisterFailed",
-                        "Failed trying to register user %d", numUsersInAlbum);
+                        "Failed trying to register user %d", _lastRegisteredUserID);
       return RESULT_FAIL;
     }
     
     PRINT_NAMED_INFO("FaceTrackerImpl.RegisterNewUser.Success",
-                     "Added user number %d to album", numUsersInAlbum);
+                     "Added user number %d to album", _lastRegisteredUserID);
     
     return RESULT_OK;
-  }
+  } // RegisterNewUser()
+  
+  Result FaceTracker::Impl::UpdateExistingUser(INT32 userID, HFEATURE& hFeature)
+  {
+    INT32 numUserData = 0;
+    INT32 okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, userID, &numUserData);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.UpdateExistingUser.GetNumDataFailed",
+                        "Failed to get num data for user %d", userID);
+      return RESULT_FAIL;
+    }
+    
+    if(numUserData >= MaxAlbumDataPerFace) {
+      //PRINT_NAMED_INFO("FaceTrackerImpl.UpdateExistingUser.MaxNumDataPerUser",
+      //                 "Reached maximum of %d data for user %d. Replacing last.",
+      //                 MaxAlbumDataPerFace, userID);
+      numUserData = MaxAlbumDataPerFace - 1;
+      
+      // TODO: Is clearing necessary if we're about to replace it anyway?
+      okaoResult = OKAO_FR_ClearData(_okaoFaceAlbum, userID, numUserData);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.UpdateExistingUser.ClearDataFailed",
+                          "Failed to clear data %d for user %d",
+                          numUserData, userID);
+        return RESULT_FAIL;
+      }
+    }
+    
+    okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID, numUserData);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.UpdateExistingUser.RegisterFailed",
+                        "Failed to trying to register data %d for existing user %d",
+                        numUserData, userID);
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
+  } // UpdateExistingUser()
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig)
   {
@@ -554,28 +610,49 @@ namespace Vision {
                               "Detection index %d of %d. OKAO Result Code=%d",
                               detectionIndex, numDetections, okaoResult);
         } else {
-          const INT32 RecognitionThreshold = 500; // TODO: Expose this parameter
-          const f32   RelativeRecogntionThreshold = 1.5; // Score of top result must be this times the score of the second best result
+          const INT32 RecognitionThreshold = 750; // TODO: Expose this parameter
+          const INT32 MergeThreshold       = 500; // TODO: Expose this parameter
+          //const f32   RelativeRecogntionThreshold = 1.5; // Score of top result must be this times the score of the second best result
           
-          bool matchFound = false;
           if(resultNum > 0 && scores[0] > RecognitionThreshold)
           {
-            if(resultNum > 1) {
-              // More than one result: see if it's score is larger enough relative to
-              // second best result
-              if(scores[0] > RelativeRecogntionThreshold*static_cast<f32>(scores[1])) {
-                face.SetID(userIDs[0]);
-                matchFound = true;
-              }
-            } else {
-              // Only one result, just use it
-              face.SetID(userIDs[0]);
-              matchFound = true;
+            INT32 minID = userIDs[0];
+
+            // Merge all results that are above threshold together, keeping the lowest ID
+            INT32 lastResult = 1;
+            while(lastResult < resultNum && scores[lastResult] > MergeThreshold) {
+              minID = std::min(userIDs[lastResult], minID);
+              ++lastResult;
             }
-          }
-          
-          if(matchFound) {
+            
+            for(INT32 iResult = 0; iResult < lastResult; ++iResult)
+            {
+              if(userIDs[iResult] != minID)
+              {
+                PRINT_NAMED_INFO("FaceTrackerImpl.Update.MergingRecords",
+                                 "Merging face %d with %d b/c its score %d is > %d",
+                                 userIDs[iResult], minID, scores[iResult], MergeThreshold);
+                
+                Result lastResult = UpdateExistingUser(minID, _okaoRecognitionFeatureHandle);
+                
+                if(RESULT_OK != lastResult) {
+                  return lastResult;
+                }
+                
+                okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userIDs[iResult]);
+                if(OKAO_NORMAL != okaoResult) {
+                  PRINT_NAMED_ERROR("FaceTrackerImpl.Update.ClearUserFailed",
+                                    "Failed to clear user %d after merging it with %d",
+                                    userIDs[iResult], minID);
+                  return RESULT_FAIL;
+                }
+              }
+              ++iResult;
+            }
+            
+            face.SetID(minID);
             face.SetName("KnownFace" + std::to_string(face.GetID()));
+
           } else {
             // No match found, add new user
             Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle);
@@ -583,6 +660,7 @@ namespace Vision {
               return lastResult;
             }
           }
+          
         }
       }
       TOC("FaceRecTime");
