@@ -180,6 +180,7 @@ namespace Anki {
           enable_ = false;
 
           inPosition_ = true;
+          prevAngleError_ = 0.f;
           angleErrorSum_ = 0.f;
 
           power_ = 0;
