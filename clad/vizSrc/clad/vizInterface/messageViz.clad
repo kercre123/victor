@@ -62,7 +62,7 @@ message Quad
   float_32 zLowerRight,
 }
 
-// SimpleQuad
+// SimpleQuad: Axis aligned quad. Any axis can be fixed or applied sideSize, depending on convention between parts
 structure SimpleQuad
 {
   uint_32 color,
@@ -76,6 +76,7 @@ message SimpleQuadVectorMessageBegin
   string identifier,
 }
 
+// SimpleQuadVectorMessage: a group of simpple quads
 message SimpleQuadVectorMessage
 {
   string identifier,
