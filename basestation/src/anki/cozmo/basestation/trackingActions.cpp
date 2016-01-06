@@ -30,6 +30,28 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark ITrackAction
   
+void ITrackAction::SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec) {
+  if(minSpeed_radPerSec >= maxSpeed_radPerSec) {
+    PRINT_NAMED_WARNING("ITrackAction.SetTiltSpeeds.InvalidSpeeds",
+                        "Min (%f) should be < max (%f)",
+                        minSpeed_radPerSec, maxSpeed_radPerSec);
+  } else {
+    _minTiltSpeed_radPerSec = minSpeed_radPerSec;
+    _maxTiltSpeed_radPerSec = maxSpeed_radPerSec;
+  }
+}
+
+void ITrackAction::SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec) {
+  if(minSpeed_radPerSec >= maxSpeed_radPerSec) {
+    PRINT_NAMED_WARNING("ITrackAction.SetPanSpeeds.InvalidSpeeds",
+                        "Min (%f) should be < max (%f)",
+                        minSpeed_radPerSec, maxSpeed_radPerSec);
+  } else {
+    _minPanSpeed_radPerSec = minSpeed_radPerSec;
+    _maxPanSpeed_radPerSec = maxSpeed_radPerSec;
+  }
+}
+
   
 u8 ITrackAction::GetAnimTracksToDisable() const
 {
@@ -118,13 +140,8 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > _tiltTolerance.ToFloat())
     {
       // Set speed/accel based on angle difference
-      const f32 MinSpeed = 30.f;
-      const f32 MaxSpeed = 50.f;
-      //const f32 MinAccel = 20.f;
-      //const f32 MaxAccel = 40.f;
-      
-      const f32 angleFrac = relTiltAngle/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
-      const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
+      const f32 angleFrac = std::abs(relTiltAngle)/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
+      const f32 speed = (_maxTiltSpeed_radPerSec - _minTiltSpeed_radPerSec)*angleFrac + _minTiltSpeed_radPerSec;
       const f32 accel = 20.f; // (MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
@@ -148,13 +165,8 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
       // Set speed/accel based on angle difference
-      const f32 MinSpeed = 20.f;
-      const f32 MaxSpeed = 80.f;
-      //const f32 MinAccel = 30.f;
-      //const f32 MaxAccel = 80.f;
-      
-      const f32 angleFrac = std::min(1.f, relPanAngle/(f32)M_PI);
-      const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
+      const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/(f32)M_PI);
+      const f32 speed = (_maxPanSpeed_radPerSec - _minPanSpeed_radPerSec)*angleFrac + _minPanSpeed_radPerSec;
       const f32 accel = 10.f; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       RobotInterface::SetBodyAngle setBodyAngle;
