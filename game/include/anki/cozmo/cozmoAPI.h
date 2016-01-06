@@ -14,7 +14,6 @@
 #ifndef __Anki_Cozmo_CozmoAPI_h__
 #define __Anki_Cozmo_CozmoAPI_h__
 
-#include "anki/cozmo/game/cozmoGame.h"
 #include "json/json.h"
 #include "util/helpers/noncopyable.h"
 
@@ -31,43 +30,45 @@ namespace Anki {
   }
   
 namespace Cozmo {
-  
+
+class CozmoGame;
+
 class CozmoAPI : private Util::noncopyable
 {
 public:
   // When the engine should run in a separate thread
-  Result StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
+  bool StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
   
   // When manual control over updating the engine is desired:
-  Result Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
-  Result Update(const double currentTime_sec);
+  bool Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
+  bool Update(const double currentTime_sec);
   
   // Destroys any running thread and game instance
   void Clear();
   
-  ~CozmoAPI();
+  virtual ~CozmoAPI();
   
 private:
   class CozmoInstanceRunner
   {
   public:
     CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
-                        const Json::Value& config, Result& initResult);
-    
+                        const Json::Value& config, bool& initResult);
+    ~CozmoInstanceRunner();
     void Run();
     void Stop() { _isRunning.store(false); }
     
     // For manually ticking the game
-    Result Update(const double currentTime_sec);
+    bool Update(const double currentTime_sec);
     
   private:
-    CozmoGame _cozmoInstance;
+    CozmoGame* _cozmoInstance;
     std::atomic<bool> _isRunning;
     
   }; // class CozmoInstanceRunner
   
   // Our running instance, if we have one
-  CozmoInstanceRunner * _cozmoRunner = nullptr;
+  CozmoInstanceRunner* _cozmoRunner = nullptr;
   std::thread _cozmoRunnerThread;
 }; // class CozmoAPI
   

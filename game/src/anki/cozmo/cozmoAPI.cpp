@@ -12,6 +12,7 @@
  **/
 
 #include "anki/cozmo/cozmoAPI.h"
+#include "anki/cozmo/game/cozmoGame.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -22,7 +23,7 @@ namespace Cozmo {
 
 #pragma mark --- CozmoAPI Methods ---
 
-Result CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
+bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
   // If there's already a thread running, we'll kill and restart
   if (_cozmoRunnerThread.joinable())
@@ -36,7 +37,7 @@ Result CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Va
   }
   
   // Init the InstanceRunner
-  Result gameInitResult;
+  bool gameInitResult = false;
   _cozmoRunner = new CozmoInstanceRunner(dataPlatform, config, gameInitResult);
   
   // Start the thread
@@ -45,7 +46,7 @@ Result CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Va
   return gameInitResult;
 }
 
-Result CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
+bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
   // If we have a joinable thread already, we can't start
   if (_cozmoRunnerThread.joinable())
@@ -62,25 +63,25 @@ Result CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value
   }
   
   // Game init happens in CozmoInstanceRunner construction, so we get the result
-  Result gameInitResult;
+  bool gameInitResult = false;
   _cozmoRunner = new CozmoInstanceRunner(dataPlatform, config, gameInitResult);
   
   return gameInitResult;
 }
 
-Result CozmoAPI::Update(const double currentTime_sec)
+bool CozmoAPI::Update(const double currentTime_sec)
 {
   // If we have a joinable thread already, shouldn't be updating
   if (_cozmoRunnerThread.joinable())
   {
     PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo running in thread - can not be externally updated!");
-    return Result::RESULT_FAIL;
+    return false;
   }
   
   if (nullptr == _cozmoRunner)
   {
     PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo has not been started!");
-    return Result::RESULT_FAIL;
+    return false;
   }
   
   return _cozmoRunner->Update(currentTime_sec);
@@ -114,13 +115,23 @@ void CozmoAPI::Clear()
 #pragma mark --- CozmoInstanceRunner Methods ---
 
 CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
-                                                   const Json::Value& config, Result& initResult)
-: _cozmoInstance(dataPlatform)
+                                                   const Json::Value& config, bool& initResult)
+: _cozmoInstance(new CozmoGame(dataPlatform))
 , _isRunning(true)
 {
-  initResult = _cozmoInstance.Init(config);
+  Result initResultReturn = _cozmoInstance->Init(config);
+  if (initResultReturn != RESULT_OK) {
+    //TODO: if init is not ok, change state to not running
+    PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner", "cozmo init failed with error %d", initResultReturn);
+  }
+  initResult = initResultReturn == RESULT_OK;
 }
-  
+
+CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
+{
+  Util::SafeDelete(_cozmoInstance);
+}
+
 void CozmoAPI::CozmoInstanceRunner::Run()
 {
   auto runStart = std::chrono::system_clock::now();
@@ -130,7 +141,8 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     auto tickStart = std::chrono::system_clock::now();
 
     std::chrono::duration<double> timeSeconds = tickStart - runStart;
-    
+
+    //TODO: capture update failure and change state to not running
     Update(timeSeconds.count());
     
     auto tickNow = std::chrono::system_clock::now();
@@ -140,7 +152,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       // Don't sleep if we're overtime, but only complain if we're more than 10ms overtime
       if (ms_left < std::chrono::milliseconds(-10))
       {
-        PRINT_NAMED_WARNING("CozmoInstanceRunner.overtime", "Update() (%dms max) ran over by %lldms", BS_TIME_STEP, (-ms_left).count());
+        PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) ran over by %lldms", BS_TIME_STEP, (-ms_left).count());
       }
     }
     else
@@ -150,9 +162,13 @@ void CozmoAPI::CozmoInstanceRunner::Run()
   }
 }
 
-Result CozmoAPI::CozmoInstanceRunner::Update(const double currentTime_sec)
+bool CozmoAPI::CozmoInstanceRunner::Update(const double currentTime_sec)
 {
-  return _cozmoInstance.Update(static_cast<float>(currentTime_sec));
+  Result updateResult = _cozmoInstance->Update(static_cast<float>(currentTime_sec));
+  if (updateResult != RESULT_OK) {
+    PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner", "cozmo update failed with error %d", updateResult);
+  }
+  return updateResult == RESULT_OK;
 }
   
 } // namespace Cozmo
