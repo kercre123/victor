@@ -63,9 +63,8 @@ namespace Anki {
         // The height of the "fingers"
         const f32 LIFT_FINGER_HEIGHT = 3.8f;
 #else
-        // Cozmo 4.1 - smooth gearbox
-        f32 Kp_ = 2.5f;    // proportional control constant
-        f32 Kd_ = 400.f;  // derivative gain
+        f32 Kp_ = 3.f;     // proportional control constant
+        f32 Kd_ = 3000.f;  // derivative gain
         f32 Ki_ = 0.1f;    // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 4.f;
@@ -421,15 +420,13 @@ namespace Anki {
         }
 
         desiredHeight_ = newDesiredHeight;
+        desiredAngle_ = Height2Rad(desiredHeight_);
 
         // Convert desired height into the necessary angle:
 #if(DEBUG_LIFT_CONTROLLER)
         PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm), duration = %f s\n", desiredHeight_, GetHeightMM(), duration_seconds);
 #endif
 
-
-        desiredAngle_ = Height2Rad(desiredHeight_);
-        prevAngleError_ = 0;
 
         f32 startRadSpeed = radSpeed_;
         f32 startRad = currDesiredAngle_;
