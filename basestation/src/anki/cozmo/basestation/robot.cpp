@@ -1553,12 +1553,6 @@ namespace Anki {
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
     } // StopSound()
-      
-      
-    Result Robot::StopAnimation()
-    {
-      return SendAbortAnimation();
-    }
 
     // Read the animations in a dir
     void Robot::ReadAnimationFile(const char* filename, std::string& animationId)

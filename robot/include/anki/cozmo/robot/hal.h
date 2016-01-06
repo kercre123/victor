@@ -428,7 +428,7 @@ namespace Anki
       //  1-63 draw N full lines (N*128 pixels) of black or blue
       //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
       // The decoder starts out drawing black, and inverts the color on every byte >= 64
-      void FaceAnimate(u8* frame);
+      void FaceAnimate(u8* frame, const u16 length);
 
       // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
       // This position is relative to the animation displayed when FaceAnimate() was

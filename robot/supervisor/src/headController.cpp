@@ -43,15 +43,11 @@ namespace HeadController {
       f32 Kd_ = 0.f;  // derivative control constant
       f32 Ki_ = 0.1f; // integral control constant
       f32 MAX_ERROR_SUM = 2.f;
-
-      const f32 BASE_POWER  = 0.f;
 #else
       f32 Kp_ = 4.f;  // proportional control constant
       f32 Kd_ = 4000.f;  // derivative control constant
       f32 Ki_ = 0.02f; // integral control constant
       f32 MAX_ERROR_SUM = 10.f;
-
-      const f32 BASE_POWER  = 0.2f;
 #endif
 
       // Current speed
@@ -148,6 +144,7 @@ namespace HeadController {
       switch (HAL::GetID()) {
         case 0x3AA0:
         case 0x3A94:
+        case 0x40:
           HEAD_CAL_OFFSET = DEG_TO_RAD(-3);
           break;
         default:
@@ -430,13 +427,6 @@ namespace HeadController {
 
         // Compute power value
         power_ = (Kp_ * angleError_) + (Kd_ * (angleError_ - prevAngleError_) * CONTROL_DT) + (Ki_ * angleErrorSum_);
-
-        // Add base power in the direction of the desired general direction
-        if (power_ > 0) {
-          power_ += BASE_POWER;
-        } else if (power_ < 0) {
-          power_ -= BASE_POWER;
-        }
 
         // Update angle error sum
         prevAngleError_ = angleError_;

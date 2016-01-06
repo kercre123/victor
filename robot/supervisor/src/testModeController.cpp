@@ -1036,8 +1036,13 @@ namespace Anki {
           0 };
 
         // Draw face
+<<<<<<< HEAD
         HAL::FaceAnimate(faceFrame);
 
+=======
+        HAL::FaceAnimate(faceFrame, sizeof(faceFrame));
+        
+>>>>>>> master
         return RESULT_OK;
       }
 
