@@ -203,6 +203,7 @@ namespace Cozmo {
                      "Will start tracking face %llu", faceID);
     _trackedFaceID = faceID;
     TrackFaceAction* trackAction = new TrackFaceAction(_trackedFaceID);
+    trackAction->SetMoveEyes(true);
     _trackActionTag = trackAction->GetTag();
     trackAction->SetUpdateTimeout(kTrackingTimeout_sec);
     robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, queueTrackingPosition, trackAction);
