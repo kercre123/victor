@@ -154,7 +154,7 @@ namespace Cozmo {
     constexpr static float kTooFarDistance_mm = kCloseEnoughDistance_mm + kFaceBufferDistance_mm;
     
     // Distance to trigger Cozmo to get further away from the focused face
-    constexpr static float kTooCloseDistance_mm = 260;
+    constexpr static float kTooCloseDistance_mm = 230;
     
     // Maximum frequency that Cozmo should glance down when interacting with faces (could be longer if he has a stable
     // face to focus on; this interval shouln't interrupt his interaction)
@@ -164,8 +164,9 @@ namespace Cozmo {
     constexpr static float kSeeNewFaceAnimationCooldown_sec = 10;
     
     // Min time between playing the shocked/scared animation when a face gets
-    // too close
-    constexpr static float kTooCloseScaredInterval_sec = 2;
+    // too close NOTE: This should probably be longer than _deletionTimeout_ms in FaceWorld.h or Cozmo could repeatedly
+    // express that he's scared with a face that's going to be deleted
+    constexpr static float kTooCloseScaredInterval_sec = 10;
     
     // Amount to periodically tilt the robot's face while watching a face, and the time spacing
     // between tilts
