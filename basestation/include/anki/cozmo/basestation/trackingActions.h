@@ -77,10 +77,17 @@ public:
 
   void SetMaxHeadAngle(const Radians& maxHeadAngle_rads) { _maxHeadAngle = maxHeadAngle_rads; }
 
+  // Enable/disable moving of eyes while tracking. Default is false.
+  void SetMoveEyes(bool moveEyes) { _moveEyes = moveEyes; }
+  
   virtual bool Interrupt() override final;
   
 protected:
 
+  ITrackAction();
+  
+  virtual void Cleanup(Robot &robot) override;
+  
   // Derived classes must implement Init(), but cannot implement CheckIfDone().
   virtual ActionResult CheckIfDone(Robot& robot) override final;
   
@@ -97,6 +104,9 @@ private:
   Radians  _panTolerance  = POINT_TURN_ANGLE_TOL;
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
+  
+  u32      _eyeShiftTag;
+  bool     _moveEyes    = false;
   
   std::string _turningSoundAnimation = "ID_MotionTrack_TurnSmall";
   f32      _soundSpacingMin_sec = 0.5f;

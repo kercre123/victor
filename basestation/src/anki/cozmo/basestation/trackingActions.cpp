@@ -30,6 +30,12 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark ITrackAction
   
+ITrackAction::ITrackAction()
+: _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
+{
+  
+}
+  
 void ITrackAction::SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec) {
   if(minSpeed_radPerSec >= maxSpeed_radPerSec) {
     PRINT_NAMED_WARNING("ITrackAction.SetTiltSpeeds.InvalidSpeeds",
@@ -134,10 +140,12 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
 #   endif
     
     bool angleLargeEnoughForSound = false;
+    f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
     
     // Tilt Head:
-    const f32 relTiltAngle = std::abs((absTiltAngle - robot.GetHeadAngle()).ToFloat());
-    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > _tiltTolerance.ToFloat())
+    const f32 relTiltAngle = (absTiltAngle - robot.GetHeadAngle()).ToFloat();
+    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
+       std::abs(relTiltAngle) > _tiltTolerance.ToFloat())
     {
       // Set speed/accel based on angle difference
       const f32 angleFrac = std::abs(relTiltAngle)/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
@@ -149,14 +157,19 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
         return ActionResult::FAILURE_ABORT;
       }
       
-      if(relTiltAngle > _minTiltAngleForSound) {
+      if(std::abs(relTiltAngle) > _minTiltAngleForSound) {
         angleLargeEnoughForSound = true;
+      }
+    
+      if(_moveEyes) {
+        const f32 y_mm = std::tan(relTiltAngle) * HEAD_CAM_POSITION[0];
+        eyeShiftY = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (2*SCREEN_SIZE[1]));
       }
     }
     
     // Pan Body:
-    const f32 relPanAngle = std::abs((absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
-    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && relPanAngle > _panTolerance.ToFloat())
+    const f32 relPanAngle = (absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
+    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && std::abs(relPanAngle) > _panTolerance.ToFloat())
     {
       // Get rotation angle around drive center
       Pose3d rotatedPose;
@@ -177,8 +190,15 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
         return ActionResult::FAILURE_ABORT;
       }
       
-      if(relPanAngle > _minPanAngleForSound) {
+      if(std::abs(relPanAngle) > _minPanAngleForSound) {
         angleLargeEnoughForSound = true;
+      }
+      
+      if(_moveEyes) {
+        // Compute horizontal eye movement
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
+        eyeShiftX = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (2*SCREEN_SIZE[0]));
       }
     }
     
@@ -190,7 +210,28 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
-      
+    
+    // Move eyes if indicated
+    if(_moveEyes) {
+      if(_eyeShiftTag == AnimationStreamer::NotAnimatingTag) {
+        _eyeShiftTag = robot.ShiftEyes(eyeShiftX, eyeShiftY, 2*IKeyFrame::SAMPLE_LENGTH_MS, true);
+      } else {
+        // Clip, but retain sign
+        eyeShiftX = CLIP(eyeShiftX, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
+        eyeShiftY = CLIP(eyeShiftY, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
+
+        PRINT_NAMED_INFO("ITrackAction.CheckIfDone.EyeShift",
+                         "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
+                         eyeShiftX, eyeShiftY, _eyeShiftTag);
+        
+        ProceduralFace procFace;
+        ProceduralFaceParams& params = procFace.GetParams();
+        params.SetFacePosition({eyeShiftX, eyeShiftY});
+        
+        robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace));
+      }
+    } // if(_moveEyes)
+    
   } else if(_updateTimeout_sec > 0.) {
     if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
       PRINT_NAMED_INFO("ITrackAction.CheckIfDone.Timeout",
@@ -202,6 +243,15 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
   }
   
   return ActionResult::RUNNING;
+}
+  
+void ITrackAction::Cleanup(Robot &robot)
+{
+  if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
+    // Make sure any eye shift gets removed
+    robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+    _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+  }
 }
   
 #pragma mark -
