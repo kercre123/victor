@@ -77,7 +77,7 @@ namespace Cozmo {
     , _didObjectsChange(false)
     , _canDeleteObjects(true)
     , _canAddObjects(true)
-    , _navMemoryMap( new NavMemoryMap{} )
+    , _navMemoryMap( nullptr )
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -191,6 +191,11 @@ namespace Cozmo {
         SetupEventHandlers(*_robot->GetExternalInterface());
       }
       
+      //////////////////////////////////////////////////////////////////////////
+      // NavMemoryMap
+      //
+      // Uncomment this line to create and use navMemoryMap. Commented out to not enable yet in master
+      // _navMemoryMap.reset( new NavMemoryMap() );
       
     } // BlockWorld() Constructor
   
@@ -502,7 +507,9 @@ namespace Cozmo {
   
   void BlockWorld::UpdateNavMemoryMap()
   {
-    _navMemoryMap->AddClearQuad(_robot->GetBoundingQuadXY());
+    if ( nullptr != _navMemoryMap ) {
+      _navMemoryMap->AddClearQuad(_robot->GetBoundingQuadXY());
+    }
   }
   
   void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
@@ -521,7 +528,9 @@ namespace Cozmo {
     }
     
     // This is a test - we would need to update objects when they move too
-    _navMemoryMap->AddObstacleQuad(object->GetBoundingQuadXY());
+    if ( nullptr != _navMemoryMap ) {
+      _navMemoryMap->AddObstacleQuad(object->GetBoundingQuadXY());
+    }
     
     // TODO if an object with same ID exists, it will leak
     existingFamily[object->GetType()][object->GetID()] = object;
