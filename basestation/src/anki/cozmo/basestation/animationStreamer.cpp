@@ -73,7 +73,8 @@ namespace Cozmo {
       using namespace ExternalInterface;
       PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.Aborting",
                           "Animation %s is interrupting animation %s",
-                          anim->GetName().c_str(), _streamingAnimation->GetName().c_str());
+                          anim != nullptr ? anim->GetName().c_str() : "NULL",
+                          _streamingAnimation->GetName().c_str());
       robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
     }
     
@@ -205,11 +206,6 @@ namespace Cozmo {
   
   Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, u8 withTag)
   {
-    if( _startOfAnimationSent && ! _endOfAnimationSent ) {
-      // stop the animation if we are in the middle of one
-      SendEndOfAnimation(robot);
-    }
-    
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
     {
@@ -583,6 +579,10 @@ namespace Cozmo {
       faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, faceParams, true);
     }
     
+    // Keep track of the face params after using the anim track because that's what we want to store off afterward,
+    // not the face after being adjusted by layers.
+    const ProceduralFaceParams animatedFaceParams = faceParams;
+    
 #   if DEBUG_ANIMATION_STREAMING
     if(!_faceLayers.empty()) {
       PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.ApplyingFaceLayers",
@@ -667,7 +667,8 @@ namespace Cozmo {
       
       if (storeFace)
       {
-        // Also store the updated face in the robot
+        // Also store the updated face in the robot using params prior to face layer application
+        procFace.SetParams(animatedFaceParams);
         robot.SetProceduralFace(procFace);
       }
     }
@@ -1143,10 +1144,7 @@ namespace Cozmo {
     {
       if(HaveFaceLayersToSend()) {
         lastResult = StreamFaceLayersOrAudio(robot);
-      } else if(_startOfAnimationSent && !_endOfAnimationSent) {
-        SendEndOfAnimation(robot);
       }
-      
     }
     
     return lastResult;
@@ -1290,8 +1288,6 @@ namespace Cozmo {
     
     Result lastResult = RESULT_OK;
     
-    bool anyFramesAdded = false;
-    
     // Don't start wiggling until we've been idling for a bit and make sure we
     // are not picking or placing
     if(_isLiveTwitchEnabled &&
@@ -1335,8 +1331,6 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         
-        anyFramesAdded = true;
-        
         _bodyMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementSpacingMin_ms),
                                                   GET_PARAM(s32, BodyMovementSpacingMax_ms));
         
@@ -1365,8 +1359,6 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         
-        anyFramesAdded = true;
-        
         _liftMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementSpacingMin_ms),
                                                   GET_PARAM(s32, LiftMovementSpacingMax_ms));
         
@@ -1394,8 +1386,6 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         
-        anyFramesAdded = true;
-        
         _headMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementSpacingMin_ms),
                                                   GET_PARAM(s32, HeadMovementSpacingMax_ms));
         
@@ -1404,13 +1394,6 @@ namespace Cozmo {
       }
       
     } // if(_isLiveTwitchEnabled && _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
-    
-    if(anyFramesAdded) {
-      // If we add a keyframe after initialization (at which time this animation
-      // could have been empty), make sure to mark that we haven't yet sent
-      // end of animation.
-      _endOfAnimationSent = false;
-    }
     
     return lastResult;
 #   undef GET_PARAM

@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
+#include "clad/types/animationKeyFrames.h"
 #include "util/logging/logging.h"
 #include "opencv2/highgui/highgui.hpp"
 #include <sys/stat.h>
@@ -348,7 +349,15 @@ namespace Cozmo {
       
       rleData.push_back(0x80 | ((count-1) << 2) | pattern);
     }
-    
+
+    if (rleData.size() >= static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE)) { // RLE compression didn't make the image smaller so just send it raw
+      rleData.resize(static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE));
+      uint8_t* packedPtr = (uint8_t*)packed;
+      for (int i=0; i<static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE); ++i) {
+        rleData[i] = *packedPtr;
+        packedPtr++;
+      }
+    }
     return RESULT_OK;
   }
   
@@ -362,7 +371,17 @@ namespace Cozmo {
     outImg.setTo(0);
     
     uint64_t decodedImg[FaceAnimationManager::IMAGE_WIDTH];
-    FaceDisplayDecode(rleData.data(), FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH, decodedImg);
+    if (rleData.size() == static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE)) {
+      uint8_t* packedPtr = (uint8_t*)decodedImg;
+      for (int i=0; i<static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE); ++i) {
+        *packedPtr = rleData[i];
+        packedPtr++;
+      }
+    }
+    else
+    {
+      FaceDisplayDecode(rleData.data(), FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH, decodedImg);
+    }
     
     // Translate from 1-bit/pixel,column-major ordering to 1-byte/pixel, row-major
     for (u8 i = 0; i < FaceAnimationManager::IMAGE_WIDTH; ++i) {
