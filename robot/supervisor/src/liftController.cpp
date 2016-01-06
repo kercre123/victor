@@ -42,6 +42,10 @@ namespace Anki {
         // Only angles greater than this can contribute to error
         // TODO: Find out what this actually is
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD(0.35f);
+        
+        // Motor burnout protection
+        const f32 BURNOUT_POWER_THRESH = 0.5;
+        const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
 
         // Initialized in Init()
         f32 LIFT_ANGLE_LOW_LIMIT;
@@ -137,6 +141,13 @@ namespace Anki {
 
         // Whether or not to command anything to motor
         bool enable_ = true;
+        
+        // If disabled, lift motor is automatically re-enabled at this time if non-zero.
+        u32 enableAtTime_ms_ = 0;
+        
+        // If enableAtTime_ms_ is non-zero, this is the time beyond current time
+        // that the motor will be re-enabled if the lift is not moving.
+        const u32 REENABLE_TIMEOUT_MS = 2000;
 
       } // "private" members
 
@@ -163,13 +174,14 @@ namespace Anki {
       {
         if (!enable_) {
           enable_ = true;
+          enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
 
           currDesiredAngle_ = currentAngle_.ToFloat();
           SetDesiredHeight(Rad2Height(currentAngle_.ToFloat()));
         }
       }
 
-      void Disable()
+      void Disable(bool autoReEnable)
       {
         if (enable_) {
           enable_ = false;
@@ -179,6 +191,10 @@ namespace Anki {
 
           power_ = 0;
           HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+          
+          if (autoReEnable) {
+            enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
+          }
         }
       }
 
@@ -254,8 +270,6 @@ namespace Anki {
               // Wait for motor to relax and then set angle
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
                 PRINT("LIFT Calibrated\n");
-                power_ = 0;
-                HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT);
                 calState_ = LCS_IDLE;
               }
@@ -482,7 +496,38 @@ namespace Anki {
         return inPosition_;
       }
 
+      // Check for conditions that could lead to motor burnout.
+      // If motor is powered at greater than BURNOUT_POWER_THRESH for more than BURNOUT_TIME_THRESH_MS, stop it!
+      // If the lift was in position, assuming that someone is messing with the motor.
+      // If the lift was not in position, assuming that it's mis-calibrated and it's hitting the low or high hard limit. Do calibration.
+      // Returns true if a protection action was triggered.
+      bool MotorBurnoutProtection() {
+        
+        static u32 potentialBurnoutStartTime_ms = 0;
 
+        if (ABS(power_) < BURNOUT_POWER_THRESH) {
+          potentialBurnoutStartTime_ms = 0;
+          return false;
+        }
+        
+        if (potentialBurnoutStartTime_ms == 0) {
+          potentialBurnoutStartTime_ms = HAL::GetTimeStamp();
+        } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms > BURNOUT_TIME_THRESH_MS) {
+          if (IsInPosition()) {
+            PRINT("WARN: LIFT burnout protection triggered. Stop messing with the lift! Going limp until you do!\n");
+            Disable(true);
+            return true;
+          } else {
+            PRINT("WARN: LIFT burnout protection triggered. Recalibrating.\n");
+            StartCalibrationRoutine();
+            return true;
+          }
+        }
+        
+        return false;
+      }
+      
+      
       Result Update()
       {
         // Update routine for calibration sequence
@@ -492,10 +537,27 @@ namespace Anki {
 
         // If disabled, do not activate motors
         if(!enable_) {
-          return RESULT_OK;
+          if (enableAtTime_ms_ == 0) {
+            return RESULT_OK;
+          }
+          
+          // Auto-enable check
+          if (IsMoving()) {
+            enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
+            return RESULT_OK;
+          } else if (HAL::GetTimeStamp() >= enableAtTime_ms_) {
+            PRINT("Lift auto-enabled\n");
+            Enable();
+          } else {
+            return RESULT_OK;
+          }
         }
 
         if (!IsCalibrated()) {
+          return RESULT_OK;
+        }
+        
+        if (MotorBurnoutProtection()) {
           return RESULT_OK;
         }
 
@@ -536,12 +598,12 @@ namespace Anki {
         // If accurately tracking current desired angle...
         if((ABS(angleError) < LIFT_ANGLE_TOL) && (desiredAngle_ == currDesiredAngle_)) {
 
+          // Keep angleErrorSum from accumulating once we're in position
+          angleErrorSum_ -= angleError;
+          
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - lastInPositionTime_ms_ > IN_POSITION_TIME_MS) {
-
-            // Keep angleErrorSum from accumulating once we're in position
-            angleErrorSum_ -= angleError;
 
             inPosition_ = true;
 #if(DEBUG_LIFT_CONTROLLER)
