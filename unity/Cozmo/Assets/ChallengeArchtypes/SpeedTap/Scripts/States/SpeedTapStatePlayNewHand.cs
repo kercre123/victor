@@ -47,6 +47,12 @@ namespace SpeedTap {
             }
           }
         }
+        else if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.75f) {
+          if (!_CozmoTapping) {
+            _CurrentRobot.SendAnimation(AnimationName.kSpeedTapFake);
+            _CozmoTapping = true;
+          }
+        }
         if ((currTimeMs - _StartTimeMs) >= _OnDelayTimeMs) {
           _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
           _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
@@ -78,6 +84,10 @@ namespace SpeedTap {
         DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
         // check for player tapped first here.
         CozmoDidTap();
+        break;
+      case AnimationName.kSpeedTapFake:
+        _CozmoTapping = false;
+        _CurrentRobot.SetLiftHeight(1.0f);
         break;
       }
 
