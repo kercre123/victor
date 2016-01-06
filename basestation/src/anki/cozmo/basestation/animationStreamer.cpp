@@ -539,7 +539,7 @@ namespace Cozmo {
     // Blinks
     if(_nextBlink_ms <= 0)
     {
-      ProceduralFace blinkFace(robot.GetProceduralFace());
+      ProceduralFace blinkFace;
       
       // Now we clear out the current face params so that the layer generated
       // below starts as the nominal face
@@ -571,17 +571,13 @@ namespace Cozmo {
     
     // Combine the robot's current face with anything the currently-streaming
     // animation does to the face, plus anything present in any face "layers".
-    ProceduralFaceParams faceParams = robot.GetProceduralFace().GetParams();
+    ProceduralFaceParams faceParams;
     
     if(nullptr != anim) {
       // Note that shouldReplace==true in this case because the animation frames
       // actually replace what's on the face.
       faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, faceParams, true);
     }
-    
-    // Keep track of the face params after using the anim track because that's what we want to store off afterward,
-    // not the face after being adjusted by layers.
-    const ProceduralFaceParams animatedFaceParams = faceParams;
     
 #   if DEBUG_ANIMATION_STREAMING
     if(!_faceLayers.empty()) {
@@ -637,7 +633,7 @@ namespace Cozmo {
     if(faceUpdated) {
       // ...turn the final procedural face into an RLE-encoded image suitable for
       // streaming to the robot
-      ProceduralFace procFace(robot.GetProceduralFace());
+      ProceduralFace procFace;
       procFace.SetParams(faceParams);
       
 #     if DEBUG_ANIMATION_STREAMING
@@ -664,13 +660,6 @@ namespace Cozmo {
 #     endif
       
       BufferFaceToSend(procFace);
-      
-      if (storeFace)
-      {
-        // Also store the updated face in the robot using params prior to face layer application
-        procFace.SetParams(animatedFaceParams);
-        robot.SetProceduralFace(procFace);
-      }
     }
   } // UpdateFace()
   
@@ -1190,58 +1179,6 @@ namespace Cozmo {
     _numAudioFramesToSend = std::max(0, NUM_AUDIO_FRAMES_LEAD-audioFramesInBuffer);
     
   } // UpdateAmountToSend()
-  
-  Result StreamProceduralFace(Robot& robot,
-                              const ProceduralFace& lastFace,
-                              const ProceduralFace& nextFace,
-                              Animation& liveAnimation)
-  {
-    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
-    const TimeStamp_t nextTime = nextFace.GetTimeStamp();
-    
-    // Either interpolate from the last procedural face's timestamp if it's not too
-    // old, or for a fixed max duration so we get a smooth change but don't
-    // queue up tons of frames right now trying to get to the current face
-    // (which would cause an unwanted delay).
-    const TimeStamp_t maxDuration = 4*IKeyFrame::SAMPLE_LENGTH_MS;
-    TimeStamp_t lastInterpTime = lastTime;
-    if(nextTime > maxDuration) {
-      lastInterpTime = std::max(lastTime, nextTime - maxDuration);
-    }
-    
-    ProceduralFace proceduralFace;
-    proceduralFace.SetTimeStamp(lastInterpTime + IKeyFrame::SAMPLE_LENGTH_MS);
-
-    while(proceduralFace.GetTimeStamp() <= nextTime)
-    {
-      // Calculate next interpolation time
-      auto nextInterpFrameTime = proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS;
-      
-      // Interpolate based on time
-      f32 blendFraction = 1.f;
-      // If there are more blending frames after this one actually calculate the blend. Otherwise this is the last
-      // frame and we should finish the interpolation
-      if (nextInterpFrameTime <= nextTime)
-      {
-        blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
-                                       static_cast<f32>(nextTime - lastInterpTime)));
-      }
-      
-      const bool useSaccades = true;
-      proceduralFace.GetParams().Interpolate(lastFace.GetParams(), nextFace.GetParams(), blendFraction, useSaccades);
-      
-      // Add this procedural face as a keyframe in the live animation
-      if(RESULT_OK != liveAnimation.AddKeyFrameToBack(ProceduralFaceKeyFrame(proceduralFace))) {
-        PRINT_NAMED_ERROR("AnimationStreamer.StreamProceduralFace.AddFrameFailed", "");
-        return RESULT_FAIL;
-      }
-      
-      // Increment the procedural face time for the next interpolated frame
-      proceduralFace.SetTimeStamp(nextInterpFrameTime);
-    }
-    
-    return RESULT_OK;
-  } // StreamProceduralFace()
   
 
   

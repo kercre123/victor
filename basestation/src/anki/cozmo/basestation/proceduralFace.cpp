@@ -10,26 +10,6 @@ namespace Cozmo {
 
   u8 ProceduralFace::_firstScanLine = 0;
   
-  ProceduralFace::ProceduralFace()
-  {
-    Reset();
-    
-    // DEBUG!
-    // Save an image of the nominal face:
-    //    static bool temp = false;
-    //    if(!temp) {
-    //      cv::Mat_<u8> nominalFace = GetFace();
-    //      cv::imwrite("/Users/andrew/temp/nominalFace.png", nominalFace);
-    //      temp = true;
-    //    }
-  }
-  
-  void ProceduralFace::Reset()
-  {
-    _sentToRobot = false;
-    _timestamp = 0;
-  }
-
   SmallMatrix<2,3,f32> ProceduralFace::GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
                                                                f32 tX, f32 tY, f32 x0, f32 y0)
   {
@@ -355,13 +335,6 @@ namespace Cozmo {
     }
     
   } // GetNextBlinkFrame()
-  
-  void ProceduralFace::MimicHumanFace(const Vision::TrackedFace& face)
-  {
-    // using Face = Vision::TrackedFace;
-    
-    // TODO Implement mimicking here and use from BehaviorInteractWithFaces / BehaviorMimicFace
-  }
 
 } // namespace Cozmo
 } // namespace Anki

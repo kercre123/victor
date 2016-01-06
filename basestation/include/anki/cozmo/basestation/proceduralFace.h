@@ -40,11 +40,6 @@ namespace Cozmo {
     using WhichEye = ProceduralFaceParams::WhichEye;
     using Value = ProceduralFaceParams::Value;
     
-    ProceduralFace();
-    
-    // Reset parameters to their nominal values
-    void Reset();
-    
     // Closes eyes and switches interlacing. Call until it returns false, which
     // indicates there are no more blink frames and the face is back in its
     // original state. The output "offset" indicates the desired timing since
@@ -53,14 +48,6 @@ namespace Cozmo {
     
     // Actually draw the face with the current parameters
     cv::Mat_<u8> GetFace() const;
-    
-    void MimicHumanFace(const Vision::TrackedFace& trackedFace);
-
-    bool HasBeenSentToRobot() const;
-    void MarkAsSentToRobot(bool tf);
-    
-    TimeStamp_t GetTimeStamp() const;
-    void SetTimeStamp(TimeStamp_t t);
     
     // To avoid burn-in this switches which scanlines to use (odd or even), e.g.
     // to be called each time we blink.
@@ -79,28 +66,10 @@ namespace Cozmo {
                                                         f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
     ProceduralFaceParams _faceData;
     static u8 _firstScanLine;
-    bool _sentToRobot;
-    TimeStamp_t _timestamp;
   }; // class ProceduralFace
   
   
 #pragma mark Inlined Methods
-  
-  inline bool ProceduralFace::HasBeenSentToRobot() const {
-    return _sentToRobot;
-  }
-  
-  inline void ProceduralFace::MarkAsSentToRobot(bool tf) {
-    _sentToRobot = tf;
-  }
-  
-  inline TimeStamp_t ProceduralFace::GetTimeStamp() const {
-    return _timestamp;
-  }
-  
-  inline void ProceduralFace::SetTimeStamp(TimeStamp_t t) {
-    _timestamp = t;
-  }
   
   inline void ProceduralFace::SwitchInterlacing() {
     _firstScanLine = 1 - _firstScanLine;
