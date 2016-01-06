@@ -88,6 +88,9 @@ namespace Cozmo {
     // to no adjustment
     void RemovePersistentFaceLayer(u32 tag, s32 duration = 0);
     
+    // Add a keyframe to the end of an existing persistent face layer
+    void AddToPersistentFaceLayer(u32 tag, ProceduralFaceKeyFrame&& keyframe);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
      
@@ -152,7 +155,7 @@ namespace Cozmo {
       bool        sentOnce;
       u8          tag;
     };
-    std::list<FaceLayer> _faceLayers;
+    std::map<u8, FaceLayer> _faceLayers;
     
     // Helper to fold the next procedural face from the given track (if one is
     // ready to play) into the passed-in procedural face params.
@@ -172,7 +175,8 @@ namespace Cozmo {
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
     Result StreamFaceLayersOrAudio(Robot& robot);
     
-    static void IncrementTagCtr(u8& tag);
+    void IncrementTagCtr();
+    void IncrementLayerTagCtr();
     
     bool _isIdling = false;
     
