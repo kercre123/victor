@@ -527,11 +527,6 @@ namespace Cozmo {
       }
     }
     
-    // This is a test - we would need to update objects when they move too
-    if ( nullptr != _navMemoryMap ) {
-      _navMemoryMap->AddObstacleQuad(object->GetBoundingQuadXY());
-    }
-    
     // TODO if an object with same ID exists, it will leak
     existingFamily[object->GetType()][object->GetID()] = object;
   }
@@ -956,6 +951,11 @@ namespace Cozmo {
         if(_unidentifiedActiveObjects.count(observedObject->GetID())==0)
         {
           BroadcastObjectObservation(observedObject, true);
+        }
+        
+        // Update navMemory map
+        if ( nullptr != _navMemoryMap ) {
+          _navMemoryMap->AddObstacleQuad(observedObject->GetBoundingQuadXY());
         }
         
         _didObjectsChange = true;
@@ -1731,6 +1731,31 @@ namespace Cozmo {
           CORETECH_ASSERT(object->GetPose().GetParent() != nullptr &&
                           object->GetPose().GetParent()->IsOrigin());
           object->SetPoseParent(_robot->GetWorldOrigin());
+
+          // update navmesh with a quadrilateral between the robot and the seen object
+          if ( nullptr != _navMemoryMap )
+          {
+            // robot corners
+            const Quad2f& robotQuad = _robot->GetBoundingQuadXY();
+            Point3f cornerBR{ robotQuad[Quad::TopLeft   ].x(), robotQuad[Quad::TopLeft ].y(), 0};
+            Point3f cornerBL{ robotQuad[Quad::BottomLeft].x(), robotQuad[Quad::BottomLeft].y(), 0};
+          
+            std::vector<const Vision::KnownMarker *> observedMarkers;
+            object->GetObservedMarkers(observedMarkers);
+            for ( const auto& observedMarkerIt : observedMarkers )
+            {
+              // marker corners
+              const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
+              Point3f cornerTL = markerCorners[Quad::BottomLeft];
+              Point3f cornerTR = markerCorners[Quad::BottomRight];
+              
+              // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
+              // the navmesh that it should be clear, since we saw the marker
+              Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
+              _navMemoryMap->AddClearQuad(clearVisionQuad);
+            }
+          }
+          
         }
         
         // Use them to add or update existing blocks in our world
