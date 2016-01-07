@@ -139,7 +139,7 @@ namespace BackpackLightController {
       u16 newColor;
       const bool colorUpdated = GetCurrentLEDcolor(_currParams[i], currentTime, _ledPhases[i], newColor);
       if(colorUpdated) {
-        HAL::SetLED((LEDId)i, (newColor>>8)); // Shift color to remove alpha bits
+        HAL::SetLED((LEDId)i, newColor);
       }
     } // for each LED
 
