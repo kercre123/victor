@@ -871,7 +871,12 @@ namespace Cozmo {
         
         // Erase this animation action and resume pickOrPlace if there are no more animations pending
         _animActionTags.erase(msg.idTag);
-        
+
+        if( msg.result != ActionResult::SUCCESS ) {
+          PRINT_NAMED_WARNING("BehaviorBlockPlay.HandleCompletedAction.Fail",
+                              "animation '%s' did not complete",
+                              msg.completionInfo.Get_animationCompleted().animationName.c_str());
+        }
       } else {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                "BehaviorBlockPlay.HandleActionCompleted.UnknownAnimCompleted",
@@ -954,9 +959,19 @@ namespace Cozmo {
               
           } // switch(actionType)
         } else if( msg.result == ActionResult::FAILURE_RETRY ) {
-          
+
           // We failed to pick up or place the last block, try again
-          PlayAnimation(robot, "ID_rollBlock_fail_01");
+          
+          bool wasDockAttempt = msg.actionType == RobotActionType::ROLL_OBJECT_LOW && 
+            msg.completionInfo.Get_objectInteractionCompleted().attemptedDock;
+
+          if( wasDockAttempt ) {
+            PlayAnimation(robot, "ID_rollBlock_fail_01");
+          }
+          else {
+            PlayAnimation(robot, "ID_react2block_align_fail");
+          }
+
 
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
@@ -1022,7 +1037,17 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.PickupFailure",
                                  "failed pickup, trying again");
-          PlayAnimation(robot, "ID_rollBlock_fail_01"); // TODO:(bn) different one?
+
+          bool wasDockAttempt = msg.actionType == RobotActionType::ROLL_OBJECT_LOW && 
+            msg.completionInfo.Get_objectInteractionCompleted().attemptedDock;
+
+          if( wasDockAttempt ) {
+            PlayAnimation(robot, "ID_rollBlock_fail_01");  // TEMP:  // TODO:(bn) different one here?
+          }
+          else {
+            PlayAnimation(robot, "ID_react2block_align_fail");
+          }
+
           SetCurrState(State::InspectingBlock);
           _holdUntilTime = currentTime_sec + _timetoInspectBlock;
           _isActing = false;
@@ -1096,11 +1121,10 @@ namespace Cozmo {
             const float failureBackupDist = 70.0f;
             const float failureBackupSpeed = 80.0f;
 
-            PlayAnimation(robot, "ID_rollBlock_fail_01");
-
             // back up and drop the block, then re-init to start over          
             StartActing(robot,
                         new CompoundActionSequential({
+                            new PlayAnimationAction("ID_rollBlock_fail_01"),
                             new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
                             new PlaceObjectOnGroundAction()}),
                         [this,&robot](ActionResult ret){
@@ -1113,6 +1137,7 @@ namespace Cozmo {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                    "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
                                    "pre-dock fail, trying again");
+            PlayAnimation(robot, "ID_react2block_align_fail");
             SetCurrState(State::PlacingBlock);
             _isActing = false;
           }
