@@ -589,7 +589,6 @@ namespace Cozmo {
       blinkFace.SetParams(ProceduralFaceParams());
       
       FaceTrack faceTrack;
-      faceTrack.SetIsLive(true);
       TimeStamp_t totalOffset = 0;
       bool moreBlinkFrames = false;
       do {
@@ -598,8 +597,20 @@ namespace Cozmo {
         totalOffset += timeInc;
         faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(blinkFace, totalOffset));
       } while(moreBlinkFrames);
-      
-      AddFaceLayer(std::move(faceTrack));
+
+      // Sanity checkt: we should never command two blinks at the same time
+      bool alreadyBlinking = false;
+      for(auto & layer : _faceLayers) {
+        if(layer.second.name == "Blink") {
+          PRINT_NAMED_WARNING("AnimationStreamer.KeepFaceAlive.DuplicateBlink",
+                              "Seems like there's already a blink layer. Skipping this blink.");
+          alreadyBlinking = true;
+        }
+      }
+
+      if(!alreadyBlinking) {
+        AddFaceLayer("Blink", std::move(faceTrack));
+      }
       
       _nextBlink_ms = _rng.RandIntInRange(GetParam<s32>(Param::BlinkSpacingMinTime_ms),
                                           GetParam<s32>(Param::BlinkSpacingMaxTime_ms));
