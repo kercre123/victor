@@ -38,7 +38,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<string> ConnectedToClient;
   public event Action<DisconnectionReason> DisconnectedFromClient;
   public event Action<int> RobotConnected;
-  public event Action<bool,RobotActionType> SuccessOrFailure;
+  public event Action<uint, bool,RobotActionType> SuccessOrFailure;
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
@@ -477,7 +477,7 @@ public class RobotEngineManager : MonoBehaviour {
     CurrentRobot.LocalBusyTimer = 0f;
 
     if (SuccessOrFailure != null) {
-      SuccessOrFailure(success, actionType);
+      SuccessOrFailure(message.idTag, success, actionType);
     }
 
     if (actionType == RobotActionType.PLAY_ANIMATION) {

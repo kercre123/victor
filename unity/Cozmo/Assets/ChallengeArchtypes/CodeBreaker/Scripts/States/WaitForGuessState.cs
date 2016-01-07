@@ -237,7 +237,7 @@ namespace CodeBreaker {
       Vector3 targetPosition = midpointPosition - (facingCubes.normalized * kCubeDistance);
 
       if (Vector3.Distance(targetPosition, _CurrentRobot.WorldPosition) > kDriveToCubeBuffer) {
-        _CurrentRobot.GotoPose(targetPosition, facingCubesQuaternion, HandleMoveToCubeCallback);
+        _CurrentRobot.GotoPose(targetPosition, facingCubesQuaternion, callback:HandleMoveToCubeCallback);
         _IsDrivingToPose = true;
       }
       else {

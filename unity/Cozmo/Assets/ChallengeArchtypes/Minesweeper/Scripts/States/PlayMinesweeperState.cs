@@ -107,7 +107,7 @@ namespace Minesweeper {
       // round to the nearest 90 degrees
       var rotation = Quaternion.Euler(0, 0, Mathf.Round(angle / 90f) * 90f);
 
-      _CurrentRobot.GotoPose(_CurrentRobot.WorldPosition + delta, rotation, HandleGoToPoseComplete);
+      _CurrentRobot.GotoPose(_CurrentRobot.WorldPosition + delta, rotation, callback:HandleGoToPoseComplete);
     }
 
     private void HandleGoToPoseComplete(bool success) {
