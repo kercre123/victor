@@ -85,7 +85,7 @@ void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t address, uint8_t *face_bytes) {
   if (address != FaceCopyLocation || FaceLock) return ;
 
   // NOTE: The length of the ring buffer is currently arbitrary
-  static uint8_t screen_bytes[8 * MAX_SCREEN_BYTES_PER_DROP];
+  static uint8_t screen_bytes[16 * MAX_SCREEN_BYTES_PER_DROP];
   static int ring_pos = 0;
   
   // Use a ring buffer to pad out screen data
