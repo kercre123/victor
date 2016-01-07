@@ -399,6 +399,12 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionUnionTag::placeRelObject:
       return GetPlaceRelActionHelper(robot, actionUnion.Get_placeRelObject());
+          
+    case RobotActionUnionTag::placeObjectOnGround:
+      return GetPlaceObjectOnGroundActionHelper(robot, actionUnion.Get_placeObjectOnGround());
+          
+    case RobotActionUnionTag::placeObjectOnGroundHere:
+      return new PlaceObjectOnGroundAction();
       
     case RobotActionUnionTag::setHeadAngle:
       // TODO: Provide a means to pass in the speed/acceleration values to the action
