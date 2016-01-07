@@ -20,6 +20,7 @@ namespace Anki
       {
         extern IMUData IMUState;
         void Init(void);
+        void Update(void);
         void Manage(void);
         uint8_t ReadID(void);
       }
