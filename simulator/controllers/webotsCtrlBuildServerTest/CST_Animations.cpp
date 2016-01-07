@@ -30,7 +30,7 @@ namespace Cozmo {
   class CST_Animations : public CozmoSimTestController {
     
   private:
-    const u32 MIN_NUM_ANIMS_REQUIRED = 10;
+    const u32 MIN_NUM_ANIMS_REQUIRED = 1;
     const u32 NUM_ANIMS_TO_PLAY = 1;
     
     virtual s32 UpdateInternal() override;
@@ -71,7 +71,7 @@ namespace Cozmo {
 
       case TestState::ReadyForNextCommand:
       {
-        CST_ASSERT(_currAnimIter != GetAvailableAnimations().end(), "Fewer animations available than expected");
+        CST_ASSERT(_currAnimIter != GetAvailableAnimations().end(), "animation " << kTestAnimationName << " not found");
         
         if (_numAnimsPlayed == NUM_ANIMS_TO_PLAY) {
           _testState = TestState::TestDone;
