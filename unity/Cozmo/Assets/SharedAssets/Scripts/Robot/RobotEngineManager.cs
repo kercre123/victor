@@ -471,7 +471,7 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     
     RobotActionType actionType = (RobotActionType)message.actionType;
-    bool success = (message.result == ActionResult.SUCCESS) || ((actionType == RobotActionType.PLAY_ANIMATION || actionType == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
+    bool success = message.result == ActionResult.SUCCESS;
     CurrentRobot.TargetLockedObject = null;
 
     CurrentRobot.LocalBusyTimer = 0f;
@@ -494,15 +494,6 @@ public class RobotEngineManager : MonoBehaviour {
     else if (message.idTag > 0) {
       if (RobotCompletedTaggedAction != null) {
         RobotCompletedTaggedAction(success, message.idTag);
-      }
-    }
-
-    if (!success) {
-      if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
-        CurrentRobot.SetLiftHeight(1f);
-      }
-      else {
-        CurrentRobot.SetLiftHeight(0f);
       }
     }
   }
