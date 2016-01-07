@@ -37,6 +37,10 @@ namespace Cozmo {
   
   using namespace ExternalInterface;
 
+  static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
+  static const char * const kMinorFriendlyReactAnimName = "ID_react2face_2nd";
+  static const char * const kStrongScaredReactAnimName = "ID_react2face_disgust";
+  
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   {
@@ -188,7 +192,18 @@ namespace Cozmo {
     {
       robot.GetActionList().Cancel();
       robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
-      PlayAnimation(robot, "ID_react2block_01", QueueActionPosition::AT_END);
+      
+      
+      auto friendlyAnimName = kMinorFriendlyReactAnimName;
+      if (0 == kCurrentFriendlyAnimCount)
+      {
+        friendlyAnimName = kStrongFriendlyReactAnimName;
+      }
+      ++kCurrentFriendlyAnimCount;
+      kCurrentFriendlyAnimCount = kCurrentFriendlyAnimCount % kStrongFriendlyAnimRatio;
+      
+      PlayAnimation(robot, friendlyAnimName, QueueActionPosition::AT_END);
+      
       robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
                                            EmotionType::Social, kEmotionChangeMedium,
                                            EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
@@ -478,7 +493,7 @@ namespace Cozmo {
               
               // Queue the animation to happen now, which will interrupt tracking, but
               // re-enable it immediately after the animation finishes
-              PlayAnimation(robot, "ID_react2face_disgust", QueueActionPosition::NOW_AND_RESUME);
+              PlayAnimation(robot, kStrongScaredReactAnimName, QueueActionPosition::NOW_AND_RESUME);
               
               robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");
               _lastTooCloseScaredTime = currentTime_sec;
