@@ -1637,7 +1637,8 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
 {
   // for now, this is implemented by simply going over every
   // intermediate pose and finding the closest one
-  float closest = 999999.9;  // TODO:(bn) talk to people about this
+  float closest = std::numeric_limits<float>::max();
+  float closestThetaDist = std::numeric_limits<float>::max();
   size_t startPoint = 0;
 
   State curr = plan.start_;
@@ -1655,19 +1656,22 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     // state we are searching for (fewer ops)
     State_c target(state.x_mm - GetX_mm(curr.x),
                    state.y_mm - GetY_mm(curr.y),
-                   0.0f);
+                   Radians(state.theta - GetTheta_c(curr.theta)).ToFloat());
 
     // first check the exact state.  // TODO:(bn) no sqrt!
     float initialDist = sqrt(pow(target.x_mm, 2) + pow(target.y_mm, 2));
+    float thetaDist = std::fabsf(target.theta);
     if(debug)
-      cout<<planIdx<<": "<<"iniitial "<<target<<" = "<<initialDist;
+      cout<<planIdx<<": "<<"initial "<<target<<" = "<<initialDist;
 
     // give a tiny bonus (1e-6) to the initial state, so we prefer it over the last intermediate state of the
     // previous action
 
-    if(initialDist < closest + 1e-6) {
+    if((initialDist < closest)
+      || ((initialDist < closest + 1e-6) && (thetaDist <= closestThetaDist))) {
       closest = initialDist;
       startPoint = planIdx;
+      closestThetaDist = thetaDist;
       if(debug)
         cout<<"  closest\n";
     }
@@ -1678,10 +1682,11 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
 
     for(const auto& intermediate : prim.intermediatePositions) {
       // TODO:(bn) get squared distance
-      float dist = GetDistanceBetween(target, intermediate.position);
+      State_c currState = State2State_c(curr);
+      float dist = GetDistanceBetween(currState, intermediate.position);
 
       if(debug)
-        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<target<<" = "<<dist;
+        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<currState<<" = "<<dist;
 
       if(dist < closest) {
         closest = dist;
