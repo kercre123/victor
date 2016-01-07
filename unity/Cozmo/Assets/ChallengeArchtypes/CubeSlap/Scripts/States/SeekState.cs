@@ -23,6 +23,7 @@ namespace CubeSlap {
     public override void Update() {
       base.Update();
       bool isBad = true;
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       LightCube target = _CubeSlapGame.GetCurrentTarget();
       if (target != null) {
         // If Cube is in the right position, enter game state.
