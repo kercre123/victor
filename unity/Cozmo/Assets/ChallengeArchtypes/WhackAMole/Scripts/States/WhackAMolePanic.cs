@@ -23,7 +23,6 @@ namespace WhackAMole {
       _PanicInterval = _WhackAMoleGame.MaxPanicInterval;
       _PanicStartTimestamp = Time.time;
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
-      _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,0f);
     }
 
@@ -35,19 +34,15 @@ namespace WhackAMole {
 
       if (Time.time - _PanicStartTimestamp > _PanicTimeout) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kIdleHumming, HandleAnimationDone));
-        //_WhackAMoleGame.DeactivateAllCubes();
-        //_StateMachine.SetNextState(new WhackAMoleIdle());
         return;
       }
       // Check timestamps for Panic Target Switching and Timeout
       if (Time.time - _PanicIntervalTimestamp > _PanicInterval) {
-        _CurrentRobot.SetLiftHeight(Random.Range(0.0f,1.0f));
         PanicTargetSwitch(true);
       }
     }
 
     // Reset the interval with decay as Cozmo panics more.
-    // TODO: Factor this into the Mood System?
     private void PanicTargetSwitch(bool success) {
       if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.BOTH) {
         return;
