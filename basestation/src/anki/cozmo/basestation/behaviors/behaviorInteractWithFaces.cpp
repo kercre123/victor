@@ -81,6 +81,10 @@ namespace Cozmo {
     
     _timeWhenInterrupted = 0.0;
     
+    // Make sure we've done this at least once in case StopTracking gets called somehow
+    // before StartTracking (which is where we normally store off the original params).
+    _originalLiveIdleParams = robot.GetAnimationStreamer().GetAllParams();
+    
     return RESULT_OK;
   }
   
