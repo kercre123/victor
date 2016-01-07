@@ -14,8 +14,6 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
-
-
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "util/helpers/templateHelpers.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
@@ -29,7 +27,6 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -46,7 +43,6 @@ namespace Cozmo {
   , _robotMgr(externalInterface, dataPlatform)
   , _robotMsgHandler(*(new RobotInterface::MessageHandler()))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
-  , _lastAnimationFolderScan(0)
   , _audioServer( nullptr )
 {
   ASSERT_NAMED(externalInterface != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
@@ -97,7 +93,7 @@ CozmoEngine::~CozmoEngine()
 Result CozmoEngine::Init(const Json::Value& config) {
 
   if(_isInitialized) {
-    PRINT_NAMED_INFO("CozmoEngineImpl.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
+    PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
   
   _config = config;
@@ -190,7 +186,7 @@ bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
   // Check if already connected
   Robot* robot = CozmoEngine::GetRobotByID(whichRobot);
   if (robot != nullptr) {
-    PRINT_NAMED_INFO("CozmoEngineHost.ConnectToRobot.AlreadyConnected", "Robot %d already connected", whichRobot);
+    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot.AlreadyConnected", "Robot %d already connected", whichRobot);
     return true;
   }
   
@@ -200,7 +196,7 @@ bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
   Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
   bool result = _robotChannel.AcceptAdvertisingConnection(id);
   if(_forceAddedRobots.count(whichRobot) > 0) {
-    PRINT_NAMED_INFO("CozmoEngineHostImpl.ConnectToRobot",
+    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot",
                      "Manually deregistering force-added robot %d from advertising service.", whichRobot);
     _robotAdvertisementService.DeregisterAllAdvertisers();
   }
@@ -223,7 +219,7 @@ Result CozmoEngine::Update(const float currTime_sec)
 {
   BaseStationTime_t currTime_ns = SEC_TO_NANOS(currTime_sec);
   if(!_isInitialized) {
-    PRINT_NAMED_ERROR("CozmoEngine.Init", "Cannot update CozmoEngine before it is initialized.\n");
+    PRINT_NAMED_ERROR("CozmoEngine.Update", "Cannot update CozmoEngine before it is initialized.\n");
     return RESULT_FAIL;
   }
   
@@ -274,7 +270,11 @@ void CozmoEngine::ProcessDeviceImage(const Vision::Image &image)
 
 void CozmoEngine::ReadAnimationsFromDisk()
 {
-  // was empty in impl
+  Robot* robot = _robotMgr.GetFirstRobot();
+  if (robot != nullptr) {
+    PRINT_NAMED_INFO("CozmoEngine.ReloadAnimations", "ReadAnimationDir");
+    robot->ReadAnimationDir();
+  }
 }
   
 Result CozmoEngine::InitInternal()
@@ -329,7 +329,7 @@ void CozmoEngine::ForceAddRobot(AdvertisingRobot robotID,
                                         bool             robotIsSimulated)
 {
   if(_isInitialized) {
-    PRINT_NAMED_INFO("CozmoEngineHostImpl.ForceAddRobot", "Force-adding %s robot with ID %d and IP %s",
+    PRINT_NAMED_INFO("CozmoEngine.ForceAddRobot", "Force-adding %s robot with ID %d and IP %s",
                      (robotIsSimulated ? "simulated" : "real"), robotID, robotIP);
     
     // Force add physical robot since it's not registering by itself yet.
@@ -346,7 +346,7 @@ void CozmoEngine::ForceAddRobot(AdvertisingRobot robotID,
     // service manually once we connect to it.
     _forceAddedRobots[robotID] = true;
   } else {
-    PRINT_NAMED_ERROR("CozmoEngineHostImpl.ForceAddRobot",
+    PRINT_NAMED_ERROR("CozmoEngine.ForceAddRobot",
                       "You cannot force-add a robot until the engine is initialized.");
   }
 }
@@ -358,10 +358,10 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
   _robotMgr.AddRobot(robotID, &_robotMsgHandler);
   Robot* robot = _robotMgr.GetRobotByID(robotID);
   if(nullptr == robot) {
-    PRINT_NAMED_ERROR("CozmoEngineHostImpl.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);
+    PRINT_NAMED_ERROR("CozmoEngine.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);
     lastResult = RESULT_FAIL;
   } else {
-    PRINT_NAMED_INFO("CozmoEngineHostImpl.AddRobot", "Sending init to the robot %d.", robotID);
+    PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
     lastResult = robot->SyncTime();
     
     // Setup Audio Server with Robot Audio Connection & Client
@@ -407,7 +407,7 @@ bool CozmoEngine::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, Ti
   if(robot != nullptr) {
     return robot->GetCurrentImage(img, newerThanTime);
   } else {
-    PRINT_NAMED_ERROR("BasestationMainImpl.GetCurrentRobotImage.InvalidRobotID",
+    PRINT_NAMED_ERROR("CozmoEngine.GetCurrentRobotImage.InvalidRobotID",
                       "Image requested for invalid robot ID = %d.", robotID);
     return false;
   }
@@ -468,7 +468,6 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     }
     case ExternalInterface::MessageGameToEngineTag::ReadAnimationFile:
     {
-      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "Reading Animations from disk");
       ReadAnimationsFromDisk();
       break;
     }

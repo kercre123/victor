@@ -33,7 +33,6 @@
 
 #include "util/logging/printfLoggerProvider.h"
 #include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/cameraCalibration.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "anki/cozmo/basestation/multiClientChannel.h"
@@ -124,15 +123,12 @@ public:
                      bool             robotIsSimulated);
   
   void ListenForRobotConnections(bool listen);
-  // TODO: Add ability to playback/record
   
   Robot* GetFirstRobot();
   int    GetNumRobots() const;
   Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
   std::vector<RobotID_t> const& GetRobotIDList() const;
   
-  // Overload to specially handle robot added by ForceAddRobot
-  // TODO: Remove once we no longer need forced adds
   virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
   
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
@@ -149,7 +145,6 @@ protected:
   Util::Data::DataPlatform* _dataPlatform;
   
   bool                      _isInitialized;
-  int                       _engineID;
   Json::Value               _config;
   MultiClientChannel        _robotChannel;
   
@@ -160,7 +155,6 @@ protected:
   virtual Result InitInternal();
   virtual Result UpdateInternal(const BaseStationTime_t currTime_ns);
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void InitPlaybackAndRecording();
   
   Result AddRobot(RobotID_t robotID);
   
@@ -171,16 +165,8 @@ protected:
   SpeechRecognition::KeyWordRecognizer* _keywordRecognizer;
   
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
-  BaseStationTime_t _lastAnimationFolderScan;
   
   Audio::AudioServer* _audioServer;
-  
-  
-#ifdef COZMO_RECORDING_PLAYBACK
-  // TODO: Make use of these for playback/recording
-  IRecordingPlaybackModule *recordingPlaybackModule_;
-  IRecordingPlaybackModule *uiRecordingPlaybackModule_;
-#endif
   
   Anki::Cozmo::DebugConsoleManager _debugConsoleManager;
   
