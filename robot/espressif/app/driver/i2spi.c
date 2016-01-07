@@ -73,7 +73,7 @@ static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops, determined through experimentation
-#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
+#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-28)/2)
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
 /// The last state we've received from the RTIP updating the Body bootloader state
