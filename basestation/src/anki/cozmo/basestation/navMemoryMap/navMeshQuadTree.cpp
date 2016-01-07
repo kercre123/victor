@@ -57,29 +57,14 @@ void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
     VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddClearQuad", quadVector);
   }
 
-  // if the root fully contains the quad, then delegate on it
-  if ( _root.Contains( quad ) )
+  // if the root does not contain the quad, expand
+  if ( !_root.Contains( quad ) )
   {
-    _gfxDirty = _root.AddClearQuad(quad) || _gfxDirty;
+    Expand( quad );
   }
-  else
-  {
-    _gfxDirty = true;
-    
-    // Find in which direction we are expanding and upgrade root level in that direction
-    const Vec2f& direction = quad.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
-    _root.UpgradeToParent(direction);
 
-    // should be contained, otherwise more expansions as required. This can only happen if quad size is too small
-    // or direction is wrong
-    if ( !_root.Contains(quad) ) {
-      PRINT_NAMED_ERROR("NavMeshQuadTree.AddClearQuad.InsufficientExpansion",
-        "Quad caused expansion, but expansion was not enough.");
-    }
-
-    // treat the quad after expansion
-    _root.AddClearQuad(quad);
-  }
+  // add clear quad now
+  _gfxDirty = _root.AddClearQuad(quad) || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -95,29 +80,14 @@ void NavMeshQuadTree::AddObstacle(const Quad2f& quad)
     VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddObstacle", quadVector);
   }
 
-  // if the root fully contains the quad, then delegate on it
-  if ( _root.Contains( quad ) )
+  // if the root does not contain the quad, expand
+  if ( !_root.Contains( quad ) )
   {
-    _gfxDirty = _root.AddObstacle(quad) || _gfxDirty;
+    Expand( quad );
   }
-  else
-  {
-    _gfxDirty = true;
-    
-    // Find in which direction we are expanding and upgrade root level in that direction
-    const Vec2f& direction = quad.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
-    _root.UpgradeToParent(direction);
 
-    // should be contained, otherwise more expansions as required. This can only happen if quad size is too small
-    // or direction is wrong
-    if ( !_root.Contains(quad) ) {
-      PRINT_NAMED_ERROR("NavMeshQuadTree.AddObstacle.InsufficientExpansion",
-        "Quad caused expansion, but expansion was not enough.");
-    }
-
-    // treat the quad after expansion
-    _root.AddObstacle(quad);
-  }
+  // add obstacle now
+  _gfxDirty = _root.AddObstacle(quad) || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,32 +103,35 @@ void NavMeshQuadTree::AddCliff(const Quad2f& quad)
     VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddCliff", quadVector);
   }
 
-  // if the root fully contains the quad, then delegate on it
-  if ( _root.Contains( quad ) )
+  // if the root does not contain the quad, expand
+  if ( !_root.Contains( quad ) )
   {
-    _gfxDirty = _root.AddCliff(quad) || _gfxDirty;
+    Expand( quad );
   }
-  else
-  {
-    _gfxDirty = true;
-    
-    // Find in which direction we are expanding and upgrade root level in that direction
-    const Vec2f& direction = quad.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
-    _root.UpgradeToParent(direction);
 
-    // should be contained, otherwise more expansions as required. This can only happen if quad size is too small
-    // or direction is wrong
-    if ( !_root.Contains(quad) ) {
-      PRINT_NAMED_ERROR("NavMeshQuadTree.AddCliff.InsufficientExpansion",
-        "Quad caused expansion, but expansion was not enough.");
-    }
-
-    // treat the quad after expansion
-    _root.AddCliff(quad);
-  }
+  // add cliff now
+  _gfxDirty = _root.AddCliff(quad) || _gfxDirty;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
+{
+  // Find in which direction we are expanding and upgrade root level in that direction
+  const Vec2f& direction = quadToCover.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+  _root.UpgradeRootLevel(direction);
 
+  // should be contained, otherwise more expansions are required. This can only happen if quad is too far from
+  // the root, ir it is bigger than the current root size. I don't think we'll ever need multiple expansions, but
+  // throw error in case it ever happens. If so, the solution might be as easy as changing the calling code to call
+  // expand until it's fully contained
+  if ( !_root.Contains(quadToCover) ) {
+    PRINT_NAMED_ERROR("NavMeshQuadTree.AddCliff.InsufficientExpansion",
+      "Quad caused expansion, but expansion was not enough.");
+  }
+  
+  // always flag as dirty since we have modified the root
+  _gfxDirty = true;
+}
 
 } // namespace Cozmo
 } // namespace Anki

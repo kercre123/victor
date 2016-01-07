@@ -42,15 +42,15 @@ public:
   // Initialization
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // Sets node at the given center, with the given side size, and that will allow its children to have the
+  // Sets node at the given center, with the given side length, and that will allow its children to have the
   // given depth (0 will not allow children).
-  NavMeshQuadTreeNode(const Point3f& center, float size, uint32_t maxDepth, EContentType contentType);
+  NavMeshQuadTreeNode(const Point3f& center, float sideLength, uint32_t maxDepth, EContentType contentType);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  float GetSize() const { return _size; }
+  float GetSideLen() const { return _sideLen; }
   const Point3f& GetCenter() const { return _center; }
   EContentType GetContentType() const { return _contentType; }
   
@@ -75,7 +75,9 @@ public:
   bool AddCliff(const Quad2f& quad);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
-  void UpgradeToParent(const Point2f& direction);
+  // In order for a quadtree to be valid, the only way this could work without further operations is calling this
+  // on a root node. Such responsibility lies in the caller, not in this node
+  void UpgradeRootLevel(const Point2f& direction);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -127,7 +129,7 @@ private:
   
   // coordinates of this quad
   Point3f _center;
-  float   _size;
+  float   _sideLen;
 
   // children when subdivided. Can be empty or have 4 nodes
   std::vector<NavMeshQuadTreeNode> _children;

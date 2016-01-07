@@ -1844,6 +1844,7 @@ namespace Cozmo {
 
     Result BlockWorld::AddCliff(const Pose3d& p)
     {
+      if ( _navMemoryMap )
       {
         // TODO this is not an actual detected size, so I just create an object only to ask a size
         Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;

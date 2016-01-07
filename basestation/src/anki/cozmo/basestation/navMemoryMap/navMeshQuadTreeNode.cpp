@@ -17,11 +17,11 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float size, uint32_t maxDepth, EContentType contentType)
+NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength, uint32_t maxDepth, EContentType contentType)
 : _maxDepth(maxDepth)
 , _contentType(contentType)
 , _center(center)
-, _size(size)
+, _sideLen(sideLength)
 {
 }
 
@@ -35,13 +35,13 @@ bool NavMeshQuadTreeNode::Contains(const Quad2f& quad) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Quad3f NavMeshQuadTreeNode::MakeQuad() const
 {
-  const float halfSize = _size * 0.5f;
+  const float halfLen = _sideLen * 0.5f;
   Quad3f ret
   {
-    {_center.x()+halfSize, _center.y()+halfSize, _center.z()}, // up L
-    {_center.x()-halfSize, _center.y()+halfSize, _center.z()}, // lo L
-    {_center.x()+halfSize, _center.y()-halfSize, _center.z()}, // up R
-    {_center.x()-halfSize, _center.y()-halfSize, _center.z()}  // lo R
+    {_center.x()+halfLen, _center.y()+halfLen, _center.z()}, // up L
+    {_center.x()-halfLen, _center.y()+halfLen, _center.z()}, // lo L
+    {_center.x()+halfLen, _center.y()-halfLen, _center.z()}, // up R
+    {_center.x()-halfLen, _center.y()-halfLen, _center.z()}  // lo R
   };
   return ret;
 }
@@ -49,13 +49,13 @@ Quad3f NavMeshQuadTreeNode::MakeQuad() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
 {
-  const float halfSize = _size * 0.5f;
+  const float halfLen = _sideLen * 0.5f;
   Quad2f ret
   {
-    {_center.x()+halfSize, _center.y()+halfSize}, // up L
-    {_center.x()-halfSize, _center.y()+halfSize}, // lo L
-    {_center.x()+halfSize, _center.y()-halfSize}, // up R
-    {_center.x()-halfSize, _center.y()-halfSize}  // lo R
+    {_center.x()+halfLen, _center.y()+halfLen}, // up L
+    {_center.x()-halfLen, _center.y()+halfLen}, // lo L
+    {_center.x()+halfLen, _center.y()-halfLen}, // up R
+    {_center.x()-halfLen, _center.y()-halfLen}  // lo R
   };
   return ret;
 }
@@ -82,7 +82,7 @@ bool NavMeshQuadTreeNode::AddCliff(const Quad2f &quad)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::UpgradeToParent(const Point2f& direction)
+void NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction)
 {
   CORETECH_ASSERT( !NEAR_ZERO(direction.x()) && !NEAR_ZERO(direction.y()) );
 
@@ -94,15 +94,15 @@ void NavMeshQuadTreeNode::UpgradeToParent(const Point2f& direction)
   const bool yPlus = FLT_GTR_ZERO(direction.y());
   
   // move to its new center
-  const float oldHalfSize = _size * 0.50f;
-  _center.x() = _center.x() + (xPlus ? oldHalfSize : -oldHalfSize);
-  _center.y() = _center.y() + (yPlus ? oldHalfSize : -oldHalfSize);
+  const float oldHalfLen = _sideLen * 0.50f;
+  _center.x() = _center.x() + (xPlus ? oldHalfLen : -oldHalfLen);
+  _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _children.emplace_back( Point3f{_center.x()+oldHalfSize, _center.y()+oldHalfSize, _center.z()}, _size, _maxDepth, EContentType::Unknown ); // up L
-  _children.emplace_back( Point3f{_center.x()-oldHalfSize, _center.y()+oldHalfSize, _center.z()}, _size, _maxDepth, EContentType::Unknown ); // lo L
-  _children.emplace_back( Point3f{_center.x()+oldHalfSize, _center.y()-oldHalfSize, _center.z()}, _size, _maxDepth, EContentType::Unknown ); // up R
-  _children.emplace_back( Point3f{_center.x()-oldHalfSize, _center.y()-oldHalfSize, _center.z()}, _size, _maxDepth, EContentType::Unknown ); // lo E
+  _children.emplace_back( Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _maxDepth, EContentType::Unknown ); // up L
+  _children.emplace_back( Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _maxDepth, EContentType::Unknown ); // lo L
+  _children.emplace_back( Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _maxDepth, EContentType::Unknown ); // up R
+  _children.emplace_back( Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _maxDepth, EContentType::Unknown ); // lo E
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
@@ -115,7 +115,7 @@ void NavMeshQuadTreeNode::UpgradeToParent(const Point2f& direction)
   _children[childIdx]._contentType = _contentType; // inherit content type
   
   // upgrade my remaining stats
-  _size = _size * 2.0f;
+  _sideLen = _sideLen * 2.0f;
   ++_maxDepth;
 }
 
@@ -135,8 +135,8 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
       case EContentType::Obstacle   : { color = Anki::NamedColors::RED;       break; }
     }
     color.SetAlpha(0.75f);
-    //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_maxDepth*100}, _size));
-    quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _size));
+    //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_maxDepth*100}, _sideLen));
+    quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _sideLen));
   }
   else
   {
@@ -153,12 +153,12 @@ void NavMeshQuadTreeNode::Subdivide()
   ASSERT_NAMED(CanSubdivide() && !IsSubdivided(), "NavMeshQuadTreeNode.Subdivide.InvalidState");
   assert( _maxDepth > 0 );
   
-  const float halfSize    = _size * 0.50f;
-  const float quarterSize = halfSize * 0.50f;
-  _children.emplace_back( Point3f{_center.x()+quarterSize, _center.y()+quarterSize, _center.z()}, halfSize, _maxDepth-1, _contentType ); // up L
-  _children.emplace_back( Point3f{_center.x()-quarterSize, _center.y()+quarterSize, _center.z()}, halfSize, _maxDepth-1, _contentType ); // lo L
-  _children.emplace_back( Point3f{_center.x()+quarterSize, _center.y()-quarterSize, _center.z()}, halfSize, _maxDepth-1, _contentType ); // up R
-  _children.emplace_back( Point3f{_center.x()-quarterSize, _center.y()-quarterSize, _center.z()}, halfSize, _maxDepth-1, _contentType ); // lo E
+  const float halfLen    = _sideLen * 0.50f;
+  const float quarterLen = halfLen * 0.50f;
+  _children.emplace_back( Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, _maxDepth-1, _contentType ); // up L
+  _children.emplace_back( Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, _maxDepth-1, _contentType ); // lo L
+  _children.emplace_back( Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, _maxDepth-1, _contentType ); // up R
+  _children.emplace_back( Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, _maxDepth-1, _contentType ); // lo E
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -234,7 +234,7 @@ bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, EContentType detectedConte
   // we need to subdivide or fit within the given quad, since this implementation doesn't keep partial
   // info within nodes, that's what subquads would be for.
   ASSERT_NAMED( CanSubdivide() ||
-                ( FLT_LE(_size,(quad.GetMaxX()-quad.GetMinX())) && (FLT_LE(_size,quad.GetMaxY()-quad.GetMinY())) ),
+                ( FLT_LE(_sideLen,(quad.GetMaxX()-quad.GetMinX())) && (FLT_LE(_sideLen,quad.GetMaxY()-quad.GetMinY())) ),
                 "NavMeshQuadTreeNode.AddQuad.InputQuadTooSmall");
 
   // if we are already of the expected type, we won't gain any info, no need to process
