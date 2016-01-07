@@ -1459,7 +1459,7 @@ namespace Anki {
                                  TimeStamp_t duration_ms, bool makePersistent,
                                  const std::string& name)
     {
-      u32 layerTag = 0;
+      u32 layerTag = AnimationStreamer::NotAnimatingTag;
       
       // Clip, but retain sign
       xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
