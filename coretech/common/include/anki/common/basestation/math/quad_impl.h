@@ -478,7 +478,6 @@ namespace Anki {
     // be made (for example checking 3 sides should be enough, only corners from the smaller quad could be checked, etc),
     // but I don't foresee this to be a bottleneck atm, and I want to err on the safe side
     // Also, I'm relying on kazMath to not reinvent the wheel at this moment
-    if ( true ) // should this be a param?
     {
       using namespace Quad;
 
