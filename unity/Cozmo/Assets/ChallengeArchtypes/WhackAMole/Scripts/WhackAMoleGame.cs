@@ -1,0 +1,234 @@
+﻿using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+namespace WhackAMole {
+  public class WhackAMoleGame : GameBase {
+
+    public enum MoleState {
+      NONE,
+      SINGLE,
+      BOTH
+    }
+
+    public MoleState CubeState {
+      get {
+        if (_CubeActiveA && _CubeActiveB) {
+          return MoleState.BOTH;
+        }
+        else if (_CubeActiveA || _CubeActiveB) {
+          return MoleState.SINGLE;
+        }
+        else {
+          return MoleState.NONE;
+        }
+      }
+    }
+
+    public Action<MoleState> MoleStateChanged;
+
+    [SerializeField]
+    private WhackAMolePanel _WhackAMolePanelPrefab;
+    private WhackAMolePanel _GamePanel;
+
+    public float MaxPanicTime;
+    public float MaxPanicInterval;
+    public float MaxConfuseTime;
+    public float PanicDecayMin;
+    public float PanicDecayMax;
+
+
+    [SerializeField]
+    private Color _CubeAColor = Color.green;
+    [SerializeField]
+    private Color _CubeBColor = Color.blue;
+    [SerializeField]
+    private Color _ActiveColor = Color.red;
+
+    private int _CubeAID;
+    private int _CubeBID;
+    private bool _CubeActiveB = false;
+    private bool _CubeActiveA = false;
+
+    public LightCube CurrentTarget = null;
+    public Dictionary<int,LightCube> ActivatedCubes;
+
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
+      WhackAMoleGameConfig config = minigameConfig as WhackAMoleGameConfig;
+      MaxPanicTime = config.MaxPanicTime;
+      MaxConfuseTime = config.MaxConfusionTime;
+      MaxPanicInterval = config.MaxPanicInterval;
+      PanicDecayMin = config.PanicDecayMin;
+      PanicDecayMax = config.PanicDecayMax;
+      ActivatedCubes = new Dictionary<int, LightCube>();
+
+      _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
+
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+      SetUpCubes();
+    }
+
+    public void SetUpCubes() {
+      // Set Buttons to Yellow until cubes are set up properly
+      _GamePanel.CubeAButton.image.color = Color.yellow;
+      _GamePanel.CubeBButton.image.color = Color.yellow;
+      InitialCubesState initCubeState = new InitialCubesState();
+      initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), 2, true, InitialCubesDone);
+      _StateMachine.SetNextState(initCubeState);
+    }
+
+    private void InitialCubesDone() {
+      bool aDone = false;
+      bool bDone = false;
+      _CubeActiveA = false;
+      _CubeActiveB = false;
+      ActivatedCubes.Clear();
+      // Look through Visible objects to find 2 light cubes, set one to cubeA, the other
+      // to cubeB. Track these IDs, if they are ever confirmed as no longer available, return
+      // to cube setup state.
+      foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
+        if (!aDone) {
+          _CubeAID = kvp.Key;
+          aDone = true;
+        }
+        else if (!bDone) {
+          _CubeBID = kvp.Key;
+          bDone = true;
+        }
+      }
+
+      if (aDone && bDone) {
+        _GamePanel.CubeAButton.onClick.RemoveAllListeners();
+        _GamePanel.CubeBButton.onClick.RemoveAllListeners();
+        _GamePanel.CubeAButton.onClick.AddListener(() => {
+          ToggleCube(_CubeAID);
+        });
+        _GamePanel.CubeBButton.onClick.AddListener(() => {
+          ToggleCube(_CubeBID);
+        });
+        UpdateCubeLights();
+      }
+      else {
+        Debug.LogError("Cubes are NOT set up properly. Could not find an A and B cube for whack a mole.");
+      }
+    }
+
+    public void DeactivateAllCubes() {
+      _CubeActiveA = false;
+      _CubeActiveB = false;
+      CurrentTarget = null;
+      ActivatedCubes.Clear();
+      UpdateCubeLights();
+    }
+
+    public void ToggleCube(int ID) {
+      LightCube cube;
+      bool isNewTarget = false;
+      if (CurrentRobot.LightCubes.TryGetValue(ID, out cube)) {
+        // Identify which cube it is and toggle active state.
+        if (ID == _CubeAID) {
+          _CubeActiveA = !_CubeActiveA;
+          isNewTarget = _CubeActiveA;
+          Debug.Log(string.Format("Cube {0} set to {1}", ID, _CubeActiveA));
+        }
+        else if (ID == _CubeBID) {
+          _CubeActiveB = !_CubeActiveB;
+          isNewTarget = _CubeActiveB;
+          Debug.Log(string.Format("Cube {0} set to {1}", ID, _CubeActiveB));
+        }
+        else {
+          CurrentTarget = null;
+          Debug.LogError("Attempting to Toggle an Invalid Cube, ID not found.");
+          return;
+        }
+
+        // If turning on a new cube, set it to the primary target.
+        if (isNewTarget) {
+          CurrentTarget = cube;
+          if (!ActivatedCubes.ContainsKey(cube.ID)) {
+            ActivatedCubes.Add(cube.ID,cube);
+          }
+        }
+        else {
+          // If the cube was turned off, set other cube to target or 
+          // leave target null
+          if (ActivatedCubes.ContainsKey(cube.ID)) {
+            ActivatedCubes.Remove(cube.ID);
+          }
+          CurrentTarget = null;
+          if (CubeState == MoleState.SINGLE) {
+            if (ID == _CubeAID) {
+              if (ActivatedCubes.TryGetValue(_CubeBID, out cube)) {
+                CurrentTarget = cube;
+              }
+            }
+            else {
+              if (ActivatedCubes.TryGetValue(_CubeAID, out cube)) {
+                CurrentTarget = cube;
+              }
+            }
+          }
+        }
+        UpdateCubeLights();
+      }
+      else {
+        Debug.LogError("Attempting to Toggle an Invalid Cube, Cube not found.");
+      }
+    }
+
+    private void UpdateCubeLights() {
+      bool cubeLost = false;
+      if (CurrentRobot.LightCubes.ContainsKey(_CubeAID)) {
+        if (_CubeActiveA) {
+          _GamePanel.CubeAButton.image.color = _ActiveColor;
+          CurrentRobot.LightCubes[_CubeAID].SetLEDs(_ActiveColor);
+        }
+        else {
+          _GamePanel.CubeAButton.image.color = _CubeAColor;
+          CurrentRobot.LightCubes[_CubeAID].SetLEDs(_CubeAColor);
+        }
+      }
+      else {
+        Debug.LogError(string.Format("Can NOT find Cube A ID : {0}",_CubeAID));
+        cubeLost = true;
+      }
+
+      if (CurrentRobot.LightCubes.ContainsKey(_CubeBID)) {
+        if (_CubeActiveB) {
+          _GamePanel.CubeBButton.image.color = _ActiveColor;
+          CurrentRobot.LightCubes[_CubeBID].SetLEDs(_ActiveColor);
+        }
+        else {
+          _GamePanel.CubeBButton.image.color = _CubeBColor;
+          CurrentRobot.LightCubes[_CubeBID].SetLEDs(_CubeBColor);
+        }
+      }
+      else {
+        Debug.LogError(string.Format("Can NOT find Cube B ID : {0}",_CubeBID));
+        cubeLost = true;
+      }
+
+      if (cubeLost) {
+        // TODO: Use Confusion Animation transition to return to setup state.
+        Debug.LogWarning("Cubes lost, set up again");
+        SetUpCubes();
+      }
+      else {
+        // Upon entry, states listen to the MoleStateChanged Action, then change
+        // state based on current state. States themselves pick which cube to target
+        // when this action fires, assuming they aren't changing state.
+        if (MoleStateChanged != null) {
+          Debug.Log("Invoke Mole State Changed");
+          MoleStateChanged.Invoke(CubeState);
+        }
+      }
+    }
+
+    protected override void CleanUpOnDestroy() { 
+    
+    }
+  }
+}
