@@ -326,6 +326,7 @@ namespace Cozmo {
             }
 
             StartActing(robot, actionToRun);
+            moveLiftAction = nullptr;
 
             // HACK: don't abort if we are carrying an object, because we might get stuck
             if (currentTime_sec - _noFacesStartTime > 2.0f && !robot.IsCarryingObject()) {
