@@ -81,10 +81,6 @@ namespace Cozmo {
     
     _timeWhenInterrupted = 0.0;
     
-    // Make sure the robot's idle animation is set to use Live, since we are
-    // going to stream live face mimicking
-    robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
-    
     return RESULT_OK;
   }
   
