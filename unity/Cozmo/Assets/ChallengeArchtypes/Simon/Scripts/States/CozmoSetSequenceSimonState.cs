@@ -15,8 +15,8 @@ namespace Simon {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _SequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Cozmo);
+      _GameInstance.InitColorsAndSounds();
       _GameInstance.GenerateNewSequence(_SequenceLength);
-      _GameInstance.Progress = _SequenceLength / (float)_GameInstance.MaxSequenceLength;
       _GameInstance.ShowHowToPlaySlide("WatchPattern");
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);

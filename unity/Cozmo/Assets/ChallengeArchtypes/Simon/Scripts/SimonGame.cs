@@ -27,8 +27,6 @@ namespace Simon {
     // Use this for initialization
     protected void InitializeMinigameObjects() { 
       DAS.Info(this, "Game Created");
-      NumSegments = MaxSequenceLength;
-      MaxAttempts = _Config.MaxAttempts;
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
       InitialCubesState initCubeState = new InitialCubesState();
       State nextState;
@@ -60,8 +58,7 @@ namespace Simon {
       return _CurrentSequenceLength;
     }
 
-    public void GenerateNewSequence(int sequenceLength) {
-
+    public void InitColorsAndSounds() {
       // give cubes colors
       List<Color> colors = new List<Color>();
       colors.Add(Color.white);
@@ -75,14 +72,6 @@ namespace Simon {
         if (colors.Count == 0) {
           break;
         }
-      }
-
-      _CurrentIDSequence.Clear();
-      for (int i = 0; i < sequenceLength; ++i) {
-        int pickedID = -1;
-        int pickIndex = Random.Range(0, CurrentRobot.LightCubes.Count);
-        pickedID = CurrentRobot.LightCubes.ElementAt(pickIndex).Key;
-        _CurrentIDSequence.Add(pickedID);
       }
 
       _BlockIdToSound.Clear();
@@ -104,8 +93,22 @@ namespace Simon {
       }
     }
 
+    public void GenerateNewSequence(int sequenceLength) {
+      _CurrentIDSequence.Clear();
+      for (int i = 0; i < sequenceLength; ++i) {
+        int pickedID = -1;
+        int pickIndex = Random.Range(0, CurrentRobot.LightCubes.Count);
+        pickedID = CurrentRobot.LightCubes.ElementAt(pickIndex).Key;
+        _CurrentIDSequence.Add(pickedID);
+      }
+    }
+
     public IList<int> GetCurrentSequence() {
       return _CurrentIDSequence.AsReadOnly();
+    }
+
+    public void SetCurrentSequence(List<int> newSequence) {
+      _CurrentIDSequence = newSequence;
     }
 
     protected override void CleanUpOnDestroy() {

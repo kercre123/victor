@@ -73,7 +73,6 @@ namespace Simon {
     }
 
     private void PlayerWinGame() {
-      _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
         kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, 100, 100, 0, 0);
       }

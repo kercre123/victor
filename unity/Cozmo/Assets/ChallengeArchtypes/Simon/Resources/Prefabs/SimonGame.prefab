@@ -46,6 +46,8 @@ MonoBehaviour:
     slidePrefab: {fileID: 22581616, guid: 711511fb428484d35a044bfc4c5c88df, type: 2}
   - slideName: ContinueButton
     slidePrefab: {fileID: 22516030, guid: e9f1eaec7e850420cac3b5442661ddb9, type: 2}
+  - slideName: CreatePattern
+    slidePrefab: {fileID: 22568458, guid: 01d525b29ad9941fb81a4b48247441e6, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -55,7 +57,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: _HowToPlayPrefabs.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
@@ -88,6 +90,15 @@ Prefab:
       propertyPath: _HowToPlayPrefabs.Array.data[2].slidePrefab
       value: 
       objectReference: {fileID: 22516030, guid: e9f1eaec7e850420cac3b5442661ddb9,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slideName
+      value: CreatePattern
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slidePrefab
+      value: 
+      objectReference: {fileID: 22568458, guid: 01d525b29ad9941fb81a4b48247441e6,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

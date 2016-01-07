@@ -8,7 +8,6 @@ namespace Simon {
 
     public override void Enter() {
       base.Enter();
-      DAS.Error(this, "Enter");
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       SimonGamePanel continueButton = _GameInstance.ShowHowToPlaySlide("ContinueButton").GetComponent<SimonGamePanel>();
       continueButton.EnableContinueButton(true);
