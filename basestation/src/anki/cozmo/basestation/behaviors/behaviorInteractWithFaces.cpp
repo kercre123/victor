@@ -81,9 +81,9 @@ namespace Cozmo {
     
     _timeWhenInterrupted = 0.0;
     
-    // Make sure the robot's idle animation is set to use Live, since we are
-    // going to stream live face mimicking
-    robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+    // Make sure we've done this at least once in case StopTracking gets called somehow
+    // before StartTracking (which is where we normally store off the original params).
+    _originalLiveIdleParams = robot.GetAnimationStreamer().GetAllParams();
     
     return RESULT_OK;
   }
@@ -203,6 +203,7 @@ namespace Cozmo {
                      "Will start tracking face %llu", faceID);
     _trackedFaceID = faceID;
     TrackFaceAction* trackAction = new TrackFaceAction(_trackedFaceID);
+    trackAction->SetMoveEyes(true);
     _trackActionTag = trackAction->GetTag();
     trackAction->SetUpdateTimeout(kTrackingTimeout_sec);
     robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, queueTrackingPosition, trackAction);
@@ -216,9 +217,9 @@ namespace Cozmo {
       using Param = LiveIdleAnimationParameter;
       //      robot.GetAnimationStreamer().SetParam(Param::EyeDartSpacingMinTime_ms, 0.f);
       //      robot.GetAnimationStreamer().SetParam(Param::EyeDartSpacingMaxTime_ms, 0.25f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMinScale, 1.f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxScale, 1.f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxDistance_pix,   0.f);
+      //robot.GetAnimationStreamer().SetParam(Param::EyeDartMinScale, 1.f);
+      //robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxScale, 1.f);
+      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxDistance_pix, 1.f); // reduce dart distance
     }
     
     _currentState = State::TrackingFace;
@@ -431,7 +432,7 @@ namespace Cozmo {
         // If we get this far, we're still apparently tracking the same face
         
         // Update cozmo's face based on our currently tracked face
-        UpdateRobotFace(robot);
+        //UpdateRobotFace(robot);
         
 #       if DO_TOO_CLOSE_SCARED
         if(!_isActing &&
@@ -475,8 +476,8 @@ namespace Cozmo {
                                "Head is %.1fmm away: playing shocked anim.",
                                headWrtRobot.GetTranslation().Length());
               
-              // Queue the animation to happen now, which will cancel tracking, but
-              // re-enable tracking immediately after:
+              // Queue the animation to happen now, which will interrupt tracking, but
+              // re-enable it immediately after the animation finishes
               PlayAnimation(robot, "ID_react2face_disgust", QueueActionPosition::NOW_AND_RESUME);
               
               robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");
@@ -745,7 +746,7 @@ namespace Cozmo {
 
       tiltTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(face, 250));
       robot.GetAnimationStreamer().RemovePersistentFaceLayer(_tiltLayerTag);
-      _tiltLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(tiltTrack));
+      _tiltLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("InteractWithFacesTilt", std::move(tiltTrack));
       
       _lastFaceTiltTime = currentTime;
       _faceTiltSpacing = GetRNG().RandDblInRange(kTiltSpacingMin_sec, kTiltSpacingMax_sec);
@@ -786,7 +787,8 @@ namespace Cozmo {
     if(xPixShift != 0 || yPixShift != 0) { // TODO: remove
       robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeDartLayerTag);
       _eyeDartLayerTag = robot.ShiftAndScaleEyes(xPixShift, yPixShift,
-                                                 distScale, distScale, 0, true);
+                                                 distScale, distScale, 0, true,
+                                                 "InteractWithFacesMimic");
     }
 
 #   if DO_FACE_MIMICKING

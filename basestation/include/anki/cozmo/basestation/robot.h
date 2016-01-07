@@ -481,7 +481,8 @@ public:
   
     // Same as above, but shifts and scales
     u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                          TimeStamp_t duration_ms, bool makePersistent = false);
+                          TimeStamp_t duration_ms, bool makePersistent = false,
+                          const std::string& name = "ShiftAndScaleEyes");
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
