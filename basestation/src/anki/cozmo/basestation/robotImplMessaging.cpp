@@ -18,11 +18,13 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/robotStatusAndActions.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
 #include <functional>
@@ -43,6 +45,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleBlockPickedUp, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPlaced,
     std::bind(&Robot::HandleBlockPlaced, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::movingLiftPostDock,
+    std::bind(&Robot::HandleMovingLiftPostDock, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectMoved,
     std::bind(&Robot::HandleActiveObjectMoved, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectStopped,
@@ -193,6 +197,22 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
   _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
   _visionComponent.EnableMode(VisionMode::Tracking, false);
 
+}
+  
+void Robot::HandleMovingLiftPostDock(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  // Play animation that just plays a sound to express exertion when rolling the block
+  const auto& payload = message.GetData().Get_movingLiftPostDock();
+  switch(payload.action) {
+    case DockAction::DA_ROLL_LOW:
+    {
+      PlayAnimationAction *animAction = new PlayAnimationAction("RollingEffort");
+      GetActionList().QueueAction(Robot::SoundSlot, QueueActionPosition::NEXT, animAction);
+      break;
+    }
+    default:
+      break;
+  }
 }
 
 void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)

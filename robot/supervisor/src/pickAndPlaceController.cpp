@@ -146,6 +146,16 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      Result SendMovingLiftPostDockMessage()
+      {
+        MovingLiftPostDock msg;
+        msg.action = action_;
+        if(RobotInterface::SendMessage(msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
       Result SendChargerMountCompleteMessage(const bool success)
       {
         ChargerMountComplete msg;
@@ -417,6 +427,8 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
             PRINT("PAP: SETTING LIFT POSTDOCK\n");
 #endif
+            SendMovingLiftPostDockMessage();
+            
             mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
               case DA_PLACE_LOW:
