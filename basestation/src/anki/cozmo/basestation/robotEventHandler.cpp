@@ -365,6 +365,7 @@ IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::T
 IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
 {
   TrackObjectAction* action = new TrackObjectAction(trackObject.objectID);
+  action->SetMoveEyes(true);
   
   // TODO: Support body-only mode
   if(trackObject.headOnly) {
