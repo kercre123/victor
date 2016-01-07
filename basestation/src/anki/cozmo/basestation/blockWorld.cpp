@@ -732,6 +732,19 @@ namespace Cozmo {
                                      candidateObject->GetID().GetValue(), matchingObject->GetID().GetValue());
                     DeleteObject(matchingObject->GetID());
                     matchingObject = candidateObject;
+                    
+                    // If the matching object currently thinks it's being carried, unset its carry state.
+                    ActionableObject* actionObject = dynamic_cast<ActionableObject*>(matchingObject);
+                    if(actionObject != nullptr) {
+                      if(actionObject->IsBeingCarried()) {
+                        PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.ObservedObjectMovedOffLift",
+                                            "Object %d was probably moved off lift. Setting as uncarried.",
+                                            actionObject->GetID().GetValue());
+                        _robot->UnSetCarryObject(actionObject->GetID());
+                      }
+                    }
+
+                    
                     break;
                   }
                 }
