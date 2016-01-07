@@ -454,20 +454,18 @@ namespace Cozmo {
           // Keep track of how long a face has been really close, continuously
           static double continuousCloseStartTime_sec = std::numeric_limits<float>::max();
           
+          // If a face isn't too close, reset the continuous close face timer
           if(distSqr >= (kTooCloseDistance_mm * kTooCloseDistance_mm))
           {
             continuousCloseStartTime_sec = std::numeric_limits<float>::max();
           }
           else
           {
+            // If the timer hasn't been set yet and a face is too close, set the timer
             if (continuousCloseStartTime_sec == std::numeric_limits<float>::max())
             {
               continuousCloseStartTime_sec = currentTime_sec;
             }
-            
-            PRINT_NAMED_INFO("BehaviorInteractWithFaces.CloseFaceCurrentTime",
-                             "%f sec",
-                             (currentTime_sec - continuousCloseStartTime_sec));
             
             if ((currentTime_sec - continuousCloseStartTime_sec) >= kContinuousCloseScareTime_sec)
             {
