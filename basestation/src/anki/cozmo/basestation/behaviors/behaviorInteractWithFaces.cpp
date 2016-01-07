@@ -450,21 +450,40 @@ namespace Cozmo {
           Vec3f headTranslate = headWrtRobot.GetTranslation();
           headTranslate.z() = 0.0f; // We only want to work with XY plane distance
           auto distSqr = headTranslate.LengthSq();
-          if(distSqr < (kTooCloseDistance_mm * kTooCloseDistance_mm))
+          
+          // Keep track of how long a face has been really close, continuously
+          static double continuousCloseStartTime_sec = std::numeric_limits<float>::max();
+          
+          // If a face isn't too close, reset the continuous close face timer
+          if(distSqr >= (kTooCloseDistance_mm * kTooCloseDistance_mm))
           {
-            // The head is very close (scary!). Move backward along the line from the
-            // robot to the head.
-            PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
-                             "Head is %.1fmm away: playing shocked anim.",
-                             headWrtRobot.GetTranslation().Length());
+            continuousCloseStartTime_sec = std::numeric_limits<float>::max();
+          }
+          else
+          {
+            // If the timer hasn't been set yet and a face is too close, set the timer
+            if (continuousCloseStartTime_sec == std::numeric_limits<float>::max())
+            {
+              continuousCloseStartTime_sec = currentTime_sec;
+            }
             
-            // Queue the animation to happen now, which will cancel tracking, but
-            // re-enable tracking immediately after:
-            PlayAnimation(robot, "ID_react2face_disgust", QueueActionPosition::NOW_AND_RESUME);
-            
-            robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");
-            _lastTooCloseScaredTime = currentTime_sec;
-            _isActing = true;
+            if ((currentTime_sec - continuousCloseStartTime_sec) >= kContinuousCloseScareTime_sec)
+            {
+              // The head is very close (scary!). Move backward along the line from the
+              // robot to the head.
+              PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
+                               "Head is %.1fmm away: playing shocked anim.",
+                               headWrtRobot.GetTranslation().Length());
+              
+              // Queue the animation to happen now, which will cancel tracking, but
+              // re-enable tracking immediately after:
+              PlayAnimation(robot, "ID_react2face_disgust", QueueActionPosition::NOW_AND_RESUME);
+              
+              robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");
+              _lastTooCloseScaredTime = currentTime_sec;
+              _isActing = true;
+              continuousCloseStartTime_sec = std::numeric_limits<float>::max();
+            }
           }
         }
 #       else
