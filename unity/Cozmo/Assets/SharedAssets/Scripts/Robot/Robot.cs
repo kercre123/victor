@@ -353,6 +353,7 @@ public class Robot : IDisposable {
     VisualizeQuadMessage = new U2G.VisualizeQuad();
     DisplayProceduralFaceMessage = new U2G.DisplayProceduralFace();
     QueueSingleAction = new U2G.QueueSingleAction();
+    QueueSingleAction.robotID = ID;
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile();
