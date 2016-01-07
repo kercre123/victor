@@ -6,8 +6,6 @@
 
   'variables': {
 
-    'game_source': 'cozmoGame.lst',
-    'game_library_type': 'static_library',
     'ctrlGameEngine_source': 'ctrlGameEngine.lst',
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
     'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',    
@@ -331,7 +329,7 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
-              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoAPI',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiMessaging',
@@ -350,7 +348,7 @@
             'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
-              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoAPI',
               'CSharpBinding',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
@@ -431,7 +429,7 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
-              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoAPI',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',
@@ -513,7 +511,7 @@
               '<(cti-cozmo_engine_path)/simulator/include'
             ],
             'dependencies': [
-              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoAPI',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-util_gyp_path):util',
               '<(cg-cti_gyp_path):ctiCommon',
@@ -562,7 +560,7 @@
               '<(cti-cozmo_engine_path)/simulator/include',
             ],
             'dependencies': [
-              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoAPI',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-util_gyp_path):util',
               '<(cg-cti_gyp_path):ctiCommon',
@@ -846,58 +844,6 @@
 
   'targets': [
 
-    {
-      'target_name': 'cozmoGame',
-      'sources': [ 
-        '<!@(cat <(game_source))',
-      ],
-      'include_dirs': [
-        '../../game/src',
-        '../../game/include',
-        '../../generated/clad/game',
-        '<@(opencv_includes)',
-      ],
-      'direct_dependent_settings': {
-        'include_dirs': [
-          '../../game/include',
-          '../../generated/clad/game',
-        ],
-      },
-      'dependencies': [
-        '<(cg-util_gyp_path):util',
-        '<(cg-ce_gyp_path):cozmoEngine',
-        '<(cg-cti_gyp_path):ctiCommon',
-        '<(cg-cti_gyp_path):ctiMessaging',
-        '<(cg-cti_gyp_path):ctiPlanning',
-        '<(cg-cti_gyp_path):ctiVision',
-      ],
-      'type': '<(game_library_type)',
-      
-      'conditions': [
-        ['face_library=="faciometric"', {
-          # Copy FacioMetric's models into the resources so they are available at runtime.
-          # This is a little icky since it reaches into cozmo engine...
-          'actions': [
-            {
-              'action_name': 'copy_faciometric_models',
-              'inputs': [
-                '<(face_library_path)/Demo/models',
-              ],
-              'outputs': [
-                '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',
-              ],
-              'action': [
-                'cp',
-                '-R',
-                '<@(_inputs)',
-                '<@(_outputs)',
-              ],
-            },
-          ],
-        }],
-      ] #'conditions'
-
-    },
     
 
   ] # end targets

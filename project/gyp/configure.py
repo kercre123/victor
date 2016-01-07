@@ -199,9 +199,9 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['game/src/anki/cozmo', 'game/include',
-    'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
-    'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
+  # generator.processFolder(['game/src/anki/cozmo', 'game/include',
+  #   'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
+  #   'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'lib/anki/cozmo-engine/simulator/src/game'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'lib/anki/cozmo-engine/simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
