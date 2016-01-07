@@ -73,8 +73,6 @@ public:
   void SetTiltTolerance(const Radians& tiltThreshold);
 
   void SetMaxHeadAngle(const Radians& maxHeadAngle_rads) { _maxHeadAngle = maxHeadAngle_rads; }
-
-  virtual bool Interrupt() override final;
   
 protected:
 
@@ -85,6 +83,8 @@ protected:
   // to turn and face whatever is being tracked.
   // Return true if new angles were provided, false if same as last time.
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) = 0;
+  
+  virtual bool InterruptInternal() override final;
   
 private:
   

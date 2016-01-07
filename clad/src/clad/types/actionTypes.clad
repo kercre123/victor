@@ -58,7 +58,8 @@ enum int_32 ActionResult {
     FAILURE_PROCEED,
     FAILURE_RETRY,
     FAILURE_ABORT,
-    CANCELLED
+    CANCELLED,
+    INTERRUPTED
 }
 
 
