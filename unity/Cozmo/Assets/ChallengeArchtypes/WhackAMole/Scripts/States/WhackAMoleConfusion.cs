@@ -23,7 +23,7 @@ namespace WhackAMole {
     public override void Update() {
       base.Update();
       if (Time.time - _ConfusionStartTimestamp > _ConfusionTimeout) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kIdleHumming, HandleAnimationDone));
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kCodeBreakerThinking, HandleAnimationDone));
       }
     }
 
