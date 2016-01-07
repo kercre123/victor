@@ -102,8 +102,9 @@ namespace Anki {
       // Returns the last computed pose of the marker based on docking error signal
       const Anki::Embedded::Pose2d& GetLastMarkerAbsPose();
       
-      // Returns the last docking error signal received
-      void GetLastMarkerRelPose(f32 &x, f32 &y, f32 &angle);
+      // Returns the distance between the current robot origin and the last computed location of
+      // the marker that it is/was docking to. Use carefully!
+      f32 GetDistToLastDockMarker();
       
       // Sets the latest docking error signal message coming from engine
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg);

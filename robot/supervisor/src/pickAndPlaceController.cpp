@@ -40,7 +40,7 @@ namespace Anki {
 
         // The distance from the last-observed position of the target that we'd
         // like to be after backing out
-        const f32 BACKOUT_DISTANCE_MM = 75.f;
+        const f32 BACKOUT_DISTANCE_MM = 50.f;
         const f32 BACKOUT_SPEED_MMPS = 60;
         
         // Max amount of time to wait for lift to get into position before backing out.
@@ -79,8 +79,8 @@ namespace Anki {
         f32 dockSpeed_mmps_ = 0;
         f32 dockAccel_mmps2_ = 0;
 
-        // Last seen marker pose used for bridge crossing
-        f32 relMarkerX_, relMarkerY_, relMarkerAng_;
+        // Distance to last known docking marker pose
+        f32 lastMarkerDist_;
 
         CarryState carryState_ = CARRY_NONE;
         bool lastActionSucceeded_ = false;
@@ -116,7 +116,6 @@ namespace Anki {
       void Reset()
       {
         mode_ = IDLE;
-        relMarkerX_ = -1.f;
         DockingController::ResetDocker();
       }
 
@@ -162,24 +161,25 @@ namespace Anki {
       {
         static const f32 MIN_BACKOUT_DIST = 10.f;
 
-        DockingController::GetLastMarkerRelPose(relMarkerX_, relMarkerY_, relMarkerAng_);
+        if (action_ == DA_PLACE_LOW_BLIND) {
+          lastMarkerDist_ = 30.f;
+        } else {
+          lastMarkerDist_ = DockingController::GetDistToLastDockMarker();
+        }
 
         f32 backoutDist_mm = MIN_BACKOUT_DIST;
-        if(relMarkerX_ > 0.f && relMarkerX_ <= BACKOUT_DISTANCE_MM) {
-          backoutDist_mm = MAX(MIN_BACKOUT_DIST, BACKOUT_DISTANCE_MM - relMarkerX_);
+        if(lastMarkerDist_ > 0.f && lastMarkerDist_ <= BACKOUT_DISTANCE_MM) {
+          backoutDist_mm = MAX(MIN_BACKOUT_DIST, BACKOUT_DISTANCE_MM - lastMarkerDist_);
         }
 
         const f32 backoutTime_sec = backoutDist_mm / BACKOUT_SPEED_MMPS;
 
         PRINT("PAP: Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)\n",
-              relMarkerX_, backoutDist_mm, backoutTime_sec);
+              lastMarkerDist_, backoutDist_mm, backoutTime_sec);
 
         transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3f);
 
         SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
-
-        // Now that we've used relMarkerX_, mark it as used
-        relMarkerX_ = -1.f;
 
         mode_ = BACKOUT;
       }
@@ -601,14 +601,14 @@ namespace Anki {
             break;
           case TRAVERSE_BRIDGE:
             if (DockingController::IsBusy()) {
-              DockingController::GetLastMarkerRelPose(relMarkerX_, relMarkerY_, relMarkerAng_);
-              if (relMarkerX_ < 100.f) {
+              lastMarkerDist_ = DockingController::GetDistToLastDockMarker();
+              if (lastMarkerDist_ < 100.f) {
                 // We're tracking the end marker.
                 // Keep driving until we're off.
                 UpdatePoseSnapshot();
                 mode_ = LEAVE_BRIDGE;
                 #if(DEBUG_PAP_CONTROLLER)
-                PRINT("LEAVING_BRIDGE: relMarkerX = %f\n", relMarkerX_);
+                PRINT("LEAVING_BRIDGE: relMarkerX = %f\n", lastMarkerDist_);
                 #endif
               }
             } else {
@@ -620,7 +620,7 @@ namespace Anki {
             }
             break;
           case LEAVE_BRIDGE:
-            if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > relMarkerX_ + MARKER_TO_OFF_BRIDGE_POSE_DIST) {
+            if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > lastMarkerDist_ + MARKER_TO_OFF_BRIDGE_POSE_DIST) {
               SteeringController::ExecuteDirectDrive(0, 0);
               #if(DEBUG_PAP_CONTROLLER)
               PRINT("PAP: IDLE (from TRAVERSE_BRIDGE)\n");
@@ -744,7 +744,6 @@ namespace Anki {
 
         useManualSpeed_ = useManualSpeed;
 
-        relMarkerX_ = -1.f;
         transitionTime_ = 0;
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
