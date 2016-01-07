@@ -6,7 +6,7 @@ namespace CubeSlap {
   public class SeekState : State {
 
     private CubeSlapGame _CubeSlapGame;
-    private float _ConfirmDelay = 1.0f;
+    private float _ConfirmDelay = 0.5f;
     public float _FirstSeenTimestamp = -1;
 
     public override void Enter() {
@@ -23,6 +23,7 @@ namespace CubeSlap {
     public override void Update() {
       base.Update();
       bool isBad = true;
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       LightCube target = _CubeSlapGame.GetCurrentTarget();
       if (target != null) {
         // If Cube is in the right position, enter game state.
@@ -38,6 +39,10 @@ namespace CubeSlap {
             if (Time.time - _FirstSeenTimestamp > _ConfirmDelay) {
               _StateMachine.SetNextState(new SlapGameState());
             }
+          }
+          else if (Vector3.Dot(_CurrentRobot.Forward, (target.WorldPosition - _CurrentRobot.WorldPosition).normalized) > 0.92f) {
+            // the robot is lined up but not close enough to drive toward it to start the game.
+            _CurrentRobot.DriveWheels(15.0f, 15.0f);
           }
         }
       }
@@ -55,6 +60,7 @@ namespace CubeSlap {
 
     public override void Exit() {
       base.Exit();
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
   }
 }
