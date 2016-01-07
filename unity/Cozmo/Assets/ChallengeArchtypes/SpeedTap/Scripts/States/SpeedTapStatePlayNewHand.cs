@@ -16,6 +16,7 @@ namespace SpeedTap {
     private bool _LightsOn = false;
     private bool _GotMatch = false;
     private bool _CozmoTapping = false;
+    private bool _TriedFake = false;
 
     public override void Enter() {
       base.Enter();
@@ -48,9 +49,9 @@ namespace SpeedTap {
           }
         }
         else if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.25f) {
-          if (!_CozmoTapping) {
+          if (!_TriedFake) {
             _CurrentRobot.SendAnimation(AnimationName.kSpeedTapFake);
-            _CozmoTapping = true;
+            _TriedFake = true;
           }
         }
         if ((currTimeMs - _StartTimeMs) >= _OnDelayTimeMs) {
@@ -116,6 +117,7 @@ namespace SpeedTap {
 
     private void RollForLights() {
       _SpeedTapGame.RollingBlocks();
+      _TriedFake = false;
 
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;

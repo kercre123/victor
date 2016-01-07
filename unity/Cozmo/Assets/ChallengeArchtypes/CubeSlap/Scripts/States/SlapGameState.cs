@@ -20,6 +20,7 @@ namespace CubeSlap {
       _SlapTriggered = false;
       _CubeSlapGame.GetCurrentTarget();
       _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kWaitForPounce); 
+      LightCube.OnMovedAction += HandleCubeMoved;
     }
 
     public override void Update() {
@@ -60,12 +61,20 @@ namespace CubeSlap {
       }
     }
 
+    private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
+      if (!_SlapTriggered && id == _CubeSlapGame.GetCurrentTarget().ID) {
+        _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kCozmoWinEarly);
+        _CubeSlapGame.OnFailure();
+      }
+    }
+
     private void ResetLastSeenTimeStamp() {
       _LastSeenTimeStamp = -1;
     }
 
     public override void Exit() {
       base.Exit();
+      LightCube.OnMovedAction -= HandleCubeMoved;
     }
   }
 }
