@@ -4,14 +4,14 @@ using System.Collections.Generic;
 
 namespace Simon {
 
-  public class CozmoSetSimonState : State {
+  public class CozmoSetSequenceSimonState : State {
 
     private SimonGame _GameInstance;
     private int _CurrentSequenceIndex = -1;
     private IList<int> _CurrentSequence;
     private int _SequenceLength;
 
-    public CozmoSetSimonState(int sequenceLength) {
+    public CozmoSetSequenceSimonState(int sequenceLength) {
       _SequenceLength = sequenceLength;
     }
 
@@ -31,10 +31,10 @@ namespace Simon {
       base.Update();
       _CurrentSequenceIndex++;
       if (_CurrentSequenceIndex == _CurrentSequence.Count) {
-        _StateMachine.SetNextState(new WaitForPlayerSimonState());
+        _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
         return;
       }
-      _StateMachine.PushSubState(new TurnToTargetState());
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState());
     }
 
     public LightCube GetCurrentTarget() {

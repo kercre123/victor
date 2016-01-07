@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Anki.Cozmo.Audio;
 
 namespace Simon {
-  public class WaitForPlayerSimonState : State {
+  public class WaitForPlayerGuessSimonState : State {
 
     private SimonGame _GameInstance;
     private IList<int> _SequenceList;
@@ -56,7 +56,7 @@ namespace Simon {
         _GameInstance.RaiseMiniGameWin();
         return;
       }
-      _StateMachine.SetNextState(new WaitForNextTurnState(_SequenceList.Count + 1));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_SequenceList.Count + 1));
     }
 
     private void HandleOnLoseAnimationDone(bool success) {
@@ -65,7 +65,7 @@ namespace Simon {
         _GameInstance.RaiseMiniGameLose();
         return;
       }
-      _StateMachine.SetNextState(new WaitForNextTurnState(_SequenceList.Count));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_SequenceList.Count));
     }
 
     private void BlackoutLights() {
@@ -109,15 +109,7 @@ namespace Simon {
     }
 
     private bool TurnToTarget(LightCube currentTarget) {
-      Vector3 robotToTarget = currentTarget.WorldPosition - _CurrentRobot.WorldPosition;
-      float crossValue = Vector3.Cross(_CurrentRobot.Forward, robotToTarget).z;
-      if (crossValue > 0.0f) {
-        _CurrentRobot.DriveWheels(-SimonGame.kDriveWheelSpeed, SimonGame.kDriveWheelSpeed);
-      }
-      else {
-        _CurrentRobot.DriveWheels(SimonGame.kDriveWheelSpeed, -SimonGame.kDriveWheelSpeed);
-      }
-      return Vector2.Dot(robotToTarget.normalized, _CurrentRobot.Forward) > SimonGame.kDotThreshold;
+      return SimonGame.TurnToTarget(_CurrentRobot, currentTarget);
     }
   }
 

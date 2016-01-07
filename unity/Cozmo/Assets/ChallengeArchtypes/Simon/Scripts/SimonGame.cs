@@ -28,7 +28,7 @@ namespace Simon {
       NumSegments = MaxSequenceLength;
       MaxAttempts = _Config.MaxAttempts;
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForNextTurnState(_Config.MinSequenceLength), 2, true, null);
+      initCubeState.InitialCubeRequirements(new WaitForNextRoundSimonState(_Config.MinSequenceLength), 2, true, null);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -106,6 +106,18 @@ namespace Simon {
         audioEvent = sound.playerSoundName;
       }
       return audioEvent;
+    }
+
+    public static bool TurnToTarget(Robot robot, LightCube target) {
+      Vector3 robotToTarget = target.WorldPosition - robot.WorldPosition;
+      float crossValue = Vector3.Cross(robot.Forward, robotToTarget).z;
+      if (crossValue > 0.0f) {
+        robot.DriveWheels(-kDriveWheelSpeed, kDriveWheelSpeed);
+      }
+      else {
+        robot.DriveWheels(kDriveWheelSpeed, -kDriveWheelSpeed);
+      }
+      return Vector2.Dot(robotToTarget.normalized, robot.Forward) > kDotThreshold;
     }
   }
 

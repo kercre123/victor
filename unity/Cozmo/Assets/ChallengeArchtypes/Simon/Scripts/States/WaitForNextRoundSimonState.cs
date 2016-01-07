@@ -2,12 +2,12 @@
 using System.Collections;
 
 namespace Simon {
-  public class WaitForNextTurnState : State {
+  public class WaitForNextRoundSimonState : State {
 
     private SimonGame _GameInstance;
     private int _SequenceCount;
 
-    public WaitForNextTurnState(int sequenceCount) {
+    public WaitForNextRoundSimonState(int sequenceCount) {
       _SequenceCount = sequenceCount;
     }
 
@@ -21,7 +21,7 @@ namespace Simon {
 
     private void HandleContinuePressed() {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.PLAYFUL);
-      _StateMachine.SetNextState(new CozmoSetSimonState(_SequenceCount));
+      _StateMachine.SetNextState(new CozmoSetSequenceSimonState(_SequenceCount));
     }
 
     public override void Exit() {
