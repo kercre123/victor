@@ -149,17 +149,21 @@ static void copy_state(const void *data, int count) {
 #endif
 }
 
+static bool readyForIMU = false;
+
+void Anki::Cozmo::HAL::IMU::Update(void) {
+  readyForIMU = true;
+}
+
 void Anki::Cozmo::HAL::IMU::Manage(void) {
   // Eventually, this should probably be synced to the body
   static const uint8_t DATA_8 = 0x0C;
-  static int imu_update = 0;
   static IMUData imu_state;
 
-  imu_update += IMU_UPDATE_FREQUENCY;
-  if (imu_update < DROPS_PER_SECOND) {
+  if (!readyForIMU) {
     return ;
   }
-  imu_update -= DROPS_PER_SECOND;
+  readyForIMU = false;
 
   I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), NULL, I2C_FORCE_START);
   I2C::Read(SLAVE_READ(ADDR_IMU), (uint8_t*) &imu_state, sizeof(IMUData), &copy_state);
