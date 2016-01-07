@@ -164,12 +164,16 @@ namespace Cozmo {
     constexpr static float kGlanceDownInterval_sec = 12;
     
     // Min time between plays of the animation when we see a new face
-    constexpr static float kSeeNewFaceAnimationCooldown_sec = 10;
+    constexpr static float kSeeNewFaceAnimationCooldown_sec = 2;
+    
+    // Frequency of playing strong friendly anim compared to minor friendly (as in every nth will be strong)
+    constexpr static int kStrongFriendlyAnimRatio = 5;
+    uint32_t kCurrentFriendlyAnimCount = 0;
     
     // Min time between playing the shocked/scared animation when a face gets
     // too close NOTE: This should probably be longer than _deletionTimeout_ms in FaceWorld.h or Cozmo could repeatedly
     // express that he's scared with a face that's going to be deleted
-    constexpr static float kTooCloseScaredInterval_sec = 10;
+    constexpr static float kTooCloseScaredInterval_sec = 45;
     
     // Amount to periodically tilt the robot's face while watching a face, and the time spacing
     // between tilts
