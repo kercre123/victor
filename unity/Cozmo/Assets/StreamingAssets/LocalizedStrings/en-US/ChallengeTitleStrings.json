@@ -245,5 +245,14 @@
     },
     "speedTapNoRed.description": {
         "translation": "Tap same color, unless it is red then don't tap"
+    },
+    "whackAMole.title" : {
+        "translation" : "Whack A Mole"
+    },
+    "whackAMole.subtitle" : {
+        "translation" : "Tap Buttons to Make Cozmo Chase cubes!"
+    },
+    "whackAMole.description" : {
+        "translation" : "Tap an active Button to turn it off and trick Cozmo."
     }
 }
