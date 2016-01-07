@@ -162,8 +162,8 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       }
     
       if(_moveEyes) {
-        const f32 y_mm = std::tan(relTiltAngle) * HEAD_CAM_POSITION[0];
-        eyeShiftY = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (2*SCREEN_SIZE[1]));
+        const f32 y_mm = std::tan(-relTiltAngle) * HEAD_CAM_POSITION[0];
+        eyeShiftY = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/2) / SCREEN_SIZE[1]);
       }
     }
     
@@ -198,7 +198,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
         // Compute horizontal eye movement
         // Note: assuming screen is about the same x distance from the neck joint as the head cam
         const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
-        eyeShiftX = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (2*SCREEN_SIZE[0]));
+        eyeShiftX = x_mm * (static_cast<f32>(ProceduralFace::WIDTH/2) / SCREEN_SIZE[0]);
       }
     }
     
@@ -212,22 +212,27 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     }
     
     // Move eyes if indicated
-    if(_moveEyes) {
+    if(_moveEyes && (eyeShiftX != 0.f || eyeShiftY != 0.f))
+    {
+      // Clip, but retain sign
+      eyeShiftX = CLIP(eyeShiftX, -ProceduralFace::WIDTH/4, ProceduralFace::WIDTH/4);
+      eyeShiftY = CLIP(eyeShiftY, -ProceduralFace::HEIGHT/4, ProceduralFace::HEIGHT/4);
+      
+      PRINT_NAMED_INFO("ITrackAction.CheckIfDone.EyeShift",
+                       "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
+                       eyeShiftX, eyeShiftY, _eyeShiftTag);
+      
+      ProceduralFace procFace;
+      ProceduralFaceParams& params = procFace.GetParams();
+      params.SetFacePosition({eyeShiftX, eyeShiftY});
+      
       if(_eyeShiftTag == AnimationStreamer::NotAnimatingTag) {
-        _eyeShiftTag = robot.ShiftEyes(eyeShiftX, eyeShiftY, 2*IKeyFrame::SAMPLE_LENGTH_MS, true);
+        // Start a new eye shift layer
+        AnimationStreamer::FaceTrack faceTrack;
+        faceTrack.AddKeyFrameToBack(procFace);
+        _eyeShiftTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(faceTrack));
       } else {
-        // Clip, but retain sign
-        eyeShiftX = CLIP(eyeShiftX, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
-        eyeShiftY = CLIP(eyeShiftY, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
-
-        PRINT_NAMED_INFO("ITrackAction.CheckIfDone.EyeShift",
-                         "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
-                         eyeShiftX, eyeShiftY, _eyeShiftTag);
-        
-        ProceduralFace procFace;
-        ProceduralFaceParams& params = procFace.GetParams();
-        params.SetFacePosition({eyeShiftX, eyeShiftY});
-        
+        // Augment existing eye shift layer
         robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace));
       }
     } // if(_moveEyes)
@@ -294,6 +299,7 @@ ActionResult TrackObjectAction::Init(Robot& robot)
 
 void TrackObjectAction::Cleanup(Robot& robot)
 {
+  ITrackAction::Cleanup(robot);
   robot.GetMoveComponent().UnSetTrackToObject();
 }
   
@@ -417,6 +423,7 @@ ActionResult TrackFaceAction::Init(Robot& robot)
   
 void TrackFaceAction::Cleanup(Robot& robot)
 {
+  ITrackAction::Cleanup(robot);
   robot.GetMoveComponent().UnSetTrackToFace();
 }
 
