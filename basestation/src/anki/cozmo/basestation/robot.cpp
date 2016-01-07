@@ -1068,7 +1068,9 @@ namespace Anki {
           }
         }
       }
-        
+      
+      // update navigation memory map
+      _blockWorld.UpdateNavMemoryMap();        
       
       /////////// Update visualization ////////////
       
@@ -1077,6 +1079,9 @@ namespace Anki {
       
       // Draw All Objects by calling their Visualize() methods.
       _blockWorld.DrawAllObjects();
+      
+      // Nav memory map
+      _blockWorld.DrawNavMemoryMap();
       
       // Always draw robot w.r.t. the origin, not in its current frame
       Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToOrigin();
