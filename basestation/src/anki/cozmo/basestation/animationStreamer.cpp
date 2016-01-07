@@ -262,7 +262,7 @@ namespace Cozmo {
   }
   
   
-  Result AnimationStreamer::AddFaceLayer(FaceTrack&& faceTrack, TimeStamp_t delay_ms)
+  Result AnimationStreamer::AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms)
   {
     Result lastResult = RESULT_OK;
     
@@ -278,10 +278,12 @@ namespace Cozmo {
     newLayer.streamTime_ms = 0;
     newLayer.isPersistent = false;
     newLayer.sentOnce = false;
+    newLayer.name = name;
     
 #   if DEBUG_ANIMATION_STREAMING
     PRINT_NAMED_INFO("AnimationStreamer.AddFaceLayer",
-                     "Tag = %d (Total layers=%lu)", newLayer.tag, _faceLayers.size()+1);
+                     "%s, Tag = %d (Total layers=%lu)",
+                     newLayer.name.c_str(), newLayer.tag, _faceLayers.size()+1);
 #   endif
     
     _faceLayers[_layerTagCtr] = std::move(newLayer);
@@ -289,7 +291,7 @@ namespace Cozmo {
     return lastResult;
   }
   
-  u32 AnimationStreamer::AddPersistentFaceLayer(FaceTrack&& faceTrack)
+  u32 AnimationStreamer::AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack)
   {
     faceTrack.SetIsLive(false); // don't want keyframes to delete as they play
     
@@ -303,13 +305,15 @@ namespace Cozmo {
     newLayer.streamTime_ms = 0;
     newLayer.isPersistent = true;
     newLayer.sentOnce = false;
-    
-    _faceLayers[_layerTagCtr] = std::move(newLayer);
-   
+    newLayer.name = name;
+
 #   if DEBUG_ANIMATION_STREAMING
     PRINT_NAMED_INFO("AnimationStreamer.AddPersistentFaceLayer",
-                     "Tag = %d (Total layers=%lu)", returnTag, _faceLayers.size());
+                     "%s, Tag = %d (Total layers=%lu)",
+                     newLayer.name.c_str(), newLayer.tag, _faceLayers.size());
 #   endif
+    
+    _faceLayers[_layerTagCtr] = std::move(newLayer);
     
     return _layerTagCtr;
   }
@@ -335,7 +339,7 @@ namespace Cozmo {
         lastFrame.SetTriggerTime(IKeyFrame::SAMPLE_LENGTH_MS*duration);
         faceTrack.AddKeyFrameToBack(std::move(lastFrame));
         
-        AddFaceLayer(std::move(faceTrack));
+        AddFaceLayer("Remove" + layerIter->second.name, std::move(faceTrack));
       }
       
       _faceLayers.erase(layerIter);
@@ -569,7 +573,7 @@ namespace Cozmo {
       //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
       //                  "shift=(%d,%d), scale=%.3f", xShift, yShift, scale);
       
-      robot.ShiftAndScaleEyes(xShift, yShift, scale, scale, 0);
+      robot.ShiftAndScaleEyes(xShift, yShift, scale, scale, 0, false, "KeepAliveEyeDart");
       
       _nextEyeDart_ms = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartSpacingMinTime_ms),
                                             GetParam<s32>(Param::EyeDartSpacingMaxTime_ms));
@@ -635,6 +639,13 @@ namespace Cozmo {
     {
       auto & faceLayer = faceLayerIter->second;
       
+#     if DEBUG_ANIMATION_STREAMING
+      PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.ApplyFaceLayer",
+                        "%slayer %s with tag %d",
+                        faceLayer.isPersistent ? "Persistent" : "",
+                        faceLayer.name.c_str(), faceLayer.tag);
+#     endif
+      
       // Note that shouldReplace==false here because face layers do not replace
       // what's on the face, by definition, they layer on top of what's already there.
       faceUpdated |= GetFaceHelper(faceLayer.track, faceLayer.startTime_ms,
@@ -657,8 +668,8 @@ namespace Cozmo {
             faceLayer.streamTime_ms -= RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
 #           if DEBUG_ANIMATION_STREAMING
             PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.HoldingLayer",
-                             "Holding last frame of face layer with tag %d",
-                             faceLayer.tag);
+                             "Holding last frame of face layer %s with tag %d",
+                             faceLayer.name.c_str(), faceLayer.tag);
 #           endif
             faceLayer.sentOnce = true; // mark that it has been sent at least once
             
@@ -669,8 +680,9 @@ namespace Cozmo {
         } else {
           //...and is not persistent, so delete it
 #         if DEBUG_ANIMATION_STREAMING
-          PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.RemovingLayer",
-                           "Tag = %d (Layers remaining=%lu)", faceLayer.tag, _faceLayers.size()-1);
+          PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.RemovingFaceLayer",
+                           "%s, Tag = %d (Layers remaining=%lu)",
+                           faceLayer.name.c_str(), faceLayer.tag, _faceLayers.size()-1);
 #         endif
           tagsToErase.push_back(faceLayerIter->first);
         }
@@ -1366,7 +1378,7 @@ namespace Cozmo {
           PRINT_NAMED_DEBUG("AnimationStreamer.UpdateLiveAnimation.EyeLeadTurn",
                             "Point turn eye shift (%d,%d)", x, y);
 #         endif
-          robot.ShiftEyes(x, y, IKeyFrame::SAMPLE_LENGTH_MS);
+          robot.ShiftAndScaleEyes(x, y, 1.f, 1.f, IKeyFrame::SAMPLE_LENGTH_MS, false, "LiveIdleTurn");
         }
         
 #       if DEBUG_ANIMATION_STREAMING

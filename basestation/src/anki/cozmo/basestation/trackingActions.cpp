@@ -230,7 +230,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
         // Start a new eye shift layer
         AnimationStreamer::FaceTrack faceTrack;
         faceTrack.AddKeyFrameToBack(procFace);
-        _eyeShiftTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(faceTrack));
+        _eyeShiftTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
       } else {
         // Augment existing eye shift layer
         robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace));

@@ -76,12 +76,12 @@ namespace Cozmo {
     
     // Add a procedural face "layer" to be combined with whatever is streaming
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
-    Result AddFaceLayer(FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0);
+    Result AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0);
     
     // Add a procedural face "layer" that is applied and then has its final
     // adjustemtn "held" until removed.
     // A handle/tag for the layer i s returned, which is needed for removal.
-    u32 AddPersistentFaceLayer(FaceTrack&& faceTrack);
+    u32 AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack);
     
     // Remove a previously-added persistent face layer using its tag.
     // If duration > 0, that number of frames will be used to transition back
@@ -154,6 +154,7 @@ namespace Cozmo {
       bool        isPersistent;
       bool        sentOnce;
       u8          tag;
+      std::string name;
     };
     std::map<u8, FaceLayer> _faceLayers;
     

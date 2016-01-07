@@ -905,7 +905,7 @@ namespace Anki {
         const Radians angleDiff = _targetAngle - currentAngle;
         const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
         const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
-        _eyeShiftTag = robot.ShiftEyes(xPixShift, 0, 0, true); // TODO: How to set the duration?
+        _eyeShiftTag = robot.ShiftAndScaleEyes(xPixShift, 0, 1.f, 1.f, 0, true, "TurnInPlaceEyeDart");
         _eyeShiftRemoved = false;
       }
       
@@ -1600,8 +1600,7 @@ namespace Anki {
         Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
         const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
         const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
-        _eyeShiftTag = robot.ShiftEyes(0, yPixShift, 0, true); // TODO: How to set the duration of the eye shift?
-        
+        _eyeShiftTag = robot.ShiftAndScaleEyes(0, yPixShift, 1.f, 1.f, 0, true, "MoveHeadToAngleEyeDart");
         _eyeShiftRemoved = false;
       }
       
@@ -2037,7 +2036,7 @@ namespace Anki {
           }
           
           squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 0));
-          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(squintLayer));
+          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("DockSquint", std::move(squintLayer));
         }
       }
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())

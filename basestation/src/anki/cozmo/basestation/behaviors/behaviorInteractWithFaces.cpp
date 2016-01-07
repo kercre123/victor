@@ -723,7 +723,7 @@ namespace Cozmo {
 
       tiltTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(face, 250));
       robot.GetAnimationStreamer().RemovePersistentFaceLayer(_tiltLayerTag);
-      _tiltLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(tiltTrack));
+      _tiltLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("InteractWithFacesTilt", std::move(tiltTrack));
       
       _lastFaceTiltTime = currentTime;
       _faceTiltSpacing = GetRNG().RandDblInRange(kTiltSpacingMin_sec, kTiltSpacingMax_sec);
@@ -764,7 +764,8 @@ namespace Cozmo {
     if(xPixShift != 0 || yPixShift != 0) { // TODO: remove
       robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeDartLayerTag);
       _eyeDartLayerTag = robot.ShiftAndScaleEyes(xPixShift, yPixShift,
-                                                 distScale, distScale, 0, true);
+                                                 distScale, distScale, 0, true,
+                                                 "InteractWithFacesMimic");
     }
 
 #   if DO_FACE_MIMICKING
