@@ -207,7 +207,7 @@ void Robot::HandleMovingLiftPostDock(const AnkiEvent<RobotInterface::RobotToEngi
     case DockAction::DA_ROLL_LOW:
     {
       PlayAnimationAction *animAction = new PlayAnimationAction("RollingEffort");
-      GetActionList().QueueAction(Robot::SoundSlot, QueueActionPosition::NEXT, animAction);
+      GetActionList().QueueAction(Robot::SoundSlot, QueueActionPosition::NOW_AND_CLEAR_REMAINING, animAction);
       break;
     }
     default:
