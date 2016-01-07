@@ -631,6 +631,7 @@ namespace Anki {
       bool                       _placeObjectOnGroundIfCarrying  = false;
       f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
       f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
+      bool                       _attemptedDock                  = false;
       
     private:
       
