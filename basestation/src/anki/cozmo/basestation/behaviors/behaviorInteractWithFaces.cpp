@@ -476,8 +476,8 @@ namespace Cozmo {
                                "Head is %.1fmm away: playing shocked anim.",
                                headWrtRobot.GetTranslation().Length());
               
-              // Queue the animation to happen now, which will cancel tracking, but
-              // re-enable tracking immediately after:
+              // Queue the animation to happen now, which will interrupt tracking, but
+              // re-enable it immediately after the animation finishes
               PlayAnimation(robot, "ID_react2face_disgust", QueueActionPosition::NOW_AND_RESUME);
               
               robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");

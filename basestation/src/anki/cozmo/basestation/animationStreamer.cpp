@@ -598,6 +598,7 @@ namespace Cozmo {
         faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(blinkFace, totalOffset));
       } while(moreBlinkFrames);
 
+#     if DEBUG_ANIMATION_STREAMING
       // Sanity checkt: we should never command two blinks at the same time
       bool alreadyBlinking = false;
       for(auto & layer : _faceLayers) {
@@ -611,6 +612,9 @@ namespace Cozmo {
       if(!alreadyBlinking) {
         AddFaceLayer("Blink", std::move(faceTrack));
       }
+#     else 
+      AddFaceLayer("Blink", std::move(faceTrack));
+#     endif // DEBUG_ANIMATION_STREAMING
       
       _nextBlink_ms = _rng.RandIntInRange(GetParam<s32>(Param::BlinkSpacingMinTime_ms),
                                           GetParam<s32>(Param::BlinkSpacingMaxTime_ms));
