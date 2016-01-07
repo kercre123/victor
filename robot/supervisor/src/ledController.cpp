@@ -23,8 +23,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  // Alpha blending (w/ black) without using floating point:
-  //  See also: http://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
   inline u16 AlphaBlend(const u16 onColor, const u16 offColor, const float alpha)
   {
     const float onRed  = GET_RED(onColor);
@@ -35,9 +33,9 @@ namespace Cozmo {
     const float offBlu = GET_BLU(offColor);
     const float invAlpha = 1.0f - alpha;
 
-    return ((u16)(onRed * alpha + offRed * invAlpha)) << LED_ENC_RED_SHIFT |
-           ((u16)(onGrn * alpha + offGrn * invAlpha)) << LED_ENC_GRN_SHIFT |
-           ((u16)(onBlu * alpha + offBlu * invAlpha)) << LED_ENC_BLU_SHIFT |
+    return ((u16)int(onRed * alpha + offRed * invAlpha)) << LED_ENC_RED_SHIFT |
+           ((u16)int(onGrn * alpha + offGrn * invAlpha)) << LED_ENC_GRN_SHIFT |
+           ((u16)int(onBlu * alpha + offBlu * invAlpha)) << LED_ENC_BLU_SHIFT |
            (alpha >= 0.5f ? onColor & LED_ENC_IR : offColor & LED_ENC_IR);
   }
 
@@ -55,7 +53,7 @@ namespace Cozmo {
     {
       if (phaseFrame <= ledParams.transitionOnFrames) // Still turning on
       {
-        newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, (float)phaseFrame/(float)ledParams.transitionOnFrames);
+        newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame)/float(ledParams.transitionOnFrames));
         return true;
       }
       else // All the way on, don't need to change the color
@@ -69,7 +67,7 @@ namespace Cozmo {
       const u16 offPhase = phaseFrame - ledParams.onFrames;
       if (offPhase <= ledParams.transitionOffFrames)
       {
-        newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, (float)offPhase/(float(ledParams.transitionOffFrames)));
+        newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(offPhase)/float(ledParams.transitionOffFrames));
         return true;
       }
       else
