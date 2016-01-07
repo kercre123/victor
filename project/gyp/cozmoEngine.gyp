@@ -7,6 +7,8 @@
   'variables': {
 
     'engine_source': 'cozmoEngine.lst',
+    'api_source': 'cozmoAPI.lst',
+    'api_library_type': 'static_library',
     'engine_test_source': 'cozmoEngine-test.lst',
     'engine_library_type': 'static_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
@@ -1005,8 +1007,60 @@
             ],
           },
         ],
+        ['face_library=="faciometric"', {
+          # Copy FacioMetric's models into the resources so they are available at runtime.
+          # This is a little icky since it reaches into cozmo engine...
+          'actions': [
+            {
+              'action_name': 'copy_faciometric_models',
+              'inputs': [
+                '<(face_library_path)/Demo/models',
+              ],
+              'outputs': [
+                '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',
+              ],
+              'action': [
+                'cp',
+                '-R',
+                '<@(_inputs)',
+                '<@(_outputs)',
+              ],
+            },
+          ],
+        }],
+      ] #'conditions'
+
+    }, # end engine target
+
+
+    {
+      'target_name': 'cozmoAPI',
+      'sources': [ 
+        '<!@(cat <(api_source))',
       ],
-    },
+      'include_dirs': [
+        '../../cozmoAPI/src',
+        '../../cozmoAPI/include',
+        '../../generated/clad/game',
+        '<@(opencv_includes)',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../cozmoAPI/include',
+          '../../generated/clad/game',
+        ],
+      },
+      'dependencies': [
+        'cozmoEngine',
+        '<(ce-util_gyp_path):util',
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiMessaging',
+        '<(ce-cti_gyp_path):ctiPlanning',
+        '<(ce-cti_gyp_path):ctiVision',
+      ],
+      'type': '<(api_library_type)',
+    }, # end API target
+
     
     {
       'target_name': 'robotClad',
