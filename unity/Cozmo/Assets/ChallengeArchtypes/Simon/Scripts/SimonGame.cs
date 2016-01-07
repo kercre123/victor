@@ -15,6 +15,10 @@ namespace Simon {
 
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
 
+    private int _CurrentSequenceLength;
+
+    private PlayerType _FirstPlayer = PlayerType.Cozmo;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = (SimonGameConfig)minigameConfig;
       InitializeMinigameObjects();
@@ -25,8 +29,18 @@ namespace Simon {
       DAS.Info(this, "Game Created");
       NumSegments = MaxSequenceLength;
       MaxAttempts = _Config.MaxAttempts;
+      _CurrentSequenceLength = _Config.MinSequenceLength - 1;
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForNextCozmoRoundSimonState(_Config.MinSequenceLength), 2, true, null);
+      State nextState;
+      if (Random.Range(0f, 1f) > 0.5f) {
+        nextState = new WaitForNextPlayerRoundSimonState();
+        _FirstPlayer = PlayerType.Human;
+      }
+      else {
+        nextState = new WaitForNextCozmoRoundSimonState();
+        _FirstPlayer = PlayerType.Cozmo;
+      }
+      initCubeState.InitialCubeRequirements(nextState, 2, true, null);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -36,7 +50,17 @@ namespace Simon {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
     }
 
-    public void PickNewSequence(int sequenceLength) {
+    public int GetNewSequenceLength(PlayerType playerPickingSequence) {
+      if (playerPickingSequence == _FirstPlayer) {
+        _CurrentSequenceLength++;
+        if (_CurrentSequenceLength > MaxSequenceLength) {
+          _CurrentSequenceLength = MaxSequenceLength;
+        }
+      }
+      return _CurrentSequenceLength;
+    }
+
+    public void GenerateNewSequence(int sequenceLength) {
 
       // give cubes colors
       List<Color> colors = new List<Color>();
@@ -110,5 +134,10 @@ namespace Simon {
   public class SimonSound {
     public string cozmoAnimationName;
     public Anki.Cozmo.Audio.EventType playerSoundName;
+  }
+
+  public enum PlayerType {
+    Human,
+    Cozmo
   }
 }
