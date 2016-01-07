@@ -2426,10 +2426,14 @@ namespace Anki {
       }
     }
     
-    void Robot::UnSetCarryingObjects()
+    void Robot::UnSetCarryingObjects(bool topOnly)
     {
       std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
       for (auto& objID : carriedObjectIDs) {
+        if (topOnly && objID != _carryingObjectOnTopID) {
+          continue;
+        }
+        
         ObservableObject* object = _blockWorld.GetObjectByID(objID);
         if(object == nullptr) {
           PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
@@ -2452,16 +2456,29 @@ namespace Anki {
           }
         }
       }
-      
-      // Tell the robot it's not carrying anything
-      if (_carryingObjectID.IsSet()) {
-        SendSetCarryState(CarryState::CARRY_NONE);
-      }
 
-      // Even if the above failed, still mark the robot's carry ID as unset
-      _carryingObjectID.UnSet();
+      if (!topOnly) {      
+        // Tell the robot it's not carrying anything
+        if (_carryingObjectID.IsSet()) {
+          SendSetCarryState(CarryState::CARRY_NONE);
+        }
+
+        // Even if the above failed, still mark the robot's carry ID as unset
+        _carryingObjectID.UnSet();
+      }
       _carryingObjectOnTopID.UnSet();
     }
+    
+    void Robot::UnSetCarryObject(ObjectID objID)
+    {
+      // If it's the bottom object in the stack, unset all carried objects.
+      if (_carryingObjectID == objID) {
+        UnSetCarryingObjects(false);
+      } else if (_carryingObjectOnTopID == objID) {
+        UnSetCarryingObjects(true);
+      }
+    }
+    
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {

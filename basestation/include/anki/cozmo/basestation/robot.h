@@ -341,8 +341,12 @@ public:
     bool IsPickedUp()         const {return _isPickedUp;}
     
     void SetCarryingObject(ObjectID carryObjectID);
-    void UnSetCarryingObjects();
-    
+    void UnSetCarryingObjects(bool topOnly = false);
+  
+    // If objID == carryingObjectOnTopID, only that object's carry state is unset.
+    // If objID == carryingObjectID, all carried objects' carry states are unset.
+    void UnSetCarryObject(ObjectID objID);
+  
     // Tell the physical robot to dock with the specified marker
     // of the specified object that it should currently be seeing.
     // If pixel_radius == u8_MAX, the marker can be seen anywhere in the image,
