@@ -108,7 +108,7 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
   }
 }
   
-bool ITrackAction::Interrupt()
+bool ITrackAction::InterruptInternal()
 {
   _lastUpdateTime = 0.f;
   return true;

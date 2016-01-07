@@ -80,8 +80,6 @@ public:
   // Enable/disable moving of eyes while tracking. Default is false.
   void SetMoveEyes(bool moveEyes) { _moveEyes = moveEyes; }
   
-  virtual bool Interrupt() override final;
-  
 protected:
 
   ITrackAction();
@@ -95,6 +93,8 @@ protected:
   // to turn and face whatever is being tracked.
   // Return true if new angles were provided, false if same as last time.
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) = 0;
+  
+  virtual bool InterruptInternal() override final;
   
 private:
   
