@@ -104,7 +104,7 @@ namespace CubeSlap {
         SlapRoll = 0.0f;
       }
       else {
-        SlapRoll = Random.Range(0.0f, 1.0f);`
+        SlapRoll = Random.Range(0.0f, 1.0f);
       }
       if (SlapRoll <= _CurrentSlapChance) {
         // Enter Animation State to attempt a pounce.
