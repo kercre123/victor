@@ -889,6 +889,7 @@ public:
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleMovingLiftPostDock(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
