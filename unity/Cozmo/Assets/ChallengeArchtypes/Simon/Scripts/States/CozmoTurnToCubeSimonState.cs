@@ -3,12 +3,15 @@ using UnityEngine;
 
 namespace Simon {
   public class CozmoTurnToCubeSimonState : State {
+    public const float kDriveWheelSpeed = 80f;
+    public const float kDotThreshold = 0.96f;
 
-    private CozmoSetSequenceSimonState _Parent;
+    private LightCube _TargetCube;
+    private bool _BlinkLights = false;
 
-    public override void Enter() {
-      base.Enter();
-      _Parent = (CozmoSetSequenceSimonState)_StateMachine.GetParentState();
+    public CozmoTurnToCubeSimonState(LightCube targetCube, bool blinkLights) {
+      _TargetCube = targetCube;
+      _BlinkLights = blinkLights;
     }
 
     public override void Exit() {
@@ -19,13 +22,27 @@ namespace Simon {
     public override void Update() {
       base.Update();
 
-      if (TurnToTarget(_Parent.GetCurrentTarget())) {
-        _StateMachine.SetNextState(new CozmoBlinkLightsSimonState());
+      if (TurnToTarget(_TargetCube)) {
+        if (_BlinkLights) {
+          _StateMachine.SetNextState(new CozmoBlinkLightsSimonState(_TargetCube));
+        }
+        else {
+          _StateMachine.PopState();
+        }
       }
     }
 
-    private bool TurnToTarget(LightCube currentTarget) {
-      return SimonGame.TurnToTarget(_CurrentRobot, currentTarget);
+    private bool TurnToTarget(LightCube target) {
+      Robot robot = _CurrentRobot;
+      Vector3 robotToTarget = target.WorldPosition - robot.WorldPosition;
+      float crossValue = Vector3.Cross(robot.Forward, robotToTarget).z;
+      if (crossValue > 0.0f) {
+        robot.DriveWheels(-kDriveWheelSpeed, kDriveWheelSpeed);
+      }
+      else {
+        robot.DriveWheels(kDriveWheelSpeed, -kDriveWheelSpeed);
+      }
+      return Vector2.Dot(robotToTarget.normalized, robot.Forward) > kDotThreshold;
     }
   }
 }

@@ -34,7 +34,7 @@ namespace Simon {
         _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
         return;
       }
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState());
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
     }
 
     public LightCube GetCurrentTarget() {

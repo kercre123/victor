@@ -10,7 +10,6 @@ namespace Simon {
     private IList<int> _SequenceList;
     private int _CurrentSequenceIndex = 0;
     private float _LastTappedTime;
-    private bool _IsTurning = false;
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
 
@@ -29,18 +28,16 @@ namespace Simon {
       if (_CurrentSequenceIndex == _SequenceList.Count) {
         WinGame();
       }
-      if (_IsTurning) {
-        _IsTurning = !TurnToTarget(_CurrentRobot.LightCubes[_TargetCube]);
-        if (!_IsTurning) {
-          _CurrentRobot.DriveWheels(0f, 0f);
-          _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
-          if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
-            _CurrentSequenceIndex++;
-          }
-          else {
-            LoseGame();
-          }
+      if (_TargetCube != -1) {
+        _CurrentRobot.DriveWheels(0f, 0f);
+        _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
+        if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
+          _CurrentSequenceIndex++;
         }
+        else {
+          LoseGame();
+        }
+        _TargetCube = -1;
       }
     }
 
@@ -56,7 +53,7 @@ namespace Simon {
         _GameInstance.RaiseMiniGameWin();
         return;
       }
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_SequenceList.Count + 1));
+      _StateMachine.SetNextState(new WaitForNextCozmoRoundSimonState(_SequenceList.Count + 1));
     }
 
     private void HandleOnLoseAnimationDone(bool success) {
@@ -65,7 +62,7 @@ namespace Simon {
         _GameInstance.RaiseMiniGameLose();
         return;
       }
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_SequenceList.Count));
+      _StateMachine.SetNextState(new WaitForNextCozmoRoundSimonState(_SequenceList.Count));
     }
 
     private void BlackoutLights() {
@@ -95,21 +92,20 @@ namespace Simon {
 
     private void OnBlockTapped(int id, int times) {
       _CurrentRobot.SetHeadAngle(Random.Range(-0.6f, 0f));
-      if (_IsTurning || Time.time - _LastTappedTime < 0.8f) {
+      if (Time.time - _LastTappedTime < 0.8f) {
         return;
       }
 
       _LastTappedTime = Time.time;
       SimonGame game = _StateMachine.GetGame() as SimonGame;
       GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(id));
-      _IsTurning = true;
-      _TargetCube = id;
-      _TargetCubeColor = _CurrentRobot.LightCubes[_TargetCube].Lights[0].OnColor;
-      _CurrentRobot.LightCubes[_TargetCube].TurnLEDsOff();
-    }
 
-    private bool TurnToTarget(LightCube currentTarget) {
-      return SimonGame.TurnToTarget(_CurrentRobot, currentTarget);
+      _TargetCube = id;
+      LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
+      _TargetCubeColor = cube.Lights[0].OnColor;
+      cube.TurnLEDsOff();
+
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(cube, false));
     }
   }
 

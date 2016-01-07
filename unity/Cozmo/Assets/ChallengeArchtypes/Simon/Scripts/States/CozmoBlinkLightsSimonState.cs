@@ -4,13 +4,16 @@ using UnityEngine;
 namespace Simon {
   public class CozmoBlinkLightsSimonState : State {
     private const float kLightBlinkLengthSeconds = 0.3f;
-    private CozmoSetSequenceSimonState _Parent;
+    private LightCube _TargetCube;
     private float _StartLightBlinkTime;
     private uint _CubeLightColor;
 
+    public CozmoBlinkLightsSimonState(LightCube targetCube) {
+      _TargetCube = targetCube;
+    }
+
     public override void Enter() {
       base.Enter();
-      _Parent = (CozmoSetSequenceSimonState)_StateMachine.GetParentState();
       SetSimonNodeBlink();
     }
 
@@ -26,14 +29,13 @@ namespace Simon {
     }
 
     private void SetSimonNodeBlink() {
-      LightCube currentCube = _Parent.GetCurrentTarget();
       SimonGame game = _StateMachine.GetGame() as SimonGame;
-      string animation = game.GetCozmoAnimationForBlock(currentCube.ID);
+      string animation = game.GetCozmoAnimationForBlock(_TargetCube.ID);
       _CurrentRobot.SendAnimation(animation, HandleAnimationEnd);
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _StartLightBlinkTime = Time.time;
-      _CubeLightColor = currentCube.Lights[0].OnColor;
-      currentCube.TurnLEDsOff();
+      _CubeLightColor = _TargetCube.Lights[0].OnColor;
+      _TargetCube.TurnLEDsOff();
       _CurrentRobot.SetAllBackpackBarLED(_CubeLightColor);
     }
 
@@ -46,8 +48,7 @@ namespace Simon {
     }
 
     private void ResetLights() {
-      LightCube currentCube = _Parent.GetCurrentTarget();
-      currentCube.SetLEDs(_CubeLightColor, 0, uint.MaxValue, 0, 0, 0);
+      _TargetCube.SetLEDs(_CubeLightColor, 0, uint.MaxValue, 0, 0, 0);
       _CurrentRobot.TurnOffAllBackpackBarLED();
     }
   }

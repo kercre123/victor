@@ -2,12 +2,12 @@
 using System.Collections;
 
 namespace Simon {
-  public class WaitForNextRoundSimonState : State {
+  public class WaitForNextCozmoRoundSimonState : State {
 
     private SimonGame _GameInstance;
     private int _SequenceCount;
 
-    public WaitForNextRoundSimonState(int sequenceCount) {
+    public WaitForNextCozmoRoundSimonState(int sequenceCount) {
       _SequenceCount = sequenceCount;
     }
 
