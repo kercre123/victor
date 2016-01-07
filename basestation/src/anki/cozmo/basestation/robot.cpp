@@ -1452,13 +1452,14 @@ namespace Anki {
 
     u32 Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent)
     {
-      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent);
+      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent, "ShiftEyes");
     }
     
     u32 Robot::ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                                 TimeStamp_t duration_ms, bool makePersistent)
+                                 TimeStamp_t duration_ms, bool makePersistent,
+                                 const std::string& name)
     {
-      u32 layerTag = 0;
+      u32 layerTag = AnimationStreamer::NotAnimatingTag;
       
       // Clip, but retain sign
       xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
@@ -1531,9 +1532,9 @@ namespace Anki {
       }
       
       if(makePersistent) {
-        layerTag = _animationStreamer.AddPersistentFaceLayer(std::move(faceTrack));
+        layerTag = _animationStreamer.AddPersistentFaceLayer(name, std::move(faceTrack));
       } else {
-        _animationStreamer.AddFaceLayer(std::move(faceTrack));
+        _animationStreamer.AddFaceLayer(name, std::move(faceTrack));
       }
       
       return layerTag;

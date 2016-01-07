@@ -30,6 +30,34 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark ITrackAction
   
+ITrackAction::ITrackAction()
+: _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
+{
+  
+}
+  
+void ITrackAction::SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec) {
+  if(minSpeed_radPerSec >= maxSpeed_radPerSec) {
+    PRINT_NAMED_WARNING("ITrackAction.SetTiltSpeeds.InvalidSpeeds",
+                        "Min (%f) should be < max (%f)",
+                        minSpeed_radPerSec, maxSpeed_radPerSec);
+  } else {
+    _minTiltSpeed_radPerSec = minSpeed_radPerSec;
+    _maxTiltSpeed_radPerSec = maxSpeed_radPerSec;
+  }
+}
+
+void ITrackAction::SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec) {
+  if(minSpeed_radPerSec >= maxSpeed_radPerSec) {
+    PRINT_NAMED_WARNING("ITrackAction.SetPanSpeeds.InvalidSpeeds",
+                        "Min (%f) should be < max (%f)",
+                        minSpeed_radPerSec, maxSpeed_radPerSec);
+  } else {
+    _minPanSpeed_radPerSec = minSpeed_radPerSec;
+    _maxPanSpeed_radPerSec = maxSpeed_radPerSec;
+  }
+}
+
   
 u8 ITrackAction::GetAnimTracksToDisable() const
 {
@@ -112,19 +140,16 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
 #   endif
     
     bool angleLargeEnoughForSound = false;
+    f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
     
     // Tilt Head:
-    const f32 relTiltAngle = std::abs((absTiltAngle - robot.GetHeadAngle()).ToFloat());
-    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > _tiltTolerance.ToFloat())
+    const f32 relTiltAngle = (absTiltAngle - robot.GetHeadAngle()).ToFloat();
+    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
+       std::abs(relTiltAngle) > _tiltTolerance.ToFloat())
     {
       // Set speed/accel based on angle difference
-      const f32 MinSpeed = 30.f;
-      const f32 MaxSpeed = 50.f;
-      //const f32 MinAccel = 20.f;
-      //const f32 MaxAccel = 40.f;
-      
-      const f32 angleFrac = relTiltAngle/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
-      const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
+      const f32 angleFrac = std::abs(relTiltAngle)/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
+      const f32 speed = (_maxTiltSpeed_radPerSec - _minTiltSpeed_radPerSec)*angleFrac + _minTiltSpeed_radPerSec;
       const f32 accel = 20.f; // (MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
@@ -132,14 +157,19 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
         return ActionResult::FAILURE_ABORT;
       }
       
-      if(relTiltAngle > _minTiltAngleForSound) {
+      if(std::abs(relTiltAngle) > _minTiltAngleForSound) {
         angleLargeEnoughForSound = true;
+      }
+    
+      if(_moveEyes) {
+        const f32 y_mm = std::tan(-relTiltAngle) * HEAD_CAM_POSITION[0];
+        eyeShiftY = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/2) / SCREEN_SIZE[1]);
       }
     }
     
     // Pan Body:
-    const f32 relPanAngle = std::abs((absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
-    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && relPanAngle > _panTolerance.ToFloat())
+    const f32 relPanAngle = (absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
+    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && std::abs(relPanAngle) > _panTolerance.ToFloat())
     {
       // Get rotation angle around drive center
       Pose3d rotatedPose;
@@ -148,13 +178,8 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
       // Set speed/accel based on angle difference
-      const f32 MinSpeed = 20.f;
-      const f32 MaxSpeed = 80.f;
-      //const f32 MinAccel = 30.f;
-      //const f32 MaxAccel = 80.f;
-      
-      const f32 angleFrac = std::min(1.f, relPanAngle/(f32)M_PI);
-      const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
+      const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/(f32)M_PI);
+      const f32 speed = (_maxPanSpeed_radPerSec - _minPanSpeed_radPerSec)*angleFrac + _minPanSpeed_radPerSec;
       const f32 accel = 10.f; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       RobotInterface::SetBodyAngle setBodyAngle;
@@ -165,8 +190,15 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
         return ActionResult::FAILURE_ABORT;
       }
       
-      if(relPanAngle > _minPanAngleForSound) {
+      if(std::abs(relPanAngle) > _minPanAngleForSound) {
         angleLargeEnoughForSound = true;
+      }
+      
+      if(_moveEyes) {
+        // Compute horizontal eye movement
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
+        eyeShiftX = x_mm * (static_cast<f32>(ProceduralFace::WIDTH/2) / SCREEN_SIZE[0]);
       }
     }
     
@@ -178,7 +210,33 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
+    
+    // Move eyes if indicated
+    if(_moveEyes && (eyeShiftX != 0.f || eyeShiftY != 0.f))
+    {
+      // Clip, but retain sign
+      eyeShiftX = CLIP(eyeShiftX, -ProceduralFace::WIDTH/4, ProceduralFace::WIDTH/4);
+      eyeShiftY = CLIP(eyeShiftY, -ProceduralFace::HEIGHT/4, ProceduralFace::HEIGHT/4);
       
+      PRINT_NAMED_INFO("ITrackAction.CheckIfDone.EyeShift",
+                       "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
+                       eyeShiftX, eyeShiftY, _eyeShiftTag);
+      
+      ProceduralFace procFace;
+      ProceduralFaceParams& params = procFace.GetParams();
+      params.SetFacePosition({eyeShiftX, eyeShiftY});
+      
+      if(_eyeShiftTag == AnimationStreamer::NotAnimatingTag) {
+        // Start a new eye shift layer
+        AnimationStreamer::FaceTrack faceTrack;
+        faceTrack.AddKeyFrameToBack(procFace);
+        _eyeShiftTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
+      } else {
+        // Augment existing eye shift layer
+        robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace));
+      }
+    } // if(_moveEyes)
+    
   } else if(_updateTimeout_sec > 0.) {
     if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
       PRINT_NAMED_INFO("ITrackAction.CheckIfDone.Timeout",
@@ -190,6 +248,15 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
   }
   
   return ActionResult::RUNNING;
+}
+  
+void ITrackAction::Cleanup(Robot &robot)
+{
+  if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
+    // Make sure any eye shift gets removed
+    robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+    _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+  }
 }
   
 #pragma mark -
@@ -232,6 +299,7 @@ ActionResult TrackObjectAction::Init(Robot& robot)
 
 void TrackObjectAction::Cleanup(Robot& robot)
 {
+  ITrackAction::Cleanup(robot);
   robot.GetMoveComponent().UnSetTrackToObject();
 }
   
@@ -355,6 +423,7 @@ ActionResult TrackFaceAction::Init(Robot& robot)
   
 void TrackFaceAction::Cleanup(Robot& robot)
 {
+  ITrackAction::Cleanup(robot);
   robot.GetMoveComponent().UnSetTrackToFace();
 }
 

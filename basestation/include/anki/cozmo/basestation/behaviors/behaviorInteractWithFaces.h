@@ -101,12 +101,12 @@ namespace Cozmo {
     f32    _faceTiltSpacing = 0.f;
     f32    _lastFaceTiltTime = 0.f;
     f32    _currentTilt = 0;
-    u32    _tiltLayerTag = 0;
+    u32    _tiltLayerTag = AnimationStreamer::NotAnimatingTag;
     
     f32    _eyeDartSpacing = 0.f;
     f32    _lastEyeDartTime = 0.f;
     bool   _lookingAtLeftEye = true;
-    u32    _eyeDartLayerTag = 0;
+    u32    _eyeDartLayerTag = AnimationStreamer::NotAnimatingTag;
     AnimationStreamer::ParamContainer _originalLiveIdleParams;
     
     struct FaceData
