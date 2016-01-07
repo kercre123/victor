@@ -11,8 +11,6 @@
 
 #include "cozmoGame_impl.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/basestation/cozmoEngineHost.h"
-#include "anki/cozmo/basestation/cozmoEngineClient.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -169,16 +167,11 @@ namespace Cozmo {
         delete _cozmoEngine;
       }
       
-      if(_isHost) {
-        PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.");
-        CozmoEngineHost* engineHost = new CozmoEngineHost(&_uiMsgHandler, _dataPlatform);
-        engineHost->ListenForRobotConnections(true);
-        _cozmoEngine = engineHost;
-      } else {
-        PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating CLIENT engine.");
-        _cozmoEngine = new CozmoEngineClient(&_uiMsgHandler, _dataPlatform);
-      }
-      
+      PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.");
+      CozmoEngine* engineHost = new CozmoEngine(&_uiMsgHandler, _dataPlatform);
+      engineHost->ListenForRobotConnections(true);
+      _cozmoEngine = engineHost;
+    
       // Init the engine with the given configuration info:
       lastResult = _cozmoEngine->Init(config);
       
@@ -229,10 +222,8 @@ namespace Cozmo {
   
   int CozmoGameImpl::GetNumRobots() const
   {
-    if(_isHost) {
-      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
-      assert(cozmoEngineHost != nullptr);
-      return cozmoEngineHost->GetNumRobots();
+    if(_cozmoEngine) {
+      return _cozmoEngine->GetNumRobots();
     } else {
       PRINT_NAMED_ERROR("CozmoGameImpl.GetNumRobots",
                         "Cannot request number of robots from game running as client.");
@@ -297,7 +288,7 @@ namespace Cozmo {
           // Force connection to first (local) UI device
           if(true == ConnectToUiDevice(device)) {
             PRINT_NAMED_INFO("CozmoGameImpl.Update",
-                             "Automatically connected to local UI device %d!", device);
+                             "Automatically connected t o local UI device %d!", device);
           }
         } else {
           _uiMsgHandler.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceAvailable(device)));
@@ -327,7 +318,7 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
+    CozmoEngine* cozmoEngineHost = reinterpret_cast<CozmoEngine*>(_cozmoEngine);
     assert(cozmoEngineHost != nullptr);
     
     switch(_runState)

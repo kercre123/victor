@@ -32,7 +32,6 @@ namespace Anki {
 namespace Cozmo {
 
   // Forward declarations:
-  class CozmoEngineHost;
   class CozmoGameImpl;
 
 

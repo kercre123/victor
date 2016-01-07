@@ -15,7 +15,6 @@
 #include "anki/cozmo/game/cozmoGame.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/basestation/cozmoEngineHost.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
