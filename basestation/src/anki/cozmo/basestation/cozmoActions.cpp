@@ -1870,6 +1870,8 @@ namespace Anki {
     ActionResult IDockAction::Init(Robot& robot)
     {
       _waitToVerifyTime = -1.f;
+
+      _attemptedDock = false;
     
       // Make sure the object we were docking with still exists in the world
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_dockObjectID));
@@ -1992,8 +1994,7 @@ namespace Anki {
             actionResult = ActionResult::RUNNING;
             
             PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking", "Docking with marker %d (%s) using action %s.",
-              _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], DockActionToString(_dockAction));
-            
+              _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], DockActionToString(_dockAction));              
             if(robot.DockWithObject(_dockObjectID,
                                     _dockSpeed_mmps,
                                     _dockAccel_mmps2,
@@ -2007,6 +2008,8 @@ namespace Anki {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!
               _wasPickingOrPlacing = false;
+
+              _attemptedDock = true;
             } else {
               return ActionResult::FAILURE_ABORT;
             }
@@ -2212,6 +2215,7 @@ namespace Anki {
             info.numObjects = carriedObjects.size();
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
+            info.attemptedDock = _attemptedDock;
             
             u8 objectCnt = 0;
             for (auto& objID : carriedObjects) {
@@ -2414,6 +2418,8 @@ namespace Anki {
             
             ObjectInteractionCompleted info;
             
+            info.attemptedDock = _attemptedDock;
+            
             auto objectStackIter = info.objectIDs.begin();
             info.objectIDs.fill(-1);
             info.numObjects = 0;
@@ -2602,9 +2608,11 @@ namespace Anki {
           }
           else {  
             ObjectInteractionCompleted info;
+            info.attemptedDock = _attemptedDock;
             info.numObjects = 1;
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
+            info.attemptedDock = _attemptedDock;
             completionUnion.Set_objectInteractionCompleted(std::move( info ));
             
             return;
@@ -2761,6 +2769,7 @@ namespace Anki {
                                 "Expecting robot to think it's not carrying object for roll action.");
           } else {
             ObjectInteractionCompleted info;
+            info.attemptedDock = _attemptedDock;
             info.numObjects = 1;
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
