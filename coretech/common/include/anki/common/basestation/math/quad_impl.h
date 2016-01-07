@@ -25,6 +25,7 @@
 #include "anki/common/basestation/utils/helpers/compareFcns.h"
 #include "anki/common/shared/utilities_shared.h"
 
+#include "kazmath/src/kazmath.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -461,6 +462,54 @@ namespace Anki {
     for(auto & point : *this) {
       if(other.Contains(point)) {
         return true;
+      }
+    }
+    
+    // check if segments intersect to fix this case, where no corner is contained within the other quad
+    //              __
+    //             |  |
+    //           __|__|__
+    //          |  |  |  |
+    //          |__|__|__|
+    //             |  |
+    //             |__|
+    //
+    // rsam: I think this should be enough in addition to the corner checks. There are some optimizations that can
+    // be made (for example checking 3 sides should be enough, only corners from the smaller quad could be checked, etc),
+    // but I don't foresee this to be a bottleneck atm, and I want to err on the safe side
+    // Also, I'm relying on kazMath to not reinvent the wheel at this moment
+    {
+      using namespace Quad;
+
+      const Quadrilateral<N,T>& one = *this;
+      kmRay2 thisSegments[4];
+      kmVec2 oneTL {one[TopLeft    ].x(), one[TopLeft    ].y()};
+      kmVec2 oneTR {one[TopRight   ].x(), one[TopRight   ].y()};
+      kmVec2 oneBL {one[BottomLeft ].x(), one[BottomLeft ].y()};
+      kmVec2 oneBR {one[BottomRight].x(), one[BottomRight].y()};
+      kmRay2FillWithEndpoints(&thisSegments[0], &oneTL, &oneTR);
+      kmRay2FillWithEndpoints(&thisSegments[1], &oneTR, &oneBR);
+      kmRay2FillWithEndpoints(&thisSegments[2], &oneBR, &oneBL);
+      kmRay2FillWithEndpoints(&thisSegments[3], &oneBL, &oneTL);
+
+      kmRay2 otherSegments[4];
+      kmVec2 otherTL {other[TopLeft    ].x(), other[TopLeft    ].y()};
+      kmVec2 otherTR {other[TopRight   ].x(), other[TopRight   ].y()};
+      kmVec2 otherBL {other[BottomLeft ].x(), other[BottomLeft ].y()};
+      kmVec2 otherBR {other[BottomRight].x(), other[BottomRight].y()};
+      kmRay2FillWithEndpoints(&otherSegments[0], &otherTL, &otherTR);
+      kmRay2FillWithEndpoints(&otherSegments[1], &otherTR, &otherBR);
+      kmRay2FillWithEndpoints(&otherSegments[2], &otherBR, &otherBL);
+      kmRay2FillWithEndpoints(&otherSegments[3], &otherBL, &otherTL);
+
+      for( int i=0; i<4; ++i) {
+        for( int j=0; j<4; ++j) {
+          kmVec2 interPoint;
+          const kmBool segmentIntersects = kmSegment2WithSegmentIntersection(&thisSegments[i], &otherSegments[j], &interPoint);
+          if ( segmentIntersects ) {
+            return true;
+          }
+        }
       }
     }
     

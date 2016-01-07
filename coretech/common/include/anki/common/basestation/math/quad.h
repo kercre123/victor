@@ -132,7 +132,7 @@ namespace Anki {
 
     // Returns true if the two quads intersect.
     // Only valid for 2D quads. Assumes quads are convex and checks whether
-    // any points of one are inside the other.
+    // any corners of one quad are inside the other one, as well as whether any segments collide
     bool Intersects(const Quadrilateral<2,T>& other) const;
     
   protected:

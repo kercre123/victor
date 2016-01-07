@@ -540,6 +540,7 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageBegin{identifier}));
       
       // split quad vector into several messages
+      if ( !quads.empty() )
       {
         // calculate some initial sizes
         const size_t maxBufferSize = Anki::Util::numeric_cast<size_t>((std::underlying_type<VizConstants>::type)VizConstants::MaxMessageSize);
