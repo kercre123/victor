@@ -1347,9 +1347,9 @@ namespace Cozmo {
     SET_DEFAULT(HeadAngleVariability_deg, 6);
     SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
     SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
-    SET_DEFAULT(EyeDartMaxDistance_pix, 3);
-    SET_DEFAULT(EyeDartMinScale, 0.95f);
-    SET_DEFAULT(EyeDartMaxScale, 1.05f);
+    SET_DEFAULT(EyeDartMaxDistance_pix, 4);
+    SET_DEFAULT(EyeDartMinScale, 0.92f);
+    SET_DEFAULT(EyeDartMaxScale, 1.08f);
     
 #   undef SET_DEFAULT
   } // SetDefaultParams()

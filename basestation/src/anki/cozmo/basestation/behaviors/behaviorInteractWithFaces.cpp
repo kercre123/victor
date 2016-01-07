@@ -213,9 +213,9 @@ namespace Cozmo {
       using Param = LiveIdleAnimationParameter;
       //      robot.GetAnimationStreamer().SetParam(Param::EyeDartSpacingMinTime_ms, 0.f);
       //      robot.GetAnimationStreamer().SetParam(Param::EyeDartSpacingMaxTime_ms, 0.25f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMinScale, 1.f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxScale, 1.f);
-      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxDistance_pix,   0.f);
+      //robot.GetAnimationStreamer().SetParam(Param::EyeDartMinScale, 1.f);
+      //robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxScale, 1.f);
+      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxDistance_pix, 1.f); // reduce dart distance
     }
     
     _currentState = State::TrackingFace;
@@ -428,7 +428,7 @@ namespace Cozmo {
         // If we get this far, we're still apparently tracking the same face
         
         // Update cozmo's face based on our currently tracked face
-        UpdateRobotFace(robot);
+        //UpdateRobotFace(robot);
         
 #       if DO_TOO_CLOSE_SCARED
         if(!_isActing &&
