@@ -16,7 +16,7 @@ namespace WhackAMole {
     public override void Enter() {
       base.Enter();
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
-      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
       _LastCubeTarget = _WhackAMoleGame.CurrentTarget;
       Debug.Log(string.Format("Chase - Start Targeting Cube {0}", _LastCubeTarget.ID));
       _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,85f,RobotArrives);
