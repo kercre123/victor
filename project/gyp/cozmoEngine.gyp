@@ -14,6 +14,9 @@
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
+    'ctrlGameEngine_source': 'ctrlGameEngine.lst',
+    'ctrlKeyboard_source': 'ctrlKeyboard.lst',
+    'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',    
     'clad_source': 'clad.lst',
     'pluginPhysics_source': 'pluginPhysics.lst',
     'robot_generated_clad_source': 'robotGeneratedClad.lst',
@@ -28,6 +31,12 @@
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
     
+    'sphinx_libs': [
+      'libpocketSphinx.a',
+      'libsphinxad.a',
+      'libsphinxBase.a',
+    ],
+
     'pocketsphinx_includes':[
       '<(coretech_external_path)/pocketsphinx/sphinxbase/include',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/include',
@@ -349,6 +358,9 @@
             'ARCHS': [ '>@(mac_target_archs)' ],
             'SDKROOT': 'macosx',
             # 'MACOSX_DEPLOYMENT_TARGET': '10.9', # latest
+            'LIBRARY_SEARCH_PATHS': [
+              '<(face_library_lib_path)',
+            ],
           },
         },
 
@@ -445,13 +457,8 @@
                 'actions' : [
                   {
                     'action_name': 'create_symlink_webotsCtrlViz_faciometricLibs',
-                      'inputs': [ ],
-                      'outputs': [ ],
                       'action': [
-                        'ln',
-                        '-s',
-                        '-n',
-                        '-f',
+                        'ln',  '-s', '-n', '-f',
                         '<(face_library_lib_path)',
                         '../../simulator/controllers/webotsCtrlViz/',
                       ],
@@ -490,19 +497,302 @@
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
             'actions': [
-                {
-                    'action_name': 'generate_version_include',
-                    'inputs': [],
-                    'outputs': [
-                        '../../robot/include/anki/cozmo/robot/version.h'
-                    ],
-                    'action': [
-                        '../../robot/tools/versionGenerator/versionGenerator.sh',
-                        '<@(_outputs)'
-                    ],
-                }
+              {
+                'action_name': 'generate_version_include',
+                'outputs': [
+                  '../../robot/include/anki/cozmo/robot/version.h'
+                ],
+                'action': [
+                  '../../robot/tools/versionGenerator/versionGenerator.sh',
+                  '../../robot/include/anki/cozmo/robot/version.h'
+                ],
+              }
             ]
           }, # end controller Robot
+
+
+
+
+
+
+
+
+
+
+
+
+          {
+            'target_name': 'webotsCtrlGameEngine',
+            'type': 'executable',
+            'include_dirs': [
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoAPI',
+              'cozmoEngine',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):jsoncpp',
+            ],
+            'sources': [ '<!@(cat <(ctrlGameEngine_source))' ],
+            'libraries': [
+              'libCppController.dylib',
+              '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
+              '<@(sphinx_libs)',
+              '<@(opencv_libs)',
+              '<@(face_library_libs)',
+            ],
+
+              
+            'actions': [
+              {
+                'action_name': 'create_symlink_webotsCtrlEnginefaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln', '-s', '-n', '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln', '-s', '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  }],
+                  ['face_library=="opencv" or face_library=="okao"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVGameAction',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ], # actions
+
+            'conditions': [
+              [
+                'OS=="ios" or OS=="mac"',
+                {
+                  'libraries': [
+                    '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+                  ],
+                },
+              ],
+            ],
+          }, # end controller Game Engine
+
+          {
+            'target_name': 'webotsCtrlKeyboard',
+            'type': 'executable',
+            'include_dirs': [
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+              '<(cti-cozmo_engine_path)/simulator/include'
+            ],
+            'dependencies': [
+              'cozmoAPI',
+              'cozmoEngine',
+              '<(ce-util_gyp_path):util',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+            ],
+            'sources': [ '<!@(cat <(ctrlKeyboard_source))' ],
+            'libraries': [
+              'libCppController.dylib',
+              '<@(opencv_libs)',
+            ],
+            'conditions': [
+              # For some reason, need to link directly against FacioMetric libs
+              # when using them for recognition, which also means they have to be
+              # present (symlinked) in the executable dir
+              ['face_library == "faciometric"', {
+                'libraries': [
+                  '<@(face_library_libs)',
+                ],
+                'actions' : [
+                  {
+                    'action_name': 'create_symlink_webotsCtrlKeyboard_faciometricLibs',
+                    'action': [
+                      'ln', '-s', '-n', '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlKeyboard/',
+                    ],
+                  },
+                ], # actions
+              }], # conditions
+            ],
+          }, # end controller Keyboard
+
+          {
+            'target_name': 'webotsCtrlBuildServerTest',
+            'type': 'executable',
+            'include_dirs': [
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+              '<(cti-cozmo_engine_path)/simulator/include',
+            ],
+            'dependencies': [
+              'cozmoAPI',
+              'cozmoEngine',
+              '<(ce-util_gyp_path):util',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+            ],
+            'sources': [ '<!@(cat <(ctrlBuildServerTest_source))' ],
+            'libraries': [
+              'libCppController.dylib',
+              '<@(opencv_libs)',
+            ],
+          }, # end controller Keyboard
+
+          {
+            'target_name': 'webotsControllers',
+            'type': 'none',
+            'dependencies': [
+              'webotsCtrlKeyboard',
+              'webotsCtrlBuildServerTest',              
+              'webotsCtrlGameEngine',
+              'webotsCtrlRobot',
+              'webotsCtrlViz',
+              'webotsCtrlLightCube',
+              'cozmo_physics',
+            ],
+            
+            # Create symlinks to controller binaries
+            # For some reason this is necessary in order to be able to attach to their processes from Xcode.
+            'actions': [
+              {
+                'action_name': 'create_symlink_webotsCtrlKeyboard',
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlKeyboard',
+                  '../../simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlBuildServerTest',
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlBuildServerTest',
+                  '../../simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest',
+                ],
+              },              
+              {
+                'action_name': 'create_symlink_webotsCtrlGameEngine',
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlGameEngine',
+                  '../../simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_assets',
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_asset_path)',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/assets',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_sound',
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/sound',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/config',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_test',
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/test',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/test',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_pocketsphinx',
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/pocketsphinx',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlRobot',
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlRobot',
+                  '../../simulator/controllers/webotsCtrlRobot/webotsCtrlRobot',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlViz',
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlViz',
+                  '../../simulator/controllers/webotsCtrlViz/webotsCtrlViz',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlLightCube',
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlLightCube',
+                  '../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsPluginPhysics',
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/libcozmo_physics.dylib',
+                  '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
+                ],
+              },
+              
+            ], # actions
+            
+          }, # end webotsControllers
+
+
+
+
+
+
+
+
+
+
+
+
 
           {
             'target_name': 'cozmoEngineUnitTest',
@@ -561,75 +851,41 @@
               # },
               {
                 'action_name': 'create_symlink_resources_configs',
-                'inputs': [
-                  '<(cozmo_engine_path)/resources/config',
-                ],
-                'outputs': [
-                  '<(PRODUCT_DIR)/resources/config',
-                ],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '<(PRODUCT_DIR)/resources/config',
                 ],
               },
               {
                 'action_name': 'create_symlink_resources_test',
-                'inputs': [
-                  '<(cozmo_engine_path)/resources/test',
-                ],
-                'outputs': [
-                  '<(PRODUCT_DIR)/resources/test',
-                ],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/test',
+                  '<(PRODUCT_DIR)/resources/test',
                 ],
               },
               {
                 'action_name': 'create_symlink_resources_pocketsphinx',
-                'inputs': [
+                'action': [
+                  'ln', '-s', '-f', '-n',
                   '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
-                ],
-                'outputs': [
                   '<(PRODUCT_DIR)/resources/pocketsphinx',
                 ],
-                'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
-                ],
               },
-	      {
+	            {
                 'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
-                'inputs': [ ],
-                'outputs': [ ],
                 'conditions': [
                   ['face_library=="faciometric"', {
                     'action': [
-                      'ln',
-                      '-s',
-                      '-n',
-                      '-f',
+                      'ln', '-s', '-f', '-n',
                       '<(face_library_lib_path)',
                       '<(PRODUCT_DIR)/',
                     ],
                   }],
                   ['face_library=="facesdk"', {
                     'action': [
-                      'ln',
-                      '-s',
-                      '-f',
+                      'ln', '-s', '-f', '-n',
                       '<(face_library_lib_path)/libfsdk.dylib',
                       '<(PRODUCT_DIR)',
                     ],
@@ -749,13 +1005,8 @@
                 'actions' : [
                   {
                     'action_name': 'create_symlink_webotsCtrlViz_faciometricLibs',
-                      'inputs': [ ],
-                      'outputs': [ ],
                       'action': [
-                        'ln',
-                        '-s',
-                        '-n',
-                        '-f',
+                        'ln', '-s', '-f', '-n',
                         '<(face_library_lib_path)',
                         '../../simulator/controllers/webotsCtrlViz/',
                       ],
@@ -844,75 +1095,41 @@
               # },
               {
                 'action_name': 'create_symlink_resources_configs',
-                'inputs': [
-                  '<(cozmo_engine_path)/resources/config',
-                ],
-                'outputs': [
-                  '<(PRODUCT_DIR)/resources/config',
-                ],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '<(PRODUCT_DIR)/resources/config',
                 ],
               },
               {
                 'action_name': 'create_symlink_resources_test',
-                'inputs': [
-                  '<(cozmo_engine_path)/resources/test',
-                ],
-                'outputs': [
-                  '<(PRODUCT_DIR)/resources/test',
-                ],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/test',
+                  '<(PRODUCT_DIR)/resources/test',
                 ],
               },
               {
                 'action_name': 'create_symlink_resources_pocketsphinx',
-                'inputs': [
-                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
-                ],
-                'outputs': [
-                  '<(PRODUCT_DIR)/resources/pocketsphinx',
-                ],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
+                  'ln', '-s', '-f', '-n',
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                  '<(PRODUCT_DIR)/resources/pocketsphinx',
                 ],
               },
               {
                 'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
-                'inputs': [ ],
-                'outputs': [ ],
                 'conditions': [
                   ['face_library=="faciometric"', {
                     'action': [
-                      'ln',
-                      '-s',
-                      '-n',
-                      '-f',
+                      'ln', '-s', '-f', '-n',
                       '<(face_library_lib_path)',
                       '<(PRODUCT_DIR)/',
                     ],
                   }],
                   ['face_library=="facesdk"', {
                     'action': [
-                      'ln',
-                      '-s',
-                      '-f',
+                      'ln', '-s', '-f',
                       '<(face_library_lib_path)/libfsdk.dylib',
                       '<(PRODUCT_DIR)',
                     ],
@@ -1013,17 +1230,11 @@
           'actions': [
             {
               'action_name': 'copy_faciometric_models',
-              'inputs': [
-                '<(face_library_path)/Demo/models',
-              ],
-              'outputs': [
-                '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',
-              ],
               'action': [
                 'cp',
                 '-R',
-                '<@(_inputs)',
-                '<@(_outputs)',
+                '<(face_library_path)/Demo/models',
+                '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',
               ],
             },
           ],

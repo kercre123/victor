@@ -182,6 +182,9 @@ def main(scriptArgs):
    ['project/gyp/ctrlRobot.lst'], ['reliableSequenceId.c'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'simulator/src/game'], ['project/gyp/ctrlKeyboard.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
   generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
   # copy the webots' physics.c into the generated folder
