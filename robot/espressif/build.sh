@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd "$(dirname "$0")"
+
 export PATH=/opt/xtensa-lx106-elf/bin:$PATH
 export ESPDIR=`pwd`
 

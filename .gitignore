@@ -6,6 +6,7 @@
 *.cache
 *.swp
 *.TMP
+.vagrant
 matlab.mat
 TAGS
 

@@ -15,7 +15,7 @@
 #include "wifi.h"
 
 typedef uint16_t transmissionWord;
-const int RX_OVERFLOW = 4;
+const int RX_OVERFLOW = 5;
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
@@ -40,7 +40,11 @@ static bool ProcessDrop(void) {
     DropToRTIP* drop = (DropToRTIP*)target;
 
     if (drop->droplet & screenDataValid) {
-      OLED::FeedFace(drop->screenInd, drop->screenData);
+      if (drop->droplet & screenRectData) {
+        OLED::BoundRect(drop->screenData);
+      } else {
+        OLED::FeedFace(drop->screenData);
+      }
     }
     
     DAC::Feed(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
