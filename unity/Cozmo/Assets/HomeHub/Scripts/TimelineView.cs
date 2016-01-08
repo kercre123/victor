@@ -4,7 +4,17 @@ using System.Collections.Generic;
 
 namespace Cozmo.Timeline {
   public class TimelineView : MonoBehaviour {
-    
+
+    [SerializeField]
+    private GameObject _TimelineEntryPrefab;
+
+    [SerializeField]
+    private RectTransform _TimelineContainer;
+
+    [SerializeField]
+    private GraphSpine _GraphSpline;
+
+
     public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
