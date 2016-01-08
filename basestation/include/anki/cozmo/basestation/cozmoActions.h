@@ -577,6 +577,9 @@ namespace Anki {
       // Set whether or not to place carried object on ground
       void SetPlaceOnGround(bool placeOnGround);
       
+      // Sets the animation to play when lift moves after docking.
+      // The animation should only contain a sound track!
+      void SetPostDockLiftMovingAnimation(const std::string& animName);
       
       virtual u8 GetAnimTracksToDisable() const override {
         return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
@@ -632,6 +635,13 @@ namespace Anki {
       f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
       f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
       bool                       _attemptedDock                  = false;
+
+      
+      // Handler for when lift begins to move so that we can play an accompanying sound
+      Signal::SmartHandle        _liftMovingSignalHandle;
+      
+      // Name of animation to play when moving lift post-dock
+      std::string                _liftMovingAnimation = "";
       
     private:
       

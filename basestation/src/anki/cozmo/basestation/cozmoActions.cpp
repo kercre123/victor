@@ -1867,6 +1867,11 @@ namespace Anki {
       _preActionPoseAngleTolerance = angleTolerance;
     }
     
+    void IDockAction::SetPostDockLiftMovingAnimation(const std::string& animName)
+    {
+      _liftMovingAnimation = animName;
+    }
+    
     ActionResult IDockAction::Init(Robot& robot)
     {
       _waitToVerifyTime = -1.f;
@@ -1940,6 +1945,34 @@ namespace Anki {
                             "");
           return ActionResult::FAILURE_ABORT;
         }
+        
+        // Specify post-dock lift motion callback to play sound
+        using namespace RobotInterface;
+        auto liftSoundLambda = [this, &robot](const AnkiEvent<RobotToEngine>& event)
+        {
+          if (!_liftMovingAnimation.empty()) {
+            // Check that the animation only has sound keyframes
+            const Animation* anim = robot.GetCannedAnimation(_liftMovingAnimation);
+            if (nullptr != anim) {
+              auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
+              auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
+              auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
+           
+              if (!headTrack.IsEmpty() || !liftTrack.IsEmpty() || !bodyTrack.IsEmpty()) {
+                PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.AnimHasMotion", "Animation must contain only sound.");
+                return;
+              }
+            
+              // Play the animation
+              PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler", "Playing animation %s ", _liftMovingAnimation.c_str());
+              robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_liftMovingAnimation, 1, false));
+            } else {
+              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation", "Could not find animation %s", _liftMovingAnimation.c_str());
+            }
+          }
+        };
+        _liftMovingSignalHandle = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
+        
         
         PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
                          "Robot is within (%.1fmm,%.1fmm) of the nearest pre-action pose, "
@@ -2172,7 +2205,7 @@ namespace Anki {
                                            const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
     {
-      
+      SetPostDockLiftMovingAnimation("LiftEffortPickup");
     }
     
     const std::string& PickupObjectAction::GetName() const
@@ -2376,6 +2409,7 @@ namespace Anki {
       SetPlacementOffset(placementOffsetX_mm, 0, 0);
       SetPlaceOnGround(placeOnGround);
       RegisterSubAction(_placementVerifyAction);
+      SetPostDockLiftMovingAnimation(placeOnGround ? "LiftEffortPlaceLow" : "LiftEffortPlaceHigh");
     }
     
     const std::string& PlaceRelObjectAction::GetName() const
@@ -2574,6 +2608,7 @@ namespace Anki {
     {
       _dockAction = DockAction::DA_ROLL_LOW;
       RegisterSubAction(_rollVerifyAction);
+      SetPostDockLiftMovingAnimation("LiftEffortRoll");
     }
     
     const std::string& RollObjectAction::GetName() const
