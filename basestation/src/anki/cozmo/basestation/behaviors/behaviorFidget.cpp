@@ -36,7 +36,7 @@ namespace Cozmo {
     _minWait_sec = 2.f;
     _maxWait_sec = 5.f;
 
-    AddFidget("Brickout", [this](){return new PlayAnimationAction("ID_idle_brickout");}, 1, 60, true);
+    AddFidget("Brickout", [this](){return new PlayAnimationAction("ID_idle_brickout_02");}, 1, 60, true);
     
     // TODO: Make probabilities non-zero once we have these animations available
     /*

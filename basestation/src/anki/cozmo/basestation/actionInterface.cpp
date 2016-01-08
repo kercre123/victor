@@ -45,6 +45,15 @@ namespace Anki {
       }
     }
     
+    bool IActionRunner::Interrupt()
+    {
+      _isInterrupted = InterruptInternal();
+      if(_isInterrupted) {
+        Reset();
+      }
+      return _isInterrupted;
+    }
+    
     // NOTE: THere should be no way for Update() to fail independently of its
     // call to UpdateInternal(). Otherwise, there's a possibility for an
     // IAction's Cleanup() method not be called on failure.
@@ -64,7 +73,12 @@ namespace Anki {
                            "Cancelling %s.", GetName().c_str());
         }
         result = ActionResult::CANCELLED;
-        
+      } else if(_isInterrupted) {
+        if(_displayMessages) {
+          PRINT_NAMED_INFO("IActionRunner.Update.InterruptAction",
+                           "Interrupting %s", GetName().c_str());
+        }
+        result = ActionResult::INTERRUPTED;
       } else {
         result = UpdateInternal(robot);
       }
@@ -82,7 +96,7 @@ namespace Anki {
         ClearSubActions(robot);
         Cleanup(robot);
         
-        if (_emitCompletionSignal)
+        if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
         {
           // Notify any listeners about this action's completion.
           // Note that I do this here so that compound actions only emit one signal,

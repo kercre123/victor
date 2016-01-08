@@ -81,6 +81,9 @@ public:
   bool IsEmpty() const { return _frames.empty(); }
 
   void Clear() { _frames.clear(); _frameIter = _frames.end(); }
+  
+  // Clear all frames up to, but not including, the current one
+  void ClearUpToCurrent();
 
 private:
   
@@ -262,6 +265,15 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonR
   return lastResult;
 }
 
+template<typename FRAME_TYPE>
+void Animations::Track<FRAME_TYPE>::ClearUpToCurrent()
+{
+  auto iter = _frames.begin();
+  while(iter != _frameIter) {
+    iter = _frames.erase(iter);
+  }
+}
+  
 } // end namespace Animations
 } // end namespace Cozmo
 } // end namespace Anki

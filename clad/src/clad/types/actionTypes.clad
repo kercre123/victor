@@ -58,7 +58,8 @@ enum int_32 ActionResult {
     FAILURE_PROCEED,
     FAILURE_RETRY,
     FAILURE_ABORT,
-    CANCELLED
+    CANCELLED,
+    INTERRUPTED
 }
 
 
@@ -66,6 +67,7 @@ enum int_32 ActionResult {
 structure ObjectInteractionCompleted {
     int_32     objectIDs[5],
     uint_8     numObjects,
+    bool       attemptedDock = 0,
 }
 
 // Used by PlayAnimationAction

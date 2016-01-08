@@ -30,6 +30,9 @@ using namespace ExternalInterface;
 static std::vector<std::string> _animReactions = {
   "Demo_Motion_Reaction",
 };
+  
+static std::string kLookDownAnimName = "Loco_Neutral2converge_01";
+static std::string kLookUpAnimName = "Loco_converge2Neutral_01";
 
 BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
@@ -121,9 +124,27 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
     case State::HoldingHeadDown:
       LiftShouldBeLocked(robot);
       if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= _holdHeadDownUntil) {
+        
+        PlayAnimationAction* action = new PlayAnimationAction(kLookUpAnimName);
+        _actionRunning = action->GetTag();
+        
+        // Note that queuing action "now" will cancel the tracking action
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+        
+        _state = State::BringingHeadUp;
+        SetStateName("BringingHeadUp");
+      }
+      break;
+      
+    case State::BringingHeadUp:
+    {
+      // Just wait til the PlayAnimationAction we started in HoldingHeadDown is done, then transition to tracking 
+      if (_actionRunning == (u32)ActionConstants::INVALID_TAG)
+      {
         StartTracking(robot); // puts us in Tracking state
       }
       break;
+    }
       
     case State::Tracking:
     {
@@ -281,7 +302,8 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
       if( belowMinGroundPlaneDist ) {
         const float timeToHold = 1.25f;
         _holdHeadDownUntil = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + timeToHold;
-        MoveHeadToAngleAction* action = new MoveHeadToAngleAction(MIN_HEAD_ANGLE);
+        PlayAnimationAction* action = new PlayAnimationAction(kLookDownAnimName);
+        _actionRunning = action->GetTag();
         
         // Note that queuing action "now" will cancel the tracking action
         robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
@@ -333,7 +355,7 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
   
   // If the action we were running completes, allow us to respond to motion again
   if(completedAction.idTag == _actionRunning) {
-    _actionRunning = 0;
+    _actionRunning = (u32)ActionConstants::INVALID_TAG;
     
     switch(_state)
     {
@@ -354,7 +376,7 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
         break;
         
       case State::HoldingHeadDown:
-        if( completedAction.actionType != RobotActionType::MOVE_HEAD_TO_ANGLE ){
+        if( completedAction.actionType != RobotActionType::PLAY_ANIMATION ){
           PRINT_NAMED_WARNING("BehaviorFollowMotion.HandleWhileRunning.HoldingHeadDown.InvalidAction",
                               "Expecting completed action to be MoveHeadToAngle, instead got %s",
                               RobotActionTypeToString(completedAction.actionType));
@@ -374,7 +396,7 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
   } // if(completedAction.idTag == _actionRunning)
 
   if( _state == State::BackingUp && completedAction.idTag == _backingUpAction ) {
-    _backingUpAction = 0;
+    _backingUpAction = (u32)ActionConstants::INVALID_TAG;
     PRINT_NAMED_INFO("BehaviorFollowMotion.BackupComplete", "");
     if( _initialReactionAnimPlayed ) {
       StartTracking(robot);

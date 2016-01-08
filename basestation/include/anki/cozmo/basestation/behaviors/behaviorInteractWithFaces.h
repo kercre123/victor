@@ -101,12 +101,12 @@ namespace Cozmo {
     f32    _faceTiltSpacing = 0.f;
     f32    _lastFaceTiltTime = 0.f;
     f32    _currentTilt = 0;
-    u32    _tiltLayerTag = 0;
+    u32    _tiltLayerTag = AnimationStreamer::NotAnimatingTag;
     
     f32    _eyeDartSpacing = 0.f;
     f32    _lastEyeDartTime = 0.f;
     bool   _lookingAtLeftEye = true;
-    u32    _eyeDartLayerTag = 0;
+    u32    _eyeDartLayerTag = AnimationStreamer::NotAnimatingTag;
     AnimationStreamer::ParamContainer _originalLiveIdleParams;
     
     struct FaceData
@@ -141,7 +141,7 @@ namespace Cozmo {
     f32 _currentMultiFaceInterestingDuration_sec = kMultiFaceInterestingDuration_sec;
     
     // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
-    constexpr static float kFaceCooldownDuration_sec = 10;
+    constexpr static float kFaceCooldownDuration_sec = 3.5;
     
     // Distance inside of which Cozmo will start noticing a face
     constexpr static float kCloseEnoughDistance_mm = 1250;
@@ -154,18 +154,26 @@ namespace Cozmo {
     constexpr static float kTooFarDistance_mm = kCloseEnoughDistance_mm + kFaceBufferDistance_mm;
     
     // Distance to trigger Cozmo to get further away from the focused face
-    constexpr static float kTooCloseDistance_mm = 260;
+    constexpr static float kTooCloseDistance_mm = 220;
+    
+    // Amount of time a face needs to be close to trigger being scared
+    constexpr static float kContinuousCloseScareTime_sec = 0.8;
     
     // Maximum frequency that Cozmo should glance down when interacting with faces (could be longer if he has a stable
     // face to focus on; this interval shouln't interrupt his interaction)
     constexpr static float kGlanceDownInterval_sec = 12;
     
     // Min time between plays of the animation when we see a new face
-    constexpr static float kSeeNewFaceAnimationCooldown_sec = 10;
+    constexpr static float kSeeNewFaceAnimationCooldown_sec = 2;
+    
+    // Frequency of playing strong friendly anim compared to minor friendly (as in every nth will be strong)
+    constexpr static int kStrongFriendlyAnimRatio = 5;
+    uint32_t kCurrentFriendlyAnimCount = 0;
     
     // Min time between playing the shocked/scared animation when a face gets
-    // too close
-    constexpr static float kTooCloseScaredInterval_sec = 2;
+    // too close NOTE: This should probably be longer than _deletionTimeout_ms in FaceWorld.h or Cozmo could repeatedly
+    // express that he's scared with a face that's going to be deleted
+    constexpr static float kTooCloseScaredInterval_sec = 45;
     
     // Amount to periodically tilt the robot's face while watching a face, and the time spacing
     // between tilts
