@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using DataPersistence;
 
 namespace Cozmo.Timeline {
-  public class Timeline : MonoBehaviour {
+  public class HomeHub : HubWorldBase {
 
     [SerializeField]
     private TimelineView _TimelineViewPrefab;
@@ -23,13 +23,13 @@ namespace Cozmo.Timeline {
 
     private string _CurrentChallengePlaying;
 
-    public bool LoadTimeline() {
+    public override bool LoadHubWorld() {
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
       ShowTimelineDialog();
       return true;
     }
 
-    public bool DestroyTimeline() {
+    public override bool DestroyHubWorld() {
       CloseMiniGameImmediately();
 
       // Deregister events
@@ -159,7 +159,7 @@ namespace Cozmo.Timeline {
     }
 
     private void LoadChallengeData(ChallengeDataList sourceChallenges, 
-      out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
+                                   out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
       // Initial load of what's unlocked and completed from data
       challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
 
@@ -222,10 +222,10 @@ namespace Cozmo.Timeline {
     // TODO: Pragma out for production
 
     #region Testing
-       
+
     public void TestLoadTimeline() {
-      DestroyTimeline();
-      LoadTimeline();
+      DestroyHubWorld();
+      LoadHubWorld();
     }
 
     public void TestCompleteChallenge(string completedChallengeId) {
