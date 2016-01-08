@@ -342,6 +342,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DevConnectDialog: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
+  _HubWorldPrefab: {fileID: 11476446, guid: 44f04469ca0784cb2976d4476c98a378, type: 2}
   _IntroScriptedSequenceName: IntroSequence
   _RobotStateTextFieldPrefab: {fileID: 0}
 --- !u!4 &1343408286

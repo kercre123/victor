@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Cozmo.HomeHub {
   public class TimelineView : MonoBehaviour {
     
-    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
