@@ -866,9 +866,9 @@ namespace Anki {
 
       // Wrappers for the sounds available in DriveToObjectAction, which is the
       // first action in the sequence for all derived classes
-      void SetSound(const std::string& startSound,
-                    const std::string& driveSound,
-                    const std::string& stopSound);
+      void SetSounds(const std::string& startSound,
+                     const std::string& driveSound,
+                     const std::string& stopSound);
       
       void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
       
@@ -887,9 +887,9 @@ namespace Anki {
       
     }; // class IDriveToInteractWithObject
     
-    inline void IDriveToInteractWithObject::SetSound(const std::string& startSound,
-                                              const std::string& driveSound,
-                                              const std::string& stopSound)
+    inline void IDriveToInteractWithObject::SetSounds(const std::string& startSound,
+                                                      const std::string& driveSound,
+                                                      const std::string& stopSound)
     {
       assert(nullptr != _driveToObjectAction);
       _driveToObjectAction->SetSounds(startSound, driveSound, stopSound);
