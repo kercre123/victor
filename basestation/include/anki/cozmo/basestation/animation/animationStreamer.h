@@ -233,6 +233,7 @@ namespace Cozmo {
     bool           _isLiveTwitchEnabled  = false;
     s32            _nextBlink_ms         = 0;
     s32            _nextEyeDart_ms       = 0;
+    u32            _eyeDartTag           = NotAnimatingTag;
     //s32            _nextLookAround_ms    = 0;
     s32            _bodyMoveDuration_ms  = 0;
     s32            _liftMoveDuration_ms  = 0;

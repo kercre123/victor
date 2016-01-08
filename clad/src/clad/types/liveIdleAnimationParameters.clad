@@ -34,6 +34,8 @@ enum uint_8 LiveIdleAnimationParameter {
   EyeDartMaxDistance_pix,
   EyeDartMinScale,
   EyeDartMaxScale,
+  EyeDartMinDuration_ms,
+  EyeDartMaxDuration_ms,
 
   NumParameters
 }

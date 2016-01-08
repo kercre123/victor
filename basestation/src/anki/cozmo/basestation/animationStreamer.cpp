@@ -563,18 +563,41 @@ namespace Cozmo {
     if(_nextEyeDart_ms <= 0)
     {
       // Shift and scale the eyes slightly by a random amount
-      const s32 xShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
-                                              GetParam<s32>(Param::EyeDartMaxDistance_pix));
-      const s32 yShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
-                                              GetParam<s32>(Param::EyeDartMaxDistance_pix));
+      const f32 xFaceShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
+                                                 GetParam<s32>(Param::EyeDartMaxDistance_pix));
+      const f32 yFaceShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
+                                                 GetParam<s32>(Param::EyeDartMaxDistance_pix));
       
-      const f32 scale = _rng.RandDblInRange(GetParam<f32>(Param::EyeDartMinScale),
-                                            GetParam<f32>(Param::EyeDartMaxScale));
+      // Randomly choose y scale and then compute xscale to maintain area
+      const f32 yscale = _rng.RandDblInRange(GetParam<f32>(Param::EyeDartMinScale),
+                                             GetParam<f32>(Param::EyeDartMaxScale));
+      const f32 xscale = 1.f / yscale;
 
-      //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
-      //                  "shift=(%d,%d), scale=%.3f", xShift, yShift, scale);
+      // Randomly choose how long the shift should take
+      const s32 duration = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartMinDuration_ms),
+                                               GetParam<s32>(Param::EyeDartMaxDuration_ms));
       
-      robot.ShiftAndScaleEyes(xShift, yShift, scale, scale, 0, false, "KeepAliveEyeDart");
+      // Decrease distance between the eyes (IOD = interocular distance)
+      const s32 reduceIOD = _rng.RandIntInRange(0, 1);
+      
+      //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
+      //                  "shift=(%.1f,%.1f), scale=(%.3f,%.3f)", xFaceShift, yFaceShift, xscale, yscale);
+      
+      ProceduralFace procFace;
+      ProceduralFaceParams& params = procFace.GetParams();
+      params.SetFacePosition({xFaceShift, yFaceShift});
+      params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
+      params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yscale);
+      params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
+      params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
+      
+      if(_eyeDartTag == NotAnimatingTag) {
+        FaceTrack faceTrack;
+        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration));
+        _eyeDartTag = AddPersistentFaceLayer("KeepAliveEyeDart", std::move(faceTrack));
+      } else {
+        AddToPersistentFaceLayer(_eyeDartTag, ProceduralFaceKeyFrame(procFace, duration));
+      }
       
       _nextEyeDart_ms = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartSpacingMinTime_ms),
                                             GetParam<s32>(Param::EyeDartSpacingMaxTime_ms));
@@ -1355,6 +1378,8 @@ namespace Cozmo {
     SET_DEFAULT(EyeDartMaxDistance_pix, 4);
     SET_DEFAULT(EyeDartMinScale, 0.92f);
     SET_DEFAULT(EyeDartMaxScale, 1.08f);
+    SET_DEFAULT(EyeDartMinDuration_ms, 50);
+    SET_DEFAULT(EyeDartMaxDuration_ms, 200);
     
 #   undef SET_DEFAULT
   } // SetDefaultParams()
