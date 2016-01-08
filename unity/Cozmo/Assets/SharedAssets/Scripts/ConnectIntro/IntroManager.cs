@@ -7,9 +7,11 @@ public class IntroManager : MonoBehaviour {
   private Intro _DevConnectDialog;
   private GameObject _DevConnectDialogInstance;
 
+#if HUBWORLD
   [SerializeField]
   private HubWorldBase _HubWorldPrefab;
   private HubWorldBase _HubWorldInstance;
+#endif
 
   [SerializeField]
   private string _IntroScriptedSequenceName;
@@ -45,11 +47,13 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void HandleDisconnectedFromClient(DisconnectionReason obj) {
+ #if HUBWORLD
     // Force quit hub world and show connect dialog again
     if (_HubWorldInstance != null) {
       _HubWorldInstance.DestroyHubWorld(); 
       Destroy(_HubWorldInstance);
     }
+ #endif
 
     UIManager.CloseAllViewsImmediately();
     if (_RobotStateTextFieldInstance != null) {
@@ -60,12 +64,14 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void HandleIntroSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+#if HUBWORLD
     // Spawn HubWorld
     GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
     hubWorldObject.transform.SetParent(transform, false);
     _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
 
     _HubWorldInstance.LoadHubWorld();
+#endif
   }
 
   private void ShowDevConnectDialog() {
