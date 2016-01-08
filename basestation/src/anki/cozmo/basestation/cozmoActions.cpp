@@ -170,9 +170,14 @@ namespace Anki {
 
       SetGoals(poses, distThreshold, angleThreshold);
     }
-    
-    Result DriveToPoseAction::SetGoal(const Anki::Pose3d& pose)
+
+    Result DriveToPoseAction::SetGoal(const Pose3d& pose,
+                                      const Point3f& distThreshold,
+                                      const Radians& angleThreshold)
     {
+      _goalDistanceThreshold = distThreshold;
+      _goalAngleThreshold = angleThreshold;
+      
       _goalPoses = {pose};
       
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
@@ -187,16 +192,6 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result DriveToPoseAction::SetGoal(const Pose3d& pose,
-                                      const Point3f& distThreshold,
-                                      const Radians& angleThreshold)
-    {
-      _goalDistanceThreshold = distThreshold;
-      _goalAngleThreshold = angleThreshold;
-      
-      return SetGoal(pose);
-    }
-    
     Result DriveToPoseAction::SetGoals(const std::vector<Pose3d>& poses,
                                        const Point3f& distThreshold,
                                        const Radians& angleThreshold)
@@ -204,13 +199,8 @@ namespace Anki {
       _goalDistanceThreshold = distThreshold;
       _goalAngleThreshold    = angleThreshold;
       
-      return SetGoals(poses);
-    }
-    
-    Result DriveToPoseAction::SetGoals(const std::vector<Pose3d>& poses)
-    {
       _goalPoses = poses;
-
+      
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
                        "Setting %lu possible goal options.",
                        _goalPoses.size());
@@ -218,6 +208,7 @@ namespace Anki {
       _isGoalSet = true;
       
       return RESULT_OK;
+
     }
     
     const std::string& DriveToPoseAction::GetName() const
@@ -449,7 +440,8 @@ namespace Anki {
     , _approachAngle_rad(approachAngle_rad)
     , _pathMotionProfile(motionProfile)
     {
-      // NOTE: _goalPose will be set later, when we check preconditions
+      // Goal options will be set later
+      _driveToPoseAction = new DriveToPoseAction(motionProfile, true, useManualSpeed);
     }
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
@@ -465,7 +457,8 @@ namespace Anki {
     , _approachAngle_rad(0)
     , _pathMotionProfile(motionProfile)
     {
-      // NOTE: _goalPose will be set later, when we check preconditions
+      // Goal options will be set later
+      _driveToPoseAction = new DriveToPoseAction(motionProfile, true, useManualSpeed);
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -648,16 +641,9 @@ namespace Anki {
           
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
-          DriveToPoseAction* action = new DriveToPoseAction(possiblePoses,
-                                                            _pathMotionProfile,
-                                                            true,
-                                                            _useManualSpeed,
-                                                            preActionPoseDistThresh);
+          _driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
           
-          action->SetSounds(_startSound, _drivingSound, _stopSound);
-          action->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
-          
-          _compoundAction.AddAction(action);
+          _compoundAction.AddAction(_driveToPoseAction);
         }
       
       

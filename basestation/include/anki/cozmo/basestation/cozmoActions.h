@@ -62,7 +62,8 @@ namespace Anki {
       
       DriveToPoseAction(const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
+                        const bool useManualSpeed = false); // Note that SetGoal(s) must be called befure Update()!
+      
       DriveToPoseAction(const std::vector<Pose3d>& poses,
                         const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
@@ -74,6 +75,16 @@ namespace Anki {
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
+      // Set single goal
+      Result SetGoal(const Pose3d& pose,
+                     const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                     const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+      
+      // Set possible goal options
+      Result SetGoals(const std::vector<Pose3d>& poses,
+                      const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                      const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
       
@@ -105,13 +116,6 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot &robot) override;
       
-      Result SetGoal(const Pose3d& pose);
-      Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
-      
-      // Set possible goal options
-      Result SetGoals(const std::vector<Pose3d>& poses);
-      Result SetGoals(const std::vector<Pose3d>& poses, const Point3f& distThreshold, const Radians& angleThreshold);
-      
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
       bool     _startedTraversingPath = false;
@@ -135,11 +139,11 @@ namespace Anki {
       float _timeToAbortPlanning;
       
       // For playing sound
-      std::string _startSound   = "";
-      std::string _drivingSound = "";
-      std::string _stopSound    = "";
+      std::string _startSound   = "ID_MotionTrack_TurnLong";
+      std::string _drivingSound = "ID_MotionTrack_TurnSmall";
+      std::string _stopSound    = "ID_MotionTrack_TurnLong";
       f32         _drivingSoundSpacingMin_sec = 0.5f;
-      f32         _drivingSoundSpacingMax_sec = 1.0f;
+      f32         _drivingSoundSpacingMax_sec = 1.5f;
       f32         _nextDrivingSoundTime = 0.f;
       
       Signal::SmartHandle _signalHandle;
@@ -225,6 +229,7 @@ namespace Anki {
       f32                        _distance_mm;
       f32                        _predockOffsetDistX_mm;
       bool                       _useManualSpeed;
+      DriveToPoseAction*         _driveToPoseAction = nullptr;
       CompoundActionSequential   _compoundAction;
       
       bool                       _useApproachAngle;
@@ -232,28 +237,18 @@ namespace Anki {
       
       PathMotionProfile          _pathMotionProfile;
       
-      // For playing sound
-      std::string _startSound   = "";
-      std::string _drivingSound = "";
-      std::string _stopSound    = "";
-      f32         _drivingSoundSpacingMin_sec = 0.5f;
-      f32         _drivingSoundSpacingMax_sec = 1.0f;
-      
     }; // DriveToObjectAction
     
     inline void DriveToObjectAction::SetSounds(const std::string& startSound,
-                                             const std::string& driveSound,
-                                             const std::string& stopSound)
+                                               const std::string& driveSound,
+                                               const std::string& stopSound)
     {
-      _startSound   = startSound;
-      _drivingSound = driveSound;
-      _stopSound    = stopSound;
+      _driveToPoseAction->SetSounds(startSound, driveSound, stopSound);
     }
     
     inline void DriveToObjectAction::SetDriveSoundSpacing(f32 min_sec, f32 max_sec)
     {
-      _drivingSoundSpacingMin_sec = min_sec;
-      _drivingSoundSpacingMax_sec = max_sec;
+      _driveToPoseAction->SetDriveSoundSpacing(min_sec, max_sec);
     }
     
     
