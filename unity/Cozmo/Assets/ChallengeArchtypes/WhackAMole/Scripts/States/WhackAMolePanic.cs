@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace WhackAMole {
-  // TODO : In this state, alternate between targets on random intervals with increasing frequency.
+  // In this state, alternate between targets on random intervals with increasing frequency.
   // Returns to normal chase if mole state is not equal to BOTH
   // Plays Frustrated Animation, deactivates both, and sets state to Idle if you remain
   // in this state for too long. Potentially have Cozmo hide or cower until mole state is not
@@ -22,10 +22,10 @@ namespace WhackAMole {
       _PanicTimeout = _WhackAMoleGame.MaxPanicTime;
       _PanicInterval = _WhackAMoleGame.MaxPanicInterval;
       _PanicStartTimestamp = Time.time;
+      PanicTargetSwitch(true);
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
-      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,0f);
     }
-
+      
     public override void Update() {
       base.Update();
       if (_PanicIntervalTimestamp == -1) {
@@ -33,7 +33,7 @@ namespace WhackAMole {
       }
 
       if (Time.time - _PanicStartTimestamp > _PanicTimeout) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kIdleHumming, HandleAnimationDone));
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kHeadDown, HandleAnimationDone));
         return;
       }
       // Check timestamps for Panic Target Switching and Timeout
