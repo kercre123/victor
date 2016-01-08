@@ -139,9 +139,9 @@ namespace Anki {
       float _timeToAbortPlanning;
       
       // For playing sound
-      std::string _startSound   = "ID_MotionTrack_TurnLong";
-      std::string _drivingSound = "ID_MotionTrack_TurnSmall";
-      std::string _stopSound    = "ID_MotionTrack_TurnLong";
+      std::string _startSound   = "";
+      std::string _drivingSound = "";
+      std::string _stopSound    = "";
       f32         _drivingSoundSpacingMin_sec = 0.5f;
       f32         _drivingSoundSpacingMax_sec = 1.5f;
       f32         _nextDrivingSoundTime = 0.f;

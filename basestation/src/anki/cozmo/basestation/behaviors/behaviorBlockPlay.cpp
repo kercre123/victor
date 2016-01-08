@@ -493,7 +493,7 @@ namespace Cozmo {
         }
         
         // Execute roll
-        IActionRunner* rollAction = nullptr;
+        DriveToRollObjectAction* rollAction = nullptr;
         if (preActionPoses.size() > 1) {
           // Block must be upside down so choose any roll action
           rollAction = new DriveToRollObjectAction(_trackedObject, _motionProfile);
@@ -510,6 +510,7 @@ namespace Cozmo {
                                                    true,
                                                    approachAngle_rad);
         }
+        SetDriveToObjectSounds(rollAction);
         StartActing(robot, rollAction);
         break;
       }
@@ -523,7 +524,9 @@ namespace Cozmo {
           break;
         }
         
-        StartActing(robot, new DriveToPickupObjectAction(_objectToPickUp, _motionProfile));
+        DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(_objectToPickUp, _motionProfile);
+        SetDriveToObjectSounds(pickupAction);
+        StartActing(robot, pickupAction);
         break;
       }
       case State::PlacingBlock:
@@ -539,7 +542,9 @@ namespace Cozmo {
         PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PlacingBlock.Place",
                          "Executing place object action");
         
-        StartActing(robot, new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn, _motionProfile));
+        DriveToPlaceOnObjectAction* placeAction = new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn, _motionProfile);
+        SetDriveToObjectSounds(placeAction);
+        StartActing(robot, placeAction);
         break;
       }
       case State::WaitingForBlock:
@@ -928,6 +933,7 @@ namespace Cozmo {
         break;
       case State::RollingBlock:
       {
+        ++_attemptCounter;
         if(msg.result == ActionResult::SUCCESS) {
           switch(msg.actionType) {
               
@@ -946,6 +952,7 @@ namespace Cozmo {
               _holdUntilTime = currentTime_sec + _timetoInspectBlock;
 
               _isActing = false;
+              _attemptCounter = 0;
               break;
             }
               
@@ -987,7 +994,6 @@ namespace Cozmo {
           SetCurrState(State::InspectingBlock);
           _holdUntilTime = currentTime_sec + _timetoInspectBlock;
           _isActing = false;
-
         } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
@@ -1000,6 +1006,7 @@ namespace Cozmo {
       }
       case State::PickingUpBlock:
       {
+        ++_attemptCounter;
         if(msg.result == ActionResult::SUCCESS) {
           switch(msg.actionType) {
               
@@ -1013,6 +1020,7 @@ namespace Cozmo {
               // We're done picking up the block.
               SetCurrState(State::TrackingFace);
               _isActing = false;
+              _attemptCounter = 0;
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
@@ -1073,6 +1081,7 @@ namespace Cozmo {
         
       case State::PlacingBlock:
       {
+        ++_attemptCounter;
         if(msg.result == ActionResult::SUCCESS) {
           switch(msg.actionType) {
               
@@ -1097,6 +1106,7 @@ namespace Cozmo {
               PlayAnimation(robot, "ID_reactTo2ndBlock_success");
               SetCurrState(State::TrackingFace);
               _isActing = false;
+              _attemptCounter = 0;
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
@@ -1657,9 +1667,21 @@ namespace Cozmo {
     }
   }
   
+  void BehaviorBlockPlay::SetDriveToObjectSounds(IDriveToInteractWithObject* action)
+  {
+    // Set sounds based on whether this is the first try or not
+    if(_attemptCounter == 0) {
+      action->SetSounds("ID_AlignToObject_Content_Start",
+                        "ID_AlignToObject_Content_Drive",
+                        "ID_AlignToObject_Content_Stop");
+    } else {
+      action->SetSounds("ID_AlignToObject_Frustrated_Start",
+                        "ID_AlignToObject_Frustrated_Drive",
+                        "ID_AlignToObject_Frustrated_Stop");
+    }
+    // TODO: More granularity in frustration level? (Hopefully don't need it; few failures!)
+  }
 
-
-  
   
 } // namespace Cozmo
 } // namespace Anki
