@@ -1560,7 +1560,7 @@ namespace Anki {
       Json::Value animDefs;
       const bool success = _dataPlatform->readAsJson(filename, animDefs);
       if (success && !animDefs.empty()) {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
+        //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
 
@@ -1603,7 +1603,7 @@ namespace Anki {
             const bool success = _dataPlatform->readAsJson(fullFileName, behaviorJson);
             if (success && !behaviorJson.empty())
             {
-              PRINT_NAMED_INFO("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+              //PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
               _behaviorMgr.LoadBehaviorFromJson(behaviorJson);
             }
             else
