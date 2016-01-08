@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/block.h"
+#include "util/logging/printfLoggerProvider.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "clad/types/ledTypes.h"
@@ -1601,6 +1602,9 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
+  Anki::Util::PrintfLoggerProvider loggerProvider;
+  loggerProvider.SetMinLogLevel(0);
+  Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
   
   webotsCtrlKeyboard.Init();
