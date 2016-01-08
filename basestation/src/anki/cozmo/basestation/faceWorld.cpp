@@ -167,7 +167,10 @@ namespace Cozmo {
                                                                    humanHeadSize,
                                                                    knownFace->face.GetHeadPose(),
                                                                    ::Anki::NamedColors::GREEN);
-        
+    // Draw box around recognized face (with ID) now that we have the real ID set
+    VizManager::getInstance()->DrawCameraFace(knownFace->face,
+                                              knownFace->face.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
+    
     // Send out an event about this face being observed
     using namespace ExternalInterface;
     const Vec3f& trans = knownFace->face.GetHeadPose().GetTranslation();

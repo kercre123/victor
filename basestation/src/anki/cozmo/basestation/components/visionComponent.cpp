@@ -568,9 +568,6 @@ namespace Cozmo {
                             "Got FaceDetection from vision processing but failed to update it.");
           return lastResult;
         }
-        
-        VizManager::getInstance()->DrawCameraFace(faceDetection,
-                                                  faceDetection.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
       }
     } // if(_visionSystem != nullptr)
     return lastResult;
