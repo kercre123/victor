@@ -562,23 +562,29 @@ namespace Cozmo {
     // Eye darts
     if(_nextEyeDart_ms <= 0)
     {
-      // Shift and scale the eyes slightly by a random amount
-      const f32 xFaceShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
-                                                 GetParam<s32>(Param::EyeDartMaxDistance_pix));
-      const f32 yFaceShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
-                                                 GetParam<s32>(Param::EyeDartMaxDistance_pix));
+      const f32 MaxDist = GetParam<f32>(Param::EyeDartMaxDistance_pix);
+      const f32 xFaceShift = _rng.RandIntInRange(-MaxDist, MaxDist);
+      const f32 yFaceShift = _rng.RandIntInRange(-MaxDist, MaxDist);
       
-      // Randomly choose y scale and then compute xscale to maintain area
-      const f32 yscale = _rng.RandDblInRange(GetParam<f32>(Param::EyeDartMinScale),
-                                             GetParam<f32>(Param::EyeDartMaxScale));
-      const f32 xscale = 1.f / yscale;
-
+      // Amount "outer" eye will increase in scale depending on how far left/right we dart
+      const f32 yscaleLR = 1.f +  GetParam<f32>(Param::EyeDartOuterEyeScaleIncrease)*std::abs(xFaceShift)/MaxDist;
+      
+      // Amount both eyes will increase/decrease in size dependingon how far we dart
+      // up our down
+      const f32 MaxScaleUD = GetParam<f32>(Param::EyeDartUpMaxScale);   // Big looking up (negative y)
+      const f32 MinScaleUD = GetParam<f32>(Param::EyeDartDownMinScale); // Squinty looking down (positive y)
+      const f32 yscaleUD = (MaxScaleUD-MinScaleUD)*(1.f - (yFaceShift + MaxDist)/(2.f*MaxDist)) + MinScaleUD;
+      
       // Randomly choose how long the shift should take
       const s32 duration = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartMinDuration_ms),
                                                GetParam<s32>(Param::EyeDartMaxDuration_ms));
       
-      // Decrease distance between the eyes (IOD = interocular distance)
-      const s32 reduceIOD = _rng.RandIntInRange(0, 1);
+      // If looking down (positive y), push eyes together (decrease IOD=interocular distance)
+      const f32 MaxIOD = 2.f;
+      f32 reduceIOD = 0.f;
+      if(yFaceShift > 0) {
+        reduceIOD = MaxIOD*yFaceShift/MaxDist;
+      }
       
       //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
       //                  "shift=(%.1f,%.1f), scale=(%.3f,%.3f)", xFaceShift, yFaceShift, xscale, yscale);
@@ -586,8 +592,16 @@ namespace Cozmo {
       ProceduralFace procFace;
       ProceduralFaceParams& params = procFace.GetParams();
       params.SetFacePosition({xFaceShift, yFaceShift});
-      params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
-      params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yscale);
+      // Scale inner/outer eyes differently, depending on which way we're looking
+      if(xFaceShift < 0) {
+        params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
+        params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
+      } else {
+        params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
+        params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
+      }
+      
+      //params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
       params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
       params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
       
@@ -1375,11 +1389,14 @@ namespace Cozmo {
     SET_DEFAULT(HeadAngleVariability_deg, 6);
     SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
     SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
-    SET_DEFAULT(EyeDartMaxDistance_pix, 4);
+    SET_DEFAULT(EyeDartMaxDistance_pix, 6);
     SET_DEFAULT(EyeDartMinScale, 0.92f);
     SET_DEFAULT(EyeDartMaxScale, 1.08f);
     SET_DEFAULT(EyeDartMinDuration_ms, 50);
     SET_DEFAULT(EyeDartMaxDuration_ms, 200);
+    SET_DEFAULT(EyeDartOuterEyeScaleIncrease, 0.1f);
+    SET_DEFAULT(EyeDartUpMaxScale, 1.1f);
+    SET_DEFAULT(EyeDartDownMinScale, 0.85f);
     
 #   undef SET_DEFAULT
   } // SetDefaultParams()
