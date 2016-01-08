@@ -118,7 +118,7 @@ namespace HAL {
       if (wind == rind) return RESULT_OK; // Nothing available
       else
       {
-        uint8_t available = (RX_BUF_SIZE - (wind - rind));
+        uint8_t available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
         RobotInterface::EngineToRobot msg;
         while (available)
         {
@@ -136,7 +136,7 @@ namespace HAL {
               {
                 for (; i<size; i++) msgBuffer[i] = rxBuf[rind++];
                 rxRind = rind;
-                available = (RX_BUF_SIZE - (wind - rind));
+                available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
                 Messages::ProcessMessage(msg);
                 continue;
               }

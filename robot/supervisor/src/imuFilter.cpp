@@ -263,11 +263,11 @@ namespace Anki {
 #ifndef TARGET_K02
         TestModeController::Start(TM_NONE);
 #endif
-        HAL::SetLED(INDICATOR_LED_ID, LED_RED);
+        HAL::SetLED(INDICATOR_LED_ID, LED_ENC_RED);
       }
       void TurnOffIndicatorLight()
       {
-        HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
+        HAL::SetLED(INDICATOR_LED_ID, LED_ENC_OFF);
       }
 
       void StartPathFollowTest()
@@ -291,9 +291,9 @@ namespace Anki {
       {
         // TEST WITH LIGHT
         if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, LED_RED);
+          HAL::SetLED(INDICATOR_LED_ID, LED_ENC_RED);
         } else {
-          HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
+          HAL::SetLED(INDICATOR_LED_ID, LED_ENC_OFF);
         }
 
         pickedUp_ = pickupDetected;
@@ -654,7 +654,7 @@ namespace Anki {
       void UpdatePitch()
       {
         f32 headAngle = HeadController::GetAngleRad();
-        
+
         // If not moving then reset pitch angle with accelerometer.
         // Otherwise, update it with gyro.
         if (!MotionDetected()) {
@@ -663,10 +663,10 @@ namespace Anki {
           f32 dAngle = -gyro_robot_frame_filt[1] * CONTROL_DT;
           pitch_ += dAngle;
         }
-        
+
         //PERIODIC_PRINT(50, "Pitch %f deg\n", RAD_TO_DEG_F32(pitch_));
       }
-      
+
       Result Update()
       {
         Result retVal = RESULT_OK;
