@@ -64,6 +64,9 @@ namespace WhackAMole {
       ActivatedCubes = new Dictionary<int, LightCube>();
 
       _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
+      CurrentRobot.SetBehaviorSystem(true);
+      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
@@ -184,7 +187,7 @@ namespace WhackAMole {
       if (CurrentRobot.LightCubes.ContainsKey(_CubeAID)) {
         if (_CubeActiveA) {
           _GamePanel.CubeAButton.image.color = _ActiveColor;
-          CurrentRobot.LightCubes[_CubeAID].SetLEDs(_ActiveColor);
+          CurrentRobot.LightCubes[_CubeAID].SetFlashingLEDs(_ActiveColor);
         }
         else {
           _GamePanel.CubeAButton.image.color = _CubeAColor;
@@ -199,7 +202,7 @@ namespace WhackAMole {
       if (CurrentRobot.LightCubes.ContainsKey(_CubeBID)) {
         if (_CubeActiveB) {
           _GamePanel.CubeBButton.image.color = _ActiveColor;
-          CurrentRobot.LightCubes[_CubeBID].SetLEDs(_ActiveColor);
+          CurrentRobot.LightCubes[_CubeBID].SetFlashingLEDs(_ActiveColor);
         }
         else {
           _GamePanel.CubeBButton.image.color = _CubeBColor;
