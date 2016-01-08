@@ -318,14 +318,14 @@ namespace Cozmo {
     return _layerTagCtr;
   }
   
-  void AnimationStreamer::RemovePersistentFaceLayer(u32 tag, s32 duration)
+  void AnimationStreamer::RemovePersistentFaceLayer(u32 tag, s32 duration_ms)
   {
     auto layerIter = _faceLayers.find(tag);
     if(layerIter != _faceLayers.end()) {
       PRINT_NAMED_INFO("AnimationStreamer.RemovePersistentFaceLayer",
                        "Tag = %d (Layers remaining=%lu)", layerIter->first, _faceLayers.size()-1);
       
-      if(duration > 0)
+      if(duration_ms > 0)
       {
         // Add a layer that takes us back from where this persistent frame leaves
         // off to no adjustment at all.
@@ -336,7 +336,7 @@ namespace Cozmo {
         faceTrack.AddKeyFrameToBack(std::move(firstFrame));
         
         ProceduralFaceKeyFrame lastFrame;
-        lastFrame.SetTriggerTime(IKeyFrame::SAMPLE_LENGTH_MS*duration);
+        lastFrame.SetTriggerTime(duration_ms);
         faceTrack.AddKeyFrameToBack(std::move(lastFrame));
         
         AddFaceLayer("Remove" + layerIter->second.name, std::move(faceTrack));
@@ -358,6 +358,7 @@ namespace Cozmo {
                               IKeyFrame::SAMPLE_LENGTH_MS +
                               keyframe.GetTriggerTime());
       track.AddKeyFrameToBack(keyframe);
+      layerIter->second.sentOnce = false;
     }
   }
   
@@ -561,19 +562,56 @@ namespace Cozmo {
     // Eye darts
     if(_nextEyeDart_ms <= 0)
     {
-      // Shift and scale the eyes slightly by a random amount
-      const s32 xShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
-                                              GetParam<s32>(Param::EyeDartMaxDistance_pix));
-      const s32 yShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
-                                              GetParam<s32>(Param::EyeDartMaxDistance_pix));
+      const f32 MaxDist = GetParam<f32>(Param::EyeDartMaxDistance_pix);
+      const f32 xFaceShift = _rng.RandIntInRange(-MaxDist, MaxDist);
+      const f32 yFaceShift = _rng.RandIntInRange(-MaxDist, MaxDist);
       
-      const f32 scale = _rng.RandDblInRange(GetParam<f32>(Param::EyeDartMinScale),
-                                            GetParam<f32>(Param::EyeDartMaxScale));
-
+      // Amount "outer" eye will increase in scale depending on how far left/right we dart
+      const f32 yscaleLR = 1.f +  GetParam<f32>(Param::EyeDartOuterEyeScaleIncrease)*std::abs(xFaceShift)/MaxDist;
+      
+      // Amount both eyes will increase/decrease in size dependingon how far we dart
+      // up our down
+      const f32 MaxScaleUD = GetParam<f32>(Param::EyeDartUpMaxScale);   // Big looking up (negative y)
+      const f32 MinScaleUD = GetParam<f32>(Param::EyeDartDownMinScale); // Squinty looking down (positive y)
+      const f32 yscaleUD = (MaxScaleUD-MinScaleUD)*(1.f - (yFaceShift + MaxDist)/(2.f*MaxDist)) + MinScaleUD;
+      
+      // Randomly choose how long the shift should take
+      const s32 duration = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartMinDuration_ms),
+                                               GetParam<s32>(Param::EyeDartMaxDuration_ms));
+      
+      // If looking down (positive y), push eyes together (decrease IOD=interocular distance)
+      const f32 MaxIOD = 2.f;
+      f32 reduceIOD = 0.f;
+      if(yFaceShift > 0) {
+        reduceIOD = MaxIOD*yFaceShift/MaxDist;
+      }
+      
       //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
-      //                  "shift=(%d,%d), scale=%.3f", xShift, yShift, scale);
+      //                  "shift=(%.1f,%.1f), scale=(%.3f,%.3f)", xFaceShift, yFaceShift, xscale, yscale);
       
-      robot.ShiftAndScaleEyes(xShift, yShift, scale, scale, 0, false, "KeepAliveEyeDart");
+      ProceduralFace procFace;
+      ProceduralFaceParams& params = procFace.GetParams();
+      params.SetFacePosition({xFaceShift, yFaceShift});
+      // Scale inner/outer eyes differently, depending on which way we're looking
+      if(xFaceShift < 0) {
+        params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
+        params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
+      } else {
+        params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
+        params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
+      }
+      
+      //params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
+      params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
+      params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
+      
+      if(_eyeDartTag == NotAnimatingTag) {
+        FaceTrack faceTrack;
+        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration));
+        _eyeDartTag = AddPersistentFaceLayer("KeepAliveEyeDart", std::move(faceTrack));
+      } else {
+        AddToPersistentFaceLayer(_eyeDartTag, ProceduralFaceKeyFrame(procFace, duration));
+      }
       
       _nextEyeDart_ms = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartSpacingMinTime_ms),
                                             GetParam<s32>(Param::EyeDartSpacingMaxTime_ms));
@@ -1351,9 +1389,14 @@ namespace Cozmo {
     SET_DEFAULT(HeadAngleVariability_deg, 6);
     SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
     SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
-    SET_DEFAULT(EyeDartMaxDistance_pix, 4);
+    SET_DEFAULT(EyeDartMaxDistance_pix, 6);
     SET_DEFAULT(EyeDartMinScale, 0.92f);
     SET_DEFAULT(EyeDartMaxScale, 1.08f);
+    SET_DEFAULT(EyeDartMinDuration_ms, 50);
+    SET_DEFAULT(EyeDartMaxDuration_ms, 200);
+    SET_DEFAULT(EyeDartOuterEyeScaleIncrease, 0.1f);
+    SET_DEFAULT(EyeDartUpMaxScale, 1.1f);
+    SET_DEFAULT(EyeDartDownMinScale, 0.85f);
     
 #   undef SET_DEFAULT
   } // SetDefaultParams()

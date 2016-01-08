@@ -84,9 +84,9 @@ namespace Cozmo {
     u32 AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack);
     
     // Remove a previously-added persistent face layer using its tag.
-    // If duration > 0, that number of frames will be used to transition back
+    // If duration > 0, that amount of time will be used to transition back
     // to no adjustment
-    void RemovePersistentFaceLayer(u32 tag, s32 duration = 0);
+    void RemovePersistentFaceLayer(u32 tag, s32 duration_ms = 0);
     
     // Add a keyframe to the end of an existing persistent face layer
     void AddToPersistentFaceLayer(u32 tag, ProceduralFaceKeyFrame&& keyframe);
@@ -233,6 +233,7 @@ namespace Cozmo {
     bool           _isLiveTwitchEnabled  = false;
     s32            _nextBlink_ms         = 0;
     s32            _nextEyeDart_ms       = 0;
+    u32            _eyeDartTag           = NotAnimatingTag;
     //s32            _nextLookAround_ms    = 0;
     s32            _bodyMoveDuration_ms  = 0;
     s32            _liftMoveDuration_ms  = 0;
