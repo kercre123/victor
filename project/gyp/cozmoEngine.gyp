@@ -489,24 +489,14 @@
             ],
             'actions': [
                 {
-                    'action_name': 'generate_version_include',
+                    'action_name': 'Robot pre-build steps',
                     'inputs': [],
                     'outputs': [
-                        '../../robot/include/anki/cozmo/robot/version.h'
+                        '../../robot/include/anki/cozmo/robot/version.h',
+                        '../../resources/config/basestation/AnkiLogStringTables.json'
                     ],
                     'action': [
-                        '../../robot/tools/versionGenerator/versionGenerator.sh',
-                        '<@(_outputs)'
-                    ],
-                },
-                {
-                    'action_name': 'Anki_Logging_pre-processing',
-                    'inputs': [],
-                    'outputs': ['../../robot/AnkiLogStringTables.json'],
-                    'action': [
-                        '../../robot/tools/ankiLogPP.py', '--preprocessor', '--string-table',
-                        '--output', '<@(_outputs)',
-                        '../../robot/supervisor/src/', '../../robot/k02_hal/', '../../robot/espressif/app/', '../../robot/sim_hal'
+                        'make', '-C', '../../robot/', 'sim'
                     ],
                 }
             ]
