@@ -160,7 +160,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: +3 Excitement
+  m_Text: +3 Whatever
 --- !u!114 &11422688
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -247,6 +247,7 @@ MonoBehaviour:
   _GoalProgressBar: {fileID: 11411882}
   _GoalLabel: {fileID: 11416022}
   _GoalIcon: {fileID: 11492196}
+  Progress: 0
 --- !u!222 &22227626
 CanvasRenderer:
   m_ObjectHideFlags: 1

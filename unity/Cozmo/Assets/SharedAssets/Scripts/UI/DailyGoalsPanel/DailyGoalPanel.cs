@@ -19,11 +19,19 @@ public class DailyGoalPanel : BaseView {
       return _Expanded;
     }
     set {
-      // TODO: Lerp the width of this from 700 to 350.
+      // Expand between half and full size
       if (_Expanded != value) {
         _Expanded = value;
         for (int i = 0; i < _GoalUIBadges.Count; i++) {
           _GoalUIBadges[i].Expand(value);
+        }
+        RectTransform trans = GetComponent<RectTransform>();
+        // TODO: DOScaleX does this wrong. Identify a different way to animate the scaling for this element.
+        if (_Expanded) {
+          trans.sizeDelta = new Vector2(800, 0.0f);
+        }
+        else {
+          trans.sizeDelta = new Vector2(400, 0.0f);
         }
       }
     }
