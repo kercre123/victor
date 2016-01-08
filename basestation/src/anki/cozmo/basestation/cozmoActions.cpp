@@ -1636,7 +1636,7 @@ namespace Anki {
                            _headAngle.getDegrees(),
                            _halfAngle.getDegrees());
 
-          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3);
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           _eyeShiftRemoved = true;
         }
       }
@@ -2042,12 +2042,13 @@ namespace Anki {
           AnimationStreamer::FaceTrack squintLayer;
           ProceduralFace squintFace;
           
-          const f32 DockSquintScaleY = 0.5f;
-          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-            squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
-          }
+          const f32 DockSquintScaleY = 0.35f;
+          const f32 DockSquintScaleX = 1.05f;
+          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
+          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
+          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
           
-          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 0));
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 400));
           _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("DockSquint", std::move(squintLayer));
         }
       }
@@ -2101,7 +2102,7 @@ namespace Anki {
       }
       
       // Stop squinting
-      robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag);
+      robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
     }
            
 
