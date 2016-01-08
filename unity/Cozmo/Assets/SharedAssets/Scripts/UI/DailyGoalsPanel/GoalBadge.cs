@@ -49,9 +49,14 @@ namespace Cozmo {
       }
 
       public void Initialize(string name, int goal, int currProg) {
-        GoalLabelText = name;
+        GoalLabelText = string.Format("+{0} {1}",goal,name);
         _GoalTarget = goal;
         SetProgress(currProg);
+      }
+
+      // Hide text while collapsing, show text when expanded
+      public void Expand(bool expand) {
+        _GoalLabel.gameObject.SetActive(expand);
       }
 
     	// Use this for initialization

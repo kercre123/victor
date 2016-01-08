@@ -7,10 +7,11 @@ using System.Collections.Generic;
 
 public class DailyGoalPanel : BaseView {
 
-  // TODO: Position GoalBadges procedurally as they are added to the list.
   private List<GoalBadge> _GoalUIBadges;
   [SerializeField]
   private GoalBadge _GoalBadgePrefab;
+
+  private bool _Expanded = true;
 
 	// Use this for initialization
 	void Start () {
@@ -26,7 +27,22 @@ public class DailyGoalPanel : BaseView {
     GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, this.transform).GetComponent<GoalBadge>();
     newBadge.Initialize(name,target,0);
     _GoalUIBadges.Add(newBadge);
+    newBadge.Expand(_Expanded);
+  }
 
+  public bool Expand {
+    get {
+      return _Expanded;
+    }
+    set {
+      // TODO: Lerp the width of this from 700 to 350.
+      if (_Expanded != value) {
+        _Expanded = value;
+        for (int i = 0; i < _GoalUIBadges.Count; i++) {
+          _GoalUIBadges[i].Expand(value);
+        }
+      }
+    }
   }
 
   protected override void CleanUp() {
