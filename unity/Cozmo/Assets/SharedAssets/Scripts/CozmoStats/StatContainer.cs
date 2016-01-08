@@ -36,6 +36,10 @@ public class StatContainer : IEquatable<StatContainer> {
     _Stats.Subtract(other._Stats);
   }
 
+  public void Set(StatContainer other) {
+    other._Stats.CopyTo(_Stats, 0);
+  }
+
   public static StatContainer operator+ (StatContainer a, StatContainer b) {
     StatContainer result = new StatContainer();
     result.Add(a);

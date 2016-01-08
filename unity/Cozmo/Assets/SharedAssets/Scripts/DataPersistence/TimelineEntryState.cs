@@ -2,14 +2,16 @@
 
 namespace DataPersistence {
   public class TimelineEntryState {
-    public TimelineEntryState() {
+
+    public TimelineEntryState(DateTime date) {
+      Date = date;
     }
 
-    public DateTime Date;
+    public readonly DateTime Date;
 
-    public StatContainer Goals;
+    public readonly StatContainer Goals = new StatContainer();
 
-    public StatContainer Progress;
+    public readonly StatContainer Progress = new StatContainer();
 
     public float PlayTime;
   }

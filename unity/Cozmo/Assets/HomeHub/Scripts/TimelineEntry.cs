@@ -38,6 +38,8 @@ public class TimelineEntry : MonoBehaviour {
   public void Inititialize(DateTime date, bool active, float progress) {
     _Date = date;
     _Fillbar.fillAmount = progress;
+
+    _FillbarButton.gameObject.SetActive(active);
     _TimelineNodeActive.SetActive(active);
     _TimelineNodeInactive.SetActive(!active);
   }
