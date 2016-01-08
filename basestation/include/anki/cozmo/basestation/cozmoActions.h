@@ -226,6 +226,8 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
+      
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxSpeed(f32 maxSpeed_radPerSec)           { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetAccel(f32 accel_radPerSec2)                { _accel_radPerSec2 = accel_radPerSec2; }
@@ -271,6 +273,8 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
 
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
+      
       void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
       void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
       
@@ -302,7 +306,9 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
+      
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
       // TODO: Use setters for variability and tolerance too
@@ -356,6 +362,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
+      
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::LIFT_TRACK; }
 
       // how long this action should take (which, in turn, effects lift speed)
       void SetDuration(float duration_sec) { _duration = duration_sec; }
@@ -406,6 +414,8 @@ namespace Anki {
       virtual u8 GetAnimTracksToDisable() const override {
         return (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
       }
+      
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::BODY_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxPanSpeed(f32 maxSpeed_radPerSec)        { _maxPanSpeed_radPerSec = maxSpeed_radPerSec; }
