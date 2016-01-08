@@ -156,7 +156,8 @@ MonoBehaviour:
   DimBackground: 0
   _UnlockedChallengeButtonPrefab: {fileID: 11402620, guid: 7dcd9a3635461408cb723d74ad988f45,
     type: 2}
-  _LockedButtonPrefab: {fileID: 0}
+  _LockedButtonPrefab: {fileID: 11402620, guid: 356b37c545ee84297ac38fc2bbb1ce6a,
+    type: 2}
   _TopChallengeContainer: {fileID: 22401556}
   _BottomChallengeContainer: {fileID: 22413684}
 --- !u!114 &11490628
@@ -314,6 +315,11 @@ Prefab:
       propertyPath: _BottomChallengeContainer
       value: 
       objectReference: {fileID: 22413684}
+    - target: {fileID: 0}
+      propertyPath: _LockedButtonPrefab
+      value: 
+      objectReference: {fileID: 11402620, guid: 356b37c545ee84297ac38fc2bbb1ce6a,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 187040}
