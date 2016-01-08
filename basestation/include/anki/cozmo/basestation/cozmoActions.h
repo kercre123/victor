@@ -637,13 +637,13 @@ namespace Anki {
       bool                       _attemptedDock                  = false;
 
       
+    private:
+
       // Handler for when lift begins to move so that we can play an accompanying sound
       Signal::SmartHandle        _liftMovingSignalHandle;
       
       // Name of animation to play when moving lift post-dock
       std::string                _liftMovingAnimation = "";
-      
-    private:
       
       u32                        _squintLayerTag;
       

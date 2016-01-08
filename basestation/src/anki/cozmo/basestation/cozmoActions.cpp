@@ -1959,15 +1959,29 @@ namespace Anki {
               auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
            
               if (!headTrack.IsEmpty() || !liftTrack.IsEmpty() || !bodyTrack.IsEmpty()) {
-                PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.AnimHasMotion", "Animation must contain only sound.");
+                PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.AnimHasMotion",
+                                    "Animation must contain only sound.");
+                return;
+              }
+              
+              // Check that the action matches the current action
+              DockAction recvdAction = event.GetData().Get_movingLiftPostDock().action;
+              if (_dockAction != recvdAction) {
+                PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.ActionMismatch",
+                                    "Expected %u, got %u. Ignoring.",
+                                    (u32)_dockAction, (u32)recvdAction);
                 return;
               }
             
               // Play the animation
-              PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler", "Playing animation %s ", _liftMovingAnimation.c_str());
+              PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
+                               "Playing animation %s ",
+                               _liftMovingAnimation.c_str());
               robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_liftMovingAnimation, 1, false));
             } else {
-              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation", "Could not find animation %s", _liftMovingAnimation.c_str());
+              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
+                                  "Could not find animation %s",
+                                  _liftMovingAnimation.c_str());
             }
           }
         };
