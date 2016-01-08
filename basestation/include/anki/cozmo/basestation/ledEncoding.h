@@ -9,10 +9,10 @@
 #include "clad/types/ledTypes.h"
 
 /// Converts 32 bit color to 16 bit
-#define ENCODED_COLOR(color)   (color & (u32)Anki::Cozmo::LEDColor::LED_IR ? (u16)Anki::Cozmo::LEDColorEncoded::LED_ENC_IR : 0) | \
-                             (((color & (u32)Anki::Cozmo::LEDColor::LED_RED)   >> (16 + 3)) << 10) | \
-                             (((color & (u32)Anki::Cozmo::LEDColor::LED_GREEN) >> ( 8 + 3)) <<  5) | \
-                             (((color & (u32)Anki::Cozmo::LEDColor::LED_BLUE)  >> ( 0 + 3)) <<  0)
+#define ENCODED_COLOR(color)  ((color & (u32)Anki::Cozmo::LEDColor::LED_IR) ? (u16)Anki::Cozmo::LEDColorEncoded::LED_ENC_IR : 0)    | \
+                             (((color & (u32)Anki::Cozmo::LEDColor::LED_RED)   >> (16 + 3)) << (u32)Anki::Cozmo::LEDColorEncodedShifts::LED_ENC_RED_SHIFT) | \
+                             (((color & (u32)Anki::Cozmo::LEDColor::LED_GREEN) >> ( 8 + 3)) << (u32)Anki::Cozmo::LEDColorEncodedShifts::LED_ENC_GRN_SHIFT) | \
+                             (((color & (u32)Anki::Cozmo::LEDColor::LED_BLUE)  >> ( 0 + 3)) << (u32)Anki::Cozmo::LEDColorEncodedShifts::LED_ENC_BLU_SHIFT)
 
 /// Convert MS to LED FRAMES
 #define MS_TO_LED_FRAMES(ms) (((ms)+29)/30)

@@ -2993,8 +2993,7 @@ namespace Anki {
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
     {
-      ASSERT_NAMED((int)LEDId::NUM_BACKPACK_LEDS == 5, "Robot.wrong.number.of.backpack.ligths");
-      std::array<Anki::Cozmo::LightState, 5> lights;
+      std::array<Anki::Cozmo::LightState, (size_t)LEDId::NUM_BACKPACK_LEDS> lights;
       for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i) {
         lights[i].onColor  = ENCODED_COLOR(onColor[i]);
         lights[i].offColor = ENCODED_COLOR(offColor[i]);
