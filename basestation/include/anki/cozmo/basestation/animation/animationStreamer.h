@@ -84,9 +84,9 @@ namespace Cozmo {
     u32 AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack);
     
     // Remove a previously-added persistent face layer using its tag.
-    // If duration > 0, that number of frames will be used to transition back
+    // If duration > 0, that amount of time will be used to transition back
     // to no adjustment
-    void RemovePersistentFaceLayer(u32 tag, s32 duration = 0);
+    void RemovePersistentFaceLayer(u32 tag, s32 duration_ms = 0);
     
     // Add a keyframe to the end of an existing persistent face layer
     void AddToPersistentFaceLayer(u32 tag, ProceduralFaceKeyFrame&& keyframe);
