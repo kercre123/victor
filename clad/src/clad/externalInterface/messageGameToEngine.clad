@@ -593,22 +593,24 @@ message EraseQuad {
 }
 
 union RobotActionUnion {
-  FaceObject         faceObject,
-  FacePose           facePose,
-  GotoPose           goToPose,
-  GotoObject         goToObject,
-  AlignWithObject    alignWithObject,
-  PlayAnimation      playAnimation,
-  PickupObject       pickupObject,
-  PlaceOnObject      placeOnObject,
-  PlaceRelObject     placeRelObject,
-  RollObject         rollObject,
-  PopAWheelie        popAWheelie,
-  SetLiftHeight      setLiftHeight,
-  SetHeadAngle       setHeadAngle,
-  TurnInPlace        turnInPlace,
-  TrackToFace        trackFace,
-  TrackToObject      trackObject
+  FaceObject                faceObject,
+  FacePose                  facePose,
+  GotoPose                  goToPose,
+  GotoObject                goToObject,
+  AlignWithObject           alignWithObject,
+  PlayAnimation             playAnimation,
+  PickupObject              pickupObject,
+  PlaceOnObject             placeOnObject,
+  PlaceRelObject            placeRelObject,
+  PlaceObjectOnGround       placeObjectOnGround,
+  PlaceObjectOnGroundHere   placeObjectOnGroundHere,
+  RollObject                rollObject,
+  PopAWheelie               popAWheelie,
+  SetLiftHeight             setLiftHeight,
+  SetHeadAngle              setHeadAngle,
+  TurnInPlace               turnInPlace,
+  TrackToFace               trackFace,
+  TrackToObject             trackObject
 }
 
 // QueueSingleAction

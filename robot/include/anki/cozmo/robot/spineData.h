@@ -22,6 +22,10 @@ typedef s64 Fixed64;
 static const int spine_baud_rate = 350000;
 static const uint32_t recovery_secret_code = 0x444d7852;
 
+enum HeadToBodyFlags {
+  BODY_FLASHLIGHT = 0x01
+};
+
 enum SPISource
 {
   SPI_SOURCE_HEAD    = 0x64616568,
@@ -70,6 +74,7 @@ union GlobalDataToBody
     u8          cubeToUpdate;
     LEDPacket   cubeStatus;
     uint32_t    recover;
+    u8          flags;
   };
 
   // Force alignment
