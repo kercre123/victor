@@ -123,7 +123,7 @@ DDEFINES +=				\
 # Required for each makefile to inherit from the parent
 #
 
-INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(ESPDIR)/../include $(INCLUDE)
+INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(ROBOT_INC_DIR) $(INCLUDE)
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

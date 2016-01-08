@@ -11,7 +11,7 @@ extern "C" {
 #include "client.h"
 #include "driver/i2spi.h"
 }
-#include "version.h"
+#include "anki/cozmo/robot/version.h"
 #include "face.h"
 #include "upgradeController.h"
 #include "animationController.h"

@@ -15,7 +15,6 @@ ifndef PDIR
 GEN_LIBS = libclad.a
 endif
 
-CLAD_DIR=../../../clad
 GENERATED_DIR=../../../generated/clad/robot
 
 #############################################################
@@ -27,19 +26,9 @@ GENERATED_DIR=../../../generated/clad/robot
 #
 #DEFINES +=
 
-CXXSRCS := $(shell find $(GENERATED_DIR)/clad/ -type f -iname '*.cpp')
+vpath %.cpp $(GENERATED_DIR)
 
-
-define MakeLibrary
-DEP_LIBS_$(1) = $$(foreach lib,$$(filter %.a,$$(COMPONENTS_$(1))),$$(dir $$(lib))$$(LIBODIR)/$$(notdir $$(lib)))
-DEP_OBJS_$(1) = $$(foreach obj,$$(filter %.o,$$(COMPONENTS_$(1))),$$(dir $$(obj))$$(OBJODIR)/$$(notdir $$(obj)))
-$$(LIBODIR)/$(1).a: $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1)) $$(DEPENDS_$(1))
-	@mkdir -p $$(LIBODIR)
-	$$(if $$(filter %.a,$$?),mkdir -p $$(EXTRACT_DIR)_$(1))
-	$$(if $$(filter %.a,$$?),cd $$(EXTRACT_DIR)_$(1); $$(foreach lib,$$(filter %.a,$$?),$$(AR) xo $$(UP_EXTRACT_DIR)/$$(lib);))
-	$$(AR) ru $$@  $$(OBJODIR)/*.o
-	$$(if $$(filter %.a,$$?),$$(RM) -r $$(EXTRACT_DIR)_$(1))
-endef
+CXXSRCS := $(shell cd $(GENERATED_DIR); find clad -type f -iname '*.cpp')
 
 #############################################################
 # Recursion Magic - Don't touch this!!

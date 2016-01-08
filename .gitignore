@@ -230,3 +230,4 @@ generated/cladCsharp/clad
 JLinkLog.txt
 *.lst
 robot/cube/lst/block.m51
+resources/config/basestation/AnkiLogStringTables.json
