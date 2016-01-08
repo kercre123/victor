@@ -58,6 +58,9 @@ namespace Cozmo {
     Pose3d      _lastObservedFacePose;
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
     
+    // The distance (in mm) threshold inside of which to head positions are considered to be the same face
+    static constexpr float headCenterPointThreshold = 220.f;
+    
     
     void RemoveFaceByID(Vision::TrackedFace::ID_t faceID);
     

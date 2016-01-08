@@ -141,7 +141,7 @@ namespace Cozmo {
     f32 _currentMultiFaceInterestingDuration_sec = kMultiFaceInterestingDuration_sec;
     
     // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
-    constexpr static float kFaceCooldownDuration_sec = 10;
+    constexpr static float kFaceCooldownDuration_sec = 3.5;
     
     // Distance inside of which Cozmo will start noticing a face
     constexpr static float kCloseEnoughDistance_mm = 1250;
