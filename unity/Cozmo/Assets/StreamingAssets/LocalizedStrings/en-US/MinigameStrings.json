@@ -57,6 +57,27 @@
   "simonGame.button": {
     "translation": "Continue"
   },
+  "simonGame.label.watchCozmoPattern": {
+    "translation": "Watch Cozmo make a pattern."
+  },
+  "simonGame.label.watchCozmoGuess": {
+    "translation": "Watch Cozmo copy your pattern."
+  },
+  "simonGame.label.createYourPattern": {
+    "translation": "Tap the cubes to create a pattern."
+  },
+  "simonGame.label.makeYourGuess": {
+    "translation": "Tap the cubes to copy Cozmo's pattern."
+  },
+  "simonGame.label.yourTurn": {
+    "translation": "Your Turn!"
+  },
+  "simonGame.label.cozmoTurn": {
+    "translation": "Cozmo's Turn!"
+  },
+  "simonGame.label.stepsLeft": {
+    "translation": "Steps In Pattern: {0}"
+  },
   "speedTap.roundsText": {
     "translation": "Round: {0:N0}/{1:N0}"
   },

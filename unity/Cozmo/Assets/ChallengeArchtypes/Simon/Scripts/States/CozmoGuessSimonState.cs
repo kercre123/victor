@@ -13,7 +13,7 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.ShowHowToPlaySlide("WatchPattern");
+      _GameInstance.ShowHowToPlaySlide("WatchCozmoGuess");
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
       _ShouldWinGame = true;
@@ -94,7 +94,7 @@ namespace Simon {
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
       BlackoutLights();
-      _StateMachine.SetNextState(new WaitForNextCozmoRoundSimonState());
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {

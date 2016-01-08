@@ -44,7 +44,7 @@ GameObject:
   - 224: {fileID: 22436172}
   - 225: {fileID: 22581616}
   m_Layer: 5
-  m_Name: WatchPatternHelpPanel
+  m_Name: WatchCozmoGuessHelpPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -97,7 +97,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
+    m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
     m_FontSize: 96
     m_FontStyle: 0
     m_BestFit: 0
@@ -108,7 +108,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Watch as Cozmo displays a pattern on his cubes.
+  m_Text: '#simonGame.label.watchCozmoGuess'
 --- !u!222 &22205880
 CanvasRenderer:
   m_ObjectHideFlags: 1

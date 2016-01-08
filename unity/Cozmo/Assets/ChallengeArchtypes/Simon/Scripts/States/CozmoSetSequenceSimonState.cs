@@ -17,7 +17,7 @@ namespace Simon {
       _SequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Cozmo);
       _GameInstance.InitColorsAndSounds();
       _GameInstance.GenerateNewSequence(_SequenceLength);
-      _GameInstance.ShowHowToPlaySlide("WatchPattern");
+      _GameInstance.ShowHowToPlaySlide("WatchCozmoPattern");
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);

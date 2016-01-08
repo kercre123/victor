@@ -29,15 +29,13 @@ namespace Simon {
       DAS.Info(this, "Game Created");
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
       InitialCubesState initCubeState = new InitialCubesState();
-      State nextState;
       if (Random.Range(0f, 1f) > 0.5f) {
-        nextState = new WaitForNextPlayerRoundSimonState();
         _FirstPlayer = PlayerType.Human;
       }
       else {
-        nextState = new WaitForNextCozmoRoundSimonState();
         _FirstPlayer = PlayerType.Cozmo;
       }
+      State nextState = new WaitForNextRoundSimonState(_FirstPlayer);
       initCubeState.InitialCubeRequirements(nextState, 2, true, null);
       _StateMachine.SetNextState(initCubeState);
 

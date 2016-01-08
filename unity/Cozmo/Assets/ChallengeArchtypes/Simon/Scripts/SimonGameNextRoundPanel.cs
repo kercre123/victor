@@ -1,12 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 using Cozmo.UI;
+using Anki.UI;
 
 namespace Simon {
-  public class SimonGamePanel : BaseView {
+  public class SimonGameNextRoundPanel : MonoBehaviour {
 
     [SerializeField]
-    private Anki.UI.AnkiButton _ContinueButton;
+    private AnkiTextLabel _NextPlayerLabel;
+
+    [SerializeField]
+    private AnkiButton _ContinueButton;
 
     public delegate void SimonButtonPressedHandler();
 
@@ -26,9 +30,15 @@ namespace Simon {
       }
     }
 
-    protected override void CleanUp() {
-
+    public void SetNextPlayerText(PlayerType player) {
+      string locKey;
+      if (player == PlayerType.Human) {
+        locKey = LocalizationKeys.kSimonGameLabelYourTurn;
+      }
+      else {
+        locKey = LocalizationKeys.kSimonGameLabelCozmoTurn;
+      }
+      _NextPlayerLabel.text = Localization.Get(locKey);
     }
   }
-
 }

@@ -49,7 +49,7 @@ namespace Simon {
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
       BlackoutLights();
-      _StateMachine.SetNextState(new WaitForNextPlayerRoundSimonState());
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
