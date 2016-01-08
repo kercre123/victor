@@ -2,7 +2,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace Cozmo.Timeline {
+namespace Cozmo.HomeHub {
   public class TimelineView : MonoBehaviour {
 
     [SerializeField]
@@ -15,11 +15,15 @@ namespace Cozmo.Timeline {
     private GraphSpine _GraphSpline;
 
 
-    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
     public event ButtonClickedHandler OnCompletedChallengeClicked;
+
+    [SerializeField]
+    HomeHubChallengeListView _ChallengeListViewPrefab;
+    HomeHubChallengeListView _ChallengeListViewInstance;
 
     public void CloseView() {
       // TODO: Play some close animations before destroying view
@@ -30,8 +34,15 @@ namespace Cozmo.Timeline {
       GameObject.Destroy(gameObject);
     }
 
-    public void Initialize(Dictionary<string, ChallengeStatePacket> _challengeStatesById) {
+    public void OnDestroy() {
+      if (_ChallengeListViewInstance != null) {
+        GameObject.Destroy(_ChallengeListViewInstance.gameObject);
+      }
+    }
 
+    public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
+      _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, this.transform).GetComponent<HomeHubChallengeListView>();
+      _ChallengeListViewInstance.Initialize(challengeStatesById);
     }
   }
 }

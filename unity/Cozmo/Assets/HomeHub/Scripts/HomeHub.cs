@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
 
-namespace Cozmo.Timeline {
+namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
 
     [SerializeField]
@@ -45,6 +45,7 @@ namespace Cozmo.Timeline {
       // Create dialog with the game prefabs
       GameObject newView = GameObject.Instantiate(_TimelineViewPrefab.gameObject);
       newView.transform.position = Vector3.zero;
+      newView.transform.SetParent(UIManager.GetUICanvas().transform, false);
 
       _TimelineViewInstance = newView.GetComponent<TimelineView>();
       _TimelineViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
