@@ -3,9 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.UI;
 using Cozmo.UI;
+using Cozmo.HubWorld;
 
-namespace Cozmo.HubWorld {
-  public class HubWorldChallengeList : BaseView {
+namespace Cozmo.HomeHub {
+  public class HomeHubChallengeListView : BaseView {
 
     [SerializeField]
     private HubWorldButton _UnlockedChallengeButtonPrefab;

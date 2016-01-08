@@ -43,11 +43,11 @@ GameObject:
   m_Component:
   - 224: {fileID: 22476092}
   - 225: {fileID: 22579018}
-  - 114: {fileID: 11486404}
   - 114: {fileID: 11411100}
   - 114: {fileID: 11428552}
+  - 114: {fileID: 11483340}
   m_Layer: 5
-  m_Name: HubWorldChallengeList
+  m_Name: HomeHubChallengeListView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &11486404
+--- !u!114 &11483340
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -149,15 +149,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 187040}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6711462483986440ba51e5795debabf4, type: 3}
+  m_Script: {fileID: 11500000, guid: b0d09ae4eb26f4521bffd568579f7852, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 0
   DimBackground: 0
   _UnlockedChallengeButtonPrefab: {fileID: 11402620, guid: 7dcd9a3635461408cb723d74ad988f45,
     type: 2}
-  _LockedButtonPrefab: {fileID: 11402620, guid: 7dcd9a3635461408cb723d74ad988f45,
-    type: 2}
+  _LockedButtonPrefab: {fileID: 0}
   _TopChallengeContainer: {fileID: 22401556}
   _BottomChallengeContainer: {fileID: 22413684}
 --- !u!114 &11490628
@@ -301,7 +300,20 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _UnlockedChallengeButtonPrefab
+      value: 
+      objectReference: {fileID: 11402620, guid: 7dcd9a3635461408cb723d74ad988f45,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _TopChallengeContainer
+      value: 
+      objectReference: {fileID: 22401556}
+    - target: {fileID: 0}
+      propertyPath: _BottomChallengeContainer
+      value: 
+      objectReference: {fileID: 22413684}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 187040}

@@ -2,7 +2,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace Cozmo.Timeline {
+namespace Cozmo.HomeHub {
   public class TimelineView : MonoBehaviour {
     
     public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);

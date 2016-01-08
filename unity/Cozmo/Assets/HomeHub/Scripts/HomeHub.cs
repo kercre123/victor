@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
 
-namespace Cozmo.Timeline {
+namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
 
     [SerializeField]
