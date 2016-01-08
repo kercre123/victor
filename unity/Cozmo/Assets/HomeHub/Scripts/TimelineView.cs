@@ -31,7 +31,7 @@ namespace Cozmo.HomeHub {
     }
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
-      _ChallengeListViewInstance = (GameObject.Instantiate(_ChallengeListViewPrefab.gameObject) as GameObject).GetComponent<HomeHubChallengeListView>();
+      _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, this.transform).GetComponent<HomeHubChallengeListView>();
       _ChallengeListViewInstance.Initialize(challengeStatesById);
     }
   }
