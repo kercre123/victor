@@ -15,7 +15,7 @@ VERSION_HEADER=include/anki/cozmo/robot/version.h
 
 all: k02 esp sim
 
-$(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell find $(ANKI_LOG_SRC_DIRS) -type f)
+$(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
 	$(ANKI_LOG_PP) --preprocessor --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
 
 $(VERSION_HEADER):

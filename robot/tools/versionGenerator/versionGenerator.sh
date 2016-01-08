@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Copied this from anki-util's VersionGenerator.
-# Maybe we can make anki-util's VersionGenerator more generic, 
+# Maybe we can make anki-util's VersionGenerator more generic,
 # but for now cozmo-engine repo gets its own.
 # - Kevin Yoon (Nov 2015)
 
@@ -27,7 +27,7 @@ fi
 
 # Get git SHA-1
 Commit=`$GIT rev-parse --short HEAD`
-DasUser=`whoami`
+DasUser=`/usr/bin/whoami`
 Date=`date +%Y-%m-%d..%H:%M`
 
 # Get just the name of the file

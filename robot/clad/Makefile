@@ -16,7 +16,7 @@ CLAD_CPPLITE_SEND_HELPER=./cozmo_CPPLite_send_helper_emitter.py
 INPUT_DIR=./src/
 OUTPUT_DIR:=../generated/clad/
 OUTPUT_DIR_PYTHON:=../generated/cladPython/
-INPUT_FILES=$(shell cd $(INPUT_DIR); find . -type f -iname '*.clad')
+INPUT_FILES=$(shell cd $(INPUT_DIR); /usr/bin/find . -type f -iname '*.clad')
 OUTPUT_CPP=$(patsubst %.clad, %.cpp, $(INPUT_FILES))
 OUTPUT_H=$(patsubst %.clad, %.h, $(INPUT_FILES))
 OUTPUT_H_AND_CPP=$(OUTPUT_H) $(OUTPUT_CPP)
@@ -74,7 +74,7 @@ python: $(OUTPUT_PYTHON)
 
 cpplilib: cpp
 	@rm -f $(OUTPUT_DIR)/clad.cpp
-	cd $(OUTPUT_DIR); find . -type f -iname '*.cpp' > cpps.list; awk '{ print "#include \"" $$0 "\"" }' <cpps.list >clad.cpp
+	cd $(OUTPUT_DIR); /usr/bin/find . -type f -iname '*.cpp' > cpps.list; awk '{ print "#include \"" $$0 "\"" }' <cpps.list >clad.cpp
 	@rm $(OUTPUT_DIR)cpps.list
 
 k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
