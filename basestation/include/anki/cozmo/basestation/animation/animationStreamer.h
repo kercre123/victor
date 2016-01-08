@@ -76,17 +76,20 @@ namespace Cozmo {
     
     // Add a procedural face "layer" to be combined with whatever is streaming
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
-    Result AddFaceLayer(FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0);
+    Result AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0);
     
     // Add a procedural face "layer" that is applied and then has its final
     // adjustemtn "held" until removed.
     // A handle/tag for the layer i s returned, which is needed for removal.
-    u32 AddPersistentFaceLayer(FaceTrack&& faceTrack);
+    u32 AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack);
     
     // Remove a previously-added persistent face layer using its tag.
-    // If duration > 0, that number of frames will be used to transition back
+    // If duration > 0, that amount of time will be used to transition back
     // to no adjustment
-    void RemovePersistentFaceLayer(u32 tag, s32 duration = 0);
+    void RemovePersistentFaceLayer(u32 tag, s32 duration_ms = 0);
+    
+    // Add a keyframe to the end of an existing persistent face layer
+    void AddToPersistentFaceLayer(u32 tag, ProceduralFaceKeyFrame&& keyframe);
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
@@ -151,8 +154,9 @@ namespace Cozmo {
       bool        isPersistent;
       bool        sentOnce;
       u8          tag;
+      std::string name;
     };
-    std::list<FaceLayer> _faceLayers;
+    std::map<u8, FaceLayer> _faceLayers;
     
     // Helper to fold the next procedural face from the given track (if one is
     // ready to play) into the passed-in procedural face params.
@@ -172,7 +176,8 @@ namespace Cozmo {
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
     Result StreamFaceLayersOrAudio(Robot& robot);
     
-    static void IncrementTagCtr(u8& tag);
+    void IncrementTagCtr();
+    void IncrementLayerTagCtr();
     
     bool _isIdling = false;
     
@@ -228,6 +233,7 @@ namespace Cozmo {
     bool           _isLiveTwitchEnabled  = false;
     s32            _nextBlink_ms         = 0;
     s32            _nextEyeDart_ms       = 0;
+    u32            _eyeDartTag           = NotAnimatingTag;
     //s32            _nextLookAround_ms    = 0;
     s32            _bodyMoveDuration_ms  = 0;
     s32            _liftMoveDuration_ms  = 0;

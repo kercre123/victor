@@ -51,6 +51,7 @@ private:
     WaitingForFirstMotion,      
     Tracking,
     HoldingHeadDown,
+    BringingHeadUp,
     DrivingForward,
     Interrupted
   };

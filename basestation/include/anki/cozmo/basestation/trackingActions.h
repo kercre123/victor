@@ -51,6 +51,9 @@ public:
   // Set to 0 to disable timeout (default).
   void SetUpdateTimeout(double timeout_sec) { _updateTimeout_sec = timeout_sec; }
   
+  // Set min/max speeds
+  void SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec);
+  void SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec);
 
   // Sound settings: which animation (should be sound only), how frequent, and
   // minimum angle required to play sound. Use empty animation name for sound to
@@ -74,10 +77,15 @@ public:
 
   void SetMaxHeadAngle(const Radians& maxHeadAngle_rads) { _maxHeadAngle = maxHeadAngle_rads; }
 
-  virtual bool Interrupt() override final;
+  // Enable/disable moving of eyes while tracking. Default is false.
+  void SetMoveEyes(bool moveEyes) { _moveEyes = moveEyes; }
   
 protected:
 
+  ITrackAction();
+  
+  virtual void Cleanup(Robot &robot) override;
+  
   // Derived classes must implement Init(), but cannot implement CheckIfDone().
   virtual ActionResult CheckIfDone(Robot& robot) override final;
   
@@ -86,14 +94,19 @@ protected:
   // Return true if new angles were provided, false if same as last time.
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) = 0;
   
+  virtual bool InterruptInternal() override final;
+  
 private:
   
   Mode     _mode = Mode::HeadAndBody;
   double   _updateTimeout_sec = 0.;
   double   _lastUpdateTime = 0.;
-  Radians  _panTolerance = POINT_TURN_ANGLE_TOL;
+  Radians  _panTolerance  = POINT_TURN_ANGLE_TOL;
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
-  Radians  _maxHeadAngle = MAX_HEAD_ANGLE;
+  Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
+  
+  u32      _eyeShiftTag;
+  bool     _moveEyes    = false;
   
   std::string _turningSoundAnimation = "ID_MotionTrack_TurnSmall";
   f32      _soundSpacingMin_sec = 0.5f;
@@ -101,7 +114,12 @@ private:
   f32      _nextSoundTime = 0.f;
   Radians  _minPanAngleForSound = DEG_TO_RAD(10);
   Radians  _minTiltAngleForSound = DEG_TO_RAD(10);
-
+  
+  f32      _minTiltSpeed_radPerSec = 30.f;
+  f32      _maxTiltSpeed_radPerSec = 50.f;
+  f32      _minPanSpeed_radPerSec  = 20.f;
+  f32      _maxPanSpeed_radPerSec  = 80.f;
+  
 }; // class ITrackAction
   
 inline void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec) {
