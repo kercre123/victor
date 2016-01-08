@@ -63,7 +63,7 @@ DEF ArrowBlock Block1x1 {
   markerImg "symbols/arrow.png"
 }
 LightCube {
-  translation 0.286208 0.102973 0.0219972
+  translation 0.270276 0.0466908 0.0219972
   rotation 1.59007e-05 -1.83671e-06 1 0.230004
 }
 BlockWorldComms {
