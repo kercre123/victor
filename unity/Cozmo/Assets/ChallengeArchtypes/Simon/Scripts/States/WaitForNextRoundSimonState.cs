@@ -14,6 +14,7 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
+      _GameInstance.InitColorsAndSounds();
       SimonGameNextRoundPanel nextRoundPanel = _GameInstance.ShowHowToPlaySlide("NextRound").GetComponent<SimonGameNextRoundPanel>();
       nextRoundPanel.EnableContinueButton(true);
       nextRoundPanel.OnContinueButtonPressed += HandleContinuePressed;

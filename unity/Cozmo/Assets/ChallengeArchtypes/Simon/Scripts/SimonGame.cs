@@ -59,17 +59,16 @@ namespace Simon {
     public void InitColorsAndSounds() {
       // give cubes colors
       List<Color> colors = new List<Color>();
-      colors.Add(Color.white);
-      colors.Add(Color.blue);
-      colors.Add(Color.magenta);
       colors.Add(Color.green);
+      colors.Add(Color.blue);
+      colors.Add(Color.red);
+      colors.Add(Color.yellow);
+      colors.Add(Color.magenta);
+      int colorCounter = 0;
       foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
-        int colorIndex = Random.Range(0, colors.Count);
-        kvp.Value.SetLEDs(colors[colorIndex]);
-        colors.RemoveAt(colorIndex);
-        if (colors.Count == 0) {
-          break;
-        }
+        kvp.Value.SetLEDs(colors[colorCounter]);
+        colorCounter++;
+        colorCounter %= colors.Count;
       }
 
       _BlockIdToSound.Clear();

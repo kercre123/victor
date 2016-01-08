@@ -76,7 +76,7 @@
     "translation": "Cozmo's Turn!"
   },
   "simonGame.label.stepsLeft": {
-    "translation": "Steps In Pattern: {0}"
+    "translation": "Steps In Pattern: {0}/{1}"
   },
   "speedTap.roundsText": {
     "translation": "Round: {0:N0}/{1:N0}"

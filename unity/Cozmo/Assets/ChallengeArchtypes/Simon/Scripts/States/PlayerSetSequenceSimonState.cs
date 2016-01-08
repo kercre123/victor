@@ -12,17 +12,22 @@ namespace Simon {
     private float _LastTappedTime;
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
+    private SimonGameSequencePanel _SequenceDisplay;
 
     public override void Enter() {
       base.Enter();
       LightCube.TappedAction += OnBlockTapped;
+      _CreatedSequence = new List<int>();
+
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.ShowHowToPlaySlide("CreatePattern");
-      _GameInstance.InitColorsAndSounds();
+      _TargetSequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Human);
+
+      GameObject sequenceDisplay = _GameInstance.ShowHowToPlaySlide("CreatePattern");
+      _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
+      _SequenceDisplay.SetSequenceText(0, _TargetSequenceLength);
+
       _CurrentRobot.SetHeadAngle(1.0f);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_01);
-      _TargetSequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Human);
-      _CreatedSequence = new List<int>();
     }
 
     public override void Update() {
@@ -36,6 +41,7 @@ namespace Simon {
         _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
         _CreatedSequence.Add(_TargetCube);
         _TargetCube = -1;
+        _SequenceDisplay.SetSequenceText(_CreatedSequence.Count, _TargetSequenceLength);
       }
     }
 

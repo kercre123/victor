@@ -10,15 +10,19 @@ namespace Simon {
     private int _CurrentSequenceIndex = -1;
     private IList<int> _CurrentSequence;
     private int _SequenceLength;
+    private SimonGameSequencePanel _SequenceDisplay;
 
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _SequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Cozmo);
-      _GameInstance.InitColorsAndSounds();
       _GameInstance.GenerateNewSequence(_SequenceLength);
-      _GameInstance.ShowHowToPlaySlide("WatchCozmoPattern");
       _CurrentSequence = _GameInstance.GetCurrentSequence();
+
+      GameObject sequenceDisplay = _GameInstance.ShowHowToPlaySlide("WatchCozmoPattern");
+      _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
+      _SequenceDisplay.SetSequenceText(0, _SequenceLength);
+
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
@@ -31,6 +35,7 @@ namespace Simon {
         _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
         return;
       }
+      _SequenceDisplay.SetSequenceText(_CurrentSequenceIndex + 1, _SequenceLength);
       _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
     }
 
