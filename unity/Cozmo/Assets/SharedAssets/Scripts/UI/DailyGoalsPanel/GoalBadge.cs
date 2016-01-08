@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Cozmo.UI;
 using Anki.UI;
 using DG.Tweening;
+using System;
 using System.Collections.Generic;
 
 namespace Cozmo {
@@ -20,6 +21,8 @@ namespace Cozmo {
       [SerializeField]
       private Image _GoalIcon;
 
+      public float Progress;
+
       public string GoalLabelText {
         get {
           return _GoalLabel.text;
@@ -36,6 +39,7 @@ namespace Cozmo {
       public void SetProgress(float progress) {
         _GoalCurrent = (int)((float)_GoalTarget * progress);
         _GoalProgressBar.SetProgress(progress);
+        Progress = progress;
       }
 
       public void SetProgress(int progress) {
@@ -45,7 +49,7 @@ namespace Cozmo {
         else {
           _GoalCurrent = progress;
         }
-        _GoalProgressBar.SetProgress((float)_GoalCurrent/(float)_GoalTarget);
+        SetProgress((float)_GoalCurrent/(float)_GoalTarget);
       }
 
       public void Initialize(string name, int goal, int currProg) {

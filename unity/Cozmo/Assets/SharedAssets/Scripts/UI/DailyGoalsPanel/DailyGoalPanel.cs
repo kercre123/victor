@@ -10,26 +10,10 @@ public class DailyGoalPanel : BaseView {
   private List<GoalBadge> _GoalUIBadges;
   [SerializeField]
   private GoalBadge _GoalBadgePrefab;
+  [SerializeField]
+  private ProgressBar _TotalProgress;
 
   private bool _Expanded = true;
-
-	// Use this for initialization
-	void Start () {
-    _GoalUIBadges = new List<GoalBadge>();
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
-  public void CreateGoalBadge(string name, int target) {
-    GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, this.transform).GetComponent<GoalBadge>();
-    newBadge.Initialize(name,target,0);
-    _GoalUIBadges.Add(newBadge);
-    newBadge.Expand(_Expanded);
-  }
-
   public bool Expand {
     get {
       return _Expanded;
@@ -43,6 +27,32 @@ public class DailyGoalPanel : BaseView {
         }
       }
     }
+  }
+
+	// Use this for initialization
+	void Start () {
+    _GoalUIBadges = new List<GoalBadge>();
+	}
+	
+	// Update is called once per frame
+	void Update () {
+    
+	}
+
+  public void CreateGoalBadge(string name, int target) {
+    GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, this.transform).GetComponent<GoalBadge>();
+    newBadge.Initialize(name,target,0);
+    _GoalUIBadges.Add(newBadge);
+    newBadge.Expand(_Expanded);
+  }
+
+  public void UpdateTotalProgress() {
+    float Total = _GoalUIBadges.Count;
+    float Curr = 0.0f;
+    for (int i = 0; i < _GoalUIBadges.Count; i++) {
+      Curr += _GoalUIBadges[i].Progress;
+    }
+    _TotalProgress.SetProgress(Curr/Total);
   }
 
   protected override void CleanUp() {
