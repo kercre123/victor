@@ -225,7 +225,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   DimBackground: 0
   _GoalBadgePrefab: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
-  _TotalProgress: {fileID: 11492562}
+  _TotalProgressBar: {fileID: 11492562}
 --- !u!114 &11479870
 MonoBehaviour:
   m_ObjectHideFlags: 1

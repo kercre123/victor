@@ -12,6 +12,8 @@ namespace Cozmo {
       [SerializeField]
       private ProgressBar _GoalProgressBar;
 
+      public Action OnProgChanged;
+
       private int _GoalTarget;
       private int _GoalCurrent;
 
@@ -21,7 +23,21 @@ namespace Cozmo {
       [SerializeField]
       private Image _GoalIcon;
 
-      public float Progress;
+      private float _GoalProg;
+      public float Progress {
+        get {
+          return _GoalProg;
+        }
+        set {
+          if (_GoalProg != value) {
+            _GoalProg = value;
+            _GoalProgressBar.SetProgress(value);
+            if (OnProgChanged != null) {
+              OnProgChanged.Invoke();
+            }
+          }
+        }
+      }
 
       public string GoalLabelText {
         get {
@@ -34,11 +50,11 @@ namespace Cozmo {
 
       public void ResetProgress() {
         _GoalProgressBar.ResetProgress();
+        Progress = 0.0f;
       }
 
       public void SetProgress(float progress) {
         _GoalCurrent = (int)((float)_GoalTarget * progress);
-        _GoalProgressBar.SetProgress(progress);
         Progress = progress;
       }
 
@@ -60,7 +76,14 @@ namespace Cozmo {
 
       // Hide text while collapsing, show text when expanded
       public void Expand(bool expand) {
-        _GoalLabel.gameObject.SetActive(expand);
+        Sequence fadeTween = DOTween.Sequence();
+        if (expand) { 
+          fadeTween.Append(_GoalLabel.DOFade(1.0f,0.25f));
+        }
+        else {
+          fadeTween.Append(_GoalLabel.DOFade(0.0f,0.25f));
+        }
+        fadeTween.Play();
       }
 
     	// Use this for initialization
