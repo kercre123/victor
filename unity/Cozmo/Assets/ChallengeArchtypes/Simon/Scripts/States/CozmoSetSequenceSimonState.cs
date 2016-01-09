@@ -4,24 +4,25 @@ using System.Collections.Generic;
 
 namespace Simon {
 
-  public class CozmoSetSimonState : State {
+  public class CozmoSetSequenceSimonState : State {
 
     private SimonGame _GameInstance;
     private int _CurrentSequenceIndex = -1;
     private IList<int> _CurrentSequence;
     private int _SequenceLength;
-
-    public CozmoSetSimonState(int sequenceLength) {
-      _SequenceLength = sequenceLength;
-    }
+    private SimonGameSequencePanel _SequenceDisplay;
 
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.PickNewSequence(_SequenceLength);
-      _GameInstance.Progress = _SequenceLength / (float)_GameInstance.MaxSequenceLength;
-      _GameInstance.ShowHowToPlaySlide("WatchPattern");
+      _SequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Cozmo);
+      _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
+
+      GameObject sequenceDisplay = _GameInstance.ShowHowToPlaySlide("WatchCozmoPattern");
+      _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
+      _SequenceDisplay.SetSequenceText(0, _SequenceLength);
+
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
@@ -31,10 +32,11 @@ namespace Simon {
       base.Update();
       _CurrentSequenceIndex++;
       if (_CurrentSequenceIndex == _CurrentSequence.Count) {
-        _StateMachine.SetNextState(new WaitForPlayerSimonState());
+        _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
         return;
       }
-      _StateMachine.PushSubState(new TurnToTargetState());
+      _SequenceDisplay.SetSequenceText(_CurrentSequenceIndex + 1, _SequenceLength);
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
     }
 
     public LightCube GetCurrentTarget() {

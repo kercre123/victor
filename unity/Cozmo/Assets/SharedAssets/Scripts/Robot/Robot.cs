@@ -1182,6 +1182,24 @@ public class Robot : IDisposable {
     SetBackpackLED((int)ledToChange, 0);
   }
 
+  public void SetAllBackpackBarLED(Color color) {
+    SetBackpackBarLED(LEDId.LED_BACKPACK_BACK, color);
+    SetBackpackBarLED(LEDId.LED_BACKPACK_MIDDLE, color);
+    SetBackpackBarLED(LEDId.LED_BACKPACK_FRONT, color);
+  }
+
+  public void SetAllBackpackBarLED(uint colorUint) {
+    SetBackpackLED((int)LEDId.LED_BACKPACK_BACK, colorUint);
+    SetBackpackLED((int)LEDId.LED_BACKPACK_MIDDLE, colorUint);
+    SetBackpackLED((int)LEDId.LED_BACKPACK_FRONT, colorUint);
+  }
+
+  public void TurnOffAllBackpackBarLED() {
+    SetBackpackLED((int)LEDId.LED_BACKPACK_BACK, 0);
+    SetBackpackLED((int)LEDId.LED_BACKPACK_MIDDLE, 0);
+    SetBackpackLED((int)LEDId.LED_BACKPACK_FRONT, 0);
+  }
+
   public void SetBackpackBarLED(LEDId ledToChange, Color color) {
     if (ledToChange == LEDId.LED_BACKPACK_LEFT || ledToChange == LEDId.LED_BACKPACK_RIGHT) {
       DAS.Warn("Robot", "BackpackLighting - LEDId.LED_BACKPACK_LEFT or LEDId.LED_BACKPACK_RIGHT " +

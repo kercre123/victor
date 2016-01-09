@@ -20,3 +20,4 @@ MonoBehaviour:
     type: 2}
   _DefaultButtonPrefab: {fileID: 11483728, guid: 0de3c51819c924d1fb37bf88d22a2414,
     type: 2}
+  _DefaultTextPrefab: {fileID: 11497542, guid: c422cb7b178a14a38859d1900954eaa3, type: 2}

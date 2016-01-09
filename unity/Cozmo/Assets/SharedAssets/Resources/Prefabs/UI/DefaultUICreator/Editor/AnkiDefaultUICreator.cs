@@ -3,7 +3,8 @@ using UnityEngine;
 using Anki.UI;
 using Cozmo.UI;
 
-public static class AnkiButtonCreator {
+public static class AnkiDefaultUICreator {
+  #region Button Creator
 
   [MenuItem("Cozmo/UI/Create Green Button %g")]
   private static void CreateGreenButtonUnderSelection() {
@@ -47,17 +48,6 @@ public static class AnkiButtonCreator {
     GameObject button = GameObject.Instantiate(UIPrefabHolder.Instance.DefaultButtonPrefab.gameObject);
     button.transform.SetParent(parent.transform, false);
     return button.GetComponent<AnkiButton>();
-  }
-
-  private static void SelectObject(GameObject go) {
-    // Register the creation in the undo system
-    Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
-    Selection.activeObject = go;
-  }
-
-  private static bool SelectionIsRectTransform() {
-    // Return false if no transform is selected.
-    return Selection.activeTransform != null && Selection.activeTransform is RectTransform;
   }
 
   private static void SetButtonValuesGreen(AnkiButton target) {
@@ -107,4 +97,49 @@ public static class AnkiButtonCreator {
     // Slot 2 is the deco
     target.ButtonGraphics[2].disabledColor = new Color32(55, 75, 100, 255);
   }
+
+  #endregion
+
+  #region Text Creator
+
+  [MenuItem("Cozmo/UI/Create Text %t")]
+  private static void CreateTextLabelUnderSelection() {
+    AnkiTextLabel textLabel = CreateTextLabel(Selection.activeTransform.gameObject);
+    SelectObject(textLabel.gameObject);
+  }
+
+  [MenuItem("Cozmo/UI/Create Text %t", true)]
+  private static bool ValidateCreateTextLabelUnderSelection() {
+    return SelectionIsRectTransform();
+  }
+
+  [MenuItem("GameObject/Cozmo/Text Label", false, 10)]
+  private static void ContextCreateTextLabel(MenuCommand command) {
+    AnkiTextLabel textLabel = CreateTextLabel(command.context as GameObject);
+    SelectObject(textLabel.gameObject);
+  }
+
+  private static AnkiTextLabel CreateTextLabel(GameObject parent) {
+    GameObject textLabel = GameObject.Instantiate(UIPrefabHolder.Instance.DefaultTextPrefab.gameObject);
+    textLabel.transform.SetParent(parent.transform, false);
+    textLabel.name = "Text";
+    return textLabel.GetComponent<AnkiTextLabel>();
+  }
+
+  #endregion
+
+  #region Helper functions
+
+  private static void SelectObject(GameObject go) {
+    // Register the creation in the undo system
+    Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
+    Selection.activeObject = go;
+  }
+
+  private static bool SelectionIsRectTransform() {
+    // Return false if no transform is selected.
+    return Selection.activeTransform != null && Selection.activeTransform is RectTransform;
+  }
+
+  #endregion
 }

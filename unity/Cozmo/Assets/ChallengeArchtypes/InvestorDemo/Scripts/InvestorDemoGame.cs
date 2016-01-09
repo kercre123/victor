@@ -28,7 +28,7 @@ namespace InvestorDemo {
     }
 
     protected void InitializeMinigameObjects() {
-      CurrentRobot.SetRobotVolume(1.0f);
+      CurrentRobot.SetRobotVolume(0.5f);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
 
