@@ -38,7 +38,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<string> ConnectedToClient;
   public event Action<DisconnectionReason> DisconnectedFromClient;
   public event Action<int> RobotConnected;
-  public event Action<bool,RobotActionType> SuccessOrFailure;
+  public event Action<uint, bool,RobotActionType> SuccessOrFailure;
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
@@ -471,13 +471,13 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     
     RobotActionType actionType = (RobotActionType)message.actionType;
-    bool success = (message.result == ActionResult.SUCCESS) || ((actionType == RobotActionType.PLAY_ANIMATION || actionType == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
+    bool success = message.result == ActionResult.SUCCESS;
     CurrentRobot.TargetLockedObject = null;
 
     CurrentRobot.LocalBusyTimer = 0f;
 
     if (SuccessOrFailure != null) {
-      SuccessOrFailure(success, actionType);
+      SuccessOrFailure(message.idTag, success, actionType);
     }
 
     if (actionType == RobotActionType.PLAY_ANIMATION) {
@@ -494,15 +494,6 @@ public class RobotEngineManager : MonoBehaviour {
     else if (message.idTag > 0) {
       if (RobotCompletedTaggedAction != null) {
         RobotCompletedTaggedAction(success, message.idTag);
-      }
-    }
-
-    if (!success) {
-      if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
-        CurrentRobot.SetLiftHeight(1f);
-      }
-      else {
-        CurrentRobot.SetLiftHeight(0f);
       }
     }
   }

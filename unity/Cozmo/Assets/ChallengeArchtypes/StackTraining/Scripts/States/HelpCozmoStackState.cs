@@ -96,7 +96,7 @@ namespace StackTraining {
 
               _Moving = true;
               // try to go back to our starting position
-              _CurrentRobot.GotoPose(_StartPosition, _StartRotation, (s) => {
+              _CurrentRobot.GotoPose(_StartPosition, _StartRotation, callback:(s) => {
                 _Moving = false;
               });
             }
