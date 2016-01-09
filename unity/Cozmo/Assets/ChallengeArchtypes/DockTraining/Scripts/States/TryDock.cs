@@ -47,7 +47,7 @@ namespace DockTraining {
     }
 
     private void HandleLoseAnimationDone(bool success) {
-      _CurrentRobot.GotoPose(_GameInstance.StartingPosition(), _GameInstance.StartingRotation(), HandleBackToStartPos);
+      _CurrentRobot.GotoPose(_GameInstance.StartingPosition(), _GameInstance.StartingRotation(), callback:HandleBackToStartPos);
     }
 
     private void HandleBackToStartPos(bool success) {

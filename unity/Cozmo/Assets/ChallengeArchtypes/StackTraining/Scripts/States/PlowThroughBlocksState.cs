@@ -71,7 +71,7 @@ namespace StackTraining {
         }
         _HasStartedReturningToPosition = true;
 
-        _CurrentRobot.GotoPose(_StartPosition, _StartRotation, (success) => {
+        _CurrentRobot.GotoPose(_StartPosition, _StartRotation, callback:(success) => {
           if(!success) {
             WaitForReturnToPosition();
           }

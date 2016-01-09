@@ -19,7 +19,7 @@ namespace PatternPlay {
       _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
       _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
       Vector3 idealViewPos = _PatternPlayAutoBuild.IdealViewPosition();
-      _CurrentRobot.GotoPose(idealViewPos.x, idealViewPos.y, _PatternPlayAutoBuild.IdealViewAngle(), ArrivedPose, false, false);
+      _CurrentRobot.GotoPose(idealViewPos.x, idealViewPos.y, _PatternPlayAutoBuild.IdealViewAngle(), false, false, callback: ArrivedPose);
     }
 
     public override void Update() {
