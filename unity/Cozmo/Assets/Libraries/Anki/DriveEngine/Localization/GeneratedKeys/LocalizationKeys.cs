@@ -51,6 +51,9 @@ public static class LocalizationKeys {
   public const string kSelfieGame01Title = "selfieGame01.title";
   public const string kSelfieGame01Subtitle = "selfieGame01.subtitle";
   public const string kSelfieGame01Description = "selfieGame01.description";
+  public const string kMinesweeper01Title = "minesweeper01.title";
+  public const string kMinesweeper01Subtitle = "minesweeper01.subtitle";
+  public const string kMinesweeper01Description = "minesweeper01.description";
   public const string kInvestorDemoInvestorDemoFull = "investorDemo.investorDemoFull";
   public const string kInvestorDemoInvestorDemoCubes = "investorDemo.investorDemoCubes";
   public const string kInvestorDemoInvestorDemoFaces = "investorDemo.investorDemoFaces";
@@ -58,6 +61,23 @@ public static class LocalizationKeys {
   public const string kCodeBreaker01Title = "codeBreaker01.title";
   public const string kCodeBreaker01Subtitle = "codeBreaker01.subtitle";
   public const string kCodeBreaker01Description = "codeBreaker01.description";
+  public const string kPeekabooTitle = "peekaboo.title";
+  public const string kPeekabooLabelPoints = "peekaboo.label.points";
+  public const string kCubeSlapTitle = "cubeSlap.title";
+  public const string kCubeSlapSubtitle = "cubeSlap.subtitle";
+  public const string kCubeSlapDescription = "cubeSlap.description";
+  public const string kSpeedTapTitle = "speedTap.title";
+  public const string kSpeedTapSubtitle = "speedTap.subtitle";
+  public const string kSpeedTapDescription = "speedTap.description";
+  public const string kSpeedTapLightCountTitle = "speedTapLightCount.title";
+  public const string kSpeedTapLightCountSubtitle = "speedTapLightCount.subtitle";
+  public const string kSpeedTapLightCountDescription = "speedTapLightCount.description";
+  public const string kSpeedTapLightCountSameColorNoTapTitle = "speedTapLightCountSameColorNoTap.title";
+  public const string kSpeedTapLightCountSameColorNoTapSubtitle = "speedTapLightCountSameColorNoTap.subtitle";
+  public const string kSpeedTapLightCountSameColorNoTapDescription = "speedTapLightCountSameColorNoTap.description";
+  public const string kSpeedTapNoRedTitle = "speedTapNoRed.title";
+  public const string kSpeedTapNoRedSubtitle = "speedTapNoRed.subtitle";
+  public const string kSpeedTapNoRedDescription = "speedTapNoRed.description";
 
   #endregion
 
@@ -113,9 +133,14 @@ public static class LocalizationKeys {
   public const string kPatternPlayDiscoverViewOkButton = "patternPlay.discoverView.okButton";
   public const string kPatternPlayDiscoverViewTitle = "patternPlay.discoverView.title";
   public const string kRotationTrainingTitle = "rotationTraining.title";
-  public const string kSpeedTapTitle = "speedTap.title";
-  public const string kSpeedTapSubtitle = "speedTap.subtitle";
-  public const string kSpeedTapDescription = "speedTap.description";
+  public const string kSimonGameButton = "simonGame.button";
+  public const string kSimonGameLabelWatchCozmoPattern = "simonGame.label.watchCozmoPattern";
+  public const string kSimonGameLabelWatchCozmoGuess = "simonGame.label.watchCozmoGuess";
+  public const string kSimonGameLabelCreateYourPattern = "simonGame.label.createYourPattern";
+  public const string kSimonGameLabelMakeYourGuess = "simonGame.label.makeYourGuess";
+  public const string kSimonGameLabelYourTurn = "simonGame.label.yourTurn";
+  public const string kSimonGameLabelCozmoTurn = "simonGame.label.cozmoTurn";
+  public const string kSimonGameLabelStepsLeft = "simonGame.label.stepsLeft";
   public const string kSpeedTapRoundsText = "speedTap.roundsText";
   public const string kSpeedTapRoundsWonCozmo = "speedTap.roundsWon.cozmo";
   public const string kSpeedTapRoundsWonPlayer = "speedTap.roundsWon.player";
@@ -130,11 +155,6 @@ public static class LocalizationKeys {
   public const string kVortexReplayButton = "vortex.replayButton";
   public const string kVortexVortexStatus = "vortex.vortexStatus";
   public const string kVortexVortexWon = "vortex.vortexWon";
-  public const string kPeekabooTitle = "peekaboo.title";
-  public const string kPeekabooLabelPoints = "peekaboo.label.points";
-  public const string kCubeSlapTitle = "cubeSlap.title";
-  public const string kCubeSlapSubtitle = "cubeSlap.subtitle";
-  public const string kCubeSlapDescription = "cubeSlap.description";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
@@ -145,6 +165,7 @@ public static class LocalizationKeys {
   public const string kCodeBreakerTextCozmoWins = "codeBreaker.text.cozmoWins";
   public const string kCodeBreakerTextHowToPlayShort = "codeBreaker.text.howToPlayShort";
   public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
+  public const string kMotionDetectionHelp01 = "motionDetectionHelp01";
 
   #endregion
 
