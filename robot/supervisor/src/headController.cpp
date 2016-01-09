@@ -46,7 +46,7 @@ namespace HeadController {
 #else
       f32 Kp_ = 4.f;  // proportional control constant
       f32 Kd_ = 4000.f;  // derivative control constant
-      f32 Ki_ = 0.02f; // integral control constant
+      f32 Ki_ = 0.03f; // integral control constant
       f32 MAX_ERROR_SUM = 10.f;
 #endif
 
@@ -107,6 +107,7 @@ namespace HeadController {
         enable_ = false;
 
         inPosition_ = true;
+        prevAngleError_ = 0;
         angleErrorSum_ = 0.f;
 
         power_ = 0;
@@ -269,12 +270,16 @@ namespace HeadController {
 
     void SetAngularVelocity(const f32 rad_per_sec)
     {
+      /*
       // TODO: Figure out power-to-speed ratio on actual robot. Normalize with battery power?
+      // NOTE: You can use this to test if it's possible to make Cozmo head skip gear teeth by
+      //       driving the motor too hard.
       f32 power = CLIP(rad_per_sec / HAL::MAX_HEAD_SPEED, -1.0, 1.0);
       HAL::MotorSetPower(HAL::MOTOR_HEAD, power);
       inPosition_ = true;
+       */
+       
 
-      /*
       // Command a target angle based on the sign of the desired speed
       f32 targetAngle = 0;
       if (rad_per_sec > 0) {
@@ -292,7 +297,6 @@ namespace HeadController {
         targetAngle = currentAngle_.ToFloat() + radToStop;
       }
       SetDesiredAngle(targetAngle);
-      */
     }
 
     void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
@@ -330,7 +334,6 @@ namespace HeadController {
 
       desiredAngle_ = angle;
       angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
-      prevAngleError_ = 0;
 
 
 #if(DEBUG_HEAD_CONTROLLER)
@@ -351,6 +354,7 @@ namespace HeadController {
         }
 
         startRadSpeed = 0;
+        prevAngleError_ = 0;
         angleErrorSum_ = 0.f;
       }
 
