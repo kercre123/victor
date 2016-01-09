@@ -49,6 +49,10 @@ namespace HeadController {
       f32 Ki_ = 0.03f; // integral control constant
       f32 MAX_ERROR_SUM = 10.f;
 #endif
+      
+      // Motor burnout protection
+      const f32 BURNOUT_POWER_THRESH = 0.3;
+      const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
 
       // Current speed
       f32 radSpeed_ = 0.f;
@@ -407,13 +411,38 @@ namespace HeadController {
       return inPosition_;
     }
 
+  
+    // Check for conditions that could lead to motor burnout.
+    // If motor is powered at greater than BURNOUT_POWER_THRESH for more than BURNOUT_TIME_THRESH_MS, stop it!
+    // Assuming that motor is mis-calibrated and it's hitting the low or high hard limit. Do calibration.
+    // Returns true if a protection action was triggered.
+    bool MotorBurnoutProtection() {
+      
+      static u32 potentialBurnoutStartTime_ms = 0;
+      
+      if (ABS(power_) < BURNOUT_POWER_THRESH) {
+        potentialBurnoutStartTime_ms = 0;
+        return false;
+      }
+      
+      if (potentialBurnoutStartTime_ms == 0) {
+        potentialBurnoutStartTime_ms = HAL::GetTimeStamp();
+      } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms > BURNOUT_TIME_THRESH_MS) {
+        PRINT("WARN: HEAD burnout protection triggered. Recalibrating.\n");
+        StartCalibrationRoutine();
+        return true;
+      }
+      return false;
+    }
+
+  
     Result Update()
     {
       CalibrationUpdate();
 
       PoseAndSpeedFilterUpdate();
 
-      if (!enable_) {
+      if (!enable_ || !IsCalibrated() || MotorBurnoutProtection()) {
         return RESULT_OK;
       }
 
