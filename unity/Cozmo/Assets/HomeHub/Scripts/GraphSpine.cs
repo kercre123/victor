@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using System.Linq;
 
 public class GraphSpine : MonoBehaviour {
 
@@ -11,55 +10,56 @@ public class GraphSpine : MonoBehaviour {
   [SerializeField]
   private Material _Material;
 
-
-  [SerializeField] // for debug only!!
   private Mesh _Mesh;
 
-	// Use this for initialization
-	void Start () {
-	
-    List<float> testPoints = new List<float>();
-    for (int i = 0; i < 14; i++) {
-      testPoints.Add(UnityEngine.Random.Range(0, 15));
-    }
-    Initialize(testPoints);
-	}
-	
+  private List<float> _Points;
 
+  private void Awake() {
+    _Mesh = new Mesh();
+    _Mesh.name = "Graph Mesh";
+  }
 
   public void Initialize(List<float> points) {
+    _Points = points;
+    RebuildMesh();
+  }
 
-    if (points.Count < 2) {
+  private void RebuildMesh() {
+    if (_Points == null || _Points.Count < 2) {
       return;
     }
 
-    float max = points.Max();
-    float yMultiplier = Mathf.Approximately(max, 0f) ? 0f : 1f / max;
-    float deltaX = 1f / (points.Count + 1);
+    float deltaX = 1f / _Points.Count;
 
     float bezierOffset = 0.7f * deltaX;
 
     List<Vector2> splinePoints = new List<Vector2>();
 
-    Vector2 start = new Vector2(deltaX * 0.5f, points[0] * yMultiplier);
+    Vector2 start = new Vector2(deltaX * 0.5f, _Points[0] * 0.9f + 0.1f);
 
     splinePoints.Add(start);
 
-    splinePoints.Add(start + (new Vector2(deltaX, (points[1] - points[0]) * yMultiplier)).normalized * bezierOffset);
+    splinePoints.Add(start + (new Vector2(deltaX, (_Points[1] - _Points[0]))).normalized * bezierOffset);
 
-    for (int i = 1; i < points.Count - 1; i++) {
-      Vector2 point = new Vector2((i + 0.5f) * deltaX, points[i] * yMultiplier);
+    for (int i = 1; i < _Points.Count - 1; i++) {
+      // if we have 3 that are the same, it will cause a wierd dip in the spline,
+      // so just skip it.
+      if (_Points[i - 1] == _Points[i] && _Points[i + 1] == _Points[i]) {
+        continue;
+      }
 
-      Vector2 delta = (new Vector2(deltaX * 2, (points[i + 1] - points[i - 1]) * yMultiplier)).normalized * bezierOffset;
+      Vector2 point = new Vector2((i + 0.5f) * deltaX, _Points[i] * 0.9f + 0.1f);
+
+      Vector2 delta = (new Vector2(deltaX * 2, (_Points[i + 1] - _Points[i - 1]))).normalized * bezierOffset;
 
       splinePoints.Add(point - delta);
       splinePoints.Add(point);
       splinePoints.Add(point);
       splinePoints.Add(point + delta);
     }
-    Vector2 end = new Vector2(deltaX * (points.Count - 0.5f), points[points.Count - 1] * yMultiplier);
+    Vector2 end = new Vector2(deltaX * (_Points.Count - 0.5f), _Points[_Points.Count - 1] * 0.9f + 0.1f);
 
-    splinePoints.Add(end - (new Vector2(deltaX, (points[points.Count - 1] - points[points.Count - 2]) * yMultiplier)).normalized * bezierOffset);
+    splinePoints.Add(end - (new Vector2(deltaX, (_Points[_Points.Count - 1] - _Points[_Points.Count - 2]))).normalized * bezierOffset);
 
     splinePoints.Add(end);
 
@@ -107,8 +107,6 @@ public class GraphSpine : MonoBehaviour {
       triangles[i * 6 - 1] = i * 2 - 2;
     }
 
-    _Mesh = new Mesh();
-    _Mesh.name = "Graph Mesh";
     _Mesh.vertices = vertices;
     _Mesh.triangles = triangles;
     _Mesh.normals = normals;
@@ -142,6 +140,10 @@ public class GraphSpine : MonoBehaviour {
 
       evaluatedPoints.Add(Vector2.Lerp(abbc, bccd, t));
     }
+  }
+
+  private void OnRectTransformDimensionsChange() {
+    RebuildMesh();
   }
 
 }
