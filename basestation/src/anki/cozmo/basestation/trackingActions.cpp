@@ -218,9 +218,11 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       eyeShiftX = CLIP(eyeShiftX, -ProceduralFace::WIDTH/4, ProceduralFace::WIDTH/4);
       eyeShiftY = CLIP(eyeShiftY, -ProceduralFace::HEIGHT/4, ProceduralFace::HEIGHT/4);
       
-      PRINT_NAMED_INFO("ITrackAction.CheckIfDone.EyeShift",
-                       "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
-                       eyeShiftX, eyeShiftY, _eyeShiftTag);
+#     if DEBUG_TRACKING_ACTIONS
+      PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",
+                        "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
+                        eyeShiftX, eyeShiftY, _eyeShiftTag);
+#     endif
       
       ProceduralFace procFace;
       ProceduralFaceParams& params = procFace.GetParams();
