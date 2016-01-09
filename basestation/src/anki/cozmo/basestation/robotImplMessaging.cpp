@@ -29,6 +29,10 @@
 #include "util/helpers/includeFstream.h"
 #include <functional>
 
+// Whether or not to handle prox obstacle events
+#define HANDLE_PROX_OBSTACLES 0
+
+
 namespace Anki {
 namespace Cozmo {
   
@@ -55,6 +59,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleGoalPose, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::cliffEvent,
     std::bind(&Robot::HandleCliffEvent, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::proxObstacle,
+    std::bind(&Robot::HandleProxObstacle, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerEvent,
    std::bind(&Robot::HandleChargerEvent, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::image,
@@ -391,6 +397,27 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
   
 }
+  
+void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+#if(HANDLE_PROX_OBSTACLES)
+  ProxObstacle proxObs = message.GetData().Get_proxObstacle();
+  PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Detected", "at dist %d mm",
+                   proxObs.distance_mm);
+  
+  // Compute location of obstacle
+  // NOTE: This should actually depend on a historical pose, but this is all changing eventually anyway...
+  f32 heading = GetPose().GetRotationAngle<'Z'>().ToFloat();
+  Vec3f newPt(GetPose().GetTranslation());
+  newPt.x() += proxObs.distance_mm * cosf(heading);
+  newPt.y() += proxObs.distance_mm * sinf(heading);
+  Pose3d obsPose(heading, Z_AXIS_3D(), newPt, GetWorldOrigin());
+  
+  // Add prox obstacle (hijack cliff function for now)
+  _blockWorld.AddCliff(obsPose);
+#endif
+}
+  
   
 void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {

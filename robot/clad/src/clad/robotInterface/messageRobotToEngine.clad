@@ -104,6 +104,7 @@ union RobotToEngine {
   RobotPoked                 robotPoked             = 0x15,
   ChargerMountComplete       chargerMountCompleted  = 0x16,
   MovingLiftPostDock         movingLiftPostDock     = 0x17,
+  ProxObstacle               proxObstacle           = 0x18,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,

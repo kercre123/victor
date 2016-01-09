@@ -182,6 +182,17 @@ Supervisor {
 				  ]
 				}
 
+				DistanceSensor {
+					name "forwardProxSensor"
+					translation 0.04 0 0
+					rotation 0 1 0 0
+					type "generic"
+					lookupTable [ 0.0     0    0,
+					              0.110   150  0]      # Adding 30mm for offset of sensor origin from robot origin
+					numberOfRays 1
+					aperture 0.1
+				}
+
 		  ] # BODY Solid children
 		  %{ if not fields.vizMode.value then }%
 		  boundingObject USE BODY_SHAPE
@@ -280,57 +291,6 @@ Supervisor {
 
 						# +/-2g (+/- 19.62m/s^2) range expressed by 12-bits
 						# resolution 0.00958
-				  }
-				  DistanceSensor {
-						name "proxSensorCenter"
-						translation 0.022 0 0.008
-						rotation 0 1 0 0
-						type "infra-red"
-						lookupTable [ 0.0   255   0,
-						              0.01   200  0.1,
-						              0.02   60   0.1,
-						              0.03   20   0.1,
-						              0.04   12   0.1,   
-						              0.06   3    0.1,   
-						              0.08   2    0.1,   
-						              0.1    1    0.1,
-						              0.12   0    0.1]
-						numberOfRays 1
-						aperture 0.1
-				  }
-				  DistanceSensor {
-						name "proxSensorLeft"
-						translation 0.022 0.013 0.008
-						rotation -0.1 -0.4 1 0.3
-						type "infra-red"
-						lookupTable [ 0.0   255   0,
-						              0.01   200  0.1,
-						              0.02   60   0.1,
-						              0.03   20   0.1,
-						              0.04   12   0.1,   
-						              0.06   3    0.1,   
-						              0.08   2    0.1,   
-						              0.1    1    0.1,
-						              0.12   0    0.1]
-						numberOfRays 1
-						aperture 0.1
-				  }
-				  DistanceSensor {
-						name "proxSensorRight"
-						translation 0.022 -0.013 0.008
-						rotation -0.1 0.4 1 -0.3
-						type "infra-red"
-						lookupTable [ 0.0   255   0,
-						              0.01   200  0.1,
-						              0.02   60   0.1,
-						              0.03   20   0.1,
-						              0.04   12   0.1,   
-						              0.06   3    0.1,   
-						              0.08   2    0.1,   
-						              0.1    1    0.1,
-						              0.12   0    0.1]
-						numberOfRays 1
-						aperture 0.1
 				  }
 				  DEF FACE Transform {
 						translation 0.016 0 0
