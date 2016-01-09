@@ -111,9 +111,7 @@ namespace Anki {
       webots::Accelerometer* accel_;
 
       // Prox sensors
-      webots::DistanceSensor *proxLeft_;
       webots::DistanceSensor *proxCenter_;
-      webots::DistanceSensor *proxRight_;
       webots::DistanceSensor *cliffSensor_;
 
       // Charge contact
@@ -418,14 +416,10 @@ namespace Anki {
       accel_->enable(TIME_STEP);
 
       // Proximity sensors
-      proxLeft_ = webotRobot_.getDistanceSensor("proxSensorLeft");
-      proxCenter_ = webotRobot_.getDistanceSensor("proxSensorCenter");
-      proxRight_ = webotRobot_.getDistanceSensor("proxSensorRight");
+      proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
       cliffSensor_ = webotRobot_.getDistanceSensor("cliffSensor");
       
-      proxLeft_->enable(TIME_STEP);
       proxCenter_->enable(TIME_STEP);
-      proxRight_->enable(TIME_STEP);
       cliffSensor_->enable(TIME_STEP);
 
       // Charge contact
@@ -1102,37 +1096,12 @@ namespace Anki {
     {
       return 0;
     }
-   
-
-    void HAL::GetProximity(ProximityValues *prox)
+    
+    u8 HAL::GetForwardProxSensor()
     {
-      static int proxID = IRleft;
-      switch(proxID)
-      {
-        case IRforward:
-          prox->forward = proxCenter_->getValue();
-          prox->latest  = IRforward;
-          proxID = IRleft;
-          break;
-
-        case IRleft:
-          prox->left = proxLeft_->getValue();
-          prox->latest = IRleft;
-          proxID = IRright;
-          break;
-
-        case IRright:
-          prox->right = proxRight_->getValue();
-          prox->latest = IRright;
-          proxID = IRforward;
-          break;
-          
-        default:
-          AnkiAssert(false);
-      }
-
-      return;
-    } // GetProximity_INT()
+      double val = proxCenter_->getValue();
+      return val >= 150 ? 0 : val;      // 150mm is from proto file
+    }
     
     bool HAL::IsCliffDetected()
     {

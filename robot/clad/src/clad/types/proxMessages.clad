@@ -14,6 +14,12 @@ message CliffEvent {
   bool   detected
 }
 
+// This is a temp message to fake obstacle detection by prox sensor.
+// TODO: This will eventually be done entirely on the engine using images.
+message ProxObstacle {
+  uint_8 distance_mm
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

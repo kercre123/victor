@@ -36,6 +36,8 @@ namespace Anki {
 
         bool _enableCliffDetect = true;
         bool _wasCliffDetected = false;
+        
+        const u32 PROX_EVENT_CYCLE_PERIOD = 6;
 
       } // "private" namespace
 
@@ -146,6 +148,19 @@ namespace Anki {
         _prevBlockedSides = currBlockedSides;
  */
 
+        // FAKING obstacle detection via prox sensor.
+        // TODO: This will eventually be done entirely on the engine using images.
+        static u32 proxCycleCnt = 0;
+        if (++proxCycleCnt == PROX_EVENT_CYCLE_PERIOD) {
+          u8 proxVal = HAL::GetForwardProxSensor();
+          if (proxVal > 0) {
+            ProxObstacle msg;
+            msg.distance_mm = proxVal;
+            RobotInterface::SendMessage(msg);
+          }
+          proxCycleCnt = 0;
+        }
+        
 
         /////// Cliff detect reaction ///////
 #ifdef TARGET_K02
