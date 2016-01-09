@@ -45,13 +45,13 @@ public class DailyGoalPanel : BaseView {
 	void Start () {
     _GoalUIBadges = new List<GoalBadge>();
     // Uncomment this for testing
-
+    /*
     GoalBadge test = CreateGoalBadge("Bond...",4);
     test.SetProgress(0.75f);
     test = CreateGoalBadge("James",3);
     test.SetProgress(2);
     test = CreateGoalBadge("Bond",7);
-    test.SetProgress(5);
+    test.SetProgress(5);*/
 	}
 	
 	// Update is called once per frame
