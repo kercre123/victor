@@ -66,9 +66,9 @@ namespace Cozmo {
     // Unsets face tracking ID and cancels last action tag. Also sets current state to Inactive.
     void StopTracking(Robot& robot);
     
-    // Remove current face from the set of _trackingFaces. If any left, pick the next random
-    // one to track. If not, StopTracking (and go back to Inactive)
-    void TrackNextFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec);
+    // If any interesting faces left, pick the next random one to track and return true.
+    // If not, StopTracking, go back to Inactive, and return false.
+    bool TrackNextFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec);
     
     // Like TrackNextFace, but does not remove current face from list. Just switches
     // to a different face in the list. If the list only has one face in it, does nothing.
@@ -132,7 +132,7 @@ namespace Cozmo {
     constexpr static float kTrackingTimeout_sec = 3;
     
     // Length of time in seconds to keep interacting with the same face non-stop
-    constexpr static float kFaceInterestingDuration_sec = 10;
+    constexpr static float kFaceInterestingDuration_sec = 3.5;
     
     // Average length of time in seconds to watch one face when multiple faces
     // are present, and +/- variability in seconds on that average.
@@ -141,7 +141,7 @@ namespace Cozmo {
     f32 _currentMultiFaceInterestingDuration_sec = kMultiFaceInterestingDuration_sec;
     
     // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
-    constexpr static float kFaceCooldownDuration_sec = 3.5;
+    constexpr static float kFaceCooldownDuration_sec = 5;
     
     // Distance inside of which Cozmo will start noticing a face
     constexpr static float kCloseEnoughDistance_mm = 1250;
