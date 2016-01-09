@@ -158,7 +158,15 @@ namespace Cozmo {
   
   bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
-    return !_interestingFacesOrder.empty();
+    bool isRunnable = false;
+    for(auto & faceData : _interestingFacesData) {
+      if(currentTime_sec > faceData.second._coolDownUntil_sec) {
+        isRunnable = true;
+        break;
+      }
+    }
+
+    return isRunnable;
   }
   
   void BehaviorInteractWithFaces::StartTracking(Robot& robot, const Face::ID_t faceID, double currentTime_sec)
@@ -270,15 +278,15 @@ namespace Cozmo {
     
     if(candidateList.empty()) {
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.GetRandIdHelper.NoAvailableIDs",
-                       "Sticking with current face %llu", _trackedFaceID);
-      return _trackedFaceID;
+                       "No faces available that are not on cooldown");
+      return Face::UnknownFace;
     }
     
     const s32 index = GetRNG().RandIntInRange(0, static_cast<s32>(candidateList.size()-1));
     return candidateList[index];
   }
   
-  void BehaviorInteractWithFaces::TrackNextFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec)
+  bool BehaviorInteractWithFaces::TrackNextFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec)
   {
     // We are switching away from tracking this face entirely, stop accumulating
     // total tracking time
@@ -291,12 +299,20 @@ namespace Cozmo {
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace.NoMoreFaces",
                        "No more faces to track, switching to Inactive.");
       StopTracking(robot);
+      return false;
     } else {
       // Pick next face from those available to look at
       Face::ID_t nextFace = GetRandIdHelper();
+      if(Face::UnknownFace == nextFace) {
+        PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace.NoValidFaces",
+                         "All remaining faces are on cooldown");
+        return false;
+      }
+      
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace",
                        "CurrentFace = %llu, NextFace = %llu", currentFace, nextFace);
       StartTracking(robot, nextFace, currentTime_sec);
+      return true;
     }
   } // TrackNextFace()
   
@@ -363,6 +379,13 @@ namespace Cozmo {
     }
     */
     
+    // Update cooldown times:
+    for(auto & faceData : _interestingFacesData) {
+      if(currentTime_sec > faceData.second._coolDownUntil_sec) {
+        faceData.second._coolDownUntil_sec = 0;
+      }
+    }
+    
     switch(_currentState)
     {
       case State::Inactive:
@@ -389,16 +412,13 @@ namespace Cozmo {
           }
         } // if(time to glance)
         
-        if(_interestingFacesOrder.empty()) {
+        // Try to start tracking next face in the list. This will put us in TrackinFace
+        // state if it succeeds
+        if(false == TrackNextFace(robot, _trackedFaceID, currentTime_sec)) {
           PRINT_NAMED_INFO("BehaviorInteractWithFaces.UpdateInternal.NoMoreFaces",
                            "Ran out of interesting faces. Stopping.");
           status = IBehavior::Status::Complete;
-          break;
         }
-        
-        // Try to start tracking next face in the list. This will put us in TrackinFace
-        // state if it succeeds
-        StartTracking(robot, *_interestingFacesOrder.begin(), currentTime_sec);
         
         break;
       } // case State::Inactive

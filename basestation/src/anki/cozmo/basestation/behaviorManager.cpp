@@ -269,8 +269,14 @@ namespace Cozmo {
           break;
           
         case IBehavior::Status::Complete:
-          // Behavior complete, switch to next
+          // Behavior complete, try to select and switch to next
           _currentBehavior->SetIsRunning(false);
+          lastResult = SelectNextBehavior(currentTime_sec);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("BehaviorManager.Update.SelectNextFailed",
+                                "Failed trying to select next behavior, continuing with current.");
+            lastResult = RESULT_OK;
+          }
           SwitchToNextBehavior(currentTime_sec);
           break;
           
