@@ -1635,120 +1635,111 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
                                                         float& distanceToPlan,
                                                         bool debug) const
 {
-  // for now, this is implemented by simply going over every
-  // intermediate pose and finding the closest one
-  float closestXYDist = std::numeric_limits<float>::max();
-  float closestThetaDist = std::numeric_limits<float>::max();
-  float minScore = std::numeric_limits<float>::max();
-  bool bestIsInitialState = false;
-  size_t startPoint = 0;
 
-  State currPlanState = plan.start_;
+  // Ideally, we have a position which is within the discretization error of the planner. If so, use the
+  // lowest index that fits within the error. We use the lowest to avoid chopping off point-turn actions.
+
+  // Otherwise, that means we are further away, so just find the closest (x,y) point, ignoring theta since we
+  // will need to drive onto the path anyway.
 
   using namespace std;
-  if(debug)
+  if(debug) {
     cout<<"Searching for position near "<<state<<" along plan of length "<<plan.Size()<<endl;
+  }
 
+  float closestXYDist = std::numeric_limits<float>::max();
+  size_t closestPointIdx = 0;
+
+  const State discreteInputState = State_c2State(state);
+
+  // First search *just* the action starting points. If there is an exact match here, that's the winner.
+  // Also, keep track of closest distances in case there isn't an exact match
+  State currPlanState = plan.start_;
   size_t planSize = plan.Size();
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
-    const MotionPrimitive& prim(GetRawMotionPrimitive(currPlanState.theta, plan.actions_[planIdx]));
-
-    // the intermediate position (x,y) coordinates are all centered at
-    // 0. Instead of shifting them over each time, we just shift the
-    // state we are searching for (fewer ops)
-    State_c offsetToPlanState(state.x_mm - GetX_mm(currPlanState.x),
-                              state.y_mm - GetY_mm(currPlanState.y),
-                              Radians(state.theta - GetTheta_c(currPlanState.theta)).ToFloat());
-
-    // first check the exact state.  // TODO:(bn) no sqrt!
-    float initialXYDist = sqrt(pow(offsetToPlanState.x_mm, 2) + pow(offsetToPlanState.y_mm, 2));
-    float initialThetaDist = std::fabsf(offsetToPlanState.theta);
-
-    if(debug)
-      cout<<planIdx<<": "<<"initial "<<offsetToPlanState<<" = "<<initialXYDist;
-
-    // we want to select a point that is closest to the state, with the following "tie-breakers"
-    // 1. Prefer a state which has (roughly) the same xyError, but is a better theta match
-    // 2. Prefer a state which is an initial state over an intermediate state
-    // 3. Prefer an earlier initial state over a later one
-
-    // #2 is because action 0 will likely have it's last intermediate position at the same position as the
-    // #initial state for action 1. In this case, we'd prefer to select action 1
-
-    const float toleranceToDoTieBreaker = 0.25f;
-    const float thetaMatchTolerance = 1e-5f;
-    
-    const float betterThetaMatchBonus = 5e-4f;
-    const float initialStateBonus = 3e-4f;
-
-    // lower scores are better, check the score of this initial point, with the initial point bonus
-    float initialScore = initialXYDist - initialStateBonus;
-    if( initialScore < minScore + toleranceToDoTieBreaker ) {
-
-      // apply theta bonus
-      if( initialThetaDist < closestThetaDist + thetaMatchTolerance ) {
-        initialScore -= betterThetaMatchBonus;
-      }
-
-      if(debug) {
-        cout<<" score = "<<initialScore;
-      }
+    if(debug) {
+      cout<<planIdx<<": "<<"initial " << currPlanState;
     }
+
+    if( currPlanState == discreteInputState ) {
+      if( debug ) {
+        cout << " exact: " << discreteInputState << endl;
+      }
       
-    if( initialScore < minScore ) {
+      distanceToPlan = 0.0f;
+      return planIdx;
+    }
+
+    // TODO:(bn) no sqrt!
+    const float xError = state.x_mm - GetX_mm(currPlanState.x);
+    const float yError = state.y_mm - GetY_mm(currPlanState.y);
+    const float initialXYDist = sqrt(pow(xError, 2) + pow(yError, 2));
+
+    if( initialXYDist < closestXYDist ) {
       closestXYDist = initialXYDist;
-      closestThetaDist = initialThetaDist;
-      minScore = initialScore;
-      bestIsInitialState = true;
-      startPoint = planIdx;
+      closestPointIdx = planIdx;
 
       if(debug) {
         cout<<"  closest\n";
       }
     }
-    else if(debug) {
+    else if( debug ) {
       cout<<endl;
     }
 
-    // check the intermediate positions (which are relative to the starting point)
+    StateID currID(currPlanState);
+    ApplyAction(plan.actions_[planIdx], currID, false);
+    currPlanState = State(currID);
+  }
+  
+  // if we get here, it means we didn't find a starting point which was an exact match. Check to see if any
+  // intermediate points are exact matches. If so, return the starting point before it, otherwise just return
+  // the closest xy distance point
+  currPlanState = plan.start_;
+  for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
+
+    // the intermediate position (x,y) coordinates are all centered at 0. Instead of shifting them over each
+    // time, we just shift the state we are searching for (fewer ops). (theta doesn't matter here)
+    const State_c offsetToPlanState(state.x_mm - GetX_mm(currPlanState.x),
+                                    state.y_mm - GetY_mm(currPlanState.y),
+                                    state.theta);
     
-    for(const auto& intermediate : prim.intermediatePositions) {
-      // TODO:(bn) get squared distance
-      // State_c currState = State2State_c(curr);
-      float xyDist = GetDistanceBetween(offsetToPlanState, intermediate.position);
-      float thetaDist = std::fabsf( Radians( state.theta -  intermediate.position.theta ).ToFloat() );
+    const MotionPrimitive& prim(GetRawMotionPrimitive(currPlanState.theta, plan.actions_[planIdx]));
 
-      if(debug)
-        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<offsetToPlanState<<" = "<<xyDist;
+    // skip the last intermediate position, since it overlaps with the next start
+    size_t intermediatePositionsSize = prim.intermediatePositions.size();
+    for( size_t intermediateIdx = 0; intermediateIdx + 1 < intermediatePositionsSize; ++intermediateIdx ) {
+      const auto& intermediate = prim.intermediatePositions[ intermediateIdx ];
 
-      float score = xyDist;
-
-      if( score < minScore + toleranceToDoTieBreaker ) {
-
-        // apply theta bonus
-        if( thetaDist < closestThetaDist + thetaMatchTolerance ) {
-          score -= betterThetaMatchBonus;
-        }
-
-        if(debug) {
-          cout<<" score = "<<score;
-        }
+      if(debug) {
+        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<offsetToPlanState;
       }
 
-      if( score < minScore ) {
-        closestXYDist = xyDist;
-        closestThetaDist = thetaDist;
-        minScore = score;
-        bestIsInitialState = false;
-        startPoint = planIdx;
 
+      // check if this intermediate state is an exact match
+      State intermediateStateRounded = State_c2State( intermediate.position );
+      if( intermediateStateRounded == discreteInputState ) {
+        if(debug) {
+          cout << " exact: " << discreteInputState << endl;
+        }
+
+        distanceToPlan = 0.0f;
+        return planIdx;
+      }
+      
+      const float xyDist = GetDistanceBetween(offsetToPlanState, intermediate.position);
+
+      if( xyDist < closestXYDist ) {
+        closestXYDist = xyDist;
+        closestPointIdx = planIdx;
         if(debug) {
           cout<<"  closest\n";
         }
       }
-      else if(debug) {
+      else if( debug ) {
         cout<<endl;
       }
+
     }
 
     StateID currID(currPlanState);
@@ -1757,8 +1748,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
   }
 
   distanceToPlan = closestXYDist;
-
-  return startPoint;
+  return closestPointIdx;
 }
 
 void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const
