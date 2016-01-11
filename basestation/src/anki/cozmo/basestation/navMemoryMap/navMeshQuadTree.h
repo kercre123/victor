@@ -14,6 +14,7 @@
 
 #include "navMeshQuadTreeNode.h"
 
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
 #include "anki/common/basestation/math/point.h"
 
 namespace Anki {
@@ -46,7 +47,7 @@ public:
   void AddClearQuad(const Quad2f& quad);
   
   // notify the navmesh of an obstacle
-  void AddObstacle(const Quad2f& quad);
+  void AddObstacle(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType);
 
   // notify the navmesh of a cliff
   void AddCliff(const Quad2f& quad);

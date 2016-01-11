@@ -68,7 +68,7 @@ void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddObstacle(const Quad2f& quad)
+void NavMeshQuadTree::AddObstacle(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType)
 {
   // render approx last quad added
   if ( kRenderLastAddedQuad )
@@ -86,8 +86,24 @@ void NavMeshQuadTree::AddObstacle(const Quad2f& quad)
     Expand( quad );
   }
 
+  // add the proper obstacle type in the node
+  bool changed = false;
+  switch( obstacleType ) {
+    case NavMemoryMapTypes::Cube: {
+      changed = _root.AddObstacleCube(quad);
+      break;
+    }
+    case NavMemoryMapTypes::Unrecognized: {
+      changed = _root.AddObstacleUnrecognized(quad);
+      break;
+    }
+    default: {
+      ASSERT_NAMED(false, "NavMeshQuadTree.AddObstacle.InvalidObstacleEnum");
+    }
+  }
+
   // add obstacle now
-  _gfxDirty = _root.AddObstacle(quad) || _gfxDirty;
+  _gfxDirty = changed || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

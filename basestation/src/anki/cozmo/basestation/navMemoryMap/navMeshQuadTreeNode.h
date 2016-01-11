@@ -34,7 +34,8 @@ public:
     Subdivided,   // we are subdivided, so children hold more detailed info
     Unknown,      // no idea
     Clear,        // what we know about the node is clear (could be partial info)
-    Obstacle,     // we have seen an obstacle in part of the node
+    ObstacleCube, // we have seen an obstacle in part of the node and we know the obstacle was a cube
+    ObstacleUnrecognized, // we have seen an obstacle in part of the node but we don't know what it is
     Cliff,        // we have seen a cliff in part of the node
   };
 
@@ -68,10 +69,11 @@ public:
   // process a clear quad that affected this node's parent. Returns true if the node changed
   bool AddClearQuad(const Quad2f& quad);
   
-  // process an obstacle that affected this node's parent
-  bool AddObstacle(const Quad2f& quad);
+  // process an obstacle that affected this node's parent. Returns true if the node changed
+  bool AddObstacleCube(const Quad2f& quad);
+  bool AddObstacleUnrecognized(const Quad2f& quad);
 
-  // process a cliff that affected this node's parent
+  // process a cliff that affected this node's parent. Returns true if the node changed
   bool AddCliff(const Quad2f& quad);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it

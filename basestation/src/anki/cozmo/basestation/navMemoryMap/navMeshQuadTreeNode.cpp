@@ -63,22 +63,29 @@ Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::AddClearQuad(const Quad2f& quad)
 {
-  const bool ret = AddQuad(quad, EContentType::Clear);
-  return ret;
+  const bool changed = AddQuad(quad, EContentType::Clear);
+  return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddObstacle(const Quad2f& quad)
+bool NavMeshQuadTreeNode::AddObstacleCube(const Quad2f& quad)
 {
-  const bool ret = AddQuad(quad, EContentType::Obstacle);
-  return ret;
+  const bool changed = AddQuad(quad, EContentType::ObstacleCube);
+  return changed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::AddObstacleUnrecognized(const Quad2f& quad)
+{
+  const bool changed = AddQuad(quad, EContentType::ObstacleUnrecognized);
+  return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::AddCliff(const Quad2f &quad)
 {
-  const bool ret = AddQuad(quad, EContentType::Cliff);
-  return ret;
+  const bool changed = AddQuad(quad, EContentType::Cliff);
+  return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -128,11 +135,12 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
     ColorRGBA color =  Anki::NamedColors::WHITE;
     switch(_contentType)
     {
-      case EContentType::Subdivided : { color = Anki::NamedColors::MAGENTA;   break; }
-      case EContentType::Unknown    : { color = Anki::NamedColors::DARKGRAY;  break; }
-      case EContentType::Cliff      : { color = Anki::NamedColors::BLACK;     break; }
-      case EContentType::Clear      : { color = Anki::NamedColors::GREEN;     break; }
-      case EContentType::Obstacle   : { color = Anki::NamedColors::RED;       break; }
+      case EContentType::Subdivided          : { color = Anki::NamedColors::BLUE;   break; }
+      case EContentType::Unknown             : { color = Anki::NamedColors::DARKGRAY;  break; }
+      case EContentType::Cliff               : { color = Anki::NamedColors::BLACK;     break; }
+      case EContentType::Clear               : { color = Anki::NamedColors::GREEN;     break; }
+      case EContentType::ObstacleCube        : { color = Anki::NamedColors::RED;       break; }
+      case EContentType::ObstacleUnrecognized: { color = Anki::NamedColors::MAGENTA;   break; }
     }
     color.SetAlpha(0.75f);
     //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_maxDepth*100}, _sideLen));
