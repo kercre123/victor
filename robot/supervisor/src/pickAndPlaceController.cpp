@@ -9,6 +9,7 @@
 #include "imuFilter.h"
 #include "proxSensors.h"
 #include "trig_fast.h"
+#include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
@@ -184,7 +185,7 @@ namespace Anki {
 
         const f32 backoutTime_sec = backoutDist_mm / BACKOUT_SPEED_MMPS;
 
-        PRINT("PAP: Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)\n",
+        AnkiInfo( 14, "PAP", 119, "Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)", 3,
               lastMarkerDist_, backoutDist_mm, backoutTime_sec);
 
         transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3f);
@@ -206,7 +207,7 @@ namespace Anki {
           case SET_LIFT_PREDOCK:
           {
 #if(DEBUG_PAP_CONTROLLER)
-            PRINT("PAP: SETTING LIFT PREDOCK (action %d)\n", action_);
+            AnkiDebug( 14, "PAP", 120, "SETTING LIFT PREDOCK (action %d)", 1, action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
             LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
@@ -253,7 +254,7 @@ namespace Anki {
                 dockOffsetDistX_ = CHARGER_ALIGNED_MARKER_DISTANCE;
                 break;
               default:
-                PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
+                AnkiError( 14, "PAP", 121, "Unknown PickAndPlaceAction %d", 1, action_);
                 mode_ = IDLE;
                 break;
             }
@@ -308,7 +309,7 @@ namespace Anki {
               }
               mode_ = DOCKING;
 #if(DEBUG_PAP_CONTROLLER)
-              PRINT("PAP: DOCKING\n");
+              AnkiDebug( 14, "PAP", 122, "DOCKING", 0);
 #endif
 
               //if (action_ == DA_PICKUP_HIGH) {
@@ -333,26 +334,26 @@ namespace Anki {
 
                 if (action_ == DA_ALIGN) {
                   #if(DEBUG_PAP_CONTROLLER)
-                  PRINT("PAP: ALIGN\n");
+                  AnkiDebug( 14, "PAP", 123, "ALIGN", 0);
                   #endif
                   mode_ = IDLE;
                 } else if(action_ == DA_RAMP_DESCEND) {
                   #if(DEBUG_PAP_CONTROLLER)
-                  PRINT("PAP: TRAVERSE_RAMP_DOWN\n");
+                  AnkiDebug( 14, "PAP", 124, "TRAVERSE_RAMP_DOWN\n", 0);
                   #endif
                   // Start driving forward (blindly) -- wheel guides!
                   SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
                   mode_ = TRAVERSE_RAMP_DOWN;
                 } else if (action_ == DA_CROSS_BRIDGE) {
                   #if(DEBUG_PAP_CONTROLLER)
-                  PRINT("PAP: ENTER_BRIDGE\n");
+                  AnkiDebug( 14, "PAP", 125, "ENTER_BRIDGE\n", 0);
                   #endif
                   // Start driving forward (blindly) -- wheel guides!
                   SteeringController::ExecuteDirectDrive(BRIDGE_TRAVERSE_SPEED_MMPS, BRIDGE_TRAVERSE_SPEED_MMPS);
                   mode_ = ENTER_BRIDGE;
                 } else if (action_ == DA_MOUNT_CHARGER) {
                   #if(DEBUG_PAP_CONTROLLER)
-                  PRINT("PAP: MOUNT_CHARGER\n");
+                  AnkiDebug( 14, "PAP", 126, "MOUNT_CHARGER\n", 0);
                   #endif
 
                   // Compute angle to turn in order to face marker
@@ -368,7 +369,7 @@ namespace Anki {
                   mode_ = ROTATE_FOR_CHARGER_APPROACH;
                 } else {
                   #if(DEBUG_PAP_CONTROLLER)
-                  PRINT("PAP: SET_LIFT_POSTDOCK\n");
+                  AnkiDebug( 14, "PAP", 127, "SET_LIFT_POSTDOCK\n", 0);
                   #endif
                   mode_ = SET_LIFT_POSTDOCK;
                 }
@@ -377,11 +378,11 @@ namespace Anki {
                 // Block is not being tracked.
                 // Probably not visible.
                 #if(DEBUG_PAP_CONTROLLER)
-                PRINT("WARN (PickAndPlaceController): Could not track block's marker\n");
+                AnkiWarn( 14, "PAP", 128, "Could not track block's marker", 0);
                 #endif
                 // TODO: Send BTLE message notifying failure
 
-                PRINT("PAP: Docking failed while picking/placing high or low. Backing out.\n");
+                AnkiDebug( 14, "PAP", 129, "Docking failed while picking/placing high or low. Backing out.", 0);
 
                 // Send failed pickup or place message
                 switch(action_)
@@ -403,7 +404,7 @@ namespace Anki {
                     break;
                   } // PLACE
                   default:
-                    PRINT("ERROR: Reached default switch statement in DOCKING case.\n");
+                    AnkiError( 14, "PAP", 130, "Reached default switch statement in DOCKING case.", 0);
                 } // switch(action_)
 
 
@@ -425,7 +426,7 @@ namespace Anki {
           case SET_LIFT_POSTDOCK:
           {
 #if(DEBUG_PAP_CONTROLLER)
-            PRINT("PAP: SETTING LIFT POSTDOCK\n");
+            AnkiDebug( 14, "PAP", 131, "SETTING LIFT POSTDOCK\n", 0);
 #endif
             SendMovingLiftPostDockMessage();
             
@@ -469,7 +470,7 @@ namespace Anki {
                 mode_ = POPPING_A_WHEELIE;
                 break;
               default:
-                PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
+                AnkiError( 14, "PAP", 121, "Unknown PickAndPlaceAction %d", 1, action_);
                 mode_ = IDLE;
                 break;
             }
@@ -518,7 +519,7 @@ namespace Anki {
                   break;
                 } // LOW
                 default:
-                  PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
+                  AnkiError( 14, "PAP", 132, "Reached default switch statement in MOVING_LIFT_POSTDOCK case.", 0);
               } // switch(action_)
 
               // Send pickup or place message.  Assume success, let BaseStation
@@ -543,7 +544,7 @@ namespace Anki {
                   break;
                 } // PLACE
                 default:
-                  PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
+                  AnkiError( 14, "PAP", 132, "Reached default switch statement in MOVING_LIFT_POSTDOCK case.", 0);
               } // switch(action_)
 
               // Switch to BACKOUT
@@ -568,7 +569,7 @@ namespace Anki {
           case LOWER_LIFT:
             if (LiftController::IsInPosition()) {
 #if(DEBUG_PAP_CONTROLLER)
-              PRINT("PAP: IDLE\n");
+              AnkiDebug( 14, "PAP", 133, "IDLE\n", 0);
 #endif
               mode_ = IDLE;
               lastActionSucceeded_ = true;
@@ -579,7 +580,7 @@ namespace Anki {
           case TRAVERSE_RAMP_DOWN:
             if(IMUFilter::GetPitch() < -ON_RAMP_ANGLE_THRESH) {
 #if(DEBUG_PAP_CONTROLLER)
-              PRINT("PAP: Switching out of TRAVERSE_RAMP_DOWN to TRAVERSE_RAMP (angle = %f)\n", IMUFilter::GetPitch());
+              AnkiDebug( 14, "PAP", 134, "Switching out of TRAVERSE_RAMP_DOWN to TRAVERSE_RAMP (angle = %f)\n", 1, IMUFilter::GetPitch());
 #endif
               Localization::SetOnRamp(true);
               mode_ = TRAVERSE_RAMP;
@@ -590,7 +591,7 @@ namespace Anki {
             if ( ABS(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
               SteeringController::ExecuteDirectDrive(0, 0);
               #if(DEBUG_PAP_CONTROLLER)
-              PRINT("PAP: IDLE (from TRAVERSE_RAMP)\n");
+              AnkiDebug( 14, "PAP", 135, "IDLE (from TRAVERSE_RAMP)\n", 0);
               #endif
               mode_ = IDLE;
               lastActionSucceeded_ = true;
@@ -606,7 +607,7 @@ namespace Anki {
               UpdatePoseSnapshot();
               mode_ = TRAVERSE_BRIDGE;
               #if(DEBUG_PAP_CONTROLLER)
-              PRINT("TRAVERSE_BRIDGE\n");
+              AnkiDebug( 14, "PAP", 136, "TRAVERSE_BRIDGE", 0);
               #endif
               Localization::SetOnBridge(true);
             }
@@ -620,14 +621,14 @@ namespace Anki {
                 UpdatePoseSnapshot();
                 mode_ = LEAVE_BRIDGE;
                 #if(DEBUG_PAP_CONTROLLER)
-                PRINT("LEAVING_BRIDGE: relMarkerX = %f\n", lastMarkerDist_);
+                AnkiDebug( 14, "PAP", 137, "LEAVING_BRIDGE: relMarkerX = %f", 1, lastMarkerDist_);
                 #endif
               }
             } else {
               // Marker tracking timedout. Start it again.
               //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
               #if(DEBUG_PAP_CONTROLLER)
-              PRINT("TRAVERSE_BRIDGE: Restarting tracking\n");
+              AnkiDebug( 14, "PAP", 138, "TRAVERSE_BRIDGE: Restarting tracking", 0);
               #endif
             }
             break;
@@ -635,7 +636,7 @@ namespace Anki {
             if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > lastMarkerDist_ + MARKER_TO_OFF_BRIDGE_POSE_DIST) {
               SteeringController::ExecuteDirectDrive(0, 0);
               #if(DEBUG_PAP_CONTROLLER)
-              PRINT("PAP: IDLE (from TRAVERSE_BRIDGE)\n");
+              AnkiDebug( 14, "PAP", 139, "IDLE (from TRAVERSE_BRIDGE)\n", 0);
               #endif
               mode_ = IDLE;
               lastActionSucceeded_ = true;
@@ -656,7 +657,7 @@ namespace Anki {
             break;
           case BACKUP_ON_CHARGER:
             if (HAL::GetTimeStamp() > transitionTime_) {
-              PRINT("BACKUP_ON_CHARGER timeout\n");
+              AnkiEvent( 15, "BACKUP_ON_CHARGER", 140, "timeout", 0);
               SteeringController::ExecuteDirectDrive(0, 0);
               SendChargerMountCompleteMessage(false);
               mode_ = IDLE;
@@ -669,13 +670,13 @@ namespace Anki {
                 tiltedOnChargerStartTime_ = HAL::GetTimeStamp();
               } else if (HAL::GetTimeStamp() - tiltedOnChargerStartTime_ > TILT_FAILURE_DURATION_MS) {
                 // Drive forward until no tilt or timeout
-                PRINT("BACKUP_ON_CHARGER tilted\n");
+                AnkiEvent( 15, "BACKUP_ON_CHARGER", 141, "tilted", 0);
                 SteeringController::ExecuteDirectDrive(40, 40);
                 transitionTime_ = HAL::GetTimeStamp() + 2500;
                 mode_ = DRIVE_FORWARD;
               }
             } else if (HAL::BatteryIsOnCharger()) {
-              PRINT("BACKUP_ON_CHARGER success\n");
+              AnkiEvent( 15, "BACKUP_ON_CHARGER", 142, "success", 0);
               SteeringController::ExecuteDirectDrive(0, 0);
               SendChargerMountCompleteMessage(true);
               lastActionSucceeded_ = true;
@@ -694,8 +695,8 @@ namespace Anki {
             break;
           default:
             mode_ = IDLE;
-            PRINT("Reached default case in DockingController "
-                  "mode switch statement.(1)\n");
+            AnkiError( 14, "PAP", 39, "Reached default case in DockingController "
+                  "mode switch statement.(1)", 0);
             break;
         }
 
@@ -736,7 +737,7 @@ namespace Anki {
                        const bool useManualSpeed)
       {
 #if(DEBUG_PAP_CONTROLLER)
-        PRINT("PAP: DOCK TO BLOCK (action %d)\n", action);
+        AnkiDebug( 14, "PAP", 143, "DOCK TO BLOCK (action %d)", 1, action);
 #endif
 
         action_ = action;

@@ -21,7 +21,7 @@ namespace Anki {
       void ProcessMessage(u8* buffer, u16 bufferSize)
       {
         RobotInterface::EngineToRobot msg;
-        AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 1, "Messages", 3, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
+        AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 1, "Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
         memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
         if (msg.tag < 0x80) // Message for RTIP not us
         {
@@ -29,7 +29,7 @@ namespace Anki {
         }
         else
         {
-          AnkiConditionalWarnAndReturn(msg.IsValid(), 1, "Messages", 4, "Received invalid message: %02x[%d]", 2, buffer[0], bufferSize);
+          AnkiConditionalWarnAndReturn(msg.IsValid(), 1, "Messages", 257, "Received invalid message: %02x[%d]", 2, buffer[0], bufferSize);
           switch(msg.tag)
           {
             case RobotInterface::EngineToRobot::Tag_eraseFlash:
@@ -65,7 +65,7 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
             {
               if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
-                AnkiWarn( 1, "Messages", 5, "Failed to buffer a keyframe! Clearing Animation buffer!\n", 0);
+                AnkiWarn( 1, "Messages", 258, "Failed to buffer a keyframe! Clearing Animation buffer!\n", 0);
                 AnimationController::Clear();
               }
               break;
@@ -87,7 +87,7 @@ namespace Anki {
             }
             default:
             {
-              AnkiWarn( 1, "Messages", 6, "Received message not expected here tag=%02x\n", 1, msg.tag);
+              AnkiWarn( 1, "Messages", 259, "Received message not expected here tag=%02x\n", 1, msg.tag);
             }
           }
         }

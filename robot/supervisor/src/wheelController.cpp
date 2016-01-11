@@ -11,6 +11,7 @@
 #include "speedController.h"
 #include "wheelController.h"
 #include "messages.h"
+#include "anki/cozmo/robot/logging.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -77,7 +78,7 @@ namespace Anki {
     //sets the wheel PID controller constants
     void SetGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
                   const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight) {
-      PRINT("New wheelController gains: kLeft (p=%f, i=%f, maxSum=%f) kRight (p=%f, i=%f maxSum=%f)\n", kpLeft, kiLeft, maxIntegralErrorLeft, kpRight, kiRight, maxIntegralErrorRight);
+      AnkiInfo( 13, "WheelController", 114, "New gains: kLeft (p=%f, i=%f, maxSum=%f) kRight (p=%f, i=%f maxSum=%f)", 6, kpLeft, kiLeft, maxIntegralErrorLeft, kpRight, kiRight, maxIntegralErrorRight);
       Kp_l_ = kpLeft;
       Ki_l_ = kiLeft;
       MAX_ERROR_SUM_LEFT = maxIntegralErrorLeft;
@@ -165,10 +166,10 @@ namespace Anki {
 //      if(!coastMode_ && !coastUntilStop_) {
 
 #if(DEBUG_WHEEL_CONTROLLER)
-        PRINT(" WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n",
+        AnkiDebug( 13, "WheelController", 115, "speeds: %f (L), %f (R)   (Curr: %d, %d)", 4,
                 filterWheelSpeedL_, filterWheelSpeedR_,
                 measuredWheelSpeedL_, measuredWheelSpeedR_);
-        PRINT(" WHEEL desired speeds: %f (L), %f (R)\n",
+        AnkiDebug( 13, "WheelController", 116, "desired speeds: %f (L), %f (R)", 2,
                 desiredWheelSpeedL_, desiredWheelSpeedR_);
 #endif
 
@@ -182,7 +183,7 @@ namespace Anki {
 
 
 #if(DEBUG_WHEEL_CONTROLLER)
-        PRINT(" WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorL, errorR, error_sumL_, error_sumR_);
+        AnkiDebug( 13, "WheelController", 117, "error: %f (L), %f (R)   error_sum: %f (L), %f (R)", 4, errorL, errorR, error_sumL_, error_sumR_);
 #endif
 
         /*
@@ -237,7 +238,7 @@ namespace Anki {
       }
 
 #if(DEBUG_WHEEL_CONTROLLER)
-      PRINT(" WHEEL power: %f (L), %f (R)\n", power_l_, power_r_);
+      AnkiDebug( 13, "WheelController", 118, "power: %f (L), %f (R)\n", 2, power_l_, power_r_);
 #endif
 
       //Command the computed motor power values

@@ -110,7 +110,7 @@ LOCAL bool TaskEraseFlash(uint32 param)
     }
     default:
     {
-      AnkiError( 8, "UpgradeController", 53, "Unexpected SPI Flash Erase operation result", 0);
+      AnkiError( 29, "UpgradeController", 171, "Unexpected SPI Flash Erase operation result", 0);
       break;
     }
   }
@@ -164,7 +164,7 @@ LOCAL bool TaskWriteFlash(uint32 param)
     }
     default:
     {
-      AnkiError( 8, "UpgradeController", 54, "Unexpected SPI Flash write operation result", 0);
+      AnkiError( 29, "UpgradeController", 172, "Unexpected SPI Flash write operation result", 0);
       break;
     }
   }
@@ -177,7 +177,7 @@ LOCAL bool TaskOtaAsset(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
   // TODO Do something with this new asset update
-  PRINT("Asset OTA successful\r\n");
+  AnkiInfo( 29, "UpgradeController", 173, "Asset OTA successful\r\n", 0);
   os_free(state);
   return false;
 }
@@ -212,7 +212,7 @@ LOCAL bool TaskOtaWiFi(uint32 param)
     }
     case SPI_FLASH_RESULT_ERR:
     {
-      AnkiError( 8, "UpgradeController", 55, "Could not write bootloader config to flash for ota upgrade version %d.", 1, state->version);
+      AnkiError( 29, "UpgradeController", 174, "Could not write bootloader config to flash for ota upgrade version %d.", 1, state->version);
       os_free(state);
       return false;
     }
@@ -224,14 +224,14 @@ LOCAL bool TaskOtaWiFi(uint32 param)
       }
       else
       {
-        AnkiError( 8, "UpgradeController", 56, "Timed out writing bootlaoder config to flash for ota upgrade version %d.", 1, state->version);
+        AnkiError( 29, "UpgradeController", 175, "Timed out writing bootlaoder config to flash for ota upgrade version %d.", 1, state->version);
         os_free(state);
         return false;
       }
     }
     default:
     {
-      AnkiError( 8, "UpgradeController", 57, "Unexpected flash write result writing bootloader config", 0);
+      AnkiError( 29, "UpgradeController", 176, "Unexpected flash write result writing bootloader config", 0);
       os_free(state);
       return false;
     }
@@ -262,7 +262,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
     {
       if (retries-- == 0)
       {
-        AnkiError( 8, "UpgradeController", 58, "RTIP OTA transfer failure! Aborting.", 0);
+        AnkiError( 29, "UpgradeController", 177, "RTIP OTA transfer failure! Aborting.", 0);
         os_free(state);
         return false;
       }
@@ -285,7 +285,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
           }
           case SPI_FLASH_RESULT_ERR:
           {
-            AnkiError( 8, "UpgradeController", 59, "RTIP OTA flash readback failure, aborting", 0);
+            AnkiError( 29, "UpgradeController", 178, "RTIP OTA flash readback failure, aborting", 0);
             os_free(state);
             return false;
           }
@@ -297,7 +297,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
             }
             else
             {
-              AnkiError( 8, "UpgradeController", 60, "RTIP OTA flash readback timeout, aborting", 0);
+              AnkiError( 29, "UpgradeController", 179, "RTIP OTA flash readback timeout, aborting", 0);
               os_free(state);
               return false;
             }
@@ -315,7 +315,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         }
         else // Done writing firmware
         {
-          PRINT("RTIP OTA transfer complete\r\n");
+          AnkiInfo( 29, "UpgradeController", 180, "RTIP OTA transfer complete\r\n", 0);
           if (flashStagedFlags[0] != 0xFFFFffff)
           {
             uint32 flag = 0;
@@ -457,7 +457,7 @@ LOCAL bool TaskOtaBody(uint32 param)
               }
               case SPI_FLASH_RESULT_ERR:
               {
-                AnkiError( 8, "UpgradeController", 61, "BODY OTA flash readback failure, aborting", 0);
+                AnkiError( 29, "UpgradeController", 181, "BODY OTA flash readback failure, aborting", 0);
                 os_free(state);
                 return false;
               }
@@ -469,7 +469,7 @@ LOCAL bool TaskOtaBody(uint32 param)
                 }
                 else
                 {
-                  AnkiError( 8, "UpgradeController", 62, "BODY OTA flash readback timeout, aborting", 0);
+                  AnkiError( 29, "UpgradeController", 182, "BODY OTA flash readback timeout, aborting", 0);
                   os_free(state);
                   return false;
                 }
@@ -525,7 +525,7 @@ LOCAL bool TaskCheckSig(uint32 param)
     }
     case SPI_FLASH_RESULT_ERR:
     {
-      AnkiError( 8, "UpgradeController", 63, "reading back flash at %x for signature check", 1, state->index);
+      AnkiError( 29, "UpgradeController", 183, "reading back flash at %x for signature check", 1, state->index);
       os_free(state);
       return false;
     }
@@ -537,14 +537,14 @@ LOCAL bool TaskCheckSig(uint32 param)
       }
       else
       {
-        AnkiError( 8, "UpgradeController", 64, "timed out reading back flash at %x for signature check", 1, state->index);
+        AnkiError( 29, "UpgradeController", 184, "timed out reading back flash at %x for signature check", 1, state->index);
         os_free(state);
         return false;
       }
     }
     default:
     {
-      AnkiError( 8, "UpgradeController", 65, "unexpected flash result when reading back at %x for signature check", 1, state->index);
+      AnkiError( 29, "UpgradeController", 185, "unexpected flash result when reading back at %x for signature check", 1, state->index);
     }
   }
   
@@ -565,7 +565,7 @@ LOCAL bool TaskCheckSig(uint32 param)
     {
       if (digest[i] != state->sig[i])
       {
-        AnkiWarn( 8, "UpgradeController", 66, "Firmware signature missmatch at character %d, %02x != %02x", 3, i, digest[i], state->sig[i]);
+        AnkiWarn( 29, "UpgradeController", 186, "Firmware signature missmatch at character %d, %02x != %02x", 3, i, digest[i], state->sig[i]);
         os_free(state);
         return false;
       }
@@ -580,7 +580,7 @@ LOCAL bool TaskCheckSig(uint32 param)
     {
       case RobotInterface::OTA_none:
       {
-        PRINT("Successfully confirmed flash signature for OTA none\r\n");
+        AnkiInfo( 29, "UpgradeController", 187, "Successfully confirmed flash signature for OTA none\r\n", 0);
         os_free(state);
         return false;
       }
@@ -621,7 +621,7 @@ LOCAL bool TaskCheckSig(uint32 param)
         uint32_t flag = state->cmd;
         if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS, &flag, 4) != SPI_FLASH_RESULT_OK)
         {
-          AnkiError( 8, "UpgradeController", 67, "Couldn't write flash staged flag!", 0);
+          AnkiError( 29, "UpgradeController", 188, "Couldn't write flash staged flag!", 0);
 #ifdef DEBUG_OTA
           os_printf("Couldn't write flash staged flag!\r\n");
         }
@@ -636,7 +636,7 @@ LOCAL bool TaskCheckSig(uint32 param)
       }
       default:
       {
-        AnkiError( 8, "UpgradeController", 68, "Unexpected OTA command %d", 1, state->cmd);
+        AnkiError( 29, "UpgradeController", 189, "Unexpected OTA command %d", 1, state->cmd);
         os_free(state);
         return false;
       }
@@ -669,14 +669,14 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
 {
   if (msg.start < FLASH_WRITE_START_ADDRESS) // Refuse to erase addresses that are too low
   {
-    AnkiWarn( 8, "UpgradeController", 69, "Refusing to erase flash address %x, below %x", 2, msg.start, FLASH_WRITE_START_ADDRESS);
+    AnkiWarn( 29, "UpgradeController", 190, "Refusing to erase flash address %x, below %x", 2, msg.start, FLASH_WRITE_START_ADDRESS);
   }
   else
   {
     RobotInterface::EraseFlash* taskMsg = static_cast<RobotInterface::EraseFlash*>(os_zalloc(msg.Size()));
     if (taskMsg == NULL)
     {
-      AnkiError( 8, "UpgradeController", 70, "Failed to allocate memory for flash erase task", 0);
+      AnkiError( 29, "UpgradeController", 191, "Failed to allocate memory for flash erase task", 0);
     }
     else
     {
@@ -692,14 +692,14 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
 {
   if (msg.address < FLASH_WRITE_START_ADDRESS) // Refuse to write addresses that are too low
   {
-    AnkiWarn( 8, "UpgradeController", 71, "Refusing to write flash address %x, below %x", 2, msg.address, FLASH_WRITE_START_ADDRESS);
+    AnkiWarn( 29, "UpgradeController", 192, "Refusing to write flash address %x, below %x", 2, msg.address, FLASH_WRITE_START_ADDRESS);
   }
   else
   {
     RobotInterface::WriteFlash* taskMsg = static_cast<RobotInterface::WriteFlash*>(os_zalloc(msg.Size()));
     if (taskMsg == NULL)
     {
-      AnkiError( 8, "UpgradeController", 72, "Failed to allocate memory for flash write task", 0);
+      AnkiError( 29, "UpgradeController", 193, "Failed to allocate memory for flash write task", 0);
     }
     else
     {
@@ -715,7 +715,7 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
     OTAUpgradeTaskState* otaState = static_cast<OTAUpgradeTaskState*>(os_zalloc(sizeof(OTAUpgradeTaskState)));
     if (otaState == NULL)
     {
-      AnkiError( 8, "UpgradeController", 73, "Failed to allocate memory for upgrade task", 0);
+      AnkiError( 29, "UpgradeController", 194, "Failed to allocate memory for upgrade task", 0);
     }
     else
     {
@@ -733,11 +733,11 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
       os_memcpy(&(otaState->sig), msg.sig, SHA1_DIGEST_LENGTH);
       if(spi_flash_read(msg.start, (uint32*)&(otaState->fwSize), 4) != SPI_FLASH_RESULT_OK)
       {
-        AnkiError( 8, "UpgradeController", 74, "Couldn't read back firmware image size! Aborting", 0);
+        AnkiError( 29, "UpgradeController", 195, "Couldn't read back firmware image size! Aborting", 0);
       }
       else if(foregroundTaskPost(TaskCheckSig, reinterpret_cast<uint32>(otaState)) == false)
       {
-        AnkiError( 8, "UpgradeController", 75, "Couldn't schedule signature check task! Aborting", 0);
+        AnkiError( 29, "UpgradeController", 196, "Couldn't schedule signature check task! Aborting", 0);
       }
     }
   }

@@ -9,11 +9,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "localization.h"
-#ifdef TARGET_K02
 #include "anki/cozmo/robot/logging.h"
-#else
-#include "anki/common/robot/errorHandling.h"
-#endif
 
 
 namespace Anki {
@@ -65,7 +61,7 @@ namespace Anki {
             break;
 
           default:
-            AnkiError( 9, "ProxSensors.Update.BadLatestValue", 76, "Got invalid/unhandled value for ProximityValues.latest.\n", 0);
+            AnkiError( 19, "ProxSensors.Update.BadLatestValue", 156, "Got invalid/unhandled value for ProximityValues.latest.\n", 0);
             return RESULT_FAIL;
 
         } // switch(currProxVals.latest)
@@ -173,7 +169,7 @@ namespace Anki {
             // TODO (maybe): Check for cases where cliff detect should not stop motors
             // 1) Turning in place
             // 2) Driving over something (i.e. pitch is higher than some degrees).
-            PRINT("Stopping due to cliff\n");
+            AnkiEvent( 20, "Cliff", 157, "Stopping due to cliff", 0);
 
             // Stop all motors and animations
             PickAndPlaceController::Reset();

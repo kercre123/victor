@@ -40,31 +40,25 @@ namespace HAL {
     }
     else
     {
-      if (size > RTIP_MAX_CLAD_MSG_SIZE)
+      AnkiConditionalErrorAndReturnValue(size <= RTIP_MAX_CLAD_MSG_SIZE, false, "WiFi", 
+                            "Can't send message %x[%d] to WiFi, max size %d\r\n", msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
+      const uint8_t rind = txRind;
+      uint8_t wind = txWind;
+      const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
+      if (available > (size+3)) // Room for message plus header
       {
-        PRINT("ERROR: Can't send message %x[%d] to WiFi, max size %d\r\n", msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
-        return false;
+        const uint16_t sizeWHeader = size+1;
+        const u8* msgPtr = (u8*)buffer;
+        txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
+        txBuf[wind++] = (reliable ? RTIP_CLAD_MSG_RELIABLE_FLAG : 0x00) | \
+                        (hot      ? RTIP_CLAD_MSG_HOT_FLAG      : 0x00) | \
+                        ((sizeWHeader >> 8) & RTIP_CLAD_SIZE_HIGH_MASK); // Size high byte plus flags
+        txBuf[wind++] = msgID;
+        for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
+        txWind = wind;
+        return true;
       }
-      else
-      {
-        const uint8_t rind = txRind;
-        uint8_t wind = txWind;
-        const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
-        if (available > (size+3)) // Room for message plus header
-        {
-          const uint16_t sizeWHeader = size+1;
-          const u8* msgPtr = (u8*)buffer;
-          txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
-          txBuf[wind++] = (reliable ? RTIP_CLAD_MSG_RELIABLE_FLAG : 0x00) | \
-                          (hot      ? RTIP_CLAD_MSG_HOT_FLAG      : 0x00) | \
-                          ((sizeWHeader >> 8) & RTIP_CLAD_SIZE_HIGH_MASK); // Size high byte plus flags
-          txBuf[wind++] = msgID;
-          for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
-          txWind = wind;
-          return true;
-        }
-        else return false;
-      }
+      else return false;
     }
   }
 

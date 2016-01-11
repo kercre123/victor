@@ -93,7 +93,7 @@ namespace Anki
         case PST_POINT_TURN:
           return 0;
         default:
-          AnkiError( 17, "Path", 109, " (Path::GetLength): Undefined segment %d\n", 1, type_);
+          AnkiError( 6, "Path", 46, " (Path::GetLength): Undefined segment %d\n", 1, type_);
           assert(false);
       }
       return 0;
@@ -117,7 +117,7 @@ namespace Anki
         def_.turn.y += yOffset;
         break;
       default:
-        AnkiError( 17, "Path", 110, " (OffsetStart): Undefined segment %d\n", 1, type_);
+        AnkiError( 6, "Path", 47, " (OffsetStart): Undefined segment %d\n", 1, type_);
         assert(false);
       }
     }
@@ -138,7 +138,7 @@ namespace Anki
           y = def_.turn.y;
           break;
         default:
-          AnkiError( 17, "Path", 111, " (GetStartPoint): Undefined segment %d\n", 1, type_);
+          AnkiError( 6, "Path", 48, " (GetStartPoint): Undefined segment %d\n", 1, type_);
           assert(false);
       }
     }
@@ -162,7 +162,7 @@ namespace Anki
           angle = def_.turn.targetAngle;
           break;
         default:
-          AnkiError( 17, "Path", 112, " (GetEndPose): Undefined segment %d\n", 1, type_);
+          AnkiError( 6, "Path", 49, " (GetEndPose): Undefined segment %d\n", 1, type_);
           assert(false);
       }
     }
@@ -175,7 +175,7 @@ namespace Anki
         case PST_LINE:
         {
           const PathSegmentDef::s_line& seg = def_.line;
-          AnkiInfo( 17, "Path", 147, "line: (%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)\n", 7,
+          AnkiInfo( 6, "Path", 50, "line: (%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)\n", 7,
                  seg.startPt_x,
                  seg.startPt_y,
                  seg.endPt_x,
@@ -188,7 +188,7 @@ namespace Anki
         case PST_ARC:
         {
           const PathSegmentDef::s_arc& seg = def_.arc;
-            AnkiInfo( 17, "Path", 148, "arc: centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)\n", 8,
+            AnkiInfo( 6, "Path", 51, "arc: centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)\n", 8,
                  seg.centerPt_x,
                  seg.centerPt_y,
                  seg.radius,
@@ -202,7 +202,7 @@ namespace Anki
         case PST_POINT_TURN:
         {
           const PathSegmentDef::s_turn& seg = def_.turn;
-            AnkiInfo( 17, "Path", 149, "ptTurn: x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)\n", 6,
+            AnkiInfo( 6, "Path", 52, "ptTurn: x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)\n", 6,
                  seg.x,
                  seg.y,
                  seg.targetAngle,
@@ -267,8 +267,8 @@ namespace Anki
       // Point of intersection is solution to mx + b == (-1/m)*x + b_inv where b_inv = y-(-1/m)*x
 
 #if(DEBUG_PATH)
-      AnkiDebug( 17, "Path", 113, "LINE (%f, %f, %f, %f)\n", 4, seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
-      AnkiDebug( 17, "Path", 114, "Robot Pose: x: %f, y: %f ang: %f\n", 3, x,y,angle);
+      AnkiDebug( 6, "Path", 53, "LINE (%f, %f, %f, %f)\n", 4, seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
+      AnkiDebug( 6, "Path", 54, "Robot Pose: x: %f, y: %f ang: %f\n", 3, x,y,angle);
 #endif
 
 
@@ -347,12 +347,12 @@ namespace Anki
         shortestDistanceToPath = sqrtf(dy*dy + dx*dx);
 
 #if(DEBUG_PATH)
-        AnkiDebug( 17, "Path", 115, "m: %f, b: %f\n", 2,line_m_,line_b_);
-        AnkiDebug( 17, "Path", 116, "x_int: %f, y_int: %f, b_inv: %f\n", 3, x_intersect, y_intersect, b_inv);
-        AnkiDebug( 17, "Path", 117, "dy: %f, dx: %f, dist: %f\n", 3, dy, dx, shortestDistanceToPath);
-        AnkiDebug( 17, "Path", 118, "signbit(dx): %d, dy_sign: %f\n", 2, signbit(dx), line_dy_sign_);
-        AnkiDebug( 17, "Path", 119, "lineTheta: %f\n", 1, line_theta_.ToFloat());
-        //AnkiInfo( 17, "Path", 150, "lineTheta: %f, robotTheta: %f\n", 2, seg->theta.ToFloat(), currPose.GetAngle().ToFloat());
+        AnkiDebug( 6, "Path", 55, "m: %f, b: %f\n", 2,line_m_,line_b_);
+        AnkiDebug( 6, "Path", 56, "x_int: %f, y_int: %f, b_inv: %f\n", 3, x_intersect, y_intersect, b_inv);
+        AnkiDebug( 6, "Path", 57, "dy: %f, dx: %f, dist: %f\n", 3, dy, dx, shortestDistanceToPath);
+        AnkiDebug( 6, "Path", 58, "signbit(dx): %d, dy_sign: %f\n", 2, signbit(dx), line_dy_sign_);
+        AnkiDebug( 6, "Path", 59, "lineTheta: %f\n", 1, line_theta_.ToFloat());
+        //AnkiInfo( 6, "Path", 60, "lineTheta: %f, robotTheta: %f\n", 2, seg->theta.ToFloat(), currPose.GetAngle().ToFloat());
 #endif
 
         // Compute the sign of the error distance
@@ -398,7 +398,7 @@ namespace Anki
       const PathSegmentDef::s_arc* seg = &(def_.arc);
 
 #if(DEBUG_PATH)
-      AnkiDebug( 17, "Path", 120, "ARC (%f, %f), startRad: %f, sweepRad: %f, radius: %f\n", 5,
+      AnkiDebug( 6, "Path", 61, "ARC (%f, %f), startRad: %f, sweepRad: %f, radius: %f\n", 5,
             seg->centerPt_x, seg->centerPt_y, seg->startRad, seg->sweepRad, seg->radius);
 #endif
 
@@ -476,8 +476,8 @@ namespace Anki
         shortestDistanceToPath = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
 
 #if(DEBUG_PATH)
-        AnkiDebug( 17, "Path", 121, "A: %f, B: %f, C: %f, sqrt: %f\n", 4, A, B, C, sqrtPart);
-        AnkiDebug( 17, "Path", 122, "x_intersects: (%f %f)\n", 2, x_intersect_1, x_intersect_2);
+        AnkiDebug( 6, "Path", 62, "A: %f, B: %f, C: %f, sqrt: %f\n", 4, A, B, C, sqrtPart);
+        AnkiDebug( 6, "Path", 63, "x_intersects: (%f %f)\n", 2, x_intersect_1, x_intersect_2);
 #endif
 
 
@@ -529,12 +529,12 @@ namespace Anki
       }
 
 #if(DEBUG_PATH)
-      AnkiDebug( 17, "Path", 123, "x: %f, y: %f, m: %f, b: %f\n", 4, x,y,m,b);
-      AnkiDebug( 17, "Path", 124, "x_center: %f, y_center: %f\n", 2, x_center, y_center);
-      AnkiDebug( 17, "Path", 125, "x_int: %f, y_int: %f\n", 2, x_intersect, y_intersect);
-      AnkiDebug( 17, "Path", 126, "dy: %f, dx: %f, dist: %f, radDiff: %f\n", 4, dy, dx, shortestDistanceToPath, radDiff);
-      AnkiDebug( 17, "Path", 127, "insideCircle: %d, segmentRangeStatus: %d\n", 2, robotInsideCircle, segStatus);
-      AnkiDebug( 17, "Path", 128, "theta_line: %f, theta_tangent: %f\n", 2, theta_line.ToFloat(), theta_tangent.ToFloat());
+      AnkiDebug( 6, "Path", 64, "x: %f, y: %f, m: %f, b: %f\n", 4, x,y,m,b);
+      AnkiDebug( 6, "Path", 65, "x_center: %f, y_center: %f\n", 2, x_center, y_center);
+      AnkiDebug( 6, "Path", 66, "x_int: %f, y_int: %f\n", 2, x_intersect, y_intersect);
+      AnkiDebug( 6, "Path", 67, "dy: %f, dx: %f, dist: %f, radDiff: %f\n", 4, dy, dx, shortestDistanceToPath, radDiff);
+      AnkiDebug( 6, "Path", 68, "insideCircle: %d, segmentRangeStatus: %d\n", 2, robotInsideCircle, segStatus);
+      AnkiDebug( 6, "Path", 69, "theta_line: %f, theta_tangent: %f\n", 2, theta_line.ToFloat(), theta_tangent.ToFloat());
 #endif
 
       return segStatus;
@@ -548,7 +548,7 @@ namespace Anki
       const PathSegmentDef::s_turn* seg = &(def_.turn);
 
 #if(DEBUG_PATH)
-      AnkiDebug( 17, "Path", 129, "TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n", 4,
+      AnkiDebug( 6, "Path", 70, "TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n", 4,
             seg->x, seg->y, seg->targetAngle, GetTargetSpeed());
 #endif
 
@@ -641,7 +641,7 @@ namespace Anki
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
       if (segment < numPathSegments_) {
-        AnkiInfo( 17, "Path", 151, "Path segment %d - ", 1, segment);
+        AnkiInfo( 6, "Path", 71, "Path segment %d - ", 1, segment);
         path_[segment].Print();
       }
     }
@@ -799,9 +799,9 @@ namespace Anki
 
 #if(DEBUG_PATH)
        f32 tanPtAngle = ATAN2_ACC(n_y, n_x);
-       AnkiDebug( 17, "Path", 154, "Dubins %d: \n p_c1 (%f, %f)\n p_c2 (%f, %f)\n", 5,
+       AnkiDebug( 6, "Path", 72, "Dubins %d: \n p_c1 (%f, %f)\n p_c2 (%f, %f)\n", 5,
                   pathType, p_c1_x, p_c1_y, p_c2_x, p_c2_y);
-       AnkiDebug( 17, "Path", 153, " V1 (%f %f)\n  n (%f %f)\n  p_t1 (%f, %f)\n  p_t2 (%f, %f)\n", 8,
+       AnkiDebug( 6, "Path", 73, " V1 (%f %f)\n  n (%f %f)\n  p_t1 (%f, %f)\n  p_t2 (%f, %f)\n", 8,
                   V1_x, V1_y, n_x, n_y, p_t1_x, p_t1_y, p_t2_x, p_t2_y);
 #endif
 
@@ -881,7 +881,7 @@ namespace Anki
 
 
 #if(DEBUG_PATH)
-      AnkiDebug( 17, "Path", 131, "DUBINS: startPt %f %f %f, preEnd %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n", 10,
+      AnkiDebug( 6, "Path", 74, "DUBINS: startPt %f %f %f, preEnd %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n", 10,
             start_x, start_y, start_theta, preStraightApproach_x, preStraightApproach_y, end_x, end_y, end_theta, start_radius, end_radius);
 #endif
 
@@ -889,7 +889,7 @@ namespace Anki
 
         numSegments = GenerateCSCCurve(start_x, start_y, start_theta, preStraightApproach_x, preStraightApproach_y, end_theta, start_radius, end_radius,  targetSpeed, accel, decel, i, csc_path[i], pathLength);
 #if(DEBUG_PATH)
-        AnkiDebug( 17, "Path", 132, "Dubins path %d: numSegments %d, length %f m\n", 3, i, numSegments, pathLength);
+        AnkiDebug( 6, "Path", 75, "Dubins path %d: numSegments %d, length %f m\n", 3, i, numSegments, pathLength);
 #endif
         if (pathLength < shortestPathLength) {
           shortestNumSegments = numSegments;
@@ -919,7 +919,7 @@ namespace Anki
               break;
             }
             default:
-              AnkiError( 17, "Path", 133, ": Invalid path segment type in Dubins path. Should not be possible!\n", 0);
+              AnkiError( 6, "Path", 76, ": Invalid path segment type in Dubins path. Should not be possible!\n", 0);
               assert(0);
               break;
           }
@@ -938,7 +938,7 @@ namespace Anki
       }
 
 #if(DEBUG_PATH)
-      AnkiDebug( 17, "Path", 134, "Dubins: Shortest path %d, length %f\n", 2, shortestPathType, shortestPathLength);
+      AnkiDebug( 6, "Path", 77, "Dubins: Shortest path %d, length %f\n", 2, shortestPathType, shortestPathLength);
 #endif
 
       return path.GetNumSegments();
@@ -957,7 +957,7 @@ namespace Anki
         return true;
       } else {
         #if(DEBUG_PATH)
-        AnkiDebug( 17, "Path", 135, "WARNING(Path::PopFront): Can't pop %d segments from %d segment path\n", 2, numSegments, numPathSegments_);
+        AnkiDebug( 6, "Path", 78, "WARNING(Path::PopFront): Can't pop %d segments from %d segment path\n", 2, numSegments, numPathSegments_);
         #endif
       }
 
@@ -973,7 +973,7 @@ namespace Anki
         return true;
       } else {
 #if(DEBUG_PATH)
-        AnkiDebug( 17, "Path", 136, "WARNING(Path::PopBack): Can't pop %d segments from %d segment path\n", 2, numSegments, numPathSegments_);
+        AnkiDebug( 6, "Path", 79, "WARNING(Path::PopBack): Can't pop %d segments from %d segment path\n", 2, numSegments, numPathSegments_);
 #endif
       }
 
@@ -1005,7 +1005,7 @@ namespace Anki
         return true;
       }
 
-      AnkiWarn( 17, "Path", 137, "Continuity fail: Segment %d start point (%f, %f), Segment %d end point (%f, %f)\n", 6,
+      AnkiWarn( 6, "Path", 80, "Continuity fail: Segment %d start point (%f, %f), Segment %d end point (%f, %f)\n", 6,
             pathSegmentIdx, start_x, start_y, pathSegmentIdx - 1, end_x, end_y);
       return false;
     }
@@ -1018,7 +1018,7 @@ namespace Anki
       if (pathSegmentIdx < 0) {
         for (u8 i=0; i< numPathSegments_; ++i) {
           if (!CheckSegmentContinuity(tolerance_distance_squared, i)) {
-            AnkiError( 17, "Path", 138, ": Continuity check failed on segment %d of %d\n", 2, i, GetNumSegments());
+            AnkiError( 6, "Path", 81, ": Continuity check failed on segment %d of %d\n", 2, i, GetNumSegments());
             return false;
           }
         }
@@ -1037,7 +1037,7 @@ namespace Anki
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        AnkiError( 17, "Path", 139, " (AppendLine): Exceeded path size\n", 0);
+        AnkiError( 6, "Path", 82, " (AppendLine): Exceeded path size\n", 0);
         return false;
       }
 
@@ -1045,7 +1045,7 @@ namespace Anki
                                          targetSpeed, accel, decel);
 
 #if DEBUG_PATH_APPEND
-      AnkiInfo( 17, "Path", 140, "(AppendLine): numPathSegments_ = %u :", 1, numPathSegments_);
+      AnkiInfo( 6, "Path", 83, "(AppendLine): numPathSegments_ = %u :", 1, numPathSegments_);
       path_[numPathSegments_].Print();
 #endif
 
@@ -1060,14 +1060,14 @@ namespace Anki
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
       if (FLT_NEAR(sweepRad,0)) {
-        AnkiError( 17, "Path", 141, ": sweepRad is zero\n", 0);
+        AnkiError( 6, "Path", 84, ": sweepRad is zero\n", 0);
       }
 
       path_[numPathSegments_].DefineArc(x_center, y_center, radius, startRad, sweepRad,
                                         targetSpeed, accel, decel);
 
 #if DEBUG_PATH_APPEND
-      AnkiInfo( 17, "Path", 142, "(AddArc): numPathSegments_ = %u :", 1, numPathSegments_);
+      AnkiInfo( 6, "Path", 85, "(AddArc): numPathSegments_ = %u :", 1, numPathSegments_);
       path_[numPathSegments_].Print();
 #endif
 
@@ -1081,12 +1081,12 @@ namespace Anki
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        AnkiError( 17, "Path", 143, " (AppendArc): Exceeded path size\n", 0);
+        AnkiError( 6, "Path", 86, " (AppendArc): Exceeded path size\n", 0);
         return false;
       }
 
       if (FLT_NEAR(sweepRad,0)) {
-        AnkiError( 17, "Path", 141, ": sweepRad is zero\n", 0);
+        AnkiError( 6, "Path", 84, ": sweepRad is zero\n", 0);
         return false;
       }
 
@@ -1156,7 +1156,7 @@ namespace Anki
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        AnkiError( 17, "Path", 144, " (AppendPointTurn): Exceeded path size\n", 0);
+        AnkiError( 6, "Path", 87, " (AppendPointTurn): Exceeded path size\n", 0);
         return false;
       }
 
@@ -1174,14 +1174,14 @@ namespace Anki
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        AnkiError( 17, "Path", 145, " (AppendSegment): Exceeded path size\n", 0);
+        AnkiError( 6, "Path", 88, " (AppendSegment): Exceeded path size\n", 0);
         return false;
       }
 
       path_[numPathSegments_] = segment;
 
 #if DEBUG_PATH_APPEND
-      AnkiInfo( 17, "Path", 146, "(AppendSegment): numPathSegments_ = %u :", 1, numPathSegments_);
+      AnkiInfo( 6, "Path", 89, "(AppendSegment): numPathSegments_ = %u :", 1, numPathSegments_);
       path_[numPathSegments_].Print();
 #endif
 

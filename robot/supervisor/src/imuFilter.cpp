@@ -22,6 +22,7 @@
 #include "wheelController.h"
 #include "pathFollower.h"
 #include "pickAndPlaceController.h"
+#include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -311,7 +312,8 @@ namespace Anki {
 
       void EnablePickupParalysis(bool enable)
       {
-        PRINT("Pickup paralysis %s", enable ? "ENABLED\n" : "DISABLED\n");
+        if (enable) { AnkiEvent( 21, "Pickup paralysis", 158, "ENABLED", 0); }
+        else        { AnkiEvent( 21, "Pickup paralysis", 159, "DISABLED", 0); }
         enablePickupParalysis_ = enable;
       }
 
@@ -416,7 +418,7 @@ namespace Anki {
             peakGyroMaxTime = currTime;
           } else if (fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
             if ((peakGyroMaxTime > peakGyroStartTime) && (peakGyroMaxTime - peakGyroStartTime < maxGyroPeakDuration_ms)) {
-              PRINT("POKE DETECTED (GYRO)\n");
+              AnkiEvent( 22, "POKE DETECTED", 160, "(GYRO)", 0);
               peakGyroStartTime = currTime;
               lastPokeDetectTime = currTime;
 
@@ -435,7 +437,7 @@ namespace Anki {
               peakAccelMaxTime = currTime;
             } else if (fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
               if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
-                PRINT("POKE DETECTED (ACCEL)");
+                AnkiEvent( 22, "POKE DETECTED", 161, "(ACCEL)", 0);
                 peakAccelStartTime = currTime;
                 lastPokeDetectTime = currTime;
 
@@ -537,7 +539,7 @@ namespace Anki {
                 //|| ABS(gyro_robot_frame_filt[2]) > 5.f  // Not checking z-rotation since it is being used to trigger naive poke detection
                 ) {
               if (++pdUnexpectedMotionCnt_ > 40) {
-                PRINT("PDWhileStationary: acc (%f, %f, %f), gyro (%f, %f, %f)\n",
+                AnkiEvent( 23, "PDWhileStationary", 162, "acc (%f, %f, %f), gyro (%f, %f, %f)", 6,
                       pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_,
                       gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);
                 SetPickupDetect(true);
@@ -554,7 +556,7 @@ namespace Anki {
             ++pdRiseCnt_;
             if (pdRiseCnt_ > 40) {
               SetPickupDetect(true);
-              PRINT("PickupDetect: accX = %f, accY = %f, accZ = %f\n",
+              AnkiEvent( 24, "PickupDetect", 163, "accX = %f, accY = %f, accZ = %f", 3,
                     pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_);
             }
           } else {
@@ -593,7 +595,7 @@ namespace Anki {
                 // Call activation function
                 if (eventActivationCallbacks[e]) {
 #if(DEBUG_IMU_FILTER)
-                  PRINT("IMUFilter: Activation callback %d\n", e);
+                  AnkiDebug( 25, "IMUFilter", 164, "Activation callback %d", 1, e);
 #endif
                   eventActivationCallbacks[e]();
                 }
@@ -614,7 +616,7 @@ namespace Anki {
                 // Call deactivation function
                 if (eventDeactivationCallbacks[e]) {
 #if(DEBUG_IMU_FILTER)
-                  PRINT("IMUFilter: Deactivation callback %d\n", e);
+                  AnkiDebug( 25, "IMUFilter", 165, "Deactivation callback %d", 1, e);
 #endif
                   eventDeactivationCallbacks[e]();
                 }
@@ -767,11 +769,11 @@ namespace Anki {
 
         static u32 measurement_cycles = 0;
         if (measurement_cycles++ == 400) {
-          PRINT("Max gyro: %f %f %f\n",
+          AnkiDebug( 25, "IMUFilter", 166, "Max gyro: %f %f %f", 3,
                          max_gyro[0],
                          max_gyro[1],
                          max_gyro[2]);
-          PRINT("Max accel_delta: %f %f %f\n",
+          AnkiDebug( 25, "IMUFilter", 167, "Max accel_delta: %f %f %f", 3,
                          max_accel[0],
                          max_accel[1],
                          max_accel[2]);
@@ -874,7 +876,7 @@ namespace Anki {
             ++imuChunkMsg_.chunkId;
 
             if (imuChunkMsg_.chunkId == imuChunkMsg_.totalNumChunks) {
-              PRINT("IMU RECORDING COMPLETE (time %dms)\n", HAL::GetTimeStamp());
+              AnkiDebug( 26, "IMU RECORDING COMPLETE", 168, "(time %dms)", 1, HAL::GetTimeStamp());
               isRecording_ = false;
             }
           }
@@ -914,7 +916,7 @@ namespace Anki {
 
       void RecordAndSend(const u32 length_ms)
       {
-        PRINT("STARTING IMU RECORDING (time = %dms)\n", HAL::GetTimeStamp());
+        AnkiDebug( 27, "STARTING IMU RECORDING", 169, "(time = %dms)", 1, HAL::GetTimeStamp());
         isRecording_ = true;
         recordDataIdx_ = 0;
         imuChunkMsg_.seqId++;

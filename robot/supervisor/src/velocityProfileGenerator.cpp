@@ -11,6 +11,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
 #include "velocityProfileGenerator.h"
+#include "anki/cozmo/robot/logging.h"
 
 #include <stdio.h>
 
@@ -118,7 +119,7 @@ namespace Anki {
       maxReachableVel_ = sqrt( ((2*accel*fabs(totalDistToTarget_)) + (endVel_*endVel_) + (startVel_*startVel_)) * 0.5f );
       maxReachableVel_ *= direction;
 #if(DEBUG_VPG)
-      PRINT("VPG new V_max: %f (d = %f)\n", maxReachableVel_, d);
+      AnkiDebug( 31, "VPG", 200, "new V_max: %f (d = %f)", 2, maxReachableVel_, d);
 #endif
     }
 
@@ -161,9 +162,9 @@ namespace Anki {
     endAccelDist_ = fabsf(0.5f * (endVel_ - maxReachableVel_) / deltaVelPerTimeStepEnd_ * timeStep_) * (maxReachableVel_ >= 0 ? 1 : -1);
 
 #if(DEBUG_VPG)
-    PRINT("VPG: startVel %f, startPos %f, maxSpeed %f, accel %f\n", startVel_, startPos_, maxVel_, accel_);
-    PRINT("     endVel %f, endPos %f, timestep %f\n", endVel_, endPos_, timeStep_);
-    PRINT("     deltaVel %f, maxReachableVel %f, totalDist %f, decelDistToTarget %f, dir %f\n", deltaVelPerTimeStepStart_, maxReachableVel_, totalDistToTarget_, decelDistToTarget_, direction);
+    AnkiDebug( 31, "VPG", 201, "startVel %f, startPos %f, maxSpeed %f, accel %f", 4, startVel_, startPos_, maxVel_, accel_);
+    AnkiDebug( 31, "VPG", 202, "endVel %f, endPos %f, timestep %f", 3, endVel_, endPos_, timeStep_);
+    AnkiDebug( 31, "VPG", 203, "deltaVel %f, maxReachableVel %f, totalDist %f, decelDistToTarget %f, dir %f", 5, deltaVelPerTimeStepStart_, maxReachableVel_, totalDistToTarget_, decelDistToTarget_, direction);
 #endif
   }
 
@@ -267,10 +268,7 @@ namespace Anki {
     vel_max = fabsf(vel_max);
 
     // Check that the acceleration durations are valid given the total duration
-    if (acc_start_duration + acc_end_duration > duration) {
-      PRINT("VPG FAIL: acc_start_duration + acc_end_duration exceeds total duration (%f + %f > %f)\n", acc_start_duration, acc_end_duration, duration);
-      return false;
-    }
+    AnkiConditionalErrorAndReturnValue((acc_start_duration + acc_end_duration <= duration), false, 31, "VPG", 204, "acc_start_duration + acc_end_duration exceeds total duration (%f + %f > %f)", 3, acc_start_duration, acc_end_duration, duration);
 
     float ts = acc_start_duration;
     float te = acc_end_duration;
@@ -285,11 +283,7 @@ namespace Anki {
 
     // If accelerating to a vel_mid of 0 for the acc_start phase actually passes the end_pos,
     // then return false as this is probably not an intended profile.
-    if (((dist > 0) == (distWhenVelMid0 > 0)) && (fabsf(distWhenVelMid0) > fabsf(dist))) {
-      PRINT("VPG FAIL: end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude.\n");
-      return false;
-    }
-
+    AnkiConditionalErrorAndReturnValue(!(((dist > 0) == (distWhenVelMid0 > 0)) && (fabsf(distWhenVelMid0) > fabsf(dist))), false, 31, "VPG", 205, "end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude.", 0);
 
     float distWhenVelMidIsVelStart = vel_start * (duration - acc_end_duration) + 0.5f*(vel_start * acc_end_duration);
     bool isVelMidGTVelStart = (dist >= distWhenVelMidIsVelStart);
@@ -315,19 +309,12 @@ namespace Anki {
       float C = 0.5f*vs*vs*ts - vs*dist;
       float discr = B*B - 4*A*C;
 
-      if (discr < 0){
-        PRINT("WARNING: discr < 0  (A = %f, B = %f, C = %f)\n", A, B, C);
-        return false;
-      }
+      AnkiConditionalWarnAndReturnValue((discr >=  0), false, 31, "VPG", 206, "discr < 0  (A = %f, B = %f, C = %f)", 3, A, B, C);
 
       float sqrtDiscr = sqrtf(discr);
       vm = (-B + sqrtDiscr) / (2*A);
-
-      if (vm > 0) {
-        // vm should be negative
-        PRINT("WARNING: discr < 0  (A = %f, B = %f, C = %f)\n", A, B, C);
-        return false;
-      }
+    
+      AnkiConditionalWarnAndReturnValue(vm <= 0, false, 31, "VPG", 207, "vm > 0  (A = %f, B = %f, C = %f)", 3, A, B, C);
 
     } else {
       // Cases 1 and 2
@@ -336,19 +323,16 @@ namespace Anki {
 
 
     // Check if any velocity exceeds the max
-    if ( (fabsf(vs) > vel_max) || (fabsf(vm) > vel_max)) {
-      PRINT("WARNING: vs = %f, vm = %f, vel_max = %f\n", vs, vm, vel_max);
-      return false;
-    }
+    AnkiConditionalWarnAndReturnValue(!((fabsf(vs) > vel_max) || (fabsf(vm) > vel_max)), false, 31, "VPG", 208, "vs = %f, vm = %f, vel_max = %f", 3, vs, vm, vel_max);
 
     // Check if any acceleration exceeds the max allowed
     float acc_start = fabsf(vm-vs)/ts;
     float acc_end = fabsf(vm/te);
-    if ((acc_start > acc_max) || (acc_end > acc_max)) {
-      PRINT("WARNING: acc_start = %f, acc_end = %f, acc_max = %f\n", acc_start, acc_end, acc_max);
+    if ((acc_start > acc_max) || (acc_end > acc_max))
+    {
+      AnkiError( 31, "VPG", 209, "acc_start = %f, acc_end = %f, acc_max = %f", 3, acc_start, acc_end, acc_max);
       return false;
     }
-
 
     if (flipped) {
       vs = -vs;
@@ -376,10 +360,10 @@ namespace Anki {
 
 
 #if(DEBUG_VPG)
-    PRINT("VPG: startVel %f, startPos %f, endVel %f, endPos %f\n", startVel_, startPos_, endVel_, endPos_);
-    PRINT("     ts %f, tm %f, te %f, total duration %f\n", ts, tm, te, duration);
-    PRINT("     deltaVelStart %f, deltaVelEnd %f, maxReachableVel %f\n", deltaVelPerTimeStepStart_, deltaVelPerTimeStepEnd_, maxReachableVel_);
-    PRINT("     totalDist %f, decelDistToTarget %f\n", totalDistToTarget_, decelDistToTarget_);
+    AnkiDebug( 31, "VPG", 210, "startVel %f, startPos %f, endVel %f, endPos %f", 4, startVel_, startPos_, endVel_, endPos_);
+    AnkiDebug( 31, "VPG", 211, "ts %f, tm %f, te %f, total duration %f", 4, ts, tm, te, duration);
+    AnkiDebug( 31, "VPG", 212, "deltaVelStart %f, deltaVelEnd %f, maxReachableVel %f", 3, deltaVelPerTimeStepStart_, deltaVelPerTimeStepEnd_, maxReachableVel_);
+    AnkiDebug( 31, "VPG", 213, "totalDist %f, decelDistToTarget %f", 2, totalDistToTarget_, decelDistToTarget_);
 #endif
 
     return true;
@@ -453,7 +437,7 @@ namespace Anki {
 
 
 #if(DEBUG_VPG)
-    PRINT("VPG::Step() - currVel %f, currPos %f, currDistToTarget %f, isDecel %d\n", currVel_, currPos_, currDistToTarget, isDecel_);
+    AnkiDebug( 32, "VPG::Step()", 214, "currVel %f, currPos %f, currDistToTarget %f, isDecel %d", 4, currVel_, currPos_, currDistToTarget, isDecel_);
 #endif
 
 

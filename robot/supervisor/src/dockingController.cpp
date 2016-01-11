@@ -301,7 +301,7 @@ namespace Anki {
       {
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
 
-        AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 16, "DockingController::Init()", 108, "NULL head cam info!\n", 0);
+        AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 4, "DockingController::Init()", 29, "NULL head cam info!\n", 0);
 
         // Compute FOV from focal length (currently used for tracker prediciton)
         headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
@@ -333,7 +333,7 @@ namespace Anki {
           u32 currTime = HAL::GetMicroCounter();
           if (lastTime != 0) {
             u32 period = (currTime - lastTime)/1000;
-            PRINT("PERIOD: %d ms\n", period);
+            AnkiDebug( 5, "DockingController", 30, "PERIOD: %d ms\n", 1, period);
           }
           lastTime = currTime;
 #endif
@@ -343,16 +343,16 @@ namespace Anki {
           // Check if we are beyond point of no return distance
           if (pastPointOfNoReturn_) {
 #if(DEBUG_DOCK_CONTROLLER)
-            PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
+            AnkiDebug( 5, "DockingController", 31, "Ignoring error msg because past point of no return (%f < %d)", 2, dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
 #endif
             break; // out of while
           }
 
 
 #if(DEBUG_DOCK_CONTROLLER)
-          PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
-                "z_height=%f, angleErr=%fdeg\n",
-                (dockMsg.isApproximate ? " approximate " : " "),
+          AnkiDebug( 5, "DockingController", 32, "Received (approximate=%d) docking error signal: x_distErr=%f, y_horErr=%f, "
+                "z_height=%f, angleErr=%fdeg", 5,
+                dockMsg.isApproximate,
                 dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
                 dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
 #endif
@@ -421,7 +421,7 @@ namespace Anki {
           // Marker has been outside field of view.
           // Check if it should be visible again.
           if (IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH)) {
-            PRINT("Marker should be INSIDE FOV\n");
+            AnkiDebug( 5, "DockingController", 33, "Marker should be INSIDE FOV\n", 0);
             // Fake the error signal received timestamp to reset the timeout
             lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
             markerOutOfFOV_ = false;
@@ -438,7 +438,7 @@ namespace Anki {
             if (PathFollower::IsTraversingPath() &&
                 !IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH - 5.f) &&
                 distToMarker > FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM) {
-              PRINT("Marker should be OUTSIDE FOV\n");
+              AnkiDebug( 5, "DockingController", 34, "Marker should be OUTSIDE FOV\n", 0);
               markerOutOfFOV_ = true;
             }
           }
@@ -448,7 +448,7 @@ namespace Anki {
         // Check if we are beyond point of no return distance
         if (!pastPointOfNoReturn_ && (pointOfNoReturnDistMM_ != 0) && (distToMarker < pointOfNoReturnDistMM_)) {
 #if(DEBUG_DOCK_CONTROLLER)
-          PRINT("DockingController: Point of no return (%f < %d)\n", distToMarker, pointOfNoReturnDistMM_);
+          AnkiDebug( 5, "DockingController", 35, "Point of no return (%f < %d)", 2, distToMarker, pointOfNoReturnDistMM_);
 #endif
           pastPointOfNoReturn_ = true;
           mode_ = APPROACH_FOR_DOCK;
@@ -469,7 +469,7 @@ namespace Anki {
               && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
               ResetDocker();
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Giving up.\n", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
+              AnkiDebug( 5, "DockingController", 36, "Too long without block pose (currTime %d, lastErrSignal %d). Giving up.", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
 #endif
             }
             break;
@@ -486,7 +486,7 @@ namespace Anki {
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
+              AnkiDebug( 5, "DockingController", 37, "Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
 #endif
               break;
             }
@@ -494,7 +494,7 @@ namespace Anki {
             // If finished traversing path
             if (createdValidPath_ && !PathFollower::IsTraversingPath()) {
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("*** DOCKING SUCCESS ***\n");
+              AnkiDebug( 5, "DockingController", 38, "*** DOCKING SUCCESS ***", 0);
 #endif
               ResetDocker();
               success_ = true;
@@ -506,8 +506,8 @@ namespace Anki {
           default:
             mode_ = IDLE;
             success_ = false;
-            PRINT("Reached default case in DockingController "
-                  "mode switch statement.(1)\n");
+            AnkiDebug( 5, "DockingController", 39, "Reached default case in DockingController "
+                  "mode switch statement.(1)", 0);
             break;
         }
 
@@ -527,7 +527,7 @@ namespace Anki {
         // Check for readings that we do not expect to get
         if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F
             ) {
-          PRINT("WARN: Ignoring out of range docking error signal (%f, %f, %f)\n", rel_x, rel_y, rel_rad);
+          AnkiWarn( 5, "DockingController", 40, "Ignoring out of range docking error signal (%f, %f, %f)", 3, rel_x, rel_y, rel_rad);
           return;
         }
 
@@ -599,7 +599,7 @@ namespace Anki {
 
         if (rel_x <= dockOffsetDistX_ && ABS(rel_y) < LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
 #if(DEBUG_DOCK_CONTROLLER)
-          PRINT("DOCK POSE REACHED (dockOffsetDistX = %f)\n", dockOffsetDistX_);
+          AnkiDebug( 5, "DockingController", 41, "DOCK POSE REACHED (dockOffsetDistX = %f)", 1, dockOffsetDistX_);
 #endif
           return;
         }
@@ -618,7 +618,7 @@ namespace Anki {
 #if(DEBUG_DOCK_CONTROLLER)
         Anki::Embedded::Pose2d currPose;
         Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle);
-        PRINT("HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n",
+        AnkiDebug( 5, "DockingController", 42, "HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)", 8,
               histPose.x(), histPose.y(), histPose.angle.getDegrees(), t,
               currPose.x(), currPose.y(), currPose.angle.getDegrees(), HAL::GetTimeStamp());
 #endif
@@ -636,10 +636,10 @@ namespace Anki {
           // Marker has been outside field of view,
           // but the latest error signal may indicate that it is back in.
           if (IsMarkerInFOV(blockPose_, MARKER_WIDTH)) {
-            PRINT("Marker signal is INSIDE FOV\n");
+            AnkiInfo( 5, "DockingController", 43, "Marker signal is INSIDE FOV\n", 0);
             markerOutOfFOV_ = false;
           } else {
-            //PRINT("Marker is expected to be out of FOV. Ignoring error signal\n");
+            //AnkiInfo( 5, "DockingController", 44, "Marker is expected to be out of FOV. Ignoring error signal\n", 0);
             return;
           }
         }
@@ -761,7 +761,7 @@ namespace Anki {
 
         // Debug
         if (!createdValidPath_) {
-          PRINT("ERROR DockingController: Failed to create path\n");
+          AnkiError( 5, "DockingController", 45, "DockingController: Failed to create path\n", 0);
           PathFollower::PrintPath();
         }
 

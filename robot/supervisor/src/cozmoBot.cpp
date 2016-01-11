@@ -115,7 +115,7 @@ namespace Anki {
 
         if (LiftController::IsCalibrated() && HeadController::IsCalibrated())
 				{
-          PRINT("Motors calibrated\n");
+          AnkiEvent( 38, "CozmoBot", 239, "Motors calibrated", 0);
           IMUFilter::Reset();
           isDone = true;
         }
@@ -142,26 +142,26 @@ namespace Anki {
         // HAL and supervisor init
 #ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
         lastResult = HAL::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 41, "HAL init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 240, "HAL init failed.\n", 0);
 #endif
 #ifndef TARGET_K02
         lastResult = Messages::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 42, "Messages / Reliable Transport init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 241, "Messages / Reliable Transport init failed.\n", 0);
 #endif
 
         lastResult = Localization::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 43, "Localization System init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 242, "Localization System init failed.\n", 0);
 
         /*
         lastResult = VisionSystem::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 44, "Vision System init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 243, "Vision System init failed.\n", 0);
          */
 
         lastResult = PathFollower::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 45, "PathFollower System init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 244, "PathFollower System init failed.\n", 0);
 
         lastResult = BackpackLightController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 46, "BackpackLightController init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 245, "BackpackLightController init failed.\n", 0);
 
         // Initialize subsystems if/when available:
         /*
@@ -186,17 +186,17 @@ namespace Anki {
          }
          */
         lastResult = DockingController::Init();;
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 47, "DockingController init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 246, "DockingController init failed.\n", 0);
 
         // Before liftController?!
         lastResult = PickAndPlaceController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 48, "PickAndPlaceController init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 247, "PickAndPlaceController init failed.\n", 0);
 
         lastResult = LiftController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 49, "LiftController init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 248, "LiftController init failed.\n", 0);
 #ifndef TARGET_K02
         lastResult = AnimationController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 5, "Robot::Init()", 50, "AnimationController init failed.\n", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 249, "AnimationController init failed.\n", 0);
 #endif
         // Start calibration
         StartMotorCalibrationRoutine();
@@ -274,11 +274,11 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          PRINT("Robot radio is connected.\n");
+          AnkiEvent( 40, "Radio", 250, "Robot radio is connected.", 0);
           wasConnected_ = true;
           BackpackLightController::TurnOffAll();
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
-          PRINT("Radio disconnected\n");
+          AnkiEvent( 40, "Radio", 251, "Radio disconnected", 0);
           Messages::ResetInit();
           SteeringController::ExecuteDirectDrive(0,0);
           LiftController::SetAngularVelocity(0);
@@ -332,7 +332,7 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
 #ifndef TARGET_K02
         if(AnimationController::Update() != RESULT_OK) {
-          PRINT("Failed updating AnimationController. Clearing.\n");
+          AnkiWarn( 38, "CozmoBot", 252, "Failed updating AnimationController. Clearing.", 0);
           AnimationController::Clear();
         }
 #endif
@@ -392,7 +392,7 @@ namespace Anki {
           }
 
           default:
-            PRINT("Unrecognized CozmoBot mode.\n");
+            AnkiWarn( 38, "CozmoBot", 253, "Unrecognized CozmoBot mode.", 0);
 
         } // switch(mode_)
 

@@ -249,7 +249,7 @@ float asin_fast(float x)
 
 float atan2_fast(float y, float x)
 {
-  AnkiAssert( !(y == 0 && x == 0), 77);
+  AnkiAssert( !(y == 0 && x == 0), 254);
 
   if (x>0) {
     return atan_fast(y/x);
@@ -268,7 +268,7 @@ float atan2_fast(float y, float x)
 
 float atan2_acc(float y, float x)
 {
-  AnkiAssert(y != 0 || x != 0, 78);
+  AnkiAssert(y != 0 || x != 0, 255);
 
   float arg = y/x;
   float atan_val = asinf( arg / sqrtf(arg*arg + 1));

@@ -37,6 +37,7 @@
 #include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/robot/logging.h"
 
 #define DEBUG_SPEED_CONTROLLER 0
 
@@ -234,7 +235,7 @@ namespace Anki {
       }
 
 #if(DEBUG_SPEED_CONTROLLER)
-      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %f, measSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, GetCurrentMeasuredVehicleSpeed(), userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
+      AnkiDebug( 28, "SpeedController", 170, "userDesSpeed: %d, userCurrSpeed: %f, measSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", 7, userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, GetCurrentMeasuredVehicleSpeed(), userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
 #endif
 
 #else
