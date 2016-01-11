@@ -1637,11 +1637,13 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
 {
   // for now, this is implemented by simply going over every
   // intermediate pose and finding the closest one
-  float closest = std::numeric_limits<float>::max();
+  float closestXYDist = std::numeric_limits<float>::max();
   float closestThetaDist = std::numeric_limits<float>::max();
+  float minScore = std::numeric_limits<float>::max();
+  bool bestIsInitialState = false;
   size_t startPoint = 0;
 
-  State curr = plan.start_;
+  State currPlanState = plan.start_;
 
   using namespace std;
   if(debug)
@@ -1649,63 +1651,112 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
 
   size_t planSize = plan.Size();
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
-    const MotionPrimitive& prim(GetRawMotionPrimitive(curr.theta, plan.actions_[planIdx]));
+    const MotionPrimitive& prim(GetRawMotionPrimitive(currPlanState.theta, plan.actions_[planIdx]));
 
     // the intermediate position (x,y) coordinates are all centered at
     // 0. Instead of shifting them over each time, we just shift the
     // state we are searching for (fewer ops)
-    State_c target(state.x_mm - GetX_mm(curr.x),
-                   state.y_mm - GetY_mm(curr.y),
-                   Radians(state.theta - GetTheta_c(curr.theta)).ToFloat());
+    State_c offsetToPlanState(state.x_mm - GetX_mm(currPlanState.x),
+                              state.y_mm - GetY_mm(currPlanState.y),
+                              Radians(state.theta - GetTheta_c(currPlanState.theta)).ToFloat());
 
     // first check the exact state.  // TODO:(bn) no sqrt!
-    float initialDist = sqrt(pow(target.x_mm, 2) + pow(target.y_mm, 2));
-    float thetaDist = std::fabsf(target.theta);
+    float initialXYDist = sqrt(pow(offsetToPlanState.x_mm, 2) + pow(offsetToPlanState.y_mm, 2));
+    float initialThetaDist = std::fabsf(offsetToPlanState.theta);
+
     if(debug)
-      cout<<planIdx<<": "<<"initial "<<target<<" = "<<initialDist;
+      cout<<planIdx<<": "<<"initial "<<offsetToPlanState<<" = "<<initialXYDist;
 
-    // give a tiny bonus (1e-6) to the initial state, so we prefer it over the last intermediate state of the
-    // previous action
+    // we want to select a point that is closest to the state, with the following "tie-breakers"
+    // 1. Prefer a state which has (roughly) the same xyError, but is a better theta match
+    // 2. Prefer a state which is an initial state over an intermediate state
+    // 3. Prefer an earlier initial state over a later one
 
-    if((initialDist < closest)
-      || ((initialDist < closest + 1e-6) && (thetaDist <= closestThetaDist))) {
-      closest = initialDist;
+    // #2 is because action 0 will likely have it's last intermediate position at the same position as the
+    // #initial state for action 1. In this case, we'd prefer to select action 1
+
+    const float toleranceToDoTieBreaker = 0.25f;
+    const float thetaMatchTolerance = 1e-5f;
+    
+    const float betterThetaMatchBonus = 5e-4f;
+    const float initialStateBonus = 3e-4f;
+
+    // lower scores are better, check the score of this initial point, with the initial point bonus
+    float initialScore = initialXYDist - initialStateBonus;
+    if( initialScore < minScore + toleranceToDoTieBreaker ) {
+
+      // apply theta bonus
+      if( initialThetaDist < closestThetaDist + thetaMatchTolerance ) {
+        initialScore -= betterThetaMatchBonus;
+      }
+
+      if(debug) {
+        cout<<" score = "<<initialScore;
+      }
+    }
+      
+    if( initialScore < minScore ) {
+      closestXYDist = initialXYDist;
+      closestThetaDist = initialThetaDist;
+      minScore = initialScore;
+      bestIsInitialState = true;
       startPoint = planIdx;
-      closestThetaDist = thetaDist;
-      if(debug)
+
+      if(debug) {
         cout<<"  closest\n";
+      }
     }
-    else {
-      if(debug)
-        cout<<endl;
+    else if(debug) {
+      cout<<endl;
     }
 
+    // check the intermediate positions (which are relative to the starting point)
+    
     for(const auto& intermediate : prim.intermediatePositions) {
       // TODO:(bn) get squared distance
-      State_c currState = State2State_c(curr);
-      float dist = GetDistanceBetween(currState, intermediate.position);
+      // State_c currState = State2State_c(curr);
+      float xyDist = GetDistanceBetween(offsetToPlanState, intermediate.position);
+      float thetaDist = std::fabsf( Radians( state.theta -  intermediate.position.theta ).ToFloat() );
 
       if(debug)
-        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<currState<<" = "<<dist;
+        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<offsetToPlanState<<" = "<<xyDist;
 
-      if(dist < closest) {
-        closest = dist;
-        startPoint = planIdx;
-        if(debug)
-          cout<<"  closest\n";
+      float score = xyDist;
+
+      if( score < minScore + toleranceToDoTieBreaker ) {
+
+        // apply theta bonus
+        if( thetaDist < closestThetaDist + thetaMatchTolerance ) {
+          score -= betterThetaMatchBonus;
+        }
+
+        if(debug) {
+          cout<<" score = "<<score;
+        }
       }
-      else {
-        if(debug)
-          cout<<endl;
+
+      if( score < minScore ) {
+        closestXYDist = xyDist;
+        closestThetaDist = thetaDist;
+        minScore = score;
+        bestIsInitialState = false;
+        startPoint = planIdx;
+
+        if(debug) {
+          cout<<"  closest\n";
+        }
+      }
+      else if(debug) {
+        cout<<endl;
       }
     }
 
-    StateID currID(curr);
+    StateID currID(currPlanState);
     ApplyAction(plan.actions_[planIdx], currID, false);
-    curr = State(currID);
+    currPlanState = State(currID);
   }
 
-  distanceToPlan = closest;
+  distanceToPlan = closestXYDist;
 
   return startPoint;
 }
