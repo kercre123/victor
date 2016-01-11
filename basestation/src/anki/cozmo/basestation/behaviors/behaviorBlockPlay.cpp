@@ -877,9 +877,9 @@ namespace Cozmo {
     {
       if (_animActionTags.count(msg.idTag) > 0) {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.AnimCompleted",
-                               "%s (result %d)",
+                               "%s (result: %s)",
                                msg.completionInfo.Get_animationCompleted().animationName.c_str(),
-                               msg.result);
+                               EnumToString(msg.result));
         
         // Erase this animation action and resume pickOrPlace if there are no more animations pending
         _animActionTags.erase(msg.idTag);
@@ -975,21 +975,18 @@ namespace Cozmo {
         } else if( msg.result == ActionResult::FAILURE_RETRY ) {
 
           // We failed to pick up or place the last block, try again
-          
-          bool wasDockAttempt = msg.actionType == RobotActionType::ROLL_OBJECT_LOW && 
-            msg.completionInfo.Get_objectInteractionCompleted().attemptedDock;
-
-          if( wasDockAttempt ) {
-            PlayAnimation(robot, "ID_rollBlock_fail_01");
-          }
-          else {
+        
+          if(ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE == msg.completionInfo.Get_objectInteractionCompleted().result) {
             PlayAnimation(robot, "ID_react2block_align_fail");
+          } else {
+            PlayAnimation(robot, "ID_rollBlock_fail_01");
           }
 
 
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
-                                 "failed roll with FAILURE_RETRY,trying again");
+                                 "failed roll with FAILURE_RETRY and %s,trying again",
+                                 EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
           // go back to inspecting so we know if we need to do a roll or a pickup
           SetCurrState(State::InspectingBlock);
           _holdUntilTime = currentTime_sec + _timetoInspectBlock;
@@ -997,7 +994,8 @@ namespace Cozmo {
         } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
-                                 "failed roll, searching for cube");
+                                 "failed roll with %s, searching for cube",
+                                 EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
           _missingBlockFoundState = State::InspectingBlock;
           SetCurrState(State::SearchingForMissingBlock);
           _isActing = false;
@@ -1051,16 +1049,13 @@ namespace Cozmo {
 
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.PickupFailure",
-                                 "failed pickup, trying again");
+                                 "failed pickup with %s, trying again",
+                                 EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
 
-          bool wasDockAttempt = msg.actionType == RobotActionType::ROLL_OBJECT_LOW && 
-            msg.completionInfo.Get_objectInteractionCompleted().attemptedDock;
-
-          if( wasDockAttempt ) {
-            PlayAnimation(robot, "ID_rollBlock_fail_01");  // TEMP:  // TODO:(bn) different one here?
-          }
-          else {
+          if(ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE == msg.completionInfo.Get_objectInteractionCompleted().result) {
             PlayAnimation(robot, "ID_react2block_align_fail");
+          } else {
+            PlayAnimation(robot, "ID_rollBlock_fail_01");  // TEMP:  // TODO:(bn) different one here?
           }
 
           SetCurrState(State::InspectingBlock);
@@ -1070,7 +1065,8 @@ namespace Cozmo {
         } else {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                    "BehaviorBlockPlay.HandleActionCompleted.PickupFailure",
-                                   "failed pickup, searching");
+                                   "failed pickup with %s, searching",
+                                   EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
             _missingBlockFoundState = State::InspectingBlock;
             SetCurrState(State::SearchingForMissingBlock);
             _isActing = false;
@@ -1123,41 +1119,48 @@ namespace Cozmo {
           }
         } else {
 
-          bool wasDockAttempt = msg.actionType == RobotActionType::PLACE_OBJECT_HIGH &&
-            msg.completionInfo.Get_objectInteractionCompleted().attemptedDock;
+          switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+          {
+            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+            {
+              // TODO:(bn) "soft fail" sound here?
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                     "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
+                                     "pre-dock fail, trying again");
+              PlayAnimation(robot, "ID_react2block_align_fail");
+              SetCurrState(State::PlacingBlock);
+              _isActing = false;
+              break;
+            }
+              
+            default:
+            {
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                     "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
+                                     "dock fail with %s, backing up to try again",
+                                     EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
+              
+              _objectToPlaceOn.UnSet();
+              _objectToPickUp.UnSet();
+              _trackedObject.UnSet();
+              
+              const float failureBackupDist = 70.0f;
+              const float failureBackupSpeed = 80.0f;
+              
+              // back up and drop the block, then re-init to start over
+              StartActing(robot,
+                          new CompoundActionSequential({
+                new PlayAnimationAction("ID_rollBlock_fail_01"),
+                new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
+                new PlaceObjectOnGroundAction()}),
+                          [this,&robot](ActionResult ret){
+                            InitState(robot);
+                            return true;
+                          });
+              break;
+            }
+          } // switch(objectInteractionResult)
           
-          if( wasDockAttempt ) {
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
-                                   "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
-                                   "dock fail, backing up to try again");          
-          
-            _objectToPlaceOn.UnSet();
-            _objectToPickUp.UnSet();
-            _trackedObject.UnSet();
-
-            const float failureBackupDist = 70.0f;
-            const float failureBackupSpeed = 80.0f;
-
-            // back up and drop the block, then re-init to start over          
-            StartActing(robot,
-                        new CompoundActionSequential({
-                            new PlayAnimationAction("ID_rollBlock_fail_01"),
-                            new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
-                            new PlaceObjectOnGroundAction()}),
-                        [this,&robot](ActionResult ret){
-                          InitState(robot);
-                          return true;
-                        });
-          }
-          else {
-            // TODO:(bn) "soft fail" sound here?
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
-                                   "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
-                                   "pre-dock fail, trying again");
-            PlayAnimation(robot, "ID_react2block_align_fail");
-            SetCurrState(State::PlacingBlock);
-            _isActing = false;
-          }
         }
         break;
       } // case PlacingBlock
