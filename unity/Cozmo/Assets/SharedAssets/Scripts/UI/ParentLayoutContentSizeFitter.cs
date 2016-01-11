@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class ParentLayoutContentSizeFitter : MonoBehaviour {
 
   void OnRectTransformDimensionsChange() {
-    if (transform.parent != null) {
+    if (transform.parent != null && gameObject.activeInHierarchy) {
       StartCoroutine(ResizeParent());
     }
   }
