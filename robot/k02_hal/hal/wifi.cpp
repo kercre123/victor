@@ -6,6 +6,7 @@
 #include "messages.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
+#include "anki/cozmo/robot/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
 /// Code below assumes buffer elements = uint8_t also assumes power of two size
@@ -40,8 +41,7 @@ namespace HAL {
     }
     else
     {
-      AnkiConditionalErrorAndReturnValue(size <= RTIP_MAX_CLAD_MSG_SIZE, false, "WiFi", 
-                            "Can't send message %x[%d] to WiFi, max size %d\r\n", msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
+      AnkiConditionalErrorAndReturnValue(size <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
       const uint8_t rind = txRind;
       uint8_t wind = txWind;
       const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
