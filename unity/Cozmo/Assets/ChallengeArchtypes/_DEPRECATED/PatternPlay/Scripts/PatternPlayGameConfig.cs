@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-
-public class TreasureHuntGameConfig : MinigameConfigBase {
+﻿public class PatternPlayGameConfig : MinigameConfigBase {
   public override int NumCubesRequired() {
     return 1;
   }

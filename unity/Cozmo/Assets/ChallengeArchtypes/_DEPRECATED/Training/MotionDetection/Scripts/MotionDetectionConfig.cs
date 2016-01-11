@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SimonGameConfig : MinigameConfigBase {
+public class MotionDetectionConfig : MinigameConfigBase {
   public override int NumCubesRequired() {
     return 1;
   }
@@ -10,7 +10,7 @@ public class SimonGameConfig : MinigameConfigBase {
     return 1;
   }
 
-  public int MinSequenceLength = 3;
-  public int MaxSequenceLength = 10;
-  public int MaxAttempts = 3;
+  public float TimeAllowedBetweenWaves = 1.0f;
+
+  public float TotalWaveTime = 5.0f;
 }
