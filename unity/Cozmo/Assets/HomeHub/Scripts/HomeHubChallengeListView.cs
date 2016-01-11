@@ -20,8 +20,8 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private RectTransform _BottomChallengeContainer;
 
-    public event HubWorldButton.ButtonClickedHandler OnLockedChallengeClicked;
-    public event HubWorldButton.ButtonClickedHandler OnUnlockedChallengeClicked;
+    public event TimelineView.ButtonClickedHandler OnLockedChallengeClicked;
+    public event TimelineView.ButtonClickedHandler OnUnlockedChallengeClicked;
 
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 

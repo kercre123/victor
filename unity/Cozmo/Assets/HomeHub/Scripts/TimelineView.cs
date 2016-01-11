@@ -52,7 +52,8 @@ namespace Cozmo.HomeHub {
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
       _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<HomeHubChallengeListView>();
       _ChallengeListViewInstance.Initialize(challengeStatesById);
-
+      _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
+      _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
       // TMP: GENERATE FAKE DATA
       GenerateFakeData();
@@ -74,7 +75,7 @@ namespace Cozmo.HomeHub {
         if (UnityEngine.Random.Range(0f, 1f) > 0.3f) {
           var entry = new TimelineEntryState(date);
 
-          for(int j = 0; j < (int)CozmoStat.COUNT; j++) {
+          for (int j = 0; j < (int)CozmoStat.COUNT; j++) {
             var stat = (CozmoStat)j;
             if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
               int goal = UnityEngine.Random.Range(0, 6);

@@ -108,7 +108,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 0
+  m_Spacing: 10
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
 --- !u!114 &11428552
@@ -189,7 +189,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 0
+  m_Spacing: 10
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
 --- !u!224 &22401556
@@ -332,6 +332,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11402620, guid: 356b37c545ee84297ac38fc2bbb1ce6a,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: m_Spacing
+      value: 10
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 187040}
