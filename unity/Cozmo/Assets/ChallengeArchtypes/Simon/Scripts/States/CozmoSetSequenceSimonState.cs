@@ -26,6 +26,15 @@ namespace Simon {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
+
+      _StateMachine.PushSubState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
+    }
+
+    private void HandleOnCozmoStartAnimationDone(bool success) {
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-1.0f);
+      _StateMachine.PopState();
     }
 
     public override void Update() {

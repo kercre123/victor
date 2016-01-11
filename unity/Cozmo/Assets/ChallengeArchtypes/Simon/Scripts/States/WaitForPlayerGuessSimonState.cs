@@ -55,11 +55,13 @@ namespace Simon {
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
       BlackoutLights();
+      _StateMachine.PopState();
       _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
       BlackoutLights();
+      _StateMachine.PopState();
       _GameInstance.RaiseMiniGameLose();
     }
 
@@ -75,7 +77,7 @@ namespace Simon {
       }
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleOnPlayerLoseAnimationDone));
+      _StateMachine.PushSubState(new AnimationState(AnimationName.kMajorWin, HandleOnPlayerLoseAnimationDone));
     }
 
     private void PlayerWinGame() {
@@ -87,7 +89,7 @@ namespace Simon {
 
       // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
       // and feel a bit thwarted 
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnPlayerWinAnimationDone));
+      _StateMachine.PushSubState(new AnimationState(AnimationName.kShocked, HandleOnPlayerWinAnimationDone));
     }
 
     private void OnBlockTapped(int id, int times) {
