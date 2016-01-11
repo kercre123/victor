@@ -85,7 +85,7 @@ public class Robot : IDisposable {
       IdTag = idTag;
       _Callback = callback;
     }
-      
+
     public void Invoke(bool success) {
       if (_Callback != null) {
         var target = _Callback.Target;
@@ -893,7 +893,9 @@ public class Robot : IDisposable {
     TrackToObject(null);
   }
 
-  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true) {
+  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true,
+                         Robot.RobotCallback callback = null,
+                         QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     FaceObjectMessage.objectID = observedObject;
     FaceObjectMessage.robotID = ID;
     FaceObjectMessage.maxTurnAngle = float.MaxValue;
@@ -902,8 +904,15 @@ public class Robot : IDisposable {
     
     DAS.Debug(this, "Face Object " + FaceObjectMessage.objectID);
 
-    RobotEngineManager.Instance.Message.FaceObject = FaceObjectMessage;
+    QueueSingleAction.action.faceObject = FaceObjectMessage;
+    var tag = GetNextIdTag();
+    QueueSingleAction.idTag = tag;
+    QueueSingleAction.position = queueActionPosition;
+    RobotEngineManager.Instance.Message.QueueSingleAction = QueueSingleAction;
+
     RobotEngineManager.Instance.SendMessage();
+
+    _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
   }
 
   public void FacePose(Face face) {
