@@ -219,7 +219,8 @@ void ProceduralFaceParams::CombineEyeParams(EyeParamArray& eyeArray0, const EyeP
   };
   for (auto param : addParamList)
   {
-    eyeArray0[(int)param] += eyeArray1[(int)param];
+    const auto newValue = eyeArray0[(int)param] + eyeArray1[(int)param];
+    eyeArray0[(int)param] = Clip(param, newValue, eyeArray0[(int)param]);
   }
   
   static const auto multiplyParamList =
@@ -229,7 +230,8 @@ void ProceduralFaceParams::CombineEyeParams(EyeParamArray& eyeArray0, const EyeP
   };
   for (auto param : multiplyParamList)
   {
-    eyeArray0[(int)param] *= eyeArray1[(int)param];
+    const auto newValue = eyeArray0[(int)param] * eyeArray1[(int)param];
+    eyeArray0[(int)param] = Clip(param, newValue, eyeArray0[(int)param]);
   }
 }
   
@@ -246,7 +248,7 @@ ProceduralFaceParams& ProceduralFaceParams::Combine(const ProceduralFaceParams& 
 }
 
   
-ProceduralFaceParams::Value ProceduralFaceParams::Clip(WhichEye eye, Parameter param, Value newValue) const
+ProceduralFaceParams::Value ProceduralFaceParams::Clip(Parameter param, Value newValue, Value oldValue) const
 {
 # define POS_INF std::numeric_limits<Value>::max()
 # define NEG_INF std::numeric_limits<Value>::lowest()
@@ -286,9 +288,9 @@ ProceduralFaceParams::Value ProceduralFaceParams::Clip(WhichEye eye, Parameter p
   
   if(std::isnan(newValue)) {
     PRINT_NAMED_WARNING("ProceduralFaceParams.Clip.NaN",
-                        "Returning original value instead of NaN for %s",
-                        EnumToString(param));
-    newValue = GetParameter(eye, param);
+                        "Returning original value (%f) instead of NaN for %s",
+                        oldValue, EnumToString(param));
+    newValue = oldValue;
   }
   
   return newValue;

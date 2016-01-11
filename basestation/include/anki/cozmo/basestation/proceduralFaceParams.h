@@ -121,7 +121,7 @@ private:
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   void CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1);
   
-  Value Clip(WhichEye eye, Parameter whichParam, Value value) const;
+  Value Clip(Parameter whichParam, Value newValue, Value oldValue) const;
                                                           
   static ProceduralFaceParams* _resetData;
   static std::function<void(const char*,Value,Value,Value)> ClipWarnFcn;
@@ -132,7 +132,7 @@ private:
   
 inline void ProceduralFaceParams::SetParameter(WhichEye whichEye, Parameter param, Value value)
 {
-  _eyeParams[whichEye][static_cast<size_t>(param)] = Clip(whichEye, param, value);
+  _eyeParams[whichEye][static_cast<size_t>(param)] = Clip(param, value, GetParameter(whichEye, param));
 }
 
 inline ProceduralFaceParams::Value ProceduralFaceParams::GetParameter(WhichEye whichEye, Parameter param) const
