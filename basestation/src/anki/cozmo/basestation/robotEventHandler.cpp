@@ -661,7 +661,12 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     }
     else {
       // In the normal case directly set the lift height
-      robot->GetMoveComponent().MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
+      MoveLiftToHeightAction* action = new MoveLiftToHeightAction(msg.height_mm);
+      action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
+      action->SetLiftAccel(msg.accel_rad_per_sec2);
+      action->SetDuration(msg.duration_sec);
+      
+      robot->GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, action);
     }
   }
 }
