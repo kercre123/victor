@@ -86,6 +86,10 @@ protected:
   
   virtual void Cleanup(Robot &robot) override;
   
+  // Note that derived classes should override InitInternal, which is called by Init
+  virtual ActionResult Init(Robot& robot) override final;
+  virtual ActionResult InitInternal(Robot& robot) = 0;
+  
   // Derived classes must implement Init(), but cannot implement CheckIfDone().
   virtual ActionResult CheckIfDone(Robot& robot) override final;
   
@@ -107,6 +111,7 @@ private:
   
   u32      _eyeShiftTag;
   bool     _moveEyes    = false;
+  f32      _originalEyeDartDist;
   
   std::string _turningSoundAnimation = "ID_MotionTrack_TurnSmall";
   f32      _soundSpacingMin_sec = 0.5f;
@@ -138,7 +143,7 @@ public:
 
 protected:
   
-  virtual ActionResult Init(Robot& robot) override;
+  virtual ActionResult InitInternal(Robot& robot) override;
   virtual void Cleanup(Robot& robot) override;
   
   // Required by ITrackAction:
@@ -170,7 +175,7 @@ public:
   
 protected:
   
-  virtual ActionResult Init(Robot& robot) override;
+  virtual ActionResult InitInternal(Robot& robot) override;
   virtual void Cleanup(Robot& robot) override;
   
   // Required by ITrackAction:
@@ -197,7 +202,7 @@ public:
   
 protected:
   
-  virtual ActionResult Init(Robot& robot) override;
+  virtual ActionResult InitInternal(Robot& robot) override;
   
   // Required by ITrackAction:
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
