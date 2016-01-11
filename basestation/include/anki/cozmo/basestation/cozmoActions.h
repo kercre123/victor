@@ -691,6 +691,14 @@ namespace Anki {
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
+      // Subclasses should call this because it sets the interaction result
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override {
+        // TODO: Annoying we have to copy this out, bet the Get_() method is const...
+        ObjectInteractionCompleted interactionCompleted = completionUnion.Get_objectInteractionCompleted();
+        interactionCompleted.result = _interactionResult;
+        completionUnion.Set_objectInteractionCompleted(interactionCompleted);
+      }
+      
       ObjectID                   _dockObjectID;
       DockAction                 _dockAction;
       const Vision::KnownMarker* _dockMarker                     = nullptr;
@@ -706,8 +714,7 @@ namespace Anki {
       bool                       _placeObjectOnGroundIfCarrying  = false;
       f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
       f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
-      bool                       _attemptedDock                  = false;
-
+      ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
       
     private:
 
@@ -1098,6 +1105,8 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -1109,6 +1118,7 @@ namespace Anki {
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker = nullptr;
       IActionRunner*              _faceAndVerifyAction = nullptr;
+      ObjectInteractionResult     _interactionResult = ObjectInteractionResult::INCOMPLETE;
       
     }; // class PlaceObjectOnGroundAction
     
