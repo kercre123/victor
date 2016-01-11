@@ -551,7 +551,6 @@ namespace Cozmo {
     return paramsSet;
   } // GetFaceHelper()
   
-  
   void AnimationStreamer::KeepFaceAlive(Robot& robot)
   {
     using Param = LiveIdleAnimationParameter;
@@ -560,50 +559,25 @@ namespace Cozmo {
     _nextEyeDart_ms -= BS_TIME_STEP;
     
     // Eye darts
-    if(_nextEyeDart_ms <= 0)
+    const f32 MaxDist = GetParam<f32>(Param::EyeDartMaxDistance_pix);
+    if(_nextEyeDart_ms <= 0 && MaxDist > 0.f)
     {
-      const f32 MaxDist = GetParam<f32>(Param::EyeDartMaxDistance_pix);
-      const f32 xFaceShift = _rng.RandIntInRange(-MaxDist, MaxDist);
-      const f32 yFaceShift = _rng.RandIntInRange(-MaxDist, MaxDist);
-      
-      // Amount "outer" eye will increase in scale depending on how far left/right we dart
-      const f32 yscaleLR = 1.f +  GetParam<f32>(Param::EyeDartOuterEyeScaleIncrease)*std::abs(xFaceShift)/MaxDist;
-      
-      // Amount both eyes will increase/decrease in size dependingon how far we dart
-      // up our down
-      const f32 MaxScaleUD = GetParam<f32>(Param::EyeDartUpMaxScale);   // Big looking up (negative y)
-      const f32 MinScaleUD = GetParam<f32>(Param::EyeDartDownMinScale); // Squinty looking down (positive y)
-      const f32 yscaleUD = (MaxScaleUD-MinScaleUD)*(1.f - (yFaceShift + MaxDist)/(2.f*MaxDist)) + MinScaleUD;
+      const f32 xDart = _rng.RandIntInRange(-MaxDist, MaxDist);
+      const f32 yDart = _rng.RandIntInRange(-MaxDist, MaxDist);
       
       // Randomly choose how long the shift should take
       const s32 duration = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartMinDuration_ms),
                                                GetParam<s32>(Param::EyeDartMaxDuration_ms));
       
-      // If looking down (positive y), push eyes together (decrease IOD=interocular distance)
-      const f32 MaxIOD = 2.f;
-      f32 reduceIOD = 0.f;
-      if(yFaceShift > 0) {
-        reduceIOD = MaxIOD*yFaceShift/MaxDist;
-      }
+      PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
+                        "shift=(%.1f,%.1f)", xDart, yDart);
       
-      //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
-      //                  "shift=(%.1f,%.1f), scale=(%.3f,%.3f)", xFaceShift, yFaceShift, xscale, yscale);
-      
+      const f32 normDist = 5.f;
       ProceduralFace procFace;
-      ProceduralFaceParams& params = procFace.GetParams();
-      params.SetFacePosition({xFaceShift, yFaceShift});
-      // Scale inner/outer eyes differently, depending on which way we're looking
-      if(xFaceShift < 0) {
-        params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
-        params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
-      } else {
-        params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
-        params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
-      }
-      
-      //params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
-      params.SetParameter(ProceduralFace::WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
-      params.SetParameter(ProceduralFace::WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
+      procFace.GetParams().LookAt(xDart, yDart, normDist, normDist,
+                                  GetParam<f32>(Param::EyeDartUpMaxScale),
+                                  GetParam<f32>(Param::EyeDartDownMinScale),
+                                  GetParam<f32>(Param::EyeDartOuterEyeScaleIncrease));
       
       if(_eyeDartTag == NotAnimatingTag) {
         FaceTrack faceTrack;

@@ -92,6 +92,18 @@ public:
                    float fraction,
                    bool usePupilSaccades = false);
   
+  // Adjust settings to make the robot look at a give place. You specify the
+  // (x,y) position of the face center and the normalize factor which is the
+  // maximum distance in x or y this LookAt is relative to. The eyes are then
+  // shifted, scaled, and squeezed together as needed to create the effect of
+  // the robot looking there.
+  //  - lookUpMaxScale controls how big the eyes get when looking up (negative y)
+  //  - lookDownMinScale controls how small the eyes get when looking down (positive y)
+  //  - outerEyeScaleIncrease controls the differentiation between inner/outer eye heigh
+  //    when looking left or right
+  void LookAt(f32 x, f32 y, f32 xmax, f32 ymax,
+              f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease);
+  
   // Combine the input params with those from our instance
   ProceduralFaceParams& Combine(const ProceduralFaceParams& otherFace);
   
