@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo.Audio;
+using AnimationGroups;
 
 namespace Simon {
   public class WaitForPlayerGuessSimonState : State {
@@ -77,7 +78,7 @@ namespace Simon {
       }
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
-      _StateMachine.PushSubState(new AnimationState(AnimationName.kMajorWin, HandleOnPlayerLoseAnimationDone));
+      _StateMachine.PushSubState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnPlayerLoseAnimationDone));
     }
 
     private void PlayerWinGame() {

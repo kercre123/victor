@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using AnimationGroups;
 
 namespace Simon {
   public class CozmoGuessSimonState : State {
@@ -98,7 +99,7 @@ namespace Simon {
 
       // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
       // and feel a bit thwarted 
-      _StateMachine.PushSubState(new AnimationState(AnimationName.kMajorWin, HandleOnCozmoWinAnimationDone));
+      _StateMachine.PushSubState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnCozmoWinAnimationDone));
     }
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
