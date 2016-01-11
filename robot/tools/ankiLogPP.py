@@ -292,7 +292,7 @@ class ParseData:
                         else:
                             vPrint(2, "Skipping file \"{}\" because it doesn't have the logging include.".format(fpn))
             self.nameTable  = {ASSERT_NAME_ID: "ASSERT", 1: "Messages"}
-            self.fmtTable   = {0: "Invalid format ID", 1: "RTIP missed %d traces", 2: "WiFi missed %d traces"}
+            self.fmtTable   = {0: ("Invalid format ID", 0), 1: ("RTIP missed %d traces", 1), 2: ("WiFi missed %d traces", 1)}
             self.dirtyFiles = set()
 
     MACROS = {
@@ -358,11 +358,11 @@ class ParseData:
                         raise LogPPError("Expected complete but file \"{}\" had an unprocessed macro".format(fpn))
                     if i.fmtId is not None:
                         if i.fmtId not in self.fmtTable:
-                            self.fmtTable[i.fmtId] = i.fmt
+                            self.fmtTable[i.fmtId] = (i.fmt, i.nargs)
                         else: # If ID is already in table
-                            if i.fmt != self.fmtTable[i.fmtId]: # But not a match
+                            if i.fmt != self.fmtTable[i.fmtId][0]: # But not a match
                                 if shouldBeComplete:
-                                    raise LogPPError("Expecting complte but found conflicting format ID in file \"[]\"".format(fpn))
+                                    raise LogPPError("Expecting complete but found conflicting format ID in file \"[]\"".format(fpn))
                                 else:
                                     i.fmtId = None
                     elif shouldBeComplete:
@@ -376,7 +376,7 @@ class ParseData:
             fmtIdGen  = rangeGenerator(max(self.fmtTable.keys())  + 1, 2**32-1)
             # Inverse mappings to find existing ones
             nameIdTable = {v: k for k, v in self.nameTable.items()}
-            fmtIdTable  = {v: k for k, v in self.fmtTable.items()}
+            fmtIdTable  = {v[0]: k for k, v in self.fmtTable.items()}
             for fpn, instances in self.pt.items():
                 for i in instances:
                     if i.nameId is None:
@@ -392,7 +392,7 @@ class ParseData:
                             i.fmtId = fmtIdTable[i.fmt]
                         else:
                             i.fmtId = next(fmtIdGen)
-                            self.fmtTable[i.fmtId] = i.fmt
+                            self.fmtTable[i.fmtId] = (i.fmt, i.nargs)
                             fmtIdTable[i.fmt] = i.fmtId
                         self.dirtyFiles.add(fpn)
 
@@ -455,6 +455,12 @@ def main(argv):
     if args.string_table:
         parse.writeJSON(args.output)
 
+def importTables(fileName):
+    "Import the string table JSON file and return Python dicts"
+    jsonDict = json.load(open(fileName, "r"))
+    nameTable = {int(k): v for k,v in jsonDict['nameTable'].items()}
+    fmtTable  = {int(k): tuple(v) for k,v in jsonDict['formatTable'].items()}
+    return nameTable, fmtTable
 
 if __name__ == '__main__':
     main(sys.argv)

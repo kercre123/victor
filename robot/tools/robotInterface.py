@@ -7,12 +7,19 @@ import sys, os, time
 
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
+ANKI_LOG_STRING_TABLE = os.path.join('..', 'resources', 'config', 'basestation', 'AnkiLogStringTables.json')
 
 if os.path.isfile(os.path.join(CLAD_SRC, "Makefile")):
     import subprocess
     make = subprocess.Popen(["make", "python", "-C", "clad"])
     if make.wait() != 0:
-        sys.exit("Could't build/update python clad, exit status {:d}\r\n".format(make.wait()))
+        sys.exit("Could't build/update python clad, exit status {:d}".format(make.wait(), linesep=os.linesep))
+
+if not os.path.isfile(ANKI_LOG_STRING_TABLE):
+    import subprocess
+    make = subprocess.Popen(['make', ANKI_LOG_STRING_TABLE])
+    if make.wait() != 0:
+        sys.exit("Anki log string table ({}) wasn't available and generating it failed with exit status {:d}".format(ANKI_LOG_STRING_TABLE, make.wait()))
 
 sys.path.insert(0, CLAD_DIR)
 
@@ -21,7 +28,8 @@ try:
     from clad.robotInterface.messageEngineToRobot import Anki
     from clad.robotInterface.messageRobotToEngine import Anki as _Anki
 except:
-    sys.exit("Can't import ReliableTransport / CLAD libraries!\r\n\t* Are you running from the base robot directory?\r\n")
+    sys.exit("Can't import ReliableTransport / CLAD libraries!{linesep}\t* Are you running from the base robot directory?{linesep}".format(linesepos.linesep))
+from ankiLogPP import importTables
 
 Anki.update(_Anki.deep_clone())
 RI = Anki.Cozmo.RobotInterface # namespace shortcut
@@ -48,6 +56,7 @@ class _Dispatcher(IDataReceiver):
         self.ReceiveDataSubscribers = {} # Dict for message tags
         self.transport = ReliableTransport(transport, self)
         self.transport.start()
+        self.nameTable, self.formatTable = importAnkiLogStringTable
 
     def Connect(self, dest=("172.31.1.1", 5551)):
         "Initiate reliable Connection"
