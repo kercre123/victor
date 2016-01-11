@@ -252,7 +252,7 @@ namespace Cozmo {
 
           const float lowCarry = kLowCarryHeightMM; //  + 10;
           
-          if( robot.IsCarryingObject() && robot.GetLiftHeight() > lowCarry + 5 && !robot.IsLiftMoving() ) {
+          if( robot.IsCarryingObject() && robot.GetLiftHeight() > lowCarry + 5 && !robot.GetMoveComponent().IsLiftMoving() ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace",
                                    "block in lift is blocking view, moving from %f to %f",
                                    robot.GetLiftHeight(),

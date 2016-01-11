@@ -967,7 +967,7 @@ namespace Anki {
                          robot.GetPoseFrameID());
       }
 
-      if( robot.IsMoving() ) {
+      if( robot.GetMoveComponent().IsMoving() ) {
         _turnStarted = true;
       }
       else if( _turnStarted ) {
@@ -1480,7 +1480,7 @@ namespace Anki {
       
       // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
       // TODO: Should this check if it's moving at all?
-      if (robot.IsHeadMoving()) {
+      if (robot.GetMoveComponent().IsHeadMoving()) {
         _waitToVerifyTime = -1;
       }
       
@@ -1723,7 +1723,7 @@ namespace Anki {
     bool MoveLiftToHeightAction::IsLiftInPosition(const Robot& robot) const
     {
       const bool inPosition = (NEAR(_heightWithVariation, robot.GetLiftHeight(), _heightTolerance) &&
-                               !robot.IsLiftMoving());
+                               !robot.GetMoveComponent().IsLiftMoving());
       
       return inPosition;
     }
@@ -2102,12 +2102,12 @@ namespace Anki {
           _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("DockSquint", std::move(squintLayer));
         }
       }
-      else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
+      else if (!robot.IsPickingOrPlacing() && !robot.GetMoveComponent().IsMoving())
       {
         const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         
         // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
-        if (robot.IsHeadMoving()) {
+        if (robot.GetMoveComponent().IsHeadMoving()) {
           _waitToVerifyTime = -1;
         }
         
@@ -3136,7 +3136,7 @@ namespace Anki {
       
       // Wait for robot to report it is done picking/placing and that it's not
       // moving
-      if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
+      if (!robot.IsPickingOrPlacing() && !robot.GetMoveComponent().IsMoving())
       {
         // Stopped executing docking path, and should have placed carried block
         // and backed out by now, and have head pointed at an angle to see

@@ -174,14 +174,7 @@ public:
     
     // Returns true if robot is not traversing a path and has no actions in its queue.
     bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
-    
-    // True if wheel speeds are non-zero in most recent RobotState message
-    bool   IsMoving() const {return _isMoving;}
-    
-    // True if head/lift is on its way to a commanded angle/height
-    bool   IsHeadMoving() const {return _isHeadMoving;}
-    bool   IsLiftMoving() const {return _isLiftMoving;}
-    
+  
     // True if we are on the sloped part of a ramp
     bool   IsOnRamp() const { return _onRamp; }
     

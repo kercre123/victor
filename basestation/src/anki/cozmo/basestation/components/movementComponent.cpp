@@ -69,6 +69,13 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeInternal<MessageGameToEngineTag::StopAllMotors>();
 }
   
+void MovementComponent::Update(const Cozmo::RobotState& robotState)
+{
+  _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
+  _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
+  _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
+  
+}
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {

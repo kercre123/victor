@@ -812,7 +812,7 @@ namespace Cozmo {
           //  - if the robot isn't already localized to an object or it has moved
           //     since the last time it got localized to an object.
           useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
-                                     !_robot->IsMoving() &&
+                                     !_robot->GetMoveComponent().IsMoving() &&
                                      distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
                                      matchingObject->CanBeUsedForLocalization() &&

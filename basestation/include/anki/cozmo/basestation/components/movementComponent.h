@@ -25,6 +25,7 @@ namespace Cozmo {
   
 // declarations
 class Robot;
+struct RobotState;
 class IExternalInterface;
 enum class AnimTrackFlag : uint8_t;
   
@@ -33,6 +34,15 @@ class MovementComponent : private Util::noncopyable
 public:
   MovementComponent(Robot& robot);
   virtual ~MovementComponent() { }
+  
+  void Update(const RobotState& robotState);
+  
+  // True if wheel speeds are non-zero in most recent RobotState message
+  bool   IsMoving() const {return _isMoving;}
+  
+  // True if head/lift is on its way to a commanded angle/height
+  bool   IsHeadMoving() const {return _isHeadMoving;}
+  bool   IsLiftMoving() const {return _isLiftMoving;}
   
   bool IsMovementTrackIgnored(AnimTrackFlag track) const;
   bool IsAnimTrackLocked(AnimTrackFlag track) const;
@@ -78,6 +88,11 @@ public:
   
 protected:
   Robot& _robot;
+  
+  bool _isMoving;
+  bool _isHeadMoving;
+  bool _isLiftMoving;
+  
   std::list<Signal::SmartHandle> _eventHandles;
   
   // Object/Face being tracked

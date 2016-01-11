@@ -427,11 +427,10 @@ namespace Anki {
       SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
       
       SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
+
+      GetMoveComponent().Update(msg);
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      _isMoving = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_MOVING);
-      _isHeadMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
-      _isLiftMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
       _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
@@ -1119,9 +1118,9 @@ namespace Anki {
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
                "r:%c%c%c%c lock:%c%c%c %s:%s ",
-               IsLiftMoving() ? 'L' : ' ',
-               IsHeadMoving() ? 'H' : ' ',
-               IsMoving() ? 'B' : ' ',
+               GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
+               GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
+               GetMoveComponent().IsMoving() ? 'B' : ' ',
                IsCarryingObject() ? 'C' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
