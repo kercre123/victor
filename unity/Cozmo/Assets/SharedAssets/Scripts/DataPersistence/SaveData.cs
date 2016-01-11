@@ -9,5 +9,7 @@ namespace DataPersistence {
     public Conversations.ConversationHistory ConversationHistory = new Conversations.ConversationHistory();
 
     public List<string> CompletedChallengeIds = new List<string>();
+
+    public List<TimelineEntryState> PreviousSessions = new List<TimelineEntryState>();
   }
 }

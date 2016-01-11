@@ -104,7 +104,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -131,6 +131,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 0
+  DimBackground: 0
   _QuitGameButtonPrefab: {fileID: 174042, guid: 5cfc3c18e14be4897ab6b17b0035f685,
     type: 2}
   _CozmoStatusPrefab: {fileID: 11442220, guid: cf9f13de2c8374a4789d98c4120fb2e9, type: 2}
