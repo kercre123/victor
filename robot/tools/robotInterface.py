@@ -56,7 +56,7 @@ class _Dispatcher(IDataReceiver):
         self.ReceiveDataSubscribers = {} # Dict for message tags
         self.transport = ReliableTransport(transport, self)
         self.transport.start()
-        self.nameTable, self.formatTable = importAnkiLogStringTable
+        self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE)
 
     def Connect(self, dest=("172.31.1.1", 5551)):
         "Initiate reliable Connection"

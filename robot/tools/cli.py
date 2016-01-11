@@ -73,7 +73,7 @@ class CozmoCLI(IDataReceiver):
         msg = RobotInterface.RobotToEngine.unpack(buffer)
         if msg.tag == msg.Tag.printText:
             sys.stdout.write("ROBOT PRINT ({:d}): {}".format(msg.printText.level, msg.printText.text))
-        elif msg.tag == msg.tag.trace:
+        elif msg.tag == msg.Tag.trace:
             base = "ROBOT TRACE"
             if not msg.trace.name in self.nameTable:
                 sys.stderr.write("{} unknown trace name ID {:d}{}".format(base, msg.trace.name, os.linesep))
@@ -85,7 +85,7 @@ class CozmoCLI(IDataReceiver):
                         'stringId': msg.trace.stringId,
                         'vals':     repr(msg.trace.value)
                 }
-                sys.stderr.write("{base} {level:d} {name}: Unknown format string id {stringId:d}.{linesep}\tValues = {vals}{linesep}".format(kwds))
+                sys.stderr.write("{base} {level:d} {name}: Unknown format string id {stringId:d}.{linesep}\tValues = {vals}{linesep}".format(**kwds))
             elif len(msg.trace.value) != self.formatTable[msg.trace.stringId][1]:
                 kwds = {'linesep':  os.linesep,
                         'base':     base,
@@ -96,15 +96,15 @@ class CozmoCLI(IDataReceiver):
                         'vals':     repr(msg.trace.value),
                         'nvals':  len(msg.trace.value)
                 }
-                sys.stderr.write("{base} {level:d} {name}: Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat:{fmt}{linesep}\t{vals}{linesep}".format(kwds))
+                sys.stderr.write("{base} {level:d} {name}: Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat:{fmt}{linesep}\t{vals}{linesep}".format(**kwds))
             else:
                 kwds = {'linesep':   os.linesep,
                         'base':      base,
                         'level':     msg.trace.level,
-                        'name':      self.nameTable.get[msg.trace.name],
+                        'name':      self.nameTable[msg.trace.name],
                         'formatted': (self.formatTable[msg.trace.stringId][0] % msg.trace.value)
                 }
-                sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(kwds))
+                sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
         elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:
             sys.stdout.write(repr(msg.state))
             sys.stdout.write(os.linesep)
