@@ -99,7 +99,7 @@ public:
   // the robot looking there.
   //  - lookUpMaxScale controls how big the eyes get when looking up (negative y)
   //  - lookDownMinScale controls how small the eyes get when looking down (positive y)
-  //  - outerEyeScaleIncrease controls the differentiation between inner/outer eye heigh
+  //  - outerEyeScaleIncrease controls the differentiation between inner/outer eye height
   //    when looking left or right
   void LookAt(f32 x, f32 y, f32 xmax, f32 ymax,
               f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease);
