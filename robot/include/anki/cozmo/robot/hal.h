@@ -379,7 +379,7 @@ namespace Anki
         sharpID       latest;   // Most up to date sensor value
       } ProximityValues;
 
-
+/*
       // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
       // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
       //       - returns data (from last function call)
@@ -389,7 +389,12 @@ namespace Anki
       // Only call once every 5ms (1 main loop)
       // current order is left -> right -> forward
       void GetProximity(ProximityValues *prox);
-
+*/
+      
+      // Returns distance in mm
+      // If 0, nothing is detected
+      u8 GetForwardProxSensor();
+      
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
       // BATTERY

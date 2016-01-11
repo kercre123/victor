@@ -352,7 +352,7 @@ namespace Anki
               // Since we're actually decelerating to END_OF_PATH_TARGET_SPEED_MMPS, this is just an approximation.
               u16 requiredDecel = 0.5f*currSpeed*currSpeed / distToEnd;
               SpeedController::SetUserCommandedDeceleration(requiredDecel);
-              SpeedController::SetUserCommandedDesiredVehicleSpeed(END_OF_PATH_TARGET_SPEED_MMPS);
+              SpeedController::SetUserCommandedDesiredVehicleSpeed(copysign(END_OF_PATH_TARGET_SPEED_MMPS, path_[currPathSegment_].GetTargetSpeed()));
               startedDecelOnSegment_ = true;
               //PRINT("PathFollower: Decel to end of segment %d (of %d) at %d mm/s^2 from speed of %d mm/s (meas %d mm/s) over %f mm\n",
               //      currPathSegment_, path_.GetNumSegments(), requiredDecel, currSpeed, (s32)SpeedController::GetCurrentMeasuredVehicleSpeed(), distToEnd);

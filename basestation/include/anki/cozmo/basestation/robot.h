@@ -341,8 +341,12 @@ public:
     bool IsPickedUp()         const {return _isPickedUp;}
     
     void SetCarryingObject(ObjectID carryObjectID);
-    void UnSetCarryingObjects();
-    
+    void UnSetCarryingObjects(bool topOnly = false);
+  
+    // If objID == carryingObjectOnTopID, only that object's carry state is unset.
+    // If objID == carryingObjectID, all carried objects' carry states are unset.
+    void UnSetCarryObject(ObjectID objID);
+  
     // Tell the physical robot to dock with the specified marker
     // of the specified object that it should currently be seeing.
     // If pixel_radius == u8_MAX, the marker can be seen anywhere in the image,
@@ -477,7 +481,8 @@ public:
   
     // Same as above, but shifts and scales
     u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                          TimeStamp_t duration_ms, bool makePersistent = false);
+                          TimeStamp_t duration_ms, bool makePersistent = false,
+                          const std::string& name = "ShiftAndScaleEyes");
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
@@ -889,6 +894,7 @@ public:
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).

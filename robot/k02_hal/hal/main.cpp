@@ -97,7 +97,7 @@ int main (void)
   CameraInit();
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
-  // So, we just loop around for now
+  
   //StartupSelfTest();
 
   do {

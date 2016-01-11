@@ -47,8 +47,7 @@
 #define MAX_SCREEN_BYTES_PER_DROP 4
 
 /// What fraction of the time to send screen data
-#define TX_SCREEN_DATA_EVERY (2)
-#define TX_SCREEN_DATA_OUTOF (3)
+#define MAX_TX_CHAIN_COUNT 2
 
 /// Maximum variable payload to RTIP
 #define DROP_TO_RTIP_MAX_VAR_PAYLOAD (64)
@@ -102,7 +101,8 @@ typedef enum
 // To RTIP drop fields
   audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
   screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid
-// Shared fields
+  screenRectData    = 1<<2,    ///< Bytes in the iscochronous screen field are bounding data
+  // Shared fields
   ToWiFi = 1<<7,       ///< Assert bit for this droplet value being on a drop from RTIP to WiFi
 } Droplet;
 

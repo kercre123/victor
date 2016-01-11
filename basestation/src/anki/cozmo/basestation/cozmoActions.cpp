@@ -170,9 +170,14 @@ namespace Anki {
 
       SetGoals(poses, distThreshold, angleThreshold);
     }
-    
-    Result DriveToPoseAction::SetGoal(const Anki::Pose3d& pose)
+
+    Result DriveToPoseAction::SetGoal(const Pose3d& pose,
+                                      const Point3f& distThreshold,
+                                      const Radians& angleThreshold)
     {
+      _goalDistanceThreshold = distThreshold;
+      _goalAngleThreshold = angleThreshold;
+      
       _goalPoses = {pose};
       
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
@@ -187,16 +192,6 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result DriveToPoseAction::SetGoal(const Pose3d& pose,
-                                      const Point3f& distThreshold,
-                                      const Radians& angleThreshold)
-    {
-      _goalDistanceThreshold = distThreshold;
-      _goalAngleThreshold = angleThreshold;
-      
-      return SetGoal(pose);
-    }
-    
     Result DriveToPoseAction::SetGoals(const std::vector<Pose3d>& poses,
                                        const Point3f& distThreshold,
                                        const Radians& angleThreshold)
@@ -204,13 +199,8 @@ namespace Anki {
       _goalDistanceThreshold = distThreshold;
       _goalAngleThreshold    = angleThreshold;
       
-      return SetGoals(poses);
-    }
-    
-    Result DriveToPoseAction::SetGoals(const std::vector<Pose3d>& poses)
-    {
       _goalPoses = poses;
-
+      
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
                        "Setting %lu possible goal options.",
                        _goalPoses.size());
@@ -218,6 +208,7 @@ namespace Anki {
       _isGoalSet = true;
       
       return RESULT_OK;
+
     }
     
     const std::string& DriveToPoseAction::GetName() const
@@ -296,6 +287,11 @@ namespace Anki {
         
       } // if/else isGoalSet
     
+      if(ActionResult::SUCCESS == result && !_startSound.empty()) {
+        // Play starting sound if there is one (only if nothing else is playing)
+        robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_startSound, 1, false));
+      }
+      
       return result;
     } // Init()
     
@@ -400,6 +396,19 @@ namespace Anki {
         }
       }
       
+      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      // Play driving or driving sounds if it's time (queue only if nothing else is playing)
+      if(ActionResult::RUNNING == result && !_drivingSound.empty() && currentTime > _nextDrivingSoundTime)
+      {
+        robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_drivingSound, 1, false));
+        _nextDrivingSoundTime = currentTime + GetRNG().RandDblInRange(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+      }
+      else if(ActionResult::SUCCESS == result && !_stopSound.empty())
+      {
+        robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_stopSound, 1, false));
+      }
+      
       return result;
     } // CheckIfDone()
     
@@ -431,7 +440,8 @@ namespace Anki {
     , _approachAngle_rad(approachAngle_rad)
     , _pathMotionProfile(motionProfile)
     {
-      // NOTE: _goalPose will be set later, when we check preconditions
+      // Goal options will be set later
+      _driveToPoseAction = new DriveToPoseAction(motionProfile, true, useManualSpeed);
     }
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
@@ -447,7 +457,8 @@ namespace Anki {
     , _approachAngle_rad(0)
     , _pathMotionProfile(motionProfile)
     {
-      // NOTE: _goalPose will be set later, when we check preconditions
+      // Goal options will be set later
+      _driveToPoseAction = new DriveToPoseAction(motionProfile, true, useManualSpeed);
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -630,11 +641,9 @@ namespace Anki {
           
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
-          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses,
-                                                          _pathMotionProfile,
-                                                          true,
-                                                          _useManualSpeed,
-                                                          preActionPoseDistThresh));
+          _driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
+          
+          _compoundAction.AddAction(_driveToPoseAction);
         }
       
       
@@ -905,7 +914,7 @@ namespace Anki {
         const Radians angleDiff = _targetAngle - currentAngle;
         const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
         const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
-        _eyeShiftTag = robot.ShiftEyes(xPixShift, 0, 0, true); // TODO: How to set the duration?
+        _eyeShiftTag = robot.ShiftAndScaleEyes(xPixShift, 0, 1.f, 1.f, 0, true, "TurnInPlaceEyeDart");
         _eyeShiftRemoved = false;
       }
       
@@ -937,7 +946,7 @@ namespace Anki {
                            "Currently at %.1fdeg, on the way to %.1fdeg, within "
                            "half angle of %.1fdeg", currentAngle.getDegrees(),
                            _targetAngle.getDegrees(), _halfAngle.getDegrees());
-          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3);
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
           _eyeShiftRemoved = true;
         }
       }
@@ -1600,8 +1609,7 @@ namespace Anki {
         Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
         const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
         const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
-        _eyeShiftTag = robot.ShiftEyes(0, yPixShift, 0, true); // TODO: How to set the duration of the eye shift?
-        
+        _eyeShiftTag = robot.ShiftAndScaleEyes(0, yPixShift, 1.f, 1.f, 0, true, "MoveHeadToAngleEyeDart");
         _eyeShiftRemoved = false;
       }
       
@@ -1628,7 +1636,7 @@ namespace Anki {
                            _headAngle.getDegrees(),
                            _halfAngle.getDegrees());
 
-          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3);
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           _eyeShiftRemoved = true;
         }
       }
@@ -1868,9 +1876,16 @@ namespace Anki {
       _preActionPoseAngleTolerance = angleTolerance;
     }
     
+    void IDockAction::SetPostDockLiftMovingAnimation(const std::string& animName)
+    {
+      _liftMovingAnimation = animName;
+    }
+    
     ActionResult IDockAction::Init(Robot& robot)
     {
       _waitToVerifyTime = -1.f;
+
+      _attemptedDock = false;
     
       // Make sure the object we were docking with still exists in the world
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_dockObjectID));
@@ -1940,6 +1955,48 @@ namespace Anki {
           return ActionResult::FAILURE_ABORT;
         }
         
+        // Specify post-dock lift motion callback to play sound
+        using namespace RobotInterface;
+        auto liftSoundLambda = [this, &robot](const AnkiEvent<RobotToEngine>& event)
+        {
+          if (!_liftMovingAnimation.empty()) {
+            // Check that the animation only has sound keyframes
+            const Animation* anim = robot.GetCannedAnimation(_liftMovingAnimation);
+            if (nullptr != anim) {
+              auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
+              auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
+              auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
+           
+              if (!headTrack.IsEmpty() || !liftTrack.IsEmpty() || !bodyTrack.IsEmpty()) {
+                PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.AnimHasMotion",
+                                    "Animation must contain only sound.");
+                return;
+              }
+              
+              // Check that the action matches the current action
+              DockAction recvdAction = event.GetData().Get_movingLiftPostDock().action;
+              if (_dockAction != recvdAction) {
+                PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.ActionMismatch",
+                                    "Expected %u, got %u. Ignoring.",
+                                    (u32)_dockAction, (u32)recvdAction);
+                return;
+              }
+            
+              // Play the animation
+              PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
+                               "Playing animation %s ",
+                               _liftMovingAnimation.c_str());
+              robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_liftMovingAnimation, 1, false));
+            } else {
+              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
+                                  "Could not find animation %s",
+                                  _liftMovingAnimation.c_str());
+            }
+          }
+        };
+        _liftMovingSignalHandle = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
+        
+        
         PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
                          "Robot is within (%.1fmm,%.1fmm) of the nearest pre-action pose, "
                          "proceeding with docking.", closestPoint.x(), closestPoint.y());
@@ -1993,8 +2050,7 @@ namespace Anki {
             actionResult = ActionResult::RUNNING;
             
             PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking", "Docking with marker %d (%s) using action %s.",
-              _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], DockActionToString(_dockAction));
-            
+              _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], DockActionToString(_dockAction));              
             if(robot.DockWithObject(_dockObjectID,
                                     _dockSpeed_mmps,
                                     _dockAccel_mmps2,
@@ -2008,6 +2064,8 @@ namespace Anki {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!
               _wasPickingOrPlacing = false;
+
+              _attemptedDock = true;
             } else {
               return ActionResult::FAILURE_ABORT;
             }
@@ -2031,13 +2089,14 @@ namespace Anki {
           AnimationStreamer::FaceTrack squintLayer;
           ProceduralFace squintFace;
           
-          const f32 DockSquintScaleY = 0.5f;
-          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-            squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
-          }
+          const f32 DockSquintScaleY = 0.35f;
+          const f32 DockSquintScaleX = 1.05f;
+          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
+          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
+          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
           
-          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 0));
-          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(squintLayer));
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 400));
+          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("DockSquint", std::move(squintLayer));
         }
       }
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
@@ -2090,7 +2149,7 @@ namespace Anki {
       }
       
       // Stop squinting
-      robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag);
+      robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
     }
            
 
@@ -2170,7 +2229,7 @@ namespace Anki {
                                            const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
     {
-      
+      SetPostDockLiftMovingAnimation("LiftEffortPickup");
     }
     
     const std::string& PickupObjectAction::GetName() const
@@ -2213,6 +2272,7 @@ namespace Anki {
             info.numObjects = carriedObjects.size();
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
+            info.attemptedDock = _attemptedDock;
             
             u8 objectCnt = 0;
             for (auto& objID : carriedObjects) {
@@ -2373,6 +2433,7 @@ namespace Anki {
       SetPlacementOffset(placementOffsetX_mm, 0, 0);
       SetPlaceOnGround(placeOnGround);
       RegisterSubAction(_placementVerifyAction);
+      SetPostDockLiftMovingAnimation(placeOnGround ? "LiftEffortPlaceLow" : "LiftEffortPlaceHigh");
     }
     
     const std::string& PlaceRelObjectAction::GetName() const
@@ -2414,6 +2475,8 @@ namespace Anki {
           } else {
             
             ObjectInteractionCompleted info;
+            
+            info.attemptedDock = _attemptedDock;
             
             auto objectStackIter = info.objectIDs.begin();
             info.objectIDs.fill(-1);
@@ -2569,6 +2632,7 @@ namespace Anki {
     {
       _dockAction = DockAction::DA_ROLL_LOW;
       RegisterSubAction(_rollVerifyAction);
+      SetPostDockLiftMovingAnimation("LiftEffortRoll");
     }
     
     const std::string& RollObjectAction::GetName() const
@@ -2603,9 +2667,11 @@ namespace Anki {
           }
           else {  
             ObjectInteractionCompleted info;
+            info.attemptedDock = _attemptedDock;
             info.numObjects = 1;
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
+            info.attemptedDock = _attemptedDock;
             completionUnion.Set_objectInteractionCompleted(std::move( info ));
             
             return;
@@ -2762,6 +2828,7 @@ namespace Anki {
                                 "Expecting robot to think it's not carrying object for roll action.");
           } else {
             ObjectInteractionCompleted info;
+            info.attemptedDock = _attemptedDock;
             info.numObjects = 1;
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
@@ -2852,6 +2919,26 @@ namespace Anki {
       
     } // Verify()
     
+#pragma mark ---- IDriveToInteractWithObjectAction ----
+    
+    IDriveToInteractWithObject::IDriveToInteractWithObject(const ObjectID& objectID,
+                                                           const PreActionPose::ActionType& actionType,
+                                                           const PathMotionProfile motionProfile,
+                                                           const f32 distanceFromMarker_mm,
+                                                           const bool useApproachAngle,
+                                                           const f32 approachAngle_rad,
+                                                           const bool useManualSpeed)
+    {
+      _driveToObjectAction = new DriveToObjectAction(objectID,
+                                                     actionType,
+                                                     motionProfile,
+                                                     distanceFromMarker_mm,
+                                                     useApproachAngle,
+                                                     approachAngle_rad,
+                                                     useManualSpeed);
+      AddAction(_driveToObjectAction);
+    }
+
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
     
@@ -2861,14 +2948,13 @@ namespace Anki {
                                                                const bool useApproachAngle,
                                                                const f32 approachAngle_rad,
                                                                const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToObjectAction(objectID,
-                              PreActionPose::DOCKING,
-                              motionProfile,
-                              distanceFromMarker_mm,
-                              useApproachAngle,
-                              approachAngle_rad,
-                              useManualSpeed)})
+    : IDriveToInteractWithObject(objectID,
+                                 PreActionPose::DOCKING,
+                                 motionProfile,
+                                 distanceFromMarker_mm,
+                                 useApproachAngle,
+                                 approachAngle_rad,
+                                 useManualSpeed)
     {
       AlignWithObjectAction* action = new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
@@ -2882,14 +2968,13 @@ namespace Anki {
                                                          const bool useApproachAngle,
                                                          const f32 approachAngle_rad,
                                                          const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToObjectAction(objectID,
-                              PreActionPose::DOCKING,
-                              motionProfile,
-                              0,
-                              useApproachAngle,
-                              approachAngle_rad,
-                              useManualSpeed)})
+    : IDriveToInteractWithObject(objectID,
+                                 PreActionPose::DOCKING,
+                                 motionProfile,
+                                 0,
+                                 useApproachAngle,
+                                 approachAngle_rad,
+                                 useManualSpeed)
     {
       PickupObjectAction* action = new PickupObjectAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
@@ -2904,14 +2989,13 @@ namespace Anki {
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToObjectAction(objectID,
-                              PreActionPose::PLACE_RELATIVE,
-                              motionProfile,
-                              0,
-                              useApproachAngle,
-                              approachAngle_rad,
-                              useManualSpeed)})
+    : IDriveToInteractWithObject(objectID,
+                                 PreActionPose::PLACE_RELATIVE,
+                                 motionProfile,
+                                 0,
+                                 useApproachAngle,
+                                 approachAngle_rad,
+                                 useManualSpeed)
     {
       PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
                                                               false,
@@ -2929,14 +3013,13 @@ namespace Anki {
                                                              const bool useApproachAngle,
                                                              const f32 approachAngle_rad,
                                                              const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToObjectAction(objectID,
-                              PreActionPose::PLACE_RELATIVE,
-                              motionProfile,
-                              placementOffsetX_mm,
-                              useApproachAngle,
-                              approachAngle_rad,
-                              useManualSpeed)})
+    : IDriveToInteractWithObject(objectID,
+                                 PreActionPose::PLACE_RELATIVE,
+                                 motionProfile,
+                                 placementOffsetX_mm,
+                                 useApproachAngle,
+                                 approachAngle_rad,
+                                 useManualSpeed)
     {
       PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
                                                               true,
@@ -2953,14 +3036,13 @@ namespace Anki {
                                                      const bool useApproachAngle,
                                                      const f32 approachAngle_rad,
                                                      const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToObjectAction(objectID,
-                              PreActionPose::ROLLING,
-                              motionProfile,
-                              0,
-                              useApproachAngle,
-                              approachAngle_rad,
-                              useManualSpeed)})
+    : IDriveToInteractWithObject(objectID,
+                                 PreActionPose::ROLLING,
+                                 motionProfile,
+                                 0,
+                                 useApproachAngle,
+                                 approachAngle_rad,
+                                 useManualSpeed)
     {
       RollObjectAction* action = new RollObjectAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
@@ -2974,14 +3056,13 @@ namespace Anki {
                                                        const bool useApproachAngle,
                                                        const f32 approachAngle_rad,
                                                        const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToObjectAction(objectID,
-                              PreActionPose::ROLLING,
-                              motionProfile,
-                              0,
-                              useApproachAngle,
-                              approachAngle_rad,
-                              useManualSpeed)})
+    : IDriveToInteractWithObject(objectID,
+                                 PreActionPose::ROLLING,
+                                 motionProfile,
+                                 0,
+                                 useApproachAngle,
+                                 approachAngle_rad,
+                                 useManualSpeed)
     {
       PopAWheelieAction* action = new PopAWheelieAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);

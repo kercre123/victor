@@ -158,6 +158,11 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't post background task initalization\r\n");
     return -3;
   }
+  else if (Anki::Cozmo::Face::Init() != Anki::RESULT_OK)
+  {
+    os_printf("\tCouldn't initalize face controller\r\n");
+    return -4;
+  }
   else
   {
     return 0;

@@ -71,7 +71,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_EQ(lastResult, RESULT_OK);
 
   // Fake an observation of a block:
-  const ObjectType testType = ObjectType::Block_BULLSEYE2;
+  const ObjectType testType = ObjectType::Block_LIGHTCUBE1;
   Block_Cube1x1 testCube(testType);
   Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   
@@ -140,7 +140,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_EQ(object->GetType(), testType);
   
   // Returned object should be dynamically-castable to its base class:
-  Block_Cube1x1* block = dynamic_cast<Block_Cube1x1*>(object);
+  Block* block = dynamic_cast<Block*>(object);
   ASSERT_NE(block, nullptr);
   
   // Now try deleting the object, and make sure we can't still get it using the old ID

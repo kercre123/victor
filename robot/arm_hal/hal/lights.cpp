@@ -70,6 +70,13 @@ namespace Anki
             return g_dataToHead.cliffLevel < DROP_LEVEL;
         }
       }
+      
+      // This will eventually go away when real prox detection is working.
+      u8 GetForwardProxSensor()
+      {
+        // Physical robot never detects obstacles for now.
+        return 0;
+      }
     }
   }
 }

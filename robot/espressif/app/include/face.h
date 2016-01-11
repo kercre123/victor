@@ -38,6 +38,9 @@ namespace Anki {
       // Enables or disables periodic blinking
       void EnableBlink(bool enable);
       
+      // Check for screen updates when the screen is idle
+      void ManageScreen(void);
+
       extern "C"
       {
         // Display text on the screen until turned off

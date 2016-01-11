@@ -5,7 +5,7 @@
 
 #include "anki/types.h"
 
-static const int MAX_QUEUE = 16;
+static const int MAX_QUEUE = 32;
 
 #define SLAVE_WRITE(x)  (x << 1)
 #define SLAVE_READ(x)   ((x << 1) | 1)

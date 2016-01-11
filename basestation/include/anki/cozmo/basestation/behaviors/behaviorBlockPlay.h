@@ -121,10 +121,12 @@ namespace Cozmo {
     
     void InitState(const Robot& robot);
     void SetCurrState(State s);
+    void UpdateStateName();
     void PlayAnimation(Robot& robot, const std::string& animName, bool sequential = true);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
 
-    using ActionResultCallback = std::function<void(ActionResult result)>;
+    // returns true if the callback handled the action, false if we should continue to handle it in HandleActionCompleted
+    using ActionResultCallback = std::function<bool(ActionResult result)>;
     
     void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
     
@@ -189,7 +191,7 @@ namespace Cozmo {
     const f32 _speedToDriveForwardWhileTracking = 90.0f;
     const f32 _highLiftHeight = 70.0f;
     const f32 _minHeadAngleforLiftUp_rads = DEG_TO_RAD(20.0f);
-    const f32 _lostBlockTimeToLookDown = 1.5f;
+    const f32 _lostBlockTimeToLookDown = 1.2f;
     const f32 _waitForBlockHeadAngle_rads = DEG_TO_RAD(-10.0f);
     const f32 _timetoInspectBlock = 0.3f;
     u32 _driveForwardActionTag = 0;

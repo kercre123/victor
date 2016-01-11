@@ -140,11 +140,6 @@ namespace Anki {
         // Whether or not to raise lift in prep for high docking
         bool doHighDockLiftTracking_ = false;
 
-        // Last received docking error
-        f32 lastMarkerDistX_ = 0.f;
-        f32 lastMarkerDistY_ = 0.f;
-        f32 lastMarkerAng_ = 0.f;
-
         // Remember the last marker pose that was fully within the
         // field of view of the camera.
         bool lastMarkerPoseObservedIsSet_ = false;
@@ -822,13 +817,6 @@ namespace Anki {
         SteeringController::ExecuteDirectDrive(0,0);
         mode_ = IDLE;
 
-        /* Don't reset these so we can query them after docking fails
-         (e.g. to compute backout distance)
-        lastMarkerDistX_ = 0.f;
-        lastMarkerDistY_ = 0.f;
-        lastMarkerAng_ = 0.f;
-        */
-
         pointOfNoReturnDistMM_ = 0;
         pastPointOfNoReturn_ = false;
         markerlessDocking_ = false;
@@ -843,22 +831,24 @@ namespace Anki {
         return blockPose_;
       }
 
-      void GetLastMarkerRelPose(f32 &x, f32 &y, f32 &angle)
+      f32 GetDistToLastDockMarker()
       {
-          x = lastMarkerDistX_;
-          y = lastMarkerDistY_;
-          angle = lastMarkerAng_;
+        // Get current robot pose
+        f32 x, y;
+        Radians angle;
+        Localization::GetCurrentMatPose(x, y, angle);
+        
+        // Get distance to last marker location
+        f32 dx = blockPose_.x() - x;
+        f32 dy = blockPose_.y() - y;
+        f32 dist = sqrtf(dx*dx + dy*dy);
+        return dist;
       }
 
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
         dockingErrSignalMsg_ = msg;
         dockingErrSignalMsgReady_ = true;
-
-        // Update last observed marker pose
-        lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
-        lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
-        lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
       }
 
 

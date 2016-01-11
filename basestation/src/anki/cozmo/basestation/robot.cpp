@@ -1458,13 +1458,14 @@ namespace Anki {
 
     u32 Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent)
     {
-      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent);
+      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent, "ShiftEyes");
     }
     
     u32 Robot::ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                                 TimeStamp_t duration_ms, bool makePersistent)
+                                 TimeStamp_t duration_ms, bool makePersistent,
+                                 const std::string& name)
     {
-      u32 layerTag = 0;
+      u32 layerTag = AnimationStreamer::NotAnimatingTag;
       
       // Clip, but retain sign
       xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
@@ -1537,9 +1538,9 @@ namespace Anki {
       }
       
       if(makePersistent) {
-        layerTag = _animationStreamer.AddPersistentFaceLayer(std::move(faceTrack));
+        layerTag = _animationStreamer.AddPersistentFaceLayer(name, std::move(faceTrack));
       } else {
-        _animationStreamer.AddFaceLayer(std::move(faceTrack));
+        _animationStreamer.AddFaceLayer(name, std::move(faceTrack));
       }
       
       return layerTag;
@@ -2432,10 +2433,14 @@ namespace Anki {
       }
     }
     
-    void Robot::UnSetCarryingObjects()
+    void Robot::UnSetCarryingObjects(bool topOnly)
     {
       std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
       for (auto& objID : carriedObjectIDs) {
+        if (topOnly && objID != _carryingObjectOnTopID) {
+          continue;
+        }
+        
         ObservableObject* object = _blockWorld.GetObjectByID(objID);
         if(object == nullptr) {
           PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
@@ -2458,16 +2463,29 @@ namespace Anki {
           }
         }
       }
-      
-      // Tell the robot it's not carrying anything
-      if (_carryingObjectID.IsSet()) {
-        SendSetCarryState(CarryState::CARRY_NONE);
-      }
 
-      // Even if the above failed, still mark the robot's carry ID as unset
-      _carryingObjectID.UnSet();
+      if (!topOnly) {      
+        // Tell the robot it's not carrying anything
+        if (_carryingObjectID.IsSet()) {
+          SendSetCarryState(CarryState::CARRY_NONE);
+        }
+
+        // Even if the above failed, still mark the robot's carry ID as unset
+        _carryingObjectID.UnSet();
+      }
       _carryingObjectOnTopID.UnSet();
     }
+    
+    void Robot::UnSetCarryObject(ObjectID objID)
+    {
+      // If it's the bottom object in the stack, unset all carried objects.
+      if (_carryingObjectID == objID) {
+        UnSetCarryingObjects(false);
+      } else if (_carryingObjectOnTopID == objID) {
+        UnSetCarryingObjects(true);
+      }
+    }
+    
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {

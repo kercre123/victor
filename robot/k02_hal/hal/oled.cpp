@@ -35,7 +35,7 @@ static const uint8_t InitDisplay[] = {
   SETDISPLAYOFFSET, 0x0, 
   SETSTARTLINE | 0x0, 
   CHARGEPUMP, 0x14, 
-  MEMORYMODE, 0x01,
+  MEMORYMODE, 0x00,
   SEGREMAP | 0x1,
   COMSCANDEC,
   SETCOMPINS, 0x12,
@@ -44,7 +44,7 @@ static const uint8_t InitDisplay[] = {
   SETVCOMDETECT, 0x40,
   DISPLAYALLON_RESUME,
   NORMALDISPLAY,
-  DISPLAYON,
+  DISPLAYON
 };
 
 static const uint8_t ResetCursor[] = {
@@ -53,9 +53,18 @@ static const uint8_t ResetCursor[] = {
   PAGEADDR, 0, 7
 };
 
+struct ScreenRect {
+  uint8_t left;
+  uint8_t right;
+  uint8_t top;
+  uint8_t bottom;
+};
+
 static const uint8_t StartWrite = I2C_DATA | I2C_CONTINUATION;
 
 static bool FaceLock = false;
+static bool Rebound = false;
+static int FaceRemaining = 0;
 
 void Anki::Cozmo::HAL::OLED::Init(void) {
   using namespace Anki::Cozmo::HAL;
@@ -79,27 +88,62 @@ void Anki::Cozmo::HAL::OLED::SendFrame(uint8_t *frame, i2c_callback cb) {
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), frame, FRAME_BUFFER_SIZE, cb);
 }
 
-void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t address, uint8_t *face_bytes) {
-  static uint8_t FaceCopyLocation = 0;
+static inline const uint8_t* SafeData(uint8_t* data, int size) {
+  static uint8_t screen_bytes[128];
+  static uint8_t *pos = screen_bytes;
 
-  if (address != FaceCopyLocation || FaceLock) return ;
-
-  // NOTE: The length of the ring buffer is currently arbitrary
-  static uint8_t screen_bytes[16 * MAX_SCREEN_BYTES_PER_DROP];
-  static int ring_pos = 0;
+  uint8_t* bytes = pos;
   
-  // Use a ring buffer to pad out screen data
-  uint8_t *bytes = &screen_bytes[ring_pos];
-  ring_pos += MAX_SCREEN_BYTES_PER_DROP;
-  if (ring_pos >= sizeof(screen_bytes)) {
-    ring_pos = 0;
+  if (pos + size > screen_bytes + sizeof(screen_bytes)) {
+    bytes = &screen_bytes[0];
+    pos = &screen_bytes[size];
+  } else {
+    pos += size;
   }
   
-  // Load face data on the I2C bus
-  memcpy(bytes, face_bytes, MAX_SCREEN_BYTES_PER_DROP);  
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL, I2C_OPTIONAL | I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), bytes, MAX_SCREEN_BYTES_PER_DROP, NULL);
-  FaceCopyLocation = (FaceCopyLocation + 1) % MAX_FACE_POSITIONS;
+  memcpy(bytes, data, size);
+  
+  return bytes;
+}
+
+void Anki::Cozmo::HAL::OLED::BoundRect(uint8_t* data) {
+  if (FaceLock) { return ; }
+
+  ScreenRect* bounds = (ScreenRect*) data;
+
+  uint8_t command[] = {
+    I2C_COMMAND | I2C_CONTINUATION,
+    COLUMNADDR, bounds->left, bounds->right,
+    PAGEADDR, bounds->top, bounds->bottom
+  };
+
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
+    SafeData(command, sizeof(command)), 
+      sizeof(command),
+      NULL,
+      I2C_FORCE_START);
+
+  FaceRemaining = (bounds->bottom - bounds->top + 1) * (bounds->right - bounds->left + 1);
+  Rebound = true;
+}
+
+void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t *face_bytes) {
+  if (FaceLock) { return ; }
+
+  int tx_size = MIN(FaceRemaining, MAX_SCREEN_BYTES_PER_DROP);
+  if (tx_size <= 0) return ;
+
+  // If we sent a rectangle, force a reset
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
+    &StartWrite, 
+    sizeof(StartWrite), 
+    NULL, 
+    Rebound ? I2C_FORCE_START : I2C_OPTIONAL | I2C_FORCE_START);
+
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), SafeData(face_bytes, tx_size), tx_size, NULL);
+  
+  FaceRemaining -= MAX_SCREEN_BYTES_PER_DROP;
+  Rebound = false;
 }
 
 static volatile bool pending = false;
