@@ -21,7 +21,7 @@ namespace Cozmo.HomeHub {
 
 
     [SerializeField]
-    private GraphSpine _GraphSpline;
+    private GraphSpline _GraphSpline;
 
 
     public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
