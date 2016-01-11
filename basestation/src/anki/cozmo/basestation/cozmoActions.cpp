@@ -2283,8 +2283,6 @@ namespace Anki {
               info.objectIDs[objectCnt++] = objID.GetValue();
             }
             completionUnion.Set_objectInteractionCompleted(std::move( info ));
-            
-            return;
           }
           break;
         }
@@ -2498,8 +2496,6 @@ namespace Anki {
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
             completionUnion.Set_objectInteractionCompleted(std::move( info ));
-            
-            return;
           }
           break;
         }
@@ -2681,8 +2677,6 @@ namespace Anki {
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
             completionUnion.Set_objectInteractionCompleted(std::move( info ));
-            
-            return;
           }
           break;
         }
@@ -2844,8 +2838,6 @@ namespace Anki {
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
             completionUnion.Set_objectInteractionCompleted(std::move( info ));
-            
-            return;
           }
           break;
         }
@@ -3105,6 +3097,7 @@ namespace Anki {
       if(robot.IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d executing PlaceObjectOnGroundAction but not carrying object.", robot.GetID());
+        _interactionResult = ObjectInteractionResult::NOT_CARRYING;
         result = ActionResult::FAILURE_ABORT;
       } else {
         
@@ -3117,6 +3110,7 @@ namespace Anki {
         } else {
           PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
                             "Robot's SendPlaceObjectOnGround method reported failure.");
+          _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
           result = ActionResult::FAILURE_ABORT;
         }
         
@@ -3131,7 +3125,6 @@ namespace Anki {
       return result;
       
     } // CheckPreconditions()
-    
     
     
     ActionResult PlaceObjectOnGroundAction::CheckIfDone(Robot& robot)
@@ -3153,18 +3146,32 @@ namespace Anki {
 
         if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
           PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone",
-                            "VerityObjectPlaceHelper reported failure, just deleting object %d.",
+                            "FaceAndVerify action reported failure, just deleting object %d.",
                             _carryingObjectID.GetValue());
           robot.GetBlockWorld().ClearObject(_carryingObjectID);
+          _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
         }
         
       } // if robot is not picking/placing or moving
+      
+      if(ActionResult::SUCCESS == actionResult) {
+        _interactionResult = ObjectInteractionResult::SUCCESS;
+      }
       
       return actionResult;
       
     } // CheckIfDone()
     
-
+    void  PlaceObjectOnGroundAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
+    {
+      ObjectInteractionCompleted info;
+      info.numObjects = 1;
+      info.objectIDs[0] = _carryingObjectID;
+      info.result = _interactionResult;
+      
+      completionUnion.Set_objectInteractionCompleted(std::move(info));
+    }
+  
 #pragma mark ---- PlaceObjectOnGroundAtPoseAction ----    
     
     PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Robot& robot,

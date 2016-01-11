@@ -115,14 +115,6 @@ namespace Anki {
       return result;
     }
     
-    void IActionRunner::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
-    {
-      ObjectInteractionCompleted info;
-      info.numObjects = 0;
-      info.objectIDs.fill(-1);
-      completionUnion.Set_objectInteractionCompleted( std::move(info) );
-    }
-    
     void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
     {
       ActionCompletedUnion completionUnion;

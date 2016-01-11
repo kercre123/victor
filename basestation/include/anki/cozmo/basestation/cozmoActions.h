@@ -1105,6 +1105,8 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -1116,6 +1118,7 @@ namespace Anki {
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker = nullptr;
       IActionRunner*              _faceAndVerifyAction = nullptr;
+      ObjectInteractionResult     _interactionResult = ObjectInteractionResult::INCOMPLETE;
       
     }; // class PlaceObjectOnGroundAction
     
