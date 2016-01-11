@@ -149,6 +149,7 @@ namespace Anki {
 
         // FAKING obstacle detection via prox sensor.
         // TODO: This will eventually be done entirely on the engine using images.
+#ifndef TARGET_K02
         static u32 proxCycleCnt = 0;
         if (++proxCycleCnt == PROX_EVENT_CYCLE_PERIOD) {
           u8 proxVal = HAL::GetForwardProxSensor();
@@ -159,7 +160,7 @@ namespace Anki {
           }
           proxCycleCnt = 0;
         }
-        
+#endif        
 
         /////// Cliff detect reaction ///////
         bool movingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
