@@ -4,12 +4,18 @@ using UnityEngine.UI;
 
 namespace Cozmo.HubWorld {
   public class HubWorldButton : MonoBehaviour {
-    public delegate void ButtonClickedHandler(string challengeClickedId,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClickedId, Transform buttonTransform);
 
     public event ButtonClickedHandler OnButtonClicked;
 
     [SerializeField]
     private Button _ButtonScript;
+
+    [SerializeField]
+    private Image _IconImage;
+
+    [SerializeField]
+    private Text _ChallengeTitle;
 
     private string _ChallengeId;
 
@@ -17,6 +23,8 @@ namespace Cozmo.HubWorld {
     
       if (challengeData != null) {
         _ChallengeId = challengeData.ChallengeID;
+        _IconImage.overrideSprite = challengeData.ChallengeIcon;
+        _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
       }
       _ButtonScript.onClick.AddListener(HandleButtonClicked);
     }
