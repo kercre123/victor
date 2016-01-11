@@ -1410,7 +1410,12 @@ namespace Cozmo {
           PRINT_NAMED_DEBUG("AnimationStreamer.UpdateLiveAnimation.EyeLeadTurn",
                             "Point turn eye shift (%d,%d)", x, y);
 #         endif
-          robot.ShiftAndScaleEyes(x, y, 1.f, 1.f, IKeyFrame::SAMPLE_LENGTH_MS, false, "LiveIdleTurn");
+          
+          ProceduralFace procFace;
+          procFace.GetParams().LookAt(x, y, ProceduralFace::WIDTH/2, ProceduralFace::HEIGHT/2);
+          FaceTrack faceTrack;
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, IKeyFrame::SAMPLE_LENGTH_MS));
+          AddFaceLayer("LiveIdleTurn", std::move(faceTrack));
         }
         
 #       if DEBUG_ANIMATION_STREAMING
