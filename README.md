@@ -70,7 +70,7 @@ A dev scene that includes a simple list of challenges for Cozmo. Used in a devel
 
 The production scene used for when we deploy. This is where the final experience will live.
 
-    <path-to-cozmo-repository>/Assets/Scenes/HubWorld.unity
+    <path-to-cozmo-repository>/Assets/Scenes/HomeHub.unity
 
 
 # Optional Info
