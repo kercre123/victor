@@ -133,6 +133,12 @@ const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
 // How fast (in mm/sec) can a wheel spin at max
 const f32 MAX_WHEEL_SPEED_MMPS = 220.f;
 
+// Maximum angular velocity
+// Determined experimentally by turning robot in place at max speed.
+// Speed, in radians, should be (MAX_WHEEL_SPEED_MMPS / WHEEL_DIST_HALF_MM), but tread slip makes this not true.
+const f32 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC = 250;
+const f32 MAX_BODY_ROTATION_SPEED_RAD_PER_SEC = DEG_TO_RAD_F32(MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+
 
 /***************************************************************************
  *

@@ -291,7 +291,7 @@ namespace Anki {
       virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
-      void SetMaxSpeed(f32 maxSpeed_radPerSec)           { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetMaxSpeed(f32 maxSpeed_radPerSec);
       void SetAccel(f32 accel_radPerSec2)                { _accel_radPerSec2 = accel_radPerSec2; }
       void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
@@ -312,7 +312,7 @@ namespace Anki {
       Radians _angleTolerance = POINT_TURN_ANGLE_TOL;
       Radians _variability = 0;
       bool    _isAbsoluteAngle;
-      f32     _maxSpeed_radPerSec = 50.f;
+      f32     _maxSpeed_radPerSec = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       f32     _accel_radPerSec2 = 10.f;
       u32     _eyeShiftTag = 0;
       bool    _eyeShiftRemoved = false;
