@@ -10,12 +10,12 @@ namespace TreasureHunt {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
-      InitializeMinigameObjects();
+      InitializeMinigameObjects(minigameConfig.NumCubesRequired());
     }
 
-    protected void InitializeMinigameObjects() {
+    protected void InitializeMinigameObjects(int numCubes) {
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), numCubes, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
     }
@@ -99,7 +99,7 @@ namespace TreasureHunt {
       distance = Vector2.Distance(blockPosition, GoldPosition);
       return distance < 15.0f;
     }
-      
+
     protected override void CleanUpOnDestroy() {
     }
   }

@@ -3,7 +3,7 @@ using System.Collections;
 
 public class SimonGameConfig : MinigameConfigBase {
   public override int NumCubesRequired() {
-    return 1;
+    return NumCubesInPattern;
   }
 
   public override int NumPlayersRequired() {
@@ -13,4 +13,7 @@ public class SimonGameConfig : MinigameConfigBase {
   public int MinSequenceLength = 3;
   public int MaxSequenceLength = 10;
   public int MaxAttempts = 3;
+
+  [Range(2, 5)]
+  public int NumCubesInPattern = 2;
 }

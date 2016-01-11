@@ -54,6 +54,8 @@ namespace WhackAMole {
     public LightCube CurrentTarget = null;
     public Dictionary<int,LightCube> ActivatedCubes;
 
+    private int _NumCubesRequired;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       WhackAMoleGameConfig config = minigameConfig as WhackAMoleGameConfig;
       MaxPanicTime = config.MaxPanicTime;
@@ -61,6 +63,7 @@ namespace WhackAMole {
       MaxPanicInterval = config.MaxPanicInterval;
       PanicDecayMin = config.PanicDecayMin;
       PanicDecayMax = config.PanicDecayMax;
+      _NumCubesRequired = config.NumCubesRequired();
       ActivatedCubes = new Dictionary<int, LightCube>();
 
       _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
@@ -79,7 +82,7 @@ namespace WhackAMole {
       _GamePanel.CubeAButton.image.color = Color.yellow;
       _GamePanel.CubeBButton.image.color = Color.yellow;
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), 2, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), _NumCubesRequired, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 
@@ -152,7 +155,7 @@ namespace WhackAMole {
         if (isNewTarget) {
           CurrentTarget = cube;
           if (!ActivatedCubes.ContainsKey(cube.ID)) {
-            ActivatedCubes.Add(cube.ID,cube);
+            ActivatedCubes.Add(cube.ID, cube);
           }
         }
         else {
@@ -195,7 +198,7 @@ namespace WhackAMole {
         }
       }
       else {
-        Debug.LogError(string.Format("Can NOT find Cube A ID : {0}",_CubeAID));
+        Debug.LogError(string.Format("Can NOT find Cube A ID : {0}", _CubeAID));
         cubeLost = true;
       }
 
@@ -210,7 +213,7 @@ namespace WhackAMole {
         }
       }
       else {
-        Debug.LogError(string.Format("Can NOT find Cube B ID : {0}",_CubeBID));
+        Debug.LogError(string.Format("Can NOT find Cube B ID : {0}", _CubeBID));
         cubeLost = true;
       }
 
