@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-public class GraphSpine : MonoBehaviour {
+public class GraphSpline : MonoBehaviour {
 
   [SerializeField]
   private CanvasRenderer _CanvasRenderer;
@@ -31,36 +31,46 @@ public class GraphSpine : MonoBehaviour {
 
     float deltaX = 1f / _Points.Count;
 
-    float bezierOffset = 0.7f * deltaX;
+    const float armLength = 0.2f;
+    const float pointOffset = 0.4f;
 
     List<Vector2> splinePoints = new List<Vector2>();
 
-    Vector2 start = new Vector2(deltaX * 0.5f, _Points[0] * 0.9f + 0.1f);
+    Vector2 start = new Vector2(deltaX * 0.5f, _Points[0]);
 
     splinePoints.Add(start);
-
-    splinePoints.Add(start + (new Vector2(deltaX, (_Points[1] - _Points[0]))).normalized * bezierOffset);
+    splinePoints.Add(start);
 
     for (int i = 1; i < _Points.Count - 1; i++) {
-      // if we have 3 that are the same, it will cause a wierd dip in the spline,
-      // so just skip it.
-      if (_Points[i - 1] == _Points[i] && _Points[i + 1] == _Points[i]) {
-        continue;
-      }
 
-      Vector2 point = new Vector2((i + 0.5f) * deltaX, _Points[i] * 0.9f + 0.1f);
+      // go slightly down each arm to get a slope
+      var a = Mathf.Lerp(_Points[i], _Points[i - 1], pointOffset);
 
-      Vector2 delta = (new Vector2(deltaX * 2, (_Points[i + 1] - _Points[i - 1]))).normalized * bezierOffset;
+      Vector2 pointA = new Vector2((i - pointOffset + 0.5f) * deltaX, a);
+      Vector2 deltaA = (new Vector2(deltaX, (_Points[i] - _Points[i - 1]))) * armLength;
 
-      splinePoints.Add(point - delta);
-      splinePoints.Add(point);
-      splinePoints.Add(point);
-      splinePoints.Add(point + delta);
+      var b = Mathf.Lerp(_Points[i], _Points[i + 1], pointOffset);
+
+      Vector2 pointB = new Vector2((i + pointOffset + 0.5f) * deltaX, b);
+      Vector2 deltaB = (new Vector2(deltaX, (_Points[i + 1] - _Points[i]))) * armLength;
+
+      // end straight segment
+      splinePoints.Add(pointA);
+      splinePoints.Add(pointA);
+
+      // add bezier curve
+      splinePoints.Add(pointA);
+      splinePoints.Add(pointA + deltaA);
+      splinePoints.Add(pointB - deltaB);
+      splinePoints.Add(pointB);
+
+      // begin next straight segment
+      splinePoints.Add(pointB);
+      splinePoints.Add(pointB);
     }
-    Vector2 end = new Vector2(deltaX * (_Points.Count - 0.5f), _Points[_Points.Count - 1] * 0.9f + 0.1f);
+    Vector2 end = new Vector2(deltaX * (_Points.Count - 0.5f), _Points[_Points.Count - 1]);
 
-    splinePoints.Add(end - (new Vector2(deltaX, (_Points[_Points.Count - 1] - _Points[_Points.Count - 2]))).normalized * bezierOffset);
-
+    splinePoints.Add(end);
     splinePoints.Add(end);
 
     List<Vector2> evaluatedPoints = new List<Vector2>();
@@ -125,10 +135,17 @@ public class GraphSpine : MonoBehaviour {
 
   private void EvaluateSplinePoints(Vector2 a, Vector2 b, Vector2 c, Vector2 d, List<Vector2> evaluatedPoints) {
 
+    // if our curve is a line, just add the end points
+    if (Mathf.Approximately((a - b).sqrMagnitude, 0f) && Mathf.Approximately((c - d).sqrMagnitude, 0f)) {
+      evaluatedPoints.Add(a);
+      evaluatedPoints.Add(d);
+      return;
+    }
+
     const int steps = 10;
     const float inv = 1f / steps;
 
-    for (int i = 0; i < steps; i++) {
+    for (int i = 0; i <= steps; i++) {
       float t = i * inv;
 
       var ab = Vector2.Lerp(a,b,t);
