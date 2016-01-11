@@ -46,6 +46,7 @@ namespace Cozmo.HomeHub {
       }
       GameObject newButton = UIManager.CreateUIElement(prefab, container);
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
+      buttonScript.GetComponentInChildren<UnityEngine.UI.Image>().overrideSprite = challengeData.ChallengeIcon;
       buttonScript.Initialize(challengeData);
       buttonScript.OnButtonClicked += handler;
       return newButton;

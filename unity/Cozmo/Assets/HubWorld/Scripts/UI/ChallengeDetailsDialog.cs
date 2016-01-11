@@ -60,10 +60,6 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
-    // Reset the camera
-    DG.Tweening.Tweener cameraTween = HubWorldCamera.Instance.ReturnCameraToDefault();
-    closeAnimation.Append(cameraTween);
-
     // Slide the dialog out
     DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(1600, 0.5f).SetEase(Ease.InBack).SetDelay(0.2f);
     closeAnimation.Join(dialogTween);
