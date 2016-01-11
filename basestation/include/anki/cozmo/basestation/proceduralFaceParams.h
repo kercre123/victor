@@ -102,7 +102,7 @@ public:
   //  - outerEyeScaleIncrease controls the differentiation between inner/outer eye height
   //    when looking left or right
   void LookAt(f32 x, f32 y, f32 xmax, f32 ymax,
-              f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease);
+              f32 lookUpMaxScale = 1.1f, f32 lookDownMinScale=0.85f, f32 outerEyeScaleIncrease=0.1f);
   
   // Combine the input params with those from our instance
   ProceduralFaceParams& Combine(const ProceduralFaceParams& otherFace);
