@@ -576,6 +576,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 1
+  DimBackground: 0
   _TitleTextLabel: {fileID: 11411044}
   _SubtitleTextLabel: {fileID: 11463726}
   _DescriptionTextLabel: {fileID: 11421726}
@@ -597,6 +598,7 @@ MonoBehaviour:
   _Interactable: 1
   _DASEventName: Minigame Quit Pressed
   _TextLabel: {fileID: 11451262}
+  _TextLabelOffset: -5
   TextEnabledColor: {r: .972549021, g: .996078432, b: 1, a: 1}
   TextPressedColor: {r: .972549021, g: .996078432, b: 1, a: 1}
   TextDisabledColor: {r: .545098066, g: .627451003, b: .686274529, a: 1}
