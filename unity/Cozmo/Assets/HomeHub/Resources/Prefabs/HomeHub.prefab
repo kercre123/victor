@@ -41,7 +41,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _TimelineViewPrefab: {fileID: 11480722, guid: d3419a371468943d0b4c9ec43d79d786,
     type: 2}
-  _ChallengeDetailsPrefab: {fileID: 0}
+  _ChallengeDetailsPrefab: {fileID: 11471404, guid: 44bcdb006051c4819a919a0acb07d57e,
+    type: 2}
   _ChallengeDataList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
 --- !u!1001 &100100000
 Prefab:
