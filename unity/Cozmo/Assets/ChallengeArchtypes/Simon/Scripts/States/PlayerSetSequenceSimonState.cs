@@ -13,6 +13,7 @@ namespace Simon {
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
     private SimonGameSequencePanel _SequenceDisplay;
+    private float _StartLightBlinkTime = -1;
 
     public override void Enter() {
       base.Enter();
@@ -32,16 +33,21 @@ namespace Simon {
 
     public override void Update() {
       base.Update();
-      if (_TargetSequenceLength == _CreatedSequence.Count) {
-        _GameInstance.SetCurrentSequence(_CreatedSequence);
-        _StateMachine.SetNextState(new CozmoGuessSimonState());
+      if (_StartLightBlinkTime == -1) {
+        if (_TargetSequenceLength == _CreatedSequence.Count) {
+          _GameInstance.SetCurrentSequence(_CreatedSequence);
+          _StateMachine.SetNextState(new CozmoGuessSimonState());
+        }
+        if (_TargetCube != -1) {
+          _CurrentRobot.DriveWheels(0f, 0f);
+          _CreatedSequence.Add(_TargetCube);
+          _TargetCube = -1;
+          _SequenceDisplay.SetSequenceText(_CreatedSequence.Count, _TargetSequenceLength);
+        }
       }
-      if (_TargetCube != -1) {
-        _CurrentRobot.DriveWheels(0f, 0f);
+      else if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
+        _StartLightBlinkTime = -1;
         _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
-        _CreatedSequence.Add(_TargetCube);
-        _TargetCube = -1;
-        _SequenceDisplay.SetSequenceText(_CreatedSequence.Count, _TargetSequenceLength);
       }
     }
 
@@ -53,11 +59,13 @@ namespace Simon {
 
     private void OnBlockTapped(int id, int times) {
       _CurrentRobot.SetHeadAngle(Random.Range(-0.6f, 0f));
-      if (Time.time - _LastTappedTime < 0.8f) {
+      if (Time.time - _LastTappedTime < 0.8f || _StartLightBlinkTime != -1) {
         return;
       }
 
       _LastTappedTime = Time.time;
+      _StartLightBlinkTime = Time.time;
+
       SimonGame game = _StateMachine.GetGame() as SimonGame;
       GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(id));
 

@@ -12,6 +12,7 @@ namespace Simon {
     private float _LastTappedTime;
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
+    private float _StartLightBlinkTime = -1;
 
     public override void Enter() {
       base.Enter();
@@ -25,19 +26,24 @@ namespace Simon {
 
     public override void Update() {
       base.Update();
-      if (_CurrentSequenceIndex == _SequenceList.Count) {
-        PlayerWinGame();
+      if (_StartLightBlinkTime == -1) {
+        if (_CurrentSequenceIndex == _SequenceList.Count) {
+          PlayerWinGame();
+        }
+        if (_TargetCube != -1) {
+          _CurrentRobot.DriveWheels(0f, 0f);
+          if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
+            _CurrentSequenceIndex++;
+          }
+          else {
+            PlayerLoseGame();
+          }
+          _TargetCube = -1;
+        }
       }
-      if (_TargetCube != -1) {
-        _CurrentRobot.DriveWheels(0f, 0f);
+      else if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
+        _StartLightBlinkTime = -1;
         _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
-        if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
-          _CurrentSequenceIndex++;
-        }
-        else {
-          PlayerLoseGame();
-        }
-        _TargetCube = -1;
       }
     }
 
@@ -86,11 +92,13 @@ namespace Simon {
 
     private void OnBlockTapped(int id, int times) {
       _CurrentRobot.SetHeadAngle(Random.Range(-0.6f, 0f));
-      if (Time.time - _LastTappedTime < 0.8f) {
+      if (Time.time - _LastTappedTime < 0.8f || _StartLightBlinkTime != -1) {
         return;
       }
 
       _LastTappedTime = Time.time;
+      _StartLightBlinkTime = Time.time;
+
       SimonGame game = _StateMachine.GetGame() as SimonGame;
       GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(id));
 

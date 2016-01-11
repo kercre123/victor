@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace Simon {
   public class CozmoBlinkLightsSimonState : State {
-    private const float kLightBlinkLengthSeconds = 0.3f;
     private LightCube _TargetCube;
     private float _StartLightBlinkTime;
     private uint _CubeLightColor;
@@ -19,7 +18,7 @@ namespace Simon {
 
     public override void Update() {
       base.Update();
-      if (Time.time - _StartLightBlinkTime > kLightBlinkLengthSeconds) {
+      if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
         StopSimonNodeBlink();
       }
     }
