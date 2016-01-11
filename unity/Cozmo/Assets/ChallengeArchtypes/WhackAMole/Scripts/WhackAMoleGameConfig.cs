@@ -3,12 +3,20 @@ using System.Collections;
 
 namespace WhackAMole {
   public class WhackAMoleGameConfig : MinigameConfigBase {
+    public override int NumCubesRequired() {
+      return 1;
+    }
+
+    public override int NumPlayersRequired() {
+      return 1;
+    }
+
     public float MaxPanicTime;
     public float MaxConfusionTime;
     public float MaxPanicInterval;
-    [Range(0f,1f)]
+    [Range(0f, 1f)]
     public float PanicDecayMin;
-    [Range(0f,1f)]
+    [Range(0f, 1f)]
     public float PanicDecayMax;
   }
 }
