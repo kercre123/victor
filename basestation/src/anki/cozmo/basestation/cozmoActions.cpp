@@ -1113,6 +1113,9 @@ namespace Anki {
       // Prevent the compound action from signaling completion
       _compoundAction.SetEmitCompletionSignal(false);
       
+      // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
+      _compoundAction.SetSuppressTrackLocking(true);
+      
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
