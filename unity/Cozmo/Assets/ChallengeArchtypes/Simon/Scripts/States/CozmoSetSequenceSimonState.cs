@@ -11,6 +11,8 @@ namespace Simon {
     private IList<int> _CurrentSequence;
     private int _SequenceLength;
     private SimonGameSequencePanel _SequenceDisplay;
+    private const float kSequenceWaitDelay = 0.3f;
+    private float _LastSequenceTime = -1;
 
     public override void Enter() {
       base.Enter();
@@ -26,16 +28,40 @@ namespace Simon {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
+
+      _StateMachine.PushSubState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
+    }
+
+    private void HandleOnCozmoStartAnimationDone(bool success) {
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-1.0f);
+      _StateMachine.PopState();
     }
 
     public override void Update() {
       base.Update();
-      _CurrentSequenceIndex++;
-      if (_CurrentSequenceIndex == _CurrentSequence.Count) {
-        _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
-        return;
+      if (_CurrentSequenceIndex == -1) {
+        // First in sequence
+        LightUpNextCube();
       }
+      else if (_CurrentSequenceIndex >= _CurrentSequence.Count - 1) {
+        // Last in sequence
+        _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
+      }
+      else {
+        bool differentCube = (_CurrentSequence[_CurrentSequenceIndex]
+                             == _CurrentSequence[_CurrentSequenceIndex + 1]);
+        if (differentCube || Time.time - _LastSequenceTime > kSequenceWaitDelay) {
+          LightUpNextCube();
+        }
+      }
+    }
+
+    private void LightUpNextCube() {
+      _CurrentSequenceIndex++;
       _SequenceDisplay.SetSequenceText(_CurrentSequenceIndex + 1, _SequenceLength);
+      _LastSequenceTime = Time.time;
       _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
     }
 

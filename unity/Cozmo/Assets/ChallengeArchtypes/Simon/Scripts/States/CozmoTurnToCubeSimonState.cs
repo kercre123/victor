@@ -8,10 +8,17 @@ namespace Simon {
 
     private LightCube _TargetCube;
     private bool _BlinkLights = false;
+    private bool _IsTurning = true;
 
     public CozmoTurnToCubeSimonState(LightCube targetCube, bool blinkLights) {
       _TargetCube = targetCube;
       _BlinkLights = blinkLights;
+    }
+
+    public override void Enter() {
+      base.Enter();
+      _IsTurning = true;
+      _CurrentRobot.FaceObject(_TargetCube, false, HandleTurnFinished);
     }
 
     public override void Exit() {
@@ -22,7 +29,7 @@ namespace Simon {
     public override void Update() {
       base.Update();
 
-      if (TurnToTarget(_TargetCube)) {
+      if (!_IsTurning) {
         if (_BlinkLights) {
           _StateMachine.SetNextState(new CozmoBlinkLightsSimonState(_TargetCube));
         }
@@ -32,17 +39,8 @@ namespace Simon {
       }
     }
 
-    private bool TurnToTarget(LightCube target) {
-      Robot robot = _CurrentRobot;
-      Vector3 robotToTarget = target.WorldPosition - robot.WorldPosition;
-      float crossValue = Vector3.Cross(robot.Forward, robotToTarget).z;
-      if (crossValue > 0.0f) {
-        robot.DriveWheels(-kDriveWheelSpeed, kDriveWheelSpeed);
-      }
-      else {
-        robot.DriveWheels(kDriveWheelSpeed, -kDriveWheelSpeed);
-      }
-      return Vector2.Dot(robotToTarget.normalized, robot.Forward) > kDotThreshold;
+    private void HandleTurnFinished(bool success) {
+      _IsTurning = false;
     }
   }
 }

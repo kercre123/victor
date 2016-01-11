@@ -7,6 +7,8 @@ namespace Simon {
 
   public class SimonGame : GameBase {
 
+    public const float kLightBlinkLengthSeconds = 0.3f;
+
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();
     private Dictionary<int, SimonSound> _BlockIdToSound = new Dictionary<int, SimonSound>();
