@@ -175,7 +175,9 @@ namespace Anki {
 
     void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
     {
-      printf("HandleDebugString: %s\n", msg.text.c_str());
+      // Useful for debug, but otherwise unneeded since this is displayed in the
+      // status window
+      //printf("HandleDebugString: %s\n", msg.text.c_str());
     }
     
     // ============== End of message handlers =================
