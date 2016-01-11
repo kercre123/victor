@@ -42,7 +42,7 @@ namespace Cozmo {
     _liveAnimation.SetIsLive(true);
   }
 
-  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops, bool interruptRunning)
+  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops, bool interruptRunning)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -58,7 +58,7 @@ namespace Cozmo {
     return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops, interruptRunning);
   }
   
-  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops, bool interruptRunning)
+  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops, bool interruptRunning)
   {
     if(nullptr != _streamingAnimation)
     {
@@ -221,7 +221,7 @@ namespace Cozmo {
     return _idleAnimation->GetName();
   }
   
-  Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, u8 withTag)
+  Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, Tag withTag)
   {
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
@@ -291,7 +291,7 @@ namespace Cozmo {
     return lastResult;
   }
   
-  u32 AnimationStreamer::AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack)
+  AnimationStreamer::Tag AnimationStreamer::AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack)
   {
     faceTrack.SetIsLive(false); // don't want keyframes to delete as they play
     
@@ -318,7 +318,7 @@ namespace Cozmo {
     return _layerTagCtr;
   }
   
-  void AnimationStreamer::RemovePersistentFaceLayer(u32 tag, s32 duration_ms)
+  void AnimationStreamer::RemovePersistentFaceLayer(Tag tag, s32 duration_ms)
   {
     auto layerIter = _faceLayers.find(tag);
     if(layerIter != _faceLayers.end()) {
@@ -346,7 +346,7 @@ namespace Cozmo {
     }
   }
   
-  void AnimationStreamer::AddToPersistentFaceLayer(u32 tag, ProceduralFaceKeyFrame&& keyframe)
+  void AnimationStreamer::AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe)
   {
     auto layerIter = _faceLayers.find(tag);
     if(layerIter != _faceLayers.end()) {
@@ -660,7 +660,7 @@ namespace Cozmo {
     }
 #   endif
     
-    std::list<u8> tagsToErase;
+    std::list<Tag> tagsToErase;
     
     for(auto faceLayerIter = _faceLayers.begin(); faceLayerIter != _faceLayers.end(); ++faceLayerIter)
     {

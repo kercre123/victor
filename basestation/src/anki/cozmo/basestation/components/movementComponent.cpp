@@ -75,7 +75,14 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
   _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
   
+  if(_isHeadMoving) {
+    for(auto tag : _faceLayerTagsToRemoveOnHeadMovement) {
+      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(tag);
+    }
+    _faceLayerTagsToRemoveOnHeadMovement.clear();
+  }
 }
+
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {

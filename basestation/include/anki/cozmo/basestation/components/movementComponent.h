@@ -16,6 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
 #include <list>
@@ -72,6 +73,9 @@ public:
                          const f32 accel_rad_per_sec2,
                          const f32 duration_sec = 0.f);
   
+  // Register a persistent face layer tag for removal next time head moves
+  void RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag);
+  
   Result StopAllMotors();
   
   // Tracking is handled by actions now, but we will continue to maintain the
@@ -86,7 +90,11 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-protected:
+private:
+  
+  void InitEventHandlers(IExternalInterface& interface);
+  int GetFlagIndex(uint8_t flag) const;
+  
   Robot& _robot;
   
   bool _isMoving;
@@ -106,12 +114,16 @@ protected:
   std::vector<int> _animTrackLockCount;
   std::vector<int> _ignoreTrackMovementCount;
   
-private:
-  void InitEventHandlers(IExternalInterface& interface);
-  int GetFlagIndex(uint8_t flag) const;
+  std::set<AnimationStreamer::Tag> _faceLayerTagsToRemoveOnHeadMovement;
   
 }; // class MovementComponent
 
+  
+inline void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag) {
+  _faceLayerTagsToRemoveOnHeadMovement.insert(faceLayerTag);
+}
+  
+  
 } // namespace Cozmo
 } // namespace Anki
 

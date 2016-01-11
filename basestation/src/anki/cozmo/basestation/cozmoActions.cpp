@@ -895,7 +895,6 @@ namespace Anki {
       
       Radians currentAngle;
       _inPosition = IsBodyInPosition(robot, currentAngle);
-      _eyeShiftRemoved = true;
       
       if(!_inPosition) {
         RobotInterface::SetBodyAngle setBodyAngle;
@@ -906,16 +905,18 @@ namespace Anki {
           return ActionResult::FAILURE_RETRY;
         }
         
-        // Store half the total difference so we know when to remove eye shift
-        _halfAngle = 0.5f*(_targetAngle - currentAngle).getAbsoluteVal();
-        
-        // Move the eyes (only if not in position)
-        // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        const Radians angleDiff = _targetAngle - currentAngle;
-        const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-        const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
-        _eyeShiftTag = robot.ShiftAndScaleEyes(xPixShift, 0, 1.f, 1.f, 0, true, "TurnInPlaceEyeDart");
-        _eyeShiftRemoved = false;
+        if(_moveEyes)
+        {
+          // Store half the total difference so we know when to remove eye shift
+          _halfAngle = 0.5f*(_targetAngle - currentAngle).getAbsoluteVal();
+          
+          // Move the eyes (only if not in position)
+          // Note: assuming screen is about the same x distance from the neck joint as the head cam
+          const Radians angleDiff = _targetAngle - currentAngle;
+          const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+          const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
+          robot.ShiftEyes(_eyeShiftTag, xPixShift, 0, 100, "TurnInPlaceEyeDart");
+        }
       }
       
       return ActionResult::SUCCESS;
@@ -939,7 +940,7 @@ namespace Anki {
       }
       
       // When we've turned at least halfway, remove eye dart
-      if(!_eyeShiftRemoved) {
+      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
         if(_inPosition || NEAR(currentAngle-_targetAngle, 0.f, _halfAngle))
         {
           PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
@@ -947,7 +948,7 @@ namespace Anki {
                            "half angle of %.1fdeg", currentAngle.getDegrees(),
                            _targetAngle.getDegrees(), _halfAngle.getDegrees());
           robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-          _eyeShiftRemoved = true;
+          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
       }
       
@@ -983,9 +984,9 @@ namespace Anki {
     void TurnInPlaceAction::Cleanup(Robot& robot)
     {
       // Make sure eye shift gets removed no matter what
-      if(!_eyeShiftRemoved) {
+      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
         robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-        _eyeShiftRemoved = true;
+        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       }
     }
 
@@ -1596,7 +1597,6 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
       
       _inPosition = IsHeadInPosition(robot);
-      _eyeShiftRemoved = true;
       
       if(!_inPosition) {
         if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
@@ -1605,16 +1605,24 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        // Store the half the angle differene so we know when to remove eye shift
-        _halfAngle = 0.5f*(_headAngle - robot.GetHeadAngle()).getAbsoluteVal();
-        
-        // Lead with the eyes, if not in position
-        // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
-        const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-        const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
-        _eyeShiftTag = robot.ShiftAndScaleEyes(0, yPixShift, 1.f, 1.f, 0, true, "MoveHeadToAngleEyeDart");
-        _eyeShiftRemoved = false;
+        if(_moveEyes)
+        {
+          // Lead with the eyes, if not in position
+          // Note: assuming screen is about the same x distance from the neck joint as the head cam
+          Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
+          const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+          const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
+          
+          robot.ShiftEyes(_eyeShiftTag, 0, yPixShift, 100, "MoveHeadToAngleEyeShift");
+          
+          if(_holdEyes) {
+            // Store the half the angle differene so we know when to remove eye shift
+            _halfAngle = 0.5f*(_headAngle - robot.GetHeadAngle()).getAbsoluteVal();
+          } else {
+            // Register this tag to be removed next time head is moved
+            robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag);
+          }
+        }
       }
       
       return result;
@@ -1628,8 +1636,10 @@ namespace Anki {
         _inPosition = IsHeadInPosition(robot);
       }
       
-      if(!_eyeShiftRemoved) {
-        // If we're not there yet but at least halfway, remove eye shift
+      if(!_holdEyes && AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
+      {
+        // If we're not there yet but at least halfway, and we're not supposed
+        // to "hold" the eyes, then remove eye shift
         if(_inPosition || NEAR(Radians(robot.GetHeadAngle()) - _headAngle, 0.f, _halfAngle))
         {
           PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
@@ -1641,7 +1651,7 @@ namespace Anki {
                            _halfAngle.getDegrees());
 
           robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
-          _eyeShiftRemoved = true;
+          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
       }
       
@@ -1663,9 +1673,9 @@ namespace Anki {
     void MoveHeadToAngleAction::Cleanup(Robot& robot)
     {
       // Make sure eye shift got removed
-      if(!_eyeShiftRemoved) {
+      if(!_holdEyes && AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
         robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-        _eyeShiftRemoved = true;
+        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       }
     }
          
