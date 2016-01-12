@@ -1009,11 +1009,19 @@ namespace Cozmo {
         } else if( msg.result == ActionResult::FAILURE_RETRY ) {
 
           // We failed to pick up or place the last block, try again
-        
-          if(ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE == msg.completionInfo.Get_objectInteractionCompleted().result) {
-            PlayAnimation(robot, "ID_react2block_align_fail");
-          } else {
-            PlayAnimation(robot, "ID_rollBlock_fail_01");
+          switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+          {
+            case ObjectInteractionResult::INCOMPLETE:
+            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+            {
+              PlayAnimation(robot, "ID_react2block_align_fail");
+              break;
+            }
+            
+            default: {
+              PlayAnimation(robot, "ID_rollBlock_fail_01");
+              break;
+            }
           }
 
 
@@ -1086,10 +1094,17 @@ namespace Cozmo {
                                  "failed pickup with %s, trying again",
                                  EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
 
-          if(ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE == msg.completionInfo.Get_objectInteractionCompleted().result) {
-            PlayAnimation(robot, "ID_react2block_align_fail");
-          } else {
-            PlayAnimation(robot, "ID_rollBlock_fail_01");  // TEMP:  // TODO:(bn) different one here?
+          switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+          {
+            case ObjectInteractionResult::INCOMPLETE:
+            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE: {
+              PlayAnimation(robot, "ID_react2block_align_fail");
+              break;
+            }
+
+            default: {
+              PlayAnimation(robot, "ID_rollBlock_fail_01");  // TEMP:  // TODO:(bn) different one here?
+            }
           }
 
           SetCurrState(State::InspectingBlock);
@@ -1155,6 +1170,7 @@ namespace Cozmo {
 
           switch(msg.completionInfo.Get_objectInteractionCompleted().result)
           {
+            case ObjectInteractionResult::INCOMPLETE:
             case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
             {
               // TODO:(bn) "soft fail" sound here?
