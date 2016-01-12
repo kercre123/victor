@@ -2802,7 +2802,7 @@ namespace Anki {
     
     ActionResult RollObjectAction::Verify(Robot& robot)
     {
-      ActionResult result = ActionResult::FAILURE_ABORT;
+      ActionResult result = ActionResult::RUNNING;
       
       switch(_dockAction)
       {
@@ -2813,7 +2813,9 @@ namespace Anki {
             if(robot.IsCarryingObject() == true) {
               PRINT_NAMED_WARNING("RollObjectAction::Verify",
                                   "Expecting robot to think it's NOT carrying an object at this point.");
-              return ActionResult::FAILURE_ABORT;
+              _interactionResult = ObjectInteractionResult::STILL_CARRYING;
+              result = ActionResult::FAILURE_ABORT;
+              break;
             }
             
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
@@ -2822,9 +2824,14 @@ namespace Anki {
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetEmitCompletionSignal(false);
+              
+              // Do one update step immediately after creating the action to get Init done
+              result = _rollVerifyAction->Update(robot);
             }
             
-            result = _rollVerifyAction->Update(robot);
+            if(result == ActionResult::RUNNING) {
+              result = _rollVerifyAction->Update(robot);
+            }
             
             if(result != ActionResult::RUNNING) {
               
