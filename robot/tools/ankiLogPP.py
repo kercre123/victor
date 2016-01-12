@@ -64,7 +64,9 @@ class CoordinatedFile:
             raise IOError("\"{}\" is not a file".format(fileName))
         else:
             self.fileName = fileName
-            self.contents = open(fileName, "r").read()
+            fh = open(fileName, "r")
+            self.contents = fh.read()
+            fh.close()
             counter = 0
             self.lineIndecies = [0]
             for l in self.contents.splitlines(True):
@@ -287,7 +289,10 @@ class ParseData:
                     base, ext = os.path.splitext(file)
                     if ext in sourceTypes:
                         fpn = os.path.join(dirpath, file)
-                        if self.INCLUDE_FILE_RE.search(open(fpn, "r").read()):
+                        fh = open(fpn, "r")
+                        text = fh.read()
+                        fh.close()
+                        if self.INCLUDE_FILE_RE.search(text):
                             self.pt[fpn] = self.parseFile(fpn)
                         else:
                             vPrint(2, "Skipping file \"{}\" because it doesn't have the logging include.".format(fpn))
