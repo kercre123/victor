@@ -855,7 +855,19 @@ namespace Anki {
       static const std::string name("TurnInPlaceAction");
       return name;
     }
-
+    
+    void TurnInPlaceAction::SetMaxSpeed(f32 maxSpeed_radPerSec)
+    {
+      if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.SetMaxSpeed.SpeedExceedsLimit",
+                            "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
+                            RAD_TO_DEG_F32(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        _maxSpeed_radPerSec = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxSpeed_radPerSec);
+      } else {
+        _maxSpeed_radPerSec = maxSpeed_radPerSec;
+      }
+    }
+    
     void TurnInPlaceAction::SetTolerance(const Radians& angleTol_rad)
     {
       _angleTolerance = angleTol_rad.getAbsoluteVal();
@@ -1058,6 +1070,18 @@ namespace Anki {
 
     }
 
+    void PanAndTiltAction::SetMaxPanSpeed(f32 maxSpeed_radPerSec)
+    {
+      if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
+        PRINT_NAMED_WARNING("PanAndTiltAction.SetMaxSpeed.PanSpeedExceedsLimit",
+                            "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
+                            RAD_TO_DEG_F32(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        _maxPanSpeed_radPerSec = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxSpeed_radPerSec);
+      } else {
+        _maxPanSpeed_radPerSec = maxSpeed_radPerSec;
+      }
+    }
+    
     void PanAndTiltAction::SetPanTolerance(const Radians& angleTol_rad)
     {
       _panAngleTol = angleTol_rad.getAbsoluteVal();
