@@ -846,6 +846,8 @@ public class Robot : IDisposable {
     var tag = GetNextIdTag();
     QueueSingleAction.idTag = tag;
     QueueSingleAction.position = queueActionPosition;
+    QueueSingleAction.inSlot = 1;
+
     RobotEngineManager.Instance.Message.QueueSingleAction = QueueSingleAction;
 
     RobotEngineManager.Instance.SendMessage();
@@ -1075,6 +1077,8 @@ public class Robot : IDisposable {
     var tag = GetNextIdTag();
     QueueSingleAction.idTag = tag;
     QueueSingleAction.position = queueActionPosition;
+    QueueSingleAction.inSlot = 0;
+
     RobotEngineManager.Instance.Message.QueueSingleAction = QueueSingleAction;
     RobotEngineManager.Instance.SendMessage();
 
