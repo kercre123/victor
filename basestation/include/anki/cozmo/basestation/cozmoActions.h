@@ -616,12 +616,6 @@ namespace Anki {
       
       virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
-      // We don't want to ignore movement commands for Body during FaceObjectAction
-      virtual u8 GetMovementTracksToIgnore() const override
-      {
-        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
-      }
-      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
