@@ -36,7 +36,7 @@ namespace Simon {
       if (_StartLightBlinkTime == -1) {
         if (_TargetSequenceLength == _CreatedSequence.Count) {
           _GameInstance.SetCurrentSequence(_CreatedSequence);
-          _StateMachine.SetNextState(new CozmoGuessSimonState());
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
         }
         if (_TargetCube != -1) {
           _CurrentRobot.DriveWheels(0f, 0f);
@@ -75,6 +75,10 @@ namespace Simon {
       cube.TurnLEDsOff();
 
       _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(cube, false));
+    }
+
+    private void HandleOnCozmoStartAnimationDone(bool success) {
+      _StateMachine.SetNextState(new CozmoGuessSimonState());
     }
   }
 }
