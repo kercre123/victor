@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 137732, guid: 6889b0520277348ca99027203e9bf85d, type: 2}
   _ChallengeID: CodeBreaker01
-  _EnableHubWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: codeBreaker01.title
   _ChallengeSubtitleLocKey: codeBreaker01.subtitle
