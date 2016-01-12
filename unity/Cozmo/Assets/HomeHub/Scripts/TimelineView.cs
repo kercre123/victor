@@ -90,6 +90,10 @@ namespace Cozmo.HomeHub {
       }
     }
 
+    private void OnRectTransformDimensionsChange() {
+
+    }
+
     private void PopulateTimeline(List<TimelineEntryState> timelineEntries) {
       int timelineIndex = 0;
 
