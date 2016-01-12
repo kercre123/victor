@@ -81,17 +81,17 @@ namespace SpeedTap {
     }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      InitializeMinigameObjects();
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       Rules = GetRules(speedTapConfig.RuleSet);
+      InitializeMinigameObjects(speedTapConfig.NumCubesRequired());
     }
 
     // Use this for initialization
-    protected void InitializeMinigameObjects() { 
+    protected void InitializeMinigameObjects(int cubesRequired) { 
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), 2, false, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), cubesRequired, false, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);

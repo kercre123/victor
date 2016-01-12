@@ -6,6 +6,7 @@ namespace Simon {
     private LightCube _TargetCube;
     private float _StartLightBlinkTime;
     private uint _CubeLightColor;
+    private bool _IsAnimating = true;
 
     public CozmoBlinkLightsSimonState(LightCube targetCube) {
       _TargetCube = targetCube;
@@ -20,6 +21,10 @@ namespace Simon {
       base.Update();
       if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
         StopSimonNodeBlink();
+        if (!_IsAnimating) {
+          // Leave blink light state
+          _StateMachine.PopState();
+        }
       }
     }
 
@@ -30,16 +35,19 @@ namespace Simon {
     private void SetSimonNodeBlink() {
       SimonGame game = _StateMachine.GetGame() as SimonGame;
       string animation = game.GetCozmoAnimationForBlock(_TargetCube.ID);
-      _CurrentRobot.SendAnimation(animation, HandleAnimationEnd);
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _StartLightBlinkTime = Time.time;
       _CubeLightColor = _TargetCube.Lights[0].OnColor;
       _TargetCube.TurnLEDsOff();
       _CurrentRobot.SetAllBackpackBarLED(_CubeLightColor);
+
+      _CurrentRobot.SendAnimation(animation, HandleAnimationEnd);
+      _IsAnimating = true;
     }
 
     private void HandleAnimationEnd(bool success) {
-      _StateMachine.PopState();
+      // Leave animation state
+      _IsAnimating = false;
     }
 
     private void StopSimonNodeBlink() {

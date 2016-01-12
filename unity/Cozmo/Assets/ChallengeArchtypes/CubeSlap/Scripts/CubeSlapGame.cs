@@ -47,10 +47,10 @@ namespace CubeSlap {
       _SuccessCount = 0;
       NumSegments = _SuccessGoal;
       Progress = 0.0f;
-      InitializeMinigameObjects();
+      InitializeMinigameObjects(config.NumCubesRequired());
     }
 
-    protected void InitializeMinigameObjects() {
+    protected void InitializeMinigameObjects(int numCubes) {
 
       CurrentRobot.SetBehaviorSystem(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -60,7 +60,7 @@ namespace CubeSlap {
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
 
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SeekState(), 1, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new SeekState(), numCubes, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 
