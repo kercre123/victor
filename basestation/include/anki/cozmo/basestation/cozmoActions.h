@@ -497,10 +497,10 @@ namespace Anki {
       
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxPanSpeed(f32 maxSpeed_radPerSec);
-      void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
+      void SetPanAccel(f32 accel_radPerSec2);
       void SetPanTolerance(const Radians& angleTol_rad);
-      void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
-      void SetTiltAccel(f32 accel_radPerSec2)            { _tiltAccel_radPerSec2 = accel_radPerSec2; }
+      void SetMaxTiltSpeed(f32 maxSpeed_radPerSec);
+      void SetTiltAccel(f32 accel_radPerSec2);
       void SetTiltTolerance(const Radians& angleTol_rad);
 
     protected:

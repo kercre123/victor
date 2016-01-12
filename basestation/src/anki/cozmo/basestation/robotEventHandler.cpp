@@ -335,20 +335,38 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
   } else {
     objectID = msg.objectID;
   }
-  return new FaceObjectAction(objectID,
-                              Radians(msg.turnAngleTol),
-                              Radians(msg.maxTurnAngle),
-                              msg.visuallyVerifyWhenDone,
-                              msg.headTrackWhenDone);
+  FaceObjectAction* action = new FaceObjectAction(objectID,
+                                             Radians(msg.turnAngleTol),
+                                             Radians(msg.maxTurnAngle),
+                                             msg.visuallyVerifyWhenDone,
+                                             msg.headTrackWhenDone);
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
 }
   
-IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::FacePose& facePose)
+IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::FacePose& msg)
 {
-  Pose3d pose(0, Z_AXIS_3D(), {facePose.world_x, facePose.world_y, facePose.world_z},
+  Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
-  return new FacePoseAction(pose,
-                            Radians(facePose.turnAngleTol),
-                            Radians(facePose.maxTurnAngle));
+  FacePoseAction* action = new FacePoseAction(pose,
+                                              Radians(msg.turnAngleTol),
+                                              Radians(msg.maxTurnAngle));
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
 }
   
 IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
