@@ -237,6 +237,7 @@ public class Robot : IDisposable {
   private U2G.PlaceRelObject PlaceRelObjectMessage;
   private U2G.PlaceOnObject PlaceOnObjectMessage;
   private U2G.PlayAnimation PlayAnimationMessage;
+  private U2G.PlayAnimationGroup PlayAnimationGroupMessage;
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
@@ -346,6 +347,7 @@ public class Robot : IDisposable {
     PlaceRelObjectMessage = new U2G.PlaceRelObject();
     PlaceOnObjectMessage = new U2G.PlaceOnObject();
     PlayAnimationMessage = new U2G.PlayAnimation();
+    PlayAnimationGroupMessage = new U2G.PlayAnimationGroup();
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
     AlignWithObjectMessage = new U2G.AlignWithObject();
     ProgressionStatMessage = new U2G.ProgressionMessage();
@@ -765,6 +767,24 @@ public class Robot : IDisposable {
     PlayAnimationMessage.robotID = this.ID;
 
     QueueSingleAction.action.playAnimation = PlayAnimationMessage;
+    var tag = GetNextIdTag();
+    QueueSingleAction.idTag = tag;
+    QueueSingleAction.position = queueActionPosition;
+    RobotEngineManager.Instance.Message.QueueSingleAction = QueueSingleAction;
+    RobotEngineManager.Instance.SendMessage();
+
+    _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
+  }
+
+  public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+
+    DAS.Debug(this, "Sending Group " + animGroupName + " with " + 1 + " loop");
+
+    PlayAnimationGroupMessage.animationGroupName = animGroupName;
+    PlayAnimationGroupMessage.numLoops = 1;
+    PlayAnimationGroupMessage.robotID = this.ID;
+
+    QueueSingleAction.action.playAnimationGroup = PlayAnimationGroupMessage;
     var tag = GetNextIdTag();
     QueueSingleAction.idTag = tag;
     QueueSingleAction.position = queueActionPosition;

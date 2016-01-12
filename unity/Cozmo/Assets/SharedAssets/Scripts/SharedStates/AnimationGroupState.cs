@@ -16,7 +16,7 @@ public class AnimationGroupState : State {
 
   public override void Enter() {
     base.Enter();
-    AnimationGroupManager.Instance.PlayAnimationFromGroup(_CurrentRobot, _AnimationGroupName, HandleAnimationDone);
+    _CurrentRobot.SendAnimationGroup(_AnimationGroupName, HandleAnimationDone);
   }
 
   private void HandleAnimationDone(bool success) {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Anki.Cozmo;
 
 namespace AnimationGroups {
-  public class AnimationGroup : ScriptableObject {
+  public class AnimationGroup {
 
     public List<AnimationGroupEntry> Animations = new List<AnimationGroupEntry>();
 
@@ -17,7 +17,7 @@ namespace AnimationGroups {
 
       [System.Serializable]
       public class MoodCurve {
-        public EmotionType Emotion;
+        public int Emotion;
 
         // by default, set a linear curve over our emotional range.
         public AnimationCurve Curve = new AnimationCurve(new Keyframe(-1, -1), new Keyframe(1,1));
@@ -27,7 +27,7 @@ namespace AnimationGroups {
         float result = 0f;
         for (int i = 0; i < MoodCurves.Count; i++) {
 
-          float emotionVal = robot.EmotionValues[(int)MoodCurves[i].Emotion];
+          float emotionVal = robot.EmotionValues[MoodCurves[i].Emotion];
           result += MoodCurves[i].Curve.Evaluate(emotionVal);
         }
         return result;
