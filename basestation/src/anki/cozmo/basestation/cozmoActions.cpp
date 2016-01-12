@@ -1696,7 +1696,7 @@ namespace Anki {
         }
       }
       
-      if( robot.IsHeadMoving() ) {
+      if( robot.GetMoveComponent().IsHeadMoving() ) {
         _motionStarted = true;
       }
 
@@ -1711,7 +1711,7 @@ namespace Anki {
                          GetTag(),
                          RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
 
-        if( _motionStarted && ! robot.IsHeadMoving() ) {
+        if( _motionStarted && ! robot.GetMoveComponent().IsHeadMoving() ) {
           PRINT_NAMED_WARNING("MoveHeadToAngleAction.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
@@ -1897,7 +1897,7 @@ namespace Anki {
       else
        */
 
-      if( robot.IsLiftMoving() ) {
+      if( robot.GetMoveComponent().IsLiftMoving() ) {
         _motionStarted = true;
       }
       
@@ -1909,7 +1909,7 @@ namespace Anki {
                          GetTag(),
                          robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
 
-        if( _motionStarted && ! robot.IsLiftMoving() ) {
+        if( _motionStarted && ! robot.GetMoveComponent().IsLiftMoving() ) {
           PRINT_NAMED_WARNING("MoveLiftToHeightAction.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
