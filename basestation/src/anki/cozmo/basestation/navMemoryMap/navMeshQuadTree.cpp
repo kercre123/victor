@@ -25,7 +25,7 @@ CONSOLE_VAR(bool, kRenderLastAddedQuad  , "NavMeshQuadTree", false);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTree::NavMeshQuadTree()
 : _gfxDirty(true)
-, _root({0,0,1}, 256, 4, NavMeshQuadTreeNode::EContentType::Unknown)
+, _root({0,0,1}, 256, 4, NavMeshQuadTreeNode::EQuadrant::Root, NavMeshQuadTreeNode::EContentType::Unknown, nullptr)
 {
 
 }

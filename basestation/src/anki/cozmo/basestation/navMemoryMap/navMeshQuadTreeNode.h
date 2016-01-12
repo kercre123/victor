@@ -30,6 +30,16 @@ public:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // position with respect to the parent
+  enum EQuadrant : uint8_t {
+    TopLeft  = 0,
+    TopRight = 1,
+    BotLeft  = 2,
+    BotRight = 3,
+    Root = 4 // needed for the root node, who has no parent
+  };
+  
+  // content detected in each node
   enum class EContentType {
     Subdivided,   // we are subdivided, so children hold more detailed info
     Unknown,      // no idea
@@ -43,9 +53,9 @@ public:
   // Initialization
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // Sets node at the given center, with the given side length, and that will allow its children to have the
-  // given depth (0 will not allow children).
-  NavMeshQuadTreeNode(const Point3f& center, float sideLength, uint32_t maxDepth, EContentType contentType);
+  // Crete node
+  // it will allow subdivision as long as level is greater than 0
+  NavMeshQuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, EContentType contentType, NavMeshQuadTreeNode* parent);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -79,7 +89,8 @@ public:
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
   // on a root node. Such responsibility lies in the caller, not in this node
-  void UpgradeRootLevel(const Point2f& direction);
+  // Returns true if successfully expanded, false otherwise
+  bool UpgradeRootLevel(const Point2f& direction);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -89,7 +100,23 @@ public:
   void AddQuadsToDraw(VizManager::SimpleQuadVector& quadVector) const;
   
 private:
- 
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // invalid node id, used as default value
+  enum { kInvalidNodeId = 0 };
+  
+  // direction with respect to self
+  enum EDirection { North, East, South, West };
+
+  // info about moving towards a neighbor
+  struct MoveInfo {
+    NavMeshQuadTreeNode::EQuadrant neighborQuadrant;  // destination quadrant
+    bool sharesParent;                                // whether destination quadrant is in the same parent
+  };
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -99,7 +126,7 @@ private:
   void Merge();
 
   // return true if this quad can subdivide
-  bool CanSubdivide() const { return _maxDepth > 0; }
+  bool CanSubdivide() const { return _level > 0; }
   
   // return true if this quad is already subdivided
   bool IsSubdivided() const { return !_children.empty(); }
@@ -118,13 +145,48 @@ private:
   
   // sets the content type to the detected one
   void SetDetectedContentType(EContentType detectedContentType);
-    
+  
+  // sets a new parent to this node. Used on expansions
+  void ChangeParent(const NavMeshQuadTreeNode* newParent) { _parent = newParent; }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Exploration
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // calculate opposite direction (eg: North vs South, West vs East)
+  static EDirection GetOppositeDirection(EDirection dir);
+  
+  // calculate where we would land from a quadrant if we moved in the given direction
+  static const MoveInfo* GetDestination(EQuadrant from, EDirection direction);
+  
+  // get the child in the given quadrant, or null if this node is not subdivided
+  const NavMeshQuadTreeNode* GetChild(EQuadrant quadrant) const;
+
+  // iterate until we reach the nodes that have a border in the given direction, and add them to the vector
+  // NOTE: this method is expected to NOT clear the vector before adding descendants
+  void AddSmallestDescendants(EDirection direction, std::vector<const NavMeshQuadTreeNode*>& descendants) const;
+
+  // find the neighbor of the same or higher level in the given direction
+  const NavMeshQuadTreeNode* FindSingleNeighbor(EDirection direction) const;
+
+  // find the group of smallest neighbors with whom this node shares a border.
+  // they would be children of the same level neighbor. This is normally useful when our neighbor is subdivided but
+  // we are not
+  // NOTE: this method is expected to NOT clear the vector before adding neighbors
+  void AddSmallestNeighbors(EDirection direction, std::vector<const NavMeshQuadTreeNode*>& neighbors) const;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // depth
-  uint32_t _maxDepth;
+
+  // parent node
+  const NavMeshQuadTreeNode* _parent;
+
+  // our level
+  uint8_t _level;
+
+  // quadrant within the parent
+  EQuadrant _quadrant;
   
   // information about what's in this quad
   EContentType _contentType;
