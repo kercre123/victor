@@ -480,7 +480,7 @@ namespace Anki {
       virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::BODY_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
-      void SetMaxPanSpeed(f32 maxSpeed_radPerSec)        { _maxPanSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetMaxPanSpeed(f32 maxSpeed_radPerSec);
       void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
       void SetPanTolerance(const Radians& angleTol_rad);
       void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
@@ -504,7 +504,7 @@ namespace Anki {
       bool    _isTiltAbsolute;
       
       Radians _panAngleTol = DEG_TO_RAD(5);
-      f32     _maxPanSpeed_radPerSec = 50.f;
+      f32     _maxPanSpeed_radPerSec = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       f32     _panAccel_radPerSec2 = 10.f;
       Radians _tiltAngleTol = DEG_TO_RAD(5);
       f32     _maxTiltSpeed_radPerSec = 15.f;
