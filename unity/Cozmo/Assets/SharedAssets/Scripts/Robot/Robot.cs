@@ -846,7 +846,8 @@ public class Robot : IDisposable {
     var tag = GetNextIdTag();
     QueueSingleAction.idTag = tag;
     QueueSingleAction.position = queueActionPosition;
-    RobotEngineManager.Instance.Message.QueueSingleAction = QueueSingleAction;
+
+    RobotEngineManager.Instance.Message.SetHeadAngle = SetHeadAngleMessage;
 
     RobotEngineManager.Instance.SendMessage();
 
@@ -1075,7 +1076,8 @@ public class Robot : IDisposable {
     var tag = GetNextIdTag();
     QueueSingleAction.idTag = tag;
     QueueSingleAction.position = queueActionPosition;
-    RobotEngineManager.Instance.Message.QueueSingleAction = QueueSingleAction;
+
+    RobotEngineManager.Instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.Instance.SendMessage();
 
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
