@@ -27,11 +27,11 @@ namespace Cozmo.HomeHub {
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
       foreach (KeyValuePair<string, ChallengeStatePacket> kvp in challengeStatesById) {
-        if (kvp.Value.currentState == ChallengeState.UNLOCKED) {
-          _ChallengeButtons.Add(kvp.Value.data.ChallengeID, CreateChallengeButton(kvp.Value.data, _UnlockedChallengeButtonPrefab.gameObject, HandleUnlockedChallengeClicked));
-        }
-        else if (kvp.Value.currentState == ChallengeState.LOCKED) {
+        if (kvp.Value.currentState == ChallengeState.LOCKED) {
           _ChallengeButtons.Add(kvp.Value.data.ChallengeID, CreateChallengeButton(kvp.Value.data, _LockedButtonPrefab.gameObject, HandleLockedChallengeClicked));
+        }
+        else {
+          _ChallengeButtons.Add(kvp.Value.data.ChallengeID, CreateChallengeButton(kvp.Value.data, _UnlockedChallengeButtonPrefab.gameObject, HandleUnlockedChallengeClicked));
         }
       }
     }
