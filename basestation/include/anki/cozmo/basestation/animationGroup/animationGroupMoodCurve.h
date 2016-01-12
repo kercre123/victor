@@ -17,7 +17,7 @@
 #define ANKI_COZMO_ANIMATION_GROUP_MOOD_CURVE_H
 
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/cozmo/basestation/animationGroup/unityAnimationCurve.h"
+#include "util/graphEvaluator/graphEvaluator2d.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -42,7 +42,7 @@ namespace Anki {
       int _emotion;
       
       // The animation curve for this animation
-      UnityAnimationCurve _curve;
+      Util::GraphEvaluator2d _graphEvaluator;
       
     }; // class AnimationGroupMoodCurve
   } // namespace Cozmo

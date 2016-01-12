@@ -35,22 +35,20 @@ namespace Anki {
       
       _emotion = jsonRoot["Emotion"].asInt();
       
-      if(!jsonRoot.isMember("Curve")) {
-        PRINT_NAMED_ERROR("AnimationGroupMoodCurve.DefineFromJson.NoCurve",
-                          "Missing 'Curve' field for mood curve.");
+      if(!jsonRoot.isMember("GraphEvaluator")) {
+        PRINT_NAMED_ERROR("AnimationGroupMoodCurve.DefineFromJson.NoGraphEvaluator",
+                          "Missing 'GraphEvaluator' field for mood graph.");
         return RESULT_FAIL;
       }
       
-      Json::Value& jsonAnimationCurve = jsonRoot["Curve"];
+      Json::Value& jsonAnimationCurve = jsonRoot["GraphEvaluator"];
       
-      auto addResult = _curve.DefineFromJson(jsonAnimationCurve);
-      
-      return addResult;
+      return _graphEvaluator.ReadFromJson(jsonAnimationCurve) ? RESULT_OK : RESULT_FAIL;
     }
     
     
     float AnimationGroupMoodCurve::Evaluate(float mood) const {
-      return _curve.Evaluate(mood);
+      return _graphEvaluator.EvaluateY(mood);
     }
     
   } // namespace Cozmo
