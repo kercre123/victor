@@ -37,10 +37,6 @@ namespace Anki {
   
   namespace Cozmo {
     
-    // Right before docking, the dock object must have been visually verified
-    // no more than this many milliseconds ago or it will not even attempt to dock.
-    const u32 DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS = 1000;
- 
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
     f32 ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
@@ -1478,6 +1474,29 @@ namespace Anki {
 
     ActionResult VisuallyVerifyObjectAction::Init(Robot& robot)
     {
+      using namespace ExternalInterface;
+      
+      _objectSeen = false;
+      
+      auto obsObjLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
+      {
+        auto objectObservation = event.GetData().Get_RobotObservedObject();
+        // ID has to match and we have to actually have seen a marker (not just
+        // saying part of the object is in FOV due to assumed projection)
+        if(!_objectSeen && objectObservation.objectID == _objectID && objectObservation.markersVisible)
+        {
+          _objectSeen = true;
+        }
+      };
+      
+      _observedObjectHandle = robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::RobotObservedObject, obsObjLambda);
+
+      if(_whichCode == Vision::Marker::ANY_CODE) {
+        _markerSeen = true;
+      } else {
+        _markerSeen = false;
+      }
+      
       // Get lift out of the way
       _moveLiftToHeightAction.SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
@@ -1499,90 +1518,93 @@ namespace Anki {
     
     ActionResult VisuallyVerifyObjectAction::CheckIfDone(Robot& robot)
     {
-
-      ActionResult actionRes = ActionResult::SUCCESS;
-      
-      if (!_moveLiftToHeightActionDone) {
-        actionRes = _moveLiftToHeightAction.Update(robot);
-        if (actionRes != ActionResult::SUCCESS) {
-          if (actionRes != ActionResult::RUNNING) {
-            PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.CompoundActionFailed",
-                                "Failed to move lift out of FOV. Action result = %s\n",
-                                EnumToString(actionRes));
-          }
-          return actionRes;
-        }
-        _moveLiftToHeightActionDone = true;
-      }
-
-      
-      // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
-      // TODO: Should this check if it's moving at all?
-      if (robot.GetMoveComponent().IsHeadMoving()) {
-        _waitToVerifyTime = -1;
-      }
+      ActionResult actionRes = ActionResult::RUNNING;
       
       const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      if(_waitToVerifyTime < 0.f) {
-        _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
-      }
       
-      // Verify that we can see the object we were interested in
-      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                          "[%d] Object with ID=%d no longer exists in the world.",
-                          GetTag(),
-                          _objectID.GetValue());
+      if(_objectSeen)
+      {
+        if(!_markerSeen)
+        {
+          // We've seen the object, check if we've seen the correct marker if one was
+          // specified and we haven't seen it yet
+          ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+          if(object == nullptr) {
+            PRINT_NAMED_ERROR("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
+                              "[%d] Object with ID=%d no longer exists in the world.",
+                              GetTag(),
+                              _objectID.GetValue());
+            return ActionResult::FAILURE_ABORT;
+          }
+          
+          // Look for which markers were seen since (and including) last observation time
+          std::vector<const Vision::KnownMarker*> observedMarkers;
+          object->GetObservedMarkers(observedMarkers, object->GetLastObservedTime());
+
+          for(auto marker : observedMarkers) {
+            if(marker->GetCode() == _whichCode) {
+              _markerSeen = true;
+              break;
+            }
+          }
+          
+          if(!_markerSeen) {
+            // Seeing wrong marker(s). Log this for help in debugging
+            std::string observedMarkerNames;
+            for(auto marker : observedMarkers) {
+              observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
+              observedMarkerNames += " ";
+            }
+            
+            PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.WrongMarker",
+                             "Have seend object %d, but not marker code %d. Have seen: %s",
+                             _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
+          }
+        } // if(!_markerSeen)
+        
+        if(_markerSeen) {
+          // We've seen the object and the correct marker: we're good to go!
+          return ActionResult::SUCCESS;
+        }
+        
+      } else {
+        // Still waiting to see the object: keep moving head/lift
+        if (!_moveLiftToHeightActionDone) {
+          ActionResult liftActionRes = _moveLiftToHeightAction.Update(robot);
+          if (liftActionRes != ActionResult::SUCCESS) {
+            if (liftActionRes != ActionResult::RUNNING) {
+              PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.CompoundActionFailed",
+                                  "Failed to move lift out of FOV. Action result = %s\n",
+                                  EnumToString(actionRes));
+            }
+            return liftActionRes;
+          }
+          _moveLiftToHeightActionDone = true;
+        }
+        
+        // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
+        // TODO: Should this check if it's moving at all?
+        if (robot.GetMoveComponent().IsHeadMoving()) {
+          _waitToVerifyTime = -1;
+        }
+        
+        if(_waitToVerifyTime < 0.f) {
+          _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
+        }
+
+      } // if/else(objectSeen)
+      
+      if(currentTime > _waitToVerifyTime)
+      {
+        PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.TimedOut",
+                            "Did not see object %d and current time > waitUntilTime (%.3f>%.3f)",
+                            _objectID.GetValue(), currentTime, _waitToVerifyTime);
         return ActionResult::FAILURE_ABORT;
       }
       
-      const TimeStamp_t lastObserved = object->GetLastObservedTime();
-      if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
-      {
-        PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                         "[%d] Object still exists, but not seen since %d (stamp=%d, curr_s = %f, _waitTil_s = %f)",
-                         GetTag(),
-                         lastObserved,
-                         robot.GetLastImageTimeStamp(),
-                         currentTime,
-                         _waitToVerifyTime);
-        actionRes = ActionResult::FAILURE_ABORT;
-      }
-      
-      if((actionRes != ActionResult::FAILURE_ABORT) && (_whichCode != Vision::Marker::ANY_CODE)) {
-        std::vector<const Vision::KnownMarker*> observedMarkers;
-        object->GetObservedMarkers(observedMarkers, robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS);
-        
-        bool markerWithCodeSeen = false;
-        for(auto marker : observedMarkers) {
-          if(marker->GetCode() == _whichCode) {
-            markerWithCodeSeen = true;
-            break;
-          }
-        }
-        
-        if(!markerWithCodeSeen) {
-          
-          std::string observedMarkerNames;
-          for(auto marker : observedMarkers) {
-            observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
-            observedMarkerNames += " ";
-          }
-          
-          PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.MarkerCodeNotSeen",
-                              "Object %d observed, but not expected marker: %s. Instead saw: %s",
-                              _objectID.GetValue(), Vision::MarkerTypeStrings[_whichCode], observedMarkerNames.c_str());
-          return ActionResult::FAILURE_ABORT;
-        }
-      }
-
-      if((currentTime < _waitToVerifyTime) && (actionRes != ActionResult::SUCCESS)) {
-        return ActionResult::RUNNING;
-      }
-      
       return actionRes;
-    }
+      
+    } // VisuallyVerifyObjectAction::CheckIfDone()
 
     
 #pragma mark ---- MoveHeadToAngleAction ----
