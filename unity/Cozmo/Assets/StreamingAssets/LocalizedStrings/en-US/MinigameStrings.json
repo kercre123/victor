@@ -24,36 +24,6 @@
   "askCozmo.button": {
     "translation": "GIVE ME ANSWER"
   },
-  "dockTraining.title": {
-    "translation": "Dock Training"
-  },
-  "followCube.title": {
-    "translation": "Follow Cube Training"
-  },
-  "followCube.label.attempts": {
-    "translation": "Lives: {0}"
-  },
-  "patternPlay.title": {
-    "translation": "Pattern Play"
-  },
-  "patternPlay.subtitle": {
-    "translation": "Pattern Play Subtitle"
-  },
-  "patternPlay.description": {
-    "translation": "Pattern Play Description"
-  },
-  "patternPlay.button.openCollection": {
-    "translation": "Open Memory Banks"
-  },
-  "patternPlay.discoverView.okButton": {
-    "translation": "Save Pattern"
-  },
-  "patternPlay.discoverView.title": {
-    "translation": "NEW PATTERN DISCOVERED!"
-  },
-  "rotationTraining.title": {
-    "translation": "Rotation Training"
-  },
   "simonGame.button": {
     "translation": "Continue"
   },
@@ -95,9 +65,6 @@
   },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
-  },
-  "visionTraining.title": {
-    "translation": "Vision Training"
   },
   "vortex.title": {
     "translation": "Vortex"
@@ -149,8 +116,5 @@
   },
   "codeBreaker.text.howToPlayLong": {
     "translation": "Guess Cozmo's Code before you run out of guesses!\n        The Code is a number of cubes of different colors, arranged horizontally in a line in front of Cozmo.\n        1. Cozmo will pick a code.\n        2. Tap a Cube to change the Cube's color.\n        3. Arrange the cubes in a line in front of Cozmo.\n        4. Tap 'Guess Code' when you're ready to guess.\n        5. Cozmo will display lights on his back to let you know correctness:\n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
-  },
-  "motionDetectionHelp01": {
-    "translation": "Wave in the center of Cozmo's view"
   }
 }
