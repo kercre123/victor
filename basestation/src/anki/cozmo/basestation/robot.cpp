@@ -1590,7 +1590,7 @@ namespace Anki {
 
         PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
         
-        _cannedAnimations.DefineAnimationGroupFromJson(animGroupDef, animationGroupName);
+        _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
       }      
     }
     

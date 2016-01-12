@@ -42,6 +42,7 @@
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
@@ -687,7 +688,7 @@ public:
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   
   const std::string& GetAnimationNameFromGroup(const std::string& name) const {
-    auto group = _cannedAnimations.GetAnimationGroup(name);
+    auto group = _animationGroups.GetAnimationGroup(name);
     if(group != nullptr && !group->IsEmpty()) {
       return group->GetAnimation(GetMoodManager());
     }
@@ -877,6 +878,7 @@ public:
     ///////// Animation /////////
     
     CannedAnimationContainer _cannedAnimations;
+    AnimationGroupContainer  _animationGroups;
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;

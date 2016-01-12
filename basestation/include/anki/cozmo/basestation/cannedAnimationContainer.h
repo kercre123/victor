@@ -17,7 +17,6 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/animation/animation.h"
-#include "anki/cozmo/basestation/animationGroup/animationGroup.h"
 #include <unordered_map>
 #include <vector>
 
@@ -33,21 +32,12 @@ namespace Cozmo {
     
     Result DefineFromJson(Json::Value& jsonRoot, std::string& loadedAnimName);
     
-    Result DefineAnimationGroupFromJson(Json::Value& jsonRoot, const std::string& animationGroupName);
-    
     Result AddAnimation(const std::string& name);
     
     Animation* GetAnimation(const std::string& name);
     const Animation* GetAnimation(const std::string& name) const;
-
-    Result AddAnimationGroup(const std::string& name);
-    
-    AnimationGroup* GetAnimationGroup(const std::string& name);
-    const AnimationGroup* GetAnimationGroup(const std::string& name) const;
     
     std::vector<std::string> GetAnimationNames();
-    
-    std::vector<std::string> GetAnimationGroupNames();
     
     void Clear();
     
@@ -55,8 +45,6 @@ namespace Cozmo {
     
     std::unordered_map<std::string, Animation> _animations;
       
-    std::unordered_map<std::string, AnimationGroup> _animationGroups;
-    
   }; // class CannedAnimationContainer
   
 } // namespace Cozmo
