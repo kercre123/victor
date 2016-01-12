@@ -1462,6 +1462,11 @@ namespace Anki {
       
       if(AnimationStreamer::NotAnimatingTag == tag) {
         AnimationStreamer::FaceTrack faceTrack;
+        if(duration_ms > 0) {
+          // Add an initial no-adjustment frame so we have something to interpolate
+          // from on our way to the specified shift
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame());
+        }
         faceTrack.AddKeyFrameToBack(std::move(keyframe));
         tag = GetAnimationStreamer().AddPersistentFaceLayer(name, std::move(faceTrack));
       } else {

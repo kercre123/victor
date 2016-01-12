@@ -325,22 +325,22 @@ namespace Cozmo {
       PRINT_NAMED_INFO("AnimationStreamer.RemovePersistentFaceLayer",
                        "Tag = %d (Layers remaining=%lu)", layerIter->first, _faceLayers.size()-1);
       
+
+      // Add a layer that takes us back from where this persistent frame leaves
+      // off to no adjustment at all.
+      FaceTrack faceTrack;
+      faceTrack.SetIsLive(true);
       if(duration_ms > 0)
       {
-        // Add a layer that takes us back from where this persistent frame leaves
-        // off to no adjustment at all.
-        FaceTrack faceTrack;
-        faceTrack.SetIsLive(true);
         ProceduralFaceKeyFrame firstFrame(layerIter->second.track.GetCurrentKeyFrame());
         firstFrame.SetTriggerTime(0);
         faceTrack.AddKeyFrameToBack(std::move(firstFrame));
-        
-        ProceduralFaceKeyFrame lastFrame;
-        lastFrame.SetTriggerTime(duration_ms);
-        faceTrack.AddKeyFrameToBack(std::move(lastFrame));
-        
-        AddFaceLayer("Remove" + layerIter->second.name, std::move(faceTrack));
       }
+      ProceduralFaceKeyFrame lastFrame;
+      lastFrame.SetTriggerTime(duration_ms);
+      faceTrack.AddKeyFrameToBack(std::move(lastFrame));
+      
+      AddFaceLayer("Remove" + layerIter->second.name, std::move(faceTrack));
       
       _faceLayers.erase(layerIter);
     }

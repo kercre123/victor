@@ -20,6 +20,7 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
 #include <list>
+#include <map>
 
 namespace Anki {
 namespace Cozmo {
@@ -74,7 +75,9 @@ public:
                          const f32 duration_sec = 0.f);
   
   // Register a persistent face layer tag for removal next time head moves
-  void RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag);
+  // You may optionally specify the duration of the layer removal (i.e. how
+  // long it takes to return to not making any face adjustment)
+  void RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms=0);
   
   Result StopAllMotors();
   
@@ -114,13 +117,13 @@ private:
   std::vector<int> _animTrackLockCount;
   std::vector<int> _ignoreTrackMovementCount;
   
-  std::set<AnimationStreamer::Tag> _faceLayerTagsToRemoveOnHeadMovement;
+  std::map<AnimationStreamer::Tag, TimeStamp_t> _faceLayerTagsToRemoveOnHeadMovement;
   
 }; // class MovementComponent
 
   
-inline void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag) {
-  _faceLayerTagsToRemoveOnHeadMovement.insert(faceLayerTag);
+inline void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms) {
+  _faceLayerTagsToRemoveOnHeadMovement[faceLayerTag] = duration_ms;
 }
   
   

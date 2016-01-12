@@ -915,7 +915,7 @@ namespace Anki {
           const Radians angleDiff = _targetAngle - currentAngle;
           const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
           const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
-          robot.ShiftEyes(_eyeShiftTag, xPixShift, 0, 100, "TurnInPlaceEyeDart");
+          robot.ShiftEyes(_eyeShiftTag, xPixShift, 0, 4*IKeyFrame::SAMPLE_LENGTH_MS, "TurnInPlaceEyeDart");
         }
       }
       
@@ -947,7 +947,7 @@ namespace Anki {
                            "Currently at %.1fdeg, on the way to %.1fdeg, within "
                            "half angle of %.1fdeg", currentAngle.getDegrees(),
                            _targetAngle.getDegrees(), _halfAngle.getDegrees());
-          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
       }
@@ -1613,14 +1613,14 @@ namespace Anki {
           const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
           const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
           
-          robot.ShiftEyes(_eyeShiftTag, 0, yPixShift, 100, "MoveHeadToAngleEyeShift");
+          robot.ShiftEyes(_eyeShiftTag, 0, yPixShift, 4*IKeyFrame::SAMPLE_LENGTH_MS, "MoveHeadToAngleEyeShift");
           
           if(_holdEyes) {
             // Store the half the angle differene so we know when to remove eye shift
             _halfAngle = 0.5f*(_headAngle - robot.GetHeadAngle()).getAbsoluteVal();
           } else {
             // Register this tag to be removed next time head is moved
-            robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag);
+            robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           }
         }
       }

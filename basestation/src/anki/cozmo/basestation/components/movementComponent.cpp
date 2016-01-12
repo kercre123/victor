@@ -77,7 +77,7 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   
   if(_isHeadMoving) {
     for(auto tag : _faceLayerTagsToRemoveOnHeadMovement) {
-      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(tag);
+      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(tag.first, tag.second);
     }
     _faceLayerTagsToRemoveOnHeadMovement.clear();
   }
