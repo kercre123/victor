@@ -413,6 +413,8 @@ namespace Anki {
       bool        _wasKeepFaceAliveEnabled;
       
       AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+
+      bool        _motionStarted = false;
       
     };  // class MoveHeadToAngleAction
     
@@ -468,6 +470,7 @@ namespace Anki {
       
       std::string _name;
       bool        _inPosition;
+      bool        _motionStarted = false;
       
     }; // class MoveLiftToHeightAction
     

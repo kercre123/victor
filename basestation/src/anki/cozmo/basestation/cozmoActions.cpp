@@ -1696,6 +1696,10 @@ namespace Anki {
         }
       }
       
+      if( robot.IsHeadMoving() ) {
+        _motionStarted = true;
+      }
+
       // Wait to get a state message back from the physical robot saying its head
       // is in the commanded position
       // TODO: Is this really necessary in practice?
@@ -1706,6 +1710,13 @@ namespace Anki {
                          "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
                          GetTag(),
                          RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
+
+        if( _motionStarted && ! robot.IsHeadMoving() ) {
+          PRINT_NAMED_WARNING("MoveHeadToAngleAction.StoppedMakingProgress",
+                              "[%d] giving up since we stopped moving",
+                              GetTag());
+          result = ActionResult::FAILURE_RETRY;
+        }
       }
       
       return result;
@@ -1885,6 +1896,10 @@ namespace Anki {
       }
       else
        */
+
+      if( robot.IsLiftMoving() ) {
+        _motionStarted = true;
+      }
       
       if(_inPosition) {
         result = ActionResult::SUCCESS;
@@ -1893,6 +1908,13 @@ namespace Anki {
                          "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",
                          GetTag(),
                          robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
+
+        if( _motionStarted && ! robot.IsLiftMoving() ) {
+          PRINT_NAMED_WARNING("MoveLiftToHeightAction.StoppedMakingProgress",
+                              "[%d] giving up since we stopped moving",
+                              GetTag());
+          result = ActionResult::FAILURE_RETRY;
+        }
       }
       
       return result;
