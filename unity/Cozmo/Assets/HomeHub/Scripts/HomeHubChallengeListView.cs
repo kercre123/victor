@@ -38,11 +38,11 @@ namespace Cozmo.HomeHub {
 
     private GameObject CreateChallengeButton(ChallengeData challengeData, GameObject prefab, HubWorldButton.ButtonClickedHandler handler) {
       RectTransform container;
-      if (_TopChallengeContainer.childCount > _BottomChallengeContainer.childCount) {
-        container = _BottomChallengeContainer;
+      if (_TopChallengeContainer.childCount < _BottomChallengeContainer.childCount) {
+        container = _TopChallengeContainer;
       }
       else {
-        container = _TopChallengeContainer;
+        container = _BottomChallengeContainer;
       }
       GameObject newButton = UIManager.CreateUIElement(prefab, container);
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();

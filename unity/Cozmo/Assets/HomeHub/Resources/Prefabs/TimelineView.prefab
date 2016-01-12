@@ -438,6 +438,7 @@ MonoBehaviour:
   _TimelineEntryPrefab: {fileID: 172978, guid: c5db28c8340dc4827b307935e52106d6, type: 2}
   _TimelineContainer: {fileID: 22410178}
   _ChallengeContainer: {fileID: 22440920}
+  _ScrollRect: {fileID: 11472504}
   _GraphSpline: {fileID: 11470472}
   _ChallengeListViewPrefab: {fileID: 11483340, guid: 2453f18bd514742a5b96299b79a121ca,
     type: 2}
@@ -683,6 +684,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11483340, guid: 2453f18bd514742a5b96299b79a121ca,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _ScrollRect
+      value: 
+      objectReference: {fileID: 11472504}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 143340}
