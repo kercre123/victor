@@ -109,9 +109,11 @@ namespace Cozmo {
     const bool hasSeenFace = _faceID != Face::UnknownFace || _hasValidLastKnownFacePose;
     const bool hasObject = _trackedObject.IsSet();
     const bool isDoingSomething = _isActing || !_animActionTags.empty();
+    const bool needsToUpdateLights = ! _objectsToTurnOffLights.empty();
 
 
-    bool ret = alreadyRunning || holdingBlock || isDoingSomething || (hasSeenFace && hasObject);
+
+    bool ret = alreadyRunning || holdingBlock || isDoingSomething || (hasSeenFace && hasObject) || needsToUpdateLights;
 
     // static bool wasTrue = false;
     // if(ret) {
@@ -189,25 +191,27 @@ namespace Cozmo {
     }
 
     UpdateStateName();
-    
-    for( auto it = _objectsToTurnOffLights.begin();
-         it != _objectsToTurnOffLights.end();
-         it = _objectsToTurnOffLights.erase(it) ) {
-      SetBlockLightState(robot, *it, BlockLightState::None);
+
+    if( ! _objectsToTurnOffLights.empty() ) {
+      for( auto it = _objectsToTurnOffLights.begin();
+           it != _objectsToTurnOffLights.end();
+           it = _objectsToTurnOffLights.erase(it) ) {
+        SetBlockLightState(robot, *it, BlockLightState::None);
+      }
+      
+      // check if that was the only reason we were running, in which case bail out now
+      
+      if( ! IsRunnable(robot, currentTime_sec) ) {
+        return Status::Complete;
+      }
     }
 
+    
     if( robot.IsCarryingObject() ) {
       LiftShouldBeLocked(robot);
     }
     else {
       LiftShouldBeUnlocked(robot);
-    }
-
-    if( _currentState == State::TrackingFace ) {
-      BodyShouldBeUnlocked(robot);
-    }
-    else {
-      BodyShouldBeLocked(robot);
     }
 
     // hack to track object motion
@@ -238,7 +242,15 @@ namespace Cozmo {
     if (_isActing || !_animActionTags.empty()) {
       return Status::Running;
     }
-    
+
+    // wait until after _isActing check for body lock so we can unlock it specifically for certain actions / animations
+    if( _currentState == State::TrackingFace ) {
+      BodyShouldBeUnlocked(robot);
+    }
+    else {
+      BodyShouldBeLocked(robot);
+    }
+
     switch(_currentState)
     {
       case State::TrackingFace:
@@ -263,9 +275,9 @@ namespace Cozmo {
             moveLiftAction->SetDuration(1.0f);
           }
 
-          if (_faceID != Face::UnknownFace) {
+          // If we have a valid faceID, track it, unless we are carrying a block, in which case just face it
+          if (_faceID != Face::UnknownFace && !robot.IsCarryingObject()) {
             
-            // If we have a valid faceID, track it.
             TrackFaceAction* action = new TrackFaceAction(_faceID);
             robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
@@ -283,6 +295,10 @@ namespace Cozmo {
 
             if( moveLiftAction != nullptr ) {
               actionToRun = new CompoundActionParallel({moveLiftAction, lookAtFaceAction});
+
+              moveLiftAction = nullptr;
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
+                                     "Moving to last face pose AND lowering lift");
             }
 
             StartActing(robot,
@@ -303,9 +319,6 @@ namespace Cozmo {
                           return false;
                         });                          
                           
-              moveLiftAction = nullptr;
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
-                                     "Moving to last face pose AND lowering lift");
           } else {
 
             // TEMP: don't let face tracking look into the cube // TODO:(bn) 
@@ -317,18 +330,20 @@ namespace Cozmo {
             }
 
             // also look up a bit in case the angle is too low
-            IActionRunner* moveHeadAction = new MoveHeadToAngleAction(DEG_TO_RAD(20.0f));
+            if( robot.GetHeadAngle() <  DEG_TO_RAD(15.0f) ) {
+              IActionRunner* moveHeadAction = new MoveHeadToAngleAction(DEG_TO_RAD(20.0f));
 
-            IActionRunner* actionToRun = moveHeadAction;
+              IActionRunner* actionToRun = moveHeadAction;
 
-            if( moveLiftAction != nullptr ) {
-              actionToRun = new CompoundActionParallel({moveLiftAction, moveHeadAction});
+              if( moveLiftAction != nullptr ) {
+                actionToRun = new CompoundActionParallel({moveLiftAction, moveHeadAction});
+              }
+
+              StartActing(robot, actionToRun);
+              moveLiftAction = nullptr;
             }
 
-            StartActing(robot, actionToRun);
-            moveLiftAction = nullptr;
-
-            // HACK: don't abort if we are carrying an object, because we might get stuck
+            // don't abort if we are carrying an object
             if (currentTime_sec - _noFacesStartTime > 2.0f && !robot.IsCarryingObject()) {
               PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
               return Status::Complete;
@@ -423,7 +438,7 @@ namespace Cozmo {
                                  "disabling block tracking in order to inspect block");
           SetCurrState(State::InspectingBlock);
           robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
-          PlayAnimation(robot, "ID_react2block_02", false); 
+          PlayAnimation(robot, "ID_react2block_02", false);
 
           // hold a bit before making a decision about the block
           _holdUntilTime = currentTime_sec + _timetoInspectBlock;
@@ -842,23 +857,45 @@ namespace Cozmo {
   // TODO: Get color and on/off settings from config
   void BehaviorBlockPlay::SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state)
   {
+    std::string name = "<INVALID>";
     
     switch(state) {
-      case BlockLightState::None:
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::BLACK, ::Anki::NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      case BlockLightState::None: {
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL,
+                              ::Anki::NamedColors::BLACK, ::Anki::NamedColors::BLACK,
+                              10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        name = "None";
         break;
-      case BlockLightState::Visible:
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::CYAN, ::Anki::NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      }
+      case BlockLightState::Visible: {
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL,
+                              ::Anki::NamedColors::CYAN, ::Anki::NamedColors::BLACK,
+                              10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        name = "Visible";
         break;
-      case BlockLightState::Upright:
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::BLUE, ::Anki::NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      }
+      case BlockLightState::Upright: {
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::BLUE,
+                              ::Anki::NamedColors::BLACK, 200, 200, 50, 50, false,
+                              MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        name = "Upright";
         break;
-      case BlockLightState::Complete:
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::GREEN, ::Anki::NamedColors::GREEN, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      }
+      case BlockLightState::Complete: {
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL,
+                              ::Anki::NamedColors::GREEN, ::Anki::NamedColors::GREEN, 200, 200, 50, 50, false,
+                              MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        name = "Complete";
         break;
+      }
       default:
         break;
     }
+
+    PRINT_NAMED_INFO("BehaviorBlockPlay.SetBlockLightState",
+                     "setting block %d to '%s'",
+                     objID.GetValue(),
+                     name.c_str());
   }
   
   
@@ -976,11 +1013,19 @@ namespace Cozmo {
         } else if( msg.result == ActionResult::FAILURE_RETRY ) {
 
           // We failed to pick up or place the last block, try again
-        
-          if(ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE == msg.completionInfo.Get_objectInteractionCompleted().result) {
-            PlayAnimation(robot, "ID_react2block_align_fail");
-          } else {
-            PlayAnimation(robot, "ID_rollBlock_fail_01");
+          switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+          {
+            case ObjectInteractionResult::INCOMPLETE:
+            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+            {
+              PlayAnimation(robot, "ID_react2block_align_fail");
+              break;
+            }
+            
+            default: {
+              PlayAnimation(robot, "ID_rollBlock_fail_01");
+              break;
+            }
           }
 
 
@@ -1053,10 +1098,17 @@ namespace Cozmo {
                                  "failed pickup with %s, trying again",
                                  EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
 
-          if(ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE == msg.completionInfo.Get_objectInteractionCompleted().result) {
-            PlayAnimation(robot, "ID_react2block_align_fail");
-          } else {
-            PlayAnimation(robot, "ID_rollBlock_fail_01");  // TEMP:  // TODO:(bn) different one here?
+          switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+          {
+            case ObjectInteractionResult::INCOMPLETE:
+            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE: {
+              PlayAnimation(robot, "ID_react2block_align_fail");
+              break;
+            }
+
+            default: {
+              PlayAnimation(robot, "ID_rollBlock_fail_01");  // TEMP:  // TODO:(bn) different one here?
+            }
           }
 
           SetCurrState(State::InspectingBlock);
@@ -1091,18 +1143,26 @@ namespace Cozmo {
               
               SetBlockLightState(robot, _objectToPlaceOn, BlockLightState::Complete);
               SetBlockLightState(robot, _objectToPickUp, BlockLightState::Complete);
-
-              IgnoreObject(robot, _objectToPlaceOn);
-              _objectToPlaceOn.UnSet();
               
-              IgnoreObject(robot, _objectToPickUp);
-              _objectToPickUp.UnSet();
-
               _trackedObject.UnSet();
+
+              BodyShouldBeUnlocked(robot);
               
-              PlayAnimation(robot, "ID_reactTo2ndBlock_success");
-              SetCurrState(State::TrackingFace);
-              _isActing = false;
+              // wait for happy to finish before we mark the blocks, so the animation doesn't trigger their motion
+              StartActing(robot,
+                          new PlayAnimationAction("ID_reactTo2ndBlock_success"),
+                          [this,&robot](ActionResult ret){
+                            IgnoreObject(robot, _objectToPlaceOn);
+                            _objectToPlaceOn.UnSet();
+              
+                            IgnoreObject(robot, _objectToPickUp);
+                            _objectToPickUp.UnSet();
+                            SetCurrState(State::TrackingFace);
+
+                            _isActing = false;
+                            return true;
+                          });
+
               _attemptCounter = 0;
               break;
               
@@ -1122,6 +1182,7 @@ namespace Cozmo {
 
           switch(msg.completionInfo.Get_objectInteractionCompleted().result)
           {
+            case ObjectInteractionResult::INCOMPLETE:
             case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
             {
               // TODO:(bn) "soft fail" sound here?
@@ -1155,6 +1216,7 @@ namespace Cozmo {
                 new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
                 new PlaceObjectOnGroundAction()}),
                           [this,&robot](ActionResult ret){
+                            _isActing = false;
                             InitState(robot);
                             return true;
                           });
@@ -1627,7 +1689,7 @@ namespace Cozmo {
       // flag this so we turn off lights as soon as we can
       _objectsToTurnOffLights.push_back(objectID);
     }
-
+    
     return RESULT_OK;
   }  
 

@@ -1696,6 +1696,10 @@ namespace Anki {
         }
       }
       
+      if( robot.GetMoveComponent().IsHeadMoving() ) {
+        _motionStarted = true;
+      }
+
       // Wait to get a state message back from the physical robot saying its head
       // is in the commanded position
       // TODO: Is this really necessary in practice?
@@ -1706,6 +1710,13 @@ namespace Anki {
                          "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
                          GetTag(),
                          RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
+
+        if( _motionStarted && ! robot.GetMoveComponent().IsHeadMoving() ) {
+          PRINT_NAMED_WARNING("MoveHeadToAngleAction.StoppedMakingProgress",
+                              "[%d] giving up since we stopped moving",
+                              GetTag());
+          result = ActionResult::FAILURE_RETRY;
+        }
       }
       
       return result;
@@ -1885,6 +1896,10 @@ namespace Anki {
       }
       else
        */
+
+      if( robot.GetMoveComponent().IsLiftMoving() ) {
+        _motionStarted = true;
+      }
       
       if(_inPosition) {
         result = ActionResult::SUCCESS;
@@ -1893,6 +1908,13 @@ namespace Anki {
                          "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",
                          GetTag(),
                          robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
+
+        if( _motionStarted && ! robot.GetMoveComponent().IsLiftMoving() ) {
+          PRINT_NAMED_WARNING("MoveLiftToHeightAction.StoppedMakingProgress",
+                              "[%d] giving up since we stopped moving",
+                              GetTag());
+          result = ActionResult::FAILURE_RETRY;
+        }
       }
       
       return result;
@@ -3559,6 +3581,8 @@ namespace Anki {
       }
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
+        // TEMP: ask andrew, this was causing a cutoff when one animation tried to interrupt another, but then failed, but then in the failed animations Cleanup, cleared the streaming animation
+        _wasAborted = true;
         return ActionResult::FAILURE_ABORT;
       }
       
