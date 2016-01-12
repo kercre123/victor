@@ -2,6 +2,7 @@ public static class LocalizationKeys {
 
   #region ChallengeTitleStrings
 
+  public const string kChallengeDetailsLabelPlayersAndCubesNeeded = "challengeDetails.label.playersAndCubesNeeded";
   public const string kAskCozmo01Title = "askCozmo01.title";
   public const string kAskCozmo01Subtitle = "askCozmo01.subtitle";
   public const string kAskCozmo01Description = "askCozmo01.description";

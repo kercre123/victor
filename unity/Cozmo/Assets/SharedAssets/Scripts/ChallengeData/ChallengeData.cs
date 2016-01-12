@@ -46,15 +46,6 @@ public class ChallengeData : ScriptableObject {
   }
 
   // the key used to get the actual localized string for the
-  // challenge subtitle shown to the player.
-  [SerializeField]
-  private string _ChallengeSubtitleLocKey;
-
-  public string ChallengeSubtitleLocKey {
-    get { return _ChallengeSubtitleLocKey; }
-  }
-
-  // the key used to get the actual localized string for the
   // challenge description shown to the player.
   [SerializeField]
   private string _ChallengeDescriptionLocKey;
@@ -69,14 +60,6 @@ public class ChallengeData : ScriptableObject {
 
   public Sprite ChallengeIcon {
     get { return _ChallengeIcon; }
-  }
-
-  // large art to show to represent this challenge
-  [SerializeField]
-  private Sprite _ChallengeKeyArt;
-
-  public Sprite ChallengeKeyArt {
-    get { return _ChallengeKeyArt; }
   }
 
   // The set of requirements needed to unlock this challenge
