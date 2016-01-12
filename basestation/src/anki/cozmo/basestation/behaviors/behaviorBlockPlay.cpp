@@ -275,9 +275,9 @@ namespace Cozmo {
             moveLiftAction->SetDuration(1.0f);
           }
 
-          if (_faceID != Face::UnknownFace) {
+          // If we have a valid faceID, track it, unless we are carrying a block, in which case just face it
+          if (_faceID != Face::UnknownFace && !robot.IsCarryingObject()) {
             
-            // If we have a valid faceID, track it.
             TrackFaceAction* action = new TrackFaceAction(_faceID);
             robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
