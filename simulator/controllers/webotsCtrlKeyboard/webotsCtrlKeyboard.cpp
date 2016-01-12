@@ -172,7 +172,6 @@ namespace Anki {
       //printf("RECEIVED FACE OBSERVED: faceID %llu\n", msg.faceID);
       _lastFace = msg;
     }
-
     void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
     {
       // Useful for debug, but otherwise unneeded since this is displayed in the
@@ -478,7 +477,19 @@ namespace Anki {
                 }
                 break;
               }
+              
+              case webots::Supervisor::KEYBOARD_PAGEUP:
+              {
+                SendMoveHeadToAngle(MAX_HEAD_ANGLE, 20, 2);
+                break;
+              }
                 
+              case webots::Supervisor::KEYBOARD_PAGEDOWN:
+              {
+                SendMoveHeadToAngle(MIN_HEAD_ANGLE, 20, 2);
+                break;
+              }
+              
               case (s32)'S':
               {
                 if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
