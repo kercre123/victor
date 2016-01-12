@@ -1591,8 +1591,7 @@ namespace Anki {
       }
       
       if(_variability > 0) {
-        _headAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
-                                                       _variability.ToDouble());
+        _headAngle += GetRNG().RandDblInRange(-_variability.ToDouble(), _variability.ToDouble());
         _headAngle = CLIP(_headAngle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
       }
     }
@@ -1632,16 +1631,13 @@ namespace Anki {
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
           Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
           const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-          const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
+          const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/4) / SCREEN_SIZE[1]);
           
           robot.ShiftEyes(_eyeShiftTag, 0, yPixShift, 4*IKeyFrame::SAMPLE_LENGTH_MS, "MoveHeadToAngleEyeShift");
           
-          if(_holdEyes) {
+          if(!_holdEyes) {
             // Store the half the angle differene so we know when to remove eye shift
             _halfAngle = 0.5f*(_headAngle - robot.GetHeadAngle()).getAbsoluteVal();
-          } else {
-            // Register this tag to be removed next time head is moved
-            robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           }
         }
       }
@@ -1693,13 +1689,16 @@ namespace Anki {
     
     void MoveHeadToAngleAction::Cleanup(Robot& robot)
     {
-      if(_moveEyes)
+      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
       {
-        // Make sure eye shift got removed
-        if(!_holdEyes && AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
+        // Make sure eye shift gets removed, by this action, or by the MoveComponent if "hold" is enabled
+        if(_holdEyes) {
+          robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
+        } else {
           robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
+        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+        
         // Restore previous keep face alive setting
         if(_wasKeepFaceAliveEnabled) {
           robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);

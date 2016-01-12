@@ -400,6 +400,7 @@ namespace Cozmo {
               
               // look down to see if we see the cube there
               MoveHeadToAngleAction* lookDownAction = new MoveHeadToAngleAction(targetAngle);
+              lookDownAction->SetMoveEyes(true, true); // hold eyes down until next head movement
               MoveLiftToHeightAction* moveLiftAction =
                 new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
               

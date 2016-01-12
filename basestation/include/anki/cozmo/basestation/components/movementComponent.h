@@ -117,14 +117,13 @@ private:
   std::vector<int> _animTrackLockCount;
   std::vector<int> _ignoreTrackMovementCount;
   
-  std::map<AnimationStreamer::Tag, TimeStamp_t> _faceLayerTagsToRemoveOnHeadMovement;
+  struct FaceLayerToRemove {
+    TimeStamp_t duration_ms;
+    bool        headWasMoving;
+  };
+  std::map<AnimationStreamer::Tag, FaceLayerToRemove> _faceLayerTagsToRemoveOnHeadMovement;
   
 }; // class MovementComponent
-
-  
-inline void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms) {
-  _faceLayerTagsToRemoveOnHeadMovement[faceLayerTag] = duration_ms;
-}
   
   
 } // namespace Cozmo

@@ -323,7 +323,8 @@ namespace Cozmo {
     auto layerIter = _faceLayers.find(tag);
     if(layerIter != _faceLayers.end()) {
       PRINT_NAMED_INFO("AnimationStreamer.RemovePersistentFaceLayer",
-                       "Tag = %d (Layers remaining=%lu)", layerIter->first, _faceLayers.size()-1);
+                       "%s, Tag = %d (Layers remaining=%lu)",
+                       layerIter->second.name.c_str(), layerIter->first, _faceLayers.size()-1);
       
 
       // Add a layer that takes us back from where this persistent frame leaves

@@ -74,14 +74,36 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
   _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
   
-  if(_isHeadMoving) {
-    for(auto tag : _faceLayerTagsToRemoveOnHeadMovement) {
-      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(tag.first, tag.second);
+  for(auto layerIter = _faceLayerTagsToRemoveOnHeadMovement.begin();
+      layerIter != _faceLayerTagsToRemoveOnHeadMovement.end(); )
+  {
+    FaceLayerToRemove & layer = layerIter->second;
+    if(_isHeadMoving && false == layer.headWasMoving) {
+      // Wait for transition from stopped to moving again
+      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(layerIter->first, layer.duration_ms);
+      layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
+    } else {
+      layer.headWasMoving = _isHeadMoving;
+      ++layerIter;
     }
-    _faceLayerTagsToRemoveOnHeadMovement.clear();
   }
 }
 
+void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms)
+{
+  PRINT_NAMED_DEBUG("MovementComponent.RemoveFaceLayersWhenHeadMoves.",
+                    "Registering tag=%d for removal with duration=%dms",
+                    faceLayerTag, duration_ms);
+
+  FaceLayerToRemove info{
+    .duration_ms  = duration_ms,
+    .headWasMoving = _isHeadMoving,
+  };
+  _faceLayerTagsToRemoveOnHeadMovement[faceLayerTag] = std::move(info);
+  
+}
+
+  
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
