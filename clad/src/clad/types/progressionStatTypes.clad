@@ -8,11 +8,14 @@ namespace Cozmo {
 
 
 enum uint_8 ProgressionStatType {
-
-    Speed = 0,
-    Stacking,
-    
-    Count
+  // Friendship Stats
+  FriendshipScore,
+  FriendshipLevel,
+  // Experience Stats
+  Time,
+  Novelty,
+  Excitement,
+  Count
 }
 
 
