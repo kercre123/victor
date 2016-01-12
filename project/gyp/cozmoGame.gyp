@@ -422,22 +422,42 @@
 
         'targets': [
 
-          {
-            'target_name': 'allUnitTests',
-            'type': 'none',
-            'dependencies': [
-              '<(cg-ce_gyp_path):cozmoEngineUnitTest',
-              '<(cg-cti_gyp_path):ctiUnitTest',
-              '<(cg-util_gyp_path):UtilUnitTest',
-            ],
-          },
+          # {
+          #   'target_name': 'allUnitTests',
+          #   'type': 'none',
+          #   'dependencies': [
+          #     '<(cg-ce_gyp_path):cozmoEngineUnitTest',
+          #     '<(cg-cti_gyp_path):ctiUnitTest',
+          #     '<(cg-util_gyp_path):UtilUnitTest',
+          #   ],
+          # },
 
+          # {
+          #   'target_name': 'allCoretechTools',
+          #   'type': 'none',
+          #   'dependencies': [
+          #     '<(cg-cti_gyp_path):ctiPlanningStandalone',
+          #   ],            
+          # },
           {
-            'target_name': 'allCoretechTools',
+            # fake target to see all of the sources...
+            'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
-              '<(cg-cti_gyp_path):ctiPlanningStandalone',
-            ],            
+              '<(cg-ce_gyp_path):cozmoAPI',
+              '<(cg-ce_gyp_path):cozmoEngine',
+              '<(cg-cti_gyp_path):ctiCommon',
+              '<(cg-cti_gyp_path):ctiCommonRobot',
+              '<(cg-cti_gyp_path):ctiMessaging',
+              '<(cg-cti_gyp_path):ctiMessagingRobot',
+              '<(cg-cti_gyp_path):ctiPlanning',
+              '<(cg-cti_gyp_path):ctiPlanningRobot',
+              '<(cg-cti_gyp_path):ctiVision',
+              '<(cg-cti_gyp_path):ctiVisionRobot',
+              '<(cg-util_gyp_path):util',
+              '<(cg-util_gyp_path):jsoncpp',
+              '<(cg-audio_path):DriveAudioEngine',
+            ]
           },
 
 
