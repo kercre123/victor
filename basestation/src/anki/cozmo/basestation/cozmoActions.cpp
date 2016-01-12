@@ -2136,7 +2136,8 @@ namespace Anki {
           squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
           squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
           
-          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 400));
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame()); // need start frame at t=0 to get interpolation
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 250));
           _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("DockSquint", std::move(squintLayer));
         }
       }
