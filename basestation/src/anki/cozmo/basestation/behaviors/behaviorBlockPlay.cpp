@@ -109,9 +109,11 @@ namespace Cozmo {
     const bool hasSeenFace = _faceID != Face::UnknownFace || _hasValidLastKnownFacePose;
     const bool hasObject = _trackedObject.IsSet();
     const bool isDoingSomething = _isActing || !_animActionTags.empty();
+    const bool needsToUpdateLights = ! _objectsToTurnOffLights.empty();
 
 
-    bool ret = alreadyRunning || holdingBlock || isDoingSomething || (hasSeenFace && hasObject);
+
+    bool ret = alreadyRunning || holdingBlock || isDoingSomething || (hasSeenFace && hasObject) || needsToUpdateLights;
 
     // static bool wasTrue = false;
     // if(ret) {
@@ -189,13 +191,22 @@ namespace Cozmo {
     }
 
     UpdateStateName();
-    
-    for( auto it = _objectsToTurnOffLights.begin();
-         it != _objectsToTurnOffLights.end();
-         it = _objectsToTurnOffLights.erase(it) ) {
-      SetBlockLightState(robot, *it, BlockLightState::None);
+
+    if( ! _objectsToTurnOffLights.empty() ) {
+      for( auto it = _objectsToTurnOffLights.begin();
+           it != _objectsToTurnOffLights.end();
+           it = _objectsToTurnOffLights.erase(it) ) {
+        SetBlockLightState(robot, *it, BlockLightState::None);
+      }
+      
+      // check if that was the only reason we were running, in which case bail out now
+      
+      if( ! IsRunnable(robot, currentTime_sec) ) {
+        return Status::Complete;
+      }
     }
 
+    
     if( robot.IsCarryingObject() ) {
       LiftShouldBeLocked(robot);
     }
@@ -842,23 +853,45 @@ namespace Cozmo {
   // TODO: Get color and on/off settings from config
   void BehaviorBlockPlay::SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state)
   {
+    std::string name = "<INVALID>";
     
     switch(state) {
-      case BlockLightState::None:
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::BLACK, ::Anki::NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      case BlockLightState::None: {
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL,
+                              ::Anki::NamedColors::BLACK, ::Anki::NamedColors::BLACK,
+                              10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        name = "None";
         break;
-      case BlockLightState::Visible:
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::CYAN, ::Anki::NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      }
+      case BlockLightState::Visible: {
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL,
+                              ::Anki::NamedColors::CYAN, ::Anki::NamedColors::BLACK,
+                              10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        name = "Visible";
         break;
-      case BlockLightState::Upright:
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::BLUE, ::Anki::NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      }
+      case BlockLightState::Upright: {
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::BLUE,
+                              ::Anki::NamedColors::BLACK, 200, 200, 50, 50, false,
+                              MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        name = "Upright";
         break;
-      case BlockLightState::Complete:
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::GREEN, ::Anki::NamedColors::GREEN, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      }
+      case BlockLightState::Complete: {
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL,
+                              ::Anki::NamedColors::GREEN, ::Anki::NamedColors::GREEN, 200, 200, 50, 50, false,
+                              MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        name = "Complete";
         break;
+      }
       default:
         break;
     }
+
+    PRINT_NAMED_INFO("BehaviorBlockPlay.SetBlockLightState",
+                     "setting block %d to '%s'",
+                     objID.GetValue(),
+                     name.c_str());
   }
   
   
