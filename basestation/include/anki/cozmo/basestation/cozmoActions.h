@@ -506,13 +506,12 @@ namespace Anki {
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Cleanup(Robot& robot) override;
       
       void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
       
     private:
-      CompoundActionParallel _compoundAction;
+      IActionRunner*   _compoundAction;
       
       Radians _bodyPanAngle;
       Radians _headTiltAngle;
