@@ -105,6 +105,9 @@ namespace Cozmo {
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;
     
+    // Overload of SetParam from base class. Mostly just calls base class method.
+    void SetParam(LiveIdleAnimationParameter whichParam, float newValue);
+    
     // "Flow control" for not getting too far ahead of the robot, to help prevent
     // too much delay when we want to layer something on "now". This is number of
     // audio frames.

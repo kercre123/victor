@@ -551,6 +551,22 @@ namespace Cozmo {
     return paramsSet;
   } // GetFaceHelper()
   
+  void AnimationStreamer::SetParam(LiveIdleAnimationParameter whichParam, float newValue)
+  {
+    if(LiveIdleAnimationParameter::EnableKeepFaceAlive == whichParam && (bool)newValue==false)
+    {
+      // Get rid of any existint eye dart in case we are disabling keep face alive
+      RemovePersistentFaceLayer(_eyeDartTag, IKeyFrame::SAMPLE_LENGTH_MS);
+      _eyeDartTag = NotAnimatingTag;
+      
+      // NOTE: we can't remove an in-progress blink. It's not persistent and has
+      // to complete so we don't leave the eyes in a weird state.
+    }
+    
+    // Call base class SetParam()
+    HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>::SetParam(whichParam, newValue);
+  }
+  
   void AnimationStreamer::KeepFaceAlive(Robot& robot)
   {
     using Param = LiveIdleAnimationParameter;
@@ -569,8 +585,8 @@ namespace Cozmo {
       const s32 duration = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartMinDuration_ms),
                                                GetParam<s32>(Param::EyeDartMaxDuration_ms));
       
-      PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
-                        "shift=(%.1f,%.1f)", xDart, yDart);
+      //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
+      //                  "shift=(%.1f,%.1f)", xDart, yDart);
       
       const f32 normDist = 5.f;
       ProceduralFace procFace;
@@ -1148,7 +1164,8 @@ namespace Cozmo {
     // sequenced.
     
     // _tagCtr check so we wait until we get one behavior until we start playing
-    if(_tagCtr > 0 && _streamingAnimation == nullptr &&
+    if(GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive) &&
+       _tagCtr > 0 && _streamingAnimation == nullptr &&
        (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f)))
     {
@@ -1338,8 +1355,7 @@ namespace Cozmo {
 #   define SET_DEFAULT(__NAME__, __VALUE__) \
     SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
     
-    SET_DEFAULT(BlinkCloseTime_ms, 150);
-    SET_DEFAULT(BlinkOpenTime_ms, 150);
+    SET_DEFAULT(EnableKeepFaceAlive, true);
     
     SET_DEFAULT(BlinkSpacingMinTime_ms, 3000);
     SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000);

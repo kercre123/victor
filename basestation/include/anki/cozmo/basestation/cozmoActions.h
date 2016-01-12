@@ -319,6 +319,7 @@ namespace Anki {
       f32     _accel_radPerSec2 = 10.f;
       Radians _halfAngle = 0.f;
       
+      bool    _wasKeepFaceAliveEnabled;
       bool    _moveEyes = true;
       AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       
@@ -408,6 +409,7 @@ namespace Anki {
       bool        _moveEyes = true;
       bool        _holdEyes = false;
       Radians     _halfAngle;
+      bool        _wasKeepFaceAliveEnabled;
       
       AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       

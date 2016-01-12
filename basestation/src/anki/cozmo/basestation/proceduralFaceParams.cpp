@@ -127,9 +127,9 @@ void ProceduralFaceParams::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
   SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
   SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
   
-  PRINT_NAMED_DEBUG("ProceduraFaceParams.LookAt",
-                    "shift=(%.1f,%.1f), up/down scale=%.3f, left/right scale=%.3f), reduceIOD=%.3f",
-                    xShift, yShift, yscaleUD, yscaleLR, reduceIOD);
+  //PRINT_NAMED_DEBUG("ProceduraFaceParams.LookAt",
+  //                  "shift=(%.1f,%.1f), up/down scale=%.3f, left/right scale=%.3f), reduceIOD=%.3f",
+  //                  xShift, yShift, yscaleUD, yscaleLR, reduceIOD);
 }
   
 template<typename T>

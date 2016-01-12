@@ -907,6 +907,12 @@ namespace Anki {
         
         if(_moveEyes)
         {
+          // Disable keep face alive if it is enabled and save so we can restore later
+          _wasKeepFaceAliveEnabled = robot.GetAnimationStreamer().GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive);
+          if(_wasKeepFaceAliveEnabled) {
+            robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, false);
+          }
+          
           // Store half the total difference so we know when to remove eye shift
           _halfAngle = 0.5f*(_targetAngle - currentAngle).getAbsoluteVal();
           
@@ -983,10 +989,17 @@ namespace Anki {
     
     void TurnInPlaceAction::Cleanup(Robot& robot)
     {
-      // Make sure eye shift gets removed no matter what
-      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
-        robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+      if(_moveEyes)
+      {
+        // Make sure eye shift gets removed no matter what
+        if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+        }
+        // Restore previous keep face alive setting
+        if(_wasKeepFaceAliveEnabled) {
+          robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
+        }
       }
     }
 
@@ -1607,6 +1620,12 @@ namespace Anki {
         
         if(_moveEyes)
         {
+          // Store initial state of keep face alive so we can restore it
+          _wasKeepFaceAliveEnabled = robot.GetAnimationStreamer().GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive);
+          if(_wasKeepFaceAliveEnabled) {
+            robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, false);
+          }
+          
           // Lead with the eyes, if not in position
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
           Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
@@ -1672,13 +1691,20 @@ namespace Anki {
     
     void MoveHeadToAngleAction::Cleanup(Robot& robot)
     {
-      // Make sure eye shift got removed
-      if(!_holdEyes && AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
-        robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+      if(_moveEyes)
+      {
+        // Make sure eye shift got removed
+        if(!_holdEyes && AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+        }
+        // Restore previous keep face alive setting
+        if(_wasKeepFaceAliveEnabled) {
+          robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
+        }
       }
     }
-         
+      
 #pragma mark ---- MoveLiftToHeightAction ----
                                 
     MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
