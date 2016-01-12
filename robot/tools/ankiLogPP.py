@@ -177,6 +177,7 @@ class ParseParams:
         '{': '}',
         }
     FORMATTER_KEY = re.compile(r'(?<!%)%[^%]') # Find singal % marks
+    FORMAT_BLACK_LIST = re.compile(r'%[bsl]')
     def __init__(self, preArgs=0):
         "Store macro parsing parameters"
         self.preArgs = preArgs # Number of arguments we don't mess with and just let the pre-processor handle
@@ -225,14 +226,17 @@ class ParseParams:
             looksLikeInt(args[0]) and looksLikeString(args[1]) and \
             looksLikeInt(args[2]) and looksLikeString(args[3]) and \
             looksLikeInt(args[4]): # This is an already processed macro instance
+            mangleEnd = mangleStart + sum([len(a)+1 for a in args[:5]])-1
             nameId = int(args[0])
             name   = args[1].strip()[1:-1]
             fmtId  = int(args[2])
             fmt    = args[3].strip()[1:-1]
             nargs = int(args[4])
             numFormatArgs = len(self.FORMATTER_KEY.findall(fmt))
-            mangleEnd = mangleStart + sum([len(a)+1 for a in args[:5]])-1
-            if nargs != numFormatArgs:
+            badFormatArgs = self.FORMAT_BLACK_LIST.findall(fmt)
+            if badFormatArgs:
+                raise LogPPError("Format arguments {} are not supported".format(repr(badFormatArgs)))
+            elif nargs != numFormatArgs:
                 raise LogPPError("Format string \"{}\" expects {} arguments but have {}".format(fmt, numFormatArgs, nargs))
             elif nargs > MAX_VAR_ARGS:
                 raise LogPPError("Too many var args to AnkiLogging macro")
@@ -247,7 +251,10 @@ class ParseParams:
             name = args[0].strip()[1:-1]
             fmt  = args[1].strip()[1:-1]
             numFormatArgs = len(self.FORMATTER_KEY.findall(fmt))
-            if nargs != numFormatArgs:
+            badFormatArgs = self.FORMAT_BLACK_LIST.findall(fmt)
+            if badFormatArgs:
+                sys.exit("Format arguments {} are not supported".format(repr(badFormatArgs)))
+            elif nargs != numFormatArgs:
                 raise LogPPError("Format string \"{}\" expects {} arguments but have {}".format(fmt, numFormatArgs, nargs))
             elif nargs > MAX_VAR_ARGS:
                 raise LogPPError("Too many var args to AnkiLogging macro")
