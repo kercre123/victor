@@ -214,13 +214,6 @@ namespace Cozmo {
       LiftShouldBeUnlocked(robot);
     }
 
-    if( _currentState == State::TrackingFace ) {
-      BodyShouldBeUnlocked(robot);
-    }
-    else {
-      BodyShouldBeLocked(robot);
-    }
-
     // hack to track object motion
     if( _trackedObject.IsSet() ) {
       ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_trackedObject);
@@ -249,7 +242,15 @@ namespace Cozmo {
     if (_isActing || !_animActionTags.empty()) {
       return Status::Running;
     }
-    
+
+    // wait until after _isActing check for body lock so we can unlock it specifically for certain actions / animations
+    if( _currentState == State::TrackingFace ) {
+      BodyShouldBeUnlocked(robot);
+    }
+    else {
+      BodyShouldBeLocked(robot);
+    }
+
     switch(_currentState)
     {
       case State::TrackingFace:
@@ -434,7 +435,7 @@ namespace Cozmo {
                                  "disabling block tracking in order to inspect block");
           SetCurrState(State::InspectingBlock);
           robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
-          PlayAnimation(robot, "ID_react2block_02", false); 
+          PlayAnimation(robot, "ID_react2block_02", false);
 
           // hold a bit before making a decision about the block
           _holdUntilTime = currentTime_sec + _timetoInspectBlock;
@@ -1139,18 +1140,26 @@ namespace Cozmo {
               
               SetBlockLightState(robot, _objectToPlaceOn, BlockLightState::Complete);
               SetBlockLightState(robot, _objectToPickUp, BlockLightState::Complete);
-
-              IgnoreObject(robot, _objectToPlaceOn);
-              _objectToPlaceOn.UnSet();
               
-              IgnoreObject(robot, _objectToPickUp);
-              _objectToPickUp.UnSet();
-
               _trackedObject.UnSet();
+
+              BodyShouldBeUnlocked(robot);
               
-              PlayAnimation(robot, "ID_reactTo2ndBlock_success");
-              SetCurrState(State::TrackingFace);
-              _isActing = false;
+              // wait for happy to finish before we mark the blocks, so the animation doesn't trigger their motion
+              StartActing(robot,
+                          new PlayAnimationAction("ID_reactTo2ndBlock_success"),
+                          [this,&robot](ActionResult ret){
+                            IgnoreObject(robot, _objectToPlaceOn);
+                            _objectToPlaceOn.UnSet();
+              
+                            IgnoreObject(robot, _objectToPickUp);
+                            _objectToPickUp.UnSet();
+                            SetCurrState(State::TrackingFace);
+
+                            _isActing = false;
+                            return true;
+                          });
+
               _attemptCounter = 0;
               break;
               
