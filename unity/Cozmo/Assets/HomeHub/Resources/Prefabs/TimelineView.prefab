@@ -9,6 +9,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22485208}
   - 114: {fileID: 11418764}
+  - 114: {fileID: 11489512}
   m_Layer: 5
   m_Name: TimelinePane
   m_TagString: Untagged
@@ -96,6 +97,7 @@ GameObject:
   - 224: {fileID: 22428388}
   - 114: {fileID: 11400332}
   - 114: {fileID: 11452840}
+  - 114: {fileID: 11462450}
   m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
@@ -344,6 +346,17 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
+--- !u!114 &11462450
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 165804}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e2291fe839e3426f8f980a1c62f5707, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11463422
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -439,9 +452,22 @@ MonoBehaviour:
   _TimelineContainer: {fileID: 22410178}
   _ChallengeContainer: {fileID: 22440920}
   _ScrollRect: {fileID: 11472504}
+  _ContentPane: {fileID: 22428388}
+  _TimelinePane: {fileID: 22485208}
   _GraphSpline: {fileID: 11470472}
   _ChallengeListViewPrefab: {fileID: 11483340, guid: 2453f18bd514742a5b96299b79a121ca,
     type: 2}
+--- !u!114 &11489512
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 128504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e2291fe839e3426f8f980a1c62f5707, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11494692
 MonoBehaviour:
   m_ObjectHideFlags: 1
