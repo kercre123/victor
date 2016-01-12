@@ -56,7 +56,8 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::FacePose,
       ExternalInterface::MessageGameToEngineTag::TurnInPlace,
       ExternalInterface::MessageGameToEngineTag::TrackToObject,
-      ExternalInterface::MessageGameToEngineTag::TrackToFace
+      ExternalInterface::MessageGameToEngineTag::TrackToFace,
+      ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
     };
     
     // Subscribe to desired events
@@ -374,7 +375,16 @@ IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface:
   
   return action;
 }
-
+  
+IActionRunner* GetMoveHeadToAngleActionHelper(Robot& robot, const ExternalInterface::SetHeadAngle& setHeadAngle)
+{
+  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(setHeadAngle.angle_rad);
+  action->SetMaxSpeed(setHeadAngle.max_speed_rad_per_sec);
+  action->SetAccel(setHeadAngle.accel_rad_per_sec2);
+  action->SetDuration(setHeadAngle.duration_sec);
+  return action;
+}
+  
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
 {
@@ -402,8 +412,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return GetPlaceRelActionHelper(robot, actionUnion.Get_placeRelObject());
       
     case RobotActionUnionTag::setHeadAngle:
-      // TODO: Provide a means to pass in the speed/acceleration values to the action
-      return new MoveHeadToAngleAction(actionUnion.Get_setHeadAngle().angle_rad);
+      return GetMoveHeadToAngleActionHelper(robot, actionUnion.Get_setHeadAngle());
       
     case RobotActionUnionTag::setLiftHeight:
       // TODO: Provide a means to pass in the speed/acceleration values to the action
@@ -566,7 +575,11 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = GetTrackObjectActionHelper(robot, event.GetData().Get_TrackToObject());
       break;
     }
-    
+    case ExternalInterface::MessageGameToEngineTag::SetHeadAngle:
+    {
+      newAction = GetMoveHeadToAngleActionHelper(robot, event.GetData().Get_SetHeadAngle());
+      break;
+    }
     default:
     {
       PRINT_STREAM_ERROR("RobotEventHandler.HandleEvents",
@@ -661,7 +674,12 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     }
     else {
       // In the normal case directly set the lift height
-      robot->GetMoveComponent().MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
+      MoveLiftToHeightAction* action = new MoveLiftToHeightAction(msg.height_mm);
+      action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
+      action->SetLiftAccel(msg.accel_rad_per_sec2);
+      action->SetDuration(msg.duration_sec);
+      
+      robot->GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, action);
     }
   }
 }

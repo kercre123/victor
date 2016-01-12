@@ -151,7 +151,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
       LiftShouldBeLocked(robot);
 
       // keep the lift out of the FOV
-      if( !robot.IsLiftMoving() && robot.GetLiftHeight() > LIFT_HEIGHT_LOWDOCK + 6.0f ) {
+      if( !robot.GetMoveComponent().IsLiftMoving() && robot.GetLiftHeight() > LIFT_HEIGHT_LOWDOCK + 6.0f ) {
         MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
         // use animation slot, since we know no one is using the lift
         robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);

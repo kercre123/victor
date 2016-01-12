@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
@@ -296,6 +297,8 @@ namespace Anki {
       void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
       
+      void SetMoveEyes(bool enable) { _moveEyes = enable; }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -314,9 +317,11 @@ namespace Anki {
       bool    _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       f32     _accel_radPerSec2 = 10.f;
-      u32     _eyeShiftTag = 0;
-      bool    _eyeShiftRemoved = false;
       Radians _halfAngle = 0.f;
+      
+      bool    _wasKeepFaceAliveEnabled;
+      bool    _moveEyes = true;
+      AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       
     }; // class TurnInPlaceAction
     
@@ -376,6 +381,11 @@ namespace Anki {
       // TODO: Use setters for variability and tolerance too
       void SetMaxSpeed(f32 maxSpeed_radPerSec)   { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetAccel(f32 accel_radPerSec2)        { _accel_radPerSec2 = accel_radPerSec2; }
+      void SetDuration(f32 duration_sec)         { _duration_sec = duration_sec; }
+      
+      // Enable/disable eye movement while turning. If hold is true, the eyes will
+      // remain in their final position until the next time something moves the head.
+      void SetMoveEyes(bool enable, bool hold=false) { _moveEyes = enable; _holdEyes = hold; }
       
     protected:
       
@@ -396,10 +406,13 @@ namespace Anki {
       
       f32         _maxSpeed_radPerSec = 15.f;
       f32         _accel_radPerSec2   = 20.f;
-      
-      u32         _eyeShiftTag = 0;
-      bool        _eyeShiftRemoved = false;
+      f32         _duration_sec = 0.f;
+      bool        _moveEyes = true;
+      bool        _holdEyes = false;
       Radians     _halfAngle;
+      bool        _wasKeepFaceAliveEnabled;
+      
+      AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       
     };  // class MoveHeadToAngleAction
     
@@ -724,7 +737,7 @@ namespace Anki {
       // Name of animation to play when moving lift post-dock
       std::string                _liftMovingAnimation = "";
       
-      u32                        _squintLayerTag;
+      AnimationStreamer::Tag     _squintLayerTag = AnimationStreamer::NotAnimatingTag;
       
     }; // class IDockAction
 
@@ -1284,15 +1297,14 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot& robot) override;
       
-      //AnimationID_t _animID;
-      std::string   _animName;
-      std::string   _name;
-      u32           _numLoops;
-      bool          _startedPlaying;
-      bool          _stoppedPlaying;
-      bool          _wasAborted;
-      u8            _animTag;
-      bool          _interruptRunning;
+      std::string               _animName;
+      std::string               _name;
+      u32                       _numLoops;
+      bool                      _startedPlaying;
+      bool                      _stoppedPlaying;
+      bool                      _wasAborted;
+      AnimationStreamer::Tag    _animTag = AnimationStreamer::NotAnimatingTag;
+      bool                      _interruptRunning;
       
       // For responding to AnimationStarted and AnimationEnded events
       Signal::SmartHandle _startSignalHandle;

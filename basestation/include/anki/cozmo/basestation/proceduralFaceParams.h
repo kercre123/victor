@@ -102,7 +102,7 @@ public:
   //  - outerEyeScaleIncrease controls the differentiation between inner/outer eye height
   //    when looking left or right
   void LookAt(f32 x, f32 y, f32 xmax, f32 ymax,
-              f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease);
+              f32 lookUpMaxScale = 1.1f, f32 lookDownMinScale=0.85f, f32 outerEyeScaleIncrease=0.1f);
   
   // Combine the input params with those from our instance
   ProceduralFaceParams& Combine(const ProceduralFaceParams& otherFace);
@@ -121,7 +121,7 @@ private:
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   void CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1);
   
-  Value Clip(WhichEye eye, Parameter whichParam, Value value) const;
+  Value Clip(Parameter whichParam, Value newValue, Value oldValue) const;
                                                           
   static ProceduralFaceParams* _resetData;
   static std::function<void(const char*,Value,Value,Value)> ClipWarnFcn;
@@ -132,7 +132,7 @@ private:
   
 inline void ProceduralFaceParams::SetParameter(WhichEye whichEye, Parameter param, Value value)
 {
-  _eyeParams[whichEye][static_cast<size_t>(param)] = Clip(whichEye, param, value);
+  _eyeParams[whichEye][static_cast<size_t>(param)] = Clip(param, value, GetParameter(whichEye, param));
 }
 
 inline ProceduralFaceParams::Value ProceduralFaceParams::GetParameter(WhichEye whichEye, Parameter param) const

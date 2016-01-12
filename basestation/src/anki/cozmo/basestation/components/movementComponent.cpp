@@ -65,9 +65,44 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeInternal<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
   helper.SubscribeInternal<MessageGameToEngineTag::MoveHead>();
   helper.SubscribeInternal<MessageGameToEngineTag::MoveLift>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetHeadAngle>();
   helper.SubscribeInternal<MessageGameToEngineTag::StopAllMotors>();
 }
+  
+void MovementComponent::Update(const Cozmo::RobotState& robotState)
+{
+  _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
+  _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
+  _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
+  
+  for(auto layerIter = _faceLayerTagsToRemoveOnHeadMovement.begin();
+      layerIter != _faceLayerTagsToRemoveOnHeadMovement.end(); )
+  {
+    FaceLayerToRemove & layer = layerIter->second;
+    if(_isHeadMoving && false == layer.headWasMoving) {
+      // Wait for transition from stopped to moving again
+      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(layerIter->first, layer.duration_ms);
+      layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
+    } else {
+      layer.headWasMoving = _isHeadMoving;
+      ++layerIter;
+    }
+  }
+}
+
+void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms)
+{
+  PRINT_NAMED_DEBUG("MovementComponent.RemoveFaceLayersWhenHeadMoves.",
+                    "Registering tag=%d for removal with duration=%dms",
+                    faceLayerTag, duration_ms);
+
+  FaceLayerToRemove info{
+    .duration_ms  = duration_ms,
+    .headWasMoving = _isHeadMoving,
+  };
+  _faceLayerTagsToRemoveOnHeadMovement[faceLayerTag] = std::move(info);
+  
+}
+
   
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
@@ -114,20 +149,6 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
     _robot.SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
-  }
-}
-
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::SetHeadAngle& msg)
-{
-  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.SetHeadAngle.HeadLocked",
-                     "Ignoring ExternalInterface::SetHeadAngle while head is locked.");
-  } else {
-    // Note that this will temporarily take over the head but because it's not an action,
-    // any tracking that's using the head should just re-take control on next
-    // observation.
-    MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
   }
 }
 

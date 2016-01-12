@@ -79,7 +79,7 @@ enum uint_8 ObjectInteractionResult {
 // Object Interaction completed is used actions that interact with objects
 structure ObjectInteractionCompleted {
     int_32     objectIDs[5],
-    uint_8     numObjects,
+    uint_8     numObjects = 0,
     ObjectInteractionResult result,
 }
 

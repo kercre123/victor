@@ -819,12 +819,8 @@ namespace Cozmo {
 //    const f32 CloseScale = 0.6f;
 //    const f32 FarScale   = 1.3f;
 //    f32 distScale = CLIP((facePoseWrtCamera.GetTranslation().Length()-kTooCloseDistance_mm)/(kTooFarDistance_mm-kTooCloseDistance_mm)*(FarScale-CloseScale) + CloseScale, CloseScale, FarScale);
-    const f32 distScale = 1.f; // TODO: remove
     if(xPixShift != 0 || yPixShift != 0) { // TODO: remove
-      robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeDartLayerTag);
-      _eyeDartLayerTag = robot.ShiftAndScaleEyes(xPixShift, yPixShift,
-                                                 distScale, distScale, 0, true,
-                                                 "InteractWithFacesMimic");
+      robot.ShiftEyes(_eyeDartLayerTag, xPixShift, yPixShift, 100, "InteractWithFacesMimic");
     }
 
 #   if DO_FACE_MIMICKING

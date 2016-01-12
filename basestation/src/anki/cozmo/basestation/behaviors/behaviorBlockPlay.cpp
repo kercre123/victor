@@ -252,7 +252,7 @@ namespace Cozmo {
 
           const float lowCarry = kLowCarryHeightMM; //  + 10;
           
-          if( robot.IsCarryingObject() && robot.GetLiftHeight() > lowCarry + 5 && !robot.IsLiftMoving() ) {
+          if( robot.IsCarryingObject() && robot.GetLiftHeight() > lowCarry + 5 && !robot.GetMoveComponent().IsLiftMoving() ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace",
                                    "block in lift is blocking view, moving from %f to %f",
                                    robot.GetLiftHeight(),
@@ -400,6 +400,7 @@ namespace Cozmo {
               
               // look down to see if we see the cube there
               MoveHeadToAngleAction* lookDownAction = new MoveHeadToAngleAction(targetAngle);
+              lookDownAction->SetMoveEyes(true, true); // hold eyes down until next head movement
               MoveLiftToHeightAction* moveLiftAction =
                 new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
               

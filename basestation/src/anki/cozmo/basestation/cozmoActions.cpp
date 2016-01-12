@@ -907,7 +907,6 @@ namespace Anki {
       
       Radians currentAngle;
       _inPosition = IsBodyInPosition(robot, currentAngle);
-      _eyeShiftRemoved = true;
       
       if(!_inPosition) {
         RobotInterface::SetBodyAngle setBodyAngle;
@@ -918,16 +917,24 @@ namespace Anki {
           return ActionResult::FAILURE_RETRY;
         }
         
-        // Store half the total difference so we know when to remove eye shift
-        _halfAngle = 0.5f*(_targetAngle - currentAngle).getAbsoluteVal();
-        
-        // Move the eyes (only if not in position)
-        // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        const Radians angleDiff = _targetAngle - currentAngle;
-        const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-        const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
-        _eyeShiftTag = robot.ShiftAndScaleEyes(xPixShift, 0, 1.f, 1.f, 0, true, "TurnInPlaceEyeDart");
-        _eyeShiftRemoved = false;
+        if(_moveEyes)
+        {
+          // Disable keep face alive if it is enabled and save so we can restore later
+          _wasKeepFaceAliveEnabled = robot.GetAnimationStreamer().GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive);
+          if(_wasKeepFaceAliveEnabled) {
+            robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, false);
+          }
+          
+          // Store half the total difference so we know when to remove eye shift
+          _halfAngle = 0.5f*(_targetAngle - currentAngle).getAbsoluteVal();
+          
+          // Move the eyes (only if not in position)
+          // Note: assuming screen is about the same x distance from the neck joint as the head cam
+          const Radians angleDiff = _targetAngle - currentAngle;
+          const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+          const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
+          robot.ShiftEyes(_eyeShiftTag, xPixShift, 0, 4*IKeyFrame::SAMPLE_LENGTH_MS, "TurnInPlaceEyeDart");
+        }
       }
       
       return ActionResult::SUCCESS;
@@ -951,15 +958,15 @@ namespace Anki {
       }
       
       // When we've turned at least halfway, remove eye dart
-      if(!_eyeShiftRemoved) {
+      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
         if(_inPosition || NEAR(currentAngle-_targetAngle, 0.f, _halfAngle))
         {
           PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
                            "Currently at %.1fdeg, on the way to %.1fdeg, within "
                            "half angle of %.1fdeg", currentAngle.getDegrees(),
                            _targetAngle.getDegrees(), _halfAngle.getDegrees());
-          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-          _eyeShiftRemoved = true;
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
+          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
       }
       
@@ -979,7 +986,7 @@ namespace Anki {
                          robot.GetPoseFrameID());
       }
 
-      if( robot.IsMoving() ) {
+      if( robot.GetMoveComponent().IsMoving() ) {
         _turnStarted = true;
       }
       else if( _turnStarted ) {
@@ -994,10 +1001,17 @@ namespace Anki {
     
     void TurnInPlaceAction::Cleanup(Robot& robot)
     {
-      // Make sure eye shift gets removed no matter what
-      if(!_eyeShiftRemoved) {
-        robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-        _eyeShiftRemoved = true;
+      if(_moveEyes)
+      {
+        // Make sure eye shift gets removed no matter what
+        if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+        }
+        // Restore previous keep face alive setting
+        if(_wasKeepFaceAliveEnabled) {
+          robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
+        }
       }
     }
 
@@ -1504,7 +1518,7 @@ namespace Anki {
       
       // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
       // TODO: Should this check if it's moving at all?
-      if (robot.IsHeadMoving()) {
+      if (robot.GetMoveComponent().IsHeadMoving()) {
         _waitToVerifyTime = -1;
       }
       
@@ -1601,8 +1615,7 @@ namespace Anki {
       }
       
       if(_variability > 0) {
-        _headAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
-                                                       _variability.ToDouble());
+        _headAngle += GetRNG().RandDblInRange(-_variability.ToDouble(), _variability.ToDouble());
         _headAngle = CLIP(_headAngle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
       }
     }
@@ -1620,25 +1633,37 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
       
       _inPosition = IsHeadInPosition(robot);
-      _eyeShiftRemoved = true;
       
       if(!_inPosition) {
         if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
-                                                                 _maxSpeed_radPerSec, _accel_radPerSec2))
+                                                                 _maxSpeed_radPerSec,
+                                                                 _accel_radPerSec2,
+                                                                 _duration_sec))
         {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        // Store the half the angle differene so we know when to remove eye shift
-        _halfAngle = 0.5f*(_headAngle - robot.GetHeadAngle()).getAbsoluteVal();
-        
-        // Lead with the eyes, if not in position
-        // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
-        const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-        const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
-        _eyeShiftTag = robot.ShiftAndScaleEyes(0, yPixShift, 1.f, 1.f, 0, true, "MoveHeadToAngleEyeDart");
-        _eyeShiftRemoved = false;
+        if(_moveEyes)
+        {
+          // Store initial state of keep face alive so we can restore it
+          _wasKeepFaceAliveEnabled = robot.GetAnimationStreamer().GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive);
+          if(_wasKeepFaceAliveEnabled) {
+            robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, false);
+          }
+          
+          // Lead with the eyes, if not in position
+          // Note: assuming screen is about the same x distance from the neck joint as the head cam
+          Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
+          const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+          const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/4) / SCREEN_SIZE[1]);
+          
+          robot.ShiftEyes(_eyeShiftTag, 0, yPixShift, 4*IKeyFrame::SAMPLE_LENGTH_MS, "MoveHeadToAngleEyeShift");
+          
+          if(!_holdEyes) {
+            // Store the half the angle differene so we know when to remove eye shift
+            _halfAngle = 0.5f*(_headAngle - robot.GetHeadAngle()).getAbsoluteVal();
+          }
+        }
       }
       
       return result;
@@ -1652,8 +1677,10 @@ namespace Anki {
         _inPosition = IsHeadInPosition(robot);
       }
       
-      if(!_eyeShiftRemoved) {
-        // If we're not there yet but at least halfway, remove eye shift
+      if(!_holdEyes && AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
+      {
+        // If we're not there yet but at least halfway, and we're not supposed
+        // to "hold" the eyes, then remove eye shift
         if(_inPosition || NEAR(Radians(robot.GetHeadAngle()) - _headAngle, 0.f, _halfAngle))
         {
           PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
@@ -1665,7 +1692,7 @@ namespace Anki {
                            _halfAngle.getDegrees());
 
           robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
-          _eyeShiftRemoved = true;
+          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
       }
       
@@ -1686,13 +1713,23 @@ namespace Anki {
     
     void MoveHeadToAngleAction::Cleanup(Robot& robot)
     {
-      // Make sure eye shift got removed
-      if(!_eyeShiftRemoved) {
-        robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-        _eyeShiftRemoved = true;
+      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
+      {
+        // Make sure eye shift gets removed, by this action, or by the MoveComponent if "hold" is enabled
+        if(_holdEyes) {
+          robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
+        } else {
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+        }
+        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+        
+        // Restore previous keep face alive setting
+        if(_wasKeepFaceAliveEnabled) {
+          robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
+        }
       }
     }
-         
+      
 #pragma mark ---- MoveLiftToHeightAction ----
                                 
     MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
@@ -1747,7 +1784,7 @@ namespace Anki {
     bool MoveLiftToHeightAction::IsLiftInPosition(const Robot& robot) const
     {
       const bool inPosition = (NEAR(_heightWithVariation, robot.GetLiftHeight(), _heightTolerance) &&
-                               !robot.IsLiftMoving());
+                               !robot.GetMoveComponent().IsLiftMoving());
       
       return inPosition;
     }
@@ -2122,16 +2159,17 @@ namespace Anki {
           squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
           squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
           
-          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 400));
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame()); // need start frame at t=0 to get interpolation
+          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 250));
           _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("DockSquint", std::move(squintLayer));
         }
       }
-      else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
+      else if (!robot.IsPickingOrPlacing() && !robot.GetMoveComponent().IsMoving())
       {
         const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         
         // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
-        if (robot.IsHeadMoving()) {
+        if (robot.GetMoveComponent().IsHeadMoving()) {
           _waitToVerifyTime = -1;
         }
         
@@ -2289,6 +2327,8 @@ namespace Anki {
     
     void PickupObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
+      ObjectInteractionCompleted info;
+      
       switch(_dockAction)
       {
         case DockAction::DA_PICKUP_HIGH:
@@ -2298,9 +2338,7 @@ namespace Anki {
             PRINT_NAMED_ERROR("PickupObjectAction.EmitCompletionSignal",
                               "Expecting robot to think it's carrying object for pickup action.");
           } else {
-            
             const std::set<ObjectID> carriedObjects = robot.GetCarryingObjects();
-            ObjectInteractionCompleted info;
             info.numObjects = carriedObjects.size();
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
@@ -2309,7 +2347,7 @@ namespace Anki {
             for (auto& objID : carriedObjects) {
               info.objectIDs[objectCnt++] = objID.GetValue();
             }
-            completionUnion.Set_objectInteractionCompleted(std::move( info ));
+            
           }
           break;
         }
@@ -2318,6 +2356,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.");
       }
       
+      completionUnion.Set_objectInteractionCompleted(std::move( info ));
       IDockAction::GetCompletionUnion(robot, completionUnion);
     }
     
@@ -2496,6 +2535,8 @@ namespace Anki {
     
     void PlaceRelObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
+      ObjectInteractionCompleted info;
+      
       switch(_dockAction)
       {
         case DockAction::DA_PLACE_HIGH:
@@ -2508,9 +2549,6 @@ namespace Anki {
                               "Docking object %d not found in world after placing.",
                               _dockObjectID.GetValue());
           } else {
-            
-            ObjectInteractionCompleted info;
-            
             auto objectStackIter = info.objectIDs.begin();
             info.objectIDs.fill(-1);
             info.numObjects = 0;
@@ -2522,7 +2560,7 @@ namespace Anki {
               ++info.numObjects;
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
-            completionUnion.Set_objectInteractionCompleted(std::move( info ));
+            
           }
           break;
         }
@@ -2531,6 +2569,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.");
       }
       
+      completionUnion.Set_objectInteractionCompleted(std::move( info ));
       IDockAction::GetCompletionUnion(robot, completionUnion);
     }
     
@@ -2690,6 +2729,7 @@ namespace Anki {
     
     void RollObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
+      ObjectInteractionCompleted info;
       switch(_dockAction)
       {
         case DockAction::DA_ROLL_LOW:
@@ -2698,12 +2738,10 @@ namespace Anki {
             PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
                                 "Expecting robot to think it's not carrying object for roll action.");
           }
-          else {  
-            ObjectInteractionCompleted info;
+          else {
             info.numObjects = 1;
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
-            completionUnion.Set_objectInteractionCompleted(std::move( info ));
           }
           break;
         }
@@ -2712,6 +2750,7 @@ namespace Anki {
                               "Dock action not set before filling completion signal.");
       }
       
+      completionUnion.Set_objectInteractionCompleted(std::move( info ));
       IDockAction::GetCompletionUnion(robot, completionUnion);
     }
     
@@ -2852,6 +2891,7 @@ namespace Anki {
     
     void PopAWheelieAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
+      ObjectInteractionCompleted info;
       switch(_dockAction)
       {
         case DockAction::DA_POP_A_WHEELIE:
@@ -2860,11 +2900,9 @@ namespace Anki {
             PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
                                 "Expecting robot to think it's not carrying object for roll action.");
           } else {
-            ObjectInteractionCompleted info;
             info.numObjects = 1;
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
-            completionUnion.Set_objectInteractionCompleted(std::move( info ));
           }
           break;
         }
@@ -2872,7 +2910,7 @@ namespace Anki {
           PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
                               "Dock action not set before filling completion signal.");
       }
-      
+      completionUnion.Set_objectInteractionCompleted(std::move( info ));
       IDockAction::GetCompletionUnion(robot, completionUnion);
     }
     
@@ -3160,7 +3198,7 @@ namespace Anki {
       
       // Wait for robot to report it is done picking/placing and that it's not
       // moving
-      if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
+      if (!robot.IsPickingOrPlacing() && !robot.GetMoveComponent().IsMoving())
       {
         // Stopped executing docking path, and should have placed carried block
         // and backed out by now, and have head pointed at an angle to see

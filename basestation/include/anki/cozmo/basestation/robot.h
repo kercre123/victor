@@ -174,14 +174,7 @@ public:
     
     // Returns true if robot is not traversing a path and has no actions in its queue.
     bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
-    
-    // True if wheel speeds are non-zero in most recent RobotState message
-    bool   IsMoving() const {return _isMoving;}
-    
-    // True if head/lift is on its way to a commanded angle/height
-    bool   IsHeadMoving() const {return _isHeadMoving;}
-    bool   IsLiftMoving() const {return _isLiftMoving;}
-    
+  
     // True if we are on the sloped part of a ramp
     bool   IsOnRamp() const { return _onRamp; }
     
@@ -474,15 +467,11 @@ public:
   
     // Tell the animation streamer to move the eyes by this x,y amount over the
     // specified duration (layered on top of any other animation that's playing).
-    // If makePersistent is true, a looping face layer will be used and it is the
-    // caller's responsibility to remove that layer using the returned tag.
-    // (Otherwise - when makePersistent=false - the tag is 0 and can be ignored.)
-    u32 ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent = false);
-  
-    // Same as above, but shifts and scales
-    u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                          TimeStamp_t duration_ms, bool makePersistent = false,
-                          const std::string& name = "ShiftAndScaleEyes");
+    // Use tag = AnimationStreamer::NotAnimatingTag to start a new layer (in which
+    // case tag will be set to the new layer's tag), or use an existing tag
+    // to add the shift to that layer.
+    void ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
+                   TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   

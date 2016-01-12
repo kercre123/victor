@@ -427,11 +427,10 @@ namespace Anki {
       SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
       
       SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
+
+      GetMoveComponent().Update(msg);
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      _isMoving = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_MOVING);
-      _isHeadMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
-      _isLiftMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
       _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
@@ -1119,9 +1118,9 @@ namespace Anki {
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
                "r:%c%c%c%c lock:%c%c%c %s:%s ",
-               IsLiftMoving() ? 'L' : ' ',
-               IsHeadMoving() ? 'H' : ' ',
-               IsMoving() ? 'B' : ' ',
+               GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
+               GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
+               GetMoveComponent().IsMoving() ? 'B' : ' ',
                IsCarryingObject() ? 'C' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
@@ -1450,95 +1449,30 @@ namespace Anki {
       return _animationStreamer.GetStreamingAnimationName();
     }
 
-    u32 Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent)
+    void Robot::ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
+                          TimeStamp_t duration_ms, const std::string& name)
     {
-      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent, "ShiftEyes");
-    }
-    
-    u32 Robot::ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                                 TimeStamp_t duration_ms, bool makePersistent,
-                                 const std::string& name)
-    {
-      u32 layerTag = AnimationStreamer::NotAnimatingTag;
+      ProceduralFace procFace;
+      procFace.GetParams().LookAt(xPix, yPix,
+                                  static_cast<f32>(ProceduralFace::WIDTH/2),
+                                  static_cast<f32>(ProceduralFace::HEIGHT/2),
+                                  1.1f, 0.85f, 0.1f);
       
-      // Clip, but retain sign
-      xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
-      yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
+      ProceduralFaceKeyFrame keyframe(procFace, duration_ms);
       
-      //PRINT_NAMED_DEBUG("Robot.ShiftAndScaleEyes", "shift=(%.3f,%.3f) scale=(%.3f,%.3f)",
-      //                  xPix, yPix, xScale, yScale);
-      
-      AnimationStreamer::FaceTrack faceTrack;
-      
-      if(duration_ms == 0) {
-        // Dart over three frames: go 2/3 of the distance in the first frame,
-        // 2/9 the second (that's 2/3 of the remaining 1/3) and then the final 1/9
-        // at the end.
-        
-        const f32 dist = std::sqrt(xPix*xPix + yPix*yPix);
-        const f32 divisor = (dist > 0 ? 1.f/dist : 1.f); // prevent divide by zero when (xPix==yPix==0)
-        const f32 cosAngle = xPix * divisor;
-        const f32 sinAngle = yPix * divisor;
-        
-        ProceduralFace procFace;
-        ProceduralFaceParams& faceParams = procFace.GetParams();
-        
-        TimeStamp_t t=0;
-        for(auto frac : {0.666667f, 0.888889f, 1.f})
-        {
-          const f32 x = frac * dist * cosAngle;
-          const f32 y = frac * dist * sinAngle;
-          faceParams.SetFacePosition(Point2f(x,y));
-          
-          // Scale "further" eye down a little and "closer" eye up a little
-          const f32 MaxScaleAdj = 0.25f;
-          f32 leftScaleY = 1.f, rightScaleY = 1.f;
-          const f32 xScaleAdj = std::abs(x) * MaxScaleAdj / (0.5f * ProceduralFace::WIDTH);
-          if(x > 0) {
-            leftScaleY  += xScaleAdj;
-            rightScaleY -= xScaleAdj;
-          } else if(x < 0) {
-            leftScaleY  -= xScaleAdj;
-            rightScaleY += xScaleAdj;
-          }
-
-          const f32 scaleY = (frac*(yScale-1.f)+1.f) - std::abs(y) / (0.5f * ProceduralFace::HEIGHT) * 0.2f;
-          
-          faceParams.SetParameter(ProceduralFace::WhichEye::Left,
-                                  ProceduralEyeParameter::EyeScaleY, leftScaleY * scaleY);
-          faceParams.SetParameter(ProceduralFace::WhichEye::Right,
-                                  ProceduralEyeParameter::EyeScaleY, rightScaleY * scaleY);
-          
-          const f32 scaleX = frac*(xScale-1.f)+1.f;
-          faceParams.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, scaleX);
-          
-          ASSERT_NAMED(!(std::isnan(leftScaleY) || std::isnan(rightScaleY) ||
-                         std::isnan(scaleY) || std::isnan(scaleX) ||
-                         std::isnan(x) || std::isnan(y)),
-                       "Shift/scale values should be non-nan!");
-          
-          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
+      if(AnimationStreamer::NotAnimatingTag == tag) {
+        AnimationStreamer::FaceTrack faceTrack;
+        if(duration_ms > 0) {
+          // Add an initial no-adjustment frame so we have something to interpolate
+          // from on our way to the specified shift
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame());
         }
+        faceTrack.AddKeyFrameToBack(std::move(keyframe));
+        tag = GetAnimationStreamer().AddPersistentFaceLayer(name, std::move(faceTrack));
       } else {
-        //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
-        
-        ProceduralFace procFace;
-        ProceduralFaceParams& params = procFace.GetParams();
-        params.SetFacePosition({xPix, yPix});
-        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
-        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
-        
-        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration_ms));
+        GetAnimationStreamer().AddToPersistentFaceLayer(tag, std::move(keyframe));
       }
-      
-      if(makePersistent) {
-        layerTag = _animationStreamer.AddPersistentFaceLayer(name, std::move(faceTrack));
-      } else {
-        _animationStreamer.AddFaceLayer(name, std::move(faceTrack));
-      }
-      
-      return layerTag;
-    } // ShiftAndScaleEyes()
+    }
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
