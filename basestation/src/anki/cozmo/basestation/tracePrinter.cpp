@@ -15,27 +15,29 @@ const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format with 
 
 TracePrinter::TracePrinter(Util::Data::DataPlatform* dp):
   printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG) {
-  Json::Value jsonDict;
-  const std::string jsonFilename = "config/basestation/AnkiLogStringTables.json";
-  bool success = dp->readAsJson(Util::Data::Scope::Resources, jsonFilename, jsonDict);
-  if (!success)
-  {
-    PRINT_NAMED_ERROR("Robot.AnkiLogStringTablesNotFound",
-                      "Robot PrintTrace string table Json config file %s not found.",
-                      jsonFilename.c_str());
-  }
-  
-  const Json::Value jsonNameTable   = jsonDict["nameTable"];
-  for (Json::ValueIterator itr = jsonNameTable.begin(); itr != jsonNameTable.end(); itr++) {
-    nameTable.insert(std::pair<const int, const std::string>(atoi(itr.key().asString().c_str()), itr->asString()));
-  }
-  
-  const Json::Value jsonFormatTable = jsonDict["formatTable"];
-  for (Json::ValueIterator itr = jsonFormatTable.begin(); itr != jsonFormatTable.end(); itr++) {
-    const int key = atoi(itr.key().asString().c_str());
-    const std::string fmt = (*itr)[0].asString();
-    const int nargs = (*itr)[1].asInt();
-    formatTable.insert(std::pair<const int, const FormatInfo>(key, FormatInfo(fmt, nargs)));
+  if (dp) {
+    Json::Value jsonDict;
+    const std::string jsonFilename = "config/basestation/AnkiLogStringTables.json";
+    bool success = dp->readAsJson(Util::Data::Scope::Resources, jsonFilename, jsonDict);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("Robot.AnkiLogStringTablesNotFound",
+                        "Robot PrintTrace string table Json config file %s not found.",
+                        jsonFilename.c_str());
+    }
+    
+    const Json::Value jsonNameTable   = jsonDict["nameTable"];
+    for (Json::ValueIterator itr = jsonNameTable.begin(); itr != jsonNameTable.end(); itr++) {
+      nameTable.insert(std::pair<const int, const std::string>(atoi(itr.key().asString().c_str()), itr->asString()));
+    }
+    
+    const Json::Value jsonFormatTable = jsonDict["formatTable"];
+    for (Json::ValueIterator itr = jsonFormatTable.begin(); itr != jsonFormatTable.end(); itr++) {
+      const int key = atoi(itr.key().asString().c_str());
+      const std::string fmt = (*itr)[0].asString();
+      const int nargs = (*itr)[1].asInt();
+      formatTable.insert(std::pair<const int, const FormatInfo>(key, FormatInfo(fmt, nargs)));
+    }
   }
 }
 
