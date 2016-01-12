@@ -496,9 +496,15 @@ public:
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
-
+  
     // Read the animations in a dir
     void ReadAnimationDir();
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupDir();
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
@@ -680,6 +686,15 @@ public:
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   
+  const std::string& GetAnimationNameFromGroup(const std::string& name) const {
+    auto group = _cannedAnimations.GetAnimationGroup(name);
+    if(group != nullptr && !group->IsEmpty()) {
+      return group->GetAnimation(GetMoodManager());
+    }
+    static const std::string empty("");
+    return empty;
+  }
+  
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -843,7 +858,8 @@ public:
     std::string _lastPlayedAnimationId;
 
     std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    
+    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+  
     ///////// Modifiers ////////
     
     void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}

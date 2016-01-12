@@ -478,6 +478,13 @@ message PlayAnimation {
     string animationName
 }
 
+// PlayAnimationGroup
+message PlayAnimationGroup {
+uint_8  robotID,
+uint_32 numLoops,
+string animationGroupName
+}
+
 // ReplayLastAnimation
 message ReplayLastAnimation {
     uint_8  robotID,
@@ -599,6 +606,7 @@ union RobotActionUnion {
   GotoObject                goToObject,
   AlignWithObject           alignWithObject,
   PlayAnimation             playAnimation,
+  PlayAnimationGroup        playAnimationGroup,
   PickupObject              pickupObject,
   PlaceOnObject             placeOnObject,
   PlaceRelObject            placeRelObject,

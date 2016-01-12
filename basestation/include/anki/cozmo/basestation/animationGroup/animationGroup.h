@@ -1,0 +1,63 @@
+/**
+ * File: animationGroup.h
+ *
+ * Authors: Trevor Dasch
+ * Created: 2016-01-11
+ *
+ * Description:
+ *    Class for storing a group of animations,
+ *    from which an animation can be selected
+ *    for a given set of moods
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+
+#ifndef ANKI_COZMO_ANIMATION_GROUP_H
+#define ANKI_COZMO_ANIMATION_GROUP_H
+
+#include "anki/common/basestation/jsonTools.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupEntry.h"
+#include <list>
+#include <queue>
+
+namespace Anki {
+  namespace Cozmo {
+    
+    // Forward declaration
+    namespace RobotInterface {
+      class EngineToRobot;
+      enum class EngineToRobotTag : uint8_t;
+    }
+    class Robot;
+    
+    class AnimationGroup
+    {
+    public:
+      
+      AnimationGroup(const std::string& name = "");
+      
+      // For reading animation groups from files
+      Result DefineFromJson(const std::string& name, Json::Value& json);
+      
+      // Retrieve an animation based on a set of moods
+      const std::string& GetAnimation(const MoodManager& moodManager) const;
+      
+      // An animation group is empty if it has no animations
+      bool IsEmpty() const;
+      
+      const std::string& GetName() const { return _name; }
+      
+    private:
+      
+      // Name of this animation
+      std::string _name;
+      
+      std::list<AnimationGroupEntry> _animations;
+      
+    }; // class AnimationGroup
+  } // namespace Cozmo
+} // namespace Anki
+
+#endif // ANKI_COZMO_ANIMATION_GROUP_H

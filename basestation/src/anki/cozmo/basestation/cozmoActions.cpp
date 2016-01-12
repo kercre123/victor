@@ -3592,6 +3592,22 @@ namespace Anki {
       completionUnion.Set_animationCompleted(std::move( info ));
     }
     
+    
+#pragma mark ---- PlayAnimationAction ----
+    
+    PlayAnimationGroupAction::PlayAnimationGroupAction(const std::string& animGroupName,
+                                             u32 numLoops, bool interruptRunning)
+    : PlayAnimationAction("", numLoops, interruptRunning),
+    _animGroupName(animGroupName)
+    {
+      
+    }
+    
+    ActionResult PlayAnimationGroupAction::Init(Robot& robot)
+    {
+      _animName = robot.GetAnimationNameFromGroup(_animGroupName);
+      return PlayAnimationAction::Init(robot);
+    }
 
 #pragma mark ---- DeviceAudioAction ----
     
