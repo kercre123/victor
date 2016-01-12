@@ -24,12 +24,15 @@ namespace Simon {
     private void HandleContinuePressed() {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.PLAYFUL);
       if (_NextPlayer == PlayerType.Cozmo) {
-        _StateMachine.SetNextState(new CozmoSetSequenceSimonState());
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
       }
       else { // _NextPlayer == PlayerType.Human
         _StateMachine.SetNextState(new PlayerSetSequenceSimonState());
       }
     }
 
+    private void HandleOnCozmoStartAnimationDone(bool success) {
+      _StateMachine.SetNextState(new CozmoSetSequenceSimonState());
+    }
   }
 }

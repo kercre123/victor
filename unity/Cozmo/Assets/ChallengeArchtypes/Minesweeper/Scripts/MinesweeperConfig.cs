@@ -3,7 +3,7 @@ using System.Collections;
 
 public class MinesweeperConfig : MinigameConfigBase {
   public override int NumCubesRequired() {
-    return 1;
+    return 2;
   }
 
   public override int NumPlayersRequired() {

@@ -3,7 +3,7 @@ using System.Collections;
 
 public class SelfieGameConfig : MinigameConfigBase {
   public override int NumCubesRequired() {
-    return 1;
+    return 0;
   }
 
   public override int NumPlayersRequired() {
