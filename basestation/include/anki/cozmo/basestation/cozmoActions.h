@@ -381,6 +381,7 @@ namespace Anki {
       // TODO: Use setters for variability and tolerance too
       void SetMaxSpeed(f32 maxSpeed_radPerSec)   { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetAccel(f32 accel_radPerSec2)        { _accel_radPerSec2 = accel_radPerSec2; }
+      void SetDuration(f32 duration_sec)         { _duration_sec = duration_sec; }
       
       // Enable/disable eye movement while turning. If hold is true, the eyes will
       // remain in their final position until the next time something moves the head.
@@ -405,7 +406,7 @@ namespace Anki {
       
       f32         _maxSpeed_radPerSec = 15.f;
       f32         _accel_radPerSec2   = 20.f;
-      
+      f32         _duration_sec = 0.f;
       bool        _moveEyes = true;
       bool        _holdEyes = false;
       Radians     _halfAngle;

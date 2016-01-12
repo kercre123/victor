@@ -1613,7 +1613,9 @@ namespace Anki {
       
       if(!_inPosition) {
         if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
-                                                                 _maxSpeed_radPerSec, _accel_radPerSec2))
+                                                                 _maxSpeed_radPerSec,
+                                                                 _accel_radPerSec2,
+                                                                 _duration_sec))
         {
           result = ActionResult::FAILURE_ABORT;
         }

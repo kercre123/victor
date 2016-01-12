@@ -65,7 +65,6 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeInternal<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
   helper.SubscribeInternal<MessageGameToEngineTag::MoveHead>();
   helper.SubscribeInternal<MessageGameToEngineTag::MoveLift>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetHeadAngle>();
   helper.SubscribeInternal<MessageGameToEngineTag::StopAllMotors>();
 }
   
@@ -119,20 +118,6 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
     _robot.SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
-  }
-}
-
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::SetHeadAngle& msg)
-{
-  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.SetHeadAngle.HeadLocked",
-                     "Ignoring ExternalInterface::SetHeadAngle while head is locked.");
-  } else {
-    // Note that this will temporarily take over the head but because it's not an action,
-    // any tracking that's using the head should just re-take control on next
-    // observation.
-    MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
   }
 }
 
