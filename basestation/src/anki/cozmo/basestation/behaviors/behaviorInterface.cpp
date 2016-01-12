@@ -19,6 +19,8 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include "util/math/numericCast.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -28,23 +30,20 @@ namespace Cozmo {
   
   const char* IBehavior::kBaseDefaultName = "no_name";
   
-  static const char* kNameKey           = "name";
-  static const char* kEmotionScorersKey = "emotionScorers";
+  static const char* kNameKey              = "name";
+  static const char* kEmotionScorersKey    = "emotionScorers";
+  static const char* kRepetitionPenaltyKey = "repetitionPenalty";
   
   
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _robot(robot)
+  , _lastRunTime(0.0)
+  , _overrideScore(-1.0f)
   , _isRunning(false)
   , _isOwnedByFactory(false)
+  , _enableRepetitionPenalty(true)
   {
-    if (config.isNull())
-    {
-      _name = kBaseDefaultName;
-    }
-    else
-    {
-      ReadFromJson(config);
-    }
+    ReadFromJson(config);
   }
 
   bool IBehavior::ReadFromJson(const Json::Value& config)
@@ -69,13 +68,30 @@ namespace Cozmo {
         
         if (emotionScorerJson.isNull())
         {
-          PRINT_NAMED_WARNING("IBehavior.BadEmotionScorer", "EmotionScorer %u failed to read", i);
+          PRINT_NAMED_WARNING("IBehavior.BadEmotionScorer", "Behavior '%s': %s[%u] failed to read", _name.c_str(), kEmotionScorersKey, i);
         }
         else
         {
           _emotionScorers.emplace_back(emotionScorerJson);
         }
       }
+    }
+    
+    _repetitionPenalty.Clear();
+    
+    const Json::Value& repetitionPenaltyJson = config[kRepetitionPenaltyKey];
+    if (!repetitionPenaltyJson.isNull())
+    {
+      if (!_repetitionPenalty.ReadFromJson(repetitionPenaltyJson))
+      {
+        PRINT_NAMED_WARNING("IBehavior.BadRepetitionPenalty", "Behavior '%s': %s failed to read", _name.c_str(), kRepetitionPenaltyKey);
+      }
+    }
+    
+    // Ensure there is a valid graph
+    if (_repetitionPenalty.GetNumNodes() == 0)
+    {
+      _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
     }
     
     return true;
@@ -140,11 +156,42 @@ namespace Cozmo {
     return averageScore;
   }
   
+  // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
   float IBehavior::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
   {
     return EvaluateEmotionScore(robot.GetMoodManager());
   }
 
+  float IBehavior::EvaluateRepetitionPenalty(double currentTime_sec) const
+  {
+    if (_lastRunTime > 0.0)
+    {
+      const float timeSinceRun = Util::numeric_cast<float>(currentTime_sec - _lastRunTime);
+      const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceRun);
+      return repetitionPenalty;
+    }
+    
+    return 1.0f;
+  }
+  
+  float IBehavior::EvaluateScore(const Robot& robot, double currentTime_sec) const
+  {
+    if (IsRunnable(robot, currentTime_sec))
+    {
+      const bool doOverrideScore = (_overrideScore >= 0.0f);
+      float score = doOverrideScore ? _overrideScore : EvaluateScoreInternal(robot, currentTime_sec);
+      
+      if (_enableRepetitionPenalty)
+      {
+        const float repetitionPenalty = EvaluateRepetitionPenalty(currentTime_sec);
+        score *= repetitionPenalty;
+      }
+      
+      return score;
+    }
+    
+    return 0.0f;
+  }
 
 #pragma mark --- IReactionaryBehavior ----
   

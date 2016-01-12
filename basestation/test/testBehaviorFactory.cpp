@@ -62,7 +62,19 @@ static const char* kTestBehaviorJson =
 "       },"
 "       \"trackDelta\" : false"
 "     }"
-"   ]"
+"   ],"
+"   \"repetitionPenalty\" : {"
+"      \"nodes\" : ["
+"         {"
+"            \"x\" : 3.0,"
+"            \"y\" : 0.0"
+"         },"
+"         {"
+"            \"x\" : 6,"
+"            \"y\" : 1.0"
+"         }"
+"      ]"
+"   }"
 "}";
 
 
@@ -79,6 +91,10 @@ void VerifyBehavior(const IBehavior* inBehavior, BehaviorFactory& behaviorFactor
   EXPECT_EQ(inBehavior->GetEmotionScorer(0).TrackDeltaScore(), true);
   EXPECT_EQ(inBehavior->GetEmotionScorer(1).GetEmotionType(),  EmotionType::Excited);
   EXPECT_EQ(inBehavior->GetEmotionScorer(1).TrackDeltaScore(), false);
+  
+  EXPECT_EQ(inBehavior->GetRepetionalPenalty().GetNumNodes(), 2);
+  EXPECT_FLOAT_EQ(inBehavior->GetRepetionalPenalty().EvaluateY(0.0f), 0.0f);
+  EXPECT_FLOAT_EQ(inBehavior->GetRepetionalPenalty().EvaluateY(4.5f), 0.5f);
   
   EXPECT_EQ(behaviorFactory.FindBehaviorByName(kTestBehaviorName), inBehavior);
   EXPECT_EQ(behaviorFactory.GetBehaviorMap().size(), expectedBehaviorCount);

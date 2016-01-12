@@ -93,7 +93,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
     case State::ReactToPoke:
     {
       // Decrease happy
-      robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeLarge, "Poked");
+      robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeLarge, "Poked", currentTime_sec);
       
       // Do startled animation
       s32 animIndex = robot.GetLastMsgTimestamp() % _animStartled.size(); // Randomly select anim to play
@@ -158,6 +158,10 @@ Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_s
     return Result::RESULT_FAIL;
   }
   return Result::RESULT_OK;
+}
+
+void BehaviorReactToPoke::StopInternal(Robot& robot, double currentTime_sec)
+{
 }
 
 void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,

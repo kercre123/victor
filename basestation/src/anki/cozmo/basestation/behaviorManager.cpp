@@ -26,6 +26,8 @@
 
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 
+#include "anki/common/basestation/utils/timer.h"
+
 #include "clad/types/behaviorChooserType.h"
 
 #include "util/logging/logging.h"
@@ -205,7 +207,7 @@ namespace Cozmo {
         _resumeBehavior = _currentBehavior;
       }
 
-      _currentBehavior = _nextBehavior;
+      SetCurrentBehavior(_nextBehavior, currentTime_sec);
       _nextBehavior = nullptr;
     }
   }
@@ -360,11 +362,12 @@ namespace Cozmo {
   
   void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   {
-    // These behavior pointers are going to be invalidated, so clear them. Leave current behavior, since it
-    // lives in the factory and doesn't get deleted
-    // TEMP: // TODO:(bn) ask Wesley about this
+    // These behavior pointers might be invalidated, so clear them
+    // SetCurrentBehavior ensures that any existing current behavior is stopped first
     
-    _nextBehavior = _forceSwitchBehavior = nullptr;
+    SetCurrentBehavior(nullptr, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+    _nextBehavior = nullptr;
+    _forceSwitchBehavior = nullptr;
     _resumeBehavior = nullptr;
 
     if( _behaviorChooser != nullptr ) {
@@ -378,10 +381,40 @@ namespace Cozmo {
     _behaviorChooser = newChooser;
   }
   
+  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
+  {
+    if (_currentBehavior && (newBehavior != _currentBehavior))
+    {
+      _currentBehavior->Stop(currentTime_sec);
+    }
+    _currentBehavior = newBehavior;
+  }
+
   IBehavior* BehaviorManager::LoadBehaviorFromJson(const Json::Value& behaviorJson)
   {
     IBehavior* newBehavior = _behaviorFactory->CreateBehavior(behaviorJson, _robot);
     return newBehavior;
+  }
+  
+  void BehaviorManager::ClearAllBehaviorOverrides()
+  {
+    const BehaviorFactory::NameToBehaviorMap& nameToBehaviorMap = _behaviorFactory->GetBehaviorMap();
+    for(const auto& it : nameToBehaviorMap)
+    {
+      IBehavior* behavior = it.second;
+      behavior->SetOverrideScore(-1.0f);
+    }
+  }
+  
+  bool BehaviorManager::OverrideBehaviorScore(const std::string& behaviorName, float newScore)
+  {
+    IBehavior* behavior = _behaviorFactory->FindBehaviorByName(behaviorName);
+    if (behavior)
+    {
+      behavior->SetOverrideScore(newScore);
+      return true;
+    }
+    return false;
   }
   
 } // namespace Cozmo
