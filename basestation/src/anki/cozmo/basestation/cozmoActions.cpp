@@ -2670,6 +2670,9 @@ namespace Anki {
                 }
                 
               }
+            } else {
+              // Mostly for debugging when placement verification is taking too long
+              PRINT_NAMED_INFO("PlaceRelObjectAction.Verify.Waiting", "");
             } // if(result != ActionResult::RUNNING)
             
           } else {
@@ -2833,6 +2836,9 @@ namespace Anki {
                                  "Robot thinks it rolled the object, but verification failed. ");
                 result = ActionResult::FAILURE_ABORT;
               }
+            } else {
+              // Mostly for debugging when verification takes too long
+              PRINT_NAMED_INFO("RollObjectAction.Verify.Waiting", "");
             } // if(result != ActionResult::RUNNING)
             
           } else {
