@@ -1578,11 +1578,11 @@ namespace Anki {
       Json::Value animGroupDef;
       const bool success = _dataPlatform->readAsJson(filename, animGroupDef);
       if (success && !animGroupDef.empty()) {
-        std::string animationGroupName(filename);
+        std::string fullName(filename);
         // remove path
-        animationGroupName.erase(0, animationGroupName.find_last_of("/") + 1);
+        std::string jsonName = fullName.substr(0, fullName.find_last_of("/") + 1);
         // remove extension
-        animationGroupName.erase(animationGroupName.find_last_of("."), std::string::npos);
+        std::string animationGroupName = jsonName.substr(jsonName.find_last_of("."), std::string::npos);
 
         PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
         
