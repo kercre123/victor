@@ -239,6 +239,19 @@ public class AnimationGroupEditor : EditorWindow {
 
     moodCurve.Curve = EditorGUILayout.CurveField("Curve", moodCurve.Curve, Color.green, new Rect(-1, -1, 2, 2));
 
+    // linearize the curve
+    for (int i = 1; i < moodCurve.Curve.keys.Length; i++) {    
+      var keyA = moodCurve.Curve.keys[i - 1];
+      var keyB = moodCurve.Curve.keys[i];
+
+      keyB.inTangent = keyA.outTangent = 
+        (keyB.value - keyA.value) /
+        (keyB.time - keyA.time);
+
+      moodCurve.Curve.MoveKey(i - 1, keyA);
+      moodCurve.Curve.MoveKey(i, keyB);
+    }
+
     EditorGUILayout.EndVertical();
   }
 

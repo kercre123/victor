@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using Newtonsoft.Json;
 
 namespace AnimationGroups {
   public class AnimationGroup {
@@ -19,8 +20,12 @@ namespace AnimationGroups {
       public class MoodCurve {
         public int Emotion;
 
+
         // by default, set a linear curve over our emotional range.
-        public AnimationCurve Curve = new AnimationCurve(new Keyframe(-1, -1), new Keyframe(1,1));
+        [JsonIgnore]
+        public AnimationCurve Curve = new AnimationCurve(new Keyframe(-1, -1, -1, 1), new Keyframe(1,1, -1, 1));
+
+        public GraphEvaluator2d GraphEvaluator { get { return Curve; } set { Curve = value; } }
       }
 
       public float Evaluate(Robot robot) {
