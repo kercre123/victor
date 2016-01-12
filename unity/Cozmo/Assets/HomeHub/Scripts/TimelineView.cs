@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
 
@@ -19,10 +20,17 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private RectTransform _ChallengeContainer;
 
+    [SerializeField]
+    private UnityEngine.UI.ScrollRect _ScrollRect;
+
+    [SerializeField]
+    private RectTransform _ContentPane;
+
+    [SerializeField]
+    private RectTransform _TimelinePane;
 
     [SerializeField]
     private GraphSpline _GraphSpline;
-
 
     public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
@@ -59,6 +67,12 @@ namespace Cozmo.HomeHub {
       GenerateFakeData();
 
       PopulateTimeline(DataPersistenceManager.Instance.Data.PreviousSessions);
+      _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
+      _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
+    }
+
+    private void SetScrollRectStartPosition() {
+      _ScrollRect.horizontalNormalizedPosition = _TimelinePane.rect.width / _ContentPane.rect.width;
     }
 
     // TMP!!!!

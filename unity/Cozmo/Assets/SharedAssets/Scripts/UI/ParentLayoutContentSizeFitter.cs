@@ -8,7 +8,7 @@ using UnityEngine.UI;
 // its content but still have it be under a parent with a layout group.
 public class ParentLayoutContentSizeFitter : MonoBehaviour {
 
-  void OnRectTransformDimensionsChange() {
+  private void OnRectTransformDimensionsChange() {
     if (transform.parent != null && gameObject.activeInHierarchy) {
       StartCoroutine(ResizeParent());
     }
