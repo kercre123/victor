@@ -650,12 +650,23 @@ void VizControllerImpl::PreUpdateBehaviorDisplay()
     return;
   }
   
-  // Advance all behaviors by one empty tick - any active ones will be updated later
+  // Advance all previoiusly active behaviors by one dummy tick - any active ones will be updated with correct value later
   
-  for (auto& kv : _behaviorScoreBuffers)
+  for (auto it = _behaviorScoreBuffers.begin(); it != _behaviorScoreBuffers.end(); )
   {
-    BehaviorScoreBuffer& behaviorScoreBuffer = kv.second;
-    behaviorScoreBuffer.push_back( behaviorScoreBuffer.back() );
+    BehaviorScoreBuffer& behaviorScoreBuffer = it->second;
+    const BehaviorScoreEntry& lastEntry = behaviorScoreBuffer.back();
+    
+    if (lastEntry._numEntriesSinceReal > behaviorScoreBuffer.capacity())
+    {
+      // This buffer is now entirely full of dummy entries - remove the buffer (behavior is no longer valid)
+      it = _behaviorScoreBuffers.erase(it);
+    }
+    else
+    {
+      behaviorScoreBuffer.push_back( BehaviorScoreEntry(lastEntry._value, lastEntry._numEntriesSinceReal + 1) );
+      ++it;
+    }
   }
   
   _behaviorEventBuffer.push_back(std::vector<std::string>()); // empty entry, expanded in other message
@@ -718,7 +729,7 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
       // Remove the dummy entry we added during preUpdate
       scoreBuffer.pop_back();
     }
-    scoreBuffer.push_back(scoreData.totalScore);
+    scoreBuffer.push_back( BehaviorScoreEntry(scoreData.totalScore) );
   }
 }
   
@@ -763,7 +774,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
     std::sort(activeScoreBuffers.begin(), activeScoreBuffers.end(),
               [](const NamedScoreBuffer& lhs, const NamedScoreBuffer& rhs)
               {
-                return lhs._scoreBuffer->back() > rhs._scoreBuffer->back();
+                return lhs._scoreBuffer->back()._value > rhs._scoreBuffer->back()._value;
               } );
   }
   
@@ -806,8 +817,6 @@ void VizControllerImpl::DrawBehaviorDisplay()
   
   int lastTextY = kTopTextY - textSpacingY;
   
-  int numLinesLeft = (int)activeScoreBuffers.size();
-  
   // Draw all the events
   {
     int eventY = kTopTextY;
@@ -840,14 +849,41 @@ void VizControllerImpl::DrawBehaviorDisplay()
     }
   }
   
+  int numLinesLeft = 0; // number of still active behaviors to display - first find most recently updated
+                        // (and how many match that) - these are considered still active
+  uint32_t minTicksSinceRealValue = UINT32_MAX;
+  for (const NamedScoreBuffer& namedScoreBuffer : activeScoreBuffers)
+  {
+    const BehaviorScoreEntry& latestScoreEntry = namedScoreBuffer._scoreBuffer->back();
+    if (latestScoreEntry._numEntriesSinceReal < minTicksSinceRealValue)
+    {
+      // new result for "most recently updated"
+      minTicksSinceRealValue = latestScoreEntry._numEntriesSinceReal;
+      numLinesLeft = 1;
+    }
+    else if (latestScoreEntry._numEntriesSinceReal == minTicksSinceRealValue)
+    {
+      // is as recently updated as current winner
+      ++numLinesLeft;
+    }
+  }
+  
   for (const NamedScoreBuffer& namedScoreBuffer : activeScoreBuffers)
   {
     const BehaviorScoreBuffer& scoreBuffer = *namedScoreBuffer._scoreBuffer;
     
+    const uint32_t numEntriesSinceRealValue = scoreBuffer.back()._numEntriesSinceReal;
+    const bool drawAllValues = (numEntriesSinceRealValue <= minTicksSinceRealValue);
+    
     behaviorDisp->setColor(namedScoreBuffer._color);
     
     const size_t numValues = scoreBuffer.size();
-    assert(numValues > 0);
+    const size_t numValuesToDraw = drawAllValues ? numValues :
+                                   (numValues > numEntriesSinceRealValue) ? (numValues - numEntriesSinceRealValue) : 0;
+    if (numValuesToDraw == 0)
+    {
+      continue;
+    }
     
     // Draw a line graph connecting all of the sample points
     
@@ -855,15 +891,18 @@ void VizControllerImpl::DrawBehaviorDisplay()
     int lastX = 0;
     int lastY = 0;
     
-    for (size_t j=0; j < numValues; ++j)
+    for (size_t j=0; j < numValuesToDraw; ++j)
     {
-      const float scoreVal = scoreBuffer[j];
+      const BehaviorScoreEntry& scoreEntry = scoreBuffer[j];
+      const float scoreVal = scoreEntry._value;
       
       const int xVal = (int)(xValF);
       const int yVal = yValueFor0 + (int)(yScalar * scoreVal);
       
       if (j > 0)
       {
+        const bool isReusingValue = (scoreEntry._numEntriesSinceReal > 0);
+        behaviorDisp->setAlpha( isReusingValue ? 0.25 : 1.0 );
         behaviorDisp->drawLine(lastX, lastY, xVal, yVal);
       }
       
@@ -872,20 +911,26 @@ void VizControllerImpl::DrawBehaviorDisplay()
       lastY = yVal;
     }
     
-    // Draw the label, ideally next to the last sample, but above maxTextY (so there's room for the rest of the labels)
-    // and at least 1 line down from the last category, clamped to the top/bottom range
+    behaviorDisp->setAlpha(1.0);
     
-    const int textX = MIN(lastX, windowWidth-labelOffset);
-    --numLinesLeft;
-    const int maxTextY = kBottomTextY - (kTextSpacingY * numLinesLeft);
-    const int textY = CLIP(MAX(MIN(lastY, maxTextY), lastTextY+kTextSpacingY), kTopTextY, kBottomTextY);
-    lastTextY = textY;
-    
-    char valueString[32];
-    snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back());
-    std::string text = std::string(valueString) + namedScoreBuffer._name;
-    
-    behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
+    // Only draw labels for most recently scored behaviors where we're drawing all values
+    if (drawAllValues)
+    {
+      // Draw the label, ideally next to the last sample, but above maxTextY (so there's room for the rest of the labels)
+      // and at least 1 line down from the last category, clamped to the top/bottom range
+      
+      const int textX = MIN(lastX, windowWidth-labelOffset);
+      --numLinesLeft;
+      const int maxTextY = kBottomTextY - (kTextSpacingY * numLinesLeft);
+      const int textY = CLIP(MAX(MIN(lastY, maxTextY), lastTextY+kTextSpacingY), kTopTextY, kBottomTextY);
+      lastTextY = textY;
+      
+      char valueString[32];
+      snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back()._value);
+      std::string text = std::string(valueString) + namedScoreBuffer._name;
+      
+      behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
+    }
   }
 }
 

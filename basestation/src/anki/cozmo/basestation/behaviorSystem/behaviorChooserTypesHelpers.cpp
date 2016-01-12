@@ -22,7 +22,7 @@ IMPLEMENT_ENUM_INCREMENT_OPERATORS(BehaviorChooserType);
 
 
 // One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<BehaviorChooserType> gStringToBehaviorChooserTypeMapper;
+static Anki::Util::StringToEnumMapperI<BehaviorChooserType> gStringToBehaviorChooserTypeMapper;
 
 BehaviorChooserType BehaviorChooserTypeFromString(const char* inString)
 {

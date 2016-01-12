@@ -665,17 +665,17 @@ namespace Cozmo {
   Result BehaviorBlockPlay::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     _interrupted = true;
-
+    
+    return RESULT_OK;
+  }
+  
+  void BehaviorBlockPlay::StopInternal(Robot& robot, double currentTime_sec)
+  {
     if(_lastActionTag != static_cast<u32>(ActionConstants::INVALID_TAG)) {
       // Make sure we don't stay in tracking when we leave this action
       // TODO: this will cancel any action we were doing. Cancel all tracking actions?
       robot.GetActionList().Cancel(_lastActionTag);
     }
-    
-    HeadShouldBeUnlocked(robot);
-    LiftShouldBeUnlocked(robot);
-    BodyShouldBeUnlocked(robot);
-    return RESULT_OK;
   }
   
   void BehaviorBlockPlay::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)

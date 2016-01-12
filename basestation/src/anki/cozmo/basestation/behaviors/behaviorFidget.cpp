@@ -177,6 +177,10 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  void BehaviorFidget::StopInternal(Robot& robot, double currentTime_sec)
+  {
+  }
+  
   void BehaviorFidget::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
   {
     switch (event.GetData().GetTag())

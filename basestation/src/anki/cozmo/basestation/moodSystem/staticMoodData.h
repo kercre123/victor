@@ -42,11 +42,14 @@ public:
   void  Init(const Json::Value& inJson);
   
   void  InitDecayGraphs();
-  bool  SetDecayGraph(EmotionType emotionType, const Anki::Util::GraphEvaluator2d& newGraph);
-  const Anki::Util::GraphEvaluator2d& GetDecayGraph(EmotionType emotionType);
+  bool  SetDecayGraph(EmotionType emotionType, const Util::GraphEvaluator2d& newGraph);
+  const Util::GraphEvaluator2d& GetDecayGraph(EmotionType emotionType) const;
   
-  static bool VerifyDecayGraph(const Anki::Util::GraphEvaluator2d& newGraph, bool warnOnErrors=true);
+  static bool VerifyDecayGraph(const Util::GraphEvaluator2d& newGraph, bool warnOnErrors=true);
 
+  void  SetDefaultRepetitionPenalty(const Util::GraphEvaluator2d& newGraph) { _defaultRepetitionPenalty = newGraph; }
+  const Util::GraphEvaluator2d& GetDefaultRepetitionPenalty() const { return _defaultRepetitionPenalty; }
+  
   const EmotionEventMapper& GetEmotionEventMapper() const { return _emotionEventMapper; }
         EmotionEventMapper& GetEmotionEventMapper()       { return _emotionEventMapper; }
   
@@ -57,8 +60,9 @@ public:
   
 private:
   
-  Anki::Util::GraphEvaluator2d   _emotionDecayGraphs[(size_t)EmotionType::Count];
-  EmotionEventMapper             _emotionEventMapper;
+  Util::GraphEvaluator2d   _emotionDecayGraphs[(size_t)EmotionType::Count];
+  EmotionEventMapper       _emotionEventMapper;
+  Util::GraphEvaluator2d   _defaultRepetitionPenalty;
 };
 
 
