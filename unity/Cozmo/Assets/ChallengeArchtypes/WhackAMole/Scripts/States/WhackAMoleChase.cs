@@ -11,42 +11,45 @@ namespace WhackAMole {
   // If Cozmo loses track of their target, enter confused state.
   public class WhackAMoleChase : State {
     private WhackAMoleGame _WhackAMoleGame;
-    private LightCube _LastCubeTarget;
+    private KeyValuePair<int,int> _TargetKvP;
 
     public override void Enter() {
       base.Enter();
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
-      _LastCubeTarget = _WhackAMoleGame.CurrentTarget;
-      Debug.Log(string.Format("Chase - Start Targeting Cube {0}", _LastCubeTarget.ID));
-      _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,85f,RobotArrives);
+      _TargetKvP = _WhackAMoleGame.CurrentTargetKvP;
+      _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], 25f , RobotArrives,true, 
+        _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
+
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
     }
 
     public void RobotArrives(bool success) {
-      LightCube cube;
       if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.SINGLE) {
         return;
       }
       if (success) {
-        if (_WhackAMoleGame.ActivatedCubes.TryGetValue(_WhackAMoleGame.CurrentTarget.ID, out cube)) {
-          _WhackAMoleGame.ToggleCube(cube.ID);
-          _StateMachine.SetNextState(new AnimationState(AnimationName.kHappyA, HandleAnimationDone));
+        if (_WhackAMoleGame.ActivatedFaces.Contains(_TargetKvP)) {
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kTapCube, HandleAnimationDone));
         }
       }
       else {
 
-        if (_WhackAMoleGame.CurrentTarget == null) {
+        if ((_TargetKvP.Equals(new KeyValuePair<int, int>(-1,-1))) || !_WhackAMoleGame.ActivatedFaces.Contains(_TargetKvP)) {
           _StateMachine.SetNextState(new WhackAMoleConfusion());
-          
         }else {
-          // Attempt to offset self
-          _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 85f, RobotArrives);
+          _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], 25f , RobotArrives,true, 
+            _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NEXT);
         }
       }
     }
 
     void HandleAnimationDone(bool success) {
+      _WhackAMoleGame.ToggleCubeFace(_TargetKvP);
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, ReturnToIdle));
+    }
+
+    void ReturnToIdle(bool success) {
       _StateMachine.SetNextState(new WhackAMoleIdle());
     }
 
@@ -64,10 +67,12 @@ namespace WhackAMole {
       else if (state == WhackAMoleGame.MoleState.BOTH) {
         _StateMachine.SetNextState(new WhackAMoleSurprise());
       }
-      else if (_LastCubeTarget.ID != _WhackAMoleGame.CurrentTarget.ID) {
+      else if (!_TargetKvP.Equals(_WhackAMoleGame.CurrentTargetKvP)) {
         // A different cube is the target now.
-        _LastCubeTarget = _WhackAMoleGame.CurrentTarget;
-        _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget, 85f, RobotArrives);
+        _TargetKvP = _WhackAMoleGame.CurrentTargetKvP;
+        _CurrentRobot.CancelCallback(RobotArrives);
+        _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], 25f , RobotArrives,true, 
+          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NEXT);
       }
     }
 

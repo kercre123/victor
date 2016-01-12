@@ -47,8 +47,7 @@ MonoBehaviour:
   MaxConfuseTime: 0
   PanicDecayMin: 0
   PanicDecayMax: 0
-  _CubeAColor: {r: 0, g: 1, b: 0, a: 1}
-  _CubeBColor: {r: 0, g: 0, b: 1, a: 1}
+  _InActiveColor: {r: .338235319, g: .338235319, b: .338235319, a: 1}
   _ActiveColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1001 &100100000
 Prefab:
@@ -208,6 +207,18 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _HowToPlayPrefabs.Array.data[4].slideName
       value: PlayerWin
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _InActiveColor.r
+      value: .338235319
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _InActiveColor.g
+      value: .338235319
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _InActiveColor.b
+      value: .338235319
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
