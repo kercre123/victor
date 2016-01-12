@@ -295,6 +295,10 @@ namespace Cozmo {
 
             if( moveLiftAction != nullptr ) {
               actionToRun = new CompoundActionParallel({moveLiftAction, lookAtFaceAction});
+
+              moveLiftAction = nullptr;
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
+                                     "Moving to last face pose AND lowering lift");
             }
 
             StartActing(robot,
@@ -315,9 +319,6 @@ namespace Cozmo {
                           return false;
                         });                          
                           
-              moveLiftAction = nullptr;
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
-                                     "Moving to last face pose AND lowering lift");
           } else {
 
             // TEMP: don't let face tracking look into the cube // TODO:(bn) 
@@ -329,18 +330,20 @@ namespace Cozmo {
             }
 
             // also look up a bit in case the angle is too low
-            IActionRunner* moveHeadAction = new MoveHeadToAngleAction(DEG_TO_RAD(20.0f));
+            if( robot.GetHeadAngle() <  DEG_TO_RAD(15.0f) ) {
+              IActionRunner* moveHeadAction = new MoveHeadToAngleAction(DEG_TO_RAD(20.0f));
 
-            IActionRunner* actionToRun = moveHeadAction;
+              IActionRunner* actionToRun = moveHeadAction;
 
-            if( moveLiftAction != nullptr ) {
-              actionToRun = new CompoundActionParallel({moveLiftAction, moveHeadAction});
+              if( moveLiftAction != nullptr ) {
+                actionToRun = new CompoundActionParallel({moveLiftAction, moveHeadAction});
+              }
+
+              StartActing(robot, actionToRun);
+              moveLiftAction = nullptr;
             }
 
-            StartActing(robot, actionToRun);
-            moveLiftAction = nullptr;
-
-            // HACK: don't abort if we are carrying an object, because we might get stuck
+            // don't abort if we are carrying an object
             if (currentTime_sec - _noFacesStartTime > 2.0f && !robot.IsCarryingObject()) {
               PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
               return Status::Complete;
@@ -1213,6 +1216,7 @@ namespace Cozmo {
                 new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
                 new PlaceObjectOnGroundAction()}),
                           [this,&robot](ActionResult ret){
+                            _isActing = false;
                             InitState(robot);
                             return true;
                           });
@@ -1685,7 +1689,7 @@ namespace Cozmo {
       // flag this so we turn off lights as soon as we can
       _objectsToTurnOffLights.push_back(objectID);
     }
-
+    
     return RESULT_OK;
   }  
 
