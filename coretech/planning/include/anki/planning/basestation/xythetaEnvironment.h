@@ -369,11 +369,10 @@ public:
   State GetPlanFinalState(const xythetaPlan& plan) const;
 
 
-  // This essentially projects the given pose onto the plan (held in
-  // this member). The projection is just the closest euclidean
-  // distance point on the plan, and the return value is the number of
-  // complete plan actions that are finished by the time you get to
-  // this point. Returns the best distance in argument
+  // This essentially projects the given pose onto the plan (held in this member). The projection is just the
+  // closest euclidean distance point on the plan, and the return value is the number of complete plan actions
+  // that are finished by the time you get to this point. Returns the best distance in argument, with the
+  // distance set to 0.0 if it seems to be within the discretization error of the planner
   size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan,
                                       const State_c& state,
                                       float& distanceToPlan,
