@@ -14,7 +14,8 @@ enum uint_8 ProgressionStatType {
   // Experience Stats
   Time,
   Novelty,
-  Excitement
+  Excitement,
+  Count
 }
 
 
