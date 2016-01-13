@@ -42,12 +42,12 @@ namespace Anki
       // This method is called at 7.5KHz (once per scan line)
       // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
-      void HALExec(u8* buf, int buflen, int eof)
+      void HALExec(void)
       {
         I2C::Enable();
         UART::Transmit();
         IMU::Manage();
-        SPI::TransmitDrop(buf, buflen, eof);
+        SPI::TransmitDrop();
       }
     }
   }

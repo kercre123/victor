@@ -13,7 +13,7 @@ namespace Anki
       {
         void EnterRecoveryMode(void);
         
-        void TransmitDrop(const uint8_t* buf, int buflen, int eof);
+        void TransmitDrop(void);
         void InitDMA(void);
         void Init(void);
         void StartDMA(void);

@@ -8,6 +8,9 @@
 #include "hal/spi.h"
 #include "hal/uart.h"
 
+#include "anki/cozmo/robot/drop.h"
+extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_write_buff
+
 //#define ENABLE_JPEG     // Comment this out to troubleshoot timing problems caused by JPEG encoder
 //#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
 //#define ASCII_IMAGE     // Uncomment this to send an ASCII image for test purposes
@@ -27,9 +30,7 @@ namespace Anki
         0, 0
       };
 
-      const int TOTAL_COLS = 640, TOTAL_ROWS = 480, SWIZZLE_ROWS = 8, BYTES_PER_PIX = 2;
-      CAMRAM static u8 dmaBuff_[TOTAL_COLS * BYTES_PER_PIX * 2];
-      CAMRAM static u8 swizzle_[TOTAL_COLS * SWIZZLE_ROWS];
+      const int TOTAL_COLS = 640, TOTAL_ROWS = 480, BYTES_PER_PIX = 4;
 
       // Camera exposure value
       u32 exposure_;
@@ -113,24 +114,17 @@ namespace Anki
 
       volatile u8 eof_ = 0;
 
-      void HALExec(u8* buf, int buflen, int eof);
+      void HALExec(void);
       void HALInit(void);
 
-#ifdef ENABLE_JPEG
-      int JPEGStart(int quality);
-      int JPEGCompress(u8* out, u8* in, int pitch);
-      int JPEGEnd(u8* out);
-#endif
-
+      u8* const dmaBuff_ = (u8*)0x20000000;       // Start of RAM buffer
+      u8* JPEGCompress(u8 *out, bool lineReady);
+      
       static void InitDMA();
 
       // Set up camera
       static void InitCam()
       {
-#ifdef ENABLE_JPEG
-        JPEGStart(50);
-#endif
-
         // Power-up/reset the camera
         MicroWait(50);
         GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
@@ -180,15 +174,15 @@ namespace Anki
         // Set up DMA channel 0 to repeatedly move one line buffer worth of pixels
         DMA_CR = DMA_CR_CLM_MASK;   // Continuous loop mode? (Makes no difference?)
         DMA_TCD0_CSR = DMA_CSR_INTMAJOR_MASK;     // Stop channel, set up interrupt on transfer complete
-        DMA_TCD0_NBYTES_MLNO = sizeof(dmaBuff_);  // Number of transfers in minor loop
-        DMA_TCD0_ATTR = DMA_ATTR_SSIZE(0)|DMA_ATTR_DSIZE(0);  // Source 8-bit, dest 8-bit
+        DMA_TCD0_NBYTES_MLNO = sizeof(TOTAL_COLS*BYTES_PER_PIX);  // Number of transfers in minor loop
+        DMA_TCD0_ATTR = DMA_ATTR_SSIZE(0)|DMA_ATTR_DSIZE(0);      // Source 8-bit, dest 8-bit
         DMA_TCD0_SOFF = 0;          // Source (register) doesn't increment
         DMA_TCD0_SADDR = (uint32_t)&CAMERA_DATA_GPIO;
         DMA_TCD0_DOFF = 1;          // Destination (buffer) increments
         DMA_TCD0_DADDR = (uint32_t)dmaBuff_;
         DMA_TCD0_CITER_ELINKNO = 1; // Current major loop iteration (1 per interrupt)
         DMA_TCD0_BITER_ELINKNO = 1; // Beginning major loop iteration (1 per interrupt)
-        DMA_TCD0_DLASTSGA = -sizeof(dmaBuff_);    // Point back at start of buffer after each loop
+        DMA_TCD0_DLASTSGA = -sizeof(TOTAL_COLS*BYTES_PER_PIX);    // Point back at start of buffer after each loop
 
         // Hook DMA start request 0 to HSYNC
         const int DMAMUX_PORTA = 49;    // This is not in the .h files for some reason
@@ -329,13 +323,6 @@ void FTM2_IRQHandler(void)
   FTM2_SC &= ~FTM_SC_TOF_MASK;
 
   static u16 line = 0;
-  static int last = 0;
-
-  CAMRAM static u8 buf[2][128];
-  static u8 whichbuf = 0;
-  static u8 buflen = 0;
-  static u8 whichpitch = 0;    // Swizzle pitch (80 or 640)
-  static u8 eof = 0;
 
   // Cheesy way to check if camera DMA buffer was updated - if it wasn't, this is a vblank line
   static u8 vblank = 0;
@@ -366,7 +353,7 @@ void FTM2_IRQHandler(void)
     HALExec(test, 0, 0);
   }
 #else
-  HALExec(&buf[whichbuf][4], buflen, eof);
+  HALExec();
 #endif
 
 #ifdef SERIAL_IMAGE
@@ -393,31 +380,17 @@ void FTM2_IRQHandler(void)
 #endif
 
 #ifdef ENABLE_JPEG
-  // Fill next buffer
-  whichbuf ^= 1;
-  u8* p = &buf[whichbuf][4];  // Offset 4 chars to leave room for a UART header
-  buflen = 0;
 
-  // Compute swizzle buffer address - this rolling buffer holds exactly 8 lines of video, the minimum for JPEG
-  // Addressing the rolling buffer is complicated since we write linearly (640x1) but read macroblocks (80x8)
-  if (0 == (line & 7))    // Switch pitch every 8 lines
-    whichpitch ^= 1;
-  int pitch = whichpitch ? 80 : 640;
-  u8* swizz = swizzle_ + (line & 7) * (whichpitch ? 640 : 80);
-
-  // Encode 10 macroblocks (one strip)
-  buflen += JPEGCompress(p + buflen, swizz, pitch);
+  int buflen = spi_write_buff->payload - JPEGCompress(spi_write_buff->payload, line < 480);
+  int eof = 0;
+  spi_write_buff->droplet  = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0) | ToWiFi;
   if (line == 239) {
-    buflen += JPEGEnd(p + buflen);
     eof = 1;
   } else {
     eof = 0;
   }
-
-  // Copy YUYV data from DMA buffer into swizzle buffer
-  for (int y = 0; y < 8; y++)
-    for (int x = 0; x < 80; x++)
-      swizz[x + y*pitch] = dmaBuff_[(y * 80 + x) * 4 + 3];
+#else
+  // spi_write_buff->droplet  = JPEG_LENGTH(0) | ToWiFi;
 #endif
 
   // Advance through the lines

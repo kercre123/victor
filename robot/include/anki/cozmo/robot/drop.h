@@ -107,6 +107,7 @@ typedef enum
 } Droplet;
 
 #define JPEG_LENGTH(i) (((i+3) >> 2)&jpegLenMask)
+#define GET_JPEG_LENGTH(i) ((i&jpegLenMask) << 2)
 
 typedef enum 
 {

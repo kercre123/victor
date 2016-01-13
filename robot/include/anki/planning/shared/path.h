@@ -161,7 +161,6 @@ namespace Anki
     public:
       Path();
       Path(const Path& other);
-      ~Path();
       
       Path& operator=(const Path& rhs);
 

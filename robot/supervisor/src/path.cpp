@@ -601,14 +601,6 @@ namespace Anki
       *this = other;
     }
 
-    Path::~Path()
-    {
-#ifdef CORETECH_BASESTATION
-      delete [] path_;
-      path_ = nullptr;
-#endif
-    }
-
     Path& Path::operator=(const Path& rhs)
     {
       capacity_ = MAX_NUM_PATH_SEGMENTS;

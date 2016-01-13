@@ -19,10 +19,10 @@ const int RX_OVERFLOW = 5;
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
-static transmissionWord spi_backbuff[2][TX_SIZE];
+static DropToWiFi spi_backbuff[2];
 
-static transmissionWord* spi_write_buff = spi_backbuff[0];
-static transmissionWord* spi_tx_buff = spi_backbuff[1];
+extern DropToWiFi* spi_write_buff = &spi_backbuff[0];
+static DropToWiFi* spi_tx_buff = &spi_backbuff[1];
 
 transmissionWord spi_rx_buff[RX_SIZE];
 
@@ -105,22 +105,21 @@ void Anki::Cozmo::HAL::SPI::StartDMA(void) {
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
 }
 
-void Anki::Cozmo::HAL::SPI::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
+void Anki::Cozmo::HAL::SPI::TransmitDrop() {   
   // Swap buffers
   {
-    transmissionWord *tmp = spi_write_buff;
+    DropToWiFi *tmp = spi_write_buff;
     spi_write_buff = spi_tx_buff;
-    spi_tx_buff = tmp;
+    spi_tx_buff = tmp;    // write_buff from last time is being sent right now
   }
 
-  DropToWiFi *drop_tx = (DropToWiFi*) spi_write_buff;
+  DropToWiFi *drop_tx = spi_write_buff;
 
   drop_tx->preamble = TO_WIFI_PREAMBLE;
-  drop_tx->droplet  = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0) | ToWiFi;
-
-  memcpy(drop_tx->payload, buf, buflen);
   
   // This is where a drop should be 
+  int buflen = 0; // GET_JPEG_LENGTH(drop_tx->droplet);
+  drop_tx->droplet  = JPEG_LENGTH(buflen) | ToWiFi;
   uint8_t *drop_addr = drop_tx->payload + buflen;
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - buflen;
   if (remainingSpace > 0)
