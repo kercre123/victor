@@ -17,7 +17,7 @@ public class EmotionScorer {
 
   // Use an animation curve when editing in unity since Unity gives us a nice graph editor for free
   [JsonIgnore]
-  public AnimationCurve Curve = new AnimationCurve(new Keyframe(-1, -1, 1, 1), new Keyframe(1,1, 1, 1));
+  public AnimationCurve Curve = new AnimationCurve(new Keyframe(-1, 0, 0, 0.5f), new Keyframe(1,1, 0.5f, 0));
 
   public EmotionScorer() {
   }

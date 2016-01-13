@@ -237,7 +237,7 @@ public class AnimationGroupEditor : EditorWindow {
 
     emotionScorer.EmotionType = (Anki.Cozmo.EmotionType)EditorGUILayout.EnumPopup("Emotion", emotionScorer.EmotionType);
 
-    emotionScorer.Curve = EditorGUILayout.CurveField("Score Graph", emotionScorer.Curve, Color.green, new Rect(-1, -1, 2, 2));
+    emotionScorer.Curve = EditorGUILayout.CurveField("Score Graph", emotionScorer.Curve, Color.green, new Rect(-1, 0, 2, 1));
 
     emotionScorer.TrackDelta = EditorGUILayout.Toggle("Track Delta", emotionScorer.TrackDelta);
 
