@@ -540,9 +540,35 @@ namespace Cozmo {
           break;
         }
         
-        DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(_objectToPickUp, _motionProfile);
-        SetDriveToObjectSounds(pickupAction);
-        StartActing(robot, pickupAction);
+        // Check if object is very well aligned for pickup already.
+        // If so, do pickup action without driving to predock pose.
+        ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_objectToPickUp);
+        if (nullptr == obj) {
+          PRINT_NAMED_WARNING("BehaviorBlockPlay.UpdateInternal.PickupBlockNotFound", "ObjID %d", _objectToPickUp.GetValue());
+          _faceID = Face::UnknownFace;
+          SetCurrState(State::TrackingFace);
+        } else {
+          Radians blockOrientation = obj->GetPose().GetRotationAngle<'Z'>();
+          Radians robotOrientation = robot.GetPose().GetRotationAngle<'Z'>();
+          Vec3f robotToBlockVector = ComputeVectorBetween(obj->GetPose(), robot.GetPose());
+          Radians robotToBlockOrientation = atan2f(robotToBlockVector.y(), robotToBlockVector.x());
+          
+          // Is block orientation reasonably close to robot orientation?
+          bool robotAndBlockOrientationMatch = std::fabsf( std::fmodf((blockOrientation - robotOrientation).ToFloat(), PIDIV2_F)) < _robotObjectOrientationDiffThreshForDirectPickup;
+          
+          // Is the block more or less directly in front of the robot?
+          bool blockIsInFrontOfRobot = std::fabsf((robotToBlockOrientation - robotOrientation).ToFloat()) < _angleToObjectThreshForDirectPickup;
+          
+          if (robotAndBlockOrientationMatch && blockIsInFrontOfRobot) {
+            // Alignment is good. Go straight to pickup!
+            PickupObjectAction* pickupAction = new PickupObjectAction(_objectToPickUp);
+            StartActing(robot, pickupAction);
+          } else {
+            DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(_objectToPickUp, _motionProfile);
+            SetDriveToObjectSounds(pickupAction);
+            StartActing(robot, pickupAction);
+          }
+        }
         break;
       }
       case State::PlacingBlock:

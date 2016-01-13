@@ -147,6 +147,7 @@ namespace Anki {
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 #endif
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
+        robotState_.enabledAnimTracks = AnimationController::GetEnabledTracks();
 
         robotState_.status = 0;
 #ifndef TARGET_K02

@@ -148,8 +148,8 @@ namespace Anki {
       // action is reset and run again.
       void RegisterSubAction(IActionRunner* &subAction);
 
-      // Call cleanup on any registered sub actions and then delete them
-      void ClearSubActions(Robot& robot);
+      // Call Cancel and Update on any registered sub actions and then delete them
+      void CancelAndDeleteSubActions(Robot& robot);
       
     private:
       

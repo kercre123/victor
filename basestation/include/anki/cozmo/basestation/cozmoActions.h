@@ -109,6 +109,8 @@ namespace Anki {
                      const std::string& driveSound,
                      const std::string& stopSound);
       
+      // Set the min/max time between end of last drive sound and beginning of next.
+      // Actual gap will be randomly selected between these two values.
       void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
       
     protected:
@@ -146,8 +148,10 @@ namespace Anki {
       f32         _drivingSoundSpacingMin_sec = 0.5f;
       f32         _drivingSoundSpacingMax_sec = 1.5f;
       f32         _nextDrivingSoundTime = 0.f;
+      u32         _driveSoundActionTag = (u32)ActionConstants::INVALID_TAG;
       
-      Signal::SmartHandle _signalHandle;
+      Signal::SmartHandle _originChangedHandle;
+      Signal::SmartHandle _soundCompletedHandle;
       
     }; // class DriveToPoseAction
     
@@ -497,34 +501,40 @@ namespace Anki {
       
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxPanSpeed(f32 maxSpeed_radPerSec);
-      void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
+      void SetPanAccel(f32 accel_radPerSec2);
       void SetPanTolerance(const Radians& angleTol_rad);
-      void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
-      void SetTiltAccel(f32 accel_radPerSec2)            { _tiltAccel_radPerSec2 = accel_radPerSec2; }
+      void SetMaxTiltSpeed(f32 maxSpeed_radPerSec);
+      void SetTiltAccel(f32 accel_radPerSec2);
       void SetTiltTolerance(const Radians& angleTol_rad);
 
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Cleanup(Robot& robot) override;
       
       void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
       
     private:
-      CompoundActionParallel _compoundAction;
+      IActionRunner*   _compoundAction;
       
       Radians _bodyPanAngle;
       Radians _headTiltAngle;
       bool    _isPanAbsolute;
       bool    _isTiltAbsolute;
       
-      Radians _panAngleTol = DEG_TO_RAD(5);
-      f32     _maxPanSpeed_radPerSec = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
-      f32     _panAccel_radPerSec2 = 10.f;
-      Radians _tiltAngleTol = DEG_TO_RAD(5);
-      f32     _maxTiltSpeed_radPerSec = 15.f;
-      f32     _tiltAccel_radPerSec2 = 20.f;
+      const f32 _kDefaultPanAngleTol  = DEG_TO_RAD(5);
+      const f32 _kDefaultMaxPanSpeed  = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
+      const f32 _kDefaultPanAccel     = 10.f;
+      const f32 _kDefaultTiltAngleTol = DEG_TO_RAD(5);
+      const f32 _kDefaultMaxTiltSpeed = 15.f;
+      const f32 _kDefaultTiltAccel    = 20.f;
+      
+      Radians _panAngleTol            = _kDefaultPanAngleTol;
+      f32     _maxPanSpeed_radPerSec  = _kDefaultMaxPanSpeed;
+      f32     _panAccel_radPerSec2    = _kDefaultPanAccel;
+      Radians _tiltAngleTol           = _kDefaultTiltAngleTol;
+      f32     _maxTiltSpeed_radPerSec = _kDefaultMaxTiltSpeed;
+      f32     _tiltAccel_radPerSec2   = _kDefaultTiltAccel;
       
       std::string _name = "PanAndTiltAction";
       
@@ -616,12 +626,6 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
       
       virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
-      
-      // We don't want to ignore movement commands for Body during FaceObjectAction
-      virtual u8 GetMovementTracksToIgnore() const override
-      {
-        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
-      }
       
     protected:
       

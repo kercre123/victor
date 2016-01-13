@@ -218,7 +218,8 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
 
       _timeToAbortPlanning = -1.0f;
-            
+      _nextDrivingSoundTime = 0.f;
+      
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.Init.NoGoalSet",
                           "Goal must be set before running this action.");
@@ -278,11 +279,31 @@ namespace Anki {
               robotPtr->AbortDrivingToPose();
             }
           };
-          _signalHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
+          _originChangedHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
         }
         
       } // if/else isGoalSet
     
+      if(!_drivingSound.empty())
+      {
+        // If we have a driving sound to play, set up callbacks for when that sound
+        // starts/ends so we can choose the time for the next to play between
+        // sounds.
+        auto soundCompleteLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+        {
+          if(_driveSoundActionTag == event.GetData().Get_RobotCompletedAction().idTag)
+          {
+            // Indicate last drive sound is done
+            _driveSoundActionTag = (u32)ActionConstants::INVALID_TAG;
+
+            // Choose next play time, relative to current time
+            _nextDrivingSoundTime = event.GetCurrentTime() + GetRNG().RandDblInRange(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+          }
+        };
+        
+        _soundCompletedHandle = robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, soundCompleteLambda);
+      }
+      
       if(ActionResult::SUCCESS == result && !_startSound.empty()) {
         // Play starting sound if there is one (only if nothing else is playing)
         robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_startSound, 1, false));
@@ -395,10 +416,14 @@ namespace Anki {
       const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
       // Play driving or driving sounds if it's time (queue only if nothing else is playing)
-      if(ActionResult::RUNNING == result && !_drivingSound.empty() && currentTime > _nextDrivingSoundTime)
+      if(ActionResult::RUNNING == result &&                              // we're still runing
+         !_drivingSound.empty() &&                                       // we have a drive sound to play
+         (u32)ActionConstants::INVALID_TAG == _driveSoundActionTag &&    // we aren't waiting on last drive sound to stop
+         currentTime > _nextDrivingSoundTime)                            // it's time to play
       {
-        robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_drivingSound, 1, false));
-        _nextDrivingSoundTime = currentTime + GetRNG().RandDblInRange(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+        PlayAnimationAction* driveSoundAction = new PlayAnimationAction(_drivingSound, 1, false);
+        _driveSoundActionTag = driveSoundAction->GetTag();
+        robot.GetActionList().QueueActionNext(Robot::SoundSlot, driveSoundAction);
       }
       else if(ActionResult::SUCCESS == result && !_stopSound.empty())
       {
@@ -1077,12 +1102,14 @@ namespace Anki {
     , _isPanAbsolute(isPanAbsolute)
     , _isTiltAbsolute(isTiltAbsolute)
     {
-
+      RegisterSubAction(_compoundAction);
     }
 
     void PanAndTiltAction::SetMaxPanSpeed(f32 maxSpeed_radPerSec)
     {
-      if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
+      if (maxSpeed_radPerSec == 0.f) {
+        _maxPanSpeed_radPerSec = _kDefaultMaxPanSpeed;
+      } else if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         PRINT_NAMED_WARNING("PanAndTiltAction.SetMaxSpeed.PanSpeedExceedsLimit",
                             "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
                             RAD_TO_DEG_F32(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -1092,8 +1119,23 @@ namespace Anki {
       }
     }
     
+    void PanAndTiltAction::SetPanAccel(f32 accel_radPerSec2)
+    {
+      // If 0, use default value
+      if (accel_radPerSec2 == 0.f) {
+        _panAccel_radPerSec2 = _kDefaultPanAccel;
+      } else {
+        _panAccel_radPerSec2 = accel_radPerSec2;
+      }
+    }
+    
     void PanAndTiltAction::SetPanTolerance(const Radians& angleTol_rad)
     {
+      if (angleTol_rad == 0.f) {
+        _panAngleTol = _kDefaultPanAngleTol;
+        return;
+      }
+      
       _panAngleTol = angleTol_rad.getAbsoluteVal();
 
       // NOTE: can't be lower than what is used internally on the robot
@@ -1106,8 +1148,33 @@ namespace Anki {
       }
     }
 
+    void PanAndTiltAction::SetMaxTiltSpeed(f32 maxSpeed_radPerSec)
+    {
+      if (maxSpeed_radPerSec == 0.f) {
+        _maxTiltSpeed_radPerSec = _kDefaultMaxTiltSpeed;
+      } else {
+        _maxTiltSpeed_radPerSec = maxSpeed_radPerSec;
+      }
+    }
+    
+    void PanAndTiltAction::SetTiltAccel(f32 accel_radPerSec2)
+    {
+      if (accel_radPerSec2 == 0.f) {
+        _tiltAccel_radPerSec2 = _kDefaultTiltAccel;
+      } else {
+        _tiltAccel_radPerSec2 = accel_radPerSec2;
+      }
+    }
+
+    
     void PanAndTiltAction::SetTiltTolerance(const Radians& angleTol_rad)
     {
+      // If 0, use default value
+      if (angleTol_rad == 0.f) {
+        _tiltAngleTol = _kDefaultTiltAngleTol;
+        return;
+      }
+      
       _tiltAngleTol = angleTol_rad.getAbsoluteVal();
 
       // NOTE: can't be lower than what is used internally on the robot
@@ -1122,22 +1189,22 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
     {
-      // In case this is a retry, make sure compound actions are cleared
-      _compoundAction.ClearActions(robot);
+      CompoundActionParallel* newCompoundParallel = new CompoundActionParallel();
+      _compoundAction = newCompoundParallel;
       
-      _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
+      newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
       
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
-      _compoundAction.AddAction(action);
+      newCompoundParallel->AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : robot.GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
-      _compoundAction.AddAction(headAction);
+      newCompoundParallel->AddAction(headAction);
       
       // Put the angles in the name for debugging
       _name = ("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
@@ -1145,15 +1212,15 @@ namespace Anki {
                "Action");
       
       // Prevent the compound action from signaling completion
-      _compoundAction.SetEmitCompletionSignal(false);
+      newCompoundParallel->SetEmitCompletionSignal(false);
       
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
-      _compoundAction.SetSuppressTrackLocking(true);
+      newCompoundParallel->SetSuppressTrackLocking(true);
       
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
-      ActionResult compoundResult = _compoundAction.Update(robot);
+      ActionResult compoundResult = newCompoundParallel->Update(robot);
       if(ActionResult::SUCCESS == compoundResult ||
          ActionResult::RUNNING == compoundResult)
       {
@@ -1167,12 +1234,7 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::CheckIfDone(Robot& robot)
     {
-      return _compoundAction.Update(robot);
-    }
-    
-    void PanAndTiltAction::Cleanup(Robot& robot)
-    {
-      _compoundAction.Cleanup(robot);
+      return _compoundAction->Update(robot);
     }
 
     

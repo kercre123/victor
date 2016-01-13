@@ -93,7 +93,7 @@ namespace Anki {
         }
       
         // Clean up after any registered sub actions and the action itself
-        ClearSubActions(robot);
+        CancelAndDeleteSubActions(robot);
         Cleanup(robot);
         
         if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
@@ -163,13 +163,14 @@ namespace Anki {
       _subActions.push_back(&subAction);
     }
     
-    void IActionRunner::ClearSubActions(Robot& robot)
+    void IActionRunner::CancelAndDeleteSubActions(Robot& robot)
     {
-      if(_subActions.empty())
+      if(!_subActions.empty())
       {
         for(auto subAction : _subActions) {
           if(nullptr != (*subAction)) {
-            (*subAction)->Cleanup(robot);
+            (*subAction)->Cancel();
+            (*subAction)->Update(robot);
             Util::SafeDelete(*subAction);
           }
         }
@@ -226,7 +227,7 @@ namespace Anki {
           // Before calling Init(), clean up any subactions, in case this is not
           // the first call to Init() -- i.e., if this is a retry or resume after
           // being interrupted.
-          ClearSubActions(robot);
+          CancelAndDeleteSubActions(robot);
           
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively
