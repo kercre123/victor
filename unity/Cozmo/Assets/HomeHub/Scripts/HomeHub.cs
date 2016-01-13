@@ -54,6 +54,8 @@ namespace Cozmo.HomeHub {
 
       // Show the current state of challenges being locked/unlocked
       _TimelineViewInstance.Initialize(_ChallengeStatesById);
+
+      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("ID_idle_brickout");
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -127,6 +129,7 @@ namespace Cozmo.HomeHub {
       _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
       _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
       _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
+      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("NONE");
     }
 
     private void CloseMiniGameImmediately() {
