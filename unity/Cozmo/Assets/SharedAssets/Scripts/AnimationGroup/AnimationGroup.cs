@@ -14,26 +14,14 @@ namespace AnimationGroups {
 
       public string Name;
 
-      public List<MoodCurve> MoodCurves = new List<MoodCurve>();
-
-      [System.Serializable]
-      public class MoodCurve {
-        public int Emotion;
-
-
-        // by default, set a linear curve over our emotional range.
-        [JsonIgnore]
-        public AnimationCurve Curve = new AnimationCurve(new Keyframe(-1, -1, -1, 1), new Keyframe(1,1, -1, 1));
-
-        public GraphEvaluator2d GraphEvaluator { get { return Curve; } set { Curve = value; } }
-      }
+      public List<EmotionScorer> EmotionScorers = new List<EmotionScorer>();
 
       public float Evaluate(Robot robot) {
         float result = 0f;
-        for (int i = 0; i < MoodCurves.Count; i++) {
+        for (int i = 0; i < EmotionScorers.Count; i++) {
 
-          float emotionVal = robot.EmotionValues[MoodCurves[i].Emotion];
-          result += MoodCurves[i].Curve.Evaluate(emotionVal);
+          float emotionVal = robot.EmotionValues[(int)EmotionScorers[i].EmotionType];
+          result += EmotionScorers[i].Curve.Evaluate(emotionVal);
         }
         return result;
       }

@@ -221,10 +221,10 @@ public class AnimationGroupEditor : EditorWindow {
 
     bool unfolded = false;
     _ExpandedFoldouts.TryGetValue(entry, out unfolded);
-    unfolded = EditorGUILayout.Foldout(unfolded, "Mood Curves ("+entry.MoodCurves.Count+")");
+    unfolded = EditorGUILayout.Foldout(unfolded, "Emotion Scorers ("+entry.EmotionScorers.Count+")");
     if (unfolded) {
       EditorGUI.indentLevel++;
-      DrawList("", entry.MoodCurves, DrawMoodCurve, () => new AnimationGroup.AnimationGroupEntry.MoodCurve());
+      DrawList("", entry.EmotionScorers, DrawEmotionScorer, () => new EmotionScorer());
       EditorGUI.indentLevel--;
     }
     _ExpandedFoldouts[entry] = unfolded;
@@ -232,24 +232,26 @@ public class AnimationGroupEditor : EditorWindow {
     EditorGUILayout.EndVertical();
   }
 
-  public void DrawMoodCurve(AnimationGroup.AnimationGroupEntry.MoodCurve moodCurve) {
+  public void DrawEmotionScorer(EmotionScorer emotionScorer) {
     EditorGUILayout.BeginVertical();
 
-    moodCurve.Emotion = (int)(Anki.Cozmo.EmotionType)EditorGUILayout.EnumPopup("Emotion", (Anki.Cozmo.EmotionType)moodCurve.Emotion);
+    emotionScorer.EmotionType = (Anki.Cozmo.EmotionType)EditorGUILayout.EnumPopup("Emotion", emotionScorer.EmotionType);
 
-    moodCurve.Curve = EditorGUILayout.CurveField("Curve", moodCurve.Curve, Color.green, new Rect(-1, -1, 2, 2));
+    emotionScorer.Curve = EditorGUILayout.CurveField("Score Graph", emotionScorer.Curve, Color.green, new Rect(-1, -1, 2, 2));
+
+    emotionScorer.TrackDelta = EditorGUILayout.Toggle("Track Delta", emotionScorer.TrackDelta);
 
     // linearize the curve
-    for (int i = 1; i < moodCurve.Curve.keys.Length; i++) {    
-      var keyA = moodCurve.Curve.keys[i - 1];
-      var keyB = moodCurve.Curve.keys[i];
+    for (int i = 1; i < emotionScorer.Curve.keys.Length; i++) {    
+      var keyA = emotionScorer.Curve.keys[i - 1];
+      var keyB = emotionScorer.Curve.keys[i];
 
       keyB.inTangent = keyA.outTangent = 
         (keyB.value - keyA.value) /
         (keyB.time - keyA.time);
 
-      moodCurve.Curve.MoveKey(i - 1, keyA);
-      moodCurve.Curve.MoveKey(i, keyB);
+      emotionScorer.Curve.MoveKey(i - 1, keyA);
+      emotionScorer.Curve.MoveKey(i, keyB);
     }
 
     EditorGUILayout.EndVertical();
