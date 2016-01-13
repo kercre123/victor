@@ -36,10 +36,10 @@ namespace Simon {
           CozmoLoseGame();
         }
       }
-      else if (_CurrentSequenceIndex == _CurrentSequence.Count - 1) {
+      else {
         // Determine if Cozmo wins on the last color of the sequence
         float coinFlip = Random.Range(0f, 10f);
-        if (coinFlip < _CurrentSequence.Count) {
+        if (coinFlip > 9f) {
           _ShouldWinGame = false;
           int correctId = _CurrentSequence[_CurrentSequenceIndex];
           List<int> blockIds = new List<int>();
@@ -54,9 +54,6 @@ namespace Simon {
         else {
           _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
         }
-      }
-      else {
-        _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
       }
     }
 
