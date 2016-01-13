@@ -1,4 +1,4 @@
-#include "anki/planning/shared/path.h"
+#include "path.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/cozmo/robot/logging.h"
 #include "radians.h"

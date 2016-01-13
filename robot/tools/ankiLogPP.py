@@ -297,12 +297,13 @@ class ParseData:
                     if ext in sourceTypes:
                         fpn = os.path.join(dirpath, file)
                         fh = open(fpn, "r")
-                        text = fh.read()
-                        fh.close()
-                        if self.INCLUDE_FILE_RE.search(text):
-                            self.pt[fpn] = self.parseFile(fpn)
+                        for line in fh:
+                            if self.INCLUDE_FILE_RE.search(line):
+                                self.pt[fpn] = self.parseFile(fpn)
+                                break
                         else:
                             vPrint(2, "Skipping file \"{}\" because it doesn't have the logging include.".format(fpn))
+                        fh.close()
             self.nameTable  = {ASSERT_NAME_ID: "ASSERT", 1: "Messages"}
             self.fmtTable   = {0: ("Invalid format ID", 0), 1: ("RTIP missed %d traces", 1), 2: ("WiFi missed %d traces", 1)}
             self.dirtyFiles = set()
