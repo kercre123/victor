@@ -45,9 +45,10 @@ namespace WhackAMole {
         float dist = Vector3.Distance(_CurrentRobot.LightCubes[_TargetKvP.Key].WorldPosition, _CurrentRobot.WorldPosition);
         Debug.Log(string.Format("DistCheck -- {0}", dist));
         if (dist < kPounceDist) {
-          _StateMachine.SetNextState(new AnimationState("pounceForward", HandleAnimationDone));
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kTapCube, HandleAnimationDone));
         }
         else {
+          // TODO: Potentially figure out other way to handle failure in this case
           _CurrentRobot.GotoPose(_WhackAMoleGame.GetRelativePos(_TargetKvP),
             _CurrentRobot.Rotation, false, false, RobotArrives, Anki.Cozmo.QueueActionPosition.NOW);
         }

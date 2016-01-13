@@ -7,6 +7,8 @@ using System.Collections.Generic;
 namespace WhackAMole {
   public class WhackAMoleGame : GameBase {
     const float kCloseUpDistance = 40f;
+    const float kMinFlashFreq = 1000f;
+    const float kMaxFlashFreq = 10f;
 
     public enum MoleState {
       NONE,
@@ -39,7 +41,7 @@ namespace WhackAMole {
     public float MaxConfuseTime;
     public float PanicDecayMin;
     public float PanicDecayMax;
-
+    public float MoleTimeout;
 
     [SerializeField]
     private Color _InActiveColor = Color.black;
@@ -50,6 +52,7 @@ namespace WhackAMole {
     private int _CubeBID;
     private Dictionary<KeyValuePair<int,int>,bool> _FaceActive;
     public List<KeyValuePair<int,int>> ActivatedFaces;
+    private Dictionary<KeyValuePair<int,int>,float> _ActivatedTimestamp;
 
     public KeyValuePair<int,int> CurrentTargetKvP;
 
@@ -63,9 +66,11 @@ namespace WhackAMole {
       PanicDecayMin = config.PanicDecayMin;
       PanicDecayMax = config.PanicDecayMax;
       _NumCubesRequired = config.NumCubesRequired();
+      MoleTimeout = config.MoleTimeout;
       CurrentTargetKvP = new KeyValuePair<int, int>();
       ActivatedFaces = new List<KeyValuePair<int, int>>();
       _FaceActive = new Dictionary<KeyValuePair<int, int>, bool>();
+      _ActivatedTimestamp = new Dictionary<KeyValuePair<int, int>, float>();
       _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -81,6 +86,26 @@ namespace WhackAMole {
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), _NumCubesRequired, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
+    }
+
+    protected override void Update() {
+      base.Update();
+      RefreshCubeTimers();
+    }
+
+    private void RefreshCubeTimers() {
+      for (int i = 0; i < ActivatedFaces.Count; i++) {
+        KeyValuePair<int,int> KvP = ActivatedFaces[i];
+        float origTimestamp = _ActivatedTimestamp[KvP];
+        float remainingTime = ((Time.time - origTimestamp)/MoleTimeout);
+        if (remainingTime > 1.0f) {
+          ToggleCubeFace(KvP);
+          continue;
+        }
+        float freq = Mathf.Lerp(kMinFlashFreq,kMaxFlashFreq,remainingTime);
+        CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = freq;
+        CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnPeriodMs = freq;
+      }
     }
 
     private void InitialCubesDone() {
@@ -133,19 +158,27 @@ namespace WhackAMole {
         _FaceActive[KvP] = isActive;
       }
 
+      // If Set to active, add the timestamp and activated face to the appropriate dict/list.
+      // If Set to inactive, remove timestamp and activated face from dict/list and find new target.
       if (isActive) {
         toSet = _ActiveColor;
         CurrentTargetKvP = KvP;
         if (!ActivatedFaces.Contains(CurrentTargetKvP)) {
           ActivatedFaces.Add(CurrentTargetKvP);
         }
+        if (!_ActivatedTimestamp.ContainsKey(CurrentTargetKvP)) {
+          _ActivatedTimestamp.Add(CurrentTargetKvP, Time.time);
+        }
       }
       else {
         toSet = _InActiveColor;
+        if (ActivatedFaces.Contains(KvP)) {
+          ActivatedFaces.Remove(KvP);
+        }
+        if (_ActivatedTimestamp.ContainsKey(KvP)) {
+          _ActivatedTimestamp.Remove(KvP);
+        }
         if ((CurrentTargetKvP.Key == cubeID) && (CurrentTargetKvP.Value == faceID)) {
-          if (ActivatedFaces.Contains(CurrentTargetKvP)) {
-            ActivatedFaces.Remove(CurrentTargetKvP);
-          }
           CurrentTargetKvP = new KeyValuePair<int, int>(-1,-1);
           for (int i = 0; i < ActivatedFaces.Count; i++) {
             CurrentTargetKvP = ActivatedFaces[i];
