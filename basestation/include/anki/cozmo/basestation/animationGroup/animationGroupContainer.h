@@ -15,10 +15,14 @@
 #ifndef __Cozmo_Basestation_AnimationGroup_AnimationGroupContainer_H__
 #define __Cozmo_Basestation_AnimationGroup_AnimationGroupContainer_H__
 
-#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
 #include <unordered_map>
 #include <vector>
+
+// Forward declaration
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
   namespace Cozmo {

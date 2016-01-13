@@ -1300,9 +1300,9 @@ namespace Anki {
     class PlayAnimationGroupAction : public PlayAnimationAction
     {
     public:
-      PlayAnimationGroupAction(const std::string& animGroupName,
-                               u32 numLoops = 1,
-                               bool interruptRunning = true);
+      explicit PlayAnimationGroupAction(const std::string& animGroupName,
+                                        u32 numLoops = 1,
+                                        bool interruptRunning = true);
       
     protected:
       virtual ActionResult Init(Robot& robot) override;

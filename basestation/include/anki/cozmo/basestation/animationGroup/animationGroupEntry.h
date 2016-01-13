@@ -5,8 +5,8 @@
  * Created: 2016-01-11
  *
  * Description:
- *    Class for storing an animation select
- *    Which defines a set of mood animation curves
+ *    Class for storing an animation selection
+ *    Which defines a set of mood score graphs
  *    by which to evaluate the suitability of this animation
  *
  * Copyright: Anki, Inc. 2016
@@ -17,13 +17,19 @@
 #ifndef __Cozmo_Basestation_AnimationGroup_AnimationGroupEntry_H__
 #define __Cozmo_Basestation_AnimationGroup_AnimationGroupEntry_H__
 
-#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include <list>
+#include "anki/common/types.h"
+
+// Forward Declaration
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
   namespace Cozmo {
+    
+    // Forward Declaration
+    class MoodManager;
     
     class AnimationGroupEntry
     {
@@ -35,7 +41,7 @@ namespace Anki {
       Result DefineFromJson(Json::Value& json);
       
       // Evaluate this animation group entry based on the current mood.
-      float Evaluate(const MoodManager& moodManager) const;
+      float EvaluateScore(const MoodManager& moodManager) const;
       
       const std::string& GetName() const { return _name; }
       

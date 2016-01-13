@@ -1,5 +1,5 @@
 /**
- * File: animationGroup.h
+ * File: animationGroup.cpp
  *
  * Authors: Trevor Dasch
  * Created: 2016-01-11
@@ -17,8 +17,7 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
-//#include <cassert>
-#include <vector>
+#include "anki/common/basestation/jsonTools.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -31,15 +30,7 @@ namespace Anki {
     
     Result AnimationGroup::DefineFromJson(const std::string& name, Json::Value &jsonRoot)
     {
-      /*
-       if(!jsonRoot.isMember("Name")) {
-       PRINT_NAMED_ERROR("Animation.DefineFromJson.NoName",
-       "Missing 'Name' field for animation.");
-       return RESULT_FAIL;
-       }
-       */
-      
-      _name = name; //jsonRoot["Name"].asString();
+      _name = name;
       
       if(!jsonRoot.isMember("Animations")) {
         
@@ -77,7 +68,7 @@ namespace Anki {
       return _animations.empty();
     }
     
-    const std::string& AnimationGroup::GetAnimation(const MoodManager& moodManager) const {
+    const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager) const {
       const float kRandomFactor = 0.1f;
       
       Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
@@ -86,7 +77,7 @@ namespace Anki {
       float bestScore = FLT_MIN;
       for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
       {
-        auto entryScore = entry->Evaluate(moodManager);
+        auto entryScore = entry->EvaluateScore(moodManager);
         auto totalScore    = entryScore;
         
         totalScore += rng.RandDbl(kRandomFactor);

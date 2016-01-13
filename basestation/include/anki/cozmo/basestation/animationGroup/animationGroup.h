@@ -17,20 +17,16 @@
 #ifndef __Cozmo_Basestation_AnimationGroup_AnimationGroup_H__
 #define __Cozmo_Basestation_AnimationGroup_AnimationGroup_H__
 
-#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupEntry.h"
-#include <list>
-#include <queue>
+#include <vector>
+
+// Forward declaration
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
   namespace Cozmo {
-    
-    // Forward declaration
-    namespace RobotInterface {
-      class EngineToRobot;
-      enum class EngineToRobotTag : uint8_t;
-    }
-    class Robot;
     
     class AnimationGroup
     {
@@ -42,7 +38,7 @@ namespace Anki {
       Result DefineFromJson(const std::string& name, Json::Value& json);
       
       // Retrieve an animation based on a set of moods
-      const std::string& GetAnimation(const MoodManager& moodManager) const;
+      const std::string& GetAnimationName(const MoodManager& moodManager) const;
       
       // An animation group is empty if it has no animations
       bool IsEmpty() const;

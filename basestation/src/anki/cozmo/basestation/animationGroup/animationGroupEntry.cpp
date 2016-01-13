@@ -1,12 +1,12 @@
 /**
- * File: animationGroupEntry.h
+ * File: animationGroupEntry.cpp
  *
  * Authors: Trevor Dasch
  * Created: 2016-01-11
  *
  * Description:
- *    Class for storing an animation select
- *    Which defines a set of mood animation curves
+ *    Class for storing an animation selection
+ *    Which defines a set of mood score graphs
  *    by which to evaluate the suitability of this animation
  *
  * Copyright: Anki, Inc. 2016
@@ -15,7 +15,7 @@
 
 #include "anki/cozmo/basestation/animationGroup/animationGroupEntry.h"
 #include "util/logging/logging.h"
-//#include <cassert>
+#include "anki/common/basestation/jsonTools.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -52,7 +52,7 @@ namespace Anki {
     }
     
     
-    float AnimationGroupEntry::Evaluate(const MoodManager& moodManager) const {
+    float AnimationGroupEntry::EvaluateScore(const MoodManager& moodManager) const {
       return _moodScorer.EvaluateEmotionScore(moodManager);
     }
     

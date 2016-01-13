@@ -44,7 +44,7 @@ namespace Cozmo {
   private:
     
     std::unordered_map<std::string, Animation> _animations;
-      
+    
   }; // class CannedAnimationContainer
   
 } // namespace Cozmo

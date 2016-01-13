@@ -12,8 +12,6 @@
  **/
 
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
-#include "anki/cozmo/basestation/faceAnimationManager.h"
-
 #include "util/logging/logging.h"
 
 namespace Anki {
