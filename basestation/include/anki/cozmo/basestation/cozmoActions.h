@@ -519,12 +519,19 @@ namespace Anki {
       bool    _isPanAbsolute;
       bool    _isTiltAbsolute;
       
-      Radians _panAngleTol = DEG_TO_RAD(5);
-      f32     _maxPanSpeed_radPerSec = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
-      f32     _panAccel_radPerSec2 = 10.f;
-      Radians _tiltAngleTol = DEG_TO_RAD(5);
-      f32     _maxTiltSpeed_radPerSec = 15.f;
-      f32     _tiltAccel_radPerSec2 = 20.f;
+      const f32 _kDefaultPanAngleTol  = DEG_TO_RAD(5);
+      const f32 _kDefaultMaxPanSpeed  = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
+      const f32 _kDefaultPanAccel     = 10.f;
+      const f32 _kDefaultTiltAngleTol = DEG_TO_RAD(5);
+      const f32 _kDefaultMaxTiltSpeed = 15.f;
+      const f32 _kDefaultTiltAccel    = 20.f;
+      
+      Radians _panAngleTol            = _kDefaultPanAngleTol;
+      f32     _maxPanSpeed_radPerSec  = _kDefaultMaxPanSpeed;
+      f32     _panAccel_radPerSec2    = _kDefaultPanAccel;
+      Radians _tiltAngleTol           = _kDefaultTiltAngleTol;
+      f32     _maxTiltSpeed_radPerSec = _kDefaultMaxTiltSpeed;
+      f32     _tiltAccel_radPerSec2   = _kDefaultTiltAccel;
       
       std::string _name = "PanAndTiltAction";
       
