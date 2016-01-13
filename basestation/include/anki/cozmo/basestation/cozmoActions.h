@@ -109,6 +109,8 @@ namespace Anki {
                      const std::string& driveSound,
                      const std::string& stopSound);
       
+      // Set the min/max time between end of last drive sound and beginning of next.
+      // Actual gap will be randomly selected between these two values.
       void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
       
     protected:
@@ -146,8 +148,10 @@ namespace Anki {
       f32         _drivingSoundSpacingMin_sec = 0.5f;
       f32         _drivingSoundSpacingMax_sec = 1.5f;
       f32         _nextDrivingSoundTime = 0.f;
+      u32         _driveSoundActionTag = (u32)ActionConstants::INVALID_TAG;
       
-      Signal::SmartHandle _signalHandle;
+      Signal::SmartHandle _originChangedHandle;
+      Signal::SmartHandle _soundCompletedHandle;
       
     }; // class DriveToPoseAction
     

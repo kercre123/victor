@@ -218,7 +218,8 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
 
       _timeToAbortPlanning = -1.0f;
-            
+      _nextDrivingSoundTime = 0.f;
+      
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.Init.NoGoalSet",
                           "Goal must be set before running this action.");
@@ -278,11 +279,31 @@ namespace Anki {
               robotPtr->AbortDrivingToPose();
             }
           };
-          _signalHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
+          _originChangedHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
         }
         
       } // if/else isGoalSet
     
+      if(!_drivingSound.empty())
+      {
+        // If we have a driving sound to play, set up callbacks for when that sound
+        // starts/ends so we can choose the time for the next to play between
+        // sounds.
+        auto soundCompleteLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+        {
+          if(_driveSoundActionTag == event.GetData().Get_RobotCompletedAction().idTag)
+          {
+            // Indicate last drive sound is done
+            _driveSoundActionTag = (u32)ActionConstants::INVALID_TAG;
+
+            // Choose next play time
+            _nextDrivingSoundTime = GetRNG().RandDblInRange(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+          }
+        };
+        
+        _soundCompletedHandle = robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, soundCompleteLambda);
+      }
+      
       if(ActionResult::SUCCESS == result && !_startSound.empty()) {
         // Play starting sound if there is one (only if nothing else is playing)
         robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_startSound, 1, false));
@@ -395,10 +416,14 @@ namespace Anki {
       const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
       // Play driving or driving sounds if it's time (queue only if nothing else is playing)
-      if(ActionResult::RUNNING == result && !_drivingSound.empty() && currentTime > _nextDrivingSoundTime)
+      if(ActionResult::RUNNING == result &&                              // we're still runing
+         !_drivingSound.empty() &&                                       // we have a drive sound to play
+         (u32)ActionConstants::INVALID_TAG == _driveSoundActionTag &&    // we aren't waiting on last drive sound to stop
+         currentTime > _nextDrivingSoundTime)                            // it's time to play
       {
-        robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_drivingSound, 1, false));
-        _nextDrivingSoundTime = currentTime + GetRNG().RandDblInRange(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+        PlayAnimationAction* driveSoundAction = new PlayAnimationAction(_drivingSound, 1, false);
+        _driveSoundActionTag = driveSoundAction->GetTag();
+        robot.GetActionList().QueueActionNext(Robot::SoundSlot, driveSoundAction);
       }
       else if(ActionResult::SUCCESS == result && !_stopSound.empty())
       {
