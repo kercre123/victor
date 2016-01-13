@@ -154,6 +154,10 @@ public class Robot : IDisposable {
 
   public int[] ProgressionStats { get; private set; }
 
+  public int FriendshipPoints { get; private set; }
+
+  public int FriendshipLevel { get; private set; }
+
   public float[] EmotionValues { get; private set; }
 
   public Light[] BackpackLights { get; private set; }
@@ -242,6 +246,8 @@ public class Robot : IDisposable {
   private U2G.SetRobotVolume SetRobotVolumeMessage;
   private U2G.AlignWithObject AlignWithObjectMessage;
   private U2G.ProgressionMessage ProgressionStatMessage;
+  private U2G.SetFriendshipPoints FriendshipPointsMessage;
+  private U2G.SetFriendshipLevel FriendshipLevelMessage;
   private U2G.MoodMessage MoodStatMessage;
   private U2G.VisualizeQuad VisualizeQuadMessage;
   private U2G.DisplayProceduralFace DisplayProceduralFaceMessage;
@@ -354,6 +360,8 @@ public class Robot : IDisposable {
     DisplayProceduralFaceMessage = new U2G.DisplayProceduralFace();
     QueueSingleAction = new U2G.QueueSingleAction();
     QueueSingleAction.robotID = ID;
+    FriendshipPointsMessage = new U2G.SetFriendshipPoints();
+    FriendshipLevelMessage = new U2G.SetFriendshipLevel();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -520,6 +528,27 @@ public class Robot : IDisposable {
       DirtyObjects.Add(dirty);
     }
   }
+
+  #region Friendship Points
+
+  public void AddToFriendshipPoints(int deltaValue) {
+    FriendshipPoints += deltaValue;
+    FriendshipPointsMessage.newVal = FriendshipPoints;
+    RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+    RobotEngineManager.Instance.SendMessage();
+
+    ComputeFriendshipLevel();
+
+    FriendshipLevelMessage.newVal = FriendshipLevel;
+    RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  private void ComputeFriendshipLevel() {
+    
+  }
+
+  #endregion
 
   #region Progression and Mood Stats
 
