@@ -25,8 +25,6 @@ TEST(ProgressionSystem, TestStats)
   ProgressionManager progressionManager;
   
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(),  0);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::FriendshipLevel).GetValue(),  0);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::FriendshipScore).GetValue(),  0);
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Novelty).GetValue(),  0);
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Time).GetValue(),  0);
   progressionManager.GetStat(ProgressionStatType::Excitement).Add(10);
@@ -43,8 +41,6 @@ TEST(ProgressionSystem, TestStats)
   
   progressionManager.Reset();
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(),  0);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::FriendshipLevel).GetValue(),  0);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::FriendshipScore).GetValue(),  0);
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Novelty).GetValue(),  0);
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Time).GetValue(),  0);
 }

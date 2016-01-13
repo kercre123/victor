@@ -689,10 +689,20 @@ message AddToProgressionStat {
   uint_32 deltaVal
 }
 
+message SetFriendshipPoints {
+  uint_32 newVal
+}
+
+message SetFriendshipLevel {
+  uint_32 newVal
+}
+
 union ProgressionMessageUnion {
   GetProgressionStats  GetProgressionStats,
   SetProgressionStat   SetProgressionStat,
-  AddToProgressionStat AddToProgressionStat
+  AddToProgressionStat AddToProgressionStat,
+  SetFriendshipPoints  SetFriendshipPoints,
+  SetFriendshipLevel   SetFriendshipLevel
 }
 
 message ProgressionMessage {

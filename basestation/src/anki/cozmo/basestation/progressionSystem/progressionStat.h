@@ -27,7 +27,7 @@ class ProgressionStat
 {
 public:
   
-  using ValueType = uint32_t;
+  using ValueType = int32_t;
   
   ProgressionStat();
   
