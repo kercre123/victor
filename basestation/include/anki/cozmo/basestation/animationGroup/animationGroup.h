@@ -36,7 +36,7 @@ namespace Anki {
     {
     public:
       
-      AnimationGroup(const std::string& name = "");
+      explicit AnimationGroup(const std::string& name = "");
       
       // For reading animation groups from files
       Result DefineFromJson(const std::string& name, Json::Value& json);
@@ -54,7 +54,7 @@ namespace Anki {
       // Name of this animation
       std::string _name;
       
-      std::list<AnimationGroupEntry> _animations;
+      std::vector<AnimationGroupEntry> _animations;
       
     }; // class AnimationGroup
   } // namespace Cozmo
