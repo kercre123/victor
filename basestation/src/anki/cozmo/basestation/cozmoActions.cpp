@@ -1082,7 +1082,9 @@ namespace Anki {
 
     void PanAndTiltAction::SetMaxPanSpeed(f32 maxSpeed_radPerSec)
     {
-      if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
+      if (maxSpeed_radPerSec == 0.f) {
+        _maxPanSpeed_radPerSec = _kDefaultMaxPanSpeed;
+      } else if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         PRINT_NAMED_WARNING("PanAndTiltAction.SetMaxSpeed.PanSpeedExceedsLimit",
                             "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
                             RAD_TO_DEG_F32(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -1092,8 +1094,23 @@ namespace Anki {
       }
     }
     
+    void PanAndTiltAction::SetPanAccel(f32 accel_radPerSec2)
+    {
+      // If 0, use default value
+      if (accel_radPerSec2 == 0.f) {
+        _panAccel_radPerSec2 = _kDefaultPanAccel;
+      } else {
+        _panAccel_radPerSec2 = accel_radPerSec2;
+      }
+    }
+    
     void PanAndTiltAction::SetPanTolerance(const Radians& angleTol_rad)
     {
+      if (angleTol_rad == 0.f) {
+        _panAngleTol = _kDefaultPanAngleTol;
+        return;
+      }
+      
       _panAngleTol = angleTol_rad.getAbsoluteVal();
 
       // NOTE: can't be lower than what is used internally on the robot
@@ -1106,8 +1123,33 @@ namespace Anki {
       }
     }
 
+    void PanAndTiltAction::SetMaxTiltSpeed(f32 maxSpeed_radPerSec)
+    {
+      if (maxSpeed_radPerSec == 0.f) {
+        _maxTiltSpeed_radPerSec = _kDefaultMaxTiltSpeed;
+      } else {
+        _maxTiltSpeed_radPerSec = maxSpeed_radPerSec;
+      }
+    }
+    
+    void PanAndTiltAction::SetTiltAccel(f32 accel_radPerSec2)
+    {
+      if (accel_radPerSec2 == 0.f) {
+        _tiltAccel_radPerSec2 = _kDefaultTiltAccel;
+      } else {
+        _tiltAccel_radPerSec2 = accel_radPerSec2;
+      }
+    }
+
+    
     void PanAndTiltAction::SetTiltTolerance(const Radians& angleTol_rad)
     {
+      // If 0, use default value
+      if (angleTol_rad == 0.f) {
+        _tiltAngleTol = _kDefaultTiltAngleTol;
+        return;
+      }
+      
       _tiltAngleTol = angleTol_rad.getAbsoluteVal();
 
       // NOTE: can't be lower than what is used internally on the robot
