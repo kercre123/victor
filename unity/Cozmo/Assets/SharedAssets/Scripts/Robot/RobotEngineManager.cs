@@ -33,6 +33,9 @@ public class RobotEngineManager : MonoBehaviour {
   [SerializeField]
   private TextAsset _AlternateConfiguration;
 
+  [SerializeField]
+  private FriendshipLevelConfig _FriendshipLevelConfig;
+
   private DisconnectionReason _LastDisconnectionReason = DisconnectionReason.None;
 
   public event Action<string> ConnectedToClient;
@@ -43,7 +46,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
-  public event Action<Anki.Cozmo.ProgressionStatType, uint> OnProgressionStatRecieved;
+  public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
 
@@ -653,6 +656,10 @@ public class RobotEngineManager : MonoBehaviour {
 
     Message.ForceAddRobot = ForceAddRobotMessage;
     SendMessage();
+  }
+
+  public FriendshipLevelConfig GetFriendshipLevelConfig() {
+    return _FriendshipLevelConfig;
   }
 
 }

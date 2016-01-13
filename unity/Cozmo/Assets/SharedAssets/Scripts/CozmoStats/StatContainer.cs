@@ -10,9 +10,9 @@ public class StatContainer : IEquatable<StatContainer> {
 
   [SerializeField]
   [JsonProperty("Stats")]
-  private readonly int[] _Stats = new int[(int)CozmoStat.COUNT];
+  private readonly int[] _Stats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
 
-  public int this[CozmoStat stat] {
+  public int this[Anki.Cozmo.ProgressionStatType stat] {
     get {
       return _Stats[(int)stat];
     }
@@ -40,21 +40,21 @@ public class StatContainer : IEquatable<StatContainer> {
     other._Stats.CopyTo(_Stats, 0);
   }
 
-  public static StatContainer operator+ (StatContainer a, StatContainer b) {
+  public static StatContainer operator+(StatContainer a, StatContainer b) {
     StatContainer result = new StatContainer();
     result.Add(a);
     result.Add(b);
     return result;
   }
 
-  public static StatContainer operator- (StatContainer a, StatContainer b) {
+  public static StatContainer operator-(StatContainer a, StatContainer b) {
     StatContainer result = new StatContainer();
     result.Add(a);
     result.Subtract(b);
     return result;
   }
 
-  public static StatContainer operator- (StatContainer a) {
+  public static StatContainer operator-(StatContainer a) {
     StatContainer result = new StatContainer();
     result.Subtract(a);
     return result;
@@ -62,12 +62,14 @@ public class StatContainer : IEquatable<StatContainer> {
 
 
   #region IEquatable implementation
+
   public bool Equals(StatContainer other) {
     if (other == null) {
       return false;
     }
     return _Stats.SequenceEquals(other._Stats);
   }
+
   #endregion
 
   public override bool Equals(object obj) {
@@ -92,11 +94,11 @@ public class StatContainer : IEquatable<StatContainer> {
 
     sb.Append("[StatContainer: ");
 
-    for (int i = 0; i < (int)CozmoStat.COUNT; i++) {
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
       if (i > 0) {
         sb.Append(", ");
       }
-      sb.Append(((CozmoStat)i).ToString());
+      sb.Append(((Anki.Cozmo.ProgressionStatType)i).ToString());
       sb.Append("=");
       sb.Append(_Stats[i]);
     }

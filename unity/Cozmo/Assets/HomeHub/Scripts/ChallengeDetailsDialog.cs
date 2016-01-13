@@ -15,13 +15,13 @@ public class ChallengeDetailsDialog : BaseView {
   private AnkiTextLabel _TitleTextLabel;
 
   [SerializeField]
-  private AnkiTextLabel _SubtitleTextLabel;
-
-  [SerializeField]
   private AnkiTextLabel _DescriptionTextLabel;
 
   [SerializeField]
-  private Image _ChallengeKeyArt;
+  private AnkiTextLabel _PlayersAndCubesLabel;
+
+  [SerializeField]
+  private Image _ChallengeIcon;
 
   [SerializeField]
   private AnkiButton _StartChallengeButton;
@@ -36,9 +36,12 @@ public class ChallengeDetailsDialog : BaseView {
 
   public void Initialize(ChallengeData challengeData, Transform challengeButtonTransform) {
     _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
-    _SubtitleTextLabel.text = Localization.Get(challengeData.ChallengeSubtitleLocKey);
     _DescriptionTextLabel.text = Localization.Get(challengeData.ChallengeDescriptionLocKey);
-    _ChallengeKeyArt.sprite = challengeData.ChallengeKeyArt;
+    _PlayersAndCubesLabel.text = string.Format(Localization.GetCultureInfo(),
+      Localization.Get(LocalizationKeys.kChallengeDetailsLabelPlayersAndCubesNeeded),
+      challengeData.MinigameConfig.NumPlayersRequired(),
+      challengeData.MinigameConfig.NumCubesRequired());
+    _ChallengeIcon.sprite = challengeData.ChallengeIcon;
     _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
     _ChallengeId = challengeData.ChallengeID;
   }
@@ -55,13 +58,13 @@ public class ChallengeDetailsDialog : BaseView {
 
   protected override void ConstructOpenAnimation(DG.Tweening.Sequence openAnimation) {
     // Slide the dialog out and back
-    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(1600, 0.5f).From().SetEase(Ease.OutBack).SetDelay(0.2f);
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).From().SetEase(Ease.OutBack).SetDelay(0.2f);
     openAnimation.Join(dialogTween);
   }
 
   protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
     // Slide the dialog out
-    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(1600, 0.5f).SetEase(Ease.InBack).SetDelay(0.2f);
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).SetEase(Ease.InBack).SetDelay(0.2f);
     closeAnimation.Join(dialogTween);
   }
 }
