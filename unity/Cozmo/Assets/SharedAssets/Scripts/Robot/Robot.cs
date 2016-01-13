@@ -68,6 +68,11 @@ public class Robot : IDisposable {
 
   public delegate void RobotCallback(bool success);
 
+
+  public delegate void FriendshipLevelUp(int newLevel);
+
+  public FriendshipLevelUp OnFriendshipLevelUp;
+
   private struct RobotCallbackWrapper {
     public readonly uint IdTag;
 
@@ -549,6 +554,9 @@ public class Robot : IDisposable {
       FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
       FriendshipLevel++;
       FriendshipLevelMessage.newVal = FriendshipLevel;
+      if (OnFriendshipLevelUp != null) {
+        OnFriendshipLevelUp(FriendshipLevel);
+      }
       RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
       RobotEngineManager.Instance.SendMessage();
     }
