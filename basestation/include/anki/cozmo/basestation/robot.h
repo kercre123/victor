@@ -35,6 +35,7 @@
 #include "anki/planning/shared/path.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -605,6 +606,8 @@ public:
     
     // =========  Other State  ============
     f32 GetBatteryVoltage() const { return _battVoltage; }
+  
+    u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
     
     // Abort everything the robot is doing, including path following, actions,
     // animations, and docking. This is like the big red E-stop button.
@@ -781,6 +784,7 @@ public:
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
+    u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ENABLE_ALL_TRACKS;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
