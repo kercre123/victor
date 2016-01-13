@@ -102,7 +102,7 @@ namespace WhackAMole {
           ToggleCubeFace(KvP);
           continue;
         }
-        float freq = Mathf.Lerp(kMinFlashFreq,kMaxFlashFreq,remainingTime);
+        uint freq = (uint)Mathf.Lerp(kMinFlashFreq,kMaxFlashFreq,remainingTime);
         CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = freq;
         CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnPeriodMs = freq;
       }
