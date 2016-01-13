@@ -18,11 +18,11 @@
             "/{*}"
         ]
     },
+    "challengeDetails.label.playersAndCubesNeeded" : {
+        "translation" : "Requires: {0} Player(s), {1} Power Cube(s)"
+    },
     "askCozmo01.title" : {
         "translation" : "Ask Cozmo Challenge 1"
-    },
-    "askCozmo01.subtitle" : {
-        "translation" : "Ask Cozmo Challenge 1 Subtitle"
     },
     "askCozmo01.description" : {
         "translation" : "Ask Cozmo Challenge 1 Description"
@@ -39,110 +39,8 @@
     "investorDemo.investorDemoScene4" : {
         "translation" : "Investor Scene 4"
     },
-    "dockTraining01.title" : {
-        "translation" : "Docking"
-    },
-    "dockTraining01.subtitle" : {
-        "translation" : "Docking Subtitle"
-    },
-    "dockTraining01.description" : {
-        "translation" : "Put a cube in front of cozmo. Cozmo will try to line up to it. Wave left and right to help steer cozmo."
-    },
-    "followCube01.title" : {
-        "translation" : "Follow Cube"
-    },
-    "followCube01.subtitle" : {
-        "translation" : "Follow Cube Subtitle"
-    },
-    "followCube01.description" : {
-        "translation" : "Put a cube in front of Cozmo. Let Cozmo follow the cube. Get Cozmo to go in a circle."
-    },
-    "rotationTraining01.title" : {
-        "translation" : "Turning Challenge"
-    },
-    "rotationTraining01.subtitle" : {
-        "translation" : "Turning Challenge Subtitle"
-    },
-    "rotationTraining01.description" : {
-        "translation" : "Turning Challenge Description"
-    },
-    "visionTraining01.title" : {
-        "translation" : "Cube Vision"
-    },
-    "visionTraining01.subtitle" : {
-        "translation" : "Cube Vision Subtitle"
-    },
-    "visionTraining01.description" : {
-        "translation" : "Put the cube that is lit up in front of Cozmo's view. Red means the cube is out of view. Blue means Cozmo sees it but it's not lined up right. White means the cube is the correct position."
-    },
-    "winkGame01.title" : {
-        "translation" : "Wink Game"
-    },
-    "winkGame01.subtitle" : {
-        "translation" : "Wink Game Subtitle"
-    },
-    "winkGame01.description" : {
-        "translation" : "Cozmo will wink to one side or the other. Wave your hand on the side with the eye still open."
-    },
-    "forwardBackward01.title" : {
-        "translation" : "Forward Backward Game"
-    },
-    "forwardBackward01.subtitle" : {
-        "translation" : "Forward Backward Subtitle"
-    },
-    "forwardBackward01.description" : {
-        "translation" : "Use a light cube to lead Cozmo forward, then use the cube to lead him backward."
-    },
-    "motionDetection01.title" : {
-        "translation" : "Motion Detection Challenge"
-    },
-    "motionDetection01.subtitle" : {
-        "translation" : "Motion Detection Subtitle"
-    },
-    "motionDetection01.description" : {
-        "translation" : "Wave your hand in front of Cozmo to train him how to detect motion."
-    },
-    "followCubeRotate1.title" : {
-        "translation" : "Follow Cube Rotate"
-    },
-    "followCubeRotate1.subtitle" : {
-        "translation" : "Follow Cube Rotate Subtitle"
-    },
-    "followCubeRotate1.description" : {
-        "translation" : "Rotate Cozmo Left and Right by leading with a cube."
-    },
-    "faceTrack1.title" : {
-        "translation" : "Face Tracking"
-    },
-    "faceTrack1.subtitle" : {
-        "translation" : "Face Tracking Subtitle"
-    },
-    "faceTrack1.description" : {
-        "translation" : "Show Cozmo your face, then slowly move left to right to help them learn to follow you."
-    },
-    "stackTraining01.title" : {
-        "translation" : "Stack Cube Training"
-    },
-    "stackTraining01.subtitle" : {
-        "translation" : "Stack Cube Training Subtitle"
-    },
-    "stackTraining01.description" : {
-        "translation" : "Teach Cozmo how to stack cubes, build a stack for cozmo so he can see how its done."
-    },
-    "cubeLifting01.title" : {
-        "translation" : "Cube Lifting Challenge"
-    },
-    "cubeLifting01.subtitle" : {
-        "translation" : "Cube Lifting Challenge Subtitle"
-    },
-    "cubeLifting01.description" : {
-        "translation" : "Teach Cozmo how to lift a block by raising and lowering it in front of him."
-    },
     "simonGame01.title" : {
         "translation" : "Simon Says Challenge"
-    },
-    "simonGame01.subtitle" : {
-        "translation" : "Simon Says Challenge Subtitle"
     },
     "simonGame01.description" : {
         "translation" : "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
@@ -150,26 +48,17 @@
     "treasureHuntGame01.title" : {
         "translation" : "Treasure Hunt Challenge"
     },
-    "treasureHuntGame01.subtitle" : {
-        "translation" : "Treasure Hunt Challenge Subtitle"
-    },
     "treasureHuntGame01.description" : {
         "translation" : "Find the treasure!"
     },
     "selfieGame01.title" : {
         "translation" : "Selfie Time"
     },
-    "selfieGame01.subtitle" : {
-        "translation" : "Cozmo Loves Cameras"
-    },
     "selfieGame01.description" : {
         "translation" : "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
     },
     "minesweeper01.title" : {
         "translation" : "Minesweeper"
-    },
-    "minesweeper01.subtitle" : {
-        "translation" : "Minesweeper Subtitle"
     },
     "minesweeper01.description" : {
         "translation" : "These mines aren't going to sweep themselves."
@@ -189,23 +78,11 @@
     "codeBreaker01.title" : {
       "translation" : "Cozmo Code Breaker"
     },
-    "codeBreaker01.subtitle" : {
-      "translation" : "Guess the code!"
-    },
     "codeBreaker01.description" : {
         "translation" : "Cozmo will think of a code and you have a certain number of tries to get it right."
     },
-    "peekaboo.title": {
-        "translation": "Peek a Boo"
-    },
-    "peekaboo.label.points": {
-        "translation": "{0} Points"
-    },
     "cubeSlap.title": {
         "translation": "Cube Pounce"
-    },
-    "cubeSlap.subtitle": {
-        "translation": "Cube Pounce Subtitle"
     },
     "cubeSlap.description": {
         "translation": "Cube Pounce Description"
@@ -213,17 +90,11 @@
     "speedTap.title": {
         "translation": "Speed Tap"
     },
-    "speedTap.subtitle": {
-        "translation": "Speed Tap Subtitle"
-    },
     "speedTap.description": {
         "translation": "tap same color"
     },
     "speedTapLightCount.title": {
         "translation": "Speed Tap Light Count"
-    },
-    "speedTapLightCount.subtitle": {
-        "translation": "Speed Tap Subtitle"
     },
     "speedTapLightCount.description": {
         "translation": "Tap same light count"
@@ -231,26 +102,17 @@
     "speedTapLightCountSameColorNoTap.title": {
         "translation": "Speed Tap Count Same Color No Tap"
     },
-    "speedTapLightCountSameColorNoTap.subtitle": {
-        "translation": "Speed Tap Subtitle"
-    },
     "speedTapLightCountSameColorNoTap.description": {
         "translation": "Tap the same count, but if it is same color do not tap."
     },
     "speedTapNoRed.title": {
         "translation": "Speed Tap No Red"
     },
-    "speedTapNoRed.subtitle": {
-        "translation": "Speed Tap Subtitle"
-    },
     "speedTapNoRed.description": {
         "translation": "Tap same color, unless it is red then don't tap"
     },
     "whackAMole.title" : {
         "translation" : "Whack A Mole"
-    },
-    "whackAMole.subtitle" : {
-        "translation" : "Tap Buttons to Make Cozmo Chase cubes!"
     },
     "whackAMole.description" : {
         "translation" : "Tap an active Button to turn it off and trick Cozmo."

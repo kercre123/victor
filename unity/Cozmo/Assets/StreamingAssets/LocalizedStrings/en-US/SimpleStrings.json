@@ -18,6 +18,9 @@
             "/{*}"
         ]
     },
+    "badge.new" : {
+        "translation" : "NEW!"
+    },
     "button.tap" : {
         "translation" : "Tap"
     },
@@ -26,18 +29,6 @@
     },
     "button.startChallenge" : {
         "translation" : "START"
-    },
-    "label.challengeCompleted" : {
-        "translation" : "Challenge Completed"
-    },
-    "label.challengeFailed" : {
-        "translation" : "Challenge Failed"
-    },
-    "badge.new" : {
-        "translation" : "NEW!"
-    },
-    "label.percentComplete" : {
-        "translation" : "{0:P2} Complete"
     },
     "button.yes" : {
         "translation" : "YES"
@@ -53,5 +44,14 @@
     },
     "button.ready" : {
         "translation" : "READY"
+    },
+    "label.challengeCompleted" : {
+        "translation" : "Challenge Completed"
+    },
+    "label.challengeFailed" : {
+        "translation" : "Challenge Failed"
+    },
+    "label.percentComplete" : {
+        "translation" : "{0:P2} Complete"
     }
 }
