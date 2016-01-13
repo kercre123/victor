@@ -580,13 +580,14 @@ namespace Anki {
       // TODO: Can this default be reduced?
       virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
       
-      ObjectID             _objectID;
-      Vision::Marker::Code _whichCode;
-      f32                  _waitToVerifyTime;
-      
-      
+      ObjectID                _objectID;
+      Vision::Marker::Code    _whichCode;
+      f32                     _waitToVerifyTime;
+      bool                    _objectSeen;
+      bool                    _markerSeen;
       MoveLiftToHeightAction  _moveLiftToHeightAction;
-      bool                 _moveLiftToHeightActionDone;
+      bool                    _moveLiftToHeightActionDone;
+      Signal::SmartHandle     _observedObjectHandle;
       
     }; // class VisuallyVerifyObjectAction
     
