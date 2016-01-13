@@ -480,7 +480,8 @@
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],
             'defines': [
               'COZMO_ROBOT',
-              'SIMULATOR'
+              'SIMULATOR',
+              '_DEBUG'
             ],
             'libraries': [
               'libCppController.dylib',

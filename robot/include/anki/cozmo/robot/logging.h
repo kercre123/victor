@@ -99,7 +99,7 @@ namespace Anki {
       #define AnkiWarn(nameId, nameString, fmtId, fmtString, nargs, ...) \
       { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, ##__VA_ARGS__); }
 
-      #define AnkiConditionalWarn(espression, nameId, nameString, fmtId, fmtString, nargs, ...) \
+      #define AnkiConditionalWarn(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
           Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, ##__VA_ARGS__); \
         }
