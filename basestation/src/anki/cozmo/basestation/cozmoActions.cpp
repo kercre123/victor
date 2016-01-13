@@ -296,8 +296,8 @@ namespace Anki {
             // Indicate last drive sound is done
             _driveSoundActionTag = (u32)ActionConstants::INVALID_TAG;
 
-            // Choose next play time
-            _nextDrivingSoundTime = GetRNG().RandDblInRange(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+            // Choose next play time, relative to current time
+            _nextDrivingSoundTime = event.GetCurrentTime() + GetRNG().RandDblInRange(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
           }
         };
         
