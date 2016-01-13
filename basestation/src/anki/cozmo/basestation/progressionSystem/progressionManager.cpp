@@ -34,8 +34,8 @@ void ProgressionManager::Reset()
   {
     GetStatByIndex(i).Reset();
   }
-  _friendshipLevel = 0;
-  _friendshipScore = 0;
+  _friendshipLevel.Reset();
+  _friendshipPoints.Reset();
 }
 
 
