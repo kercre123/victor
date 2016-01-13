@@ -47,6 +47,7 @@ namespace WhackAMole {
       if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.BOTH) {
         return;
       }
+      _WhackAMoleGame.FixCozmoAngles();
       _PanicIntervalTimestamp = -1;
       _PanicInterval = _PanicInterval - (Random.Range(_WhackAMoleGame.PanicDecayMin, _WhackAMoleGame.PanicDecayMax));
       if (_PanicInterval <= _WhackAMoleGame.PanicDecayMin) {
@@ -64,7 +65,7 @@ namespace WhackAMole {
         if (!kVp.Equals(curr)) {
           _WhackAMoleGame.CurrentTargetKvP = kVp;
           Debug.Log(string.Format("Panic - Now Target Cube {0}", kVp.Key));
-          _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[kVp.Key], 55f , null,true, 
+          _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[kVp.Key], 150f , null,true, 
             _WhackAMoleGame.GetRelativeRad(kVp), Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
           return;
         }

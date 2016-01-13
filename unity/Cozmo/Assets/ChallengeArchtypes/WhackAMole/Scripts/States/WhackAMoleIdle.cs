@@ -12,6 +12,7 @@ namespace WhackAMole {
       base.Enter();
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      _WhackAMoleGame.FixCozmoAngles();
     }
 
     public override void Update() {

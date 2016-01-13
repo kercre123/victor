@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace WhackAMole {
   public class WhackAMoleGame : GameBase {
+    const float kCloseUpDistance = 40f;
 
     public enum MoleState {
       NONE,
@@ -197,10 +198,45 @@ namespace WhackAMole {
     }
 
     public float GetRelativeRad(KeyValuePair<int,int> KvP) {
-      float deg = (90.0f * (3-KvP.Value));
+      float deg = (90.0f * (KvP.Value+1));
       float result = Mathf.Deg2Rad * deg;
-      Debug.Log(string.Format("Relative Rad - {0} Degrees - {1}", result,deg));
+      Debug.Log(string.Format("Cube{2}:Face{3} - Relative Rad - {0} Degrees - {1}", result,deg, KvP.Key,KvP.Value));
       return result;
+    }
+
+    public Vector3 GetRelativePos(KeyValuePair<int,int> KvP) {
+      Vector3 point = CurrentRobot.LightCubes[KvP.Key].WorldPosition;
+      float offset = kCloseUpDistance;
+      Vector3 angle = Vector3.zero;
+      switch (KvP.Value) 
+      {
+      case 0:
+        angle = Vector3.down;
+        break;
+      case 1:
+        angle = Vector3.right;
+        break;
+      case 2:
+        angle = Vector3.up;
+        break;
+      case 3:
+        angle = Vector3.left;
+        break;
+      }
+      angle *= offset;
+      return (point + angle);
+    }
+
+    // Cozmo hates keeping his head at an angle where he can see cubes, this is probably problematic for a lot of reasons.
+    // This hack exists to try and override whatever is causing it.
+    public void FixCozmoAngles() {
+
+      if (CurrentRobot.HeadAngle != -0.8f) {
+        CurrentRobot.SetHeadAngle(-0.8f, null, Anki.Cozmo.QueueActionPosition.NEXT);
+      }
+      if (CurrentRobot.LiftHeight != 1.0f) { 
+        CurrentRobot.SetLiftHeight(1.0f, null, Anki.Cozmo.QueueActionPosition.NEXT);
+      }
     }
 
     protected override void CleanUpOnDestroy() { 

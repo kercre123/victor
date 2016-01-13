@@ -17,7 +17,7 @@ namespace WhackAMole {
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       KeyValuePair<int,int> _TargetKvP = _WhackAMoleGame.CurrentTargetKvP;
-      _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key],185f ,WentToObject ,true , 
+      _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key],0f ,WentToObject ,true , 
         _WhackAMoleGame.GetRelativeRad(_TargetKvP) , Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
     }
 
