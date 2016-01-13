@@ -491,10 +491,7 @@
                 {
                     'action_name': 'Robot pre-build steps',
                     'inputs': [],
-                    'outputs': [
-                        '../../robot/include/anki/cozmo/robot/version.h',
-                        '../../resources/config/basestation/AnkiLogStringTables.json'
-                    ],
+                    'outputs': [],
                     'action': [
                         'make', '-C', '../../robot/', 'sim'
                     ],

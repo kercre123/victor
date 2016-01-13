@@ -18,7 +18,7 @@ Copyright 2015 Anki Inc. All rights reserved.
 __author__  = "Daniel Casner <daniel@anki.com>"
 __version__ = "0.1"
 
-import sys, os, re, argparse, json
+import sys, os, re, argparse, json, mmap
 
 if sys.version_info.major < 3:
     sys.stderr.write("Python less than 3.0 is depricated" + os.linesep)
@@ -38,14 +38,14 @@ def vPrint(level, text, err=False):
 
 def assertString(assertCondition, code):
     "Returns a format string for a given assert macro"
-    return 'Failed "{:s}" in file "{:s}" line %d'.format(assertCondition, code.fileName)
+    return 'Failed "{:s}" in file "{:s}" line %d'.format(assertCondition.decode(), code.fileName)
 
 def looksLikeInt(s):
     return s.strip().isdigit()
 
 def looksLikeString(s):
     x = s.strip()
-    return x.startswith('"') and x.endswith('"')
+    return x.startswith(b'"') and x.endswith(b'"')
 
 def rangeGenerator(start, end, step=1):
     "A real generator for yielding range numbers"
@@ -59,23 +59,40 @@ class LogPPError(Exception):
 
 class CoordinatedFile:
     "A class wrapper for managing files, reads the whole thing in and keeps track of different coordinates"
-    def __init__(self, fileName):
+    def __init__(self, fileName, writeAccess=False):
         if not os.path.isfile(fileName):
             raise IOError("\"{}\" is not a file".format(fileName))
         else:
             self.fileName = fileName
-            fh = open(fileName, "r")
+            self.writeAccess = writeAccess
             try:
-                self.contents = fh.read()
-            except UnicodeDecodeError as e:
-                sys.exit("Unicode decode error while trying to parse file \"{}\":{linesep}\t{}{linesep}".format(file, str(e), linesep=os.linesep)
-            fh.close()
-            counter = 0
+                if writeAccess:
+                    self.fh = open(fileName, "r+b")
+                    self.__memoryMap()
+                    self.adjustedLength = len(self.contents)
+                else:
+                    self.fh = open(fileName, "rb")
+                    self.__memoryMap()
+            except Exception as e:
+                sys.exit("Error while trying to memory map file \"{}\":{linesep}\t{}{linesep}".format(fileName, str(e), linesep=os.linesep))
             self.lineIndecies = [0]
-            for l in self.contents.splitlines(True):
-                counter += len(l)
-                self.lineIndecies.append(counter)
+            position = self.contents.find(b"\n")
+            while position >= 0:
+                self.lineIndecies.append(position)
+                position = self.contents.find(b"\n", position+1)
             self.index = 0
+
+    def __memoryMap(self):
+        if self.writeAccess:
+            self.contents = mmap.mmap(self.fh.fileno(), 0)
+        else:
+            self.contents = mmap.mmap(self.fh.fileno(), 0, access=mmap.ACCESS_READ)
+
+    def __del__(self):
+        if self.writeAccess:
+            self.contents.flush()
+        self.contents.close()
+        self.fh.close()
 
     def update(self, index=0, line=0):
         "Update the pointer by index and / or line"
@@ -97,22 +114,21 @@ class CoordinatedFile:
         "A nice format string showing were we are in the file"
         l = self.line
         c = self.index - self.lineIndecies[l]
-        lines = self.contents.split("\n")
         return '"{filename}" line {l}, character {c}:{linesep}{line}{linesep}{dots}^{linesep}'.format(
             filename=self.fileName,
             l = l, c = c,
             linesep = os.linesep,
-            line = lines[l],
+            line = self.contents[self.lineIndecies[l]:self.lineIndecies[l+1]].decode(),
             dots = '.' * c
         )
 
     def __getitem__(self, index):
         "Get an item relative to the current index in the file"
-        return self.contents[index + self.index]
+        return bytes([self.contents[index + self.index]])
 
     def __next__(self):
         "Get the next item in the file"
-        ret = self.contents[self.index]
+        ret = bytes([self.contents[self.index]])
         self.index += 1
         return ret
 
@@ -131,18 +147,41 @@ class CoordinatedFile:
 
     def write(self):
         "Write (modified) contents back out to file"
-        fh = open(self.fileName, "w")
-        fh.write(self.contents)
-        fh.truncate() # Nessisary under windows apparently
-        fh.close()
+        if not self.writeAccess:
+            raise ValueError("This CoordinatedFile ({}) instance doesn't have write access".format(self.fileName))
+        else:
+            self.contents.flush()
+            self.fh.seek(self.adjustedLength, 0)
+            self.fh.truncate()
+
+    def expand(self, addition):
+        "Makes the file bigger and re-memory maps it"
+        if not self.writeAccess:
+            raise ValueError("This Coordinated file ({}) does not have write access".format(self.fileName))
+        else:
+            self.contents.close()
+            self.fh.seek(0, 2) # Seek the end of the file
+            self.fh.write((os.linesep * addition).encode())
+            self.fh.seek(0, 0) # Seek back to the beginning of the file
+            self.__memoryMap()
+        
 
     def insert(self, slice, newText):
         "Replace the slice from start to end with newText and return the change in length"
+        if not self.writeAccess:
+            raise ValueError("This Coordinated file ({}) does not have write access".format(self.fileName))
         start, end = slice
-        self.contents = self.contents[:start] + newText + self.contents[end:]
-        offset = len(newText) - (end - start)
-        if self.index > start: self.index += offset
-        return offset
+        lenChange = len(newText) - (end-start)
+        if lenChange == 0:
+            self.contents[start:end] = newText
+        else:
+            if lenChange > 0:
+                self.expand(lenChange)
+            self.contents.move(end + lenChange, end, self.adjustedLength - end)
+            self.contents[start:end+lenChange] = newText
+            self.adjustedLength += lenChange
+            if self.index > start: self.index += lenChange
+        return lenChange
 
 class ParseInstance:
     "Stores data about a parsed macro instance"
@@ -173,11 +212,11 @@ class ParseInstance:
 class ParseParams:
     "Class container for parsing a macro"
     CONTAINERS = {
-        "'": "'",
-        '"': '"',
-        '(': ')',
-        '[': ']',
-        '{': '}',
+        b"'": b"'",
+        b'"': b'"',
+        b'(': b')',
+        b'[': b']',
+        b'{': b'}',
         }
     FORMATTER_KEY = re.compile(r'(?<!%)%[^%]') # Find singal % marks
     FORMAT_BLACK_LIST = re.compile(r'%[bsl]')
@@ -191,26 +230,26 @@ class ParseParams:
         depth = []
         preArgs = []
         args = []
-        a = ""
+        a = b""
         startInd = code.index
         mangleStart = startInd if self.preArgs == 0 else None
         for ch in code:
             if not depth: # things that can only happen at depth 0
-                if ch in (',', ')'):
+                if ch in (b',', b')'):
                     if len(preArgs) < self.preArgs:
                         preArgs.append(a)
                         if len(preArgs) == self.preArgs:
                             mangleStart = code.index + sum([len(pa) + 1 for pa in preArgs])
-                            if ch == ')': mangleStart -= 1
+                            if ch == b')': mangleStart -= 1
                     else:
                         args.append(a)
-                    a = ""
-                    if ch == ")":
+                    a = b""
+                    if ch == b")":
                         break
                     else:
                         continue
             a += ch
-            if depth and depth[-1] in ("'", '"') and code[-2] != "\\": # Sadly quotes require separate handling first because other characters inside a quote do not count
+            if depth and depth[-1] in (b"'", b'"') and code[-2] != b"\\": # Sadly quotes require separate handling first because other characters inside a quote do not count
                 if ch == self.CONTAINERS[depth[-1]]: # Match for current
                     depth.pop(-1)
             elif ch in self.CONTAINERS.keys():
@@ -231,9 +270,9 @@ class ParseParams:
             looksLikeInt(args[4]): # This is an already processed macro instance
             mangleEnd = mangleStart + sum([len(a)+1 for a in args[:5]])-1
             nameId = int(args[0])
-            name   = args[1].strip()[1:-1]
+            name   = args[1].strip()[1:-1].decode()
             fmtId  = int(args[2])
-            fmt    = args[3].strip()[1:-1]
+            fmt    = args[3].strip()[1:-1].decode()
             nargs = int(args[4])
             numFormatArgs = len(self.FORMATTER_KEY.findall(fmt))
             badFormatArgs = self.FORMAT_BLACK_LIST.findall(fmt)
@@ -251,8 +290,8 @@ class ParseParams:
         elif len(args) >= 2 and looksLikeString(args[0]) and looksLikeString(args[1]): # An unprocessed macro
             mangleEnd = mangleStart + len(args[0]) + 1 + len(args[1])
             nargs = len(args) - 2
-            name = args[0].strip()[1:-1]
-            fmt  = args[1].strip()[1:-1]
+            name = args[0].strip()[1:-1].decode()
+            fmt  = args[1].strip()[1:-1].decode()
             numFormatArgs = len(self.FORMATTER_KEY.findall(fmt))
             badFormatArgs = self.FORMAT_BLACK_LIST.findall(fmt)
             if badFormatArgs:
@@ -312,18 +351,18 @@ class ParseData:
             self.dirtyFiles = set()
 
     MACROS = {
-        re.compile(r"AnkiEvent\s*\("): ParseParams(),
-        re.compile(r"AnkiInfo\s*\("):  ParseParams(),
-        re.compile(r"AnkiDebug\s*\("): ParseParams(),
-        re.compile(r"AnkiWarn\s*\("):  ParseParams(),
-        re.compile(r"AnkiError\s*\("): ParseParams(),
-        re.compile(r"AnkiConditionalError\s*\("): ParseParams(1),
-        re.compile(r"AnkiConditionalErrorAndReturn\s*\("): ParseParams(1),
-        re.compile(r"AnkiConditionalErrorAndReturnValue\s*\("): ParseParams(2),
-        re.compile(r"AnkiConditionalWarn\s*\("): ParseParams(1),
-        re.compile(r"AnkiConditionalWarnAndReturn\s*\("): ParseParams(1),
-        re.compile(r"AnkiConditionalWarnAndReturnValue\s*\("): ParseParams(2),
-        re.compile(r"AnkiAssert\s*\("): AssertParseParams()
+        re.compile(rb"AnkiEvent\s*\("): ParseParams(),
+        re.compile(rb"AnkiInfo\s*\("):  ParseParams(),
+        re.compile(rb"AnkiDebug\s*\("): ParseParams(),
+        re.compile(rb"AnkiWarn\s*\("):  ParseParams(),
+        re.compile(rb"AnkiError\s*\("): ParseParams(),
+        re.compile(rb"AnkiConditionalError\s*\("): ParseParams(1),
+        re.compile(rb"AnkiConditionalErrorAndReturn\s*\("): ParseParams(1),
+        re.compile(rb"AnkiConditionalErrorAndReturnValue\s*\("): ParseParams(2),
+        re.compile(rb"AnkiConditionalWarn\s*\("): ParseParams(1),
+        re.compile(rb"AnkiConditionalWarnAndReturn\s*\("): ParseParams(1),
+        re.compile(rb"AnkiConditionalWarnAndReturnValue\s*\("): ParseParams(2),
+        re.compile(rb"AnkiAssert\s*\("): AssertParseParams()
     }
 
     def parseFile(self, file):
@@ -416,17 +455,17 @@ class ParseData:
         "Update all the files in the directory we're recursing over"
         vPrint(1, "Source files in need of update are: {}".format(', '.join(self.dirtyFiles)))
         for fpn in self.dirtyFiles:
-            code = CoordinatedFile(fpn)
+            code = CoordinatedFile(fpn, True)
             accumulatedOffset = 0
             for inst in self.pt[fpn]:
                 if inst.nameId == ASSERT_NAME_ID: # Special handling for assert macros
                     if inst.length == 0:
-                        insert = ", {:d}".format(inst.fmtId)
+                        insert = ", {:d}".format(inst.fmtId).encode()
                     else:
-                        insert = " {:d}".format(inst.fmtId)
+                        insert = " {:d}".format(inst.fmtId).encode()
                     accumulatedOffset += code.insert(inst.getMangle(accumulatedOffset), insert)
                 else:
-                    insert = " {nameId:d}, \"{name:s}\", {fmtId:d}, \"{fmt:s}\", {nargs:d}".format(**inst.__dict__)
+                    insert = " {nameId:d}, \"{name:s}\", {fmtId:d}, \"{fmt:s}\", {nargs:d}".format(**inst.__dict__).encode()
                     accumulatedOffset += code.insert(inst.getMangle(accumulatedOffset), insert)
             code.write()
 
