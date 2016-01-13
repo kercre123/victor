@@ -152,7 +152,7 @@ public class Robot : IDisposable {
 
   public List<Face> Faces { get; private set; }
 
-  public uint[] ProgressionStats { get; private set; }
+  public int[] ProgressionStats { get; private set; }
 
   public float[] EmotionValues { get; private set; }
 
@@ -371,7 +371,7 @@ public class Robot : IDisposable {
 
     BackpackLights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
-    ProgressionStats = new uint[(int)Anki.Cozmo.ProgressionStatType.Count];
+    ProgressionStats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
     EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
@@ -523,7 +523,7 @@ public class Robot : IDisposable {
 
   #region Progression and Mood Stats
 
-  public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, uint deltaValue) {
+  public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
     ProgressionStatMessage.robotID = ID;
     ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.statType = index;
     ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.deltaVal = deltaValue;
@@ -568,7 +568,7 @@ public class Robot : IDisposable {
 
   // Only debug panels should be using set.
   // You should not be calling this from a minigame/challenge.
-  public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, uint value) {
+  public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, int value) {
     ProgressionStatMessage.robotID = ID;
     ProgressionStatMessage.ProgressionMessageUnion.SetProgressionStat = new G2U.SetProgressionStat(type, value);
 
@@ -576,7 +576,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, uint value) {
+  private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
     ProgressionStats[(int)index] = value;
   }
 

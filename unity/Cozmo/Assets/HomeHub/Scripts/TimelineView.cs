@@ -89,8 +89,8 @@ namespace Cozmo.HomeHub {
         if (UnityEngine.Random.Range(0f, 1f) > 0.3f) {
           var entry = new TimelineEntryState(date);
 
-          for (int j = 0; j < (int)CozmoStat.COUNT; j++) {
-            var stat = (CozmoStat)j;
+          for (int j = 0; j < (int)Anki.Cozmo.ProgressionStatType.Count; j++) {
+            var stat = (Anki.Cozmo.ProgressionStatType)j;
             if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
               int goal = UnityEngine.Random.Range(0, 6);
               int progress = Mathf.Clamp(UnityEngine.Random.Range(0, goal * 2), 0, goal);
