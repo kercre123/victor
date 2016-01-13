@@ -6,6 +6,7 @@ Not that this describes the format of packets coming from the robot. The embedde
 
 ### Header
 Each packet will start with
+
 1. The 7 byte preamble `COZ\x03RE\x01`
 2. 1 byte enum indicating the reliable message type. For the robot this is always `eRMT_MultipleMixedMessages`
 3. 2 bytes, 16 bit number, indicating the lowest sequence ID of the reliable messages in this packet
@@ -16,9 +17,8 @@ All told the header is 14 bytes.
 
 ### Sub message headers
 After the header, the packet will contain *0* or more messages, each prefixed with a 3 byte header which contains:
-1. 1 byte indicating the message type.
- * Application messages from the robot will either be `eRMT_SingleReliableMessage` or `eRMT_SingleUnreliableMessage`
- * anything else is a reliable transport control message.
+
+1. 1 byte indicating the message type. Application messages from the robot will either be `eRMT_SingleReliableMessage` or `eRMT_SingleUnreliableMessage`; anything else is a reliable transport control message.
 2. 2 bytes, 16 bit number, indicating the length of the message, not including this 3 byte message header.
 
 ### Robot messages
@@ -26,6 +26,7 @@ The first byte in a robot message will always be the message tag. For ImageChunk
 
 ## Parsing image Messages
 To simply collect image Messages
+
 ```
 Skip the first 14 bytes of the packet.
 While not at end of packet:
