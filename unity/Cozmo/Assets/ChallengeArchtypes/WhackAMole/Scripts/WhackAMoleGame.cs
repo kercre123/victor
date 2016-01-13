@@ -6,9 +6,9 @@ using System.Collections.Generic;
 
 namespace WhackAMole {
   public class WhackAMoleGame : GameBase {
-    const float kCloseUpDistance = 40f;
-    const float kMinFlashFreq = 1000f;
-    const float kMaxFlashFreq = 10f;
+    const float kCloseUpDistance = 50f;
+    const float kMinFlashFreq = 5000f;
+    const float kMaxFlashFreq = 500f;
 
     public enum MoleState {
       NONE,
@@ -44,7 +44,7 @@ namespace WhackAMole {
     public float MoleTimeout;
 
     [SerializeField]
-    private Color _InActiveColor = Color.black;
+    private Color _InActiveColor = Color.clear;
     [SerializeField]
     private Color _ActiveColor = Color.red;
 
@@ -98,12 +98,12 @@ namespace WhackAMole {
         KeyValuePair<int,int> KvP = ActivatedFaces[i];
         float origTimestamp = _ActivatedTimestamp[KvP];
         float remainingTime = ((Time.time - origTimestamp)/MoleTimeout);
-        if (remainingTime > 1.0f) {
+        if (remainingTime >= 1.0f) {
           ToggleCubeFace(KvP);
           continue;
         }
         uint freq = (uint)Mathf.Lerp(kMinFlashFreq,kMaxFlashFreq,remainingTime);
-        CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = freq;
+        //CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = freq;
         CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnPeriodMs = freq;
       }
     }
@@ -185,7 +185,10 @@ namespace WhackAMole {
           }
         }
       }
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = (uint)kMinFlashFreq;
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnPeriodMs = 0;
       CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnColor = CozmoPalette.ColorToUInt(toSet);
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffColor = CozmoPalette.ColorToUInt(_InActiveColor);
       currButt.image.color = toSet;
       if (MoleStateChanged != null) {
         MoleStateChanged.Invoke(CubeState);

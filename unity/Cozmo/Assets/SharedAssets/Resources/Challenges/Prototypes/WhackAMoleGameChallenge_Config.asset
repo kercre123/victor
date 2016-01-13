@@ -14,6 +14,6 @@ MonoBehaviour:
   MaxPanicTime: 15
   MaxConfusionTime: 4
   MaxPanicInterval: 4
-  MoleTimeout: 8
+  MoleTimeout: 15
   PanicDecayMin: .150000006
   PanicDecayMax: .400000006

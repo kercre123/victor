@@ -11,7 +11,7 @@ namespace WhackAMole {
   // If Cozmo loses track of their target, enter confused state.
   public class WhackAMoleChase : State {
     private const float kPounceDist = 60f;
-    private const float kTargetDist = 120f;
+    private const float kTargetDist = 80f;
     private WhackAMoleGame _WhackAMoleGame;
     private KeyValuePair<int,int> _TargetKvP;
 
