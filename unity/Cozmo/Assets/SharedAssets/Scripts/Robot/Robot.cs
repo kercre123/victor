@@ -68,6 +68,11 @@ public class Robot : IDisposable {
 
   public delegate void RobotCallback(bool success);
 
+
+  public delegate void FriendshipLevelUp(int newLevel);
+
+  public FriendshipLevelUp OnFriendshipLevelUp;
+
   private struct RobotCallbackWrapper {
     public readonly uint IdTag;
 
@@ -152,8 +157,6 @@ public class Robot : IDisposable {
 
   public List<Face> Faces { get; private set; }
 
-  public int[] ProgressionStats { get; private set; }
-
   public int FriendshipPoints { get; private set; }
 
   public int FriendshipLevel { get; private set; }
@@ -211,6 +214,8 @@ public class Robot : IDisposable {
   }
 
   private int _LastHeadTrackingObjectID;
+
+  private int[] ProgressionStats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
 
   public string CurrentBehaviorString { get; set; }
 
@@ -538,26 +543,47 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     ComputeFriendshipLevel();
+  }
 
-    FriendshipLevelMessage.newVal = FriendshipLevel;
-    RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
-    RobotEngineManager.Instance.SendMessage();
+  public string GetFriendshipLevelName(int friendshipLevel) {
+    FriendshipLevelConfig levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
+    return levelConfig.FriendshipLevels[friendshipLevel].FriendshipLevelName;
+  }
+
+  public int GetFriendshipLevelByName(string friendshipName) {
+    FriendshipLevelConfig levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
+    for (int i = 0; i < levelConfig.FriendshipLevels.Length; ++i) {
+      if (levelConfig.FriendshipLevels[i].FriendshipLevelName == friendshipName) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private void ComputeFriendshipLevel() {
     FriendshipLevelConfig levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
-    int i = 0;
-    for (; i < levelConfig.FriendshipLevels.Length; ++i) {
-      if (levelConfig.FriendshipLevels[i].LevelRequirement > FriendshipPoints) {
-        break;
-      }
+    if (FriendshipLevel == levelConfig.FriendshipLevels.Length) {
+      return;
     }
-    FriendshipLevel = i - 1;
+    if (levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
+      FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
+      FriendshipLevel++;
+      FriendshipLevelMessage.newVal = FriendshipLevel;
+      if (OnFriendshipLevelUp != null) {
+        OnFriendshipLevelUp(FriendshipLevel);
+      }
+      RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
+      RobotEngineManager.Instance.SendMessage();
+    }
   }
 
   #endregion
 
   #region Progression and Mood Stats
+
+  public int GetProgressionStat(Anki.Cozmo.ProgressionStatType index) {
+    return ProgressionStats[(int)index];
+  }
 
   public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
     ProgressionStatMessage.robotID = ID;
