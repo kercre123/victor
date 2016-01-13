@@ -198,6 +198,8 @@ namespace Cozmo {
     const f32 _lostBlockTimeToLookDown = 1.2f;
     const f32 _waitForBlockHeadAngle_rads = DEG_TO_RAD(-10.0f);
     const f32 _timetoInspectBlock = 0.3f;
+    const f32 _robotObjectOrientationDiffThreshForDirectPickup = DEG_TO_RAD(3);
+    const f32 _angleToObjectThreshForDirectPickup = DEG_TO_RAD(3);
     u32 _driveForwardActionTag = 0;
     bool _isDrivingForward = false;
 
