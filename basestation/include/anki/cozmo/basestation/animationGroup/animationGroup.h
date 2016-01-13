@@ -14,8 +14,8 @@
  **/
 
 
-#ifndef ANKI_COZMO_ANIMATION_GROUP_H
-#define ANKI_COZMO_ANIMATION_GROUP_H
+#ifndef __Cozmo_Basestation_AnimationGroup_AnimationGroup_H__
+#define __Cozmo_Basestation_AnimationGroup_AnimationGroup_H__
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupEntry.h"
@@ -60,4 +60,4 @@ namespace Anki {
   } // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_COZMO_ANIMATION_GROUP_H
+#endif // __Cozmo_Basestation_AnimationGroup_AnimationGroup_H__

@@ -20,8 +20,6 @@
 //#include <cassert>
 #include <vector>
 
-#define DEBUG_ANIMATIONS 0
-
 namespace Anki {
   namespace Cozmo {
     

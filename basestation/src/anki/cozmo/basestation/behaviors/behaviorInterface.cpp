@@ -15,7 +15,6 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/moodSystem/emotionScoreEvaluator.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -37,7 +36,8 @@ namespace Cozmo {
   
   
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-  : _robot(robot)
+  : _moodScorer()
+  , _robot(robot)
   , _lastRunTime(0.0)
   , _overrideScore(-1.0f)
   , _isRunning(false)
@@ -52,30 +52,12 @@ namespace Cozmo {
     const Json::Value& nameJson = config[kNameKey];
     _name = nameJson.isString() ? nameJson.asCString() : kBaseDefaultName;
 
-    _emotionScorers.clear();
+    _moodScorer.ClearEmotionScorers();
     
     const Json::Value& emotionScorersJson = config[kEmotionScorersKey];
     if (!emotionScorersJson.isNull())
     {
-      const uint32_t numEmotionScorers = emotionScorersJson.size();
-
-      _emotionScorers.reserve(numEmotionScorers);
-      
-      const Json::Value kNullScorerValue;
-      
-      for (uint32_t i = 0; i < numEmotionScorers; ++i)
-      {
-        const Json::Value& emotionScorerJson = emotionScorersJson.get(i, kNullScorerValue);
-        
-        if (emotionScorerJson.isNull())
-        {
-          PRINT_NAMED_WARNING("IBehavior.BadEmotionScorer", "Behavior '%s': %s[%u] failed to read", _name.c_str(), kEmotionScorersKey, i);
-        }
-        else
-        {
-          _emotionScorers.emplace_back(emotionScorerJson);
-        }
-      }
+      _moodScorer.ReadFromJson(emotionScorersJson);
     }
     
     _repetitionPenalty.Clear();
@@ -131,7 +113,7 @@ namespace Cozmo {
   
   float IBehavior::EvaluateEmotionScore(const MoodManager& moodManager) const
   {
-    return EmotionScoreEvaluator::EvaluateEmotionScore(_emotionScorers, moodManager);
+    return _moodScorer.EvaluateEmotionScore(moodManager);
   }
   
   // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses

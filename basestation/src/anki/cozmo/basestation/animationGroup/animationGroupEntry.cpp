@@ -14,17 +14,14 @@
  **/
 
 #include "anki/cozmo/basestation/animationGroup/animationGroupEntry.h"
-#include "util/graphEvaluator/graphEvaluator2d.h"
-#include "anki/cozmo/basestation/moodSystem/emotionScoreEvaluator.h"
 #include "util/logging/logging.h"
 //#include <cassert>
-
-#define DEBUG_ANIMATIONS 0
 
 namespace Anki {
   namespace Cozmo {
     
     AnimationGroupEntry::AnimationGroupEntry()
+    : _moodScorer()
     {
     }
     
@@ -38,18 +35,16 @@ namespace Anki {
       
       _name = jsonRoot["Name"].asString();
       
-      if(jsonRoot.isMember("EmotionScorers")) {
+      if(jsonRoot.isMember("MoodScorer")) {
         
-        Json::Value& jsonEmotionScorers = jsonRoot["EmotionScorers"];
+        Json::Value& jsonEmotionScorers = jsonRoot["MoodScorer"];
         
-        
-        const s32 numEntries = jsonEmotionScorers.size();
-        for(s32 i = 0; i < numEntries; ++i)
-        {
-          Json::Value& jsonEmotionScorer = jsonEmotionScorers[i];
+        if(!_moodScorer.ReadFromJson(jsonEmotionScorers)) {
+          PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.BadMoodScorer",
+                            "'MoodScorer' field contains bad data");
           
-          _emotionScorers.push_back(EmotionScorer(jsonEmotionScorer));
-        } // for each Emotion Scorer
+          return RESULT_FAIL;
+        }
       }
       
       
@@ -58,7 +53,7 @@ namespace Anki {
     
     
     float AnimationGroupEntry::Evaluate(const MoodManager& moodManager) const {
-      return EmotionScoreEvaluator::EvaluateEmotionScore(_emotionScorers, moodManager);
+      return _moodScorer.EvaluateEmotionScore(moodManager);
     }
     
   } // namespace Cozmo
