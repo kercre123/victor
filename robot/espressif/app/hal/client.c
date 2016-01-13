@@ -8,7 +8,7 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
-#include "driver/i2spi.h"
+#include "backgroundTask.h"
 #include "transport/IReceiver.h"
 #include "transport/reliableTransport.h"
 
@@ -177,8 +177,7 @@ void Receiver_OnConnectionRequest(ReliableConnection* conn)
   {
     ReliableTransport_FinishConnection(conn); // Accept the connection
     clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
-    uint8_t msg[2] = {0xFC, true}; // FC is the tag for a radio connection state message to the robot
-    i2spiQueueMessage(msg, 2);
+    backgroundTaskOnConnect();
   }
   else // The engine is trying to reconnect
   {
@@ -201,8 +200,7 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
   else
   {
-    uint8_t msg[2] = {0xFC, false}; // FC is the tag for a radio connection state message to the robot
-    i2spiQueueMessage(msg, 2);
+    backgroundTaskOnDisconnect();
     os_free(clientConnection->dest);
     os_free(clientConnection);
     clientConnection = NULL;
