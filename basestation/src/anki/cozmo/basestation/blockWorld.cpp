@@ -1923,7 +1923,7 @@ namespace Cozmo {
             if(marker2isInsideMarker1) {
               PRINT_NAMED_INFO("BlockWorld.Update",
                                "Removing %s marker completely contained within %s marker.\n",
-                               marker1.GetCodeName(), marker2.GetCodeName());
+                               marker2.GetCodeName(), marker1.GetCodeName());
               // Note: erase does increment of iterator for us
               markerIter2 = currentObsMarkers.erase(markerIter2);
             } else {
@@ -1983,7 +1983,8 @@ namespace Cozmo {
           }
         }
         
-        RemoveMarkersWithinMarkers(currentObsMarkers);
+        // Optional: don't allow markers seen enclosed in other markers
+        //RemoveMarkersWithinMarkers(currentObsMarkers);
         
         // Only update robot's poses using VisionMarkers while not on a ramp
         if(!_robot->IsOnRamp()) {
