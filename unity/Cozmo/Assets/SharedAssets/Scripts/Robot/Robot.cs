@@ -1086,11 +1086,12 @@ public class Robot : IDisposable {
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
   }
 
-  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, float approachAngleRad = 0.0f, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     AlignWithObjectMessage.objectID = obj;
     AlignWithObjectMessage.distanceFromMarker_mm = distanceFromMarker_mm;
     AlignWithObjectMessage.useManualSpeed = false;
-    AlignWithObjectMessage.useApproachAngle = false;
+    AlignWithObjectMessage.useApproachAngle = useApproachAngle;
+    AlignWithObjectMessage.approachAngle_rad = approachAngleRad;
     AlignWithObjectMessage.motionProf = PathMotionProfileDefault;
 
     QueueSingleAction.action.alignWithObject = AlignWithObjectMessage;

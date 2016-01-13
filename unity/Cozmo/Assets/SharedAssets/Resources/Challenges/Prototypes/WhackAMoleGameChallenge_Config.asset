@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Name: WhackAMoleGameChallenge_Config
   m_EditorClassIdentifier: 
   MaxPanicTime: 15
-  MaxConfusionTime: 8
+  MaxConfusionTime: 4
   MaxPanicInterval: 4
+  MoleTimeout: 15
   PanicDecayMin: .150000006
   PanicDecayMax: .400000006

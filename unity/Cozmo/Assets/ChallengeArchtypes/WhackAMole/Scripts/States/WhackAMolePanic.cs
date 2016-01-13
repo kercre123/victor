@@ -33,7 +33,7 @@ namespace WhackAMole {
       }
 
       if (Time.time - _PanicStartTimestamp > _PanicTimeout) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kHeadDown, HandleAnimationDone));
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
         return;
       }
       // Check timestamps for Panic Target Switching and Timeout
@@ -47,23 +47,26 @@ namespace WhackAMole {
       if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.BOTH) {
         return;
       }
+      _WhackAMoleGame.FixCozmoAngles();
       _PanicIntervalTimestamp = -1;
       _PanicInterval = _PanicInterval - (Random.Range(_WhackAMoleGame.PanicDecayMin, _WhackAMoleGame.PanicDecayMax));
       if (_PanicInterval <= _WhackAMoleGame.PanicDecayMin) {
         _PanicInterval = _WhackAMoleGame.PanicDecayMin;
       }
-      int curr;
-      if (_WhackAMoleGame.CurrentTarget != null) {
-        curr = _WhackAMoleGame.CurrentTarget.ID;
+      KeyValuePair<int,int> curr;
+      if (_WhackAMoleGame.CurrentTargetKvP.Equals(null)) {
+        curr = _WhackAMoleGame.CurrentTargetKvP;
       }
       else {
-        curr = -1;
+        curr = new KeyValuePair<int,int>(-1,-1);
       }
-      foreach (KeyValuePair<int, LightCube> kVp in _WhackAMoleGame.ActivatedCubes) {
-        if (kVp.Key != curr) {
-          _WhackAMoleGame.CurrentTarget = kVp.Value;
+      // Grab a different face to chase after. TODO: Make this more random
+      foreach (KeyValuePair<int, int> kVp in _WhackAMoleGame.ActivatedFaces) {
+        if (!kVp.Equals(curr)) {
+          _WhackAMoleGame.CurrentTargetKvP = kVp;
           Debug.Log(string.Format("Panic - Now Target Cube {0}", kVp.Key));
-          _CurrentRobot.GotoObject(_WhackAMoleGame.CurrentTarget,0f);
+          _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[kVp.Key], 150f , null,true, 
+            _WhackAMoleGame.GetRelativeRad(kVp), Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
           return;
         }
       }
@@ -71,7 +74,7 @@ namespace WhackAMole {
 
     void HandleAnimationDone(bool success) {
       Debug.Log("Panic Animation Done, Deactivate all Cubes and return to idle.");
-      _WhackAMoleGame.DeactivateAllCubes();
+      _WhackAMoleGame.InitializeButtons();
       _StateMachine.SetNextState(new WhackAMoleIdle());
     }
 
