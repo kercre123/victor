@@ -468,52 +468,48 @@
             ],
           }, # end controller viz
 
-          # {
-          #   'target_name': 'webotsCtrlRobot',
-          #   'type': 'executable',
-          #   'include_dirs': [
-          #     '../../robot/include',
-          #     '../../include',
-          #     '../../simulator/include',
-          #     '<@(webots_includes)',
-          #     '<@(opencv_includes)',
-          #   ],
-          #   'dependencies': [
-          #     '<(ce-cti_gyp_path):ctiCommonRobot',
-          #     '<(ce-cti_gyp_path):ctiVisionRobot',
-          #     '<(ce-cti_gyp_path):ctiMessagingRobot',
-          #     '<(ce-cti_gyp_path):ctiPlanningRobot',
-          #     '<(ce-util_gyp_path):util',
-          #     'robotClad',
-          #   ],
-          #   'sources': [ '<!@(cat <(ctrlRobot_source))' ],
-          #   'defines': [
-          #     'COZMO_ROBOT',
-          #     'SIMULATOR'
-          #   ],
-          #   'libraries': [
-          #     'libCppController.dylib',
-          #     '<@(opencv_libs)',
-          #     '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
-          #   ],
-          #   'actions': [
-          #     {
-          #       'action_name': 'generate_version_include',
-          #       'outputs': [
-          #         '../../robot/include/anki/cozmo/robot/version.h'
-          #       ],
-          #       'action': [
-          #         '../../robot/tools/versionGenerator/versionGenerator.sh',
-          #         '../../robot/include/anki/cozmo/robot/version.h'
-          #       ],
-          #     }
-          #   ]
-          # }, # end controller Robot
-
-
-
-
-
+          {
+            'target_name': 'webotsCtrlRobot',
+            'type': 'executable',
+            'include_dirs': [
+              '../../robot/include',
+              '../../include',
+              '../../simulator/include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-cti_gyp_path):ctiMessagingRobot',
+              '<(ce-cti_gyp_path):ctiPlanningRobot',
+              '<(ce-util_gyp_path):util',
+              'robotClad',
+            ],
+            'sources': [ '<!@(cat <(ctrlRobot_source))' ],
+            'defines': [
+              'COZMO_ROBOT',
+              'SIMULATOR'
+            ],
+            'libraries': [
+              'libCppController.dylib',
+              '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+            ],
+            'actions': [
+              {
+                'action_name': 'generate_version_include',
+                'inputs': [ ],
+                'outputs': [
+                  '../../robot/include/anki/cozmo/robot/version.h'
+                ],
+                'action': [
+                  '../../robot/tools/versionGenerator/versionGenerator.sh',
+                  '../../robot/include/anki/cozmo/robot/version.h'
+                ],
+              }
+            ]
+          }, # end controller Robot
 
 
 
@@ -665,122 +661,142 @@
             ],
           }, # end controller Keyboard
 
-          # {
-          #   'target_name': 'webotsControllers',
-          #   'type': 'none',
-          #   'dependencies': [
-          #     'webotsCtrlKeyboard',
-          #     'webotsCtrlBuildServerTest',              
-          #     'webotsCtrlGameEngine',
-          #     #'webotsCtrlRobot',
-          #     'webotsCtrlViz',
-          #     'webotsCtrlLightCube',
-          #     'cozmo_physics',
-          #   ],
+          {
+            'target_name': 'webotsControllers',
+            'type': 'none',
+            'dependencies': [
+              'webotsCtrlKeyboard',
+              'webotsCtrlBuildServerTest',              
+              'webotsCtrlGameEngine',
+              'webotsCtrlRobot',
+              'webotsCtrlViz',
+              'webotsCtrlLightCube',
+              'cozmo_physics',
+            ],
             
-          #   # Create symlinks to controller binaries
-          #   # For some reason this is necessary in order to be able to attach to their processes from Xcode.
-          #   'actions': [
-          #     {
-          #       'action_name': 'create_symlink_webotsCtrlKeyboard',
-          #       'action': [
-          #         'ln', '-s', '-f',
-          #         '<(PRODUCT_DIR)/webotsCtrlKeyboard',
-          #         '../../simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_webotsCtrlBuildServerTest',
-          #       'action': [
-          #         'ln', '-s', '-f',
-          #         '<(PRODUCT_DIR)/webotsCtrlBuildServerTest',
-          #         '../../simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest',
-          #       ],
-          #     },              
-          #     {
-          #       'action_name': 'create_symlink_webotsCtrlGameEngine',
-          #       'action': [
-          #         'ln', '-s', '-f',
-          #         '<(PRODUCT_DIR)/webotsCtrlGameEngine',
-          #         '../../simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine',
-          #       ],
-          #     },
-          #     # {
-          #     #  'action_name': 'create_symlink_resources_assets',
-          #     #   'action': [
-          #     #    'ln', '-s', '-f', '-n',
-          #     #     '<(cozmo_asset_path)',
-          #     #     '../../simulator/controllers/webotsCtrlGameEngine/resources/assets',
-          #     #   ],
-          #     # },
-          #     # {
-          #     #  'action_name': 'create_symlink_resources_sound',
-          #     #  'action': [
-          #     #    'ln', '-s', '-f', '-n',
-          #     #    '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
-          #     #    '../../simulator/controllers/webotsCtrlGameEngine/resources/sound',
-          #     #  ],
-          #     # },
-          #     {
-          #       'action_name': 'create_symlink_resources_configs',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(cozmo_engine_path)/resources/config',
-          #         '../../simulator/controllers/webotsCtrlGameEngine/resources/config',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_resources_test',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(cozmo_engine_path)/resources/test',
-          #         '../../simulator/controllers/webotsCtrlGameEngine/resources/test',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_resources_pocketsphinx',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
-          #         '../../simulator/controllers/webotsCtrlGameEngine/resources/pocketsphinx',
-          #       ],
-          #     },
-          #     # {
-          #     #   'action_name': 'create_symlink_webotsCtrlRobot',
-          #     #   'action': [
-          #     #     'ln', '-s', '-f',
-          #     #     '<(PRODUCT_DIR)/webotsCtrlRobot',
-          #     #     '../../simulator/controllers/webotsCtrlRobot/webotsCtrlRobot',
-          #     #   ],
-          #     # },
-          #     {
-          #       'action_name': 'create_symlink_webotsCtrlViz',
-          #       'action': [
-          #         'ln', '-s', '-f',
-          #         '<(PRODUCT_DIR)/webotsCtrlViz',
-          #         '../../simulator/controllers/webotsCtrlViz/webotsCtrlViz',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_webotsCtrlLightCube',
-          #       'action': [
-          #         'ln', '-s', '-f',
-          #         '<(PRODUCT_DIR)/webotsCtrlLightCube',
-          #         '../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_webotsPluginPhysics',
-          #       'action': [
-          #         'ln', '-s', '-f',
-          #         '<(PRODUCT_DIR)/libcozmo_physics.dylib',
-          #         '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
-          #       ],
-          #     },
+            # Create symlinks to controller binaries
+            # For some reason this is necessary in order to be able to attach to their processes from Xcode.
+            'actions': [
+              {
+                'action_name': 'create_symlink_webotsCtrlKeyboard',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlKeyboard',
+                  '../../simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlBuildServerTest',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlBuildServerTest',
+                  '../../simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest',
+                ],
+              },              
+              {
+                'action_name': 'create_symlink_webotsCtrlGameEngine',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlGameEngine',
+                  '../../simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine',
+                ],
+              },
+              # {
+              #  'action_name': 'create_symlink_resources_assets',
+              #   'action': [
+              #    'ln', '-s', '-f', '-n',
+              #     '<(cozmo_asset_path)',
+              #     '../../simulator/controllers/webotsCtrlGameEngine/resources/assets',
+              #   ],
+              # },
+              # {
+              #  'action_name': 'create_symlink_resources_sound',
+              #  'action': [
+              #    'ln', '-s', '-f', '-n',
+              #    '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
+              #    '../../simulator/controllers/webotsCtrlGameEngine/resources/sound',
+              #  ],
+              # },
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/config',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_test',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/test',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/test',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_pocketsphinx',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/pocketsphinx',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlRobot',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlRobot',
+                  '../../simulator/controllers/webotsCtrlRobot/webotsCtrlRobot',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlViz',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlViz',
+                  '../../simulator/controllers/webotsCtrlViz/webotsCtrlViz',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlLightCube',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlLightCube',
+                  '../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsPluginPhysics',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/libcozmo_physics.dylib',
+                  '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
+                ],
+              },
               
-          #   ], # actions
+            ], # actions
             
-          # }, # end webotsControllers
+          }, # end webotsControllers
 
 
           {
@@ -840,6 +856,8 @@
               #   ],
               # },
 
+              #These have empty inputs and outputs and are instead in the action 
+              #so gyp doesn't think that they're dupes
               {
                 'action_name': 'create_symlink_resources_configs',
                 'inputs':[],
@@ -851,7 +869,6 @@
                 ],
               },
 
-              #These have empty inputs and outputs so gyp doesn't think that they're dupes
               {
                 'action_name': 'create_symlink_resources_test',
                 'inputs': [
