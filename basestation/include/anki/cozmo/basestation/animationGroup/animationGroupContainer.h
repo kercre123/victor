@@ -32,7 +32,7 @@ namespace Anki {
     public:
       AnimationGroupContainer();
 
-      Result DefineFromJson(Json::Value& jsonRoot, const std::string& animationGroupName);
+      Result DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName);
       
       Result AddAnimationGroup(const std::string& name);
       

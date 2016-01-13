@@ -22,31 +22,45 @@
 namespace Anki {
   namespace Cozmo {
     
+    static const char* kAnimationsKeyName = "Animations";
+    
     AnimationGroup::AnimationGroup(const std::string& name)
     : _name(name)
     {
       
     }
     
-    Result AnimationGroup::DefineFromJson(const std::string& name, Json::Value &jsonRoot)
+    Result AnimationGroup::DefineFromJson(const std::string& name, const Json::Value &jsonRoot)
     {
       _name = name;
       
-      if(!jsonRoot.isMember("Animations")) {
+      const Json::Value& jsonAnimations = jsonRoot[kAnimationsKeyName];
+      
+      if(jsonAnimations.isNull()) {
         
         PRINT_NAMED_ERROR("AnimationGroup.DefineFromJson.NoAnimations",
-                          "Missing 'Animations' field for animation group.");
+                          "Missing '%s' field for animation group.", kAnimationsKeyName);
+        return RESULT_FAIL;
       }
-      
-      Json::Value& jsonAnimations = jsonRoot["Animations"];
-      
+
+      if(!jsonAnimations.isArray()) {
+        
+        PRINT_NAMED_ERROR("AnimationGroup.DefineFromJson.AnimationsNotArray",
+                          "'%s' field is not an array", kAnimationsKeyName);
+        return RESULT_FAIL;
+      }
+
+      _animations.clear();
       
       const s32 numEntries = jsonAnimations.size();
+      
+      _animations.reserve(numEntries);
+      
       for(s32 iEntry = 0; iEntry < numEntries; ++iEntry)
       {
-        Json::Value& jsonEntry = jsonAnimations[iEntry];
+        const Json::Value& jsonEntry = jsonAnimations[iEntry];
         
-        _animations.push_back(AnimationGroupEntry());
+        _animations.emplace_back();
         
         auto addResult = _animations.back().DefineFromJson(jsonEntry);
         
@@ -71,10 +85,15 @@ namespace Anki {
     const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager) const {
       const float kRandomFactor = 0.1f;
       
+      if(IsEmpty()) {
+        static const std::string empty = "";
+        return empty;
+      }
+      
       Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
       
       auto bestEntry = _animations.end();
-      float bestScore = FLT_MIN;
+      float bestScore = -FLT_MAX;
       for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
       {
         auto entryScore = entry->EvaluateScore(moodManager);

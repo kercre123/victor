@@ -20,33 +20,42 @@
 namespace Anki {
   namespace Cozmo {
     
+    static const char* kNameKey = "Name";
+    static const char* kMoodScorerKey = "MoodScorer";
+    
     AnimationGroupEntry::AnimationGroupEntry()
     : _moodScorer()
     {
     }
     
-    Result AnimationGroupEntry::DefineFromJson(Json::Value &jsonRoot)
+    Result AnimationGroupEntry::DefineFromJson(const Json::Value &jsonRoot)
     {
-      if(!jsonRoot.isMember("Name")) {
+      const Json::Value& jsonName = jsonRoot[kNameKey];
+      
+      if(jsonName.isNull()) {
         PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoName",
-                          "Missing 'Name' field for animation.");
+                          "Missing '%s' field for animation.", kNameKey);
         return RESULT_FAIL;
       }
       
-      _name = jsonRoot["Name"].asString();
-      
-      if(jsonRoot.isMember("MoodScorer")) {
-        
-        Json::Value& jsonEmotionScorers = jsonRoot["MoodScorer"];
-        
-        if(!_moodScorer.ReadFromJson(jsonEmotionScorers)) {
-          PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.BadMoodScorer",
-                            "'MoodScorer' field contains bad data");
-          
-          return RESULT_FAIL;
-        }
+      if(!jsonName.isString()) {
+        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NameNotString",
+                          "'%s' field is not a string.", kNameKey);
+        return RESULT_FAIL;
       }
       
+      _name = jsonName.asString();
+      
+      const Json::Value& jsonEmotionScorers = jsonRoot[kMoodScorerKey];
+      
+      _moodScorer.ClearEmotionScorers();
+      
+      if(!_moodScorer.ReadFromJson(jsonEmotionScorers)) {
+        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.BadMoodScorer",
+                          "'%s' field contains bad data", kMoodScorerKey);
+        
+        return RESULT_FAIL;
+      }
       
       return RESULT_OK;
     }

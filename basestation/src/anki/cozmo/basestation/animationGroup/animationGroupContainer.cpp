@@ -35,18 +35,8 @@ namespace Anki {
     
     AnimationGroup* AnimationGroupContainer::GetAnimationGroup(const std::string& name)
     {
-      AnimationGroup* animPtr = nullptr;
-      
-      auto retVal = _animationGroups.find(name);
-      if(retVal == _animationGroups.end()) {
-        PRINT_NAMED_ERROR("AnimationGroupContainer.GetAnimationGroup.InvalidName",
-                          "AnimationGroup requested for unknown animation group '%s'.\n",
-                          name.c_str());
-      } else {
-        animPtr = &retVal->second;
-      }
-      
-      return animPtr;
+      const AnimationGroup* animGroupPtr = const_cast<const AnimationGroupContainer *>(this)->GetAnimationGroup(name);
+      return const_cast<AnimationGroup*>(animGroupPtr);
     }
     
     const AnimationGroup* AnimationGroupContainer::GetAnimationGroup(const std::string& name) const
@@ -76,7 +66,7 @@ namespace Anki {
     }
     
     
-    Result AnimationGroupContainer::DefineFromJson(Json::Value& jsonRoot, const std::string& animationGroupName)
+    Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName)
     {
       
       if(RESULT_OK != AddAnimationGroup(animationGroupName)) {

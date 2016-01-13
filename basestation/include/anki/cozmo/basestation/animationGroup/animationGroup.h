@@ -35,7 +35,7 @@ namespace Anki {
       explicit AnimationGroup(const std::string& name = "");
       
       // For reading animation groups from files
-      Result DefineFromJson(const std::string& name, Json::Value& json);
+      Result DefineFromJson(const std::string& name, const Json::Value& json);
       
       // Retrieve an animation based on a set of moods
       const std::string& GetAnimationName(const MoodManager& moodManager) const;

@@ -1,5 +1,5 @@
 /**
- * File: emotionScorer
+ * File: moodScorer.h
  *
  * Author: Trevor Dasch
  * Created: 01/12/16
@@ -16,7 +16,6 @@
 #define __Cozmo_Basestation_MoodSystem_MoodScorer_H__
 
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include <vector>
 
 namespace Json {
@@ -25,6 +24,9 @@ namespace Json {
 
 namespace Anki {
   namespace Cozmo {
+    
+    //Forward declaration
+    class MoodManager;
     
     
     class MoodScorer

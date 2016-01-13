@@ -38,7 +38,7 @@ namespace Anki {
       AnimationGroupEntry();
       
       // For reading animation groups from files
-      Result DefineFromJson(Json::Value& json);
+      Result DefineFromJson(const Json::Value& json);
       
       // Evaluate this animation group entry based on the current mood.
       float EvaluateScore(const MoodManager& moodManager) const;

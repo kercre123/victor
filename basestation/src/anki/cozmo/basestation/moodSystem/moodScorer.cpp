@@ -1,5 +1,5 @@
 /**
- * File: emotionScorer
+ * File: moodScorer.cpp
  *
  * Author: Trevor Dasch
  * Created: 01/12/16
@@ -12,12 +12,12 @@
  **/
 
 
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "util/logging/logging.h"
 #include "json/json.h"
 #include "util/math/constantsAndMacros.h"
-#include <assert.h>
 
 
 namespace Anki {
@@ -33,6 +33,20 @@ namespace Anki {
     
     bool MoodScorer::ReadFromJson(const Json::Value& emotionScorersJson)
     {
+      ClearEmotionScorers();
+      
+      if(emotionScorersJson.isNull()) {
+        PRINT_NAMED_ERROR("MoodScorer.ReadFromJson.NullJson",
+                            "Json is null for MoodScorer");
+        return false;
+      }
+      
+      if(!emotionScorersJson.isArray()) {
+        PRINT_NAMED_ERROR("MoodScorer.ReadFromJson.JsonNotArray",
+                            "Json is not an array for MoodScorer");
+        return false;
+      }
+      
       // read array
       const uint32_t numEmotionScorers = emotionScorersJson.size();
       
@@ -46,7 +60,8 @@ namespace Anki {
         
         if (emotionScorerJson.isNull())
         {
-          PRINT_NAMED_WARNING("MoodScorer.BadEmotionScorer", "MoodScorer: failed to read emotion scorer %u", i);
+          PRINT_NAMED_WARNING("MoodScorer.BadEmotionScorer",
+                              "MoodScorer: failed to read emotion scorer %u", i);
         }
         else
         {
