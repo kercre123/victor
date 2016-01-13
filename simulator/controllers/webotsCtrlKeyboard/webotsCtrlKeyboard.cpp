@@ -1441,7 +1441,14 @@ namespace Anki {
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   // Turn to face the pose of the last observed face:
                   printf("Turning to face ID = %llu\n", _lastFace.faceID);
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FacePose(_lastFace.world_x, _lastFace.world_y, _lastFace.world_z, DEG_TO_RAD(10), M_PI, 1)));
+                  ExternalInterface::FacePose facePose; // construct w/ defaults for speed
+                  facePose.world_x = _lastFace.world_x;
+                  facePose.world_y = _lastFace.world_y;
+                  facePose.world_z = _lastFace.world_z;
+                  facePose.turnAngleTol = DEG_TO_RAD(10);
+                  facePose.maxTurnAngle = M_PI;
+                  facePose.robotID = 1;
+                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(facePose)));
                 } else {
                   SendEnableVisionMode(VisionMode::DetectingFaces, true);
                 }
