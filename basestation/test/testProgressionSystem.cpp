@@ -30,14 +30,13 @@ TEST(ProgressionSystem, TestStats)
   progressionManager.GetStat(ProgressionStatType::Excitement).Add(10);
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(), 10);
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Novelty).GetValue(),  0);
-  
-  
-  // TODO: Fix clamping by adding one for signed integers.
-  /*
+
   // Check we clamp correctly when added beyond the max
   progressionManager.GetStat(ProgressionStatType::Excitement).Add(ProgressionStat::kStatValueMax);
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(), ProgressionStat::kStatValueMax);
 
+  /*
+  // TODO: Fix clamping by adding one for signed integers.
   // Check we clamp correctly when adding enough to overflow
   progressionManager.GetStat(ProgressionStatType::Excitement).Add( std::numeric_limits<ProgressionStat::ValueType>::max() );
   EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(), ProgressionStat::kStatValueMax);
