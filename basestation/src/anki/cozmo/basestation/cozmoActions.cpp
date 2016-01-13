@@ -1557,7 +1557,7 @@ namespace Anki {
             }
             
             PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.WrongMarker",
-                             "Have seend object %d, but not marker code %d. Have seen: %s",
+                             "Have seen object %d, but not marker code %d. Have seen: %s",
                              _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
           }
         } // if(!_markerSeen)
