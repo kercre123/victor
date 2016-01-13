@@ -538,21 +538,20 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     ComputeFriendshipLevel();
-
-    FriendshipLevelMessage.newVal = FriendshipLevel;
-    RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
-    RobotEngineManager.Instance.SendMessage();
   }
 
   private void ComputeFriendshipLevel() {
     FriendshipLevelConfig levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
-    int i = 0;
-    for (; i < levelConfig.FriendshipLevels.Length; ++i) {
-      if (levelConfig.FriendshipLevels[i].LevelRequirement > FriendshipPoints) {
-        break;
-      }
+    if (FriendshipLevel == levelConfig.FriendshipLevels.Length) {
+      return;
     }
-    FriendshipLevel = i - 1;
+    if (levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
+      FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
+      FriendshipLevel++;
+      FriendshipLevelMessage.newVal = FriendshipLevel;
+      RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
+      RobotEngineManager.Instance.SendMessage();
+    }
   }
 
   #endregion
