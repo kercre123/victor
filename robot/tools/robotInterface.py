@@ -111,6 +111,38 @@ class _Dispatcher(IDataReceiver):
         else:
             if msg.tag == msg.Tag.printText:
                 sys.stdout.write("ROBOT: " + msg.printText.text)
+            elif msg.tag == msg.Tag.trace:
+                base = "ROBOT TRACE"
+                if not msg.trace.name in self.nameTable:
+                    sys.stderr.write("{} unknown trace name ID {:d}{}".format(base, msg.trace.name, os.linesep))
+                elif not msg.trace.stringId in self.formatTable:
+                    kwds = {'linesep':  os.linesep,
+                            'base':     base,
+                            'level':    msg.trace.level,
+                            'name':     self.nameTable[msg.trace.name],
+                            'stringId': msg.trace.stringId,
+                            'vals':     repr(msg.trace.value)
+                    }
+                    sys.stderr.write("{base} {level:d} {name}: Unknown format string id {stringId:d}.{linesep}\tValues = {vals}{linesep}".format(**kwds))
+                elif len(msg.trace.value) != self.formatTable[msg.trace.stringId][1]:
+                    kwds = {'linesep':  os.linesep,
+                            'base':     base,
+                            'level':    msg.trace.level,
+                            'name':     self.nameTable[msg.trace.name],
+                            'fmt':      self.formatTable[msg.trace.stringId][0],
+                            'nargs':    self.formatTable[msg.trace.stringId][1],
+                            'vals':     repr(msg.trace.value),
+                            'nvals':  len(msg.trace.value)
+                    }
+                    sys.stderr.write("{base} {level:d} {name}: Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat:{fmt}{linesep}\t{vals}{linesep}".format(**kwds))
+                else:
+                    kwds = {'linesep':   os.linesep,
+                            'base':      base,
+                            'level':     msg.trace.level,
+                            'name':      self.nameTable[msg.trace.name],
+                            'formatted': (self.formatTable[msg.trace.stringId][0] % msg.trace.value)
+                    }
+                    sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:
