@@ -65,7 +65,10 @@ class CoordinatedFile:
         else:
             self.fileName = fileName
             fh = open(fileName, "r")
-            self.contents = fh.read()
+            try:
+                self.contents = fh.read()
+            except UnicodeDecodeError as e:
+                sys.exit("Unicode decode error while trying to parse file \"{}\":{linesep}\t{}{linesep}".format(file, str(e), linesep=os.linesep)
             fh.close()
             counter = 0
             self.lineIndecies = [0]

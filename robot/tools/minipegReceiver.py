@@ -53,7 +53,7 @@ class MinipegReceiver:
             self.imageBuffer = []
         if self.imageBuffer is not None:
             fh = open("img{:05d}.minipeg".format(chunk.imageId), 'wb')
-            fh.write(chunk.data)
+            fh.write(bytes(chunk.data))
             fh.close()
             self.imageBuffer.extend(chunk.data)
             if chunk.imageChunkCount == chunk.chunkId+1:
