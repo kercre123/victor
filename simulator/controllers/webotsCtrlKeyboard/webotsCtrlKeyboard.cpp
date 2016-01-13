@@ -732,7 +732,7 @@ namespace Anki {
                          useManualSpeed);
 
                   SendExecutePathToPose(poseMarkerPose_, pathMotionProfile_, useManualSpeed);
-                  SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
+                  //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                 } else {
                   
                   // Indicate whether or not to place object at the exact rotation specified or
@@ -744,7 +744,7 @@ namespace Anki {
                                                   useExactRotation,
                                                   useManualSpeed);
                   // Make sure head is tilted down so that it can localize well
-                  SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
+                  //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   
                 }
                 break;
