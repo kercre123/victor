@@ -85,8 +85,8 @@ typedef struct
 {
   preambleType preamble;
   uint8_t payloadLen;  ///< Number of bytes of message data following JPEG data
-  uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
   uint8_t droplet; ///< Drop flags and bit fields
+  uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
 } DropToWiFi;
 
 ct_assert(sizeof(DropToWiFi) == DROP_TO_WIFI_SIZE);
