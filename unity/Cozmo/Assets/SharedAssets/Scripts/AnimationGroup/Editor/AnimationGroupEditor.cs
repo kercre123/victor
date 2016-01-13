@@ -221,10 +221,10 @@ public class AnimationGroupEditor : EditorWindow {
 
     bool unfolded = false;
     _ExpandedFoldouts.TryGetValue(entry, out unfolded);
-    unfolded = EditorGUILayout.Foldout(unfolded, "Emotion Scorers ("+entry.EmotionScorers.Count+")");
+    unfolded = EditorGUILayout.Foldout(unfolded, "Emotion Scorers ("+entry.MoodScorer.Count+")");
     if (unfolded) {
       EditorGUI.indentLevel++;
-      DrawList("", entry.EmotionScorers, DrawEmotionScorer, () => new EmotionScorer());
+      DrawList("", entry.MoodScorer, DrawEmotionScorer, () => new EmotionScorer());
       EditorGUI.indentLevel--;
     }
     _ExpandedFoldouts[entry] = unfolded;

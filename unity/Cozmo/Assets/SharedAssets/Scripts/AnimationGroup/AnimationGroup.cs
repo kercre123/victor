@@ -14,14 +14,14 @@ namespace AnimationGroups {
 
       public string Name;
 
-      public List<EmotionScorer> EmotionScorers = new List<EmotionScorer>();
+      public List<EmotionScorer> MoodScorer = new List<EmotionScorer>();
 
       public float Evaluate(Robot robot) {
         float result = 0f;
-        for (int i = 0; i < EmotionScorers.Count; i++) {
+        for (int i = 0; i < MoodScorer.Count; i++) {
 
-          float emotionVal = robot.EmotionValues[(int)EmotionScorers[i].EmotionType];
-          result += EmotionScorers[i].Curve.Evaluate(emotionVal);
+          float emotionVal = robot.EmotionValues[(int)MoodScorer[i].EmotionType];
+          result += MoodScorer[i].Curve.Evaluate(emotionVal);
         }
         return result;
       }
