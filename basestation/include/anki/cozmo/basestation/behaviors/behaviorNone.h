@@ -61,6 +61,10 @@ protected:
   {
     _isInterrupted = true; return Result::RESULT_OK;
   }
+
+  virtual void StopInternal(Robot& robot, double currentTime_sec) override
+  {
+  }
   
   bool _isInterrupted = false;
 };

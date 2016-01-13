@@ -1572,20 +1572,6 @@ namespace Anki {
       }
 
     }
-
-    static bool HasSuffix(const char* inFilename, const char* inSuffix)
-    {
-      const size_t filenameLen = strlen(inFilename);
-      const size_t suffixLen   = strlen(inSuffix);
-      
-      if (filenameLen < suffixLen)
-      {
-        return false;
-      }
-      
-      const int cmp = strcmp(&inFilename[filenameLen-suffixLen], inSuffix);
-      return (cmp == 0);
-    }
     
     void Robot::LoadBehaviors()
     {
@@ -1602,7 +1588,7 @@ namespace Anki {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr)
         {
-          if ((ent->d_type == DT_REG) && HasSuffix(ent->d_name, ".json"))
+          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
           {
             std::string fullFileName = behaviorFolder + ent->d_name;
             

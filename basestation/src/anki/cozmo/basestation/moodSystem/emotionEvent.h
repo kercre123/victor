@@ -16,6 +16,7 @@
 
 
 #include "anki/cozmo/basestation/moodSystem/emotionAffector.h"
+#include "util/graphEvaluator/graphEvaluator2d.h"
 #include <vector>
 
 
@@ -50,6 +51,9 @@ public:
   size_t GetNumAffectors() const { return _affectors.size(); }
   const EmotionAffector& GetAffector(size_t index) const { return _affectors[index]; }
   const std::vector<EmotionAffector>& GetAffectors() const { return _affectors; }
+  
+  // penalty is applied as a scalar, so 1.0f == no penalty
+  float CalculateRepetitionPenalty(float timeSinceLastOccurence) const;
 
   // ===== Json =====
   
@@ -60,6 +64,7 @@ private:
   
   std::vector<EmotionAffector>  _affectors;
   std::string                   _name;
+  Util::GraphEvaluator2d        _repetitionPenalty;
 };
 
 

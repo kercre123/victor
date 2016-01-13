@@ -23,14 +23,11 @@ using namespace ExternalInterface;
   
   
 static const char* kAnimNameKey = "animName";
-static const char* kMinTimeBetweenRunsKey = "minTimeBetweenRuns";
   
 
 BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _animationName()
-  , _minTimeBetweenRuns(0.0)
-  , _lastRunTime_sec(0.0)
   , _loopCount(1)
   , _loopsLeft(0)
   , _lastActionTag(0)
@@ -47,13 +44,6 @@ BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
       if (valueJson.isString())
       {
         _animationName = valueJson.asCString();
-      }
-    }
-    {
-      const Json::Value& valueJson = config[kMinTimeBetweenRunsKey];
-      if (valueJson.isNumeric())
-      {
-        _minTimeBetweenRuns = valueJson.asDouble();
       }
     }
   }
@@ -77,7 +67,7 @@ void BehaviorPlayAnim::SetAnimationName(const std::string& inName)
   
 bool BehaviorPlayAnim::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
-  const bool retVal = (_lastRunTime_sec == 0.0) || (currentTime_sec > (_lastRunTime_sec + _minTimeBetweenRuns));
+  const bool retVal = true;
   return retVal;
 }
   
@@ -88,7 +78,6 @@ Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec, bool
   _isActing = false;
   _loopsLeft = _loopCount;
   _lastActionTag = 0;
-  _lastRunTime_sec = currentTime_sec;
   
   return Result::RESULT_OK;
 }
@@ -115,7 +104,12 @@ Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec,
   
   return Result::RESULT_OK;
 }
+
   
+void BehaviorPlayAnim::StopInternal(Robot& robot, double currentTime_sec)
+{
+}
+
 
 void BehaviorPlayAnim::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {

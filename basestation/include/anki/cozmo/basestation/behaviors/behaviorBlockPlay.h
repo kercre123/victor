@@ -78,6 +78,8 @@ namespace Cozmo {
     // Finish placing current object if there is one, otherwise good to go
     virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
     
+    virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
+    
     // If the robot is not executing any action for this amount of time,
     // something went wrong so start it up again.
     constexpr static f32 kInactionFailsafeTimeoutSec = 1;

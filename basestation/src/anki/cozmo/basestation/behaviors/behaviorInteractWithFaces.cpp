@@ -76,7 +76,8 @@ namespace Cozmo {
       }
       _currentState = _resumeState;
       _resumeState = State::Interrupted;
-      //robot.GetMoveComponent().EnableTrackToFace(); // [MarkW:TODO] If we disabled TrackToFace on interrupt we might want to restore it here?
+      
+      // [MarkW:TODO] Might want to cache and resume anything that was stopped/cancelled in StopInternal()
     }
     else
     {
@@ -206,7 +207,7 @@ namespace Cozmo {
       
       robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
                                            EmotionType::Social, kEmotionChangeMedium,
-                                           EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
+                                           EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew", currentTime_sec);
       dataIter->second._playedInitAnim = true;
       _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
       queueTrackingPosition = QueueActionPosition::AT_END;
@@ -433,7 +434,7 @@ namespace Cozmo {
         {
           robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
                                                EmotionType::Excited, kEmotionChangeSmall,
-                                               EmotionType::Social,  kEmotionChangeLarge,  "LotsOfFace");
+                                               EmotionType::Social,  kEmotionChangeLarge,  "LotsOfFace", currentTime_sec);
           
           _interestingFacesData[faceID]._coolDownUntil_sec = currentTime_sec + kFaceCooldownDuration_sec;
           StopTracking(robot);
@@ -495,7 +496,7 @@ namespace Cozmo {
               // re-enable it immediately after the animation finishes
               PlayAnimation(robot, kStrongScaredReactAnimName, QueueActionPosition::NOW_AND_RESUME);
               
-              robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");
+              robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace", currentTime_sec);
               _lastTooCloseScaredTime = currentTime_sec;
               _isActing = true;
               continuousCloseStartTime_sec = std::numeric_limits<float>::max();
@@ -543,15 +544,15 @@ namespace Cozmo {
   {
     _resumeState = isShortInterrupt ? _currentState : State::Interrupted;
     _timeWhenInterrupted = currentTime_sec;
-
-    if (_resumeState == State::Interrupted)
-    {
-      //robot.GetMoveComponent().DisableTrackToFace();
-      StopTracking(robot);
-    }
     _currentState = State::Interrupted;
     
     return RESULT_OK;
+  }
+  
+  void BehaviorInteractWithFaces::StopInternal(Robot& robot, double currentTime_sec)
+  {
+    //robot.GetMoveComponent().DisableTrackToFace();
+    StopTracking(robot);
   }
   
 #pragma mark -
@@ -903,7 +904,7 @@ namespace Cozmo {
                            lastFaceID);
           
           robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  -kEmotionChangeVerySmall,
-                                               EmotionType::Social, -kEmotionChangeVerySmall, "LostFace");
+                                               EmotionType::Social, -kEmotionChangeVerySmall, "LostFace", MoodManager::GetCurrentTimeInSeconds());
         }
         
         TrackNextFace(robot, lastFaceID, event.GetCurrentTime());
