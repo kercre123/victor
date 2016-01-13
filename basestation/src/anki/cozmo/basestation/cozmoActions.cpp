@@ -1077,7 +1077,7 @@ namespace Anki {
     , _isPanAbsolute(isPanAbsolute)
     , _isTiltAbsolute(isTiltAbsolute)
     {
-
+      RegisterSubAction(_compoundAction);
     }
 
     void PanAndTiltAction::SetMaxPanSpeed(f32 maxSpeed_radPerSec)
@@ -1122,22 +1122,22 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
     {
-      // In case this is a retry, make sure compound actions are cleared
-      _compoundAction.ClearActions(robot);
+      CompoundActionParallel* newCompoundParallel = new CompoundActionParallel();
+      _compoundAction = newCompoundParallel;
       
-      _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
+      newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
       
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
-      _compoundAction.AddAction(action);
+      newCompoundParallel->AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : robot.GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
-      _compoundAction.AddAction(headAction);
+      newCompoundParallel->AddAction(headAction);
       
       // Put the angles in the name for debugging
       _name = ("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
@@ -1145,15 +1145,15 @@ namespace Anki {
                "Action");
       
       // Prevent the compound action from signaling completion
-      _compoundAction.SetEmitCompletionSignal(false);
+      newCompoundParallel->SetEmitCompletionSignal(false);
       
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
-      _compoundAction.SetSuppressTrackLocking(true);
+      newCompoundParallel->SetSuppressTrackLocking(true);
       
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
-      ActionResult compoundResult = _compoundAction.Update(robot);
+      ActionResult compoundResult = newCompoundParallel->Update(robot);
       if(ActionResult::SUCCESS == compoundResult ||
          ActionResult::RUNNING == compoundResult)
       {
@@ -1167,12 +1167,7 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::CheckIfDone(Robot& robot)
     {
-      return _compoundAction.Update(robot);
-    }
-    
-    void PanAndTiltAction::Cleanup(Robot& robot)
-    {
-      _compoundAction.Cleanup(robot);
+      return _compoundAction->Update(robot);
     }
 
     
