@@ -783,112 +783,135 @@
           # }, # end webotsControllers
 
 
-          # {
-          #   'target_name': 'cozmoEngineUnitTest',
-          #   'type': 'executable',
-          #   'include_dirs': [
-          #     '../../basestation/test',
-          #     '../../robot/include',
-          #     '<@(opencv_includes)',
-          #   ],
-          #   'dependencies': [
-          #     'cozmoEngine',
-          #     '<(ce-cti_gyp_path):ctiCommon',
-          #     '<(ce-cti_gyp_path):ctiCommonRobot',
-          #     '<(ce-cti_gyp_path):ctiMessaging',
-          #     '<(ce-cti_gyp_path):ctiPlanning',
-          #     '<(ce-cti_gyp_path):ctiVision',
-          #     '<(ce-cti_gyp_path):ctiVisionRobot',
-          #     '<(ce-util_gyp_path):jsoncpp',
-          #     '<(ce-util_gyp_path):util',
-          #   ],
-          #   'sources': [ '<!@(cat <(engine_test_source))' ],
-          #   'sources/': [
-          #     ['exclude', 'run_pc_embeddedTests.cpp'],
-          #     ['exclude', 'run_m4_embeddedTests.cpp'],
-          #     ['exclude', 'resaveBlockImages.m'],
-          #   ],
-          #   'xcode_settings': {
-          #     'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
-          #   },
-          #   'libraries': [
-          #     '<(ce-gtest_path)/gtest.framework',
-          #     '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
-          #     '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
-          #     '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
-          #     '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
-          #     '<@(opencv_libs)',
-          #     '<@(face_library_libs)',
-          #   ],
-          #   'actions': [
-          #     # { # in engine only mode, we do not know where the assets are
-          #     #   'action_name': 'create_symlink_resources_assets',
-          #     #   'inputs': [
-          #     #     '<(cozmo_asset_path)',
-          #     #   ],
-          #     #   'outputs': [
-          #     #     '<(PRODUCT_DIR)/resources/assets',
-          #     #   ],
-          #     #   'action': [
-          #     #     'ln',
-          #     #     '-s',
-          #     #     '-f',
-          #     #     '-h',
-          #     #     '<@(_inputs)',
-          #     #     '<@(_outputs)',
-          #     #   ],
-          #     # },
-          #     {
-          #       'action_name': 'create_symlink_resources_configs',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(cozmo_engine_path)/resources/config',
-          #         '<(PRODUCT_DIR)/resources/config',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_resources_test',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(cozmo_engine_path)/resources/test',
-          #         '<(PRODUCT_DIR)/resources/test',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_resources_pocketsphinx',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
-          #         '<(PRODUCT_DIR)/resources/pocketsphinx',
-          #       ],
-          #     },
-	         #    {
-          #       'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
-          #       'conditions': [
-          #         ['face_library=="faciometric"', {
-          #           'action': [
-          #             'ln', '-s', '-f', '-n',
-          #             '<(face_library_lib_path)',
-          #             '<(PRODUCT_DIR)/',
-          #           ],
-          #         }],
-          #         ['face_library=="facesdk"', {
-          #           'action': [
-          #             'ln', '-s', '-f', '-n',
-          #             '<(face_library_lib_path)/libfsdk.dylib',
-          #             '<(PRODUCT_DIR)',
-          #           ],
-          #         }],
-          #         ['face_library=="opencv"', {
-          #           'action': [
-          #           'echo',
-          #           'dummyOpenCVEngineAction',
-          #           ],
-          #         }],
-          #       ], # conditions
-          #     },
-          #   ],
-          # }, # end unittest target
+          {
+            'target_name': 'cozmoEngineUnitTest',
+            'type': 'executable',
+            'include_dirs': [
+              '../../basestation/test',
+              '../../robot/include',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoEngine',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-util_gyp_path):jsoncpp',
+              '<(ce-util_gyp_path):util',
+            ],
+            'sources': [ '<!@(cat <(engine_test_source))' ],
+            'sources/': [
+              ['exclude', 'run_pc_embeddedTests.cpp'],
+              ['exclude', 'run_m4_embeddedTests.cpp'],
+              ['exclude', 'resaveBlockImages.m'],
+            ],
+            'xcode_settings': {
+              'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
+            },
+            'libraries': [
+              '<(ce-gtest_path)/gtest.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '<@(opencv_libs)',
+              '<@(face_library_libs)',
+            ],
+            'actions': [
+
+              # { # in engine only mode, we do not know where the assets are
+              #   'action_name': 'create_symlink_resources_assets',
+              #   'inputs': [
+              #     '<(cozmo_asset_path)',
+              #   ],
+              #   'outputs': [
+              #     '<(PRODUCT_DIR)/resources/assets',
+              #   ],
+              #   'action': [
+              #     'ln',
+              #     '-s',
+              #     '-f',
+              #     '-h',
+              #     '<@(_inputs)',
+              #     '<@(_outputs)',
+              #   ],
+              # },
+
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '<(PRODUCT_DIR)/resources/config',
+                ],
+              },
+
+              #These have empty inputs and outputs so gyp doesn't think that they're dupes
+              {
+                'action_name': 'create_symlink_resources_test',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/test',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/test',
+                ],
+                #'message':'what is <(cozmo_engine_path)',
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+
+              {
+                'action_name': 'create_symlink_resources_pocketsphinx',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                  '<(PRODUCT_DIR)/resources/pocketsphinx',
+                ],
+              },
+
+	            {
+                'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
+                'inputs':[],
+                'outputs':[],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln', '-s', '-f', '-n',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln', '-s', '-f', '-n',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVEngineAction',
+                    ],
+                  }],
+                ], # conditions
+              },
+
+            ], #end actions
+          }, # end unittest target
 
 
 
