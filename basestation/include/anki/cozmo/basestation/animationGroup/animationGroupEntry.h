@@ -18,7 +18,7 @@
 #define ANKI_COZMO_ANIMATION_GROUP_ENTRY_H
 
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/cozmo/basestation/animationGroup/animationGroupMoodCurve.h"
+#include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include <list>
 
@@ -44,7 +44,7 @@ namespace Anki {
       // Name of this animation
       std::string _name;
       
-      std::list<AnimationGroupMoodCurve> _moodCurves;
+      std::vector<EmotionScorer> _emotionScorers;
       
     }; // class AnimationGroupEntry
   } // namespace Cozmo

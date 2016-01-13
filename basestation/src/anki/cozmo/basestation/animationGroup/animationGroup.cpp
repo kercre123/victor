@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/logging/logging.h"
+#include "util/random/randomGenerator.h"
 //#include <cassert>
 #include <vector>
 
@@ -79,30 +80,27 @@ namespace Anki {
     }
     
     const std::string& AnimationGroup::GetAnimation(const MoodManager& moodManager) const {
+      const float kRandomFactor = 0.1f;
       
-      PRINT_NAMED_ERROR("AnimationGroup.GetAnimation.TMP",
-                        "Getting animation from group %s.",
-                        _name.c_str());
+      Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
       
-      float max = FLT_MIN;
-      std::vector<std::string> results;
-      
-      
-      for(auto it = _animations.begin(); it != _animations.end(); it++) {
-        float val = it->Evaluate(moodManager);
-        if(fabsf(val - max) < 0.1) {
-          results.push_back(it->GetName());
-          float invCount = 1.0 / results.size();
-          max = val * invCount + max * (1 - invCount);
-        }
-        else if(val > max) {
-          max = val;
-          results.clear();
-          results.push_back(it->GetName());
+      auto bestEntry = _animations.end();
+      float bestScore = FLT_MIN;
+      for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
+      {
+        auto entryScore = entry->Evaluate(moodManager);
+        auto totalScore    = entryScore;
+        
+        totalScore += rng.RandDbl(kRandomFactor);
+        
+        if (totalScore > bestScore)
+        {
+          bestEntry = entry;
+          bestScore = totalScore;
         }
       }
       
-      return results[rand() % results.size()];
+      return bestEntry->GetName();
     }
     
   } // namespace Cozmo
