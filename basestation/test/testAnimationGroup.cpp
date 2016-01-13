@@ -8,7 +8,7 @@
  *
  * Copyright: Anki, Inc. 2015
  *
- * --gtest_filter=ProgressionSystem*
+ * --gtest_filter=AnimationGroup*
  **/
 
 #include "gtest/gtest.h"
@@ -30,12 +30,7 @@ static const std::string kMajorWinBeatBox = "majorWinBeatBox";
 
 static const char* kNoAnimationJson =
 "{"
-"  \"Animations\": ["
-"    {"
-"      \"Name\": \"majorWin\","
-"      \"MoodScorer\": []"
-"    }"
-"  ]"
+"  \"Animations\": []"
 "}";
 
 
@@ -62,7 +57,7 @@ static const char* kOneAnimationOneScorerJson =
 "            \"nodes\": ["
 "              {"
 "                \"x\": -1.0,"
-"                \"y\": -1.0"
+"                \"y\": 0.0"
 "              },"
 "              {"
 "                \"x\": 1.0,"
@@ -103,7 +98,7 @@ static const char* kTwoAnimationsTwoScorersJson =
 "            \"nodes\": ["
 "              {"
 "                \"x\": -1.0,"
-"                \"y\": -1.0"
+"                \"y\": 0.0"
 "              },"
 "              {"
 "                \"x\": 1.0,"
@@ -119,7 +114,7 @@ static const char* kTwoAnimationsTwoScorersJson =
 "            \"nodes\": ["
 "              {"
 "                \"x\": -1.0,"
-"                \"y\": -1.0"
+"                \"y\": 0.0"
 "              },"
 "              {"
 "                \"x\": 1.0,"
@@ -144,7 +139,7 @@ static const char* kTwoAnimationsTwoScorersJson =
 "              },"
 "              {"
 "                \"x\": 1.0,"
-"                \"y\": -1.0"
+"                \"y\": 0.0"
 "              }"
 "            ]"
 "          }"
@@ -160,7 +155,7 @@ static const char* kTwoAnimationsTwoScorersJson =
 "              },"
 "              {"
 "                \"x\": 1.0,"
-"                \"y\": -1.0"
+"                \"y\": 0.0"
 "              }"
 "            ]"
 "          }"
