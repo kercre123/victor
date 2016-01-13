@@ -13,6 +13,7 @@
 #define ANKI_COZMO_NAV_MESH_QUAD_TREE_H
 
 #include "navMeshQuadTreeNode.h"
+#include "navMeshQuadTreeProcessor.h"
 
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
 #include "anki/common/basestation/math/point.h"
@@ -68,7 +69,10 @@ private:
   // set to true if data has changed since last time we send to gfx
   mutable bool _gfxDirty;
 
-  // TODO may need to create more parents as the space covered outgrows the root
+  // processor for this quadtree
+  NavMeshQuadTreeProcessor _processor;
+
+  // current root of the tree. It expands as needed
   NavMeshQuadTreeNode _root;
   
 }; // class
