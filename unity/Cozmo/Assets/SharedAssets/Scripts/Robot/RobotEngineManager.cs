@@ -43,7 +43,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
-  public event Action<Anki.Cozmo.ProgressionStatType, uint> OnProgressionStatRecieved;
+  public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
 

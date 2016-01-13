@@ -12,7 +12,7 @@ public class SingleStat : MonoBehaviour {
   [SerializeField]
   private Text _StatLabel;
 
-  public void Init(string lbl, uint progress, Anki.Cozmo.ProgressionStatType statEnum) {
+  public void Init(string lbl, int progress, Anki.Cozmo.ProgressionStatType statEnum) {
     _StatLabel.text = lbl;
     _StatInputField.text = progress.ToString("D");
     _StatEnum = statEnum;
@@ -23,9 +23,9 @@ public class SingleStat : MonoBehaviour {
   private void HandleValueChanged(string newValue) {
     //DAS.Info("Single Stat " + _StatEnum, "HandleValueChanged: " + newValue);
     Robot robot = RobotEngineManager.Instance.CurrentRobot;
-    uint newStat;
+    int newStat;
 
-    if (robot != null && uint.TryParse(newValue, out newStat)) {
+    if (robot != null && int.TryParse(newValue, out newStat)) {
       robot.SetProgressionStat(_StatEnum, newStat);
     }
   }
