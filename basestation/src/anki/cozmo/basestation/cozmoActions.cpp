@@ -1817,14 +1817,15 @@ namespace Anki {
           robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
         }
         _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
-        
+      }
+      if(_moveEyes) {
         // Restore previous keep face alive setting
         if(_wasKeepFaceAliveEnabled) {
           robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
         }
       }
     }
-      
+    
 #pragma mark ---- MoveLiftToHeightAction ----
                                 
     MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
