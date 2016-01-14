@@ -929,16 +929,16 @@ namespace Cozmo {
         break;
       }
       case BlockLightState::Upright: {
-        robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::BLUE,
-                              ::Anki::NamedColors::BLACK, 200, 200, 50, 50, false,
-                              MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        robot.SetObjectLights(objID, WhichCubeLEDs::ALL,
+                              ::Anki::NamedColors::BLUE, ::Anki::NamedColors::BLUE,
+                              200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         name = "Upright";
         break;
       }
       case BlockLightState::Complete: {
         robot.SetObjectLights(objID, WhichCubeLEDs::ALL,
-                              ::Anki::NamedColors::GREEN, ::Anki::NamedColors::GREEN, 200, 200, 50, 50, false,
-                              MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+                              ::Anki::NamedColors::GREEN, ::Anki::NamedColors::GREEN,
+                              200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         name = "Complete";
         break;
       }
@@ -1516,6 +1516,7 @@ namespace Cozmo {
              robot.IsCarryingObject() &&
              diffVec.z() < 0.75 * oObject->GetSize().z()) {
       _objectToPlaceOn = objectID;
+      SetBlockLightState(robot, _trackedObject, BlockLightState::Upright);
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StartPlacing",
                              "Found block %d, placing on it",
                              _objectToPlaceOn.GetValue());
