@@ -10,6 +10,7 @@
  *
  **/
 #include "anki/cozmo/basestation/proceduralFaceParams.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -207,6 +208,48 @@ void ProceduralFaceParams::Interpolate(const ProceduralFaceParams& face1, const 
   
 } // Interpolate()
   
+void ProceduralFaceParams::GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax)
+{
+  // Left edge of left eye
+  xmin = (ProceduralFace::NominalLeftEyeX +
+          GetParameter(WhichEye::Left, Parameter::EyeCenterX) -
+          GetParameter(WhichEye::Left, Parameter::EyeScaleX) * ProceduralFace::NominalEyeWidth/2);
+  
+  // Right edge of right eye
+  xmax = (ProceduralFace::NominalRightEyeX +
+          GetParameter(WhichEye::Right, Parameter::EyeCenterX) +
+          GetParameter(WhichEye::Right, Parameter::EyeScaleX) * ProceduralFace::NominalEyeWidth/2);
+  
+  // Min of the top edges of the two eyes
+  const Value leftHalfHeight = GetParameter(WhichEye::Left, Parameter::EyeScaleY) * ProceduralFace::NominalEyeHeight/2;
+  const Value rightHalfHeight = GetParameter(WhichEye::Right, Parameter::EyeScaleY) * ProceduralFace::NominalEyeHeight/2;
+  ymin = (ProceduralFace::NominalEyeY +
+          std::min(GetParameter(WhichEye::Left, Parameter::EyeCenterY) - leftHalfHeight,
+                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) - rightHalfHeight));
+  
+  // Max of the bottom edges of the two eyes
+  ymax = (ProceduralFace::NominalEyeY +
+          std::max(GetParameter(WhichEye::Left, Parameter::EyeCenterY) + leftHalfHeight,
+                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) + rightHalfHeight));
+}
+  
+void ProceduralFaceParams::SetFacePosition(Point<2, Value> center)
+{
+  // Try not to let the eyes drift off the face
+  // NOTE: (1) if you set center and *then* change eye centers/scales, you could still go off screen
+  //       (2) this also doesn't take lid height into account, so if the top lid is half closed and
+  //           you move the eyes way down, it could look like they disappeared, for example
+  
+  Value xmin=0, xmax=0, ymin=0, ymax=0;
+  GetEyeBoundingBox(xmin, xmax, ymin, ymax);
+  
+  // The most we can move left is the distance b/w left edge of left eye and the
+  // left edge of the screen. The most we can move right is the distance b/w the
+  // right edge of the right eye and the right edge of the screen
+  _faceCenter.x() = CLIP(center.x(), -(xmin-1), ProceduralFace::WIDTH-(xmax+1));
+  _faceCenter.y() = CLIP(center.y(), -(ymin-1), ProceduralFace::HEIGHT-(ymax+1));
+}
+  
 void ProceduralFaceParams::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
 {
   static const auto addParamList =
@@ -242,7 +285,7 @@ ProceduralFaceParams& ProceduralFaceParams::Combine(const ProceduralFaceParams& 
   
   _faceAngle += otherFace.GetFaceAngle();
   _faceScale *= otherFace.GetFaceScale();
-  _faceCenter += otherFace.GetFacePosition();
+  SetFacePosition(_faceCenter + otherFace.GetFacePosition());
 
   return *this;
 }
