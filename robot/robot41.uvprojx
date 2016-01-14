@@ -441,16 +441,6 @@
               <FileName>enjpeg.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dac.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>oled.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -471,7 +461,7 @@
                 <FileArmAds>
                   <Cads>
                     <interw>2</interw>
-                    <Optim>1</Optim>
+                    <Optim>4</Optim>
                     <oTime>2</oTime>
                     <SplitLS>2</SplitLS>
                     <OneElfS>2</OneElfS>
@@ -496,6 +486,16 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>dac.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>oled.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
             </File>
             <File>
               <FileName>spi.cpp</FileName>
