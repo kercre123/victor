@@ -83,6 +83,7 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
     TitleText = Localization.Get(data.ChallengeTitleLocKey);
+    TitleIcon = data.ChallengeIcon;
     CreateDefaultQuitButton();
   }
 
@@ -261,11 +262,14 @@ public abstract class GameBase : MonoBehaviour {
   #region Title Widget
 
   protected string TitleText {
-    get {
-      return _SharedMinigameViewInstance.TitleText;
-    }
     set {
       _SharedMinigameViewInstance.TitleText = value;
+    }
+  }
+
+  public Sprite TitleIcon {
+    set {
+      _SharedMinigameViewInstance.TitleIcon = value;
     }
   }
 
