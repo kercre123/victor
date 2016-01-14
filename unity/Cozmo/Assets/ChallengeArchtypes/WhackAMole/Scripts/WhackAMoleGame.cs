@@ -1,10 +1,14 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace WhackAMole {
   public class WhackAMoleGame : GameBase {
+    const float kCloseUpDistance = 50f;
+    const float kMinFlashFreq = 5000f;
+    const float kMaxFlashFreq = 500f;
 
     public enum MoleState {
       NONE,
@@ -14,10 +18,10 @@ namespace WhackAMole {
 
     public MoleState CubeState {
       get {
-        if (_CubeActiveA && _CubeActiveB) {
+        if (ActivatedFaces.Count > 1) {
           return MoleState.BOTH;
         }
-        else if (_CubeActiveA || _CubeActiveB) {
+        else if (ActivatedFaces.Count == 1) {
           return MoleState.SINGLE;
         }
         else {
@@ -37,22 +41,20 @@ namespace WhackAMole {
     public float MaxConfuseTime;
     public float PanicDecayMin;
     public float PanicDecayMax;
-
+    public float MoleTimeout;
 
     [SerializeField]
-    private Color _CubeAColor = Color.green;
-    [SerializeField]
-    private Color _CubeBColor = Color.blue;
+    private Color _InActiveColor = Color.clear;
     [SerializeField]
     private Color _ActiveColor = Color.red;
 
     private int _CubeAID;
     private int _CubeBID;
-    private bool _CubeActiveB = false;
-    private bool _CubeActiveA = false;
+    private Dictionary<KeyValuePair<int,int>,bool> _FaceActive;
+    public List<KeyValuePair<int,int>> ActivatedFaces;
+    private Dictionary<KeyValuePair<int,int>,float> _ActivatedTimestamp;
 
-    public LightCube CurrentTarget = null;
-    public Dictionary<int,LightCube> ActivatedCubes;
+    public KeyValuePair<int,int> CurrentTargetKvP;
 
     private int _NumCubesRequired;
 
@@ -64,8 +66,11 @@ namespace WhackAMole {
       PanicDecayMin = config.PanicDecayMin;
       PanicDecayMax = config.PanicDecayMax;
       _NumCubesRequired = config.NumCubesRequired();
-      ActivatedCubes = new Dictionary<int, LightCube>();
-
+      MoleTimeout = config.MoleTimeout;
+      CurrentTargetKvP = new KeyValuePair<int, int>();
+      ActivatedFaces = new List<KeyValuePair<int, int>>();
+      _FaceActive = new Dictionary<KeyValuePair<int, int>, bool>();
+      _ActivatedTimestamp = new Dictionary<KeyValuePair<int, int>, float>();
       _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -78,20 +83,34 @@ namespace WhackAMole {
     }
 
     public void SetUpCubes() {
-      // Set Buttons to Yellow until cubes are set up properly
-      _GamePanel.CubeAButton.image.color = Color.yellow;
-      _GamePanel.CubeBButton.image.color = Color.yellow;
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), _NumCubesRequired, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 
+    protected override void Update() {
+      base.Update();
+      RefreshCubeTimers();
+    }
+
+    private void RefreshCubeTimers() {
+      for (int i = 0; i < ActivatedFaces.Count; i++) {
+        KeyValuePair<int,int> KvP = ActivatedFaces[i];
+        float origTimestamp = _ActivatedTimestamp[KvP];
+        float remainingTime = ((Time.time - origTimestamp)/MoleTimeout);
+        if (remainingTime >= 1.0f) {
+          ToggleCubeFace(KvP);
+          continue;
+        }
+        uint freq = (uint)Mathf.Lerp(kMinFlashFreq,kMaxFlashFreq,remainingTime);
+        //CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = freq;
+        CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnPeriodMs = freq;
+      }
+    }
+
     private void InitialCubesDone() {
       bool aDone = false;
       bool bDone = false;
-      _CubeActiveA = false;
-      _CubeActiveB = false;
-      ActivatedCubes.Clear();
       // Look through Visible objects to find 2 light cubes, set one to cubeA, the other
       // to cubeB. Track these IDs, if they are ever confirmed as no longer available, return
       // to cube setup state.
@@ -107,129 +126,152 @@ namespace WhackAMole {
       }
 
       if (aDone && bDone) {
-        _GamePanel.CubeAButton.onClick.RemoveAllListeners();
-        _GamePanel.CubeBButton.onClick.RemoveAllListeners();
-        _GamePanel.CubeAButton.onClick.AddListener(() => {
-          ToggleCube(_CubeAID);
-        });
-        _GamePanel.CubeBButton.onClick.AddListener(() => {
-          ToggleCube(_CubeBID);
-        });
-        UpdateCubeLights();
+        InitializeButtons();
       }
       else {
         Debug.LogError("Cubes are NOT set up properly. Could not find an A and B cube for whack a mole.");
       }
     }
 
-    public void DeactivateAllCubes() {
-      _CubeActiveA = false;
-      _CubeActiveB = false;
-      CurrentTarget = null;
-      ActivatedCubes.Clear();
-      UpdateCubeLights();
+    // Overload for passing in both ints instead of full KvP
+    public void ToggleCubeFace(int cubeID, int faceID) {
+      ToggleCubeFace(new KeyValuePair<int,int>(cubeID, faceID));
     }
 
-    public void ToggleCube(int ID) {
+    public void ToggleCubeFace(KeyValuePair<int,int> KvP) {
+      int cubeID = KvP.Key;
+      int faceID = KvP.Value;
+      Color toSet;
+      bool isActive;
+      bool isCubeA;
+      Button currButt;
+      isCubeA = (cubeID == _CubeAID);
+
+      if (isCubeA) {
+        isActive = !_FaceActive[KvP];
+        currButt = _GamePanel.CubeAFaceButtons[faceID];
+        _FaceActive[KvP] = isActive;
+      }
+      else {
+        isActive = !_FaceActive[KvP];
+        currButt = _GamePanel.CubeBFaceButtons[faceID];
+        _FaceActive[KvP] = isActive;
+      }
+
+      // If Set to active, add the timestamp and activated face to the appropriate dict/list.
+      // If Set to inactive, remove timestamp and activated face from dict/list and find new target.
+      if (isActive) {
+        toSet = _ActiveColor;
+        CurrentTargetKvP = KvP;
+        if (!ActivatedFaces.Contains(CurrentTargetKvP)) {
+          ActivatedFaces.Add(CurrentTargetKvP);
+        }
+        if (!_ActivatedTimestamp.ContainsKey(CurrentTargetKvP)) {
+          _ActivatedTimestamp.Add(CurrentTargetKvP, Time.time);
+        }
+      }
+      else {
+        toSet = _InActiveColor;
+        if (ActivatedFaces.Contains(KvP)) {
+          ActivatedFaces.Remove(KvP);
+        }
+        if (_ActivatedTimestamp.ContainsKey(KvP)) {
+          _ActivatedTimestamp.Remove(KvP);
+        }
+        if ((CurrentTargetKvP.Key == cubeID) && (CurrentTargetKvP.Value == faceID)) {
+          CurrentTargetKvP = new KeyValuePair<int, int>(-1,-1);
+          for (int i = 0; i < ActivatedFaces.Count; i++) {
+            CurrentTargetKvP = ActivatedFaces[i];
+          }
+        }
+      }
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = (uint)kMinFlashFreq;
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnPeriodMs = 0;
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnColor = CozmoPalette.ColorToUInt(toSet);
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffColor = CozmoPalette.ColorToUInt(_InActiveColor);
+      currButt.image.color = toSet;
+      if (MoleStateChanged != null) {
+        MoleStateChanged.Invoke(CubeState);
+      }
+    }
+
+    public void InitializeButtons() {
+      Button curr;
+      CurrentTargetKvP = new KeyValuePair<int, int>(-1,-1);
+      ActivatedFaces.Clear();
+      _FaceActive.Clear();
       LightCube cube;
-      bool isNewTarget = false;
-      if (CurrentRobot.LightCubes.TryGetValue(ID, out cube)) {
-        // Identify which cube it is and toggle active state.
-        if (ID == _CubeAID) {
-          _CubeActiveA = !_CubeActiveA;
-          isNewTarget = _CubeActiveA;
-          Debug.Log(string.Format("Cube {0} set to {1}", ID, _CubeActiveA));
-        }
-        else if (ID == _CubeBID) {
-          _CubeActiveB = !_CubeActiveB;
-          isNewTarget = _CubeActiveB;
-          Debug.Log(string.Format("Cube {0} set to {1}", ID, _CubeActiveB));
-        }
-        else {
-          CurrentTarget = null;
-          Debug.LogError("Attempting to Toggle an Invalid Cube, ID not found.");
-          return;
-        }
 
-        // If turning on a new cube, set it to the primary target.
-        if (isNewTarget) {
-          CurrentTarget = cube;
-          if (!ActivatedCubes.ContainsKey(cube.ID)) {
-            ActivatedCubes.Add(cube.ID, cube);
-          }
-        }
-        else {
-          // If the cube was turned off, set other cube to target or 
-          // leave target null
-          if (ActivatedCubes.ContainsKey(cube.ID)) {
-            ActivatedCubes.Remove(cube.ID);
-          }
-          CurrentTarget = null;
-          if (CubeState == MoleState.SINGLE) {
-            if (ID == _CubeAID) {
-              if (ActivatedCubes.TryGetValue(_CubeBID, out cube)) {
-                CurrentTarget = cube;
-              }
-            }
-            else {
-              if (ActivatedCubes.TryGetValue(_CubeAID, out cube)) {
-                CurrentTarget = cube;
-              }
-            }
-          }
-        }
-        UpdateCubeLights();
+      // Reset all of Cube A's faces.
+      if (CurrentRobot.LightCubes.TryGetValue(_CubeAID, out cube)) {
+        cube.SetLEDs(_InActiveColor);
       }
-      else {
-        Debug.LogError("Attempting to Toggle an Invalid Cube, Cube not found.");
+      for (int i = 0; i < _GamePanel.CubeAFaceButtons.Count; i++) {
+        curr = _GamePanel.CubeAFaceButtons[i];
+        curr.onClick.RemoveAllListeners();
+        SetUpButton(curr, _CubeAID, i);
+        _FaceActive.Add(new KeyValuePair<int, int>(_CubeAID,i),false);
+      }
+
+      // Reset all of Cube B's faces.
+      if (CurrentRobot.LightCubes.TryGetValue(_CubeBID, out cube)) {
+        cube.SetLEDs(_InActiveColor);
+      }
+
+      for (int i = 0; i < _GamePanel.CubeBFaceButtons.Count; i++) {
+        curr = _GamePanel.CubeBFaceButtons[i];
+        curr.onClick.RemoveAllListeners();
+        SetUpButton(curr, _CubeBID, i);
+        _FaceActive.Add(new KeyValuePair<int, int>(_CubeBID,i),false);
       }
     }
 
-    private void UpdateCubeLights() {
-      bool cubeLost = false;
-      if (CurrentRobot.LightCubes.ContainsKey(_CubeAID)) {
-        if (_CubeActiveA) {
-          _GamePanel.CubeAButton.image.color = _ActiveColor;
-          CurrentRobot.LightCubes[_CubeAID].SetFlashingLEDs(_ActiveColor);
-        }
-        else {
-          _GamePanel.CubeAButton.image.color = _CubeAColor;
-          CurrentRobot.LightCubes[_CubeAID].SetLEDs(_CubeAColor);
-        }
-      }
-      else {
-        Debug.LogError(string.Format("Can NOT find Cube A ID : {0}", _CubeAID));
-        cubeLost = true;
-      }
+    void SetUpButton(Button button, int cubeID, int faceID) {
+      button.onClick.AddListener(() => {
+        ToggleCubeFace(cubeID, faceID);
+      });
+      button.image.color = _InActiveColor;
+    }
 
-      if (CurrentRobot.LightCubes.ContainsKey(_CubeBID)) {
-        if (_CubeActiveB) {
-          _GamePanel.CubeBButton.image.color = _ActiveColor;
-          CurrentRobot.LightCubes[_CubeBID].SetFlashingLEDs(_ActiveColor);
-        }
-        else {
-          _GamePanel.CubeBButton.image.color = _CubeBColor;
-          CurrentRobot.LightCubes[_CubeBID].SetLEDs(_CubeBColor);
-        }
-      }
-      else {
-        Debug.LogError(string.Format("Can NOT find Cube B ID : {0}", _CubeBID));
-        cubeLost = true;
-      }
+    public float GetRelativeRad(KeyValuePair<int,int> KvP) {
+      float deg = (90.0f * (KvP.Value+1));
+      float result = Mathf.Deg2Rad * deg;
+      Debug.Log(string.Format("Cube{2}:Face{3} - Relative Rad - {0} Degrees - {1}", result,deg, KvP.Key,KvP.Value));
+      return result;
+    }
 
-      if (cubeLost) {
-        // TODO: Use Confusion Animation transition to return to setup state.
-        Debug.LogWarning("Cubes lost, set up again");
-        SetUpCubes();
+    public Vector3 GetRelativePos(KeyValuePair<int,int> KvP) {
+      Vector3 point = CurrentRobot.LightCubes[KvP.Key].WorldPosition;
+      float offset = kCloseUpDistance;
+      Vector3 angle = Vector3.zero;
+      switch (KvP.Value) 
+      {
+      case 0:
+        angle = Vector3.down;
+        break;
+      case 1:
+        angle = Vector3.right;
+        break;
+      case 2:
+        angle = Vector3.up;
+        break;
+      case 3:
+        angle = Vector3.left;
+        break;
       }
-      else {
-        // Upon entry, states listen to the MoleStateChanged Action, then change
-        // state based on current state. States themselves pick which cube to target
-        // when this action fires, assuming they aren't changing state.
-        if (MoleStateChanged != null) {
-          Debug.Log("Invoke Mole State Changed");
-          MoleStateChanged.Invoke(CubeState);
-        }
+      angle *= offset;
+      return (point + angle);
+    }
+
+    // Cozmo hates keeping his head at an angle where he can see cubes, this is probably problematic for a lot of reasons.
+    // This hack exists to try and override whatever is causing it.
+    public void FixCozmoAngles() {
+
+      if (CurrentRobot.HeadAngle != -0.8f) {
+        CurrentRobot.SetHeadAngle(-0.8f, null, Anki.Cozmo.QueueActionPosition.NEXT);
+      }
+      if (CurrentRobot.LiftHeight != 1.0f) { 
+        CurrentRobot.SetLiftHeight(1.0f, null, Anki.Cozmo.QueueActionPosition.NEXT);
       }
     }
 

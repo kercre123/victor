@@ -5,7 +5,7 @@ public class FriendshipLevelConfig : ScriptableObject {
 
   [System.Serializable] 
   public struct FriendshipLevelData {
-    public int LevelRequirement;
+    public int PointsRequired;
     public string FriendshipLevelName;
   }
 

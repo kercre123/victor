@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Name: FriendshipLevelConfig
   m_EditorClassIdentifier: 
   FriendshipLevels:
-  - LevelRequirement: 0
+  - PointsRequired: 0
     FriendshipLevelName: Stranger
-  - LevelRequirement: 10
+  - PointsRequired: 10
     FriendshipLevelName: Acquaintance
-  - LevelRequirement: 50
+  - PointsRequired: 50
     FriendshipLevelName: Friend
-  - LevelRequirement: 100
+  - PointsRequired: 100
     FriendshipLevelName: Best Friend
-  - LevelRequirement: 1000
+  - PointsRequired: 500
     FriendshipLevelName: BFF5EVR
