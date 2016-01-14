@@ -75,33 +75,32 @@ static int timeDMA, timeCol, timeRow, timeEmit;
 // Here's a fast SIMD-friendly patent-free 1D DCT:  The Bink 2.2 integer DCT (aka variant B2)
 // This is a scaled DCT, so the quantizers in rowB2() also descale the results to JPEG standard
 #define BINK() \
-  int16_t a6=d2-d5, a0=d0+d7, a2=d2+d5, a4=d0-d7;           \
-  int16_t a1=d1+d6, a3=d3+d4, a5=d1-d6, a7=d3-d4;           \
-  int16_t b0=a0+a3, b1=a1+a2, b2=a0-a3, b3=a1-a2;           \
-  d0=b0+b1; d4=b0-b1; d2=b2+b2/4+b3/2; d6=b2/2-b3-b3/4; \
-  int16_t b4=a7/4+a4+a4/4-a4/16, b7=a4/4-a7-a7/4+a7/16;     \
-  int16_t b5=a5+a6-a6/4-a6/16, b6=a6-a5+a5/4+a5/16;         \
-  int16_t c4=b4+b5, c5=b4-b5, c6=b6+b7, c7=b6-b7;           \
-  d1=d3=d5=d7=0;
-//  d1=c4; d5=c5+c7; d3=c5-c7; d7=c6;
+  int a6=d2-d5, a0=d0+d7, a2=d2+d5, a4=d0-d7;           \
+  int a1=d1+d6, a3=d3+d4, a5=d1-d6, a7=d3-d4;           \
+  int b0=a0+a3, b1=a1+a2, b2=a0-a3, b3=a1-a2;           \
+  d0=b0+b1; d4=b0-b1; d2=b2+(b2>>2)+(b3>>1); d6=(b2>>1)-b3-(b3>>2); \
+  int b4=(a7>>2)+a4+(a4>>2)-(a4>>4), b7=(a4>>2)-a7-(a7>>2)+(a7>>4); \
+  int b5=a5+a6-(a6>>2)-(a6>>4), b6=a6-a5+(a5>>2)+(a5>>4);           \
+  int c4=b4+b5, c5=b4-b5, c6=b6+b7, c7=b6-b7;           \
+  d1=c4; d5=c5+c7; d3=c5-c7; d7=c6;
 
 // This performs column DCTs on all pixel data in the slice buffer and writes the cofficients to state.coeff
-static void simcolB2(uint8_t* image, int pitch)
+static void __attribute__((noinline)) simcolB2(uint8_t* image, int pitch)
 {
   // We do columns 0-3, then 4-7 to stay behind DMA - which is still crunching Y data out of state.coeff
   for (int h = 0; h < 2; h++)             // First or second half
     for (int b = BLOCK_SKIP; b < BLOCKS_LINE; b++) // Block number
       for (int c = 0; c < 4; c++)         // Column
       {
-        uint8_t* p = image + b*BLOCKW + h*4 + c - (BLOCK_SKIP*BLOCKW);
-        int16_t d0 = *p;
-        int16_t d1 = *(p += pitch);
-        int16_t d2 = *(p += pitch);
-        int16_t d3 = *(p += pitch);
-        int16_t d4 = *(p += pitch);
-        int16_t d5 = *(p += pitch);
-        int16_t d6 = *(p += pitch);
-        int16_t d7 = *(p += pitch);
+        uint8_t* p = image + b*BLOCKW + h*4 + c;
+        int d0 = *p;
+        int d1 = *(p += pitch);
+        int d2 = *(p += pitch);
+        int d3 = *(p += pitch);
+        int d4 = *(p += pitch);
+        int d5 = *(p += pitch);
+        int d6 = *(p += pitch);
+        int d7 = *(p += pitch);
 
         BINK();
         
@@ -125,37 +124,45 @@ static void unrowB2()
 {
   // These macros load the coefficients and run the outer loop for each row
   #define ROW(r) \
-    for (int8_t* dct = state.dct + BLOCK_SKIP*DCT_SIZE; dct < state.dct + BLOCKS_LINE*DCT_SIZE; dct += DCT_SIZE) { \
-    int16_t d0=CTa(0,r),d1=CTa(1,r),d2=CTa(2,r),d3=CTa(3,r), d4=CTb(0,r),d5=CTb(1,r),d6=CTb(2,r),d7=CTb(3,r);      \
+    dct = state.dct + BLOCK_SKIP*DCT_SIZE; \
+    do { \
+    int d0=CTa(0,r),d1=CTa(1,r),d2=CTa(2,r),d3=CTa(3,r), d4=CTb(0,r),d5=CTb(1,r),d6=CTb(2,r),d7=CTb(3,r);      \
     BINK();
+  #define ENDROW } while ((dct += DCT_SIZE) < state.dct + BLOCKS_LINE*DCT_SIZE)
+    
   // Coefficients are loaded relative to dct to save a register and a lot of spilling
   #define CTa(x,r) *(int16_t*)(state.coeff + (dct-state.dct) + r*8 + x*2)
   #define CTb(x,r) *(int16_t*)(state.coeff + (dct-state.dct) + r*8 + x*2 + BLOCKS_LINE*DCT_SIZE)
   // Quantize a value and store it in the correct zig-zag location
-  #define ZZQ(i,v,q) dct[i] = (v*q+0x8000) >> 16;
-
+  #define ZZQ(i,v,q) dct[i] = __uhsax(1, v*q);
+  #define ZHQ(i,v,q) dct[i] = __uhsax(1, v*(q >> 16));
+  #define ZLQ(i,v,q) dct[i] = __uhsax(1, v*(q & 65535));
+  
   // JPEG uses signed pixels, we use unsigned - this removes the offset
   #define DC_START 64     // 128 (our offset) * 64 pixels * sqrt(8) (DCT scale) / 16 (Q50 quant)
+
+  s8* dct;
   
   // Unrolled loops with JPEG-standard zig-zag and Q50 quantizers (16.16 reciprocal Q50 * row/col Bink scalers)
-  ROW(0) ZZQ( 0,d0,0x200) ZZQ( 1,d1,0x364) ZZQ( 5,d2,0x35d) ZZQ( 6,d3,0x1a6) ZZQ(14,d4,0x155) ZZQ(15,d5,0x0a9) ZZQ(27,d6,0x0a9) ZZQ(28,d7,0x09d) }
-  ROW(1) ZZQ( 2,d0,0x31c) ZZQ( 4,d1,0x39f) ZZQ( 7,d2,0x2cc) ZZQ(13,d3,0x19e) ZZQ(16,d4,0x16f) ZZQ(26,d5,0x088) ZZQ(29,d6,0x0a7) ZZQ(42,d7,0x0ca) }
-  ROW(2) ZZQ( 3,d0,0x267) ZZQ( 8,d1,0x304) ZZQ(12,d2,0x235) ZZQ(17,d3,0x128) ZZQ(25,d4,0x0d7) ZZQ(30,d5,0x07c) ZZQ(41,d6,0x083) ZZQ(43,d7,0x0b3) }
-  ROW(3) ZZQ( 9,d0,0x1e2) ZZQ(11,d1,0x1cf) ZZQ(18,d2,0x142) ZZQ(24,d3,0x0c0) ZZQ(31,d4,0x084) ZZQ(40,d5,0x040) ZZQ(44,d6,0x059) ZZQ(53,d7,0x07f) }
-  ROW(4) ZZQ(10,d0,0x1c7) ZZQ(19,d1,0x1b2) ZZQ(23,d2,0x0e9) ZZQ(32,d3,0x079) ZZQ(39,d4,0x078) ZZQ(45,d5,0x03e) ZZQ(52,d6,0x054) ZZQ(54,d7,0x07c) }
-  ROW(5) ZZQ(20,d0,0x119) ZZQ(22,d1,0x0e1) ZZQ(33,d2,0x081) ZZQ(38,d3,0x057) ZZQ(46,d4,0x053) ZZQ(51,d5,0x035) ZZQ(55,d6,0x03f) ZZQ(60,d7,0x056) }
-  ROW(6) ZZQ(21,d0,0x0b0) ZZQ(34,d1,0x09d) ZZQ(37,d2,0x074) ZZQ(47,d3,0x052) ZZQ(50,d4,0x054) ZZQ(56,d5,0x03b) ZZQ(59,d6,0x04b) ZZQ(61,d7,0x063) }
-  ROW(7) ZZQ(35,d0,0x085) ZZQ(36,d1,0x079) ZZQ(48,d2,0x06a) ZZQ(49,d3,0x050) ZZQ(57,d4,0x055) ZZQ(58,d5,0x04f) ZZQ(62,d6,0x061) /*Who needs 63?*/}
+  ROW(0) ZZQ( 0,d0,0x400) ZZQ( 1,d1,0x6c8) ZZQ( 5,d2,0x6b9) ZZQ( 6,d3,0x34c) ZZQ(14,d4,0x2ab) ZZQ(15,d5,0x152) ZZQ(27,d6,0x151) ZZQ(28,d7,0x139) ENDROW;
+  ROW(1) ZZQ( 2,d0,0x637) ZZQ( 4,d1,0x73f) ZZQ( 7,d2,0x599) ZZQ(13,d3,0x33c) ZZQ(16,d4,0x2de) ZZQ(26,d5,0x10f) ZZQ(29,d6,0x14e) ZZQ(42,d7,0x195) ENDROW;
+  ROW(2) ZZQ( 3,d0,0x4cd) ZZQ( 8,d1,0x607) ZZQ(12,d2,0x46a) ZZQ(17,d3,0x24f) ZZQ(25,d4,0x1ae) ZZQ(30,d5,0x0f9) ZZQ(41,d6,0x106) ZZQ(43,d7,0x166) ENDROW;
+  ROW(3) ZZQ( 9,d0,0x3c4) ZZQ(11,d1,0x39e) ZZQ(18,d2,0x285) ZZQ(24,d3,0x180) ZZQ(31,d4,0x109) ZZQ(40,d5,0x080) ZZQ(44,d6,0x0b1) ZZQ(53,d7,0x0fe) ENDROW;
+  ROW(4) ZZQ(10,d0,0x38e) ZZQ(19,d1,0x364) ZZQ(23,d2,0x1d1) ZZQ(32,d3,0x0f1) ZZQ(39,d4,0x0f1) ZZQ(45,d5,0x07c) ZZQ(52,d6,0x0a7) ZZQ(54,d7,0x0f8) ENDROW;
+  ROW(5) ZZQ(20,d0,0x233) ZZQ(22,d1,0x1c2) ZZQ(33,d2,0x102) ZZQ(38,d3,0x0ae) ZZQ(46,d4,0x0a7) ZZQ(51,d5,0x06b) ZZQ(55,d6,0x07e) ZZQ(60,d7,0x0ab) ENDROW;
+  ROW(6) ZZQ(21,d0,0x15f) ZZQ(34,d1,0x139) ZZQ(37,d2,0x0e8) ZZQ(47,d3,0x0a3) ZZQ(50,d4,0x0a7) ZZQ(56,d5,0x075) ZZQ(59,d6,0x097) ZZQ(61,d7,0x0c7) ENDROW;
+  ROW(7) ZZQ(35,d0,0x109) ZZQ(36,d1,0x0f2) ZZQ(48,d2,0x0d3) ZZQ(49,d3,0x0a1) ZZQ(57,d4,0x0aa) ZZQ(58,d5,0x09d) ZZQ(62,d6,0x0c3) ENDROW;
 }
-
+  
 // This uses DMA to de-interleave Y data to the left side of the buffer
 // This makes it much faster for the CPU to work with and frees space for coefficient storage
 static void DMACrunch()
 {
   // TODO: DMA not working yet
 #if BLOCK_SKIP > 0
-  for (int i = 1; i < SLICEW*BLOCKH; i++)
-    state.row[i] = state.row[i<<3];
+  uint8_t *src = state.row, *dst = state.row - 8;
+  for (int i = 0; i < SLICEW*BLOCKH; i++)
+    *src++ = *(dst+=8);
 #else
   for (int i = 1; i < WIDTH; i++)
     state.row[i] = state.row[i<<2];
@@ -377,9 +384,8 @@ void JPEGCompress(int line, int height)
       
     // If we have a slice left in the buffer, start column DCT
     START(timeCol);
-    uint8_t* slicep = state.slice + xpitch*(readline&(BLOCKH-1));
     if (docompress)
-      simcolB2(slicep, ypitch);
+      simcolB2(state.slice + (-BLOCK_SKIP*BLOCKW) + xpitch*(readline&(BLOCKH-1)), ypitch);
     else
       ; // TODO: No encode to slow us down, wait on crunch DMA to complete before row copy
     STOP(timeCol);
@@ -387,10 +393,13 @@ void JPEGCompress(int line, int height)
     // DMA copy the latest line into the slice buffer (even if it's not ready)
     // TODO:  Can we chain these or do they go between row DCTs?  Either way is fast enough..
     START(timeDMA);
-    slicep = state.slice + xpitch*(line&(BLOCKH-1));
+    uint8_t* slicep = state.slice + xpitch*(line&(BLOCKH-1));
     for (int i = 0; i < SLICEW*BLOCKH; i += SLICEW)
     {
-      memcpy(slicep, state.row + i, SLICEW);  // XXX: DMACopy
+      uint32_t *src = (uint32_t*)slicep, *dst = (uint32_t*)(state.row + i);
+      //for (int i = 0; i < SLICEW/4; i++)    // XXX - Keil turns it into memmove which is too slow!
+      src[0] = dst[0]; src[1] = dst[1]; src[2] = dst[2]; src[3] = dst[3]; src[4] = dst[4];
+      src[5] = dst[5]; src[6] = dst[6]; src[7] = dst[7]; src[8] = dst[8]; src[9] = dst[9];
       slicep += ypitch;
     }
     STOP(timeDMA);
@@ -415,7 +424,7 @@ void JPEGCompress(int line, int height)
         buflen = writeEOF(out) - out;
         eof = 1;
         readline = 0;
-      #if 0 // def PROFILE
+      #ifdef PROFILE
         UART::DebugPrintProfile(timeDMA);
         UART::DebugPrintProfile(timeCol);
         UART::DebugPrintProfile(timeRow);
