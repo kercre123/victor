@@ -259,25 +259,13 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
       
       LiftShouldBeLocked(robot);
       
-      // If this is the first motion reaction, also play the first part of the
-      // motion reaction animation, move the head back to the right tilt, and
-      // then play the second half of the animation to open the eyes back up
-      const Radians finalHeadAngle = robot.GetHeadAngle() + relHeadAngle_rad;
-      
-      PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.FirstMotion",
-                       "Queuing first motion reaction animation and head tilt back to %.1fdeg",
-                       finalHeadAngle.getDegrees());
-      
-      CompoundActionSequential* compoundAction = new CompoundActionSequential({
-        new PlayAnimationAction("ID_MotionFollow_ReactToMotion"),
-        new MoveHeadToAngleAction(finalHeadAngle, _panAndTiltTol),
-        new PlayAnimationAction("ID_MotionFollow_ReactToMotion_end")
-      });
+      // If this is the first motion reaction, play the motion reaction animation
+      PlayAnimationAction* reactAnimAction = new PlayAnimationAction("ID_MotionFollow_ReactToMotion");
       
       // Wait for the animation to complete
-      _actionRunning = compoundAction->GetTag();
+      _actionRunning = reactAnimAction->GetTag();
       
-      robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, compoundAction);
+      robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, reactAnimAction);
     }
   }
   
