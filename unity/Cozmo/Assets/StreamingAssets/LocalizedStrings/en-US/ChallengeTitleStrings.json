@@ -1,120 +1,123 @@
 {
-    "smartling": {
-        "translate_paths": [
-            "*/translation"
-        ],
-        "variants_enabled": true,
-        "translate_mode": "custom",
-        "placeholder_format_custom": [
-            "%%[^%]+?%%",
-            "%[^%]+?%",
-            "##[^#]+?##",
-            "__[^_]+?__",
-            "[$]\\{[^\\}\\{]+?\\}",
-            "\\{\\{[^\\}\\{]+?\\}\\}",
-            "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-        ],
-        "source_key_paths": [
-            "/{*}"
-        ]
-    },
-    "challengeDetails.label.playersAndCubesNeeded" : {
-        "translation" : "Requires: {0} Player(s), {1} Power Cube(s)"
-    },
-    "askCozmo01.title" : {
-        "translation" : "Ask Cozmo Challenge 1"
-    },
-    "askCozmo01.description" : {
-        "translation" : "Ask Cozmo Challenge 1 Description"
-    },
-    "investorDemo.investorDemoScene1" : {
-        "translation" : "Investor Scene 1"
-    },
-    "investorDemo.investorDemoScene2" : {
-        "translation" : "Investor Scene 2"
-    },
-    "investorDemo.investorDemoScene3" : {
-        "translation" : "Investor Scene 3"
-    },
-    "investorDemo.investorDemoScene4" : {
-        "translation" : "Investor Scene 4"
-    },
-    "simonGame01.title" : {
-        "translation" : "Simon Says Challenge"
-    },
-    "simonGame01.description" : {
-        "translation" : "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
-    },
-    "treasureHuntGame01.title" : {
-        "translation" : "Treasure Hunt Challenge"
-    },
-    "treasureHuntGame01.description" : {
-        "translation" : "Find the treasure!"
-    },
-    "selfieGame01.title" : {
-        "translation" : "Selfie Time"
-    },
-    "selfieGame01.description" : {
-        "translation" : "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
-    },
-    "minesweeper01.title" : {
-        "translation" : "Minesweeper"
-    },
-    "minesweeper01.description" : {
-        "translation" : "These mines aren't going to sweep themselves."
-    },
-    "investorDemo.investorDemoFull" : {
-        "translation" : "Full"
-    },
-    "investorDemo.investorDemoCubes" : {
-        "translation" : "Cubes"
-    },
-    "investorDemo.investorDemoFaces" : {
-        "translation" : "Faces"
-    },
-    "investorDemo.investorDemoMotion" : {
-        "translation" : "Motion"
-    },
-    "codeBreaker01.title" : {
-      "translation" : "Cozmo Code Breaker"
-    },
-    "codeBreaker01.description" : {
-        "translation" : "Cozmo will think of a code and you have a certain number of tries to get it right."
-    },
-    "cubeSlap.title": {
-        "translation": "Cube Pounce"
-    },
-    "cubeSlap.description": {
-        "translation": "Cube Pounce Description"
-    },
-    "speedTap.title": {
-        "translation": "Speed Tap"
-    },
-    "speedTap.description": {
-        "translation": "tap same color"
-    },
-    "speedTapLightCount.title": {
-        "translation": "Speed Tap Light Count"
-    },
-    "speedTapLightCount.description": {
-        "translation": "Tap same light count"
-    },
-    "speedTapLightCountSameColorNoTap.title": {
-        "translation": "Speed Tap Count Same Color No Tap"
-    },
-    "speedTapLightCountSameColorNoTap.description": {
-        "translation": "Tap the same count, but if it is same color do not tap."
-    },
-    "speedTapNoRed.title": {
-        "translation": "Speed Tap No Red"
-    },
-    "speedTapNoRed.description": {
-        "translation": "Tap same color, unless it is red then don't tap"
-    },
-    "whackAMole.title" : {
-        "translation" : "Whack A Mole"
-    },
-    "whackAMole.description" : {
-        "translation" : "Tap an active Button to turn it off and trick Cozmo."
-    }
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "challengeDetails.label.playersAndCubesNeeded": {
+    "translation": "Requires: {0} Player(s), {1} Power Cube(s)"
+  },
+  "askCozmo01.title": {
+    "translation": "Ask Cozmo Challenge 1"
+  },
+  "askCozmo01.description": {
+    "translation": "Ask Cozmo Challenge 1 Description"
+  },
+  "investorDemo.investorDemoScene1": {
+    "translation": "Investor Scene 1"
+  },
+  "investorDemo.investorDemoScene2": {
+    "translation": "Investor Scene 2"
+  },
+  "investorDemo.investorDemoScene3": {
+    "translation": "Investor Scene 3"
+  },
+  "investorDemo.investorDemoScene4": {
+    "translation": "Investor Scene 4"
+  },
+  "simonGame01.title": {
+    "translation": "Simon Says Challenge"
+  },
+  "simonGame01.description": {
+    "translation": "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
+  },
+  "treasureHuntGame01.title": {
+    "translation": "Treasure Hunt Challenge"
+  },
+  "treasureHuntGame01.description": {
+    "translation": "Find the treasure!"
+  },
+  "selfieGame01.title": {
+    "translation": "Selfie Time"
+  },
+  "selfieGame01.description": {
+    "translation": "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
+  },
+  "minesweeper01.title": {
+    "translation": "Minesweeper"
+  },
+  "minesweeper01.description": {
+    "translation": "These mines aren't going to sweep themselves."
+  },
+  "investorDemo.investorDemoFull": {
+    "translation": "Full"
+  },
+  "investorDemo.investorDemoCubes": {
+    "translation": "Cubes"
+  },
+  "investorDemo.investorDemoFaces": {
+    "translation": "Faces"
+  },
+  "investorDemo.investorDemoMotion": {
+    "translation": "Motion"
+  },
+  "codeBreaker01.title": {
+    "translation": "Cozmo Code Breaker"
+  },
+  "codeBreaker01.description": {
+    "translation": "Cozmo will think of a code and you have a certain number of tries to get it right."
+  },
+  "cubeSlap.title": {
+    "translation": "Cube Pounce"
+  },
+  "cubeSlap.description": {
+    "translation": "Cube Pounce Description"
+  },
+  "speedTap.title": {
+    "translation": "Speed Tap"
+  },
+  "speedTap.description": {
+    "translation": "tap same color"
+  },
+  "speedTapLightCount.title": {
+    "translation": "Speed Tap Light Count"
+  },
+  "speedTapLightCount.description": {
+    "translation": "Tap same light count"
+  },
+  "speedTapLightCountSameColorNoTap.title": {
+    "translation": "Speed Tap Count Same Color No Tap"
+  },
+  "speedTapLightCountSameColorNoTap.description": {
+    "translation": "Tap the same count, but if it is same color do not tap."
+  },
+  "speedTapNoRed.title": {
+    "translation": "Speed Tap No Red"
+  },
+  "speedTapNoRed.description": {
+    "translation": "Tap same color, unless it is red then don't tap"
+  },
+  "whackAMole.title": {
+    "translation": "Whack A Mole"
+  },
+  "whackAMole.description": {
+    "translation": "Tap an active Button to turn it off and trick Cozmo."
+  },
+  "challengeEnded.label.reward": {
+    "translation": "Rewards:"
+  }
 }

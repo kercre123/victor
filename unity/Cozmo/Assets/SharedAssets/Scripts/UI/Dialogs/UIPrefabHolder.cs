@@ -38,9 +38,9 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private AlertView _ChallengeEndViewPrefab;
+      private ChallengeEndedDialog _ChallengeEndViewPrefab;
 
-      public AlertView ChallengeEndViewPrefab {
+      public ChallengeEndedDialog ChallengeEndViewPrefab {
         get { return _ChallengeEndViewPrefab; }
       }
 

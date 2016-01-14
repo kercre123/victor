@@ -150,16 +150,14 @@ public abstract class GameBase : MonoBehaviour {
     Destroy(gameObject);
   }
 
-  private AlertView OpenChallengeEndedDialog() {
+  private void OpenChallengeEndedDialog() {
+    // TODO: Make custom script for end challenge dialog
     // Open confirmation dialog instead
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as AlertView;
-    // Hook up callbacks
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
-    alertView.TitleLocKey = _ChallengeData.ChallengeTitleLocKey;
-    alertView.DescriptionLocKey = _WonChallenge ? LocalizationKeys.kLabelChallengeCompleted : LocalizationKeys.kLabelChallengeFailed;
+    ChallengeEndedDialog challengeEndDialog = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
+
     // Listen for dialog close
-    alertView.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
-    return alertView;
+    challengeEndDialog.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
+
     _RewardedXp = new Dictionary<Anki.Cozmo.ProgressionStatType, int>();
     int timeXp = CalculateTimeStatRewards();
     if (timeXp != 0) {

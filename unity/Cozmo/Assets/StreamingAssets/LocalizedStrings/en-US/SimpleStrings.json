@@ -45,12 +45,6 @@
   "button.ready": {
     "translation": "READY"
   },
-  "label.challengeCompleted": {
-    "translation": "Challenge Completed"
-  },
-  "label.challengeFailed": {
-    "translation": "Challenge Failed"
-  },
   "label.percentComplete": {
     "translation": "{0:P2} Complete"
   },
