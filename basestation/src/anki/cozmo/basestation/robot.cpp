@@ -1454,9 +1454,11 @@ namespace Anki {
                           TimeStamp_t duration_ms, const std::string& name)
     {
       ProceduralFace procFace;
+      ProceduralFaceParams::Value xMin=0, xMax=0, yMin=0, yMax=0;
+      procFace.GetParams().GetEyeBoundingBox(xMin, xMax, yMin, yMax);
       procFace.GetParams().LookAt(xPix, yPix,
-                                  static_cast<f32>(ProceduralFace::WIDTH/2),
-                                  static_cast<f32>(ProceduralFace::HEIGHT/2),
+                                  std::max(xMin, ProceduralFace::WIDTH-xMax),
+                                  std::max(yMin, ProceduralFace::HEIGHT-yMax),
                                   1.1f, 0.85f, 0.1f);
       
       ProceduralFaceKeyFrame keyframe(procFace, duration_ms);

@@ -258,31 +258,18 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
                                                                  relHeadAngle_rad,
                                                                  false, false);
           MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
-          
-          robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
-                                               new CompoundActionParallel({panTiltAction, liftAction}));
+
+          PlayAnimationAction* reactAnimAction = new PlayAnimationAction("ID_MotionFollow_ReactToMotion");
+
+          CompoundActionParallel* compoundAction = new CompoundActionParallel({panTiltAction, liftAction, reactAnimAction});
+          robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, compoundAction);
           
           LiftShouldBeLocked(robot);
-          
-          // If this is the first motion reaction, also play the first part of the
-          // motion reaction animation, move the head back to the right tilt, and
-          // then play the second half of the animation to open the eyes back up
-          const Radians finalHeadAngle = robot.GetHeadAngle() + relHeadAngle_rad;
-          
-          PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.FirstMotion",
-                           "Queuing first motion reaction animation and head tilt back to %.1fdeg",
-                           finalHeadAngle.getDegrees());
-          
-          CompoundActionSequential* compoundAction = new CompoundActionSequential({
-            new PlayAnimationAction("ID_MotionFollow_ReactToMotion"),
-            new MoveHeadToAngleAction(finalHeadAngle, _panAndTiltTol),
-            new PlayAnimationAction("ID_MotionFollow_ReactToMotion_end")
-          });
-          
-          // Wait for the animation to complete
-          _actionRunning = compoundAction->GetTag();
-          
-          robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, compoundAction);
+      
+      	  // Wait for the animation to complete
+      	  _actionRunning = compoundAction->GetTag();
+      
+      	  robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, compoundAction);
         }
       } // if(_actionRunning==0 && motionObserved.img_area > 0)
       break;
