@@ -625,17 +625,20 @@ namespace Anki {
             // there is on the faster one, thus making the total distance travelled
             // per tic closer to the maximum distance traversed by a wheel than
             // their average distance.
+            // When carrying a block, however, don't bother doing this since the
+            // weight makes the robot drive more like a wheeled robot.
             // TODO: This is definitely not totally correct, but seems to be more
             //       right than not doing it, at least from what I can see from
             //       controlling it via the webots_keyboard_controller.
-            
-            if (rDist * lDist >= 0) {
-              // rDist and lDist are the same sign or at least one of them is zero
-              f32 maxVal = MAX(ABS(lDist), ABS(rDist));
-              if (cDist < 0) {
-                maxVal *= -1;
+            if (!PickAndPlaceController::IsCarryingBlock()) {
+              if (rDist * lDist >= 0) {
+                // rDist and lDist are the same sign or at least one of them is zero
+                f32 maxVal = MAX(ABS(lDist), ABS(rDist));
+                if (cDist < 0) {
+                  maxVal *= -1;
+                }
+                cDist = cDist * (1.f-slipFactor_) + (maxVal * slipFactor_);
               }
-              cDist = cDist * (1.f-slipFactor_) + (maxVal * slipFactor_);
             }
             
             
