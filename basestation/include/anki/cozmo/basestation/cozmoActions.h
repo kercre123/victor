@@ -655,6 +655,9 @@ namespace Anki {
       
       virtual ~IDockAction() { }
       
+      // Set whether or not to check if robot is near predock pose before docking.
+      void SetDoNearPredockPoseCheck(bool doCheck) { _doNearPredockPoseCheck = doCheck; }
+      
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
@@ -736,6 +739,7 @@ namespace Anki {
       f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
       f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
       ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
+      bool                       _doNearPredockPoseCheck         = true;
       
     private:
 
