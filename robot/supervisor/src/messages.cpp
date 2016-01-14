@@ -555,6 +555,11 @@ namespace Anki {
         }
       }
 
+      void Process_setMotionModelParams(const RobotInterface::SetMotionModelParams& msg)
+      {
+        Localization::SetMotionModelParams(msg.slipFactor);
+      }
+      
       void Process_abortDocking(const AbortDocking& msg)
       {
 #ifndef TARGET_K02

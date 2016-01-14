@@ -856,6 +856,11 @@ namespace Anki {
         return sqrtf((x_-x)*(x_-x) + (y_-y)*(y_-y));
       }
       
+      void SetMotionModelParams(f32 slipFactor)
+      {
+        slipFactor_ = slipFactor;
+      }
+      
     }
   }
 }
