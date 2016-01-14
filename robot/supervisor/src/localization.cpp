@@ -619,8 +619,6 @@ namespace Anki {
             */
           } else {
             
-           
-#if(1)
 
 #if         (SLIP_MODELLING == 1)
             // Slip modelling method 1:
@@ -681,7 +679,8 @@ namespace Anki {
             }
             
 
-            /*
+            // ======= Some experimental stuff to try later ========
+           /*
             // Assuming that the actual distance travelled is the expected distance
             // travelled (based on encoders) scaled by the
             // measured rotation (cTheta_meas) / the expected rotation based on encoders (cTheta)
@@ -692,52 +691,32 @@ namespace Anki {
              */
 
             
-            driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
-            driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
-            
-            driveCenter_x_ += cDist * cosf(orientation_.ToFloat());
-            driveCenter_y_ += cDist * sinf(orientation_.ToFloat());
-            
-            orientation_ = newOrientation;
-            
-            x_ = driveCenter_x_ - driveCenterOffset * cosf(orientation_.ToFloat());
-            y_ = driveCenter_y_ - driveCenterOffset * sinf(orientation_.ToFloat());
-            /*
-            // DEBUG PRINT
-            static u8 cnt= 0;
-            if (++cnt == 200) {
-              PRINT("LOC: cDist=%f, cTheta=%f, cTheta_meas=%f, icr=(%f,%f), xy=(%f,%f), orientation=%f\n", cDist, cTheta, cTheta_meas, driveCenter_x_, driveCenter_y_, x_, y_, orientation_.ToFloat());
-              cnt = 0;
-            }
-            */
-            
-#elif(0)
             // Compute distance traveled relative to previous position.
             // Drawing a straight line from the previous position to the new position forms a chord
             // in the circle defined by the turning radius as determined by the incremental wheel motion this tick.
             // The angle of this circle that this chord spans is cTheta.
             // The angle of the chord relative to the robot's previous trajectory is cTheta / 2.
-            f32 alpha = cTheta * 0.5f;
+            f32 cThetaHalf = 0.f;
+            /*
+            cThetaHalf = cTheta_meas * 0.5f;
             
-            // The chord length is 2 * cRadius * sin(cTheta / 2).
-            f32 chord_length = ABS(2 * cRadius * sinf(alpha));
+            // The chord length is 2 * cRadius * sin(cThetaHalf).
+            cDist = copysign((2 * cRadius * sinf(cThetaHalf)), cDist);
+            */
+            // ===============================================
             
-            // The new pose is then
-            x_ += (cDist > 0 ? 1 : -1) * chord_length * cosf(orientation_.ToFloat() + alpha);
-            y_ += (cDist > 0 ? 1 : -1) * chord_length * sinf(orientation_.ToFloat() + alpha);
-            orientation_ += cTheta;
             
-            driveCenter_x_ = x_;
-            driveCenter_y_ = y_;
-#else
-            // Naive approximation, but seems to work nearly as well as non-naive with one less sin() call.
-            x_ += cDist * cosf(orientation_.ToFloat());
-            y_ += cDist * sinf(orientation_.ToFloat());
-            orientation_ += cTheta;
+            driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
+            driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
             
-            driveCenter_x_ = x_;
-            driveCenter_y_ = y_;
-#endif
+            driveCenter_x_ += cDist * cosf(orientation_.ToFloat() + cThetaHalf);
+            driveCenter_y_ += cDist * sinf(orientation_.ToFloat() + cThetaHalf);
+            
+            orientation_ = newOrientation;
+            
+            x_ = driveCenter_x_ - driveCenterOffset * cosf(orientation_.ToFloat());
+            y_ = driveCenter_y_ - driveCenterOffset * sinf(orientation_.ToFloat());
+            
           }
           
 #if(DEBUG_LOCALIZATION)
