@@ -172,7 +172,6 @@ namespace Anki {
       //printf("RECEIVED FACE OBSERVED: faceID %llu\n", msg.faceID);
       _lastFace = msg;
     }
-
     void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
     {
       // Useful for debug, but otherwise unneeded since this is displayed in the
@@ -478,7 +477,19 @@ namespace Anki {
                 }
                 break;
               }
+              
+              case webots::Supervisor::KEYBOARD_PAGEUP:
+              {
+                SendMoveHeadToAngle(MAX_HEAD_ANGLE, 20, 2);
+                break;
+              }
                 
+              case webots::Supervisor::KEYBOARD_PAGEDOWN:
+              {
+                SendMoveHeadToAngle(MIN_HEAD_ANGLE, 20, 2);
+                break;
+              }
+              
               case (s32)'S':
               {
                 if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
@@ -721,7 +732,7 @@ namespace Anki {
                          useManualSpeed);
 
                   SendExecutePathToPose(poseMarkerPose_, pathMotionProfile_, useManualSpeed);
-                  SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
+                  //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                 } else {
                   
                   // Indicate whether or not to place object at the exact rotation specified or
@@ -733,7 +744,7 @@ namespace Anki {
                                                   useExactRotation,
                                                   useManualSpeed);
                   // Make sure head is tilted down so that it can localize well
-                  SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
+                  //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   
                 }
                 break;
@@ -1430,7 +1441,14 @@ namespace Anki {
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   // Turn to face the pose of the last observed face:
                   printf("Turning to face ID = %llu\n", _lastFace.faceID);
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FacePose(_lastFace.world_x, _lastFace.world_y, _lastFace.world_z, DEG_TO_RAD(10), M_PI, 1)));
+                  ExternalInterface::FacePose facePose; // construct w/ defaults for speed
+                  facePose.world_x = _lastFace.world_x;
+                  facePose.world_y = _lastFace.world_y;
+                  facePose.world_z = _lastFace.world_z;
+                  facePose.turnAngleTol = DEG_TO_RAD(10);
+                  facePose.maxTurnAngle = M_PI;
+                  facePose.robotID = 1;
+                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(facePose)));
                 } else {
                   SendEnableVisionMode(VisionMode::DetectingFaces, true);
                 }
