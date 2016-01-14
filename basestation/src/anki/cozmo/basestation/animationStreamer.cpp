@@ -257,6 +257,17 @@ namespace Cozmo {
       _onDeviceRobotAudioKeyFrameQueue.clear();
       _lastPlayedOnDeviceRobotAudioKeyFrame = nullptr;
 #     endif
+      
+      // Make sure any eye dart (which is persistent) gets removed so it doesn't
+      // affect the animation we are about to start streaming. Give it a little
+      // duration so it doesn't pop.
+      // (Special case: allow KeepAlive to play on top of the "Live" idle.)
+      if(anim != &_liveAnimation) {
+        if(NotAnimatingTag != _eyeDartTag) {
+          RemovePersistentFaceLayer(_eyeDartTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
+          _eyeDartTag = NotAnimatingTag;
+        }
+      }
     }
     return lastResult;
   }
