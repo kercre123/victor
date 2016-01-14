@@ -24,6 +24,12 @@
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
 #endif
 
+// Slip modelling
+// 0 == no slip modelling
+// 1 == Assumes slower tread slips
+// 2 == Assumes total dist travelled per tic is discounted more the sharper you turn
+#define SLIP_MODELLING 2
+
 namespace Anki {
   namespace Cozmo {
     namespace Localization {
@@ -66,16 +72,10 @@ namespace Anki {
         PoseFrameID_t frameId_ = 0;
         
         
-        // Tread slip factor
-        // The lower the value the more the expected distance approaches
-        // the distance expected of a two-wheeled no-slip robot.
-        // The higher the value the more the expected distance approaches
-        // the distance of the wheel that moved the most.
-        // (i.e. Assumes the faster wheel drags the slower wheel along.
-        // How correct is this assumption? Who knows?)
+        // Tread slip modelling
         // Value ranges from 0 to 1.
         // TODO: This value may change for different durometer treads
-        f32 slipFactor_ = 0.3f;
+        f32 slipFactor_ = 1.f;
         
         
         // Pose history
@@ -559,7 +559,8 @@ namespace Anki {
           // wheel_dist / lRadius = rDist / lDist - 1
           // lRadius = wheel_dist / (rDist / lDist - 1)
 
-          if ((rDist != 0) && (lDist / rDist) < 1.01f && (lDist / rDist) > 0.99f) {
+          f32 wheelDistRatio = lDist / rDist;
+          if ((rDist != 0) && (wheelDistRatio < 1.01f) && (wheelDistRatio > 0.99f)) {
 //          if (FLT_NEAR(lDist, rDist)) {
             lRadius = BIG_RADIUS;
             rRadius = BIG_RADIUS;
@@ -620,11 +621,21 @@ namespace Anki {
             
            
 #if(1)
-            
-            // For treaded robot, assuming there is more slip of the slower tread than
+
+#if         (SLIP_MODELLING == 1)
+            // Slip modelling method 1:
+            // Assuming there is more slip of the slower tread than
             // there is on the faster one, thus making the total distance travelled
-            // per tic closer to the maximum distance traversed by a wheel than
+            // per tic closer to the distance traversed by the faster wheel than
             // their average distance.
+            //
+            // The lower the slipFactor the more the expected distance approaches
+            // the distance expected of a two-wheeled no-slip robot.
+            // The higher the value the more the expected distance approaches
+            // the distance of the wheel that moved the most.
+            // (i.e. Assumes the faster wheel drags the slower wheel along.
+            // How correct is this assumption? Who knows?)
+            //
             // When carrying a block, however, don't bother doing this since the
             // weight makes the robot drive more like a wheeled robot.
             // TODO: This is definitely not totally correct, but seems to be more
@@ -640,6 +651,20 @@ namespace Anki {
                 cDist = cDist * (1.f-slipFactor_) + (maxVal * slipFactor_);
               }
             }
+            
+#elif       (SLIP_MODELLING == 2)
+            // Slip modelling method 2:
+            // A simple discount factor applied to cDist.
+            // The slipFactor represents the multiplier that is applied
+            // at point turn. The multiplier linearly increases to 1 as
+            // the ratio of the distances travelled by the two wheels approaches 1.
+            f32 absWheelDistRatio = fabsf(wheelDistRatio);
+            if (absWheelDistRatio > 1.f) {
+              absWheelDistRatio = 1.f / absWheelDistRatio;
+            }
+            cDist *= slipFactor_ + (1.f-slipFactor_) * absWheelDistRatio;
+            
+#endif // SLIP_MODELLING
             
             
             // Get ICR offset from robot origin depending on carry state
