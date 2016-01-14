@@ -287,7 +287,7 @@ TEST(AnimationGroup, GetNoAnimationName)
 // either name, so the chance of getting the same one all 100 times
 // is astronomical.
 void TestTwoAnimations100Times(const MoodManager& moodManager, bool& foundMajorWin, bool& foundMajorWinBeatBox) {
-  AnimationGroup group = DeserializeAnimationGroupFromJson(kTwoAnimationsNoScorersJson);
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kTwoAnimationsTwoScorersJson);
 
   for(int i = 0; i < 100; i++) {
     
