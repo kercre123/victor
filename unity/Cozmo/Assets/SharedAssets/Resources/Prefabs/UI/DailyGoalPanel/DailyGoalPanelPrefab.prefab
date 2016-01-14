@@ -124,6 +124,7 @@ MonoBehaviour:
   _GoalBadgePrefab: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
   _TotalProgressBar: {fileID: 11492562}
   _GoalContainer: {fileID: 22416974}
+  _Config: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1, type: 2}
 --- !u!114 &11414914
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -442,6 +443,11 @@ Prefab:
       propertyPath: m_MinWidth
       value: 800
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _Config
+      value: 
+      objectReference: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 130834}

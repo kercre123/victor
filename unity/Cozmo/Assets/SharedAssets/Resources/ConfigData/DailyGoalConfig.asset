@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59f017fdad5b54867aff311e855af24a, type: 3}
+  m_Name: DailyGoalConfig
+  m_EditorClassIdentifier: 
+  MinDailyGoalTarget: 1
+  MaxDailyGoalTarget: 4
+  FriendshipLevels:
+  - StatsIncluded: 00
+    FriendshipLevelName: Stranger
+    MaxGoals: 1
+  - StatsIncluded: 02
+    FriendshipLevelName: Acquaintance
+    MaxGoals: 2
+  - StatsIncluded: 01
+    FriendshipLevelName: Friend
+    MaxGoals: 2
+  - StatsIncluded: 
+    FriendshipLevelName: Best Friend
+    MaxGoals: 3
+  - StatsIncluded: 
+    FriendshipLevelName: BFF5EVR
+    MaxGoals: 4

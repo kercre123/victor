@@ -18,6 +18,8 @@ public class DailyGoalPanel : BaseView {
   private readonly float _CollapseWidth = 400f;
   [SerializeField]
   private Transform _GoalContainer;
+  [SerializeField]
+  private DailyGoalConfig _Config;
 
   private bool _Expanded = true;
   public bool Expand {
@@ -46,14 +48,6 @@ public class DailyGoalPanel : BaseView {
 	// Use this for initialization
 	void Awake () {
     _GoalUIBadges = new List<GoalBadge>();
-    // Uncomment this for testing
-    /*
-    GoalBadge test = CreateGoalBadge("Bond...",4);
-    test.SetProgress(0.75f);
-    test = CreateGoalBadge("James",3);
-    test.SetProgress(2);
-    test = CreateGoalBadge("Bond",7);
-    test.SetProgress(5);*/
 	}
 	
 	// Update is called once per frame
@@ -63,11 +57,34 @@ public class DailyGoalPanel : BaseView {
   // TODO: Using current friendship level and the appropriate config file,
   // generate a series of random goals for the day.
   public void GenerateDailyGoals() {
-    //Robot rob = RobotEngineManager.Instance.CurrentRobot;
+    Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
-    //string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
-
-    // TODO: Generate Goals by the Friendship Level
+    string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
+    Debug.Log("Current Friendship level for Generation : " + name);
+    List<Anki.Cozmo.ProgressionStatType> PossibleStats = new List<Anki.Cozmo.ProgressionStatType>();
+    int totalGoals = 0;
+    for (int i = 0; i < _Config.FriendshipLevels.Length; i++) {
+      for (int j = 0; j < _Config.FriendshipLevels[i].StatsIncluded.Length; j++) {
+        if (!PossibleStats.Contains(_Config.FriendshipLevels[i].StatsIncluded[j])) {
+          PossibleStats.Add(_Config.FriendshipLevels[i].StatsIncluded[j]);
+        }
+      }
+      if (_Config.FriendshipLevels[i].FriendshipLevelName == name) {
+        totalGoals = _Config.FriendshipLevels[i].MaxGoals;
+        break;
+      }
+    }
+    // Don't generate more goals than possible stats
+    if (totalGoals > PossibleStats.Count) {
+      Debug.LogWarning("More Goals that Potential Stats");
+      totalGoals = PossibleStats.Count;
+    }
+    // Generate Goals from the possible stats
+    for (int i = 0; i < totalGoals; i++) {
+      Anki.Cozmo.ProgressionStatType targetStat = PossibleStats[Random.Range(0, PossibleStats.Count)];
+      PossibleStats.Remove(targetStat);
+      CreateGoalBadge(targetStat, Random.Range(_Config.MinDailyGoalTarget, _Config.MaxDailyGoalTarget));
+    }
   }
 
   // Creates a goal badge based on a progression stat

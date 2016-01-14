@@ -114,10 +114,7 @@ namespace Cozmo.HomeHub {
         }
       }
 
-      // Fake Daily Goals
-      _DailyGoalInstance.CreateGoalBadge("Eat", 10);
-      _DailyGoalInstance.CreateGoalBadge("Pray", 8);
-      _DailyGoalInstance.CreateGoalBadge("Love", 1);
+      _DailyGoalInstance.GenerateDailyGoals();
     }
 
     private void PopulateTimeline(List<TimelineEntryState> timelineEntries) {
