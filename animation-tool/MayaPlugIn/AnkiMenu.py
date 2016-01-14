@@ -160,6 +160,7 @@ def GetMovementJSON():
     #The first keyframe always just inits things at 0
     i = 1
     for i in range(keyframe_count-1):
+        print “In move loop “ + str(i)
         #skip the ending frames and go to the start of the next bookend, we process in pairs.
         if( ( i % 2) == 0 ):
             continue
@@ -175,16 +176,19 @@ def GetMovementJSON():
             (move_data_combined[i+1]["Radius"] == 0) and
             (move_data_combined[i+1]["Turn"]  == 0)):
             #just an empty reset frame.
+	     print “Skipping frame “ + str(i)
             continue
         if( (move_data_combined[i+1]["Forward"]  != 0) and  
             (move_data_combined[i+1]["Radius"]  == 0) and
             (move_data_combined[i+1]["Turn"]  == 0)):
+            print “STRAIGHT “ + str(i)
             curr["radius_mm"] = "STRAIGHT"
             curr["speed"] =round(keyframe_attr_data["FwdValues"][i+1])
         elif( (move_data_combined[i+1]["Forward"] == 0) and  
             (move_data_combined[i+1]["Radius"] == 0) and
             (move_data_combined[i+1]["Turn"]  != 0)):
             curr["radius_mm"] = "TURN_IN_PLACE"
+            print “TURN_IN_PLACE “ + str(i)
             # whereas in maya the turn values are in degrees. The one robot Mooly tested on turned about 360 degrees in 1.25 seconds
             # but in theory the max is 8 radians per second 
             rot_degrees_wanted = keyframe_attr_data["TurnValues"][i+1]
@@ -194,6 +198,7 @@ def GetMovementJSON():
         else:
             curr["radius_mm"] = keyframe_attr_data["RadiusValues"][i+1]
             curr["speed"] =round(keyframe_attr_data["TurnValues"][i+1])
+            print “ARC “ + str(i)
         json_arr.append(curr)
     return json_arr
 
