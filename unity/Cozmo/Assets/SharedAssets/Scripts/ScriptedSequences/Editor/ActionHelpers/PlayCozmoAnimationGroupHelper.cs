@@ -8,15 +8,15 @@ using System.Linq;
 
 namespace ScriptedSequences.Editor.ActionHelpers {
 
-  [ScriptedSequenceHelper(typeof(PlayCozmoAnimation))]
-  public class PlayCozmoAnimationHelper : ScriptedSequenceHelper<PlayCozmoAnimation, ScriptedSequenceAction> {
+  [ScriptedSequenceHelper(typeof(PlayCozmoAnimationGroup))]
+  public class PlayCozmoAnimationGroupHelper : ScriptedSequenceHelper<PlayCozmoAnimationGroup, ScriptedSequenceAction> {
 
-    public PlayCozmoAnimationHelper(PlayCozmoAnimation condition, ScriptedSequenceEditor editor, List<ScriptedSequenceAction> list) : base(condition, editor, list) {}
-    public PlayCozmoAnimationHelper(PlayCozmoAnimation condition, ScriptedSequenceEditor editor, Action<ScriptedSequenceAction> replaceAction) : base(condition, editor, replaceAction) {}
+    public PlayCozmoAnimationGroupHelper(PlayCozmoAnimationGroup condition, ScriptedSequenceEditor editor, List<ScriptedSequenceAction> list) : base(condition, editor, list) {}
+    public PlayCozmoAnimationGroupHelper(PlayCozmoAnimationGroup condition, ScriptedSequenceEditor editor, Action<ScriptedSequenceAction> replaceAction) : base(condition, editor, replaceAction) {}
 
     protected override void DrawControls(Vector2 mousePosition, EventType eventType) {
-      var options = AnimationGroupEditor.AnimationNameOptions;
-      Value.AnimationName = options[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(options, Value.AnimationName)), options)];
+      var options = AnimationGroupEditor.AnimationGroupNameOptions;
+      Value.AnimationGroupName = options[EditorGUILayout.Popup("AnimationGroup Name", Mathf.Max(0, Array.IndexOf(options, Value.AnimationGroupName)), options)];
 
       Value.LoopForever = EditorGUILayout.Toggle(
         new GUIContent("Loop Forever", 

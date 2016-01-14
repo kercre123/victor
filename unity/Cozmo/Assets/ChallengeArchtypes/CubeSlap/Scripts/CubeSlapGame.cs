@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using AnimationGroups;
 
 namespace CubeSlap {
   
@@ -158,7 +159,7 @@ namespace CubeSlap {
 
     public void OnFailure() {
       TryDecrementAttempts();
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
     }
 
     public void HandleAnimationDone(bool success) {
