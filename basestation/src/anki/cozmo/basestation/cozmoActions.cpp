@@ -1347,13 +1347,13 @@ namespace Anki {
                                        bool headTrackWhenDone)
     : FacePoseAction(turnAngleTol, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
-    , _visuallyVerifyAction(objectID, whichCode)
+    , _visuallyVerifyAction()
     , _objectID(objectID)
     , _whichCode(whichCode)
     , _visuallyVerifyWhenDone(visuallyVerifyWhenDone)
     , _headTrackWhenDone(headTrackWhenDone)
     {
-
+      RegisterSubAction(_visuallyVerifyAction);
     }
     
     Radians FaceObjectAction::GetHeadAngle(f32 heightDiff)
@@ -1371,7 +1371,7 @@ namespace Anki {
     
     ActionResult FaceObjectAction::Init(Robot &robot)
     {
-      
+      _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
       ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
@@ -1446,7 +1446,7 @@ namespace Anki {
       _facePoseCompoundActionDone = false;
       
       // Disable completion signals since this is inside another action
-      _visuallyVerifyAction.SetEmitCompletionSignal(false);
+      _visuallyVerifyAction->SetEmitCompletionSignal(false);
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
@@ -1465,7 +1465,7 @@ namespace Anki {
 
           // Go ahead and do a first tick of visual verification's Update, to
           // get it initialized
-          ActionResult verificationResult = _visuallyVerifyAction.Update(robot);
+          ActionResult verificationResult = _visuallyVerifyAction->Update(robot);
           if(ActionResult::SUCCESS != verificationResult) {
             return verificationResult;
           }
@@ -1475,7 +1475,7 @@ namespace Anki {
       // If we get here, _compoundAction completed returned SUCCESS. So we can
       // can continue with our additional checks:
       if (_visuallyVerifyWhenDone) {
-        ActionResult verificationResult = _visuallyVerifyAction.Update(robot);
+        ActionResult verificationResult = _visuallyVerifyAction->Update(robot);
         if (verificationResult != ActionResult::SUCCESS) {
           return verificationResult;
         } else {
@@ -1520,10 +1520,10 @@ namespace Anki {
     : _objectID(objectID)
     , _whichCode(whichCode)
     , _waitToVerifyTime(-1)
-    , _moveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV)
+    , _moveLiftToHeightAction()
     , _moveLiftToHeightActionDone(false)
     {
-      
+      RegisterSubAction(_moveLiftToHeightAction);
     }
     
     const std::string& VisuallyVerifyObjectAction::GetName() const
@@ -1560,13 +1560,14 @@ namespace Anki {
       }
       
       // Get lift out of the way
-      _moveLiftToHeightAction.SetEmitCompletionSignal(false);
+      _moveLiftToHeightAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV);
+      _moveLiftToHeightAction->SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
       
       // Go ahead and do the first update on moving the lift, so we don't "waste"
       // the first tick of CheckIfDone initializing the sub-action.
-      ActionResult moveLiftInitResult = _moveLiftToHeightAction.Update(robot);
+      ActionResult moveLiftInitResult = _moveLiftToHeightAction->Update(robot);
       if(ActionResult::SUCCESS == moveLiftInitResult ||
          ActionResult::RUNNING == moveLiftInitResult)
       {
@@ -1632,7 +1633,7 @@ namespace Anki {
       } else {
         // Still waiting to see the object: keep moving head/lift
         if (!_moveLiftToHeightActionDone) {
-          ActionResult liftActionRes = _moveLiftToHeightAction.Update(robot);
+          ActionResult liftActionRes = _moveLiftToHeightAction->Update(robot);
           if (liftActionRes != ActionResult::SUCCESS) {
             if (liftActionRes != ActionResult::RUNNING) {
               PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.CompoundActionFailed",
