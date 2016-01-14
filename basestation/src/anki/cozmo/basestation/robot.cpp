@@ -708,7 +708,7 @@ namespace Anki {
           return RESULT_OK;
         }
 
-        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
+        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
         const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
         
         assert(t_prev < t);
