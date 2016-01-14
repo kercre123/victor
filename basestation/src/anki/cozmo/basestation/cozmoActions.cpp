@@ -2321,9 +2321,6 @@ namespace Anki {
       robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
       robot.GetVisionComponent().EnableMode(VisionMode::Tracking, false);
       
-      // Also return the robot's head to level
-      robot.GetMoveComponent().MoveHeadToAngle(0, 2.f, 6.f);
-      
       // Abort anything that shouldn't still be running
       if(robot.IsTraversingPath()) {
         robot.AbortDrivingToPose();
