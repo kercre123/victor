@@ -16,6 +16,8 @@ public class DailyGoalPanel : BaseView {
   private readonly float _ExpandWidth = 800f;
   [SerializeField]
   private readonly float _CollapseWidth = 400f;
+  [SerializeField]
+  private Transform _GoalContainer;
 
   private bool _Expanded = true;
   public bool Expand {
@@ -42,7 +44,7 @@ public class DailyGoalPanel : BaseView {
   }
 
 	// Use this for initialization
-	void Start () {
+	void Awake () {
     _GoalUIBadges = new List<GoalBadge>();
     // Uncomment this for testing
     /*
@@ -61,7 +63,7 @@ public class DailyGoalPanel : BaseView {
   // TODO: Once we have some data class for representing a Goal Type (includes name, listens for the right changes, ect.)
   // replace this with a variant that takes in that class
   public GoalBadge CreateGoalBadge(string name, int target) {
-    GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, this.transform).GetComponent<GoalBadge>();
+    GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, _GoalContainer).GetComponent<GoalBadge>();
     newBadge.Initialize(name,target,0);
     _GoalUIBadges.Add(newBadge);
     newBadge.Expand(_Expanded);

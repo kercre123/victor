@@ -42,6 +42,11 @@ namespace Cozmo.HomeHub {
     HomeHubChallengeListView _ChallengeListViewPrefab;
     HomeHubChallengeListView _ChallengeListViewInstance;
 
+
+    [SerializeField]
+    DailyGoalPanel _DailyGoalPrefab;
+    DailyGoalPanel _DailyGoalInstance;
+
     public void CloseView() {
       // TODO: Play some close animations before destroying view
       GameObject.Destroy(gameObject);
@@ -63,12 +68,18 @@ namespace Cozmo.HomeHub {
       _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
       _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
+      _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _ContentPane).GetComponent<DailyGoalPanel>();
+
       // TMP: GENERATE FAKE DATA
       GenerateFakeData();
 
       PopulateTimeline(DataPersistenceManager.Instance.Data.PreviousSessions);
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
       _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
+
+
+      _DailyGoalInstance.transform.SetSiblingIndex(1);
+
     }
 
     private void SetScrollRectStartPosition() {
@@ -102,6 +113,11 @@ namespace Cozmo.HomeHub {
           DataPersistenceManager.Instance.Data.PreviousSessions.Add(entry);
         }
       }
+
+
+      _DailyGoalInstance.CreateGoalBadge("Eat", 10);
+      _DailyGoalInstance.CreateGoalBadge("Pray", 8);
+      _DailyGoalInstance.CreateGoalBadge("Love", 1);
     }
 
     private void PopulateTimeline(List<TimelineEntryState> timelineEntries) {
