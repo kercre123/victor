@@ -37,7 +37,7 @@ namespace Cozmo {
 
     // Returns time of the last observed face.
     // 0 if no face was ever observed.
-    TimeStamp_t GetLastObservedFace(Pose3d& p);
+    TimeStamp_t GetLastObservedFace(Pose3d& p) const;
     
   private:
     

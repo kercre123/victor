@@ -172,9 +172,6 @@ namespace Cozmo {
     // ID of player face that Cozmo will interact with for this behavior
     Face::ID_t _faceID;
     
-    // This is the last known pose of a face that has been tracked
-    Pose3d _lastKnownFacePose;
-    bool   _hasValidLastKnownFacePose;
     double _noFacesStartTime = -1.0;
     
     float _oldHeadAngle_rads = 0.0f;

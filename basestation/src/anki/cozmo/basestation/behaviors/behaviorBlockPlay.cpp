@@ -58,7 +58,6 @@ namespace Cozmo {
   , _lastHandlerResult(RESULT_OK)
   //, _inactionStartTime(0)
   , _faceID(Face::UnknownFace)
-  , _hasValidLastKnownFacePose(false)
   {
     SetDefaultName("BlockPlay");
 
@@ -105,8 +104,9 @@ namespace Cozmo {
   bool BehaviorBlockPlay::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
     const bool holdingBlock = robot.IsCarryingObject() && _objectToPickUp.IsSet();
-    const bool alreadyRunning = _currentState != State::TrackingFace;    
-    const bool hasSeenFace = _faceID != Face::UnknownFace || _hasValidLastKnownFacePose;
+    const bool alreadyRunning = _currentState != State::TrackingFace;
+    Pose3d waste;
+    const bool hasSeenFace = _faceID != Face::UnknownFace || robot.GetFaceWorld().GetLastObservedFace(waste) > 0;
     const bool hasObject = _trackedObject.IsSet();
     const bool isDoingSomething = _isActing || !_animActionTags.empty();
     const bool needsToUpdateLights = ! _objectsToTurnOffLights.empty();
@@ -175,6 +175,15 @@ namespace Cozmo {
     } else {
       SetCurrState(State::TrackingFace);
     }
+  }
+
+  namespace {
+  void AddToCompoundAction( CompoundActionParallel*& compound, IActionRunner* newAction ) {
+    if(compound == nullptr) {
+      compound = new CompoundActionParallel;
+    }
+    compound->AddAction(newAction);
+  }
   }
   
   IBehavior::Status BehaviorBlockPlay::UpdateInternal(Robot& robot, double currentTime_sec)
@@ -255,12 +264,54 @@ namespace Cozmo {
     {
       case State::TrackingFace:
       {
-        // If not already tracking face...
-        if (robot.GetMoveComponent().GetTrackToFace() == Face::UnknownFace) {
-          
-          // if we are carrying an object, make sure the lift is out of the way. Don't execute the action yet
-          // because we may want to do it in parallel
-          MoveLiftToHeightAction* moveLiftAction = nullptr;
+
+        // Behavior is different depending on whether we are carrying a block (it's almost like a different
+        // state really....)
+
+        if( ! robot.IsCarryingObject() )  {
+          if( _faceID != Face::UnknownFace ) {
+            TrackFaceAction* action = new TrackFaceAction(_faceID);
+            // NOTE: don't use StartActing for this, because it is a continuous action
+            robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
+                                   "EnableTrackToFace %lld", _faceID);
+          }
+          else if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
+            PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
+                             "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
+            robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
+          }
+          else {
+            if (_noFacesStartTime <= 0) {
+              _noFacesStartTime = currentTime_sec;
+            }
+
+            const float abortAfterNoFacesFor_s = 3.0f;
+            
+            // abort if we haven't seen a face in a while (this should allow us to run, e.g.,  the FindFaces behavior)
+            if (currentTime_sec - _noFacesStartTime > abortAfterNoFacesFor_s ) {
+              PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
+              return Status::Complete;
+            }
+
+            Pose3d lastFacePose;
+            if( robot.GetFaceWorld().GetLastObservedFace(lastFacePose) > 0 ) {
+              IActionRunner* lookAtFaceAction = new FacePoseAction(lastFacePose, DEG_TO_RAD(5), PI_F);
+              StartActing(robot, lookAtFaceAction);
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
+                                     "Moving to last face pose");
+            }
+            else if( robot.GetHeadAngle() < DEG_TO_RAD(15.0f) && ! robot.GetMoveComponent().IsHeadMoving()) {
+              PRINT_NAMED_INFO("BehaviorBlockPlay.TrackFace.NoFace.NeverSawFace",
+                               "never saw any faces, so just moving head up instead");
+              StartActing(robot, new MoveHeadToAngleAction( DEG_TO_RAD(20.0f) ));
+            }
+          }
+
+        }
+        else {
+          // we may need to do multiple actions in parallel, so set up a compound action just in case
+          CompoundActionParallel* actionToRun = nullptr;
 
           const float lowCarry = kLowCarryHeightMM; //  + 10;
           
@@ -270,99 +321,75 @@ namespace Cozmo {
                                    robot.GetLiftHeight(),
                                    lowCarry);
 
-            moveLiftAction = new MoveLiftToHeightAction(lowCarry);
+            MoveLiftToHeightAction* moveLiftAction = new MoveLiftToHeightAction(lowCarry);
             // move slowly
             moveLiftAction->SetDuration(1.0f);
+            AddToCompoundAction(actionToRun, moveLiftAction);
           }
 
-          // If we have a valid faceID, track it, unless we are carrying a block, in which case just face it
-          if (_faceID != Face::UnknownFace && !robot.IsCarryingObject()) {
-            
-            TrackFaceAction* action = new TrackFaceAction(_faceID);
-            robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
-                                   "EnableTrackToFace %lld", _faceID);
-            
-          } else if (_hasValidLastKnownFacePose) {
-            
-            // Otherwise, if had previously seen a valid face, turn to face its last known pose
-            IActionRunner* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, DEG_TO_RAD(5), PI_F);
-
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
-                                   "Moving to last face pose");
-
-            IActionRunner* actionToRun = lookAtFaceAction;
-
-            if( moveLiftAction != nullptr ) {
-              actionToRun = new CompoundActionParallel({moveLiftAction, lookAtFaceAction});
-
-              moveLiftAction = nullptr;
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
-                                     "Moving to last face pose AND lowering lift");
-            }
-
-            StartActing(robot,
-                        actionToRun,
-                        [this, &robot](ActionResult ret){
-                          _hasValidLastKnownFacePose = false;
-                          // make sure the head is at a high enough angle if we are holding something, so our
-                          // view isn't blocked
-                          if( robot.IsCarryingObject() && robot.GetHeadAngle() < DEG_TO_RAD(20.0f) ) {
-                            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
-                                                   "BehaviorBlockPlay.TrackFace.RaiseHead",
-                                                   "Carrying object and head angle of %fdeg is too low",
-                                                   RAD_TO_DEG( robot.GetHeadAngle( )));
-                            StartActing(robot,
-                                        new MoveHeadToAngleAction( DEG_TO_RAD(25.0f) ));
-                            return true;
-                          }
-                          return false;
-                        });                          
-                          
-          } else {
-
-            // TEMP: don't let face tracking look into the cube // TODO:(bn) 
-            
-            // There's no face visible.
-            // Wait a few seconds for a face to appear, otherwise quit.
-            if (_noFacesStartTime <= 0) {
-              _noFacesStartTime = currentTime_sec;
-            }
-
-            // also look up a bit in case the angle is too low
-            if( robot.GetHeadAngle() <  DEG_TO_RAD(15.0f) ) {
-              IActionRunner* moveHeadAction = new MoveHeadToAngleAction(DEG_TO_RAD(20.0f));
-
-              IActionRunner* actionToRun = moveHeadAction;
-
-              if( moveLiftAction != nullptr ) {
-                actionToRun = new CompoundActionParallel({moveLiftAction, moveHeadAction});
+          // figure out which body angle we should face to look at a person. For the demo, we assume a table
+          // with a reasonable head height, so we'll just pick the head angle manually to avoid bugs where it
+          // stares into it's own cube
+          const float fixedHeadAngle_rads = DEG_TO_RAD(25.0f);
+          Radians targetBodyAngle = 0;
+          bool haveTargetAngle = false;
+          
+          if( _faceID != Face::UnknownFace ) {
+            auto face = robot.GetFaceWorld().GetFace(_faceID);
+            if( face != nullptr ) {
+              Pose3d faceWrtRobot;
+              if( face->GetHeadPose().GetWithRespectTo(robot.GetPose(), faceWrtRobot) ) {
+                targetBodyAngle = std::atan2( faceWrtRobot.GetTranslation().y(),
+                                              faceWrtRobot.GetTranslation().x() );
+                haveTargetAngle = true;
+                
+                BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Block.HaveFaceId",
+                                       "turning towards face id %lld at angle %fdeg",
+                                       _faceID,
+                                       DEG_TO_RAD( targetBodyAngle.ToFloat() ));
               }
-
-              StartActing(robot, actionToRun);
-              moveLiftAction = nullptr;
-            }
-
-            // don't abort if we are carrying an object
-            if (currentTime_sec - _noFacesStartTime > 2.0f && !robot.IsCarryingObject()) {
-              PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
-              return Status::Complete;
             }
           }
 
-          if( moveLiftAction != nullptr) {
-            // execute the lower lift action before we start tracking faces
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.LowerLift",
-                                   "executing lift lowering action");
+          if( ! haveTargetAngle ) {
+            // just use the last face from face world
+            Pose3d lastFacePose;
+            if( robot.GetFaceWorld().GetLastObservedFace(lastFacePose) > 0 ) {
+              Pose3d faceWrtRobot;
+              if( lastFacePose.GetWithRespectTo(robot.GetPose(), faceWrtRobot) ) {
+                targetBodyAngle = std::atan2( faceWrtRobot.GetTranslation().y(),
+                                              faceWrtRobot.GetTranslation().x() );
+                haveTargetAngle = true;
 
-            StartActing(robot, moveLiftAction);
-            break;
+                BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Block.UseLastFace",
+                                       "turning towards the last face in Faceworld, with angle %f",
+                                       DEG_TO_RAD( targetBodyAngle.ToFloat() ));
+              }
+            }
           }
-        }
-        else if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
-          PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
-                           "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
-          robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
+
+          
+          const float turnInPlaceTol_rads = DEG_TO_RAD(3.0f);
+          
+          if( haveTargetAngle ) {
+            if( !robot.GetMoveComponent().IsMoving() &&
+                (robot.GetPose().GetRotationAngle<'Z'>() - targetBodyAngle).getAbsoluteVal().ToFloat() > turnInPlaceTol_rads ) {
+              AddToCompoundAction(actionToRun, new TurnInPlaceAction(targetBodyAngle, false) );
+            }
+          }
+          else {
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.NoTurnInPlace",
+                                   "couldn't find an angle to turn to");
+          }
+
+          if( !robot.GetMoveComponent().IsHeadMoving() &&
+              (Radians(fixedHeadAngle_rads) - Radians(robot.GetHeadAngle())).getAbsoluteVal().ToFloat() > turnInPlaceTol_rads ) {
+            AddToCompoundAction(actionToRun, new MoveHeadToAngleAction(fixedHeadAngle_rads) );
+          }
+
+          if( actionToRun != nullptr ) {
+            StartActing(robot, actionToRun);
+          }
         }
 
         break;
@@ -1174,7 +1201,10 @@ namespace Cozmo {
               _trackedObject.UnSet();
 
               BodyShouldBeUnlocked(robot);
-              
+
+              // play the happy animation, then look at the user, then ignore the cubes until they move (wait
+              // to ignore the cubes in case we shake / bump them during the other actions)
+                            
               // wait for happy to finish before we mark the blocks, so the animation doesn't trigger their motion
               StartActing(robot,
                           new PlayAnimationAction("ID_reactTo2ndBlock_success"),
@@ -1186,7 +1216,18 @@ namespace Cozmo {
                             _objectToPickUp.UnSet();
                             SetCurrState(State::TrackingFace);
 
-                            _isActing = false;
+                            Pose3d lastFacePose;
+                            if( robot.GetFaceWorld().GetLastObservedFace(lastFacePose) > 0 ) {
+                              PRINT_NAMED_INFO("BehaviorBlockPlay.PlacingBlock.Complete.FacingUser",
+                                               "finished final happy reaction, turning to look at face");
+                              StartActing( robot, new FacePoseAction(lastFacePose, DEG_TO_RAD(5), PI_F) );
+                            }
+                            else {
+                              PRINT_NAMED_INFO("BehaviorBlockPlay.PlacingBlock.Complete.NoFace",
+                                               "finished final happy reaction, but didnt have a face to look at");
+                              _isActing = false;
+                            }
+                            
                             return true;
                           });
 
@@ -1680,14 +1721,9 @@ namespace Cozmo {
                              "id = %lld",
                              msg.faceID);
       _faceID = static_cast<Face::ID_t>(msg.faceID);
-      _noFacesStartTime = -1.0;
-    } else if (_faceID == robot.GetMoveComponent().GetTrackToFace() ) {
-      // Currently tracking a face, keep track of last known position
-      _lastKnownFacePose = robot.GetPose();
-      _lastKnownFacePose.SetTranslation({msg.world_x, msg.world_y, msg.world_z});
-      _hasValidLastKnownFacePose = true;
-      _noFacesStartTime = -1.0;
     }
+
+    _noFacesStartTime = -1.0;
     
     return RESULT_OK;
   }
