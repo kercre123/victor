@@ -57,7 +57,7 @@ private:
   };
   
   // Internal state of the behavior:
-  State       _state;
+  State       _state = State::WaitingForFirstMotion;
   u32         _actionRunning = (u32)ActionConstants::INVALID_TAG;
   u32         _backingUpAction = (u32)ActionConstants::INVALID_TAG;
   u8          _originalVisionModes = 0;
