@@ -520,7 +520,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::PickupObject:
     {
-      numRetries = 1;
+      numRetries = 0;
       newAction = GetPickupActionHelper(robot, event.GetData().Get_PickupObject());
       break;
     }

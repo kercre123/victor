@@ -188,12 +188,16 @@ namespace Anki {
       {
         for(auto subAction : _subActions) {
           if(nullptr != (*subAction)) {
+#if DEBUG_ANIM_TRACK_LOCKING
+            PRINT_NAMED_INFO("IActionRunner.CancelAndDeleteSubActions",
+                             "Removing subAction %s [%d]",
+                             (*subAction)->GetName().c_str(), (*subAction)->GetTag());
+#endif
             (*subAction)->Cancel();
             (*subAction)->Update(robot);
             Util::SafeDelete(*subAction);
           }
         }
-        _subActions.clear();
       }
     }
     

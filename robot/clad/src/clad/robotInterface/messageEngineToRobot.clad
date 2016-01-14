@@ -177,6 +177,11 @@ message ControllerGains
   ControllerChannel controller
 }
 
+message SetMotionModelParams
+{
+  float_32 slipFactor,
+}
+
 message BackpackLights
 {
   LightState lights[5],
@@ -239,6 +244,7 @@ union EngineToRobot
   EnablePickupParalysis         enablePickupParalysis       = 0x20,
   EnableLiftPower               enableLiftPower             = 0x21,
   RawPWM                        setRawPWM                   = 0x22,
+  SetMotionModelParams          setMotionModelParams        = 0x23,
   
   // To WiFi 0x80 to 0xFE
   EraseFlash                    eraseFlash                  = 0x80,
