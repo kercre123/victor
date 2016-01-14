@@ -1125,7 +1125,7 @@ namespace Anki {
                IsCarryingObject() ? 'C' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'B' : ' ',
+               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
                behaviorChooserName,
                behaviorName.c_str());
       

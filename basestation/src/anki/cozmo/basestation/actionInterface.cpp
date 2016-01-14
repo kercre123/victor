@@ -11,14 +11,17 @@
  **/
 
 #include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/components/animTrackHelpers.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/helpers/templateHelpers.h"
+
+#define DEBUG_ANIM_TRACK_LOCKING 0
 
 namespace Anki {
   
@@ -61,7 +64,15 @@ namespace Anki {
     {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
-        robot.GetMoveComponent().LockAnimTracks(GetAnimTracksToDisable());
+        uint8_t disableTracks = GetAnimTracksToDisable();
+#if DEBUG_ANIM_TRACK_LOCKING
+        PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
+                         disableTracks,
+                         AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
+                         GetName().c_str(),
+                         GetTag());
+#endif
+        robot.GetMoveComponent().LockAnimTracks(disableTracks);
         robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
         _isRunning = true;
       }
@@ -106,7 +117,15 @@ namespace Anki {
         }
         
         if(!_suppressTrackLocking) {
-          robot.GetMoveComponent().UnlockAnimTracks(GetAnimTracksToDisable());
+          uint8_t disableTracks = GetAnimTracksToDisable();
+#if DEBUG_ANIM_TRACK_LOCKING
+          PRINT_NAMED_INFO("IActionRunner.Update.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                           disableTracks,
+                           AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
+                           GetName().c_str(),
+                           GetTag());
+#endif
+          robot.GetMoveComponent().UnlockAnimTracks(disableTracks);
           robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
         _isRunning = false;
