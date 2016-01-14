@@ -13,11 +13,14 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/config.h"
 #include "hal/portable.h"
+#include "hal/spi.h"
 #include "MK02F12810.h"
 #include "uart.h"
-#include "anki/cozmo/robot/drop.h"
 
-//#define PROFILE   // If you want to know how many cycles you're using
+#include "anki/cozmo/robot/drop.h"
+extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_write_buff
+
+//#define PROFILE   // If you want to UART-print how many cycles you're using
     
 namespace Anki
 {
@@ -28,14 +31,14 @@ namespace Anki
 
 const int DROP_LIMIT = DROP_TO_WIFI_MAX_PAYLOAD;    // Max size of JPEG part of drop - used for rate-limiting
 
-const int BLOCKW = 8, BLOCKH = 8;           // A JPEG block is 8x8 pixels
-const int WIDTH = 640;                      // Frame width is 640x
-const int SLICEW = WIDTH/BLOCKH;            // A slice is 1/8th of a line (since slices are 8 lines high)
-const int UVSUB = BLOCKW;                   // Subsample U/V by 8x in both dimensions
+const int BLOCKW = 8, BLOCKH = 8; // A JPEG block is 8x8 pixels
+const int WIDTH = 640;            // Frame width is 640x
+const int UVSUB = BLOCKW;         // Subsample U/V by 8x in both dimensions
 const int DCT_SIZE = 76;
 
-const int BLOCKS_LINE = WIDTH / BLOCKW / BLOCKH;  // Number of blocks we can compress per line
+const int BLOCKS_LINE = WIDTH / BLOCKW / BLOCKH;    // Number of blocks we can compress per line
 #define BLOCK_SKIP 5     // Set to 5 for QVGA, 0 for VGA
+const int SLICEW = (BLOCKS_LINE-BLOCK_SKIP)*BLOCKW;  // A slice is 1/8th of a line (since slices are 8 lines high)
 
 // This is for JPEG state that must be laid out in a specific order due to DMA/CPU limitations
 // There is no need to add to this structure unless you're doing DMA stuff - just use member variables
@@ -60,9 +63,9 @@ CAMRAM struct JPEGState {
 } state;
 
 #ifdef PROFILE
-static int timeDCT, timeQuant, timeHuff;
-#define START(x)  do { __disable_irq(); x += SysTick->VAL; } while(0)
-#define STOP(x)   do { __enable_irq();  x -= SysTick->VAL; } while(0)
+static int timeDMA, timeCol, timeRow, timeEmit;
+#define START(x)  do { x += SysTick->VAL; } while(0)
+#define STOP(x)   do { x -= SysTick->VAL; } while(0)
 #else
 #define START(x)
 #define STOP(x)
@@ -79,7 +82,8 @@ static int timeDCT, timeQuant, timeHuff;
   int16_t b4=a7/4+a4+a4/4-a4/16, b7=a4/4-a7-a7/4+a7/16;     \
   int16_t b5=a5+a6-a6/4-a6/16, b6=a6-a5+a5/4+a5/16;         \
   int16_t c4=b4+b5, c5=b4-b5, c6=b6+b7, c7=b6-b7;           \
-  d1=c4; d5=c5+c7; d3=c5-c7; d7=c6;
+  d1=d3=d5=d7=0;
+//  d1=c4; d5=c5+c7; d3=c5-c7; d7=c6;
 
 // This performs column DCTs on all pixel data in the slice buffer and writes the cofficients to state.coeff
 static void simcolB2(uint8_t* image, int pitch)
@@ -89,7 +93,7 @@ static void simcolB2(uint8_t* image, int pitch)
     for (int b = BLOCK_SKIP; b < BLOCKS_LINE; b++) // Block number
       for (int c = 0; c < 4; c++)         // Column
       {
-        uint8_t* p = image + b*8 + h*4 + c;
+        uint8_t* p = image + b*BLOCKW + h*4 + c - (BLOCK_SKIP*BLOCKW);
         int16_t d0 = *p;
         int16_t d1 = *(p += pitch);
         int16_t d2 = *(p += pitch);
@@ -150,7 +154,7 @@ static void DMACrunch()
 {
   // TODO: DMA not working yet
 #if BLOCK_SKIP > 0
-  for (int i = 1; i < WIDTH/2; i++)
+  for (int i = 1; i < SLICEW*BLOCKH; i++)
     state.row[i] = state.row[i<<3];
 #else
   for (int i = 1; i < WIDTH; i++)
@@ -339,76 +343,102 @@ stop:
   return (uint8_t*)out;
 }
 
-// Write JPEG-compressed data to *out, returning the new *out
-// If lineReady is true, add the contents of the LineBuf to the picture
+// Read DMA lines from dmabuff_ and write JPEG-compressed data to the current drop (spi_write_buff)
+// 'line' should be the line number of the current frame and 'height' is the total number of lines
+// To allow time for EOF, there must be a vblank of 1 or more lines (where line >= height)
 // Note there is an 8-line latency, because JPEG works in 8x8 blocks
-// So, you'll need to call JPEGCompress(false) up to 9 times after EOF to squeeze out the last bytes
-// TODO:  'out' should be rethought - rate-limiting works better if JPEG encoder owns double-buffering
-uint8_t* JPEGCompress(uint8_t *out, bool lineReady)
+void JPEGCompress(int line, int height)
 {
   // Current state of the encoder for this frame
-  static uint16_t whichpitch_ = 0;    // To put lines in and pull blocks out, slice pitch changes every 8 lines
-  static uint16_t sliceoff_ = 0;      // Pointer to next slice to compress 
-  static uint8_t line_ = 0;           // Normally counts 1-8 - set at 0 for start of frame
-  static bool sliceready_ = 0;   // True when the slice buffer is full
+  static uint16_t readline = 0;       // Pointer to next line to compress (lags by 8 lines)
+  static uint16_t xpitch = SLICEW;    // To put lines in and pull blocks out, slice pitch changes every 8 lines
+  
+  int ypitch = xpitch ^ (SLICEW^(SLICEW*BLOCKH));   // ypitch is always orthogonal to xpitch
+  uint8_t *out = spi_write_buff->payload;           // Pointer to destination
 
-  // If there aren't any slices left to encode, we are at EOF
-  if (!lineReady && !sliceready_)
-  {
-    // If the encoder is reset to the start of next frame, there's nothing to do
-    if (0 == line_)
-      return out;
-    
-    // If not, write the EOF, then reset to start of next frame
-    line_ = 0;
-    return writeEOF(out);
-  }
+  // QVGA subsampling code - TODO: Make switchable
+  int subsample = !(line & 1);
+  height >>= 1;
+  line >>= 1;
   
-  // Start DMA-moving Y data out of the way - needs 320 cycles before coeff[0] is free, 1280 total
-  DMACrunch();
+  // Do we have anything ready to compress sitting in the pipeline?
+  int docompress = readline < height && (readline > line || line >= BLOCKH);
+  int eof = 0, buflen = 0;
+  
+  if (subsample)
+  {
+    // Start DMA-moving Y data out of the way - needs 320 cycles before coeff[0] is free, 1280 total
+    START(timeDMA);
+    DMACrunch();
+    STOP(timeDMA);
 
-  // TODO COLOR: In camera.cpp ISR start color DMACrunch, 160+160 U+V bytes to 640 dct bytes: 0u0v
-  // First write color into output, then sadd16 -> uvsum, or packed uvdata (on rows 6 and 7) using 320 cycles
-  
-  // If we have a slice in the buffer, start column DCT
-  if (sliceready_)
-    simcolB2(state.slice + sliceoff_ - (BLOCK_SKIP*BLOCKW), whichpitch_ ? SLICEW : SLICEW*BLOCKH);
-  else
-    ; // TODO: No encode to slow us down, wait on crunch DMA to complete before row copy
-  
-  // DMA copy the latest line into the slice buffer (even if it's not ready)
-  // TODO:  Can we chain these or do they go between row DCTs?  Either way is fast enough..
-  uint8_t* slicep = state.slice + sliceoff_;
-  for (int i = 0; i < (BLOCK_SKIP ? WIDTH/2 : WIDTH); i += (BLOCK_SKIP ? SLICEW/2 : SLICEW))
-  {
-    memcpy(slicep, state.row + i, SLICEW);  // XXX: DMACopy
-    slicep += whichpitch_ ? SLICEW : SLICEW*BLOCKH;
-  }
-  
-  // Continue with row DCT, then emit bits
-  if (sliceready_)
-  {
-    unrowB2();
-    out = emit(out);
-  }
-  
-  // Update line pointer - once 8 lines are processed, reverse slice pitch
-  sliceoff_ += !whichpitch_ ? SLICEW : SLICEW*BLOCKH;
-  if (7 == line_)
-  {
-    if (!sliceready_)   // If we're about to start a new image, reset encoder state 
-    {         
+    // TODO COLOR: In camera.cpp ISR start color DMACrunch, 160+160 U+V bytes to 640 dct bytes: 0u0v
+    // First write color into output, then sadd16 -> uvsum, or packed uvdata (on rows 6 and 7) using 320 cycles
+      
+    // If we have a slice left in the buffer, start column DCT
+    START(timeCol);
+    uint8_t* slicep = state.slice + xpitch*(readline&(BLOCKH-1));
+    if (docompress)
+      simcolB2(slicep, ypitch);
+    else
+      ; // TODO: No encode to slow us down, wait on crunch DMA to complete before row copy
+    STOP(timeCol);
+
+    // DMA copy the latest line into the slice buffer (even if it's not ready)
+    // TODO:  Can we chain these or do they go between row DCTs?  Either way is fast enough..
+    START(timeDMA);
+    slicep = state.slice + xpitch*(line&(BLOCKH-1));
+    for (int i = 0; i < SLICEW*BLOCKH; i += SLICEW)
+    {
+      memcpy(slicep, state.row + i, SLICEW);  // XXX: DMACopy
+      slicep += ypitch;
+    }
+    STOP(timeDMA);
+
+    // QVGA:  We only have data on every other line
+    SPI::FinalizeDrop(0, 0);
+  } else {
+    // Continue with row DCT, then emit bits
+    if (docompress)
+    {
+      START(timeRow);
+      unrowB2();
+      STOP(timeRow);
+      START(timeEmit);
+      buflen = emit(out) - out;
+      STOP(timeEmit);
+      readline++;         // Point at next line
+      
+    } else {
+      // One line past the end of the image, send the EOF
+      if (readline == height) {
+        buflen = writeEOF(out) - out;
+        eof = 1;
+        readline = 0;
+      #if 0 // def PROFILE
+        UART::DebugPrintProfile(timeDMA);
+        UART::DebugPrintProfile(timeCol);
+        UART::DebugPrintProfile(timeRow);
+        UART::DebugPrintProfile(timeEmit);
+        UART::DebugPutc('\n');
+        timeDMA = timeCol = timeRow = timeEmit = 0;
+      #endif
+      }
+      
+      // Since nothing to compress, reset encoder state for next time 
       state.bitCnt = 32-EOB_SIZE; // Just enough to cut off the first EOB
       state.lastDC = DC_START;
     }
-    sliceoff_ = 0;              // Start of slice
-    whichpitch_ = !whichpitch_; // Reverse slice pitch
-    sliceready_ = lineReady;    // Set slice ready state to the last line of each block
+        
+    // On the last line of each block, reverse the slice pitch
+    if (line < height && (BLOCKH-1) == (line & (BLOCKH-1)))
+      xpitch = ypitch;
+    
+    // Write the data to the drop buffer
+    Anki::Cozmo::HAL::SPI::FinalizeDrop(buflen, eof);
   }
-  line_ = (line_&7) + 1;   // Count 1-8
-  return out;
 }
 
-    }
-  }
-}
+    } // HAL
+  }   // Cozmo
+}     // Anki

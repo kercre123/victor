@@ -47,7 +47,6 @@ namespace Anki
         I2C::Enable();
         UART::Transmit();
         IMU::Manage();
-        SPI::TransmitDrop();
       }
     }
   }

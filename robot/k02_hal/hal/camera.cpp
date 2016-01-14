@@ -1,3 +1,4 @@
+#include <string.h>
 #include "anki/cozmo/robot/hal.h"
 #include "MK02F12810.h"
 
@@ -11,7 +12,7 @@
 #include "anki/cozmo/robot/drop.h"
 extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_write_buff
 
-//#define ENABLE_JPEG     // Comment this out to troubleshoot timing problems caused by JPEG encoder
+#define ENABLE_JPEG     // Comment this out to troubleshoot timing problems caused by JPEG encoder
 //#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
 //#define ASCII_IMAGE     // Uncomment this to send an ASCII image for test purposes
 
@@ -118,8 +119,8 @@ namespace Anki
       void HALInit(void);
 
       u8* const dmaBuff_ = (u8*)0x20000000;       // Start of RAM buffer
-      u8* JPEGCompress(u8 *out, bool lineReady);
-      
+      void JPEGCompress(int line, int height);
+        
       static void InitDMA();
 
       // Set up camera
@@ -156,6 +157,8 @@ namespace Anki
 
         InitDMA();
       }
+      
+      const int DMAMUX_PORTA = 49;    // This is not in the K02 .h files for some reason
 
       // Initialize DMA to row buffer, and fire an interrupt at end of each transfer
       static void InitDMA()
@@ -174,7 +177,7 @@ namespace Anki
         // Set up DMA channel 0 to repeatedly move one line buffer worth of pixels
         DMA_CR = DMA_CR_CLM_MASK;   // Continuous loop mode? (Makes no difference?)
         DMA_TCD0_CSR = DMA_CSR_INTMAJOR_MASK;     // Stop channel, set up interrupt on transfer complete
-        DMA_TCD0_NBYTES_MLNO = sizeof(TOTAL_COLS*BYTES_PER_PIX);  // Number of transfers in minor loop
+        DMA_TCD0_NBYTES_MLNO = TOTAL_COLS*BYTES_PER_PIX;  // Number of transfers in minor loop
         DMA_TCD0_ATTR = DMA_ATTR_SSIZE(0)|DMA_ATTR_DSIZE(0);      // Source 8-bit, dest 8-bit
         DMA_TCD0_SOFF = 0;          // Source (register) doesn't increment
         DMA_TCD0_SADDR = (uint32_t)&CAMERA_DATA_GPIO;
@@ -182,10 +185,9 @@ namespace Anki
         DMA_TCD0_DADDR = (uint32_t)dmaBuff_;
         DMA_TCD0_CITER_ELINKNO = 1; // Current major loop iteration (1 per interrupt)
         DMA_TCD0_BITER_ELINKNO = 1; // Beginning major loop iteration (1 per interrupt)
-        DMA_TCD0_DLASTSGA = -sizeof(TOTAL_COLS*BYTES_PER_PIX);    // Point back at start of buffer after each loop
+        DMA_TCD0_DLASTSGA = -TOTAL_COLS*BYTES_PER_PIX;    // Point back at start of buffer after each loop
 
         // Hook DMA start request 0 to HSYNC
-        const int DMAMUX_PORTA = 49;    // This is not in the .h files for some reason
         DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_CAM_HSYNC));
         DMA_ERQ = DMA_ERQ_ERQ0_MASK;
 
@@ -279,7 +281,7 @@ void DMA0_IRQHandler(void)
 
   // The camera will send one entire frame (around 480 lines) at the wrong rate
   // So let that frame pass before we attempt to synchronize
-  static u16 lineskip = 480;
+  static u16 lineskip = TOTAL_ROWS;
   if (lineskip--)
     return;
 
@@ -317,14 +319,23 @@ void FTM2_IRQHandler(void)
   if (~FTM2_SC & FTM_SC_TOF_MASK) return ;
   */
 
+  // QVGA subsample - TODO: Make dynamic
+  static u16 line = 0;
+  if (line & 1) {
+    // After receiving odd line, need to turn DMA back on
+    DMA_TCD0_DOFF = 1;
+    DMA_TCD0_DADDR = (uint32_t)dmaBuff_;
+  } else {        
+    DMA_TCD0_DOFF = 0;
+  }
+
+  // Do this as early as possible - but after DMA is set up
   SPI::StartDMA();
 
   // Acknowledge timer interrupt now (we won't get time to later)
   FTM2_SC &= ~FTM_SC_TOF_MASK;
 
-  static u16 line = 0;
-
-  // Cheesy way to check if camera DMA buffer was updated - if it wasn't, this is a vblank line
+  // Cheesy way to check for vblank - we know it is if camera DMA buffer wasn't updated
   static u8 vblank = 0;
   if (1 == dmaBuff_[0])
     vblank++;
@@ -334,40 +345,44 @@ void FTM2_IRQHandler(void)
     line = 478 + vblank;   // Set to start of vblank (adjusted for QVGA rate)
   dmaBuff_[0] = 1;
 
-#ifdef ASCII_IMAGE
-  static u8 test[] = "\n======..........................................................................................";
-  static u8 hex[] = "0123456789abcdef";
-
-  const int LINELEN = 96;
-  static u16 frame = 0;
-  test[2] = hex[frame & 15];
-  test[3] = hex[(line>>8) & 15];
-  test[4] = hex[(line>>4) & 15];
-  test[5] = hex[line & 15];
-  if (line < 480) {
-    HALExec(test, LINELEN, 0);
-  } else if (line == 480) {
-    HALExec(test, LINELEN, 1);
-    frame++;
-  } else {
-    HALExec(test, 0, 0);
-  }
-#else
+  // Run all the register-hitting stuff
   HALExec();
-#endif
 
-#ifdef SERIAL_IMAGE
-  static int pclkoffset = 0;
-  int hline = line;
-  if (1) // !(line & 1))
-  {
+  // Don't touch registers or dmabuff_ after this point!
+  
+  // Run the JPEG encoder for all of the remaining time
+  int eof = 0, buflen;   
+#ifdef ENABLE_JPEG
+  JPEGCompress(line, TOTAL_ROWS);
+#else
+  // If JPEG encoder is disabled, try various test modes
+  #ifdef ASCII_IMAGE
+    const int LINELEN = 32;
+    static u8 test[] = "\n======..........................................................................................";
+    static u8 hex[] = "0123456789abcdef";
+    static u16 frame = 0;
+    test[2] = hex[frame & 15];
+    test[3] = hex[(line>>8) & 15];
+    test[4] = hex[(line>>4) & 15];
+    test[5] = hex[line & 15];
+    
+    memcpy(spi_write_buff->payload, test, LINELEN);
+    Anki::Cozmo::HAL::SPI::FinalizeDrop(LINELEN, line == TOTAL_ROWS);
+    frame += (line == TOTAL_ROWS);
+  #else
+    
+  // Video streaming disabled - stream nothing at all
+  Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0);
+
+  #ifdef SERIAL_IMAGE
+    static int pclkoffset = 0;
     // At 3mbaud, during 60% time, can send about 20 bytes per line, or 160x60
-    if (hline < 480)
+    if (line < TOTAL_ROWS)
       for (int i = 0; i < 20; i++)
-        UART::DebugPutc(dmaBuff_[((hline & 7) * 20 + i) * 16 + 3 + (pclkoffset >> 4)]);
+        UART::DebugPutc(dmaBuff_[((line & 7) * 20 + i) * 16 + 3 + (pclkoffset >> 4)]);
 
     // Write header for start of next frame
-    if (hline == 480)
+    if (hline == TOTAL_ROWS)
     {
       UART::DebugPutc(0xBE);
       UART::DebugPutc(0xEF);
@@ -376,24 +391,11 @@ void FTM2_IRQHandler(void)
       UART::DebugPutc(0xBD);
       // pclkoffset++;
     }
-  }
+  #endif  
+  #endif
 #endif
-
-#ifdef ENABLE_JPEG
-
-  int buflen = spi_write_buff->payload - JPEGCompress(spi_write_buff->payload, line < 480);
-  int eof = 0;
-  spi_write_buff->droplet  = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0) | ToWiFi;
-  if (line == 239) {
-    eof = 1;
-  } else {
-    eof = 0;
-  }
-#else
-  // spi_write_buff->droplet  = JPEG_LENGTH(0) | ToWiFi;
-#endif
-
-  // Advance through the lines
+  
+  // Advance line pointer
   line++;
   if (line >= 496)
     line = 0;

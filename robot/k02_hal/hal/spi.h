@@ -13,10 +13,12 @@ namespace Anki
       {
         void EnterRecoveryMode(void);
         
-        void TransmitDrop(void);
         void InitDMA(void);
         void Init(void);
         void StartDMA(void);
+
+        // Finalize the drop for transmission next time
+        void FinalizeDrop(int jpeglen, bool eof);
       }
     }
   }
