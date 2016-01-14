@@ -19,10 +19,6 @@
 #endif // #ifdef SIMULATOR
 
 
-// Whether or not to use the orientation given by the gyro
-#define USE_GYRO_ORIENTATION 1
-
-
 #if(USE_OVERLAY_DISPLAY)
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
@@ -68,6 +64,18 @@ namespace Anki {
         f32 gyroRotOffset_ = 0;
         
         PoseFrameID_t frameId_ = 0;
+        
+        
+        // Tread slip factor
+        // The lower the value the more the expected distance approaches
+        // the distance expected of a two-wheeled no-slip robot.
+        // The higher the value the more the expected distance approaches
+        // the distance of the wheel that moved the most.
+        // (i.e. Assumes the faster wheel drags the slower wheel along.
+        // How correct is this assumption? Who knows?)
+        // Value ranges from 0 to 1.
+        // TODO: This value may change for different durometer treads
+        f32 slipFactor_ = 0.3f;
         
         
         // Pose history
@@ -612,17 +620,7 @@ namespace Anki {
             
            
 #if(1)
-              
-              // Value ranging from 0 to 1.
-              // The lower the value the more the expected distance approaches
-              // the distance expected of a two-wheeled no-slip robot.
-              // The higher the value the more the expected distance approaches
-              // the distance of the wheel that moved the most.
-              // (i.e. Assumes the faster wheel drags the slower wheel along.
-              // How correct is this assumption? Who knows?)
-              // TODO: This value may change for different durometer treads
-              //const f32 SLIP_FACTOR = 0.7f;
-              
+            
             // For treaded robot, assuming there is more slip of the slower tread than
             // there is on the faster one, thus making the total distance travelled
             // per tic closer to the maximum distance traversed by a wheel than
@@ -630,16 +628,16 @@ namespace Anki {
             // TODO: This is definitely not totally correct, but seems to be more
             //       right than not doing it, at least from what I can see from
             //       controlling it via the webots_keyboard_controller.
-            /*
+            
             if (rDist * lDist >= 0) {
               // rDist and lDist are the same sign or at least one of them is zero
               f32 maxVal = MAX(ABS(lDist), ABS(rDist));
               if (cDist < 0) {
                 maxVal *= -1;
               }
-              cDist = cDist * (1.f-SLIP_FACTOR) + (maxVal * SLIP_FACTOR);
+              cDist = cDist * (1.f-slipFactor_) + (maxVal * slipFactor_);
             }
-             */
+            
             
             // Get ICR offset from robot origin depending on carry state
             f32 driveCenterOffset = GetDriveCenterOffset();
@@ -721,10 +719,8 @@ namespace Anki {
         }
 
         
-#if(USE_GYRO_ORIENTATION)
         // Set orientation according to gyro
         orientation_ = IMUFilter::GetRotation() + gyroRotOffset_;
-#endif
         
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
