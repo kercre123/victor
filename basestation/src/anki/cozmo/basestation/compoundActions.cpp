@@ -84,7 +84,7 @@ namespace Anki {
         const bool isDone = action.first;
         if(!isDone) {
           action.second->Cancel();
-          action.second->Cleanup(robot);
+          action.second->Update(robot);
           action.first = true;
         }
       }
