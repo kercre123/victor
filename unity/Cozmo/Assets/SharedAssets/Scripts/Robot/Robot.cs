@@ -589,8 +589,7 @@ public class Robot : IDisposable {
 
   public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
     ProgressionStatMessage.robotID = ID;
-    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.statType = index;
-    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.deltaVal = deltaValue;
+    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat = new G2U.AddToProgressionStat(index, deltaValue);
 
     RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -612,8 +611,7 @@ public class Robot : IDisposable {
 
   public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue) {
     MoodStatMessage.robotID = ID;
-    MoodStatMessage.MoodMessageUnion.AddToEmotion.emotionType = type;
-    MoodStatMessage.MoodMessageUnion.AddToEmotion.deltaVal = deltaValue;
+    MoodStatMessage.MoodMessageUnion.AddToEmotion = new G2U.AddToEmotion(type, deltaValue);
 
     RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
     RobotEngineManager.Instance.SendMessage();
