@@ -436,7 +436,7 @@ namespace Anki {
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
-      _hasMovedSinceLocalization |= _isMoving || _isPickedUp;
+      _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _isPickedUp;
       
       Pose3d newPose;
       
