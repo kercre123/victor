@@ -36,6 +36,22 @@ RI = Anki.Cozmo.RobotInterface # namespace shortcut
 
 dispatcher = None
 
+CameraResolutions = (
+  (16, 16),     # VerificationSnapshot
+  (40, 30),     # QQQQVGA
+  (80, 60),     # QQQVGA
+  (160, 120),   # QQVGA
+  (320, 240),   # QVGA
+  (400, 296),   # CVGA
+  (640, 480),   # VGA
+  (800, 600),   # SVGA
+  (1024, 768),  # XGA
+  (1280, 960),  # SXGA
+  (1600, 1200), # UXGA
+  (2048, 1536), # QXGA
+  (3200, 2400), # QUXGA
+)
+
 class ConnectionState:
     "An enum for connection states"
     notConnected     = 0

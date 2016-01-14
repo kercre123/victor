@@ -30,10 +30,11 @@ namespace Cozmo {
   
   // Turn a fully assembled MINIPEG_GRAY image into a JPEG with header and footer
   // This is a port of C# code from Nathan.
-  static void miniGrayToJpeg(const std::vector<u8>& bufferIn, const s32 bufferLength, std::vector<u8>& bufferOut)
+  static void miniGrayToJpeg(const std::vector<u8>& bufferIn, const s32 bufferLength, std::vector<u8>& bufferOut, const u16 height, const u16 width)
   {
     // Fetch quality to decide which header to use
-    const int quality = bufferIn[0];
+    //const int quality = bufferIn[0];
+    const int quality = 50;
     
     // Pre-baked JPEG header for grayscale, Q50
     static const u8 header50[] = {
@@ -116,7 +117,10 @@ namespace Cozmo {
     int off = headerLength;
     std::copy(header, header+headerLength, bufferOut.begin());
     
-    
+    bufferOut[0x5e] = height >> 8;
+    bufferOut[0x5f] = height & 0xff;
+    bufferOut[0x60] = width  >> 8;
+    bufferOut[0x61] = width  & 0xff;
     
     // Add byte stuffing - one 0 after each 0xff
     for (int i = 1; i < bufferLength; i++)
@@ -193,7 +197,7 @@ namespace Cozmo {
         case ImageEncoding::JPEGMinimizedGray:
         {
           std::vector<u8> buffer;
-          miniGrayToJpeg(_imgData, _imgBytes, buffer);
+          miniGrayToJpeg(_imgData, _imgBytes, buffer, _imgHeight, _imgWidth);
           _img = cv::imdecode(buffer, CV_LOAD_IMAGE_GRAYSCALE);
           break;
         }

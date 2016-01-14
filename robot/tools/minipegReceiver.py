@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join("tools"))
 import robotInterface
 RI = robotInterface.RI
 
-def mini2jpeg(minipeg):
+def mini2jpeg(minipeg, dimensions):
     header = [
       0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 
       0x00, 0x01, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00, 0x10, 0x0B, 0x0C, 0x0E, 0x0C, 0x0A, 0x10, # 0x19 = QTable
@@ -34,7 +34,14 @@ def mini2jpeg(minipeg):
       0x00, 0x00, 0x3F, 0x00
     ]
     out = header
-    for b in minipeg:
+    
+    width, height = dimensions
+    out[0x5e] = height >> 8
+    out[0x5f] = height & 0xff
+    out[0x60] = width  >> 8
+    out[0x61] = width  & 0xff
+    
+    for b in minipeg[1:]:
         out.append(b)
         if b == 0xFF:
             out.append(0x00)
@@ -47,8 +54,8 @@ class MinipegReceiver:
     
     def recvData(self, chunk):
         "Handle incoming image chunks"
-        sys.stdout.write(repr(chunk))
-        sys.stdout.write(os.linesep)
+        #sys.stdout.write(repr(chunk))
+        #sys.stdout.write(os.linesep)
         if self.imageBuffer is None and chunk.chunkId == 0:
             self.imageBuffer = []
         if self.imageBuffer is not None:
@@ -58,7 +65,7 @@ class MinipegReceiver:
             self.imageBuffer.extend(chunk.data)
             if chunk.imageChunkCount == chunk.chunkId+1:
                 fh = open("image{:05d}.jpg".format(chunk.imageId), 'wb')
-                fh.write(mini2jpeg(self.imageBuffer))
+                fh.write(mini2jpeg(self.imageBuffer, robotInterface.CameraResolutions[chunk.resolution]))
                 fh.close()
                 self.imageBuffer = []
                 
