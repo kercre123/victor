@@ -1455,7 +1455,7 @@ namespace Anki {
     {
       ProceduralFace procFace;
       ProceduralFaceParams::Value xMin=0, xMax=0, yMin=0, yMax=0;
-      procFace.GetParams().GetBoundingBox(xMin, xMax, yMin, yMax, false);
+      procFace.GetParams().GetEyeBoundingBox(xMin, xMax, yMin, yMax);
       procFace.GetParams().LookAt(xPix, yPix,
                                   std::max(xMin, ProceduralFace::WIDTH-xMax),
                                   std::max(yMin, ProceduralFace::HEIGHT-yMax),

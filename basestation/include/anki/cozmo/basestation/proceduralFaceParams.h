@@ -110,10 +110,9 @@ public:
   // E.g. for unit tests
   static void EnableClippingWarning(bool enable);
   
-  // Get the bounding edge of the current face in screen pixel space, given eye
-  // sizes/scales, and optionally including the current face center setting.
-  void GetBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax,
-                      bool includeFaceCenter = true);
+  // Get the bounding edge of the current eyes in screen pixel space, at their current
+  // size and position, without taking into account the current FacePosition (a.k.a. face center)
+  void GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax);
   
 private:
   

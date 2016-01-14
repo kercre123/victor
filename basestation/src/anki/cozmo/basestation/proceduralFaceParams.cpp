@@ -208,8 +208,7 @@ void ProceduralFaceParams::Interpolate(const ProceduralFaceParams& face1, const 
   
 } // Interpolate()
   
-void ProceduralFaceParams::GetBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax,
-                                          bool includeFaceCenter)
+void ProceduralFaceParams::GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax)
 {
   // Left edge of left eye
   xmin = (ProceduralFace::NominalLeftEyeX +
@@ -232,14 +231,6 @@ void ProceduralFaceParams::GetBoundingBox(Value& xmin, Value& xmax, Value& ymin,
   ymax = (ProceduralFace::NominalEyeY +
           std::max(GetParameter(WhichEye::Left, Parameter::EyeCenterY) + leftHalfHeight,
                    GetParameter(WhichEye::Right, Parameter::EyeCenterY) + rightHalfHeight));
-  
-  if(includeFaceCenter) {
-    xmin += _faceCenter.x();
-    xmax += _faceCenter.x();
-    ymin += _faceCenter.y();
-    ymax += _faceCenter.y();
-  }
-
 }
   
 void ProceduralFaceParams::SetFacePosition(Point<2, Value> center)
@@ -250,7 +241,7 @@ void ProceduralFaceParams::SetFacePosition(Point<2, Value> center)
   //           you move the eyes way down, it could look like they disappeared, for example
   
   Value xmin=0, xmax=0, ymin=0, ymax=0;
-  GetBoundingBox(xmin, xmax, ymin, ymax, false);
+  GetEyeBoundingBox(xmin, xmax, ymin, ymax);
   
   // The most we can move left is the distance b/w left edge of left eye and the
   // left edge of the screen. The most we can move right is the distance b/w the
