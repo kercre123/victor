@@ -117,6 +117,7 @@ namespace Cozmo {
       double _trackingStart_sec = 0;
       double _cumulativeTrackingTime_sec = 0;
       double _coolDownUntil_sec = 0;
+      bool   _playedNewFaceAnim = false;
       size_t _whichReactionAnim;
     };
     
