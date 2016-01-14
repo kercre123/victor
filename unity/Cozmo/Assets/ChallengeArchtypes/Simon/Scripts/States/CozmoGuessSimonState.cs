@@ -9,7 +9,7 @@ namespace Simon {
     private SimonGame _GameInstance;
     private IList<int> _CurrentSequence;
     private int _CurrentSequenceIndex;
-    private bool _ShouldWinGame;
+    private bool? _ShouldWinGame;
 
     public override void Enter() {
       base.Enter();
@@ -17,7 +17,7 @@ namespace Simon {
       _GameInstance.ShowHowToPlaySlide("WatchCozmoGuess");
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
-      _ShouldWinGame = true;
+      _ShouldWinGame = null;
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
@@ -27,14 +27,18 @@ namespace Simon {
 
     public override void Update() {
       base.Update();
-      _CurrentSequenceIndex++;
-      if (_CurrentSequenceIndex >= _CurrentSequence.Count) {
-        if (_ShouldWinGame) {
+      if (_ShouldWinGame != null) {
+        if (_ShouldWinGame == true) {
           CozmoWinGame();
         }
         else {
           CozmoLoseGame();
         }
+      }
+
+      _CurrentSequenceIndex++;
+      if (_CurrentSequenceIndex >= _CurrentSequence.Count) {
+        _ShouldWinGame = true;
       }
       else {
         // Determine if Cozmo wins on the last color of the sequence
