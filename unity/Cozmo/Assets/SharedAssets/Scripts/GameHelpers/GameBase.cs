@@ -29,11 +29,15 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public void RaiseMiniGameWin() {
+  public void RaiseMiniGameWin(string primaryTextOverride = "", string secondaryTextOverride = "") {
     _StateMachine.Stop();
 
     _WonChallenge = true;
-    OpenChallengeEndedDialog();
+    string primaryText = primaryTextOverride;
+    if (!string.IsNullOrEmpty(primaryText)) {
+      primaryText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
+    }
+    OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
   // TODO: Modify so that it passes the rewards
@@ -41,11 +45,15 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameWinHandler OnMiniGameLose;
 
-  public void RaiseMiniGameLose() {
+  public void RaiseMiniGameLose(string primaryTextOverride = "", string secondaryTextOverride = "") {
     _StateMachine.Stop();
 
     _WonChallenge = false;
-    OpenChallengeEndedDialog();
+    string primaryText = primaryTextOverride;
+    if (!string.IsNullOrEmpty(primaryText)) {
+      primaryText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    }
+    OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
@@ -150,11 +158,12 @@ public abstract class GameBase : MonoBehaviour {
     Destroy(gameObject);
   }
 
-  private void OpenChallengeEndedDialog() {
+  private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
     // TODO: Make custom script for end challenge dialog
     // Open confirmation dialog instead
     ChallengeEndedDialog challengeEndDialog = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
-
+    challengeEndDialog.SetupDialog(Localization.Get(_ChallengeData.ChallengeTitleLocKey),
+      _ChallengeData.ChallengeIcon, primaryText, secondaryText);
     // Listen for dialog close
     challengeEndDialog.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
 

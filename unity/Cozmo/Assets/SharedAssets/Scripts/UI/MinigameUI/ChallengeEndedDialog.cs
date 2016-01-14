@@ -24,4 +24,26 @@ public class ChallengeEndedDialog : BaseView {
   protected override void CleanUp() {
     
   }
+
+  public void SetupDialog(string titleText, Sprite titleIcon, string primaryText, string secondaryText) {
+    _ChallengeTitleLabel.SetText(titleText);
+    _ChallengeTitleLabel.SetIcon(titleIcon);
+
+    if (!string.IsNullOrEmpty(primaryText)) {
+      _PrimaryInfoLabel.text = primaryText;
+    }
+    else {
+      _PrimaryInfoLabel.enabled = false;
+    }
+
+    if (!string.IsNullOrEmpty(secondaryText)) {
+      _AdditionalInfoLabel.text = secondaryText;
+    }
+    else {
+      _AdditionalInfoLabel.enabled = false;
+    }
+  }
+
+  public void AddReward(Anki.Cozmo.ProgressionStatType progressionStat, int numberPoints) {
+  }
 }
