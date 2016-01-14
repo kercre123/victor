@@ -595,7 +595,7 @@ namespace Anki {
       f32                     _waitToVerifyTime;
       bool                    _objectSeen;
       bool                    _markerSeen;
-      MoveLiftToHeightAction  _moveLiftToHeightAction;
+      IActionRunner*          _moveLiftToHeightAction;
       bool                    _moveLiftToHeightActionDone;
       Signal::SmartHandle     _observedObjectHandle;
       
@@ -636,7 +636,7 @@ namespace Anki {
       
       bool                 _facePoseCompoundActionDone;
       
-      VisuallyVerifyObjectAction    _visuallyVerifyAction;
+      IActionRunner*    _visuallyVerifyAction;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
