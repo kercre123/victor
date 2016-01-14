@@ -178,7 +178,7 @@ namespace Cozmo {
   }
 
   namespace {
-  void AddToCoumpountAction( CompoundActionParallel*& compound, IActionRunner* newAction ) {
+  void AddToCompoundAction( CompoundActionParallel*& compound, IActionRunner* newAction ) {
     if(compound == nullptr) {
       compound = new CompoundActionParallel;
     }
@@ -324,7 +324,7 @@ namespace Cozmo {
             MoveLiftToHeightAction* moveLiftAction = new MoveLiftToHeightAction(lowCarry);
             // move slowly
             moveLiftAction->SetDuration(1.0f);
-            AddToCoumpountAction(actionToRun, moveLiftAction);
+            AddToCompoundAction(actionToRun, moveLiftAction);
           }
 
           // figure out which body angle we should face to look at a person. For the demo, we assume a table
@@ -374,7 +374,7 @@ namespace Cozmo {
           if( haveTargetAngle ) {
             if( !robot.GetMoveComponent().IsMoving() &&
                 (robot.GetPose().GetRotationAngle<'Z'>() - targetBodyAngle).getAbsoluteVal().ToFloat() > turnInPlaceTol_rads ) {
-              AddToCoumpountAction(actionToRun, new TurnInPlaceAction(targetBodyAngle, false) );
+              AddToCompoundAction(actionToRun, new TurnInPlaceAction(targetBodyAngle, false) );
             }
           }
           else {
@@ -384,7 +384,7 @@ namespace Cozmo {
 
           if( !robot.GetMoveComponent().IsHeadMoving() &&
               (Radians(fixedHeadAngle_rads) - Radians(robot.GetHeadAngle())).getAbsoluteVal().ToFloat() > turnInPlaceTol_rads ) {
-            AddToCoumpountAction(actionToRun, new MoveHeadToAngleAction(fixedHeadAngle_rads) );
+            AddToCompoundAction(actionToRun, new MoveHeadToAngleAction(fixedHeadAngle_rads) );
           }
 
           if( actionToRun != nullptr ) {
