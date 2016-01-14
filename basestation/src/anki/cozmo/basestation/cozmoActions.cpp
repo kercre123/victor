@@ -2106,101 +2106,110 @@ namespace Anki {
           closestIndex  = index;
         }
       }
-      
+        
       //const f32 closestDist = sqrtf(closestDistSq);
       
-      f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), dockObject,
-                                                                      _preActionPoseAngleTolerance);
       
-      if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
-        PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
-                         "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
-                         closestPoint.x(), closestPoint.y());
-        _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
-        return ActionResult::FAILURE_RETRY;
-      }
-      else {
-        if(SelectDockAction(robot, dockObject) != RESULT_OK) {
-          PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
-                            "");
-          // NOTE: SelectDockAction should set _interactionResult on failure
-          return ActionResult::FAILURE_ABORT;
+      if (_doNearPredockPoseCheck) {
+        f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), dockObject,
+                                                                        _preActionPoseAngleTolerance);
+        
+        if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
+          PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
+                           "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
+                           closestPoint.x(), closestPoint.y());
+          _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
+          return ActionResult::FAILURE_RETRY;
         }
-        
-        // Specify post-dock lift motion callback to play sound
-        using namespace RobotInterface;
-        auto liftSoundLambda = [this, &robot](const AnkiEvent<RobotToEngine>& event)
-        {
-          if (!_liftMovingAnimation.empty()) {
-            // Check that the animation only has sound keyframes
-            const Animation* anim = robot.GetCannedAnimation(_liftMovingAnimation);
-            if (nullptr != anim) {
-              auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
-              auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
-              auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
-           
-              if (!headTrack.IsEmpty() || !liftTrack.IsEmpty() || !bodyTrack.IsEmpty()) {
-                PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.AnimHasMotion",
-                                    "Animation must contain only sound.");
-                return;
-              }
-              
-              // Check that the action matches the current action
-              DockAction recvdAction = event.GetData().Get_movingLiftPostDock().action;
-              if (_dockAction != recvdAction) {
-                PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.ActionMismatch",
-                                    "Expected %u, got %u. Ignoring.",
-                                    (u32)_dockAction, (u32)recvdAction);
-                return;
-              }
-            
-              // Play the animation
-              PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
-                               "Playing animation %s ",
-                               _liftMovingAnimation.c_str());
-              robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_liftMovingAnimation, 1, false));
-            } else {
-              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
-                                  "Could not find animation %s",
-                                  _liftMovingAnimation.c_str());
+      }
+      
+    
+      if(SelectDockAction(robot, dockObject) != RESULT_OK) {
+        PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
+                          "");
+        // NOTE: SelectDockAction should set _interactionResult on failure
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      // Specify post-dock lift motion callback to play sound
+      using namespace RobotInterface;
+      auto liftSoundLambda = [this, &robot](const AnkiEvent<RobotToEngine>& event)
+      {
+        if (!_liftMovingAnimation.empty()) {
+          // Check that the animation only has sound keyframes
+          const Animation* anim = robot.GetCannedAnimation(_liftMovingAnimation);
+          if (nullptr != anim) {
+            auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
+            auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
+            auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
+         
+            if (!headTrack.IsEmpty() || !liftTrack.IsEmpty() || !bodyTrack.IsEmpty()) {
+              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.AnimHasMotion",
+                                  "Animation must contain only sound.");
+              return;
             }
+            
+            // Check that the action matches the current action
+            DockAction recvdAction = event.GetData().Get_movingLiftPostDock().action;
+            if (_dockAction != recvdAction) {
+              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.ActionMismatch",
+                                  "Expected %u, got %u. Ignoring.",
+                                  (u32)_dockAction, (u32)recvdAction);
+              return;
+            }
+          
+            // Play the animation
+            PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
+                             "Playing animation %s ",
+                             _liftMovingAnimation.c_str());
+            robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_liftMovingAnimation, 1, false));
+          } else {
+            PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
+                                "Could not find animation %s",
+                                _liftMovingAnimation.c_str());
           }
-        };
-        _liftMovingSignalHandle = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
-        
-        
+        }
+      };
+      _liftMovingSignalHandle = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
+      
+      
+      if (_doNearPredockPoseCheck) {
         PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
                          "Robot is within (%.1fmm,%.1fmm) of the nearest pre-action pose, "
                          "proceeding with docking.", closestPoint.x(), closestPoint.y());
-        
-        // Set dock markers
-        _dockMarker = preActionPoses[closestIndex].GetMarker();
-        _dockMarker2 = GetDockMarker2(preActionPoses, closestIndex);
-        
-        // Set up a visual verification action to make sure we can still see the correct
-        // marker of the selected object before proceeding
-        // NOTE: This also disables tracking head to object if there was any
-        _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
-                                                    _dockMarker->GetCode(),
-                                                    0, 0, true, false);
-
-        // Disable the visual verification from issuing a completion signal
-        _faceAndVerifyAction->SetEmitCompletionSignal(false);
-        
-        // Go ahead and Update the FaceObjectAction once now, so we don't
-        // waste a tick doing so in CheckIfDone (since this is the first thing
-        // that will be done in CheckIfDone anyway)
-        ActionResult faceObjectResult = _faceAndVerifyAction->Update(robot);
-        
-        if(ActionResult::SUCCESS == faceObjectResult ||
-           ActionResult::RUNNING == faceObjectResult)
-        {
-          return ActionResult::SUCCESS;
-        } else {
-          return faceObjectResult;
-        }
-
+      } else {
+        PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
+                         "Proceeding with docking.");
       }
+      
+      // Set dock markers
+      _dockMarker = preActionPoses[closestIndex].GetMarker();
+      _dockMarker2 = GetDockMarker2(preActionPoses, closestIndex);
+      
+      // Set up a visual verification action to make sure we can still see the correct
+      // marker of the selected object before proceeding
+      // NOTE: This also disables tracking head to object if there was any
+      _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
+                                                  _dockMarker->GetCode(),
+                                                  0, 0, true, false);
+
+      // Disable the visual verification from issuing a completion signal
+      _faceAndVerifyAction->SetEmitCompletionSignal(false);
+      
+      // Go ahead and Update the FaceObjectAction once now, so we don't
+      // waste a tick doing so in CheckIfDone (since this is the first thing
+      // that will be done in CheckIfDone anyway)
+      ActionResult faceObjectResult = _faceAndVerifyAction->Update(robot);
+      
+      if(ActionResult::SUCCESS == faceObjectResult ||
+         ActionResult::RUNNING == faceObjectResult)
+      {
+        return ActionResult::SUCCESS;
+      } else {
+        return faceObjectResult;
+      }
+
+      
       
     } // Init()
     
@@ -2312,9 +2321,6 @@ namespace Anki {
       // and however this action finishes
       robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
       robot.GetVisionComponent().EnableMode(VisionMode::Tracking, false);
-      
-      // Also return the robot's head to level
-      robot.GetMoveComponent().MoveHeadToAngle(0, 2.f, 6.f);
       
       // Abort anything that shouldn't still be running
       if(robot.IsTraversingPath()) {
