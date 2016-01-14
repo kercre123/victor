@@ -1297,6 +1297,20 @@ namespace Anki {
       
     }; // class PlayAnimationAction
     
+    class PlayAnimationGroupAction : public PlayAnimationAction
+    {
+    public:
+      explicit PlayAnimationGroupAction(const std::string& animGroupName,
+                                        u32 numLoops = 1,
+                                        bool interruptRunning = true);
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      
+      std::string   _animGroupName;
+
+    }; // class PlayAnimationGroupAction
+    
     
     class DeviceAudioAction : public IAction
     {

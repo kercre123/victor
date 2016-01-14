@@ -123,6 +123,7 @@ namespace Anki {
       _lastDebugStringHash = 0;
 
       ReadAnimationDir();
+      ReadAnimationGroupDir();
       
       // Set up the neutral face to use when resetting procedural animations
       static const char* neutralFaceAnimName = "neutral_face";
@@ -1571,6 +1572,28 @@ namespace Anki {
 
     }
     
+    // Read the animation groups in a dir
+    void Robot::ReadAnimationGroupFile(const char* filename)
+    {
+      Json::Value animGroupDef;
+      const bool success = _dataPlatform->readAsJson(filename, animGroupDef);
+      if (success && !animGroupDef.empty()) {
+        
+        std::string fullName(filename);
+        
+        // remove path
+        auto slashIndex = fullName.find_last_of("/");
+        std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
+        // remove extension
+        auto dotIndex = jsonName.find_last_of(".");
+        std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
+
+        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
+        
+        _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
+      }      
+    }
+    
     void Robot::LoadBehaviors()
     {
       if (_dataPlatform == nullptr)
@@ -1662,6 +1685,64 @@ namespace Anki {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
+    }
+    
+    // Read the animationGroups in a dir
+    void Robot::ReadAnimationGroupDir()
+    {
+      if (_dataPlatform == nullptr) { return; }
+      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
+      
+      const std::string animationGroupFolder =
+      _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
+      s32 loadedFileCount = 0;
+      DIR* dir = opendir(animationGroupFolder.c_str());
+      if ( dir != nullptr) {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr) {
+          
+          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
+            std::string fullFileName = animationGroupFolder + ent->d_name;
+            struct stat attrib{0};
+            int result = stat(fullFileName.c_str(), &attrib);
+            if (result == -1) {
+              PRINT_NAMED_WARNING("Robot.ReadAnimationGroupFile", "could not get mtime for %s", fullFileName.c_str());
+              continue;
+            }
+            bool loadFile = false;
+            auto mapIt = _loadedAnimationGroupFiles.find(fullFileName);
+            if (mapIt == _loadedAnimationGroupFiles.end()) {
+              _loadedAnimationGroupFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
+              loadFile = true;
+            } else {
+              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
+                mapIt->second = attrib.st_mtimespec.tv_sec;
+                loadFile = true;
+              } else {
+                //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());
+              }
+            }
+            if (loadFile) {
+              ReadAnimationGroupFile(fullFileName.c_str());
+              ++loadedFileCount;
+            }
+          }
+        }
+        closedir(dir);
+      } else {
+        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "folder not found %s", animationGroupFolder.c_str());
+      }
+      
+      // TODO: Implement external interface
+      /*
+      // Tell UI about available animationGroups
+      if (HasExternalInterface()) {
+        std::vector<std::string> animNames(_cannedAnimationGroups.GetAnimationGroupNames());
+        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
+        }
+      }
+       */
     }
 
     Result Robot::SyncTime()

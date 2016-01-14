@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
 #include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "util/random/randomGenerator.h"
 #include "json/json.h"
@@ -108,10 +109,13 @@ namespace Cozmo {
     
     float EvaluateScore(const Robot& robot, double currentTime_sec) const;
 
-    void ClearEmotionScorers()                         { _emotionScorers.clear(); }
-    void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }
-    size_t GetEmotionScorerCount() const { return _emotionScorers.size(); }
-    const EmotionScorer& GetEmotionScorer(size_t index) const { return _emotionScorers[index]; }
+    const MoodScorer& GetMoodScorer() const { return _moodScorer; }
+    
+    void ClearEmotionScorers()                         { _moodScorer.ClearEmotionScorers(); }
+    void AddEmotionScorer(const EmotionScorer& scorer) { _moodScorer.AddEmotionScorer(scorer); }
+    size_t GetEmotionScorerCount() const { return _moodScorer.GetEmotionScorerCount(); }
+    const EmotionScorer& GetEmotionScorer(size_t index) const { return _moodScorer.GetEmotionScorer(index); }
+    
     
     void SetOverrideScore(float newVal) { _overrideScore = newVal; }
     
@@ -201,7 +205,7 @@ namespace Cozmo {
     std::string _name;
     std::string _stateName = "";
         
-    std::vector<EmotionScorer> _emotionScorers;
+    MoodScorer                 _moodScorer;
     Util::GraphEvaluator2d     _repetitionPenalty;
     
     Robot& _robot;

@@ -392,6 +392,11 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       auto & playAnimation = actionUnion.Get_playAnimation();
       return new PlayAnimationAction(playAnimation.animationName, playAnimation.numLoops);
     }
+    case RobotActionUnionTag::playAnimationGroup:
+    {
+      auto & playAnimationGroup = actionUnion.Get_playAnimationGroup();
+      return new PlayAnimationGroupAction(playAnimationGroup.animationGroupName, playAnimationGroup.numLoops);
+    }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
 
@@ -543,6 +548,12 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     {
       const ExternalInterface::PlayAnimation& msg = event.GetData().Get_PlayAnimation();
       newAction = new PlayAnimationAction(msg.animationName, msg.numLoops);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::PlayAnimationGroup:
+    {
+      const ExternalInterface::PlayAnimationGroup& msg = event.GetData().Get_PlayAnimationGroup();
+      newAction = new PlayAnimationGroupAction(msg.animationGroupName, msg.numLoops);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::FaceObject:

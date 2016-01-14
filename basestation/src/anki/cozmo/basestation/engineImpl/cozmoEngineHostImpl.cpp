@@ -368,6 +368,8 @@ void CozmoEngineHostImpl::ReadAnimationsFromDisk() {
   if (robot != nullptr) {
     PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
     robot->ReadAnimationDir();
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimationGroups", "ReadAnimationGroupDir");
+    robot->ReadAnimationGroupDir();
   }
 }
 

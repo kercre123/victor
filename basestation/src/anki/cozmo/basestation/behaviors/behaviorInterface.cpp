@@ -36,7 +36,8 @@ namespace Cozmo {
   
   
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-  : _robot(robot)
+  : _moodScorer()
+  , _robot(robot)
   , _lastRunTime(0.0)
   , _overrideScore(-1.0f)
   , _isRunning(false)
@@ -51,30 +52,12 @@ namespace Cozmo {
     const Json::Value& nameJson = config[kNameKey];
     _name = nameJson.isString() ? nameJson.asCString() : kBaseDefaultName;
 
-    _emotionScorers.clear();
+    _moodScorer.ClearEmotionScorers();
     
     const Json::Value& emotionScorersJson = config[kEmotionScorersKey];
     if (!emotionScorersJson.isNull())
     {
-      const uint32_t numEmotionScorers = emotionScorersJson.size();
-
-      _emotionScorers.reserve(numEmotionScorers);
-      
-      const Json::Value kNullScorerValue;
-      
-      for (uint32_t i = 0; i < numEmotionScorers; ++i)
-      {
-        const Json::Value& emotionScorerJson = emotionScorersJson.get(i, kNullScorerValue);
-        
-        if (emotionScorerJson.isNull())
-        {
-          PRINT_NAMED_WARNING("IBehavior.BadEmotionScorer", "Behavior '%s': %s[%u] failed to read", _name.c_str(), kEmotionScorersKey, i);
-        }
-        else
-        {
-          _emotionScorers.emplace_back(emotionScorerJson);
-        }
-      }
+      _moodScorer.ReadFromJson(emotionScorersJson);
     }
     
     _repetitionPenalty.Clear();
@@ -130,30 +113,7 @@ namespace Cozmo {
   
   float IBehavior::EvaluateEmotionScore(const MoodManager& moodManager) const
   {
-    float totalScore = 0.0f;
-    uint32_t numEmotionsScored = 0;
-    const uint32_t kTickRangeForDelta = 60; // 2 would give any chances between the last 2 updates, but we might want to track more if it takes longer for a running behavior to interrupt and allow this to run
-    
-    for (const EmotionScorer& emotionScorer : _emotionScorers)
-    {
-      const EmotionType emotionType = emotionScorer.GetEmotionType();
-      const float emotionValue = emotionScorer.TrackDeltaScore() ? moodManager.GetEmotionDeltaRecentTicks(emotionType, kTickRangeForDelta)
-                                                                 : moodManager.GetEmotionValue(emotionType);
-      const float score = emotionScorer.GetScoreGraph().EvaluateY(emotionValue);
-      if (FLT_NEAR(score, 0.0f))
-      {
-        // any component scoring 0 forces an overal 0 score (e.g. prevent behavior ever being picked)
-        return 0.0f;
-      }
-      else
-      {
-        totalScore += score;
-        ++numEmotionsScored;
-      }
-    }
-    
-    const float averageScore = (numEmotionsScored > 0) ? (totalScore / float(numEmotionsScored)) : 0.0f;
-    return averageScore;
+    return _moodScorer.EvaluateEmotionScore(moodManager);
   }
   
   // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
