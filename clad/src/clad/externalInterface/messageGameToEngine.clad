@@ -464,6 +464,11 @@ message SetSteeringControllerGains {
   float_32 dockPathAngularOffsetCap_rad
 }
 
+message SetMotionModelParams
+{
+  float_32 slipFactor,
+}
+
 // SetRobotVolume
 message SetRobotVolume {
   float_32 volume
