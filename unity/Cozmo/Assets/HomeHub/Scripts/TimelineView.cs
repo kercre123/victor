@@ -69,6 +69,7 @@ namespace Cozmo.HomeHub {
       _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
       _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _ContentPane).GetComponent<DailyGoalPanel>();
+      _DailyGoalInstance.GenerateDailyGoals();
 
       // TMP: GENERATE FAKE DATA
       GenerateFakeData();
@@ -114,7 +115,6 @@ namespace Cozmo.HomeHub {
         }
       }
 
-      _DailyGoalInstance.GenerateDailyGoals();
     }
 
     private void PopulateTimeline(List<TimelineEntryState> timelineEntries) {

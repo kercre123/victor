@@ -11,8 +11,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59f017fdad5b54867aff311e855af24a, type: 3}
   m_Name: DailyGoalConfig
   m_EditorClassIdentifier: 
-  MinDailyGoalTarget: 1
-  MaxDailyGoalTarget: 4
+  MinDailyGoalTarget: 2
+  MaxDailyGoalTarget: 7
   FriendshipLevels:
   - StatsIncluded: 00
     FriendshipLevelName: Stranger
