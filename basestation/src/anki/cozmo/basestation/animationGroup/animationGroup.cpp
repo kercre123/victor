@@ -35,18 +35,11 @@ namespace Anki {
       _name = name;
       
       const Json::Value& jsonAnimations = jsonRoot[kAnimationsKeyName];
-      
-      if(jsonAnimations.isNull()) {
-        
-        PRINT_NAMED_ERROR("AnimationGroup.DefineFromJson.NoAnimations",
-                          "Missing '%s' field for animation group.", kAnimationsKeyName);
-        return RESULT_FAIL;
-      }
 
       if(!jsonAnimations.isArray()) {
         
-        PRINT_NAMED_ERROR("AnimationGroup.DefineFromJson.AnimationsNotArray",
-                          "'%s' field is not an array", kAnimationsKeyName);
+        PRINT_NAMED_ERROR("AnimationGroup.DefineFromJson.NoAnimations",
+                          "Missing '%s' field for animation group.", kAnimationsKeyName);
         return RESULT_FAIL;
       }
 

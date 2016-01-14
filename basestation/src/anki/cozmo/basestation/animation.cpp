@@ -48,31 +48,17 @@ namespace Cozmo {
     {
       const Json::Value& jsonFrame = jsonRoot[iFrame];
       
-      if(jsonFrame.isNull()) {
-        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameIsNull",
-                          "Missing frame %d of '%s' animation.",
-                          iFrame, _name.c_str());
-        return RESULT_FAIL;
-      }
-      
       if(!jsonFrame.isObject()) {
-        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameNotObject",
-                          "frame %d of '%s' animation is not an object.",
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameMissing",
+                          "frame %d of '%s' animation is missing or incorrect type.",
                           iFrame, _name.c_str());
         return RESULT_FAIL;
       }
       
       const Json::Value& jsonFrameName = jsonFrame[kNameKey];
       
-      if(jsonFrameName.isNull()) {
-        PRINT_NAMED_ERROR("Animation.DefineFromJson.NoFrameName",
-                          "Missing '%s' field for frame %d of '%s' animation.",
-                          kNameKey, iFrame, _name.c_str());
-        return RESULT_FAIL;
-      }
-      
       if(!jsonFrameName.isString()) {
-        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameNameNotString",
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameNameMissing",
                           "Missing '%s' field for frame %d of '%s' animation.",
                           kNameKey, iFrame, _name.c_str());
         return RESULT_FAIL;

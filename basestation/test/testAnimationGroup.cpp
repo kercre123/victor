@@ -182,14 +182,14 @@ AnimationGroup DeserializeAnimationGroupFromJson(const char* jsonString) {
   return animGroup;
 }
 
-void DeserializeAnimationGroupContainerFromJson(AnimationGroupContainer & containter, const std::string& name, const char* jsonString) {
+void DeserializeAnimationGroupContainerFromJson(AnimationGroupContainer & container, const std::string& name, const char* jsonString) {
   Json::Value data;
   Json::Reader reader;
   bool success = reader.parse(jsonString, data);
   
   EXPECT_TRUE(success);
   
-  auto result = containter.DefineFromJson(data, name);
+  auto result = container.DefineFromJson(data, name);
   
   EXPECT_EQ(Anki::RESULT_OK, result);
 }

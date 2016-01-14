@@ -32,15 +32,9 @@ namespace Anki {
     {
       const Json::Value& jsonName = jsonRoot[kNameKey];
       
-      if(jsonName.isNull()) {
+      if(!jsonName.isString()) {
         PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoName",
                           "Missing '%s' field for animation.", kNameKey);
-        return RESULT_FAIL;
-      }
-      
-      if(!jsonName.isString()) {
-        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NameNotString",
-                          "'%s' field is not a string.", kNameKey);
         return RESULT_FAIL;
       }
       
