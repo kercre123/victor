@@ -113,6 +113,7 @@ public static class LocalizationKeys {
   public const string kButtonReady = "button.ready";
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kButtonClose = "button.close";
+  public const string kLabelPlusCount = "label.plusCount";
 
   #endregion
 }

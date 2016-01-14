@@ -45,5 +45,11 @@ public class ChallengeEndedDialog : BaseView {
   }
 
   public void AddReward(Anki.Cozmo.ProgressionStatType progressionStat, int numberPoints) {
+    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, _RewardContainer.transform).GetComponent<IconTextLabel>();
+    iconTextLabel.SetText(string.Format(Localization.GetCultureInfo(), 
+      Localization.Get(LocalizationKeys.kLabelPlusCount),
+      numberPoints));
+
+    // TODO: Set icon
   }
 }

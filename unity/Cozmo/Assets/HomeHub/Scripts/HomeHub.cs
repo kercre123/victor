@@ -95,13 +95,13 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
     }
 
-    private void HandleMiniGameLose() {
+    private void HandleMiniGameLose(Dictionary<Anki.Cozmo.ProgressionStatType, int> rewards) {
       // Reset the current challenge
       _CurrentChallengePlaying = null;
       ShowTimelineDialog();
     }
 
-    private void HandleMiniGameWin() {
+    private void HandleMiniGameWin(Dictionary<Anki.Cozmo.ProgressionStatType, int> rewards) {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
         CompleteChallenge(_CurrentChallengePlaying);

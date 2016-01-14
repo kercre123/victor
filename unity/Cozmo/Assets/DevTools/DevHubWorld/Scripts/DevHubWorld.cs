@@ -49,8 +49,12 @@ public class DevHubWorld : HubWorldBase {
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
     _MiniGameInstance.InitializeMinigame(challenge);
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
-    _MiniGameInstance.OnMiniGameLose += HandleMiniGameQuit;
-    _MiniGameInstance.OnMiniGameWin += HandleMiniGameQuit;
+    _MiniGameInstance.OnMiniGameLose += HandleMiniGameEnd;
+    _MiniGameInstance.OnMiniGameWin += HandleMiniGameEnd;
+  }
+
+  private void HandleMiniGameEnd(System.Collections.Generic.Dictionary<Anki.Cozmo.ProgressionStatType, int> rewards) {
+    ShowHubWorldDialog();
   }
 
   private void HandleMiniGameQuit() {

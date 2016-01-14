@@ -50,5 +50,8 @@
   },
   "button.close": {
     "translation": "CLOSE"
+  },
+  "label.plusCount": {
+    "translation": "+{0}"
   }
 }

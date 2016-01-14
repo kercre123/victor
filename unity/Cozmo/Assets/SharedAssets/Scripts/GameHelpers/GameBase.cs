@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Cozmo.MinigameWidgets;
 using DG.Tweening;
+using Anki.Cozmo;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -25,7 +26,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // TODO: Modify so that it passes the rewards
-  public delegate void MiniGameWinHandler();
+  public delegate void MiniGameWinHandler(Dictionary<ProgressionStatType, int> rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
@@ -41,7 +42,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // TODO: Modify so that it passes the rewards
-  public delegate void MiniGameLoseHandler();
+  public delegate void MiniGameLoseHandler(Dictionary<ProgressionStatType, int> rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -71,7 +72,9 @@ public abstract class GameBase : MonoBehaviour {
   [SerializeField]
   protected HowToPlaySlide[] _HowToPlayPrefabs;
 
-  private Dictionary<Anki.Cozmo.ProgressionStatType, int> _RewardedXp;
+  private Dictionary<ProgressionStatType, int> _RewardedXp;
+
+  private delegate int XpCalculator();
 
   public void InitializeMinigame(ChallengeData challengeData) {
     _StateMachine.SetGameRef(this);
@@ -159,7 +162,6 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
-    // TODO: Make custom script for end challenge dialog
     // Open confirmation dialog instead
     ChallengeEndedDialog challengeEndDialog = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
     challengeEndDialog.SetupDialog(Localization.Get(_ChallengeData.ChallengeTitleLocKey),
@@ -168,32 +170,34 @@ public abstract class GameBase : MonoBehaviour {
     challengeEndDialog.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
 
     _RewardedXp = new Dictionary<Anki.Cozmo.ProgressionStatType, int>();
-    int timeXp = CalculateTimeStatRewards();
-    if (timeXp != 0) {
-      _RewardedXp.Add(Anki.Cozmo.ProgressionStatType.Time, timeXp);
-      // TODO: Show reward
-    }
-    int noveltyXp = CalculateNoveltyStatRewards();
-    if (noveltyXp != 0) {
-      _RewardedXp.Add(Anki.Cozmo.ProgressionStatType.Novelty, noveltyXp);
-      // TODO: Show reward
-    }
-    int excitementXp = CalculateExcitementStatRewards();
-    if (excitementXp != 0) {
-      _RewardedXp.Add(Anki.Cozmo.ProgressionStatType.Excitement, excitementXp);
-      // TODO: Show reward
+
+    Dictionary<ProgressionStatType, XpCalculator> rewardCalculators = new Dictionary<ProgressionStatType, XpCalculator>();
+    rewardCalculators.Add(ProgressionStatType.Time, CalculateTimeStatRewards);
+    rewardCalculators.Add(ProgressionStatType.Novelty, CalculateNoveltyStatRewards);
+    rewardCalculators.Add(ProgressionStatType.Excitement, CalculateExcitementStatRewards);
+
+    foreach (var kvp in rewardCalculators) {
+      // TODO: Check that this is a goal xp
+      int grantedXp = kvp.Value();
+      if (grantedXp != 0) {
+        _RewardedXp.Add(kvp.Key, grantedXp);
+        challengeEndDialog.AddReward(kvp.Key, grantedXp);
+
+        // Grant right away even if there are animations in the daily goal ui
+        CurrentRobot.AddToProgressionStat(kvp.Key, grantedXp);
+      }
     }
   }
 
   private void HandleChallengeResultViewClosed() {
     if (_WonChallenge) {
       if (OnMiniGameWin != null) {
-        OnMiniGameWin();
+        OnMiniGameWin(_RewardedXp);
       }
     }
     else {
       if (OnMiniGameLose != null) {
-        OnMiniGameLose();
+        OnMiniGameLose(_RewardedXp);
       }
     }
     CloseMinigameImmediately();
