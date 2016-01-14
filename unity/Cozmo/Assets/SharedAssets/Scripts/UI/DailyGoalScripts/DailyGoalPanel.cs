@@ -60,8 +60,22 @@ public class DailyGoalPanel : BaseView {
 	void Update () {
 	}
 
-  // TODO: Once we have some data class for representing a Goal Type (includes name, listens for the right changes, ect.)
-  // replace this with a variant that takes in that class
+  // TODO: Using current friendship level and the appropriate config file,
+  // generate a series of random goals for the day.
+  public void GenerateDailyGoals() {
+    //Robot rob = RobotEngineManager.Instance.CurrentRobot;
+
+    //string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
+
+    // TODO: Generate Goals by the Friendship Level
+  }
+
+  // Creates a goal badge based on a progression stat
+  public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target) {
+    return CreateGoalBadge(type.ToString(), target);
+  }
+
+  // Creates a goal badge based on an arbitrary string
   public GoalBadge CreateGoalBadge(string name, int target) {
     GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, _GoalContainer).GetComponent<GoalBadge>();
     newBadge.Initialize(name,target,0);
