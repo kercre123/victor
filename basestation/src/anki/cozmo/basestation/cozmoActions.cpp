@@ -1817,14 +1817,15 @@ namespace Anki {
           robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
         }
         _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
-        
+      }
+      if(_moveEyes) {
         // Restore previous keep face alive setting
         if(_wasKeepFaceAliveEnabled) {
           robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
         }
       }
     }
-      
+    
 #pragma mark ---- MoveLiftToHeightAction ----
                                 
     MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
@@ -2320,9 +2321,6 @@ namespace Anki {
       // and however this action finishes
       robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
       robot.GetVisionComponent().EnableMode(VisionMode::Tracking, false);
-      
-      // Also return the robot's head to level
-      robot.GetMoveComponent().MoveHeadToAngle(0, 2.f, 6.f);
       
       // Abort anything that shouldn't still be running
       if(robot.IsTraversingPath()) {

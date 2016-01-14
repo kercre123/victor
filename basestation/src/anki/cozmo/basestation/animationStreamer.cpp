@@ -118,7 +118,6 @@ namespace Cozmo {
     if(_streamingAnimation == nullptr) {
       return NotAnimatingTag;
     } else {
-      
       IncrementTagCtr();
     
       // Get the animation ready to play
@@ -257,6 +256,17 @@ namespace Cozmo {
       _onDeviceRobotAudioKeyFrameQueue.clear();
       _lastPlayedOnDeviceRobotAudioKeyFrame = nullptr;
 #     endif
+      
+      // Make sure any eye dart (which is persistent) gets removed so it doesn't
+      // affect the animation we are about to start streaming. Give it a little
+      // duration so it doesn't pop.
+      // (Special case: allow KeepAlive to play on top of the "Live" idle.)
+      if(anim != &_liveAnimation) {
+        if(NotAnimatingTag != _eyeDartTag) {
+          RemovePersistentFaceLayer(_eyeDartTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
+          _eyeDartTag = NotAnimatingTag;
+        }
+      }
     }
     return lastResult;
   }
@@ -1157,6 +1167,18 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     bool streamUpdated = false;
+    
+    // Update name in viz:
+    if(nullptr == _streamingAnimation && nullptr == _idleAnimation)
+    {
+      VizManager::getInstance()->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim: <none>");
+    } else if(nullptr != _streamingAnimation) {
+      VizManager::getInstance()->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim: %s",
+                                         _streamingAnimation->GetName().c_str());
+    } else if(nullptr != _idleAnimation) {
+      VizManager::getInstance()->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim[Idle]: %s",
+                                         _idleAnimation->GetName().c_str());
+    }
     
     // Always keep face alive, unless we have a streaming animation, since we rely on it
     // to do all face updating and we don't want to step on it's hand-designed toes.

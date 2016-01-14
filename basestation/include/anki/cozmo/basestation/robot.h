@@ -778,9 +778,6 @@ public:
     // State
     bool             _isPickingOrPlacing = false;
     bool             _isPickedUp         = false;
-    bool             _isMoving           = false;
-    bool             _isHeadMoving       = false;
-    bool             _isLiftMoving       = false;
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;

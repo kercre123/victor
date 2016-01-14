@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -25,25 +26,6 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-
-// TODO:(bn) move this somewhere central
-namespace AnimTrackFlagHelpers
-{
-
-std::string AnimTrackFlagsToString(uint8_t tracks)
-{
-  std::stringstream ss;
-  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
-  {
-    uint8_t currTrack = (1 << i);
-    if( tracks & currTrack ) {
-      ss << EnumToString( static_cast<AnimTrackFlag>(currTrack) ) << ' ';
-    }
-  }
-
-  return ss.str();
-}
-}
 
 
 MovementComponent::MovementComponent(Robot& robot)
@@ -266,7 +248,7 @@ void MovementComponent::PrintAnimationLockState() const
   for( int trackNum = 0; trackNum < (int)AnimConstants::NUM_TRACKS; ++trackNum ) {
     if( _animTrackLockCount[trackNum] > 0 ) {
       uint8_t trackEnumVal = 1 << trackNum;
-      ss << AnimTrackFlagHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _animTrackLockCount[trackNum] << ' ';
+      ss << AnimTrackHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _animTrackLockCount[trackNum] << ' ';
     }
   }
 
