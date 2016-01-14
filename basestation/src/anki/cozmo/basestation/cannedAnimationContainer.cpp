@@ -50,18 +50,8 @@ namespace Cozmo {
 
   Animation* CannedAnimationContainer::GetAnimation(const std::string& name)
   {
-    Animation* animPtr = nullptr;
-    
-    auto retVal = _animations.find(name);
-    if(retVal == _animations.end()) {
-      PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation.InvalidName",
-                        "Animation requested for unknown animation '%s'.\n",
-                        name.c_str());
-    } else {
-      animPtr = &retVal->second;
-    }
-    
-    return animPtr;
+    const Animation* animPtr = const_cast<const CannedAnimationContainer *>(this)->GetAnimation(name);
+    return const_cast<Animation*>(animPtr);
   }
   
   const Animation* CannedAnimationContainer::GetAnimation(const std::string& name) const
@@ -79,7 +69,7 @@ namespace Cozmo {
     
     return animPtr;
   }
-
+  
   std::vector<std::string> CannedAnimationContainer::GetAnimationNames()
   {
     std::vector<std::string> v;
@@ -93,7 +83,7 @@ namespace Cozmo {
     return v;
   }
   
-  Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot, std::string& loadedAnimName)
+  Result CannedAnimationContainer::DefineFromJson(const Json::Value& jsonRoot, std::string& loadedAnimName)
   {
     
     Json::Value::Members animationNames = jsonRoot.getMemberNames();

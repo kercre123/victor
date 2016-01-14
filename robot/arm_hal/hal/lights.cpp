@@ -64,7 +64,6 @@ namespace Anki
         switch(HAL::GetID()) {
           // Cliff sensors not working on these robots
           case 0x3AA7:
-          case 0x3A94:
             return false;
           default:
             return g_dataToHead.cliffLevel < DROP_LEVEL;

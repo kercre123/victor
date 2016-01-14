@@ -777,6 +777,16 @@ void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
       SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, msg.dockPathDistOffsetCap_mm, msg.dockPathAngularOffsetCap_rad,
                                                         Anki::Cozmo::RobotInterface::ControllerChannel::controller_steering);
     }));
+  
+  // SetMotionModelParams
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetMotionModelParams,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetMotionModelParams& msg = event.GetData().Get_SetMotionModelParams();
+                                                         
+      SendRobotMessage<RobotInterface::SetMotionModelParams>(msg.slipFactor);
+    }));
+  
 }
   
 } // end namespace Cozmo

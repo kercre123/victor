@@ -279,6 +279,11 @@ namespace Anki {
       } else {
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
+        PRINT_NAMED_DEBUG("ActionQueue.QueueNow.CancelingPrevious", "Canceling %s [%d] in favor of action %s [%d]",
+                          _queue.front()->GetName().c_str(),
+                          _queue.front()->GetTag(),
+                          action->GetName().c_str(),
+                          action->GetTag());
         _queue.front()->Cancel();
         return QueueNext(action, numRetries);
       }

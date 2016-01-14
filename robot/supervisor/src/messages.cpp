@@ -143,6 +143,7 @@ namespace Anki {
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
+        robotState_.enabledAnimTracks = AnimationController::GetEnabledTracks();
 
         robotState_.status = 0;
         // TODO: Make this a parameters somewhere?
@@ -514,6 +515,11 @@ namespace Anki {
         }
       }
 
+      void Process_setMotionModelParams(const RobotInterface::SetMotionModelParams& msg)
+      {
+        Localization::SetMotionModelParams(msg.slipFactor);
+      }
+      
       void Process_abortDocking(const AbortDocking& msg)
       {
         DockingController::ResetDocker();

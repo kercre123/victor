@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -25,25 +26,6 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-
-// TODO:(bn) move this somewhere central
-namespace AnimTrackFlagHelpers
-{
-
-std::string AnimTrackFlagsToString(uint8_t tracks)
-{
-  std::stringstream ss;
-  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
-  {
-    uint8_t currTrack = (1 << i);
-    if( tracks & currTrack ) {
-      ss << EnumToString( static_cast<AnimTrackFlag>(currTrack) ) << ' ';
-    }
-  }
-
-  return ss.str();
-}
-}
 
 
 MovementComponent::MovementComponent(Robot& robot)
@@ -65,9 +47,44 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeInternal<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
   helper.SubscribeInternal<MessageGameToEngineTag::MoveHead>();
   helper.SubscribeInternal<MessageGameToEngineTag::MoveLift>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetHeadAngle>();
   helper.SubscribeInternal<MessageGameToEngineTag::StopAllMotors>();
 }
+  
+void MovementComponent::Update(const Cozmo::RobotState& robotState)
+{
+  _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
+  _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
+  _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
+  
+  for(auto layerIter = _faceLayerTagsToRemoveOnHeadMovement.begin();
+      layerIter != _faceLayerTagsToRemoveOnHeadMovement.end(); )
+  {
+    FaceLayerToRemove & layer = layerIter->second;
+    if(_isHeadMoving && false == layer.headWasMoving) {
+      // Wait for transition from stopped to moving again
+      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(layerIter->first, layer.duration_ms);
+      layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
+    } else {
+      layer.headWasMoving = _isHeadMoving;
+      ++layerIter;
+    }
+  }
+}
+
+void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms)
+{
+  PRINT_NAMED_DEBUG("MovementComponent.RemoveFaceLayersWhenHeadMoves.",
+                    "Registering tag=%d for removal with duration=%dms",
+                    faceLayerTag, duration_ms);
+
+  FaceLayerToRemove info{
+    .duration_ms  = duration_ms,
+    .headWasMoving = _isHeadMoving,
+  };
+  _faceLayerTagsToRemoveOnHeadMovement[faceLayerTag] = std::move(info);
+  
+}
+
   
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
@@ -83,7 +100,16 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpeed& msg)
 {
-  _robot.SendRobotMessage<RobotInterface::TurnInPlaceAtSpeed>(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
+  
+  f32 turnSpeed = msg.speed_rad_per_sec;
+  if (std::fabsf(turnSpeed) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
+    PRINT_NAMED_WARNING("MovementComponent.EventHandler.TurnInPlaceAtSpeed.SpeedExceedsLimit",
+                        "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
+                        RAD_TO_DEG_F32(turnSpeed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+    turnSpeed = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, turnSpeed);
+  }
+  
+  _robot.SendRobotMessage<RobotInterface::TurnInPlaceAtSpeed>(turnSpeed, msg.accel_rad_per_sec2);
 }
 
 template<>
@@ -105,20 +131,6 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
     _robot.SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
-  }
-}
-
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::SetHeadAngle& msg)
-{
-  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.SetHeadAngle.HeadLocked",
-                     "Ignoring ExternalInterface::SetHeadAngle while head is locked.");
-  } else {
-    // Note that this will temporarily take over the head but because it's not an action,
-    // any tracking that's using the head should just re-take control on next
-    // observation.
-    MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
   }
 }
 
@@ -236,7 +248,7 @@ void MovementComponent::PrintAnimationLockState() const
   for( int trackNum = 0; trackNum < (int)AnimConstants::NUM_TRACKS; ++trackNum ) {
     if( _animTrackLockCount[trackNum] > 0 ) {
       uint8_t trackEnumVal = 1 << trackNum;
-      ss << AnimTrackFlagHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _animTrackLockCount[trackNum] << ' ';
+      ss << AnimTrackHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _animTrackLockCount[trackNum] << ' ';
     }
   }
 

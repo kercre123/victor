@@ -24,14 +24,16 @@
 #endif // #ifdef SIMULATOR
 
 
-// Whether or not to use the orientation given by the gyro
-#define USE_GYRO_ORIENTATION 1
-
-
 #if(USE_OVERLAY_DISPLAY)
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
 #endif
+
+// Slip modelling
+// 0 == no slip modelling
+// 1 == Assumes slower tread slips
+// 2 == Assumes total dist travelled per tic is discounted more the sharper you turn
+#define SLIP_MODELLING 2
 
 namespace Anki {
   namespace Cozmo {
@@ -73,6 +75,13 @@ namespace Anki {
         f32 gyroRotOffset_ = 0;
 
         PoseFrameID_t frameId_ = 0;
+        
+        
+        // Tread slip modelling
+        // Value ranges from 0 to 1.
+        // TODO: This value may change for different durometer treads
+        f32 slipFactor_ = 1.f;
+        
 
         // Pose history
         // Never need to erase elements, just overwrite with new data.
@@ -572,7 +581,8 @@ namespace Anki {
           // wheel_dist / lRadius = rDist / lDist - 1
           // lRadius = wheel_dist / (rDist / lDist - 1)
 
-          if ((rDist != 0) && (lDist / rDist) < 1.01f && (lDist / rDist) > 0.99f) {
+          f32 wheelDistRatio = lDist / rDist;
+          if ((rDist != 0) && (wheelDistRatio < 1.01f) && (wheelDistRatio > 0.99f)) {
 //          if (FLT_NEAR(lDist, rDist)) {
             lRadius = BIG_RADIUS;
             rRadius = BIG_RADIUS;
@@ -631,36 +641,50 @@ namespace Anki {
             */
           } else {
 
-
-#if(1)
-
-              // Value ranging from 0 to 1.
-              // The lower the value the more the expected distance approaches
-              // the distance expected of a two-wheeled no-slip robot.
-              // The higher the value the more the expected distance approaches
-              // the distance of the wheel that moved the most.
-              // (i.e. Assumes the faster wheel drags the slower wheel along.
-              // How correct is this assumption? Who knows?)
-              // TODO: This value may change for different durometer treads
-              //const f32 SLIP_FACTOR = 0.7f;
-
-            // For treaded robot, assuming there is more slip of the slower tread than
+#if         (SLIP_MODELLING == 1)
+            // Slip modelling method 1:
+            // Assuming there is more slip of the slower tread than
             // there is on the faster one, thus making the total distance travelled
-            // per tic closer to the maximum distance traversed by a wheel than
+            // per tic closer to the distance traversed by the faster wheel than
             // their average distance.
+            //
+            // The lower the slipFactor the more the expected distance approaches
+            // the distance expected of a two-wheeled no-slip robot.
+            // The higher the value the more the expected distance approaches
+            // the distance of the wheel that moved the most.
+            // (i.e. Assumes the faster wheel drags the slower wheel along.
+            // How correct is this assumption? Who knows?)
+            //
+            // When carrying a block, however, don't bother doing this since the
+            // weight makes the robot drive more like a wheeled robot.
             // TODO: This is definitely not totally correct, but seems to be more
             //       right than not doing it, at least from what I can see from
             //       controlling it via the webots_keyboard_controller.
-            /*
-            if (rDist * lDist >= 0) {
-              // rDist and lDist are the same sign or at least one of them is zero
-              f32 maxVal = MAX(ABS(lDist), ABS(rDist));
-              if (cDist < 0) {
-                maxVal *= -1;
+            if (!PickAndPlaceController::IsCarryingBlock()) {
+              if (rDist * lDist >= 0) {
+                // rDist and lDist are the same sign or at least one of them is zero
+                f32 maxVal = MAX(ABS(lDist), ABS(rDist));
+                if (cDist < 0) {
+                  maxVal *= -1;
+                }
+                cDist = cDist * (1.f-slipFactor_) + (maxVal * slipFactor_);
               }
-              cDist = cDist * (1.f-SLIP_FACTOR) + (maxVal * SLIP_FACTOR);
             }
-             */
+            
+#elif       (SLIP_MODELLING == 2)
+            // Slip modelling method 2:
+            // A simple discount factor applied to cDist.
+            // The slipFactor represents the multiplier that is applied
+            // at point turn. The multiplier linearly increases to 1 as
+            // the ratio of the distances travelled by the two wheels approaches 1.
+            f32 absWheelDistRatio = fabsf(wheelDistRatio);
+            if (absWheelDistRatio > 1.f) {
+              absWheelDistRatio = 1.f / absWheelDistRatio;
+            }
+            cDist *= slipFactor_ + (1.f-slipFactor_) * absWheelDistRatio;
+            
+#endif // SLIP_MODELLING
+            
 
             // Get ICR offset from robot origin depending on carry state
             f32 driveCenterOffset = GetDriveCenterOffset();
@@ -674,9 +698,10 @@ namespace Anki {
             } else {
               cTheta_meas = CLIP(cTheta_meas, cTheta, 0);
             }
+            
 
-
-            /*
+            // ======= Some experimental stuff to try later ========
+           /*
             // Assuming that the actual distance travelled is the expected distance
             // travelled (based on encoders) scaled by the
             // measured rotation (cTheta_meas) / the expected rotation based on encoders (cTheta)
@@ -686,53 +711,33 @@ namespace Anki {
             }
              */
 
-
-            driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
-            driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
-
-            driveCenter_x_ += cDist * cosf(orientation_.ToFloat());
-            driveCenter_y_ += cDist * sinf(orientation_.ToFloat());
-
-            orientation_ = newOrientation;
-
-            x_ = driveCenter_x_ - driveCenterOffset * cosf(orientation_.ToFloat());
-            y_ = driveCenter_y_ - driveCenterOffset * sinf(orientation_.ToFloat());
-            /*
-            // DEBUG PRINT
-            static u8 cnt= 0;
-            if (++cnt == 200) {
-              PRINT("LOC: cDist=%f, cTheta=%f, cTheta_meas=%f, icr=(%f,%f), xy=(%f,%f), orientation=%f\n", cDist, cTheta, cTheta_meas, driveCenter_x_, driveCenter_y_, x_, y_, orientation_.ToFloat());
-              cnt = 0;
-            }
-            */
-
-#elif(0)
+            
             // Compute distance traveled relative to previous position.
             // Drawing a straight line from the previous position to the new position forms a chord
             // in the circle defined by the turning radius as determined by the incremental wheel motion this tick.
             // The angle of this circle that this chord spans is cTheta.
             // The angle of the chord relative to the robot's previous trajectory is cTheta / 2.
-            f32 alpha = cTheta * 0.5f;
+            f32 cThetaHalf = 0.f;
+            /*
+            cThetaHalf = cTheta_meas * 0.5f;
+            
+            // The chord length is 2 * cRadius * sin(cThetaHalf).
+            cDist = copysign((2 * cRadius * sinf(cThetaHalf)), cDist);
+            */
+            // ===============================================
+            
+            
+            driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
+            driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
+            
+            driveCenter_x_ += cDist * cosf(orientation_.ToFloat() + cThetaHalf);
+            driveCenter_y_ += cDist * sinf(orientation_.ToFloat() + cThetaHalf);
+            
+            orientation_ = newOrientation;
 
-            // The chord length is 2 * cRadius * sin(cTheta / 2).
-            f32 chord_length = ABS(2 * cRadius * sinf(alpha));
-
-            // The new pose is then
-            x_ += (cDist > 0 ? 1 : -1) * chord_length * cosf(orientation_.ToFloat() + alpha);
-            y_ += (cDist > 0 ? 1 : -1) * chord_length * sinf(orientation_.ToFloat() + alpha);
-            orientation_ += cTheta;
-
-            driveCenter_x_ = x_;
-            driveCenter_y_ = y_;
-#else
-            // Naive approximation, but seems to work nearly as well as non-naive with one less sin() call.
-            x_ += cDist * cosf(orientation_.ToFloat());
-            y_ += cDist * sinf(orientation_.ToFloat());
-            orientation_ += cTheta;
-
-            driveCenter_x_ = x_;
-            driveCenter_y_ = y_;
-#endif
+            x_ = driveCenter_x_ - driveCenterOffset * cosf(orientation_.ToFloat());
+            y_ = driveCenter_y_ - driveCenterOffset * sinf(orientation_.ToFloat());
+            
           }
 
 #if(DEBUG_LOCALIZATION)
@@ -741,15 +746,13 @@ namespace Anki {
 
         }
 
-
-#if(USE_GYRO_ORIENTATION)
+        
         // Set orientation according to gyro
         orientation_ = IMUFilter::GetRotation() + gyroRotOffset_;
-#endif
 
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
-
+        
 
 #if(USE_OVERLAY_DISPLAY)
         if(movement && HAL::GetTimeStamp()%100 == 0)
@@ -879,6 +882,11 @@ namespace Anki {
       f32 GetDistTo(const f32 x, const f32 y)
       {
         return sqrtf((x_-x)*(x_-x) + (y_-y)*(y_-y));
+      
+      }
+      void SetMotionModelParams(f32 slipFactor)
+      {
+        slipFactor_ = slipFactor;
       }
 
     }

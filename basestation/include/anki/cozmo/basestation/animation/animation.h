@@ -41,7 +41,7 @@ public:
   Animation(const std::string& name = "");
 
   // For reading canned animations from files
-  Result DefineFromJson(const std::string& name, Json::Value& json);
+  Result DefineFromJson(const std::string& name, const Json::Value& json);
 
   // For defining animations at runtime (e.g. live animation)
   template<class KeyFrameType>

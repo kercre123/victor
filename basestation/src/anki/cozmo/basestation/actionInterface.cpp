@@ -11,14 +11,17 @@
  **/
 
 #include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/components/animTrackHelpers.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/helpers/templateHelpers.h"
+
+#define DEBUG_ANIM_TRACK_LOCKING 0
 
 namespace Anki {
   
@@ -61,7 +64,15 @@ namespace Anki {
     {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
-        robot.GetMoveComponent().LockAnimTracks(GetAnimTracksToDisable());
+        uint8_t disableTracks = GetAnimTracksToDisable();
+#if DEBUG_ANIM_TRACK_LOCKING
+        PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
+                         disableTracks,
+                         AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
+                         GetName().c_str(),
+                         GetTag());
+#endif
+        robot.GetMoveComponent().LockAnimTracks(disableTracks);
         robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
         _isRunning = true;
       }
@@ -93,7 +104,7 @@ namespace Anki {
         }
       
         // Clean up after any registered sub actions and the action itself
-        ClearSubActions(robot);
+        CancelAndDeleteSubActions(robot);
         Cleanup(robot);
         
         if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
@@ -106,21 +117,21 @@ namespace Anki {
         }
         
         if(!_suppressTrackLocking) {
-          robot.GetMoveComponent().UnlockAnimTracks(GetAnimTracksToDisable());
+          uint8_t disableTracks = GetAnimTracksToDisable();
+#if DEBUG_ANIM_TRACK_LOCKING
+          PRINT_NAMED_INFO("IActionRunner.Update.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                           disableTracks,
+                           AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
+                           GetName().c_str(),
+                           GetTag());
+#endif
+          robot.GetMoveComponent().UnlockAnimTracks(disableTracks);
           robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
         _isRunning = false;
       }
       
       return result;
-    }
-    
-    void IActionRunner::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
-    {
-      ObjectInteractionCompleted info;
-      info.numObjects = 0;
-      info.objectIDs.fill(-1);
-      completionUnion.Set_objectInteractionCompleted( std::move(info) );
     }
     
     void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
@@ -171,17 +182,22 @@ namespace Anki {
       _subActions.push_back(&subAction);
     }
     
-    void IActionRunner::ClearSubActions(Robot& robot)
+    void IActionRunner::CancelAndDeleteSubActions(Robot& robot)
     {
-      if(_subActions.empty())
+      if(!_subActions.empty())
       {
         for(auto subAction : _subActions) {
           if(nullptr != (*subAction)) {
-            (*subAction)->Cleanup(robot);
+#if DEBUG_ANIM_TRACK_LOCKING
+            PRINT_NAMED_INFO("IActionRunner.CancelAndDeleteSubActions",
+                             "Removing subAction %s [%d]",
+                             (*subAction)->GetName().c_str(), (*subAction)->GetTag());
+#endif
+            (*subAction)->Cancel();
+            (*subAction)->Update(robot);
             Util::SafeDelete(*subAction);
           }
         }
-        _subActions.clear();
       }
     }
     
@@ -234,7 +250,7 @@ namespace Anki {
           // Before calling Init(), clean up any subactions, in case this is not
           // the first call to Init() -- i.e., if this is a retry or resume after
           // being interrupted.
-          ClearSubActions(robot);
+          CancelAndDeleteSubActions(robot);
           
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively

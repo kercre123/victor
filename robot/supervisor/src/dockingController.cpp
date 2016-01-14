@@ -535,6 +535,13 @@ namespace Anki {
           // We already accomplished the dock. We're done!
           return;
         }
+        
+        // TEMP (maybe): Just use the first error signal that starts docking.
+        //               This way we skip error signals that were potentially generated from a wonky marker due to motion.
+        if (PathFollower::IsTraversingPath()) {
+          return;
+        }
+        
 
 
         // Ignore error signals received while turning "fast" since they're generated

@@ -35,6 +35,7 @@
 #include "anki/planning/shared/path.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -42,6 +43,7 @@
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
@@ -175,14 +177,7 @@ public:
     
     // Returns true if robot is not traversing a path and has no actions in its queue.
     bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
-    
-    // True if wheel speeds are non-zero in most recent RobotState message
-    bool   IsMoving() const {return _isMoving;}
-    
-    // True if head/lift is on its way to a commanded angle/height
-    bool   IsHeadMoving() const {return _isHeadMoving;}
-    bool   IsLiftMoving() const {return _isLiftMoving;}
-    
+  
     // True if we are on the sloped part of a ramp
     bool   IsOnRamp() const { return _onRamp; }
     
@@ -475,15 +470,11 @@ public:
   
     // Tell the animation streamer to move the eyes by this x,y amount over the
     // specified duration (layered on top of any other animation that's playing).
-    // If makePersistent is true, a looping face layer will be used and it is the
-    // caller's responsibility to remove that layer using the returned tag.
-    // (Otherwise - when makePersistent=false - the tag is 0 and can be ignored.)
-    u32 ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent = false);
-  
-    // Same as above, but shifts and scales
-    u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                          TimeStamp_t duration_ms, bool makePersistent = false,
-                          const std::string& name = "ShiftAndScaleEyes");
+    // Use tag = AnimationStreamer::NotAnimatingTag to start a new layer (in which
+    // case tag will be set to the new layer's tag), or use an existing tag
+    // to add the shift to that layer.
+    void ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
+                   TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
@@ -497,9 +488,15 @@ public:
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
-
+  
     // Read the animations in a dir
     void ReadAnimationDir();
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupDir();
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
@@ -617,6 +614,8 @@ public:
     
     // =========  Other State  ============
     f32 GetBatteryVoltage() const { return _battVoltage; }
+  
+    u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
     
     // Abort everything the robot is doing, including path following, actions,
     // animations, and docking. This is like the big red E-stop button.
@@ -680,6 +679,15 @@ public:
     Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
+  
+  const std::string& GetAnimationNameFromGroup(const std::string& name) const {
+    auto group = _animationGroups.GetAnimationGroup(name);
+    if(group != nullptr && !group->IsEmpty()) {
+      return group->GetAnimationName(GetMoodManager());
+    }
+    static const std::string empty("");
+    return empty;
+  }
   
   protected:
     IExternalInterface* _externalInterface;
@@ -787,12 +795,10 @@ public:
     // State
     bool             _isPickingOrPlacing = false;
     bool             _isPickedUp         = false;
-    bool             _isMoving           = false;
-    bool             _isHeadMoving       = false;
-    bool             _isLiftMoving       = false;
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
+    u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ENABLE_ALL_TRACKS;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -844,7 +850,8 @@ public:
     std::string _lastPlayedAnimationId;
 
     std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    
+    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+  
     ///////// Modifiers ////////
     
     void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
@@ -862,6 +869,7 @@ public:
     ///////// Animation /////////
     
     CannedAnimationContainer _cannedAnimations;
+    AnimationGroupContainer  _animationGroups;
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;

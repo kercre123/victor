@@ -15,6 +15,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
+#include "clad/types/animationKeyFrames.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
@@ -438,8 +439,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(VizTextLabelType::TEXT_LABEL_PROX_SENSORS, Anki::NamedColors::GREEN, txt);
   */
 
-  sprintf(txt, "Batt: %2.1f V",
-    (f32)payload.state.battVolt10x/10);
+  sprintf(txt, "Batt: %2.1f V  AnimTracksLocked: %c%c%c",
+    (f32)payload.state.battVolt10x/10,
+          !(payload.state.enabledAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+          !(payload.state.enabledAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+          !(payload.state.enabledAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ');
   DrawText(VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Video: %d Hz   Proc: %d Hz",
