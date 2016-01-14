@@ -58,7 +58,7 @@ private:
   };
   
   // Internal state of the behavior:
-  State       _state;
+  State       _state = State::WaitingForFirstMotion;
   u32         _actionRunning = (u32)ActionConstants::INVALID_TAG;
   u32         _backingUpAction = (u32)ActionConstants::INVALID_TAG;
   u8          _originalVisionModes = 0;
@@ -75,7 +75,8 @@ private:
   f32     _minGroundAreaToConsider = 0.1f;
   Radians _panAndTiltTol = DEG_TO_RAD(3.f);  // pan/tilt must be greater than this to actually turn
   double  _initialReactionWaitTime_sec = 20.f;
-
+  f32     _timeToHoldHeadDown_sec = 1.25f;  // increment hold by this amount if motion observed
+  
   // tracks how far we've driven forward in this behavior
   f32 _totalDriveForwardDist = 0.0f;
   f32 _additionalBackupDist = 20.0f;

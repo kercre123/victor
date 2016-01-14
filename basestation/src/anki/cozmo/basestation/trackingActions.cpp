@@ -107,6 +107,17 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
     _tiltTolerance = HEAD_ANGLE_TOL;
   }
 }
+
+ActionResult ITrackAction::Init(Robot& robot)
+{
+  // Store eye dart setting so we can restore after tracking
+  _originalEyeDartDist = robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
+  
+  // Reduce eye darts so we better appear to be tracking and not look around
+  robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
+  
+  return InitInternal(robot);
+}
   
 bool ITrackAction::InterruptInternal()
 {
@@ -218,22 +229,31 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       eyeShiftX = CLIP(eyeShiftX, -ProceduralFace::WIDTH/4, ProceduralFace::WIDTH/4);
       eyeShiftY = CLIP(eyeShiftY, -ProceduralFace::HEIGHT/4, ProceduralFace::HEIGHT/4);
       
-      PRINT_NAMED_INFO("ITrackAction.CheckIfDone.EyeShift",
-                       "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
-                       eyeShiftX, eyeShiftY, _eyeShiftTag);
+#     if DEBUG_TRACKING_ACTIONS
+      PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",
+                        "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
+                        eyeShiftX, eyeShiftY, _eyeShiftTag);
+#     endif
+      
+      // Expose as params?
+      const f32 maxLookUpScale   = 1.1f;
+      const f32 minLookDownScale = 0.8f;
+      const f32 outerEyeScaleIncrease = 0.1f;
       
       ProceduralFace procFace;
-      ProceduralFaceParams& params = procFace.GetParams();
-      params.SetFacePosition({eyeShiftX, eyeShiftY});
+      procFace.GetParams().LookAt(eyeShiftX, eyeShiftY,
+                                  static_cast<f32>(ProceduralFace::WIDTH/4),
+                                  static_cast<f32>(ProceduralFace::HEIGHT/4),
+                                  maxLookUpScale, minLookDownScale, outerEyeScaleIncrease);
       
       if(_eyeShiftTag == AnimationStreamer::NotAnimatingTag) {
         // Start a new eye shift layer
         AnimationStreamer::FaceTrack faceTrack;
-        faceTrack.AddKeyFrameToBack(procFace);
+        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
         _eyeShiftTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
       } else {
         // Augment existing eye shift layer
-        robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace));
+        robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
       }
     } // if(_moveEyes)
     
@@ -257,6 +277,9 @@ void ITrackAction::Cleanup(Robot &robot)
     robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
     _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
   }
+  
+  // Make sure to restore original eye dart distance
+  robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
 }
   
 #pragma mark -
@@ -269,7 +292,7 @@ TrackObjectAction::TrackObjectAction(const ObjectID& objectID, bool trackByType)
 
 }
 
-ActionResult TrackObjectAction::Init(Robot& robot)
+ActionResult TrackObjectAction::InitInternal(Robot& robot)
 {
   if(!_objectID.IsSet()) {
     PRINT_NAMED_ERROR("TrackObjectAction.Init.ObjectIdNotSet", "");
@@ -295,7 +318,7 @@ ActionResult TrackObjectAction::Init(Robot& robot)
   robot.GetMoveComponent().SetTrackToObject(_objectID);
   
   return ActionResult::SUCCESS;
-} // Init()
+} // InitInternal()
 
 void TrackObjectAction::Cleanup(Robot& robot)
 {
@@ -412,13 +435,13 @@ TrackFaceAction::TrackFaceAction(FaceID faceID)
 }
 
 
-ActionResult TrackFaceAction::Init(Robot& robot)
+ActionResult TrackFaceAction::InitInternal(Robot& robot)
 {
   _name = "TrackFace" + std::to_string(_faceID) + "Action";
   robot.GetMoveComponent().SetTrackToFace(_faceID);
   _lastFaceUpdate = 0;
   return ActionResult::SUCCESS;
-} // Init()
+} // InitInternal()
   
   
 void TrackFaceAction::Cleanup(Robot& robot)
@@ -484,7 +507,7 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
 #pragma mark -
 #pragma mark TrackMotionAction
   
-ActionResult TrackMotionAction::Init(Robot& robot)
+ActionResult TrackMotionAction::InitInternal(Robot& robot)
 {
   if(false == robot.HasExternalInterface()) {
     PRINT_NAMED_ERROR("TrackMotionAction.Init.NoExternalInterface",
@@ -505,7 +528,7 @@ ActionResult TrackMotionAction::Init(Robot& robot)
   _signalHandle = robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
   
   return ActionResult::SUCCESS;
-} // Init()
+} // InitInternal()
 
   
 bool TrackMotionAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)

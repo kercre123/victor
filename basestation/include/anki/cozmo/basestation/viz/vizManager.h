@@ -60,6 +60,7 @@ namespace Anki {
         WORLD_ORIGIN,
         VISION_MODE,
         BEHAVIOR_STATE,
+        ANIMATION_NAME,
         DEBUG_STRING
       } TextLabelType;
       

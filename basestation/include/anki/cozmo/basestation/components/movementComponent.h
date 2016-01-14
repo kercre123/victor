@@ -16,15 +16,18 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
 #include <list>
+#include <map>
 
 namespace Anki {
 namespace Cozmo {
   
 // declarations
 class Robot;
+struct RobotState;
 class IExternalInterface;
 enum class AnimTrackFlag : uint8_t;
   
@@ -33,6 +36,15 @@ class MovementComponent : private Util::noncopyable
 public:
   MovementComponent(Robot& robot);
   virtual ~MovementComponent() { }
+  
+  void Update(const RobotState& robotState);
+  
+  // True if wheel speeds are non-zero in most recent RobotState message
+  bool   IsMoving() const {return _isMoving;}
+  
+  // True if head/lift is on its way to a commanded angle/height
+  bool   IsHeadMoving() const {return _isHeadMoving;}
+  bool   IsLiftMoving() const {return _isLiftMoving;}
   
   bool IsMovementTrackIgnored(AnimTrackFlag track) const;
   bool IsAnimTrackLocked(AnimTrackFlag track) const;
@@ -62,6 +74,11 @@ public:
                          const f32 accel_rad_per_sec2,
                          const f32 duration_sec = 0.f);
   
+  // Register a persistent face layer tag for removal next time head moves
+  // You may optionally specify the duration of the layer removal (i.e. how
+  // long it takes to return to not making any face adjustment)
+  void RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms=0);
+  
   Result StopAllMotors();
   
   // Tracking is handled by actions now, but we will continue to maintain the
@@ -76,8 +93,17 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-protected:
+private:
+  
+  void InitEventHandlers(IExternalInterface& interface);
+  int GetFlagIndex(uint8_t flag) const;
+  
   Robot& _robot;
+  
+  bool _isMoving;
+  bool _isHeadMoving;
+  bool _isLiftMoving;
+  
   std::list<Signal::SmartHandle> _eventHandles;
   
   // Object/Face being tracked
@@ -91,12 +117,15 @@ protected:
   std::vector<int> _animTrackLockCount;
   std::vector<int> _ignoreTrackMovementCount;
   
-private:
-  void InitEventHandlers(IExternalInterface& interface);
-  int GetFlagIndex(uint8_t flag) const;
+  struct FaceLayerToRemove {
+    TimeStamp_t duration_ms;
+    bool        headWasMoving;
+  };
+  std::map<AnimationStreamer::Tag, FaceLayerToRemove> _faceLayerTagsToRemoveOnHeadMovement;
   
 }; // class MovementComponent
-
+  
+  
 } // namespace Cozmo
 } // namespace Anki
 

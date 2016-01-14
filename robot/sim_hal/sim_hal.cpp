@@ -190,6 +190,12 @@ namespace Anki {
         float rad_per_s = power / 0.05f;
         return rad_per_s;
       }
+      
+      // Approximate open-loop conversion of head power to angular head speed
+      float HeadPowerToAngSpeed(float power)
+      {
+        return power * 2*PI_F;
+      }
 
 
       void MotorUpdate()
@@ -251,13 +257,6 @@ namespace Anki {
           #endif
         }
       }
-
-
-      void SetHeadAngularVelocity(const f32 rad_per_sec)
-      {
-        headMotor_->setVelocity(rad_per_sec);
-      }
-
 
       Result SendBlockMessage(const u8 blockID, const BlockMessages::LightCubeMessage& msg)
       {
@@ -591,7 +590,7 @@ namespace Anki {
           break;
         case MOTOR_HEAD:
           // TODO: Assuming linear relationship, but it's not!
-          SetHeadAngularVelocity(power * MAX_HEAD_SPEED);
+          headMotor_->setVelocity(HeadPowerToAngSpeed(power));
           break;
         default:
           PRINT("ERROR (HAL::MotorSetPower) - Undefined motor type %d\n", motor);

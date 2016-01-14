@@ -162,16 +162,6 @@ namespace Anki
       //
       const f32 MOTOR_MAX_POWER = 1.0f;
 
-      ///////////////////
-      // TODO: The following are constants for a naive linear approximation of power to speed,
-      // which is definitely a non-linear relationship. Eventually, we should figure out the true
-      // relationship on the robot so that the simulator can approximate it.
-
-      // The max angular speed the head can move when max power is commanded.
-      const f32 MAX_HEAD_SPEED = 2*PI; // rad/s
-
-      //////////////////////
-
       //
       // Simulator-only functions - not needed by real hardware
       // TBD:  If these aren't hardware features, can they go elsewhere?

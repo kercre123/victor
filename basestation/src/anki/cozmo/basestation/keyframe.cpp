@@ -731,8 +731,24 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
         const std::string& radiusStr = jsonRoot["radius_mm"].asString();
         if(radiusStr == "TURN_IN_PLACE" || radiusStr == "POINT_TURN") {
           _streamMsg.curvatureRadius_mm = 0;
+          
+          // Check that speed is valid
+          if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
+            PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.PointTurnSpeedExceedsLimit",
+                                "PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                                std::abs(_streamMsg.speed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+            _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC, MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+          }
         } else if(radiusStr == "STRAIGHT") {
           _streamMsg.curvatureRadius_mm = s16_MAX;
+          
+          // Check that speed is valid
+          if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
+            PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.StraightSpeedExceedsLimit",
+                                "Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                                std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+            _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
+          }
         } else {
           PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
                             "Unrecognized string for 'radius_mm' field: %s.\n",
@@ -741,6 +757,18 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
         }
       } else {
         _streamMsg.curvatureRadius_mm = (uint16_t)jsonRoot["radius_mm"].asInt();
+        
+        // Check that speed is valid
+        // NOTE: This should actually be checking the speed of the outer wheel
+        //       when driving at the given curvature, but not exactly sure what
+        //       speed limit should look like between straight and point turns so
+        //       just using straight limit for now as a sanity check.
+        if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
+          PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.ArcSpeedExceedsLimit",
+                              "Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                              std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+          _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
+        }
       }
       
       return RESULT_OK;
