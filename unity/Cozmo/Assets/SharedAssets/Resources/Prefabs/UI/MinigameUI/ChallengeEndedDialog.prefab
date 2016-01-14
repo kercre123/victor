@@ -309,7 +309,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#button.continue'
+  m_Text: '#challengeEnded.label.reward'
 --- !u!114 &11421866
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -388,7 +388,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#button.continue'
+  m_Text: FPO Challenge Title
 --- !u!114 &11435140
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -501,7 +501,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#button.continue'
+  m_Text: FPO Additional Info
 --- !u!114 &11474462
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -593,7 +593,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#button.continue'
+  m_Text: FPO Primary Info
 --- !u!114 &11491794
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -64,7 +64,7 @@ public abstract class GameBase : MonoBehaviour {
   public SharedMinigameView SharedMinigameViewInstance { get { return _SharedMinigameViewInstance; } }
 
   protected ChallengeData _ChallengeData;
-  private AlertView _ChallengeEndViewInstance;
+  private ChallengeEndedDialog _ChallengeEndViewInstance;
   private bool _WonChallenge;
 
   protected StateMachine _StateMachine = new StateMachine();
@@ -126,6 +126,7 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance = null;
     }
     if (_ChallengeEndViewInstance != null) {
+      _ChallengeEndViewInstance.ViewCloseAnimationFinished -= HandleChallengeResultViewClosed;
       _ChallengeEndViewInstance.CloseViewImmediately();
       _ChallengeEndViewInstance = null;
     }
@@ -163,11 +164,11 @@ public abstract class GameBase : MonoBehaviour {
 
   private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
     // Open confirmation dialog instead
-    ChallengeEndedDialog challengeEndDialog = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
-    challengeEndDialog.SetupDialog(Localization.Get(_ChallengeData.ChallengeTitleLocKey),
+    _ChallengeEndViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
+    _ChallengeEndViewInstance.SetupDialog(Localization.Get(_ChallengeData.ChallengeTitleLocKey),
       _ChallengeData.ChallengeIcon, primaryText, secondaryText);
     // Listen for dialog close
-    challengeEndDialog.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
+    _ChallengeEndViewInstance.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
 
     _RewardedXp = new Dictionary<Anki.Cozmo.ProgressionStatType, int>();
 
@@ -181,10 +182,10 @@ public abstract class GameBase : MonoBehaviour {
       int grantedXp = kvp.Value();
       if (grantedXp != 0) {
         _RewardedXp.Add(kvp.Key, grantedXp);
-        challengeEndDialog.AddReward(kvp.Key, grantedXp);
+        _ChallengeEndViewInstance.AddReward(kvp.Key, grantedXp);
 
-        // Grant right away even if there are animations in the daily goal ui
-        CurrentRobot.AddToProgressionStat(kvp.Key, grantedXp);
+        // TODO: Grant right away even if there are animations in the daily goal ui
+        // CurrentRobot.AddToProgressionStat(kvp.Key, grantedXp);
       }
     }
   }
