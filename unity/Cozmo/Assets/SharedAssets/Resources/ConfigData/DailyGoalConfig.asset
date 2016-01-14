@@ -11,21 +11,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59f017fdad5b54867aff311e855af24a, type: 3}
   m_Name: DailyGoalConfig
   m_EditorClassIdentifier: 
-  MinDailyGoalTarget: 2
-  MaxDailyGoalTarget: 7
   FriendshipLevels:
   - StatsIncluded: 00
     FriendshipLevelName: Stranger
     MaxGoals: 1
+    MinTarget: 2
+    MaxTarget: 5
   - StatsIncluded: 02
     FriendshipLevelName: Acquaintance
     MaxGoals: 2
+    MinTarget: 3
+    MaxTarget: 6
   - StatsIncluded: 01
     FriendshipLevelName: Friend
     MaxGoals: 2
+    MinTarget: 4
+    MaxTarget: 7
   - StatsIncluded: 
     FriendshipLevelName: Best Friend
     MaxGoals: 3
+    MinTarget: 4
+    MaxTarget: 8
   - StatsIncluded: 
     FriendshipLevelName: BFF5EVR
     MaxGoals: 4
+    MinTarget: 4
+    MaxTarget: 10

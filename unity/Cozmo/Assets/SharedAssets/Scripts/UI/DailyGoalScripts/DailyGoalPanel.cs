@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 public class DailyGoalPanel : BaseView {
 
-  private int[] DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+  private int[] _DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
   private List<GoalBadge> _GoalUIBadges;
   [SerializeField]
   private GoalBadge _GoalBadgePrefab;
@@ -49,8 +49,8 @@ public class DailyGoalPanel : BaseView {
 	// Use this for initialization
 	void Awake () {
     _GoalUIBadges = new List<GoalBadge>();
-    for (int i = 0; i < DailyGoals.Length; i++) {
-      DailyGoals[i] = 0;
+    for (int i = 0; i < _DailyGoals.Length; i++) {
+      _DailyGoals[i] = 0;
     }
 	}
 	
@@ -59,8 +59,8 @@ public class DailyGoalPanel : BaseView {
 	}
 
   public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
-    for (int i = 0; i < DailyGoals.Length; i++) {
-      if (DailyGoals[i] > 0) {
+    for (int i = 0; i < _DailyGoals.Length; i++) {
+      if (_DailyGoals[i] > 0) {
         return true;
       }
     }
@@ -73,35 +73,39 @@ public class DailyGoalPanel : BaseView {
     Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
     string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
-    List<Anki.Cozmo.ProgressionStatType> PossibleStats = new List<Anki.Cozmo.ProgressionStatType>();
+    List<Anki.Cozmo.ProgressionStatType> possibleStats = new List<Anki.Cozmo.ProgressionStatType>();
     int totalGoals = 0;
+    int min = 0;
+    int max = 0;
     for (int i = 0; i < _Config.FriendshipLevels.Length; i++) {
       for (int j = 0; j < _Config.FriendshipLevels[i].StatsIncluded.Length; j++) {
-        if (!PossibleStats.Contains(_Config.FriendshipLevels[i].StatsIncluded[j])) {
-          PossibleStats.Add(_Config.FriendshipLevels[i].StatsIncluded[j]);
+        if (!possibleStats.Contains(_Config.FriendshipLevels[i].StatsIncluded[j])) {
+          possibleStats.Add(_Config.FriendshipLevels[i].StatsIncluded[j]);
         }
       }
       if (_Config.FriendshipLevels[i].FriendshipLevelName == name) {
         totalGoals = _Config.FriendshipLevels[i].MaxGoals;
+        min = _Config.FriendshipLevels[i].MinTarget;
+        max = _Config.FriendshipLevels[i].MaxTarget;
         break;
       }
     }
     // Don't generate more goals than possible stats
-    if (totalGoals > PossibleStats.Count) {
-      Debug.LogWarning("More Goals that Potential Stats");
-      totalGoals = PossibleStats.Count;
+    if (totalGoals > possibleStats.Count) {
+      DAS.Warn(this, "More Goals than Potential Stats");
+      totalGoals = possibleStats.Count;
     }
     // Generate Goals from the possible stats
     for (int i = 0; i < totalGoals; i++) {
-      Anki.Cozmo.ProgressionStatType targetStat = PossibleStats[Random.Range(0, PossibleStats.Count)];
-      PossibleStats.Remove(targetStat);
-      CreateGoalBadge(targetStat, Random.Range(_Config.MinDailyGoalTarget, _Config.MaxDailyGoalTarget));
+      Anki.Cozmo.ProgressionStatType targetStat = possibleStats[Random.Range(0, possibleStats.Count)];
+      possibleStats.Remove(targetStat);
+      CreateGoalBadge(targetStat, Random.Range(min, max));
     }
   }
 
   // Creates a goal badge based on a progression stat
   public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target) {
-    DailyGoals[(int)type] += target;
+    _DailyGoals[(int)type] += target;
     return CreateGoalBadge(type.ToString(), target);
   }
 
@@ -118,12 +122,12 @@ public class DailyGoalPanel : BaseView {
   // Listens for any goal Badge values you listen to changing.
   // On Change, updates the total progress achieved by all goalbadges.
   public void UpdateTotalProgress() {
-    float Total = _GoalUIBadges.Count;
-    float Curr = 0.0f;
+    float total = _GoalUIBadges.Count;
+    float curr = 0.0f;
     for (int i = 0; i < _GoalUIBadges.Count; i++) {
-      Curr += _GoalUIBadges[i].Progress;
+      curr += _GoalUIBadges[i].Progress;
     }
-    _TotalProgressBar.SetProgress(Curr/Total);
+    _TotalProgressBar.SetProgress(curr/total);
   }
 
   protected override void CleanUp() {

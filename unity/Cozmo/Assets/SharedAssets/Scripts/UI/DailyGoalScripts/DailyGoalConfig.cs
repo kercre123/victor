@@ -8,14 +8,9 @@ public class DailyGoalConfig : ScriptableObject {
     public Anki.Cozmo.ProgressionStatType[] StatsIncluded;
     public string FriendshipLevelName;
     public int MaxGoals;
+    public int MinTarget;
+    public int MaxTarget;
   }
-
-  [SerializeField]
-  [Range(1,10)]
-  public int MinDailyGoalTarget;
-  [SerializeField]
-  [Range(1,10)]
-  public int MaxDailyGoalTarget;
 
   [SerializeField]
   public DailyGoalData[] FriendshipLevels;
