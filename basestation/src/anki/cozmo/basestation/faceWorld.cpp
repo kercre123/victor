@@ -249,7 +249,7 @@ namespace Cozmo {
   }
   
   
-  TimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& p)
+  TimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& p) const
   {
     if (_lastObservedFaceTimeStamp > 0) {
       p = _lastObservedFacePose;
