@@ -439,6 +439,42 @@
           #     '<(cg-cti_gyp_path):ctiPlanningStandalone',
           #   ],            
           # },
+          #Build everything for BUILD_WORKSPACE
+          # When game was a real target it was built automatically, now manually include what to build.
+          {
+            'target_name': 'All',
+            'type': 'none',
+            'dependencies': [
+              '<(cg-ce_gyp_path):cozmoAPI',
+              '<(cg-ce_gyp_path):cozmoEngine',
+              '<(cg-ce_gyp_path):robotClad',
+              '<(cg-ce_gyp_path):cozmo_physics',
+              '<(cg-ce_gyp_path):webotsCtrlLightCube',
+              '<(cg-ce_gyp_path):webotsCtrlViz',
+              '<(cg-ce_gyp_path):webotsCtrlRobot',
+              '<(cg-ce_gyp_path):webotsCtrlGameEngine',
+              '<(cg-ce_gyp_path):webotsCtrlKeyboard',
+              '<(cg-ce_gyp_path):webotsCtrlBuildServerTest',
+              '<(cg-ce_gyp_path):cozmoEngineUnitTest',
+              '<(cg-cti_gyp_path):ctiCommon',
+              '<(cg-cti_gyp_path):ctiCommonRobot',
+              '<(cg-cti_gyp_path):ctiMessaging',
+              '<(cg-cti_gyp_path):ctiMessagingRobot',
+              '<(cg-cti_gyp_path):ctiPlanning',
+              '<(cg-cti_gyp_path):ctiPlanningRobot',
+              '<(cg-cti_gyp_path):ctiVision',
+              '<(cg-cti_gyp_path):ctiVisionRobot',
+              '<(cg-cti_gyp_path):ctiUnitTest',
+              '<(cg-cti_gyp_path):ctiPlanningStandalone',
+              '<(cg-util_gyp_path):util',
+              '<(cg-util_gyp_path):jsoncpp',
+              '<(cg-util_gyp_path):kazmath',
+              '<(cg-util_gyp_path):UtilUnitTest',
+              '<(cg-audio_path):DriveAudioEngine',
+              #'<(cg-audio_path):CozmoFxPlugIn',
+            ]
+          },
+
           {
             # fake target to see all of the sources...
             'target_name': 'all_lib_targets',

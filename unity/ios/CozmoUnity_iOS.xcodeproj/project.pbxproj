@@ -178,7 +178,6 @@
 		EB571AB7012B0C6E437221BA /* Bulk_Generics_11.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A763A9FDB5EA25D02F2140A /* Bulk_Generics_11.cpp */; };
 		EC592C7353C1438449A0B4BE /* InternalProfiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E42E274EA44A59C0030BBA5C /* InternalProfiler.cpp */; };
 		F532341AEB2FCCD3D3E0EEEA /* Bulk_Generics_7.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 481D25FD28C6FD7E8BDCD56B /* Bulk_Generics_7.cpp */; };
-		F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */; };
 		F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */; };
 		F97DBAD6C25368FBE5A1E7B1 /* Bulk_Generics_8.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55347E9811187A1208F2DBCB /* Bulk_Generics_8.cpp */; };
 		FB2A318526378D7F6EA46676 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 7AEBF3499E66EFB6C0C3E722 /* config.xml */; };
@@ -908,6 +907,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastUpgradeCheck = 0720;
 				TargetAttributes = {
 					1D6058900D05DD3D006BFB54 = {
 						DevelopmentTeam = BEJF9NAYCL;
@@ -939,7 +939,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */,
 				1CD2597B9FF357EE897EDE7E /* global-metadata.dat in Resources */,
 				BC272330529E0D90254EECE6 /* mscorlib.dll-resources.dat in Resources */,
 				680BE13E2BBD95FCDC3BC0ED /* browscap.ini in Resources */,
@@ -1151,7 +1150,6 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = armv7;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
@@ -1192,6 +1190,7 @@
 					CoreMotion,
 					"-weak-lSystem",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.anki.${PRODUCT_NAME}";
 				PRODUCT_NAME = cozmo;
 				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
@@ -1207,7 +1206,6 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = armv7;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
@@ -1246,6 +1244,7 @@
 					CoreMotion,
 					"-weak-lSystem",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.anki.${PRODUCT_NAME}";
 				PRODUCT_NAME = cozmo;
 				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
@@ -1260,10 +1259,10 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
-				ARCHS = armv7;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_BITCODE = NO;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
@@ -1272,7 +1271,7 @@
 				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -1283,7 +1282,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
-				ARCHS = armv7;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_BITCODE = NO;
 				GCC_C_LANGUAGE_STANDARD = c99;
