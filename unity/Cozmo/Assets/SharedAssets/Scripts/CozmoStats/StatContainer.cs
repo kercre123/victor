@@ -10,13 +10,15 @@ public class StatContainer : IEquatable<StatContainer> {
 
   [SerializeField]
   [JsonProperty("Stats")]
-  private readonly int[] _Stats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+  private int[] _Stats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
 
   public int this[Anki.Cozmo.ProgressionStatType stat] {
     get {
+      ValidateStatSize();
       return _Stats[(int)stat];
     }
     set {
+      ValidateStatSize();
       _Stats[(int)stat] = value;
     }
   }
@@ -26,6 +28,19 @@ public class StatContainer : IEquatable<StatContainer> {
     get { 
       return _Stats.Sum();
     } 
+  }
+
+  /// <summary>
+  /// The serializer could potentially set _Stats to an array that is less
+  /// than the current length of stats if we add new stats. 
+  /// If that happened, fix it
+  /// </summary>
+  private void ValidateStatSize() {
+    if (_Stats.Length != (int)Anki.Cozmo.ProgressionStatType.Count) {
+      var oldStats = _Stats;
+      _Stats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+      oldStats.CopyTo(_Stats, 0);
+    }
   }
 
   public void Add(StatContainer other) {
