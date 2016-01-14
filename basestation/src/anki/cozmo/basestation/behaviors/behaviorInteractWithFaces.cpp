@@ -38,9 +38,16 @@ namespace Cozmo {
   
   using namespace ExternalInterface;
 
-  static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
-  static const char * const kMinorFriendlyReactAnimName = "ID_react2face_2nd";
+  //static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
+  //static const char * const kMinorFriendlyReactAnimName = "ID_react2face_2nd";
   static const char * const kStrongScaredReactAnimName = "ID_react2face_disgust";
+  
+  static const std::vector<const char *> kReactionAnimNames = {
+    "ID_react2face_A01",
+    "ID_react2face_B01",
+    "ID_react2face_C01",
+    "ID_react2face_D01",
+  };
   
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -197,26 +204,17 @@ namespace Cozmo {
     // If we haven't played our init anim yet for this face and it's been awhile
     // since we did so, do so now and start tracking afterward
     QueueActionPosition queueTrackingPosition = QueueActionPosition::NOW;
-    if (!dataIter->second._playedInitAnim && currentTime_sec >= _newFaceAnimCooldownTime)
+    if (currentTime_sec >= _newFaceAnimCooldownTime)
     {
       robot.GetActionList().Cancel();
       robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
       
-      
-      auto friendlyAnimName = kMinorFriendlyReactAnimName;
-      if (0 == kCurrentFriendlyAnimCount)
-      {
-        friendlyAnimName = kStrongFriendlyReactAnimName;
-      }
-      ++kCurrentFriendlyAnimCount;
-      kCurrentFriendlyAnimCount = kCurrentFriendlyAnimCount % kStrongFriendlyAnimRatio;
-      
-      PlayAnimation(robot, friendlyAnimName, QueueActionPosition::AT_END);
+      PlayAnimation(robot, kReactionAnimNames[dataIter->second._whichReactionAnim], QueueActionPosition::AT_END);
       
       robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
                                            EmotionType::Social, kEmotionChangeMedium,
                                            EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
-      dataIter->second._playedInitAnim = true;
+
       _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
       queueTrackingPosition = QueueActionPosition::AT_END;
     }
@@ -721,6 +719,21 @@ namespace Cozmo {
       {
         dataIter = insertRet.first;
         dataIter->second._lastSeen_sec = event.GetCurrentTime();
+        
+        if(_reactionAnimCtr < 0) {
+          // Randomly choose first reaction animation
+          _reactionAnimCtr = GetRNG().RandIntInRange(0, (s32)kReactionAnimNames.size()-1);
+        } else {
+          // Rotate through other reactions
+          ++_reactionAnimCtr;
+          if(_reactionAnimCtr == kReactionAnimNames.size()) {
+            _reactionAnimCtr = 0;
+          }
+        }
+        
+        // Assign the reaction for this face. For as long as we maintain the face ID,
+        // this will be the reaciton animation we play when we see this face
+        dataIter->second._whichReactionAnim = _reactionAnimCtr;
       }
     }
     

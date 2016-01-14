@@ -65,13 +65,13 @@ namespace Anki {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
         uint8_t disableTracks = GetAnimTracksToDisable();
-#if DEBUG_ANIM_TRACK_LOCKING
+#       if DEBUG_ANIM_TRACK_LOCKING
         PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
                          disableTracks,
                          AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
                          GetName().c_str(),
                          GetTag());
-#endif
+#       endif
         robot.GetMoveComponent().LockAnimTracks(disableTracks);
         robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
         _isRunning = true;
@@ -118,13 +118,13 @@ namespace Anki {
         
         if(!_suppressTrackLocking) {
           uint8_t disableTracks = GetAnimTracksToDisable();
-#if DEBUG_ANIM_TRACK_LOCKING
+#         if DEBUG_ANIM_TRACK_LOCKING
           PRINT_NAMED_INFO("IActionRunner.Update.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
                            disableTracks,
                            AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
                            GetName().c_str(),
                            GetTag());
-#endif
+#         endif
           robot.GetMoveComponent().UnlockAnimTracks(disableTracks);
           robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
