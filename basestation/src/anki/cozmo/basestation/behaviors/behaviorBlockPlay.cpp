@@ -562,6 +562,7 @@ namespace Cozmo {
           if (robotAndBlockOrientationMatch && blockIsInFrontOfRobot) {
             // Alignment is good. Go straight to pickup!
             PickupObjectAction* pickupAction = new PickupObjectAction(_objectToPickUp);
+            pickupAction->SetDoNearPredockPoseCheck(false);
             StartActing(robot, pickupAction);
           } else {
             DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(_objectToPickUp, _motionProfile);
