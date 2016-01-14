@@ -357,7 +357,7 @@
           'xcode_settings': {
             'ARCHS': [ '>@(mac_target_archs)' ],
             'SDKROOT': 'macosx',
-            # 'MACOSX_DEPLOYMENT_TARGET': '10.9', # latest
+            'MACOSX_DEPLOYMENT_TARGET': '10.10', # latest
             'LIBRARY_SEARCH_PATHS': [
               '<(face_library_lib_path)',
             ],
@@ -839,7 +839,6 @@
             'copies': [
               {
                 'files': [
-                  #'../../libs/framework/gtest.framework',
                   '<(ce-gtest_path)/gtest.framework'
                 ],
                 'destination': '<(PRODUCT_DIR)',
