@@ -775,6 +775,11 @@ namespace AnimationController {
   {
     _tracksToPlay &= ~whichTracks;
   }
+  
+  u8 GetEnabledTracks()
+  {
+    return _tracksToPlay;
+  }
 
   u8 GetCurrentTag()
   {

@@ -75,6 +75,9 @@ namespace Anki {
       // Returns distance between the current pose and the given xy coordinates
       f32 GetDistTo(const f32 x, const f32 y);
 
+      // Set motion model parameters
+      void SetMotionModelParams(f32 slipFactor);
+
     } // Localization
   } // Cozmo
 } // Anki

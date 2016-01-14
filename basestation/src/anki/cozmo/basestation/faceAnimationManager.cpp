@@ -146,11 +146,13 @@ namespace Cozmo {
                       ++emptyFramesAdded;
                     }
                     
+                    /*
                     if(emptyFramesAdded > 0) {
-                      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
-                                       "Inserted %d empty frames before frame %d in animation %s.",
-                                       emptyFramesAdded, frameNum, animName.c_str());
+                      PRINT_NAMED_DEBUG("FaceAnimationManager.ReadFaceAnimationDir.InsertEmptyFrames",
+                                        "Inserted %d empty frames before frame %d in animation %s.",
+                                        emptyFramesAdded, frameNum, animName.c_str());
                     }
+                     */
                   }
                   
                   // Read the image
@@ -179,16 +181,16 @@ namespace Cozmo {
               }
             }
             
-            PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
-                             "Added %lu files/frames to animation %s",
-                             _availableAnimations[animName].GetNumFrames(),
-                             animName.c_str());
+            //PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
+            //                 "Added %lu files/frames to animation %s",
+            //                 _availableAnimations[animName].GetNumFrames(),
+            //                 animName.c_str());
           }
         }
       }
       closedir(dir);
     } else {
-      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir", "folder not found %s", animationFolder.c_str());
+      PRINT_NAMED_WARNING("FaceAnimationManager.ReadFaceAnimationDir", "folder not found %s", animationFolder.c_str());
     }
     
   } // ReadFaceAnimationDir()

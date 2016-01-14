@@ -1186,7 +1186,9 @@ namespace Cozmo {
 
               ASSERT_NAMED( msg.completionInfo.GetTag() ==  ActionCompletedUnionTag::animationCompleted, "");
               
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleted", "%s (result %d)", msg.completionInfo.Get_animationCompleted().animationName.c_str(), msg.result);
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleted", "%s (result: %s)",
+                                     msg.completionInfo.Get_animationCompleted().animationName.c_str(),
+                                     EnumToString(msg.result));
               
               // Erase this animation action and resume pickOrPlace if there are no more animations pending
               _animActionTags.erase(msg.idTag);
@@ -1237,7 +1239,7 @@ namespace Cozmo {
       {
         if (msg.idTag == _lastActionTag) {
           if (msg.result != ActionResult::SUCCESS) {
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.FaceDisturbedBlockFailed", "Probably because block is no longer there. This is expected. (result %d)", msg.result);
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.FaceDisturbedBlockFailed", "Probably because block is no longer there. This is expected. (result: %s)", EnumToString(msg.result));
           }
           
           // If block status is neat then don't play irritation

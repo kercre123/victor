@@ -37,7 +37,7 @@ namespace Anki {
       //The gains for the steering controller
       //Heading tracking gain K1, Crosstrack approach rate K2
       const float DEFAULT_STEERING_K1 = 0.1f;
-      const float DEFAULT_STEERING_K2 = 10.f;
+      const float DEFAULT_STEERING_K2 = 12.f;
 
       //Steering gains: Heading tracking gain K1, Crosstrack approach rate K2
       f32 K1_ = DEFAULT_STEERING_K1;
@@ -447,6 +447,12 @@ namespace Anki {
 
     void ExecutePointTurn(f32 angularVel, f32 angularAccel)
     {
+      if (std::fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
+        PRINT("WARN: ExecutePointTurn speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
+              RAD_TO_DEG_F32(angularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        angularVel = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, angularVel);
+      }
+      
       isPointTurnWithTarget_ = false;
       ExecutePointTurn_Internal(angularVel, angularAccel);
 
@@ -471,6 +477,12 @@ namespace Anki {
 
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
     {
+      if (std::fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
+        PRINT("WARN: ExecutePointTurn speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
+              RAD_TO_DEG_F32(maxAngularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        maxAngularVel = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxAngularVel);
+      }
+      
       isPointTurnWithTarget_ = true;
       ExecutePointTurn_Internal(maxAngularVel, angularAccel);
 

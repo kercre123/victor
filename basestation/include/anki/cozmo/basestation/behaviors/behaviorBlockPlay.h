@@ -35,6 +35,9 @@
 namespace Anki {
 namespace Cozmo {
   
+  // Forward declaration
+  class IDriveToInteractWithObject;
+  
   class BehaviorBlockPlay : public IBehavior
   {
   protected:
@@ -131,6 +134,7 @@ namespace Cozmo {
     using ActionResultCallback = std::function<bool(ActionResult result)>;
     
     void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
+    void SetDriveToObjectSounds(IDriveToInteractWithObject* action);
     
     State _currentState;
     bool  _interrupted;
@@ -196,6 +200,8 @@ namespace Cozmo {
     const f32 _lostBlockTimeToLookDown = 1.2f;
     const f32 _waitForBlockHeadAngle_rads = DEG_TO_RAD(-10.0f);
     const f32 _timetoInspectBlock = 0.3f;
+    const f32 _robotObjectOrientationDiffThreshForDirectPickup = DEG_TO_RAD(3);
+    const f32 _angleToObjectThreshForDirectPickup = DEG_TO_RAD(3);
     u32 _driveForwardActionTag = 0;
     bool _isDrivingForward = false;
 
@@ -230,6 +236,9 @@ namespace Cozmo {
     // This is the block upon which the first block is placed.
     ObjectID _objectToPlaceOn;
 
+    // The higher this gets, the more frustrated
+    // TODO: Base on moodmanager instead?
+    s32 _attemptCounter = 0;
     
   }; // class BehaviorBlockPlay
 

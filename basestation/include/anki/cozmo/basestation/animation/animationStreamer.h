@@ -51,10 +51,12 @@ namespace Cozmo {
   class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
   public:
-    static const std::string LiveAnimation;
-    static const std::string AnimToolAnimation;
-    static const u8          NotAnimatingTag  = 0;
-    static const u8          IdleAnimationTag = 255;
+    using Tag = u8;
+    
+    static const std::string   LiveAnimation;
+    static const std::string   AnimToolAnimation;
+    static const Tag  NotAnimatingTag  = 0;
+    static const Tag  IdleAnimationTag = 255;
     
     AnimationStreamer(IExternalInterface* externalInterface, CannedAnimationContainer& container, Audio::RobotAudioClient& audioClient);
     
@@ -63,9 +65,9 @@ namespace Cozmo {
     // Returns a tag you can use to monitor whether the robot is done playing this
     // animation.
     // Actual streaming occurs on calls to Update().
-    u8 SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
+    Tag SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
     
-    u8 SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
+    Tag SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
     
     // Sets the "idle" animation that will be streamed (in a loop) when no other
     // animation is streaming. Use empty string ("") to disable.
@@ -81,15 +83,15 @@ namespace Cozmo {
     // Add a procedural face "layer" that is applied and then has its final
     // adjustemtn "held" until removed.
     // A handle/tag for the layer i s returned, which is needed for removal.
-    u32 AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack);
+    Tag AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack);
     
     // Remove a previously-added persistent face layer using its tag.
     // If duration > 0, that amount of time will be used to transition back
     // to no adjustment
-    void RemovePersistentFaceLayer(u32 tag, s32 duration_ms = 0);
+    void RemovePersistentFaceLayer(Tag tag, s32 duration_ms = 0);
     
     // Add a keyframe to the end of an existing persistent face layer
-    void AddToPersistentFaceLayer(u32 tag, ProceduralFaceKeyFrame&& keyframe);
+    void AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe);
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
@@ -103,6 +105,9 @@ namespace Cozmo {
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;
     
+    // Overload of SetParam from base class. Mostly just calls base class method.
+    void SetParam(LiveIdleAnimationParameter whichParam, float newValue);
+    
     // "Flow control" for not getting too far ahead of the robot, to help prevent
     // too much delay when we want to layer something on "now". This is number of
     // audio frames.
@@ -112,7 +117,7 @@ namespace Cozmo {
     
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
-    Result InitStream(Robot& robot, Animation* anim, u8 withTag);
+    Result InitStream(Robot& robot, Animation* anim, Tag withTag);
     
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim, bool storeFace);
@@ -153,10 +158,10 @@ namespace Cozmo {
       TimeStamp_t streamTime_ms;
       bool        isPersistent;
       bool        sentOnce;
-      u8          tag;
+      Tag         tag;
       std::string name;
     };
-    std::map<u8, FaceLayer> _faceLayers;
+    std::map<Tag, FaceLayer> _faceLayers;
     
     // Helper to fold the next procedural face from the given track (if one is
     // ready to play) into the passed-in procedural face params.
@@ -183,8 +188,8 @@ namespace Cozmo {
     
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
-    u8  _tagCtr   = 0;
-    u8  _layerTagCtr = 0;
+    Tag _tagCtr   = 0;
+    Tag _layerTagCtr = 0;
     
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
@@ -220,7 +225,7 @@ namespace Cozmo {
     std::list<RobotInterface::EngineToRobot*> _sendBuffer;
     s32 _numBytesToSend = 0;
     s32 _numAudioFramesToSend = 0;
-    uint8_t _tag;
+    Tag _tag;
     
     // "Flow control" for not overrunning reliable transport in a single
     // update tick
@@ -233,7 +238,7 @@ namespace Cozmo {
     bool           _isLiveTwitchEnabled  = false;
     s32            _nextBlink_ms         = 0;
     s32            _nextEyeDart_ms       = 0;
-    u32            _eyeDartTag           = NotAnimatingTag;
+    Tag            _eyeDartTag           = NotAnimatingTag;
     //s32            _nextLookAround_ms    = 0;
     s32            _bodyMoveDuration_ms  = 0;
     s32            _liftMoveDuration_ms  = 0;

@@ -114,7 +114,7 @@ namespace Anki {
       // completion signal with an action finishes. Note that this public because
       // subclasses that are composed of other actions may want to make use of
       // the completion info of their constituent actions.
-      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const { }
 
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
@@ -148,8 +148,8 @@ namespace Anki {
       // action is reset and run again.
       void RegisterSubAction(IActionRunner* &subAction);
 
-      // Call cleanup on any registered sub actions and then delete them
-      void ClearSubActions(Robot& robot);
+      // Call Cancel and Update on any registered sub actions and then delete them
+      void CancelAndDeleteSubActions(Robot& robot);
       
     private:
       

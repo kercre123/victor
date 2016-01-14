@@ -44,7 +44,7 @@ namespace Anki {
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD(0.35f);
         
         // Motor burnout protection
-        const f32 BURNOUT_POWER_THRESH = 0.5;
+        const f32 BURNOUT_POWER_THRESH = 0.6;
         const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
 
         // Initialized in Init()
@@ -68,10 +68,10 @@ namespace Anki {
         const f32 LIFT_FINGER_HEIGHT = 3.8f;
 #else
         f32 Kp_ = 3.f;     // proportional control constant
-        f32 Kd_ = 3000.f;  // derivative gain
+        f32 Kd_ = 2000.f;  // derivative gain
         f32 Ki_ = 0.1f;    // integral control constant
         f32 angleErrorSum_ = 0.f;
-        f32 MAX_ERROR_SUM = 4.f;
+        f32 MAX_ERROR_SUM = 5.f;
 
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
