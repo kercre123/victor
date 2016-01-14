@@ -110,6 +110,11 @@ public:
   // E.g. for unit tests
   static void EnableClippingWarning(bool enable);
   
+  // Get the bounding edge of the current face in screen pixel space, given eye
+  // sizes/scales, and optionally including the current face center setting.
+  void GetBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax,
+                      bool includeFaceCenter = true);
+  
 private:
   
   std::array<EyeParamArray, 2> _eyeParams{{}};
@@ -158,10 +163,6 @@ inline ProceduralFaceParams::Value ProceduralFaceParams::GetFaceAngle() const {
 inline void ProceduralFaceParams::SetFaceAngle(Value angle) {
   // TODO: Define face angle limits?
   _faceAngle = angle;
-}
-
-inline void ProceduralFaceParams::SetFacePosition(Point<2, Value> center) {
-  _faceCenter = center;
 }
 
 inline Point<2,ProceduralFaceParams::Value> const& ProceduralFaceParams::GetFacePosition() const {
