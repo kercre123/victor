@@ -262,7 +262,6 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
           PlayAnimationAction* reactAnimAction = new PlayAnimationAction("ID_MotionFollow_ReactToMotion");
 
           CompoundActionParallel* compoundAction = new CompoundActionParallel({panTiltAction, liftAction, reactAnimAction});
-          robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, compoundAction);
           
           LiftShouldBeLocked(robot);
       
