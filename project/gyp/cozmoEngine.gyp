@@ -836,6 +836,15 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
+            'copies': [
+              {
+                'files': [
+                  #'../../libs/framework/gtest.framework',
+                  '<(ce-gtest_path)/gtest.framework'
+                ],
+                'destination': '<(PRODUCT_DIR)',
+              },
+            ],
             'actions': [
 
               # { # in engine only mode, we do not know where the assets are
@@ -856,12 +865,22 @@
               #   ],
               # },
 
+              #Simlinks don't create a parent directory, so create it only if it doesn't exist...
+              {
+                'action_name': 'setup_dir_for_simlink',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'mkdir', '-p','<(PRODUCT_DIR)/resources',
+                ],
+              },
               #These have empty inputs and outputs and are instead in the action 
               #so gyp doesn't think that they're dupes
               {
                 'action_name': 'create_symlink_resources_configs',
                 'inputs':[],
                 'outputs':[],
+                #'message':'create_symlink_resources_configs -> ln -s -f -n <(cozmo_engine_path)/resources/config <(PRODUCT_DIR)/resources/config',
                 'action': [
                   'ln', '-s', '-f', '-n',
                   '<(cozmo_engine_path)/resources/config',
@@ -871,20 +890,15 @@
 
               {
                 'action_name': 'create_symlink_resources_test',
-                'inputs': [
-                  '<(cozmo_engine_path)/resources/test',
-                ],
-                'outputs': [
-                  '<(PRODUCT_DIR)/resources/test',
-                ],
-                #'message':'what is <(cozmo_engine_path)',
+                'inputs': [],
+                'outputs': [],
                 'action': [
                   'ln',
                   '-s',
                   '-f',
                   '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
+                  '<(cozmo_engine_path)/resources/test',
+                  '<(PRODUCT_DIR)/resources/test',
                 ],
               },
 
