@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System;
 using Anki.Cozmo.Audio;
+using AnimationGroups;
 
 namespace SpeedTap {
 
@@ -62,7 +63,7 @@ namespace SpeedTap {
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorWin, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationGroupState(AnimationGroupName.kWin, HandleRoundAnimationDone)));
         }
 
         int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
