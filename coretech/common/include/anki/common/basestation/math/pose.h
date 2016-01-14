@@ -198,6 +198,7 @@ namespace Anki {
     // Accessors:
     const Rotation3d&       GetRotation()       const;
     const Vec3f&            GetTranslation()    const;
+    Vec3f&                  GetTranslation();
     
     RotationMatrix3d        GetRotationMatrix() const;
     RotationVector3d        GetRotationVector() const;
@@ -400,7 +401,10 @@ namespace Anki {
   
   inline const Vec3f& Pose3d::GetTranslation() const
   { return _translation; }
-  
+
+  inline Vec3f& Pose3d::GetTranslation()
+  { return _translation; }
+
   inline Vec3f Pose3d::GetRotationAxis() const
   { return GetRotationVector().GetAxis(); }
   
