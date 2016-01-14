@@ -24,6 +24,7 @@ public abstract class GameBase : MonoBehaviour {
     CloseMinigameImmediately();
   }
 
+  // TODO: Modify so that it passes the rewards
   public delegate void MiniGameWinHandler();
 
   public event MiniGameWinHandler OnMiniGameWin;
@@ -35,6 +36,7 @@ public abstract class GameBase : MonoBehaviour {
     OpenChallengeEndedDialog();
   }
 
+  // TODO: Modify so that it passes the rewards
   public delegate void MiniGameLoseHandler();
 
   public event MiniGameWinHandler OnMiniGameLose;
@@ -61,6 +63,8 @@ public abstract class GameBase : MonoBehaviour {
   [SerializeField]
   protected HowToPlaySlide[] _HowToPlayPrefabs;
 
+  private Dictionary<Anki.Cozmo.ProgressionStatType, int> _RewardedXp;
+
   public void InitializeMinigame(ChallengeData challengeData) {
     _StateMachine.SetGameRef(this);
     _SharedMinigameViewInstance = UIManager.OpenView(
@@ -85,6 +89,21 @@ public abstract class GameBase : MonoBehaviour {
     TitleText = Localization.Get(data.ChallengeTitleLocKey);
     TitleIcon = data.ChallengeIcon;
     CreateDefaultQuitButton();
+  }
+
+  // INGO TODO: For now just return a random value until actual rules are thought up.
+  protected virtual int CalculateTimeStatRewards() {
+    return Random.Range(0, 4); // 4 is exclusive
+  }
+
+  // INGO TODO: For now just return a random value until actual rules are thought up.
+  protected virtual int CalculateNoveltyStatRewards() {
+    return Random.Range(0, 4); // 4 is exclusive
+  }
+
+  // INGO TODO: For now just return a random value until actual rules are thought up.
+  protected virtual int CalculateExcitementStatRewards() {
+    return Random.Range(0, 4); // 4 is exclusive
   }
 
   public void OnDestroy() {
@@ -141,6 +160,22 @@ public abstract class GameBase : MonoBehaviour {
     // Listen for dialog close
     alertView.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
     return alertView;
+    _RewardedXp = new Dictionary<Anki.Cozmo.ProgressionStatType, int>();
+    int timeXp = CalculateTimeStatRewards();
+    if (timeXp != 0) {
+      _RewardedXp.Add(Anki.Cozmo.ProgressionStatType.Time, timeXp);
+      // TODO: Show reward
+    }
+    int noveltyXp = CalculateNoveltyStatRewards();
+    if (noveltyXp != 0) {
+      _RewardedXp.Add(Anki.Cozmo.ProgressionStatType.Novelty, noveltyXp);
+      // TODO: Show reward
+    }
+    int excitementXp = CalculateExcitementStatRewards();
+    if (excitementXp != 0) {
+      _RewardedXp.Add(Anki.Cozmo.ProgressionStatType.Excitement, excitementXp);
+      // TODO: Show reward
+    }
   }
 
   private void HandleChallengeResultViewClosed() {
