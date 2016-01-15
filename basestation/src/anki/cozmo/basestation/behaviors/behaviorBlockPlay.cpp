@@ -721,10 +721,11 @@ namespace Cozmo {
             haveTargetAngle = true;
 
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TurnTowardsAFace.Block.UseLastFace",
-                                   "turning towards the last face in Faceworld, with angle %f",
+                                   "turning towards the last face in Faceworld, with angle %fdeg",
                                    DEG_TO_RAD( targetBodyAngle.ToFloat() ));
 
             lastFacePose.Print();
+            faceWrtRobot.Print();
           }
         }
       }
@@ -735,7 +736,7 @@ namespace Cozmo {
       if( haveTargetAngle ) {
         if( !robot.GetMoveComponent().IsMoving() &&
             (robot.GetPose().GetRotationAngle<'Z'>() - targetBodyAngle).getAbsoluteVal().ToFloat() > turnInPlaceTol_rads ) {
-          AddToCompoundAction(actionToRun, new TurnInPlaceAction(targetBodyAngle, true) );
+          AddToCompoundAction(actionToRun, new TurnInPlaceAction(targetBodyAngle, false) );
         }
       }
       else {
