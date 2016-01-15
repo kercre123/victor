@@ -175,11 +175,18 @@ namespace Cozmo {
     
     // Update the last observed face pose.
     // If more than one was observed in the same timestamp then take the closest one.
-    if ((_lastObservedFaceTimeStamp != knownFace->face.GetTimeStamp()) ||
-       (ComputeDistanceBetween(_robot.GetPose(), _lastObservedFacePose) >
-        ComputeDistanceBetween(_robot.GetPose(), knownFace->face.GetHeadPose()))) {
+    if ( ( knownFace->face.GetNumTimesObserved() > _minObservationsToStoreLastPose ) && 
+         ((_lastObservedFaceTimeStamp != knownFace->face.GetTimeStamp()) ||
+          (ComputeDistanceBetween(_robot.GetPose(), _lastObservedFacePose) >
+           ComputeDistanceBetween(_robot.GetPose(), knownFace->face.GetHeadPose())))) {
       _lastObservedFacePose = knownFace->face.GetHeadPose();
       _lastObservedFaceTimeStamp = knownFace->face.GetTimeStamp();
+
+      // Draw 3D face
+      knownFace->vizHandle = VizManager::getInstance()->DrawHumanHead(0,
+                                                                      humanHeadSize,
+                                                                      knownFace->face.GetHeadPose(),
+                                                                      ::Anki::NamedColors::DARKGRAY);
     }
     
     // Draw 3D face
