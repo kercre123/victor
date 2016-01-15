@@ -413,7 +413,7 @@
           'xcode_settings': {
               'ARCHS': [ '>@(mac_target_archs)' ],
               'SDKROOT': 'macosx',
-              'MACOSX_DEPLOYMENT_TARGET': '10.10', # latest
+              'MACOSX_DEPLOYMENT_TARGET': '10.10',
               'LIBRARY_SEARCH_PATHS': [
                 '<(face_library_lib_path)',
                ],
@@ -449,13 +449,8 @@
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-ce_gyp_path):robotClad',
               '<(cg-ce_gyp_path):cozmo_physics',
-              '<(cg-ce_gyp_path):webotsCtrlLightCube',
-              '<(cg-ce_gyp_path):webotsCtrlViz',
-              '<(cg-ce_gyp_path):webotsCtrlRobot',
-              '<(cg-ce_gyp_path):webotsCtrlGameEngine',
-              '<(cg-ce_gyp_path):webotsCtrlKeyboard',
-              '<(cg-ce_gyp_path):webotsCtrlBuildServerTest',
               '<(cg-ce_gyp_path):cozmoEngineUnitTest',
+              '<(cg-ce_gyp_path):webotsControllers',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',
               '<(cg-cti_gyp_path):ctiMessaging',
@@ -472,6 +467,42 @@
               '<(cg-util_gyp_path):UtilUnitTest',
               '<(cg-audio_path):DriveAudioEngine',
               #'<(cg-audio_path):CozmoFxPlugIn',
+            ],
+            'actions': [
+            {
+                'action_name': 'create_symlink_resources_assets',
+                'inputs': [
+                  '<(cozmo_asset_path)',
+                ],
+                'outputs': [
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_sound',
+                'inputs': [
+                  '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
+                ],
+                'outputs': [
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/sound',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
             ]
           },
 
