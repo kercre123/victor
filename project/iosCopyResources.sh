@@ -24,6 +24,7 @@ ASSETS_SOUND_DIR="$TOPLEVEL"/EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/iOS
 DSTDIR_META=$DSTDIR/cozmo_resources/config/
 DSTDIR_SPHINX=$DSTDIR/cozmo_resources/pocketsphinx/
 DSTDIR_ASSET=$DSTDIR/cozmo_resources/assets/
+DSTDIR_SOUND=$DSTDIR/cozmo_resources/sound
 
 # verify inputs
 if [ -z "$SRCDIR" ] ; then
@@ -68,7 +69,7 @@ if [ -d "$ASSETSRDIR" ] ; then
 fi
 
 if [ -d "$ASSETS_SOUND_DIR" ]; then
-  rsync -v -r -t --exclude=".*" $ASSETS_SOUND_DIR/ $DSTDIR_ASSET/sounds
+  rsync -v -r -t --exclude=".*" $ASSETS_SOUND_DIR/ $DSTDIR_SOUND/
 fi
 
 echo asset: $DSTDIR_ASSET
