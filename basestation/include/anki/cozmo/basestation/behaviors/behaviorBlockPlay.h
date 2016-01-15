@@ -119,8 +119,11 @@ namespace Cozmo {
                                  double currentTime_sec);
     Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
 
-
     void TrackBlockWithLift(Robot& robot, const Pose3d& objectPose);
+
+    // tries to move the robot towards a face, properly handling things like if the robot is holding a cube,
+    // if it has seen a face, etc
+    void TurnTowardsAFace(Robot& robot);
     
     void InitState(const Robot& robot);
     void SetCurrState(State s);

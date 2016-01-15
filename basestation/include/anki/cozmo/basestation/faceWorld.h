@@ -60,6 +60,9 @@ namespace Cozmo {
     
     // The distance (in mm) threshold inside of which to head positions are considered to be the same face
     static constexpr float headCenterPointThreshold = 220.f;
+
+    // The minimum number of observations to consider a face valid as the "last observed face"
+    u32 _minObservationsToStoreLastPose = 3;
     
     
     void RemoveFaceByID(Vision::TrackedFace::ID_t faceID);
