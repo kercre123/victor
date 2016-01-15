@@ -168,7 +168,16 @@ namespace Cozmo {
       } else {
         StopTracking();
       }
-    } else {
+    } else if(whichMode == VisionMode::Idle) {
+      if(enabled) {
+        // "Enabling" idle means to turn everything off
+        PRINT_NAMED_INFO("VisionSystem.EnableMode.Idle",
+                         "Disabling all vision modes");
+        _mode = static_cast<u32>(VisionMode::Idle);
+      } else {
+        PRINT_NAMED_WARNING("VisionSystem.EnableMode.InvalidRequest", "Ignoring request to 'disable' idle mode.");
+      }
+    }else {
       if(enabled) {
         const bool modeAlreadyEnabled = _mode & static_cast<u32>(whichMode);
         if(!modeAlreadyEnabled) {
