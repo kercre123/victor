@@ -126,7 +126,7 @@ namespace Anki {
       // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
       // to make it suitable for webots LED 24bit RGB color
       inline void SetLED_helper(u32 index, u32 rgbaColor) {
-        led_[index]->set(rgbaColor>>8);
+        led_[index]->set(rgbaColor);
       }
       
       
@@ -152,9 +152,9 @@ namespace Anki {
         
         // Set lights immediately
         for (u32 i=0; i<NUM_CUBE_LEDS; ++i) {
-          const u32 newColor = ((msg.lights[i].onColor & LED_ENC_RED) << (16 - 10)) |
-                               ((msg.lights[i].onColor & LED_ENC_GRN) << ( 8 -  5)) |
-                               ((msg.lights[i].onColor & LED_ENC_BLU) << ( 0 -  0));
+          const u32 newColor = ((msg.lights[i].onColor & LED_ENC_RED) << (16 - 10 + 3)) |
+                               ((msg.lights[i].onColor & LED_ENC_GRN) << ( 8 -  5 + 3)) |
+                               ((msg.lights[i].onColor & LED_ENC_BLU) << ( 0 -  0 + 3));
           SetLED_helper(i, newColor);
         }
         
@@ -352,21 +352,6 @@ namespace Anki {
       }
 
       
-      void ApplyLEDParams(TimeStamp_t currentTime)
-      {
-        for(int i=0; i<NUM_CUBE_LEDS; ++i)
-        {
-          u16 newEncodedColor;
-          const bool colorUpdated = GetCurrentLEDcolor(ledParams_[i], currentTime, ledPhases_[i], newEncodedColor);
-          if(colorUpdated) {
-            const u32 newColor = ((newEncodedColor & LED_ENC_RED) << (16 - 10)) |
-                                 ((newEncodedColor & LED_ENC_GRN) << ( 8 -  5)) |
-                                 ((newEncodedColor & LED_ENC_BLU) << ( 0 -  0));
-            SetLED_helper(ledIndexLUT[currentUpAxis_][i], newColor);
-          }
-        } // for each LED
-      } // ApplyLEDParams()
-      
       void SetAllLEDs(u32 color) {
         for(int i=0; i<NUM_CUBE_LEDS; ++i) {
           SetLED_helper(i, color);
@@ -552,17 +537,12 @@ namespace Anki {
                 }
               } // if(SEND_MOVING_MESSAGES_EVERY_N_TIMESTEPS)
               
-              // Apply ledParams
-              //ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
-              
               break;
             }
               
             case BEING_CARRIED:
             {
-              // Just apply ledParams, don't check for movement since we're being carried
-              //ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
-              
+              // Don't check for movement since we're being carried
               break;
             }
 
