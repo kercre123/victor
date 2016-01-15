@@ -37,7 +37,7 @@ public struct StatBitMask {
         _Mask |= offset;
       }
       else {
-        _Mask ^= ~offset;
+        _Mask &= ~offset;
       }
     }
   }
@@ -51,6 +51,14 @@ public struct StatBitMask {
 
   public static StatBitMask operator^(StatBitMask a, StatBitMask b) {
     return new StatBitMask(a._Mask ^ b._Mask);
+  }
+
+  public static StatBitMask operator&(StatBitMask a, StatBitMask b) {
+    return new StatBitMask(a._Mask & b._Mask);
+  }
+
+  public static StatBitMask operator~(StatBitMask a) {
+    return new StatBitMask(~a._Mask);
   }
 
   public static bool operator==(StatBitMask a, StatBitMask b) {
@@ -117,7 +125,7 @@ public struct StatBitMask {
     int r = UnityEngine.Random.Range(0, count);
 
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
-      if ((_Mask ^ (1 << i)) != 0) {
+      if ((_Mask & (1 << i)) != 0) {
         if (r == 0) {
           return (ProgressionStatType)i;
         }
@@ -130,14 +138,14 @@ public struct StatBitMask {
 
   public IEnumerable<ProgressionStatType> GetStats() {
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
-      if ((_Mask ^ (1 << i)) != 0) {
+      if ((_Mask & (1 << i)) != 0) {
         yield return (ProgressionStatType)i;
       }
     }
   }
 
   public override string ToString() {
-    return "[StatBitMask: " +
+    return "[StatBitMask: ("+_Mask+") " +
            string.Join(", ", GetStats()
                  .Select(x => x.ToString())
                  .ToArray()) + "]";

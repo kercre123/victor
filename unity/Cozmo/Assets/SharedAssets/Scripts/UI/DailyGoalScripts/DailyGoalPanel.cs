@@ -10,6 +10,10 @@ public class DailyGoalPanel : BaseView {
   private int[] _DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
   private List<GoalBadge> _GoalUIBadges;
   [SerializeField]
+  private string _DebugLevel = "";
+  [SerializeField]
+  private bool _UseDebug = false;
+  [SerializeField]
   private GoalBadge _GoalBadgePrefab;
   [SerializeField]
   private ProgressBar _TotalProgressBar;
@@ -67,13 +71,16 @@ public class DailyGoalPanel : BaseView {
     return false;
   }
 
-  // TODO: Using current friendship level and the appropriate config file,
+  // Using current friendship level and the appropriate config file,
   // generate a series of random goals for the day.
   public void GenerateDailyGoals() {
     Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
     string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
-    Debug.Log(string.Format("Generate Goals for {0}", name));
+    if (_UseDebug && _DebugLevel != "") {
+      name = _DebugLevel;
+    }
+    DAS.Event(this, string.Format("GoalGeneration({0})", name));
     StatBitMask possibleStats = StatBitMask.None;
     int totalGoals = 0;
     int min = 0;
@@ -103,7 +110,7 @@ public class DailyGoalPanel : BaseView {
   // Creates a goal badge based on a progression stat
   public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target) {
     _DailyGoals[(int)type] += target;
-    Debug.Log(string.Format("NEW GOAL {0} : {1}", type, target));
+    DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
     return CreateGoalBadge(type.ToString(), target);
   }
 
