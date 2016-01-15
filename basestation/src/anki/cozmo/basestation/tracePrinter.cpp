@@ -83,7 +83,7 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
           snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1]);
           return pbuf;
         case 3:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[3]);
+          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2]);
           return pbuf;
         case 4:
           snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3]);
@@ -104,13 +104,13 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
           snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[8]);
           return pbuf;
         case 10:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[9]);
+          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[8], trace.value[9]);
           return pbuf;
         case 11:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[9], trace.value[10]);
+          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[8], trace.value[9], trace.value[10]);
           return pbuf;
         case 12:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[9], trace.value[10], trace.value[11]);
+          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[8], trace.value[9], trace.value[10], trace.value[11]);
           return pbuf;
         default:
           PRINT_NAMED_ERROR("Robot.TracePrinterBadArgs", "Invalid number of trace arguments %d", nargs);
