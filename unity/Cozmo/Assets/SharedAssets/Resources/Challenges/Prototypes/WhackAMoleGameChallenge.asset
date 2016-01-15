@@ -16,12 +16,9 @@ MonoBehaviour:
   _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: whackAMole.title
-  _ChallengeSubtitleLocKey: whackAMole.subtitle
   _ChallengeDescriptionLocKey: whackAMole.description
   _ChallengeIcon: {fileID: 21300000, guid: f62381e18f14f42eca4b75da898accf3, type: 3}
-  _ChallengeKeyArt: {fileID: 21300000, guid: f62381e18f14f42eca4b75da898accf3, type: 3}
   _ChallengeReqs:
-    ChallengeGateKeys:
-    - StackTrainingChallenge01
+    ChallengeGateKeys: []
     StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: 566bcc302b99544f39c6182baf144e67, type: 2}
