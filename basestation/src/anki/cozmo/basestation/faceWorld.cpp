@@ -111,9 +111,14 @@ namespace Cozmo {
     
     if(foundMatch) {
       const Vision::TrackedFace::ID_t matchedID = knownFace->face.GetID();
-      //PRINT_NAMED_INFO("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
-      //                 "Updating face with ID=%lld from t=%d to %d",
-      //                 matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp());
+      face.SetNumTimesObserved(knownFace->face.GetNumTimesObserved()+1);
+      
+      // Verbose! Useful for debugging
+      //PRINT_NAMED_DEBUG("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
+      //                  "Updating face with ID=%lld from t=%d to %d, observed %d times",
+      //                  matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp(),
+      //                  face.GetNumTimesObserved());
+      
       knownFace->face = face;
       knownFace->face.SetID(matchedID);
     }
@@ -131,21 +136,36 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       knownFace = &insertResult.first->second;
+      
+      ASSERT_NAMED(knownFace->face.GetNumTimesObserved() == 1,
+                   "Expecting num times observed to be == 1 for new face");
+      
       ++_idCtr;
     }
       
 #   else // USE_POSE_FOR_ID==0
       
     auto insertResult = _knownFaces.insert({face.GetID(), face});
+    knownFace = &insertResult.first->second;
     
     if(insertResult.second) {
       PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace", "Added new face with ID=%lld at t=%d.", face.GetID(), face.GetTimeStamp());
+      
+      ASSERT_NAMED(knownFace->face.GetNumTimesObserved() == 1,
+                   "Expecting num times observed to be == 1 for new face");
+
     } else {
       // Update the existing face:
+      face.SetNumTimesObserved(knownFace->face.GetNumTimesObserved() + 1);
       insertResult.first->second = face;
+      
+      // Verbose! Useful for debug
+      //PRINT_NAMED_DEBUG("FaceWorld.UpdateFace.ExistingFace",
+      //                  "Updating face %llu, observed %d times",
+      //                  knownFace->face.GetID(), knownFace->face.GetNumTimesObserved());
     }
     
-    knownFace = &insertResult.first->second;
+    
   
 #   endif // if USE_POSE_FOR_ID
     
