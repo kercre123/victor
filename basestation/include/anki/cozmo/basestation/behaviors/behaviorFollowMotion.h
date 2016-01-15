@@ -70,8 +70,8 @@ private:
   f32     _moveForwardDist_mm = 15.f;
   f32     _moveForwardSpeedIncrease = 2.f;
   Radians _driveForwardTol = DEG_TO_RAD(5.f); // both pan/tilt less than this will result in drive forward
-  f32     _minDriveFrowardGroundPlaneDist_mm = 105.0f;
-  f32     _minGroundAreaToConsider = 0.1f;
+  f32     _minDriveFrowardGroundPlaneDist_mm = 120.0f;
+  f32     _minGroundAreaToConsider = 0.05f;
   Radians _panAndTiltTol = DEG_TO_RAD(3.f);  // pan/tilt must be greater than this to actually turn
   double  _initialReactionWaitTime_sec = 20.f;
   f32     _timeToHoldHeadDown_sec = 1.25f;  // increment hold by this amount if motion observed
