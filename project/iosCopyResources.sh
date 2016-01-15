@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x
 
 SRCDIR="$1"
 ASSETSRDIR="$2"
