@@ -78,7 +78,7 @@ namespace CodeBreaker {
       // TODO: Play reaction animation and leave current state based on game state
       if (_NumCorrectPosAndColor >= _WinningCode.NumCubes) {
         DisplayCorrectCode(_SortedCubeState, _WinningCode, game.ValidColors);
-        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kMajorFail, LocalizationKeys.kCodeBreakerTextPlayerWins));
+        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kMajorFail, LocalizationKeys.kMinigameTextPlayerWins));
       }
       else if (game.AnyGuessesLeft()) {
         if (_NumCorrectPosAndColor == _WinningCode.NumCubes - 1) {
@@ -111,7 +111,7 @@ namespace CodeBreaker {
       else {
         // Player lost
         DisplayCorrectCode(_SortedCubeState, _WinningCode, game.ValidColors);
-        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kCelebration2, LocalizationKeys.kCodeBreakerTextCozmoWins));
+        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kCelebration2, LocalizationKeys.kMinigameTextCozmoWins));
       }
     }
 

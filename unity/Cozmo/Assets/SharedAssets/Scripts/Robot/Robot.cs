@@ -589,8 +589,7 @@ public class Robot : IDisposable {
 
   public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
     ProgressionStatMessage.robotID = ID;
-    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.statType = index;
-    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.deltaVal = deltaValue;
+    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat = new G2U.AddToProgressionStat(index, deltaValue);
 
     RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -610,10 +609,11 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue) {
+  // source is a identifier for where the emotion is being set so it can penalize the
+  // amount affected if it's coming too often from the same source.
+  public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue, string source) {
     MoodStatMessage.robotID = ID;
-    MoodStatMessage.MoodMessageUnion.AddToEmotion.emotionType = type;
-    MoodStatMessage.MoodMessageUnion.AddToEmotion.deltaVal = deltaValue;
+    MoodStatMessage.MoodMessageUnion.AddToEmotion = new G2U.AddToEmotion(type, deltaValue, source);
 
     RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -987,7 +987,7 @@ public class Robot : IDisposable {
     FaceObjectMessage.objectID = observedObject;
     FaceObjectMessage.robotID = ID;
     FaceObjectMessage.maxTurnAngle = float.MaxValue;
-    FaceObjectMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
+    FacePoseMessage.turnAngleTol = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
     FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte(headTrackWhenDone);
     
     DAS.Debug(this, "Face Object " + FaceObjectMessage.objectID);
@@ -1007,7 +1007,7 @@ public class Robot : IDisposable {
   public void FacePose(Face face) {
     FacePoseMessage.maxTurnAngle = float.MaxValue;
     FacePoseMessage.robotID = ID;
-    FacePoseMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
+    FacePoseMessage.turnAngleTol = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
     FacePoseMessage.world_x = face.WorldPosition.x;
     FacePoseMessage.world_y = face.WorldPosition.y;
     FacePoseMessage.world_z = face.WorldPosition.z;

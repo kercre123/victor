@@ -2,6 +2,7 @@
 using System.Collections;
 using DG.Tweening;
 using Cozmo.UI;
+using Anki.UI;
 
 namespace Cozmo {
   namespace UI {
@@ -29,6 +30,9 @@ namespace Cozmo {
       /// </summary>
       [SerializeField]
       private bool _CloseDialogOnTapOutside;
+
+      [SerializeField]
+      private AnkiButton _OptionalCloseDialogButton;
 
       public bool DimBackground = false;
 
@@ -66,6 +70,10 @@ namespace Cozmo {
           fullScreenButton.transform.SetAsFirstSibling();
           UnityEngine.UI.Button fullScreenCollider = fullScreenButton.GetComponent<UnityEngine.UI.Button>();
           fullScreenCollider.onClick.AddListener(HandleCloseColliderClicked);
+        }
+          
+        if (_OptionalCloseDialogButton != null) {
+          _OptionalCloseDialogButton.onClick.AddListener(HandleCloseColliderClicked);
         }
 
         PlayOpenAnimations();

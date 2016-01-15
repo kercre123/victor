@@ -21,6 +21,8 @@ namespace Simon {
 
     private PlayerType _FirstPlayer = PlayerType.Cozmo;
 
+    public float CozmoWinPercentage { get { return _Config.CozmoGuessCubeCorrectPercentage; } }
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = (SimonGameConfig)minigameConfig;
       InitializeMinigameObjects();
@@ -75,16 +77,17 @@ namespace Simon {
 
       _BlockIdToSound.Clear();
       int counter = 0;
-      string[] cozmoAnimationNames = { "SimonSays_Cube00", "SimonSays_Cube01" };
+      string cozmoAnimationName = "Simon_Cube";
       Anki.Cozmo.Audio.EventType[] playerAudio = { 
         Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_02, 
-        Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_03
+        Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_03,
+        Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_04
       };
-      int smallestArrayLength = Mathf.Min(cozmoAnimationNames.Length, playerAudio.Length);
+      int smallestArrayLength = playerAudio.Length;
       SimonSound sound;
       foreach (var kvp in CurrentRobot.LightCubes) {
         sound = new SimonSound();
-        sound.cozmoAnimationName = cozmoAnimationNames[counter];
+        sound.cozmoAnimationName = cozmoAnimationName;
         sound.playerSoundName = playerAudio[counter];
         _BlockIdToSound.Add(kvp.Key, sound);
         counter++;
