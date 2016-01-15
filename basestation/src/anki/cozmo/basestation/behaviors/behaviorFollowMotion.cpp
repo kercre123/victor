@@ -20,7 +20,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#define DO_BACK_UP_AFTER_POUNCE 0
+#define DO_BACK_UP_AFTER_POUNCE 1
 
 namespace Anki {
 namespace Cozmo {
@@ -67,7 +67,10 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
 
 #if DO_BACK_UP_AFTER_POUNCE
-  if( _totalDriveForwardDist > 5.0f ) {
+  if( _initialReactionAnimPlayed ) {
+      PRINT_NAMED_INFO("BehaviorFollowMotion.Init.CheckBackup",
+                   "have driven %f forward",
+                   _totalDriveForwardDist);
     _state = State::BackingUp;
     SetStateName("BackUp");
   }

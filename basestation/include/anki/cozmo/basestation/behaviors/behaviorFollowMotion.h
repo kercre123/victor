@@ -78,9 +78,9 @@ private:
   
   // tracks how far we've driven forward in this behavior
   f32 _totalDriveForwardDist = 0.0f;
-  f32 _additionalBackupDist = 20.0f;
-  f32 _maxBackupDistance = 250.0f;
-  f32 _backupSpeed = 80.0f;
+  const f32 _additionalBackupDist = 70.0f;
+  const f32 _maxBackupDistance = 250.0f;
+  const f32 _backupSpeed = 80.0f;
   
   
   bool _lockedLift = false;
