@@ -5,7 +5,7 @@ public class DailyGoalConfig : ScriptableObject {
 
   [System.Serializable] 
   public struct DailyGoalData {
-    public Anki.Cozmo.ProgressionStatType[] StatsIncluded;
+    public StatBitMask StatsIntroduced;
     public string FriendshipLevelName;
     public int MaxGoals;
     public int MinTarget;

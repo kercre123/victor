@@ -69,10 +69,12 @@ namespace Cozmo.HomeHub {
       _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
       _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _ContentPane).GetComponent<DailyGoalPanel>();
-      _DailyGoalInstance.GenerateDailyGoals();
+
 
       // TMP: GENERATE FAKE DATA
       GenerateFakeData();
+
+      _DailyGoalInstance.GenerateDailyGoals();
 
       PopulateTimeline(DataPersistenceManager.Instance.Data.PreviousSessions);
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;

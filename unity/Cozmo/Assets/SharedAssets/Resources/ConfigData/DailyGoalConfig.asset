@@ -12,27 +12,32 @@ MonoBehaviour:
   m_Name: DailyGoalConfig
   m_EditorClassIdentifier: 
   FriendshipLevels:
-  - StatsIncluded: 00
+  - StatsIntroduced:
+      _Mask: 1
     FriendshipLevelName: Stranger
     MaxGoals: 1
     MinTarget: 2
     MaxTarget: 5
-  - StatsIncluded: 02
+  - StatsIntroduced:
+      _Mask: 4
     FriendshipLevelName: Acquaintance
     MaxGoals: 2
     MinTarget: 3
     MaxTarget: 6
-  - StatsIncluded: 01
+  - StatsIntroduced:
+      _Mask: 2
     FriendshipLevelName: Friend
     MaxGoals: 2
     MinTarget: 4
     MaxTarget: 7
-  - StatsIncluded: 
+  - StatsIntroduced:
+      _Mask: 0
     FriendshipLevelName: Best Friend
     MaxGoals: 3
     MinTarget: 4
     MaxTarget: 8
-  - StatsIncluded: 
+  - StatsIntroduced:
+      _Mask: 0
     FriendshipLevelName: BFF5EVR
     MaxGoals: 4
     MinTarget: 4

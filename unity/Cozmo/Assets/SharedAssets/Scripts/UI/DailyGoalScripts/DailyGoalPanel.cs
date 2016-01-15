@@ -73,16 +73,13 @@ public class DailyGoalPanel : BaseView {
     Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
     string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
-    List<Anki.Cozmo.ProgressionStatType> possibleStats = new List<Anki.Cozmo.ProgressionStatType>();
+    Debug.Log(string.Format("Generate Goals for {0}", name));
+    StatBitMask possibleStats = StatBitMask.None;
     int totalGoals = 0;
     int min = 0;
     int max = 0;
     for (int i = 0; i < _Config.FriendshipLevels.Length; i++) {
-      for (int j = 0; j < _Config.FriendshipLevels[i].StatsIncluded.Length; j++) {
-        if (!possibleStats.Contains(_Config.FriendshipLevels[i].StatsIncluded[j])) {
-          possibleStats.Add(_Config.FriendshipLevels[i].StatsIncluded[j]);
-        }
-      }
+      possibleStats |= _Config.FriendshipLevels[i].StatsIntroduced;
       if (_Config.FriendshipLevels[i].FriendshipLevelName == name) {
         totalGoals = _Config.FriendshipLevels[i].MaxGoals;
         min = _Config.FriendshipLevels[i].MinTarget;
@@ -97,8 +94,8 @@ public class DailyGoalPanel : BaseView {
     }
     // Generate Goals from the possible stats
     for (int i = 0; i < totalGoals; i++) {
-      Anki.Cozmo.ProgressionStatType targetStat = possibleStats[Random.Range(0, possibleStats.Count)];
-      possibleStats.Remove(targetStat);
+      Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
+      possibleStats[targetStat] = false;
       CreateGoalBadge(targetStat, Random.Range(min, max));
     }
   }
@@ -106,6 +103,7 @@ public class DailyGoalPanel : BaseView {
   // Creates a goal badge based on a progression stat
   public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target) {
     _DailyGoals[(int)type] += target;
+    Debug.Log(string.Format("NEW GOAL {0} : {1}", type, target));
     return CreateGoalBadge(type.ToString(), target);
   }
 
