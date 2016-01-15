@@ -468,6 +468,9 @@ namespace Cozmo {
         }
         
         // If we get this far, we're still apparently tracking the same face
+        //PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.Update.TrackingFace",
+        //                  "Been tracking face %llu for %.1fsec, %lu others available",
+        //                  faceID, watchingFaceDuration, _interestingFacesData.size()-1);
         
         // Update cozmo's face based on our currently tracked face
         //UpdateRobotFace(robot);
