@@ -56,7 +56,7 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
-      "ExitOnActionsComplete": true,
+      "ExitOnActionsComplete": false,
       "Conditions": [],
       "Actions": [
         {
@@ -72,7 +72,17 @@
       ],
       "ExitConditions": [
         {
-          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+          "$type": "ScriptedSequences.Conditions.OrCondition, Assembly-CSharp",
+          "Conditions": [
+            {
+              "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
+              "AnyAnimation": false,
+              "AnimationName": "ID_idle_brickout"
+            },
+            {
+              "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+            }
+          ]
         }
       ]
     },
