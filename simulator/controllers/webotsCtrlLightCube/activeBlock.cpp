@@ -152,7 +152,10 @@ namespace Anki {
         
         // Set lights immediately
         for (u32 i=0; i<NUM_CUBE_LEDS; ++i) {
-          SetLED_helper(i, msg.lights[i].onColor);
+          const u32 newColor = ((msg.lights[i].onColor & LED_ENC_RED) << (16 - 10)) |
+                               ((msg.lights[i].onColor & LED_ENC_GRN) << ( 8 -  5)) |
+                               ((msg.lights[i].onColor & LED_ENC_BLU) << ( 0 -  0));
+          SetLED_helper(i, newColor);
         }
         
       }
