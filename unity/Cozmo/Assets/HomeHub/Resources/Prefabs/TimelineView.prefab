@@ -457,6 +457,7 @@ MonoBehaviour:
   _GraphSpline: {fileID: 11470472}
   _ChallengeListViewPrefab: {fileID: 11483340, guid: 2453f18bd514742a5b96299b79a121ca,
     type: 2}
+  _DailyGoalPrefab: {fileID: 11413872, guid: 5cfca50bd149c4f0fa165abf972d8c13, type: 2}
 --- !u!114 &11489512
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -714,6 +715,11 @@ Prefab:
       propertyPath: _ScrollRect
       value: 
       objectReference: {fileID: 11472504}
+    - target: {fileID: 0}
+      propertyPath: _DailyGoalPrefab
+      value: 
+      objectReference: {fileID: 11413872, guid: 5cfca50bd149c4f0fa165abf972d8c13,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 143340}
