@@ -609,9 +609,11 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue) {
+  // source is a identifier for where the emotion is being set so it can penalize the
+  // amount affected if it's coming too often from the same source.
+  public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue, string source) {
     MoodStatMessage.robotID = ID;
-    MoodStatMessage.MoodMessageUnion.AddToEmotion = new G2U.AddToEmotion(type, deltaValue);
+    MoodStatMessage.MoodMessageUnion.AddToEmotion = new G2U.AddToEmotion(type, deltaValue, source);
 
     RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
     RobotEngineManager.Instance.SendMessage();
