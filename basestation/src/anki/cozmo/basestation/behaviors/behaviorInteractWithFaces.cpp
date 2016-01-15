@@ -38,8 +38,8 @@ namespace Cozmo {
   
   using namespace ExternalInterface;
 
-  static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
-  //static const char * const kMinorFriendlyReactAnimName = "ID_react2face_2nd";
+  //static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
+  static const char * const kMinorFriendlyReactAnimName = "ID_react2face_2nd";
   static const char * const kStrongScaredReactAnimName = "ID_react2face_disgust";
   
   static const std::vector<const char *> kReactionAnimNames = {
@@ -209,7 +209,7 @@ namespace Cozmo {
       robot.GetActionList().Cancel();
       robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
       
-      PlayAnimation(robot, kStrongFriendlyReactAnimName, QueueActionPosition::AT_END);
+      PlayAnimation(robot, kMinorFriendlyReactAnimName, QueueActionPosition::AT_END);
       dataIter->second._playedNewFaceAnim = true;
       
       robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
@@ -468,6 +468,9 @@ namespace Cozmo {
         }
         
         // If we get this far, we're still apparently tracking the same face
+        //PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.Update.TrackingFace",
+        //                  "Been tracking face %llu for %.1fsec, %lu others available",
+        //                  faceID, watchingFaceDuration, _interestingFacesData.size()-1);
         
         // Update cozmo's face based on our currently tracked face
         //UpdateRobotFace(robot);

@@ -1501,6 +1501,12 @@ namespace Anki {
       if (success && !animDefs.empty()) {
         //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
+        
+        if(std::string(filename).find(animationId) == std::string::npos) {
+          PRINT_NAMED_WARNING("Robot.ReadAnimationFile.AnimationNameMismatch",
+                              "Animation name '%s' does not match seem to match "
+                              "filename '%s'", animationId.c_str(), filename);
+        }
       }
 
     }
