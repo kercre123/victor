@@ -58,15 +58,8 @@ float BehaviorFollowMotion::EvaluateScoreInternal(const Robot& robot, double cur
 
 Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
-  // Store whatever modes the vision system was using so we can restore once this
-  // behavior completes
-  // NOTE: if vision modes are enabled _while_ this behavior is running, they will be
-  //       disabled when it finishes!
-  
-  _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
-  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
 
-#if DO_BACK_UP_AFTER_POUNCE
+# if DO_BACK_UP_AFTER_POUNCE
   if( _initialReactionAnimPlayed ) {
       PRINT_NAMED_INFO("BehaviorFollowMotion.Init.CheckBackup",
                    "have driven %f forward",
@@ -74,7 +67,7 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
     _state = State::BackingUp;
     SetStateName("BackUp");
   }
-#endif
+# endif
 
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
@@ -183,11 +176,6 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
   _actionRunning = (u32)ActionConstants::INVALID_TAG;
   _lastInterruptTime_sec = currentTime_sec;
   _holdHeadDownUntil = -1.0f;
-
-  PRINT_NAMED_DEBUG("BehaviorFollowMotion.InterruptInternal", "restoring original vision modes");
-  
-  // Restore original vision modes
-  robot.GetVisionComponent().SetModes(_originalVisionModes);
 
   LiftShouldBeUnlocked(robot);
   
