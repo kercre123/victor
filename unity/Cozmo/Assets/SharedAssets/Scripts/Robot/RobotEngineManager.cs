@@ -496,15 +496,6 @@ public class RobotEngineManager : MonoBehaviour {
         RobotCompletedTaggedAction(success, message.idTag);
       }
     }
-
-    if (!success) {
-      if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
-        CurrentRobot.SetLiftHeight(1f);
-      }
-      else {
-        CurrentRobot.SetLiftHeight(0f);
-      }
-    }
   }
 
   private void ReceivedSpecificMessage(G2U.AnimationAvailable message) {
