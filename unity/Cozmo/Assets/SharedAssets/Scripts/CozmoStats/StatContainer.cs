@@ -4,21 +4,31 @@ using Cozmo.Util;
 using System;
 using System.Text;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 [Serializable]
-public class StatContainer : IEquatable<StatContainer> {
+public class StatContainer : IEquatable<StatContainer>, IDictionary<Anki.Cozmo.ProgressionStatType, int> {
+
+  private const int kCount = (int)Anki.Cozmo.ProgressionStatType.Count;
+
+  private static List<Anki.Cozmo.ProgressionStatType> sKeys;
+
+  static StatContainer() {
+    sKeys = new List<Anki.Cozmo.ProgressionStatType>(kCount);
+    for (int i = 0; i < kCount; i++) {
+      sKeys.Add((Anki.Cozmo.ProgressionStatType)i);
+    }
+  }
+
 
   [SerializeField]
-  [JsonProperty("Stats")]
-  private int[] _Stats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+  private int[] _Stats = new int[kCount];
 
   public int this[Anki.Cozmo.ProgressionStatType stat] {
     get {
-      ValidateStatSize();
       return _Stats[(int)stat];
     }
     set {
-      ValidateStatSize();
       _Stats[(int)stat] = value;
     }
   }
@@ -28,19 +38,6 @@ public class StatContainer : IEquatable<StatContainer> {
     get { 
       return _Stats.Sum();
     } 
-  }
-
-  /// <summary>
-  /// The serializer could potentially set _Stats to an array that is less
-  /// than the current length of stats if we add new stats. 
-  /// If that happened, fix it
-  /// </summary>
-  private void ValidateStatSize() {
-    if (_Stats.Length != (int)Anki.Cozmo.ProgressionStatType.Count) {
-      var oldStats = _Stats;
-      _Stats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
-      oldStats.CopyTo(_Stats, 0);
-    }
   }
 
   public void Add(StatContainer other) {
@@ -109,7 +106,7 @@ public class StatContainer : IEquatable<StatContainer> {
 
     sb.Append("[StatContainer: ");
 
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+    for (int i = 0; i < kCount; i++) {
       if (i > 0) {
         sb.Append(", ");
       }
@@ -120,4 +117,99 @@ public class StatContainer : IEquatable<StatContainer> {
     sb.Append("]");
     return sb.ToString();
   }
+
+
+#region IDicionary Interface
+  public void Add(Anki.Cozmo.ProgressionStatType key, int value) {
+    this[key] = value;
+  }
+
+  public bool ContainsKey(Anki.Cozmo.ProgressionStatType key) {
+    int keyInt = (int)key;
+    return (keyInt >= 0 && keyInt < _Stats.Length);
+  }
+
+  public bool Remove(Anki.Cozmo.ProgressionStatType key) {
+    // We can't actually remove an entry, assume
+    // they just want to clear it
+    if (ContainsKey(key)) {
+      this[key] = 0;
+      return true;
+    }
+    return false;
+  }
+
+  public bool TryGetValue(Anki.Cozmo.ProgressionStatType key, out int value) {
+    if (ContainsKey(key)) {
+      value = this[key];
+      return true;
+    }
+    else {
+      value = 0;
+      return false;
+    }
+  }
+
+  public ICollection<Anki.Cozmo.ProgressionStatType> Keys {
+    get {
+      return sKeys;
+    }
+  }
+
+  public ICollection<int> Values {
+    get {
+      return _Stats;
+    }
+  }
+
+  public void Add(KeyValuePair<Anki.Cozmo.ProgressionStatType, int> item) {
+    this[item.Key] = item.Value;
+  }
+
+  public void Clear() {
+    Array.Clear(_Stats, 0, _Stats.Length);
+  }
+
+  public bool Contains(KeyValuePair<Anki.Cozmo.ProgressionStatType, int> item) {
+    return ContainsKey(item.Key) && this[item.Key] == item.Value;
+  }
+
+  public void CopyTo(KeyValuePair<Anki.Cozmo.ProgressionStatType, int>[] array, int arrayIndex) {
+    for (int i = 0; i < _Stats.Length && i < array.Length - arrayIndex; i++) {
+      array[i + arrayIndex] = new KeyValuePair<Anki.Cozmo.ProgressionStatType, int>((Anki.Cozmo.ProgressionStatType)i, _Stats[i]);
+    }
+  }
+
+  public bool Remove(KeyValuePair<Anki.Cozmo.ProgressionStatType, int> item) {
+    if (Contains(item)) {
+      this[item.Key] = 0;
+      return true;
+    }
+    return false;
+  }
+
+  public int Count {
+    get {
+      return kCount;
+    }
+  }
+
+  public bool IsReadOnly {
+    get {
+      return false;
+    }
+  }
+
+  public IEnumerator<KeyValuePair<Anki.Cozmo.ProgressionStatType, int>> GetEnumerator() {
+    for (int i = 0; i < _Stats.Length; i++) {
+      yield return new KeyValuePair<Anki.Cozmo.ProgressionStatType, int>((Anki.Cozmo.ProgressionStatType)i, _Stats[i]);
+    }
+  }
+
+  IEnumerator IEnumerable.GetEnumerator() {
+    for (int i = 0; i < _Stats.Length; i++) {
+      yield return new DictionaryEntry((Anki.Cozmo.ProgressionStatType)i, _Stats[i]);
+    }
+  }
+#endregion
 }

@@ -87,7 +87,7 @@ namespace Cozmo.HomeHub {
         var date = startDate.AddDays(i);
 
         if (UnityEngine.Random.Range(0f, 1f) > 0.3f) {
-          var entry = new TimelineEntryState(date);
+          var entry = new TimelineEntryData(date);
 
           for (int j = 0; j < (int)Anki.Cozmo.ProgressionStatType.Count; j++) {
             var stat = (Anki.Cozmo.ProgressionStatType)j;
@@ -104,7 +104,7 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void PopulateTimeline(List<TimelineEntryState> timelineEntries) {
+    private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
       int timelineIndex = 0;
 
       var today = DateTime.UtcNow.Date;

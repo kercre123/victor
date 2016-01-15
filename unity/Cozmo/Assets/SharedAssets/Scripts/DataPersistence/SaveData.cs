@@ -10,6 +10,6 @@ namespace DataPersistence {
 
     public List<string> CompletedChallengeIds = new List<string>();
 
-    public List<TimelineEntryState> PreviousSessions = new List<TimelineEntryState>();
+    public List<TimelineEntryData> PreviousSessions = new List<TimelineEntryData>();
   }
 }
