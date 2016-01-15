@@ -16,4 +16,7 @@ public class SimonGameConfig : MinigameConfigBase {
 
   [Range(2, 5)]
   public int NumCubesInPattern = 2;
+
+  [Range(0f, 1f)]
+  public float CozmoGuessCubeCorrectPercentage = 0.9f;
 }

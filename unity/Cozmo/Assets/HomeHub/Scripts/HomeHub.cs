@@ -95,13 +95,13 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
     }
 
-    private void HandleMiniGameLose() {
+    private void HandleMiniGameLose(StatContainer rewards) {
       // Reset the current challenge
       _CurrentChallengePlaying = null;
       ShowTimelineDialog();
     }
 
-    private void HandleMiniGameWin() {
+    private void HandleMiniGameWin(StatContainer rewards) {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
         CompleteChallenge(_CurrentChallengePlaying);

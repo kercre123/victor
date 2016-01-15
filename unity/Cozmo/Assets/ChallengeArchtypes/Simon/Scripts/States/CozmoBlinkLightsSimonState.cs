@@ -40,6 +40,7 @@ namespace Simon {
       _CubeLightColor = _TargetCube.Lights[0].OnColor;
       _TargetCube.TurnLEDsOff();
       _CurrentRobot.SetAllBackpackBarLED(_CubeLightColor);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(_TargetCube.ID));
 
       _CurrentRobot.SendAnimation(animation, HandleAnimationEnd);
       _IsAnimating = true;

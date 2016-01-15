@@ -230,20 +230,28 @@ namespace Cozmo {
       #region Challenge Title Widget
 
       public string TitleText {
-        get {
-          return _TitleWidgetInstance != null ? _TitleWidgetInstance.TitleLabelText : null;
-        }
         set {
           if (_TitleWidgetInstance != null) {
             _TitleWidgetInstance.TitleLabelText = value;
           }
           else {
-            CreateTitleWidget(value);
+            CreateTitleWidget(value, null);
           }
         }
       }
 
-      private void CreateTitleWidget(string titleText) {
+      public UnityEngine.Sprite TitleIcon {
+        set {
+          if (_TitleWidgetInstance != null) {
+            _TitleWidgetInstance.TitleIcon = value;
+          }
+          else {
+            CreateTitleWidget(null, value);
+          }
+        }
+      }
+
+      private void CreateTitleWidget(string titleText, Sprite titleSprite) {
         if (_TitleWidgetInstance != null) {
           return;
         }
@@ -253,6 +261,10 @@ namespace Cozmo {
 
         if (!string.IsNullOrEmpty(titleText)) {
           _TitleWidgetInstance.TitleLabelText = titleText;
+        }
+
+        if (titleSprite != null) {
+          _TitleWidgetInstance.TitleIcon = titleSprite;
         }
 
         _ActiveWidgets.Add(_TitleWidgetInstance);
@@ -307,6 +319,7 @@ namespace Cozmo {
           _SlideOutTween.Play();
         }
       }
+
       #endregion
     }
   }
