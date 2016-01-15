@@ -1115,10 +1115,11 @@ namespace Anki {
       
       // Sending debug string to game and viz
       char buffer [128];
+
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c lock:%c%c%c %s:%s ",
+               "r:%c%c%c%c lock:%c%c%c %2dHz %s:%s ",
                GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
                GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
                GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -1126,6 +1127,7 @@ namespace Anki {
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+               (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                behaviorChooserName,
                behaviorName.c_str());
       
