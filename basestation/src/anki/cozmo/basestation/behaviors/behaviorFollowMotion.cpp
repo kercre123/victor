@@ -201,6 +201,7 @@ void BehaviorFollowMotion::StartTracking(Robot& robot)
 {
   TrackMotionAction* action = new TrackMotionAction();
   action->SetMaxHeadAngle( DEG_TO_RAD( 5.0f ) );
+  action->SetMoveEyes(true);
   _actionRunning = action->GetTag();
   
   robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
