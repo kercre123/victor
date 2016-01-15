@@ -184,8 +184,8 @@ public abstract class GameBase : MonoBehaviour {
         _RewardedXp.Add(kvp.Key, grantedXp);
         _ChallengeEndViewInstance.AddReward(kvp.Key, grantedXp);
 
-        // TODO: Grant right away even if there are animations in the daily goal ui
-        // CurrentRobot.AddToProgressionStat(kvp.Key, grantedXp);
+        // Grant right away even if there are animations in the daily goal ui
+        CurrentRobot.AddToProgressionStat(kvp.Key, grantedXp);
       }
     }
   }
