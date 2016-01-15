@@ -46,6 +46,9 @@ namespace Vision {
     void SetID(ID_t newID);
     void SetTimeStamp(TimeStamp_t timestamp);
     
+    u32  GetNumTimesObserved() const { return _numTimesObserved; }
+    void SetNumTimesObserved(u32 N) { _numTimesObserved = N; }
+    
     const std::string& GetName() const;
     void SetName(std::string&& newName);
     
@@ -109,6 +112,10 @@ namespace Vision {
     float _score;
     bool _isBeingTracked;
     TimeStamp_t _timestamp;
+    
+    // Start at one: a first observation has to have led to the creation of the
+    // TrackedFace
+    u32 _numTimesObserved = 1;
     
     Rectangle<f32> _rect;
     
