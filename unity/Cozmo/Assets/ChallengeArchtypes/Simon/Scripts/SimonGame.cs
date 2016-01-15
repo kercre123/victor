@@ -21,6 +21,8 @@ namespace Simon {
 
     private PlayerType _FirstPlayer = PlayerType.Cozmo;
 
+    public float CozmoWinPercentage { get { return _Config.CozmoGuessCubeCorrectPercentage; } }
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = (SimonGameConfig)minigameConfig;
       InitializeMinigameObjects();

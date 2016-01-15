@@ -26,7 +26,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // TODO: Modify so that it passes the rewards
-  public delegate void MiniGameWinHandler(Dictionary<ProgressionStatType, int> rewardedXp);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
@@ -42,7 +42,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // TODO: Modify so that it passes the rewards
-  public delegate void MiniGameLoseHandler(Dictionary<ProgressionStatType, int> rewardedXp);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -72,7 +72,7 @@ public abstract class GameBase : MonoBehaviour {
   [SerializeField]
   protected HowToPlaySlide[] _HowToPlayPrefabs;
 
-  private Dictionary<ProgressionStatType, int> _RewardedXp;
+  private StatContainer _RewardedXp;
 
   private delegate int XpCalculator();
 
@@ -170,7 +170,7 @@ public abstract class GameBase : MonoBehaviour {
     // Listen for dialog close
     _ChallengeEndViewInstance.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
 
-    _RewardedXp = new Dictionary<Anki.Cozmo.ProgressionStatType, int>();
+    _RewardedXp = new StatContainer();
 
     Dictionary<ProgressionStatType, XpCalculator> rewardCalculators = new Dictionary<ProgressionStatType, XpCalculator>();
     rewardCalculators.Add(ProgressionStatType.Time, CalculateTimeStatRewards);
@@ -181,7 +181,7 @@ public abstract class GameBase : MonoBehaviour {
       // TODO: Check that this is a goal xp
       int grantedXp = kvp.Value();
       if (grantedXp != 0) {
-        _RewardedXp.Add(kvp.Key, grantedXp);
+        _RewardedXp[kvp.Key] = grantedXp;
         _ChallengeEndViewInstance.AddReward(kvp.Key, grantedXp);
 
         // Grant right away even if there are animations in the daily goal ui

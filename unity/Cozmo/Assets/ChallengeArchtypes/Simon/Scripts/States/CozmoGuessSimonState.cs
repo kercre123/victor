@@ -42,8 +42,8 @@ namespace Simon {
       }
       else {
         // Determine if Cozmo wins on the last color of the sequence
-        float coinFlip = Random.Range(0f, 10f);
-        if (coinFlip > 9f) {
+        float coinFlip = Random.Range(0f, 1f);
+        if (coinFlip > _GameInstance.CozmoWinPercentage) {
           _ShouldWinGame = false;
           int correctId = _CurrentSequence[_CurrentSequenceIndex];
           List<int> blockIds = new List<int>();

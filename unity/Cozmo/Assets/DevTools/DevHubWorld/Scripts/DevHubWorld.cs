@@ -53,7 +53,7 @@ public class DevHubWorld : HubWorldBase {
     _MiniGameInstance.OnMiniGameWin += HandleMiniGameEnd;
   }
 
-  private void HandleMiniGameEnd(System.Collections.Generic.Dictionary<Anki.Cozmo.ProgressionStatType, int> rewards) {
+  private void HandleMiniGameEnd(StatContainer rewards) {
     ShowHubWorldDialog();
   }
 
