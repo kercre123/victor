@@ -165,12 +165,12 @@ namespace Anki
         for (int c = 0; c < NUM_BLOCK_LEDS; c++) {
           uint16_t color = colors[order[c]];
 
-          uint8_t  status = color & LED_ENC_IR ? 0xff : 0x00; // IR is only one bit so handle specially
-          for (int ch = 10; ch >= -5; ch -= 5) { // Slightly off loop constraints for handling IR on first iteration
+          // IR is ignored right now
+          for (int ch = 10; ch >= 0; ch -= 5) {
+            uint8_t status = ((color >> ch) & 0x1F) << 3;
             uint32_t bright = status;
             sum += bright * bright;
             *(light++) = bright;
-            status = ((color >> ch) & 0x1F) << 3; // Update status for next iteration
           }
         }
 
