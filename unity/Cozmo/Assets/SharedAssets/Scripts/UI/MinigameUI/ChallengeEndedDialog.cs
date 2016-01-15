@@ -50,6 +50,6 @@ public class ChallengeEndedDialog : BaseView {
       Localization.Get(LocalizationKeys.kLabelPlusCount),
       numberPoints));
 
-    // TODO: Set icon
+    iconTextLabel.SetIcon(ProgressionStatIconMap.Instance.GetIconForStat(progressionStat));
   }
 }
