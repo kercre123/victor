@@ -836,14 +836,16 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
-            'copies': [
-              {
-                'files': [
-                  '<(ce-gtest_path)/gtest.framework'
-                ],
-                'destination': '<(PRODUCT_DIR)',
-              },
-            ],
+            #util unit tests copys this first and the copies command doesn't have a pre-existing check.
+            # should probably turn this into a cp action with conditions at some point.
+            # 'copies': [
+            #   {
+            #     'files': [
+            #       '<(ce-gtest_path)/gtest.framework'
+            #     ],
+            #     'destination': '<(PRODUCT_DIR)',
+            #   },
+            # ],
             'actions': [
 
               # { # in engine only mode, we do not know where the assets are
@@ -863,7 +865,6 @@
               #     '<@(_outputs)',
               #   ],
               # },
-
               #Simlinks don't create a parent directory, so create it only if it doesn't exist...
               {
                 'action_name': 'setup_dir_for_simlink',
