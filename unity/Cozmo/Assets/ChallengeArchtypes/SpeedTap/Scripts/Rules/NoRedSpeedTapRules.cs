@@ -26,7 +26,7 @@ namespace SpeedTap {
         Color playerColor = _Colors[playerColorIdx];
         Color cozmoColor = _Colors[cozmoColorIdx];
 
-        if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.2f) {
+        if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.38f) {
           playerColor = Color.red;
           cozmoColor = Color.red;
         }

@@ -9,18 +9,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
-  m_Name: SpeedTapGameChallenge
+  m_Name: SpeedTapLightCount
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 141604, guid: 5cdde45f3f19243c593dc39faf8bf354, type: 2}
-  _ChallengeID: SpeedTapGame
+  _ChallengeID: SpeedTapLightCount
   _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 1
-  _ChallengeTitleLocKey: speedTap.title
-  _ChallengeSubtitleLocKey: speedTap.subtitle
-  _ChallengeDescriptionLocKey: speedTap.description
+  _ChallengeTitleLocKey: speedTapLightCount.title
+  _ChallengeSubtitleLocKey: speedTapLightCount.subtitle
+  _ChallengeDescriptionLocKey: speedTapLightCount.description
   _ChallengeIcon: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
   _ChallengeKeyArt: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
-  MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}
+  MinigameConfig: {fileID: 11400000, guid: 6424c54bc1978490fa418fa0a63dbaf9, type: 2}

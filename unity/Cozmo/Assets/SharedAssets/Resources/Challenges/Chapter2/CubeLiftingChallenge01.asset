@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 186758, guid: e64e69f93e8964e9a944e4b21e4c4d90, type: 2}
   _ChallengeID: CubeLiftingChallenge01
-  _EnableHubWorldChallenge: 1
-  _EnableDevWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
+  _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: cubeLifting01.title
   _ChallengeSubtitleLocKey: cubeLifting01.subtitle
   _ChallengeDescriptionLocKey: cubeLifting01.description

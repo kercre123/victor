@@ -95,7 +95,7 @@ namespace Minesweeper {
     private Bounds _Bounds;
     private float _InBoundsTime = 0f;
 
-    private const float kPositionTolerance = 30f;
+    private const float kPositionTolerance = 50f;
 
     private static ProceduralEyeParameters _LeftEye = ProceduralEyeParameters.MakeDefaultLeftEye();
     private static ProceduralEyeParameters _RightEye = ProceduralEyeParameters.MakeDefaultRightEye();

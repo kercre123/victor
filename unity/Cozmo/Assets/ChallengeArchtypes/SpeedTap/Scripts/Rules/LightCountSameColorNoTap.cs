@@ -11,9 +11,19 @@ namespace SpeedTap {
       if (shouldTap) {
         // Do match
         int lightCount = UnityEngine.Random.Range(1, 5);
+        game.CozmoBlock.SetLEDs(Color.black);
+        game.PlayerBlock.SetLEDs(Color.black);
+
+        int colorPlayer = UnityEngine.Random.Range(1, _Colors.Length);
+        int colorCozmo = UnityEngine.Random.Range(1, _Colors.Length);
+
+        if (colorPlayer == colorCozmo) {
+          colorPlayer = (colorCozmo + 1) % _Colors.Length;
+        }
+
         for (int i = 0; i < lightCount; ++i) {
-          game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
-          game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
+          game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[colorCozmo]);
+          game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[colorPlayer]);
         }
 
       }
@@ -26,9 +36,12 @@ namespace SpeedTap {
 
           for (int i = 0; i < lightCount; ++i) {
             game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[randColorIndex]);
+            game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[randColorIndex]);
           }
         }
         else {
+
+          int lightIndex = UnityEngine.Random.Range(1, _Colors.Length);
 
           int lightCountPlayer = UnityEngine.Random.Range(1, 5);
           int lightCountCozmo = UnityEngine.Random.Range(1, 5);
@@ -38,11 +51,11 @@ namespace SpeedTap {
           }
 
           for (int i = 0; i < lightCountPlayer; ++i) {
-            game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
+            game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[lightIndex]);
           }
 
           for (int i = 0; i < lightCountCozmo; ++i) {
-            game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
+            game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[lightIndex]);
           }
 
         }

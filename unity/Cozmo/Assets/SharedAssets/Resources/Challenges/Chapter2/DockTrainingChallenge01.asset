@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 171318, guid: d0931a28541c84b619f43ef72d5bafe5, type: 2}
   _ChallengeID: DockTrainingChallenge01
-  _EnableHubWorldChallenge: 1
-  _EnableDevWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
+  _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: dockTraining01.title
   _ChallengeSubtitleLocKey: dockTraining01.subtitle
   _ChallengeDescriptionLocKey: dockTraining01.description

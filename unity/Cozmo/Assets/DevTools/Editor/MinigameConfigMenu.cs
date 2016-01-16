@@ -40,7 +40,7 @@ namespace AssemblyCSharpEditor {
         if (!string.IsNullOrEmpty(path)) {
           var challengeDataInstance = ScriptableObject.CreateInstance(typeof(ChallengeData)) as ChallengeData;
           var configInstance = type != null ? ScriptableObject.CreateInstance(type) as MinigameConfigBase : null;
-            
+
           if (path.StartsWith(Application.dataPath) && path.Contains("Resources")) {
             path = "Assets" + path.Substring(Application.dataPath.Length);
             string path2 = path.Replace(".asset", "_Config.asset");
@@ -62,7 +62,7 @@ namespace AssemblyCSharpEditor {
       }
     }
 
-    [MenuItem("Cozmo/Challenges/Create Challenge Config")]
+    [MenuItem("Cozmo/Challenges/Create Challenge Config", false, 10)]
     public static void OpenMinigameConfigMenu() {
       // Get existing open window or if none, make a new one:
       MinigameConfigMenu window = (MinigameConfigMenu)EditorWindow.GetWindow(typeof(MinigameConfigMenu));

@@ -57,15 +57,6 @@
   "simonGame.button": {
     "translation": "Continue"
   },
-  "speedTap.title": {
-    "translation": "Speed Tap"
-  },
-  "speedTap.subtitle": {
-    "translation": "Speed Tap Subtitle"
-  },
-  "speedTap.description": {
-    "translation": "Speed Tap Description"
-  },
   "speedTap.roundsText": {
     "translation": "Round: {0:N0}/{1:N0}"
   },
@@ -107,21 +98,6 @@
   },
   "vortex.vortexWon": {
     "translation": "{0} Won"
-  },
-  "peekaboo.title": {
-    "translation": "Peek a Boo"
-  },
-  "peekaboo.label.points": {
-    "translation": "{0} Points"
-  },
-  "cubeSlap.title": {
-    "translation": "Cube Slap"
-  },
-  "cubeSlap.subtitle": {
-    "translation": "Cube Slap Subtitle"
-  },
-  "cubeSlap.description": {
-    "translation": "Cube Slap Description"
   },
   "minigame.quitView.title": {
     "translation": "Return to Main Menu?"
