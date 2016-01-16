@@ -395,6 +395,8 @@ public class Robot : IDisposable {
 
     ClearData(true);
 
+    InitializeFriendshipPoints();
+
     RobotEngineManager.Instance.DisconnectedFromClient += Reset;
 
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
@@ -538,6 +540,21 @@ public class Robot : IDisposable {
 
   #region Friendship Points
 
+  public void InitializeFriendshipPoints() {
+    // Set FriendshipPoints and Level from Save Data.
+    FriendshipLevel = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipLevel;
+    FriendshipPoints = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipPoints;
+
+    FriendshipPointsMessage.newVal = FriendshipPoints;
+
+    RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+    RobotEngineManager.Instance.SendMessage();
+    FriendshipLevelMessage.newVal = FriendshipLevel;
+
+    RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void AddToFriendshipPoints(int deltaValue) {
     FriendshipPoints += deltaValue;
     FriendshipPointsMessage.newVal = FriendshipPoints;
@@ -564,18 +581,25 @@ public class Robot : IDisposable {
 
   private void ComputeFriendshipLevel() {
     FriendshipLevelConfig levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
-    if (FriendshipLevel == levelConfig.FriendshipLevels.Length) {
-      return;
-    }
-    if (levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
+    bool friendshipLevelChanged = false;
+    while (FriendshipLevel < levelConfig.FriendshipLevels.Length && 
+          levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
       FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
       FriendshipLevel++;
+      friendshipLevelChanged = true;
+    }
+    if(friendshipLevelChanged) {
       FriendshipLevelMessage.newVal = FriendshipLevel;
       if (OnFriendshipLevelUp != null) {
         OnFriendshipLevelUp(FriendshipLevel);
       }
       RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
       RobotEngineManager.Instance.SendMessage();
+
+      FriendshipPointsMessage.newVal = FriendshipPoints;
+      RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+      RobotEngineManager.Instance.SendMessage();
+
     }
   }
 

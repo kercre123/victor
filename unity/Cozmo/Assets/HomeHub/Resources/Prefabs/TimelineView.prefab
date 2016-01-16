@@ -461,6 +461,8 @@ MonoBehaviour:
   _DailyGoalPrefab: {fileID: 11413872, guid: 5cfca50bd149c4f0fa165abf972d8c13, type: 2}
   _DailySummaryPrefab: {fileID: 11431484, guid: 208cdc22bb9974adebd14cd4d3247e61,
     type: 2}
+  _FriendshipFormulaConfig: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
+    type: 2}
 --- !u!114 &11489512
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -727,6 +729,11 @@ Prefab:
       propertyPath: _DailySummaryPrefab
       value: 
       objectReference: {fileID: 11431484, guid: 208cdc22bb9974adebd14cd4d3247e61,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _FriendshipFormulaConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

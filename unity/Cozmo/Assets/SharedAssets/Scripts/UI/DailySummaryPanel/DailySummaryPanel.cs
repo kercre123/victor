@@ -8,6 +8,8 @@ using Anki.Cozmo;
 
 public class DailySummaryPanel : MonoBehaviour {
 
+  private const string kAnimName = "LevelReached";
+
   [SerializeField]
   private Button _CloseButton;
 
@@ -75,6 +77,8 @@ public class DailySummaryPanel : MonoBehaviour {
       }
       CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, subContainer);
     }
+
+    StartCoroutine(FriendshipBarCoroutine(data));
   }
 
   // Creates a goal badge
@@ -89,5 +93,65 @@ public class DailySummaryPanel : MonoBehaviour {
     ChallengeBadge newBadge = UIManager.CreateUIElement(_ChallengePrefab.gameObject, container).GetComponent<ChallengeBadge>();
     newBadge.Initialize(challengeId);
     return newBadge;
+  }
+
+  private IEnumerator FriendshipBarFill(float start, float end) {
+    // this is pretty bad
+    const float initialPoint = 0.14f;
+    const float finalPoint = 0.86f;
+    const float timeLimit = 1.42f;
+
+    start = Mathf.Lerp(initialPoint, finalPoint, start);
+    end = Mathf.Lerp(initialPoint, finalPoint, end);
+
+    var startTime = Time.time;
+
+    while (true) {
+      float progress = Mathf.Clamp01((Time.time - startTime) / timeLimit);
+
+      float fill = Mathf.Lerp(start, end, progress);
+
+      _FriendBar.fillAmount = fill;
+
+      if (Time.time - startTime > timeLimit) {
+        yield break;
+      }
+      yield return null;
+    }
+  }
+
+  private IEnumerator FriendshipBarCoroutine(TimelineEntryData data) {
+
+    var levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
+
+    int startingPoints = data.StartingFriendshipPoints;
+    float pointsRequired, startingPercent, endingPercent;
+    for(int level = data.StartingFriendshipLevel; level < data.EndingFriendshipLevel; level++) {
+      pointsRequired = levelConfig.FriendshipLevels[level + 1].PointsRequired;
+
+      startingPercent = startingPoints / pointsRequired;
+
+      yield return StartCoroutine(FriendshipBarFill(startingPercent, 1f));
+
+      _FriendBarAnimator.Play(kAnimName);
+
+      yield return StartCoroutine(FriendshipBarFill(1, 0));
+
+      startingPoints = 0;
+    }
+
+    int endingPoints = data.EndingFriendshipPoints;
+
+    if (data.EndingFriendshipLevel + 1 < levelConfig.FriendshipLevels.Length) {
+      pointsRequired = levelConfig.FriendshipLevels[data.EndingFriendshipLevel + 1].PointsRequired;
+
+      startingPercent = startingPoints / pointsRequired;
+      endingPercent = endingPoints / pointsRequired;
+    }
+    else {
+      startingPercent = endingPercent = 1f;
+    }
+
+    yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent));
   }
 }

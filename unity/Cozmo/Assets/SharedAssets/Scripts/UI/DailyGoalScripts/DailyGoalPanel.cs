@@ -61,7 +61,7 @@ public class DailyGoalPanel : BaseView {
 
   // Using current friendship level and the appropriate config file,
   // generate a series of random goals for the day.
-  public void GenerateDailyGoals() {
+  public StatContainer GenerateDailyGoals() {
     Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
     string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
@@ -87,25 +87,38 @@ public class DailyGoalPanel : BaseView {
       DAS.Warn(this, "More Goals than Potential Stats");
       totalGoals = possibleStats.Count;
     }
+    StatContainer goals = new StatContainer();
     // Generate Goals from the possible stats
     for (int i = 0; i < totalGoals; i++) {
       Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
       possibleStats[targetStat] = false;
-      CreateGoalBadge(targetStat, Random.Range(min, max));
+      goals[targetStat] = Random.Range(min, max);
+      CreateGoalBadge(targetStat, goals[targetStat], 0);
+    }
+    return goals;
+  }
+
+  public void SetDailyGoals(StatContainer goals, StatContainer progress) {
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+      var targetStat = (Anki.Cozmo.ProgressionStatType)i;
+      if (goals[targetStat] > 0) {
+        CreateGoalBadge(targetStat, goals[targetStat], progress[targetStat]);
+      }
     }
   }
 
+
   // Creates a goal badge based on a progression stat
-  public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target) {
+  public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
     _DailyGoals[(int)type] += target;
     DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
-    return CreateGoalBadge(type.ToString(), target);
+    return CreateGoalBadge(type.ToString(), target, goal);
   }
 
   // Creates a goal badge based on an arbitrary string
-  public GoalBadge CreateGoalBadge(string name, int target) {
+  public GoalBadge CreateGoalBadge(string name, int target, int goal) {
     GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, _GoalContainer).GetComponent<GoalBadge>();
-    newBadge.Initialize(name,target,0);
+    newBadge.Initialize(name, target, goal);
     _GoalUIBadges.Add(newBadge);
     newBadge.Expand(_Expanded);
     newBadge.OnProgChanged += UpdateTotalProgress;
