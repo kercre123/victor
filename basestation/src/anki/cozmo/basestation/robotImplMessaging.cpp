@@ -88,6 +88,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
        if (_timeSynced) {
          _numAnimationBytesPlayed = message.GetData().Get_animState().numAnimBytesPlayed;
          _numAnimationAudioFramesPlayed = message.GetData().Get_animState().numAudioFramesPlayed;
+         _enabledAnimTracks = message.GetData().Get_animState().enabledAnimTracks;
          _animationTag = message.GetData().Get_animState().tag;
        }
      }));

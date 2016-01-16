@@ -631,9 +631,10 @@ namespace Anki {
                                     const s32 numAnimAudioFramesFree,
                                     const u8 videoFrameRateHz,
                                     const u8 imageProcFrameRateHz,
+                                    const u8 enabledAnimTracks,
                                     const u8 animTag)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, animTag)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, enabledAnimTracks, animTag)));
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)

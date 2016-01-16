@@ -434,7 +434,6 @@ namespace Anki {
       GetMoveComponent().Update(msg);
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      _enabledAnimTracks = msg.enabledAnimTracks;
       _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
@@ -569,6 +568,7 @@ namespace Anki {
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
                                                 (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+                                                _enabledAnimTracks,
                                                 _animationTag);
       
       return lastResult;

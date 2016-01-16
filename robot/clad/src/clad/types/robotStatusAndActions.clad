@@ -77,7 +77,20 @@ structure RobotState
   int_8   currPathSegment, // -1 if not traversing a path
   uint_8  numFreeSegmentSlots,
   uint_8  battVolt10x,
-  uint_8  enabledAnimTracks,
+}
+
+namespace RobotInterface {
+
+  message AnimationState
+  {
+    uint_32 timestamp,
+    int_32  numAnimBytesPlayed,
+    int_32  numAudioFramesPlayed,
+    RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+    uint_8  enabledAnimTracks,
+    uint_8 tag,
+  }
+
 }
 
 } // namespace Cozmo

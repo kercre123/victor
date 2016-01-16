@@ -143,7 +143,6 @@ namespace Anki {
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
-        robotState_.enabledAnimTracks = AnimationController::GetEnabledTracks();
 
         robotState_.status = 0;
         // TODO: Make this a parameters somewhere?
