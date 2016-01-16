@@ -383,6 +383,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _CanvasRenderer: {fileID: 22221300}
   _Material: {fileID: 2100000, guid: 8d3d0c016777240959775b4d4518d1cd, type: 2}
+  _Mesh: {fileID: 0}
 --- !u!114 &11472504
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -458,6 +459,8 @@ MonoBehaviour:
   _ChallengeListViewPrefab: {fileID: 11483340, guid: 2453f18bd514742a5b96299b79a121ca,
     type: 2}
   _DailyGoalPrefab: {fileID: 11413872, guid: 5cfca50bd149c4f0fa165abf972d8c13, type: 2}
+  _DailySummaryPrefab: {fileID: 11431484, guid: 208cdc22bb9974adebd14cd4d3247e61,
+    type: 2}
 --- !u!114 &11489512
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -719,6 +722,11 @@ Prefab:
       propertyPath: _DailyGoalPrefab
       value: 
       objectReference: {fileID: 11413872, guid: 5cfca50bd149c4f0fa165abf972d8c13,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DailySummaryPrefab
+      value: 
+      objectReference: {fileID: 11431484, guid: 208cdc22bb9974adebd14cd4d3247e61,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

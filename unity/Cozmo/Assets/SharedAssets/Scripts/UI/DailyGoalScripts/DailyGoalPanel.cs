@@ -7,8 +7,8 @@ using System.Collections.Generic;
 
 public class DailyGoalPanel : BaseView {
 
-  private int[] _DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
-  private List<GoalBadge> _GoalUIBadges;
+  private readonly int[] _DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+  private readonly List<GoalBadge> _GoalUIBadges = new List<GoalBadge>();
   [SerializeField]
   private string _DebugLevel = "";
   [SerializeField]
@@ -49,18 +49,6 @@ public class DailyGoalPanel : BaseView {
       }
     }
   }
-
-	// Use this for initialization
-	void Awake () {
-    _GoalUIBadges = new List<GoalBadge>();
-    for (int i = 0; i < _DailyGoals.Length; i++) {
-      _DailyGoals[i] = 0;
-    }
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	}
 
   public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
     for (int i = 0; i < _DailyGoals.Length; i++) {
