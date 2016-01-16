@@ -343,6 +343,10 @@ namespace Anki
     s32 nrows = this->GetNumRows();
     s32 ncols = this->GetNumCols();
 
+    ASSERT_NAMED(otherArray.GetNumRows() == this->GetNumRows() &&
+                 otherArray.GetNumCols() == this->GetNumCols(),
+                 "Both arrays should be same size to ApplyScalarFunction");
+    
     ASSERT_NAMED(result.GetNumRows() == this->GetNumRows() &&
                  result.GetNumCols() == this->GetNumCols(),
                  "Result Array2d must be the same size as this one.");
