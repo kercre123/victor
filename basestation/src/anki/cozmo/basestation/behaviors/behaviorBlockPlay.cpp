@@ -1501,7 +1501,7 @@ namespace Cozmo {
         StartActing(robot,
                     new FacePoseAction(oObject->GetPose(), DEG_TO_RAD(5), PI_F),
                     [this,&robot](ActionResult ret){
-                      PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
+                      PlayAnimation(robot, "ID_reactTo2ndBlock_01");
                       return false;
                     });
         SetCurrState(State::WaitingForBlock);
