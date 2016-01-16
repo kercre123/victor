@@ -1011,7 +1011,7 @@ public class Robot : IDisposable {
     FaceObjectMessage.objectID = observedObject;
     FaceObjectMessage.robotID = ID;
     FaceObjectMessage.maxTurnAngle = float.MaxValue;
-    FacePoseMessage.turnAngleTol = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
+    FaceObjectMessage.turnAngleTol = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
     FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte(headTrackWhenDone);
     
     DAS.Debug(this, "Face Object " + FaceObjectMessage.objectID);
