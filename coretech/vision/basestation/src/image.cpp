@@ -94,29 +94,53 @@ namespace Vision {
     DrawLine(quad[CornerName::BottomLeft], quad[CornerName::BottomRight], color, thickness);
   }
   
-  template<typename T>
-  void ImageBase<T>::Resize(f32 scaleFactor)
+  // Compile time "LUT" for converting from our resize method to OpenCV's
+  static inline int GetOpenCvInterpMethod(ResizeMethod method)
   {
-    cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor, CV_INTER_LINEAR);
+    switch(method)
+    {
+      case ResizeMethod::NearestNeighbor:
+        return CV_INTER_NN;
+        
+      case ResizeMethod::Linear:
+        return CV_INTER_LINEAR;
+        
+      case ResizeMethod::Cubic:
+        return CV_INTER_CUBIC;
+        
+      case ResizeMethod::AverageArea:
+        return CV_INTER_AREA;
+    }
+  }
+  
+  
+  template<typename T>
+  void ImageBase<T>::Resize(f32 scaleFactor, ResizeMethod method)
+  {
+    cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor,
+               GetOpenCvInterpMethod(method));
   }
   
   template<typename T>
-  void ImageBase<T>::Resize(s32 desiredRows, s32 desiredCols)
+  void ImageBase<T>::Resize(s32 desiredRows, s32 desiredCols, ResizeMethod method)
   {
     if(desiredRows != GetNumRows() || desiredCols != GetNumCols()) {
       const cv::Size desiredSize(desiredCols, desiredRows);
-      cv::resize(this->get_CvMat_(), this->get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+      cv::resize(this->get_CvMat_(), this->get_CvMat_(), desiredSize, 0, 0,
+                 GetOpenCvInterpMethod(method));
     }
   }
   
   template<typename T>
-  void ImageBase<T>::Resize(ImageBase<T>& resizedImage) const
+  void ImageBase<T>::Resize(ImageBase<T>& resizedImage, ResizeMethod method) const
   {
     if(resizedImage.IsEmpty()) {
       printf("Image::Resize - Output image should already be the desired size.\n");
     } else {
       const cv::Size desiredSize(resizedImage.GetNumCols(), resizedImage.GetNumRows());
-      cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+      cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0,
+                 GetOpenCvInterpMethod(method));
+      resizedImage.SetTimestamp(this->GetTimestamp());
     }
   }
   

@@ -25,6 +25,13 @@
 
 namespace Anki {
 namespace Vision {
+  
+  enum class ResizeMethod : u8 {
+    NearestNeighbor = 0,
+    Linear,
+    Cubic,
+    AverageArea
+  };
 
   template<typename T>
   class ImageBase : public Array2d<T>
@@ -51,13 +58,13 @@ namespace Vision {
     void Display(const char *windowName, s32 pauseTime_ms = 5) const;
 
     // Resize in place by scaleFactor
-    void Resize(f32 scaleFactor);
+    void Resize(f32 scaleFactor, ResizeMethod method = ResizeMethod::Linear);
     
     // Resize in place to a specific size
-    void Resize(s32 desiredRows, s32 desiredCols);
+    void Resize(s32 desiredRows, s32 desiredCols, ResizeMethod method = ResizeMethod::Linear);
     
     // Resize into the new image (which is already the desired size)
-    void Resize(ImageBase<T>& resizedImage) const;
+    void Resize(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
     
     void DrawLine(const Point2f& start, const Point2f& end,
                   const ColorRGBA& color, const s32 thickness);
