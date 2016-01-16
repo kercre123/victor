@@ -21,6 +21,11 @@ namespace InvestorDemo {
         return;
       }
       InitializeMinigameObjects();
+
+      // Enable idle vision mode, which means "turn off" all vision processing.
+      // We will rely on each demo behavior chooser to enable its required 
+      // vision modes.
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.Idle, true);
     }
 
     protected override void InitializeView(ChallengeData data) {
