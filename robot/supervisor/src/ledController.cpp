@@ -48,40 +48,28 @@ namespace Cozmo {
       phaseTime = currentTime; // Someone changed currentTime under us or something else went wrong so reset
       phaseFrame = 0;
     }
-
-    if (phaseFrame < ledParams.onFrames)
+    
+    if (phaseFrame < ledParams.transitionOnFrames) // Still turning on
     {
-      if (phaseFrame <= ledParams.transitionOnFrames) // Still turning on
-      {
-        newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame)/float(ledParams.transitionOnFrames));
-        return true;
-      }
-      else // All the way on, don't need to change the color
-      {
-        newColor = ledParams.onColor;
-        return false;
-      }
+      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame)/float(ledParams.transitionOnFrames));
+      return true;
     }
-    else if (phaseFrame < (ledParams.onFrames + ledParams.offFrames))
+    else if (phaseFrame < (ledParams.transitionOnFrames + ledParams.onFrames))
     {
-      const u16 offPhase = phaseFrame - ledParams.onFrames;
-      if (offPhase <= ledParams.transitionOffFrames)
-      {
-        newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(offPhase)/float(ledParams.transitionOffFrames));
-        return true;
-      }
-      else
-      {
-        newColor = ledParams.offColor;
-        return false;
-      }
-    }
-    else
-    {
-      phaseTime = currentTime;
-      newColor = ledParams.offColor;
+      newColor = ledParams.onColor;
       return false;
     }
+    else if (phaseFrame < (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames))
+    {
+      const u16 offPhase = phaseFrame - (ledParams.transitionOnFrames + ledParams.onFrames);
+      newColor = AlphaBlend(ledParams.offColor, ledParams.onColor, float(offPhase)/float(ledParams.transitionOffFrames));
+      return true;
+    }
+    
+    phaseTime = currentTime;
+    newColor = ledParams.offColor;
+    return false;
+
   } // GetCurrentLEDcolor()
 
 } // namespace Anki
