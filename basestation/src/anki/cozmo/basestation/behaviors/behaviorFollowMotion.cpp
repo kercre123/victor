@@ -281,8 +281,8 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
     case State::Tracking:
     {
       PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.Motion",
-                       "Motion area=%d, centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
-                       motionObserved.img_area,
+                       "Motion area=%.1f%%, centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
+                       motionObserved.img_area * 100.f,
                        motionCentroid.x(), motionCentroid.y(),
                        relHeadAngle_rad.getDegrees(), relBodyPanAngle_rad.getDegrees());
       
