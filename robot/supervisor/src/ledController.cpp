@@ -49,26 +49,31 @@ namespace Cozmo {
       phaseFrame = 0;
     }
     
-    if (phaseFrame < ledParams.transitionOnFrames) // Still turning on
+    if (phaseFrame <= ledParams.transitionOnFrames) // Still turning on
     {
       newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame)/float(ledParams.transitionOnFrames));
       return true;
     }
-    else if (phaseFrame < (ledParams.transitionOnFrames + ledParams.onFrames))
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames))
     {
       newColor = ledParams.onColor;
       return false;
     }
-    else if (phaseFrame < (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames))
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames))
     {
       const u16 offPhase = phaseFrame - (ledParams.transitionOnFrames + ledParams.onFrames);
       newColor = AlphaBlend(ledParams.offColor, ledParams.onColor, float(offPhase)/float(ledParams.transitionOffFrames));
       return true;
     }
-    
-    phaseTime = currentTime;
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offFrames))
+    {
+      newColor = ledParams.offColor;
+      return false;
+    }
+
     newColor = ledParams.offColor;
-    return false;
+    phaseTime = currentTime;
+    return true;
 
   } // GetCurrentLEDcolor()
 
