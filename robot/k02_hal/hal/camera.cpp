@@ -328,22 +328,19 @@ void FTM2_IRQHandler(void)
   } else {        
     DMA_TCD0_DOFF = 0;
   }
-
+  
   // Do this as early as possible - but after DMA is set up
   SPI::StartDMA();
 
   // Acknowledge timer interrupt now (we won't get time to later)
   FTM2_SC &= ~FTM_SC_TOF_MASK;
 
-  // Cheesy way to check for vblank - we know it is if camera DMA buffer wasn't updated
-  static u8 vblank = 0;
-  if (1 == dmaBuff_[0])
-    vblank++;
-  else
-    vblank = 0;
-  if (vblank > 3)
-    line = 478 + vblank;   // Set to start of vblank (adjusted for QVGA rate)
-  dmaBuff_[0] = 1;
+  // Cheesy way to check for start of frame
+  // If we're past end of frame, but we saw a pixel change, reset line to 0
+  // TODO:  The correct way is to just ask the DMA controller if it got triggered
+  if (line >= TOTAL_ROWS && 1 != dmaBuff_[BYTES_PER_PIX*(TOTAL_COLS-1)])
+    line = 0;
+  dmaBuff_[BYTES_PER_PIX*(TOTAL_COLS-1)] = 1;
 
   // Run all the register-hitting stuff
   HALExec();
@@ -353,7 +350,10 @@ void FTM2_IRQHandler(void)
   // Run the JPEG encoder for all of the remaining time
   int eof = 0, buflen;   
 #ifdef ENABLE_JPEG
-  JPEGCompress(line, TOTAL_ROWS);
+  if (line < 498)
+    JPEGCompress(line, TOTAL_ROWS);
+  else
+    Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0);
 #else
   // If JPEG encoder is disabled, try various test modes
   #ifdef ASCII_IMAGE
@@ -397,6 +397,4 @@ void FTM2_IRQHandler(void)
   
   // Advance line pointer
   line++;
-  if (line >= 496)
-    line = 0;
 }

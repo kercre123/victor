@@ -8,9 +8,9 @@
 #define m_text_start                   (m_interrupts_start + m_interrupts_size)
 #define m_text_size                    (0x10000 - m_text_start)
 
-; 8KB - 768 bytes for camera - 2KB for stack
-#define m_data_start                   0x1FFFE800
-#define m_data_size                    0x00001500   
+; 8KB - 768 bytes for camera - 1.5KB for stack
+#define m_data_start                   0x1FFFE600
+#define m_data_size                    0x00001700   
 
 ; 8KB + 768 bytes
 #define m_data_2_start                 0x1FFFFD00   

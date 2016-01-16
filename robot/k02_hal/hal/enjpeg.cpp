@@ -30,7 +30,7 @@ namespace Anki
     {
 
 const int DROP_LIMIT = DROP_TO_WIFI_MAX_PAYLOAD;    // Max size of JPEG part of drop - used for rate-limiting
-
+      
 const int BLOCKW = 8, BLOCKH = 8; // A JPEG block is 8x8 pixels
 const int WIDTH = 640;            // Frame width is 640x
 const int UVSUB = BLOCKW;         // Subsample U/V by 8x in both dimensions
@@ -85,8 +85,9 @@ static int timeDMA, timeCol, timeRow, timeEmit;
   d1=c4; d5=c5+c7; d3=c5-c7; d7=c6;
 
 // This performs column DCTs on all pixel data in the slice buffer and writes the cofficients to state.coeff
-static void __attribute__((noinline)) simcolB2(uint8_t* image, int pitch)
+static void __attribute__((noinline)) simcolB2x(uint8_t* image)
 {
+  const int pitch = SLICEW;
   // We do columns 0-3, then 4-7 to stay behind DMA - which is still crunching Y data out of state.coeff
   for (int h = 0; h < 2; h++)             // First or second half
     for (int b = BLOCK_SKIP; b < BLOCKS_LINE; b++) // Block number
@@ -116,7 +117,38 @@ static void __attribute__((noinline)) simcolB2(uint8_t* image, int pitch)
         *(co += 4) = d7;
       }
 }
+static void __attribute__((noinline)) simcolB2y(uint8_t* image)
+{
+  const int pitch = SLICEW*BLOCKH;
+  // We do columns 0-3, then 4-7 to stay behind DMA - which is still crunching Y data out of state.coeff
+  for (int h = 0; h < 2; h++)             // First or second half
+    for (int b = BLOCK_SKIP; b < BLOCKS_LINE; b++) // Block number
+      for (int c = 0; c < 4; c++)         // Column
+      {
+        uint8_t* p = image + b*BLOCKW + h*4 + c;
+        int d0 = *p;
+        int d1 = *(p += pitch);
+        int d2 = *(p += pitch);
+        int d3 = *(p += pitch);
+        int d4 = *(p += pitch);
+        int d5 = *(p += pitch);
+        int d6 = *(p += pitch);
+        int d7 = *(p += pitch);
 
+        BINK();
+        
+        // Store 4 * 8 halfwords per 76 bytes
+        int16_t* co = (int16_t*)(state.coeff + c*2 + (h*BLOCKS_LINE+b)*DCT_SIZE);
+        *co = d0;
+        *(co += 4) = d1;  // Actually 8 bytes apart - and we'll store all 8 eventually
+        *(co += 4) = d2;
+        *(co += 4) = d3;
+        *(co += 4) = d4;
+        *(co += 4) = d5;
+        *(co += 4) = d6;
+        *(co += 4) = d7;
+      }
+}
 // This performs all the row DCTs on state.coeff and writes Zig-Zag Quantized results into state.dct
 // To save costly table look-ups, Zig-Zag index and Q50 Quantizers (ZZQ) are inlined
 // To prevent I-cache thrashing, the same ZZQs are used 10 times in a row (strip-mine order)
@@ -128,7 +160,8 @@ static void unrowB2()
     do { \
     int d0=CTa(0,r),d1=CTa(1,r),d2=CTa(2,r),d3=CTa(3,r), d4=CTb(0,r),d5=CTb(1,r),d6=CTb(2,r),d7=CTb(3,r);      \
     BINK();
-  #define ENDROW } while ((dct += DCT_SIZE) < state.dct + BLOCKS_LINE*DCT_SIZE)
+//#define ENDROW } while ((dct += DCT_SIZE) < state.dct + BLOCKS_LINE*DCT_SIZE)// Sane version
+  #define ENDROW } while ((intptr_t)(dct += DCT_SIZE) & 1024)                  // "Clever" version
     
   // Coefficients are loaded relative to dct to save a register and a lot of spilling
   #define CTa(x,r) *(int16_t*)(state.coeff + (dct-state.dct) + r*8 + x*2)
@@ -159,14 +192,10 @@ static void unrowB2()
 static void DMACrunch()
 {
   // TODO: DMA not working yet
-#if BLOCK_SKIP > 0
-  uint8_t *src = state.row, *dst = state.row - 8;
+  // Note: Compiler already optimizes this 
+  uint8_t *src = state.row, *dst = (state.row) - 8;
   for (int i = 0; i < SLICEW*BLOCKH; i++)
     *src++ = *(dst+=8);
-#else
-  for (int i = 1; i < WIDTH; i++)
-    state.row[i] = state.row[i<<2];
-#endif
 }
 
 const int EOB_SIZE = 4;   // EOB is 0xA, 4-bits long
@@ -180,8 +209,6 @@ static inline uint8_t* writeEOF(uint8_t* out)
   if (bitsFree < EOB_SIZE)      // If EOB was cropped, add the rest of it
     out[4] = (0xAFF) >> (EOB_SIZE-bitsFree);
   out += (7 + EOB_SIZE + 32-bitsFree) >> 3;   // Round pointer up (+7) to nearest byte including EOB (+4)
-  *out++ = 0xFF;  // Write byte-aligned EOI
-  *out++ = 0xD9;
   return out;
 }
 
@@ -226,7 +253,8 @@ static uint8_t* emit(__packed uint8_t* outp)
   int bitBuf, bitCnt; // Current bit buffer and number of bits still "free" in buffer
   
   uint32_t* out = (uint32_t*)outp;
-  uint32_t* outchop = out + (DROP_LIMIT/4 - (BLOCKS_LINE-1)*2);  // Point where rate limiting kicks in
+  //uint32_t* outchop = out + DROP_LIMIT/4;  // End of first buffer
+  uint32_t* outchop = out + (DROP_LIMIT/4 - ((BLOCKS_LINE-BLOCK_SKIP)-1)*2);  // Point where rate limiting must happen
   
   int8_t* dct = state.dct + BLOCK_SKIP*DCT_SIZE;
   int lastDC;     // DC delta (saves ten bytes of RAM to do this here, and we have regs)
@@ -335,10 +363,18 @@ flushbits:
   // Check that we haven't run out of space
   if (out < outchop)
     goto writebits;
-  
-  // We're out of space - save the code, then end the block
+/*  
+  // If we ran out buffer 1, fill buffer 2 first
+  if ((intptr_t)out < (intptr_t)state.dct) {
+    out = (uint32_t*)state.dct;
+    outchop = out + (DROP_LIMIT/4 - ((BLOCKS_LINE-BLOCK_SKIP)-1)*2);  // Point where rate limiting must happen
+    goto writebits;
+  }
+*/
+  // We're really out of space - save the code, then end the block
   bitBuf <<= len;
   bitBuf += val;
+  
   goto chopblock;
   
 stop:
@@ -385,7 +421,10 @@ void JPEGCompress(int line, int height)
     // If we have a slice left in the buffer, start column DCT
     START(timeCol);
     if (docompress)
-      simcolB2(state.slice + (-BLOCK_SKIP*BLOCKW) + xpitch*(readline&(BLOCKH-1)), ypitch);
+      if (ypitch == SLICEW)
+        simcolB2x(state.slice + (-BLOCK_SKIP*BLOCKW) + xpitch*(readline&(BLOCKH-1)));
+      else
+        simcolB2y(state.slice + (-BLOCK_SKIP*BLOCKW) + xpitch*(readline&(BLOCKH-1)));
     else
       ; // TODO: No encode to slow us down, wait on crunch DMA to complete before row copy
     STOP(timeCol);
@@ -394,14 +433,15 @@ void JPEGCompress(int line, int height)
     // TODO:  Can we chain these or do they go between row DCTs?  Either way is fast enough..
     START(timeDMA);
     uint8_t* slicep = state.slice + xpitch*(line&(BLOCKH-1));
-    for (int i = 0; i < SLICEW*BLOCKH; i += SLICEW)
-    {
-      uint32_t *src = (uint32_t*)slicep, *dst = (uint32_t*)(state.row + i);
-      //for (int i = 0; i < SLICEW/4; i++)    // XXX - Keil turns it into memmove which is too slow!
-      src[0] = dst[0]; src[1] = dst[1]; src[2] = dst[2]; src[3] = dst[3]; src[4] = dst[4];
-      src[5] = dst[5]; src[6] = dst[6]; src[7] = dst[7]; src[8] = dst[8]; src[9] = dst[9];
-      slicep += ypitch;
-    }
+    if (line < height)
+      for (int i = 0; i < SLICEW*BLOCKH; i += SLICEW)
+      {
+        uint32_t *src = (uint32_t*)slicep, *dst = (uint32_t*)(state.row + i);
+        //for (int i = 0; i < SLICEW/4; i++)    // XXX - Keil turns it into memmove which is too slow!
+        src[0] = dst[0]; src[1] = dst[1]; src[2] = dst[2]; src[3] = dst[3]; src[4] = dst[4];
+        src[5] = dst[5]; src[6] = dst[6]; src[7] = dst[7]; src[8] = dst[8]; src[9] = dst[9];
+        slicep += ypitch;
+      }
     STOP(timeDMA);
 
     // QVGA:  We only have data on every other line
@@ -415,6 +455,8 @@ void JPEGCompress(int line, int height)
       STOP(timeRow);
       START(timeEmit);
       buflen = emit(out) - out;
+      if (buflen > DROP_LIMIT)
+        buflen = DROP_LIMIT;
       STOP(timeEmit);
       readline++;         // Point at next line
       

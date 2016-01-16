@@ -9,6 +9,7 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/robot/cozmoBot.h"
+#include "hal/hardware.h"
 
 #include "uart.h"
 #include "oled.h"
@@ -66,6 +67,7 @@ int main (void)
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
 
+  // Get some initialization done 
   UART::DebugInit();
   TimerInit();
   PowerInit();
@@ -73,17 +75,21 @@ int main (void)
   DAC::Init();
   DAC::Tone();
 
-  // Wait for Espressif to boot
-  MicroWait(2000000);
-
+  // Wait for Espressif to toggle out 32 bits of SPI
+  for (int i = 0; i < 32; i++)
+  {
+    while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
+    while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;
+  }
+  
   // Switch to 10MHz external reference to enable 100MHz clock
   MCG_C1 &= ~MCG_C1_IREFS_MASK;
   // Wait for IREF to turn off
-  while((MCG->S & MCG_S_IREFST_MASK)) ;
+  while((MCG->S & MCG_S_IREFST_MASK))   ;
   // Wait for FLL to lock
-  while((MCG->S & MCG_S_CLKST_MASK)) ;
+  while((MCG->S & MCG_S_CLKST_MASK))    ;
 
-  MicroWait(100000); // Because the FLL is lame
+  MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
 
   SPI::Init();
   I2C::Init();

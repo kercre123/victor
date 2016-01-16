@@ -50,8 +50,8 @@ static inline void SendEmergencyStop(void) {
   GPIO_IN(GPIO_I2C_SDA, PIN_I2C_SDA);
   SOURCE_SETUP(GPIO_I2C_SDA, PIN_I2C_SDA, SourceGPIO);
   
-  // Clock the output until the data line goes high
-  for (int i = 0; i < 100 || !GPIO_READ(GPIO_I2C_SDA); i++) {
+  // Clock the output 100 times
+  for (int i = 0; i < 100; i++) {
     GPIO_RESET(GPIO_I2C_SCL, PIN_I2C_SCL);
     MicroWait(1);
     GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);

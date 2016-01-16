@@ -247,7 +247,6 @@ inline uint16_t WaitForByte(void) {
 void SyncSPI(void) {
   // Syncronize SPI to WS
   __disable_irq();
-  Anki::Cozmo::HAL::UART::DebugPrintf("Syncing to espressif clock... ");
   
   for (;;) {
     // Flush SPI
@@ -276,7 +275,6 @@ void SyncSPI(void) {
     PORTE_PCR17 = PORT_PCR_MUX(0);    // SPI0_SCK (disabled)
   }
   
-  Anki::Cozmo::HAL::UART::DebugPrintf("Done.\n\r");
   __enable_irq();
 }
 
