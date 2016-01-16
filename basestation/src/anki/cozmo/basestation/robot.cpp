@@ -1563,6 +1563,10 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
     {
+      // Disable super-verbose warnings about clipping face parameters in json files
+      // To help find bad/deprecated animations, try removing this.
+      ProceduralFaceParams::EnableClippingWarning(false);
+      
       if (_dataPlatform == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
@@ -1616,6 +1620,8 @@ namespace Anki {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
+      
+      ProceduralFaceParams::EnableClippingWarning(true);
     }
 
     Result Robot::SyncTime()
