@@ -221,6 +221,7 @@ namespace Cozmo {
 #   endif
     
     // Previous image for doing background subtraction, e.g. for saliency
+    // NOTE: previous images stored at resolution of motion detection processing.
     Vision::ImageRGB _prevImage;
     Vision::ImageRGB _prevPrevImage;
     TimeStamp_t      _lastMotionTime = 0;
