@@ -671,6 +671,15 @@ namespace Cozmo {
       return;
     }
     
+    if(face->GetNumTimesObserved() < kMinNumFaceObservations) {
+      // Ignore faces that have not been seen a sufficient number of times yet,
+      // to help avoid responding to false positives
+      PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.HandleRobotObservedFace.IgnoringFace",
+                        "Ignoring face %lld, seen only %d times (which is less than %d)",
+                        faceID, face->GetNumTimesObserved(), kMinNumFaceObservations);
+      return;
+    }
+    
     auto dataIter = _interestingFacesData.find(faceID);
     
     // If we have an entry for this face, check if the cooldown time has passed
