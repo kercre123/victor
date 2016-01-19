@@ -110,14 +110,17 @@ void Anki::Cozmo::HAL::SPI::StartDMA(void) {
   spi_tx_buff = tmp;    // write_buff from last time is being sent right now
 }
 
-void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) {   
+void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) { 
   DropToWiFi *drop_tx = spi_write_buff;
 
   drop_tx->preamble = TO_WIFI_PREAMBLE;
   
   // This is where a drop should be 
   drop_tx->droplet  = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0) | ToWiFi;
+  while (jpeglen & 0x3) drop_tx->payload[jpeglen++] = 0xff;
+  
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
+  
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;
   if (remainingSpace > 0)
   {

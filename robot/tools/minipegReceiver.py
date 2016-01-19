@@ -35,6 +35,8 @@ def mini2jpeg(minipeg, dimensions):
     ]
     out = header
     
+    while minipeg[-1] == 0xff: minipeg.pop(-1) # remove trailing 0xFF padding
+    
     width, height = dimensions
     out[0x5e] = height >> 8
     out[0x5f] = height & 0xff

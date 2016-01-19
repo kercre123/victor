@@ -30,7 +30,7 @@ namespace Cozmo {
   
   // Turn a fully assembled MINIPEG_GRAY image into a JPEG with header and footer
   // This is a port of C# code from Nathan.
-  static void miniGrayToJpeg(const std::vector<u8>& bufferIn, const s32 bufferLength, std::vector<u8>& bufferOut, const u16 height, const u16 width)
+  static void miniGrayToJpeg(const std::vector<u8>& bufferIn, s32 bufferLength, std::vector<u8>& bufferOut, const u16 height, const u16 width)
   {
     // Fetch quality to decide which header to use
     //const int quality = bufferIn[0];
@@ -112,17 +112,21 @@ namespace Cozmo {
     assert(headerLength > 0);
     
     // Allocate enough space for worst case expansion
-    bufferOut.resize(bufferLength*2 + headerLength);
+    bufferOut.resize(bufferLength*2 + headerLength); 
     
-    int off = headerLength;
     std::copy(header, header+headerLength, bufferOut.begin());
-    
+    // Adjust header size information
     bufferOut[0x5e] = height >> 8;
     bufferOut[0x5f] = height & 0xff;
     bufferOut[0x60] = width  >> 8;
     bufferOut[0x61] = width  & 0xff;
     
+    while (bufferIn[bufferLength-1] == 0xff) {
+      bufferLength--; // Remove trailing 0xFF padding
+    }
+    
     // Add byte stuffing - one 0 after each 0xff
+    int off = headerLength;
     for (int i = 1; i < bufferLength; i++)
     {
       bufferOut[off++] = bufferIn[i];
