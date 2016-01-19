@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorFindFaces_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/common/shared/radians.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -41,6 +42,7 @@ protected:
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
   enum class State {
@@ -62,11 +64,16 @@ private:
   constexpr static float kPauseMin_sec = 1;
   // Max time to pause after moving
   constexpr static float kPauseMax_sec = 3.5;
+  // Width of zone to focus on
+  constexpr static float kFocusAreaAngle_deg = 120;
   
   State _currentState = State::Inactive;
   uint32_t _currentDriveActionID; // Init in cpp to not have constants include in header
   double _lookPauseTimer = 0;
+  Radians _faceAngleCenter;
+  bool _faceAngleCenterSet = false;
   
+  float GetRandomPanAmount() const;
   void StartMoving(Robot& robot);
 };
   

@@ -176,7 +176,7 @@ namespace Cozmo {
     virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
     
-    Util::RandomGenerator& GetRNG();
+    Util::RandomGenerator& GetRNG() const;
     
   private:
     
@@ -184,9 +184,6 @@ namespace Cozmo {
     std::string _stateName = "";
     
     static const char* kBaseDefaultName;
-    
-    // A random number generator for all behaviors to share
-    static Util::RandomGenerator sRNG;
     
     std::vector<EmotionScorer> _emotionScorers;
     
@@ -217,7 +214,8 @@ namespace Cozmo {
     return InterruptInternal(_robot, currentTime_sec, isShortInterrupt);
   }
   
-  inline Util::RandomGenerator& IBehavior::GetRNG() {
+  inline Util::RandomGenerator& IBehavior::GetRNG() const {
+    static Util::RandomGenerator sRNG;
     return sRNG;
   }
   
