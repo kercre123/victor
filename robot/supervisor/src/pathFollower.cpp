@@ -301,8 +301,7 @@ namespace Anki
         lookaheadX = x;
         lookaheadY = y;
 
-        Planning::PathSegmentType currType = path_[currPathSegment_].GetType();
-        assert(currType == Planning::PST_LINE || currType == Planning::PST_ARC);
+        assert(Planning::PST_LINE == path_[currPathSegment_].GetType() || Planning::PST_ARC == path_[currPathSegment_].GetType());
 
         // Compute lookahead position
         if (LOOK_AHEAD_DIST_MM != 0) {
