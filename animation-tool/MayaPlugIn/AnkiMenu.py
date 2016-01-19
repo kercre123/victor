@@ -10,6 +10,7 @@ import time
 from operator import itemgetter
 import ast
 from functools import partial
+import inspect
 
 #To setup add "MAYA_PLUG_IN_PATH = <INSERT PATH TO COZMO GAME HERE>/cozmo-game/animation-tool/MayaPlugIn" in "~/Library/Preferences/Autodesk/maya/2016/Maya.env"
 #In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load and auto-load and an Anki menu will appear on the main menu
@@ -18,17 +19,18 @@ kPluginCmdName = "AnkiAnimExport"
 kShortFlagName = "oj"
 kLongFlagName = "open_json"
 
-
-
 #something like ~/cozmo-game/lib/anki/products-cozmo-assets/animations
 g_AnkiExportPath = ""
 g_PrevMenuName = ""
 g_EndMsg = ""
+
 g_ProceduralFaceKeyFrames = []
+g_AudioIDs = {}
 ANIM_FPS = 30
 MAX_FRAMES = 10000
 NUM_PROCEDURAL_FRAMES = 19
 DATA_NODE_NAME = "x:data_node"
+ONLY_ALLOW_WWISE_IDS = False
 
 # mapping from  cozmo-game\unity\cozmo\assets\scripts\generated\clad\types\proceduraleyeparameters.cs
 #which could have probably been included, but we'd still need a way to map those to the maya names.
@@ -179,6 +181,8 @@ def IsProceduralAttribute(currattr):
 
 def GetAudioJSON():
     global g_EndMsg
+    global g_AudioIDs
+    global ONLY_ALLOW_WWISE_IDS
     all_audio_clips = cmds.ls(type='audio')
     if( len(all_audio_clips) > 0):
         json_arr = []
@@ -192,11 +196,13 @@ def GetAudioJSON():
             audioEnd = cmds.sound(audioNode,query=True, sourceEnd=True)
             audio_frame_key = str(audioStart)
             audioFile = cmds.sound(audioNode,query=True, file=True)
+            audioShortName = cmds.sound(audioNode,query=True, name=True)
             audioPathSplit = audioFile.split("/sounds/", 1)
             if( len(audioPathSplit) < 2 ):
                 print "ERROR: sound must be in the sounds directory"
                 continue
             audioFile = audioPathSplit[1]
+            # we support variation so that any sound at the same time is in the same array
             if( audio_sorted_by_frame.has_key(audio_frame_key)):
                 audio_json = audio_sorted_by_frame[audio_frame_key]
                 audio_json["audioName"].append(audioFile)
@@ -209,6 +215,12 @@ def GetAudioJSON():
                             }
                 audio_sorted_by_frame[audio_frame_key] = audio_json
                 json_arr.append(audio_json)
+            if( audioShortName in g_AudioIDs ):
+                if( "audioEventId" not in audio_json):
+                    audio_json["audioEventId"] = []
+                audio_json["audioEventId"].append(g_AudioIDs[audioShortName])
+            elif ONLY_ALLOW_WWISE_IDS:
+                g_EndMsg = g_EndMsg + audioShortName + " is not found as wwise event!!"
             #For the investor demo mooly wants to make sure that nothing is overlapping so print a non-fatal warning
             #cmds.warning("alsjfd")
             for check_against in all_audio_clips:
@@ -576,6 +588,20 @@ def initializePlugin(mobject):
     global g_PrevMenuName
     mplugin = OpenMayaMPx.MFnPlugin(mobject)
     print "Initting Anki plugin"
+
+    audio_json_file_name = "wwiseIds.json"
+    #Right now just the current dir, might make this just a maya env var.
+    audio_json_dir = os.path.dirname(os.path.abspath(inspect.stack()[0][1])) 
+    audio_full_path = os.path.join(audio_json_dir, audio_json_file_name)
+    if( os.path.isfile(audio_full_path)):
+        with open(audio_full_path) as data_file:
+            global g_AudioIDs;   
+            data = json.load(data_file)
+            if( "events" in data ):
+                g_AudioIDs = data["events"]
+        print "wwise JSON file open"
+    else:
+        print "Wwise audio events json file not found"
     try:
         mplugin.registerCommand( kPluginCmdName, cmdCreator, syntaxCreator )
         #create the menu on the main menu bar
