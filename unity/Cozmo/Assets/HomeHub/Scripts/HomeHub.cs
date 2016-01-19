@@ -54,7 +54,6 @@ namespace Cozmo.HomeHub {
 
       // Show the current state of challenges being locked/unlocked
       _TimelineViewInstance.Initialize(_ChallengeStatesById);
-
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("ID_idle_brickout");
     }
 

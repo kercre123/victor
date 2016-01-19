@@ -120,6 +120,7 @@ public abstract class GameBase : MonoBehaviour {
   public void OnDestroy() {
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState();
+      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("ID_idle_brickout");
     }
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
