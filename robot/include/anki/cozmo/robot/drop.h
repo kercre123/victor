@@ -102,8 +102,6 @@ typedef enum
   audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
   screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid
   screenRectData    = 1<<2,    ///< Bytes in the iscochronous screen field are bounding data
-  // Shared fields
-  ToWiFi = 1<<7,       ///< Assert bit for this droplet value being on a drop from RTIP to WiFi
 } Droplet;
 
 #define JPEG_LENGTH(i) (((i+3) >> 2)&jpegLenMask)

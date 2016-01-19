@@ -79,7 +79,7 @@ namespace HAL {
       const uint8_t wind = txWind;
       uint8_t rind = txRind;
       uint8_t i = 0;
-      while (rind != wind)
+      while ((rind != wind) && i < maxLength)
       {
         dest[i++] = txBuf[rind++];
       }

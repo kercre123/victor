@@ -113,8 +113,7 @@ void processDrop(DropToWiFi* drop)
   if (unlikely(drop->droplet & bootloaderStatus)) os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, 4);
   else if (drop->payloadLen > 0)
   {
-    const uint8 jpegOffset = (drop->droplet & jpegLenMask) * 4;
-    AcceptRTIPMessage(drop->payload + jpegOffset, drop->payloadLen);
+    AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
   }
 }
 
