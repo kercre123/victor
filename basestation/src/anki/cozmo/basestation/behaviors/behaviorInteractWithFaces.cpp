@@ -445,12 +445,13 @@ namespace Cozmo {
                              "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
                              watchingFaceDuration, _currentMultiFaceInterestingDuration_sec);
             
-            _currentMultiFaceInterestingDuration_sec = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec, kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
+            _currentMultiFaceInterestingDuration_sec = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec,
+                                                                               kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
             break;
           }
         }
         
-        // We're just watching one face, see it's time for cooldown
+        // We're just watching one face, see if it's time for cooldown
         else if(watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
           robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
