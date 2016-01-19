@@ -42,6 +42,12 @@ namespace Cozmo {
   bool GetCurrentLEDcolor(const LightState& ledParams, const TimeStamp_t currentTime, TimeStamp_t& phaseTime,
                           u16& newColor)
   {
+    // Check for constant color
+    if (ledParams.onFrames == 255 || (ledParams.onColor == ledParams.offColor)) {
+      newColor = ledParams.onColor;
+      return true;
+    }
+    
     u16 phaseFrame = TIMESTAMP_TO_FRAMES(currentTime - phaseTime);
     if (phaseFrame > 1024)
     {
