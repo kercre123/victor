@@ -157,20 +157,20 @@ float BehaviorFindFaces::GetRandomPanAmount() const
   
 void BehaviorFindFaces::StartMoving(Robot& robot)
 {
-  float currentBodyAngle = robot.GetPose().GetRotationAngle().ToFloat();
-  float newBodyAngle;
-  do
+  Radians currentBodyAngle = robot.GetPose().GetRotationAngle().ToFloat();
+  float turnAmount = GetRandomPanAmount();
+  
+  Radians proposedNewAngle = Radians(currentBodyAngle + turnAmount);
+  // If the potential turn takes us outside of our cone of focus, flip the sign on the turn
+  if(Anki::Util::Abs((proposedNewAngle - _faceAngleCenter).getDegrees()) > kFocusAreaAngle_deg / 2.0f)
   {
-    // Keep pulling random amounts until the clamped new angle is different from where we are now
-    newBodyAngle = Anki::Util::Clamp(currentBodyAngle + GetRandomPanAmount(),
-                                     _faceAngleCenter.ToFloat() - DEG_TO_RAD_F32(kFocusAreaAngle_deg / 2.0f) ,
-                                     _faceAngleCenter.ToFloat() + DEG_TO_RAD_F32(kFocusAreaAngle_deg / 2.0f));
-  } while (newBodyAngle == currentBodyAngle);
+    proposedNewAngle = Radians(currentBodyAngle - turnAmount);
+  }
   
   float randomTilt = (float) GetRNG().RandDbl();
   Radians tiltRads(DEG_TO_RAD(((kTiltMax - kTiltMin) * randomTilt) + kTiltMin));
   
-  IActionRunner* moveAction = new PanAndTiltAction(newBodyAngle, tiltRads, true, true);
+  IActionRunner* moveAction = new PanAndTiltAction(proposedNewAngle, tiltRads, true, true);
   _currentDriveActionID = moveAction->GetTag();
   robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveAction);
   
