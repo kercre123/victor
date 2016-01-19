@@ -113,8 +113,7 @@ void processDrop(DropToWiFi* drop)
   if (unlikely(drop->droplet & bootloaderStatus)) os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, 4);
   else if (drop->payloadLen > 0)
   {
-    const uint8 jpegOffset = (drop->droplet & jpegLenMask) * 4;
-    AcceptRTIPMessage(drop->payload + jpegOffset, drop->payloadLen);
+    AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
   }
 }
 
@@ -556,25 +555,19 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   return 0;
 }
 
-bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen)
+bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
 {
   if (unlikely(outgoingPhase < PHASE_FLAGS))
   {
     return false;
   }
+  else if (msgLen > DROP_TO_RTIP_MAX_VAR_PAYLOAD)
+  {
+    return false;
+  }
   else
   {
-    uint16_t queued = 0;
-    while (queued < msgLen)
-    {
-      uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-      if (makeDrop(msgData + queued, payloadLen) == false)
-      {
-        return false;
-      }
-      queued += payloadLen;
-    }
-    return true;
+    return makeDrop(msgData, msgLen);
   }
 }
 

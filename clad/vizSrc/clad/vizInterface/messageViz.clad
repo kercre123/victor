@@ -20,6 +20,7 @@ message RobotStateMessage
   int_32 numAnimAudioFramesFree,
   uint_8 videoFrameRateHz,
   uint_8 imageProcFrameRateHz,
+  uint_8 enabledAnimTracks,
   uint_8 animTag
 }
 

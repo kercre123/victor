@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Copied this from anki-util's VersionGenerator.
-# Maybe we can make anki-util's VersionGenerator more generic, 
+# Maybe we can make anki-util's VersionGenerator more generic,
 # but for now cozmo-engine repo gets its own.
 # - Kevin Yoon (Nov 2015)
 
@@ -27,7 +27,7 @@ fi
 
 # Get git SHA-1
 Commit=`$GIT rev-parse --short HEAD`
-DasUser=`whoami`
+DasUser=`/usr/bin/whoami`
 Date=`date +%Y-%m-%d..%H:%M`
 
 # Get just the name of the file
@@ -44,7 +44,6 @@ echo " "                                                           >> $VersionFi
 echo "static const unsigned int COZMO_VERSION_COMMIT = 0x$Commit;" >> $VersionFile
 echo "static const char* DAS_USER = \"$DasUser\";"                 >> $VersionFile
 echo "static const char* BUILD_DATE = \"$Date\";"                  >> $VersionFile
-
 
 echo "Cozmo FW version file generated"
 exit 0

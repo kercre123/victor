@@ -978,10 +978,13 @@ namespace Anki {
       //timeStamp_ = t;
     };
 
-    void HAL::SetLED(LEDId led_id, u32 color) {
+    void HAL::SetLED(LEDId led_id, u16 color) {
       #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
-        leds_[led_id]->set(color);
+        leds_[led_id]->set( ((color & LED_ENC_IR) ? LED_IR : 0) |
+                           (((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT) << (16 + 3)) |
+                           (((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT) << ( 8 + 3)) |
+                           (((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT) << ( 0 + 3)));
       } else {
         PRINT("Unhandled LED %d\n", led_id);
       }
@@ -1147,17 +1150,12 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
 
-    Result HAL::SetBlockLight(const u32 blockID, const LightState* lights)
+    Result HAL::SetBlockLight(const u32 blockID, const u16* colors)
     {
       BlockMessages::LightCubeMessage m;
       m.tag = BlockMessages::LightCubeMessage::Tag_setCubeLights;
       for (int i=0; i<NUM_CUBE_LEDS; ++i) {
-        m.setCubeLights.lights[i].onColor = lights[i].onColor;
-        m.setCubeLights.lights[i].offColor = lights[i].offColor;
-        m.setCubeLights.lights[i].onPeriod_ms = lights[i].onPeriod_ms;
-        m.setCubeLights.lights[i].offPeriod_ms = lights[i].offPeriod_ms;
-        m.setCubeLights.lights[i].transitionOnPeriod_ms = lights[i].transitionOnPeriod_ms;
-        m.setCubeLights.lights[i].transitionOffPeriod_ms = lights[i].transitionOffPeriod_ms;
+        m.setCubeLights.lights[i].onColor = colors[i];
       }
       m.setCubeLights.objectID = blockID;
 

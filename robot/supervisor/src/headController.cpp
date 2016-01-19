@@ -2,11 +2,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "radians.h"
 #include "velocityProfileGenerator.h"
-#ifdef TARGET_K02
 #include "anki/cozmo/robot/logging.h"
-#else
-#include "anki/common/robot/errorHandling.h"
-#endif
 #include "messages.h"
 #include <math.h>
 
@@ -122,7 +118,7 @@ namespace HeadController {
 
     void StartCalibrationRoutine()
     {
-      PRINT("Starting Head calibration\n");
+      AnkiEvent( 7, "HeadController", 90, "Starting Head calibration", 0);
 
 #ifdef SIMULATOR
       // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
@@ -214,7 +210,7 @@ namespace HeadController {
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
             if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
-              PRINT("HEAD Calibrated\n");
+              AnkiEvent( 7, "HeadController", 91, "Calibrated", 0);
               ResetLowAnglePosition();
               calState_ = HCS_IDLE;
             }
@@ -263,7 +259,7 @@ namespace HeadController {
       currentAngle_ += (HAL::MotorGetPosition(HAL::MOTOR_HEAD) - prevHalPos_);
 
 #if(DEBUG_HEAD_CONTROLLER)
-      PRINT("HEAD FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n",
+      AnkiDebug( 7, "HeadController", 92, "HEAD FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f", 6,
             measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(HAL::MOTOR_HEAD), prevHalPos_, power_);
 #endif
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
@@ -332,7 +328,7 @@ namespace HeadController {
           (angle == desiredAngle_) &&
           (ABS((desiredAngle_ - currentAngle_).ToFloat()) < HEAD_ANGLE_TOL) ) {
         #if(DEBUG_HEAD_CONTROLLER)
-        PRINT("HEAD: Already at desired angle %f degrees\n", RAD_TO_DEG_F32(angle));
+        AnkiDebug( 7, "HeadController", 93, "Already at desired angle %f degrees", 1, RAD_TO_DEG_F32(angle));
         #endif
         return;
       }
@@ -343,7 +339,7 @@ namespace HeadController {
 
 
 #if(DEBUG_HEAD_CONTROLLER)
-      PRINT("HEAD (fixedDuration): SetDesiredAngle %f rads (duration %f)\n", desiredAngle_.ToFloat(), duration_seconds);
+      AnkiDebug( 7, "HeadController", 94, "(fixedDuration): SetDesiredAngle %f rads (duration %f)", 2, desiredAngle_.ToFloat(), duration_seconds);
 #endif
 
       f32 startRadSpeed = radSpeed_;
@@ -354,7 +350,7 @@ namespace HeadController {
 
         if (FLT_NEAR(angleError_,0.f)) {
           #if(DEBUG_HEAD_CONTROLLER)
-          PRINT("Head (fixedDuration): Already at desired position\n");
+          AnkiDebug( 7, "HeadController", 95, "(fixedDuration): Already at desired position", 0);
           #endif
           return;
         }
@@ -377,10 +373,8 @@ namespace HeadController {
                                               duration_seconds,
                                               CONTROL_DT);
 
-        if (!res) {
-          PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying VPG without fixed duration.\n",
+        AnkiConditionalWarn(res, 7, "HeadController", 96, "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying VPG without fixed duration.", 6,
                 startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
-        }
       }
       if (!res) {
         //SetDesiredAngle_internal(angle);
@@ -392,7 +386,7 @@ namespace HeadController {
       }
 
 #if(DEBUG_HEAD_CONTROLLER)
-      PRINT("HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+      AnkiDebug( 7, "HeadController", 97, "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f", 6,
             startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
 #endif
 
@@ -480,7 +474,7 @@ namespace HeadController {
             inPosition_ = true;
 
 #         if(DEBUG_HEAD_CONTROLLER)
-            PRINT(" HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
+            AnkiDebug( 7, "HeadController", 98, " HEAD ANGLE REACHED (%f rad)\n", 1, GetAngleRad() );
 #         endif
           }
         } else {
@@ -529,7 +523,7 @@ namespace HeadController {
       Ki_ = ki;
       Kd_ = kd;
       MAX_ERROR_SUM = maxIntegralError;
-      PRINT("New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f\n",
+      AnkiInfo( 7, "HeadController", 99, "New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
             Kp_, Ki_, Kd_, MAX_ERROR_SUM);
     }
 
@@ -537,10 +531,9 @@ namespace HeadController {
                       const u16 period_ms, const s32 numLoops,
                       const f32 easeInFraction, const f32 easeOutFraction)
     {
-      //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, "HeadNodStart.WrongKeyFrameType", "\n");
+      //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, 8, "HeadNodStart.WrongKeyFrameType", 100, "\n", 0);
 
-      AnkiConditionalWarnAndReturn(enable_, "HeadController.StartNodding.Disabled",
-                                   "StartNodding() command ignored: HeadController is disabled.\n");
+      AnkiConditionalWarnAndReturn(enable_, 9, "HeadController.StartNodding.Disabled", 101, "StartNodding() command ignored: HeadController is disabled.\n", 0);
 
       //preNodAngle_ = GetAngleRad();
       nodLowAngle_  = lowAngle;
@@ -560,8 +553,7 @@ namespace HeadController {
 
     void StopNodding()
     {
-      AnkiConditionalWarnAndReturn(enable_, "HeadController.StopNodding.Disabled",
-                                   "StopNodding() command ignored: HeadController is disabled.\n");
+      AnkiConditionalWarnAndReturn(enable_, 10, "HeadController.StopNodding.Disabled", 102, "StopNodding() command ignored: HeadController is disabled.\n", 0);
 
       //SetDesiredAngle_internal(preNodAngle_);
       isNodding_ = false;

@@ -5,11 +5,7 @@
 #include "anki/common/robot/config.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#ifdef TARGET_K02
 #include "anki/cozmo/robot/logging.h"
-#else
-#include "anki/common/robot/errorHandling.h"
-#endif
 #include "messages.h"
 #include "radians.h"
 #include "velocityProfileGenerator.h"
@@ -207,7 +203,7 @@ namespace Anki {
 
       void StartCalibrationRoutine()
       {
-        PRINT("Starting Lift calibration\n");
+        AnkiEvent( 16, "LiftController", 144, "Starting calibration", 0);
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
       }
@@ -263,7 +259,7 @@ namespace Anki {
             case LCS_SET_CURR_ANGLE:
               // Wait for motor to relax and then set angle
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
-                PRINT("LIFT Calibrated\n");
+                AnkiEvent( 16, "LiftController", 91, "Calibrated", 0);
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT);
                 calState_ = LCS_IDLE;
               }
@@ -353,7 +349,7 @@ namespace Anki {
         currentAngle_ += (HAL::MotorGetPosition(HAL::MOTOR_LIFT) - prevHalPos_);
 
 #if(DEBUG_LIFT_CONTROLLER)
-        PRINT("LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n",
+        AnkiDebig("LiftController", "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n",
               measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(HAL::MOTOR_LIFT), prevHalPos_, power_);
 #endif
         prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
@@ -400,7 +396,7 @@ namespace Anki {
             (Height2Rad(newDesiredHeight) == desiredAngle_) &&
             (ABS((desiredAngle_ - currentAngle_).ToFloat()) < LIFT_ANGLE_TOL) ) {
           #if(DEBUG_LIFT_CONTROLLER)
-          PRINT("LIFT: Already at desired height %f\n", newDesiredHeight);
+          AnkiDebug( 16, "LiftController", 145, "Already at desired height %f", 1, newDesiredHeight);
           #endif
           return;
         }
@@ -410,7 +406,7 @@ namespace Anki {
 
         // Convert desired height into the necessary angle:
 #if(DEBUG_LIFT_CONTROLLER)
-        PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm), duration = %f s\n", desiredHeight_, GetHeightMM(), duration_seconds);
+        AnkiDebug( 16, "LiftController", 146, "LIFT DESIRED HEIGHT: %f mm (curr height %f mm), duration = %f s", 3, desiredHeight_, GetHeightMM(), duration_seconds);
 #endif
 
 
@@ -433,10 +429,8 @@ namespace Anki {
                                                    duration_seconds,
                                                    CONTROL_DT);
 
-          if (!res) {
-            PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.\n",
+          AnkiConditionalWarn(res, 16, "LiftController", 147, "FAIL: VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.\n", 6,
                   startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
-          }
         }
         if (!res) {
           vpg_.StartProfile(startRadSpeed, startRad,
@@ -446,7 +440,7 @@ namespace Anki {
         }
 
 #if DEBUG_LIFT_CONTROLLER
-        PRINT("LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+        AnkiDebug( 16, "LiftController", 148, "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n", 6,
               startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
 #endif
       } // SetDesiredHeight_internal
@@ -486,11 +480,11 @@ namespace Anki {
           potentialBurnoutStartTime_ms = HAL::GetTimeStamp();
         } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms > BURNOUT_TIME_THRESH_MS) {
           if (IsInPosition()) {
-            PRINT("WARN: LIFT burnout protection triggered. Stop messing with the lift! Going limp until you do!\n");
+            AnkiWarn( 16, "LiftController", 149, "burnout protection triggered. Stop messing with the lift! Going limp until you do!", 0);
             Disable(true);
             return true;
           } else {
-            PRINT("WARN: LIFT burnout protection triggered. Recalibrating.\n");
+            AnkiWarn( 16, "LiftController", 150, "burnout protection triggered. Recalibrating.", 0);
             StartCalibrationRoutine();
             return true;
           }
@@ -518,7 +512,7 @@ namespace Anki {
             enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
             return RESULT_OK;
           } else if (HAL::GetTimeStamp() >= enableAtTime_ms_) {
-            PRINT("Lift auto-enabled\n");
+            AnkiInfo( 16, "LiftController", 151, "Lift auto-enabled", 0);
             Enable();
           } else {
             return RESULT_OK;
@@ -579,7 +573,7 @@ namespace Anki {
 
             inPosition_ = true;
 #if(DEBUG_LIFT_CONTROLLER)
-            PRINT(" LIFT HEIGHT REACHED (%f mm)\n", GetHeightMM());
+            AnkiDebug( 16, "LiftController", 152, " LIFT HEIGHT REACHED (%f mm)", 1, GetHeightMM());
 #endif
           }
         } else {
@@ -629,7 +623,7 @@ namespace Anki {
         Ki_ = ki;
         Kd_ = kd;
         MAX_ERROR_SUM = maxIntegralError;
-        PRINT("New lift gains: kp = %f, ki = %f, kd = %f, maxSum = %f\n",
+        AnkiInfo( 16, "LiftController", 153, "New lift gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
               Kp_, Ki_, Kd_, MAX_ERROR_SUM);
       }
 
@@ -643,8 +637,7 @@ namespace Anki {
                         const u16 period_ms, const s32 numLoops,
                         const f32 easeInFraction, const f32 easeOutFraction)
       {
-        AnkiConditionalWarnAndReturn(enable_, "LiftController.StartNodding.Disabled",
-                                     "StartNodding() command ignored: LiftController is disabled.\n");
+        AnkiConditionalWarnAndReturn(enable_, 17, "LiftController.StartNodding.Disabled", 154, "StartNodding() command ignored: LiftController is disabled.\n", 0);
 
         //preNodHeight_  = GetHeightMM();
         nodLowHeight_  = lowHeight;
@@ -664,8 +657,7 @@ namespace Anki {
 
       void StopNodding()
       {
-        AnkiConditionalWarnAndReturn(enable_, "LiftController.StopNodding.Disabled",
-                                     "StopNodding() command ignored: LiftController is disabled.\n");
+        AnkiConditionalWarnAndReturn(enable_, 18, "LiftController.StopNodding.Disabled", 155, "StopNodding() command ignored: LiftController is disabled.\n", 0);
 
         //SetDesiredHeight_internal(preNodHeight_);
         isNodding_ = false;

@@ -45,6 +45,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleCameraCalibration, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::printText,
     std::bind(&Robot::HandlePrint, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::trace,
+    std::bind(&Robot::HandleTrace, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPickedUp,
     std::bind(&Robot::HandleBlockPickedUp, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPlaced,
@@ -86,6 +88,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
        if (_timeSynced) {
          _numAnimationBytesPlayed = message.GetData().Get_animState().numAnimBytesPlayed;
          _numAnimationAudioFramesPlayed = message.GetData().Get_animState().numAudioFramesPlayed;
+         _enabledAnimTracks = message.GetData().Get_animState().enabledAnimTracks;
          _animationTag = message.GetData().Get_animState().tag;
        }
      }));
@@ -161,6 +164,11 @@ void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const RobotInterface::PrintText& payload = message.GetData().Get_printText();
   printf("ROBOT-PRINT (%d): %s", GetID(), payload.text.c_str());
+}
+
+void Robot::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  _traceHandler.HandleTrace(message);
 }
 
 void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message)

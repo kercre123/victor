@@ -8,12 +8,8 @@
 #include "imuFilter.h"
 #include "anki/cozmo/robot/hal.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#ifdef TARGET_K02
-#include "anki/cozmo/robot/logging.h"
-#else
-#include "anki/common/robot/errorHandling.h"
 #include "localization.h"
-#endif
+#include "anki/cozmo/robot/logging.h"
 
 
 namespace Anki {
@@ -65,8 +61,7 @@ namespace Anki {
             break;
 
           default:
-            AnkiError("ProxSensors.Update.BadLatestValue",
-                      "Got invalid/unhandled value for ProximityValues.latest.\n");
+            AnkiError( 19, "ProxSensors.Update.BadLatestValue", 156, "Got invalid/unhandled value for ProximityValues.latest.\n", 0);
             return RESULT_FAIL;
 
         } // switch(currProxVals.latest)
@@ -150,6 +145,7 @@ namespace Anki {
 
         // FAKING obstacle detection via prox sensor.
         // TODO: This will eventually be done entirely on the engine using images.
+#ifndef TARGET_K02
         static u32 proxCycleCnt = 0;
         if (++proxCycleCnt == PROX_EVENT_CYCLE_PERIOD) {
           u8 proxVal = HAL::GetForwardProxSensor();
@@ -160,14 +156,10 @@ namespace Anki {
           }
           proxCycleCnt = 0;
         }
-        
+#endif        
 
         /////// Cliff detect reaction ///////
-#ifdef TARGET_K02
-        bool movingForward = false;
-#else
         bool movingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
-#endif
         if (_enableCliffDetect) {
           if (HAL::IsCliffDetected() &&
               !IMUFilter::IsPickedUp() &&
@@ -177,19 +169,17 @@ namespace Anki {
             // TODO (maybe): Check for cases where cliff detect should not stop motors
             // 1) Turning in place
             // 2) Driving over something (i.e. pitch is higher than some degrees).
-#ifndef TARGET_K02
-            PRINT("Stopping due to cliff\n");
+            AnkiEvent( 20, "Cliff", 157, "Stopping due to cliff", 0);
 
             // Stop all motors and animations
             PickAndPlaceController::Reset();
+#ifndef TARGET_K02
             AnimationController::Clear();
 #endif
             // Send cliff detected message to engine
             CliffEvent msg;
             Radians angle;
-#ifndef TARGET_K02
             Localization::GetCurrentMatPose(msg.x_mm, msg.y_mm, angle);
-#endif
             msg.detected = true;
             msg.angle_rad = angle.ToFloat();
             RobotInterface::SendMessage(msg);

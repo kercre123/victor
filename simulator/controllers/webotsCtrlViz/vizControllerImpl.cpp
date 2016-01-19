@@ -441,9 +441,9 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
 
   sprintf(txt, "Batt: %2.1f V  AnimTracksLocked: %c%c%c",
     (f32)payload.state.battVolt10x/10,
-          !(payload.state.enabledAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
-          !(payload.state.enabledAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-          !(payload.state.enabledAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ');
+          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+          !(payload.enabledAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ');
   DrawText(VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Video: %d Hz   Proc: %d Hz",

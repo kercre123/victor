@@ -404,7 +404,7 @@ namespace Anki
       // UI LEDs
 
       // Light up one of the eye LEDs to the specified 24-bit RGB color
-      void SetLED(LEDId led_id, u32 color);
+      void SetLED(LEDId led_id, u16 color);
 
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
@@ -481,7 +481,7 @@ namespace Anki
       void FlashBlockIDs();
 
       // Set the color and flashing of each LED on a block separately
-      Result SetBlockLight(const u32 blockID, const LightState* lights);
+      Result SetBlockLight(const u32 blockID, const u16* colors);
 
       void ManageCubes(void);
 

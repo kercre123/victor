@@ -67,9 +67,7 @@ __ESPRESSIF_SERIAL_NUMBER
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
 
-                IMPORT  |Image$$ARM_LIB_STACK$$ZI$$Limit|
-
-__Vectors       DCD     |Image$$ARM_LIB_STACK$$ZI$$Limit| ; Top of Stack
+__Vectors       DCD     __initial_sp   ; Top of Stack
                 DCD     Reset_Handler  ; Reset Handler
                 DCD     NMI_Handler                         ;NMI Handler
                 DCD     HardFault_Handler                   ;Hard Fault Handler
@@ -333,6 +331,9 @@ __Vectors_Size 	EQU     __Vectors_End - __Vectors
 
 _NVIC_ICER0     EQU   0xE000E180
 _NVIC_ICPR0     EQU   0xE000E280
+
+__initial_sp    EQU   0x1FFFE600        ; 1.5KB of stack at BOTTOM of RAM
+                EXPORT __initial_sp
 
                 AREA    |.text|, CODE, READONLY
 

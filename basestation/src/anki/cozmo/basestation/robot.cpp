@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
@@ -88,6 +89,7 @@ namespace Anki {
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
     , _imageDeChunker(new ImageDeChunker())
+    , _traceHandler(dataPlatform)
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -432,7 +434,6 @@ namespace Anki {
       GetMoveComponent().Update(msg);
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      _enabledAnimTracks = msg.enabledAnimTracks;
       _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
@@ -567,6 +568,7 @@ namespace Anki {
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
                                                 (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+                                                _enabledAnimTracks,
                                                 _animationTag);
       
       return lastResult;
@@ -3012,7 +3014,6 @@ namespace Anki {
       return poseUpdated;
     }
     
-
     void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
@@ -3020,15 +3021,14 @@ namespace Anki {
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
     {
-      ASSERT_NAMED((int)LEDId::NUM_BACKPACK_LEDS == 5, "Robot.wrong.number.of.backpack.ligths");
-      std::array<Anki::Cozmo::LightState, 5> lights;
-      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i){
-        lights[i].onColor = onColor[i];
-        lights[i].offColor = offColor[i];
-        lights[i].onPeriod_ms = onPeriod_ms[i];
-        lights[i].offPeriod_ms = offPeriod_ms[i];
-        lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
-        lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+      std::array<Anki::Cozmo::LightState, (size_t)LEDId::NUM_BACKPACK_LEDS> lights;
+      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i) {
+        lights[i].onColor  = ENCODED_COLOR(onColor[i]);
+        lights[i].offColor = ENCODED_COLOR(offColor[i]);
+        lights[i].onFrames  = MS_TO_LED_FRAMES(onPeriod_ms[i]);
+        lights[i].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
+        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
+        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
       }
 
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
@@ -3123,12 +3123,12 @@ namespace Anki {
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
           const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-          lights[i].onColor = ledState.onColor;
-          lights[i].offColor = ledState.offColor;
-          lights[i].onPeriod_ms = ledState.onPeriod_ms;
-          lights[i].offPeriod_ms = ledState.offPeriod_ms;
-          lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
-          lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
+          lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+          lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+          lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+          lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+          lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+          lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
@@ -3158,12 +3158,13 @@ namespace Anki {
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          lights[i].onColor = onColor[i];
-          lights[i].offColor = offColor[i];
-          lights[i].onPeriod_ms = onPeriod_ms[i];
-          lights[i].offPeriod_ms = offPeriod_ms[i];
-          lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
-          lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+          lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+          lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+          lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+          lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+          lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
 
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
@@ -3319,12 +3320,12 @@ namespace Anki {
       ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
       for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
         const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-        lights[i].onColor = ledState.onColor;
-        lights[i].offColor = ledState.offColor;
-        lights[i].onPeriod_ms = ledState.onPeriod_ms;
-        lights[i].offPeriod_ms = ledState.offPeriod_ms;
-        lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
-        lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
+        lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+        lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+        lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+        lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
       }
       return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }

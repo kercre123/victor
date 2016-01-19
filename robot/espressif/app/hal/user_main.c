@@ -178,32 +178,6 @@ void user_init(void)
 
   struct softap_config ap_config;
   
-  // Disable DHCP server before setting static IP info
-  err = wifi_softap_dhcps_stop();
-  if (err == false)
-  {
-    os_printf("Couldn't stop DHCP server\r\n");
-  }
-
-  struct ip_info ipinfo;
-  ipinfo.gw.addr = ipaddr_addr(AP_GATEWAY);
-  ipinfo.ip.addr = ipaddr_addr(AP_IP);
-  ipinfo.netmask.addr = ipaddr_addr(AP_NETMASK);
-
-  // Assign ip config
-  err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
-  if (err == false)
-  {
-    os_printf("Couldn't set IP info\r\n");
-  }
-
-  // Start DHCP server
-  err = wifi_softap_dhcps_start();
-  if (err == false)
-  {
-    os_printf("Couldn't restart DHCP server\r\n");
-  }
-  
   // Create config for Wifi AP
   err = wifi_softap_get_config(&ap_config);
   if (err == false)
@@ -227,10 +201,46 @@ void user_init(void)
   // Disable radio sleep
   //wifi_set_sleep_type(NONE_SLEEP_T);
   wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
+  
+  // Disable DHCP server before setting static IP info
+  err = wifi_softap_dhcps_stop();
+  if (err == false)
+  {
+    os_printf("Couldn't stop DHCP server\r\n");
+  }
+
+  struct ip_info ipinfo;
+  ipinfo.gw.addr = ipaddr_addr(AP_GATEWAY);
+  ipinfo.ip.addr = ipaddr_addr(AP_IP);
+  ipinfo.netmask.addr = ipaddr_addr(AP_NETMASK);
+
+  // Assign ip config
+  err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
+  if (err == false)
+  {
+    os_printf("Couldn't set IP info\r\n");
+  }
+
+  // Configure the DHCP server
+  struct dhcps_lease dhcpInfo;
+  dhcpInfo.start_ip.addr = ipaddr_addr(DHCP_START);
+  dhcpInfo.end_ip.addr   = ipaddr_addr(DHCP_END);
+  err = wifi_softap_set_dhcps_lease(&dhcpInfo);
+  if (err == false)
+  {
+    os_printf("Couldn't set DHCPS lease information\r\n");
+  }
+
+  // Start DHCP server
+  err = wifi_softap_dhcps_start();
+  if (err == false)
+  {
+    os_printf("Couldn't restart DHCP server\r\n");
+  }
 
   os_printf("SSID: %s\r\nPSK: %s\r\n", ap_config.ssid, ap_config.password);
 
   // Register callbacks
   system_init_done_cb(&system_init_done);
-  wifi_set_event_handler_cb(wifi_event_callback);
+  //wifi_set_event_handler_cb(wifi_event_callback);
 }

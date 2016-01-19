@@ -7,12 +7,19 @@ import sys, os, time
 
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
+ANKI_LOG_STRING_TABLE = os.path.join('..', 'resources', 'config', 'basestation', 'AnkiLogStringTables.json')
 
 if os.path.isfile(os.path.join(CLAD_SRC, "Makefile")):
     import subprocess
     make = subprocess.Popen(["make", "python", "-C", "clad"])
     if make.wait() != 0:
-        sys.exit("Could't build/update python clad, exit status {:d}\r\n".format(make.wait()))
+        sys.exit("Could't build/update python clad, exit status {:d}".format(make.wait(), linesep=os.linesep))
+
+if not os.path.isfile(ANKI_LOG_STRING_TABLE):
+    import subprocess
+    make = subprocess.Popen(['make', ANKI_LOG_STRING_TABLE])
+    if make.wait() != 0:
+        sys.exit("Anki log string table ({}) wasn't available and generating it failed with exit status {:d}".format(ANKI_LOG_STRING_TABLE, make.wait()))
 
 sys.path.insert(0, CLAD_DIR)
 
@@ -21,12 +28,29 @@ try:
     from clad.robotInterface.messageEngineToRobot import Anki
     from clad.robotInterface.messageRobotToEngine import Anki as _Anki
 except:
-    sys.exit("Can't import ReliableTransport / CLAD libraries!\r\n\t* Are you running from the base robot directory?\r\n")
+    sys.exit("Can't import ReliableTransport / CLAD libraries!{linesep}\t* Are you running from the base robot directory?{linesep}".format(linesepos.linesep))
+from ankiLogPP import importTables
 
 Anki.update(_Anki.deep_clone())
 RI = Anki.Cozmo.RobotInterface # namespace shortcut
 
 dispatcher = None
+
+CameraResolutions = (
+  (16, 16),     # VerificationSnapshot
+  (40, 30),     # QQQQVGA
+  (80, 60),     # QQQVGA
+  (160, 120),   # QQVGA
+  (320, 240),   # QVGA
+  (400, 296),   # CVGA
+  (640, 480),   # VGA
+  (800, 600),   # SVGA
+  (1024, 768),  # XGA
+  (1280, 960),  # SXGA
+  (1600, 1200), # UXGA
+  (2048, 1536), # QXGA
+  (3200, 2400), # QUXGA
+)
 
 class ConnectionState:
     "An enum for connection states"
@@ -48,6 +72,7 @@ class _Dispatcher(IDataReceiver):
         self.ReceiveDataSubscribers = {} # Dict for message tags
         self.transport = ReliableTransport(transport, self)
         self.transport.start()
+        self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE)
 
     def Connect(self, dest=("172.31.1.1", 5551)):
         "Initiate reliable Connection"
@@ -97,11 +122,46 @@ class _Dispatcher(IDataReceiver):
         try:
             msg = RI.RobotToEngine.unpack(buffer)
         except Exception as e:
-            tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
-            sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]\r\n\t{2:s}\r\n".format(tag, len(buffer), str(e)))
+            if len(buffer):
+                tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
+                sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]\r\n\t{2:s}\r\n".format(tag, len(buffer), str(e)))
+            else:
+                sys.stderr.write("Got 0 length message!\r\n")
         else:
             if msg.tag == msg.Tag.printText:
                 sys.stdout.write("ROBOT: " + msg.printText.text)
+            elif msg.tag == msg.Tag.trace:
+                base = "ROBOT TRACE"
+                if not msg.trace.name in self.nameTable:
+                    sys.stderr.write("{} unknown trace name ID {:d}{}".format(base, msg.trace.name, os.linesep))
+                elif not msg.trace.stringId in self.formatTable:
+                    kwds = {'linesep':  os.linesep,
+                            'base':     base,
+                            'level':    msg.trace.level,
+                            'name':     self.nameTable[msg.trace.name],
+                            'stringId': msg.trace.stringId,
+                            'vals':     repr(msg.trace.value)
+                    }
+                    sys.stderr.write("{base} {level:d} {name}: Unknown format string id {stringId:d}.{linesep}\tValues = {vals}{linesep}".format(**kwds))
+                elif len(msg.trace.value) != self.formatTable[msg.trace.stringId][1]:
+                    kwds = {'linesep':  os.linesep,
+                            'base':     base,
+                            'level':    msg.trace.level,
+                            'name':     self.nameTable[msg.trace.name],
+                            'fmt':      self.formatTable[msg.trace.stringId][0],
+                            'nargs':    self.formatTable[msg.trace.stringId][1],
+                            'vals':     repr(msg.trace.value),
+                            'nvals':  len(msg.trace.value)
+                    }
+                    sys.stderr.write("{base} {level:d} {name}: Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat:{fmt}{linesep}\t{vals}{linesep}".format(**kwds))
+                else:
+                    kwds = {'linesep':   os.linesep,
+                            'base':      base,
+                            'level':     msg.trace.level,
+                            'name':      self.nameTable[msg.trace.name],
+                            'formatted': (self.formatTable[msg.trace.stringId][0] % msg.trace.value)
+                    }
+                    sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:

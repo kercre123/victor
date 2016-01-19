@@ -2,7 +2,7 @@
 #define PATH_FOLLOWER_H_
 
 #include "anki/types.h"
-#include "anki/planning/shared/path.h"
+#include "path.h"
 
 namespace Anki
 {

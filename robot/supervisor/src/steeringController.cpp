@@ -8,18 +8,20 @@
 #include <math.h>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "dockingController.h"
-#include "localization.h"
 #include "pathFollower.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
 #include "imuFilter.h"
+#include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
 
 #include "velocityProfileGenerator.h"
 #include "trig_fast.h"
+
+#include "localization.h"
+#include "dockingController.h"
 
 #define DEBUG_STEERING_CONTROLLER 0
 
@@ -94,7 +96,7 @@ namespace Anki {
     //sets the steering controller constants
     void SetGains(f32 k1, f32 k2, f32 dockPathDistOffsetCap_mm, f32 dockPathAngularOffsetCap_rad)
     {
-      PRINT("New Steering gains: k1 %f, k2 %f, dist_cap %f mm, ang_cap %f rad\n",
+      AnkiInfo( 11, "SteeringController", 103, "New gains: k1 %f, k2 %f, dist_cap %f mm, ang_cap %f rad", 4,
             k1, k2, dockPathDistOffsetCap_mm, dockPathAngularOffsetCap_rad);
       K1_ = k1;
       K2_ = k2;
@@ -112,7 +114,7 @@ namespace Anki {
     void Manage()
     {
 #if(DEBUG_STEERING_CONTROLLER)
-      PRINT("STEER MODE: %d\n", currSteerMode_);
+      AnkiDebug( 11, "SteeringController", 104, "MODE: %d", 1, currSteerMode_);
 #endif
       switch(currSteerMode_) {
 
@@ -195,7 +197,7 @@ namespace Anki {
           f32 speedAdjust = 0.5f*(wheelSpeedDiff - maxRotationWheelSpeedDiff);
           *higherWheelSpeed -= speedAdjust;
           *lowerWheelSpeed += speedAdjust;
-          PRINT("  Wheel speed adjust: (%f, %f), adjustment %f\n", *higherWheelSpeed, *lowerWheelSpeed, speedAdjust);
+          AnkiInfo( 11, "SteeringController", 105, "  Wheel speed adjust: (%f, %f), adjustment %f", 3, *higherWheelSpeed, *lowerWheelSpeed, speedAdjust);
         }
       }
 
@@ -279,7 +281,7 @@ namespace Anki {
       }
 
 #if(DEBUG_STEERING_CONTROLLER)
-      PRINT(" STEERING: offsetError_mm: %f, headingError_rad: %f, curvature: %f, currSpeed: %d\n", offsetError_mm, headingError_rad, curvature, currspeed);
+      AnkiDebug( 11, "SteeringController", 106, " offsetError_mm: %f, headingError_rad: %f, curvature: %f, currSpeed: %d", 4, offsetError_mm, headingError_rad, curvature, currspeed);
 #endif
 
 
@@ -301,7 +303,7 @@ namespace Anki {
       s16 wright = (s16)CLIP(rightspeed,s16_MIN,s16_MAX);
 
 #if(DEBUG_STEERING_CONTROLLER)
-      PRINT(" STEERING: %d (L), %d (R)\n", wleft, wright);
+      AnkiDebug( 11, "SteeringController", 107, " STEERING: %d (L), %d (R)", 2, wleft, wright);
 #endif
 
       //Command the desired wheel speeds to the wheels
@@ -320,7 +322,6 @@ namespace Anki {
       if (mode != SM_PATH_FOLLOW) {
         PathFollower::ClearPath();
       }
-
       currSteerMode_ = mode;
     }
 
@@ -349,7 +350,6 @@ namespace Anki {
           SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
         }
       }
-
 
       //If we found a valid followline, let's run the controller
       if (fidx != INVALID_IDEAL_FOLLOW_LINE_IDX) {
@@ -439,7 +439,7 @@ namespace Anki {
       // If not, make it at least that big.
       if (ABS(maxAngularVel_) < POINT_TURN_TERMINAL_VEL_RAD_PER_S) {
         maxAngularVel_ = POINT_TURN_TERMINAL_VEL_RAD_PER_S * (maxAngularVel_ > 0 ? 1 : -1);
-        PRINT("WARNING (PointTurn.TooSlow): Speeding up commanded point turn of %f rad/s to %f rad/s\n", maxAngularVel, maxAngularVel_);
+        AnkiWarn( 11, "SteeringController", 108, "(PointTurn.TooSlow): Speeding up commanded point turn of %f rad/s to %f rad/s", 2, maxAngularVel, maxAngularVel_);
       }
 
 
@@ -465,7 +465,6 @@ namespace Anki {
                         maxAngularVel_,
                         angularAccel_,
                         CONTROL_DT);
-
     }
 
     void ExitPointTurn()
@@ -498,7 +497,7 @@ namespace Anki {
       if (ABS(angularDistExpected_) < POINT_TURN_ANGLE_TOL) {
         ExitPointTurn();
 #if(DEBUG_STEERING_CONTROLLER)
-        PRINT("POINT TURN: Already at destination\n");
+        AnkiDebug( 12, "POINT TURN", 109, "Already at destination", 0);
 #endif
         return;
       }
@@ -560,7 +559,7 @@ namespace Anki {
         if (absAngularDistToTarget < POINT_TURN_ANGLE_TOL) {
           ExitPointTurn();
   #if(DEBUG_STEERING_CONTROLLER)
-          PRINT("POINT TURN: Stopping\n");
+          AnkiDebug( 12, "POINT TURN", 110, "Stopping", 0);
   #endif
         }
 
@@ -571,7 +570,7 @@ namespace Anki {
         if (ABS(angularDistTraversed_) - ANGULAR_TRAVERSAL_DISTANCE_MARGIN > ABS(angularDistExpected_) ) {
           ExitPointTurn();
   #if(DEBUG_STEERING_CONTROLLER)
-          PRINT("POINT TURN: Stopping because turned more than expected\n");
+          AnkiDebug( 12, "POINT TURN", 111, "Stopping because turned more than expected", 0);
   #endif
         }
       }
@@ -595,7 +594,7 @@ namespace Anki {
 
 
 #if(DEBUG_STEERING_CONTROLLER)
-      PRINT("POINT TURN: angularDistToTarget: %f radians, arcVel: %d mm/s\n", angularDistToTarget, arcVel);
+      AnkiDebug( 12, "POINT TURN", 112, "angularDistToTarget: %f radians, arcVel: %d mm/s", 2, angularDistToTarget, arcVel);
 #endif
 
       WheelController::SetDesiredWheelSpeeds(wleft, wright);
@@ -606,7 +605,7 @@ namespace Anki {
           WheelController::SetDesiredWheelSpeeds(0,0);
           ExitPointTurn();
 #if(DEBUG_STEERING_CONTROLLER)
-          PRINT("POINT TURN: Stopping because 0 vel reached\n");
+          AnkiDebug( 12, "POINT TURN", 113, "Stopping because 0 vel reached", 0);
 #endif
         }
       }

@@ -85,8 +85,8 @@ typedef struct
 {
   preambleType preamble;
   uint8_t payloadLen;  ///< Number of bytes of message data following JPEG data
-  uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
   uint8_t droplet; ///< Drop flags and bit fields
+  uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
 } DropToWiFi;
 
 ct_assert(sizeof(DropToWiFi) == DROP_TO_WIFI_SIZE);
@@ -102,11 +102,10 @@ typedef enum
   audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
   screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid
   screenRectData    = 1<<2,    ///< Bytes in the iscochronous screen field are bounding data
-  // Shared fields
-  ToWiFi = 1<<7,       ///< Assert bit for this droplet value being on a drop from RTIP to WiFi
 } Droplet;
 
 #define JPEG_LENGTH(i) (((i+3) >> 2)&jpegLenMask)
+#define GET_JPEG_LENGTH(i) ((i&jpegLenMask) << 2)
 
 typedef enum 
 {

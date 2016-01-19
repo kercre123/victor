@@ -15,14 +15,14 @@
 #include "wifi.h"
 
 typedef uint16_t transmissionWord;
-const int RX_OVERFLOW = 5;
+const int RX_OVERFLOW = 5;  // Adjust this to fix screen - possibly at expense of camera
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
-static transmissionWord spi_backbuff[2][TX_SIZE];
+static DropToWiFi spi_backbuff[2];
 
-static transmissionWord* spi_write_buff = spi_backbuff[0];
-static transmissionWord* spi_tx_buff = spi_backbuff[1];
+extern DropToWiFi* spi_write_buff = &spi_backbuff[0];
+static DropToWiFi* spi_tx_buff = &spi_backbuff[1];
 
 transmissionWord spi_rx_buff[RX_SIZE];
 
@@ -103,26 +103,25 @@ void Anki::Cozmo::HAL::SPI::StartDMA(void) {
   SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
   DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+  
+  // Swap buffers
+  DropToWiFi *tmp = spi_write_buff;
+  spi_write_buff = spi_tx_buff;
+  spi_tx_buff = tmp;    // write_buff from last time is being sent right now
 }
 
-void Anki::Cozmo::HAL::SPI::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
-  // Swap buffers
-  {
-    transmissionWord *tmp = spi_write_buff;
-    spi_write_buff = spi_tx_buff;
-    spi_tx_buff = tmp;
-  }
-
-  DropToWiFi *drop_tx = (DropToWiFi*) spi_write_buff;
+void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) { 
+  DropToWiFi *drop_tx = spi_write_buff;
 
   drop_tx->preamble = TO_WIFI_PREAMBLE;
-  drop_tx->droplet  = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0) | ToWiFi;
-
-  memcpy(drop_tx->payload, buf, buflen);
   
   // This is where a drop should be 
-  uint8_t *drop_addr = drop_tx->payload + buflen;
-  const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - buflen;
+  drop_tx->droplet  = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
+  while (jpeglen & 0x3) drop_tx->payload[jpeglen++] = 0xff;
+  
+  uint8_t *drop_addr = drop_tx->payload + jpeglen;
+  
+  const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;
   if (remainingSpace > 0)
   {
     drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
@@ -251,7 +250,6 @@ inline uint16_t WaitForByte(void) {
 void SyncSPI(void) {
   // Syncronize SPI to WS
   __disable_irq();
-  Anki::Cozmo::HAL::UART::DebugPrintf("Syncing to espressif clock... ");
   
   for (;;) {
     // Flush SPI
@@ -280,7 +278,6 @@ void SyncSPI(void) {
     PORTE_PCR17 = PORT_PCR_MUX(0);    // SPI0_SCK (disabled)
   }
   
-  Anki::Cozmo::HAL::UART::DebugPrintf("Done.\n\r");
   __enable_irq();
 }
 

@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
-import sys, socket, struct, time
-from ReliableTransport import *
+import sys, os, time
 
 if sys.version_info.major < 3:
     sys.exit("minipegReceiver only works with python3+")
 
-def mini2jpeg(minipeg):
+sys.path.insert(0, os.path.join("tools"))
+import robotInterface
+RI = robotInterface.RI
+
+def mini2jpeg(minipeg, dimensions):
     header = [
       0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 
       0x00, 0x01, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00, 0x10, 0x0B, 0x0C, 0x0E, 0x0C, 0x0A, 0x10, # 0x19 = QTable
@@ -31,7 +34,16 @@ def mini2jpeg(minipeg):
       0x00, 0x00, 0x3F, 0x00
     ]
     out = header
-    for b in minipeg:
+    
+    while minipeg[-1] == 0xff: minipeg.pop(-1) # remove trailing 0xFF padding
+    
+    width, height = dimensions
+    out[0x5e] = height >> 8
+    out[0x5f] = height & 0xff
+    out[0x60] = width  >> 8
+    out[0x61] = width  & 0xff
+    
+    for b in minipeg[1:]:
         out.append(b)
         if b == 0xFF:
             out.append(0x00)
@@ -39,81 +51,36 @@ def mini2jpeg(minipeg):
     out.append(0xd9)
     return bytes(out)
 
-class ImageChunk(struct.Struct):
-    """A one off python implementation of the ImageChunk CLAD message
-    This should be replaced ASAP by importing CLAD generated python code.
-    See messageRobotToEngine.clad for the definition"""
+class MinipegReceiver:
+    "Dumb simple class for receiving image data from robots"
     
-    ID = 0x82
+    def recvData(self, chunk):
+        "Handle incoming image chunks"
+        #sys.stdout.write(repr(chunk))
+        #sys.stdout.write(os.linesep)
+        if self.imageBuffer is None and chunk.chunkId == 0:
+            self.imageBuffer = []
+        if self.imageBuffer is not None:
+            fh = open("img{:05d}.minipeg".format(chunk.imageId), 'wb')
+            fh.write(bytes(chunk.data))
+            fh.close()
+            self.imageBuffer.extend(chunk.data)
+            if chunk.imageChunkCount == chunk.chunkId+1:
+                fh = open("image{:05d}.jpg".format(chunk.imageId), 'wb')
+                fh.write(mini2jpeg(self.imageBuffer, robotInterface.CameraResolutions[chunk.resolution]))
+                fh.close()
+                self.imageBuffer = []
+                
+    def onConnect(self, source):
+        robotInterface.Send(RI.EngineToRobot(syncTime=RI.SyncTime()))
     
-    def __init__(self, buffer=None):
-        struct.Struct.__init__(self, "IIBBBBH")
-        self.frameTimeStamp = 0
-        self.imageId = 0
-        self.imageEncoding = 0
-        self.imageResolution = 0
-        self.imageChunkCount = 0
-        self.chunkId = 0
-        self.data = bytes()
-        if buffer is not None:
-            self.deserialize(buffer)
-
-    def __repr__(self):
-        return "ImageChunk({:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d})".format(self.frameTimeStamp, self.imageId, \
-                        self.imageEncoding, self.imageResolution, self.imageChunkCount, self.chunkId, len(self.data))
-
-    def serialize(self):
-        "Convert python struct into CLAD wire format"
-        return bytes([self.ID]) + self.pack(self.frameTimeStamp, self.imageId, self.imageEncoding, self.imageResolution,
-                                            self.imageChunkCount, self.chunkId, len(self.data)) + self.data
-
-    def deserialize(self, buffer):
-        "Load the ImageChunk from a bytestream"
-        assert(buffer[0] == self.ID) # Check the ID
-        self.frameTimeStamp, self.imageId, self.imageEncoding, self.imageResolution, self.imageChunkCount, \
-            self.chunkId, length = self.unpack(buffer[1:self.size+1])
-        self.data = buffer[self.size+1:]
-        assert(len(self.data) == length)
-
-class CozmoReceiver(IDataReceiver):
-    "ReliableTransport receiver class"
-    
-    def __init__(self, saveImages=False, robotAddress=("172.31.1.1", 5551)):
-        self.robot = robotAddress
-        self.saveImages = False
-        ut = UDPTransport(logInPackets="rxPackets.bin")
-        ut.OpenSocket()
-        sys.stdout.write("Connecting to robot at {}:{} from {}:{}\r\n".format(*robotAddress, *ut.getsockname()))
-        self.transport = ReliableTransport(ut, self)
-        self.transport.Connect(self.robot)
-        self.transport.start()
-        
-    def __del__(self):
-        self.transport.KillThread()
-        
-    def OnConnectionRequest(self, sourceAddress):
-        raise Exception("CozmoReceiver wasn't expecing a connection request")
-
-    def OnConnected(self, sourceAddress):
-        sys.stdout.write("Connected to robot at {}\r\n".format(repr(sourceAddress)))
-
-    def OnDisconnected(self, sourceAddress):
-        sys.stdout.write("Lost connection to robot at {}\r\n".format(repr(sourceAddress)))
-
-    def ReceiveData(self, buffer, sourceAddress):
-        if sourceAddress != self.robot:
-            sys.stderr.write("Received data from unexpected address {}\r\n".format(repr(sourceAddress)))
-        elif buffer[0] != ImageChunk.ID:
-            sys.stderr.write("Received unexpected message {:02x}[{:d}]\r\n".format(buffer[0], len(buffer)))
-        else:
-            chunk = ImageChunk(buffer)
-            sys.stdout.write(repr(chunk) + "\r\n")
-            if self.saveImages and chunk.imageChunkCount != 0:
-                open("img{:05d}.minipeg".format(chunk.imageId), 'wb').write(chunk.data)
-
-    def SendData(self, buffer):
-        return self.transport.SendData(True, False, self.robot, buffer)
+    def __init__(self):
+        self.imageBuffer = None
+        robotInterface.Init()
+        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.image, self.recvData)
+        robotInterface.SubscribeToConnect(self.onConnect)
+        robotInterface.Connect()
         
 if __name__ == '__main__':
-    c = CozmoReceiver()
+    c = MinipegReceiver()
     time.sleep(5)

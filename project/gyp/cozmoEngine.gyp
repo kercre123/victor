@@ -480,7 +480,8 @@
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],
             'defines': [
               'COZMO_ROBOT',
-              'SIMULATOR'
+              'SIMULATOR',
+              '_DEBUG'
             ],
             'libraries': [
               'libCppController.dylib',
@@ -489,14 +490,11 @@
             ],
             'actions': [
                 {
-                    'action_name': 'generate_version_include',
+                    'action_name': 'Robot pre-build steps',
                     'inputs': [],
-                    'outputs': [
-                        '../../robot/include/anki/cozmo/robot/version.h'
-                    ],
+                    'outputs': [],
                     'action': [
-                        '../../robot/tools/versionGenerator/versionGenerator.sh',
-                        '<@(_outputs)'
+                        'make', '-C', '../../robot/', 'sim'
                     ],
                 }
             ]
