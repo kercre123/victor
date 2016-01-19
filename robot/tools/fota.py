@@ -88,7 +88,7 @@ class Upgrader:
 
     def __init__(self):
         self.acked = None
-        robotInterface.Init()
+        robotInterface.Init(False)
         robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.flashWriteAck, self.recieveAck)
 
 def UpgradeWiFi(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_WiFi_flash_address):

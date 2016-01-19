@@ -61,26 +61,40 @@ class MinipegReceiver:
         if self.imageBuffer is None and chunk.chunkId == 0:
             self.imageBuffer = []
         if self.imageBuffer is not None:
-            fh = open("img{:05d}.minipeg".format(chunk.imageId), 'wb')
-            fh.write(bytes(chunk.data))
-            fh.close()
             self.imageBuffer.extend(chunk.data)
             if chunk.imageChunkCount == chunk.chunkId+1:
-                fh = open("image{:05d}.jpg".format(chunk.imageId), 'wb')
-                fh.write(mini2jpeg(self.imageBuffer, robotInterface.CameraResolutions[chunk.resolution]))
-                fh.close()
+                self.imageCallback(mini2jpeg(self.imageBuffer, robotInterface.CameraResolutions[chunk.resolution]), chunk.imageId)
                 self.imageBuffer = []
-                
+                    
+    def __init__(self, imageCallback):
+        self.imageBuffer = None
+        self.imageCallback = imageCallback
+        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.image, self.recvData)
+        
+class MinipegWriter(MinipegReceiver):
+    "Writes received images out to files"
+    
+    def recvData(self, chunk):
+        "Handle incoming image chunks"
+        fh = open("img{:05d}.minipeg".format(chunk.imageId), 'wb')
+        fh.write(bytes(chunk.data))
+        fh.close()
+        MinipegReceiver.recvData(self, chunk)
+    
+    def writeImage(self, img, frameId):
+        fh = open("image{:05d}.jpg".format(frameId), 'wb')
+        fh.write(img)
+        fh.close()
+    
     def onConnect(self, source):
         robotInterface.Send(RI.EngineToRobot(syncTime=RI.SyncTime()))
-    
+
     def __init__(self):
-        self.imageBuffer = None
-        robotInterface.Init()
-        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.image, self.recvData)
+        MinipegReceiver.__init__(self, self.writeImage)
         robotInterface.SubscribeToConnect(self.onConnect)
-        robotInterface.Connect()
         
 if __name__ == '__main__':
-    c = MinipegReceiver()
+    robotInterface.Init()
+    c = MinipegWriter()
+    robotInterface.Connect()
     time.sleep(5)

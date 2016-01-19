@@ -62,8 +62,9 @@ class ConnectionState:
 
 class _Dispatcher(IDataReceiver):
     "An IDataReciver interface implementation which dispatches messages to / from the robot"
-    def __init__(self, transport):
+    def __init__(self, transport, warnMsgErrors):
         transport.OpenSocket()
+        self.warnMsgErrors = warnMsgErrors
         self.state = ConnectionState.notConnected
         self.dest = None
         self.OnConnectionRequestSubscribers = []
@@ -122,11 +123,12 @@ class _Dispatcher(IDataReceiver):
         try:
             msg = RI.RobotToEngine.unpack(buffer)
         except Exception as e:
-            if len(buffer):
-                tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
-                sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]\r\n\t{2:s}\r\n".format(tag, len(buffer), str(e)))
-            else:
-                sys.stderr.write("Got 0 length message!\r\n")
+            if self.warnMsgErrors:
+                if len(buffer):
+                    tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
+                    sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]\r\n\t{2:s}\r\n".format(tag, len(buffer), str(e)))
+                else:
+                    sys.stderr.write("Got 0 length message!\r\n")
         else:
             if msg.tag == msg.Tag.printText:
                 sys.stdout.write("ROBOT: " + msg.printText.text)
@@ -170,11 +172,13 @@ class _Dispatcher(IDataReceiver):
     def send(self, msg):
         return self.transport.SendData(True, False, self.dest, msg.pack())
         
-def Init(transport=UDPTransport()):
+def Init(warnMsgErrors=True, transport=UDPTransport()):
     "Initalize the robot interface. Must be called before any other methods"
     global dispatcher
     if dispatcher is None:
-        dispatcher = _Dispatcher(transport)
+        dispatcher = _Dispatcher(transport, warnMsgErrors)
+    elif warnMsgErrors:
+        dispatcher.warnMsgErrors = True
     return dispatcher
 
 def Connect(*args, **kwargs):
