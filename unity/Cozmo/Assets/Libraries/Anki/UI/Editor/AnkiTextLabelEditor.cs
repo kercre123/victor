@@ -40,10 +40,8 @@ namespace Anki.Editor.UI {
 
       _Localized = EditorGUILayout.Toggle("Localize", _Localized);
 
-
+      m_Text.stringValue = _LocalizedString;
       if (_Localized) {
-        m_Text.stringValue = _LocalizedString;
-
         int selectedFileIndex = EditorGUILayout.Popup("Localization File", 
           Mathf.Max(0, 
                     System.Array.IndexOf(
@@ -58,6 +56,7 @@ namespace Anki.Editor.UI {
           EditorGUILayout.BeginHorizontal();
           if (GUILayout.Button("Reset")) {
             _LocalizedString = LocalizationEditorUtility.GetTranslation(_LocalizedStringFile, _LocalizationKey);
+            m_Text.stringValue = _LocalizedString;
           }
           if (GUILayout.Button("Save")) {
             LocalizationEditorUtility.SetTranslation(_LocalizedStringFile, _LocalizationKey, _LocalizedString);
@@ -70,7 +69,7 @@ namespace Anki.Editor.UI {
 
         m_Text.stringValue = "#" + _LocalizationKey;
       }
-      else {
+      else {        
         EditorGUILayout.PropertyField(m_Text);
         _LocalizedString = m_Text.stringValue;
       }

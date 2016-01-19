@@ -88,7 +88,7 @@ namespace Anki {
 
       public virtual bool IsIndexPathValid(Anki.UI.IndexPath indexPath)
       {
-				return (indexPath.Section < NumberOfSections() && indexPath.Item < NumberOfItems(indexPath.Section));
+        return (indexPath.Section < NumberOfSections() && indexPath.Item < NumberOfItems(indexPath.Section));
       }
 
       ///  Actions

@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
+using System.Linq;
 
 namespace Cozmo.HomeHub {
   public class TimelineView : MonoBehaviour {
@@ -47,6 +48,13 @@ namespace Cozmo.HomeHub {
     DailyGoalPanel _DailyGoalPrefab;
     DailyGoalPanel _DailyGoalInstance;
 
+    [SerializeField]
+    DailySummaryPanel _DailySummaryPrefab;
+
+    [SerializeField]
+    FriendshipFormulaConfiguration _FriendshipFormulaConfig;
+
+
     public void CloseView() {
       // TODO: Play some close animations before destroying view
       GameObject.Destroy(gameObject);
@@ -72,11 +80,12 @@ namespace Cozmo.HomeHub {
 
 
       // TMP: GENERATE FAKE DATA
-      GenerateFakeData();
+      GenerateFakeData(challengeStatesById.Keys.ToArray());
 
-      _DailyGoalInstance.GenerateDailyGoals();
+      UpdateDailySession();
 
-      PopulateTimeline(DataPersistenceManager.Instance.Data.PreviousSessions);
+
+      PopulateTimeline(DataPersistenceManager.Instance.Data.Sessions);
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
       _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
 
@@ -85,13 +94,59 @@ namespace Cozmo.HomeHub {
 
     }
 
+    private void UpdateDailySession() {
+      var lastDay = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+
+      // check if the current session is still valid
+      if (lastDay != null && lastDay.Date == DateTime.UtcNow.Date) {  
+        _DailyGoalInstance.SetDailyGoals(lastDay.Goals, lastDay.Progress);
+        return;
+      }
+
+      if (lastDay != null && !lastDay.Complete) {
+        CompleteSession(lastDay);
+      }
+
+      // start a new session
+      var goals = _DailyGoalInstance.GenerateDailyGoals();
+
+      TimelineEntryData newSession = new TimelineEntryData(DateTime.UtcNow.Date) {
+        StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
+        StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
+      };
+
+      newSession.Goals.Set(goals);
+
+      DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
+
+      DataPersistenceManager.Instance.Save();
+    }
+
+    private void CompleteSession(TimelineEntryData timelineEntry) {
+
+      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress));
+
+      RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
+
+      timelineEntry.AwardedFriendshipPoints = friendshipPoints;
+      DataPersistenceManager.Instance.Data.FriendshipLevel
+          = timelineEntry.EndingFriendshipLevel
+          = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
+      DataPersistenceManager.Instance.Data.FriendshipPoints
+          = timelineEntry.EndingFriendshipPoints
+          = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
+      timelineEntry.Complete = true;
+
+      ShowDailySessionPanel(timelineEntry);
+    }
+
     private void SetScrollRectStartPosition() {
       _ScrollRect.horizontalNormalizedPosition = _TimelinePane.rect.width / _ContentPane.rect.width;
     }
 
     // TMP!!!!
-    private void GenerateFakeData() {
-      DataPersistenceManager.Instance.Data.PreviousSessions.Clear();
+    private void GenerateFakeData(string[] challengeIds) {
+      DataPersistenceManager.Instance.Data.Sessions.Clear();
 
       var today = DateTime.UtcNow.Date;
 
@@ -100,26 +155,35 @@ namespace Cozmo.HomeHub {
       for (int i = 0; i < kTimelineHistoryLength; i++) {
         var date = startDate.AddDays(i);
 
-        if (UnityEngine.Random.Range(0f, 1f) > 0.3f) {
-          var entry = new TimelineEntryState(date);
+        var entry = new TimelineEntryData(date);
 
-          for (int j = 0; j < (int)Anki.Cozmo.ProgressionStatType.Count; j++) {
-            var stat = (Anki.Cozmo.ProgressionStatType)j;
-            if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
-              int goal = UnityEngine.Random.Range(0, 6);
-              int progress = Mathf.Clamp(UnityEngine.Random.Range(0, goal * 2), 0, goal);
-              entry.Goals[stat] = goal;
-              entry.Progress[stat] = progress;
-            }
+        for (int j = 0; j < (int)Anki.Cozmo.ProgressionStatType.Count; j++) {
+          var stat = (Anki.Cozmo.ProgressionStatType)j;
+          if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
+            int goal = UnityEngine.Random.Range(0, 6);
+            int progress = Mathf.Clamp(UnityEngine.Random.Range(0, goal * 2), 0, goal);
+            entry.Goals[stat] = goal;
+            entry.Progress[stat] = progress;
           }
+        }
 
-          DataPersistenceManager.Instance.Data.PreviousSessions.Add(entry);
+        int challengeCount = UnityEngine.Random.Range(0, 20);
+
+        for (int j = 0; j < challengeCount; j++) {
+          entry.CompletedChallenges.Add(new CompletedChallengeData() {
+            ChallengeId = challengeIds[UnityEngine.Random.Range(0, challengeIds.Length)]
+          });
+        }
+
+        // don't add any days with goal of 0
+        if (entry.Goals.Total > 0) {
+          DataPersistenceManager.Instance.Data.Sessions.Add(entry);
         }
       }
 
     }
 
-    private void PopulateTimeline(List<TimelineEntryState> timelineEntries) {
+    private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
       int timelineIndex = 0;
 
       var today = DateTime.UtcNow.Date;
@@ -158,13 +222,17 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleTimelineEntrySelected(DateTime date) {
-      var session = DataPersistenceManager.Instance.Data.PreviousSessions.Find(x => x.Date == date);
+      var session = DataPersistenceManager.Instance.Data.Sessions.Find(x => x.Date == date);
 
       if (session != null) {
-        // DO Something?
+        ShowDailySessionPanel(session);
       }
     }
 
+    private void ShowDailySessionPanel(TimelineEntryData session) {
+      var summaryPanel = UIManager.CreateUIElement(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
+      summaryPanel.Initialize(session);
+    }
 
   }
 }

@@ -10,9 +10,14 @@ public class GraphSpline : MonoBehaviour {
   [SerializeField]
   private Material _Material;
 
+  [SerializeField]
   private Mesh _Mesh;
 
   private List<float> _Points;
+
+  #if DEBUG_SPLINE
+  private List<Vector2> _SplinePoints;
+  #endif
 
   private void Awake() {
     _Mesh = new Mesh();
@@ -78,16 +83,18 @@ public class GraphSpline : MonoBehaviour {
     for (int i = 0; i < splinePoints.Count; i += 4) {
       EvaluateSplinePoints(splinePoints[i], splinePoints[i + 1], splinePoints[i + 2], splinePoints[i + 3], evaluatedPoints);
     }
+
+    #if DEBUG_SPLINE
+    _SplinePoints = splinePoints;
+    #endif
+
+    var rt = GetComponent<RectTransform>();
+    Vector3 scale = rt.rect.size;
       
     Vector3[] vertices = new Vector3[evaluatedPoints.Count * 2];    
     Vector3[] normals = new Vector3[evaluatedPoints.Count * 2]; 
     Vector2[] uvs = new Vector2[evaluatedPoints.Count * 2];
     int[] triangles = new int[(evaluatedPoints.Count - 1) * 6];
-
-
-    var rt = GetComponent<RectTransform>();
-
-    Vector3 scale = rt.rect.size;
 
     vertices[0] = evaluatedPoints[0];
     vertices[0].Scale(scale);
@@ -131,6 +138,43 @@ public class GraphSpline : MonoBehaviour {
     _CanvasRenderer.materialCount = 1;
     _CanvasRenderer.SetMaterial(_Material, 0);
     _CanvasRenderer.SetMesh(_Mesh);
+
+    #if DEBUG_SPLINE
+
+    var rt = GetComponent<RectTransform>();
+    Vector3 scale = rt.rect.size;
+
+    for(int i = 0; i < _SplinePoints.Count; i+=4) {
+
+      var a = _SplinePoints[i];
+      var b = _SplinePoints[i + 1];
+      var c = _SplinePoints[i + 2];
+      var d = _SplinePoints[i + 3];
+      a.Scale(scale);
+      b.Scale(scale);
+      c.Scale(scale);
+      d.Scale(scale);
+
+      UnityEngine.Debug.DrawLine(a, b, Color.red);
+      UnityEngine.Debug.DrawLine(b, c, Color.red);
+      UnityEngine.Debug.DrawLine(c, d, Color.red);
+
+    }
+
+    float deltaX = 1f / _Points.Count;
+
+    for(int i = 1; i < _Points.Count; i++) {
+
+      var a = new Vector2(deltaX * (i - 0.5f), _Points[i - 1]);
+      var b = new Vector2(deltaX * (i + 0.5f), _Points[i]);
+      a.Scale(scale);
+      b.Scale(scale);
+
+      UnityEngine.Debug.DrawLine(a, b, Color.blue);
+
+    }
+
+    #endif
   }
 
   private void EvaluateSplinePoints(Vector2 a, Vector2 b, Vector2 c, Vector2 d, List<Vector2> evaluatedPoints) {
@@ -155,7 +199,10 @@ public class GraphSpline : MonoBehaviour {
       var abbc = Vector2.Lerp(ab,bc,t);
       var bccd = Vector2.Lerp(bc,cd,t);
 
-      evaluatedPoints.Add(Vector2.Lerp(abbc, bccd, t));
+      var evaluatedPoint = Vector2.Lerp(abbc, bccd, t);
+      // don't allow negative numbers
+      evaluatedPoint.y = Mathf.Max(evaluatedPoint.y, 0);
+      evaluatedPoints.Add(evaluatedPoint);
     }
   }
 
