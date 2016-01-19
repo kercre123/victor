@@ -582,7 +582,7 @@ public class Robot : IDisposable {
   private void ComputeFriendshipLevel() {
     FriendshipLevelConfig levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
     bool friendshipLevelChanged = false;
-    while (FriendshipLevel < levelConfig.FriendshipLevels.Length && 
+    while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length && 
           levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
       FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
       FriendshipLevel++;

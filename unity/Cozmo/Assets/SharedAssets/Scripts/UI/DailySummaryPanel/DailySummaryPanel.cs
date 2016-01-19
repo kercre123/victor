@@ -8,7 +8,19 @@ using Anki.Cozmo;
 
 public class DailySummaryPanel : MonoBehaviour {
 
-  private const string kAnimName = "LevelReached";
+  private const string kIdleAnimationName = "Idle";
+
+  private const string kLevelReachedAnimationName = "LevelReached";
+
+  private const string kMaxLevelAnimationName = "MaxLevel";
+
+  private const string kIdleAnimationNameB = "IdleB";
+
+  private const string kLevelReachedAnimationNameB = "LevelReachedB";
+
+  private const string kMaxLevelAnimationNameB = "MaxLevelB";
+
+
 
   [SerializeField]
   private Button _CloseButton;
@@ -36,6 +48,22 @@ public class DailySummaryPanel : MonoBehaviour {
 
   [SerializeField]
   private GameObject _ChallengePrefab;
+
+  [SerializeField]
+  private AnkiTextLabel _CurrentFriendshipLevelTop;
+  [SerializeField]
+  private AnkiTextLabel _CurrentFriendshipLevelBottom;
+
+  [SerializeField]
+  private AnkiTextLabel _NextFriendshipLevelTop;
+  [SerializeField]
+  private AnkiTextLabel _NextFriendshipLevelBottom;
+
+  [SerializeField]
+  private AnkiTextLabel _NextNextFriendshipLevelTop;
+  [SerializeField]
+  private AnkiTextLabel _NextNextFriendshipLevelBottom;
+
 
   private void Awake() {
     _CloseButton.onClick.AddListener(HandleCloseClicked);
@@ -126,16 +154,33 @@ public class DailySummaryPanel : MonoBehaviour {
 
     int startingPoints = data.StartingFriendshipPoints;
     float pointsRequired, startingPercent, endingPercent;
-    for(int level = data.StartingFriendshipLevel; level < data.EndingFriendshipLevel; level++) {
+    for(int level = data.StartingFriendshipLevel; 
+          level < data.EndingFriendshipLevel; level++) {
+      _FriendBarAnimator.Play(level % 2 == 0 ? kIdleAnimationName : kIdleAnimationNameB);
+
+      SetFriendshipTexts(
+        levelConfig.FriendshipLevels[level].FriendshipLevelName,
+        levelConfig.FriendshipLevels[level + 1].FriendshipLevelName,
+        level % 2 == 0,
+        level + 2 < levelConfig.FriendshipLevels.Length ?
+          levelConfig.FriendshipLevels[level + 2].FriendshipLevelName :
+          string.Empty);
+
       pointsRequired = levelConfig.FriendshipLevels[level + 1].PointsRequired;
 
       startingPercent = startingPoints / pointsRequired;
 
       yield return StartCoroutine(FriendshipBarFill(startingPercent, 1f));
 
-      _FriendBarAnimator.Play(kAnimName);
+      if (level + 2 < levelConfig.FriendshipLevels.Length) {
+        _FriendBarAnimator.Play(level % 2 == 0 ? kLevelReachedAnimationName : kLevelReachedAnimationNameB);
 
-      yield return StartCoroutine(FriendshipBarFill(1, 0));
+        yield return StartCoroutine(FriendshipBarFill(1, 0));
+      }
+      else {
+        _FriendBarAnimator.Play(level % 2 == 0 ? kMaxLevelAnimationName : kMaxLevelAnimationNameB);
+        yield break;
+      }
 
       startingPoints = 0;
     }
@@ -143,15 +188,43 @@ public class DailySummaryPanel : MonoBehaviour {
     int endingPoints = data.EndingFriendshipPoints;
 
     if (data.EndingFriendshipLevel + 1 < levelConfig.FriendshipLevels.Length) {
+
+      _FriendBarAnimator.Play(data.EndingFriendshipLevel % 2 == 0 ? kIdleAnimationName : kIdleAnimationNameB);
+
+      SetFriendshipTexts(
+        levelConfig.FriendshipLevels[data.EndingFriendshipLevel].FriendshipLevelName,
+        levelConfig.FriendshipLevels[data.EndingFriendshipLevel + 1].FriendshipLevelName,
+        data.EndingFriendshipLevel % 2 == 0);
+
       pointsRequired = levelConfig.FriendshipLevels[data.EndingFriendshipLevel + 1].PointsRequired;
 
       startingPercent = startingPoints / pointsRequired;
       endingPercent = endingPoints / pointsRequired;
+
     }
     else {
       startingPercent = endingPercent = 1f;
+
+      _FriendBarAnimator.Play(data.EndingFriendshipLevel % 2 == 1 ? kMaxLevelAnimationName : kMaxLevelAnimationNameB);
+
+      SetFriendshipTexts(
+        levelConfig.FriendshipLevels[data.EndingFriendshipLevel - 1].FriendshipLevelName,
+        levelConfig.FriendshipLevels[data.EndingFriendshipLevel].FriendshipLevelName,
+        data.EndingFriendshipLevel % 2 == 1);
     }
 
     yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent));
+  }
+
+  private void SetFriendshipTexts(string current, string next, bool even, string nextNext = null) {
+
+    nextNext = nextNext ?? string.Empty;
+    // TODO: Localize
+    _CurrentFriendshipLevelTop.text = even ? current : next;
+    _CurrentFriendshipLevelBottom.text = even ? next : current;
+    _NextFriendshipLevelTop.text = even ? nextNext : next;
+    _NextFriendshipLevelBottom.text = even ? next : nextNext;
+    _NextNextFriendshipLevelBottom.text = nextNext;
+    _NextNextFriendshipLevelTop.text = nextNext;
   }
 }
