@@ -281,35 +281,7 @@ AnimationClip:
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 31
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-    attribute: m_IsActive
-    path: CurrentFriendshipCircle/LabelBottom
-    classID: 1
-    script: {fileID: 0}
-  - curve:
-      serializedVersion: 2
-      m_Curve:
-      - time: 0
-        value: 0
-        inSlope: Infinity
-        outSlope: Infinity
-        tangentMode: 31
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-    attribute: m_IsActive
-    path: 'CurrentFriendshipCircle/LabelNextNextBottom '
-    classID: 1
-    script: {fileID: 0}
-  - curve:
-      serializedVersion: 2
-      m_Curve:
-      - time: 0
-        value: 0
-        inSlope: Infinity
-        outSlope: Infinity
-        tangentMode: 31
-      - time: .583333313
+      - time: .75
         value: 1
         inSlope: Infinity
         outSlope: Infinity
@@ -317,7 +289,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
     attribute: m_IsActive
-    path: CurrentFriendshipCircle/LabelNextNextTop
+    path: CurrentFriendshipCircle/LabelNextTop
     classID: 1
     script: {fileID: 0}
   - curve:
@@ -328,7 +300,7 @@ AnimationClip:
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 31
-      - time: .583333313
+      - time: .75
         value: 0
         inSlope: Infinity
         outSlope: Infinity
@@ -364,7 +336,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
     attribute: m_IsActive
-    path: NextFriendshipCircle/LabelTop
+    path: 'NextFriendshipCircle/LabelNextBottom '
     classID: 1
     script: {fileID: 0}
   m_PPtrCurves: []
@@ -441,19 +413,7 @@ AnimationClip:
       classID: 114
       customType: 0
       isPPtrCurve: 0
-    - path: 2035528493
-      attribute: 2086281974
-      script: {fileID: 0}
-      classID: 1
-      customType: 0
-      isPPtrCurve: 0
-    - path: 2743941849
-      attribute: 2086281974
-      script: {fileID: 0}
-      classID: 1
-      customType: 0
-      isPPtrCurve: 0
-    - path: 3926716968
+    - path: 2120375703
       attribute: 2086281974
       script: {fileID: 0}
       classID: 1
@@ -471,7 +431,7 @@ AnimationClip:
       classID: 1
       customType: 0
       isPPtrCurve: 0
-    - path: 4173325056
+    - path: 1719990543
       attribute: 2086281974
       script: {fileID: 0}
       classID: 1
@@ -768,35 +728,7 @@ AnimationClip:
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 31
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-    attribute: m_IsActive
-    path: CurrentFriendshipCircle/LabelBottom
-    classID: 1
-    script: {fileID: 0}
-  - curve:
-      serializedVersion: 2
-      m_Curve:
-      - time: 0
-        value: 0
-        inSlope: Infinity
-        outSlope: Infinity
-        tangentMode: 31
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-    attribute: m_IsActive
-    path: 'CurrentFriendshipCircle/LabelNextNextBottom '
-    classID: 1
-    script: {fileID: 0}
-  - curve:
-      serializedVersion: 2
-      m_Curve:
-      - time: 0
-        value: 0
-        inSlope: Infinity
-        outSlope: Infinity
-        tangentMode: 31
-      - time: .583333313
+      - time: .75
         value: 1
         inSlope: Infinity
         outSlope: Infinity
@@ -804,7 +736,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
     attribute: m_IsActive
-    path: CurrentFriendshipCircle/LabelNextNextTop
+    path: CurrentFriendshipCircle/LabelNextTop
     classID: 1
     script: {fileID: 0}
   - curve:
@@ -815,7 +747,7 @@ AnimationClip:
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 31
-      - time: .583333313
+      - time: .75
         value: 0
         inSlope: Infinity
         outSlope: Infinity
@@ -851,7 +783,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
     attribute: m_IsActive
-    path: NextFriendshipCircle/LabelTop
+    path: 'NextFriendshipCircle/LabelNextBottom '
     classID: 1
     script: {fileID: 0}
   m_EulerEditorCurves: []

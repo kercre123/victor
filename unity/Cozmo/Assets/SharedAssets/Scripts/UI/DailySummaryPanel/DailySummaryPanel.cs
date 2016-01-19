@@ -57,12 +57,6 @@ public class DailySummaryPanel : MonoBehaviour {
   [SerializeField]
   private AnkiTextLabel _NextFriendshipLevelBottom;
 
-  [SerializeField]
-  private AnkiTextLabel _NextNextFriendshipLevelTop;
-  [SerializeField]
-  private AnkiTextLabel _NextNextFriendshipLevelBottom;
-
-
   private void Awake() {
     _CloseButton.onClick.AddListener(HandleCloseClicked);
   }
@@ -240,7 +234,5 @@ public class DailySummaryPanel : MonoBehaviour {
     _CurrentFriendshipLevelBottom.text = even ? next : current;
     _NextFriendshipLevelTop.text = even ? nextNext : next;
     _NextFriendshipLevelBottom.text = even ? next : nextNext;
-    _NextNextFriendshipLevelBottom.text = nextNext;
-    _NextNextFriendshipLevelTop.text = nextNext;
   }
 }
