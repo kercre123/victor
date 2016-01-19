@@ -1,12 +1,12 @@
 ﻿Shader "UI/CozmoFacePost"
 {
-	Properties
-	{
+  Properties
+  {
       _Color ("Main Color", Color) = (1,1,1,1)
       _MainTex ("Main Texture", 2D) = "white" {}
-	}
-	SubShader
-	{
+  }
+  SubShader
+  {
     Tags
     {
         "Queue"="AlphaTest"
@@ -16,28 +16,28 @@
     }
     ZTest LEqual
 
-		Pass
-		{
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			
-			#include "UnityCG.cginc"
+    Pass
+    {
+      CGPROGRAM
+      #pragma vertex vert
+      #pragma fragment frag
+      
+      #include "UnityCG.cginc"
 
-			struct appdata
-			{
-				float4 vertex : POSITION;
-				float2 uv : TEXCOORD0;
-			};
+      struct appdata
+      {
+        float4 vertex : POSITION;
+        float2 uv : TEXCOORD0;
+      };
 
-			struct v2f
-			{
-				float2 uv : TEXCOORD0;
-				float4 vertex : SV_POSITION;
+      struct v2f
+      {
+        float2 uv : TEXCOORD0;
+        float4 vertex : SV_POSITION;
         float2 screenPos : TEXCOORD1;
-			};
+      };
 
-			sampler2D _MainTex;
+      sampler2D _MainTex;
       uniform fixed4 _Color;
 
 
@@ -61,7 +61,7 @@
         float a = tex2D(_MainTex,i.uv);
         return _Color * a * mod(floor(i.screenPos.y * _ScreenParams.y * 0.5), 2);
       }
-			ENDCG
-		}
-	}
+      ENDCG
+    }
+  }
 }

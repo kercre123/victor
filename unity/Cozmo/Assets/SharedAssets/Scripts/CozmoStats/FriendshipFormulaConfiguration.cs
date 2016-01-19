@@ -3,9 +3,9 @@ using System.Collections;
 
 public class FriendshipFormulaConfiguration : ScriptableObject {
 
-	[SerializeField]
+  [SerializeField]
   [HideInInspector]
-	private float[] _Multipliers = new float[(int)Anki.Cozmo.ProgressionStatType.Count];
+  private float[] _Multipliers = new float[(int)Anki.Cozmo.ProgressionStatType.Count];
 
   public float[] Multipliers { 
     get { 
@@ -18,11 +18,11 @@ public class FriendshipFormulaConfiguration : ScriptableObject {
     } 
   }
 
-	public float CalculateFriendshipScore(StatContainer stats) {
-		float total = 0f;
-		for (int i = 0; i < _Multipliers.Length; i++) {
-			total += _Multipliers[i] * stats[(Anki.Cozmo.ProgressionStatType)i];
-		}
-		return total;
-	}
+  public float CalculateFriendshipScore(StatContainer stats) {
+    float total = 0f;
+    for (int i = 0; i < _Multipliers.Length; i++) {
+      total += _Multipliers[i] * stats[(Anki.Cozmo.ProgressionStatType)i];
+    }
+    return total;
+  }
 }

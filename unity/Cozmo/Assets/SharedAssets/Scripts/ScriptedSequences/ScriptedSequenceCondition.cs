@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace ScriptedSequences
 {
   public abstract class ScriptedSequenceCondition : IScriptedSequenceItem
-	{
+  {
     [JsonIgnore]
     protected IScriptedSequenceParent _Parent { get; private set; }
 
@@ -57,6 +57,6 @@ namespace ScriptedSequences
     }
 
     protected abstract void EnableChanged(bool enabled);
-	}
+  }
 }
 

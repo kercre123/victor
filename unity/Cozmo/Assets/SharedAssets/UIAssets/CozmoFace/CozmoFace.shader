@@ -1,7 +1,7 @@
 ﻿Shader "UI/CozmoFace"
 {
-	Properties
-	{
+  Properties
+  {
     _FaceAngle ("Face Angle", Float) = 0
     _FaceCenterScale ("Face Center Scale", Vector) = (0, 0, 1, 1)
 
@@ -31,38 +31,38 @@
     _RightLowerLidAngle ("Right Lower Lid Angle", Float) = 0
     _RightLowerLidBend ("Right Lower Lid Bend", Float) = 0
 
-	}
-	SubShader
-	{
-		// No culling or depth
-		Cull Off ZWrite Off ZTest Always
+  }
+  SubShader
+  {
+    // No culling or depth
+    Cull Off ZWrite Off ZTest Always
 
-		Pass
-		{
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			
-			#include "UnityCG.cginc"
+    Pass
+    {
+      CGPROGRAM
+      #pragma vertex vert
+      #pragma fragment frag
+      
+      #include "UnityCG.cginc"
 
-			struct appdata
-			{
-				float4 vertex : POSITION;
-				float2 uv : TEXCOORD0;
-			};
+      struct appdata
+      {
+        float4 vertex : POSITION;
+        float2 uv : TEXCOORD0;
+      };
 
-			struct v2f
-			{
-				float2 uv : TEXCOORD0;
-				float4 vertex : SV_POSITION;
+      struct v2f
+      {
+        float2 uv : TEXCOORD0;
+        float4 vertex : SV_POSITION;
         float4 tangent : TANGENT;
         float4 sine : TEXCOORD1;
         float4 cosine : TEXCOORD2;
         float3 face : NORMAL;
         float4 eyes : TEXCOORD3;
-			};
+      };
 
-			sampler2D _MainTex;
+      sampler2D _MainTex;
       uniform fixed4 _Color;
 
       float _FaceAngle;
@@ -333,7 +333,7 @@
 
         return saturate(left + right) * baseColor;
       }
-			ENDCG
-		}
-	}
+      ENDCG
+    }
+  }
 }

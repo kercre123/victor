@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 namespace Anki
 {
-	namespace UI
-	{
+  namespace UI
+  {
 
     public struct StoryboardNode
     {
@@ -78,5 +78,5 @@ namespace Anki
       }
 
     }
-	}
+  }
 }
