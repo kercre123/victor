@@ -385,9 +385,8 @@ void PhysVizController::ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInt
   //      std::make_move_iterator(payload.quads.begin()),
   //      std::make_move_iterator(payload.quads.end())
   //    );
-  const size_t kMaxQuads = 1024; // just to set a limit, no rationale on actual number
   const size_t newSize = dest.size() + payload.quads.size();
-  CORETECH_ASSERT( newSize <= kMaxQuads );
+  CORETECH_ASSERT( newSize <= 1024 ); // Debug set to a limit, no rationale on actual number.
   dest.reserve( newSize );
   dest.insert( dest.end(), payload.quads.begin(), payload.quads.end());
 }
