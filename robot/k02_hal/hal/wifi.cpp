@@ -45,7 +45,7 @@ namespace HAL {
       const uint8_t rind = txRind;
       uint8_t wind = txWind;
       const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
-      if (available > (size+3)) // Room for message plus header
+      if (available > (size + 4)) // Room for message plus header plus one more so we can tell empty from full
       {
         const uint16_t sizeWHeader = size+1;
         const u8* msgPtr = (u8*)buffer;
