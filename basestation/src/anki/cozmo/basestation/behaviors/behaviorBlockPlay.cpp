@@ -1134,10 +1134,10 @@ namespace Cozmo {
               PlayAnimation(robot, "ID_pickUpBlock_succeed", false);
               
               // We're done picking up the block.
-              TurnTowardsAFace(robot);
               SetCurrState(State::TrackingFace);
               _isActing = false;
               _attemptCounter = 0;
+              TurnTowardsAFace(robot);
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
@@ -1501,7 +1501,7 @@ namespace Cozmo {
         StartActing(robot,
                     new FacePoseAction(oObject->GetPose(), DEG_TO_RAD(5), PI_F),
                     [this,&robot](ActionResult ret){
-                      PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
+                      PlayAnimation(robot, "ID_reactTo2ndBlock_01");
                       return false;
                     });
         SetCurrState(State::WaitingForBlock);
