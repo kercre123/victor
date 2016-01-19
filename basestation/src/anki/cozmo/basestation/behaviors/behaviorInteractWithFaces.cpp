@@ -201,14 +201,14 @@ namespace Cozmo {
       _newFaceAnimCooldownTime = currentTime_sec;
     }
     
+    // Always turn to look at the face before any reaction
+    robot.GetActionList().QueueAction(IBehavior::sActionSlot, QueueActionPosition::NOW,
+                                      new FacePoseAction(face->GetHeadPose(), DEG_TO_RAD(0.5), DEG_TO_RAD(179)));
+    
     // If we haven't played our init anim yet for this face and it's been awhile
-    // since we did so, do so now and start tracking afterward
-    QueueActionPosition queueNextActionPosition = QueueActionPosition::NOW;
+    // since we did so, do so now and start face-specific reaction and tracking afterward
     if (!dataIter->second._playedNewFaceAnim && currentTime_sec >= _newFaceAnimCooldownTime)
     {
-      robot.GetActionList().Cancel();
-      robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
-      
       PlayAnimation(robot, kMinorFriendlyReactAnimName, QueueActionPosition::AT_END);
       dataIter->second._playedNewFaceAnim = true;
       
@@ -217,11 +217,10 @@ namespace Cozmo {
                                            EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
 
       _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
-      queueNextActionPosition = QueueActionPosition::AT_END;
     }
     
     // Play the reaction animation corresponding to this face ID
-    PlayAnimation(robot, kReactionAnimNames[dataIter->second._whichReactionAnim], queueNextActionPosition);
+    PlayAnimation(robot, kReactionAnimNames[dataIter->second._whichReactionAnim], QueueActionPosition::AT_END);
     
     dataIter->second._trackingStart_sec = currentTime_sec;
     
@@ -446,12 +445,13 @@ namespace Cozmo {
                              "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
                              watchingFaceDuration, _currentMultiFaceInterestingDuration_sec);
             
-            _currentMultiFaceInterestingDuration_sec = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec, kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
+            _currentMultiFaceInterestingDuration_sec = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec,
+                                                                               kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
             break;
           }
         }
         
-        // We're just watching one face, see it's time for cooldown
+        // We're just watching one face, see if it's time for cooldown
         else if(watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
           robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
@@ -669,6 +669,15 @@ namespace Cozmo {
     {
       PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.InvalidFaceID",
                         "Got event that face ID %lld was observed, but it wasn't found.", faceID);
+      return;
+    }
+    
+    if(face->GetNumTimesObserved() < kMinNumFaceObservations) {
+      // Ignore faces that have not been seen a sufficient number of times yet,
+      // to help avoid responding to false positives
+      PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.HandleRobotObservedFace.IgnoringFace",
+                        "Ignoring face %lld, seen only %d times (which is less than %d)",
+                        faceID, face->GetNumTimesObserved(), kMinNumFaceObservations);
       return;
     }
     
