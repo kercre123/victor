@@ -32,6 +32,12 @@ class NavMeshQuadTreeNode
 public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  using NodeCPtrVector = std::vector<const NavMeshQuadTreeNode*>;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -74,6 +80,21 @@ public:
   // on a root node. Such responsibility lies in the caller, not in this node
   // Returns true if successfully expanded, false otherwise
   bool UpgradeRootLevel(const Point2f& direction, NavMeshQuadTreeProcessor& processor);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Exploration
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // find the neighbor of the same or higher level in the given direction
+  const NavMeshQuadTreeNode* FindSingleNeighbor(EDirection direction) const;
+
+  // find the group of smallest neighbors with whom this node shares a border.
+  // they would be children of the same level neighbor. This is normally useful when our neighbor is subdivided but
+  // we are not.
+  // direction: direction in which we move to find the neighbors (4 cardinals)
+  // iterationDirection: when there're more than one neighbor in that direction, which one comes first in the list
+  // NOTE: this method is expected to NOT clear the vector before adding neighbors
+  void AddSmallestNeighbors(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& neighbors) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -91,9 +112,6 @@ private:
   // invalid node id, used as default value
   enum { kInvalidNodeId = 0 };
   
-  // direction with respect to self
-  enum EDirection { North, East, South, West };
-
   // info about moving towards a neighbor
   struct MoveInfo {
     EQuadrant neighborQuadrant;  // destination quadrant
@@ -142,10 +160,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // calculate opposite direction (eg: North vs South, West vs East)
-  static EDirection GetOppositeDirection(EDirection dir);
-  
+   
   // calculate where we would land from a quadrant if we moved in the given direction
   static const MoveInfo* GetDestination(EQuadrant from, EDirection direction);
   
@@ -154,20 +169,20 @@ private:
 
   // iterate until we reach the nodes that have a border in the given direction, and add them to the vector
   // NOTE: this method is expected to NOT clear the vector before adding descendants
-  void AddSmallestDescendants(EDirection direction, std::vector<const NavMeshQuadTreeNode*>& descendants) const;
-
-  // find the neighbor of the same or higher level in the given direction
-  const NavMeshQuadTreeNode* FindSingleNeighbor(EDirection direction) const;
-
-  // find the group of smallest neighbors with whom this node shares a border.
-  // they would be children of the same level neighbor. This is normally useful when our neighbor is subdivided but
-  // we are not
-  // NOTE: this method is expected to NOT clear the vector before adding neighbors
-  void AddSmallestNeighbors(EDirection direction, std::vector<const NavMeshQuadTreeNode*>& neighbors) const;
+  void AddSmallestDescendants(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& descendants) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // NOTE: try to minimize padding in these attributes
+
+  // children when subdivided. Can be empty or have 4 nodes
+  std::vector<NavMeshQuadTreeNode> _children;
+
+  // coordinates of this quad
+  Point3f _center;
+  float   _sideLen;
 
   // parent node
   const NavMeshQuadTreeNode* _parent;
@@ -180,14 +195,7 @@ private:
   
   // information about what's in this quad
   EContentType _contentType;
-  
-  // coordinates of this quad
-  Point3f _center;
-  float   _sideLen;
-
-  // children when subdivided. Can be empty or have 4 nodes
-  std::vector<NavMeshQuadTreeNode> _children;
-  
+    
 }; // class
   
 } // namespace

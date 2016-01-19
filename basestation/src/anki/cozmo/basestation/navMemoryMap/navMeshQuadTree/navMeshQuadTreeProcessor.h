@@ -41,15 +41,22 @@ public:
   NavMeshQuadTreeProcessor();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Attributes
+  // Notifications from nodes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // set root
+  void SetRoot(const NavMeshQuadTreeNode* node) { _root = node; }
 
   // notification when the content type changes for the given node
   void OnNodeContentTypeChanged(NavMeshQuadTreeNode* node, EContentType oldContent, EContentType newContent);
 
   // notification when a node is going to be removed entirely
   void OnNodeDestroyed(NavMeshQuadTreeNode* node);
-
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Processing
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -65,6 +72,23 @@ private:
   
   // true if we have a need to cache the given content type, false otherwise
   static bool IsCached(EContentType contentType);
+  
+  // returns a color used to represent the given contentType for debugging purposes
+  static ColorRGBA GetDebugColor(EContentType contentType);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Processing
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // adds border information
+  void AddBorderWaypoint(const NavMeshQuadTreeNode* from, const NavMeshQuadTreeNode* to);
+  
+  // flags the last border waypoint as finishing a border, so that it doesn't connect with the next one
+  void FinishBorder();
+  
+  // iterate over current nodes and finding borders between the specified types
+  // note this deletes previous borders for other types (in the future we may prefer to find them all at the same time)
+  void FindBorders(EContentType innerType, EContentType outerType);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -72,20 +96,36 @@ private:
   
   // add quads from the given contentType to the vector for rendering
   void AddQuadsToDraw(EContentType contentType,
-    VizManager::SimpleQuadVector& quadVector, const ColorRGBA& color, float zOffset=50.0f) const;
+    VizManager::SimpleQuadVector& quadVector, const ColorRGBA& color, float zOffset) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  struct BorderWaypoint {
+    BorderWaypoint() : from(nullptr), to(nullptr), isEnd(false) {}
+    BorderWaypoint(const NavMeshQuadTreeNode* f, const NavMeshQuadTreeNode* t, bool end) : from(f), to(t), isEnd(end) {}
+    const NavMeshQuadTreeNode* from;  // inner quad
+    const NavMeshQuadTreeNode* to;    // outer quad
+    bool isEnd; // true if this is the last waypoint of a border, for example when the obstacle finishines
+  };
+  
   using NodeSet = std::unordered_set<NavMeshQuadTreeNode*>;
   using NodeSetPerType = std::unordered_map<EContentType, NodeSet, Anki::Util::EnumHasher>;
+  using BorderWaypointVector = std::vector<BorderWaypoint>;
 
   // cache of nodes/quads classified per type for faster processing
-  NodeSetPerType _nodeCache;
+  NodeSetPerType _nodeSets;
+  
+  // borders detected in the last search
+  BorderWaypointVector _borders;
+  
+  // pointer to the root of the tree
+  const NavMeshQuadTreeNode* _root;
   
   // true if there have been changes since last drawn
-  mutable bool _gfxDirty;
+  mutable bool _contentGfxDirty;
+  mutable bool _borderGfxDirty;
   
 }; // class
   

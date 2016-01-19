@@ -22,12 +22,12 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, NavMeshQuadTreeNode* parent)
-: _parent(parent)
+: _center(center)
+, _sideLen(sideLength)
+, _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
 , _contentType(EContentType::Unknown)
-, _center(center)
-, _sideLen(sideLength)
 {
   CORETECH_ASSERT(_quadrant <= EQuadrant::Root);
 }
@@ -118,10 +118,10 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, NavMeshQuad
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _children.emplace_back( Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, TopLeft , this ); // up L
-  _children.emplace_back( Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, TopRight, this ); // up R
-  _children.emplace_back( Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, BotLeft , this ); // lo L
-  _children.emplace_back( Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, BotRight, this ); // lo R
+  _children.emplace_back( Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this ); // up L
+  _children.emplace_back( Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this ); // up R
+  _children.emplace_back( Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this ); // lo L
+  _children.emplace_back( Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
@@ -158,14 +158,13 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
     ColorRGBA color =  Anki::NamedColors::WHITE;
     switch(_contentType)
     {
-      case EContentType::Subdivided          : { color = Anki::NamedColors::BLUE;   break; }
-      case EContentType::Unknown             : { color = Anki::NamedColors::DARKGRAY;  break; }
-      case EContentType::Cliff               : { color = Anki::NamedColors::BLACK;     break; }
-      case EContentType::Clear               : { color = Anki::NamedColors::GREEN;     break; }
-      case EContentType::ObstacleCube        : { color = Anki::NamedColors::RED;       break; }
-      case EContentType::ObstacleUnrecognized: { color = Anki::NamedColors::MAGENTA;   break; }
+      case EContentType::Subdivided          : { color = Anki::NamedColors::BLUE;     color.SetAlpha(1.0f); break; }
+      case EContentType::Unknown             : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
+      case EContentType::Cliff               : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
+      case EContentType::Clear               : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.2f); break; }
+      case EContentType::ObstacleCube        : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
+      case EContentType::ObstacleUnrecognized: { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
     }
-    color.SetAlpha(0.75f);
     //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_level*100}, _sideLen));
     quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _sideLen));
   }
@@ -187,10 +186,10 @@ void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
   const float halfLen    = _sideLen * 0.50f;
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
-  _children.emplace_back( Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, TopLeft , this ); // up L
-  _children.emplace_back( Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, TopRight, this ); // up R
-  _children.emplace_back( Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, BotLeft , this ); // lo L
-  _children.emplace_back( Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, BotRight, this ); // lo E
+  _children.emplace_back( Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this ); // up L
+  _children.emplace_back( Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this ); // up R
+  _children.emplace_back( Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this ); // lo L
+  _children.emplace_back( Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& child : _children )
@@ -377,13 +376,6 @@ void NavMeshQuadTreeNode::ForceSetDetectedContentType(EContentType detectedConte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTreeNode::EDirection NavMeshQuadTreeNode::GetOppositeDirection(EDirection dir)
-{
-  const EDirection ret = (EDirection)((dir + 2) % 4);
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const NavMeshQuadTreeNode::MoveInfo* NavMeshQuadTreeNode::GetDestination(EQuadrant from, EDirection direction)
 {
   static MoveInfo quadrantAndDirection[4][4] =
@@ -420,7 +412,9 @@ const NavMeshQuadTreeNode::MoveInfo* NavMeshQuadTreeNode::GetDestination(EQuadra
   CORETECH_ASSERT( from <= EQuadrant::Root && direction <= EDirection::West );
   
   // root can't move, for any other, apply the table
-  const MoveInfo* ret = ( from == EQuadrant::Root ) ? nullptr : &quadrantAndDirection[from][direction];
+  const size_t fromIdx = std::underlying_type<EQuadrant>::type( from );
+  const size_t dirIdx  = std::underlying_type<EDirection>::type( direction );
+  const MoveInfo* ret = ( from == EQuadrant::Root ) ? nullptr : &quadrantAndDirection[fromIdx][dirIdx];
   return ret;
 }
 
@@ -435,37 +429,52 @@ const NavMeshQuadTreeNode* NavMeshQuadTreeNode::GetChild(EQuadrant quadrant) con
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddSmallestDescendants(EDirection direction, std::vector<const NavMeshQuadTreeNode*>& descendants) const
+void NavMeshQuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& descendants) const
 {
   if ( !IsSubdivided() ) {
     descendants.push_back( this );
   } else {
+  
+    // depending on CW vs CCW, we iterate children in opposite orders
+    const bool isCW = iterationDirection == EClockDirection::CW;
+    EQuadrant firstChild = EQuadrant::Invalid;
+    EQuadrant secondChild = EQuadrant::Invalid;
+  
     switch (direction) {
-      case North:
+      case EDirection::North:
       {
-        _children[EQuadrant::TopLeft].AddSmallestDescendants(direction, descendants);
-        _children[EQuadrant::TopRight].AddSmallestDescendants(direction, descendants);
+        firstChild  = isCW ? EQuadrant::TopLeft  : EQuadrant::TopRight;
+        secondChild = isCW ? EQuadrant::TopRight : EQuadrant::TopLeft;
       }
       break;
-      case East:
+      case EDirection::East:
       {
-        _children[EQuadrant::TopRight].AddSmallestDescendants(direction, descendants);
-        _children[EQuadrant::BotRight].AddSmallestDescendants(direction, descendants);
+        firstChild  = isCW ? EQuadrant::TopRight : EQuadrant::BotRight;
+        secondChild = isCW ? EQuadrant::BotRight : EQuadrant::TopRight;
       }
       break;
-      case South:
+      case EDirection::South:
       {
-        _children[EQuadrant::BotLeft].AddSmallestDescendants(direction, descendants);
-        _children[EQuadrant::BotRight].AddSmallestDescendants(direction, descendants);
+        firstChild  = isCW ? EQuadrant::BotRight : EQuadrant::BotLeft;
+        secondChild = isCW ? EQuadrant::BotLeft  : EQuadrant::BotRight;
       }
       break;
-      case West:
+      case EDirection::West:
       {
-        _children[EQuadrant::TopLeft].AddSmallestDescendants(direction, descendants);
-        _children[EQuadrant::BotLeft].AddSmallestDescendants(direction, descendants);
+        firstChild  = isCW ? EQuadrant::BotLeft : EQuadrant::TopLeft;
+        secondChild = isCW ? EQuadrant::TopLeft : EQuadrant::BotLeft;
       }
       break;
+      case EDirection::Invalid:
+      {
+        CORETECH_ASSERT(false);
+      }
     }
+    
+    CORETECH_ASSERT(firstChild != EQuadrant::Invalid);
+    CORETECH_ASSERT(secondChild != EQuadrant::Invalid);
+    _children[(std::underlying_type<EQuadrant>::type)firstChild ].AddSmallestDescendants(direction, iterationDirection, descendants);
+    _children[(std::underlying_type<EQuadrant>::type)secondChild].AddSmallestDescendants(direction, iterationDirection, descendants);
   }
 }
 
@@ -501,12 +510,19 @@ const NavMeshQuadTreeNode* NavMeshQuadTreeNode::FindSingleNeighbor(EDirection di
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddSmallestNeighbors(EDirection direction, std::vector<const NavMeshQuadTreeNode*>& neighbors) const
+void NavMeshQuadTreeNode::AddSmallestNeighbors(EDirection direction,
+  EClockDirection iterationDirection, NodeCPtrVector& neighbors) const
 {
   const NavMeshQuadTreeNode* firstNeighbor = FindSingleNeighbor(direction);
   if ( nullptr != firstNeighbor )
   {
-    firstNeighbor->AddSmallestDescendants( GetOppositeDirection(direction), neighbors);
+    // direction and iterationDirection are with respect to the node, but the descendants with respect
+    // to the neighbor are opposite.
+    // For example, if we want my smallest neighbors to the North in CW direction, I ask my northern
+    // same level neighbor to give me its Southern descendants in CCW direction.
+    EDirection descendantDir = GetOppositeDirection(direction);
+    EClockDirection descendantClockDir = GetOppositeClockDirection(iterationDirection);
+    firstNeighbor->AddSmallestDescendants( descendantDir, descendantClockDir, neighbors);
   }
 }
 

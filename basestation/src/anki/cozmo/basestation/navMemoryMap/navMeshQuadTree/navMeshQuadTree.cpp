@@ -29,7 +29,13 @@ NavMeshQuadTree::NavMeshQuadTree()
 : _gfxDirty(true)
 , _root({0,0,1}, 256, 4, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
 {
+  _processor.SetRoot( &_root );
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NavMeshQuadTree::~NavMeshQuadTree()
+{
+  _processor.SetRoot(nullptr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
