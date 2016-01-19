@@ -1237,18 +1237,6 @@ namespace Cozmo {
                             TurnTowardsAFace(robot);
                             SetCurrState(State::TrackingFace);
 
-                            Pose3d lastFacePose;
-                            if( robot.GetFaceWorld().GetLastObservedFace(lastFacePose) > 0 ) {
-                              PRINT_NAMED_INFO("BehaviorBlockPlay.PlacingBlock.Complete.FacingUser",
-                                               "finished final happy reaction, turning to look at face");
-                              StartActing( robot, new FacePoseAction(lastFacePose, DEG_TO_RAD(5), PI_F) );
-                            }
-                            else {
-                              PRINT_NAMED_INFO("BehaviorBlockPlay.PlacingBlock.Complete.NoFace",
-                                               "finished final happy reaction, but didnt have a face to look at");
-                              _isActing = false;
-                            }
-                            
                             return true;
                           });
 
