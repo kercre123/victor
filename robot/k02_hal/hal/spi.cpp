@@ -116,7 +116,7 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) {
   drop_tx->preamble = TO_WIFI_PREAMBLE;
   
   // This is where a drop should be 
-  drop_tx->droplet  = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0) | ToWiFi;
+  drop_tx->droplet  = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
   while (jpeglen & 0x3) drop_tx->payload[jpeglen++] = 0xff;
   
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
