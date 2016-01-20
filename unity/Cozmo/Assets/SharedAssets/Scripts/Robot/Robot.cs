@@ -426,8 +426,9 @@ public class Robot : IDisposable {
 
     for (int i = 0; i < _RobotCallbacks.Count; ++i) {
       if (_RobotCallbacks[i].IdTag == idTag) {
-        _RobotCallbacks[i].Invoke(success);
+        var callback = _RobotCallbacks[i];
         _RobotCallbacks.RemoveAt(i);
+        callback.Invoke(success);
         break;
       }
     }
@@ -447,10 +448,16 @@ public class Robot : IDisposable {
     ClearData();
   }
 
-  public void ResetRobotState() {
+  public bool IsLightCubeInPickupRange(LightCube lightCube) {
+    var bounds = new Bounds(
+      new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f), 
+      Vector3.one * CozmoUtil.kBlockLengthMM);
+
+    return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
+  }
+
+  public void ResetRobotState(Action onComplete) {
     DriveWheels(0.0f, 0.0f);
-    SetHeadAngle(0.0f);
-    SetLiftHeight(0.0f);
     TrackToObject(null);
     CancelAllCallbacks();
     SetBehaviorSystem(false);
@@ -463,7 +470,26 @@ public class Robot : IDisposable {
     foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
       kvp.Value.SetLEDs(Color.black);
     }
-    SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.black));
+    SetBackpackLEDs(Color.black.ToUInt());
+
+    TryResetHeadAndLift(onComplete);
+  }
+
+  public void TryResetHeadAndLift(Action onComplete) {
+    // if there is a light cube right in front of cozmo, lowering
+    // the lift will cause him to lift up. Instead, rotate 90 degrees
+    // and try lowering lift
+    foreach (var lightCube in LightCubes.Values) {
+      if (IsLightCubeInPickupRange(lightCube)) {
+        TurnInPlace(Mathf.PI * 0.5f, (s) => TryResetHeadAndLift(onComplete));
+        return;
+      }
+    }
+    SetHeadAngle(0.0f);
+    SetLiftHeight(0.0f);
+    if (onComplete != null) {
+      onComplete();
+    }
   }
 
   public void ClearData(bool initializing = false) {
@@ -620,7 +646,7 @@ public class Robot : IDisposable {
   }
 
   public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
-    VisualizeQuadMessage.color = CozmoPalette.ColorToUInt(Color.black);
+    VisualizeQuadMessage.color = Color.black.ToUInt();
     VisualizeQuadMessage.xLowerLeft = lowerLeft.x;
     VisualizeQuadMessage.yLowerLeft = lowerLeft.y;
     VisualizeQuadMessage.zLowerLeft = lowerLeft.z;
@@ -1343,7 +1369,7 @@ public class Robot : IDisposable {
       SetBackbackArrowLED(ledToChange, highestIntensity);
     }
     else {
-      uint colorUint = CozmoPalette.ColorToUInt(color);
+      uint colorUint = color.ToUInt();
       SetBackpackLED((int)ledToChange, colorUint);
     }
   }
@@ -1351,12 +1377,12 @@ public class Robot : IDisposable {
   public void SetBackbackArrowLED(LEDId ledId, float intensity) {
     intensity = Mathf.Clamp(intensity, 0f, 1f);
     Color color = new Color(intensity, intensity, intensity);
-    uint colorUint = CozmoPalette.ColorToUInt(color);
+    uint colorUint = color.ToUInt();
     SetBackpackLED((int)ledId, colorUint);
   }
 
   public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionDurationMs = 0) {
-    uint colorUint = CozmoPalette.ColorToUInt(color);
+    uint colorUint = color.ToUInt();
     SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }
 
@@ -1371,7 +1397,7 @@ public class Robot : IDisposable {
                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     // Special case for arrow lights; they only accept red as a color
     if (index == (int)LEDId.LED_BACKPACK_LEFT || index == (int)LEDId.LED_BACKPACK_RIGHT) {
-      //uint whiteUint = CozmoPalette.ColorToUInt(Color.white);
+      //uint whiteUint = Color.white.ToUInt();
       //onColor = (onColor > 0) ? whiteUint : 0;
       //offColor = (offColor > 0) ? whiteUint : 0;
     }

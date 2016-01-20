@@ -4,67 +4,67 @@ using System;
 using System.Collections.Generic;
 
 namespace Cozmo.Util { 
-  public static class ListLinq {
+  public static class IListLinq {
 
     #region Int Math
 
-    public static int Sum(this List<int> array) {
+    public static int Sum(this IList<int> list) {
       int sum = 0;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        sum += array[i];
+      for (int i = 0, len = list.Count; i < len; i++) {
+        sum += list[i];
       }
       return sum;
     }
 
-    public static int Max(this List<int> array) {
+    public static int Max(this IList<int> list) {
       int max = int.MinValue;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        max = (array[i] > max ? array[i] : max);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        max = (list[i] > max ? list[i] : max);
       }
       return max;
     }
 
-    public static int Min(this List<int> array) {
+    public static int Min(this IList<int> list) {
       int min = int.MaxValue;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        min = (array[i] < min ? array[i] : min);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        min = (list[i] < min ? list[i] : min);
       }
       return min;
     }
 
-    public static void Add(this List<int> array, List<int> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] += second[i];
+    public static void Add(this IList<int> list, IList<int> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] += second[i];
       }
     }
 
-    public static void Subtract(this List<int> array, List<int> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] -= second[i];
+    public static void Subtract(this IList<int> list, IList<int> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] -= second[i];
       }
     }
 
-    public static void Multiply(this List<int> array, List<int> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] *= second[i];
+    public static void Multiply(this IList<int> list, IList<int> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] *= second[i];
       }
     }
 
-    public static void Divide(this List<int> array, List<int> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] /= second[i];
+    public static void Divide(this IList<int> list, IList<int> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] /= second[i];
       }
     }
 
-    public static void Invert(this List<int> array) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = -array[i];
+    public static void Invert(this IList<int> list) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = -list[i];
       }
     }
 
-    public static void Zero(this List<int> array) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = 0;
+    public static void Zero(this IList<int> list) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = 0;
       }
     }
 
@@ -72,63 +72,63 @@ namespace Cozmo.Util {
 
     #region Long Math
 
-    public static long Sum(this List<long> array) {
+    public static long Sum(this IList<long> list) {
       long sum = 0;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        sum += array[i];
+      for (int i = 0, len = list.Count; i < len; i++) {
+        sum += list[i];
       }
       return sum;
     }
 
-    public static long Max(this List<long> array) {
+    public static long Max(this IList<long> list) {
       long max = long.MinValue;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        max = (array[i] > max ? array[i] : max);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        max = (list[i] > max ? list[i] : max);
       }
       return max;
     }
 
-    public static long Min(this List<long> array) {
+    public static long Min(this IList<long> list) {
       long min = long.MaxValue;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        min = (array[i] < min ? array[i] : min);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        min = (list[i] < min ? list[i] : min);
       }
       return min;
     }
 
-    public static void Add(this List<long> array, List<long> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] += second[i];
+    public static void Add(this IList<long> list, IList<long> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] += second[i];
       }
     }
 
-    public static void Subtract(this List<long> array, List<long> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] -= second[i];
+    public static void Subtract(this IList<long> list, IList<long> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] -= second[i];
       }
     }
 
-    public static void Multiply(this List<long> array, List<long> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] *= second[i];
+    public static void Multiply(this IList<long> list, IList<long> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] *= second[i];
       }
     }
 
-    public static void Divide(this List<long> array, List<long> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] /= second[i];
+    public static void Divide(this IList<long> list, IList<long> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] /= second[i];
       }
     }
 
-    public static void Invert(this List<long> array) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = -array[i];
+    public static void Invert(this IList<long> list) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = -list[i];
       }
     }
 
-    public static void Zero(this List<long> array) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = 0;
+    public static void Zero(this IList<long> list) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = 0;
       }
     }
 
@@ -136,63 +136,63 @@ namespace Cozmo.Util {
 
     #region Float Math
 
-    public static float Sum(this List<float> array) {
+    public static float Sum(this IList<float> list) {
       float sum = 0;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        sum += array[i];
+      for (int i = 0, len = list.Count; i < len; i++) {
+        sum += list[i];
       }
       return sum;
     }
 
-    public static float Max(this List<float> array) {
+    public static float Max(this IList<float> list) {
       float max = float.MinValue;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        max = (array[i] > max ? array[i] : max);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        max = (list[i] > max ? list[i] : max);
       }
       return max;
     }
 
-    public static float Min(this List<float> array) {
+    public static float Min(this IList<float> list) {
       float min = float.MaxValue;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        min = (array[i] < min ? array[i] : min);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        min = (list[i] < min ? list[i] : min);
       }
       return min;
     }
 
-    public static void Add(this List<float> array, List<float> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] += second[i];
+    public static void Add(this IList<float> list, IList<float> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] += second[i];
       }
     }
 
-    public static void Subtract(this List<float> array, List<float> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] -= second[i];
+    public static void Subtract(this IList<float> list, IList<float> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] -= second[i];
       }
     }
 
-    public static void Multiply(this List<float> array, List<float> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] *= second[i];
+    public static void Multiply(this IList<float> list, IList<float> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] *= second[i];
       }
     }
 
-    public static void Divide(this List<float> array, List<float> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] /= second[i];
+    public static void Divide(this IList<float> list, IList<float> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] /= second[i];
       }
     }
 
-    public static void Invert(this List<float> array) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = -array[i];
+    public static void Invert(this IList<float> list) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = -list[i];
       }
     }
 
-    public static void Zero(this List<float> array) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = 0;
+    public static void Zero(this IList<float> list) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = 0;
       }
     }
 
@@ -200,164 +200,178 @@ namespace Cozmo.Util {
 
     #region Double Math
 
-    public static double Sum(this List<double> array) {
+    public static double Sum(this IList<double> list) {
       double sum = 0;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        sum += array[i];
+      for (int i = 0, len = list.Count; i < len; i++) {
+        sum += list[i];
       }
       return sum;
     }
 
-    public static double Max(this List<double> array) {
+    public static double Max(this IList<double> list) {
       double max = double.MinValue;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        max = (array[i] > max ? array[i] : max);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        max = (list[i] > max ? list[i] : max);
       }
       return max;
     }
 
-    public static double Min(this List<double> array) {
+    public static double Min(this IList<double> list) {
       double min = double.MaxValue;
-      for (int i = 0, len = array.Count; i < len; i++) {
-        min = (array[i] < min ? array[i] : min);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        min = (list[i] < min ? list[i] : min);
       }
       return min;
     }
 
-    public static void Add(this List<double> array, List<double> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] += second[i];
+    public static void Add(this IList<double> list, IList<double> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] += second[i];
       }
     }
 
-    public static void Subtract(this List<double> array, List<double> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] -= second[i];
+    public static void Subtract(this IList<double> list, IList<double> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] -= second[i];
       }
     }
 
-    public static void Multiply(this List<double> array, List<double> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] *= second[i];
+    public static void Multiply(this IList<double> list, IList<double> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] *= second[i];
       }
     }
 
-    public static void Divide(this List<double> array, List<double> second) {
-      for (int i = 0; i < array.Count && i < second.Count; i++) {
-        array[i] /= second[i];
+    public static void Divide(this IList<double> list, IList<double> second) {
+      for (int i = 0; i < list.Count && i < second.Count; i++) {
+        list[i] /= second[i];
       }
     }
 
-    public static void Invert(this List<double> array) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = -array[i];
+    public static void Invert(this IList<double> list) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = -list[i];
       }
     }
 
-    public static void Zero(this List<double> array) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = 0;
+    public static void Zero(this IList<double> list) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = 0;
       }
     }
 
     #endregion
 
     #region Helper Methods
-    public static bool Any<T>(this List<T> array, Func<T, bool> selector = null) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        if (selector == null || selector(array[i])) {
+    public static bool Any<T>(this IList<T> list, Func<T, bool> selector = null) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        if (selector == null || selector(list[i])) {
           return true;
         }
       }
       return false;
     }
 
-    public static T FirstOrDefault<T>(this List<T> array) {
-      if (array.Count > 0) {
-        return array[0];
+    public static T FirstOrDefault<T>(this IList<T> list) {
+      if (list.Count > 0) {
+        return list[0];
       }
       return default(T);
     }
 
-    public static T FirstOrDefault<T>(this List<T> array, Func<T, bool> selector) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        if (selector == null || selector(array[i])) {
-          return array[i];
+    public static T FirstOrDefault<T>(this IList<T> list, Func<T, bool> selector) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        if (selector == null || selector(list[i])) {
+          return list[i];
         }
       }
       return default(T);
     }
 
-    public static T LastOrDefault<T>(this List<T> array) {
-      if (array.Count > 0) {
-        return array[array.Count - 1];
+    public static T LastOrDefault<T>(this IList<T> list) {
+      if (list.Count > 0) {
+        return list[list.Count - 1];
       }
       return default(T);
     }
 
-    public static T LastOrDefault<T>(this List<T> array, Func<T, bool> selector) {
-      for (int i = array.Count - 1; i >= 0; i--) {
-        if (selector == null || selector(array[i])) {
-          return array[i];
+    public static T LastOrDefault<T>(this IList<T> list, Func<T, bool> selector) {
+      for (int i = list.Count - 1; i >= 0; i--) {
+        if (selector == null || selector(list[i])) {
+          return list[i];
         }
       }
       return default(T);
     }
 
-    public static TDest[] SelectArray<TSource, TDest>(this List<TSource> array, Func<TSource, TDest> selector) {
-      TDest[] result = new TDest[array.Count];
-      for (int i = 0, len = array.Count; i < len; i++) {
-        result[i] = selector(array[i]);
+    public static TDest[] Selectlist<TSource, TDest>(this IList<TSource> list, Func<TSource, TDest> selector) {
+      TDest[] result = new TDest[list.Count];
+      for (int i = 0, len = list.Count; i < len; i++) {
+        result[i] = selector(list[i]);
       }
       return result;
     }
 
-    public static List<TDest> SelectList<TSource, TDest>(this List<TSource> array, Func<TSource, TDest> selector) {
-      List<TDest> result = new List<TDest>(array.Count);
-      for (int i = 0, len = array.Count; i < len; i++) {
-        result.Add(selector(array[i]));
+    public static IList<TDest> SelectList<TSource, TDest>(this IList<TSource> list, Func<TSource, TDest> selector) {
+      List<TDest> result = new List<TDest>(list.Count);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        result.Add(selector(list[i]));
       }
       return result;
     }
       
-    public static List<T> ToList<T>(List<T> array) {
-      // passing the array into the constructor treats it as an IEnumerable, which allocates
-      List<T> result = new List<T>(array.Count);
-      for (int i = 0, len = array.Count; i < len; i++) {
-        result.Add(array[i]);
+    public static List<T> ToList<T>(IList<T> list) {
+      // passing the list into the constructor treats it as an IEnumerable, which allocates
+      List<T> result = new List<T>(list.Count);
+      for (int i = 0, len = list.Count; i < len; i++) {
+        result.Add(list[i]);
       }
       return result;
     }
 
-    public static void ForEach<T>(this List<T> array, Action<T> action) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        action(array[i]);
+    public static void ForEach<T>(this IList<T> list, Action<T> action) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        action(list[i]);
       }
     }
 
-    public static void ForEach<T>(this IEnumerable<T> array, Action<T> action) {
-      foreach(var element in array) {
+    public static void ForEach<T>(this IEnumerable<T> list, Action<T> action) {
+      foreach(var element in list) {
         action(element);
       }
     }
 
-    public static void UpdateEach<T>(this List<T> array, Func<T,T> action) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = action(array[i]);
+    public static void UpdateEach<T>(this IList<T> list, Func<T,T> action) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = action(list[i]);
       }
     }
 
-    public static void Fill<T>(this List<T> array, T value) {
-      for (int i = 0, len = array.Count; i < len; i++) {
-        array[i] = value;
+    public static void Fill<T>(this IList<T> list, T value) {
+      for (int i = 0, len = list.Count; i < len; i++) {
+        list[i] = value;
       }
     }
 
-    public static void FillDefault<T>(this List<T> array) {
-      array.Fill(default(T));
+    public static void FillDefault<T>(this IList<T> list) {
+      list.Fill(default(T));
     }
 
-    public static bool SequenceEquals<T>(this List<T> a1, List<T> a2, EqualityComparer<T> comparer = null)
+    public static void ReverseInPlace<T>(this IList<T> list) {
+      for (int i = 0, end = list.Count - 1, len = list.Count / 2; i < len; i++) {
+        var tmp = list[i];
+        list[i] = list[end - i];
+        list[end - i] = tmp;
+      }
+    }
+
+    public static IEnumerable<T> Reversed<T>(this IList<T> list) {
+      for (int i = list.Count - 1; i >= 0; i--) {
+        yield return list[i];
+      }
+    }
+      
+    public static bool SequenceEquals<T>(this IList<T> a1, IList<T> a2, EqualityComparer<T> comparer = null)
     {
       if (ReferenceEquals(a1, a2))
         return true;
