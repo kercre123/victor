@@ -353,7 +353,8 @@ public abstract class GameBase : MonoBehaviour {
   #region How To Play Slides
 
   public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
-    return null;
+    GameObject slideObject = _SharedMinigameViewInstance.ShowHowToPlaySlide(UIPrefabHolder.Instance.InitialCubesSlide);
+    return slideObject.GetComponent<ShowCozmoCubeSlide>();
   }
 
   /// <summary>

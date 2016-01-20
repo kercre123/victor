@@ -74,6 +74,7 @@ public class InitialCubesState : State {
   }
 
   private void HandleContinueButtonClicked() {
+    _Game.HideContinueButtonShelf();
     _StateMachine.SetNextState(_NextState);
   }
 }
