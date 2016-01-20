@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 using Anki.Cozmo.Audio;
 using AnimationGroups;
+using Cozmo.Util;
 
 namespace SpeedTap {
 
@@ -10,7 +11,25 @@ namespace SpeedTap {
 
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
-    public Color MatchColor;
+
+    public readonly Color[] PlayerWinColors = new Color[4];
+    public readonly Color[] CozmoWinColors = new Color[4];
+    public Color PlayerWinColor { 
+      get { 
+        return PlayerWinColors[0]; 
+      } 
+      set {
+        PlayerWinColors.Fill(value);
+      }
+    }
+    public Color CozmoWinColor { 
+      get { 
+        return CozmoWinColors[0]; 
+      } 
+      set {
+        CozmoWinColors.Fill(value);
+      }
+    }
 
     public ISpeedTapRules Rules;
 
@@ -187,6 +206,8 @@ namespace SpeedTap {
         return new LightCountSameColorNoTap();
       case SpeedTapRuleSet.LightCountNoColor:
         return new LightCountNoColorSpeedTapRules();
+      case SpeedTapRuleSet.LightCountSameColorNoRed:
+        return new LightCountSameColorNoRed();
       default:
         return new DefaultSpeedTapRules();
       }
