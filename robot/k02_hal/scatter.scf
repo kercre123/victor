@@ -24,6 +24,7 @@ LR_m_text m_text_start m_text_size {   ; load region size_region
   
   RW_DATA m_data_start m_data_size { ; RW data
     .ANY (+RW +ZI)
+    *(CODERAM)
   }
   
   RW_DATA2 m_data_2_start { ; RW data
