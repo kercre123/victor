@@ -58,7 +58,7 @@ public class MinesweeperGame : GameBase {
   public void SetupPanel() {
     var panelObject = UIManager.CreateUIElement(_MinesweeperPanelPrefab);
 
-    panelObject.transform.SetParent(SharedMinigameViewInstance.transform, false);
+    panelObject.transform.SetParent(SharedMinigameViewInstanceParent, false);
 
     _Panel = panelObject.GetComponent<MinesweeperPanel>();
 

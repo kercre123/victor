@@ -35,6 +35,10 @@ namespace Cozmo {
       private ChallengeTitleWidget _TitleWidgetInstance;
 
       [SerializeField]
+      private ContinueGameShelfWidget _ContinueButtonShelfPrefab;
+      private ContinueGameShelfWidget _ContinueButtonShelfInstance;
+
+      [SerializeField]
       private RectTransform _HowToSlideContainer;
 
       private CanvasGroup _CurrentSlide;
@@ -46,6 +50,8 @@ namespace Cozmo {
       private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
 
       public CanvasGroup CurrentSlide { get { return _CurrentSlide; } }
+
+      public bool _OpenAnimationStarted = false;
 
       protected override void CleanUp() {
         foreach (IMinigameWidget widget in _ActiveWidgets) {
@@ -76,6 +82,7 @@ namespace Cozmo {
             openAnimation.Join(open);
           }
         }
+        _OpenAnimationStarted = true;
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
@@ -100,6 +107,14 @@ namespace Cozmo {
         }
       }
 
+      private void AddWidget(IMinigameWidget widgetToAdd) {
+        _ActiveWidgets.Add(widgetToAdd);
+        if (_OpenAnimationStarted) {
+          Sequence openAnimation = widgetToAdd.OpenAnimationSequence();
+          openAnimation.Play();
+        }
+      }
+
       #region Quit Button
 
       public void CreateQuitButton() {
@@ -115,7 +130,7 @@ namespace Cozmo {
         _QuitButtonInstance.QuitViewClosed += HandleQuitViewClosed;
         _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
 
-        _ActiveWidgets.Add(_QuitButtonInstance);
+        AddWidget(_QuitButtonInstance);
       }
 
       private void HandleQuitViewOpened() {
@@ -169,7 +184,7 @@ namespace Cozmo {
         _CozmoStatusInstance = statusWidgetObj.GetComponent<CozmoStatusWidget>();
         _CozmoStatusInstance.SetMaxAttempts(attemptsAllowed);
         _CozmoStatusInstance.SetAttemptsLeft(attemptsAllowed);
-        _ActiveWidgets.Add(_CozmoStatusInstance);
+        AddWidget(_CozmoStatusInstance);
       }
 
       #endregion
@@ -222,7 +237,7 @@ namespace Cozmo {
         }
         _ChallengeProgressWidgetInstance.ResetProgress();
 
-        _ActiveWidgets.Add(_ChallengeProgressWidgetInstance);
+        AddWidget(_ChallengeProgressWidgetInstance);
       }
 
       #endregion
@@ -267,7 +282,7 @@ namespace Cozmo {
           _TitleWidgetInstance.TitleIcon = titleSprite;
         }
 
-        _ActiveWidgets.Add(_TitleWidgetInstance);
+        AddWidget(_TitleWidgetInstance);
       }
 
       #endregion
@@ -324,14 +339,47 @@ namespace Cozmo {
 
       #region ContinueGameShelfWidget
 
-      public void ShowContinueButton(string helpText, string buttonText, 
-                                     ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler) {
+      public void ShowContinueButtonShelf() {
+        if (_ContinueButtonShelfInstance != null) {
+          return;
+        }
+
+        GameObject widgetObj = UIManager.CreateUIElement(_ContinueButtonShelfPrefab.gameObject, this.transform);
+        _ContinueButtonShelfInstance = widgetObj.GetComponent<ContinueGameShelfWidget>();
+
+        AddWidget(_ContinueButtonShelfInstance);
       }
 
-      public void HideContinueButton() {
+      public void HideContinueButtonShelf() {
+        if (_ContinueButtonShelfInstance == null) {
+          return;
+        }
+
+        ContinueGameShelfWidget oldShelf = _ContinueButtonShelfInstance;
+        _ActiveWidgets.Remove(_ContinueButtonShelfInstance);
+        _ContinueButtonShelfInstance = null;
+
+        Sequence close = oldShelf.CloseAnimationSequence();
+        close.AppendCallback(() => {
+          oldShelf.DestroyWidgetImmediately();
+        });
+        close.Play();
+      }
+
+      public void SetContinueButtonShelfText(string text) {
+        _ContinueButtonShelfInstance.SetShelfText(text);
+      }
+
+      public void SetContinueButtonText(string text) {
+        _ContinueButtonShelfInstance.SetButtonText(text);
+      }
+
+      public void SetContinueButtonListener(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler) {
+        _ContinueButtonShelfInstance.SetButtonListener(buttonClickHandler);
       }
 
       public void EnableContinueButton(bool enable) {
+        _ContinueButtonShelfInstance.SetButtonInteractivity(enable);
       }
 
       #endregion

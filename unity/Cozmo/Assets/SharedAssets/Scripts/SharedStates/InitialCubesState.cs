@@ -45,7 +45,7 @@ public class InitialCubesState : State {
 
       bool isValidCube = lightCube.Value.MarkersVisible;
 
-      if (isValidCube) { 
+      if (isValidCube && numValidCubes < _CubesRequired) { 
         lightCube.Value.SetLEDs(Color.white);
         numValidCubes++;
       }

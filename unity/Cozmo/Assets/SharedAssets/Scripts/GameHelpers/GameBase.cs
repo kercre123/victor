@@ -63,7 +63,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
-  public SharedMinigameView SharedMinigameViewInstance { get { return _SharedMinigameViewInstance; } }
+  protected Transform SharedMinigameViewInstanceParent { get { return _SharedMinigameViewInstance.transform; } }
 
   protected ChallengeData _ChallengeData;
   private ChallengeEndedDialog _ChallengeEndViewInstance;
@@ -354,7 +354,9 @@ public abstract class GameBase : MonoBehaviour {
 
   public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
     GameObject slideObject = _SharedMinigameViewInstance.ShowHowToPlaySlide(UIPrefabHolder.Instance.InitialCubesSlide);
-    return slideObject.GetComponent<ShowCozmoCubeSlide>();
+    ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
+    cubeSlide.Initialize(numCubesRequired);
+    return cubeSlide;
   }
 
   /// <summary>
@@ -402,21 +404,27 @@ public abstract class GameBase : MonoBehaviour {
   #region ContinueGameShelfWidget
 
   public void ShowContinueButtonShelf() {
+    _SharedMinigameViewInstance.ShowContinueButtonShelf();
   }
 
   public void HideContinueButtonShelf() {
+    _SharedMinigameViewInstance.HideContinueButtonShelf();
   }
 
   public void SetContinueButtonShelfText(string text) {
+    _SharedMinigameViewInstance.SetContinueButtonShelfText(text);
   }
 
   public void SetContinueButtonText(string text) {
+    _SharedMinigameViewInstance.SetContinueButtonText(text);
   }
 
   public void SetContinueButtonListener(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler) {
+    _SharedMinigameViewInstance.SetContinueButtonListener(buttonClickHandler);
   }
 
   public void EnableContinueButton(bool enable) {
+    _SharedMinigameViewInstance.EnableContinueButton(enable);
   }
 
   #endregion

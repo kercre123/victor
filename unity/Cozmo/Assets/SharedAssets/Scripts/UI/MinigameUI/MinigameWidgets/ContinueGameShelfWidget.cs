@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using Anki.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
@@ -8,10 +9,40 @@ namespace Cozmo {
 
       public delegate void ContinueButtonClickHandler();
 
-      public void Initialize(string buttonText, string helpText, ContinueButtonClickHandler buttonCallback) {
+      [SerializeField]
+      private AnkiButton _ContinueButton;
+
+      [SerializeField]
+      private AnkiTextLabel _ShelfTextLabel;
+
+      private bool _ShouldButtonBeInteractive = false;
+      private ContinueButtonClickHandler _OnClickCallback;
+
+      private void Start() {
+        _ContinueButton.onClick.AddListener(HandleContinueButtonClicked);
       }
 
-      public void SetButtonEnabled(bool enableButton) {
+      public void SetShelfText(string text) {
+        _ShelfTextLabel.text = text;
+      }
+
+      public void SetButtonText(string text) {
+        _ContinueButton.Text = text;
+      }
+
+      public void SetButtonListener(ContinueButtonClickHandler buttonClickHandler) {
+        _OnClickCallback = buttonClickHandler;
+      }
+
+      private void HandleContinueButtonClicked() {
+        if (_OnClickCallback != null) {
+          _OnClickCallback();
+        }
+      }
+
+      public void SetButtonInteractivity(bool enableButton) {
+        _ShouldButtonBeInteractive = enableButton;
+        _ContinueButton.Interactable = _ShouldButtonBeInteractive;
       }
 
       #region IMinigameWidget
@@ -24,7 +55,7 @@ namespace Cozmo {
       public Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x, 
-          this.transform.localPosition.y + 300, this.transform.localPosition.z),
+          this.transform.localPosition.y - 300, this.transform.localPosition.z),
           0.25f).From().SetEase(Ease.OutQuad));
         return open;
       }
@@ -33,17 +64,18 @@ namespace Cozmo {
       public Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x, 
-          this.transform.localPosition.y + 300, this.transform.localPosition.z),
+          this.transform.localPosition.y - 300, this.transform.localPosition.z),
           0.25f).SetEase(Ease.OutQuad));
         return close;
       }
 
       public void EnableInteractivity() {
-        // Nothing interactive to enable
+        _ContinueButton.Interactable = _ShouldButtonBeInteractive;
       }
 
       public void DisableInteractivity() {
-        // Nothing interactive to disable
+        _ContinueButton.Interactable = false;
+        
       }
 
       #endregion
