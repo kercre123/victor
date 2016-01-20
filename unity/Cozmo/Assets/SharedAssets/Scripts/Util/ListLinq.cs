@@ -263,6 +263,15 @@ namespace Cozmo.Util {
     #endregion
 
     #region Helper Methods
+    public static bool Any<T>(this List<T> array, Func<T, bool> selector = null) {
+      for (int i = 0, len = array.Count; i < len; i++) {
+        if (selector == null || selector(array[i])) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     public static T FirstOrDefault<T>(this List<T> array) {
       if (array.Count > 0) {
         return array[0];
@@ -271,11 +280,25 @@ namespace Cozmo.Util {
     }
 
     public static T FirstOrDefault<T>(this List<T> array, Func<T, bool> selector) {
+      for (int i = 0, len = array.Count; i < len; i++) {
+        if (selector == null || selector(array[i])) {
+          return array[i];
+        }
+      }
+      return default(T);
+    }
+
+    public static T LastOrDefault<T>(this List<T> array) {
       if (array.Count > 0) {
-        for (int i = 0, len = array.Count; i < len; i++) {
-          if (selector == null || selector(array[i])) {
-            return array[i];
-          }
+        return array[array.Count - 1];
+      }
+      return default(T);
+    }
+
+    public static T LastOrDefault<T>(this List<T> array, Func<T, bool> selector) {
+      for (int i = array.Count - 1; i >= 0; i--) {
+        if (selector == null || selector(array[i])) {
+          return array[i];
         }
       }
       return default(T);
@@ -322,6 +345,16 @@ namespace Cozmo.Util {
       for (int i = 0, len = array.Count; i < len; i++) {
         array[i] = action(array[i]);
       }
+    }
+
+    public static void Fill<T>(this List<T> array, T value) {
+      for (int i = 0, len = array.Count; i < len; i++) {
+        array[i] = value;
+      }
+    }
+
+    public static void FillDefault<T>(this List<T> array) {
+      array.Fill(default(T));
     }
 
     public static bool SequenceEquals<T>(this List<T> a1, List<T> a2, EqualityComparer<T> comparer = null)
