@@ -6,8 +6,12 @@ using DG.Tweening;
 namespace ScriptedSequences.Actions {
   public class FadeAudio : ScriptedSequenceAction {
 
-    [DefaultValue(true)]
-    public bool RobotVolume;
+    public enum FadeVolumeChannel {
+      Robot,
+      Music
+    }
+
+    public FadeVolumeChannel VolumeChannel;
 
     public float TargetVolume;
 
@@ -17,8 +21,15 @@ namespace ScriptedSequences.Actions {
 
     public override ISimpleAsyncToken Act() {
       _Token = new SimpleAsyncToken();
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
-      DOTween.To(() => currentRobot.GetRobotVolume(), x => currentRobot.SetRobotVolume(x), TargetVolume, Duration).OnComplete(() => DoneTween());
+
+      if (VolumeChannel == FadeVolumeChannel.Robot) {
+        Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+        DOTween.To(() => currentRobot.GetRobotVolume(), x => currentRobot.SetRobotVolume(x), TargetVolume, Duration).OnComplete(() => DoneTween());
+      }
+      else {
+        // TODO: Fade Music Volume here
+      }
+
       return _Token;
     }
 
