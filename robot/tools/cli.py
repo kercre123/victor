@@ -102,7 +102,7 @@ class CozmoCLI(IDataReceiver):
                         'base':      base,
                         'level':     msg.trace.level,
                         'name':      self.nameTable[msg.trace.name],
-                        'formatted': (self.formatTable[msg.trace.stringId][0] % msg.trace.value)
+                        'formatted': (self.formatTable[msg.trace.stringId][0] % tuple(msg.trace.value))
                 }
                 sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
         elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:

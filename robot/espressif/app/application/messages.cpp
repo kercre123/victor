@@ -1,11 +1,13 @@
 extern "C" {
 #include "client.h"
+#include "foregroundTask.h"
 }
 #include "messages.h"
 #include "anki/cozmo/robot/esp.h"
 #include "anki/cozmo/robot/logging.h"
 #include "animationController.h"
 #include "rtip.h"
+#include "nvStorage.h"
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
@@ -16,6 +18,26 @@ namespace Anki {
       Result Init()
       {
         return RESULT_OK;
+      }
+      
+      bool taskReadNVAndSend(u32 tag)
+      {
+        NVStorage::NVStorageBlob entry;
+        entry.tag = tag;
+        const NVStorage::NVResult result = NVStorage::Read(entry);
+        if (result == NVStorage::NV_OKAY)
+        {
+          RobotInterface::SendMessage(entry);
+        }
+        else
+        {
+          NVStorage::NVOpResult msg;
+          msg.tag = tag;
+          msg.result = result;
+          msg.write = false;
+          RobotInterface::SendMessage(msg);
+        }
+        return false;
       }
       
       void ProcessMessage(u8* buffer, u16 bufferSize)
@@ -45,6 +67,20 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
             {
               UpgradeController::Trigger(msg.triggerOTAUpgrade);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_writeNV:
+            {
+              NVStorage::NVOpResult result;
+              result.tag    = msg.writeNV.tag;
+              result.write  = true;
+              result.result = NVStorage::Write(msg.writeNV);
+              RobotInterface::SendMessage(result);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_readNV:
+            {
+              foregroundTaskPost(taskReadNVAndSend, msg.readNV);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_abortAnimation:

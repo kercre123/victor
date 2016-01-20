@@ -107,6 +107,10 @@ void user_rf_pre_init(void)
   //system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
 }
 
+/// Forward declarations
+int NVCheckIntegrity(const bool recollect, const bool defragment);
+void NVWipeAll(void);
+
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
  */
@@ -115,6 +119,15 @@ static void system_init_done(void)
   // Check bootloader config and clear if nessisary
   // Do this before i2spiInit so we don't desynchronize
   checkAndClearBootloaderConfig();
+  
+  // Check the file system integrity
+#if 1
+  const int nvops = NVCheckIntegrity(false, false); /// @TODO do the recollect and defragment operations
+  os_printf("Completed %d non-volatile file system operations\r\n", nvops);
+#else
+  NVWipeAll();
+  os_printf("Wiped all NV storage\r\n");
+#endif
   
   // Setup Basestation client
   clientInit();
