@@ -11,15 +11,14 @@ public class StatContainer : IEquatable<StatContainer>, IDictionary<Anki.Cozmo.P
 
   private const int kCount = (int)Anki.Cozmo.ProgressionStatType.Count;
 
-  private static List<Anki.Cozmo.ProgressionStatType> sKeys;
+  public static readonly Anki.Cozmo.ProgressionStatType[] sKeys;
 
   static StatContainer() {
-    sKeys = new List<Anki.Cozmo.ProgressionStatType>(kCount);
+    sKeys = new Anki.Cozmo.ProgressionStatType[kCount];
     for (int i = 0; i < kCount; i++) {
-      sKeys.Add((Anki.Cozmo.ProgressionStatType)i);
+      sKeys[i] = (Anki.Cozmo.ProgressionStatType)i;
     }
   }
-
 
   [SerializeField]
   private int[] _Stats = new int[kCount];

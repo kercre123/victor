@@ -76,8 +76,6 @@ public abstract class GameBase : MonoBehaviour {
 
   private StatContainer _RewardedXp;
 
-  private delegate int XpCalculator();
-
   private float _GameStartTime;
 
   public void InitializeMinigame(ChallengeData challengeData) {
@@ -184,6 +182,19 @@ public abstract class GameBase : MonoBehaviour {
     Destroy(gameObject);
   }
 
+  private int ComputeXpForStat(Anki.Cozmo.ProgressionStatType statType) {
+    switch (statType) {
+    case Anki.Cozmo.ProgressionStatType.Time:
+      return CalculateTimeStatRewards();
+    case Anki.Cozmo.ProgressionStatType.Novelty:
+      return CalculateNoveltyStatRewards();
+    case Anki.Cozmo.ProgressionStatType.Excitement:
+      return CalculateExcitementStatRewards();
+    default: 
+      return 0;
+    }
+  }
+
   private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
     // Open confirmation dialog instead
     _ChallengeEndViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
@@ -194,20 +205,15 @@ public abstract class GameBase : MonoBehaviour {
 
     _RewardedXp = new StatContainer();
 
-    Dictionary<ProgressionStatType, XpCalculator> rewardCalculators = new Dictionary<ProgressionStatType, XpCalculator>();
-    rewardCalculators.Add(ProgressionStatType.Time, CalculateTimeStatRewards);
-    rewardCalculators.Add(ProgressionStatType.Novelty, CalculateNoveltyStatRewards);
-    rewardCalculators.Add(ProgressionStatType.Excitement, CalculateExcitementStatRewards);
-
-    foreach (var kvp in rewardCalculators) {
+    foreach (var statType in StatContainer.sKeys) {
       // TODO: Check that this is a goal xp
-      int grantedXp = kvp.Value();
+      int grantedXp = ComputeXpForStat(statType);
       if (grantedXp != 0) {
-        _RewardedXp[kvp.Key] = grantedXp;
-        _ChallengeEndViewInstance.AddReward(kvp.Key, grantedXp);
+        _RewardedXp[statType] = grantedXp;
+        _ChallengeEndViewInstance.AddReward(statType, grantedXp);
 
         // Grant right away even if there are animations in the daily goal ui
-        CurrentRobot.AddToProgressionStat(kvp.Key, grantedXp);
+        CurrentRobot.AddToProgressionStat(statType, grantedXp);
       }
     }
   }
