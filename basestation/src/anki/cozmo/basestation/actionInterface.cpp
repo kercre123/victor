@@ -204,26 +204,27 @@ namespace Anki {
       if(!_subActions.empty())
       {
         for(auto subAction : _subActions) {
-          if(nullptr != (*subAction) && (*subAction)->_isRunning ) {
-            if( DEBUG_ACTION_RUNNING && _displayMessages ) {
-              PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions",
-                                "Removing subAction %s [%d] (parent action is %s [%d])",
-                                (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
-                                GetName().c_str(), GetTag());
-            }
+          if( nullptr != (*subAction) ) {
+            if( (*subAction)->_isRunning ) {
+              if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+                PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions",
+                                  "Removing subAction %s [%d] (parent action is %s [%d])",
+                                  (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
+                                  GetName().c_str(), GetTag());
+              }
             
-            (*subAction)->Cancel();
-            (*subAction)->Update(robot);
-            Util::SafeDelete(*subAction);
-          }
-          else if( nullptr != (*subAction) ) {
-            if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+              (*subAction)->Cancel();
+              (*subAction)->Update(robot);
+            } // if running
+            else if( DEBUG_ACTION_RUNNING && _displayMessages ) {
               PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions.Skip",
                                 "skipping sub action  %s [%d] because it isn't running (parent action is %s [%d])",
                                 (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
                                 GetName().c_str(), GetTag());
             }
-          }
+            
+            Util::SafeDelete(*subAction);
+          } // if not null
         }
       }
     }
