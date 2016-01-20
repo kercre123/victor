@@ -109,7 +109,8 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       if (lastObservedFaceTime > 0 &&
           (robot.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeSinceLastObservedFace_ms)) {
         PRINT_NAMED_INFO("BehaviorReactToPoke.TurnToFace.TurningToLastObservedFace","time = %d", lastObservedFaceTime);
-        FacePoseAction* action = new FacePoseAction(facePose, DEG_TO_RAD(3), DEG_TO_RAD(180));
+        FacePoseAction* action = new FacePoseAction(facePose, DEG_TO_RAD(180));
+        action->SetPanTolerance(DEG_TO_RAD(3));
         action->SetMaxPanSpeed(DEG_TO_RAD(1080));
         action->SetMaxTiltSpeed(DEG_TO_RAD(1080));
         action->SetPanAccel(200);
