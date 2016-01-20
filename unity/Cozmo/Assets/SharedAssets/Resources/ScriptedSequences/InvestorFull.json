@@ -223,11 +223,6 @@
       "ExitConditions": [
         {
           "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
-        },
-        {
-          "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
-          "AnyAnimation": false,
-          "AnimationName": "ID_sleeping_02"
         }
       ]
     },
@@ -244,13 +239,13 @@
           "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
           "VolumeChannel": "Robot",
           "TargetVolume": 0.0,
-          "Duration": 2.0
+          "Duration": 4.0
         },
         {
           "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
           "VolumeChannel": "Music",
           "TargetVolume": 0.0,
-          "Duration": 2.0
+          "Duration": 4.0
         }
       ],
       "ExitConditions": []

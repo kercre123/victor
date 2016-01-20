@@ -136,11 +136,6 @@
       "ExitConditions": [
         {
           "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
-        },
-        {
-          "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
-          "AnyAnimation": false,
-          "AnimationName": "ID_sleeping_02"
         }
       ]
     },
