@@ -16,6 +16,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 
@@ -74,8 +75,18 @@ static const char* kTestBehaviorJson =
 "            \"y\" : 1.0"
 "         }"
 "      ]"
-"   }"
+"   },"
+"   \"behaviorGroups\" : ["
+"      \"AffectsBlocks\","
+"      \"MovesLift\""
+"   ]"
 "}";
+
+
+bool ShouldBehaviorGroupBeSetForTest(BehaviorGroup behaviorGroup)
+{
+  return (behaviorGroup == BehaviorGroup::AffectsBlocks) || (behaviorGroup == BehaviorGroup::MovesLift);
+}
 
 
 static const char* kTestBehaviorName = "UnitTestPlayAnim";
@@ -91,6 +102,38 @@ void VerifyBehavior(const IBehavior* inBehavior, BehaviorFactory& behaviorFactor
   EXPECT_EQ(inBehavior->GetEmotionScorer(0).TrackDeltaScore(), true);
   EXPECT_EQ(inBehavior->GetEmotionScorer(1).GetEmotionType(),  EmotionType::Excited);
   EXPECT_EQ(inBehavior->GetEmotionScorer(1).TrackDeltaScore(), false);
+  
+  // Verify Behavior Groups
+  {
+    for (BehaviorGroup i = BehaviorGroup(0); i < BehaviorGroup::Count; ++i)
+    {
+      EXPECT_EQ(inBehavior->IsBehaviorGroup(i), ShouldBehaviorGroupBeSetForTest(i));
+    }
+
+    IBehavior::BehaviorGroupFlags groupFlags;
+    EXPECT_FALSE(inBehavior->MatchesAnyBehaviorGroups(groupFlags));
+    
+    // Set every flag _but_ the set ones
+    for (BehaviorGroup i = BehaviorGroup(0); i < BehaviorGroup::Count; ++i)
+    {
+      groupFlags.SetBitFlag(i, !ShouldBehaviorGroupBeSetForTest(i));
+    }
+    EXPECT_FALSE(inBehavior->MatchesAnyBehaviorGroups(groupFlags));
+    
+    // Set every expected flag, clear the rest
+    for (BehaviorGroup i = BehaviorGroup(0); i < BehaviorGroup::Count; ++i)
+    {
+      groupFlags.SetBitFlag(i, ShouldBehaviorGroupBeSetForTest(i));
+    }
+    EXPECT_TRUE(inBehavior->MatchesAnyBehaviorGroups(groupFlags));
+
+    // Set every flag
+    for (BehaviorGroup i = BehaviorGroup(0); i < BehaviorGroup::Count; ++i)
+    {
+      groupFlags.SetBitFlag(i, true);
+    }
+    EXPECT_TRUE(inBehavior->MatchesAnyBehaviorGroups(groupFlags));
+  }
   
   EXPECT_EQ(inBehavior->GetRepetionalPenalty().GetNumNodes(), 2);
   EXPECT_FLOAT_EQ(inBehavior->GetRepetionalPenalty().EvaluateY(0.0f), 0.0f);

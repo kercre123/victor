@@ -35,8 +35,6 @@ public:
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return _isRunnable; }
   
-  virtual bool IsShortInterruption() const override { return _isShortInterruption; }
-  
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
     
 protected:
@@ -52,7 +50,6 @@ private:
   
   float _externalScore;
   
-  bool  _isShortInterruption;
   bool  _isScoredExternally;
   
   bool  _isRunnable;

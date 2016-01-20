@@ -69,8 +69,7 @@ void ProgressionStat::Update(double currentTime)
 
 void ProgressionStat::Add(ValueType deltaValue)
 {
-  // TODO: add a signed clamp value function
-  const ValueType newValue = _value + deltaValue;
+  const ValueType newValue = Anki::Util::ClampedAddition(_value, deltaValue);
   SetValue(newValue);
 }
 
