@@ -582,13 +582,13 @@ public class Robot : IDisposable {
   private void ComputeFriendshipLevel() {
     FriendshipLevelConfig levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
     bool friendshipLevelChanged = false;
-    while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length && 
-          levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
+    while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length &&
+           levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
       FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
       FriendshipLevel++;
       friendshipLevelChanged = true;
     }
-    if(friendshipLevelChanged) {
+    if (friendshipLevelChanged) {
       FriendshipLevelMessage.newVal = FriendshipLevel;
       if (OnFriendshipLevelUp != null) {
         OnFriendshipLevelUp(FriendshipLevel);
@@ -1011,8 +1011,8 @@ public class Robot : IDisposable {
     FaceObjectMessage.objectID = observedObject;
     FaceObjectMessage.robotID = ID;
     FaceObjectMessage.maxTurnAngle = float.MaxValue;
-    FaceObjectMessage.turnAngleTol = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
-    FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte(headTrackWhenDone);
+    FaceObjectMessage.panTolerance_rad = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
+    FaceObjectMessage.headTrackWhenDone = headTrackWhenDone;
     
     DAS.Debug(this, "Face Object " + FaceObjectMessage.objectID);
 
@@ -1031,7 +1031,7 @@ public class Robot : IDisposable {
   public void FacePose(Face face) {
     FacePoseMessage.maxTurnAngle = float.MaxValue;
     FacePoseMessage.robotID = ID;
-    FacePoseMessage.turnAngleTol = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
+    FacePoseMessage.panTolerance_rad = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
     FacePoseMessage.world_x = face.WorldPosition.x;
     FacePoseMessage.world_y = face.WorldPosition.y;
     FacePoseMessage.world_z = face.WorldPosition.z;
