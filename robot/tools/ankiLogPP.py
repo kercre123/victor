@@ -164,7 +164,7 @@ class CoordinatedFile:
             self.fh.write((os.linesep * addition).encode())
             self.fh.seek(0, 0) # Seek back to the beginning of the file
             self.__memoryMap()
-        
+
 
     def insert(self, slice, newText):
         "Replace the slice from start to end with newText and return the change in length"
@@ -351,18 +351,18 @@ class ParseData:
             self.dirtyFiles = set()
 
     MACROS = {
-        re.compile(rb"AnkiEvent\s*\("): ParseParams(),
-        re.compile(rb"AnkiInfo\s*\("):  ParseParams(),
-        re.compile(rb"AnkiDebug\s*\("): ParseParams(),
-        re.compile(rb"AnkiWarn\s*\("):  ParseParams(),
-        re.compile(rb"AnkiError\s*\("): ParseParams(),
-        re.compile(rb"AnkiConditionalError\s*\("): ParseParams(1),
-        re.compile(rb"AnkiConditionalErrorAndReturn\s*\("): ParseParams(1),
-        re.compile(rb"AnkiConditionalErrorAndReturnValue\s*\("): ParseParams(2),
-        re.compile(rb"AnkiConditionalWarn\s*\("): ParseParams(1),
-        re.compile(rb"AnkiConditionalWarnAndReturn\s*\("): ParseParams(1),
-        re.compile(rb"AnkiConditionalWarnAndReturnValue\s*\("): ParseParams(2),
-        re.compile(rb"AnkiAssert\s*\("): AssertParseParams()
+        re.compile(b"AnkiEvent\\s*\\("): ParseParams(),
+        re.compile(b"AnkiInfo\\s*\\("):  ParseParams(),
+        re.compile(b"AnkiDebug\\s*\\("): ParseParams(),
+        re.compile(b"AnkiWarn\\s*\\("):  ParseParams(),
+        re.compile(b"AnkiError\\s*\\("): ParseParams(),
+        re.compile(b"AnkiConditionalError\\s*\\("): ParseParams(1),
+        re.compile(b"AnkiConditionalErrorAndReturn\\s*\\("): ParseParams(1),
+        re.compile(b"AnkiConditionalErrorAndReturnValue\\s*\\("): ParseParams(2),
+        re.compile(b"AnkiConditionalWarn\\s*\\("): ParseParams(1),
+        re.compile(b"AnkiConditionalWarnAndReturn\\s*\\("): ParseParams(1),
+        re.compile(b"AnkiConditionalWarnAndReturnValue\\s*\\("): ParseParams(2),
+        re.compile(b"AnkiAssert\\s*\\("): AssertParseParams()
     }
 
     def parseFile(self, file):
