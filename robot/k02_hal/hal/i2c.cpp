@@ -11,12 +11,14 @@
 
 // Internal Settings
 enum I2C_Control {
+  // These are top level modes
   I2C_CTRL_STOP = I2C_C1_COMMON,
-  I2C_CTRL_READ = I2C_C1_COMMON | I2C_C1_MST_MASK,
-  
+  I2C_CTRL_READ = I2C_C1_COMMON | I2C_C1_MST_MASK,  
   I2C_CTRL_SEND = I2C_C1_COMMON | I2C_C1_MST_MASK | I2C_C1_TX_MASK,
-  I2C_CTRL_NACK = I2C_C1_COMMON | I2C_C1_TXAK_MASK,
-  I2C_CTRL_RST  = I2C_C1_COMMON | I2C_C1_RSTA_MASK
+    
+  // These are modifiers
+  I2C_CTRL_NACK = I2C_C1_TXAK_MASK,
+  I2C_CTRL_RST  = I2C_C1_RSTA_MASK
 };
 
 static const uint8_t UNUSED_SLAVE = 0xFF;
@@ -29,10 +31,13 @@ extern "C" void (*I2C0_Proc)(void);
 // Queue registers
 static uint16_t i2c_queue[MAX_QUEUE];
 static volatile int _fifo_count;
+static volatile int _fifo_start;
+static volatile int _fifo_end;
 
 // Random state values
 static volatile bool _active = false;
 static bool _enabled = false;
+static bool _send_reset = false;
 
 // Read buffer
 static volatile void* _read_target = NULL;
@@ -45,16 +50,12 @@ static void Write_Handler(void);
 static void Read_Handler(void);
 
 static inline void write_queue(uint8_t mode, uint8_t data = 0) {
-  static volatile int _fifo_start = 0;
-
   i2c_queue[_fifo_start++] = (mode << 8) | data;
   if (_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
   _fifo_count++;
 }
 
 static inline void read_queue(uint8_t& mode, uint8_t& data) {
-  static volatile int _fifo_end = 0;
-
   uint16_t temp = i2c_queue[_fifo_end++];
   if (_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
   _fifo_count--;
@@ -92,6 +93,8 @@ void Anki::Cozmo::HAL::I2C::Init()
   
   // Clear our FIFO
   _fifo_count = 0;
+  _fifo_start = 0;
+  _fifo_end = 0;
 
   I2C0_Proc = &Write_Handler;
   _active = false;
@@ -111,7 +114,7 @@ void Anki::Cozmo::HAL::I2C::Init()
 
   // Configure i2c
   I2C0_F  = I2C_F_ICR(0x1A);
-  I2C0_C1 = I2C_C1_COMMON | I2C_C1_MST_MASK;
+  I2C0_C1 = I2C_C1_COMMON;
   
   // Enable IRQs
   NVIC_SetPriority(I2C0_IRQn, 0);
@@ -121,6 +124,10 @@ void Anki::Cozmo::HAL::I2C::Init()
 void Anki::Cozmo::HAL::I2C::Enable(void) {
   _enabled = true;
   NVIC_EnableIRQ(I2C0_IRQn);
+  
+  if (!_active && _fifo_count > 0) {
+    I2C0_Proc();
+  }
 }
 
 void Anki::Cozmo::HAL::I2C::Disable(void) {
@@ -149,14 +156,27 @@ uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
 }
 
 void Anki::Cozmo::HAL::I2C::Flush(void) {
-  while (_active) {
+  while (_active || _fifo_count > 0) {
+    Enable();
     __asm { WFI }
   }
 }
 
-// This should only be used during 
 void Anki::Cozmo::HAL::I2C::ForceStop(void) {
+  _active_slave = UNUSED_SLAVE;
+  _send_reset = false;
   write_queue(I2C_CTRL_STOP);
+}
+
+// This is a carpet bomb stop on the i2c bus that should not be used inside IRQs
+void Anki::Cozmo::HAL::I2C::FullStop(void) {
+  _active_slave = UNUSED_SLAVE;
+  _send_reset = false;
+
+  Flush();
+  I2C0_C1 &= ~I2C_C1_MST_MASK;
+  MicroWait(1);
+  Enable();
 }
 
 void Anki::Cozmo::HAL::I2C::SetupRead(void* target, int size, i2c_callback cb) {
@@ -170,12 +190,16 @@ static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags)
   
   bool ena = _enabled;
   Disable();
-  
+    
   if (slave != _active_slave || flags & I2C_FORCE_START) {
-    // Select the device (with 
+    // Select the device
     _active_slave = slave;
     
-    write_queue(I2C_CTRL_RST | I2C_CTRL_SEND, slave);
+    if (_send_reset) {
+      write_queue(I2C_CTRL_RST | I2C_CTRL_SEND, slave);
+    } else {
+      write_queue(I2C_CTRL_SEND, slave);
+    }
   } else if (flags & I2C_OPTIONAL) {
     return ;
   }
@@ -187,9 +211,10 @@ static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags)
   if (ena) Enable();
 
   if (!_active) {
-    _active = true;
     I2C0_Proc();
   }
+
+  _send_reset = true;
 }
 
 void Anki::Cozmo::HAL::I2C::Write(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags) {
@@ -245,18 +270,25 @@ static void Write_Handler(void) {
   if (!_fifo_count) {
     _active = false;
     return ;
+  } else {
+    _active = true;
   }
 
   uint8_t data;
   uint8_t mode;
   read_queue(mode, data);
 
-  I2C0_C1 = (I2C0_C1 & ~(I2C_C1_TX_MASK | I2C_C1_MST_MASK | I2C_C1_TXAK_MASK)) | mode;
+  volatile uint8_t testing = I2C0_C1;
+  if (I2C0_C1 != mode) {
+    I2C0_C1 = mode;
+  }
+  testing = I2C0_C1;
   
   switch (mode) {
     default:
       I2C0_D = data;
-      break ;
+      return ;
+
     case I2C_CTRL_READ | I2C_CTRL_NACK:
     case I2C_CTRL_READ:
       {
@@ -264,12 +296,12 @@ static void Write_Handler(void) {
         _read_buffer = (uint8_t*) _read_target;
         I2C0_Proc = &Read_Handler;
       
-        int throwaway = I2C0_D;
+        int ignore = I2C0_D;
       }
-      break ;
+      return ;
+
     case I2C_CTRL_STOP:
-      // This is gross as shit and will go away eventually
-      MicroWait(1);
-      Write_Handler();
+      _active = false;
+      break ;
   }
 }

@@ -150,17 +150,22 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>_read_count</ItemText>
+          <ItemText>mode</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>_fifo_count</ItemText>
+          <ItemText>testing</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>&amp;Write_Handler</ItemText>
+          <ItemText>_active</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>id</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

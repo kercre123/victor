@@ -77,9 +77,9 @@ int main (void)
   DAC::Tone();
   
   I2C::Init();
+  UART::Init();
   IMU::Init();
   OLED::Init();
-  UART::Init();
   CameraInit();
 
   Anki::Cozmo::Robot::Init();
