@@ -1231,7 +1231,7 @@ namespace Anki {
                   ExternalInterface::FaceObject msg;
                   msg.robotID = 1;
                   msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
-                  msg.turnAngleTol = DEG_TO_RAD(5);
+                  msg.panTolerance_rad = DEG_TO_RAD(5);
                   msg.maxTurnAngle = DEG_TO_RAD(90);
                   msg.headTrackWhenDone = 0;
                   
@@ -1445,7 +1445,7 @@ namespace Anki {
                   facePose.world_x = _lastFace.world_x;
                   facePose.world_y = _lastFace.world_y;
                   facePose.world_z = _lastFace.world_z;
-                  facePose.turnAngleTol = DEG_TO_RAD(10);
+                  facePose.panTolerance_rad = DEG_TO_RAD(10);
                   facePose.maxTurnAngle = M_PI;
                   facePose.robotID = 1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(facePose)));
