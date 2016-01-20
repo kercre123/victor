@@ -43,6 +43,7 @@ void CheckForUpgrades(void)
 
 void WiFiFace(void)
 {
+  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n";
   static bool wasConnected = false;
   if (clientConnected() && !wasConnected)
   {
@@ -62,7 +63,7 @@ void WiFiFace(void)
       unsigned int i;
       for (i=0; i<((system_get_time()/2000000) % 10); i++) scrollLines[i] = '\n';
       scrollLines[i] = 0;
-      Face::FacePrintf("%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n", scrollLines,
+      Face::FacePrintf(wifiFaceFormat, scrollLines,
                        ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
                        COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
     }
