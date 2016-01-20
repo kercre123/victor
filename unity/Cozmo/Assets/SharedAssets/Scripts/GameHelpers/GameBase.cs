@@ -7,6 +7,7 @@ using Cozmo.MinigameWidgets;
 using DG.Tweening;
 using Anki.Cozmo;
 using System.Linq;
+using Cozmo.Util;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -111,21 +112,24 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual int CalculateNoveltyStatRewards() {
-    List<DataPersistence.CompletedChallengeData> completedChallenges = DataPersistence.DataPersistenceManager.Instance.Data.Sessions.SelectMany(x => x.CompletedChallenges).ToList();
+    const int maxPoints = 5;
+
+    // sessions are in chronological order, completed challenges are as well.
+    // using Reversed gets them in reverse chronological order
+    var completedChallenges = 
+      DataPersistence.DataPersistenceManager.Instance.Data.Sessions
+          .Reversed().SelectMany(x => x.CompletedChallenges.Reversed());
+
     int noveltyPoints = 0;
-    for (int i = completedChallenges.Count - 1; i >= 0; --i) {
-      if (completedChallenges[i].ChallengeId == this._ChallengeData.ChallengeID) {
+    bool found = false;
+    foreach(var challenge in completedChallenges) {
+      if (challenge.ChallengeId == this._ChallengeData.ChallengeID || noveltyPoints == maxPoints) {
+        found = true;
         break;
       }
-
-      // reward max points if this challenge has not been played yet.
-      if (i == 0) {
-        noveltyPoints = 5;
-      }
-
       noveltyPoints++;
     }
-    return Mathf.Min(noveltyPoints, 5);
+    return found ? noveltyPoints : maxPoints;
   }
 
   // should be override for each mini game that wants to grant excitement rewards.
