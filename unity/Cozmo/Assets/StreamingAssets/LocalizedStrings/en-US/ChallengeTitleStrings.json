@@ -105,6 +105,12 @@
   "speedTapLightCountSameColorNoTap.description": {
     "translation": "Tap the same count, but if it is same color do not tap."
   },
+  "speedTapHard.title": {
+    "translation": "Speed Tap Hard Mode"
+  },
+  "speedTapHard.description": {
+    "translation": "Tap when color and light count matches, but don't tap on red"
+  },
   "speedTapNoRed.title": {
     "translation": "Speed Tap No Red"
   },

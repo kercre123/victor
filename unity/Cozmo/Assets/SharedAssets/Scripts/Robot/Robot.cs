@@ -885,6 +885,9 @@ public class Robot : IDisposable {
   }
 
   public void SetIdleAnimation(string default_anim) {
+
+    DAS.Debug(this, "Setting idle animation to " + default_anim);
+
     SetIdleAnimationMessage.animationName = default_anim;
     SetIdleAnimationMessage.robotID = this.ID;
     RobotEngineManager.Instance.Message.SetIdleAnimation = SetIdleAnimationMessage;
