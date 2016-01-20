@@ -114,7 +114,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
                          "driving backwards %fmm to reset position",
                          distToBackUp);
         
-        DriveStraightAction* backupAction = new DriveStraightAction(-distToBackUp, -_backupSpeed);
+        DriveStraightAction* backupAction = new DriveStraightAction(robot, -distToBackUp, -_backupSpeed);
         _backingUpAction = backupAction->GetTag();
         robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, backupAction);
 
@@ -126,7 +126,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
       LiftShouldBeLocked(robot);
       if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= _holdHeadDownUntil) {
         
-        PlayAnimationAction* action = new PlayAnimationAction(kLookUpAnimName);
+        PlayAnimationAction* action = new PlayAnimationAction(robot, kLookUpAnimName);
         _actionRunning = action->GetTag();
         
         // Note that queuing action "now" will cancel the tracking action
@@ -153,7 +153,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
 
       // keep the lift out of the FOV
       if( !robot.GetMoveComponent().IsLiftMoving() && robot.GetLiftHeight() > LIFT_HEIGHT_LOWDOCK + 6.0f ) {
-        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
         // use animation slot, since we know no one is using the lift
         robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
       }
@@ -199,7 +199,7 @@ void BehaviorFollowMotion::StopInternal(Robot& robot, double currentTime_sec)
   
 void BehaviorFollowMotion::StartTracking(Robot& robot)
 {
-  TrackMotionAction* action = new TrackMotionAction();
+  TrackMotionAction* action = new TrackMotionAction(robot);
   action->SetMaxHeadAngle( DEG_TO_RAD( 5.0f ) );
   _actionRunning = action->GetTag();
   
@@ -257,14 +257,15 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
                                                EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact", MoodManager::GetCurrentTimeInSeconds());
           
           // Turn to face the motion, also drop the lift, and lock it from animations
-          PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad,
+          PanAndTiltAction* panTiltAction = new PanAndTiltAction(robot,
+                                                                 relBodyPanAngle_rad,
                                                                  relHeadAngle_rad,
                                                                  false, false);
-          MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+          MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
 
-          PlayAnimationAction* reactAnimAction = new PlayAnimationAction("ID_MotionFollow_ReactToMotion");
+          PlayAnimationAction* reactAnimAction = new PlayAnimationAction(robot, "ID_MotionFollow_ReactToMotion");
 
-          CompoundActionParallel* compoundAction = new CompoundActionParallel({panTiltAction, liftAction, reactAnimAction});
+          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {panTiltAction, liftAction, reactAnimAction});
           
           LiftShouldBeLocked(robot);
       
@@ -298,14 +299,14 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
         if( belowMinGroundPlaneDist )
         {
           _holdHeadDownUntil = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeToHoldHeadDown_sec;
-          PlayAnimationAction* lookDownAction = new PlayAnimationAction(kLookDownAnimName);
+          PlayAnimationAction* lookDownAction = new PlayAnimationAction(robot, kLookDownAnimName);
           _actionRunning = lookDownAction->GetTag();
           
           // Note that queuing action "now" will cancel the tracking action
           robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, lookDownAction);
           
           // After head gets down and before pouncing, play animation to glance up and down, looping
-          PlayAnimationAction* glanceUpAndDownAction = new PlayAnimationAction(kLookUpAndDownAnimName, 0);
+          PlayAnimationAction* glanceUpAndDownAction = new PlayAnimationAction(robot, kLookUpAndDownAnimName, 0);
           robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, glanceUpAndDownAction);
           
           PRINT_NAMED_INFO("BehaviorFollowMotion.HoldingHeadLow",
@@ -323,7 +324,8 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
                relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol )
       {
         // Move towards the motion since it's centered
-        DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm,
+        DriveStraightAction* driveAction = new DriveStraightAction(robot,
+                                                                   _moveForwardDist_mm,
                                                                    DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
         driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
         _actionRunning = driveAction->GetTag();

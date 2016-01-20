@@ -97,7 +97,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       
       // Do startled animation
       s32 animIndex = robot.GetLastMsgTimestamp() % _animStartled.size(); // Randomly select anim to play
-      StartActing(robot, new PlayAnimationAction(_animStartled[animIndex]));
+      StartActing(robot, new PlayAnimationAction(robot, _animStartled[animIndex]));
       _currentState = State::TurnToFace;
       break;
     }
@@ -109,7 +109,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       if (lastObservedFaceTime > 0 &&
           (robot.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeSinceLastObservedFace_ms)) {
         PRINT_NAMED_INFO("BehaviorReactToPoke.TurnToFace.TurningToLastObservedFace","time = %d", lastObservedFaceTime);
-        FacePoseAction* action = new FacePoseAction(facePose, DEG_TO_RAD(3), DEG_TO_RAD(180));
+        FacePoseAction* action = new FacePoseAction(robot, facePose, DEG_TO_RAD(3), DEG_TO_RAD(180));
         action->SetMaxPanSpeed(DEG_TO_RAD(1080));
         action->SetMaxTiltSpeed(DEG_TO_RAD(1080));
         action->SetPanAccel(200);
@@ -134,7 +134,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       PRINT_NAMED_INFO("BehaviorReactToPoke.Update.HappyVal", "happy: %f, animIndex: %d", happyVal, animIndex);
       
       
-      StartActing(robot, new PlayAnimationAction(_animReactions[animIndex]));
+      StartActing(robot, new PlayAnimationAction(robot, _animReactions[animIndex]));
       _currentState = State::Inactive;
       _doReaction = false;
       

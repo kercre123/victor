@@ -365,7 +365,7 @@ namespace Anki {
       
       // Update any interrupted actions (but leave them in the queue)
       for(auto interruptedAction : _interruptedActions) {
-        ActionResult result = interruptedAction->Update(robot);
+        ActionResult result = interruptedAction->Update();
         if(ActionResult::INTERRUPTED != result) {
           PRINT_NAMED_WARNING("ActionQueue.Update.InterruptFailed",
                               "Expecting interrupted %s action to return INTERRUPTED result on Update",
@@ -382,7 +382,7 @@ namespace Anki {
         VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN,
                                            "Action: %s", currentAction->GetName().c_str());
         
-        const ActionResult actionResult = currentAction->Update(robot);
+        const ActionResult actionResult = currentAction->Update();
         
         if(actionResult != ActionResult::RUNNING) {
           // Current action just finished, pop it

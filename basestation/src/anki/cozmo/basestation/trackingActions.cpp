@@ -30,8 +30,9 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark ITrackAction
   
-ITrackAction::ITrackAction()
-: _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
+ITrackAction::ITrackAction(Robot& robot)
+  : IAction(robot)
+  , _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
 {
   
 }
@@ -108,15 +109,15 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
   }
 }
 
-ActionResult ITrackAction::Init(Robot& robot)
+ActionResult ITrackAction::Init()
 {
   // Store eye dart setting so we can restore after tracking
-  _originalEyeDartDist = robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
+  _originalEyeDartDist = _robot->GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
   
   // Reduce eye darts so we better appear to be tracking and not look around
-  robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
+  _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
   
-  return InitInternal(robot);
+  return InitInternal();
 }
   
 bool ITrackAction::InterruptInternal()
@@ -125,14 +126,14 @@ bool ITrackAction::InterruptInternal()
   return true;
 }
 
-ActionResult ITrackAction::CheckIfDone(Robot& robot)
+ActionResult ITrackAction::CheckIfDone()
 {
   Radians absPanAngle = 0, absTiltAngle = 0;
   
   const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // See if there are new relative pan/tilt angles from the derived class
-  if(GetAngles(robot, absPanAngle, absTiltAngle))
+  if(GetAngles(*_robot, absPanAngle, absTiltAngle))
   {
 
     if( absTiltAngle > _maxHeadAngle ) {
@@ -154,7 +155,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
     
     // Tilt Head:
-    const f32 relTiltAngle = (absTiltAngle - robot.GetHeadAngle()).ToFloat();
+    const f32 relTiltAngle = (absTiltAngle - _robot->GetHeadAngle()).ToFloat();
     if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
        std::abs(relTiltAngle) > _tiltTolerance.ToFloat())
     {
@@ -163,7 +164,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       const f32 speed = (_maxTiltSpeed_radPerSec - _minTiltSpeed_radPerSec)*angleFrac + _minTiltSpeed_radPerSec;
       const f32 accel = 20.f; // (MaxAccel - MinAccel)*angleFrac + MinAccel;
       
-      if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
+      if(RESULT_OK != _robot->GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
       {
         return ActionResult::FAILURE_ABORT;
       }
@@ -179,14 +180,14 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     }
     
     // Pan Body:
-    const f32 relPanAngle = (absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
+    const f32 relPanAngle = (absPanAngle - _robot->GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
     if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && std::abs(relPanAngle) > _panTolerance.ToFloat())
     {
       // Get rotation angle around drive center
       Pose3d rotatedPose;
-      Pose3d dcPose = robot.GetDriveCenterPose();
+      Pose3d dcPose = _robot->GetDriveCenterPose();
       dcPose.SetRotation(absPanAngle, Z_AXIS_3D());
-      robot.ComputeOriginPose(dcPose, rotatedPose);
+      _robot->ComputeOriginPose(dcPose, rotatedPose);
       
       // Set speed/accel based on angle difference
       const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/(f32)M_PI);
@@ -197,7 +198,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       setBodyAngle.angle_rad             = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
       setBodyAngle.max_speed_rad_per_sec = speed;
       setBodyAngle.accel_rad_per_sec2    = accel; 
-      if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+      if(RESULT_OK != _robot->SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
         return ActionResult::FAILURE_ABORT;
       }
       
@@ -217,7 +218,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
-      robot.GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation, 1, false));
+      _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(*_robot, _turningSoundAnimation, 1, false));
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
@@ -250,10 +251,10 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
         // Start a new eye shift layer
         AnimationStreamer::FaceTrack faceTrack;
         faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
-        _eyeShiftTag = robot.GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
+        _eyeShiftTag = _robot->GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
       } else {
         // Augment existing eye shift layer
-        robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
+        _robot->GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
       }
     } // if(_moveEyes)
     
@@ -270,36 +271,37 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
   return ActionResult::RUNNING;
 }
   
-void ITrackAction::Cleanup(Robot &robot)
+void ITrackAction::Cleanup()
 {
   if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
     // Make sure any eye shift gets removed
-    robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+    _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
     _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
   }
   
   // Make sure to restore original eye dart distance
-  robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+  _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
 }
   
 #pragma mark -
 #pragma mark TrackObjectAction
 
-TrackObjectAction::TrackObjectAction(const ObjectID& objectID, bool trackByType)
-: _objectID(objectID)
-, _trackByType(trackByType)
+TrackObjectAction::TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType)
+  : ITrackAction(robot)
+  , _objectID(objectID)
+  , _trackByType(trackByType)
 {
 
 }
 
-ActionResult TrackObjectAction::InitInternal(Robot& robot)
+ActionResult TrackObjectAction::InitInternal()
 {
   if(!_objectID.IsSet()) {
     PRINT_NAMED_ERROR("TrackObjectAction.Init.ObjectIdNotSet", "");
     return ActionResult::FAILURE_ABORT;
   }
   
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = _robot->GetBlockWorld().GetObjectByID(_objectID);
   if(nullptr == object) {
     PRINT_NAMED_ERROR("TrackObjectAction.Init.InvalidObject",
                       "Object %d does not exist in BlockWorld", _objectID.GetValue());
@@ -315,15 +317,15 @@ ActionResult TrackObjectAction::InitInternal(Robot& robot)
     _name = "TrackObject" + std::to_string(_objectID) + "Action";
   }
   
-  robot.GetMoveComponent().SetTrackToObject(_objectID);
+  _robot->GetMoveComponent().SetTrackToObject(_objectID);
   
   return ActionResult::SUCCESS;
 } // InitInternal()
 
-void TrackObjectAction::Cleanup(Robot& robot)
+void TrackObjectAction::Cleanup()
 {
-  ITrackAction::Cleanup(robot);
-  robot.GetMoveComponent().UnSetTrackToObject();
+  ITrackAction::Cleanup();
+  _robot->GetMoveComponent().UnSetTrackToObject();
 }
   
 bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)
@@ -428,29 +430,30 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
 #pragma mark -
 #pragma mark TrackFaceAction
   
-TrackFaceAction::TrackFaceAction(FaceID faceID)
-: _faceID(faceID)
+TrackFaceAction::TrackFaceAction(Robot& robot, FaceID faceID)
+  : ITrackAction(robot)
+  , _faceID(faceID)
 {
   
 }
 
 
-ActionResult TrackFaceAction::InitInternal(Robot& robot)
+ActionResult TrackFaceAction::InitInternal()
 {
   _name = "TrackFace" + std::to_string(_faceID) + "Action";
-  robot.GetMoveComponent().SetTrackToFace(_faceID);
+  _robot->GetMoveComponent().SetTrackToFace(_faceID);
   _lastFaceUpdate = 0;
   return ActionResult::SUCCESS;
 } // InitInternal()
   
   
-void TrackFaceAction::Cleanup(Robot& robot)
+void TrackFaceAction::Cleanup()
 {
-  ITrackAction::Cleanup(robot);
-  robot.GetMoveComponent().UnSetTrackToFace();
+  ITrackAction::Cleanup();
+  _robot->GetMoveComponent().UnSetTrackToFace();
 }
 
-void TrackFaceAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
+void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
 {
   TrackFaceCompleted completion;
   completion.faceID = static_cast<s32>(_faceID);
@@ -507,9 +510,9 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
 #pragma mark -
 #pragma mark TrackMotionAction
   
-ActionResult TrackMotionAction::InitInternal(Robot& robot)
+ActionResult TrackMotionAction::InitInternal()
 {
-  if(false == robot.HasExternalInterface()) {
+  if(false == _robot->HasExternalInterface()) {
     PRINT_NAMED_ERROR("TrackMotionAction.Init.NoExternalInterface",
                       "Robot must have an external interface so action can "
                       "subscribe to motion observation events.");
@@ -525,7 +528,7 @@ ActionResult TrackMotionAction::InitInternal(Robot& robot)
     this->_motionObservation = event.GetData().Get_RobotObservedMotion();
   };
   
-  _signalHandle = robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
+  _signalHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
   
   return ActionResult::SUCCESS;
 } // InitInternal()

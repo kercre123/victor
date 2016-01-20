@@ -109,7 +109,7 @@ namespace Cozmo {
           // TODO: Find a good place to put down this object
           // For now, just put it down right _here_
           PRINT_NAMED_WARNING("BehaviorOCD.Init.PlacingBlockDown", "Make sure this pose is clear!");
-          lastResult = robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new PlaceObjectOnGroundAction());
+          lastResult = robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new PlaceObjectOnGroundAction(robot));
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("BehaviorOCD.Init.PlacementFailed",
                               "Failed to queue PlaceObjectOnGroundAction.");
@@ -438,7 +438,7 @@ namespace Cozmo {
     }
     
     robot.GetActionList().Cancel(_lastActionTag);
-    IActionRunner* pickupAction = new DriveToPickupObjectAction(_objectToPickUp);
+    IActionRunner* pickupAction = new DriveToPickupObjectAction(robot, _objectToPickUp);
     _lastActionTag = pickupAction->GetTag();
     robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupAction);
     
@@ -595,7 +595,8 @@ namespace Cozmo {
             }
 
             // Place block at specified offset from lastObjectPlacedOnGround.
-            placementAction = new DriveToPlaceRelObjectAction(_lastObjectPlacedOnGround,
+            placementAction = new DriveToPlaceRelObjectAction(robot,
+                                                              _lastObjectPlacedOnGround,
                                                               DEFAULT_PATH_MOTION_PROFILE,
                                                               kLowPlacementOffsetMM);
 
@@ -1208,9 +1209,9 @@ namespace Cozmo {
 
                 // Set lift to appropriate height in case animation moved it
                 if (robot.IsCarryingObject() && !NEAR(robot.GetLiftHeight(), LIFT_HEIGHT_CARRY, 10)) {
-                  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY));
+                  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY));
                 } else if (!robot.IsCarryingObject() && !NEAR(robot.GetLiftHeight(), LIFT_HEIGHT_LOWDOCK, 10)) {
-                  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
+                  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK));
                 }
                 
                 // Do next pick or place action
@@ -1569,7 +1570,7 @@ namespace Cozmo {
     }
     
     BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.PlayAnimation", "%s", animName.c_str());
-    PlayAnimationAction* animAction = new PlayAnimationAction(animName.c_str());
+    PlayAnimationAction* animAction = new PlayAnimationAction(robot, animName.c_str());
     _currentState = State::Animating;
     _animActionTags[animAction->GetTag()] = animName;
     robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
@@ -1578,7 +1579,7 @@ namespace Cozmo {
   
   void BehaviorOCD::FaceDisturbedBlock(Robot& robot, const ObjectID& objID)
   {
-    FaceObjectAction* faceObjectAction = new FaceObjectAction(objID, Radians(DEG_TO_RAD_F32(10)), Radians(PI_F), true, false);
+    FaceObjectAction* faceObjectAction = new FaceObjectAction(robot, objID, Radians(DEG_TO_RAD_F32(10)), Radians(PI_F), true, false);
     robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
     _currentState = State::FaceDisturbedBlock;
     _lastActionTag = faceObjectAction->GetTag();

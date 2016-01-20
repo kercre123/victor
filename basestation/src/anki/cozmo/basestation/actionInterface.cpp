@@ -29,8 +29,9 @@ namespace Anki {
     
     u32 IActionRunner::sTagCounter = 100000;
     
-    IActionRunner::IActionRunner()
+    IActionRunner::IActionRunner(Robot& robot)
     {
+      _robot = &robot;
       // Assign every action a unique tag
       if (++IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
         ++IActionRunner::sTagCounter;
@@ -60,7 +61,7 @@ namespace Anki {
     // NOTE: THere should be no way for Update() to fail independently of its
     // call to UpdateInternal(). Otherwise, there's a possibility for an
     // IAction's Cleanup() method not be called on failure.
-    ActionResult IActionRunner::Update(Robot& robot)
+    ActionResult IActionRunner::Update()
     {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
@@ -72,8 +73,8 @@ namespace Anki {
                          GetName().c_str(),
                          GetTag());
 #endif
-        robot.GetMoveComponent().LockAnimTracks(disableTracks);
-        robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
+        _robot->GetMoveComponent().LockAnimTracks(disableTracks);
+        _robot->GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
         _isRunning = true;
       }
 
@@ -91,7 +92,7 @@ namespace Anki {
         }
         result = ActionResult::INTERRUPTED;
       } else {
-        result = UpdateInternal(robot);
+        result = UpdateInternal();
       }
       
       if(result != ActionResult::RUNNING) {
@@ -104,8 +105,8 @@ namespace Anki {
         }
       
         // Clean up after any registered sub actions and the action itself
-        CancelAndDeleteSubActions(robot);
-        Cleanup(robot);
+        CancelAndDeleteSubActions();
+        Cleanup();
         
         if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
         {
@@ -113,7 +114,7 @@ namespace Anki {
           // Note that I do this here so that compound actions only emit one signal,
           // not a signal for each constituent action.
           // TODO: Populate the signal with any action-specific info?
-          EmitCompletionSignal(robot, result);
+          EmitCompletionSignal(result);
         }
         
         if(!_suppressTrackLocking) {
@@ -125,8 +126,8 @@ namespace Anki {
                            GetName().c_str(),
                            GetTag());
 #endif
-          robot.GetMoveComponent().UnlockAnimTracks(disableTracks);
-          robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+          _robot->GetMoveComponent().UnlockAnimTracks(disableTracks);
+          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
         _isRunning = false;
       }
@@ -134,13 +135,13 @@ namespace Anki {
       return result;
     }
     
-    void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void IActionRunner::EmitCompletionSignal(ActionResult result) const
     {
       ActionCompletedUnion completionUnion;
 
-      GetCompletionUnion(robot, completionUnion);
+      GetCompletionUnion(completionUnion);
       
-      robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionUnion)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, GetType(), result, completionUnion)));
     }
     
     bool IActionRunner::RetriesRemain()
@@ -182,7 +183,7 @@ namespace Anki {
       _subActions.push_back(&subAction);
     }
     
-    void IActionRunner::CancelAndDeleteSubActions(Robot& robot)
+    void IActionRunner::CancelAndDeleteSubActions()
     {
       if(!_subActions.empty())
       {
@@ -194,7 +195,7 @@ namespace Anki {
                              (*subAction)->GetName().c_str(), (*subAction)->GetTag());
 #endif
             (*subAction)->Cancel();
-            (*subAction)->Update(robot);
+            (*subAction)->Update();
             Util::SafeDelete(*subAction);
           }
         }
@@ -204,7 +205,7 @@ namespace Anki {
     
 #pragma mark ---- IAction ----
     
-    IAction::IAction()
+    IAction::IAction(Robot& robot) : IActionRunner(robot)
     {
       Reset();
     }
@@ -216,7 +217,7 @@ namespace Anki {
       _timeoutTime = -1.f;
     }
     
-    ActionResult IAction::UpdateInternal(Robot& robot)
+    ActionResult IAction::UpdateInternal()
     {
       ActionResult result = ActionResult::RUNNING;
       SetStatus(GetName());
@@ -250,13 +251,13 @@ namespace Anki {
           // Before calling Init(), clean up any subactions, in case this is not
           // the first call to Init() -- i.e., if this is a retry or resume after
           // being interrupted.
-          CancelAndDeleteSubActions(robot);
+          CancelAndDeleteSubActions();
           
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively
           // just wait for the preconditions to be met. Otherwise, a failure
           // will get propagated out as the return value of the Update method.
-          result = Init(robot);
+          result = Init();
           if(result == ActionResult::SUCCESS) {
             if(IsMessageDisplayEnabled()) {
               PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
@@ -285,7 +286,7 @@ namespace Anki {
           SetStatus(GetName() + ": check if done");
           
           // Pre-conditions already met, just run until done
-          result = CheckIfDone(robot);
+          result = CheckIfDone();
         }
       } // if(currentTimeInSeconds > _waitUntilTime)
       
@@ -293,7 +294,7 @@ namespace Anki {
         if(IsMessageDisplayEnabled()) {
           PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
                            "Robot %d failed running action %s. Retrying.",
-                           robot.GetID(), GetName().c_str());
+                           _robot->GetID(), GetName().c_str());
         }
         
         Reset();

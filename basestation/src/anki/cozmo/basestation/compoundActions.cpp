@@ -20,7 +20,7 @@ namespace Anki {
     
 #pragma mark ---- ICompoundAction ----
     
-    ICompoundAction::ICompoundAction(std::initializer_list<IActionRunner*> actions)
+    ICompoundAction::ICompoundAction(Robot& robot, std::initializer_list<IActionRunner*> actions) : IActionRunner(robot)
     {
       for(IActionRunner* action : actions) {
         if(action == nullptr) {
@@ -70,21 +70,21 @@ namespace Anki {
       _name += "]";
     }
     
-    void ICompoundAction::ClearActions(Robot& robot)
+    void ICompoundAction::ClearActions()
     {
-      Cleanup(robot);
+      Cleanup();
       _actions.clear();
       Reset();
     }
     
-    void ICompoundAction::Cleanup(Robot& robot)
+    void ICompoundAction::Cleanup()
     {
       for(auto action : _actions) {
         // Call any actions' Cleanup() methods if they aren't done
         const bool isDone = action.first;
         if(!isDone) {
           action.second->Cancel();
-          action.second->Update(robot);
+          action.second->Update();
           action.first = true;
         }
       }
@@ -98,8 +98,8 @@ namespace Anki {
       
     }
     
-    CompoundActionSequential::CompoundActionSequential(std::initializer_list<IActionRunner*> actions)
-    : ICompoundAction(actions)
+    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions)
+    : ICompoundAction(robot, actions)
     , _delayBetweenActionsInSeconds(0)
     {
       Reset();
@@ -113,7 +113,7 @@ namespace Anki {
       _wasJustReset = true;
     }
     
-    ActionResult CompoundActionSequential::UpdateInternal(Robot& robot)
+    ActionResult CompoundActionSequential::UpdateInternal()
     {
       SetStatus(GetName());
       
@@ -134,7 +134,7 @@ namespace Anki {
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
         {
-          ActionResult subResult = currentAction->Update(robot);
+          ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());
           switch(subResult)
           {
@@ -164,7 +164,7 @@ namespace Anki {
                 // Otherwise, we are still running. Go ahead and immediately do an
                 // update on the next action now to get its initialization and
                 // precondition checking going, to reduce lag between actions.
-                subResult = _currentActionPair->second->Update(robot);
+                subResult = _currentActionPair->second->Update();
                 
                 // In the special case that the sub-action sucessfully completed
                 // immediately, don't return SUCCESS if there are more actions left!
@@ -234,13 +234,13 @@ namespace Anki {
       
     }
     
-    CompoundActionParallel::CompoundActionParallel(std::initializer_list<IActionRunner*> actions)
-    : ICompoundAction(actions)
+    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions)
+    : ICompoundAction(robot, actions)
     {
       
     }
     
-    ActionResult CompoundActionParallel::UpdateInternal(Robot& robot)
+    ActionResult CompoundActionParallel::UpdateInternal()
     {
       // Return success unless we encounter anything still running or failed in loop below.
       // Note that we will return SUCCESS on the call following the one where the
@@ -256,7 +256,7 @@ namespace Anki {
           IActionRunner* currentAction = currentActionPair.second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
           
-          const ActionResult subResult = currentAction->Update(robot);
+          const ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());
           switch(subResult)
           {

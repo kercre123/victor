@@ -82,16 +82,16 @@ public:
   
 protected:
 
-  ITrackAction();
+  ITrackAction(Robot& robot);
   
-  virtual void Cleanup(Robot &robot) override;
+  virtual void Cleanup() override;
   
   // Note that derived classes should override InitInternal, which is called by Init
-  virtual ActionResult Init(Robot& robot) override final;
-  virtual ActionResult InitInternal(Robot& robot) = 0;
+  virtual ActionResult Init() override final;
+  virtual ActionResult InitInternal() = 0;
   
   // Derived classes must implement Init(), but cannot implement CheckIfDone().
-  virtual ActionResult CheckIfDone(Robot& robot) override final;
+  virtual ActionResult CheckIfDone() override final;
   
   // Implementation-specific method for computing the absolute angles needed
   // to turn and face whatever is being tracked.
@@ -136,15 +136,15 @@ inline void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec
 class TrackObjectAction : public ITrackAction
 {
 public:
-  TrackObjectAction(const ObjectID& objectID, bool trackByType = true);
+  TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType = true);
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_OBJECT; }
 
 protected:
   
-  virtual ActionResult InitInternal(Robot& robot) override;
-  virtual void Cleanup(Robot& robot) override;
+  virtual ActionResult InitInternal() override;
+  virtual void Cleanup() override;
   
   // Required by ITrackAction:
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
@@ -166,17 +166,17 @@ public:
   
   using FaceID = Vision::TrackedFace::ID_t;
   
-  TrackFaceAction(FaceID faceID);
+  TrackFaceAction(Robot& robot, FaceID faceID);
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_FACE; }
 
-  virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
+  virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
   
 protected:
   
-  virtual ActionResult InitInternal(Robot& robot) override;
-  virtual void Cleanup(Robot& robot) override;
+  virtual ActionResult InitInternal() override;
+  virtual void Cleanup() override;
   
   // Required by ITrackAction:
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
@@ -195,14 +195,14 @@ class TrackMotionAction : public ITrackAction
 {
 public:
   
-  TrackMotionAction() { }
+  TrackMotionAction(Robot& robot) : ITrackAction(robot) { }
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_MOTION; }
   
 protected:
   
-  virtual ActionResult InitInternal(Robot& robot) override;
+  virtual ActionResult InitInternal() override;
   
   // Required by ITrackAction:
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;

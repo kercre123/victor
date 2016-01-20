@@ -201,7 +201,7 @@ namespace Cozmo {
     if (!dataIter->second._playedInitAnim && currentTime_sec >= _newFaceAnimCooldownTime)
     {
       robot.GetActionList().Cancel();
-      robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
+      robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(robot, face->GetHeadPose(), 0, DEG_TO_RAD(179)));
       
       
       auto friendlyAnimName = kMinorFriendlyReactAnimName;
@@ -227,7 +227,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("BehaviorInteractWithFaces.StartTracking",
                      "Will start tracking face %llu", faceID);
     _trackedFaceID = faceID;
-    TrackFaceAction* trackAction = new TrackFaceAction(_trackedFaceID);
+    TrackFaceAction* trackAction = new TrackFaceAction(robot, _trackedFaceID);
     trackAction->SetMoveEyes(true);
     _trackActionTag = trackAction->GetTag();
     trackAction->SetUpdateTimeout(kTrackingTimeout_sec);
@@ -401,9 +401,9 @@ namespace Cozmo {
           if(headAngle > 0.f) // don't bother if we're already at or below zero degrees
           {
             // Move head down to check for a block, then look back up.
-            CompoundActionSequential* moveHeadAction = new CompoundActionSequential({
-              new MoveHeadToAngleAction(0.),
-              new MoveHeadToAngleAction(headAngle),
+            CompoundActionSequential* moveHeadAction = new CompoundActionSequential(robot, {
+              new MoveHeadToAngleAction(robot, 0.),
+              new MoveHeadToAngleAction(robot, headAngle),
             });
             _lastActionTag = moveHeadAction->GetTag();
             robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, moveHeadAction);
@@ -555,7 +555,7 @@ namespace Cozmo {
   void BehaviorInteractWithFaces::PlayAnimation(Robot& robot, const std::string& animName,
                                                 QueueActionPosition position)
   {
-    PlayAnimationAction* animAction = new PlayAnimationAction(animName);
+    PlayAnimationAction* animAction = new PlayAnimationAction(robot, animName);
     robot.GetActionList().QueueAction(IBehavior::sActionSlot, position, animAction);
     _lastActionTag = animAction->GetTag();
     _isActing = true;
