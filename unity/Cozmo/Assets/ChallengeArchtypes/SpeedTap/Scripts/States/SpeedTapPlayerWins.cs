@@ -10,7 +10,9 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _SpeedTapGame.PlayerBlock.SetFlashingLEDs(_SpeedTapGame.MatchColor, 100, 100, 0);
+      for (int i = 0; i < 4; i++) {
+        _SpeedTapGame.PlayerBlock.Lights[i].SetFlashingLED(_SpeedTapGame.PlayerWinColors[i], 100, 100, 0);
+      }
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
       _CurrentRobot.SendAnimation(AnimationName.kFinishTabCubeLose, HandleAnimationDone);
     }

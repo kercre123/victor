@@ -11,9 +11,9 @@ namespace SpeedTap {
       if (shouldTap) {
         // Do match
         int randColorIndex = UnityEngine.Random.Range(0, _Colors.Length);
-        game.MatchColor = _Colors[randColorIndex];
-        game.CozmoBlock.SetLEDs(CozmoPalette.ColorToUInt(game.MatchColor), 0, 0xFF);
-        game.PlayerBlock.SetLEDs(CozmoPalette.ColorToUInt(game.MatchColor), 0, 0xFF);
+        game.PlayerWinColor = game.CozmoWinColor = _Colors[randColorIndex];
+        game.CozmoBlock.SetLEDs(CozmoPalette.ColorToUInt(game.CozmoWinColor), 0, 0xFF);
+        game.PlayerBlock.SetLEDs(CozmoPalette.ColorToUInt(game.PlayerWinColor), 0, 0xFF);
       }
       else {
         // Do non-match
