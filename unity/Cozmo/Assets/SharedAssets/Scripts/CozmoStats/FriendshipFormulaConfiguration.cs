@@ -25,4 +25,22 @@ public class FriendshipFormulaConfiguration : ScriptableObject {
     }
     return total;
   }
+
+  public float CalculateFriendshipProgress(StatContainer progress, StatContainer goal) {
+    float totalProgress = 0f, totalGoal = 0f;
+    for (int i = 0; i < _Multipliers.Length; i++) {
+      var stat = (Anki.Cozmo.ProgressionStatType)i;
+
+      int p = Mathf.Min(progress[stat], goal[stat]);
+
+      totalProgress += p * _Multipliers[i];
+      totalGoal += goal[stat] * _Multipliers[i];
+    }
+    if (totalGoal > 0f) {
+      return totalProgress / totalGoal;
+    }
+    else {
+      return 0f;
+    }
+  }
 }
