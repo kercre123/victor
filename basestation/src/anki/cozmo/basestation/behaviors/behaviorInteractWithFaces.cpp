@@ -201,8 +201,7 @@ namespace Cozmo {
     if (!dataIter->second._playedInitAnim && currentTime_sec >= _newFaceAnimCooldownTime)
     {
       robot.GetActionList().Cancel();
-      robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(robot, face->GetHeadPose(), 0, DEG_TO_RAD(179)));
-      
+      robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(robot, face->GetHeadPose(), DEG_TO_RAD(179)));
       
       auto friendlyAnimName = kMinorFriendlyReactAnimName;
       if (0 == kCurrentFriendlyAnimCount)

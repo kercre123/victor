@@ -679,7 +679,7 @@ namespace Anki {
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
-          _compoundAction.AddAction(new FaceObjectAction(robot, _objectID, Radians(0), Radians(0), true, false));
+          _compoundAction.AddAction(new FaceObjectAction(robot, _objectID, Radians(0), true, false));
         }
         
         _compoundAction.SetEmitCompletionSignal(false);
@@ -1252,21 +1252,19 @@ namespace Anki {
     
 #pragma mark ---- FacePoseAction ----
     
-    FacePoseAction::FacePoseAction(Robot& robot, const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle)
+    FacePoseAction::FacePoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
     : PanAndTiltAction(robot,0,0,false,true)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
-      PanAndTiltAction::SetPanTolerance(turnAngleTol);
     }
     
-    FacePoseAction::FacePoseAction(Robot& robot, Radians turnAngleTol, Radians maxTurnAngle)
+    FacePoseAction::FacePoseAction(Robot& robot, Radians maxTurnAngle)
     : PanAndTiltAction(robot,0,0,false,true)
     , _isPoseSet(false)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
-      PanAndTiltAction::SetPanTolerance(turnAngleTol);
     }
     
     Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
@@ -1343,23 +1341,23 @@ namespace Anki {
 #pragma mark ---- FaceObjectAction ----
     
     FaceObjectAction::FaceObjectAction(Robot& robot,
-                                       ObjectID objectID, Radians turnAngleTol,
+                                       ObjectID objectID,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
     : FaceObjectAction(robot, objectID, Vision::Marker::ANY_CODE,
-                       turnAngleTol, maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
+                       maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
     {
       
     }
     
     FaceObjectAction::FaceObjectAction(Robot& robot,
-                                       ObjectID objectID, Vision::Marker::Code whichCode,
-                                       Radians turnAngleTol,
+                                       ObjectID objectID,
+                                       Vision::Marker::Code whichCode,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FacePoseAction(robot, turnAngleTol, maxTurnAngle)
+    : FacePoseAction(robot, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
     , _visuallyVerifyAction()
     , _objectID(objectID)
@@ -2212,7 +2210,7 @@ namespace Anki {
       _faceAndVerifyAction = new FaceObjectAction(*_robot,
                                                   _dockObjectID,
                                                   _dockMarker->GetCode(),
-                                                  0, 0, true, false);
+                                                  0, true, false);
 
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->SetEmitCompletionSignal(false);
@@ -2750,7 +2748,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, move the lift out of the
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
-              _placementVerifyAction = new FaceObjectAction(*_robot, _carryObjectID, Radians(0), Radians(0), true, false);
+              _placementVerifyAction = new FaceObjectAction(robot, _carryObjectID, Radians(0), true, false);
               _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
@@ -3346,7 +3344,7 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        _faceAndVerifyAction = new FaceObjectAction(*_robot, _carryingObjectID, _carryObjectMarker->GetCode(), 0, 0, true, false);
+        _faceAndVerifyAction = new FaceObjectAction(*_robot, _carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
         _faceAndVerifyAction->SetEmitCompletionSignal(false);
         
       } // if/else IsCarryingObject()

@@ -29,6 +29,7 @@ namespace Anki
         void Enable(void);
         void Disable(void);
         void ForceStop(void);
+        void FullStop(void);
         void Flush(void);
         
         void SetupRead(void* target, int size, i2c_callback cb = NULL);

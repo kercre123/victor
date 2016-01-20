@@ -176,7 +176,12 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
         
+<<<<<<< HEAD
         IActionRunner* faceObjectAction = new FaceObjectAction(robot, objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(2), DEG_TO_RAD(1440), false, true);
+=======
+        FaceObjectAction* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, true);
+        faceObjectAction->SetPanTolerance(DEG_TO_RAD(2));
+>>>>>>> 7f9db1b5cec9549bf6b7849467abff65ac993de6
         _actionsInProgress.insert(faceObjectAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
         

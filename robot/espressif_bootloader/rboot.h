@@ -56,6 +56,7 @@ typedef enum {
   FACTORY_SECTOR,        ///< Where factory build information will be stored
   BOOT_CONFIG_SECTOR,    ///< Where the boot configuration is stored
   FIRMWARE_START_SECTOR, ///< Where the user firmware starts
+  ASSET_START_SECTOR   = 0x400, ///< Where assets and any other application code may be uploaded
   ESP_INIT_DATA_SECTOR = 0x1fc, ///< Where the Espressif OS keeps it's init data, two sectors long
   ESP_WIFI_CFG_SECTOR  = 0x1fe, ///< Where the Espressif OS keeps it's wifi configuration data, two sectors long
 } FlashSector;

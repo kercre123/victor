@@ -121,12 +121,12 @@ static IMUData imu_state;
 void Anki::Cozmo::HAL::IMU::Init(void) {
   // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
   I2C::WriteReg(ADDR_IMU, CMD, 0x10 + 1); // Power up accelerometer (normal mode)
-  //MicroWait(4000);   // Datasheet says wait 4ms
+  MicroWait(4000);   // Datasheet says wait 4ms
   I2C::WriteReg(ADDR_IMU, CMD, 0x10 + 1); // Power up accelerometer (normal mode)
-  //MicroWait(4000);   // Datasheet says wait 4ms
+  MicroWait(4000);   // Datasheet says wait 4ms
 
   I2C::WriteReg(ADDR_IMU, CMD, 0x14 + 1); // Power up gyroscope (normal mode)
-  //MicroWait(81000);   // Datasheet says wait 80ms
+  MicroWait(81000);   // Datasheet says wait 80ms
 
 #ifdef IMU_DEBUG
   UART::DebugPrintf("IMU status after power up: %02x %02x %02x\n", I2C::ReadReg(ADDR_IMU, 0x0), I2C::ReadReg(ADDR_IMU, 0x2), I2C::ReadReg(ADDR_IMU, 0x3));

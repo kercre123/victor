@@ -553,7 +553,7 @@ namespace Anki {
     {
     public:
       // Note that the rotation information in pose will be ignored
-      FacePoseAction(Robot& robot, const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle);
+      FacePoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
@@ -561,7 +561,8 @@ namespace Anki {
     protected:
       virtual ActionResult Init() override;
       
-      FacePoseAction(Robot& robot, Radians turnAngleTol, Radians maxTurnAngle);
+      FacePoseAction(Robot& robot, Radians maxTurnAngle);
+      
       void SetPose(const Pose3d& pose);
       virtual Radians GetHeadAngle(f32 heightDiff);
       
@@ -619,12 +620,16 @@ namespace Anki {
       // to face the object, then tilt its head. To disallow turning, set
       // maxTurnAngle to zero.
       
-      FaceObjectAction(Robot& robot, ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+      FaceObjectAction(Robot& robot,
+                       ObjectID objectID,
+                       Radians maxTurnAngle,
                        bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
-      FaceObjectAction(Robot& robot, ObjectID objectID, Vision::Marker::Code whichCode,
-                       Radians turnAngleTol, Radians maxTurnAngle,
+      FaceObjectAction(Robot& robot,
+                       ObjectID objectID,
+                       Vision::Marker::Code whichCode,
+                       Radians maxTurnAngle,
                        bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       

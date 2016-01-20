@@ -12,6 +12,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/powerMessages.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
+#include "clad/types/nvStorage.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -39,18 +40,6 @@ message AnimationStarted
 message AnimationEnded
 {
   uint_8 tag
-}
-
-message CameraCalibration
-{
-  float_32 focalLength_x,
-  float_32 focalLength_y,
-  float_32 center_x,
-  float_32 center_y,
-  float_32 skew,
-  uint_16  nrows,
-  uint_16  ncols,
-  bool     isPhysicalRobots,
 }
 
 message RobotAvailable
@@ -106,6 +95,8 @@ union RobotToEngine {
   FlashWriteAcknowledge      flashWriteAck          = 0x85,
   AnimationStarted           animStarted            = 0x86,
   AnimationEnded             animEnded              = 0x87,
+  NVStorage::NVStorageBlob   nvData                 = 0x88,
+  NVStorage::NVOpResult      nvResult               = 0x98,
 }
 
 

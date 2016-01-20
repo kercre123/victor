@@ -154,15 +154,15 @@ class _Dispatcher(IDataReceiver):
                             'fmt':      self.formatTable[msg.trace.stringId][0],
                             'nargs':    self.formatTable[msg.trace.stringId][1],
                             'vals':     repr(msg.trace.value),
-                            'nvals':  len(msg.trace.value)
+                            'nvals':    len(msg.trace.value)
                     }
-                    sys.stderr.write("{base} {level:d} {name}: Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat:{fmt}{linesep}\t{vals}{linesep}".format(**kwds))
+                    sys.stderr.write("{base} {level:d} {name}: Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat: \"{fmt}\"{linesep}\tVals: {vals}{linesep}".format(**kwds))
                 else:
                     kwds = {'linesep':   os.linesep,
                             'base':      base,
                             'level':     msg.trace.level,
                             'name':      self.nameTable[msg.trace.name],
-                            'formatted': (self.formatTable[msg.trace.stringId][0] % msg.trace.value)
+                            'formatted': (self.formatTable[msg.trace.stringId][0] % tuple(msg.trace.value))
                     }
                     sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
             for tag, subs in self.ReceiveDataSubscribers.items():
