@@ -599,7 +599,6 @@ def initializePlugin(mobject):
             data = json.load(data_file)
             if( "events" in data ):
                 g_AudioIDs = data["events"]
-        print "wwise JSON file open"
     else:
         print "Wwise audio events json file not found"
     try:
