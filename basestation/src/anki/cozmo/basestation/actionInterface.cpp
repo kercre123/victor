@@ -23,6 +23,8 @@
 
 #define DEBUG_ANIM_TRACK_LOCKING 0
 
+#define DEBUG_ACTION_RUNNING 0
+
 namespace Anki {
   
   namespace Cozmo {
@@ -74,6 +76,15 @@ namespace Anki {
 #       endif
         robot.GetMoveComponent().LockAnimTracks(disableTracks);
         robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
+      }
+
+      if( ! _isRunning ) {
+        if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+          PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s running",
+                            GetTag(),
+                            GetName().c_str());
+        }
+                          
         _isRunning = true;
       }
 
@@ -81,13 +92,13 @@ namespace Anki {
       if(_isCancelled) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
-                           "Cancelling %s.", GetName().c_str());
+                           "Cancelling [%d] %s.", _idTag, GetName().c_str());
         }
         result = ActionResult::CANCELLED;
       } else if(_isInterrupted) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.InterruptAction",
-                           "Interrupting %s", GetName().c_str());
+                           "Interrupting [%d] %s", _idTag, GetName().c_str());
         }
         result = ActionResult::INTERRUPTED;
       } else {
@@ -127,6 +138,12 @@ namespace Anki {
 #         endif
           robot.GetMoveComponent().UnlockAnimTracks(disableTracks);
           robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+        }
+
+        if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+          PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
+                            GetTag(),
+                            GetName().c_str());
         }
         _isRunning = false;
       }
@@ -187,16 +204,27 @@ namespace Anki {
       if(!_subActions.empty())
       {
         for(auto subAction : _subActions) {
-          if(nullptr != (*subAction)) {
-#if DEBUG_ANIM_TRACK_LOCKING
-            PRINT_NAMED_INFO("IActionRunner.CancelAndDeleteSubActions",
-                             "Removing subAction %s [%d]",
-                             (*subAction)->GetName().c_str(), (*subAction)->GetTag());
-#endif
-            (*subAction)->Cancel();
-            (*subAction)->Update(robot);
+          if( nullptr != (*subAction) ) {
+            if( (*subAction)->_isRunning ) {
+              if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+                PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions",
+                                  "Removing subAction %s [%d] (parent action is %s [%d])",
+                                  (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
+                                  GetName().c_str(), GetTag());
+              }
+            
+              (*subAction)->Cancel();
+              (*subAction)->Update(robot);
+            } // if running
+            else if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+              PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions.Skip",
+                                "skipping sub action  %s [%d] because it isn't running (parent action is %s [%d])",
+                                (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
+                                GetName().c_str(), GetTag());
+            }
+            
             Util::SafeDelete(*subAction);
-          }
+          } // if not null
         }
       }
     }

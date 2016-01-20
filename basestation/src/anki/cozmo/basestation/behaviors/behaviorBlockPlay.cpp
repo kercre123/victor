@@ -583,41 +583,55 @@ namespace Cozmo {
         // first face the block object (where we think it is, if we know), then look a bit to the left and
         // right
 
-        const float lookAmountRads = DEG_TO_RAD(20);
-        const float waitTime = 0.6f;
-        
-        CompoundActionSequential* searchAction = new CompoundActionSequential();
-        searchAction->SetDelayBetweenActions(waitTime);
-
-        if( _trackedObject.IsSet() ) {
-          ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_trackedObject);
-          if( obj != nullptr &&
-              obj->IsExistenceConfirmed() ) {
-
-            searchAction->AddAction( new FacePoseAction(obj->GetPose(), DEG_TO_RAD(5), 0.5 * PI_F) );
+        const float skipSearchIfSeenWithin_s = 0.5f;
+        if( _lastObjectObservedTime > currentTime_sec - skipSearchIfSeenWithin_s ) {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.UpdateInternal.SearchingForMissingBlock.SkipSearch",
+                                 "in searching state, but saw the object at %f (t=%f), so not searching",
+                                 _lastObjectObservedTime,
+                                 currentTime_sec);
+          SetCurrState(_missingBlockFoundState);
+          if( _missingBlockFoundState == State::InspectingBlock ) {
+            _holdUntilTime = currentTime_sec + _timetoInspectBlock;
           }
         }
+        else {
+        
+          const float lookAmountRads = DEG_TO_RAD(20);
+          const float waitTime = 0.6f;
+        
+          CompoundActionSequential* searchAction = new CompoundActionSequential();
+          searchAction->SetDelayBetweenActions(waitTime);
 
-        TurnInPlaceAction* turnAction = new TurnInPlaceAction( -lookAmountRads, false );
-        turnAction->SetTolerance(DEG_TO_RAD(2));
-        searchAction->AddAction( turnAction );
+          if( _trackedObject.IsSet() ) {
+            ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_trackedObject);
+            if( obj != nullptr &&
+                obj->IsExistenceConfirmed() ) {
 
-        turnAction = new TurnInPlaceAction( 2 * lookAmountRads, false );
-        turnAction->SetTolerance(DEG_TO_RAD(2));
-        searchAction->AddAction( turnAction );
+              searchAction->AddAction( new FacePoseAction(obj->GetPose(), DEG_TO_RAD(5), 0.5 * PI_F) );
+            }
+          }
 
-        searchAction->AddAction( new WaitAction(0.2f) );
+          TurnInPlaceAction* turnAction = new TurnInPlaceAction( -lookAmountRads, false );
+          turnAction->SetTolerance(DEG_TO_RAD(2));
+          searchAction->AddAction( turnAction );
 
-        StartActing(robot, searchAction);
+          turnAction = new TurnInPlaceAction( 2 * lookAmountRads, false );
+          turnAction->SetTolerance(DEG_TO_RAD(2));
+          searchAction->AddAction( turnAction );
 
-        // mark the time the search started, so if we see something after this time we count it.  Add a bit of
-        // a fudge factor so we don't count things that we are seeing right now
-        _searchStartTime = currentTime_sec + _objectObservedTimeThreshold;
+          searchAction->AddAction( new WaitAction(0.2f) );
 
-        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
-                               "BehaviorBlockPlay.StartSearchingForObject",
-                               "t must be >= %f",
-                               _searchStartTime);
+          StartActing(robot, searchAction);
+
+          // mark the time the search started, so if we see something after this time we count it.  Add a bit of
+          // a fudge factor so we don't count things that we are seeing right now
+          _searchStartTime = currentTime_sec + _objectObservedTimeThreshold;
+
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                 "BehaviorBlockPlay.StartSearchingForObject",
+                                 "t must be >= %f",
+                                 _searchStartTime);
+        }
 
         break;
       }
