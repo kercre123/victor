@@ -126,6 +126,7 @@ void Anki::Cozmo::HAL::I2C::Enable(void) {
   NVIC_EnableIRQ(I2C0_IRQn);
   
   if (!_active && _fifo_count > 0) {
+    _active = true;
     I2C0_Proc();
   }
 }
@@ -211,6 +212,7 @@ static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags)
   if (ena) Enable();
 
   if (!_active) {
+    _active = true;
     I2C0_Proc();
   }
 
@@ -270,19 +272,15 @@ static void Write_Handler(void) {
   if (!_fifo_count) {
     _active = false;
     return ;
-  } else {
-    _active = true;
   }
 
   uint8_t data;
   uint8_t mode;
   read_queue(mode, data);
 
-  volatile uint8_t testing = I2C0_C1;
   if (I2C0_C1 != mode) {
     I2C0_C1 = mode;
   }
-  testing = I2C0_C1;
   
   switch (mode) {
     default:
