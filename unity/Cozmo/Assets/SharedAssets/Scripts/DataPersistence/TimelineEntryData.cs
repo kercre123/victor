@@ -44,6 +44,8 @@ namespace DataPersistence {
     public readonly StatContainer RecievedStats = new StatContainer();
 
     public string ChallengeId;
+
+    public bool Won;
   }
 }
 

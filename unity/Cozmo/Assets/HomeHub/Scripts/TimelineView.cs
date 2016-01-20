@@ -90,27 +90,32 @@ namespace Cozmo.HomeHub {
     }
 
     private void UpdateDailySession() {
-      var lastDay = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+
+      var currentSession = DataPersistenceManager.Instance.CurrentSession;
 
       // check if the current session is still valid
-      if (lastDay != null && lastDay.Date == DateTime.UtcNow.Date) {  
-        _DailyGoalInstance.SetDailyGoals(lastDay.Goals, lastDay.Progress);
+      if (currentSession != null) {  
+        _DailyGoalInstance.SetDailyGoals(currentSession.Goals, currentSession.Progress);
         return;
       }
 
-      if (lastDay != null && !lastDay.Complete) {
-        CompleteSession(lastDay);
+      var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+
+      if (lastSession != null && !lastSession.Complete) {
+        CompleteSession(lastSession);
       }
 
       // start a new session
       var goals = _DailyGoalInstance.GenerateDailyGoals();
 
-      TimelineEntryData newSession = new TimelineEntryData(DateTime.UtcNow.Date) {
+      TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
         StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
         StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
       };
 
       newSession.Goals.Set(goals);
+
+      RobotEngineManager.Instance.CurrentRobot.SetProgressionStats(newSession.Progress);
 
       DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
 
@@ -142,7 +147,7 @@ namespace Cozmo.HomeHub {
     private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
       int timelineIndex = 0;
 
-      var today = DateTime.UtcNow.Date;
+      var today = DataPersistenceManager.Today;
 
       var startDate = today.AddDays(-kTimelineHistoryLength);
 
