@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Cozmo.MinigameWidgets;
 using DG.Tweening;
 using Anki.Cozmo;
+using System.Linq;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -109,13 +110,21 @@ public abstract class GameBase : MonoBehaviour {
     return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f) + 1;
   }
 
-  // INGO TODO: For now just return a random value until actual rules are thought up.
   protected virtual int CalculateNoveltyStatRewards() {
-    return Random.Range(0, 4); // 4 is exclusive
+    List<DataPersistence.CompletedChallengeData> completedChallenges = DataPersistence.DataPersistenceManager.Instance.Data.Sessions.SelectMany(x => x.CompletedChallenges).ToList();
+    int noveltyPoints = 0;
+    for (int i = completedChallenges.Count - 1; i >= 0; --i) {
+      if (completedChallenges[i].ChallengeId == this._ChallengeData.ChallengeID) {
+        break;
+      }
+      noveltyPoints++;
+    }
+    return Mathf.Min(noveltyPoints, 5);
   }
 
+  // should be override for each mini game that wants to grant excitement rewards.
   protected virtual int CalculateExcitementStatRewards() {
-    return 0; // should be override for each mini game that wants to grant excitement rewards.
+    return 0;
   }
 
   public void OnDestroy() {
