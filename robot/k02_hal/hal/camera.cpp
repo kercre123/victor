@@ -132,6 +132,7 @@ namespace Anki
         MicroWait(50);
         GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
 
+        I2C::ForceStop();
         I2C::ReadReg(I2C_ADDR, 0xF0);
         I2C::ForceStop();
         I2C::ReadReg(I2C_ADDR, 0xF1);
@@ -148,6 +149,7 @@ namespace Anki
 
           I2C::ForceStop();
           I2C::WriteReg(I2C_ADDR, p1, p2);
+          I2C::Flush();
         }
         I2C::ForceStop();
 

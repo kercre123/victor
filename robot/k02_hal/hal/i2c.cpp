@@ -7,14 +7,16 @@
 #include "MK02F12810.h"
 #include "hal/hardware.h"
 
+#define I2C_C1_COMMON (I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK)
+
 // Internal Settings
 enum I2C_Control {
-  I2C_CTRL_STOP = 0,
-  I2C_CTRL_READ = I2C_C1_MST_MASK,
+  I2C_CTRL_STOP = I2C_C1_COMMON,
+  I2C_CTRL_READ = I2C_C1_COMMON | I2C_C1_MST_MASK,
   
-  I2C_CTRL_SEND = I2C_C1_MST_MASK | I2C_C1_TX_MASK,
-  I2C_CTRL_NACK = I2C_C1_TXAK_MASK,
-  I2C_CTRL_RST  = I2C_C1_RSTA_MASK
+  I2C_CTRL_SEND = I2C_C1_COMMON | I2C_C1_MST_MASK | I2C_C1_TX_MASK,
+  I2C_CTRL_NACK = I2C_C1_COMMON | I2C_C1_TXAK_MASK,
+  I2C_CTRL_RST  = I2C_C1_COMMON | I2C_C1_RSTA_MASK
 };
 
 static const uint8_t UNUSED_SLAVE = 0xFF;
@@ -109,7 +111,7 @@ void Anki::Cozmo::HAL::I2C::Init()
 
   // Configure i2c
   I2C0_F  = I2C_F_ICR(0x1A);
-  I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK | I2C_C1_MST_MASK;
+  I2C0_C1 = I2C_C1_COMMON | I2C_C1_MST_MASK;
   
   // Enable IRQs
   NVIC_SetPriority(I2C0_IRQn, 0);
@@ -257,16 +259,17 @@ static void Write_Handler(void) {
       break ;
     case I2C_CTRL_READ | I2C_CTRL_NACK:
     case I2C_CTRL_READ:
-      _read_count = _read_size;
-      _read_buffer = (uint8_t*) _read_target;
-      I2C0_Proc = &Read_Handler;
-    
-      int throwaway = I2C0_D;
+      {
+        _read_count = _read_size;
+        _read_buffer = (uint8_t*) _read_target;
+        I2C0_Proc = &Read_Handler;
+      
+        int throwaway = I2C0_D;
+      }
       break ;
     case I2C_CTRL_STOP:
       // This is gross as shit and will go away eventually
       MicroWait(1);
-      I2C0_C1 |= I2C_C1_MST_MASK;
-      MicroWait(1);
+      Write_Handler();
   }
 }
