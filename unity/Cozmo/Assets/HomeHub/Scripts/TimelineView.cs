@@ -78,12 +78,7 @@ namespace Cozmo.HomeHub {
 
       _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _ContentPane).GetComponent<DailyGoalPanel>();
 
-
-      // TMP: GENERATE FAKE DATA
-      GenerateFakeData(challengeStatesById.Keys.ToArray());
-
       UpdateDailySession();
-
 
       PopulateTimeline(DataPersistenceManager.Instance.Data.Sessions);
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
@@ -143,46 +138,7 @@ namespace Cozmo.HomeHub {
     private void SetScrollRectStartPosition() {
       _ScrollRect.horizontalNormalizedPosition = _TimelinePane.rect.width / _ContentPane.rect.width;
     }
-
-    // TMP!!!!
-    private void GenerateFakeData(string[] challengeIds) {
-      DataPersistenceManager.Instance.Data.Sessions.Clear();
-
-      var today = DateTime.UtcNow.Date;
-
-      var startDate = today.AddDays(-kTimelineHistoryLength);
-
-      for (int i = 0; i < kTimelineHistoryLength; i++) {
-        var date = startDate.AddDays(i);
-
-        var entry = new TimelineEntryData(date);
-
-        for (int j = 0; j < (int)Anki.Cozmo.ProgressionStatType.Count; j++) {
-          var stat = (Anki.Cozmo.ProgressionStatType)j;
-          if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
-            int goal = UnityEngine.Random.Range(0, 6);
-            int progress = Mathf.Clamp(UnityEngine.Random.Range(0, goal * 2), 0, goal);
-            entry.Goals[stat] = goal;
-            entry.Progress[stat] = progress;
-          }
-        }
-
-        int challengeCount = UnityEngine.Random.Range(0, 20);
-
-        for (int j = 0; j < challengeCount; j++) {
-          entry.CompletedChallenges.Add(new CompletedChallengeData() {
-            ChallengeId = challengeIds[UnityEngine.Random.Range(0, challengeIds.Length)]
-          });
-        }
-
-        // don't add any days with goal of 0
-        if (entry.Goals.Total > 0) {
-          DataPersistenceManager.Instance.Data.Sessions.Add(entry);
-        }
-      }
-
-    }
-
+      
     private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
       int timelineIndex = 0;
 
@@ -205,7 +161,7 @@ namespace Cozmo.HomeHub {
         float progress = 0f;
         if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
           var state = timelineEntries[timelineIndex];
-          progress = Mathf.Clamp01(state.Progress.Total / (float)state.Goals.Total);
+          progress = _FriendshipFormulaConfig.CalculateFriendshipProgress(state.Progress, state.Goals);
           active = true;
           timelineIndex++;
         }
