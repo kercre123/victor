@@ -80,7 +80,7 @@ namespace Minesweeper {
 
       var rotation = Quaternion.Euler(0, 0, angle);
 
-      _CurrentRobot.GotoPose(_Center + delta - deltaNorm * 100f, rotation, HandleGoToPoseComplete);
+      _CurrentRobot.GotoPose(_Center + delta - deltaNorm * 100f, rotation, callback:HandleGoToPoseComplete);
     }
 
     protected void HandleGoToPoseComplete(bool success) {

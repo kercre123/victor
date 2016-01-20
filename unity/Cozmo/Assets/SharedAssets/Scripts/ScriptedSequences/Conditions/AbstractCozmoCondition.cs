@@ -12,7 +12,7 @@ namespace ScriptedSequences.Conditions {
     protected override void EnableChanged(bool enabled) {
       if (enabled) {
         if (Robot != null) {
-          EnableChangedAndRobotConnected(enabled);
+          EnableChangedAndRobotConnected(true);
         }
         else {
           RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
@@ -20,6 +20,7 @@ namespace ScriptedSequences.Conditions {
         }
       }
       else {
+        EnableChangedAndRobotConnected(false);
         RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
         RobotEngineManager.Instance.DisconnectedFromClient -= HandleRobotDisconnected;
       }

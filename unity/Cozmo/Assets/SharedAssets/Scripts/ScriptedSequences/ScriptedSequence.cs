@@ -125,7 +125,7 @@ namespace ScriptedSequences {
       if (Condition.IsMet && ActivateOnConditionMet) {
         Enable();
       }
-      else if (RequiresConditionRemainsMet) {
+      else if (RequiresConditionRemainsMet && !IsComplete) {
         Fail(new Exception("Condition Became Unmet"));
       }
     }

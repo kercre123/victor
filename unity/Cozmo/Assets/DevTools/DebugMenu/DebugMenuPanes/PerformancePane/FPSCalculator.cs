@@ -32,7 +32,7 @@ public class FPSCalculator : MonoBehaviour {
 
     PerformancePane.OnPerformancePaneOpened += HandlePerformancePaneOpened;
   }
-	
+  
   // Update is called once per frame
   private void Update() {
     float lastFrameSeconds = Time.deltaTime;

@@ -45,10 +45,10 @@ namespace Vortex {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
-      InitializeMinigameObjects();
+      InitializeMinigameObjects(minigameConfig.NumCubesRequired());
     }
 
-    protected void InitializeMinigameObjects() {
+    protected void InitializeMinigameObjects(int numCubes) {
       DAS.Info(this, "VortexGame::Start");
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<VortexPanel>();
 
@@ -62,7 +62,7 @@ namespace Vortex {
 
       InitialCubesState initCubeState = new InitialCubesState();
       // we need at least one for cozmo and one for at least one player but if we find more cool, stateintro will deal with it.
-      initCubeState.InitialCubeRequirements(new StateIntro(), 2, false, null);
+      initCubeState.InitialCubeRequirements(new StateIntro(), numCubes, false, null);
       _StateMachine.SetNextState(initCubeState);
 
       _RoundNumber = 0;

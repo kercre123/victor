@@ -12,7 +12,7 @@ namespace ScriptedSequences.Conditions {
           Robot.OnCarryingObjectSet += HandleCarryingObjectSet;
         }
       }
-      else {
+      else if(Robot != null) {
         Robot.OnCarryingObjectSet -= HandleCarryingObjectSet;
       }
     }

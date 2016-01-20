@@ -18,8 +18,8 @@ MonoBehaviour:
   _ChallengeTitleLocKey: speedTapLightCount.title
   _ChallengeSubtitleLocKey: speedTapLightCount.subtitle
   _ChallengeDescriptionLocKey: speedTapLightCount.description
-  _ChallengeIcon: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
-  _ChallengeKeyArt: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 9f55d61e2661643428baa66ce302b81a, type: 3}
+  _ChallengeKeyArt: {fileID: 21300000, guid: 9f55d61e2661643428baa66ce302b81a, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []

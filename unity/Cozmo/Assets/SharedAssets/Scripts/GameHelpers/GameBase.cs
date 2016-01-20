@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Cozmo.MinigameWidgets;
 using DG.Tweening;
+using Anki.Cozmo;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -24,26 +25,36 @@ public abstract class GameBase : MonoBehaviour {
     CloseMinigameImmediately();
   }
 
-  public delegate void MiniGameWinHandler();
+  // TODO: Modify so that it passes the rewards
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public void RaiseMiniGameWin() {
+  public void RaiseMiniGameWin(string primaryTextOverride = "", string secondaryTextOverride = "") {
     _StateMachine.Stop();
 
     _WonChallenge = true;
-    OpenChallengeEndedDialog();
+    string primaryText = primaryTextOverride;
+    if (!string.IsNullOrEmpty(primaryText)) {
+      primaryText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
+    }
+    OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
-  public delegate void MiniGameLoseHandler();
+  // TODO: Modify so that it passes the rewards
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
-  public void RaiseMiniGameLose() {
+  public void RaiseMiniGameLose(string primaryTextOverride = "", string secondaryTextOverride = "") {
     _StateMachine.Stop();
 
     _WonChallenge = false;
-    OpenChallengeEndedDialog();
+    string primaryText = primaryTextOverride;
+    if (!string.IsNullOrEmpty(primaryText)) {
+      primaryText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    }
+    OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
@@ -53,13 +64,17 @@ public abstract class GameBase : MonoBehaviour {
   public SharedMinigameView SharedMinigameViewInstance { get { return _SharedMinigameViewInstance; } }
 
   protected ChallengeData _ChallengeData;
-  private AlertView _ChallengeEndViewInstance;
+  private ChallengeEndedDialog _ChallengeEndViewInstance;
   private bool _WonChallenge;
 
   protected StateMachine _StateMachine = new StateMachine();
 
   [SerializeField]
   protected HowToPlaySlide[] _HowToPlayPrefabs;
+
+  private StatContainer _RewardedXp;
+
+  private delegate int XpCalculator();
 
   public void InitializeMinigame(ChallengeData challengeData) {
     _StateMachine.SetGameRef(this);
@@ -83,18 +98,36 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
     TitleText = Localization.Get(data.ChallengeTitleLocKey);
+    TitleIcon = data.ChallengeIcon;
     CreateDefaultQuitButton();
+  }
+
+  // INGO TODO: For now just return a random value until actual rules are thought up.
+  protected virtual int CalculateTimeStatRewards() {
+    return Random.Range(0, 4); // 4 is exclusive
+  }
+
+  // INGO TODO: For now just return a random value until actual rules are thought up.
+  protected virtual int CalculateNoveltyStatRewards() {
+    return Random.Range(0, 4); // 4 is exclusive
+  }
+
+  // INGO TODO: For now just return a random value until actual rules are thought up.
+  protected virtual int CalculateExcitementStatRewards() {
+    return Random.Range(0, 4); // 4 is exclusive
   }
 
   public void OnDestroy() {
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState();
+      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(AnimationName.kIdleBrickout);
     }
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
     }
     if (_ChallengeEndViewInstance != null) {
+      _ChallengeEndViewInstance.ViewCloseAnimationFinished -= HandleChallengeResultViewClosed;
       _ChallengeEndViewInstance.CloseViewImmediately();
       _ChallengeEndViewInstance = null;
     }
@@ -130,27 +163,43 @@ public abstract class GameBase : MonoBehaviour {
     Destroy(gameObject);
   }
 
-  private AlertView OpenChallengeEndedDialog() {
+  private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
     // Open confirmation dialog instead
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as AlertView;
-    // Hook up callbacks
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
-    alertView.TitleLocKey = _ChallengeData.ChallengeTitleLocKey;
-    alertView.DescriptionLocKey = _WonChallenge ? LocalizationKeys.kLabelChallengeCompleted : LocalizationKeys.kLabelChallengeFailed;
+    _ChallengeEndViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
+    _ChallengeEndViewInstance.SetupDialog(Localization.Get(_ChallengeData.ChallengeTitleLocKey),
+      _ChallengeData.ChallengeIcon, primaryText, secondaryText);
     // Listen for dialog close
-    alertView.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
-    return alertView;
+    _ChallengeEndViewInstance.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
+
+    _RewardedXp = new StatContainer();
+
+    Dictionary<ProgressionStatType, XpCalculator> rewardCalculators = new Dictionary<ProgressionStatType, XpCalculator>();
+    rewardCalculators.Add(ProgressionStatType.Time, CalculateTimeStatRewards);
+    rewardCalculators.Add(ProgressionStatType.Novelty, CalculateNoveltyStatRewards);
+    rewardCalculators.Add(ProgressionStatType.Excitement, CalculateExcitementStatRewards);
+
+    foreach (var kvp in rewardCalculators) {
+      // TODO: Check that this is a goal xp
+      int grantedXp = kvp.Value();
+      if (grantedXp != 0) {
+        _RewardedXp[kvp.Key] = grantedXp;
+        _ChallengeEndViewInstance.AddReward(kvp.Key, grantedXp);
+
+        // Grant right away even if there are animations in the daily goal ui
+        CurrentRobot.AddToProgressionStat(kvp.Key, grantedXp);
+      }
+    }
   }
 
   private void HandleChallengeResultViewClosed() {
     if (_WonChallenge) {
       if (OnMiniGameWin != null) {
-        OnMiniGameWin();
+        OnMiniGameWin(_RewardedXp);
       }
     }
     else {
       if (OnMiniGameLose != null) {
-        OnMiniGameLose();
+        OnMiniGameLose(_RewardedXp);
       }
     }
     CloseMinigameImmediately();
@@ -261,11 +310,14 @@ public abstract class GameBase : MonoBehaviour {
   #region Title Widget
 
   protected string TitleText {
-    get {
-      return _SharedMinigameViewInstance.TitleText;
-    }
     set {
       _SharedMinigameViewInstance.TitleText = value;
+    }
+  }
+
+  public Sprite TitleIcon {
+    set {
+      _SharedMinigameViewInstance.TitleIcon = value;
     }
   }
 

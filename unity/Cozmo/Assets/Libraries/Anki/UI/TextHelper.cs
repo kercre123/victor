@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 namespace Anki {
-	
+  
   namespace UI {
-	
+  
     public static class TextHelper {
 
       private static string _Language = "en";
@@ -37,7 +37,7 @@ namespace Anki {
 
       // returns localized ordinal string for 1-based rank
       public static string OrdinalString(uint rank, bool includeRankInString = true) {
-				OrdinalStrategy strategy = _OrdinalStrategies[_Language];
+        OrdinalStrategy strategy = _OrdinalStrategies[_Language];
         if (strategy != null) {
           string ordinal = strategy.OrdinalString(rank, includeRankInString);
           return ordinal;
@@ -104,6 +104,6 @@ namespace Anki {
     }
 
   }
-	
+  
   }
 }
