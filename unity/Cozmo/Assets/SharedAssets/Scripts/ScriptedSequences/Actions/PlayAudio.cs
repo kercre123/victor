@@ -19,7 +19,7 @@ namespace ScriptedSequences.Actions {
       
       SimpleAsyncToken token = new SimpleAsyncToken();
 
-      if (WaitToEnd) {        
+      if (WaitToEnd) {
         // Play with Callback
         // TODO: Need to set the Game Object Type appropriately
         AudioClient.Instance.PostEvent(EventType, GameObjectType, AudioCallbackFlag.EventComplete, (c) => {
