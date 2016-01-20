@@ -19,6 +19,7 @@ namespace ScriptedSequences.Actions {
       _Token = new SimpleAsyncToken();
       Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       DOTween.To(() => currentRobot.GetRobotVolume(), x => currentRobot.SetRobotVolume(x), TargetVolume, Duration).OnComplete(() => DoneTween());
+      return _Token;
     }
 
     private void DoneTween() {
