@@ -76,17 +76,10 @@ int main (void)
   DAC::Init();
   DAC::Tone();
   
-  I2C::Init();
-  UART::Init();
-  IMU::Init();
-  OLED::Init();
-  CameraInit();
-
-  Anki::Cozmo::Robot::Init();
   DAC::Mute();
 
   // Wait for Espressif to toggle out 4 words of I2SPI
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < 32; i++)
   {
     while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
     while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;
@@ -101,6 +94,14 @@ int main (void)
 
   MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
   
+  I2C::Init();
+  UART::Init();
+  IMU::Init();
+  OLED::Init();
+  CameraInit();
+
+  Anki::Cozmo::Robot::Init();
+
   // We can now safely start camera DMA, which shortly after starts HALExec
   // This function returns after the first call to HALExec is complete
   SPI::Init();

@@ -22,7 +22,7 @@ enum I2C_Control {
 };
 
 static const uint8_t UNUSED_SLAVE = 0xFF;
-static const int MAX_QUEUE = 128; // 256 bytes worth of i2c buffer (excessive)
+static const int MAX_QUEUE = 256; // 256 bytes worth of i2c buffer (excessive)
 
 static uint8_t _active_slave = UNUSED_SLAVE;
 
@@ -122,6 +122,8 @@ void Anki::Cozmo::HAL::I2C::Init()
 }
 
 void Anki::Cozmo::HAL::I2C::Enable(void) {
+  if (_enabled) return ;
+
   _enabled = true;
   NVIC_EnableIRQ(I2C0_IRQn);
   
