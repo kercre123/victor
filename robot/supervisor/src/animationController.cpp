@@ -121,23 +121,29 @@ namespace AnimationController {
       // (For now, this just means motor-based tracks.) Note that we don't
       // stop tracks we weren't using, in case we were, for example, playing
       // a head animation while driving a path.
+#ifdef TARGET_ESPRESSIF
+      RobotInterface::EngineToRobot msg;
+#endif
       if(_tracksInUse & HEAD_TRACK) {
 #ifdef TARGET_ESPRESSIF
-        // Don't have an API for this on Espressif right now, PUNT
+        msg.tag = RobotInterface::EngineToRobot::Tag_moveHead;
+        msg.moveHead.speed_rad_per_sec = 0.0f;
+        RTIP::SendMessage(msg);
 #else
         HeadController::SetAngularVelocity(0);
 #endif
       }
       if(_tracksInUse & LIFT_TRACK) {
 #ifdef TARGET_ESPRESSIF
-        // Don't have an API for this on Espressif right now, PUNT
+        msg.tag = RobotInterface::EngineToRobot::Tag_moveLift;
+        msg.moveLift.speed_rad_per_sec = 0.0f;
+        RTIP::SendMessage(msg);
 #else
         LiftController::SetAngularVelocity(0);
 #endif
       }
       if(_tracksInUse & BODY_TRACK) {
 #ifdef TARGET_ESPRESSIF
-        RobotInterface::EngineToRobot msg;
         msg.tag = RobotInterface::EngineToRobot::Tag_animBodyMotion;
         msg.animBodyMotion.speed = 0;
         msg.animBodyMotion.curvatureRadius_mm = 0;
