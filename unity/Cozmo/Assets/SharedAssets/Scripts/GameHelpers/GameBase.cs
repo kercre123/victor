@@ -114,9 +114,8 @@ public abstract class GameBase : MonoBehaviour {
     return Random.Range(0, 4); // 4 is exclusive
   }
 
-  // INGO TODO: For now just return a random value until actual rules are thought up.
   protected virtual int CalculateExcitementStatRewards() {
-    return Random.Range(0, 4); // 4 is exclusive
+    return 0; // should be override for each mini game that wants to grant excitement rewards.
   }
 
   public void OnDestroy() {
