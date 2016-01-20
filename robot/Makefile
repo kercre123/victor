@@ -37,6 +37,11 @@ esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
 
+otaBinaries: esp
+	cp espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
+	cp build/41/robot.safe releases/robot.safe
+	cp syscon/build/syscon.safe releases/syscon.safe
+
 clean:
 	make -C clad clean
 	make -C espressif/app clean
