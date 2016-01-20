@@ -117,6 +117,12 @@ public abstract class GameBase : MonoBehaviour {
       if (completedChallenges[i].ChallengeId == this._ChallengeData.ChallengeID) {
         break;
       }
+
+      // reward max points if this challenge has not been played yet.
+      if (i == 0) {
+        noveltyPoints = 5;
+      }
+
       noveltyPoints++;
     }
     return Mathf.Min(noveltyPoints, 5);
