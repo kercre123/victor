@@ -13,8 +13,8 @@
 extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_write_buff
 
 #define ENABLE_JPEG     // Comment this out to troubleshoot timing problems caused by JPEG encoder
+//#define TEST_VIDEO      // When JPEG encoder is disabled, uncomment this to send JPEG test video anyway
 //#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
-//#define ASCII_IMAGE     // Uncomment this to send an ASCII image for test purposes
 
 namespace Anki
 {
@@ -154,8 +154,6 @@ namespace Anki
         // TODO: Check that the GPIOs are okay
         //for (u8 i = 1; i; i <<= 1)
         //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));
-
-        InitDMA();
       }
       
       const int DMAMUX_PORTA = 49;    // This is not in the K02 .h files for some reason
@@ -222,11 +220,14 @@ namespace Anki
 
         InitIO();
         InitCam();
-
-        // Wait for everything to sync
-        while (!timingSynced_)
-        {}
       }
+      
+      // Start streaming data from the camera - after this point, the main thread can't touch registers
+      void CameraStart()
+      {
+        InitDMA();
+        while (!timingSynced_)  ;
+      }          
 
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
       {
@@ -350,25 +351,26 @@ void FTM2_IRQHandler(void)
   // Run the JPEG encoder for all of the remaining time
   int eof = 0, buflen;   
 #ifdef ENABLE_JPEG
-  if (line < 498)
+  if (line < 498)   // XXX: This is apparently compensating for a JPEGCompress bug
     JPEGCompress(line, TOTAL_ROWS);
   else
     Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0);
 #else
   // If JPEG encoder is disabled, try various test modes
-  #ifdef ASCII_IMAGE
-    const int LINELEN = 32;
-    static u8 test[] = "\n======..........................................................................................";
-    static u8 hex[] = "0123456789abcdef";
-    static u16 frame = 0;
-    test[2] = hex[frame & 15];
-    test[3] = hex[(line>>8) & 15];
-    test[4] = hex[(line>>4) & 15];
-    test[5] = hex[line & 15];
-    
-    memcpy(spi_write_buff->payload, test, LINELEN);
-    Anki::Cozmo::HAL::SPI::FinalizeDrop(LINELEN, line == TOTAL_ROWS);
-    frame += (line == TOTAL_ROWS);
+  #ifdef TEST_VIDEO
+    static u8 frame = 0;
+    if (0==(line&7) && line < TOTAL_ROWS) {
+      for (int i = 0; i < 20; i++)
+        spi_write_buff->payload[i] = ((frame + i) % 20) > (line > TOTAL_ROWS/2 ? 10 : 8) ? 0x4a : 0x5a;
+      Anki::Cozmo::HAL::SPI::FinalizeDrop(20, false);
+    } else if (line == TOTAL_ROWS) {
+      *((int*)spi_write_buff->payload) = 0xffffff4a;
+      Anki::Cozmo::HAL::SPI::FinalizeDrop(4, true);
+      frame++;
+      if (frame >= 20)
+        frame = 0;
+    } else
+      Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0);
   #else
     
   // Video streaming disabled - stream nothing at all

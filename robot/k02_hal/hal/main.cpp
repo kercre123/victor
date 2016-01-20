@@ -32,6 +32,7 @@ namespace Anki
     {
       // Import init functions from all HAL components
       void CameraInit(void);
+      void CameraStart(void);
       void TimerInit(void);
       void PowerInit(void);
 
@@ -67,22 +68,31 @@ int main (void)
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
 
-  // Get some initialization done 
+  // Initialize everything we can, while waiting for Espressif to boot
   UART::DebugInit();
   TimerInit();
   PowerInit();
 
   DAC::Init();
   DAC::Tone();
+  
+  I2C::Init();
+  IMU::Init();
+  OLED::Init();
+  UART::Init();
+  CameraInit();
 
-  // Wait for Espressif to toggle out 32 bits of SPI
-  for (int i = 0; i < 32; i++)
+  Anki::Cozmo::Robot::Init();
+  DAC::Mute();
+
+  // Wait for Espressif to toggle out 4 words of I2SPI
+  for (int i = 0; i < 4; i++)
   {
     while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
     while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;
   }
   
-  // Switch to 10MHz external reference to enable 100MHz clock
+  // Switch to 10MHz Espressif/external reference and 100MHz clock
   MCG_C1 &= ~MCG_C1_IREFS_MASK;
   // Wait for IREF to turn off
   while((MCG->S & MCG_S_IREFST_MASK))   ;
@@ -90,21 +100,17 @@ int main (void)
   while((MCG->S & MCG_S_CLKST_MASK))    ;
 
   MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
-
+  
+  // We can now safely start camera DMA, which shortly after starts HALExec
+  // This function returns after the first call to HALExec is complete
   SPI::Init();
-  I2C::Init();
-  IMU::Init();
-  OLED::Init();
-  UART::Init();
-
-  Anki::Cozmo::Robot::Init();
-
-  CameraInit();
-
-  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
+  CameraStart();
+  
+  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart()
   
   //StartupSelfTest();
 
+  // Run the main thread
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
