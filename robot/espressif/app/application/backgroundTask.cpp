@@ -43,7 +43,7 @@ void CheckForUpgrades(void)
 
 void WiFiFace(void)
 {
-  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n";
+  static const char wifiFaceFormat[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = "%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n";
   static bool wasConnected = false;
   if (clientConnected() && !wasConnected)
   {
