@@ -16,8 +16,9 @@ namespace ScriptedSequences.Actions {
     private SimpleAsyncToken _Token;
 
     public override ISimpleAsyncToken Act() {
-      SimpleAsyncToken _Token = new SimpleAsyncToken();
-      DOTween.To(() => RobotEngineManager.Instance.CurrentRobot.GetRobotVolume(), x => RobotEngineManager.Instance.CurrentRobot.SetRobotVolume(x), TargetVolume, Duration).OnComplete(() => DoneTween());
+      _Token = new SimpleAsyncToken();
+      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      DOTween.To(() => currentRobot.GetRobotVolume(), x => currentRobot.SetRobotVolume(x), TargetVolume, Duration).OnComplete(() => DoneTween());
     }
 
     private void DoneTween() {
