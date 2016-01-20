@@ -77,33 +77,9 @@ void Anki::Cozmo::HAL::OLED::Init(void) {
   MicroWait(80);
   GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
 
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), InitDisplay, sizeof(InitDisplay), NULL, I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), NULL, I2C_FORCE_START);
-}
-
-void Anki::Cozmo::HAL::OLED::SendFrame(uint8_t *frame, i2c_callback cb) {
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), NULL, I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), frame, FRAME_BUFFER_SIZE, cb);
-}
-
-static inline const uint8_t* SafeData(uint8_t* data, int size) {
-  static uint8_t screen_bytes[128];
-  static uint8_t *pos = screen_bytes;
-
-  uint8_t* bytes = pos;
-  
-  if (pos + size > screen_bytes + sizeof(screen_bytes)) {
-    bytes = &screen_bytes[0];
-    pos = &screen_bytes[size];
-  } else {
-    pos += size;
-  }
-  
-  memcpy(bytes, data, size);
-  
-  return bytes;
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), InitDisplay, sizeof(InitDisplay), I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), ResetCursor, sizeof(ResetCursor), I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), I2C_FORCE_START);
 }
 
 void Anki::Cozmo::HAL::OLED::BoundRect(uint8_t* data) {
@@ -118,9 +94,8 @@ void Anki::Cozmo::HAL::OLED::BoundRect(uint8_t* data) {
   };
 
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
-    SafeData(command, sizeof(command)), 
+      command,
       sizeof(command),
-      NULL,
       I2C_FORCE_START);
 
   FaceRemaining = (bounds->bottom - bounds->top + 1) * (bounds->right - bounds->left + 1);
@@ -137,41 +112,33 @@ void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t *face_bytes) {
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
     &StartWrite, 
     sizeof(StartWrite), 
-    NULL, 
     Rebound ? I2C_FORCE_START : I2C_OPTIONAL | I2C_FORCE_START);
 
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), SafeData(face_bytes, tx_size), tx_size, NULL);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), face_bytes, tx_size);
   
   FaceRemaining -= MAX_SCREEN_BYTES_PER_DROP;
   Rebound = false;
-}
-
-static volatile bool pending = false;
-static void StopHalt(const void* data, int count) {
-  pending = false;
 }
 
 // Display a number
 void Anki::Cozmo::HAL::OLED::ErrorCode(uint16_t code) {
   using namespace Anki::Cozmo::HAL;
   
-  uint8_t FrameBuffer[SCREEN_HEIGHT*SCREEN_WIDTH/8];
-  uint8_t *write_ptr = &FrameBuffer[sizeof(FrameBuffer) - SCREEN_WIDTH/8];
-  
-  memset(FrameBuffer, 0, sizeof(FrameBuffer));
+  uint8_t FrameBuffer[(CHAR_WIDTH + 1) * 5];
+  uint8_t *write_ptr = &FrameBuffer[sizeof(FrameBuffer)];
   
   FaceLock = true;
+  int bytes = 0;
   do {
-    const uint8_t *px = &FONT[code % 10][CHAR_WIDTH-1];
+    write_ptr -= CHAR_WIDTH;
+    memcpy(write_ptr, FONT[code % 10], CHAR_WIDTH);
+    *(--write_ptr) = 0;
+    bytes += CHAR_WIDTH + 1;
     code /= 10;
-
-    for (int i = 0; i < CHAR_WIDTH; i++) {
-      *write_ptr = *(px--);
-      write_ptr -= SCREEN_HEIGHT/8;
-    }
   } while (code > 0);
 
-  pending = true;
-  OLED::SendFrame(FrameBuffer, &StopHalt);
-  while (pending) ;
+
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), write_ptr, bytes);
 }

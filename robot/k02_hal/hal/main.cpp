@@ -104,10 +104,10 @@ int main (void)
   // We can now safely start camera DMA, which shortly after starts HALExec
   // This function returns after the first call to HALExec is complete
   SPI::Init();
+  OLED::ErrorCode(255);
   CameraStart();
   
-  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart()
-  
+  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
   //StartupSelfTest();
 
   // Run the main thread
