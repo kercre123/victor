@@ -84,11 +84,11 @@ namespace Anki {
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
-				#ifdef TARGET_K02
-				#include "clad/robotInterface/messageEngineToRobot_switch.def"
-				#else
+        #ifdef TARGET_K02
+        #include "clad/robotInterface/messageEngineToRobot_switch.def"
+        #else
         #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
-				#endif
+        #endif
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
           if (msg.tag == lookForID_)
@@ -694,6 +694,14 @@ namespace Anki {
         // Nothing to do here
       }
       void Process_triggerOTAUpgrade(Anki::Cozmo::RobotInterface::OTAUpgrade const&)
+      {
+        // Nothing to do here
+      }
+      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageBlob const&)
+      {
+        // Nothing to do here
+      }
+      void Process_readNV(Anki::Cozmo::NVStorage::NVEntryTag const&)
       {
         // Nothing to do here
       }
