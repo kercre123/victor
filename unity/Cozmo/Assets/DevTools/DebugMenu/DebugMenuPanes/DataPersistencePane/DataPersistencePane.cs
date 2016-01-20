@@ -2,6 +2,9 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using System;
+using Cozmo.HomeHub;
+using System.Linq;
 
 namespace DataPersistence {
   public class DataPersistencePane : MonoBehaviour {
@@ -9,18 +12,95 @@ namespace DataPersistence {
     [SerializeField]
     private Button _ResetSaveDataButton;
 
-    private void Start() {
-      _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
+    [SerializeField]
+    private Button _GenerateFakeDataButton;
+
+    [SerializeField]
+    private Button _StartNewSessionButton;
+
+    [SerializeField]
+    private ChallengeDataList _ChallengeDataList;
+
+    private HomeHub GetHomeHub() {
+      var go = GameObject.Find("HomeHub(Clone)");
+      if (go != null) {
+        return go.GetComponent<HomeHub>();
+      }
+      return null;
     }
 
-    private void OnDestroy() {
-      _ResetSaveDataButton.onClick.RemoveListener(HandleResetSaveDataButtonClicked);
+    private void TryReloadHomeHub() {
+      var homeHub = GetHomeHub();
+      if (homeHub != null) {
+        homeHub.TestLoadTimeline();
+      }
+    }
+
+    private void Start() {
+      _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
+      _GenerateFakeDataButton.onClick.AddListener(HandleGenerateFakeDataButtonClicked);
+      _StartNewSessionButton.onClick.AddListener(StartNewSessionButtonClicked);
     }
       
     private void HandleResetSaveDataButtonClicked() {
       // use reflection to change readonly field
       typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
       DataPersistenceManager.Instance.Save();
+      TryReloadHomeHub();
+    }
+
+    private void HandleGenerateFakeDataButtonClicked() {
+      GenerateFakeData(_ChallengeDataList.ChallengeData.Select(x => x.ChallengeID).ToArray());
+      DataPersistenceManager.Instance.Save();
+      TryReloadHomeHub();
+    }
+
+    private void StartNewSessionButtonClicked() {
+
+      var field = typeof(TimelineEntryData).GetField("Date");
+      // move every day back one in time.
+      DataPersistenceManager.Instance.Data.Sessions.ForEach(x => field.SetValue(x, x.Date.AddDays(-1)));
+      DataPersistenceManager.Instance.Save();
+
+      TryReloadHomeHub();
+    }
+
+    private void GenerateFakeData(string[] challengeIds) {
+      DataPersistenceManager.Instance.Data.Sessions.Clear();
+
+      var today = DateTime.UtcNow.Date;
+
+      var startDate = today.AddDays(-TimelineView.kTimelineHistoryLength);
+
+      for (int i = 0; i < TimelineView.kTimelineHistoryLength; i++) {
+        var date = startDate.AddDays(i);
+
+        var entry = new TimelineEntryData(date);
+
+        for (int j = 0; j < (int)Anki.Cozmo.ProgressionStatType.Count; j++) {
+          var stat = (Anki.Cozmo.ProgressionStatType)j;
+          if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
+            int goal = UnityEngine.Random.Range(0, 6);
+            int progress = Mathf.Clamp(UnityEngine.Random.Range(0, goal * 2), 0, goal);
+            entry.Goals[stat] = goal;
+            entry.Progress[stat] = progress;
+          }
+        }
+
+        int challengeCount = UnityEngine.Random.Range(0, 20);
+
+        for (int j = 0; j < challengeCount; j++) {
+          entry.CompletedChallenges.Add(new CompletedChallengeData() {
+            ChallengeId = challengeIds[UnityEngine.Random.Range(0, challengeIds.Length)]
+          });
+        }
+
+        // don't add any days with goal of 0
+        if (entry.Goals.Total > 0) {
+          DataPersistenceManager.Instance.Data.Sessions.Add(entry);
+        }
+      }
+
     }
   }
 }

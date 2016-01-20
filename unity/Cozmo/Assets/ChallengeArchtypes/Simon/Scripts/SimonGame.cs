@@ -134,6 +134,10 @@ namespace Simon {
       }
       return audioEvent;
     }
+
+    protected override int CalculateExcitementStatRewards() {
+      return Mathf.Max(0, _CurrentSequenceLength - 4);
+    }
   }
 
   public class SimonSound {
@@ -145,4 +149,6 @@ namespace Simon {
     Human,
     Cozmo
   }
+
+
 }

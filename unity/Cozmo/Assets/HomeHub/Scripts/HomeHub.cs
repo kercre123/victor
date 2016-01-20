@@ -21,7 +21,7 @@ namespace Cozmo.HomeHub {
 
     private GameBase _MiniGameInstance;
 
-    private string _CurrentChallengePlaying;
+    private CompletedChallengeData _CurrentChallengePlaying;
 
     public override bool LoadHubWorld() {
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
@@ -69,7 +69,10 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance.ChallengeStarted -= HandleStartChallengeClicked;
 
       // Keep track of the current challenge
-      _CurrentChallengePlaying = challengeClicked;
+      _CurrentChallengePlaying = new CompletedChallengeData() {
+        ChallengeId = challengeClicked,
+        StartTime = System.DateTime.UtcNow,
+      };
 
       // Close dialog
       // TODO: Don't close the hub dialog during minigames
@@ -103,7 +106,7 @@ namespace Cozmo.HomeHub {
     private void HandleMiniGameWin(StatContainer rewards) {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
-        CompleteChallenge(_CurrentChallengePlaying);
+        CompleteChallenge(_CurrentChallengePlaying, rewards);
         _CurrentChallengePlaying = null;
       }
       ShowTimelineDialog();
@@ -199,12 +202,12 @@ namespace Cozmo.HomeHub {
       return challengeState;
     }
 
-    private void CompleteChallenge(string completedChallengeId) { 
+    private void CompleteChallenge(CompletedChallengeData completedChallenge, StatContainer rewards) { 
       // If the completed challenge is not already complete
-      if (!DataPersistenceManager.Instance.Data.CompletedChallengeIds.Contains(completedChallengeId)) {
+      if (!DataPersistenceManager.Instance.Data.CompletedChallengeIds.Contains(completedChallenge.ChallengeId)) {
         // Add the current challenge to the completed list
-        DataPersistenceManager.Instance.Data.CompletedChallengeIds.Add(completedChallengeId);
-        _ChallengeStatesById[completedChallengeId].currentState = ChallengeState.FRESHLY_COMPLETED;
+        DataPersistenceManager.Instance.Data.CompletedChallengeIds.Add(completedChallenge.ChallengeId);
+        _ChallengeStatesById[completedChallenge.ChallengeId].currentState = ChallengeState.FRESHLY_COMPLETED;
 
         // Check all the locked challenges to see if any new ones unlocked.
         foreach (ChallengeStatePacket challengeState in _ChallengeStatesById.Values) {
@@ -218,8 +221,16 @@ namespace Cozmo.HomeHub {
             }
           }
         }
-        DataPersistenceManager.Instance.Save();
       }
+
+      completedChallenge.RecievedStats.Set(rewards);
+      completedChallenge.EndTime = System.DateTime.UtcNow;
+
+      var session = DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 1];
+      session.CompletedChallenges.Add(completedChallenge);
+      session.Progress.Add(rewards);
+
+      DataPersistenceManager.Instance.Save();
     }
 
     // TODO: Pragma out for production
@@ -233,7 +244,10 @@ namespace Cozmo.HomeHub {
 
     public void TestCompleteChallenge(string completedChallengeId) {
       if (_TimelineViewInstance != null) {
-        CompleteChallenge(completedChallengeId);
+
+        CompleteChallenge(new CompletedChallengeData() {
+          ChallengeId = completedChallengeId 
+        }, new StatContainer());
 
         // Force refresh of the dialog
         DeregisterDialogEvents();

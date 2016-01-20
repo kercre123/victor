@@ -14,6 +14,7 @@ namespace SpeedTap {
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
+
     public Color PlayerWinColor { 
       get { 
         return PlayerWinColors[0]; 
@@ -22,6 +23,7 @@ namespace SpeedTap {
         PlayerWinColors.Fill(value);
       }
     }
+
     public Color CozmoWinColor { 
       get { 
         return CozmoWinColors[0]; 
@@ -39,6 +41,9 @@ namespace SpeedTap {
     private int _CozmoRoundsWon;
     private int _Rounds;
     private int _MaxScorePerRound;
+    // how many rounds were close in score? used to calculate
+    // excitement score rewards.
+    private int _CloseRoundCount = 0;
 
     public event Action PlayerTappedBlockEvent;
 
@@ -83,6 +88,10 @@ namespace SpeedTap {
         else {
           _CozmoRoundsWon++;
           _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationGroupState(AnimationGroupName.kWin, HandleRoundAnimationDone)));
+        }
+
+        if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
+          _CloseRoundCount++;
         }
 
         int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
@@ -211,6 +220,10 @@ namespace SpeedTap {
       default:
         return new DefaultSpeedTapRules();
       }
+    }
+
+    protected override int CalculateExcitementStatRewards() {
+      return 1 + _CloseRoundCount * 2;
     }
   }
 }
