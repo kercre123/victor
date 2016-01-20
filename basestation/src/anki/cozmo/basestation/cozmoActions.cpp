@@ -671,7 +671,16 @@ namespace Anki {
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
-          _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), Radians(0), true, false));
+          IActionRunner* faceObjectAction = new FaceObjectAction(_objectID, Radians(0), Radians(0), true, false);
+
+          PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                            GetTag(),
+                            GetName().c_str(),
+                            faceObjectAction->GetTag(),
+                            faceObjectAction->GetName().c_str());
+
+          _compoundAction.AddAction(faceObjectAction);
+
         }
         
         _compoundAction.SetEmitCompletionSignal(false);
@@ -1372,6 +1381,13 @@ namespace Anki {
     ActionResult FaceObjectAction::Init(Robot &robot)
     {
       _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
+
+      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                        GetTag(),
+                        GetName().c_str(),
+                        _visuallyVerifyAction->GetTag(),
+                        _visuallyVerifyAction->GetName().c_str());
+
       ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
@@ -1564,6 +1580,13 @@ namespace Anki {
       _moveLiftToHeightAction->SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
+
+      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                        GetTag(),
+                        GetName().c_str(),
+                        _moveLiftToHeightAction->GetTag(),
+                        _moveLiftToHeightAction->GetName().c_str());
+
       
       // Go ahead and do the first update on moving the lift, so we don't "waste"
       // the first tick of CheckIfDone initializing the sub-action.
@@ -1620,7 +1643,8 @@ namespace Anki {
             }
             
             PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.WrongMarker",
-                             "Have seen object %d, but not marker code %d. Have seen: %s",
+                             "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
+                             GetTag(),
                              _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
           }
         } // if(!_markerSeen)
@@ -2194,6 +2218,12 @@ namespace Anki {
                                                   _dockMarker->GetCode(),
                                                   0, 0, true, false);
 
+      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                        GetTag(),
+                        GetName().c_str(),
+                        _faceAndVerifyAction->GetTag(),
+                        _faceAndVerifyAction->GetName().c_str());
+
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->SetEmitCompletionSignal(false);
       
@@ -2209,8 +2239,6 @@ namespace Anki {
       } else {
         return faceObjectResult;
       }
-
-      
       
     } // Init()
     
@@ -2728,6 +2756,13 @@ namespace Anki {
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false);
+
+              PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                                GetTag(),
+                                GetName().c_str(),
+                                _placementVerifyAction->GetTag(),
+                                _placementVerifyAction->GetName().c_str());
+              
               _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
@@ -2776,6 +2811,13 @@ namespace Anki {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+
+                  PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                                    GetTag(),
+                                    GetName().c_str(),
+                                    _placementVerifyAction->GetTag(),
+                                    _placementVerifyAction->GetName().c_str());
+
                   
                   // Disable completion signals since this is inside another action
                   _placementVerifyAction->SetEmitCompletionSignal(false);
@@ -2935,6 +2977,12 @@ namespace Anki {
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
+              
+              PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                                GetTag(),
+                                GetName().c_str(),
+                                _rollVerifyAction->GetTag(),
+                                _rollVerifyAction->GetName().c_str());
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetEmitCompletionSignal(false);
@@ -3308,6 +3356,12 @@ namespace Anki {
         
         _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, 0, true, false);
         _faceAndVerifyAction->SetEmitCompletionSignal(false);
+
+        PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                          GetTag(),
+                          GetName().c_str(),
+                          _faceAndVerifyAction->GetTag(),
+                          _faceAndVerifyAction->GetName().c_str());
         
       } // if/else IsCarryingObject()
       
@@ -3686,7 +3740,6 @@ namespace Anki {
       }
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
-        // TEMP: ask andrew, this was causing a cutoff when one animation tried to interrupt another, but then failed, but then in the failed animations Cleanup, cleared the streaming animation
         _wasAborted = true;
         return ActionResult::FAILURE_ABORT;
       }
