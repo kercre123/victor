@@ -1008,7 +1008,7 @@ public class Robot : IDisposable {
     TrackToObject(null);
   }
 
-  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec, float panAccel_radPerSec2,
+  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                          Robot.RobotCallback callback = null,
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     FaceObjectMessage.objectID = observedObject;
