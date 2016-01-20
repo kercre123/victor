@@ -76,7 +76,10 @@ public abstract class GameBase : MonoBehaviour {
 
   private delegate int XpCalculator();
 
+  private float _GameStartTime;
+
   public void InitializeMinigame(ChallengeData challengeData) {
+    _GameStartTime = Time.time;
     _StateMachine.SetGameRef(this);
     _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
@@ -102,9 +105,8 @@ public abstract class GameBase : MonoBehaviour {
     CreateDefaultQuitButton();
   }
 
-  // INGO TODO: For now just return a random value until actual rules are thought up.
   protected virtual int CalculateTimeStatRewards() {
-    return Random.Range(0, 4); // 4 is exclusive
+    return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f) + 1;
   }
 
   // INGO TODO: For now just return a random value until actual rules are thought up.
