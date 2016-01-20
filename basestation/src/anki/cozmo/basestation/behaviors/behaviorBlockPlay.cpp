@@ -286,7 +286,8 @@ namespace Cozmo {
           } else if (_hasValidLastKnownFacePose) {
             
             // Otherwise, if had previously seen a valid face, turn to face its last known pose
-            IActionRunner* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, DEG_TO_RAD(5), PI_F);
+            FacePoseAction* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, PI_F);
+            lookAtFaceAction->SetPanTolerance(DEG_TO_RAD(5));
 
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
                                    "Moving to last face pose");
@@ -654,7 +655,9 @@ namespace Cozmo {
           if( obj != nullptr &&
               obj->IsExistenceConfirmed() ) {
 
-            searchAction->AddAction( new FacePoseAction(obj->GetPose(), DEG_TO_RAD(5), 0.5 * PI_F) );
+            FacePoseAction* faceAction = new FacePoseAction(obj->GetPose(), 0.5 * PI_F);
+            faceAction->SetPanTolerance(DEG_TO_RAD(5));
+            searchAction->AddAction( faceAction );
           }
         }
 
@@ -1435,8 +1438,10 @@ namespace Cozmo {
      
       if( robot.IsCarryingObject() ) {
         // look at the block, then react to it
+        FacePoseAction* faceObjectAction = new FacePoseAction(oObject->GetPose(), PI_F);
+        faceObjectAction->SetPanTolerance(DEG_TO_RAD(5));
         StartActing(robot,
-                    new FacePoseAction(oObject->GetPose(), DEG_TO_RAD(5), PI_F),
+                    faceObjectAction,
                     [this,&robot](ActionResult ret){
                       PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
                       return false;

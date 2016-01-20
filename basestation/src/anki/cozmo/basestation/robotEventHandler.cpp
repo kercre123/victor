@@ -336,7 +336,6 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
     objectID = msg.objectID;
   }
   FaceObjectAction* action = new FaceObjectAction(objectID,
-                                             Radians(msg.turnAngleTol),
                                              Radians(msg.maxTurnAngle),
                                              msg.visuallyVerifyWhenDone,
                                              msg.headTrackWhenDone);
@@ -356,7 +355,6 @@ IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::Fa
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
   FacePoseAction* action = new FacePoseAction(pose,
-                                              Radians(msg.turnAngleTol),
                                               Radians(msg.maxTurnAngle));
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
