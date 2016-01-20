@@ -89,6 +89,9 @@ namespace Cozmo {
           BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
     
     IBehavior* LoadBehaviorFromJson(const Json::Value& behaviorJson);
+    
+    void ClearAllBehaviorOverrides();
+    bool OverrideBehaviorScore(const std::string& behaviorName, float newScore);
 
   private:
     
@@ -101,6 +104,8 @@ namespace Cozmo {
     Result InitNextBehaviorHelper(float currentTime_sec);
     void   SetupOctDemoBehaviorChooser(const Json::Value &config);
     void   AddReactionaryBehavior(IReactionaryBehavior* behavior);
+    
+    void   SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec);
     
     // Factory creates and tracks data-driven behaviors etc
     BehaviorFactory* _behaviorFactory;

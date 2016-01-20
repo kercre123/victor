@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
 #include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "util/random/randomGenerator.h"
 #include "json/json.h"
@@ -81,6 +82,9 @@ namespace Cozmo {
     // derived class should implement.
     Status Update(double currentTime_sec) ;
     
+    // This behavior was the currently running behavior, but is now stopping (to make way for a new current behavior)
+    void Stop(double currentTime_sec);
+    
     //
     // Abstract methods to be overloaded:
     //
@@ -103,15 +107,20 @@ namespace Cozmo {
     // EvaluateScoreInternal is used to score each behavior for behavior selection - by default it just uses EvaluateEmotionScore
     virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const;
     
-    float EvaluateScore(const Robot& robot, double currentTime_sec) const
-    {
-      return IsRunnable(robot, currentTime_sec) ? EvaluateScoreInternal(robot, currentTime_sec) : 0.0f;
-    }
+    float EvaluateScore(const Robot& robot, double currentTime_sec) const;
 
-    void ClearEmotionScorers()                         { _emotionScorers.clear(); }
-    void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }
-    size_t GetEmotionScorerCount() const { return _emotionScorers.size(); }
-    const EmotionScorer& GetEmotionScorer(size_t index) const { return _emotionScorers[index]; }
+    const MoodScorer& GetMoodScorer() const { return _moodScorer; }
+    
+    void ClearEmotionScorers()                         { _moodScorer.ClearEmotionScorers(); }
+    void AddEmotionScorer(const EmotionScorer& scorer) { _moodScorer.AddEmotionScorer(scorer); }
+    size_t GetEmotionScorerCount() const { return _moodScorer.GetEmotionScorerCount(); }
+    const EmotionScorer& GetEmotionScorer(size_t index) const { return _moodScorer.GetEmotionScorer(index); }
+    
+    
+    void SetOverrideScore(float newVal) { _overrideScore = newVal; }
+    
+    float EvaluateRepetitionPenalty(double currentTime_sec) const;
+    const Util::GraphEvaluator2d& GetRepetionalPenalty() const { return _repetitionPenalty; }
     
     bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
@@ -135,6 +144,7 @@ namespace Cozmo {
     virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) = 0;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) = 0;
     virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) = 0;
+    virtual void   StopInternal(Robot& robot, double currentTime_sec) = 0;
     
     bool ReadFromJson(const Json::Value& config);
     
@@ -179,26 +189,37 @@ namespace Cozmo {
     Util::RandomGenerator& GetRNG() const;
     
   private:
-    
-    std::string _name;
-    std::string _stateName = "";
-    
+            
+    template<class EventType>
+    void HandleEvent(const EventType& event);
+
+    // ==================== Static Member Vars ====================
+            
     static const char* kBaseDefaultName;
     
     // A random number generator for all behaviors to share
     static Util::RandomGenerator sRNG;
+            
+    // ==================== Member Vars ====================
     
-    std::vector<EmotionScorer> _emotionScorers;
+    std::string _name;
+    std::string _stateName = "";
+        
+    MoodScorer                 _moodScorer;
+    Util::GraphEvaluator2d     _repetitionPenalty;
     
     Robot& _robot;
     
-    bool _isRunning;
-    bool _isOwnedByFactory;
-
     std::vector<::Signal::SmartHandle> _eventHandles;
     
-    template<class EventType>
-    void HandleEvent(const EventType& event);
+    double _lastRunTime;
+
+    float _overrideScore; // any value >= 0 implies it should be used
+
+    bool _isRunning;
+    bool _isOwnedByFactory;
+    
+    bool _enableRepetitionPenalty;
     
   }; // class IBehavior
   
@@ -210,6 +231,12 @@ namespace Cozmo {
   inline IBehavior::Status IBehavior::Update(double currentTime_sec)
   {
     return UpdateInternal(_robot, currentTime_sec);
+  }
+
+  inline void IBehavior::Stop(double currentTime_sec)
+  {
+    StopInternal(_robot, currentTime_sec);
+    _lastRunTime = currentTime_sec;
   }
   
   inline Result IBehavior::Interrupt(double currentTime_sec, bool isShortInterrupt)

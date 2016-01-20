@@ -67,6 +67,11 @@ Result BehaviorUnityDriven::InterruptInternal(Robot& robot, double currentTime_s
   return Result::RESULT_OK;
 }
 
+  
+void BehaviorUnityDriven::StopInternal(Robot& robot, double currentTime_sec)
+{
+}
+  
 
 float BehaviorUnityDriven::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
 {

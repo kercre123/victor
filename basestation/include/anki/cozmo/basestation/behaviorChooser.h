@@ -79,7 +79,9 @@ public:
   virtual ~SimpleBehaviorChooser();
   
 protected:
-  std::vector<IBehavior*> _behaviorList;
+  
+  using BehaviorList = std::vector<IBehavior*>;
+  BehaviorList      _behaviorList;
 };
   
 // Builds upon the SimpleBehaviorChooser to also directly trigger a specific behavior on certain events
@@ -96,6 +98,8 @@ public:
   virtual IBehavior* GetReactionaryBehavior(
     const Robot& robot,
     const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override;
+  
+  virtual const char* GetName() const override { return "Reactionary"; }
   
   // We need to clean up the behaviors we've been given to hold onto
   virtual ~ReactionaryBehaviorChooser();

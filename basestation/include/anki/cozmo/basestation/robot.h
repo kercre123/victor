@@ -35,6 +35,7 @@
 #include "anki/planning/shared/path.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -42,6 +43,7 @@
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
@@ -50,6 +52,7 @@
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/tracePrinter.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -174,14 +177,7 @@ public:
     
     // Returns true if robot is not traversing a path and has no actions in its queue.
     bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
-    
-    // True if wheel speeds are non-zero in most recent RobotState message
-    bool   IsMoving() const {return _isMoving;}
-    
-    // True if head/lift is on its way to a commanded angle/height
-    bool   IsHeadMoving() const {return _isHeadMoving;}
-    bool   IsLiftMoving() const {return _isLiftMoving;}
-    
+  
     // True if we are on the sloped part of a ramp
     bool   IsOnRamp() const { return _onRamp; }
     
@@ -341,8 +337,12 @@ public:
     bool IsPickedUp()         const {return _isPickedUp;}
     
     void SetCarryingObject(ObjectID carryObjectID);
-    void UnSetCarryingObjects();
-    
+    void UnSetCarryingObjects(bool topOnly = false);
+  
+    // If objID == carryingObjectOnTopID, only that object's carry state is unset.
+    // If objID == carryingObjectID, all carried objects' carry states are unset.
+    void UnSetCarryObject(ObjectID objID);
+  
     // Tell the physical robot to dock with the specified marker
     // of the specified object that it should currently be seeing.
     // If pixel_radius == u8_MAX, the marker can be seen anywhere in the image,
@@ -470,14 +470,11 @@ public:
   
     // Tell the animation streamer to move the eyes by this x,y amount over the
     // specified duration (layered on top of any other animation that's playing).
-    // If makePersistent is true, a looping face layer will be used and it is the
-    // caller's responsibility to remove that layer using the returned tag.
-    // (Otherwise - when makePersistent=false - the tag is 0 and can be ignored.)
-    u32 ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent = false);
-  
-    // Same as above, but shifts and scales
-    u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                          TimeStamp_t duration_ms, bool makePersistent = false);
+    // Use tag = AnimationStreamer::NotAnimatingTag to start a new layer (in which
+    // case tag will be set to the new layer's tag), or use an existing tag
+    // to add the shift to that layer.
+    void ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
+                   TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
@@ -491,10 +488,15 @@ public:
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
-
+  
     // Read the animations in a dir
     void ReadAnimationDir();
-    void ReadAnimationDirImpl(const std::string& animationDir);
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupDir();
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
@@ -612,6 +614,8 @@ public:
     
     // =========  Other State  ============
     f32 GetBatteryVoltage() const { return _battVoltage; }
+  
+    u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
     
     // Abort everything the robot is doing, including path following, actions,
     // animations, and docking. This is like the big red E-stop button.
@@ -675,6 +679,15 @@ public:
     Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
+  
+  const std::string& GetAnimationNameFromGroup(const std::string& name) const {
+    auto group = _animationGroups.GetAnimationGroup(name);
+    if(group != nullptr && !group->IsEmpty()) {
+      return group->GetAnimationName(GetMoodManager());
+    }
+    static const std::string empty("");
+    return empty;
+  }
   
   protected:
     IExternalInterface* _externalInterface;
@@ -782,12 +795,10 @@ public:
     // State
     bool             _isPickingOrPlacing = false;
     bool             _isPickedUp         = false;
-    bool             _isMoving           = false;
-    bool             _isHeadMoving       = false;
-    bool             _isLiftMoving       = false;
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
+    u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ENABLE_ALL_TRACKS;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -839,7 +850,8 @@ public:
     std::string _lastPlayedAnimationId;
 
     std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    
+    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+  
     ///////// Modifiers ////////
     
     void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
@@ -857,6 +869,7 @@ public:
     ///////// Animation /////////
     
     CannedAnimationContainer _cannedAnimations;
+    AnimationGroupContainer  _animationGroups;
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
@@ -879,10 +892,12 @@ public:
     ImageDeChunker* _imageDeChunker;
     uint8_t _imuSeqID = 0;
     std::ofstream _imuLogFileStream;
+    TracePrinter _traceHandler;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -890,6 +905,7 @@ public:
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).

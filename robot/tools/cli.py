@@ -10,6 +10,7 @@ if sys.version_info.major < 3:
 
 TOOLS_DIR = os.path.join("tools")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
+ANKI_LOG_STRING_TABLE = os.path.join('..', 'resources', 'config', 'basestation', 'AnkiLogStringTables.json')
 
 if not os.path.isdir(TOOLS_DIR):
     sys.exit("Cannot find tools directory \"{}\". Are you running from the base robot directory?".format(TOOLS_DIR))
@@ -20,6 +21,8 @@ sys.path.insert(0, TOOLS_DIR)
 sys.path.insert(0, CLAD_DIR)
 
 from ReliableTransport import *
+
+from ankiLogPP import importTables
 
 from clad.robotInterface.messageEngineToRobot import Anki
 from clad.robotInterface.messageRobotToEngine import Anki as _Anki
@@ -50,6 +53,7 @@ class CozmoCLI(IDataReceiver):
             self.lastStateRXTimes = [0.0, 0.0]
         else:
             self.lastStateRXTimes = None
+        self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE)
 
     def __del__(self):
         if self.transport != None:
@@ -68,7 +72,39 @@ class CozmoCLI(IDataReceiver):
         now = time.time()
         msg = RobotInterface.RobotToEngine.unpack(buffer)
         if msg.tag == msg.Tag.printText:
-            sys.stdout.write("ROBOT: " + msg.printText.text)
+            sys.stdout.write("ROBOT PRINT ({:d}): {}".format(msg.printText.level, msg.printText.text))
+        elif msg.tag == msg.Tag.trace:
+            base = "ROBOT TRACE"
+            if not msg.trace.name in self.nameTable:
+                sys.stderr.write("{} unknown trace name ID {:d}{}".format(base, msg.trace.name, os.linesep))
+            elif not msg.trace.stringId in self.formatTable:
+                kwds = {'linesep':  os.linesep,
+                        'base':     base,
+                        'level':    msg.trace.level,
+                        'name':     self.nameTable[msg.trace.name],
+                        'stringId': msg.trace.stringId,
+                        'vals':     repr(msg.trace.value)
+                }
+                sys.stderr.write("{base} {level:d} {name}: Unknown format string id {stringId:d}.{linesep}\tValues = {vals}{linesep}".format(**kwds))
+            elif len(msg.trace.value) != self.formatTable[msg.trace.stringId][1]:
+                kwds = {'linesep':  os.linesep,
+                        'base':     base,
+                        'level':    msg.trace.level,
+                        'name':     self.nameTable[msg.trace.name],
+                        'fmt':      self.formatTable[msg.trace.stringId][0],
+                        'nargs':    self.formatTable[msg.trace.stringId][1],
+                        'vals':     repr(msg.trace.value),
+                        'nvals':  len(msg.trace.value)
+                }
+                sys.stderr.write("{base} {level:d} {name}: Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat:{fmt}{linesep}\t{vals}{linesep}".format(**kwds))
+            else:
+                kwds = {'linesep':   os.linesep,
+                        'base':      base,
+                        'level':     msg.trace.level,
+                        'name':      self.nameTable[msg.trace.name],
+                        'formatted': (self.formatTable[msg.trace.stringId][0] % msg.trace.value)
+                }
+                sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
         elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:
             sys.stdout.write(repr(msg.state))
             sys.stdout.write(os.linesep)

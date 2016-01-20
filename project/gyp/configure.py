@@ -123,7 +123,8 @@ def main(scriptArgs):
   if not os.path.exists(options.audioPath):
     UtilLog.error('audio path not found [%s]' % options.audioPath)
     return False
-  audioProjectPath = os.path.join(options.audioPath, 'gyp/audioengine.gyp')
+  audioProjectPath = options.audioPath
+  audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioengine.gyp')
 
 
   # do not check for coretech external, and gyp if we are only updating list files
@@ -219,7 +220,10 @@ def main(scriptArgs):
   ankiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
   ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
   coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
-  audioProjectPath = os.path.relpath(audioProjectPath, configurePath)
+  audioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
+  audioProjectPath = os.path.relpath(options.audioPath, configurePath)
+
+  print "Set audio project relpath: %s" % audioProjectPath
 
   # mac
   if 'mac' in options.platforms:
@@ -255,7 +259,7 @@ def main(scriptArgs):
                                     gtestPath, 
                                     ankiUtilProjectPath, 
                                     coretechInternalProjectPath,
-                                    audioProjectPath
+                                    audioProjectGypPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -299,7 +303,7 @@ def main(scriptArgs):
                                   gtestPath, 
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
-                                  audioProjectPath
+                                  audioProjectGypPath
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -339,7 +343,7 @@ def main(scriptArgs):
                                     gtestPath, 
                                     ankiUtilProjectPath, 
                                     coretechInternalProjectPath,
-                                    audioProjectPath
+                                    audioProjectGypPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
       gyp.main(gypArgs)
@@ -414,7 +418,7 @@ def main(scriptArgs):
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
                                   ndk_root,
-                                  audioProjectPath
+                                  audioProjectGypPath
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
@@ -462,7 +466,7 @@ def main(scriptArgs):
                                     gtestPath,
                                     ankiUtilProjectPath,
                                     coretechInternalProjectPath,
-                                    audioProjectPath
+                                    audioProjectGypPath
                                   )
       os.environ['CC_target'] = '/usr/bin/clang'
       os.environ['CXX_target'] = '/usr/bin/clang++'
@@ -471,9 +475,10 @@ def main(scriptArgs):
       gyp.main(gypArgs)
       print "***********************HERE-configure.py2"
 
-  #pre build setup: decompress audio libs
-  if (subprocess.call([os.path.join(projectRoot, 'lib/audio/gyp/decompressAudioLibs.sh')]) != 0):
-    Logger.error('error decompressing audio libs')
+  # Configure Anki Audio project
+  audio_config_script = os.path.join(audioProjectPath, 'configure.py')
+  if (subprocess.call(audio_config_script) != 0):
+    Logger.error('error Anki Audio project Configure')
 
   return True
 

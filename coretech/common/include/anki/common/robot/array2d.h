@@ -19,7 +19,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/memory.h"
-#include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/geometry.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/sequences.h"
@@ -334,30 +333,30 @@ namespace Anki
 
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
-      AnkiAssert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
-      AnkiAssert(this->IsValid());
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
+      assert(this->IsValid());
 
       return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> Type* Array<Type>::Pointer(const s32 index0, const s32 index1)
     {
-      AnkiAssert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
-      AnkiAssert(this->IsValid());
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
+      assert(this->IsValid());
 
       return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> inline const Type * Array<Type>::operator[](const s32 index0) const
     {
-      AnkiAssert(index0 >= 0 && index0 < this->size[0]);
+      assert(index0 >= 0 && index0 < this->size[0]);
 
       return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride );
     }
 
     template<typename Type> inline Type * Array<Type>::operator[](const s32 index0)
     {
-      AnkiAssert(index0 >= 0 && index0 < this->size[0]);
+      assert(index0 >= 0 && index0 < this->size[0]);
 
       return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride );
     }
@@ -685,7 +684,7 @@ namespace Anki
     {
       // This is a little tough to write a general case for, so this method should be specialized
       // for each relevant case
-      AnkiAssert(false);
+      assert(false);
 
       return 0;
     }
@@ -709,7 +708,7 @@ namespace Anki
 
           //memcpy(pThisData, values + y*size[1], numValuesThisRow*sizeof(Type));
           for(s32 x=0; x<numWordsToCopy; x++) {
-            //AnkiAssert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
+            //assert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
             pThisData[x] = reinterpret_cast<const u32*>(values+y*size[1])[x];
           }
           numValuesSet += numValuesThisRow;

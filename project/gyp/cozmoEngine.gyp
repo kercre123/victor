@@ -457,6 +457,8 @@
                 'actions' : [
                   {
                     'action_name': 'create_symlink_webotsCtrlViz_faciometricLibs',
+                    'inputs': [ ],
+                      'outputs': [ ],
                       'action': [
                         'ln',  '-s', '-n', '-f',
                         '<(face_library_lib_path)',
@@ -489,7 +491,8 @@
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],
             'defines': [
               'COZMO_ROBOT',
-              'SIMULATOR'
+              'SIMULATOR',
+              '_DEBUG'
             ],
             'libraries': [
               'libCppController.dylib',
@@ -498,16 +501,13 @@
             ],
             'actions': [
               {
-                'action_name': 'generate_version_include',
-                'inputs': [ ],
-                'outputs': [
-                  '../../robot/include/anki/cozmo/robot/version.h'
-                ],
-                'action': [
-                  '../../robot/tools/versionGenerator/versionGenerator.sh',
-                  '../../robot/include/anki/cozmo/robot/version.h'
-                ],
-              }
+                    'action_name': 'Robot pre-build steps',
+                    'inputs': [],
+                    'outputs': [],
+                    'action': [
+                        'make', '-C', '../../robot/', 'sim'
+                    ],
+                }
             ]
           }, # end controller Robot
 
@@ -626,8 +626,13 @@
                 'actions' : [
                   {
                     'action_name': 'create_symlink_webotsCtrlKeyboard_faciometricLibs',
+                    'inputs': [ ],
+                    'outputs': [ ],
                     'action': [
-                      'ln', '-s', '-n', '-f',
+                      'ln',
+                      '-s',
+                      '-n',
+                      '-f',
                       '<(face_library_lib_path)',
                       '../../simulator/controllers/webotsCtrlKeyboard/',
                     ],

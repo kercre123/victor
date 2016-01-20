@@ -19,6 +19,8 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include "util/math/numericCast.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -28,23 +30,21 @@ namespace Cozmo {
   
   const char* IBehavior::kBaseDefaultName = "no_name";
   
-  static const char* kNameKey           = "name";
-  static const char* kEmotionScorersKey = "emotionScorers";
+  static const char* kNameKey              = "name";
+  static const char* kEmotionScorersKey    = "emotionScorers";
+  static const char* kRepetitionPenaltyKey = "repetitionPenalty";
   
   
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-  : _robot(robot)
+  : _moodScorer()
+  , _robot(robot)
+  , _lastRunTime(0.0)
+  , _overrideScore(-1.0f)
   , _isRunning(false)
   , _isOwnedByFactory(false)
+  , _enableRepetitionPenalty(true)
   {
-    if (config.isNull())
-    {
-      _name = kBaseDefaultName;
-    }
-    else
-    {
-      ReadFromJson(config);
-    }
+    ReadFromJson(config);
   }
 
   bool IBehavior::ReadFromJson(const Json::Value& config)
@@ -52,30 +52,29 @@ namespace Cozmo {
     const Json::Value& nameJson = config[kNameKey];
     _name = nameJson.isString() ? nameJson.asCString() : kBaseDefaultName;
 
-    _emotionScorers.clear();
+    _moodScorer.ClearEmotionScorers();
     
     const Json::Value& emotionScorersJson = config[kEmotionScorersKey];
     if (!emotionScorersJson.isNull())
     {
-      const uint32_t numEmotionScorers = emotionScorersJson.size();
-
-      _emotionScorers.reserve(numEmotionScorers);
-      
-      const Json::Value kNullScorerValue;
-      
-      for (uint32_t i = 0; i < numEmotionScorers; ++i)
+      _moodScorer.ReadFromJson(emotionScorersJson);
+    }
+    
+    _repetitionPenalty.Clear();
+    
+    const Json::Value& repetitionPenaltyJson = config[kRepetitionPenaltyKey];
+    if (!repetitionPenaltyJson.isNull())
+    {
+      if (!_repetitionPenalty.ReadFromJson(repetitionPenaltyJson))
       {
-        const Json::Value& emotionScorerJson = emotionScorersJson.get(i, kNullScorerValue);
-        
-        if (emotionScorerJson.isNull())
-        {
-          PRINT_NAMED_WARNING("IBehavior.BadEmotionScorer", "EmotionScorer %u failed to read", i);
-        }
-        else
-        {
-          _emotionScorers.emplace_back(emotionScorerJson);
-        }
+        PRINT_NAMED_WARNING("IBehavior.BadRepetitionPenalty", "Behavior '%s': %s failed to read", _name.c_str(), kRepetitionPenaltyKey);
       }
+    }
+    
+    // Ensure there is a valid graph
+    if (_repetitionPenalty.GetNumNodes() == 0)
+    {
+      _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
     }
     
     return true;
@@ -114,37 +113,45 @@ namespace Cozmo {
   
   float IBehavior::EvaluateEmotionScore(const MoodManager& moodManager) const
   {
-    float totalScore = 0.0f;
-    uint32_t numEmotionsScored = 0;
-    const uint32_t kTickRangeForDelta = 60; // 2 would give any chances between the last 2 updates, but we might want to track more if it takes longer for a running behavior to interrupt and allow this to run
-    
-    for (const EmotionScorer& emotionScorer : _emotionScorers)
-    {
-      const EmotionType emotionType = emotionScorer.GetEmotionType();
-      const float emotionValue = emotionScorer.TrackDeltaScore() ? moodManager.GetEmotionDeltaRecentTicks(emotionType, kTickRangeForDelta)
-                                                                 : moodManager.GetEmotionValue(emotionType);
-      const float score = emotionScorer.GetScoreGraph().EvaluateY(emotionValue);
-      if (FLT_NEAR(score, 0.0f))
-      {
-        // any component scoring 0 forces an overal 0 score (e.g. prevent behavior ever being picked)
-        return 0.0f;
-      }
-      else
-      {
-        totalScore += score;
-        ++numEmotionsScored;
-      }
-    }
-    
-    const float averageScore = (numEmotionsScored > 0) ? (totalScore / float(numEmotionsScored)) : 0.0f;
-    return averageScore;
+    return _moodScorer.EvaluateEmotionScore(moodManager);
   }
   
+  // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
   float IBehavior::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
   {
     return EvaluateEmotionScore(robot.GetMoodManager());
   }
 
+  float IBehavior::EvaluateRepetitionPenalty(double currentTime_sec) const
+  {
+    if (_lastRunTime > 0.0)
+    {
+      const float timeSinceRun = Util::numeric_cast<float>(currentTime_sec - _lastRunTime);
+      const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceRun);
+      return repetitionPenalty;
+    }
+    
+    return 1.0f;
+  }
+  
+  float IBehavior::EvaluateScore(const Robot& robot, double currentTime_sec) const
+  {
+    if (IsRunnable(robot, currentTime_sec))
+    {
+      const bool doOverrideScore = (_overrideScore >= 0.0f);
+      float score = doOverrideScore ? _overrideScore : EvaluateScoreInternal(robot, currentTime_sec);
+      
+      if (_enableRepetitionPenalty)
+      {
+        const float repetitionPenalty = EvaluateRepetitionPenalty(currentTime_sec);
+        score *= repetitionPenalty;
+      }
+      
+      return score;
+    }
+    
+    return 0.0f;
+  }
 
 #pragma mark --- IReactionaryBehavior ----
   

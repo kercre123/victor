@@ -6,6 +6,7 @@
 #include "messages.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
+#include "anki/cozmo/robot/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
 /// Code below assumes buffer elements = uint8_t also assumes power of two size
@@ -40,31 +41,24 @@ namespace HAL {
     }
     else
     {
-      if (size > RTIP_MAX_CLAD_MSG_SIZE)
+      AnkiConditionalErrorAndReturnValue(size <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
+      const uint8_t rind = txRind;
+      uint8_t wind = txWind;
+      const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
+      if (available > (size + 4)) // Room for message plus header plus one more so we can tell empty from full
       {
-        PRINT("ERROR: Can't send message %x[%d] to WiFi, max size %d\r\n", msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
-        return false;
+        const uint16_t sizeWHeader = size+1;
+        const u8* msgPtr = (u8*)buffer;
+        txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
+        txBuf[wind++] = (reliable ? RTIP_CLAD_MSG_RELIABLE_FLAG : 0x00) | \
+                        (hot      ? RTIP_CLAD_MSG_HOT_FLAG      : 0x00) | \
+                        ((sizeWHeader >> 8) & RTIP_CLAD_SIZE_HIGH_MASK); // Size high byte plus flags
+        txBuf[wind++] = msgID;
+        for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
+        txWind = wind;
+        return true;
       }
-      else
-      {
-        const uint8_t rind = txRind;
-        uint8_t wind = txWind;
-        const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
-        if (available > (size+3)) // Room for message plus header
-        {
-          const uint16_t sizeWHeader = size+1;
-          const u8* msgPtr = (u8*)buffer;
-          txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
-          txBuf[wind++] = (reliable ? RTIP_CLAD_MSG_RELIABLE_FLAG : 0x00) | \
-                          (hot      ? RTIP_CLAD_MSG_HOT_FLAG      : 0x00) | \
-                          ((sizeWHeader >> 8) & RTIP_CLAD_SIZE_HIGH_MASK); // Size high byte plus flags
-          txBuf[wind++] = msgID;
-          for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
-          txWind = wind;
-          return true;
-        }
-        else return false;
-      }
+      else return false;
     }
   }
 
@@ -85,7 +79,7 @@ namespace HAL {
       const uint8_t wind = txWind;
       uint8_t rind = txRind;
       uint8_t i = 0;
-      while (rind != wind)
+      while ((rind != wind) && i < maxLength)
       {
         dest[i++] = txBuf[rind++];
       }
@@ -118,7 +112,7 @@ namespace HAL {
       if (wind == rind) return RESULT_OK; // Nothing available
       else
       {
-        uint8_t available = (RX_BUF_SIZE - (wind - rind));
+        uint8_t available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
         RobotInterface::EngineToRobot msg;
         while (available)
         {
@@ -136,7 +130,7 @@ namespace HAL {
               {
                 for (; i<size; i++) msgBuffer[i] = rxBuf[rind++];
                 rxRind = rind;
-                available = (RX_BUF_SIZE - (wind - rind));
+                available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
                 Messages::ProcessMessage(msg);
                 continue;
               }

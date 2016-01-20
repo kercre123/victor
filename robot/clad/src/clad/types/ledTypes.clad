@@ -1,7 +1,7 @@
 /** Types and structures for controlling LEDs on the robot and accessories
  * ROBOT_CLAD_SHARED
  */
- 
+
 namespace Anki {
 namespace Cozmo {
 
@@ -12,7 +12,7 @@ enum uint_8 LEDId {
   LED_BACKPACK_FRONT,
   LED_BACKPACK_MIDDLE,
   LED_BACKPACK_BACK,
-  LED_BACKPACK_RIGHT,  
+  LED_BACKPACK_RIGHT,
   NUM_BACKPACK_LEDS
 }
 
@@ -29,25 +29,42 @@ enum uint_32 LEDColor {
   LED_WHITE = 0xffffff,
   LED_IR    = 0xff000000,
 }
- 
-enum uint_8 LEDState {
-  LED_STATE_OFF = 0,
-  LED_STATE_ON,
-  LED_STATE_TURNING_ON,
-  LED_STATE_TURNING_OFF
+
+/** 16 bit shortened encoding of color
+ * 1 bit for IR
+ * 5 bits each for reg green blue
+ */
+enum uint_16 LEDColorEncoded {
+  LED_ENC_OFF    = 0x0000,
+  LED_ENC_RED    = 0x7c00,
+  LED_ENC_GRN    = 0x03e0,
+  LED_ENC_BLU    = 0x001f,
+  LED_ENC_YELLOW = 0x7fe0,
+  LED_ENC_PURPLE = 0x7c1f,
+  LED_ENC_CYAN   = 0x03ff,
+  LED_ENC_WHITE  = 0x7fff,
+  LED_ENC_IR     = 0x8000,
 }
- 
+
+enum uint_16 LEDColorEncodedShifts {
+  LED_ENC_RED_SHIFT = 10,
+  LED_ENC_GRN_SHIFT = 5,
+  LED_ENC_BLU_SHIFT = 0,
+  LED_ENC_IR_SHIFT  = 15
+}
+
+/** Light state information to transmit to the robot.
+ * frames are assumed to be 30ms for this purpose.
+ * Note this structure must align to allow arrays of it
+ */
 structure LightState
 {
-  uint_32  onColor = 0,
-  uint_32  offColor = 0,
-  uint_32  onPeriod_ms = 0,
-  uint_32  offPeriod_ms = 0,
-  uint_32  transitionOnPeriod_ms = 0,
-  uint_32  transitionOffPeriod_ms = 0,
-  uint_32  nextSwitchTime,
-  LEDState state,
-  uint_8   PADDING[3],
+  uint_16  onColor = 0,
+  uint_16  offColor = 0,
+  uint_8   onFrames = 0,
+  uint_8   offFrames = 0,
+  uint_8   transitionOnFrames = 0,
+  uint_8   transitionOffFrames = 0,
 }
 
 

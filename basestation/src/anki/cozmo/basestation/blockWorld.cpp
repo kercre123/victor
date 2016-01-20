@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMap.h"
 #include "bridge.h"
 #include "flatMat.h"
 #include "platform.h"
@@ -34,6 +35,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -75,6 +77,7 @@ namespace Cozmo {
     , _didObjectsChange(false)
     , _canDeleteObjects(true)
     , _canAddObjects(true)
+    , _navMemoryMap( nullptr )
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -87,6 +90,7 @@ namespace Cozmo {
       
       //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
+      /*
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ANGRYFACE));
 
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BULLSEYE2));
@@ -99,6 +103,7 @@ namespace Cozmo {
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ANKILOGO));
       
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_STAR5));
+      */
       
       //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_DICE));
       
@@ -112,6 +117,7 @@ namespace Cozmo {
        */
       //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_BANGBANGBANG));
       
+      /*
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ARROW));
       
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG));
@@ -122,6 +128,7 @@ namespace Cozmo {
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_SPIDER));
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_KITTY));
       _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BEE));
+      */
       
       //////////////////////////////////////////////////////////////////////////
       // 1x1 Light Cubes
@@ -150,7 +157,7 @@ namespace Cozmo {
       // 2x1 Blocks
       //
       
-      _objectLibrary[ObjectFamily::Block].AddObject(new Block_2x1(ObjectType::Block_BANGBANGBANG));
+      //_objectLibrary[ObjectFamily::Block].AddObject(new Block_2x1(ObjectType::Block_BANGBANGBANG));
       
       
       //////////////////////////////////////////////////////////////////////////
@@ -159,7 +166,7 @@ namespace Cozmo {
       
       // Flat mats:
       //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_LETTERS_4x4));
-      _objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_GEARS_4x4));
+      //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_GEARS_4x4));
       
       // Platform piece:
       //_objectLibrary[ObjectFamily::Mat].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
@@ -188,6 +195,11 @@ namespace Cozmo {
         SetupEventHandlers(*_robot->GetExternalInterface());
       }
       
+      //////////////////////////////////////////////////////////////////////////
+      // NavMemoryMap
+      //
+      // Uncomment this line to create and use navMemoryMap. Commented out to not enable yet in master
+      // _navMemoryMap.reset( new NavMemoryMap() );
       
     } // BlockWorld() Constructor
   
@@ -497,6 +509,13 @@ namespace Cozmo {
     return result;
   }
   
+  void BlockWorld::UpdateNavMemoryMap()
+  {
+    if ( nullptr != _navMemoryMap ) {
+      _navMemoryMap->AddClearQuad(_robot->GetBoundingQuadXY());
+    }
+  }
+  
   void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
   {
     if(!object->GetID().IsSet()) {
@@ -512,6 +531,7 @@ namespace Cozmo {
       }
     }
     
+    // TODO if an object with same ID exists, it will leak
     existingFamily[object->GetType()][object->GetID()] = object;
   }
   
@@ -732,6 +752,19 @@ namespace Cozmo {
                                      candidateObject->GetID().GetValue(), matchingObject->GetID().GetValue());
                     DeleteObject(matchingObject->GetID());
                     matchingObject = candidateObject;
+                    
+                    // If the matching object currently thinks it's being carried, unset its carry state.
+                    ActionableObject* actionObject = dynamic_cast<ActionableObject*>(matchingObject);
+                    if(actionObject != nullptr) {
+                      if(actionObject->IsBeingCarried()) {
+                        PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.ObservedObjectMovedOffLift",
+                                            "Object %d was probably moved off lift. Setting as uncarried.",
+                                            actionObject->GetID().GetValue());
+                        _robot->UnSetCarryObject(actionObject->GetID());
+                      }
+                    }
+
+                    
                     break;
                   }
                 }
@@ -795,7 +828,7 @@ namespace Cozmo {
           //  - if the robot isn't already localized to an object or it has moved
           //     since the last time it got localized to an object.
           useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
-                                     !_robot->IsMoving() &&
+                                     !_robot->GetMoveComponent().IsMoving() &&
                                      distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
                                      matchingObject->CanBeUsedForLocalization() &&
@@ -935,6 +968,11 @@ namespace Cozmo {
         if(_unidentifiedActiveObjects.count(observedObject->GetID())==0)
         {
           BroadcastObjectObservation(observedObject, true);
+        }
+        
+        // Update navMemory map
+        if ( nullptr != _navMemoryMap ) {
+          _navMemoryMap->AddObstacleQuad(observedObject->GetBoundingQuadXY());
         }
         
         _didObjectsChange = true;
@@ -1710,6 +1748,31 @@ namespace Cozmo {
           CORETECH_ASSERT(object->GetPose().GetParent() != nullptr &&
                           object->GetPose().GetParent()->IsOrigin());
           object->SetPoseParent(_robot->GetWorldOrigin());
+
+          // update navmesh with a quadrilateral between the robot and the seen object
+          if ( nullptr != _navMemoryMap )
+          {
+            // robot corners
+            const Quad2f& robotQuad = _robot->GetBoundingQuadXY();
+            Point3f cornerBR{ robotQuad[Quad::TopLeft   ].x(), robotQuad[Quad::TopLeft ].y(), 0};
+            Point3f cornerBL{ robotQuad[Quad::BottomLeft].x(), robotQuad[Quad::BottomLeft].y(), 0};
+          
+            std::vector<const Vision::KnownMarker *> observedMarkers;
+            object->GetObservedMarkers(observedMarkers);
+            for ( const auto& observedMarkerIt : observedMarkers )
+            {
+              // marker corners
+              const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
+              Point3f cornerTL = markerCorners[Quad::BottomLeft];
+              Point3f cornerTR = markerCorners[Quad::BottomRight];
+              
+              // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
+              // the navmesh that it should be clear, since we saw the marker
+              Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
+              _navMemoryMap->AddClearQuad(clearVisionQuad);
+            }
+          }
+          
         }
         
         // Use them to add or update existing blocks in our world
@@ -1821,7 +1884,28 @@ namespace Cozmo {
     }
     */
 
+    Result BlockWorld::AddCliff(const Pose3d& p)
+    {
+      if ( _navMemoryMap )
+      {
+        // TODO this is not an actual detected size, so I just create an object only to ask a size
+        Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
+        Quad3f cliffquad
+        {
+          {+cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // up L
+          {-cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // lo L
+          {+cliffSize.x(), -cliffSize.y(), cliffSize.z()}, // up R
+          {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
+        };
+        p.ApplyTo(cliffquad, cliffquad);
+        _navMemoryMap->AddCliffQuad(cliffquad);
+      }
     
+      // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
+      // so that's nice
+      return AddProxObstacle(p);
+    }
+  
     Result BlockWorld::AddProxObstacle(const Pose3d& p)
     {
       TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
@@ -1906,7 +1990,7 @@ namespace Cozmo {
             if(marker2isInsideMarker1) {
               PRINT_NAMED_INFO("BlockWorld.Update",
                                "Removing %s marker completely contained within %s marker.\n",
-                               marker1.GetCodeName(), marker2.GetCodeName());
+                               marker2.GetCodeName(), marker1.GetCodeName());
               // Note: erase does increment of iterator for us
               markerIter2 = currentObsMarkers.erase(markerIter2);
             } else {
@@ -1966,7 +2050,8 @@ namespace Cozmo {
           }
         }
         
-        RemoveMarkersWithinMarkers(currentObsMarkers);
+        // Optional: don't allow markers seen enclosed in other markers
+        //RemoveMarkersWithinMarkers(currentObsMarkers);
         
         // Only update robot's poses using VisionMarkers while not on a ramp
         if(!_robot->IsOnRamp()) {
@@ -2785,6 +2870,13 @@ namespace Cozmo {
       }
       
     } // DrawAllObjects()
+  
+    void BlockWorld::DrawNavMemoryMap() const
+    {
+      if ( _navMemoryMap ) {
+        _navMemoryMap->Draw();
+      }
+    }
     
 } // namespace Cozmo
 } // namespace Anki

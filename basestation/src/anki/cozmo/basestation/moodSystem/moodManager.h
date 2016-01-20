@@ -53,6 +53,8 @@ class MoodManager
 {
 public:
   
+  using MoodEventTimes = std::map<std::string, double>;
+  
   explicit MoodManager(Robot* inRobot = nullptr);
   
   void Init(const Json::Value& inJson);
@@ -63,17 +65,18 @@ public:
   
   // ==================== Modify Emotions ====================
   
-  void TriggerEmotionEvent(const std::string& eventName);
+  void TriggerEmotionEvent(const std::string& eventName, double currentTimeInSeconds);
   
-  void AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString); // , bool dropOff?
+  void AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString, double currentTimeInSeconds);
   
   void AddToEmotions(EmotionType emotionType1, float baseValue1,
-                     EmotionType emotionType2, float baseValue2, const char* uniqueIdString);
+                     EmotionType emotionType2, float baseValue2,
+                     const char* uniqueIdString, double currentTimeInSeconds);
   
   void AddToEmotions(EmotionType emotionType1, float baseValue1,
                      EmotionType emotionType2, float baseValue2,
                      EmotionType emotionType3, float baseValue3,
-                     const char* uniqueIdString);
+                     const char* uniqueIdString, double currentTimeInSeconds);
   
   void SetEmotion(EmotionType emotionType, float value); // directly set the value e.g. for debugging
   
@@ -101,9 +104,16 @@ public:
   
   static StaticMoodData& GetStaticMoodData();
   
+  // Helper for anything calling functions that require currentTimeInSeconds, where they don't already have access to it
+  static double GetCurrentTimeInSeconds();
+  
 private:
   
   // ============================== Private Member Funcs ==============================
+  
+  float UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::string& eventName, double currentTimeInSeconds);
+  
+  float UpdateEventTimeAndCalculateRepetitionPenalty(const std::string& eventName, double currentTimeInSeconds);
   
   void  FadeEmotionsToDefault(float delta);
 
@@ -126,10 +136,11 @@ private:
     
   // ============================== Private Member Vars ==============================
   
-  Emotion     _emotions[(size_t)EmotionType::Count];
+  Emotion         _emotions[(size_t)EmotionType::Count];
+  MoodEventTimes  _moodEventTimes;
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
-  Robot*      _robot;
-  double      _lastUpdateTime;
+  Robot*          _robot;
+  double          _lastUpdateTime;
 };
   
 

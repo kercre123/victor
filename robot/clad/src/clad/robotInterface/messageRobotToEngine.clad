@@ -30,15 +30,6 @@ message RobotPoked
 
 /// *************** WiFi to Engine messages ******************************* ///
 
-message AnimationState
-{
-  uint_32 timestamp,
-  int_32  numAnimBytesPlayed,
-  int_32  numAudioFramesPlayed,
-  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
-  uint_8 tag,
-}
-
 // These two messages bookend animations as they are played on the robot
 message AnimationStarted
 {
@@ -103,6 +94,8 @@ union RobotToEngine {
   SyncTimeAck                syncTimeAck            = 0x14,
   RobotPoked                 robotPoked             = 0x15,
   ChargerMountComplete       chargerMountCompleted  = 0x16,
+  MovingLiftPostDock         movingLiftPostDock     = 0x17,
+  ProxObstacle               proxObstacle           = 0x18,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,
