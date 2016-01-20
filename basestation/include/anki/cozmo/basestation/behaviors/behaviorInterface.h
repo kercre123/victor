@@ -19,9 +19,11 @@
 #include "json/json.h"
 #include <set>
 
+#include "util/bitFlags/bitFlags.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
+#include "clad/types/behaviorGroup.h"
 
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
 // All args following the first are passed directly to the chosen print macro
@@ -125,7 +127,7 @@ namespace Cozmo {
     bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
     // Some behaviors are short interruptions that can resume directly to previous behavior
-    virtual bool IsShortInterruption() const { return false; }
+    bool IsShortInterruption() const { return IsBehaviorGroup(BehaviorGroup::ShortInterruption); }
     virtual bool WantsToResume() const { return false; }
     
     // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
@@ -133,7 +135,18 @@ namespace Cozmo {
     
     virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
     
+    // Behavior groups stored as bit flags - a behavior can belong to many groups
+    using BehaviorGroupFlagStorage = uint32_t;
+    using BehaviorGroupFlags = Util::BitFlags<BehaviorGroupFlagStorage, BehaviorGroup>;
+    
+    bool IsBehaviorGroup(BehaviorGroup behaviorGroup) const { return _behaviorGroups.IsBitFlagSet(behaviorGroup); }
+    bool MatchesAnyBehaviorGroups(BehaviorGroupFlagStorage flags) const { return _behaviorGroups.AreAnyBitsInMaskSet(flags); }
+    bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags& groupFlags) const { return MatchesAnyBehaviorGroups(groupFlags.GetFlags()); }
+    
   protected:
+  
+    void ClearBehaviorGroups() { _behaviorGroups.ClearFlags(); }
+    void SetBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) { _behaviorGroups.SetBitFlag(behaviorGroup, newVal); }
     
     // Going forward we don't want names being set arbitrarily (they can come from data etc.)
     void DEMO_HACK_SetName(const char* inName) { _name = inName; }
@@ -215,6 +228,8 @@ namespace Cozmo {
     double _lastRunTime;
 
     float _overrideScore; // any value >= 0 implies it should be used
+    
+    BehaviorGroupFlags  _behaviorGroups;
 
     bool _isRunning;
     bool _isOwnedByFactory;
@@ -274,7 +289,7 @@ namespace Cozmo {
   protected:
     
     // Enforce creation through BehaviorFactory
-    IReactionaryBehavior(Robot& robot, const Json::Value& config) : IBehavior(robot, config) { }
+    IReactionaryBehavior(Robot& robot, const Json::Value& config);
     virtual ~IReactionaryBehavior() {}
     
   public:

@@ -23,7 +23,6 @@ using namespace ExternalInterface;
   
 BehaviorUnityDriven::BehaviorUnityDriven(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _isShortInterruption(false)
   , _isScoredExternally(false)
   , _isRunnable(true)
   , _wasInterrupted(false)
