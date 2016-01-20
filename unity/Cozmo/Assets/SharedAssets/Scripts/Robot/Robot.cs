@@ -1008,7 +1008,7 @@ public class Robot : IDisposable {
     TrackToObject(null);
   }
 
-  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true,
+  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec, float panAccel_radPerSec2,
                          Robot.RobotCallback callback = null,
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     FaceObjectMessage.objectID = observedObject;
@@ -1016,6 +1016,8 @@ public class Robot : IDisposable {
     FaceObjectMessage.maxTurnAngle = float.MaxValue;
     FaceObjectMessage.panTolerance_rad = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
     FaceObjectMessage.headTrackWhenDone = headTrackWhenDone;
+    FaceObjectMessage.maxPanSpeed_radPerSec = maxPanSpeed_radPerSec;
+    FaceObjectMessage.panAccel_radPerSec2 = panAccel_radPerSec2;
     
     DAS.Debug(this, "Face Object " + FaceObjectMessage.objectID);
 
