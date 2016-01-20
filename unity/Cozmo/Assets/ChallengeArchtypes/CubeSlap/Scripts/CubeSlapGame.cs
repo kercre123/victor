@@ -63,7 +63,7 @@ namespace CubeSlap {
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
 
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SeekState(), numCubes, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new SeekState(), numCubes, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 

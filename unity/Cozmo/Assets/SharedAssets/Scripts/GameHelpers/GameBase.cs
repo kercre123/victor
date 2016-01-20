@@ -352,6 +352,10 @@ public abstract class GameBase : MonoBehaviour {
 
   #region How To Play Slides
 
+  public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
+    return null;
+  }
+
   /// <summary>
   /// Returns an instance of the slide created. Null if the creation failed.
   /// </summary>]
@@ -390,6 +394,28 @@ public abstract class GameBase : MonoBehaviour {
 
   public void HideHowToPlaySlide() {
     _SharedMinigameViewInstance.HideHowToPlaySlide();
+  }
+
+  #endregion
+
+  #region ContinueGameShelfWidget
+
+  public void ShowContinueButtonShelf() {
+  }
+
+  public void HideContinueButtonShelf() {
+  }
+
+  public void SetContinueButtonShelfText(string text) {
+  }
+
+  public void SetContinueButtonText(string text) {
+  }
+
+  public void SetContinueButtonListener(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler) {
+  }
+
+  public void EnableContinueButton(bool enable) {
   }
 
   #endregion

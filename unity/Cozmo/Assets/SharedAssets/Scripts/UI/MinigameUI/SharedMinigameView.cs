@@ -321,6 +321,20 @@ namespace Cozmo {
       }
 
       #endregion
+
+      #region ContinueGameShelfWidget
+
+      public void ShowContinueButton(string helpText, string buttonText, 
+                                     ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler) {
+      }
+
+      public void HideContinueButton() {
+      }
+
+      public void EnableContinueButton(bool enable) {
+      }
+
+      #endregion
     }
   }
 }

@@ -84,7 +84,7 @@ namespace WhackAMole {
 
     public void SetUpCubes() {
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), _NumCubesRequired, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), _NumCubesRequired, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 
@@ -97,12 +97,12 @@ namespace WhackAMole {
       for (int i = 0; i < ActivatedFaces.Count; i++) {
         KeyValuePair<int,int> KvP = ActivatedFaces[i];
         float origTimestamp = _ActivatedTimestamp[KvP];
-        float remainingTime = ((Time.time - origTimestamp)/MoleTimeout);
+        float remainingTime = ((Time.time - origTimestamp) / MoleTimeout);
         if (remainingTime >= 1.0f) {
           ToggleCubeFace(KvP);
           continue;
         }
-        uint freq = (uint)Mathf.Lerp(kMinFlashFreq,kMaxFlashFreq,remainingTime);
+        uint freq = (uint)Mathf.Lerp(kMinFlashFreq, kMaxFlashFreq, remainingTime);
         //CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = freq;
         CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnPeriodMs = freq;
       }
@@ -179,7 +179,7 @@ namespace WhackAMole {
           _ActivatedTimestamp.Remove(KvP);
         }
         if ((CurrentTargetKvP.Key == cubeID) && (CurrentTargetKvP.Value == faceID)) {
-          CurrentTargetKvP = new KeyValuePair<int, int>(-1,-1);
+          CurrentTargetKvP = new KeyValuePair<int, int>(-1, -1);
           for (int i = 0; i < ActivatedFaces.Count; i++) {
             CurrentTargetKvP = ActivatedFaces[i];
           }
@@ -197,7 +197,7 @@ namespace WhackAMole {
 
     public void InitializeButtons() {
       Button curr;
-      CurrentTargetKvP = new KeyValuePair<int, int>(-1,-1);
+      CurrentTargetKvP = new KeyValuePair<int, int>(-1, -1);
       ActivatedFaces.Clear();
       _FaceActive.Clear();
       LightCube cube;
@@ -210,7 +210,7 @@ namespace WhackAMole {
         curr = _GamePanel.CubeAFaceButtons[i];
         curr.onClick.RemoveAllListeners();
         SetUpButton(curr, _CubeAID, i);
-        _FaceActive.Add(new KeyValuePair<int, int>(_CubeAID,i),false);
+        _FaceActive.Add(new KeyValuePair<int, int>(_CubeAID, i), false);
       }
 
       // Reset all of Cube B's faces.
@@ -222,7 +222,7 @@ namespace WhackAMole {
         curr = _GamePanel.CubeBFaceButtons[i];
         curr.onClick.RemoveAllListeners();
         SetUpButton(curr, _CubeBID, i);
-        _FaceActive.Add(new KeyValuePair<int, int>(_CubeBID,i),false);
+        _FaceActive.Add(new KeyValuePair<int, int>(_CubeBID, i), false);
       }
     }
 
@@ -234,9 +234,9 @@ namespace WhackAMole {
     }
 
     public float GetRelativeRad(KeyValuePair<int,int> KvP) {
-      float deg = (90.0f * (KvP.Value+1));
+      float deg = (90.0f * (KvP.Value + 1));
       float result = Mathf.Deg2Rad * deg;
-      Debug.Log(string.Format("Cube{2}:Face{3} - Relative Rad - {0} Degrees - {1}", result,deg, KvP.Key,KvP.Value));
+      Debug.Log(string.Format("Cube{2}:Face{3} - Relative Rad - {0} Degrees - {1}", result, deg, KvP.Key, KvP.Value));
       return result;
     }
 
@@ -244,8 +244,7 @@ namespace WhackAMole {
       Vector3 point = CurrentRobot.LightCubes[KvP.Key].WorldPosition;
       float offset = kCloseUpDistance;
       Vector3 angle = Vector3.zero;
-      switch (KvP.Value) 
-      {
+      switch (KvP.Value) {
       case 0:
         angle = Vector3.down;
         break;

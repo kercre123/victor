@@ -57,6 +57,13 @@ namespace Cozmo {
       public Anki.UI.AnkiTextLabel DefaultTextPrefab {
         get { return _DefaultTextPrefab; }
       }
+
+      [SerializeField]
+      private HowToPlaySlide _ShowCozmoCubeSlide;
+
+      public HowToPlaySlide InitialCubesSlide {
+        get { return _ShowCozmoCubeSlide; }
+      }
     }
   }
 }

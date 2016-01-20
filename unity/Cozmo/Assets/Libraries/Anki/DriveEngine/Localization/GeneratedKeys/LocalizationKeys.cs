@@ -66,6 +66,10 @@ public static class LocalizationKeys {
 
   public const string kMinigameTextPlayerWins = "minigame.text.playerWins";
   public const string kMinigameTextCozmoWins = "minigame.text.cozmoWins";
+  public const string kMinigameQuitViewTitle = "minigame.quitView.title";
+  public const string kMinigameQuitViewDescription = "minigame.quitView.description";
+  public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
+  public const string kMinigameLabelShowCubes = "minigame.label.showCubes";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
   public const string kSimonGameButton = "simonGame.button";
@@ -89,9 +93,6 @@ public static class LocalizationKeys {
   public const string kVortexReplayButton = "vortex.replayButton";
   public const string kVortexVortexStatus = "vortex.vortexStatus";
   public const string kVortexVortexWon = "vortex.vortexWon";
-  public const string kMinigameQuitViewTitle = "minigame.quitView.title";
-  public const string kMinigameQuitViewDescription = "minigame.quitView.description";
-  public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
   public const string kCodeBreakerButtonGuessCode = "codeBreaker.button.guessCode";
   public const string kCodeBreakerButtonPickingCode = "codeBreaker.button.pickingCode";
   public const string kCodeBreakerTextGuessesLeft = "codeBreaker.text.guessesLeft";

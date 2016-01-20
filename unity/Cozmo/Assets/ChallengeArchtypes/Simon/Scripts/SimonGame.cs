@@ -40,7 +40,7 @@ namespace Simon {
         _FirstPlayer = PlayerType.Cozmo;
       }
       State nextState = new WaitForNextRoundSimonState(_FirstPlayer);
-      initCubeState.InitialCubeRequirements(nextState, _Config.NumCubesRequired(), true, null);
+      initCubeState.InitialCubeRequirements(nextState, _Config.NumCubesRequired(), null);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);

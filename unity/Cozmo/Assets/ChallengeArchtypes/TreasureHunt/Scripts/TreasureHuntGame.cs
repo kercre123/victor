@@ -15,7 +15,7 @@ namespace TreasureHunt {
 
     protected void InitializeMinigameObjects(int numCubes) {
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), numCubes, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), numCubes, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
     }
