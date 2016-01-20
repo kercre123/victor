@@ -7,7 +7,8 @@ import sys, os, time
 
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
-ANKI_LOG_STRING_TABLE = os.path.join('..', 'resources', 'config', 'basestation', 'AnkiLogStringTables.json')
+ANKI_LOG_STRING_TABLE_LOCAL  = 'AnkiLogStringTables.json'
+ANKI_LOG_STRING_TABLE_GLOBAL = os.path.join('..', 'resources', 'config', 'basestation', 'AnkiLogStringTables.json')
 
 if os.path.isfile(os.path.join(CLAD_SRC, "Makefile")):
     import subprocess
@@ -15,11 +16,11 @@ if os.path.isfile(os.path.join(CLAD_SRC, "Makefile")):
     if make.wait() != 0:
         sys.exit("Could't build/update python clad, exit status {:d}".format(make.wait(), linesep=os.linesep))
 
-if not os.path.isfile(ANKI_LOG_STRING_TABLE):
+if not os.path.isfile(ANKI_LOG_STRING_TABLE_GLOBAL) and not os.path.isfile(ANKI_LOG_STRING_TABLE_LOCAL):
     import subprocess
-    make = subprocess.Popen(['make', ANKI_LOG_STRING_TABLE])
+    make = subprocess.Popen(['make', ANKI_LOG_STRING_TABLE_GLOBAL])
     if make.wait() != 0:
-        sys.exit("Anki log string table ({}) wasn't available and generating it failed with exit status {:d}".format(ANKI_LOG_STRING_TABLE, make.wait()))
+        sys.exit("Anki log string table ({} or {}) wasn't available and generating it failed with exit status {:d}".format(ANKI_LOG_STRING_TABLE_GLOBAL, ANKI_LOG_STRING_TABLE_LOCAL, make.wait()))
 
 sys.path.insert(0, CLAD_DIR)
 
@@ -73,7 +74,7 @@ class _Dispatcher(IDataReceiver):
         self.ReceiveDataSubscribers = {} # Dict for message tags
         self.transport = ReliableTransport(transport, self)
         self.transport.start()
-        self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE)
+        self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE_LOCAL if os.path.isfile(ANKI_LOG_STRING_TABLE_LOCAL) else ANKI_LOG_STRING_TABLE_GLOBAL)
 
     def Connect(self, dest=("172.31.1.1", 5551)):
         "Initiate reliable Connection"
@@ -168,10 +169,10 @@ class _Dispatcher(IDataReceiver):
                 if msg.tag == tag:
                     for sub in subs:
                         sub(getattr(msg, msg.tag_name))
-        
+
     def send(self, msg):
         return self.transport.SendData(True, False, self.dest, msg.pack())
-        
+
 def Init(warnMsgErrors=True, transport=UDPTransport()):
     "Initalize the robot interface. Must be called before any other methods"
     global dispatcher
@@ -184,7 +185,7 @@ def Init(warnMsgErrors=True, transport=UDPTransport()):
 def Connect(*args, **kwargs):
     global dispatcher
     return dispatcher.Connect(*args, **kwargs)
-    
+
 def Disconnect(*args, **kwargs):
     global dispatcher
     return dispatcher.Disconnect(*args, **kwargs)
@@ -212,17 +213,17 @@ def SubscribeToConnectionRequests(callback):
     global dispatcher
     assert callable(callback)
     dispatcher.OnConnectedSubscribers.append(callback)
-    
+
 def SubscribeToConnect(callback):
     global dispatcher
     assert callable(callback)
     dispatcher.OnConnectedSubscribers.append(callback)
-    
+
 def SubscribeToDisconnect(callback):
     global dispatcher
     assert callable(callback)
     dispatcher.OnDisconnectedSubscribers.append(callback)
-    
+
 def SubscribeToTag(tag, callback):
     global dispatcher
     assert callable(callback)
