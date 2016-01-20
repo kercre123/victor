@@ -48,10 +48,10 @@ public:
   void SetRoot(const NavMeshQuadTreeNode* node) { _root = node; }
 
   // notification when the content type changes for the given node
-  void OnNodeContentTypeChanged(NavMeshQuadTreeNode* node, EContentType oldContent, EContentType newContent);
+  void OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, EContentType oldContent, EContentType newContent);
 
   // notification when a node is going to be removed entirely
-  void OnNodeDestroyed(NavMeshQuadTreeNode* node);
+  void OnNodeDestroyed(const NavMeshQuadTreeNode* node);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Processing
@@ -77,7 +77,7 @@ private:
   static ColorRGBA GetDebugColor(EContentType contentType);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Processing
+  // Processing borders
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // adds border information
@@ -103,14 +103,15 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   struct BorderWaypoint {
-    BorderWaypoint() : from(nullptr), to(nullptr), isEnd(false) {}
-    BorderWaypoint(const NavMeshQuadTreeNode* f, const NavMeshQuadTreeNode* t, bool end) : from(f), to(t), isEnd(end) {}
+    BorderWaypoint() : from(nullptr), to(nullptr), isEnd(false), isSeed(false) {}
+    BorderWaypoint(const NavMeshQuadTreeNode* f, const NavMeshQuadTreeNode* t, bool end) : from(f), to(t), isEnd(end), isSeed(false) {}
     const NavMeshQuadTreeNode* from;  // inner quad
     const NavMeshQuadTreeNode* to;    // outer quad
-    bool isEnd; // true if this is the last waypoint of a border, for example when the obstacle finishines
+    bool isEnd; // true if this is the last waypoint of a border, for example when the obstacle finishes
+    bool isSeed; // just a flag fore debugging. True if this waypoint was the first in a border
   };
   
-  using NodeSet = std::unordered_set<NavMeshQuadTreeNode*>;
+  using NodeSet = std::unordered_set<const NavMeshQuadTreeNode*>;
   using NodeSetPerType = std::unordered_map<EContentType, NodeSet, Anki::Util::EnumHasher>;
   using BorderWaypointVector = std::vector<BorderWaypoint>;
 

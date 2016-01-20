@@ -105,11 +105,11 @@ void NavMeshQuadTree::AddObstacle(const Quad2f& quad, NavMemoryMapTypes::EObstac
   // add the proper obstacle type in the node
   bool changed = false;
   switch( obstacleType ) {
-    case NavMemoryMapTypes::Cube: {
+    case NavMemoryMapTypes::EObstacleType::Cube: {
       changed = _root.AddObstacleCube(quad, _processor);
       break;
     }
-    case NavMemoryMapTypes::Unrecognized: {
+    case NavMemoryMapTypes::EObstacleType::Unrecognized: {
       changed = _root.AddObstacleUnrecognized(quad, _processor);
       break;
     }

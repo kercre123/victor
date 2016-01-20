@@ -972,7 +972,7 @@ namespace Cozmo {
         
         // Update navMemory map
         if ( nullptr != _navMemoryMap ) {
-          _navMemoryMap->AddObstacleQuad(observedObject->GetBoundingQuadXY(), NavMemoryMapTypes::Cube);
+          _navMemoryMap->AddObstacleQuad(observedObject->GetBoundingQuadXY(), NavMemoryMapTypes::EObstacleType::Cube);
         }
         
         _didObjectsChange = true;

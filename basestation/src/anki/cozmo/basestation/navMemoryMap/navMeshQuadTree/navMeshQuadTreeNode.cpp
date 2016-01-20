@@ -30,6 +30,9 @@ NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength
 , _contentType(EContentType::Unknown)
 {
   CORETECH_ASSERT(_quadrant <= EQuadrant::Root);
+
+  // processor would need to know otherwise, like we do in ForceSetDetectedContentType
+  CORETECH_ASSERT(_contentType == EContentType::Unknown);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
