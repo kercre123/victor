@@ -136,6 +136,57 @@
           "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
         }
       ]
+    },
+    {
+      "Name": "Sleeping (loop)",
+      "Id": 6,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": false,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "ID_sleeping_02",
+          "LoopForever": true,
+          "WaitToEnd": true
+        }
+      ],
+      "ExitConditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+        },
+        {
+          "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
+          "AnyAnimation": false,
+          "AnimationName": "ID_sleeping_02"
+        }
+      ]
+    },
+    {
+      "Name": "Fade Volume To Zero",
+      "Id": 7,
+      "Sequencial": true,
+      "Final": true,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
+          "VolumeChannel": "Robot",
+          "TargetVolume": 0.0,
+          "Duration": 2.0
+        },
+        {
+          "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
+          "VolumeChannel": "Music",
+          "TargetVolume": 0.0,
+          "Duration": 2.0
+        }
+      ],
+      "ExitConditions": []
     }
   ]
 }
