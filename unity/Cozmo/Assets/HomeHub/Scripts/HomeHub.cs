@@ -22,6 +22,12 @@ namespace Cozmo.HomeHub {
 
     private GameBase _MiniGameInstance;
 
+    public GameBase MiniGameInstance { 
+      get {        
+        return _MiniGameInstance;
+      }
+    }
+
     private CompletedChallengeData _CurrentChallengePlaying;
 
     public override bool LoadHubWorld() {
