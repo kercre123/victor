@@ -27,8 +27,8 @@ namespace Simon {
 
     public override void Update() {
       base.Update();
-      if (_ShouldWinGame != null) {
-        if (_ShouldWinGame == true) {
+      if (_ShouldWinGame.HasValue) {
+        if (_ShouldWinGame.GetValueOrDefault()) {
           CozmoWinGame();
         }
         else {
@@ -53,12 +53,20 @@ namespace Simon {
             }
           }
           int targetId = blockIds[Random.Range(0, blockIds.Count)];
-          _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(_CurrentRobot.LightCubes[targetId], true));
+          StartTurnToTarget(_CurrentRobot.LightCubes[targetId]);
         }
         else {
-          _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
+          StartTurnToTarget(GetCurrentTarget());
         }
       }
+    }
+
+    private void StartTurnToTarget(LightCube target) {
+      var cubeLightColor = target.Lights[0].OnColor;
+
+      _CurrentRobot.SetAllBackpackBarLED(cubeLightColor);
+
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(target, true));
     }
 
     public LightCube GetCurrentTarget() {
