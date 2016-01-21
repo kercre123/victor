@@ -215,49 +215,49 @@ public class Robot : IDisposable {
 
   private int _LastHeadTrackingObjectID;
 
-  private int[] ProgressionStats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+  private readonly StatContainer ProgressionStats = new StatContainer();
 
   public string CurrentBehaviorString { get; set; }
 
-  private U2G.DriveWheels DriveWheelsMessage;
-  private U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHereMessage;
-  private U2G.CancelAction CancelActionMessage;
-  private U2G.SetHeadAngle SetHeadAngleMessage;
-  private U2G.TrackToObject TrackToObjectMessage;
-  private U2G.FaceObject FaceObjectMessage;
-  private U2G.FacePose FacePoseMessage;
-  private U2G.PickupObject PickupObjectMessage;
-  private U2G.RollObject RollObjectMessage;
-  private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
-  private U2G.GotoPose GotoPoseMessage;
-  private U2G.GotoObject GotoObjectMessage;
-  private U2G.SetLiftHeight SetLiftHeightMessage;
-  private U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
-  private U2G.ClearAllBlocks ClearAllBlocksMessage;
-  private U2G.ClearAllObjects ClearAllObjectsMessage;
-  private U2G.VisionWhileMoving VisionWhileMovingMessage;
-  private U2G.TurnInPlace TurnInPlaceMessage;
-  private U2G.TraverseObject TraverseObjectMessage;
-  private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
-  private U2G.EnableVisionMode EnableVisionModeMessage;
-  private U2G.ExecuteBehavior ExecuteBehaviorMessage;
-  private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
-  private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
-  private U2G.PlaceRelObject PlaceRelObjectMessage;
-  private U2G.PlaceOnObject PlaceOnObjectMessage;
-  private U2G.PlayAnimation PlayAnimationMessage;
-  private U2G.PlayAnimationGroup PlayAnimationGroupMessage;
-  private U2G.SetIdleAnimation SetIdleAnimationMessage;
-  private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
-  private U2G.SetRobotVolume SetRobotVolumeMessage;
-  private U2G.AlignWithObject AlignWithObjectMessage;
-  private U2G.ProgressionMessage ProgressionStatMessage;
-  private U2G.SetFriendshipPoints FriendshipPointsMessage;
-  private U2G.SetFriendshipLevel FriendshipLevelMessage;
-  private U2G.MoodMessage MoodStatMessage;
-  private U2G.VisualizeQuad VisualizeQuadMessage;
-  private U2G.DisplayProceduralFace DisplayProceduralFaceMessage;
-  private U2G.QueueSingleAction QueueSingleAction;
+  private readonly U2G.DriveWheels DriveWheelsMessage;
+  private readonly U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHereMessage;
+  private readonly U2G.CancelAction CancelActionMessage;
+  private readonly U2G.SetHeadAngle SetHeadAngleMessage;
+  private readonly U2G.TrackToObject TrackToObjectMessage;
+  private readonly U2G.FaceObject FaceObjectMessage;
+  private readonly U2G.FacePose FacePoseMessage;
+  private readonly U2G.PickupObject PickupObjectMessage;
+  private readonly U2G.RollObject RollObjectMessage;
+  private readonly U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
+  private readonly U2G.GotoPose GotoPoseMessage;
+  private readonly U2G.GotoObject GotoObjectMessage;
+  private readonly U2G.SetLiftHeight SetLiftHeightMessage;
+  private readonly U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
+  private readonly U2G.ClearAllBlocks ClearAllBlocksMessage;
+  private readonly U2G.ClearAllObjects ClearAllObjectsMessage;
+  private readonly U2G.VisionWhileMoving VisionWhileMovingMessage;
+  private readonly U2G.TurnInPlace TurnInPlaceMessage;
+  private readonly U2G.TraverseObject TraverseObjectMessage;
+  private readonly U2G.SetBackpackLEDs SetBackpackLEDsMessage;
+  private readonly U2G.EnableVisionMode EnableVisionModeMessage;
+  private readonly U2G.ExecuteBehavior ExecuteBehaviorMessage;
+  private readonly U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
+  private readonly U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
+  private readonly U2G.PlaceRelObject PlaceRelObjectMessage;
+  private readonly U2G.PlaceOnObject PlaceOnObjectMessage;
+  private readonly U2G.PlayAnimation PlayAnimationMessage;
+  private readonly U2G.PlayAnimationGroup PlayAnimationGroupMessage;
+  private readonly U2G.SetIdleAnimation SetIdleAnimationMessage;
+  private readonly U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
+  private readonly U2G.SetRobotVolume SetRobotVolumeMessage;
+  private readonly U2G.AlignWithObject AlignWithObjectMessage;
+  private readonly U2G.ProgressionMessage ProgressionStatMessage;
+  private readonly U2G.SetFriendshipPoints FriendshipPointsMessage;
+  private readonly U2G.SetFriendshipLevel FriendshipLevelMessage;
+  private readonly U2G.MoodMessage MoodStatMessage;
+  private readonly U2G.VisualizeQuad VisualizeQuadMessage;
+  private readonly U2G.DisplayProceduralFace DisplayProceduralFaceMessage;
+  private readonly U2G.QueueSingleAction QueueSingleAction;
 
   private PathMotionProfile PathMotionProfileDefault;
 
@@ -386,7 +386,6 @@ public class Robot : IDisposable {
 
     BackpackLights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
-    ProgressionStats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
     EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
@@ -523,9 +522,7 @@ public class Robot : IDisposable {
       BackpackLights[i].ClearData();
     }
 
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; ++i) {
-      ProgressionStats[i] = 0;
-    }
+    ProgressionStats.Clear();
   }
 
   public void ClearVisibleObjects() {
@@ -572,13 +569,19 @@ public class Robot : IDisposable {
     FriendshipPoints = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipPoints;
 
     FriendshipPointsMessage.newVal = FriendshipPoints;
-
     RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
     RobotEngineManager.Instance.SendMessage();
-    FriendshipLevelMessage.newVal = FriendshipLevel;
 
+    FriendshipLevelMessage.newVal = FriendshipLevel;
     RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
     RobotEngineManager.Instance.SendMessage();
+
+    // Now initialize progress stats
+    var currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
+
+    if (currentSession != null) {
+      SetProgressionStats(currentSession.Progress);
+    }
   }
 
   public void AddToFriendshipPoints(int deltaValue) {
@@ -634,7 +637,11 @@ public class Robot : IDisposable {
   #region Progression and Mood Stats
 
   public int GetProgressionStat(Anki.Cozmo.ProgressionStatType index) {
-    return ProgressionStats[(int)index];
+    return ProgressionStats[index];
+  }
+
+  public StatContainer GetProgressionStats() {
+    return ProgressionStats;
   }
 
   public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
@@ -680,7 +687,6 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  // Only debug panels should be using set.
   // You should not be calling this from a minigame/challenge.
   public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, int value) {
     ProgressionStatMessage.robotID = ID;
@@ -690,8 +696,15 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  // You should not be calling this from a minigame/challenge.
+  public void SetProgressionStats(StatContainer stats) {
+    foreach (var key in StatContainer.sKeys) {
+      SetProgressionStat(key, stats[key]);
+    }
+  }
+
   private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
-    ProgressionStats[(int)index] = value;
+    ProgressionStats[index] = value;
   }
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {

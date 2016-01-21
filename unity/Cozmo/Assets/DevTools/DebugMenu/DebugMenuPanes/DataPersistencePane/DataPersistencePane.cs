@@ -68,7 +68,7 @@ namespace DataPersistence {
     private void GenerateFakeData(string[] challengeIds) {
       DataPersistenceManager.Instance.Data.Sessions.Clear();
 
-      var today = DateTime.UtcNow.Date;
+      var today = DataPersistenceManager.Today;
 
       var startDate = today.AddDays(-TimelineView.kTimelineHistoryLength);
 
