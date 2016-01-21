@@ -182,7 +182,7 @@ namespace Cozmo.HomeHub {
       _GraphSpline.Initialize(graphPoints);
     }
 
-    private void HandleTimelineEntrySelected(DateTime date) {
+    private void HandleTimelineEntrySelected(Date date) {
       var session = DataPersistenceManager.Instance.Data.Sessions.Find(x => x.Date == date);
 
       if (session != null) {

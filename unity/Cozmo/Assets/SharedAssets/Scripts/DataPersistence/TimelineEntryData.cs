@@ -4,11 +4,11 @@ using System.Collections.Generic;
 namespace DataPersistence {
   public class TimelineEntryData {
 
-    public TimelineEntryData(DateTime date) {
+    public TimelineEntryData(Date date) {
       Date = date;
     }
 
-    public readonly DateTime Date;
+    public readonly Date Date;
 
     public readonly StatContainer Goals = new StatContainer();
 

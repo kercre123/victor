@@ -12,10 +12,10 @@ namespace DataPersistence {
 
     private static string sBackupSaveFilePath = sSaveFilePath + ".bak";
 
-    public static DateTime Today {
+    public static Date Today {
       get {
         // Roll over at 4 am
-        return DateTime.Now.AddDays(-4).Date;
+        return DateTime.Now.AddHours(-4).Date;
       }
     }
 
