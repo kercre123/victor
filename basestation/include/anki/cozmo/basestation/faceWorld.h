@@ -39,6 +39,8 @@ namespace Cozmo {
     // 0 if no face was ever observed.
     TimeStamp_t GetLastObservedFace(Pose3d& p) const;
     
+    void ClearAllFaces();
+    
   private:
     
     Robot& _robot;
@@ -49,7 +51,8 @@ namespace Cozmo {
       KnownFace(Vision::TrackedFace& faceIn);
     };
     
-    std::map<Vision::TrackedFace::ID_t, KnownFace> _knownFaces;
+    using FaceContainer = std::map<Vision::TrackedFace::ID_t, KnownFace>;
+    FaceContainer _knownFaces;
     
     TimeStamp_t _deletionTimeout_ms = 4000;
 
@@ -64,8 +67,15 @@ namespace Cozmo {
     // The minimum number of observations to consider a face valid as the "last observed face"
     u32 _minObservationsToStoreLastPose = 3;
     
+    // Removes the face and advances the iterator. Notifies any listeners that
+    // the face was removed.
+    void RemoveFace(FaceContainer::iterator& faceIter);
     
     void RemoveFaceByID(Vision::TrackedFace::ID_t faceID);
+
+    void SetupEventHandlers(IExternalInterface& externalInterface);
+    
+    std::vector<Signal::SmartHandle> _eventHandles;
     
   }; // class FaceWorld
   
