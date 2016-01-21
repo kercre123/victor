@@ -26,6 +26,9 @@ public class DailyGoalPanel : BaseView {
   [SerializeField]
   private DailyGoalConfig _Config;
 
+  [SerializeField]
+  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
+
   private bool _Expanded = true;
   public bool Expand {
     get {
@@ -95,6 +98,8 @@ public class DailyGoalPanel : BaseView {
       goals[targetStat] = Random.Range(min, max);
       CreateGoalBadge(targetStat, goals[targetStat], 0);
     }
+
+    _TotalProgressBar.SetProgress(0f);
     return goals;
   }
 
@@ -105,6 +110,7 @@ public class DailyGoalPanel : BaseView {
         CreateGoalBadge(targetStat, goals[targetStat], progress[targetStat]);
       }
     }
+    _TotalProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(progress, goals));
   }
 
 
@@ -121,25 +127,11 @@ public class DailyGoalPanel : BaseView {
     newBadge.Initialize(name, target, goal);
     _GoalUIBadges.Add(newBadge);
     newBadge.Expand(_Expanded);
-    newBadge.OnProgChanged += UpdateTotalProgress;
     return newBadge;
-  }
-
-  // Listens for any goal Badge values you listen to changing.
-  // On Change, updates the total progress achieved by all goalbadges.
-  public void UpdateTotalProgress() {
-    float total = _GoalUIBadges.Count;
-    float curr = 0.0f;
-    for (int i = 0; i < _GoalUIBadges.Count; i++) {
-      curr += _GoalUIBadges[i].Progress;
-    }
-    _TotalProgressBar.SetProgress(curr/total);
   }
 
   protected override void CleanUp() {
     for (int i = 0; i < _GoalUIBadges.Count; i++) {
-      //TODO: Dismiss GoalBadges through themselves
-      _GoalUIBadges[i].OnProgChanged -= UpdateTotalProgress;
       Destroy(_GoalUIBadges[i].gameObject);
     }
     _GoalUIBadges.Clear();
