@@ -56,6 +56,8 @@ namespace Cozmo {
       // NOTE: RemoveFace increments the iterator for us
       RemoveFace(knownFaceIter);
     }
+    
+    _lastObservedFaceTimeStamp = 0;
   }
   
   void FaceWorld::RemoveFaceByID(Vision::TrackedFace::ID_t faceID)
