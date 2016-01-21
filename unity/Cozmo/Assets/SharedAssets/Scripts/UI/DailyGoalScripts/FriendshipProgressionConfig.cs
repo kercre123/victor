@@ -1,15 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class DailyGoalConfig : ScriptableObject {
+public class FriendshipProgressionConfig : ScriptableObject {
 
   [System.Serializable] 
   public struct DailyGoalData {
+	  public string FriendshipLevelName;
     public StatBitMask StatsIntroduced;
-    public string FriendshipLevelName;
     public int MaxGoals;
     public int MinTarget;
     public int MaxTarget;
+    public int PointsRequired;
   }
 
   [SerializeField]

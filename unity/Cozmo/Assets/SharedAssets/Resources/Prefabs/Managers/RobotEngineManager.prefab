@@ -42,7 +42,7 @@ MonoBehaviour:
   _Configuration: {fileID: 4900000, guid: 0af30709c80ce4039978f9ccbfc2b24b, type: 3}
   _AlternateConfiguration: {fileID: 4900000, guid: 17d6429d232624c808866bd8490aaeb9,
     type: 3}
-  _FriendshipLevelConfig: {fileID: 11400000, guid: 8b31caf99c1344c85b46d9c23c92d4e1,
+  _FriendshipProgConfig: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1,
     type: 2}
 --- !u!1001 &100100000
 Prefab:

@@ -34,7 +34,7 @@ public class RobotEngineManager : MonoBehaviour {
   private TextAsset _AlternateConfiguration;
 
   [SerializeField]
-  private FriendshipLevelConfig _FriendshipLevelConfig;
+  private FriendshipProgressionConfig _FriendshipProgConfig;
 
   private DisconnectionReason _LastDisconnectionReason = DisconnectionReason.None;
 
@@ -658,8 +658,8 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
-  public FriendshipLevelConfig GetFriendshipLevelConfig() {
-    return _FriendshipLevelConfig;
+  public FriendshipProgressionConfig GetFriendshipProgressConfig() {
+    return _FriendshipProgConfig;
   }
 
 }

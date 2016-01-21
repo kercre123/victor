@@ -142,7 +142,7 @@ public class DailySummaryPanel : MonoBehaviour {
 
   private IEnumerator FriendshipBarCoroutine(TimelineEntryData data) {
 
-    var levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
+    var levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
 
     int startingPoints = data.StartingFriendshipPoints;
     float pointsRequired, startingPercent, endingPercent;

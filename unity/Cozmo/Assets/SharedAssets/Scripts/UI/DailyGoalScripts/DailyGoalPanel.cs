@@ -24,7 +24,7 @@ public class DailyGoalPanel : BaseView {
   [SerializeField]
   private Transform _GoalContainer;
   [SerializeField]
-  private DailyGoalConfig _Config;
+  private FriendshipProgressionConfig _Config;
 
   private bool _Expanded = true;
   public bool Expand {
@@ -107,23 +107,28 @@ public class DailyGoalPanel : BaseView {
     }
   }
 
+  public bool HasDailyGoal(Anki.Cozmo.ProgressionStatType type) {
+    if (_DailyGoals[(int)type] > 0) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
 
   // Creates a goal badge based on a progression stat
   public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
-    _DailyGoals[(int)type] += target;
     DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
-    return CreateGoalBadge(type.ToString(), target, goal);
-  }
-
-  // Creates a goal badge based on an arbitrary string
-  public GoalBadge CreateGoalBadge(string name, int target, int goal) {
     GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, _GoalContainer).GetComponent<GoalBadge>();
-    newBadge.Initialize(name, target, goal);
+    _DailyGoals[(int)type] += target;
+    newBadge.Initialize(name, target, goal, type);
     _GoalUIBadges.Add(newBadge);
     newBadge.Expand(_Expanded);
     newBadge.OnProgChanged += UpdateTotalProgress;
     return newBadge;
   }
+
 
   // Listens for any goal Badge values you listen to changing.
   // On Change, updates the total progress achieved by all goalbadges.
