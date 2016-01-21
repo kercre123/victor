@@ -89,6 +89,7 @@ namespace Anki {
     extern const ColorRGBA WHITE;
     extern const ColorRGBA BLACK;
     extern const ColorRGBA DARKGRAY;
+    extern const ColorRGBA LIGHTGRAY;
     extern const ColorRGBA DARKGREEN;
     extern const ColorRGBA OFFWHITE;
     extern const ColorRGBA DEFAULT;
