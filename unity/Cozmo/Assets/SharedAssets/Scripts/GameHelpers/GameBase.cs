@@ -72,9 +72,6 @@ public abstract class GameBase : MonoBehaviour {
   [SerializeField]
   protected GameStateSlide[] _GameStateSlides;
 
-  [SerializeField]
-  protected GameObject _HowToPlayDialogContentPrefab;
-
   private StatContainer _RewardedXp;
 
   private float _GameStartTime;
@@ -337,7 +334,7 @@ public abstract class GameBase : MonoBehaviour {
   #region Title Widget
 
   protected void ShowTitleWidget(string titleText, Sprite titleIcon) {
-    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon, _HowToPlayDialogContentPrefab);
+    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon, _ChallengeData.HowToPlayDialogContentPrefab);
     _SharedMinigameViewInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
     _SharedMinigameViewInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
   }

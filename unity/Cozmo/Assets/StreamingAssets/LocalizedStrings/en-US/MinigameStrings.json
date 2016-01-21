@@ -133,6 +133,15 @@
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
   "speedTap.text.howToPlay": {
+    "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point!"
+  },
+  "speedTap.text.howToPlayNoRed": {
     "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
+  },
+  "speedTap.text.howToPlayLightCountSameColorNoRed": {
+    "translation": "Tap the cube faster than Cozmo when the colors AND the light numbers are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
+  },
+  "speedTap.text.howToPlayLightCountNoColor": {
+    "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
   }
 }
