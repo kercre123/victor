@@ -46,7 +46,7 @@ namespace Cozmo {
     using namespace ExternalInterface;
     _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(knownFaceIter->first, _robot.GetID())));
     VizManager::getInstance()->EraseVizObject(knownFaceIter->second.vizHandle);
-    _knownFaces.erase(knownFaceIter);
+    knownFaceIter = _knownFaces.erase(knownFaceIter);
   }
   
   void FaceWorld::ClearAllFaces()
