@@ -102,6 +102,9 @@ public static class LocalizationKeys {
   public const string kCodeBreakerTextGuessesLeft = "codeBreaker.text.guessesLeft";
   public const string kCodeBreakerTextHowToPlayShort = "codeBreaker.text.howToPlayShort";
   public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
+  public const string kCubeSlapTextHowToPlay = "cubeSlap.text.howToPlay";
+  public const string kSimonGameTextHowToPlay = "simonGame.text.howToPlay";
+  public const string kSpeedTapTextHowToPlay = "speedTap.text.howToPlay";
 
   #endregion
 

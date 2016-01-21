@@ -50,6 +50,8 @@ MonoBehaviour:
     slidePrefab: {fileID: 22592278, guid: a90079693b5024559b8290b75e53a2ff, type: 2}
   - slideName: PlayerWin
     slidePrefab: {fileID: 22581792, guid: 09f5eea8ed5a14118b87e4f36651acd1, type: 2}
+  _HowToPlayDialogContentPrefab: {fileID: 131798, guid: 9981867c3655b4dbca3b75d21c3d9dd3,
+    type: 2}
   _FakeoutAnimations:
   - pounceFakeout1
   - pounceFakeout2
@@ -227,6 +229,10 @@ Prefab:
       value: 
       objectReference: {fileID: 22581792, guid: 09f5eea8ed5a14118b87e4f36651acd1,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayDialogContentPrefab
+      value: 
+      objectReference: {fileID: 131798, guid: 9981867c3655b4dbca3b75d21c3d9dd3, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 141604}
