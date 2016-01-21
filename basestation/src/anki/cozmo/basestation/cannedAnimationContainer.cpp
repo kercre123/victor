@@ -57,6 +57,7 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation.InvalidName",
                         "Animation requested for unknown animation '%s'.\n",
                         name.c_str());
+      ASSERT_NAMED(false, "CannedAnimationContainer.MissingAnimation");
     } else {
       animPtr = &retVal->second;
     }
