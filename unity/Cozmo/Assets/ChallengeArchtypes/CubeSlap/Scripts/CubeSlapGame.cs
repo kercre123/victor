@@ -195,7 +195,7 @@ namespace CubeSlap {
     }
 
     protected override int CalculateExcitementStatRewards() {
-      return MaxAttempts + _SuccessCount;
+      return (MaxAttempts - AttemptsLeft);
     }
  
   }
