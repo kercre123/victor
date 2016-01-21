@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine.UI;
 using System;
+using DataPersistence;
 
 public class TimelineEntry : MonoBehaviour {
 
@@ -20,9 +21,9 @@ public class TimelineEntry : MonoBehaviour {
   [SerializeField]
   private Button _TimelineNodeButton;
 
-  private DateTime _Date;
+  private Date _Date;
 
-  public event Action<DateTime> OnSelect;
+  public event Action<Date> OnSelect;
 
   private void Awake() {
     _FillbarButton.onClick.AddListener(HandleClick);
@@ -35,7 +36,7 @@ public class TimelineEntry : MonoBehaviour {
     }
   }
 
-  public void Inititialize(DateTime date, bool active, float progress) {
+  public void Inititialize(Date date, bool active, float progress) {
     _Date = date;
     _Fillbar.fillAmount = progress;
 
