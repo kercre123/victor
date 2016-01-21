@@ -30,9 +30,8 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark ITrackAction
   
-ITrackAction::ITrackAction(Robot& robot)
-  : IAction(robot)
-  , _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
+ITrackAction::ITrackAction()
+  : _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
 {
   
 }
@@ -218,7 +217,7 @@ ActionResult ITrackAction::CheckIfDone()
     if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
-      _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(*_robot, _turningSoundAnimation, 1, false));
+      _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation, 1, false));
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
@@ -286,9 +285,8 @@ void ITrackAction::Cleanup()
 #pragma mark -
 #pragma mark TrackObjectAction
 
-TrackObjectAction::TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType)
-  : ITrackAction(robot)
-  , _objectID(objectID)
+TrackObjectAction::TrackObjectAction(const ObjectID& objectID, bool trackByType)
+  : _objectID(objectID)
   , _trackByType(trackByType)
 {
 
@@ -430,9 +428,8 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
 #pragma mark -
 #pragma mark TrackFaceAction
   
-TrackFaceAction::TrackFaceAction(Robot& robot, FaceID faceID)
-  : ITrackAction(robot)
-  , _faceID(faceID)
+TrackFaceAction::TrackFaceAction(FaceID faceID)
+  : _faceID(faceID)
 {
   
 }

@@ -82,7 +82,7 @@ public:
   
 protected:
 
-  ITrackAction(Robot& robot);
+  ITrackAction();
   
   virtual void Cleanup() override;
   
@@ -136,7 +136,7 @@ inline void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec
 class TrackObjectAction : public ITrackAction
 {
 public:
-  TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType = true);
+  TrackObjectAction(const ObjectID& objectID, bool trackByType = true);
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_OBJECT; }
@@ -166,7 +166,7 @@ public:
   
   using FaceID = Vision::TrackedFace::ID_t;
   
-  TrackFaceAction(Robot& robot, FaceID faceID);
+  TrackFaceAction(FaceID faceID);
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_FACE; }
@@ -195,7 +195,7 @@ class TrackMotionAction : public ITrackAction
 {
 public:
   
-  TrackMotionAction(Robot& robot) : ITrackAction(robot) { }
+  TrackMotionAction() { }
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_MOTION; }

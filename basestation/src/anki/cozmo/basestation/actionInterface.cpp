@@ -29,9 +29,8 @@ namespace Anki {
     
     u32 IActionRunner::sTagCounter = 100000;
     
-    IActionRunner::IActionRunner(Robot& robot)
+    IActionRunner::IActionRunner()
     {
-      _robot = &robot;
       // Assign every action a unique tag
       if (++IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
         ++IActionRunner::sTagCounter;
@@ -205,7 +204,7 @@ namespace Anki {
     
 #pragma mark ---- IAction ----
     
-    IAction::IAction(Robot& robot) : IActionRunner(robot)
+    IAction::IAction() : IActionRunner()
     {
       Reset();
     }

@@ -21,9 +21,9 @@ namespace Anki {
     
 #pragma mark ---- ActionList ----
     
-    ActionList::ActionList()
+    ActionList::ActionList(Robot& robot)
     {
-      
+      _robot = &robot;
     }
     
     ActionList::~ActionList()
@@ -74,6 +74,35 @@ namespace Anki {
       
       return RESULT_OK;
     } // QueueAction()
+    
+    inline Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      action->SetRobot(*_robot);
+      return _queues[atSlot].QueueNext(action, numRetries);
+    }
+    
+    inline Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      action->SetRobot(*_robot);
+      return _queues[atSlot].QueueAtEnd(action, numRetries);
+    }
+    
+    inline Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      action->SetRobot(*_robot);
+      return _queues[atSlot].QueueNow(action, numRetries);
+    }
+    
+    inline Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      action->SetRobot(*_robot);
+      return _queues[atSlot].QueueAtFront(action, numRetries);
+    }
+    
+    inline size_t ActionList::GetQueueLength(SlotHandle atSlot)
+    {
+      return _queues[atSlot].Length();
+    }
     
     bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
     {
@@ -138,13 +167,13 @@ namespace Anki {
       
     } // Print()
     
-    Result ActionList::Update(Robot& robot)
+    Result ActionList::Update()
     {
       Result lastResult = RESULT_OK;
       
       for(auto queueIter = _queues.begin(); queueIter != _queues.end(); )
       {
-        lastResult = queueIter->second.Update(robot);
+        lastResult = queueIter->second.Update();
         
         // If the queue is complete, remove it
         if(queueIter->second.IsEmpty()) {
@@ -359,7 +388,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result ActionQueue::Update(Robot& robot)
+    Result ActionQueue::Update()
     {
       Result lastResult = RESULT_OK;
       

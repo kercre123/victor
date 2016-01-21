@@ -46,8 +46,10 @@ namespace Anki {
     {
     public:
       
-      IActionRunner(Robot& robot);
+      IActionRunner();
       virtual ~IActionRunner() { }
+      
+      void SetRobot(Robot& robot) { _robot = &robot; }
       
       ActionResult Update();
       
@@ -203,7 +205,7 @@ namespace Anki {
     {
     public:
       
-      IAction(Robot& robot);
+      IAction();
       virtual ~IAction() { }
       
       

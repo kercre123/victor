@@ -111,8 +111,7 @@ IActionRunner* GetPlaceObjectOnGroundActionHelper(Robot& robot, const ExternalIn
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
   Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
   Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
-  return new PlaceObjectOnGroundAtPoseAction(robot,
-                                             targetPose,
+  return new PlaceObjectOnGroundAtPoseAction(targetPose,
                                              msg.motionProf,
                                              msg.useExactRotation,
                                              msg.useManualSpeed);
@@ -129,8 +128,7 @@ IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface:
   // (For now it is hard-coded to true)
   const bool driveWithHeadDown = true;
   
-  return new DriveToPoseAction(robot,
-                               targetPose,
+  return new DriveToPoseAction(targetPose,
                                msg.motionProf,
                                driveWithHeadDown,
                                msg.useManualSpeed);
@@ -147,14 +145,13 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPickupObjectAction(robot,
-                                         selectedObjectID,
+    return new DriveToPickupObjectAction(selectedObjectID,
                                          msg.motionProf,
                                          msg.useApproachAngle,
                                          msg.approachAngle_rad,
                                          msg.useManualSpeed);
   } else {
-    PickupObjectAction* action = new PickupObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    PickupObjectAction* action = new PickupObjectAction(selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
@@ -172,16 +169,14 @@ IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::Pl
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPlaceRelObjectAction(robot,
-                                           selectedObjectID,
+    return new DriveToPlaceRelObjectAction(selectedObjectID,
                                            msg.motionProf,
                                            msg.placementOffsetX_mm,
                                            msg.useApproachAngle,
                                            msg.approachAngle_rad,
                                            msg.useManualSpeed);
   } else {
-    PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
-                                                            selectedObjectID,
+    PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             true,
                                                             msg.placementOffsetX_mm,
                                                             msg.useManualSpeed);
@@ -202,15 +197,13 @@ IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::Pla
   
   if(static_cast<bool>(msg.usePreDockPose)) {
 
-    return new DriveToPlaceOnObjectAction(robot,
-                                          selectedObjectID,
+    return new DriveToPlaceOnObjectAction(selectedObjectID,
                                           msg.motionProf,
                                           msg.useApproachAngle,
                                           msg.approachAngle_rad,
                                           msg.useManualSpeed);
   } else {
-    PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
-                                                            selectedObjectID,
+    PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             false,
                                                             0,
                                                             msg.useManualSpeed);
@@ -230,8 +223,7 @@ IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterfac
     selectedObjectID = msg.objectID;
   }
   
-  return new DriveToObjectAction(robot,
-                                 selectedObjectID,
+  return new DriveToObjectAction(selectedObjectID,
                                  msg.distanceFromObjectOrigin_mm,
                                  msg.motionProf,
                                  msg.useManualSpeed);
@@ -246,8 +238,7 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
     selectedObjectID = msg.objectID;
   }
   
-  return new DriveToAlignWithObjectAction(robot,
-                                          selectedObjectID,
+  return new DriveToAlignWithObjectAction(selectedObjectID,
                                           msg.distanceFromMarker_mm,
                                           msg.motionProf,
                                           msg.useApproachAngle,
@@ -265,14 +256,13 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToRollObjectAction(robot,
-                                       selectedObjectID,
+    return new DriveToRollObjectAction(selectedObjectID,
                                        msg.motionProf,
                                        msg.useApproachAngle,
                                        msg.approachAngle_rad,
                                        msg.useManualSpeed);
   } else {
-    RollObjectAction* action = new RollObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
@@ -290,14 +280,13 @@ IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface:
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPopAWheelieAction(robot,
-                                        selectedObjectID,
+    return new DriveToPopAWheelieAction(selectedObjectID,
                                         msg.motionProf,
                                         msg.useApproachAngle,
                                         msg.approachAngle_rad,
                                         msg.useManualSpeed);
   } else {
-    PopAWheelieAction* action = new PopAWheelieAction(robot, selectedObjectID, msg.useManualSpeed);
+    PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
@@ -310,12 +299,11 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToAndTraverseObjectAction(robot,
-                                              selectedObjectID,
+    return new DriveToAndTraverseObjectAction(selectedObjectID,
                                               msg.motionProf,
                                               msg.useManualSpeed);
   } else {
-    TraverseObjectAction* traverseAction = new TraverseObjectAction(robot,selectedObjectID, msg.useManualSpeed);
+    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
     traverseAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     return traverseAction;
   }
@@ -326,12 +314,11 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToAndMountChargerAction(robot,
-                                            selectedObjectID,
+    return new DriveToAndMountChargerAction(selectedObjectID,
                                             msg.motionProf,
                                             msg.useManualSpeed);
   } else {
-    MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, msg.useManualSpeed);
+    MountChargerAction* chargerAction = new MountChargerAction(selectedObjectID, msg.useManualSpeed);
     chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     return chargerAction;
   }
@@ -347,8 +334,7 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
     objectID = msg.objectID;
   }
 
-  FaceObjectAction* action = new FaceObjectAction(robot,
-                                                  objectID,
+  FaceObjectAction* action = new FaceObjectAction(objectID,
                                                   Radians(msg.maxTurnAngle),
                                                   msg.visuallyVerifyWhenDone,
                                                   msg.headTrackWhenDone);
@@ -368,9 +354,7 @@ IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::Fa
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
   
-  FacePoseAction* action = new FacePoseAction(robot,
-                                              pose,
-                                              Radians(msg.maxTurnAngle));
+  FacePoseAction* action = new FacePoseAction(pose, Radians(msg.maxTurnAngle));
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -384,7 +368,7 @@ IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::Fa
   
 IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
 {
-  TrackFaceAction* action = new TrackFaceAction(robot, trackFace.faceID);
+  TrackFaceAction* action = new TrackFaceAction(trackFace.faceID);
   
   // TODO: Support body-only mode
   if(trackFace.headOnly) {
@@ -396,7 +380,7 @@ IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::T
   
 IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
 {
-  TrackObjectAction* action = new TrackObjectAction(robot, trackObject.objectID);
+  TrackObjectAction* action = new TrackObjectAction(trackObject.objectID);
   action->SetMoveEyes(true);
   
   // TODO: Support body-only mode
@@ -409,7 +393,7 @@ IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface:
   
 IActionRunner* GetMoveHeadToAngleActionHelper(Robot& robot, const ExternalInterface::SetHeadAngle& setHeadAngle)
 {
-  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(robot, setHeadAngle.angle_rad);
+  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(setHeadAngle.angle_rad);
   action->SetMaxSpeed(setHeadAngle.max_speed_rad_per_sec);
   action->SetAccel(setHeadAngle.accel_rad_per_sec2);
   action->SetDuration(setHeadAngle.duration_sec);
@@ -426,17 +410,17 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::turnInPlace:
     {
       auto & turnInPlace = actionUnion.Get_turnInPlace();
-      return new TurnInPlaceAction(robot, turnInPlace.angle_rad, turnInPlace.isAbsolute);
+      return new TurnInPlaceAction(turnInPlace.angle_rad, turnInPlace.isAbsolute);
     }
     case RobotActionUnionTag::playAnimation:
     {
       auto & playAnimation = actionUnion.Get_playAnimation();
-      return new PlayAnimationAction(robot, playAnimation.animationName, playAnimation.numLoops);
+      return new PlayAnimationAction(playAnimation.animationName, playAnimation.numLoops);
     }
     case RobotActionUnionTag::playAnimationGroup:
     {
       auto & playAnimationGroup = actionUnion.Get_playAnimationGroup();
-      return new PlayAnimationGroupAction(robot, playAnimationGroup.animationGroupName, playAnimationGroup.numLoops);
+      return new PlayAnimationGroupAction(playAnimationGroup.animationGroupName, playAnimationGroup.numLoops);
     }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
@@ -451,14 +435,14 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return GetPlaceObjectOnGroundActionHelper(robot, actionUnion.Get_placeObjectOnGround());
           
     case RobotActionUnionTag::placeObjectOnGroundHere:
-      return new PlaceObjectOnGroundAction(robot);
+      return new PlaceObjectOnGroundAction();
       
     case RobotActionUnionTag::setHeadAngle:
       return GetMoveHeadToAngleActionHelper(robot, actionUnion.Get_setHeadAngle());
       
     case RobotActionUnionTag::setLiftHeight:
       // TODO: Provide a means to pass in the speed/acceleration values to the action
-      return new MoveLiftToHeightAction(robot, actionUnion.Get_setLiftHeight().height_mm);
+      return new MoveLiftToHeightAction(actionUnion.Get_setLiftHeight().height_mm);
       
     case RobotActionUnionTag::faceObject:
       return GetFaceObjectActionHelper(robot, actionUnion.Get_faceObject());
@@ -523,7 +507,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere:
     {
-      newAction = new PlaceObjectOnGroundAction(robot);
+      newAction = new PlaceObjectOnGroundAction();
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::GotoPose:
@@ -587,13 +571,13 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     case ExternalInterface::MessageGameToEngineTag::PlayAnimation:
     {
       const ExternalInterface::PlayAnimation& msg = event.GetData().Get_PlayAnimation();
-      newAction = new PlayAnimationAction(robot, msg.animationName, msg.numLoops);
+      newAction = new PlayAnimationAction(msg.animationName, msg.numLoops);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::PlayAnimationGroup:
     {
       const ExternalInterface::PlayAnimationGroup& msg = event.GetData().Get_PlayAnimationGroup();
-      newAction = new PlayAnimationGroupAction(robot, msg.animationGroupName, msg.numLoops);
+      newAction = new PlayAnimationGroupAction(msg.animationGroupName, msg.numLoops);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::FaceObject:
@@ -609,8 +593,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::TurnInPlace:
     {
-      newAction = new TurnInPlaceAction(robot,
-                                        event.GetData().Get_TurnInPlace().angle_rad,
+      newAction = new TurnInPlaceAction(event.GetData().Get_TurnInPlace().angle_rad,
                                         event.GetData().Get_TurnInPlace().isAbsolute);
       break;
     }
@@ -718,12 +701,12 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot->IsCarryingObject()) {
       
       // Put the block down right here
-      IActionRunner* newAction = new PlaceObjectOnGroundAction(*robot);
+      IActionRunner* newAction = new PlaceObjectOnGroundAction();
       robot->GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, newAction);
     }
     else {
       // In the normal case directly set the lift height
-      MoveLiftToHeightAction* action = new MoveLiftToHeightAction(*robot, msg.height_mm);
+      MoveLiftToHeightAction* action = new MoveLiftToHeightAction(msg.height_mm);
       action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
       action->SetLiftAccel(msg.accel_rad_per_sec2);
       action->SetDuration(msg.duration_sec);

@@ -119,12 +119,11 @@ namespace Anki {
     
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot,
-                                         const PathMotionProfile motionProf,
+    DriveToPoseAction::DriveToPoseAction(const PathMotionProfile motionProf,
+                                         
                                          const bool forceHeadDown,
                                          const bool useManualSpeed) //, const Pose3d& pose)
-    : IAction(robot)
-    , _isGoalSet(false)
+    :  _isGoalSet(false)
     , _driveWithHeadDown(forceHeadDown)
     , _pathMotionProfile(motionProf)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
@@ -137,8 +136,7 @@ namespace Anki {
       
     }
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot,
-                                         const Pose3d& pose,
+    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
                                          const PathMotionProfile motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
@@ -146,7 +144,7 @@ namespace Anki {
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-      : DriveToPoseAction(robot, motionProf, forceHeadDown, useManualSpeed)
+      : DriveToPoseAction(motionProf, forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -154,8 +152,7 @@ namespace Anki {
       SetGoal(pose, distThreshold, angleThreshold);
     }
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot,
-                                         const std::vector<Pose3d>& poses,
+    DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses,
                                          const PathMotionProfile motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
@@ -163,7 +160,7 @@ namespace Anki {
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-      : DriveToPoseAction(robot, motionProf, forceHeadDown, useManualSpeed)
+      : DriveToPoseAction(motionProf, forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -310,7 +307,7 @@ namespace Anki {
       
       if(ActionResult::SUCCESS == result && !_startSound.empty()) {
         // Play starting sound if there is one (only if nothing else is playing)
-        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(*_robot, _startSound, 1, false));
+        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_startSound, 1, false));
       }
       
       return result;
@@ -425,13 +422,13 @@ namespace Anki {
          (u32)ActionConstants::INVALID_TAG == _driveSoundActionTag &&    // we aren't waiting on last drive sound to stop
          currentTime > _nextDrivingSoundTime)                            // it's time to play
       {
-        PlayAnimationAction* driveSoundAction = new PlayAnimationAction(*_robot, _drivingSound, 1, false);
+        PlayAnimationAction* driveSoundAction = new PlayAnimationAction(_drivingSound, 1, false);
         _driveSoundActionTag = driveSoundAction->GetTag();
         _robot->GetActionList().QueueActionNext(Robot::SoundSlot, driveSoundAction);
       }
       else if(ActionResult::SUCCESS == result && !_stopSound.empty())
       {
-        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(*_robot, _stopSound, 1, false));
+        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_stopSound, 1, false));
       }
       
       return result;
@@ -449,16 +446,14 @@ namespace Anki {
     
 #pragma mark ---- DriveToObjectAction ----
     
-    DriveToObjectAction::DriveToObjectAction(Robot& robot,
-                                             const ObjectID& objectID,
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const PreActionPose::ActionType& actionType,
                                              const PathMotionProfile motionProfile,
                                              const f32 predockOffsetDistX_mm,
                                              const bool useApproachAngle,
                                              const f32 approachAngle_rad,
                                              const bool useManualSpeed)
-    : IAction(robot)
-    , _objectID(objectID)
+    : _objectID(objectID)
     , _actionType(actionType)
     , _distance_mm(-1.f)
     , _predockOffsetDistX_mm(predockOffsetDistX_mm)
@@ -468,16 +463,14 @@ namespace Anki {
     , _pathMotionProfile(motionProfile)
     {
       // Goal options will be set later
-      _driveToPoseAction = new DriveToPoseAction(robot, motionProfile, true, useManualSpeed);
+      _driveToPoseAction = new DriveToPoseAction(motionProfile, true, useManualSpeed);
     }
     
-    DriveToObjectAction::DriveToObjectAction(Robot& robot,
-                                             const ObjectID& objectID,
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const f32 distance,
                                              const PathMotionProfile motionProfile,
                                              const bool useManualSpeed)
-    : IAction(robot)
-    , _objectID(objectID)
+    : _objectID(objectID)
     , _actionType(PreActionPose::ActionType::NONE)
     , _distance_mm(distance)
     , _predockOffsetDistX_mm(0)
@@ -487,7 +480,7 @@ namespace Anki {
     , _pathMotionProfile(motionProfile)
     {
       // Goal options will be set later
-      _driveToPoseAction = new DriveToPoseAction(robot, motionProfile, true, useManualSpeed);
+      _driveToPoseAction = new DriveToPoseAction(motionProfile, true, useManualSpeed);
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -679,7 +672,7 @@ namespace Anki {
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
-          _compoundAction.AddAction(new FaceObjectAction(robot, _objectID, Radians(0), true, false));
+          _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), true, false));
         }
         
         _compoundAction.SetEmitCompletionSignal(false);
@@ -782,14 +775,12 @@ namespace Anki {
             
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
-    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(Robot& robot,
-                                                                     const Pose3d& placementPose,
+    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Pose3d& placementPose,
                                                                      const bool placeOnGround,
                                                                      const PathMotionProfile motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
-    : DriveToObjectAction(robot,
-                          _robot->GetCarryingObject(),
+    : DriveToObjectAction(_robot->GetCarryingObject(),
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
                           motionProfile,
                           0,
@@ -873,9 +864,8 @@ namespace Anki {
     
 #pragma mark ---- TurnInPlaceAction ----
     
-    TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const Radians& angle, const bool isAbsolute)
-    : IAction(robot)
-    , _targetAngle(angle)
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute)
+    :  _targetAngle(angle)
     , _isAbsoluteAngle(isAbsolute)
     {
       
@@ -1048,9 +1038,8 @@ namespace Anki {
 
 #pragma mark ---- DriveStraightAction ----
     
-    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps)
-    : IAction(robot)
-    , _dist_mm(dist_mm)
+    DriveStraightAction::DriveStraightAction(f32 dist_mm, f32 speed_mmps)
+    : _dist_mm(dist_mm)
     , _speed_mmps(speed_mmps)
     {
       
@@ -1105,10 +1094,9 @@ namespace Anki {
     
 #pragma mark ---- PanAndTiltAction ----
     
-    PanAndTiltAction::PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
+    PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
                                        bool isPanAbsolute, bool isTiltAbsolute)
-    : IAction(robot)
-    , _compoundAction{}
+    : _compoundAction{}
     , _bodyPanAngle(bodyPan)
     , _headTiltAngle(headTilt)
     , _isPanAbsolute(isPanAbsolute)
@@ -1206,14 +1194,14 @@ namespace Anki {
       
       newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
       
-      TurnInPlaceAction* action = new TurnInPlaceAction(*_robot, _bodyPanAngle, _isPanAbsolute);
+      TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
       newCompoundParallel->AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot->GetHeadAngle() + _headTiltAngle;
-      MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(*_robot, newHeadAngle, _tiltAngleTol);
+      MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
       newCompoundParallel->AddAction(headAction);
@@ -1252,16 +1240,16 @@ namespace Anki {
     
 #pragma mark ---- FacePoseAction ----
     
-    FacePoseAction::FacePoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
-    : PanAndTiltAction(robot,0,0,false,true)
+    FacePoseAction::FacePoseAction(const Pose3d& pose, Radians maxTurnAngle)
+    : PanAndTiltAction(0,0,false,true)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
     }
     
-    FacePoseAction::FacePoseAction(Robot& robot, Radians maxTurnAngle)
-    : PanAndTiltAction(robot,0,0,false,true)
+    FacePoseAction::FacePoseAction(Radians maxTurnAngle)
+    : PanAndTiltAction(0,0,false,true)
     , _isPoseSet(false)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
@@ -1340,24 +1328,22 @@ namespace Anki {
 
 #pragma mark ---- FaceObjectAction ----
     
-    FaceObjectAction::FaceObjectAction(Robot& robot,
-                                       ObjectID objectID,
+    FaceObjectAction::FaceObjectAction(ObjectID objectID,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FaceObjectAction(robot, objectID, Vision::Marker::ANY_CODE,
+    : FaceObjectAction(objectID, Vision::Marker::ANY_CODE,
                        maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
     {
       
     }
     
-    FaceObjectAction::FaceObjectAction(Robot& robot,
-                                       ObjectID objectID,
+    FaceObjectAction::FaceObjectAction(ObjectID objectID,
                                        Vision::Marker::Code whichCode,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FacePoseAction(robot, maxTurnAngle)
+    : FacePoseAction(maxTurnAngle)
     , _facePoseCompoundActionDone(false)
     , _visuallyVerifyAction()
     , _objectID(objectID)
@@ -1383,7 +1369,7 @@ namespace Anki {
     
     ActionResult FaceObjectAction::Init()
     {
-      _visuallyVerifyAction = new VisuallyVerifyObjectAction(*_robot, _objectID, _whichCode);
+      _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
       ObservableObject* object = _robot->GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
@@ -1503,7 +1489,7 @@ namespace Anki {
                               "slot unknown. Using DriveAndManipulateSlot");
           inSlot = Robot::DriveAndManipulateSlot;
         }
-        _robot->GetActionList().QueueActionNext(inSlot, new TrackObjectAction(*_robot, _objectID));
+        _robot->GetActionList().QueueActionNext(inSlot, new TrackObjectAction(_objectID));
       }
       
       return ActionResult::SUCCESS;
@@ -1527,10 +1513,9 @@ namespace Anki {
     
 #pragma mark ---- VisuallyVerifyObjectAction ----
     
-    VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(Robot& robot, ObjectID objectID,
+    VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(ObjectID objectID,
                                                            Vision::Marker::Code whichCode)
-    : IAction(robot)
-    , _objectID(objectID)
+    : _objectID(objectID)
     , _whichCode(whichCode)
     , _waitToVerifyTime(-1)
     , _moveLiftToHeightAction()
@@ -1573,7 +1558,7 @@ namespace Anki {
       }
       
       // Get lift out of the way
-      _moveLiftToHeightAction = new MoveLiftToHeightAction(*_robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV);
+      _moveLiftToHeightAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV);
       _moveLiftToHeightAction->SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
@@ -1685,9 +1670,8 @@ namespace Anki {
     
 #pragma mark ---- MoveHeadToAngleAction ----
     
-    MoveHeadToAngleAction::MoveHeadToAngleAction(Robot& robot, const Radians& headAngle, const Radians& tolerance, const Radians& variability)
-    : IAction(robot)
-    , _headAngle(headAngle)
+    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance, const Radians& variability)
+    : _headAngle(headAngle)
     , _angleTolerance(tolerance)
     , _variability(variability)
     , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
@@ -1843,9 +1827,8 @@ namespace Anki {
     
 #pragma mark ---- MoveLiftToHeightAction ----
                                 
-    MoveLiftToHeightAction::MoveLiftToHeightAction(Robot& robot, const f32 height_mm, const f32 tolerance_mm, const f32 variability)
-    : IAction(robot)
-    , _height_mm(height_mm)
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
+    : _height_mm(height_mm)
     , _heightTolerance(tolerance_mm)
     , _variability(variability)
     , _name("MoveLiftTo" + std::to_string(_height_mm) + "mmAction")
@@ -1854,8 +1837,8 @@ namespace Anki {
       
     }
     
-    MoveLiftToHeightAction::MoveLiftToHeightAction(Robot& robot, const Preset preset, const f32 tolerance_mm)
-    : MoveLiftToHeightAction(robot, GetPresetHeight(preset), tolerance_mm, 0.f)
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm)
+    : MoveLiftToHeightAction(GetPresetHeight(preset), tolerance_mm, 0.f)
     {
       _name = "MoveLiftTo";
       _name += GetPresetName(preset);
@@ -2024,11 +2007,8 @@ namespace Anki {
     
 #pragma mark ---- IDockAction ----
     
-    IDockAction::IDockAction(Robot& robot,
-                             ObjectID objectID,
-                             const bool useManualSpeed)
-    : IAction(robot)
-    , _dockObjectID(objectID)
+    IDockAction::IDockAction(ObjectID objectID, const bool useManualSpeed)
+    :  _dockObjectID(objectID)
     , _useManualSpeed(useManualSpeed)
     {
       RegisterSubAction(_faceAndVerifyAction);
@@ -2180,7 +2160,7 @@ namespace Anki {
             PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
                              "Playing animation %s ",
                              _liftMovingAnimation.c_str());
-            _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(*_robot, _liftMovingAnimation, 1, false));
+            _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_liftMovingAnimation, 1, false));
           } else {
             PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
                                 "Could not find animation %s",
@@ -2207,8 +2187,7 @@ namespace Anki {
       // Set up a visual verification action to make sure we can still see the correct
       // marker of the selected object before proceeding
       // NOTE: This also disables tracking head to object if there was any
-      _faceAndVerifyAction = new FaceObjectAction(*_robot,
-                                                  _dockObjectID,
+      _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
 
@@ -2356,11 +2335,10 @@ namespace Anki {
 
 #pragma mark ---- PickupObjectAction ----
     
-    AlignWithObjectAction::AlignWithObjectAction(Robot& robot,
-                                                 ObjectID objectID,
+    AlignWithObjectAction::AlignWithObjectAction(ObjectID objectID,
                                                  const f32 distanceFromMarker_mm,
                                                  const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
     {
       SetPlacementOffset(distanceFromMarker_mm, 0, 0);
     }
@@ -2428,10 +2406,8 @@ namespace Anki {
     
 #pragma mark ---- PickupObjectAction ----
     
-    PickupObjectAction::PickupObjectAction(Robot& robot,
-                                           ObjectID objectID,
-                                           const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    PickupObjectAction::PickupObjectAction(ObjectID objectID, const bool useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
     {
       SetPostDockLiftMovingAnimation("LiftEffortPickup");
     }
@@ -2632,12 +2608,11 @@ namespace Anki {
     
 #pragma mark ---- PlaceRelObjectAction ----
     
-    PlaceRelObjectAction::PlaceRelObjectAction(Robot& robot,
-                                               ObjectID objectID,
+    PlaceRelObjectAction::PlaceRelObjectAction(ObjectID objectID,
                                                const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
     {
       SetPlacementOffset(placementOffsetX_mm, 0, 0);
       SetPlaceOnGround(placeOnGround);
@@ -2748,7 +2723,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, move the lift out of the
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
-              _placementVerifyAction = new FaceObjectAction(robot, _carryObjectID, Radians(0), true, false);
+              _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), true, false);
               _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
@@ -2796,7 +2771,7 @@ namespace Anki {
                 if(result == ActionResult::SUCCESS) {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
-                  _placementVerifyAction = new MoveLiftToHeightAction(*_robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+                  _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
                   
                   // Disable completion signals since this is inside another action
                   _placementVerifyAction->SetEmitCompletionSignal(false);
@@ -2837,8 +2812,8 @@ namespace Anki {
     
 #pragma mark ---- RollObjectAction ----
     
-    RollObjectAction::RollObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
     {
       _dockAction = DockAction::DA_ROLL_LOW;
       RegisterSubAction(_rollVerifyAction);
@@ -2955,7 +2930,7 @@ namespace Anki {
             
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
-              _rollVerifyAction = new VisuallyVerifyObjectAction(robot, _dockObjectID, _expectedMarkerPostRoll->GetCode());
+              _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetEmitCompletionSignal(false);
@@ -3011,9 +2986,9 @@ namespace Anki {
     
 #pragma mark ---- PopAWheelieAction ----
     
-    PopAWheelieAction::PopAWheelieAction(Robot& robot, ObjectID objectID,
+    PopAWheelieAction::PopAWheelieAction(ObjectID objectID,
                                          const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
     {
       
     }
@@ -3142,8 +3117,7 @@ namespace Anki {
     
 #pragma mark ---- IDriveToInteractWithObjectAction ----
     
-    IDriveToInteractWithObject::IDriveToInteractWithObject(Robot& robot,
-                                                           const ObjectID& objectID,
+    IDriveToInteractWithObject::IDriveToInteractWithObject(const ObjectID& objectID,
                                                            const PreActionPose::ActionType& actionType,
                                                            const PathMotionProfile motionProfile,
                                                            const f32 distanceFromMarker_mm,
@@ -3151,8 +3125,7 @@ namespace Anki {
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed)
     {
-      _driveToObjectAction = new DriveToObjectAction(robot,
-                                                     objectID,
+      _driveToObjectAction = new DriveToObjectAction(objectID,
                                                      actionType,
                                                      motionProfile,
                                                      distanceFromMarker_mm,
@@ -3165,15 +3138,13 @@ namespace Anki {
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
     
-    DriveToAlignWithObjectAction::DriveToAlignWithObjectAction(Robot& robot,
-                                                               const ObjectID& objectID,
+    DriveToAlignWithObjectAction::DriveToAlignWithObjectAction(const ObjectID& objectID,
                                                                const f32 distanceFromMarker_mm,
                                                                const PathMotionProfile motionProfile,
                                                                const bool useApproachAngle,
                                                                const f32 approachAngle_rad,
                                                                const bool useManualSpeed)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::DOCKING,
                                  motionProfile,
                                  distanceFromMarker_mm,
@@ -3181,21 +3152,19 @@ namespace Anki {
                                  approachAngle_rad,
                                  useManualSpeed)
     {
-      AlignWithObjectAction* action = new AlignWithObjectAction(robot, objectID, distanceFromMarker_mm, useManualSpeed);
+      AlignWithObjectAction* action = new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
     }
 
 #pragma mark ---- DriveToPickupObjectAction ----
     
-    DriveToPickupObjectAction::DriveToPickupObjectAction(Robot& robot,
-                                                         const ObjectID& objectID,
+    DriveToPickupObjectAction::DriveToPickupObjectAction(const ObjectID& objectID,
                                                          const PathMotionProfile motionProfile,
                                                          const bool useApproachAngle,
                                                          const f32 approachAngle_rad,
                                                          const bool useManualSpeed)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::DOCKING,
                                  motionProfile,
                                  0,
@@ -3203,21 +3172,19 @@ namespace Anki {
                                  approachAngle_rad,
                                  useManualSpeed)
     {
-      PickupObjectAction* action = new PickupObjectAction(robot, objectID, useManualSpeed);
+      PickupObjectAction* action = new PickupObjectAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
     }
     
 #pragma mark ---- DriveToPlaceOnObjectAction ----
     
-    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(Robot& robot,
-                                                           const ObjectID& objectID,
+    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const ObjectID& objectID,
                                                            const PathMotionProfile motionProfile,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::PLACE_RELATIVE,
                                  motionProfile,
                                  0,
@@ -3225,8 +3192,7 @@ namespace Anki {
                                  approachAngle_rad,
                                  useManualSpeed)
     {
-      PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
-                                                              objectID,
+      PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
                                                               false,
                                                               0,
                                                               useManualSpeed);
@@ -3236,15 +3202,13 @@ namespace Anki {
     
 #pragma mark ---- DriveToPlaceRelObjectAction ----
     
-    DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(Robot& robot,
-                                                             const ObjectID& objectID,
+    DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(const ObjectID& objectID,
                                                              const PathMotionProfile motionProfile,
                                                              const f32 placementOffsetX_mm,
                                                              const bool useApproachAngle,
                                                              const f32 approachAngle_rad,
                                                              const bool useManualSpeed)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::PLACE_RELATIVE,
                                  motionProfile,
                                  placementOffsetX_mm,
@@ -3252,8 +3216,7 @@ namespace Anki {
                                  approachAngle_rad,
                                  useManualSpeed)
     {
-      PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
-                                                              objectID,
+      PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
                                                               true,
                                                               placementOffsetX_mm,
                                                               useManualSpeed);
@@ -3263,14 +3226,12 @@ namespace Anki {
     
 #pragma mark ---- DriveToRollObjectAction ----
     
-    DriveToRollObjectAction::DriveToRollObjectAction(Robot& robot,
-                                                     const ObjectID& objectID,
+    DriveToRollObjectAction::DriveToRollObjectAction(const ObjectID& objectID,
                                                      const PathMotionProfile motionProfile,
                                                      const bool useApproachAngle,
                                                      const f32 approachAngle_rad,
                                                      const bool useManualSpeed)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::ROLLING,
                                  motionProfile,
                                  0,
@@ -3278,21 +3239,19 @@ namespace Anki {
                                  approachAngle_rad,
                                  useManualSpeed)
     {
-      RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
+      RollObjectAction* action = new RollObjectAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
     }
     
 #pragma mark ---- DriveToPopAWheelieAction ----
     
-    DriveToPopAWheelieAction::DriveToPopAWheelieAction(Robot& robot,
-                                                       const ObjectID& objectID,
+    DriveToPopAWheelieAction::DriveToPopAWheelieAction(const ObjectID& objectID,
                                                        const PathMotionProfile motionProfile,
                                                        const bool useApproachAngle,
                                                        const f32 approachAngle_rad,
                                                        const bool useManualSpeed)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
+    : IDriveToInteractWithObject(objectID,
                                  PreActionPose::ROLLING,
                                  motionProfile,
                                  0,
@@ -3300,15 +3259,14 @@ namespace Anki {
                                  approachAngle_rad,
                                  useManualSpeed)
     {
-      PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
+      PopAWheelieAction* action = new PopAWheelieAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
     }
     
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
-    PlaceObjectOnGroundAction::PlaceObjectOnGroundAction(Robot& robot)
-    : IAction(robot)
+    PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
     {
       RegisterSubAction(_faceAndVerifyAction);
     }
@@ -3344,7 +3302,7 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        _faceAndVerifyAction = new FaceObjectAction(*_robot, _carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
+        _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
         _faceAndVerifyAction->SetEmitCompletionSignal(false);
         
       } // if/else IsCarryingObject()
@@ -3404,29 +3362,25 @@ namespace Anki {
   
 #pragma mark ---- PlaceObjectOnGroundAtPoseAction ----    
     
-    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(Robot& robot,
-                                                                     const Pose3d& placementPose,
+    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
                                                                      const PathMotionProfile motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
-    : CompoundActionSequential(robot, {
-      new DriveToPlaceCarriedObjectAction(robot,
-                                          placementPose,
+    : CompoundActionSequential({
+      new DriveToPlaceCarriedObjectAction(placementPose,
                                           true,
                                           motionProfile,
                                           useExactRotation,
                                           useManualSpeed),
-      new PlaceObjectOnGroundAction(robot)})
+      new PlaceObjectOnGroundAction()})
     {
       
     }
     
 #pragma mark ---- CrossBridgeAction ----
     
-    CrossBridgeAction::CrossBridgeAction(Robot& robot,
-                                         ObjectID bridgeID,
-                                         const bool useManualSpeed)
-    : IDockAction(robot, bridgeID, useManualSpeed)
+    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed)
+    : IDockAction(bridgeID, useManualSpeed)
     {
       
     }
@@ -3464,10 +3418,8 @@ namespace Anki {
     
 #pragma mark ---- AscendOrDescendRampAction ----
     
-    AscendOrDescendRampAction::AscendOrDescendRampAction(Robot& robot,
-                                                         ObjectID rampID,
-                                                         const bool useManualSpeed)
-    : IDockAction(robot, rampID, useManualSpeed)
+    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed)
+    : IDockAction(rampID, useManualSpeed)
     {
 
     }
@@ -3527,10 +3479,8 @@ namespace Anki {
     
 #pragma mark ---- MountChargerAction ----
     
-    MountChargerAction::MountChargerAction(Robot& robot,
-                                           ObjectID chargerID,
-                                           const bool useManualSpeed)
-    : IDockAction(robot, chargerID, useManualSpeed)
+    MountChargerAction::MountChargerAction(ObjectID chargerID, const bool useManualSpeed)
+    : IDockAction(chargerID, useManualSpeed)
     {
       
     }
@@ -3577,11 +3527,8 @@ namespace Anki {
     
 #pragma mark ---- TraverseObjectAction ----
     
-    TraverseObjectAction::TraverseObjectAction(Robot& robot,
-                                               ObjectID objectID,
-                                               const bool useManualSpeed)
-    : IActionRunner(robot)
-    , _objectID(objectID)
+    TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
+    : _objectID(objectID)
     , _useManualSpeed(useManualSpeed)
     {
       RegisterSubAction(_chosenAction);
@@ -3613,12 +3560,12 @@ namespace Anki {
         if(object->GetType() == ObjectType::Bridge_LONG ||
            object->GetType() == ObjectType::Bridge_SHORT)
         {
-          CrossBridgeAction* bridgeAction = new CrossBridgeAction(*_robot, _objectID, _useManualSpeed);
+          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = bridgeAction;
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
-          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(*_robot, _objectID, _useManualSpeed);
+          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = rampAction;
         }
@@ -3641,13 +3588,11 @@ namespace Anki {
     
 #pragma mark ---- DriveToAndTraverseObjectAction ----
     
-    DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(Robot& robot,
-                                                                   const ObjectID& objectID,
+    DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(const ObjectID& objectID,
                                                                    const PathMotionProfile motionProfile,
                                                                    const bool useManualSpeed)
-    : CompoundActionSequential(robot, {
-      new DriveToObjectAction(robot,
-                              objectID,
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
                               PreActionPose::ENTRY,
                               motionProfile,
                               0,
@@ -3655,20 +3600,18 @@ namespace Anki {
                               0,
                               useManualSpeed)})
     {
-      TraverseObjectAction* action = new TraverseObjectAction(robot, objectID, useManualSpeed);
+      TraverseObjectAction* action = new TraverseObjectAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
     }
     
 #pragma mark ---- DriveToAndMountChargerAction ----
     
-    DriveToAndMountChargerAction::DriveToAndMountChargerAction(Robot& robot,
-                                                               const ObjectID& objectID,
+    DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
                                                                const PathMotionProfile motionProfile,
                                                                const bool useManualSpeed)
-    : CompoundActionSequential(robot, {
-      new DriveToObjectAction(robot,
-                              objectID,
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
                               PreActionPose::ENTRY,
                               motionProfile,
                               0,
@@ -3676,18 +3619,16 @@ namespace Anki {
                               0,
                               useManualSpeed)})
     {
-      MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
+      MountChargerAction* action = new MountChargerAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
     }
     
 #pragma mark ---- PlayAnimationAction ----
     
-    PlayAnimationAction::PlayAnimationAction(Robot& robot,
-                                             const std::string& animName,
+    PlayAnimationAction::PlayAnimationAction(const std::string& animName,
                                              u32 numLoops, bool interruptRunning)
-    : IAction(robot)
-    , _animName(animName)
+    : _animName(animName)
     , _name("PlayAnimation" + animName + "Action")
     , _numLoops(numLoops)
     , _interruptRunning(interruptRunning)
@@ -3865,10 +3806,9 @@ namespace Anki {
     
 #pragma mark ---- PlayAnimationAction ----
     
-    PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
-                                                       const std::string& animGroupName,
+    PlayAnimationGroupAction::PlayAnimationGroupAction(const std::string& animGroupName,
                                                        u32 numLoops, bool interruptRunning)
-    : PlayAnimationAction(robot, "", numLoops, interruptRunning),
+    : PlayAnimationAction("", numLoops, interruptRunning),
     _animGroupName(animGroupName)
     {
       
@@ -3882,12 +3822,10 @@ namespace Anki {
 
 #pragma mark ---- DeviceAudioAction ----
     
-    DeviceAudioAction::DeviceAudioAction(Robot& robot,
-                                         const Audio::EventType event,
+    DeviceAudioAction::DeviceAudioAction(const Audio::EventType event,
                                          const Audio::GameObjectType gameObj,
                                          const bool waitUntilDone)
-    : IAction(robot)
-    , _actionType( AudioActionType::Event )
+    : _actionType( AudioActionType::Event )
     , _name( "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)) )
     , _waitUntilDone( waitUntilDone )
     , _event( event )
@@ -3895,19 +3833,15 @@ namespace Anki {
     { }
     
     // Stop All Events on Game Object, pass in Invalid to stop all audio
-    DeviceAudioAction::DeviceAudioAction(Robot& robot,
-                                         const Audio::GameObjectType gameObj)
-    : IAction(robot)
-    , _actionType( AudioActionType::StopEvents )
+    DeviceAudioAction::DeviceAudioAction(const Audio::GameObjectType gameObj)
+    : _actionType( AudioActionType::StopEvents )
     , _name( "StopAudioEvents_GameObj_" + std::string(EnumToString(gameObj)) )
     , _gameObj( gameObj )
     { }
     
     // Change Music state
-    DeviceAudioAction::DeviceAudioAction(Robot& robot,
-                                         const Audio::MusicGroupStates state)
-    : IAction(robot)
-    , _actionType( AudioActionType::SetState )
+    DeviceAudioAction::DeviceAudioAction(const Audio::MusicGroupStates state)
+    : _actionType( AudioActionType::SetState )
     , _name( "PlayAudioMusicState_" + std::string(EnumToString(state)) )
     , _stateGroup( Audio::GameStateGroupType::Music )
     , _state( static_cast<Audio::GameStateType>(state) )
@@ -3981,9 +3915,8 @@ namespace Anki {
     
 #pragma mark ---- WaitAction ----
     
-    WaitAction::WaitAction(Robot& robot, f32 waitTimeInSeconds)
-    : IAction(robot)
-    , _waitTimeInSeconds(waitTimeInSeconds)
+    WaitAction::WaitAction(f32 waitTimeInSeconds)
+    :  _waitTimeInSeconds(waitTimeInSeconds)
     , _doneTimeInSeconds(-1.f)
     {
       // Put the wait time with two decimals of precision in the action's name

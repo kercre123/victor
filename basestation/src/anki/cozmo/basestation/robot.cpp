@@ -77,6 +77,7 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
+    , _actionList(*this)
     , _movementComponent(*this)
     , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, dataPlatform)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
@@ -964,7 +965,7 @@ namespace Anki {
 
       
       //////// Update Robot's State Machine /////////////
-      Result actionResult = _actionList.Update(*this);
+      Result actionResult = _actionList.Update();
       if(actionResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.", GetID());
       }

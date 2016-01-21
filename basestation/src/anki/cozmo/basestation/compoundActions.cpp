@@ -20,7 +20,7 @@ namespace Anki {
     
 #pragma mark ---- ICompoundAction ----
     
-    ICompoundAction::ICompoundAction(Robot& robot, std::initializer_list<IActionRunner*> actions) : IActionRunner(robot)
+    ICompoundAction::ICompoundAction(std::initializer_list<IActionRunner*> actions)
     {
       for(IActionRunner* action : actions) {
         if(action == nullptr) {
@@ -98,8 +98,8 @@ namespace Anki {
       
     }
     
-    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions)
-    : ICompoundAction(robot, actions)
+    CompoundActionSequential::CompoundActionSequential(std::initializer_list<IActionRunner*> actions)
+    : ICompoundAction(actions)
     , _delayBetweenActionsInSeconds(0)
     {
       Reset();
@@ -234,8 +234,8 @@ namespace Anki {
       
     }
     
-    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions)
-    : ICompoundAction(robot, actions)
+    CompoundActionParallel::CompoundActionParallel(std::initializer_list<IActionRunner*> actions)
+    : ICompoundAction(actions)
     {
       
     }
