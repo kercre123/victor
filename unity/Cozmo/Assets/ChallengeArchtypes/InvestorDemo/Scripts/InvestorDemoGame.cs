@@ -34,6 +34,7 @@ namespace InvestorDemo {
 
     protected void InitializeMinigameObjects() {
       CurrentRobot.SetRobotVolume(1.0f);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicVolume(1.0f);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
 

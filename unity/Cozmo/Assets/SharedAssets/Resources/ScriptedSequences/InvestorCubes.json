@@ -34,7 +34,7 @@
       "Name": "Goodnight",
       "Id": 2,
       "Sequencial": true,
-      "Final": true,
+      "Final": false,
       "FailOnError": false,
       "ExitOnActionsComplete": true,
       "Conditions": [],
@@ -42,11 +42,6 @@
         {
           "$type": "ScriptedSequences.Actions.EnterCozmoBehaviorChooser, Assembly-CSharp",
           "BehaviorChooser": "Selection"
-        },
-        {
-          "$type": "ScriptedSequences.Actions.PlayMusic, Assembly-CSharp",
-          "MusicState": "SILENCE",
-          "WaitToEnd": true
         },
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
@@ -94,15 +89,17 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
-          "VolumeChannel": "Robot",
+          "VolumeChannel": "ROBOT_VOLUME",
           "TargetVolume": 0.0,
-          "Duration": 2.0
+          "Duration": 2.0,
+          "Curve": "Linear"
         },
         {
           "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
-          "VolumeChannel": "Music",
+          "VolumeChannel": "MUSIC_VOLUME",
           "TargetVolume": 0.0,
-          "Duration": 2.0
+          "Duration": 2.0,
+          "Curve": "Linear"
         }
       ],
       "ExitConditions": []
