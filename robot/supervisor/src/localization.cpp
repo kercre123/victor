@@ -1,7 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #ifndef TARGET_K02
 #include "anki/common/robot/errorHandling.h"
-#include "anki/common/robot/matrix.h"
 #endif
 #include "localization.h"
 #include "pickAndPlaceController.h"
@@ -94,25 +93,6 @@ namespace Anki {
         u16 hEnd_ = 0;
         u16 hSize_ = 0;
 
-#ifndef TARGET_K02
-        // MemoryStack for rotation matrices and operations on them
-        const s32 SCRATCH_BUFFER_SIZE = 75*4 + 128;
-        char scratchBuffer[SCRATCH_BUFFER_SIZE];
-        Embedded::MemoryStack scratch(scratchBuffer, SCRATCH_BUFFER_SIZE);
-
-        // Poses
-        Embedded::Point3<f32> currPoseTrans;
-        Embedded::Array<f32> currPoseRot(3,3,scratch);
-
-        Embedded::Point3<f32> p0Trans;
-        Embedded::Array<f32> p0Rot(3,3,scratch);
-
-        Embedded::Point3<f32> pDiffTrans;
-        Embedded::Array<f32> pDiffRot(3,3,scratch);
-
-        Embedded::Point3<f32> keyPoseTrans;
-        Embedded::Array<f32> keyPoseRot(3,3,scratch);
-  #endif
         // The time of the last keyframe that was used to update the robot's pose.
         // Using this to limit how often keyframes are used to compute the robot's
         // current pose so that we don't have to do multiple
@@ -238,78 +218,25 @@ namespace Anki {
         }
 
 
-
         // Compute new pose based on key frame pose and the diff between the historical
         // pose at time t and the latest pose.
 
         // Historical pose
-        p0Trans.x = hist_[i].x;
-        p0Trans.y = hist_[i].y;
-        p0Trans.z = 0;
-
-        f32 s0 = sinf(hist_[i].angle);
-        f32 c0 = cosf(hist_[i].angle);
-        p0Rot[0][0] = c0;    p0Rot[0][1] = -s0;    p0Rot[0][2] = 0;
-        p0Rot[1][0] = s0;    p0Rot[1][1] =  c0;    p0Rot[1][2] = 0;
-        p0Rot[2][0] =  0;    p0Rot[2][1] =   0;    p0Rot[2][2] = 1;
-
+        Embedded::Pose2d histPose( hist_[i].x, hist_[i].y, hist_[i].angle);
+        
         // Current pose
-        currPoseTrans.x = x_;
-        currPoseTrans.y = y_;
-        currPoseTrans.z = 0;
-
-        f32 s1 = sinf(orientation_.ToFloat());
-        f32 c1 = cosf(orientation_.ToFloat());
-        currPoseRot[0][0] = c1;    currPoseRot[0][1] = -s1;    currPoseRot[0][2] = 0;
-        currPoseRot[1][0] = s1;    currPoseRot[1][1] =  c1;    currPoseRot[1][2] = 0;
-        currPoseRot[2][0] =  0;    currPoseRot[2][1] =   0;    currPoseRot[2][2] = 1;
-
+        Embedded::Pose2d currPose( x_, y_, orientation_.ToFloat() );
+        
         // Compute the difference between the historical pose and the current pose
-        if (ComputePoseDiff(p0Rot, p0Trans, currPoseRot, currPoseTrans, pDiffRot, pDiffTrans, scratch) == RESULT_FAIL) {
-          PRINT("Failed to compute pose diff\n");
-          return RESULT_FAIL;
-        }
-
+        Embedded::Pose2d currPoseWrtHistPose = currPose.GetWithRespectTo(histPose);
+        
         // Compute pose of the keyframe
-        keyPoseTrans.x = x;
-        keyPoseTrans.y = y;
-        keyPoseTrans.z = 0;
-
-        f32 sk = sinf(angle);
-        f32 ck = cosf(angle);
-        keyPoseRot[0][0] = ck;    keyPoseRot[0][1] = -sk;    keyPoseRot[0][2] = 0;
-        keyPoseRot[1][0] = sk;    keyPoseRot[1][1] =  ck;    keyPoseRot[1][2] = 0;
-        keyPoseRot[2][0] =  0;    keyPoseRot[2][1] =   0;    keyPoseRot[2][2] = 1;
-
-        #if(DEBUG_POSE_HISTORY)
-        PRINT("pHist: %f %f %f (frame %d, curFrame %d)\n", hist_[i].x, hist_[i].y, hist_[i].angle, hist_[i].frame, frameId_);
-        PRINT("pCurr: %f %f %f\n", currPoseTrans.x, currPoseTrans.y, orientation_.ToFloat());
-        PRINT("pKey: %f %f %f\n", x, y, angle);
-        #endif
-
+        Embedded::Pose2d keyPose(x, y, angle );
 
         // Apply the pose diff to the keyframe pose to get the new curr pose
-        Embedded::Matrix::Multiply(keyPoseRot, pDiffRot, currPoseRot);
-        currPoseTrans = keyPoseRot*pDiffTrans + keyPoseTrans;
-
-        // NOTE: Expecting only rotation about the z-axis.
-        //       If this is not the case, we need to do something more mathy.
-        f32 newAngle = acosf(currPoseRot[0][0]);
-        if (currPoseRot[0][1] > 0) {
-          newAngle *= -1;
-        }
-
-        SetCurrentMatPose(currPoseTrans.x, currPoseTrans.y, newAngle);
-
-        #if(DEBUG_POSE_HISTORY)
-        f32 pDiffAngle = acosf(pDiffRot[0][0]);
-        if (pDiffRot[0][1] > 0) {
-          pDiffAngle *= -1;
-        }
-        PRINT("pDiff: %f %f %f\n", pDiffTrans.x, pDiffTrans.y, pDiffAngle);
-        PRINT("pCurrNew: %f %f %f\n", x_, y_, orientation_.ToFloat());
-        #endif
-
+        Embedded::Pose2d newCurrPose = keyPose * currPoseWrtHistPose;
+        SetCurrentMatPose(newCurrPose.GetX(), newCurrPose.GetY(), newCurrPose.GetAngle());
+        
         lastKeyframeUpdate_ = HAL::GetTimeStamp();
 
         return RESULT_OK;
@@ -345,7 +272,7 @@ namespace Anki {
 
         p.x() = hist_[idx].x;
         p.y() = hist_[idx].y;
-        p.angle = hist_[idx].angle;
+        p.angle() = hist_[idx].angle;
 
         return RESULT_OK;
       }
@@ -846,20 +773,20 @@ namespace Anki {
 
       void ConvertToDriveCenterPose(const Anki::Embedded::Pose2d &robotOriginPose, Anki::Embedded::Pose2d &driveCenterPose)
       {
-        f32 angle = robotOriginPose.angle.ToFloat();
+        f32 angle = robotOriginPose.GetAngle().ToFloat();
 
         driveCenterPose.x() = robotOriginPose.GetX() + GetDriveCenterOffset() * cosf(angle);
         driveCenterPose.y() = robotOriginPose.GetY() + GetDriveCenterOffset() * sinf(angle);
-        driveCenterPose.angle = robotOriginPose.angle;
+        driveCenterPose.angle() = robotOriginPose.GetAngle();
       }
 
       void ConvertToOriginPose(const Anki::Embedded::Pose2d &driveCenterPose, Anki::Embedded::Pose2d &robotOriginPose)
       {
-        f32 angle = driveCenterPose.angle.ToFloat();
+        f32 angle = driveCenterPose.GetAngle().ToFloat();
 
         robotOriginPose.x() = driveCenterPose.GetX() - GetDriveCenterOffset() * cosf(angle);
         robotOriginPose.y() = driveCenterPose.GetY() - GetDriveCenterOffset() * sinf(angle);
-        robotOriginPose.angle = driveCenterPose.angle;
+        robotOriginPose.angle() = driveCenterPose.GetAngle();
       }
 
       Radians GetCurrentMatOrientation()
