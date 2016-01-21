@@ -151,12 +151,14 @@ class _Dispatcher(IDataReceiver):
                             'base':     base,
                             'level':    msg.trace.level,
                             'name':     self.nameTable[msg.trace.name],
+                            'nameId':   msg.trace.name,
                             'fmt':      self.formatTable[msg.trace.stringId][0],
+                            'fmtId':    msg.trace.stringId,
                             'nargs':    self.formatTable[msg.trace.stringId][1],
                             'vals':     repr(msg.trace.value),
                             'nvals':    len(msg.trace.value)
                     }
-                    sys.stderr.write("{base} {level:d} {name}: Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat: \"{fmt}\"{linesep}\tVals: {vals}{linesep}".format(**kwds))
+                    sys.stderr.write("{base} {level:d} {name} ({nameId:d}): Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat ({fmdId:d}): \"{fmt}\"{linesep}\tVals: {vals}{linesep}".format(**kwds))
                 else:
                     kwds = {'linesep':   os.linesep,
                             'base':      base,
