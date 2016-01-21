@@ -57,12 +57,22 @@ public class InitialCubesState : State {
     if (numValidCubes != _NumValidCubes) {
       _NumValidCubes = numValidCubes;
       _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
-      _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
-        Localization.Get(LocalizationKeys.kMinigameLabelShowCubes),
-        _CubesRequired,
-        _NumValidCubes));
 
-      _Game.EnableContinueButton(_NumValidCubes >= _CubesRequired);
+      if (_NumValidCubes >= _CubesRequired) {
+        _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
+          Localization.Get(LocalizationKeys.kMinigameLabelCubesReady),
+          _NumValidCubes));
+
+        _Game.EnableContinueButton(true);
+      }
+      else {
+        _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
+          Localization.Get(LocalizationKeys.kMinigameLabelShowCubes),
+          _CubesRequired,
+          _NumValidCubes));
+
+        _Game.EnableContinueButton(false);
+      }
     }
   }
 

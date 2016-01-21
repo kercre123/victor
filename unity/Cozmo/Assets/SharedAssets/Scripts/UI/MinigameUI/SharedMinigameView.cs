@@ -264,6 +264,14 @@ namespace Cozmo {
         AddWidget(_TitleWidgetInstance);
       }
 
+      public void OpenHowToPlayView() {
+        _TitleWidgetInstance.OpenHowToPlayDialog();
+      }
+
+      public void CloseHowToPlayView() {
+        _TitleWidgetInstance.CloseHowToPlayView();
+      }
+
       private void HandleHowToPlayViewOpened() {
         if (HowToPlayViewOpened != null) {
           HowToPlayViewOpened();

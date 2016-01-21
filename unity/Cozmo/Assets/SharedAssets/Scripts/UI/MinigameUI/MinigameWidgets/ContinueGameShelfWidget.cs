@@ -31,6 +31,7 @@ namespace Cozmo {
       }
 
       public void SetButtonListener(ContinueButtonClickHandler buttonClickHandler) {
+        _OnClickCallback = null;
         _OnClickCallback = buttonClickHandler;
       }
 

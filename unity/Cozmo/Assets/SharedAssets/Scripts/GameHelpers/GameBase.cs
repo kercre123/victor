@@ -342,6 +342,14 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
   }
 
+  public void OpenHowToPlayView() {
+    _SharedMinigameViewInstance.OpenHowToPlayView();
+  }
+
+  public void CloseHowToPlayView() {
+    _SharedMinigameViewInstance.CloseHowToPlayView();
+  }
+
   private void HandleHowToPlayViewOpened() {
     PauseGame();
   }

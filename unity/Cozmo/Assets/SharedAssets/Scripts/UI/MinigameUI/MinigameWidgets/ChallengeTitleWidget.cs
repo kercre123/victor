@@ -16,7 +16,7 @@ namespace Cozmo {
 
       [SerializeField]
       private HowToPlayView _HowToPlayViewPrefab;
-
+      private HowToPlayView _HowToPlayViewInstance;
       [SerializeField]
       private Cozmo.UI.IconTextLabel _ChallengeTitleLabel;
 
@@ -33,12 +33,19 @@ namespace Cozmo {
       }
 
       public void OpenHowToPlayDialog() {
-        HowToPlayView howToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
-        howToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
-        howToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
+        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
+        _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
+        _HowToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
 
         if (HowToPlayViewOpened != null) {
           HowToPlayViewOpened();
+        }
+      }
+
+      public void CloseHowToPlayView() {
+        if (_HowToPlayViewInstance != null) {
+          _HowToPlayViewInstance.CloseView();
+          _HowToPlayViewInstance = null;
         }
       }
 

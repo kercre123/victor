@@ -31,6 +31,8 @@ public static class LocalizationKeys {
   public const string kSpeedTapLightCountDescription = "speedTapLightCount.description";
   public const string kSpeedTapLightCountSameColorNoTapTitle = "speedTapLightCountSameColorNoTap.title";
   public const string kSpeedTapLightCountSameColorNoTapDescription = "speedTapLightCountSameColorNoTap.description";
+  public const string kSpeedTapHardTitle = "speedTapHard.title";
+  public const string kSpeedTapHardDescription = "speedTapHard.description";
   public const string kSpeedTapNoRedTitle = "speedTapNoRed.title";
   public const string kSpeedTapNoRedDescription = "speedTapNoRed.description";
   public const string kWhackAMoleTitle = "whackAMole.title";
@@ -70,6 +72,8 @@ public static class LocalizationKeys {
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
   public const string kMinigameLabelShowCubes = "minigame.label.showCubes";
+  public const string kMinigameLabelCubesReady = "minigame.label.cubesReady";
+  public const string kMinigameLabelReadyToPlay = "minigame.label.readyToPlay";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
   public const string kSimonGameButton = "simonGame.button";
@@ -115,6 +119,7 @@ public static class LocalizationKeys {
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kButtonClose = "button.close";
   public const string kLabelPlusCount = "label.plusCount";
+  public const string kDailySummaryTitle = "dailySummary.title";
 
   #endregion
 }

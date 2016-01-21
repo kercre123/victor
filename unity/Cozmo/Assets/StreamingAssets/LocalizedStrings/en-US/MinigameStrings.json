@@ -36,6 +36,12 @@
   "minigame.label.showCubes": {
     "translation": "Put {0} cubes where Cozmo can see them. They'll turn white when they're in the right place. ({1}/{0})"
   },
+  "minigame.label.cubesReady": {
+    "translation": "{0} cubes ready!"
+  },
+  "minigame.label.readyToPlay": {
+    "translation": "Ready to Play?"
+  },
   "askCozmo.title": {
     "translation": "Ask Cozmo"
   },
