@@ -112,7 +112,7 @@ static const uint8_t INT_OPEN_DRAIN = 0x44;
 static const uint8_t RANGE_500DPS = 0x02;
 static const uint8_t BW_200 = 0x19;           // Maybe?
 
-static const float ACC_RANGE_CONST  = 9.58f;
+static const float ACC_RANGE_CONST  = 9.58f / 16.0f;
 static const float GYRO_RANGE_CONST = 2.663E-4f;
 
 static bool readyForIMU = true;
