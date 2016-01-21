@@ -164,7 +164,7 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
   readyForIMU = false;
 
   // Configure I2C bus to read IMU data
-  I2C::SetupRead(&imu_state, sizeof(IMUData));
+  I2C::SetupRead(&imu_state, sizeof(IMUData), copy_state);
 
   I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), I2C_FORCE_START);
   I2C::Read(SLAVE_READ(ADDR_IMU));
