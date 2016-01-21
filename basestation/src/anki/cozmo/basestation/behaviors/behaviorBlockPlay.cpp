@@ -1285,6 +1285,21 @@ namespace Cozmo {
               _isActing = false;
               break;
             }
+
+            case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
+            {
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                     "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
+                                     "failed to visually verify before placement docking, searching for cube");
+              PlayAnimation(robot, "ID_react2block_align_fail");
+
+              // search for the block, but hold a bit first in case we see it
+              _missingBlockFoundState = State::PlacingBlock;
+              _holdUntilTime = currentTime_sec + 0.75f;
+              SetCurrState(State::SearchingForMissingBlock);
+              _isActing = false;
+              break;
+            }
               
             default:
             {
