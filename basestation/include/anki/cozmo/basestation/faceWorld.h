@@ -39,6 +39,8 @@ namespace Cozmo {
     // 0 if no face was ever observed.
     TimeStamp_t GetLastObservedFace(Pose3d& p) const;
     
+    // Removes all known faces and resets the last observed face timer to 0, so
+    // GetLastObservedFace() will return 0.
     void ClearAllFaces();
     
   private:
