@@ -46,6 +46,7 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
     if (length > (RELAY_BUFFER_SIZE - relayQueued))
     {
       AnkiError( 50, "RTIP.AcceptRTIPMessage", 288, "overflow! %d > %d - %d", 3, length, RELAY_BUFFER_SIZE, relayQueued);
+      AnkiConditionalError(relayQueued < 2, 50, "RTIP.AcceptRTIPMessage", 290, "Waiting for message of size %d", 1, (relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8)));
       relayQueued = 0;
       return false;
     }
