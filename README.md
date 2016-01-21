@@ -16,7 +16,7 @@ Install CMAKE using [brew](http://brew.sh/).
 
 The robotics simulation environment we use is Webots. We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg).
 
-### Build coretech-external
+### coretech-external
 
 Get the latest coretech-external binaries [here](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). The latest results click Artifacts->View and download the .tar.gz
 
