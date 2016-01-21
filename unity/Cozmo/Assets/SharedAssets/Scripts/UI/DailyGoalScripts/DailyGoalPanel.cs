@@ -7,8 +7,7 @@ using System.Collections.Generic;
 
 // Panel for generating and displaying the ProgressionStat goals for the Day.
 public class DailyGoalPanel : BaseView {
-
-  private readonly int[] _DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+  
   private readonly List<GoalBadge> _GoalUIBadges = new List<GoalBadge>();
 
   // Force a specific Friendship level for Goal Generation testing,
@@ -33,14 +32,6 @@ public class DailyGoalPanel : BaseView {
   // Config file for friendship progression
   private FriendshipProgressionConfig _Config;
 
-  public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
-    for (int i = 0; i < _DailyGoals.Length; i++) {
-      if (_DailyGoals[i] > 0) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   void Awake() {
     _Config = RobotEngineManager.Instance.GetFriendshipProgressConfig();
@@ -94,21 +85,11 @@ public class DailyGoalPanel : BaseView {
     }
   }
 
-  public bool HasDailyGoal(Anki.Cozmo.ProgressionStatType type) {
-    if (_DailyGoals[(int)type] > 0) {
-      return true;
-    }
-    else {
-      return false;
-    }
-  }
-
-
   // Creates a goal badge based on a progression stat
   public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
     DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
     GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, _GoalContainer).GetComponent<GoalBadge>();
-    _DailyGoals[(int)type] += target;
+    RobotEngineManager.Instance.DailyGoals[(int)type] += target;
     newBadge.Initialize(name, target, goal, type);
     _GoalUIBadges.Add(newBadge);
     newBadge.OnProgChanged += UpdateTotalProgress;

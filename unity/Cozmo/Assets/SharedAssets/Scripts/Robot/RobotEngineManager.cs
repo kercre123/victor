@@ -32,9 +32,21 @@ public class RobotEngineManager : MonoBehaviour {
 
   [SerializeField]
   private TextAsset _AlternateConfiguration;
-
+  #region FriendshipProgression and DailyGoals
   [SerializeField]
   private FriendshipProgressionConfig _FriendshipProgConfig;
+
+  public readonly int[] DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+
+  public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
+    for (int i = 0; i < DailyGoals.Length; i++) {
+      if (DailyGoals[i] > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+  #endregion
 
   private DisconnectionReason _LastDisconnectionReason = DisconnectionReason.None;
 
