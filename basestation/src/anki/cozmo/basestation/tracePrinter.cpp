@@ -67,8 +67,8 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
     const FormatInfo& fi(it->second);
     const int nargs = fi.second;
     if (nargs != trace.value.size()) {
-      snprintf(pbuf, sizeof(pbuf), "Trace nargs missmatch. Expected %d values but got %d for format string \"%s\"",
-               nargs, (int)trace.value.size(), fi.first.c_str());
+      snprintf(pbuf, sizeof(pbuf), "Trace nargs missmatch. Expected %d values but got %d for format string (%d) \"%s\"",
+               nargs, (int)trace.value.size(), trace.stringId, fi.first.c_str());
       return pbuf;
     }
     else {
