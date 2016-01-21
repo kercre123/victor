@@ -3,13 +3,7 @@ using UnityEngine;
 
 namespace Simon {
   public class CozmoMoveCloserToCubesState : State {
-    public const float kDriveWheelSpeed = 80f;
-
     public const float kTargetDistance = 200f;
-
-    private Vector3 _TargetPosition;
-
-    private Quaternion _TargetRotation;
 
     private PlayerType _FirstPlayer;
 
@@ -29,11 +23,11 @@ namespace Simon {
 
       var delta = (currentPos - averagePos).normalized;
 
-      _TargetPosition = averagePos + kTargetDistance * delta;
+      var targetPosition = averagePos + kTargetDistance * delta;
 
-      _TargetRotation = Quaternion.LookRotation(delta, Vector3.up);
+      var targetRotation = Quaternion.LookRotation(delta, Vector3.up);
 
-      _CurrentRobot.GotoPose(_TargetPosition, _TargetRotation, callback: HandleGotoPoseComplete);
+      _CurrentRobot.GotoPose(targetPosition, targetRotation, callback: HandleGotoPoseComplete);
     }
 
     public override void Exit() {
