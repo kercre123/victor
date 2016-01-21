@@ -48,7 +48,8 @@ void CheckForUpgrades(void)
 
 void WiFiFace(void)
 {
-  static const char wifiFaceFormat[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = "%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n";
+  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n";
+  const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
   if (!clientConnected())
   {
     struct softap_config ap_config;
@@ -57,11 +58,13 @@ void WiFiFace(void)
       os_printf("WiFiFace couldn't read back config\r\n");
     }
     {
+      char fmtBuf[wifiFaceFmtSz];
       char scrollLines[11];
       unsigned int i;
+      memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
       for (i=0; i<((system_get_time()/2000000) % 10); i++) scrollLines[i] = '\n';
       scrollLines[i] = 0;
-      Face::FacePrintf(wifiFaceFormat, scrollLines,
+      Face::FacePrintf(fmtBuf, scrollLines,
                        ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
                        COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
     }
