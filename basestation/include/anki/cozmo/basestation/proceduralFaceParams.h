@@ -92,11 +92,27 @@ public:
                    float fraction,
                    bool usePupilSaccades = false);
   
+  // Adjust settings to make the robot look at a give place. You specify the
+  // (x,y) position of the face center and the normalize factor which is the
+  // maximum distance in x or y this LookAt is relative to. The eyes are then
+  // shifted, scaled, and squeezed together as needed to create the effect of
+  // the robot looking there.
+  //  - lookUpMaxScale controls how big the eyes get when looking up (negative y)
+  //  - lookDownMinScale controls how small the eyes get when looking down (positive y)
+  //  - outerEyeScaleIncrease controls the differentiation between inner/outer eye height
+  //    when looking left or right
+  void LookAt(f32 x, f32 y, f32 xmax, f32 ymax,
+              f32 lookUpMaxScale = 1.1f, f32 lookDownMinScale=0.85f, f32 outerEyeScaleIncrease=0.1f);
+  
   // Combine the input params with those from our instance
   ProceduralFaceParams& Combine(const ProceduralFaceParams& otherFace);
   
   // E.g. for unit tests
   static void EnableClippingWarning(bool enable);
+  
+  // Get the bounding edge of the current eyes in screen pixel space, at their current
+  // size and position, without taking into account the current FacePosition (a.k.a. face center)
+  void GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax);
   
 private:
   
@@ -109,7 +125,7 @@ private:
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   void CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1);
   
-  Value Clip(WhichEye eye, Parameter whichParam, Value value) const;
+  Value Clip(Parameter whichParam, Value newValue, Value oldValue) const;
                                                           
   static ProceduralFaceParams* _resetData;
   static std::function<void(const char*,Value,Value,Value)> ClipWarnFcn;
@@ -120,7 +136,7 @@ private:
   
 inline void ProceduralFaceParams::SetParameter(WhichEye whichEye, Parameter param, Value value)
 {
-  _eyeParams[whichEye][static_cast<size_t>(param)] = Clip(whichEye, param, value);
+  _eyeParams[whichEye][static_cast<size_t>(param)] = Clip(param, value, GetParameter(whichEye, param));
 }
 
 inline ProceduralFaceParams::Value ProceduralFaceParams::GetParameter(WhichEye whichEye, Parameter param) const
@@ -146,10 +162,6 @@ inline ProceduralFaceParams::Value ProceduralFaceParams::GetFaceAngle() const {
 inline void ProceduralFaceParams::SetFaceAngle(Value angle) {
   // TODO: Define face angle limits?
   _faceAngle = angle;
-}
-
-inline void ProceduralFaceParams::SetFacePosition(Point<2, Value> center) {
-  _faceCenter = center;
 }
 
 inline Point<2,ProceduralFaceParams::Value> const& ProceduralFaceParams::GetFacePosition() const {

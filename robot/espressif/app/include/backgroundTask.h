@@ -14,4 +14,10 @@
  */
 int8_t backgroundTaskInit(void);
 
+/// Callback for client connect events
+void backgroundTaskOnConnect(void);
+
+/// Callback for client disconnect events
+void backgroundTaskOnDisconnect(void);
+
 #endif

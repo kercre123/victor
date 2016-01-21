@@ -39,6 +39,7 @@ protected:
   virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
+  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   

@@ -7,6 +7,7 @@
 #include "sha1.h"
 #include "timer.h"
 #include "recovery.h"
+#include "battery.h"
 #include "../../hal/hardware.h"
 
 struct BootLoaderSignature {
@@ -46,20 +47,6 @@ void StopDevices(void) {
   MicroWait(1000);      // Give it some time to power down
 }
 
-void PowerOn(void) {
-  // Enable charger
-  nrf_gpio_pin_set(PIN_CHARGE_EN);
-  nrf_gpio_cfg_output(PIN_CHARGE_EN);
- 
-  // Syscon power - this should always be on until battery fail
-  nrf_gpio_pin_set(PIN_PWR_EN);
-  nrf_gpio_cfg_output(PIN_PWR_EN);
-
-  // Encoder and headboard power
-  nrf_gpio_pin_set(PIN_VDDs_EN);
-  nrf_gpio_cfg_output(PIN_VDDs_EN);
-}
-
 extern "C" void ResetStack(void);
 
 // This is the remote entry point recovery mode
@@ -67,7 +54,7 @@ extern "C" void SVC_Handler(void) {
   __disable_irq();
   ResetStack();
   StopDevices();
-  PowerOn();
+  Battery::init();
   EnterRecovery();
   NVIC_SystemReset();
 }

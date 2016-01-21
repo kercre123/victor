@@ -87,11 +87,19 @@ message TurnInPlaceAtSpeed {
 //   object once the robot has successfully faced it.
 message FaceObject {
     uint_32  objectID,
-    float_32 turnAngleTol,
     float_32 maxTurnAngle,
+
+    // A value of 0 means 'Don't care' (i.e. use engine's default value)
+    float_32 maxPanSpeed_radPerSec = 0.0,
+    float_32 panAccel_radPerSec2 = 0.0,
+    float_32 panTolerance_rad = 0.0,
+    float_32 maxTiltSpeed_radPerSec = 0.0,
+    float_32 tiltAccel_radPerSec2 = 0.0,
+    float_32 tiltTolerance_rad = 0.0,
+
     uint_8   robotID,
-    uint_8   visuallyVerifyWhenDone,
-    uint_8   headTrackWhenDone
+    bool   visuallyVerifyWhenDone,
+    bool   headTrackWhenDone
 }
 
 // FacePose
@@ -101,8 +109,16 @@ message FacePose {
     float_32 world_x,
     float_32 world_y,
     float_32 world_z,
-    float_32 turnAngleTol,
     float_32 maxTurnAngle,
+
+    // A value of 0 means 'Don't care' (i.e. use engine's default value)
+    float_32 maxPanSpeed_radPerSec = 0.0,
+    float_32 panAccel_radPerSec2 = 0.0,
+    float_32 panTolerance_rad = 0.0,
+    float_32 maxTiltSpeed_radPerSec = 0.0,
+    float_32 tiltAccel_radPerSec2 = 0.0,
+    float_32 tiltTolerance_rad = 0.0,
+
     uint_8   robotID
 }
 
@@ -446,6 +462,11 @@ message SetSteeringControllerGains {
   float_32 dockPathAngularOffsetCap_rad
 }
 
+message SetMotionModelParams
+{
+  float_32 slipFactor,
+}
+
 // SetRobotVolume
 message SetRobotVolume {
   float_32 volume
@@ -476,6 +497,13 @@ message PlayAnimation {
     uint_8  robotID,
     uint_32 numLoops,
     string animationName
+}
+
+// PlayAnimationGroup
+message PlayAnimationGroup {
+uint_8  robotID,
+uint_32 numLoops,
+string animationGroupName
 }
 
 // ReplayLastAnimation
@@ -593,22 +621,25 @@ message EraseQuad {
 }
 
 union RobotActionUnion {
-  FaceObject         faceObject,
-  FacePose           facePose,
-  GotoPose           goToPose,
-  GotoObject         goToObject,
-  AlignWithObject    alignWithObject,
-  PlayAnimation      playAnimation,
-  PickupObject       pickupObject,
-  PlaceOnObject      placeOnObject,
-  PlaceRelObject     placeRelObject,
-  RollObject         rollObject,
-  PopAWheelie        popAWheelie,
-  SetLiftHeight      setLiftHeight,
-  SetHeadAngle       setHeadAngle,
-  TurnInPlace        turnInPlace,
-  TrackToFace        trackFace,
-  TrackToObject      trackObject
+  FaceObject                faceObject,
+  FacePose                  facePose,
+  GotoPose                  goToPose,
+  GotoObject                goToObject,
+  AlignWithObject           alignWithObject,
+  PlayAnimation             playAnimation,
+  PlayAnimationGroup        playAnimationGroup,
+  PickupObject              pickupObject,
+  PlaceOnObject             placeOnObject,
+  PlaceRelObject            placeRelObject,
+  PlaceObjectOnGround       placeObjectOnGround,
+  PlaceObjectOnGroundHere   placeObjectOnGroundHere,
+  RollObject                rollObject,
+  PopAWheelie               popAWheelie,
+  SetLiftHeight             setLiftHeight,
+  SetHeadAngle              setHeadAngle,
+  TurnInPlace               turnInPlace,
+  TrackToFace               trackFace,
+  TrackToObject             trackObject
 }
 
 // QueueSingleAction
@@ -679,18 +710,28 @@ message GetProgressionStats {
 
 message SetProgressionStat {
   ProgressionStatType statType,
-  uint_32 newVal
+  int_32 newVal
 }
 
 message AddToProgressionStat {
   ProgressionStatType statType,
-  uint_32 deltaVal
+  int_32 deltaVal
+}
+
+message SetFriendshipPoints {
+  int_32 newVal
+}
+
+message SetFriendshipLevel {
+  int_32 newVal
 }
 
 union ProgressionMessageUnion {
   GetProgressionStats  GetProgressionStats,
   SetProgressionStat   SetProgressionStat,
-  AddToProgressionStat AddToProgressionStat
+  AddToProgressionStat AddToProgressionStat,
+  SetFriendshipPoints  SetFriendshipPoints,
+  SetFriendshipLevel   SetFriendshipLevel
 }
 
 message ProgressionMessage {

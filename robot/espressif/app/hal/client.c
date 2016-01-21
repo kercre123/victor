@@ -8,7 +8,7 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
-#include "driver/i2spi.h"
+#include "backgroundTask.h"
 #include "transport/IReceiver.h"
 #include "transport/reliableTransport.h"
 
@@ -45,8 +45,17 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
   
   if (unlikely(!clientConnected()))
   {
+    remot_info *remote = NULL;
+    sint8 err;
+    err = espconn_get_connection_info(src,&remote,0);
+    if (err != ESPCONN_OK)
+    {
+      os_printf("ERROR, couldn't get remote info for connection! %d\r\n", err);
+      return;
+    }
+    
 #ifdef DEBUG_CLIENT
-    printf("Initalizing new connection from  %d.%d.%d.%d:%d\r\n", src->proto.udp->remote_ip[0], src->proto.udp->remote_ip[1], src->proto.udp->remote_ip[2], src->proto.udp->remote_ip[3], src->proto.udp->remote_port);
+    printf("Initalizing new connection from  %d.%d.%d.%d:%d\r\n", remote->remote_ip[0], remote->remote_ip[1], remote->remote_ip[2], remote->remote_ip[3], remote->remote_port);
 #endif    
     esp_udp* dest    = os_zalloc(sizeof(esp_udp));
     clientConnection = os_zalloc(sizeof(ReliableConnection));
@@ -55,7 +64,8 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
       os_printf("DIE! Couldn't allocate memory for reliable connection!\r\n");
       return;
     }
-    os_memcpy(dest, src->proto.udp, sizeof(esp_udp));
+    os_memcpy(dest->remote_ip, remote->remote_ip, 4);
+    dest->remote_port = remote->remote_port;
     ReliableConnection_Init(clientConnection, dest);
   }
   else if (unlikely(!destsEqual(src->proto.udp, (esp_udp*)clientConnection->dest)))
@@ -139,6 +149,10 @@ bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const b
 
 bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 {
+  const esp_udp* const dest = (esp_udp*)clientConnection->dest;
+  os_memcpy(socket->proto.udp->remote_ip, dest->remote_ip, 4);
+  socket->proto.udp->remote_port = dest->remote_port;
+  
 #ifdef DEBUG_CLIENT
   printf("clientQueuePacket to %d.%d.%d.%d:%d\r\n", socket->proto.udp->remote_ip[0], socket->proto.udp->remote_ip[1],
                     socket->proto.udp->remote_ip[2], socket->proto.udp->remote_ip[3], socket->proto.udp->remote_port);
@@ -163,8 +177,7 @@ void Receiver_OnConnectionRequest(ReliableConnection* conn)
   {
     ReliableTransport_FinishConnection(conn); // Accept the connection
     clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
-    uint8_t msg[2] = {0xFC, true}; // FC is the tag for a radio connection state message to the robot
-    i2spiQueueMessage(msg, 2);
+    backgroundTaskOnConnect();
   }
   else // The engine is trying to reconnect
   {
@@ -187,8 +200,7 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
   else
   {
-    uint8_t msg[2] = {0xFC, false}; // FC is the tag for a radio connection state message to the robot
-    i2spiQueueMessage(msg, 2);
+    backgroundTaskOnDisconnect();
     os_free(clientConnection->dest);
     os_free(clientConnection);
     clientConnection = NULL;

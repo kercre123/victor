@@ -7,14 +7,19 @@ extern "C" {
 #include "ets_sys.h"
 #include "osapi.h"
 #include "mem.h"
+#include "foregroundTask.h"
 #include "backgroundTask.h"
 #include "client.h"
 #include "driver/i2spi.h"
 }
-#include "version.h"
+#include "anki/cozmo/robot/esp.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "anki/cozmo/robot/version.h"
+#include "anki/cozmo/robot/logging.h"
 #include "face.h"
 #include "upgradeController.h"
 #include "animationController.h"
+#include "nvStorage.h"
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
@@ -43,26 +48,23 @@ void CheckForUpgrades(void)
 
 void WiFiFace(void)
 {
-  static bool wasConnected = false;
-  if (clientConnected() && !wasConnected)
+  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n";
+  const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
+  if (!clientConnected())
   {
-    Face::FaceUnPrintf();
-    wasConnected = true;
-  }
-  else if (!clientConnected())
-  {
-    wasConnected = false;
     struct softap_config ap_config;
     if (wifi_softap_get_config(&ap_config) == false)
     {
       os_printf("WiFiFace couldn't read back config\r\n");
     }
     {
+      char fmtBuf[wifiFaceFmtSz];
       char scrollLines[11];
       unsigned int i;
+      memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
       for (i=0; i<((system_get_time()/2000000) % 10); i++) scrollLines[i] = '\n';
       scrollLines[i] = 0;
-      Face::FacePrintf("%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n", scrollLines,
+      Face::FacePrintf(fmtBuf, scrollLines,
                        ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
                        COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
     }
@@ -135,7 +137,19 @@ void Exec(os_event_t *event)
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
 }
 
-} // Background 
+
+bool readCameraCalAndSend(uint32_t tag)
+{
+  NVStorage::NVStorageBlob entry;
+  entry.tag = tag;
+  const NVStorage::NVResult result = NVStorage::Read(entry);
+  AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 48, "ReadAndSendCameraCal", 272, "Failed to read camera calibration: %d", 1, result);
+  const RobotInterface::CameraCalibration* const calib = (RobotInterface::CameraCalibration*)entry.blob;
+  RobotInterface::SendMessage(*calib);
+  return false;
+}
+
+} // BackgroundTask
 } // Cozmo
 } // Anki
 
@@ -158,8 +172,29 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't post background task initalization\r\n");
     return -3;
   }
+  else if (Anki::Cozmo::Face::Init() != Anki::RESULT_OK)
+  {
+    os_printf("\tCouldn't initalize face controller\r\n");
+    return -4;
+  }
   else
   {
     return 0;
   }
+}
+
+extern "C" void backgroundTaskOnConnect(void)
+{
+  uint8_t msg[2] = {0xFC, true}; // FC is the tag for a radio connection state message to the robot
+  i2spiQueueMessage(msg, 2);
+  Anki::Cozmo::Face::FaceUnPrintf();
+  Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
+  Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
+  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
+}
+
+extern "C" void backgroundTaskOnDisconnect(void)
+{
+  uint8_t msg[2] = {0xFC, false}; // FC is the tag for a radio connection state message to the robot
+  i2spiQueueMessage(msg, 2);
 }

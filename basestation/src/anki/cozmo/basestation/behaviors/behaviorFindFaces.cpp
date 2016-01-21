@@ -144,12 +144,17 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
 Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   _currentState = State::Inactive;
+  return Result::RESULT_OK;
+}
+  
+void BehaviorFindFaces::StopInternal(Robot& robot, double currentTime_sec)
+{
   if (_currentDriveActionID != (uint32_t)ActionConstants::INVALID_TAG)
   {
     robot.GetActionList().Cancel(_currentDriveActionID);
     _currentDriveActionID = (uint32_t)ActionConstants::INVALID_TAG;
   }
-  return Result::RESULT_OK;
 }
+  
 } // namespace Cozmo
 } // namespace Anki

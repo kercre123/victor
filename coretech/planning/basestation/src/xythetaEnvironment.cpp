@@ -1635,74 +1635,120 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
                                                         float& distanceToPlan,
                                                         bool debug) const
 {
-  // for now, this is implemented by simply going over every
-  // intermediate pose and finding the closest one
-  float closest = 999999.9;  // TODO:(bn) talk to people about this
-  size_t startPoint = 0;
 
-  State curr = plan.start_;
+  // Ideally, we have a position which is within the discretization error of the planner. If so, use the
+  // lowest index that fits within the error. We use the lowest to avoid chopping off point-turn actions.
+
+  // Otherwise, that means we are further away, so just find the closest (x,y) point, ignoring theta since we
+  // will need to drive onto the path anyway.
 
   using namespace std;
-  if(debug)
+  if(debug) {
     cout<<"Searching for position near "<<state<<" along plan of length "<<plan.Size()<<endl;
-
-  size_t planSize = plan.Size();
-  for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
-    const MotionPrimitive& prim(GetRawMotionPrimitive(curr.theta, plan.actions_[planIdx]));
-
-    // the intermediate position (x,y) coordinates are all centered at
-    // 0. Instead of shifting them over each time, we just shift the
-    // state we are searching for (fewer ops)
-    State_c target(state.x_mm - GetX_mm(curr.x),
-                   state.y_mm - GetY_mm(curr.y),
-                   0.0f);
-
-    // first check the exact state.  // TODO:(bn) no sqrt!
-    float initialDist = sqrt(pow(target.x_mm, 2) + pow(target.y_mm, 2));
-    if(debug)
-      cout<<planIdx<<": "<<"iniitial "<<target<<" = "<<initialDist;
-
-    // give a tiny bonus (1e-6) to the initial state, so we prefer it over the last intermediate state of the
-    // previous action
-
-    if(initialDist < closest + 1e-6) {
-      closest = initialDist;
-      startPoint = planIdx;
-      if(debug)
-        cout<<"  closest\n";
-    }
-    else {
-      if(debug)
-        cout<<endl;
-    }
-
-    for(const auto& intermediate : prim.intermediatePositions) {
-      // TODO:(bn) get squared distance
-      float dist = GetDistanceBetween(target, intermediate.position);
-
-      if(debug)
-        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<target<<" = "<<dist;
-
-      if(dist < closest) {
-        closest = dist;
-        startPoint = planIdx;
-        if(debug)
-          cout<<"  closest\n";
-      }
-      else {
-        if(debug)
-          cout<<endl;
-      }
-    }
-
-    StateID currID(curr);
-    ApplyAction(plan.actions_[planIdx], currID, false);
-    curr = State(currID);
   }
 
-  distanceToPlan = closest;
+  float closestXYDist = std::numeric_limits<float>::max();
+  size_t closestPointIdx = 0;
 
-  return startPoint;
+  const State discreteInputState = State_c2State(state);
+
+  // First search *just* the action starting points. If there is an exact match here, that's the winner.
+  // Also, keep track of closest distances in case there isn't an exact match
+  State currPlanState = plan.start_;
+  size_t planSize = plan.Size();
+  for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
+    if(debug) {
+      cout<<planIdx<<": "<<"initial " << currPlanState;
+    }
+
+    if( currPlanState == discreteInputState ) {
+      if( debug ) {
+        cout << " exact: " << discreteInputState << endl;
+      }
+      
+      distanceToPlan = 0.0f;
+      return planIdx;
+    }
+
+    // TODO:(bn) no sqrt!
+    const float xError = state.x_mm - GetX_mm(currPlanState.x);
+    const float yError = state.y_mm - GetY_mm(currPlanState.y);
+    const float initialXYDist = sqrt(pow(xError, 2) + pow(yError, 2));
+
+    if( initialXYDist < closestXYDist ) {
+      closestXYDist = initialXYDist;
+      closestPointIdx = planIdx;
+
+      if(debug) {
+        cout<<"  closest\n";
+      }
+    }
+    else if( debug ) {
+      cout<<endl;
+    }
+
+    StateID currID(currPlanState);
+    ApplyAction(plan.actions_[planIdx], currID, false);
+    currPlanState = State(currID);
+  }
+  
+  // if we get here, it means we didn't find a starting point which was an exact match. Check to see if any
+  // intermediate points are exact matches. If so, return the starting point before it, otherwise just return
+  // the closest xy distance point
+  currPlanState = plan.start_;
+  for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
+
+    // the intermediate position (x,y) coordinates are all centered at 0. Instead of shifting them over each
+    // time, we just shift the state we are searching for (fewer ops). (theta doesn't matter here)
+    const State_c offsetToPlanState(state.x_mm - GetX_mm(currPlanState.x),
+                                    state.y_mm - GetY_mm(currPlanState.y),
+                                    state.theta);
+    
+    const MotionPrimitive& prim(GetRawMotionPrimitive(currPlanState.theta, plan.actions_[planIdx]));
+
+    // skip the last intermediate position, since it overlaps with the next start
+    size_t intermediatePositionsSize = prim.intermediatePositions.size();
+    for( size_t intermediateIdx = 0; intermediateIdx + 1 < intermediatePositionsSize; ++intermediateIdx ) {
+      const auto& intermediate = prim.intermediatePositions[ intermediateIdx ];
+
+      if(debug) {
+        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<offsetToPlanState;
+      }
+
+
+      // check if this intermediate state is an exact match
+      State intermediateStateRounded = State_c2State( intermediate.position );
+      if( intermediateStateRounded == discreteInputState ) {
+        if(debug) {
+          cout << " exact: " << discreteInputState << endl;
+        }
+
+        distanceToPlan = 0.0f;
+        return planIdx;
+      }
+      
+      const float xyDist = GetDistanceBetween(offsetToPlanState, intermediate.position);
+
+      if( xyDist < closestXYDist ) {
+        closestXYDist = xyDist;
+        closestPointIdx = planIdx;
+        if(debug) {
+          cout<<"  closest\n";
+        }
+      }
+      else if( debug ) {
+        cout<<endl;
+      }
+
+    }
+
+    StateID currID(currPlanState);
+    ApplyAction(plan.actions_[planIdx], currID, false);
+    currPlanState = State(currID);
+  }
+
+  distanceToPlan = closestXYDist;
+  return closestPointIdx;
 }
 
 void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const

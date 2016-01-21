@@ -68,8 +68,6 @@ namespace Cozmo {
 
     // Look through known faces and compare pose and image rectangles:
     f32 IOU_threshold = 0.5f;
-    Vec3f closestTdiff(100.f); // humanHeadSize*0.75f);
-    Radians closestAngleDiff(DEG_TO_RAD(45));
     for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); ++knownFaceIter)
     {
       
@@ -93,22 +91,21 @@ namespace Cozmo {
         foundMatch = true;
         knownFace = &knownFaceIter->second;
       }
-      else if(knownFaceIter->second.face.GetHeadPose().IsSameAs(face.GetHeadPose(),
-                                                                closestTdiff,
-                                                                closestAngleDiff,
-                                                                Tdiff, angleDiff))
+      else
       {
-        if(foundMatch) {
-          // If we had already found a match, delete the last one, because this
-          // new face matches multiple existing faces
-          assert(nullptr != knownFace);
-          RemoveFaceByID(knownFace->face.GetID());
-        }
+        auto posDiffVec = knownFaceIter->second.face.GetHeadPose().GetTranslation() - face.GetHeadPose().GetTranslation();
+        float posDiffSq = posDiffVec.LengthSq();
+        if(posDiffSq <= headCenterPointThreshold * headCenterPointThreshold) {
+          if(foundMatch) {
+            // If we had already found a match, delete the last one, because this
+            // new face matches multiple existing faces
+            assert(nullptr != knownFace);
+            RemoveFaceByID(knownFace->face.GetID());
+          }
         
-        closestTdiff = Tdiff.GetAbs().GetMax(); // max should still be less than previous closestTdiff
-        closestAngleDiff = angleDiff.getAbsoluteVal();
-        knownFace = &knownFaceIter->second;
-        foundMatch = true;
+          knownFace = &knownFaceIter->second;
+          foundMatch = true;
+        }
       }
     } // for each known face
     
@@ -199,6 +196,11 @@ namespace Cozmo {
                                                                       humanHeadSize,
                                                                       knownFace->face.GetHeadPose(),
                                                                       ::Anki::NamedColors::GREEN);
+
+      // Draw box around recognized face (with ID) now that we have the real ID set
+      VizManager::getInstance()->DrawCameraFace(knownFace->face,
+                                                knownFace->face.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
+
       
       // Send out an event about this face being observed
       using namespace ExternalInterface;

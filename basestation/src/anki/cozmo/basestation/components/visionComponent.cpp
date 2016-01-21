@@ -340,18 +340,20 @@ namespace Cozmo {
         }
         case RunMode::Asynchronous:
         {
-          Lock();
-          
-          if(!_nextImg.IsEmpty()) {
-            PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
-                             "Setting next image with t=%d, but existing next image from t=%d not yet processed.",
-                             image.GetTimestamp(), _nextImg.GetTimestamp());
+          if(!_paused) {
+            Lock();
+            
+            if(!_nextImg.IsEmpty()) {
+              PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
+                               "Setting next image with t=%d, but existing next image from t=%d not yet processed.",
+                               image.GetTimestamp(), _nextImg.GetTimestamp());
+            }
+            
+            // TODO: Avoid the copying here (shared memory?)
+            image.CopyTo(_nextImg);
+            
+            Unlock();
           }
-          
-          // TODO: Avoid the copying here (shared memory?)
-          image.CopyTo(_nextImg);
-          
-          Unlock();
           break;
         }
         default:
@@ -568,9 +570,6 @@ namespace Cozmo {
                             "Got FaceDetection from vision processing but failed to update it.");
           return lastResult;
         }
-        
-        VizManager::getInstance()->DrawCameraFace(faceDetection,
-                                                  faceDetection.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
       }
     } // if(_visionSystem != nullptr)
     return lastResult;

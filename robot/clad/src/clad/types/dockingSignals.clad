@@ -53,6 +53,11 @@ message BlockPlaced
   bool didSucceed,
 }
 
+message MovingLiftPostDock
+{
+  DockAction action
+}
+
 message RampTraverseStart
 {
   uint_32  timestamp,

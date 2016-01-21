@@ -31,11 +31,12 @@ typedef enum {
 int8_t i2spiInit(void);
 
 /** Queues a buffer to transmit over I2S
- * @param msgData a pointer to the data to be sent to the RTIP
- * @param msgLen the number of bytes of message data pointed to by msgData
+ * @param msgData A pointer to the data to be sent to the RTIP
+ * @param msgLen The number of bytes of message data pointed to by msgData.
+ *               Must be no more than DROP_TO_RTIP_MAX_VAR_PAYLOAD
  * @return true if the data was successfully queued or false if it could not be queued.
  */
-bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen);
+bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen);
 
 /** Switch the operating mode of the I2SPI interface
  * I2SPI_NORMAL is the default mode

@@ -295,6 +295,11 @@ Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTim
 
   return Result::RESULT_FAIL;
 }
+  
+void BehaviorPounceOnMotion::StopInternal(Robot& robot, double currentTime_sec)
+{
+  Cleanup(robot);
+}
 
 
 }

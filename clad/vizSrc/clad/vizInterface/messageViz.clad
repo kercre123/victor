@@ -20,6 +20,7 @@ message RobotStateMessage
   int_32 numAnimAudioFramesFree,
   uint_8 videoFrameRateHz,
   uint_8 imageProcFrameRateHz,
+  uint_8 enabledAnimTracks,
   uint_8 animTag
 }
 
@@ -60,6 +61,33 @@ message Quad
   float_32 xLowerRight,
   float_32 yLowerRight,
   float_32 zLowerRight,
+}
+
+// SimpleQuad: Axis aligned quad. Any axis can be fixed or applied sideSize, depending on convention between parts
+structure SimpleQuad
+{
+  uint_32 color,
+  float_32 sideSize,
+  float_32 center[3],
+}
+
+// SimpleQuadVectorMessageBegin: we are about to send one or several messages with quads
+message SimpleQuadVectorMessageBegin
+{
+  string identifier,
+}
+
+// SimpleQuadVectorMessage: a group of simpple quads
+message SimpleQuadVectorMessage
+{
+  string identifier,
+  SimpleQuad quads[uint_8],
+}
+
+// SimpleQuadVectorMessageBegin: we finished sending messages with quads for the given id
+message SimpleQuadVectorMessageEnd
+{
+  string identifier,
 }
 
 // VizCameraQuad
