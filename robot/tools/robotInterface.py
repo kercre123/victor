@@ -158,7 +158,7 @@ class _Dispatcher(IDataReceiver):
                             'vals':     repr(msg.trace.value),
                             'nvals':    len(msg.trace.value)
                     }
-                    sys.stderr.write("{base} {level:d} {name} ({nameId:d}): Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat ({fmdId:d}): \"{fmt}\"{linesep}\tVals: {vals}{linesep}".format(**kwds))
+                    sys.stderr.write("{base} {level:d} {name} ({nameId:d}): Number of args ({nvals:d}) doesn't match format string ({nargs:d}){linesep}\tFormat ({fmtId:d}): \"{fmt}\"{linesep}\tVals: {vals}{linesep}".format(**kwds))
                 else:
                     kwds = {'linesep':   os.linesep,
                             'base':      base,
