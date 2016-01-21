@@ -6,24 +6,52 @@ namespace Cozmo {
   namespace MinigameWidgets {
     public class ChallengeTitleWidget : MonoBehaviour, IMinigameWidget {
 
+      public delegate void HowToPlayButtonHandler();
+
+      public event HowToPlayButtonHandler HowToPlayViewOpened;
+      public event HowToPlayButtonHandler HowToPlayViewClosed;
+
+      [SerializeField]
+      private Anki.UI.AnkiButton _HowToPlayButton;
+
+      [SerializeField]
+      private HowToPlayView _HowToPlayViewPrefab;
+
       [SerializeField]
       private Cozmo.UI.IconTextLabel _ChallengeTitleLabel;
 
-      public string TitleLabelText {
-        set {
-          _ChallengeTitleLabel.SetText(value);
+      private GameObject _HowToPlayViewContentPrefab;
+
+      public void Initialize(string titleText, Sprite titleIcon, GameObject howToPlayContentPrefab) {
+        _HowToPlayViewContentPrefab = howToPlayContentPrefab;
+        _ChallengeTitleLabel.SetText(titleText);
+        _ChallengeTitleLabel.SetIcon(titleIcon);
+      }
+
+      private void Start() {
+        _HowToPlayButton.onClick.AddListener(HandleHowToPlayButtonTap);
+      }
+
+      private void HandleHowToPlayButtonTap() {
+        HowToPlayView howToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
+        howToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
+        howToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
+
+        if (HowToPlayViewOpened != null) {
+          HowToPlayViewOpened();
         }
       }
 
-      public Sprite TitleIcon {
-        set {
-          _ChallengeTitleLabel.SetIcon(value);
+      private void HandleHowToPlayViewClosed() {
+        if (HowToPlayViewClosed != null) {
+          HowToPlayViewClosed();
         }
       }
 
       #region IMinigameWidget
 
       public void DestroyWidgetImmediately() {
+        _HowToPlayButton.onClick.RemoveAllListeners();
         Destroy(gameObject);
       }
 
@@ -46,11 +74,11 @@ namespace Cozmo {
       }
 
       public void EnableInteractivity() {
-        // Nothing interactive to enable
+        _HowToPlayButton.Interactable = true;
       }
 
       public void DisableInteractivity() {
-        // Nothing interactive to disable
+        _HowToPlayButton.Interactable = false;
       }
 
       #endregion

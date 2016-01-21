@@ -27,7 +27,6 @@ public abstract class GameBase : MonoBehaviour {
     CloseMinigameImmediately();
   }
 
-  // TODO: Modify so that it passes the rewards
   public delegate void MiniGameWinHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameWin;
@@ -43,7 +42,6 @@ public abstract class GameBase : MonoBehaviour {
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
-  // TODO: Modify so that it passes the rewards
   public delegate void MiniGameLoseHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameLose;
@@ -74,6 +72,9 @@ public abstract class GameBase : MonoBehaviour {
   [SerializeField]
   protected GameStateSlide[] _GameStateSlides;
 
+  [SerializeField]
+  protected GameObject _HowToPlayDialogContentPrefab;
+
   private StatContainer _RewardedXp;
 
   private float _GameStartTime;
@@ -100,8 +101,7 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    TitleText = Localization.Get(data.ChallengeTitleLocKey);
-    TitleIcon = data.ChallengeIcon;
+    ShowTitleWidget(Localization.Get(data.ChallengeTitleLocKey), data.ChallengeIcon);
     CreateDefaultQuitButton();
   }
 
@@ -336,16 +336,18 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Title Widget
 
-  protected string TitleText {
-    set {
-      _SharedMinigameViewInstance.TitleText = value;
-    }
+  protected void ShowTitleWidget(string titleText, Sprite titleIcon) {
+    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon, _HowToPlayDialogContentPrefab);
+    _SharedMinigameViewInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
+    _SharedMinigameViewInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
   }
 
-  public Sprite TitleIcon {
-    set {
-      _SharedMinigameViewInstance.TitleIcon = value;
-    }
+  private void HandleHowToPlayViewOpened() {
+    PauseGame();
+  }
+
+  private void HandleHowToPlayViewClosed() {
+    ResumeGame();
   }
 
   #endregion

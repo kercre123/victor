@@ -14,6 +14,9 @@ namespace Cozmo {
       public event SharedMinigameViewHandler QuitMiniGameViewOpened;
       public event SharedMinigameViewHandler QuitMiniGameViewClosed;
 
+      public event SharedMinigameViewHandler HowToPlayViewOpened;
+      public event SharedMinigameViewHandler HowToPlayViewClosed;
+
       [SerializeField]
       private GameObject _QuitGameButtonPrefab;
 
@@ -52,6 +55,8 @@ namespace Cozmo {
       public CanvasGroup CurrentSlide { get { return _CurrentSlide; } }
 
       public bool _OpenAnimationStarted = false;
+
+      #region Base View
 
       protected override void CleanUp() {
         foreach (IMinigameWidget widget in _ActiveWidgets) {
@@ -94,6 +99,8 @@ namespace Cozmo {
           }
         }
       }
+
+      #endregion
 
       public void EnableInteractivity() {
         foreach (IMinigameWidget widget in _ActiveWidgets) {
@@ -161,7 +168,6 @@ namespace Cozmo {
         }
         else {
           CreateCozmoStatusWidget(maxAttempts);
-          // TODO: Play animation, if dialog had already been opened?
         }
       }
 
@@ -171,7 +177,6 @@ namespace Cozmo {
         }
         else {
           CreateCozmoStatusWidget(attemptsLeft);
-          // TODO: Play animation, if dialog had already been opened?
         }
       }
 
@@ -244,29 +249,7 @@ namespace Cozmo {
 
       #region Challenge Title Widget
 
-      public string TitleText {
-        set {
-          if (_TitleWidgetInstance != null) {
-            _TitleWidgetInstance.TitleLabelText = value;
-          }
-          else {
-            CreateTitleWidget(value, null);
-          }
-        }
-      }
-
-      public UnityEngine.Sprite TitleIcon {
-        set {
-          if (_TitleWidgetInstance != null) {
-            _TitleWidgetInstance.TitleIcon = value;
-          }
-          else {
-            CreateTitleWidget(null, value);
-          }
-        }
-      }
-
-      private void CreateTitleWidget(string titleText, Sprite titleSprite) {
+      public void CreateTitleWidget(string titleText, Sprite titleSprite, GameObject howToPlayContentsPrefab) {
         if (_TitleWidgetInstance != null) {
           return;
         }
@@ -274,15 +257,23 @@ namespace Cozmo {
         GameObject widgetObj = UIManager.CreateUIElement(_TitleWidgetPrefab.gameObject, this.transform);
         _TitleWidgetInstance = widgetObj.GetComponent<ChallengeTitleWidget>();
 
-        if (!string.IsNullOrEmpty(titleText)) {
-          _TitleWidgetInstance.TitleLabelText = titleText;
-        }
-
-        if (titleSprite != null) {
-          _TitleWidgetInstance.TitleIcon = titleSprite;
-        }
+        _TitleWidgetInstance.Initialize(titleText, titleSprite, howToPlayContentsPrefab);
+        _TitleWidgetInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
+        _TitleWidgetInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
 
         AddWidget(_TitleWidgetInstance);
+      }
+
+      private void HandleHowToPlayViewOpened() {
+        if (HowToPlayViewOpened != null) {
+          HowToPlayViewOpened();
+        }
+      }
+
+      private void HandleHowToPlayViewClosed() {
+        if (HowToPlayViewClosed != null) {
+          HowToPlayViewClosed();
+        }
       }
 
       #endregion
