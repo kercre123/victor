@@ -130,6 +130,8 @@ namespace Anki {
 	#define ANKI_ASSERT_SHOW FacePrintf("ASSERT in " __FILE__ ", line %d", __LINE__)
 #elif defined(TARGET_K02)
  #define ANKI_ASSERT_SHOW for (int i=0; i<5; ++i) Anki::Cozmo::HAL::SetLED(i, 0x7c00)
+#else
+ #define ANKI_ASSERT_SHOW
 #endif
 				
       // Anki assert sends assesrt CLAD message and then halts main exec
