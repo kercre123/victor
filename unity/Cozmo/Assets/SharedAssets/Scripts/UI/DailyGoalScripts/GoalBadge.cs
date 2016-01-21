@@ -79,9 +79,9 @@ namespace Cozmo {
       }
 
       // Hide text while collapsing, show text when expanded
-      public void Expand(bool expand) {
+      public void ShowText(bool show) {
         Sequence fadeTween = DOTween.Sequence();
-        if (expand) { 
+        if (show) { 
           fadeTween.Append(_GoalLabel.DOFade(1.0f,0.25f));
         }
         else {

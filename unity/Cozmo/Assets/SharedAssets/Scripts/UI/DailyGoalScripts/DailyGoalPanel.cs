@@ -5,50 +5,33 @@ using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 
+// Panel for generating and displaying the ProgressionStat goals for the Day.
 public class DailyGoalPanel : BaseView {
 
   private readonly int[] _DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
   private readonly List<GoalBadge> _GoalUIBadges = new List<GoalBadge>();
+
+  // Force a specific Friendship level for Goal Generation testing,
+  // must also set _UseDebug to true.
   [SerializeField]
-  private string _DebugLevel = "";
+  private int _DebugLevel = -1;
   [SerializeField]
   private bool _UseDebug = false;
+
+  // Prefab for GoalBadges
   [SerializeField]
   private GoalBadge _GoalBadgePrefab;
+
+  // Progress bar for tracking total progress for all Goals
   [SerializeField]
   private ProgressBar _TotalProgressBar;
-  [SerializeField]
-  private readonly float _ExpandWidth = 800f;
-  [SerializeField]
-  private readonly float _CollapseWidth = 400f;
+
+  // Container for Daily Goal Badges to be children of
   [SerializeField]
   private Transform _GoalContainer;
-  [SerializeField]
-  private FriendshipProgressionConfig _Config;
 
-  private bool _Expanded = true;
-  public bool Expand {
-    get {
-      return _Expanded;
-    }
-    set {
-      // Expand between half and full size
-      if (_Expanded != value) {
-        _Expanded = value;
-        for (int i = 0; i < _GoalUIBadges.Count; i++) {
-          _GoalUIBadges[i].Expand(value);
-        }
-        RectTransform trans = GetComponent<RectTransform>();
-        // TODO: DOScaleX does this wrong. Identify a different way to animate the scaling for this element.
-        if (_Expanded) {
-          trans.sizeDelta = new Vector2(_ExpandWidth, 0.0f);
-        }
-        else {
-          trans.sizeDelta = new Vector2(_CollapseWidth, 0.0f);
-        }
-      }
-    }
-  }
+  // Config file for friendship progression
+  private FriendshipProgressionConfig _Config;
 
   public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
     for (int i = 0; i < _DailyGoals.Length; i++) {
@@ -59,14 +42,18 @@ public class DailyGoalPanel : BaseView {
     return false;
   }
 
+  void Awake() {
+    _Config = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+  }
+
   // Using current friendship level and the appropriate config file,
   // generate a series of random goals for the day.
   public StatContainer GenerateDailyGoals() {
     Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
     string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
-    if (_UseDebug && _DebugLevel != "") {
-      name = _DebugLevel;
+    if (_UseDebug && _DebugLevel != -1) {
+      name = rob.GetFriendshipLevelName(_DebugLevel);
     }
     DAS.Event(this, string.Format("GoalGeneration({0})", name));
     StatBitMask possibleStats = StatBitMask.None;
@@ -124,7 +111,6 @@ public class DailyGoalPanel : BaseView {
     _DailyGoals[(int)type] += target;
     newBadge.Initialize(name, target, goal, type);
     _GoalUIBadges.Add(newBadge);
-    newBadge.Expand(_Expanded);
     newBadge.OnProgChanged += UpdateTotalProgress;
     return newBadge;
   }
@@ -143,7 +129,6 @@ public class DailyGoalPanel : BaseView {
 
   protected override void CleanUp() {
     for (int i = 0; i < _GoalUIBadges.Count; i++) {
-      //TODO: Dismiss GoalBadges through themselves
       _GoalUIBadges[i].OnProgChanged -= UpdateTotalProgress;
       Destroy(_GoalUIBadges[i].gameObject);
     }
