@@ -1571,13 +1571,19 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
     {
+      ReadAnimationDirImpl("assets/animations/");
+      ReadAnimationDirImpl("config/basestation/animations/");
+    }
+    
+    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
+    {
       if (_dataPlatform == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
       const std::string animationFolder =
-        _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animations/");
+        _dataPlatform->pathToResource(Util::Data::Scope::Resources, animationDir);
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
