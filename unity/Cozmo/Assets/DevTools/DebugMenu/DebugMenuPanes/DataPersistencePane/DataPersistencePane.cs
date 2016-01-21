@@ -19,7 +19,14 @@ namespace DataPersistence {
     private Button _StartNewSessionButton;
 
     [SerializeField]
+    private Button _WinGameButton;
+
+    [SerializeField]
+    private Button _LoseGameButton;
+
+    [SerializeField]
     private ChallengeDataList _ChallengeDataList;
+
 
     private HomeHub GetHomeHub() {
       var go = GameObject.Find("HomeHub(Clone)");
@@ -40,6 +47,8 @@ namespace DataPersistence {
       _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
       _GenerateFakeDataButton.onClick.AddListener(HandleGenerateFakeDataButtonClicked);
       _StartNewSessionButton.onClick.AddListener(StartNewSessionButtonClicked);
+      _WinGameButton.onClick.AddListener(WinGameButtonClicked);
+      _LoseGameButton.onClick.AddListener(LoseGameButtonClicked);
     }
       
     private void HandleResetSaveDataButtonClicked() {
@@ -68,7 +77,7 @@ namespace DataPersistence {
     private void GenerateFakeData(string[] challengeIds) {
       DataPersistenceManager.Instance.Data.Sessions.Clear();
 
-      var today = DateTime.UtcNow.Date;
+      var today = DataPersistenceManager.Today;
 
       var startDate = today.AddDays(-TimelineView.kTimelineHistoryLength);
 
@@ -101,6 +110,25 @@ namespace DataPersistence {
         }
       }
 
+    }
+    private void WinGameButtonClicked() {
+      var homeHub = GetHomeHub();
+      if (homeHub != null) {
+        var minigame = homeHub.MiniGameInstance;
+        if (minigame != null) {
+          minigame.RaiseMiniGameWin();
+        }
+      }
+    }
+
+    private void LoseGameButtonClicked() {
+      var homeHub = GetHomeHub();
+      if (homeHub != null) {
+        var minigame = homeHub.MiniGameInstance;
+        if (minigame != null) {
+          minigame.RaiseMiniGameLose();
+        }
+      }
     }
   }
 }

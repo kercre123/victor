@@ -215,49 +215,49 @@ public class Robot : IDisposable {
 
   private int _LastHeadTrackingObjectID;
 
-  private int[] ProgressionStats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+  private readonly StatContainer ProgressionStats = new StatContainer();
 
   public string CurrentBehaviorString { get; set; }
 
-  private U2G.DriveWheels DriveWheelsMessage;
-  private U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHereMessage;
-  private U2G.CancelAction CancelActionMessage;
-  private U2G.SetHeadAngle SetHeadAngleMessage;
-  private U2G.TrackToObject TrackToObjectMessage;
-  private U2G.FaceObject FaceObjectMessage;
-  private U2G.FacePose FacePoseMessage;
-  private U2G.PickupObject PickupObjectMessage;
-  private U2G.RollObject RollObjectMessage;
-  private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
-  private U2G.GotoPose GotoPoseMessage;
-  private U2G.GotoObject GotoObjectMessage;
-  private U2G.SetLiftHeight SetLiftHeightMessage;
-  private U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
-  private U2G.ClearAllBlocks ClearAllBlocksMessage;
-  private U2G.ClearAllObjects ClearAllObjectsMessage;
-  private U2G.VisionWhileMoving VisionWhileMovingMessage;
-  private U2G.TurnInPlace TurnInPlaceMessage;
-  private U2G.TraverseObject TraverseObjectMessage;
-  private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
-  private U2G.EnableVisionMode EnableVisionModeMessage;
-  private U2G.ExecuteBehavior ExecuteBehaviorMessage;
-  private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
-  private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
-  private U2G.PlaceRelObject PlaceRelObjectMessage;
-  private U2G.PlaceOnObject PlaceOnObjectMessage;
-  private U2G.PlayAnimation PlayAnimationMessage;
-  private U2G.PlayAnimationGroup PlayAnimationGroupMessage;
-  private U2G.SetIdleAnimation SetIdleAnimationMessage;
-  private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
-  private U2G.SetRobotVolume SetRobotVolumeMessage;
-  private U2G.AlignWithObject AlignWithObjectMessage;
-  private U2G.ProgressionMessage ProgressionStatMessage;
-  private U2G.SetFriendshipPoints FriendshipPointsMessage;
-  private U2G.SetFriendshipLevel FriendshipLevelMessage;
-  private U2G.MoodMessage MoodStatMessage;
-  private U2G.VisualizeQuad VisualizeQuadMessage;
-  private U2G.DisplayProceduralFace DisplayProceduralFaceMessage;
-  private U2G.QueueSingleAction QueueSingleAction;
+  private readonly U2G.DriveWheels DriveWheelsMessage;
+  private readonly U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHereMessage;
+  private readonly U2G.CancelAction CancelActionMessage;
+  private readonly U2G.SetHeadAngle SetHeadAngleMessage;
+  private readonly U2G.TrackToObject TrackToObjectMessage;
+  private readonly U2G.FaceObject FaceObjectMessage;
+  private readonly U2G.FacePose FacePoseMessage;
+  private readonly U2G.PickupObject PickupObjectMessage;
+  private readonly U2G.RollObject RollObjectMessage;
+  private readonly U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
+  private readonly U2G.GotoPose GotoPoseMessage;
+  private readonly U2G.GotoObject GotoObjectMessage;
+  private readonly U2G.SetLiftHeight SetLiftHeightMessage;
+  private readonly U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
+  private readonly U2G.ClearAllBlocks ClearAllBlocksMessage;
+  private readonly U2G.ClearAllObjects ClearAllObjectsMessage;
+  private readonly U2G.VisionWhileMoving VisionWhileMovingMessage;
+  private readonly U2G.TurnInPlace TurnInPlaceMessage;
+  private readonly U2G.TraverseObject TraverseObjectMessage;
+  private readonly U2G.SetBackpackLEDs SetBackpackLEDsMessage;
+  private readonly U2G.EnableVisionMode EnableVisionModeMessage;
+  private readonly U2G.ExecuteBehavior ExecuteBehaviorMessage;
+  private readonly U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
+  private readonly U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
+  private readonly U2G.PlaceRelObject PlaceRelObjectMessage;
+  private readonly U2G.PlaceOnObject PlaceOnObjectMessage;
+  private readonly U2G.PlayAnimation PlayAnimationMessage;
+  private readonly U2G.PlayAnimationGroup PlayAnimationGroupMessage;
+  private readonly U2G.SetIdleAnimation SetIdleAnimationMessage;
+  private readonly U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
+  private readonly U2G.SetRobotVolume SetRobotVolumeMessage;
+  private readonly U2G.AlignWithObject AlignWithObjectMessage;
+  private readonly U2G.ProgressionMessage ProgressionStatMessage;
+  private readonly U2G.SetFriendshipPoints FriendshipPointsMessage;
+  private readonly U2G.SetFriendshipLevel FriendshipLevelMessage;
+  private readonly U2G.MoodMessage MoodStatMessage;
+  private readonly U2G.VisualizeQuad VisualizeQuadMessage;
+  private readonly U2G.DisplayProceduralFace DisplayProceduralFaceMessage;
+  private readonly U2G.QueueSingleAction QueueSingleAction;
 
   private PathMotionProfile PathMotionProfileDefault;
 
@@ -386,7 +386,6 @@ public class Robot : IDisposable {
 
     BackpackLights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
-    ProgressionStats = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
     EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
@@ -426,8 +425,9 @@ public class Robot : IDisposable {
 
     for (int i = 0; i < _RobotCallbacks.Count; ++i) {
       if (_RobotCallbacks[i].IdTag == idTag) {
-        _RobotCallbacks[i].Invoke(success);
+        var callback = _RobotCallbacks[i];
         _RobotCallbacks.RemoveAt(i);
+        callback.Invoke(success);
         break;
       }
     }
@@ -447,10 +447,16 @@ public class Robot : IDisposable {
     ClearData();
   }
 
-  public void ResetRobotState() {
+  public bool IsLightCubeInPickupRange(LightCube lightCube) {
+    var bounds = new Bounds(
+      new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f), 
+      Vector3.one * CozmoUtil.kBlockLengthMM);
+
+    return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
+  }
+
+  public void ResetRobotState(Action onComplete) {
     DriveWheels(0.0f, 0.0f);
-    SetHeadAngle(0.0f);
-    SetLiftHeight(0.0f);
     TrackToObject(null);
     CancelAllCallbacks();
     SetBehaviorSystem(false);
@@ -463,7 +469,26 @@ public class Robot : IDisposable {
     foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
       kvp.Value.SetLEDs(Color.black);
     }
-    SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.black));
+    SetBackpackLEDs(Color.black.ToUInt());
+
+    TryResetHeadAndLift(onComplete);
+  }
+
+  public void TryResetHeadAndLift(Action onComplete) {
+    // if there is a light cube right in front of cozmo, lowering
+    // the lift will cause him to lift up. Instead, rotate 90 degrees
+    // and try lowering lift
+    foreach (var lightCube in LightCubes.Values) {
+      if (IsLightCubeInPickupRange(lightCube)) {
+        TurnInPlace(Mathf.PI * 0.5f, (s) => TryResetHeadAndLift(onComplete));
+        return;
+      }
+    }
+    SetHeadAngle(0.0f);
+    SetLiftHeight(0.0f);
+    if (onComplete != null) {
+      onComplete();
+    }
   }
 
   public void ClearData(bool initializing = false) {
@@ -497,9 +522,7 @@ public class Robot : IDisposable {
       BackpackLights[i].ClearData();
     }
 
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; ++i) {
-      ProgressionStats[i] = 0;
-    }
+    ProgressionStats.Clear();
   }
 
   public void ClearVisibleObjects() {
@@ -546,13 +569,19 @@ public class Robot : IDisposable {
     FriendshipPoints = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipPoints;
 
     FriendshipPointsMessage.newVal = FriendshipPoints;
-
     RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
     RobotEngineManager.Instance.SendMessage();
-    FriendshipLevelMessage.newVal = FriendshipLevel;
 
+    FriendshipLevelMessage.newVal = FriendshipLevel;
     RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
     RobotEngineManager.Instance.SendMessage();
+
+    // Now initialize progress stats
+    var currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
+
+    if (currentSession != null) {
+      SetProgressionStats(currentSession.Progress);
+    }
   }
 
   public void AddToFriendshipPoints(int deltaValue) {
@@ -582,13 +611,13 @@ public class Robot : IDisposable {
   private void ComputeFriendshipLevel() {
     FriendshipLevelConfig levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
     bool friendshipLevelChanged = false;
-    while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length && 
-          levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
+    while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length &&
+           levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
       FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
       FriendshipLevel++;
       friendshipLevelChanged = true;
     }
-    if(friendshipLevelChanged) {
+    if (friendshipLevelChanged) {
       FriendshipLevelMessage.newVal = FriendshipLevel;
       if (OnFriendshipLevelUp != null) {
         OnFriendshipLevelUp(FriendshipLevel);
@@ -608,7 +637,11 @@ public class Robot : IDisposable {
   #region Progression and Mood Stats
 
   public int GetProgressionStat(Anki.Cozmo.ProgressionStatType index) {
-    return ProgressionStats[(int)index];
+    return ProgressionStats[index];
+  }
+
+  public StatContainer GetProgressionStats() {
+    return ProgressionStats;
   }
 
   public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
@@ -620,7 +653,7 @@ public class Robot : IDisposable {
   }
 
   public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
-    VisualizeQuadMessage.color = CozmoPalette.ColorToUInt(Color.black);
+    VisualizeQuadMessage.color = Color.black.ToUInt();
     VisualizeQuadMessage.xLowerLeft = lowerLeft.x;
     VisualizeQuadMessage.yLowerLeft = lowerLeft.y;
     VisualizeQuadMessage.zLowerLeft = lowerLeft.z;
@@ -654,7 +687,6 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  // Only debug panels should be using set.
   // You should not be calling this from a minigame/challenge.
   public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, int value) {
     ProgressionStatMessage.robotID = ID;
@@ -664,8 +696,15 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  // You should not be calling this from a minigame/challenge.
+  public void SetProgressionStats(StatContainer stats) {
+    foreach (var key in StatContainer.sKeys) {
+      SetProgressionStat(key, stats[key]);
+    }
+  }
+
   private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
-    ProgressionStats[(int)index] = value;
+    ProgressionStats[index] = value;
   }
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
@@ -1008,14 +1047,16 @@ public class Robot : IDisposable {
     TrackToObject(null);
   }
 
-  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true,
+  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                          Robot.RobotCallback callback = null,
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     FaceObjectMessage.objectID = observedObject;
     FaceObjectMessage.robotID = ID;
     FaceObjectMessage.maxTurnAngle = float.MaxValue;
-    FaceObjectMessage.turnAngleTol = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
-    FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte(headTrackWhenDone);
+    FaceObjectMessage.panTolerance_rad = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
+    FaceObjectMessage.headTrackWhenDone = headTrackWhenDone;
+    FaceObjectMessage.maxPanSpeed_radPerSec = maxPanSpeed_radPerSec;
+    FaceObjectMessage.panAccel_radPerSec2 = panAccel_radPerSec2;
     
     DAS.Debug(this, "Face Object " + FaceObjectMessage.objectID);
 
@@ -1034,7 +1075,7 @@ public class Robot : IDisposable {
   public void FacePose(Face face) {
     FacePoseMessage.maxTurnAngle = float.MaxValue;
     FacePoseMessage.robotID = ID;
-    FacePoseMessage.turnAngleTol = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
+    FacePoseMessage.panTolerance_rad = 5 * Mathf.Deg2Rad; // 1.7 degrees is the minimum in the engine
     FacePoseMessage.world_x = face.WorldPosition.x;
     FacePoseMessage.world_y = face.WorldPosition.y;
     FacePoseMessage.world_z = face.WorldPosition.z;
@@ -1343,7 +1384,7 @@ public class Robot : IDisposable {
       SetBackbackArrowLED(ledToChange, highestIntensity);
     }
     else {
-      uint colorUint = CozmoPalette.ColorToUInt(color);
+      uint colorUint = color.ToUInt();
       SetBackpackLED((int)ledToChange, colorUint);
     }
   }
@@ -1351,12 +1392,12 @@ public class Robot : IDisposable {
   public void SetBackbackArrowLED(LEDId ledId, float intensity) {
     intensity = Mathf.Clamp(intensity, 0f, 1f);
     Color color = new Color(intensity, intensity, intensity);
-    uint colorUint = CozmoPalette.ColorToUInt(color);
+    uint colorUint = color.ToUInt();
     SetBackpackLED((int)ledId, colorUint);
   }
 
   public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionDurationMs = 0) {
-    uint colorUint = CozmoPalette.ColorToUInt(color);
+    uint colorUint = color.ToUInt();
     SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }
 
@@ -1371,7 +1412,7 @@ public class Robot : IDisposable {
                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     // Special case for arrow lights; they only accept red as a color
     if (index == (int)LEDId.LED_BACKPACK_LEFT || index == (int)LEDId.LED_BACKPACK_RIGHT) {
-      //uint whiteUint = CozmoPalette.ColorToUInt(Color.white);
+      //uint whiteUint = Color.white.ToUInt();
       //onColor = (onColor > 0) ? whiteUint : 0;
       //offColor = (offColor > 0) ? whiteUint : 0;
     }

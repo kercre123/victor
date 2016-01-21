@@ -17,8 +17,8 @@ namespace SpeedTap {
         int randColor = UnityEngine.Random.Range(0, _Colors.Length);
 
         for (int i = 0; i < lightCount; ++i) {
-          game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[randColor]);
-          game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[randColor]);
+          game.CozmoBlock.Lights[i].OnColor = _Colors[randColor].ToUInt();
+          game.PlayerBlock.Lights[i].OnColor = _Colors[randColor].ToUInt();
         }
 
         game.PlayerWinColor = _Colors[randColor];
@@ -32,8 +32,8 @@ namespace SpeedTap {
           int lightCount = UnityEngine.Random.Range(1, 5);
 
           for (int i = 0; i < lightCount; ++i) {
-            game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.red);
-            game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.red);
+            game.PlayerBlock.Lights[i].OnColor = Color.red.ToUInt();
+            game.CozmoBlock.Lights[i].OnColor = Color.red.ToUInt();
           }
         }
         // second posibility, match count but not colors
@@ -44,8 +44,8 @@ namespace SpeedTap {
           int randColorIndex2 = (randColorIndex + UnityEngine.Random.Range(1, _Colors.Length)) % _Colors.Length;
 
           for (int i = 0; i < lightCount; ++i) {
-            game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[randColorIndex]);
-            game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[randColorIndex2]);
+            game.PlayerBlock.Lights[i].OnColor = _Colors[randColorIndex].ToUInt();
+            game.CozmoBlock.Lights[i].OnColor = _Colors[randColorIndex2].ToUInt();
           }
         }
         // third posibility, match color but not count.
@@ -57,11 +57,11 @@ namespace SpeedTap {
           int lightCountCozmo = 1 + ((lightCountPlayer + UnityEngine.Random.Range(0, 3)) % 4);
 
           for (int i = 0; i < lightCountPlayer; ++i) {
-            game.PlayerBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[colorIndex]);
+            game.PlayerBlock.Lights[i].OnColor = _Colors[colorIndex].ToUInt();
           }
 
           for (int i = 0; i < lightCountCozmo; ++i) {
-            game.CozmoBlock.Lights[i].OnColor = CozmoPalette.ColorToUInt(_Colors[colorIndex]);
+            game.CozmoBlock.Lights[i].OnColor = _Colors[colorIndex].ToUInt();
           }
         }
       }

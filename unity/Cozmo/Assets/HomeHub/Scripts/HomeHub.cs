@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
+using Cozmo.Util;
 
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
@@ -20,6 +21,12 @@ namespace Cozmo.HomeHub {
     private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
 
     private GameBase _MiniGameInstance;
+
+    public GameBase MiniGameInstance { 
+      get {        
+        return _MiniGameInstance;
+      }
+    }
 
     private CompletedChallengeData _CurrentChallengePlaying;
 
@@ -99,14 +106,17 @@ namespace Cozmo.HomeHub {
 
     private void HandleMiniGameLose(StatContainer rewards) {
       // Reset the current challenge
-      _CurrentChallengePlaying = null;
+      if (_CurrentChallengePlaying != null) {
+        CompleteChallenge(_CurrentChallengePlaying, false, rewards);
+        _CurrentChallengePlaying = null;
+      }
       ShowTimelineDialog();
     }
 
     private void HandleMiniGameWin(StatContainer rewards) {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
-        CompleteChallenge(_CurrentChallengePlaying, rewards);
+        CompleteChallenge(_CurrentChallengePlaying, true, rewards);
         _CurrentChallengePlaying = null;
       }
       ShowTimelineDialog();
@@ -202,9 +212,9 @@ namespace Cozmo.HomeHub {
       return challengeState;
     }
 
-    private void CompleteChallenge(CompletedChallengeData completedChallenge, StatContainer rewards) { 
+    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won, StatContainer rewards) { 
       // If the completed challenge is not already complete
-      if (!DataPersistenceManager.Instance.Data.CompletedChallengeIds.Contains(completedChallenge.ChallengeId)) {
+      if (won && !DataPersistenceManager.Instance.Data.CompletedChallengeIds.Contains(completedChallenge.ChallengeId)) {
         // Add the current challenge to the completed list
         DataPersistenceManager.Instance.Data.CompletedChallengeIds.Add(completedChallenge.ChallengeId);
         _ChallengeStatesById[completedChallenge.ChallengeId].currentState = ChallengeState.FRESHLY_COMPLETED;
@@ -223,12 +233,20 @@ namespace Cozmo.HomeHub {
         }
       }
 
+      completedChallenge.Won = won;
       completedChallenge.RecievedStats.Set(rewards);
       completedChallenge.EndTime = System.DateTime.UtcNow;
 
-      var session = DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 1];
-      session.CompletedChallenges.Add(completedChallenge);
-      session.Progress.Add(rewards);
+      // the last session is not necessarily valid as the 'CurrentSession', as its possible
+      // the day rolled over while we were playing the challenge.
+      var session = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+      if (session != null) {
+        session.CompletedChallenges.Add(completedChallenge);
+        session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
+      }
+      else {
+        DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
+      }
 
       DataPersistenceManager.Instance.Save();
     }
@@ -247,7 +265,7 @@ namespace Cozmo.HomeHub {
 
         CompleteChallenge(new CompletedChallengeData() {
           ChallengeId = completedChallengeId 
-        }, new StatContainer());
+        }, true, new StatContainer());
 
         // Force refresh of the dialog
         DeregisterDialogEvents();

@@ -18,7 +18,7 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _IsTurning = true;
-      _CurrentRobot.FaceObject(_TargetCube, false, HandleTurnFinished);
+      _CurrentRobot.FaceObject(_TargetCube, false, 1000, 1000, HandleTurnFinished);
     }
 
     public override void Exit() {

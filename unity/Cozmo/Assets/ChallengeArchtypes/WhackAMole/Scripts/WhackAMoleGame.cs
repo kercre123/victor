@@ -187,8 +187,8 @@ namespace WhackAMole {
       }
       CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffPeriodMs = (uint)kMinFlashFreq;
       CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnPeriodMs = 0;
-      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnColor = CozmoPalette.ColorToUInt(toSet);
-      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffColor = CozmoPalette.ColorToUInt(_InActiveColor);
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OnColor = toSet.ToUInt();
+      CurrentRobot.LightCubes[KvP.Key].Lights[KvP.Value].OffColor = _InActiveColor.ToUInt();
       currButt.image.color = toSet;
       if (MoleStateChanged != null) {
         MoleStateChanged.Invoke(CubeState);

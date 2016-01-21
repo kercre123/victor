@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using Cozmo.MinigameWidgets;
 using DG.Tweening;
 using Anki.Cozmo;
+using System.Linq;
+using Cozmo.Util;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -74,9 +76,10 @@ public abstract class GameBase : MonoBehaviour {
 
   private StatContainer _RewardedXp;
 
-  private delegate int XpCalculator();
+  private float _GameStartTime;
 
   public void InitializeMinigame(ChallengeData challengeData) {
+    _GameStartTime = Time.time;
     _StateMachine.SetGameRef(this);
     _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
@@ -102,25 +105,41 @@ public abstract class GameBase : MonoBehaviour {
     CreateDefaultQuitButton();
   }
 
-  // INGO TODO: For now just return a random value until actual rules are thought up.
   protected virtual int CalculateTimeStatRewards() {
-    return Random.Range(0, 4); // 4 is exclusive
+    return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f) + 1;
   }
 
-  // INGO TODO: For now just return a random value until actual rules are thought up.
   protected virtual int CalculateNoveltyStatRewards() {
-    return Random.Range(0, 4); // 4 is exclusive
+    const int maxPoints = 5;
+
+    // sessions are in chronological order, completed challenges are as well.
+    // using Reversed gets them in reverse chronological order
+    var completedChallenges = 
+      DataPersistence.DataPersistenceManager.Instance.Data.Sessions
+          .Reversed().SelectMany(x => x.CompletedChallenges.Reversed());
+
+    int noveltyPoints = 0;
+    bool found = false;
+    foreach(var challenge in completedChallenges) {
+      if (challenge.ChallengeId == this._ChallengeData.ChallengeID || noveltyPoints == maxPoints) {
+        found = true;
+        break;
+      }
+      noveltyPoints++;
+    }
+    return found ? noveltyPoints : maxPoints;
   }
 
-  // INGO TODO: For now just return a random value until actual rules are thought up.
+  // should be override for each mini game that wants to grant excitement rewards.
   protected virtual int CalculateExcitementStatRewards() {
-    return Random.Range(0, 4); // 4 is exclusive
+    return 0;
   }
 
   public void OnDestroy() {
     if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState();
-      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(AnimationName.kIdleBrickout);
+      CurrentRobot.ResetRobotState(() => {
+        RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(AnimationName.kIdleBrickout);
+      });
     }
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
@@ -163,6 +182,19 @@ public abstract class GameBase : MonoBehaviour {
     Destroy(gameObject);
   }
 
+  private int ComputeXpForStat(Anki.Cozmo.ProgressionStatType statType) {
+    switch (statType) {
+    case Anki.Cozmo.ProgressionStatType.Time:
+      return CalculateTimeStatRewards();
+    case Anki.Cozmo.ProgressionStatType.Novelty:
+      return CalculateNoveltyStatRewards();
+    case Anki.Cozmo.ProgressionStatType.Excitement:
+      return CalculateExcitementStatRewards();
+    default: 
+      return 0;
+    }
+  }
+
   private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
     // Open confirmation dialog instead
     _ChallengeEndViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
@@ -173,20 +205,15 @@ public abstract class GameBase : MonoBehaviour {
 
     _RewardedXp = new StatContainer();
 
-    Dictionary<ProgressionStatType, XpCalculator> rewardCalculators = new Dictionary<ProgressionStatType, XpCalculator>();
-    rewardCalculators.Add(ProgressionStatType.Time, CalculateTimeStatRewards);
-    rewardCalculators.Add(ProgressionStatType.Novelty, CalculateNoveltyStatRewards);
-    rewardCalculators.Add(ProgressionStatType.Excitement, CalculateExcitementStatRewards);
-
-    foreach (var kvp in rewardCalculators) {
+    foreach (var statType in StatContainer.sKeys) {
       // TODO: Check that this is a goal xp
-      int grantedXp = kvp.Value();
+      int grantedXp = ComputeXpForStat(statType);
       if (grantedXp != 0) {
-        _RewardedXp[kvp.Key] = grantedXp;
-        _ChallengeEndViewInstance.AddReward(kvp.Key, grantedXp);
+        _RewardedXp[statType] = grantedXp;
+        _ChallengeEndViewInstance.AddReward(statType, grantedXp);
 
         // Grant right away even if there are animations in the daily goal ui
-        CurrentRobot.AddToProgressionStat(kvp.Key, grantedXp);
+        CurrentRobot.AddToProgressionStat(statType, grantedXp);
       }
     }
   }

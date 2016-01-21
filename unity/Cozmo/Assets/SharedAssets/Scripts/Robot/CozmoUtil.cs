@@ -21,4 +21,6 @@ public static class CozmoUtil {
   public const float kHeadAngleRequestTime = 3f;
   public const float kCarriedObjectHeight = 75f;
   public const float kMaxVoltage = 5f;
+  public const float kOriginToLowLiftDDistMM = 28f;
+
 }

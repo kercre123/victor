@@ -28,6 +28,8 @@ namespace CubeSlap {
     private float _BaseSlapChance;
     private int _MaxFakeouts;
 
+    private int _SlapCount;
+
     private LightCube _CurrentTarget = null;
 
     [SerializeField]
@@ -190,6 +192,10 @@ namespace CubeSlap {
 
     public void ResetSlapChance() {
       _CurrentSlapChance = _BaseSlapChance;
+    }
+
+    protected override int CalculateExcitementStatRewards() {
+      return (MaxAttempts - AttemptsLeft);
     }
  
   }
