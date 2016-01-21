@@ -3,7 +3,6 @@
 #include "anki/cozmo/robot/logging.h"
 #include "radians.h"
 #include "trig_fast.h"
-#include <assert.h>
 #include <math.h>
 #include <float.h>
 #include <string.h>
@@ -94,7 +93,7 @@ namespace Anki
           return 0;
         default:
           AnkiError( 6, "Path", 46, " (Path::GetLength): Undefined segment %d\n", 1, type_);
-          assert(false);
+          AnkiAssert(false, 275);
       }
       return 0;
     }
@@ -118,7 +117,7 @@ namespace Anki
         break;
       default:
         AnkiError( 6, "Path", 47, " (OffsetStart): Undefined segment %d\n", 1, type_);
-        assert(false);
+        AnkiAssert(false, 275);
       }
     }
 
@@ -139,7 +138,7 @@ namespace Anki
           break;
         default:
           AnkiError( 6, "Path", 48, " (GetStartPoint): Undefined segment %d\n", 1, type_);
-          assert(false);
+          AnkiAssert(false, 275);
       }
     }
 
@@ -163,7 +162,7 @@ namespace Anki
           break;
         default:
           AnkiError( 6, "Path", 49, " (GetEndPose): Undefined segment %d\n", 1, type_);
-          assert(false);
+          AnkiAssert(false, 275);
       }
     }
 
@@ -239,7 +238,7 @@ namespace Anki
           res = GetDistToPointTurnSegment(x,y,angle,shortestDistanceToPath,radDiff);
           break;
         default:
-          assert(false);
+          AnkiAssert(false, 275);
       }
 
       return res;
@@ -604,7 +603,7 @@ namespace Anki
     Path& Path::operator=(const Path& rhs)
     {
       capacity_ = MAX_NUM_PATH_SEGMENTS;
-      assert(capacity_ == rhs.capacity_);
+      AnkiAssert(capacity_ == rhs.capacity_, 276);
 
       numPathSegments_ = rhs.numPathSegments_;
       memcpy(path_, rhs.path_, numPathSegments_*sizeof(PathSegment));
@@ -613,7 +612,7 @@ namespace Anki
 
     void Path::Clear()
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       numPathSegments_ = 0;
     }
@@ -621,7 +620,7 @@ namespace Anki
 
     void Path::PrintPath() const
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       for(u8 i = 0; i<numPathSegments_; ++i) {
         PrintSegment(i);
@@ -630,7 +629,7 @@ namespace Anki
 
     void Path::PrintSegment(u8 segment) const
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       if (segment < numPathSegments_) {
         AnkiInfo( 6, "Path", 71, "Path segment %d - ", 1, segment);
@@ -670,7 +669,7 @@ namespace Anki
                         DubinsPathType pathType, PathSegment path[], f32 &path_length)
     {
 
-      assert(pathType != NUM_DUBINS_PATHS);
+      AnkiAssert(pathType != NUM_DUBINS_PATHS, 278);
 
       // Compute LSL, LSR, RSR, RSL paths
       // http://gieseanw.wordpress.com/2012/10/21/a-comprehensive-step-by-step-tutorial-to-computing-dubins-paths/
@@ -912,7 +911,7 @@ namespace Anki
             }
             default:
               AnkiError( 6, "Path", 76, ": Invalid path segment type in Dubins path. Should not be possible!\n", 0);
-              assert(0);
+              AnkiAssert(0, 279);
               break;
           }
 
@@ -938,7 +937,7 @@ namespace Anki
 
     bool Path::PopFront(const u8 numSegments)
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       if (numSegments <= numPathSegments_) {
         numPathSegments_ -= numSegments;
@@ -958,7 +957,7 @@ namespace Anki
 
     bool Path::PopBack(const u8 numSegments)
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       if (numSegments <= numPathSegments_) {
         numPathSegments_ -= numSegments;
@@ -979,7 +978,7 @@ namespace Anki
     // at transition points.
     bool Path::CheckSegmentContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       // If checking continuity on non-existent piece
       if (pathSegmentIdx >= numPathSegments_)
@@ -1004,7 +1003,7 @@ namespace Anki
 
     bool Path::CheckContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       // Check entire path?
       if (pathSegmentIdx < 0) {
@@ -1026,7 +1025,7 @@ namespace Anki
     bool Path::AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,
                           f32 targetSpeed, f32 accel, f32 decel)
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         AnkiError( 6, "Path", 82, " (AppendLine): Exceeded path size\n", 0);
@@ -1049,7 +1048,7 @@ namespace Anki
 
     void Path::AddArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                       f32 targetSpeed, f32 accel, f32 decel) {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       if (FLT_NEAR(sweepRad,0)) {
         AnkiError( 6, "Path", 84, ": sweepRad is zero\n", 0);
@@ -1070,7 +1069,7 @@ namespace Anki
     bool Path::AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                          f32 targetSpeed, f32 accel, f32 decel)
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         AnkiError( 6, "Path", 86, " (AppendArc): Exceeded path size\n", 0);
@@ -1145,7 +1144,7 @@ namespace Anki
                                f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                bool useShortestDir)
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         AnkiError( 6, "Path", 87, " (AppendPointTurn): Exceeded path size\n", 0);
@@ -1163,7 +1162,7 @@ namespace Anki
 
     bool Path::AppendSegment(const PathSegment& segment)
     {
-      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+      AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         AnkiError( 6, "Path", 88, " (AppendSegment): Exceeded path size\n", 0);

@@ -123,10 +123,11 @@ namespace Anki {
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
+      // Anki assert sends assesrt CLAD message and then halts main exec
       #define AnkiAssert(expression, fmtId) \
         if (!(expression)) { \
           Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ASSERT, 0, fmtId, 1, __LINE__); \
-          assert(false); \
+          while(true); \
         }
 #else
       #define AnkiAssert(...)
