@@ -39,7 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c81116d335d443d6b7a8f4588a50355, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _HowToPlayPrefabs:
+  _GameStateSlides:
   - slideName: HowToPlay
     slidePrefab: {fileID: 22534598, guid: 196ed5daf2b56409f8c3903baf652a58, type: 2}
   - slideName: ScoreCard
@@ -64,6 +64,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _ValidCodeColors.Array.size
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GameStateSlides.Array.size
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _ValidCodeColors.Array.data[0].a
@@ -189,6 +193,24 @@ Prefab:
       propertyPath: NotCorrectColor.r
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GameStateSlides.Array.data[0].slideName
+      value: HowToPlay
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GameStateSlides.Array.data[1].slideName
+      value: ScoreCard
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GameStateSlides.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22534598, guid: 196ed5daf2b56409f8c3903baf652a58,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _GameStateSlides.Array.data[1].slidePrefab
+      value: 
+      objectReference: {fileID: 22572456, guid: 7343f6c8119a142dd8e9e64b2402a13d,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 137732}

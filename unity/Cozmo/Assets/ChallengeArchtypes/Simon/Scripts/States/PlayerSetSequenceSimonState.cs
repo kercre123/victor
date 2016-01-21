@@ -23,7 +23,7 @@ namespace Simon {
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _TargetSequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Human);
 
-      GameObject sequenceDisplay = _GameInstance.ShowHowToPlaySlide("CreatePattern");
+      GameObject sequenceDisplay = _GameInstance.ShowGameStateSlide("CreatePattern");
       _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
       _SequenceDisplay.SetSequenceText(0, _TargetSequenceLength);
 

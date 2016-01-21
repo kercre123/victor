@@ -129,14 +129,14 @@ namespace CubeSlap {
       // If the animation completes and the cube is beneath Cozmo,
       // Cozmo has won.
       if (_CliffFlagTrown) {
-        ShowHowToPlaySlide(kCozmoWinPounce);
+        ShowGameStateSlide(kCozmoWinPounce);
         OnFailure();
         return;
       }
       else {
         // If the animation completes Cozmo is not on top of the Cube,
         // The player has won this round
-        ShowHowToPlaySlide(kPlayerWin);
+        ShowGameStateSlide(kPlayerWin);
         OnSuccess();
       }
     }

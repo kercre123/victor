@@ -72,7 +72,7 @@ public abstract class GameBase : MonoBehaviour {
   protected StateMachine _StateMachine = new StateMachine();
 
   [SerializeField]
-  protected HowToPlaySlide[] _HowToPlayPrefabs;
+  protected GameStateSlide[] _GameStateSlides;
 
   private StatContainer _RewardedXp;
 
@@ -120,7 +120,7 @@ public abstract class GameBase : MonoBehaviour {
 
     int noveltyPoints = 0;
     bool found = false;
-    foreach(var challenge in completedChallenges) {
+    foreach (var challenge in completedChallenges) {
       if (challenge.ChallengeId == this._ChallengeData.ChallengeID || noveltyPoints == maxPoints) {
         found = true;
         break;
@@ -353,7 +353,7 @@ public abstract class GameBase : MonoBehaviour {
   #region How To Play Slides
 
   public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
-    GameObject slideObject = _SharedMinigameViewInstance.ShowHowToPlaySlide(UIPrefabHolder.Instance.InitialCubesSlide);
+    GameObject slideObject = _SharedMinigameViewInstance.ShowGameStateSlide(UIPrefabHolder.Instance.InitialCubesSlide);
     ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
     cubeSlide.Initialize(numCubesRequired);
     return cubeSlide;
@@ -362,11 +362,11 @@ public abstract class GameBase : MonoBehaviour {
   /// <summary>
   /// Returns an instance of the slide created. Null if the creation failed.
   /// </summary>]
-  public GameObject ShowHowToPlaySlide(string slideName) {
+  public GameObject ShowGameStateSlide(string slideName) {
     // Search through the array for a slide of the same name
     GameObject slideObject = null;
-    HowToPlaySlide foundSlideData = null;
-    foreach (var slide in _HowToPlayPrefabs) {
+    GameStateSlide foundSlideData = null;
+    foreach (var slide in _GameStateSlides) {
       if (slide != null && slide.slideName == slideName) {
         foundSlideData = slide;
         break;
@@ -380,7 +380,7 @@ public abstract class GameBase : MonoBehaviour {
     // If found, show that slide.
     if (foundSlideData != null) {
       if (foundSlideData.slidePrefab != null) {
-        slideObject = _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlideData);
+        slideObject = _SharedMinigameViewInstance.ShowGameStateSlide(foundSlideData);
       }
       else {
         DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
@@ -395,8 +395,8 @@ public abstract class GameBase : MonoBehaviour {
     return slideObject;
   }
 
-  public void HideHowToPlaySlide() {
-    _SharedMinigameViewInstance.HideHowToPlaySlide();
+  public void HideGameStateSlide() {
+    _SharedMinigameViewInstance.HideGameStateSlide();
   }
 
   #endregion
@@ -431,7 +431,7 @@ public abstract class GameBase : MonoBehaviour {
 }
 
 [System.Serializable]
-public class HowToPlaySlide {
+public class GameStateSlide {
   public string slideName;
   public CanvasGroup slidePrefab;
 }

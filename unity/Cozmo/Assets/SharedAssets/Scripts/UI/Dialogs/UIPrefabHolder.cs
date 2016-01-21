@@ -59,9 +59,9 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private HowToPlaySlide _ShowCozmoCubeSlide;
+      private GameStateSlide _ShowCozmoCubeSlide;
 
-      public HowToPlaySlide InitialCubesSlide {
+      public GameStateSlide InitialCubesSlide {
         get { return _ShowCozmoCubeSlide; }
       }
     }

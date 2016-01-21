@@ -289,20 +289,33 @@ namespace Cozmo {
 
       #region How To Play Slides
 
-      public GameObject ShowHowToPlaySlide(HowToPlaySlide slideData) {
-        if (slideData.slideName == _CurrentSlideName) {
+      public GameObject ShowGameStateSlide(GameObject slidePrefab) {
+        return ShowGameStateSlide(slidePrefab.name, slidePrefab);
+      }
+
+      public GameObject ShowGameStateSlide(GameStateSlide slideData) {
+        return ShowGameStateSlide(slideData.slideName, slideData.slidePrefab.gameObject);
+      }
+
+      private GameObject ShowGameStateSlide(string slideName, GameObject slidePrefab) {
+        if (slideName == _CurrentSlideName) {
           return _CurrentSlide.gameObject;
         }
 
-        CanvasGroup slidePrefab = slideData.slidePrefab;
         // If a slide already exists, play a transition out tween on it
-        HideHowToPlaySlide();
+        HideGameStateSlide();
+
+        _CurrentSlideName = slideName;
 
         // Create the new slide underneath the container
-        GameObject newSlideObj = UIManager.CreateUIElement(slidePrefab.gameObject, _HowToSlideContainer);
+        GameObject newSlideObj = UIManager.CreateUIElement(slidePrefab, _HowToSlideContainer);
         _CurrentSlide = newSlideObj.GetComponent<CanvasGroup>();
+        if (_CurrentSlide == null) {
+          _CurrentSlide = newSlideObj.AddComponent<CanvasGroup>();
+          _CurrentSlide.interactable = true;
+          _CurrentSlide.blocksRaycasts = true;
+        }
         _CurrentSlide.alpha = 0;
-        _CurrentSlideName = slideData.slideName;
 
         // Play a transition in tween on it
         _SlideInTween = DOTween.Sequence();
@@ -314,8 +327,7 @@ namespace Cozmo {
         return newSlideObj;
       }
 
-
-      public void HideHowToPlaySlide() {
+      public void HideGameStateSlide() {
         if (_CurrentSlide != null) {
           // Set the instance to transition out slot
           _TransitionOutSlide = _CurrentSlide;
