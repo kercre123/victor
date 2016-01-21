@@ -39,6 +39,18 @@ namespace Cozmo {
                                                         {
                                                           ClearAllFaces();
                                                         }));
+    
+    // SetOwnerFace
+    _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetOwnerFace,
+                                                        [this](const EventType& event)
+                                                        {
+                                                          const s32 ownerID = event.GetData().Get_SetOwnerFace().ownerID;
+                                                          if(ownerID < 0) {
+                                                            SetOwnerID(Vision::TrackedFace::UnknownFace);
+                                                          } else {
+                                                            SetOwnerID(ownerID);
+                                                          }
+                                                        }));
   }
   
   void FaceWorld::RemoveFace(KnownFaceIter& knownFaceIter)
@@ -187,6 +199,17 @@ namespace Cozmo {
     
     if(knownFace->numTimesObserved >= MinTimesToSeeFace)
     {
+      // TEST
+      const s32 NumObservationsToSetOwner = 10;
+      if(Vision::TrackedFace::UnknownFace == _ownerID &&
+         knownFace->numTimesObserved > NumObservationsToSetOwner)
+      {
+        SetOwnerID(knownFace->face.GetID());
+        PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace.OwnerSet",
+                         "Setting owner to ID=%llu after %d observations",
+                         _ownerID, NumObservationsToSetOwner);
+      }
+      
 #     if !USE_POSE_FOR_ID
       // Remove any known faces whose poses overlap with this observed face
       for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); /* in loop */)
@@ -220,14 +243,15 @@ namespace Cozmo {
       }
 
       // Draw 3D face
+      const ColorRGBA& drawColor = (knownFace->face.GetID() == _ownerID ?
+                                    NamedColors::BLUE : NamedColors::GREEN);
       knownFace->vizHandle = VizManager::getInstance()->DrawHumanHead(1+static_cast<u32>(knownFace->face.GetID()),
                                                                       humanHeadSize,
                                                                       knownFace->face.GetHeadPose(),
-                                                                      ::Anki::NamedColors::GREEN);
+                                                                      drawColor);
 
       // Draw box around recognized face (with ID) now that we have the real ID set
-      VizManager::getInstance()->DrawCameraFace(knownFace->face,
-                                                knownFace->face.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
+      VizManager::getInstance()->DrawCameraFace(knownFace->face, drawColor);
 
       
       // Send out an event about this face being observed

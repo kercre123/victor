@@ -33,6 +33,9 @@ namespace Cozmo {
     // Actual face IDs returned in faceIDs
     std::vector<Vision::TrackedFace::ID_t> GetKnownFaceIDs() const;
     
+    Vision::TrackedFace::ID_t GetOwnerID() const                            { return _ownerID; }
+    void                      SetOwnerID(Vision::TrackedFace::ID_t ownerID) { _ownerID = ownerID; }
+    
     // Returns number of known faces observed since seenSinceTime_ms
     std::map<TimeStamp_t, Vision::TrackedFace::ID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
 
@@ -45,6 +48,9 @@ namespace Cozmo {
   private:
     
     Robot& _robot;
+    
+    Vision::TrackedFace::ID_t  _ownerID = Vision::TrackedFace::UnknownFace;
+    
     struct KnownFace {
       Vision::TrackedFace      face;
       VizManager::Handle_t     vizHandle;
