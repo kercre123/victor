@@ -32,12 +32,11 @@ public class Robot : IDisposable {
       _LastOffPeriodMs = OffPeriodMs;
       _LastTransitionOnPeriodMs = TransitionOnPeriodMs;
       _LastTransitionOffPeriodMs = TransitionOffPeriodMs;
-      _Initialized = true;
     }
 
     public bool Changed {
       get {
-        return !_Initialized || _LastOnColor != OnColor || _LastOffColor != OffColor || _LastOnPeriodMs != OnPeriodMs || _LastOffPeriodMs != OffPeriodMs ||
+        return _LastOnColor != OnColor || _LastOffColor != OffColor || _LastOnPeriodMs != OnPeriodMs || _LastOffPeriodMs != OffPeriodMs ||
         _LastTransitionOnPeriodMs != TransitionOnPeriodMs || _LastTransitionOffPeriodMs != TransitionOffPeriodMs;
       }
     }
@@ -63,7 +62,6 @@ public class Robot : IDisposable {
     public static float MessageDelay = 0f;
 
     public const uint FOREVER = 2147483647;
-    private bool _Initialized = false;
   }
 
   public delegate void RobotCallback(bool success);
