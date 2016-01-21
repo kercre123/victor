@@ -818,8 +818,9 @@ void VizControllerImpl::DrawBehaviorDisplay()
     
     behaviorDisp->setColor(0xffffff);
     float xValF = 0.0f;
-    
-    for (size_t j=0; j < maxBufferValues; ++j)
+
+    size_t bufferSize = std::min( maxBufferValues, _behaviorEventBuffer.size());
+    for (size_t j=0; j < bufferSize; ++j)
     {
       const std::vector<std::string>& eventsThisTick = _behaviorEventBuffer[j];
       

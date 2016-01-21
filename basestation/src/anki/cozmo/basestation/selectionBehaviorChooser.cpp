@@ -83,6 +83,11 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
       return;
     }
   }
+
+  if( selectedBehavior != nullptr ) {
+    PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehavior.SelectBehavior",
+                     "selecting behavior '%s'", EnumToString(type));
+  }
   
   _selectedBehavior = selectedBehavior;
 }

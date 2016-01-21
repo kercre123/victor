@@ -2091,6 +2091,9 @@ namespace Anki {
         _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
         return ActionResult::FAILURE_ABORT;
       }
+
+      // select the object so it shows up properly in viz
+      robot.GetBlockWorld().SelectObject(_dockObjectID);
       
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
@@ -2113,6 +2116,7 @@ namespace Anki {
       //float closestDistSq = std::numeric_limits<float>::max();
       Point2f closestPoint(std::numeric_limits<float>::max());
       size_t closestIndex = preActionPoses.size();
+      float closestDistSq = std::numeric_limits<float>::max();
       
       for(size_t index=0; index < preActionPoses.size(); ++index) {
         Pose3d preActionPose;
@@ -2123,15 +2127,21 @@ namespace Anki {
         
         const Point2f preActionXY(preActionPose.GetTranslation().x(),
                                   preActionPose.GetTranslation().y());
-        //const float distSq = (currentXY - preActionXY).LengthSq();
-        const Point2f dist = (currentXY - preActionXY).Abs();
-        if(dist < closestPoint) {
-          //closestDistSq = distSq;
-          closestPoint = dist;
+        const Point2f dist = (currentXY - preActionXY);
+        const float distSq = dist.LengthSq();
+        if(distSq < closestDistSq) {
+          closestPoint = dist.GetAbs();
           closestIndex  = index;
+          closestDistSq = distSq;
         }
       }
-        
+
+      PRINT_NAMED_INFO("IDockAction.Init.ClosestPoint",
+                       "Closest point (%f, %f) robot (%f, %f) dist = %f",
+                       closestPoint.x(), closestPoint.y(),
+                       currentXY.x(), currentXY.y(),
+                       closestPoint.Length());      
+      
       //const f32 closestDist = sqrtf(closestDistSq);
       
       
