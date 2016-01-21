@@ -274,15 +274,6 @@ namespace Cozmo {
     return RESULT_OK;
   } // Update()
   
-  void FaceWorld::RemoveFace(KnownFaceIter& faceIter)
-  {
-    using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceIter->second.face.GetID(), _robot.GetID())));
-    
-    VizManager::getInstance()->EraseVizObject(faceIter->second.vizHandle);
-    faceIter = _knownFaces.erase(faceIter);
-  }
-  
   const Vision::TrackedFace* FaceWorld::GetFace(Vision::TrackedFace::ID_t faceID) const
   {
     auto faceIter = _knownFaces.find(faceID);
