@@ -83,8 +83,7 @@ namespace WhackAMole {
     }
 
     public void SetUpCubes() {
-      InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WhackAMoleIdle(), _NumCubesRequired, InitialCubesDone);
+      InitialCubesState initCubeState = new InitialCubesState(new WhackAMoleIdle(), _NumCubesRequired, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 

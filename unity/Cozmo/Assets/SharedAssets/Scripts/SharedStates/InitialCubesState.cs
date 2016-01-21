@@ -14,7 +14,7 @@ public class InitialCubesState : State {
 
   CubeStateDone _CubeStateDone = null;
 
-  public void InitialCubeRequirements(State nextState, int cubesRequired, CubeStateDone cubeStateDone = null) {
+  public InitialCubesState(State nextState, int cubesRequired, CubeStateDone cubeStateDone = null) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
     _CubeStateDone = cubeStateDone;
@@ -74,7 +74,7 @@ public class InitialCubesState : State {
   }
 
   private void HandleContinueButtonClicked() {
-    _Game.HideContinueButtonShelf();
-    _StateMachine.SetNextState(_NextState);
+    // TODO: Check if the game has been run before; if so skip the HowToPlayState
+    _StateMachine.SetNextState(new HowToPlayState(_NextState));
   }
 }

@@ -32,7 +32,7 @@ namespace Cozmo {
         _HowToPlayButton.onClick.AddListener(HandleHowToPlayButtonTap);
       }
 
-      private void HandleHowToPlayButtonTap() {
+      public void OpenHowToPlayDialog() {
         HowToPlayView howToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
         howToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
         howToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
@@ -40,6 +40,10 @@ namespace Cozmo {
         if (HowToPlayViewOpened != null) {
           HowToPlayViewOpened();
         }
+      }
+
+      private void HandleHowToPlayButtonTap() {
+        OpenHowToPlayDialog();
       }
 
       private void HandleHowToPlayViewClosed() {

@@ -119,8 +119,7 @@ namespace SpeedTap {
 
     // Use this for initialization
     protected void InitializeMinigameObjects(int cubesRequired) { 
-      InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), cubesRequired, InitialCubesDone);
+      InitialCubesState initCubeState = new InitialCubesState(new SpeedTapWaitForCubePlace(), cubesRequired, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
