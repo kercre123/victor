@@ -365,7 +365,7 @@ message ClearAllBlocks {
 }
 
 // ClearAllObjects
-//   Clears all objects the robot knows about (blocks, ramps, mats, etc)
+//   Clears all objects the robot knows about (blocks, faces, ramps, mats, etc)
 message ClearAllObjects {
     uint_8 robotID
 }

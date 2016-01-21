@@ -24,7 +24,38 @@ namespace Cozmo {
   FaceWorld::FaceWorld(Robot& robot)
   : _robot(robot)
   {
+    if(robot.HasExternalInterface()) {
+      SetupEventHandlers(*robot.GetExternalInterface());
+    }
+  }
+  
+  void FaceWorld::SetupEventHandlers(IExternalInterface& externalInterface)
+  {
+    using EventType = AnkiEvent<ExternalInterface::MessageGameToEngine>;
     
+    // ClearAllObjects
+    _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllObjects,
+                                                        [this] (const EventType& event)
+                                                        {
+                                                          ClearAllFaces();
+                                                        }));
+  }
+  
+  void FaceWorld::RemoveFace(KnownFaceIter& knownFaceIter)
+  {
+    using namespace ExternalInterface;
+    _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(knownFaceIter->first, _robot.GetID())));
+    VizManager::getInstance()->EraseVizObject(knownFaceIter->second.vizHandle);
+    _knownFaces.erase(knownFaceIter);
+  }
+  
+  void FaceWorld::ClearAllFaces()
+  {
+    for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); /* inc in loop */)
+    {
+      // NOTE: RemoveFace increments the iterator for us
+      RemoveFace(knownFaceIter);
+    }
   }
   
   void FaceWorld::RemoveFaceByID(Vision::TrackedFace::ID_t faceID)
@@ -36,10 +67,7 @@ namespace Cozmo {
       PRINT_NAMED_INFO("FaceWorld.RemoveFaceByID",
                        "Removing face %llu", faceID);
       
-      using namespace ExternalInterface;
-      _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceID, _robot.GetID())));
-      VizManager::getInstance()->EraseVizObject(knownFaceIter->second.vizHandle);
-      _knownFaces.erase(knownFaceIter);
+      RemoveFace(knownFaceIter);
     }
   }
   
