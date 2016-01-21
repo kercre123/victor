@@ -49,26 +49,8 @@ void configure_game(Json::Value config)
     config[AnkiUtil::kP_AS_HOST] = true;
   }
   
-  // Get engine playback mode mode
-  CozmoGame::PlaybackMode playbackMode = CozmoGame::LIVE_SESSION_NO_RECORD;
-  int pmInt;
-  if(JsonTools::GetValueOptional(config, AnkiUtil::kP_ENGINE_PLAYBACK_MODE, pmInt)) {
-    playbackMode = (CozmoGame::PlaybackMode)pmInt;
-    assert(playbackMode <= CozmoGame::PLAYBACK_SESSION);
-  }
-  
-  if (playbackMode != CozmoGame::PLAYBACK_SESSION) {
-    
-    // Wait for at least one robot and UI device to connect
-    config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 1;
-    config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
-    
-  } else {
-    
-    config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
-    config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
-    
-  } // if (bm != BM_PLAYBACK_SESSION)
+  config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
+  config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
 }
 
 int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data)
@@ -103,8 +85,8 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
   
     CozmoAPI* created_game = new CozmoAPI();
   
-    Result result = created_game->StartRun(dataPlatform, config);
-    if (result != RESULT_OK) {
+    bool result = created_game->StartRun(dataPlatform, config);
+    if (! result) {
       delete created_game;
       return (int)result;
     }
