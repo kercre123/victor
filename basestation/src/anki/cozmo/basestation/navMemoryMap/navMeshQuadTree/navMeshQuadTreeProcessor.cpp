@@ -27,10 +27,10 @@ namespace Anki {
 namespace Cozmo {
 
 CONSOLE_VAR(bool , kRenderContentTypes , "NavMeshQuadTreeProcessor", false); // renders registered content nodes for webots
-CONSOLE_VAR(bool , kRenderSeeds        , "NavMeshQuadTreeProcessor", true); // renders seeds differently for debugging purposes
+CONSOLE_VAR(bool , kRenderSeeds        , "NavMeshQuadTreeProcessor", false); // renders seeds differently for debugging purposes
 CONSOLE_VAR(bool , kRenderBordersFrom  , "NavMeshQuadTreeProcessor", false); // renders detected borders for webots (origin)
 CONSOLE_VAR(bool , kRenderBordersTo    , "NavMeshQuadTreeProcessor", true); // renders detected borders for webots (destination)
-CONSOLE_VAR(float, kRenderZOffset      , "NavMeshQuadTreeProcessor", 50.0f); // adds Z offset to all quads
+CONSOLE_VAR(float, kRenderZOffset      , "NavMeshQuadTreeProcessor", 20.0f); // adds Z offset to all quads
 CONSOLE_VAR(bool , kDebugFindBorders   , "NavMeshQuadTreeProcessor", false); // prints debug information in console
 
 #define DEBUG_FIND_BORDER(format, ...)                                                                          \
