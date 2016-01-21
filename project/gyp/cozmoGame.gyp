@@ -422,6 +422,49 @@
 
         'targets': [
 
+        {
+            #TODO: pass this in python configure.
+            'target_name': 'AddAssetsToEngine',
+            'type': 'none',
+            'dependencies': [],
+            'actions': [
+            {
+                'action_name': 'setup_dir_for_simlink',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'mkdir', '-p','<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources',
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_assets',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<(cozmo_asset_path)',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_sound',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/sound',
+                ],
+              },
+            ]
+          },
+
           # {
           #   'target_name': 'allUnitTests',
           #   'type': 'none',
@@ -445,6 +488,7 @@
             'target_name': 'All',
             'type': 'none',
             'dependencies': [
+              'AddAssetsToEngine',
               '<(cg-ce_gyp_path):cozmoAPI',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-ce_gyp_path):robotClad',
@@ -468,42 +512,7 @@
               '<(cg-audio_path):DriveAudioEngine',
               #'<(cg-audio_path):CozmoFxPlugIn',
             ],
-            'actions': [
-            {
-                'action_name': 'create_symlink_resources_assets',
-                'inputs': [
-                  '<(cozmo_asset_path)',
-                ],
-                'outputs': [
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets',
-                ],
-                'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
-                ],
-              },
-              {
-                'action_name': 'create_symlink_resources_sound',
-                'inputs': [
-                  '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
-                ],
-                'outputs': [
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/sound',
-                ],
-                'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
-                ],
-              },
-            ]
+            'actions': []
           },
 
           {
