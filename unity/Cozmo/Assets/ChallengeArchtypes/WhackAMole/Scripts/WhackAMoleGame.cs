@@ -71,7 +71,6 @@ namespace WhackAMole {
       ActivatedFaces = new List<KeyValuePair<int, int>>();
       _FaceActive = new Dictionary<KeyValuePair<int, int>, bool>();
       _ActivatedTimestamp = new Dictionary<KeyValuePair<int, int>, float>();
-      _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
@@ -108,6 +107,8 @@ namespace WhackAMole {
     }
 
     private void InitialCubesDone() {
+      _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
+
       bool aDone = false;
       bool bDone = false;
       // Look through Visible objects to find 2 light cubes, set one to cubeA, the other

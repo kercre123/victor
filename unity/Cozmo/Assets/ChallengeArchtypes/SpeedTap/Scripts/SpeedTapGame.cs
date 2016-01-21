@@ -128,14 +128,19 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetBehaviorSystem(false);
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
-      _GamePanel.TapButtonPressed += UIButtonTapped;
-      UpdateUI();
 
       CurrentRobot.SetLiftHeight(0.0f);
       CurrentRobot.SetHeadAngle(-1.0f);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
+    }
+
+    public void OpenGamePanel() {
+      if (_GamePanel == null) {
+        _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
+        _GamePanel.TapButtonPressed += UIButtonTapped;
+        UpdateUI();
+      }
     }
 
     protected override void CleanUpOnDestroy() {

@@ -78,13 +78,11 @@ public class InitialCubesState : State {
 
   public override void Exit() {
     base.Exit();
-    if (_CubeStateDone != null) {
-      _CubeStateDone();
-    }
+    _Game.HideGameStateSlide();
   }
 
   private void HandleContinueButtonClicked() {
     // TODO: Check if the game has been run before; if so skip the HowToPlayState
-    _StateMachine.SetNextState(new HowToPlayState(_NextState));
+    _StateMachine.SetNextState(new HowToPlayState(_NextState, _CubeStateDone));
   }
 }
