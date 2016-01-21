@@ -39,7 +39,7 @@ namespace Simon {
       else {
         _FirstPlayer = PlayerType.Cozmo;
       }
-      State nextState = new WaitForNextRoundSimonState(_FirstPlayer);
+      State nextState = new CozmoMoveCloserToCubesState(_FirstPlayer);
       initCubeState.InitialCubeRequirements(nextState, _Config.NumCubesRequired(), true, null);
       _StateMachine.SetNextState(initCubeState);
 
