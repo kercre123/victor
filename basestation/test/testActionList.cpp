@@ -40,9 +40,18 @@ ActionResult TestAction::Init() { return ActionResult::SUCCESS; }
 
 ActionResult TestAction::CheckIfDone() { return ActionResult::SUCCESS; }
 
-TEST(QueueAction, NullRobotAction)
+TEST(QueueAction, QueueSingleAction)
 {
-  TestAction* a = new TestAction();
+  TestAction* testAction = new TestAction();
   
-  EXPECT_EQ(a->GetRobot(), nullptr);
+  EXPECT_EQ(testAction->GetRobot(), nullptr);
+  
+  Robot r(0, nullptr, nullptr, nullptr);
+  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction);
+  
+  EXPECT_EQ(testAction->GetRobot(), &r);
+  
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test"));
 }
