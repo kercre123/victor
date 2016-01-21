@@ -97,7 +97,9 @@ static bool ProcessDrop(void) {
 void Anki::Cozmo::HAL::SPI::StartDMA(void) {
   // Start sending out junk
   SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
-  DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
+  do  // Per erratum e8011: Repeat writes to SADDR, DADDR, or NBYTES until they stick
+    DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
+  while (DMA_TCD3_SADDR != (uint32_t)spi_write_buff);
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
   
   // Swap buffers
