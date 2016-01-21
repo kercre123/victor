@@ -63,6 +63,8 @@
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 #define MIN_DISTANCE_FOR_MINANGLE_PLANNER 1.0f
 
+#define DEBUG_BLOCK_LIGHTS 0
+
 namespace Anki {
   namespace Cozmo {
     
@@ -3072,6 +3074,13 @@ namespace Anki {
           lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
           lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
         }
+
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
     }
@@ -3108,6 +3117,12 @@ namespace Anki {
           lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
         }
 
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+        
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
 
