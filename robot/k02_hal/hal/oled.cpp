@@ -63,7 +63,6 @@ struct ScreenRect {
 static const uint8_t StartWrite = I2C_DATA | I2C_CONTINUATION;
 
 static bool FaceLock = false;
-static bool Rebound = false;
 static int FaceRemaining = 0;
 
 void Anki::Cozmo::HAL::OLED::Init(void) {
@@ -82,42 +81,42 @@ void Anki::Cozmo::HAL::OLED::Init(void) {
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), I2C_FORCE_START);
 }
 
-void Anki::Cozmo::HAL::OLED::BoundRect(uint8_t* data) {
+void Anki::Cozmo::HAL::OLED::FeedFace(bool rect, uint8_t *face_bytes) {
   if (FaceLock) { return ; }
 
-  ScreenRect* bounds = (ScreenRect*) data;
-
-  uint8_t command[] = {
-    I2C_COMMAND | I2C_CONTINUATION,
-    COLUMNADDR, bounds->left, bounds->right,
-    PAGEADDR, bounds->top, bounds->bottom
-  };
-
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
-      command,
-      sizeof(command),
-      I2C_FORCE_START);
-
-  FaceRemaining = (bounds->bottom - bounds->top + 1) * (bounds->right - bounds->left + 1);
-  Rebound = true;
-}
-
-void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t *face_bytes) {
-  if (FaceLock) { return ; }
-
-  int tx_size = MIN(FaceRemaining, MAX_SCREEN_BYTES_PER_DROP);
-  if (tx_size <= 0) return ;
-
-  // If we sent a rectangle, force a reset
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
-    &StartWrite, 
-    sizeof(StartWrite), 
-    Rebound ? I2C_FORCE_START : I2C_OPTIONAL | I2C_FORCE_START);
-
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), face_bytes, tx_size);
+  static bool was_rect = false;
   
-  FaceRemaining -= MAX_SCREEN_BYTES_PER_DROP;
-  Rebound = false;
+  if (rect) {
+    ScreenRect* bounds = (ScreenRect*) face_bytes;
+
+    uint8_t command[] = {
+      I2C_COMMAND | I2C_CONTINUATION,
+      COLUMNADDR, bounds->left, bounds->right,
+      PAGEADDR, bounds->top, bounds->bottom
+    };
+
+    I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
+        command,
+        sizeof(command),
+        I2C_FORCE_START);
+
+    FaceRemaining = (bounds->bottom - bounds->top + 1) * (bounds->right - bounds->left + 1);
+    was_rect = true;
+  } else {
+    int tx_size = MIN(FaceRemaining, MAX_SCREEN_BYTES_PER_DROP);
+    if (tx_size <= 0) return ;
+
+    // If we sent a rectangle, force a reset
+    I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
+      &StartWrite, 
+      sizeof(StartWrite), 
+      was_rect ? I2C_FORCE_START : I2C_OPTIONAL);
+
+    I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), face_bytes, tx_size);
+    FaceRemaining -= MAX_SCREEN_BYTES_PER_DROP;
+  }
+
+  was_rect = rect;
 }
 
 // Display a number

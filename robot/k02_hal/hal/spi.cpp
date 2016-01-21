@@ -40,11 +40,7 @@ static bool ProcessDrop(void) {
     DropToRTIP* drop = (DropToRTIP*)target;
 
     if (drop->droplet & screenDataValid) {
-      if (drop->droplet & screenRectData) {
-        OLED::BoundRect(drop->screenData);
-      } else {
-        OLED::FeedFace(drop->screenData);
-      }
+      OLED::FeedFace(drop->droplet & screenRectData, drop->screenData);
     }
     
     DAC::Feed(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
