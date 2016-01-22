@@ -72,6 +72,11 @@ namespace Cozmo {
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
    
+#   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+    // Force the NN library to load _now_, not on first use
+    VisionMarker::GetNearestNeighborLibrary();
+#   endif
+    
   } // VisionSystem()
   
   VisionSystem::~VisionSystem()
