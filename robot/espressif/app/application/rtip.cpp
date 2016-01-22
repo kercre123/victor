@@ -57,14 +57,15 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
       while (relayQueued > 2) // Have a header +
       {
         const uint16 size = relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8);
-        if (relayQueued >= size)
+        const uint16 sizeWHeader = size + 2;
+        if (relayQueued >= sizeWHeader)
         {
           const bool reliable = relayBuffer[1] & RTIP_CLAD_MSG_RELIABLE_FLAG;
           const bool hot      = relayBuffer[1] & RTIP_CLAD_MSG_HOT_FLAG;
           //GLOBAL_INVALID_TAG = 0, fighting include nightmare
           AnkiConditionalError(clientSendMessage(relayBuffer + 2, size, 0, reliable, hot), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, relayBuffer[2], size);
           relayQueued -= size + 2;
-          os_memcpy(relayBuffer, relayBuffer + size + 2, relayQueued);
+          os_memcpy(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
         }
         else
         {
