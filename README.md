@@ -8,7 +8,7 @@ Please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wik
 
 At this point, only Mac and iOS are supported. The engine itself supports more platforms. See [products-cozmo](https://github.com/anki/products-cozmo).
 
-### Prerequisites
+### Brew
 
 Install CMAKE using [brew](http://brew.sh/).
 
@@ -32,13 +32,13 @@ We are using [Unity 5.2.2f1](http://unity3d.com/get-unity/download/archive).
 
 A dev scene that includes a simple list of challenges for Cozmo. Used in a development environment.
 
-    <path-to-cozmo-repository>/Assets/Scenes/Dev.unity
+    /unity/Cozmo/Assets/Scenes/Dev.unity
 
 The production scene used for when we deploy. This is where the final experience will live.
 
-    <path-to-cozmo-repository>/Assets/Scenes/HomeHub.unity
+    /unity/Cozmo/Assets/Scenes/HomeHub.unity
 
-### Building cozmo-game
+### Build Script
 
 To run the configure python scripts you'll need xcpretty.
 
@@ -82,6 +82,14 @@ The basic commands are as follows:
 
 Only generate and delete are really useful for C++ developers since the other commands are just duplicates of what you have in Xcode. C# developers might find the terminal commands easier to work with, and eventually the terminal versions should be cross-platform.
 
+### webots orphaned processes
+
+ * Happens often when simulator crashes
+ * `ps -ef | grep simulator\/controllers | cut -d ' ' -f 4 | xargs kill`
+ * You can also search for orphaned processes in Activity Monitor.
+
+### ios-deploy
+
 To install, run or uninstall, you must have the ios-deploy application. To get it, run these commands:
 
     brew install node
@@ -100,9 +108,3 @@ ios-deploy does not seem to be 100% reliable, nor does it have great error messa
 5. If none of the above apply, it's likely it won't work in Xcode either and Xcode has better error messages, so try running it from there.
 
 6. ios-deploy is a popular enough program that google can usually lead you to an answer.
-
-### webots orphaned processes
-
- * Happens often when simulator crashes
- * `ps -ef | grep simulator\/controllers | cut -d ' ' -f 4 | xargs kill`
- * You can also search for orphaned processes in Activity Monitor.
