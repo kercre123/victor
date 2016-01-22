@@ -103,7 +103,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual int CalculateTimeStatRewards() {
-    return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f) + 1;
+    return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f);
   }
 
   protected virtual int CalculateNoveltyStatRewards() {
