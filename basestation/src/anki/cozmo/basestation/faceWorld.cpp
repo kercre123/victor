@@ -322,7 +322,7 @@ namespace Cozmo {
     std::map<TimeStamp_t, Vision::TrackedFace::ID_t> faceIDs;
     for (auto pair : _knownFaces) {
       if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
-        faceIDs.insert(std::pair<TimeStamp_t, Vision::TrackedFace::ID_t>(pair.first, pair.second.face.GetTimeStamp()));
+        faceIDs.insert(std::pair<TimeStamp_t, Vision::TrackedFace::ID_t>(pair.second.face.GetTimeStamp(), pair.second.face.GetID()));
       }
     }
     return faceIDs;
