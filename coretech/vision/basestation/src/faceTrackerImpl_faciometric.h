@@ -55,7 +55,7 @@ namespace Vision {
   {
   public:
     
-    Impl(const std::string& modelPath);
+    Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
     ~Impl();
     
     Result Update(const Vision::Image& frame);
@@ -376,7 +376,7 @@ namespace Vision {
   
 # endif // DO_RECOGNITION
   
-  FaceTracker::Impl::Impl(const std::string& modelPath)
+  FaceTracker::Impl::Impl(const std::string& modelPath, FaceTracker::DetectionMode mode)
   //: _displayEnabled(false)
   {
     const std::string subPath = modelPath + "/faciometric/models/";

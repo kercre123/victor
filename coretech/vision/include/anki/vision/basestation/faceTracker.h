@@ -28,7 +28,14 @@ namespace Vision {
   {
   public:
     
-    FaceTracker(const std::string& modelPath);
+    enum class DetectionMode : u8 {
+      SingleImage,
+      Video
+    };
+    
+    FaceTracker(const std::string& modelPath,
+                DetectionMode mode = DetectionMode::Video);
+    
     ~FaceTracker();
     
     Result Update(const Vision::Image& frameOrig);
@@ -36,6 +43,8 @@ namespace Vision {
     std::list<TrackedFace> GetFaces() const;
     
     void EnableDisplay(bool enabled);
+    
+    static bool IsRecognitionSupported();
     
   private:
     

@@ -40,8 +40,8 @@ FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
 namespace Anki {
 namespace Vision {
   
-  FaceTracker::FaceTracker(const std::string& modelPath)
-  : _pImpl(new Impl(modelPath))
+  FaceTracker::FaceTracker(const std::string& modelPath, DetectionMode mode)
+  : _pImpl(new Impl(modelPath, mode))
   {
     
   }
@@ -60,6 +60,11 @@ namespace Vision {
   std::list<TrackedFace> FaceTracker::GetFaces() const
   {
     return _pImpl->GetFaces();
+  }
+  
+  bool FaceTracker::IsRecognitionSupported()
+  {
+    return Impl::IsRecognitionSupported();
   }
   
   /*

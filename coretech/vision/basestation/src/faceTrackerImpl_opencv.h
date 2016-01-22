@@ -32,13 +32,15 @@ namespace Vision {
   class FaceTracker::Impl
   {
   public:
-    Impl(const std::string& modelPath);
+    Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
     
     Result Update(const Vision::Image& frameOrig);
     
     std::list<TrackedFace> GetFaces() const;
     
     void EnableDisplay(bool enabled) { }
+    
+    static bool IsRecognitionSupported() { return false; }
     
   private:
     
@@ -59,7 +61,7 @@ namespace Vision {
   }; // class FaceTracker::Impl
   
   
-  FaceTracker::Impl::Impl(const std::string& modelPath)
+  FaceTracker::Impl::Impl(const std::string& modelPath, FaceTracker::DetectionMode mode)
   {
     const std::string faceCascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
     

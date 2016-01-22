@@ -47,7 +47,7 @@ namespace Vision {
   class FaceTracker::Impl
   {
   public:
-    Impl(const std::string& modelPath);
+    Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
     ~Impl();
     
     Result Update(const Vision::Image& frameOrig);
@@ -56,6 +56,8 @@ namespace Vision {
     
     void EnableDisplay(bool enabled) { }
     
+    static bool IsRecognitionSupported() { return true; }
+    
   private:
     
     Result Init();
@@ -63,6 +65,7 @@ namespace Vision {
     Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
     
     bool _isInitialized = false;
+    FaceTracker::DetectionMode _detectionMode;
     
     static const s32 MaxFaces = 10; // detectable at once
     static const INT32 MaxAlbumDataPerFace = 10; // can't be more than 10
@@ -99,7 +102,8 @@ namespace Vision {
   }; // class FaceTracker::Impl
   
   
-  FaceTracker::Impl::Impl(const std::string& modelPath)
+  FaceTracker::Impl::Impl(const std::string& modelPath, FaceTracker::DetectionMode mode)
+  : _detectionMode(mode)
   {
     
   } // Impl Constructor()
@@ -135,7 +139,22 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
 
-    _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_MOVIE, MaxFaces);
+    auto okaoDetectionMode = DETECTION_MODE_DEFAULT;
+    switch(_detectionMode)
+    {
+      case FaceTracker::DetectionMode::Video:
+        okaoDetectionMode = DETECTION_MODE_MOVIE;
+        break;
+      case FaceTracker::DetectionMode::SingleImage:
+        okaoDetectionMode = DETECTION_MODE_STILL;
+        break;
+      default:
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Init.UnknownDetectionMode",
+                          "Requested mode = %hhu", _detectionMode);
+        return RESULT_FAIL;
+    }
+    _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, okaoDetectionMode, MaxFaces);
+        
     if(NULL == _okaoDetectorHandle) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoDetectionHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
