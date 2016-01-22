@@ -113,6 +113,10 @@ void processDrop(DropToWiFi* drop)
   if (unlikely(drop->droplet & bootloaderStatus)) os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, 4);
   else if (drop->payloadLen > 0)
   {
+    if (rxJpegLen + drop->payloadLen > DROP_TO_WIFI_MAX_PAYLOAD - 4)
+    {
+      os_put_hex(rxJpegLen, 2); os_put_char(' '); os_put_hex(drop->payloadLen, 2); os_put_char('\r'); os_put_char('\n');
+    }
     AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
   }
 }

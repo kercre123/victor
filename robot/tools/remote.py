@@ -20,7 +20,7 @@ class Remote:
         self.upgrader = None
         self.animStreamer = None
         self.image = None
-        robotInterface.Init()
+        robotInterface.Init(True)
         pygame.init()
         self.imageReceiver = minipegReceiver.MinipegReceiver(self.receiveImage)
         self.run()
