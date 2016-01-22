@@ -17,13 +17,13 @@
 #define IRAM_ATTR
 #endif
 
-
 #ifdef ROBOT_HARDWARE
 // Disable printf when on the real robot
 void board_printf(char *format, ...);
 void FaceUnPrintf(void);
 void FacePrintf(const char *format, ...);
-#define printf FacePrintf
+// DEMO_ONLY: For the demo, we don't want to print to Cozmo's face so don't use FacePrintf ever.
+#define printf(...) (void)0
 #define printClear FaceUnPrintf
 #else
 #define printClear() (void)0
@@ -551,7 +551,9 @@ bool ReliableTransport_Update(ReliableConnection* connection)
   //printState(connection);
   if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_PRETIMEOUT)
   {
-    printf("Transport time since\nlast receive:\n %u ms\n", (unsigned int)(currentTime - connection->latestRecvTime));
+    // DEMO_ONLY: put the helpful print line back (or just don't merge this to master) when not for the demo
+    //printf("Transport time since\nlast receive:\n %u ms\n", (unsigned int)(currentTime - connection->latestRecvTime));
+    printClear();
   }
   if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_TIMEOUT)
   {
