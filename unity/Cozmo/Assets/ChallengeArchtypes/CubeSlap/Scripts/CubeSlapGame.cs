@@ -181,11 +181,11 @@ namespace CubeSlap {
       }
     }
 
-    public void HandleWinGameAnimationDone() {
+    public void HandleWinGameAnimationDone(bool success) {
       RaiseMiniGameWin();
     }
 
-    public void HandleLoseGameAnimationDone() {
+    public void HandleLoseGameAnimationDone(bool success) {
       RaiseMiniGameLose();
     }
 
