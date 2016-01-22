@@ -728,6 +728,15 @@
               #    '../../simulator/controllers/webotsCtrlGameEngine/resources/sound',
               #  ],
               # },
+              #Simlinks don't create a parent directory, so create it only if it doesn't exist...
+              {
+                'action_name': 'setup_dir_for_simlink',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'mkdir', '-p','<(PRODUCT_DIR)/resources',
+                ],
+              },
               {
                 'action_name': 'create_symlink_resources_configs',
                 'inputs':[],
