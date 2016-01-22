@@ -102,8 +102,8 @@ public class DailySummaryPanel : MonoBehaviour {
   }
 
   // Creates a goal badge
-  private GoalBadge CreateGoalBadge(ProgressionStatType type, int goal, int progress) {
-    GoalBadge newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalBadge>();
+  private GoalCell CreateGoalBadge(ProgressionStatType type, int goal, int progress) {
+    GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
     newBadge.Initialize(type.ToString(),goal,progress);
     newBadge.ShowText(true);
     return newBadge;

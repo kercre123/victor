@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Cozmo {
   namespace UI {
-    public class GoalBadge : MonoBehaviour  {
+    public class GoalCell : MonoBehaviour  {
       [SerializeField]
       private ProgressBar _GoalProgressBar;
 

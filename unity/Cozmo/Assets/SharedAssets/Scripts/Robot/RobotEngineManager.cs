@@ -39,10 +39,8 @@ public class RobotEngineManager : MonoBehaviour {
   public readonly int[] DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
 
   public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
-    for (int i = 0; i < DailyGoals.Length; i++) {
-      if (DailyGoals[i] > 0) {
-        return true;
-      }
+    if (DailyGoals[(int)type] > 0) {
+      return true;
     }
     return false;
   }

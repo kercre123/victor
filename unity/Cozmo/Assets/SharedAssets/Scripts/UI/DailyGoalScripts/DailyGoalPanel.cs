@@ -8,7 +8,7 @@ using System.Collections.Generic;
 // Panel for generating and displaying the ProgressionStat goals for the Day.
 public class DailyGoalPanel : BaseView {
   
-  private readonly List<GoalBadge> _GoalUIBadges = new List<GoalBadge>();
+  private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
 
   // Force a specific Friendship level for Goal Generation testing,
   // must also set _UseDebug to true.
@@ -17,15 +17,15 @@ public class DailyGoalPanel : BaseView {
   [SerializeField]
   private bool _UseDebug = false;
 
-  // Prefab for GoalBadges
+  // Prefab for GoalCells
   [SerializeField]
-  private GoalBadge _GoalBadgePrefab;
+  private GoalCell _GoalCellPrefab;
 
   // Progress bar for tracking total progress for all Goals
   [SerializeField]
   private ProgressBar _TotalProgressBar;
 
-  // Container for Daily Goal Badges to be children of
+  // Container for Daily Goal Cells to be children of
   [SerializeField]
   private Transform _GoalContainer;
 
@@ -85,13 +85,14 @@ public class DailyGoalPanel : BaseView {
     }
   }
 
-  // Creates a goal badge based on a progression stat
-  public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
+  // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
+  // Currently this will be additive so if multiple Goals are created with the same required type, they will be combined
+  public GoalCell CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
     DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
-    GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, _GoalContainer).GetComponent<GoalBadge>();
+    GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     RobotEngineManager.Instance.DailyGoals[(int)type] += target;
     newBadge.Initialize(name, target, goal, type);
-    _GoalUIBadges.Add(newBadge);
+    _GoalCells.Add(newBadge);
     newBadge.OnProgChanged += UpdateTotalProgress;
     return newBadge;
   }
@@ -100,20 +101,20 @@ public class DailyGoalPanel : BaseView {
   // Listens for any goal Badge values you listen to changing.
   // On Change, updates the total progress achieved by all goalbadges.
   public void UpdateTotalProgress() {
-    float total = _GoalUIBadges.Count;
+    float total = _GoalCells.Count;
     float curr = 0.0f;
-    for (int i = 0; i < _GoalUIBadges.Count; i++) {
-      curr += _GoalUIBadges[i].Progress;
+    for (int i = 0; i < _GoalCells.Count; i++) {
+      curr += _GoalCells[i].Progress;
     }
     _TotalProgressBar.SetProgress(curr/total);
   }
 
   protected override void CleanUp() {
-    for (int i = 0; i < _GoalUIBadges.Count; i++) {
-      _GoalUIBadges[i].OnProgChanged -= UpdateTotalProgress;
-      Destroy(_GoalUIBadges[i].gameObject);
+    for (int i = 0; i < _GoalCells.Count; i++) {
+      _GoalCells[i].OnProgChanged -= UpdateTotalProgress;
+      Destroy(_GoalCells[i].gameObject);
     }
-    _GoalUIBadges.Clear();
+    _GoalCells.Clear();
   }
 
 }
