@@ -110,6 +110,22 @@ namespace Vision {
   }
   
   template<typename T>
+  void ImageBase<T>::DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness)
+  {
+    DrawLine(rect.GetTopLeft(), rect.GetTopRight(), color, thickness);
+    DrawLine(rect.GetTopLeft(), rect.GetBottomLeft(), color, thickness);
+    DrawLine(rect.GetTopRight(), rect.GetBottomRight(), color, thickness);
+    DrawLine(rect.GetBottomLeft(), rect.GetBottomRight(), color, thickness);
+  }
+  
+  template<typename T>
+  void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
+                              const ColorRGBA& color, f32 scale)
+  {
+    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor((color)));
+  }
+  
+  template<typename T>
   void ImageBase<T>::Resize(f32 scaleFactor)
   {
     cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor, CV_INTER_LINEAR);
