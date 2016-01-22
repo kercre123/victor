@@ -502,10 +502,24 @@ namespace Cozmo {
             PickupObjectAction* pickupAction = new PickupObjectAction(_objectToPickUp);
             pickupAction->SetDoNearPredockPoseCheck(false);
             StartActing(robot, pickupAction);
+            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.Pickup.Direct",
+                             "orientation diff = %f (need < %f), angle diff = %f (need < %f)",
+                             std::fabsf( std::fmodf((blockOrientation - robotOrientation).ToFloat(), PIDIV2_F)),
+                             _robotObjectOrientationDiffThreshForDirectPickup,
+                             std::fabsf((robotToBlockOrientation - robotOrientation).ToFloat()),
+                             _angleToObjectThreshForDirectPickup);
+                             
           } else {
             DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(_objectToPickUp, _motionProfile);
             SetDriveToObjectSounds(pickupAction);
             StartActing(robot, pickupAction);
+
+            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.Pickup.Drive",
+                             "orientation diff = %f (need < %f), angle diff = %f (need < %f)",
+                             std::fabsf( std::fmodf((blockOrientation - robotOrientation).ToFloat(), PIDIV2_F)),
+                             _robotObjectOrientationDiffThreshForDirectPickup,
+                             std::fabsf((robotToBlockOrientation - robotOrientation).ToFloat()),
+                             _angleToObjectThreshForDirectPickup);
           }
         }
         break;
