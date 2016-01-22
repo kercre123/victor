@@ -167,10 +167,10 @@ namespace CubeSlap {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
       if (_SuccessCount >= _SuccessGoal) {
-        RaiseMiniGameWin();
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleWinGameAnimationDone));
       }
       else if (AttemptsLeft <= 0) {
-        RaiseMiniGameLose();
+        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleLoseGameAnimationDone));
       }
       else if (_SlapFlagThrown) {
         _SlapFlagThrown = false;
@@ -179,6 +179,14 @@ namespace CubeSlap {
       else {
         _StateMachine.SetNextState(new SeekState());
       }
+    }
+
+    public void HandleWinGameAnimationDone() {
+      RaiseMiniGameWin();
+    }
+
+    public void HandleLoseGameAnimationDone() {
+      RaiseMiniGameLose();
     }
 
     public void HandleRetractDone(bool success) {
