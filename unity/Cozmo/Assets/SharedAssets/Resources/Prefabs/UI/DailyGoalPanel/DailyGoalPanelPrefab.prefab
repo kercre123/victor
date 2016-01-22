@@ -198,6 +198,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: DAILY GOALS
+  _AllUppercase: 0
 --- !u!114 &11417702
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -633,6 +634,14 @@ Prefab:
       value: 
       objectReference: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DebugLevel
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _UseDebug
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 130834}
