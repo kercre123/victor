@@ -317,13 +317,13 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
   DEBUG_FIND_BORDER("Starting FindBorders...");
 
   CORETECH_ASSERT(IsCached(innerType));
-  NodeSet& innerSet = _nodeSets[innerType];
+  const NodeSet& innerSet = _nodeSets[innerType];
 
   _borders.clear();
   _borderGfxDirty = true;
   
   // map with what is visited for every inner node
-  std::map<const NavMeshQuadTreeNode*, CheckedInfo> checkedNodes;
+  std::unordered_map<const NavMeshQuadTreeNode*, CheckedInfo> checkedNodes;
 
   // reserve space for this node's neighbors
   NavMeshQuadTreeNode::NodeCPtrVector neighbors;
@@ -333,7 +333,7 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
   const EClockDirection clockDir = EClockDirection::CW;
     
   // for every node, try to see if they are an innerContent with at least one outerContent neighbor
-  for( auto& candidateSeed : innerSet )
+  for( const auto& candidateSeed : innerSet )
   {
     DEBUG_FIND_BORDER("[%p] Checking node for seeds", candidateSeed);
     
@@ -454,6 +454,7 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
                 for ( size_t idx=0; idx<neighbors.size(); ++idx) {
                   if ( neighbors[idx] == curInnerNode ) {
                     fromNeighborIdx = idx; // we pretend to point at the same node we come from
+                    break;
                   }
                 }
                 CORETECH_ASSERT(fromNeighborIdx < neighbors.size()); // should always find it
@@ -467,6 +468,9 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
                 // back, either for a new border or the same one
                 CheckedInfo& nextCheckedInfo = checkedNodes[nextNode];
                 nextCheckedInfo.InitDirection(fromDir, neighbors.size());
+                
+                // Flag where we come from, cause we know that it's not an outer
+                nextCheckedInfo.MarkChecked(fromDir, fromNeighborIdx);
 
                 // jump to the new node
                 curDir = fromDir;
@@ -483,7 +487,11 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
                 {
                   DEBUG_FIND_BORDER("[%p] (%s,%zu) 'OuterType' looped iterating neighbors. Finishing border and seed",
                   curInnerNode, EDirectionToString(curDir), nextNeighborIdx);
+                  
+                  // we could add also this node as a waypoint, but then it belongs to two borders; consider.
+                  // AddBorderWaypoint( curInnerNode, nextNode );
               
+                  // in any case, a border ends here
                   FinishBorder();
 
                   // we are no longer seeding, we have to go back to find a seeding point
