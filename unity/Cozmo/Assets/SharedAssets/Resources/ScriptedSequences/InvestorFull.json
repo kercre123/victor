@@ -191,6 +191,13 @@
           "AnimationName": "ID_ByeBye",
           "LoopForever": false,
           "WaitToEnd": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.PlayAudio, Assembly-CSharp",
+          "EventType": "PLAY_SFX_UI_ID_COZMO_OFF",
+          "GameObjectType": "UI",
+          "WaitToEnd": true,
+          "StopSoundOnEnd": true
         }
       ],
       "ExitConditions": [
