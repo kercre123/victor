@@ -234,14 +234,14 @@
           "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
           "VolumeChannel": "ROBOT_VOLUME",
           "TargetVolume": 0.0,
-          "Duration": 4.0,
+          "Duration": 6.0,
           "Curve": "Linear"
         },
         {
           "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
           "VolumeChannel": "MUSIC_VOLUME",
           "TargetVolume": 0.0,
-          "Duration": 4.0,
+          "Duration": 6.0,
           "Curve": "Linear"
         }
       ],
