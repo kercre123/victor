@@ -1303,7 +1303,7 @@ namespace Anki {
       
       virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
-      virtual f32 GetTimeoutInSeconds() const override { 60.0f; }
+      virtual f32 GetTimeoutInSeconds() const override { return 60.0f; }
 
     protected:
       
