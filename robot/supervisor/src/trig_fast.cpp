@@ -12,7 +12,6 @@
 *
 *
 **/
-#include <assert.h>
 #include <math.h>
 #include "anki/types.h"
 #include "anki/common/constantsAndMacros.h"

@@ -11,8 +11,8 @@
 *
 **/
 
-#include <assert.h>
 #include <math.h>
+#include "anki/cozmo/robot/logging.h"
 #include "anki/common/constantsAndMacros.h"
 #include "radians.h"
 
@@ -139,7 +139,7 @@ namespace Anki {
   Radians operator/(const Radians& a, float b)
   {
     // Check for divide by 0
-    assert(!NEAR_ZERO(b));  // Check for divide by 0
+    AnkiAssert(!NEAR_ZERO(b), 282);  // Check for divide by 0
 
     Radians newRadians;
     newRadians.radians_ = a.radians_ / b;

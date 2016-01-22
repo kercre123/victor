@@ -33,6 +33,8 @@
 #define ANKI_DEBUG_INFO 1
 #endif
 
+
+
 #include "clad/types/robotLogging.h"
 
 namespace Anki {
@@ -123,10 +125,21 @@ namespace Anki {
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
+
+#if defined(TARGET_ESPRESSIF)
+	#define ANKI_ASSERT_SHOW FacePrintf("ASSERT in " __FILE__ ", line %d", __LINE__)
+#elif defined(TARGET_K02)
+ #define ANKI_ASSERT_SHOW for (int i=0; i<5; ++i) Anki::Cozmo::HAL::SetLED(i, 0x7c00)
+#else
+ #define ANKI_ASSERT_SHOW
+#endif
+				
+      // Anki assert sends assesrt CLAD message and then halts main exec
       #define AnkiAssert(expression, fmtId) \
         if (!(expression)) { \
           Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ASSERT, 0, fmtId, 1, __LINE__); \
-          assert(false); \
+					ANKI_ASSERT_SHOW; \
+          while(true); \
         }
 #else
       #define AnkiAssert(...)
@@ -136,5 +149,13 @@ namespace Anki {
   }
 }
 
+#if defined(TARGET_ESPRESSIF)
+	void FacePrintf(const char *format, ...); // Forward declaration instead of include because we don't want that include everywhere this is.
+#elif defined(TARGET_K02)
+ // Forward declaration instead of include because we don't want that include everywhere this is.
+ namespace Anki { namespace Cozmo { namespace HAL {
+	void SetLED(uint8_t led_id, uint16_t color);
+ }}}
+#endif
 
 #endif
