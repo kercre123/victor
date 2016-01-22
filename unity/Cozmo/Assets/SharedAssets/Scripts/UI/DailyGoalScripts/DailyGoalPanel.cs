@@ -96,7 +96,8 @@ public class DailyGoalPanel : BaseView {
     DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     RobotEngineManager.Instance.DailyGoals[(int)type] += target;
-    newBadge.Initialize(name, target, goal, type);
+    string newName = type.ToString();
+    newBadge.Initialize(newName, target, goal, type);
     _GoalCells.Add(newBadge);
     newBadge.OnProgChanged += UpdateTotalProgress;
     return newBadge;
