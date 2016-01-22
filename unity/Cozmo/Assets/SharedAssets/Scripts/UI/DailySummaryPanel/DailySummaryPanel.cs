@@ -102,10 +102,10 @@ public class DailySummaryPanel : MonoBehaviour {
   }
 
   // Creates a goal badge
-  private GoalBadge CreateGoalBadge(ProgressionStatType type, int goal, int progress) {
-    GoalBadge newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalBadge>();
+  private GoalCell CreateGoalBadge(ProgressionStatType type, int goal, int progress) {
+    GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
     newBadge.Initialize(type.ToString(),goal,progress);
-    newBadge.Expand(true);
+    newBadge.ShowText(true);
     return newBadge;
   }
 
@@ -142,7 +142,7 @@ public class DailySummaryPanel : MonoBehaviour {
 
   private IEnumerator FriendshipBarCoroutine(TimelineEntryData data) {
 
-    var levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
+    var levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
 
     int startingPoints = data.StartingFriendshipPoints;
     float pointsRequired, startingPercent, endingPercent;

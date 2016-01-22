@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Cozmo {
   namespace UI {
-    public class GoalBadge : MonoBehaviour  {
+    public class GoalCell : MonoBehaviour  {
       [SerializeField]
       private ProgressBar _GoalProgressBar;
 
@@ -19,6 +19,8 @@ namespace Cozmo {
 
       [SerializeField]
       private AnkiTextLabel _GoalLabel;
+
+      public Anki.Cozmo.ProgressionStatType Type;
 
       [SerializeField]
       private Image _GoalIcon;
@@ -68,22 +70,34 @@ namespace Cozmo {
         SetProgress((float)_GoalCurrent/(float)_GoalTarget);
       }
 
-      public void Initialize(string name, int goal, int currProg) {
+      public void Initialize(string name, int goal, int currProg, Anki.Cozmo.ProgressionStatType type = Anki.Cozmo.ProgressionStatType.Count) {
         GoalLabelText = string.Format("+{0} {1}",goal,name);
         _GoalTarget = goal;
+        Type = type;
+        RobotEngineManager.Instance.OnProgressionStatRecieved += OnProgressionStatUpdate;
         SetProgress(currProg);
       }
 
       // Hide text while collapsing, show text when expanded
-      public void Expand(bool expand) {
+      public void ShowText(bool show) {
         Sequence fadeTween = DOTween.Sequence();
-        if (expand) { 
+        if (show) { 
           fadeTween.Append(_GoalLabel.DOFade(1.0f,0.25f));
         }
         else {
           fadeTween.Append(_GoalLabel.DOFade(0.0f,0.25f));
         }
         fadeTween.Play();
+      }
+
+      void OnProgressionStatUpdate(Anki.Cozmo.ProgressionStatType type, int count) {
+        if (Type == type) {
+          SetProgress(count);
+        }
+      }
+
+      void OnDestroy() {
+        RobotEngineManager.Instance.OnProgressionStatRecieved -= OnProgressionStatUpdate;
       }
 
       // Use this for initialization

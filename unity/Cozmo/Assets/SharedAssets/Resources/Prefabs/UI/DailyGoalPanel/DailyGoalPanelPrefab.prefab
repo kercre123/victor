@@ -120,11 +120,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 0
+  _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
-  _GoalBadgePrefab: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
+  _DebugLevel: -1
+  _UseDebug: 0
+  _GoalCellPrefab: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
   _TotalProgressBar: {fileID: 11492562}
   _GoalContainer: {fileID: 22416974}
-  _Config: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1, type: 2}
 --- !u!114 &11414914
 MonoBehaviour:
   m_ObjectHideFlags: 1

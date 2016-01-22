@@ -8,37 +8,42 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59f017fdad5b54867aff311e855af24a, type: 3}
-  m_Name: DailyGoalConfig
+  m_Script: {fileID: 11500000, guid: 0f4e8e58e7fe44714ac3795faf293f12, type: 3}
+  m_Name: FriendshipProgressionConfig
   m_EditorClassIdentifier: 
   FriendshipLevels:
-  - StatsIntroduced:
+  - FriendshipLevelName: Stranger
+    StatsIntroduced:
       _Mask: 1
-    FriendshipLevelName: Stranger
     MaxGoals: 1
     MinTarget: 2
     MaxTarget: 5
-  - StatsIntroduced:
+    PointsRequired: 0
+  - FriendshipLevelName: Acquaintance
+    StatsIntroduced:
       _Mask: 4
-    FriendshipLevelName: Acquaintance
     MaxGoals: 2
     MinTarget: 3
     MaxTarget: 6
-  - StatsIntroduced:
+    PointsRequired: 10
+  - FriendshipLevelName: Friend
+    StatsIntroduced:
       _Mask: 2
-    FriendshipLevelName: Friend
     MaxGoals: 2
     MinTarget: 4
     MaxTarget: 7
-  - StatsIntroduced:
+    PointsRequired: 50
+  - FriendshipLevelName: Best Friend
+    StatsIntroduced:
       _Mask: 0
-    FriendshipLevelName: Best Friend
     MaxGoals: 3
     MinTarget: 4
     MaxTarget: 8
-  - StatsIntroduced:
+    PointsRequired: 100
+  - FriendshipLevelName: BFF5EVR
+    StatsIntroduced:
       _Mask: 0
-    FriendshipLevelName: BFF5EVR
     MaxGoals: 4
     MinTarget: 4
     MaxTarget: 10
+    PointsRequired: 500
