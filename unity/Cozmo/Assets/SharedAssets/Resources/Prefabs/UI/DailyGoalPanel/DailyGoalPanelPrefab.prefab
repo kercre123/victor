@@ -159,12 +159,11 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
-  _DebugLevel: 
+  _DebugLevel: -1
   _UseDebug: 0
-  _GoalBadgePrefab: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
+  _GoalCellPrefab: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
   _TotalProgressBar: {fileID: 11492562}
   _GoalContainer: {fileID: 22416974}
-  _Config: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1, type: 2}
   _FriendshipFormulaConfig: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
     type: 2}
 --- !u!114 &11414914
