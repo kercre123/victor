@@ -100,7 +100,6 @@ namespace Anki
 
 
       // Add path segment
-      // TODO: Change units to meters
       bool AppendPathSegment_Line(u32 matID, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm,
                                   f32 targetSpeed, f32 accel, f32 decel)
       {
@@ -486,12 +485,12 @@ namespace Anki
             segRes = ProcessPathSegmentPointTurn(distToPath_mm_, radToPath_);
             break;
           default:
-            // TODO: Error?
+            AnkiWarn( 33, "PathFollower", 297, "Segment %d has invalid type %d", 2, currPathSegment_, path_[currPathSegment_].GetType());
             break;
         }
 
 #if(DEBUG_PATH_FOLLOWER)
-        AnkiError( 33, "PathFollower", 224, "%f mm, %f deg, segRes %d, segType %d, currSeg %d", 5, distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType(), currPathSegment_);
+        AnkiInfo( 33, "PathFollower", 224, "%f mm, %f deg, segRes %d, segType %d, currSeg %d", 5, distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType(), currPathSegment_);
 #endif
 
         // Go to next path segment if no longer in range of the current one
@@ -576,21 +575,15 @@ namespace Anki
         Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         f32 currSpeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
 
+        acc_start_frac = MAX(std::fabsf(acc_start_frac), 0.01f);
+        acc_end_frac   = MAX(std::fabsf(acc_end_frac),   0.01f);
+        
         if (!vpg.StartProfile_fixedDuration(0, currSpeed, acc_start_frac * duration_sec,
                                             dist_mm, acc_end_frac * duration_sec,
-                                            10000, 10000,  // TODO: maxVel, maxAccel
+                                            MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_ACCEL_MMPS2,
                                             duration_sec, CONTROL_DT) ) {
-
-          AnkiInfo( 34, "PathFollower.DriveStraight.VPGRetry", 227, "Trying simple path with instantaneous accel", 0);
-
-          if (!vpg.StartProfile_fixedDuration(0, currSpeed, 0.01f * duration_sec,
-                                              dist_mm, 0.01f * duration_sec,
-                                              10000.f, 10000.f,  // TODO: maxVel, maxAccel
-                                              duration_sec, CONTROL_DT) ) {
-
-            AnkiWarn( 35, "PathFollower.DriveStraight.VPGFail", 228, "Fail", 0);
-            return false;
-          }
+          AnkiWarn( 35, "PathFollower.DriveStraight.VPGFail", 228, "Fail", 0);
+          return false;
         }
 
 
@@ -646,21 +639,15 @@ namespace Anki
         Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         f32 currAngSpeed = -SpeedController::GetCurrentMeasuredVehicleSpeed() / radius_mm;
 
+        acc_start_frac = MAX(std::fabsf(acc_start_frac), 0.01f);
+        acc_end_frac   = MAX(std::fabsf(acc_end_frac),   0.01f);
+        
         if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, acc_start_frac * duration_sec,
                                             sweep_rad, acc_end_frac * duration_sec,
-                                            100, 100,  // TODO: maxVel, maxAccel
+                                            MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2,
                                             duration_sec, CONTROL_DT) ) {
-
-          AnkiInfo( 36, "PathFollower.DriveArc.VPGRetry", 227, "Trying simple path with instantaneous accel", 0);
-
-          if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, 0.01f * duration_sec,
-                                              sweep_rad, 0.01f * duration_sec,
-                                              100.f, 100.f,  // TODO: maxVel, maxAccel
-                                              duration_sec, CONTROL_DT) ) {
-
-            AnkiWarn( 37, "PathFollower.DriveArc.VPGFail", 232, "Warn", 0);
-            return false;
-          }
+          AnkiWarn( 37, "PathFollower.DriveArc.VPGFail", 232, "Warn", 0);
+          return false;
         }
 
         // Compute x_center,y_center
@@ -719,23 +706,16 @@ namespace Anki
         Radians curr_angle;
         Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
 
-
+        acc_start_frac = MAX(std::fabsf(acc_start_frac), 0.01f);
+        acc_end_frac   = MAX(std::fabsf(acc_end_frac),   0.01f);
+        
         if (!vpg.StartProfile_fixedDuration(0, 0, acc_start_frac * duration_sec,
                                             sweep_rad, acc_end_frac * duration_sec,
-                                            10000.f, 10000.f,  // TODO: maxVel, maxAccel
+                                            MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2,
                                             duration_sec, CONTROL_DT)) {
-
-          if (!vpg.StartProfile_fixedDuration(0, 0, 0.01f * duration_sec,
-                                              sweep_rad, 0.01f * duration_sec,
-                                              10000.f, 10000.f,  // TODO: maxVel, maxAccel
-                                              duration_sec, CONTROL_DT)) {
-
-            AnkiWarn( 33, "PathFollower", 236, "DrivePointTurn vpg fail (sweep_rad: %f, acc_start_frac %f, acc_end_frac %f, duration_sec %f). Default to simple version", 4, sweep_rad, acc_start_frac, acc_end_frac, duration_sec);
-            return false;
-          }
-
+          AnkiWarn( 33, "PathFollower", 236, "DrivePointTurn vpg fail (sweep_rad: %f, acc_start_frac %f, acc_end_frac %f, duration_sec %f). Default to simple version", 4, sweep_rad, acc_start_frac, acc_end_frac, duration_sec);
+          return false;
         }
-
 
 
         f32 targetRotVel = vpg.GetMaxReachableVel();
