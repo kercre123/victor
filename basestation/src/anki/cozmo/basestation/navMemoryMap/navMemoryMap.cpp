@@ -34,9 +34,9 @@ void NavMemoryMap::AddClearQuad(const Quad2f& quad)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMap::AddObstacleQuad(const Quad2f& quad)
+void NavMemoryMap::AddObstacleQuad(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType)
 {
-  _navMesh.AddObstacle(quad);
+  _navMesh.AddObstacle(quad, obstacleType);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
