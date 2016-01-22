@@ -12,6 +12,7 @@
 #ifndef ANKI_COZMO_NAV_MEMORY_MAP_H
 #define ANKI_COZMO_NAV_MEMORY_MAP_H
 
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
 #include "navMeshQuadTree.h"
 
@@ -40,7 +41,7 @@ public:
   virtual void AddClearQuad(const Quad2f& quad) override;
 
   // add a quad representing an obstacle
-  virtual void AddObstacleQuad(const Quad2f& quad) override;
+  virtual void AddObstacleQuad(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType) override;
   
   // add a quad representing a cliff
   virtual void AddCliffQuad(const Quad2f& quad) override;

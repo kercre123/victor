@@ -734,7 +734,7 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'mkdir', '-p','<(PRODUCT_DIR)/resources',
+                  'mkdir', '-p','../../simulator/controllers/webotsCtrlGameEngine/resources',
                 ],
               },
               {

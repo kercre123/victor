@@ -315,10 +315,10 @@ class AssertParseParams(ParseParams):
         mangleStart, preArgs, args = self.parseArgs(code)
         fmt = assertString(preArgs[0], code)
         if len(args) == 0: # An unprocessed macro
-            return ParseInstance(mangleStart, mangleStart, ASSERT_NAME_ID, "ASSERT", None, fmt, 0)
+            return ParseInstance(mangleStart, mangleStart, ASSERT_NAME_ID, "ASSERT", None, fmt, 1)
         elif len(args) == 1 and looksLikeInt(args[0]): # An already processed macro instance
             mangleEnd = mangleStart + len(args[0])
-            return ParseInstance(mangleStart, mangleEnd, ASSERT_NAME_ID, "ASSERT", int(args[0]), fmt, 0)
+            return ParseInstance(mangleStart, mangleEnd, ASSERT_NAME_ID, "ASSERT", int(args[0]), fmt, 1)
         else:
             raise LogPPError("Bad AnkiAssert macro arguments")
 

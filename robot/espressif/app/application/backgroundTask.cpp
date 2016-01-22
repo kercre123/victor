@@ -86,7 +86,7 @@ void Exec(os_event_t *event)
   const u32 btInterval = btStart - lastBTT;
   if ((btInterval > EXPECTED_BT_INTERVAL_US*2) && (periodicPrint++ == 0))
   {
-    os_printf("Background task interval too long: %dus!\r\n", btInterval);
+    AnkiWarn( 51, "BackgroundTask.IntervalTooLong", 295, "Background task interval too long: %dus!", 1, btInterval);
   }
   
   switch (event->sig)
@@ -130,7 +130,7 @@ void Exec(os_event_t *event)
   const u32 btRunTime = system_get_time() - btStart;
   if ((btRunTime > BT_MAX_RUN_TIME_US) && (periodicPrint++ == 0))
   {
-    os_printf("Background task run time too long: %dus!\r\n", btRunTime);
+    AnkiWarn( 52, "BackgroundTask.RunTimeTooLong", 296, "Background task run time too long: %dus!", 1, btRunTime);
   }
   lastBTT = btStart;
   // Always repost so we'll execute again.
@@ -185,8 +185,7 @@ extern "C" int8_t backgroundTaskInit(void)
 
 extern "C" void backgroundTaskOnConnect(void)
 {
-  uint8_t msg[2] = {0xFC, true}; // FC is the tag for a radio connection state message to the robot
-  i2spiQueueMessage(msg, 2);
+  i2spiQueueMessage((u8*)"\xfc\x01", 2); // FC is the tag for a radio connection state message to the robot
   Anki::Cozmo::Face::FaceUnPrintf();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
@@ -195,6 +194,5 @@ extern "C" void backgroundTaskOnConnect(void)
 
 extern "C" void backgroundTaskOnDisconnect(void)
 {
-  uint8_t msg[2] = {0xFC, false}; // FC is the tag for a radio connection state message to the robot
-  i2spiQueueMessage(msg, 2);
+  i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
 }

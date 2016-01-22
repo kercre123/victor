@@ -5,7 +5,6 @@
  *
  **/
 
-#include <assert.h>
 #include <math.h>
 #include "anki/common/constantsAndMacros.h"
 #include "anki/cozmo/robot/hal.h"
@@ -77,9 +76,9 @@ namespace Anki {
     endPos_ = endPos;
     timeStep_ = fabs(timeStep);
 
-    assert(maxVel_ >= endVel_);
-    assert(accel_ > 0);
-    assert(timeStep_ > 0);
+    AnkiAssert(maxVel_ >= endVel_, 283);
+    AnkiAssert(accel_ > 0, 284);
+    AnkiAssert(timeStep_ > 0, 285);
 
     // Compute direction based on startPos and endPos
     // and use it to determine sign of maxVel and endVel.
