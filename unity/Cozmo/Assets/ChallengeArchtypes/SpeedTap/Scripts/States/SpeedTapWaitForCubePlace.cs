@@ -10,6 +10,7 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _SpeedTapGame.OpenGamePanel();
       _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);

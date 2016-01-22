@@ -16,11 +16,11 @@ MonoBehaviour:
   _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: speedTap.title
-  _ChallengeSubtitleLocKey: speedTap.subtitle
   _ChallengeDescriptionLocKey: speedTap.description
   _ChallengeIcon: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
-  _ChallengeKeyArt: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
+  _HowToPlayDialogContentPrefab: {fileID: 130530, guid: a2e53def1b8024870a878b8cb2e42ba4,
+    type: 2}
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}

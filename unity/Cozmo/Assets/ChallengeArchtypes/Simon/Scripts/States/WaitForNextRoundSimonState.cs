@@ -15,7 +15,7 @@ namespace Simon {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InitColorsAndSounds();
-      SimonGameNextRoundPanel nextRoundPanel = _GameInstance.ShowHowToPlaySlide("NextRound").GetComponent<SimonGameNextRoundPanel>();
+      SimonGameNextRoundPanel nextRoundPanel = _GameInstance.ShowGameStateSlide("NextRound").GetComponent<SimonGameNextRoundPanel>();
       nextRoundPanel.EnableContinueButton(true);
       nextRoundPanel.OnContinueButtonPressed += HandleContinuePressed;
       nextRoundPanel.SetNextPlayerText(_NextPlayer);

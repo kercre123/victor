@@ -70,6 +70,14 @@ public class ChallengeData : ScriptableObject {
     get { return _ChallengeReqs; }
   }
 
+
+  [SerializeField]
+  protected GameObject _HowToPlayDialogContentPrefab;
+
+  public GameObject HowToPlayDialogContentPrefab {
+    get { return _HowToPlayDialogContentPrefab; }
+  }
+
   // string path to MinigameConfig
   public MinigameConfigBase MinigameConfig;
 }

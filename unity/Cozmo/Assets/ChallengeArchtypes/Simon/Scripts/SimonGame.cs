@@ -32,7 +32,6 @@ namespace Simon {
     protected void InitializeMinigameObjects() { 
       DAS.Info(this, "Game Created");
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
-      InitialCubesState initCubeState = new InitialCubesState();
       if (Random.Range(0f, 1f) > 0.5f) {
         _FirstPlayer = PlayerType.Human;
       }
@@ -40,7 +39,7 @@ namespace Simon {
         _FirstPlayer = PlayerType.Cozmo;
       }
       State nextState = new WaitForNextRoundSimonState(_FirstPlayer);
-      initCubeState.InitialCubeRequirements(nextState, _Config.NumCubesRequired(), true, null);
+      InitialCubesState initCubeState = new InitialCubesState(nextState, _Config.NumCubesRequired(), null);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);

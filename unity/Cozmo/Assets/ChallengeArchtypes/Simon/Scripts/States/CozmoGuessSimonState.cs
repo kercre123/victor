@@ -14,7 +14,7 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.ShowHowToPlaySlide("WatchCozmoGuess");
+      _GameInstance.ShowGameStateSlide("WatchCozmoGuess");
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
       _ShouldWinGame = null;

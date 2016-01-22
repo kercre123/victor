@@ -68,9 +68,16 @@ namespace Anki {
       public AnkiButtonImage[] ButtonGraphics;
 
       public string Text {
-        get{ return _TextLabel.text; }
+        get {
+          if (_TextLabel == null) {
+            return null;
+          }
+          return _TextLabel.text;
+        }
         set { 
-          _TextLabel.text = value;
+          if (_TextLabel != null) {
+            _TextLabel.text = value;
+          }
         }
       }
 
@@ -120,9 +127,11 @@ namespace Anki {
 
       protected override void Start() {
         base.Start();
-        _TextDefaultPosition = _TextLabel.gameObject.transform.localPosition;
-        _TextPressedPosition = _TextDefaultPosition;
-        _TextPressedPosition.y += _TextLabelOffset;
+        if (_TextLabel != null) {
+          _TextDefaultPosition = _TextLabel.gameObject.transform.localPosition;
+          _TextPressedPosition = _TextDefaultPosition;
+          _TextPressedPosition.y += _TextLabelOffset;
+        }
         UpdateVisuals();
       }
 
@@ -234,8 +243,10 @@ namespace Anki {
           }
         }
 
-        _TextLabel.color = TextEnabledColor;
-        _TextLabel.transform.localPosition = _TextDefaultPosition;
+        if (_TextLabel != null) {
+          _TextLabel.color = TextEnabledColor;
+          _TextLabel.transform.localPosition = _TextDefaultPosition;
+        }
       }
 
       private void ShowPressedState() {
@@ -247,8 +258,11 @@ namespace Anki {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
           }
         }
-        _TextLabel.color = TextPressedColor;
-        _TextLabel.transform.localPosition = _TextPressedPosition;
+
+        if (_TextLabel != null) {
+          _TextLabel.color = TextPressedColor;
+          _TextLabel.transform.localPosition = _TextPressedPosition;
+        }
       }
 
       private void ShowDisabledState() {
@@ -260,8 +274,10 @@ namespace Anki {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
           }
         }
-        _TextLabel.color = TextDisabledColor;
-        _TextLabel.transform.localPosition = _TextDefaultPosition;
+        if (_TextLabel != null) {
+          _TextLabel.color = TextDisabledColor;
+          _TextLabel.transform.localPosition = _TextDefaultPosition;
+        }
       }
 
       private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor) {
