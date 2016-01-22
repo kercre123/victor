@@ -107,6 +107,21 @@
       ]
     },
     {
+      "Name": "Turn Off Cube Lights",
+      "Id": 9,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.TurnOffAllBlockLights, Assembly-CSharp"
+        }
+      ],
+      "ExitConditions": []
+    },
+    {
       "Name": "Goodnight",
       "Id": 8,
       "Sequencial": true,
@@ -165,7 +180,7 @@
       "Name": "Fade Volume To Zero",
       "Id": 7,
       "Sequencial": true,
-      "Final": false,
+      "Final": true,
       "FailOnError": false,
       "ExitOnActionsComplete": true,
       "Conditions": [],
@@ -183,21 +198,6 @@
           "TargetVolume": 0.0,
           "Duration": 6.0,
           "Curve": "Linear"
-        }
-      ],
-      "ExitConditions": []
-    },
-    {
-      "Name": "Turn Off Cube Lights",
-      "Id": 9,
-      "Sequencial": true,
-      "Final": true,
-      "FailOnError": false,
-      "ExitOnActionsComplete": true,
-      "Conditions": [],
-      "Actions": [
-        {
-          "$type": "ScriptedSequences.Actions.TurnOffAllBlockLights, Assembly-CSharp"
         }
       ],
       "ExitConditions": []
