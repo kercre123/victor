@@ -51,9 +51,11 @@ Build everything from the cozmo-game folder.
 
 ### Webots
 
-Webots is used for our robotics simulation environment. It is also used to run the engine on desktop/Mac when we connect to a physical robot. We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg).
+Webots is used for our robotics simulation environment. It is also used to run the engine on desktop/Mac when we connect to a physical robot.
 
-The Webots worlds can be found in cozmo-game/lib/anki/cozmo-engine/simulator/worlds
+We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg). You will need to get a license from IT.
+
+The Webots worlds can be found in /lib/anki/cozmo-engine/simulator/worlds
 
 Useful worlds:
 
