@@ -142,6 +142,7 @@ namespace Anki {
       
     }; // class IDockAction
     
+    
     // If not carrying anything, pops a wheelie off of the specified object
     class PopAWheelieAction : public IDockAction
     {
@@ -166,6 +167,7 @@ namespace Anki {
       virtual ActionResult Verify(Robot& robot) override;
       
     }; // class PopAWheelieAction
+    
     
     // "Docks" to the specified object at the distance specified
     class AlignWithObjectAction : public IDockAction
@@ -293,6 +295,7 @@ namespace Anki {
       IActionRunner*             _rollVerifyAction = nullptr;
       
     }; // class RollObjectAction
+
     
     class CrossBridgeAction : public IDockAction
     {
@@ -364,6 +367,5 @@ namespace Anki {
     }; // class MountChargerAction
   }
 }
-
 
 #endif /* ANKI_COZMO_DOCKACTIONS_H */

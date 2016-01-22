@@ -47,7 +47,6 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      
       // Get pose of carried object wrt robot
       Pose3d poseObjectWrtRobot;
       if (!object->GetPose().GetWithRespectTo(robot.GetPose(), poseObjectWrtRobot)) {
@@ -66,9 +65,6 @@ namespace Anki {
       
       return RESULT_OK;
     }
-    
-
-
     
 #pragma mark ---- DriveToObjectAction ----
     
@@ -165,7 +161,6 @@ namespace Anki {
         }
       }
       
-      
       if(possiblePreActionPoses.empty()) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
                           "ActionableObject %d did not return any pre-action poses with action type %d.",
@@ -239,7 +234,7 @@ namespace Anki {
       return result;
     } // GetPossiblePoses()
     
-    ActionResult DriveToObjectAction::InitHelper(Robot& robot, ActionableObject* object)
+    ActionResult DriveToObjectAction::InitHelper(ActionableObject* object)
     {
       ActionResult result = ActionResult::RUNNING;
       
@@ -277,7 +272,7 @@ namespace Anki {
         }
       } else {
         
-        result = GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition);
+        result = GetPossiblePoses(*_robot, object, possiblePoses, alreadyInPosition);
       }
       
       // In case we are re-running this action, make sure compound actions are cleared.
@@ -315,7 +310,6 @@ namespace Anki {
       
     } // InitHelper()
     
-    
     ActionResult DriveToObjectAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
@@ -335,13 +329,12 @@ namespace Anki {
       } else {
         
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
-        result = InitHelper(*_robot, object);
+        result = InitHelper(object);
         
       } // if/else object==nullptr
       
       return result;
     }
-    
     
     ActionResult DriveToObjectAction::CheckIfDone()
     {
@@ -388,7 +381,6 @@ namespace Anki {
             result = ActionResult::FAILURE_RETRY;
           }
         }
-        
       }
       
       return result;
@@ -462,7 +454,7 @@ namespace Anki {
           object->SetPose(_placementPose);
           
           // Call parent class's init helper
-          result = InitHelper(*_robot, object);
+          result = InitHelper(object);
           
           // Move the object back to where it was (being carried)
           object->SetPose(origObjectPose);
@@ -473,7 +465,6 @@ namespace Anki {
       return result;
       
     } // DriveToPlaceCarriedObjectAction::Init()
-    
     
     ActionResult DriveToPlaceCarriedObjectAction::CheckIfDone()
     {
@@ -574,7 +565,6 @@ namespace Anki {
       _isGoalSet = true;
       
       return RESULT_OK;
-      
     }
     
     const std::string& DriveToPoseAction::GetName() const
@@ -812,11 +802,6 @@ namespace Anki {
       VizManager::getInstance()->EraseAllPlannerObstacles(true);
       VizManager::getInstance()->EraseAllPlannerObstacles(false);
     }
-
-    
-
-
-
     
 #pragma mark ---- IDriveToInteractWithObjectAction ----
     
@@ -837,7 +822,6 @@ namespace Anki {
                                                      useManualSpeed);
       AddAction(_driveToObjectAction);
     }
-    
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
     
@@ -1004,7 +988,5 @@ namespace Anki {
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
     }
-
-    
   }
 }

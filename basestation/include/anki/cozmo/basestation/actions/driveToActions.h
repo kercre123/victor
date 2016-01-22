@@ -23,10 +23,6 @@ namespace Anki {
   
   namespace Cozmo {
     
-    // Forward Declarations:
-    class Robot;
-    class Animation;
-    
     class DriveToPoseAction : public IAction
     {
     public:
@@ -193,13 +189,12 @@ namespace Anki {
                      const std::string& stopSound);
       void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
       
-      
     protected:
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
-      ActionResult InitHelper(Robot& robot, ActionableObject* object);
+      ActionResult InitHelper(ActionableObject* object);
       ActionResult GetPossiblePoses(const Robot& robot, ActionableObject* object,
                                     std::vector<Pose3d>& possiblePoses,
                                     bool& alreadyInPosition);
@@ -234,6 +229,7 @@ namespace Anki {
       _driveToPoseAction->SetDriveSoundSpacing(min_sec, max_sec);
     }
     
+    
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
@@ -255,10 +251,6 @@ namespace Anki {
       bool   _useExactRotation;
       
     }; // DriveToPlaceCarriedObjectAction()
-    
-    
-
-
 
     
     // Interface for all classes below which first drive to an object and then
@@ -333,7 +325,6 @@ namespace Anki {
     };
     
     
-    
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then picking it up.
     // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
@@ -384,7 +375,6 @@ namespace Anki {
       }
       
     };
-    
     
     
     // Common compound action for driving to an object, visually verifying we
@@ -445,6 +435,7 @@ namespace Anki {
       
     };
     
+    
     // Common compound action for driving to an object and popping a wheelie off of it
     // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
     //                            approach angle closest to approachAngle_rad is considered.
@@ -466,7 +457,6 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
         _actions.back().second->GetCompletionUnion(completionUnion);
       }
-      
     };
   
 
@@ -481,6 +471,7 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
       
     };
+    
     
     class DriveToAndMountChargerAction : public CompoundActionSequential
     {

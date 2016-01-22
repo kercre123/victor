@@ -53,7 +53,6 @@ namespace Anki {
       }
     }
 
-
     #pragma mark ---- IDockAction ----
 
     IDockAction::IDockAction(ObjectID objectID, const bool useManualSpeed)
@@ -156,7 +155,6 @@ namespace Anki {
       
       //const f32 closestDist = sqrtf(closestDistSq);
       
-      
       if (_doNearPredockPoseCheck) {
         f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(_robot->GetPose(), dockObject,
                                                                         _preActionPoseAngleTolerance);
@@ -169,7 +167,6 @@ namespace Anki {
           return ActionResult::FAILURE_RETRY;
         }
       }
-      
       
       if(SelectDockAction(*_robot, dockObject) != RESULT_OK) {
         PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
@@ -255,11 +252,7 @@ namespace Anki {
       } else {
         return faceObjectResult;
       }
-      
-      
-      
     } // Init()
-
 
     ActionResult IDockAction::CheckIfDone()
     {
@@ -467,7 +460,6 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    
     ActionResult PopAWheelieAction::Verify(Robot& robot)
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
@@ -582,7 +574,6 @@ namespace Anki {
       
     } // Verify()
     
-    
 #pragma mark ---- PickupObjectAction ----
     
     PickupObjectAction::PickupObjectAction(ObjectID objectID, const bool useManualSpeed)
@@ -677,7 +668,6 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    
     ActionResult PickupObjectAction::Verify(Robot& robot)
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
@@ -740,7 +730,6 @@ namespace Anki {
               objectInOriginalPose = object.second;
               break;
             }
-            
           }
           
           if(objectInOriginalPose != nullptr)
@@ -778,12 +767,10 @@ namespace Anki {
           break;
           
       } // switch(_dockAction)
-      
+
       return result;
       
     } // Verify()
-    
-    
     
 #pragma mark ---- PlaceRelObjectAction ----
     
@@ -988,7 +975,6 @@ namespace Anki {
       
     } // Verify()
     
-    
 #pragma mark ---- RollObjectAction ----
     
     RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
@@ -1087,7 +1073,6 @@ namespace Anki {
       
       return RESULT_OK;
     } // SelectDockAction()
-    
     
     ActionResult RollObjectAction::Verify(Robot& robot)
     {
@@ -1222,7 +1207,6 @@ namespace Anki {
       return ActionResult::SUCCESS;
     } // Verify()
     
-    
 #pragma mark ---- MountChargerAction ----
     
     MountChargerAction::MountChargerAction(ObjectID chargerID, const bool useManualSpeed)
@@ -1307,9 +1291,6 @@ namespace Anki {
                        "Robot has completed crossing a bridge.");
       return ActionResult::SUCCESS;
     } // Verify()
-    
-
-
   }
 }
 

@@ -292,7 +292,6 @@ namespace Anki {
       return inPosition;
     }
     
-    
     ActionResult MoveHeadToAngleAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
@@ -660,7 +659,6 @@ namespace Anki {
       }
     }
     
-    
     void PanAndTiltAction::SetTiltTolerance(const Radians& angleTol_rad)
     {
       // If 0, use default value
@@ -730,8 +728,6 @@ namespace Anki {
     {
       return _compoundAction->Update();
     }
-    
-
     
 #pragma mark ---- FaceObjectAction ----
     
@@ -917,7 +913,6 @@ namespace Anki {
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     
-    
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
     PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
@@ -967,7 +962,6 @@ namespace Anki {
       return result;
       
     } // CheckPreconditions()
-    
     
     ActionResult PlaceObjectOnGroundAction::CheckIfDone()
     {
@@ -1091,9 +1085,6 @@ namespace Anki {
       
     } // Update()
     
-
-
-    
 #pragma mark ---- FacePoseAction ----
     
     FacePoseAction::FacePoseAction(const Pose3d& pose, Radians maxTurnAngle)
@@ -1182,8 +1173,6 @@ namespace Anki {
       return name;
     }
     
-    
-    
 #pragma mark ---- VisuallyVerifyObjectAction ----
     
     VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(ObjectID objectID,
@@ -1203,7 +1192,6 @@ namespace Anki {
                                     + "Action");
       return name;
     }
-    
     
     ActionResult VisuallyVerifyObjectAction::Init()
     {
@@ -1248,7 +1236,6 @@ namespace Anki {
         return moveLiftInitResult;
       }
     }
-    
     
     ActionResult VisuallyVerifyObjectAction::CheckIfDone()
     {
@@ -1339,11 +1326,6 @@ namespace Anki {
       return actionRes;
       
     } // VisuallyVerifyObjectAction::CheckIfDone()
-    
-
-    
-    
-    
     
 #pragma mark ---- WaitAction ----
     
@@ -1659,9 +1641,5 @@ namespace Anki {
     {
       return _isCompleted ? ActionResult::SUCCESS : ActionResult::RUNNING;
     }
-    
-
-
-
   }
 }

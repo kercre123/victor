@@ -25,10 +25,6 @@
 namespace Anki {
   
   namespace Cozmo {
-    
-    // Forward Declarations:
-    class Robot;
-    class Animation;
 
     // Turn in place by a given angle, wherever the robot is when the action
     // is executed.
@@ -116,6 +112,7 @@ namespace Anki {
       
     }; // class DriveStraightAction
     
+    
     class PanAndTiltAction : public IAction
     {
     public:
@@ -178,6 +175,7 @@ namespace Anki {
       
     }; // class PanAndTiltAction
     
+    
     class MoveHeadToAngleAction : public IAction
     {
     public:
@@ -231,6 +229,7 @@ namespace Anki {
       bool        _motionStarted = false;
       
     };  // class MoveHeadToAngleAction
+    
     
     // Set the lift to specified height with a given tolerance. Note that settign
     // the tolerance too small will likely lead to an action timeout.
@@ -289,7 +288,6 @@ namespace Anki {
     }; // class MoveLiftToHeightAction
     
 
-    
     class PlaceObjectOnGroundAction : public IAction
     {
     public:
@@ -335,6 +333,7 @@ namespace Anki {
       
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
     };
+    
     
     // This is just a selector for AscendOrDescendRampAction or
     // CrossBridgeAction, depending on the object's type.
@@ -388,6 +387,7 @@ namespace Anki {
       Radians   _maxTurnAngle;
       
     }; // class FacePoseAction
+    
     
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
@@ -470,8 +470,6 @@ namespace Anki {
     }; // class VisuallyVerifyObjectAction
     
     
-    
-    
     // Waits for a specified amount of time in seconds, from the time the action
     // is begun. Returns RUNNING while waiting and SUCCESS when the time has
     // elapsed.
@@ -493,6 +491,7 @@ namespace Anki {
       std::string _name;
       
     };
+    
     
     class PlayAnimationAction : public IAction
     {
@@ -549,6 +548,7 @@ namespace Anki {
       
     }; // class PlayAnimationGroupAction
     
+    
     class DeviceAudioAction : public IAction
     {
     public:
@@ -590,8 +590,6 @@ namespace Anki {
       Audio::GameStateType      _state          = Audio::GameStateType::Invalid;
       
     }; // class PlayAudioAction
-
-    
   }
 }
 
