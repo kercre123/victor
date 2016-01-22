@@ -73,7 +73,7 @@ public class DailyGoalPanel : BaseView {
       Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
       possibleStats[targetStat] = false;
       goals[targetStat] = Random.Range(min, max);
-      CreateGoalBadge(targetStat, goals[targetStat], 0);
+      CreateGoalCell(targetStat, goals[targetStat], 0);
     }
 
     _TotalProgressBar.SetProgress(0f);
@@ -84,7 +84,7 @@ public class DailyGoalPanel : BaseView {
     for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
       var targetStat = (Anki.Cozmo.ProgressionStatType)i;
       if (goals[targetStat] > 0) {
-        CreateGoalBadge(targetStat, goals[targetStat], progress[targetStat]);
+        CreateGoalCell(targetStat, goals[targetStat], progress[targetStat]);
       }
     }
     _TotalProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(progress, goals));
@@ -92,7 +92,7 @@ public class DailyGoalPanel : BaseView {
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
   // Currently this will be additive so if multiple Goals are created with the same required type, they will be combined
-  public GoalCell CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
+  public GoalCell CreateGoalCell(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
     DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     RobotEngineManager.Instance.DailyGoals[(int)type] += target;
