@@ -269,7 +269,7 @@ namespace Cozmo {
         
         // Wait for initialization to complete (i.e. Matlab to start up, if needed)
         while(!_visionSystem->IsInitialized()) {
-          usleep(500);
+          std::this_thread::sleep_for(std::chrono::microseconds(500));
         }
         
         if(_runMode == RunMode::Asynchronous) {
@@ -471,7 +471,7 @@ namespace Cozmo {
     while (_running) {
       
       if(_paused) {
-        usleep(100);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
         continue;
       }
       
@@ -507,7 +507,7 @@ namespace Cozmo {
         _nextImg = {};
         Unlock();
       } else {
-        usleep(100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
       }
       
     } // while(_running)
