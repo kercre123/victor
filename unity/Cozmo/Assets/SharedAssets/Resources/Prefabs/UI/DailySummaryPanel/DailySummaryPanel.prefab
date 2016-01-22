@@ -969,6 +969,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Current
+  _AllUppercase: 0
 --- !u!114 &11430796
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1059,6 +1060,8 @@ MonoBehaviour:
   _CurrentFriendshipLevelBottom: {fileID: 11467842}
   _NextFriendshipLevelTop: {fileID: 11483090}
   _NextFriendshipLevelBottom: {fileID: 11464100}
+  _FriendshipFormulaConfig: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
+    type: 2}
 --- !u!114 &11433650
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1323,6 +1326,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Next
+  _AllUppercase: 0
 --- !u!114 &11465290
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1355,6 +1359,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '#dailySummary.title'
+  _AllUppercase: 0
 --- !u!114 &11467398
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1405,6 +1410,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Next
+  _AllUppercase: 0
 --- !u!114 &11473066
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1475,6 +1481,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Current
+  _AllUppercase: 0
 --- !u!114 &11486132
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2397,7 +2404,12 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _FriendshipFormulaConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 136404}
