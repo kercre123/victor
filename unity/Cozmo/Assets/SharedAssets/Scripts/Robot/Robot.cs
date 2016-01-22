@@ -61,7 +61,7 @@ public class Robot : IDisposable {
 
     public static float MessageDelay = 0f;
 
-    public const uint FOREVER = 2147483647;
+    public const uint FOREVER = uint.MaxValue;
   }
 
   public delegate void RobotCallback(bool success);
