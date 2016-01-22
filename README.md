@@ -14,8 +14,6 @@ Install CMAKE using [brew](http://brew.sh/).
 
     brew install cmake
 
-The robotics simulation environment we use is Webots. We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg).
-
 ### coretech-external
 
 Get the latest coretech-external binaries [here](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). The latest results click Artifacts->View and download the .tar.gz
@@ -26,7 +24,19 @@ Have your paths (eg. ~/.bash_profile) setup correctly it must include the line:
 
 Once you set your paths you need to restart your terminal for the settings to take effect. Alternatively you can refresh your environment:
 
-source ~/.bash_profile
+    source ~/.bash_profile
+
+### Unity
+
+We are using [Unity 5.2.2f1](http://unity3d.com/get-unity/download/archive).
+
+A dev scene that includes a simple list of challenges for Cozmo. Used in a development environment.
+
+    <path-to-cozmo-repository>/Assets/Scenes/Dev.unity
+
+The production scene used for when we deploy. This is where the final experience will live.
+
+    <path-to-cozmo-repository>/Assets/Scenes/HomeHub.unity
 
 ### Building cozmo-game
 
@@ -41,6 +51,8 @@ Build everything from the cozmo-game folder.
 
 ### Webots
 
+Webots is used for our robotics simulation environment. It is also used to run the engine on desktop/Mac when we connect to a physical robot. We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg).
+
 The Webots worlds can be found in cozmo-game/lib/anki/cozmo-engine/simulator/worlds
 
 Useful worlds:
@@ -52,19 +64,6 @@ Useful worlds:
  * PatternPlay.wbt - Simulated environment for a virtual robot. Useful for using Unity to run simulated games. You can create your own versions of this ideal for the game you are testing.
 
  * remoteAnimationWorld.wbt - Used by the animation tool to see your animation on a simulated robot.
-
-### Unity
-
-We are using [Unity 5.2.2f1](http://unity3d.com/get-unity/download/archive).
-
-A dev scene that includes a simple list of challenges for Cozmo. Used in a development environment.
-
-    <path-to-cozmo-repository>/Assets/Scenes/Dev.unity
-
-The production scene used for when we deploy. This is where the final experience will live.
-
-    <path-to-cozmo-repository>/Assets/Scenes/HomeHub.unity
-
 
 # Optional Info
 
@@ -102,23 +101,8 @@ ios-deploy does not seem to be 100% reliable, nor does it have great error messa
 
 6. ios-deploy is a popular enough program that google can usually lead you to an answer.
 
-### lldb Commands
-
- * Control-C seems to just crash the ios app without fully closing it.
-
- * Type `quit` or `exit` and hit enter, then `y` and hit enter to confirm.
-
- * ios-deploy also adds the `safequit` command, but sometimes it only kills the process and you have to `quit` afterward.
-
- * Note that all these commands work when logs are spamming, even if they get cut off.
-
- * Sometimes lldb hangs. In that case, use activity monitor to force quit lldb or open a new terminal and type `pkill lldb`.
-
- * Sometimes it hides console input after it closes. In that case, you can type `reset` and hit enter.
-
-Here's a good link for basic commands: [I don't really want to learn lldb, I just want to fix a crash.](http://meowni.ca/posts/unscary-lldb/)
-
 ### webots orphaned processes
 
- * happens often when simulator crashes
+ * Happens often when simulator crashes
  * `ps -ef | grep simulator\/controllers | cut -d ' ' -f 4 | xargs kill`
+ * You can also search for orphaned processes in Activity Monitor.
