@@ -45,7 +45,10 @@ namespace HAL {
       const uint8_t rind = txRind;
       uint8_t wind = txWind;
       const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
-      while (reliable && (available < (size + 4))); // Wait for room for message plus tag plus header plus one more so we can tell empty from full
+      while (available < (size + 4))
+			{ // Wait for room for message plus tag plus header plus one more so we can tell empty from full
+				if (!reliable) return false;
+			}
       const uint16_t sizeWHeader = size+1;
       const u8* msgPtr = (u8*)buffer;
       txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
