@@ -7,11 +7,11 @@ using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
 public enum CubeType {
-  UNKNOWN = -1,
-  LIGHT_CUBE,
-  BULLS_EYE,
-  FLAG,
-  FACE,
+  Unknown = -1,
+  LightCube,
+  BullsEye,
+  Flag,
+  Face,
   Count
 }
 
@@ -66,9 +66,9 @@ public class ObservedObject {
 
   protected Robot RobotInstance { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  public bool IsActive { get { return CubeType == CubeType.LIGHT_CUBE; } }
+  public bool IsActive { get { return CubeType == CubeType.LightCube; } }
 
-  public bool IsFace { get { return CubeType == CubeType.FACE; } }
+  public bool IsFace { get { return CubeType == CubeType.Face; } }
 
   public const float kRemoveDelay = 0.33f;
 
@@ -93,16 +93,16 @@ public class ObservedObject {
     SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 
     if (objectFamily == ObjectFamily.LightCube) {
-      CubeType = CubeType.LIGHT_CUBE;
+      CubeType = CubeType.LightCube;
     }
     else if (objectType == ObjectType.Block_BULLSEYE2 || objectType == ObjectType.Block_BULLSEYE2_INVERTED) {
-      CubeType = CubeType.BULLS_EYE;
+      CubeType = CubeType.BullsEye;
     }
     else if (objectType == ObjectType.Block_FLAG || objectType == ObjectType.Block_FLAG2 || objectType == ObjectType.Block_FLAG_INVERTED) {
-      CubeType = CubeType.FLAG;
+      CubeType = CubeType.Flag;
     }
     else {
-      CubeType = CubeType.UNKNOWN;
+      CubeType = CubeType.Unknown;
       DAS.Warn(this, "Object " + ID + " with type " + objectType + " is unsupported"); 
     }
 

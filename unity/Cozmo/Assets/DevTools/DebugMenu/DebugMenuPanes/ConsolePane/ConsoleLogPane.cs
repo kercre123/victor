@@ -27,7 +27,7 @@ public class ConsoleLogPane : MonoBehaviour {
     }
   }
 
-  public delegate void ConsoleLogToggleChangedHandler(LogPacket.ELogKind logKind,bool newIsOnValue);
+  public delegate void ConsoleLogToggleChangedHandler(LogPacket.ELogKind logKind, bool newIsOnValue);
 
   public event ConsoleLogToggleChangedHandler ConsoleLogToggleChanged;
 
@@ -147,23 +147,23 @@ public class ConsoleLogPane : MonoBehaviour {
   }
 
   public void OnInfoToggleChanged(bool newValue) {
-    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.INFO, newValue);
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.Info, newValue);
   }
 
   public void OnWarningToggleChanged(bool newValue) {
-    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.WARNING, newValue);
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.Warning, newValue);
   }
 
   public void OnErrorToggleChanged(bool newValue) {
-    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.ERROR, newValue);
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.Error, newValue);
   }
 
   public void OnEventToggleChanged(bool newValue) {
-    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.EVENT, newValue);
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.Event, newValue);
   }
 
   public void OnDebugToggleChanged(bool newValue) {
-    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.DEBUG, newValue);
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.Debug, newValue);
   }
 
   #endregion
