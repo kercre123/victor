@@ -35,6 +35,9 @@ namespace Vision {
     ImageBase(s32 nrows, s32 ncols, T* data) : Array2d<T>(nrows, ncols, data) { }
     ImageBase(Array2d<T>&& array) : Array2d<T>(array) { }
     
+    // Read from file
+    Result Load(const std::string& filename);
+    
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<T>
     ImageBase(cv::Mat_<T>& cvMat) : Array2d<T>(cvMat) { }

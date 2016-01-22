@@ -25,6 +25,21 @@ namespace Vision {
 #pragma mark --- ImageBase ---
   
   template<typename T>
+  Result ImageBase<T>::Load(const std::string& filename)
+  {
+    
+    this->get_CvMat_() = cv::imread(filename, (GetNumChannels() == 1 ?
+                                               CV_LOAD_IMAGE_GRAYSCALE :
+                                               CV_LOAD_IMAGE_COLOR));
+    
+    if(IsEmpty()) {
+      return RESULT_FAIL;
+    } else {
+      return RESULT_OK;
+    }
+  }
+  
+  template<typename T>
   ImageBase<T>& ImageBase<T>::operator= (const ImageBase<T> &other)
   {
     SetTimestamp(other.GetTimestamp());
