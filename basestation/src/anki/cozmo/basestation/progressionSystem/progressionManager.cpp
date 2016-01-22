@@ -75,7 +75,7 @@ void ProgressionManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageG
         case ExternalInterface::ProgressionMessageUnionTag::AddToProgressionStat:
         {
           const Anki::Cozmo::ExternalInterface::AddToProgressionStat& msg = progressionMessage.Get_AddToProgressionStat();
-          GetStat(msg.statType).SetValue(msg.deltaVal);
+          GetStat(msg.statType).Add(msg.deltaVal);
           break;
         }
         case ExternalInterface::ProgressionMessageUnionTag::SetFriendshipLevel:
