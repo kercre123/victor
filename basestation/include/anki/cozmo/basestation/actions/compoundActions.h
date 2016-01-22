@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_COMPOUND_ACTIONS_H
 #define ANKI_COZMO_COMPOUND_ACTIONS_H
 
-#include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 
 namespace Anki {
   namespace Cozmo {

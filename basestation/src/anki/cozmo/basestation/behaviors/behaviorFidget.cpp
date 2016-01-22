@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"

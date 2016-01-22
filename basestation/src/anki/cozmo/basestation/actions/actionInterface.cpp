@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

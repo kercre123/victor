@@ -18,7 +18,7 @@
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
-#include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
 
 #include "clad/types/actionTypes.h"
 

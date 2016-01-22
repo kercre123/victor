@@ -148,6 +148,12 @@ namespace Anki {
       Robot* _robot;
       
     }; // class ActionList
+    
+    inline size_t ActionList::GetQueueLength(SlotHandle atSlot)
+    {
+      return _queues[atSlot].Length();
+    }
+    
   } // namespace Cozmo
 } // namespace Anki
 

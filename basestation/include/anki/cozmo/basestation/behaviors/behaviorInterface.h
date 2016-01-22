@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
-#include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "util/random/randomGenerator.h"

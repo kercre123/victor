@@ -11,8 +11,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/cozmo/basestation/actionContainers.h"
-#include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 
 #include "util/logging/logging.h"
 
@@ -97,11 +97,6 @@ namespace Anki {
     {
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueAtFront(action, numRetries);
-    }
-    
-    inline size_t ActionList::GetQueueLength(SlotHandle atSlot)
-    {
-      return _queues[atSlot].Length();
     }
     
     bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
@@ -461,16 +456,17 @@ namespace Anki {
     
     void ActionQueue::Print() const
     {
-      
       if(IsEmpty()) {
         PRINT_STREAM_INFO("ActionQueue.Print", "ActionQueue is empty.\n");
       } else {
-        std::stringstream ss;
-        ss << "ActionQueue with " << _queue.size() << " actions: ";
+//        std::stringstream ss;
+//        ss << "ActionQueue with " << _queue.size() << " actions: ";
+        PRINT_STREAM_INFO("ActionQueue.Print", "ActionQueue contains " << _queue.size() << " actions:\n");
         for(auto action : _queue) {
-          ss << action->GetName() << ", ";
+//          ss << action->GetName() << ", ";
+          PRINT_STREAM_INFO("ActionList.Print", action->GetName() << ", ");
         }
-        PRINT_STREAM_INFO("ActionQueue.Print", ss.str());
+//        PRINT_STREAM_INFO("ActionQueue.Print", ss.str());
       }
       
     } // Print()

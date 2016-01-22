@@ -12,8 +12,8 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
-#include "anki/cozmo/basestation/trackingActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"

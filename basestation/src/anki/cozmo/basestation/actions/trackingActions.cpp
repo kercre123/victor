@@ -12,8 +12,8 @@
  **/
 
 
-#include "anki/cozmo/basestation/trackingActions.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 

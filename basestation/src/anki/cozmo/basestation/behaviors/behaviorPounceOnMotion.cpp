@@ -15,7 +15,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
