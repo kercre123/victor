@@ -139,39 +139,43 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
 
-    auto okaoDetectionMode = DETECTION_MODE_DEFAULT;
     switch(_detectionMode)
     {
       case FaceTracker::DetectionMode::Video:
-        okaoDetectionMode = DETECTION_MODE_MOVIE;
+      {
+        _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_MOVIE, MaxFaces);
+        
+        // Adjust some detection parameters
+        // TODO: Expose these for setting at runtime
+        okaoResult = OKAO_DT_MV_SetDelayCount(_okaoDetectorHandle, 1); // have to see faces for more than one frame
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetDelayCountFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+        
+        okaoResult = OKAO_DT_MV_SetSearchCycle(_okaoDetectorHandle, 2, 2, 5);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetSearchCycleFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+
         break;
+      }
+        
       case FaceTracker::DetectionMode::SingleImage:
-        okaoDetectionMode = DETECTION_MODE_STILL;
+        _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_STILL, MaxFaces);
         break;
+        
       default:
         PRINT_NAMED_ERROR("FaceTrackerImpl.Init.UnknownDetectionMode",
                           "Requested mode = %hhu", _detectionMode);
         return RESULT_FAIL;
     }
-    _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, okaoDetectionMode, MaxFaces);
+    
         
     if(NULL == _okaoDetectorHandle) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoDetectionHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
-    }
-    
-    // Adjust some detection parameters
-    // TODO: Expose these for setting at runtime
-    okaoResult = OKAO_DT_MV_SetDelayCount(_okaoDetectorHandle, 1); // have to see faces for more than one frame
-    if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetDelayCountFailed", "");
-      return RESULT_FAIL_INVALID_PARAMETER;
-    }
-    
-    okaoResult = OKAO_DT_MV_SetSearchCycle(_okaoDetectorHandle, 2, 2, 5);
-    if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetSearchCycleFailed", "");
-      return RESULT_FAIL_INVALID_PARAMETER;
     }
     
     okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_HALF_PROFILE, ROLL_ANGLE_ULR45);
