@@ -15,7 +15,7 @@
 
 
 #include "anki/common/basestation/math/quad.h"
-
+#include "navMemoryMapTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -32,15 +32,11 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   virtual ~INavMemoryMap() {}
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Object information
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   // add a quad that is clear of obstacles
   virtual void AddClearQuad(const Quad2f& quad) = 0;
 
   // add a quad representing an obstacle
-  virtual void AddObstacleQuad(const Quad2f& quad) = 0;
+  virtual void AddObstacleQuad(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType) = 0;
 
   // add a quad representing a cliff
   virtual void AddCliffQuad(const Quad2f& quad) = 0;

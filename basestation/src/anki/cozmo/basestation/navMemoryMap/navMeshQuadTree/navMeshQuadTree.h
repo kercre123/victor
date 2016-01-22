@@ -13,7 +13,9 @@
 #define ANKI_COZMO_NAV_MESH_QUAD_TREE_H
 
 #include "navMeshQuadTreeNode.h"
+#include "navMeshQuadTreeProcessor.h"
 
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
 #include "anki/common/basestation/math/point.h"
 
 namespace Anki {
@@ -28,8 +30,9 @@ public:
   // Initialization
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // constructor
+  // constructor/destructor
   NavMeshQuadTree();
+  ~NavMeshQuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -46,7 +49,7 @@ public:
   void AddClearQuad(const Quad2f& quad);
   
   // notify the navmesh of an obstacle
-  void AddObstacle(const Quad2f& quad);
+  void AddObstacle(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType);
 
   // notify the navmesh of a cliff
   void AddCliff(const Quad2f& quad);
@@ -67,7 +70,10 @@ private:
   // set to true if data has changed since last time we send to gfx
   mutable bool _gfxDirty;
 
-  // TODO may need to create more parents as the space covered outgrows the root
+  // processor for this quadtree
+  NavMeshQuadTreeProcessor _processor;
+
+  // current root of the tree. It expands as needed
   NavMeshQuadTreeNode _root;
   
 }; // class

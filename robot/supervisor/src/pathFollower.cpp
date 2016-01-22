@@ -5,7 +5,6 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "speedController.h"
-#include <assert.h>
 #include <math.h>
 #include <float.h>
 #include "trig_fast.h"
@@ -148,7 +147,7 @@ namespace Anki
 
       u8 GetClosestSegment(const f32 x, const f32 y, const f32 angle)
       {
-        assert(path_.GetNumSegments() > 0);
+        AnkiAssert(path_.GetNumSegments() > 0, 286);
 
         Planning::SegmentRangeStatus res;
         f32 distToSegment, angError;
@@ -298,7 +297,7 @@ namespace Anki
         lookaheadX = x;
         lookaheadY = y;
 
-        assert(Planning::PST_LINE == path_[currPathSegment_].GetType() || Planning::PST_ARC == path_[currPathSegment_].GetType());
+        AnkiAssert(Planning::PST_LINE == path_[currPathSegment_].GetType() || Planning::PST_ARC == path_[currPathSegment_].GetType(), 287);
 
         // Compute lookahead position
         if (LOOK_AHEAD_DIST_MM != 0) {
