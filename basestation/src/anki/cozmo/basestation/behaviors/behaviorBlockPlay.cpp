@@ -502,10 +502,24 @@ namespace Cozmo {
             PickupObjectAction* pickupAction = new PickupObjectAction(_objectToPickUp);
             pickupAction->SetDoNearPredockPoseCheck(false);
             StartActing(robot, pickupAction);
+            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.Pickup.Direct",
+                             "orientation diff = %f (need < %f), angle diff = %f (need < %f)",
+                             std::fabsf( std::fmodf((blockOrientation - robotOrientation).ToFloat(), PIDIV2_F)),
+                             _robotObjectOrientationDiffThreshForDirectPickup,
+                             std::fabsf((robotToBlockOrientation - robotOrientation).ToFloat()),
+                             _angleToObjectThreshForDirectPickup);
+                             
           } else {
             DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(_objectToPickUp, _motionProfile);
             SetDriveToObjectSounds(pickupAction);
             StartActing(robot, pickupAction);
+
+            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.Pickup.Drive",
+                             "orientation diff = %f (need < %f), angle diff = %f (need < %f)",
+                             std::fabsf( std::fmodf((blockOrientation - robotOrientation).ToFloat(), PIDIV2_F)),
+                             _robotObjectOrientationDiffThreshForDirectPickup,
+                             std::fabsf((robotToBlockOrientation - robotOrientation).ToFloat()),
+                             _angleToObjectThreshForDirectPickup);
           }
         }
         break;
@@ -1282,6 +1296,21 @@ namespace Cozmo {
                                      "pre-dock fail, trying again");
               PlayAnimation(robot, "ID_react2block_align_fail");
               SetCurrState(State::PlacingBlock);
+              _isActing = false;
+              break;
+            }
+
+            case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
+            {
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                     "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
+                                     "failed to visually verify before placement docking, searching for cube");
+              PlayAnimation(robot, "ID_react2block_align_fail");
+
+              // search for the block, but hold a bit first in case we see it
+              _missingBlockFoundState = State::PlacingBlock;
+              _holdUntilTime = currentTime_sec + 0.75f;
+              SetCurrState(State::SearchingForMissingBlock);
               _isActing = false;
               break;
             }

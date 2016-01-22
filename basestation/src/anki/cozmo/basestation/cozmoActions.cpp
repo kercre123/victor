@@ -2129,6 +2129,12 @@ namespace Anki {
                                   preActionPose.GetTranslation().y());
         const Point2f dist = (currentXY - preActionXY);
         const float distSq = dist.LengthSq();
+
+        PRINT_NAMED_DEBUG("IDockAction.Init.CheckPoint",
+                          "considering point (%f, %f) dist = %f",
+                          dist.x(), dist.y(),
+                          dist.Length());
+        
         if(distSq < closestDistSq) {
           closestPoint = dist.GetAbs();
           closestIndex  = index;
@@ -2144,20 +2150,22 @@ namespace Anki {
       
       //const f32 closestDist = sqrtf(closestDistSq);
       
+      // by default, even if we aren't checking for pre-dock poses, we shouldn't be too far away, otherwise we
+      // may be selecting a different marker / face to dock with
+      f32 preActionPoseDistThresh = DEFAULT_PREDOCK_POSE_DISTANCE_MM * 1.1f;
       
       if (_doNearPredockPoseCheck) {
-        f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), dockObject,
-                                                                        _preActionPoseAngleTolerance);
-        
-        if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
-          PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
-                           "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
-                           closestPoint.x(), closestPoint.y());
-          _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
-          return ActionResult::FAILURE_RETRY;
-        }
+        preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), dockObject,
+                                                                    _preActionPoseAngleTolerance);
       }
-      
+        
+      if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
+        PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
+                         "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
+                         closestPoint.x(), closestPoint.y());
+        _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
+        return ActionResult::FAILURE_RETRY;
+      }      
     
       if(SelectDockAction(robot, dockObject) != RESULT_OK) {
         PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
