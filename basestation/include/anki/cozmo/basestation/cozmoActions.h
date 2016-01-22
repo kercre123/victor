@@ -1303,12 +1303,14 @@ namespace Anki {
       
       virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
+      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
+
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot& robot) override;
-      
+
       std::string               _animName;
       std::string               _name;
       u32                       _numLoops;
