@@ -1080,9 +1080,6 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.ClearAllObjects = ClearAllObjectsMessage;
     RobotEngineManager.Instance.SendMessage();
     Reset();
-    
-    SetLiftHeight(0f);
-    SetHeadAngle();
   }
 
   public void VisionWhileMoving(bool enable) {
