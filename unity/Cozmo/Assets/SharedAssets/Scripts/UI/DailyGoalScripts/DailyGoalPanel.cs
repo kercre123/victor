@@ -31,6 +31,8 @@ public class DailyGoalPanel : BaseView {
 
   // Config file for friendship progression
   private FriendshipProgressionConfig _Config;
+  [SerializeField]
+  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
 
   void Awake() {
@@ -73,6 +75,8 @@ public class DailyGoalPanel : BaseView {
       goals[targetStat] = Random.Range(min, max);
       CreateGoalBadge(targetStat, goals[targetStat], 0);
     }
+
+    _TotalProgressBar.SetProgress(0f);
     return goals;
   }
 
@@ -83,6 +87,7 @@ public class DailyGoalPanel : BaseView {
         CreateGoalBadge(targetStat, goals[targetStat], progress[targetStat]);
       }
     }
+    _TotalProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(progress, goals));
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
@@ -112,7 +117,6 @@ public class DailyGoalPanel : BaseView {
   protected override void CleanUp() {
     for (int i = 0; i < _GoalCells.Count; i++) {
       _GoalCells[i].OnProgChanged -= UpdateTotalProgress;
-      Destroy(_GoalCells[i].gameObject);
     }
     _GoalCells.Clear();
   }
