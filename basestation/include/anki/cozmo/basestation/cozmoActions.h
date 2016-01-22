@@ -588,7 +588,7 @@ namespace Anki {
       // Max amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
       // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
+      virtual f32 GetWaitToVerifyTime() const { return 0.5f; }
       
       ObjectID                _objectID;
       Vision::Marker::Code    _whichCode;
