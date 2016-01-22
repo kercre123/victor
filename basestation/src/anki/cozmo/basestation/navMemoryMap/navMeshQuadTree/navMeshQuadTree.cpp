@@ -9,6 +9,7 @@
  * Copyright: Anki, Inc. 2015
  **/
 #include "navMeshQuadTree.h"
+#include "navMeshQuadTreeTypes.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
@@ -19,15 +20,22 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kRenderNavMeshQuadTree, "NavMeshQuadTree", true);
-CONSOLE_VAR(bool, kRenderLastAddedQuad  , "NavMeshQuadTree", false);
+CONSOLE_VAR(bool, kRenderNavMeshQuadTree         , "NavMeshQuadTree", true);
+CONSOLE_VAR(bool, kRenderNavMeshQuadTreeProcessor, "NavMeshQuadTree", true);
+CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTree::NavMeshQuadTree()
 : _gfxDirty(true)
-, _root({0,0,1}, 256, 4, NavMeshQuadTreeNode::EContentType::Unknown)
+, _root({0,0,1}, 256, 4, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
 {
+  _processor.SetRoot( &_root );
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NavMeshQuadTree::~NavMeshQuadTree()
+{
+  _processor.SetRoot(nullptr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,9 +47,17 @@ void NavMeshQuadTree::Draw() const
     VizManager::SimpleQuadVector quadVector;
     _root.AddQuadsToDraw(quadVector);
     VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree", quadVector);
+    
+//    // compare actual size vs max
+//    size_t actual = quadVector.size();
+//    size_t max = pow(4,_root.GetLevel()) + 1;
+//    PRINT_NAMED_INFO("RSAM", "%zu / %zu", actual, max);
   
     _gfxDirty = false;
   }
+  
+  // draw the processor information
+  _processor.Draw();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -64,11 +80,11 @@ void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
   }
 
   // add clear quad now
-  _gfxDirty = _root.AddClearQuad(quad) || _gfxDirty;
+  _gfxDirty = _root.AddClearQuad(quad, _processor) || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddObstacle(const Quad2f& quad)
+void NavMeshQuadTree::AddObstacle(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType)
 {
   // render approx last quad added
   if ( kRenderLastAddedQuad )
@@ -86,8 +102,24 @@ void NavMeshQuadTree::AddObstacle(const Quad2f& quad)
     Expand( quad );
   }
 
+  // add the proper obstacle type in the node
+  bool changed = false;
+  switch( obstacleType ) {
+    case NavMemoryMapTypes::EObstacleType::Cube: {
+      changed = _root.AddObstacleCube(quad, _processor);
+      break;
+    }
+    case NavMemoryMapTypes::EObstacleType::Unrecognized: {
+      changed = _root.AddObstacleUnrecognized(quad, _processor);
+      break;
+    }
+    default: {
+      ASSERT_NAMED(false, "NavMeshQuadTree.AddObstacle.InvalidObstacleEnum");
+    }
+  }
+
   // add obstacle now
-  _gfxDirty = _root.AddObstacle(quad) || _gfxDirty;
+  _gfxDirty = changed || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -110,7 +142,7 @@ void NavMeshQuadTree::AddCliff(const Quad2f& quad)
   }
 
   // add cliff now
-  _gfxDirty = _root.AddCliff(quad) || _gfxDirty;
+  _gfxDirty = _root.AddCliff(quad, _processor) || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -118,7 +150,7 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
 {
   // Find in which direction we are expanding and upgrade root level in that direction
   const Vec2f& direction = quadToCover.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
-  _root.UpgradeRootLevel(direction);
+  _root.UpgradeRootLevel(direction, _processor);
 
   // should be contained, otherwise more expansions are required. This can only happen if quad is too far from
   // the root, ir it is bigger than the current root size. I don't think we'll ever need multiple expansions, but
