@@ -435,11 +435,9 @@ public class RobotEngineManager : MonoBehaviour {
 
     DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
-    ObservedObject deleted = CurrentRobot.SeenObjects.Find(x => x == message.objectID);
-
-    CurrentRobot.SeenObjects.Remove(deleted);
-    CurrentRobot.VisibleObjects.Remove(deleted);
-    CurrentRobot.DirtyObjects.Remove(deleted);
+    CurrentRobot.SeenObjects.Remove(CurrentRobot.SeenObjects.Find(x => x == message.objectID));
+    CurrentRobot.VisibleObjects.Remove(CurrentRobot.VisibleObjects.Find(x => x == message.objectID));
+    CurrentRobot.DirtyObjects.Remove(CurrentRobot.DirtyObjects.Find(x => x == message.objectID));
     CurrentRobot.LightCubes.Remove((int)message.objectID);
 
   }
