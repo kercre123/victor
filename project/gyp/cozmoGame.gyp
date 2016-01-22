@@ -535,6 +535,14 @@
               '<(cg-audio_path):DriveAudioEngine',
             ]
           },
+          #Build server requires this for webots tests that require assets.
+          {
+            'target_name': 'webotsControllers',
+            'type': 'none',
+            'dependencies': [
+              '<(cg-ce_gyp_path):webotsControllers',
+            ]
+          }
 
 
         ], # end targets
