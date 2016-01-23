@@ -227,6 +227,7 @@ namespace Cozmo {
     }
     else {
       LiftShouldBeUnlocked(robot);
+      HeadShouldBeUnlocked(robot);
     }
 
     // hack to track object motion
