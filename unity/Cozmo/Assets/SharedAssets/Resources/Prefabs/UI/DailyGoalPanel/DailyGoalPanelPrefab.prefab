@@ -198,6 +198,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: DAILY GOALS
+  _AllUppercase: 0
 --- !u!114 &11417702
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -300,7 +301,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .978275418, g: 1, b: .963235319, a: 1}
+  m_Color: {r: .895721912, g: 1, b: .823529422, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -396,9 +397,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _FilledForegroundImage: {fileID: 11431410}
-  _NormalColor: {r: .138512686, g: .544117689, b: .124026813, a: 1}
+  _NormalColor: {r: .158620596, g: .815999985, b: 0, a: 1}
   _DecreasingColor: {r: .602941155, g: 0, b: 0, a: 1}
-  _IncreasingColor: {r: .158620596, g: .815999985, b: 0, a: 1}
+  _IncreasingColor: {r: .194388032, g: 1, b: 0, a: 1}
 --- !u!114 &11496402
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -633,6 +634,14 @@ Prefab:
       value: 
       objectReference: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DebugLevel
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _UseDebug
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 130834}

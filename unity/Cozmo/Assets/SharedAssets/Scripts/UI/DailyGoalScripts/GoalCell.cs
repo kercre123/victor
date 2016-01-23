@@ -75,6 +75,7 @@ namespace Cozmo {
         _GoalTarget = goal;
         Type = type;
         RobotEngineManager.Instance.OnProgressionStatRecieved += OnProgressionStatUpdate;
+        _GoalIcon.sprite = ProgressionStatIconMap.Instance.GetIconForStat(type);
         SetProgress(currProg);
       }
 

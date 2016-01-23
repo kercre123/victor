@@ -44,24 +44,25 @@ public class DailyGoalPanel : BaseView {
   public StatContainer GenerateDailyGoals() {
     Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
-    string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
+    int lvl = rob.FriendshipLevel;
     if (_UseDebug && _DebugLevel != -1) {
-      name = rob.GetFriendshipLevelName(_DebugLevel);
+      lvl = _DebugLevel;
     }
-    DAS.Event(this, string.Format("GoalGeneration({0})", name));
+    if (lvl > _Config.FriendshipLevels.Length) {
+      lvl = _Config.FriendshipLevels.Length-1;
+    }
+    DAS.Event(this, string.Format("GoalGeneration({0},{1})", lvl, rob.GetFriendshipLevelName(lvl)));
     StatBitMask possibleStats = StatBitMask.None;
     int totalGoals = 0;
     int min = 0;
     int max = 0;
-    for (int i = 0; i < _Config.FriendshipLevels.Length; i++) {
+    for (int i = 0; i < lvl; i++) {
       possibleStats |= _Config.FriendshipLevels[i].StatsIntroduced;
-      if (_Config.FriendshipLevels[i].FriendshipLevelName == name) {
-        totalGoals = _Config.FriendshipLevels[i].MaxGoals;
-        min = _Config.FriendshipLevels[i].MinTarget;
-        max = _Config.FriendshipLevels[i].MaxTarget;
-        break;
-      }
     }
+    totalGoals = _Config.FriendshipLevels[lvl].MaxGoals;
+    min = _Config.FriendshipLevels[lvl].MinTarget;
+    max = _Config.FriendshipLevels[lvl].MaxTarget;
+
     // Don't generate more goals than possible stats
     if (totalGoals > possibleStats.Count) {
       DAS.Warn(this, "More Goals than Potential Stats");
