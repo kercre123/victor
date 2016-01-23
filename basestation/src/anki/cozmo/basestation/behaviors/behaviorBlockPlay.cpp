@@ -218,9 +218,16 @@ namespace Cozmo {
     
     if( robot.IsCarryingObject() ) {
       LiftShouldBeLocked(robot);
+      if( _currentState == State::TrackingFace || _currentState == State::WaitingForBlock ) {
+        HeadShouldBeLocked(robot);
+      }
+      else {
+        HeadShouldBeUnlocked(robot);
+      }
     }
     else {
       LiftShouldBeUnlocked(robot);
+      HeadShouldBeUnlocked(robot);
     }
 
     // hack to track object motion
