@@ -695,51 +695,6 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 66c2fdefd291b416c94c699822cbd062, type: 2}
   m_IsPrefabParent: 0
---- !u!1 &2072601118
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 106742, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-  m_PrefabInternal: {fileID: 0}
-  serializedVersion: 4
-  m_Component:
-  - 4: {fileID: 2072601120}
-  - 114: {fileID: 2072601119}
-  m_Layer: 0
-  m_Name: InvestorIntroManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2072601119
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 11464276, guid: d03a6b14c839047bc8ff52e543828227,
-    type: 2}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 2072601118}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _DevConnectDialog: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
-  _HubWorldPrefab: {fileID: 11482156, guid: 0a14ae0a8099b4285a7bc241e2ba822e, type: 2}
-  _IntroScriptedSequenceName: 
-  _RobotStateTextFieldPrefab: {fileID: 11455370, guid: 689e303582fa0435b8ce1a821c97d2cb,
-    type: 2}
---- !u!4 &2072601120
-Transform:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 2072601118}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 0
 --- !u!1001 &2093738665
 Prefab:
   m_ObjectHideFlags: 0
@@ -790,3 +745,54 @@ Prefab:
 Transform:
   m_PrefabParentObject: {fileID: 472660, guid: 96563fa7c044a44afa01f530712be672, type: 2}
   m_PrefabInternal: {fileID: 2093738665}
+--- !u!1001 &2102575139
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 106742, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: m_Name
+      value: InvestorIntroManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 11464276, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: _DevConnectDialog
+      value: 
+      objectReference: {fileID: 11479636, guid: a9aac651b15944e00bd82acaac7f014c,
+        type: 2}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+  m_IsPrefabParent: 0
