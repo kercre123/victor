@@ -1204,17 +1204,24 @@ namespace Cozmo {
             case ObjectInteractionResult::INCOMPLETE:
             case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE: {
               PlayAnimation(robot, "ID_react2block_align_fail");
+              _isActing = false;
               break;
             }
 
             default: {
-              PlayAnimation(robot, "ID_rollBlock_fail_01");  // TEMP:  // TODO:(bn) different one here?
+              // Simultaneously lower lift and play failure animation
+              MoveLiftToHeightAction* lowerLift = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+              lowerLift->SetDuration(0.25); // Lower it fast: frustrated
+              StartActing(robot, new CompoundActionParallel({
+                new PlayAnimationAction("ID_rollBlock_fail_01"),
+                lowerLift
+              }));
             }
           }
 
           SetCurrState(State::InspectingBlock);
           _holdUntilTime = currentTime_sec + _timetoInspectBlock;
-          _isActing = false;
+
 
         } else {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
