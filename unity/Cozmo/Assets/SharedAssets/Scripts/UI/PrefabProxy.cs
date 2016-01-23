@@ -23,7 +23,14 @@ public class PrefabProxy : MonoBehaviour {
 
       var splitPath = path.Split('/');
 
-      return GetGameObjectInternal(t, splitPath, 0);
+      var go = GetGameObjectInternal(t, splitPath, 0);
+
+      // if our path ends on a prefab proxy, expand it and return the expansion.
+      var proxy = go.GetComponent<PrefabProxy>();
+      if (proxy != null) {
+        return proxy.Expand();
+      }
+      return go;
     }
 
     private static readonly Dictionary<string, Type> _TypeCache = new Dictionary<string, Type>();
@@ -60,10 +67,27 @@ public class PrefabProxy : MonoBehaviour {
         return GetGameObjectInternal(n, path, index + 1);
       }
       else if (curr == "." || curr == string.Empty) {
+
+        // prefab proxy still exists in edit mode, which throws off relative paths by one
+        if (!Application.isPlaying) {
+          var proxy = t.GetComponent<PrefabProxy>();
+          if (proxy != null) {
+            t = proxy.Expand().transform;
+          }
+        }
         return GetGameObjectInternal(t, path, index + 1);
       }
       else {
-        return GetGameObjectInternal(t.FindChild(curr), path, index + 1);
+        // if we hit a dead end, check if its caused by an
+        // unexpanded prefab proxy
+        var next = t.FindChild(curr);
+        if (next == null) {
+          var proxy = t.GetComponent<PrefabProxy>();
+          if (proxy != null) {
+            next = proxy.Expand().transform.FindChild(curr);
+          }
+        }
+        return GetGameObjectInternal(next, path, index + 1);
       }
     }
 
@@ -282,22 +306,29 @@ public class PrefabProxy : MonoBehaviour {
     Expand();
   }
 
-  public void Expand() {
+  private GameObject _Instance;
+
+  public GameObject Expand() {
     if (Prefab == null) {
-      return;
+      return null;
+    }
+    // if we already expanded, or are in the process of doing so
+    if (_Instance != null) {
+      return _Instance;
     }
 
     if (Application.isPlaying) {
-      var instance = (GameObject)GameObject.Instantiate(Prefab);
+      
+      _Instance = (GameObject)GameObject.Instantiate(Prefab);
 
-      instance.name = name;
+      _Instance.name = name;
 
-      instance.transform.SetParent(transform.parent);
+      _Instance.transform.SetParent(transform.parent);
 
       var rectTransform = GetComponent<RectTransform>();
 
       if (rectTransform != null) {
-        var instanceRectTransform = instance.GetComponent<RectTransform>() ?? instance.AddComponent<RectTransform>();
+        var instanceRectTransform = _Instance.GetComponent<RectTransform>() ?? _Instance.AddComponent<RectTransform>();
 
         instanceRectTransform.anchorMin = rectTransform.anchorMin;
         instanceRectTransform.anchorMax = rectTransform.anchorMax;
@@ -308,16 +339,16 @@ public class PrefabProxy : MonoBehaviour {
         instanceRectTransform.localRotation = rectTransform.localRotation;
       }
       else {
-        instance.transform.localPosition = transform.localPosition;
-        instance.transform.localScale = transform.localScale;
-        instance.transform.localRotation = transform.localRotation;
+        _Instance.transform.localPosition = transform.localPosition;
+        _Instance.transform.localScale = transform.localScale;
+        _Instance.transform.localRotation = transform.localRotation;
       }
 
       // layout element is a special case
       var oldLayoutElement = GetComponent<LayoutElement>();
 
       if(oldLayoutElement != null) {
-        var newLayoutElement = instance.GetComponent<LayoutElement>() ?? instance.AddComponent<LayoutElement>();
+        var newLayoutElement = _Instance.GetComponent<LayoutElement>() ?? _Instance.AddComponent<LayoutElement>();
 
         newLayoutElement.ignoreLayout = oldLayoutElement.ignoreLayout;
         newLayoutElement.flexibleWidth = oldLayoutElement.flexibleWidth;
@@ -328,22 +359,23 @@ public class PrefabProxy : MonoBehaviour {
         newLayoutElement.preferredHeight = oldLayoutElement.preferredHeight;
       }
 
-      instance.transform.SetSiblingIndex(transform.GetSiblingIndex());
+      _Instance.transform.SetSiblingIndex(transform.GetSiblingIndex());
       GameObject.DestroyImmediate(gameObject);
 
-      ExpandReferences(instance);
+      ExpandReferences(_Instance);
+      return _Instance;
     }
     else {
-      var instance = (GameObject)GameObject.Instantiate(Prefab);
+      _Instance = (GameObject)GameObject.Instantiate(Prefab);
 
-      instance.name = string.Empty;
+      _Instance.name = string.Empty;
 
-      instance.transform.SetParent(transform);
+      _Instance.transform.SetParent(transform);
 
       var rectTransform = GetComponent<RectTransform>();
 
       if (rectTransform != null) {
-        var instanceRectTransform = instance.GetComponent<RectTransform>() ?? instance.AddComponent<RectTransform>();
+        var instanceRectTransform = _Instance.GetComponent<RectTransform>() ?? _Instance.AddComponent<RectTransform>();
 
         instanceRectTransform.anchorMin = Vector2.zero;
         instanceRectTransform.anchorMax = Vector2.one;
@@ -354,13 +386,15 @@ public class PrefabProxy : MonoBehaviour {
         instanceRectTransform.localRotation = Quaternion.identity;
       }
       else {
-        instance.transform.localPosition = Vector3.zero;
-        instance.transform.localScale = Vector3.one;
-        instance.transform.localRotation = Quaternion.identity;
+        _Instance.transform.localPosition = Vector3.zero;
+        _Instance.transform.localScale = Vector3.one;
+        _Instance.transform.localRotation = Quaternion.identity;
       }
 
-      instance.hideFlags = HideFlags.DontSave;
-      ExpandReferences(instance);
+      _Instance.hideFlags = HideFlags.DontSave;
+      ExpandReferences(_Instance);
+
+      return _Instance;
     }
 	}
 
