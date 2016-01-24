@@ -167,6 +167,15 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
     proposedNewAngle = Radians(currentBodyAngle - turnAmount);
   }
   
+  // In the case where this is our first time moving, if our head wasn't already in the ideal range, move the head only
+  // and cancel out the body movement
+  static bool firstTimeMoving = true;
+  if (firstTimeMoving && robot.GetHeadAngle() < kTiltMin)
+  {
+    proposedNewAngle = currentBodyAngle;
+    firstTimeMoving = false;
+  }
+  
   float randomTilt = (float) GetRNG().RandDbl();
   Radians tiltRads(DEG_TO_RAD(((kTiltMax - kTiltMin) * randomTilt) + kTiltMin));
   
