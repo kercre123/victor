@@ -235,6 +235,12 @@ namespace Cozmo {
       ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_trackedObject);
       if (nullptr != obj) {
         if( obj->IsMoving() ) {
+          if( _trackedObjectStoppedMovingTime > 0.0f ) {
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.BlockMoved",
+                                   "tracked block started moving again at t=%f",
+                                   currentTime_sec);
+          }
+          
           _trackedObjectStoppedMovingTime = -1.0f;
         }
         else if( _trackedObjectStoppedMovingTime < 0 ) {
@@ -287,19 +293,6 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
                              "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
             robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
-          }
-          else {
-            if (_noFacesStartTime <= 0) {
-              _noFacesStartTime = currentTime_sec;
-            }
-
-            const float abortAfterNoFacesFor_s = 3.0f;
-            
-            // abort if we haven't seen a face in a while (this should allow us to run, e.g.,  the FindFaces behavior)
-            if (currentTime_sec - _noFacesStartTime > abortAfterNoFacesFor_s ) {
-              PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
-              return Status::Complete;
-            }
           }
         }
 
@@ -1259,7 +1252,13 @@ namespace Cozmo {
               SetBlockLightState(robot, _objectToPlaceOn, BlockLightState::Complete);
               SetBlockLightState(robot, _objectToPickUp, BlockLightState::Complete);
               
+
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                     "BehaviorBlockPlay.TrackedObject.Clear.PlacingBlock", "cleared tracked object. was %d",
+                                     _trackedObject.IsSet() ? _trackedObject.GetValue() : -1);
+                                     
               _trackedObject.UnSet();
+              
 
               BodyShouldBeUnlocked(robot);
 
@@ -1335,6 +1334,11 @@ namespace Cozmo {
                                      "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure",
                                      "dock fail with %s, backing up to try again",
                                      EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
+
+
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                     "BehaviorBlockPlay.TrackedObject.Clear.PlaceFail", "cleared tracked object. was %d",
+                                     _trackedObject.IsSet() ? _trackedObject.GetValue() : -1);
               
               _objectToPlaceOn.UnSet();
               _objectToPickUp.UnSet();
@@ -1487,9 +1491,12 @@ namespace Cozmo {
         // // (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
         // (diffVec.z() > oObject->GetSize().z())
       ) {
-      PRINT_NAMED_INFO("BehaviorBlockPlay.HandleObservedObjectWhileNotRunning.TrackingBlock",
-                       "Now tracking object %d",
-                       objectID.GetValue());
+
+      if( objectID != _trackedObject ) {
+        PRINT_NAMED_INFO("BehaviorBlockPlay.TrackedObject.Set.HandleObservedObjectWhileNotRunning",
+                         "Now tracking object %d",
+                         objectID.GetValue());
+      }
 
       _trackedObject = objectID;
     }
@@ -1532,6 +1539,12 @@ namespace Cozmo {
 
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StopTrackingFace",
                              "disabling face tracking (in favor of block tracking)");
+
+      if( objectID != _trackedObject ) {
+        PRINT_NAMED_INFO("BehaviorBlockPlay.TrackedObject.Set.HandleObservedObjectWhileRunning",
+                         "Now tracking object %d",
+                         objectID.GetValue());
+      }
 
       _trackedObject = objectID;
 
@@ -1749,7 +1762,6 @@ namespace Cozmo {
     }
   }
 
-  
   Result BehaviorBlockPlay::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec)
   {
     // remove the object if we knew about it
@@ -1757,6 +1769,10 @@ namespace Cozmo {
     objectID = msg.objectID;
     
     if(_trackedObject == objectID) {
+      PRINT_NAMED_INFO("BehaviorBlockPlay.TrackedObject.Clear.DeletedObject",
+                       "cleared tracked object. was %d",
+                       _trackedObject.IsSet() ? _trackedObject.GetValue() : -1);
+
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleDeletedObject",
                              "About to delete tracked object, clearing.");      
       _trackedObject.UnSet();
