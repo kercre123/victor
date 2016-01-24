@@ -53,7 +53,7 @@ private:
   };
   
   // Min angle to move relative to current, in degrees
-  constexpr static float kPanMin = 25;
+  constexpr static float kPanMin = 35;
   // Max angle to move relative to current, in degrees
   constexpr static float kPanMax = 80;
   // Min absolute angle to move head to, in degrees
