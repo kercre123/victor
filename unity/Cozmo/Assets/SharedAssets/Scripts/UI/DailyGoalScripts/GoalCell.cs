@@ -111,16 +111,6 @@ namespace Cozmo {
       void OnDestroy() {
         RobotEngineManager.Instance.OnProgressionStatRecieved -= OnProgressionStatUpdate;
       }
-
-      // Use this for initialization
-      void Start() {
-      
-      }
-      
-      // Update is called once per frame
-      void Update() {
-      
-      }
     }
   }
 }
