@@ -276,7 +276,7 @@ message MoodState {
 
 message ProgressionStats {
   uint_8  robotID,
-  uint_32 statValues[uint_8]
+  int_32 statValues[uint_8]
 }
 
 ///////////////////////////////////////////////////////////////////////////////

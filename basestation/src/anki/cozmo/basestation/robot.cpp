@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
@@ -90,6 +91,7 @@ namespace Anki {
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
     , _imageDeChunker(new ImageDeChunker())
+    , _traceHandler(dataPlatform)
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -125,6 +127,7 @@ namespace Anki {
       _lastDebugStringHash = 0;
 
       ReadAnimationDir();
+      ReadAnimationGroupDir();
       
       // Set up the neutral face to use when resetting procedural animations
       static const char* neutralFaceAnimName = "neutral_face";
@@ -433,7 +436,6 @@ namespace Anki {
       GetMoveComponent().Update(msg);
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      _enabledAnimTracks = msg.enabledAnimTracks;
       _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
@@ -568,6 +570,7 @@ namespace Anki {
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
                                                 (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+                                                _enabledAnimTracks,
                                                 _animationTag);
       
       return lastResult;
@@ -1070,7 +1073,9 @@ namespace Anki {
           }
         }
       }
-        
+      
+      // update navigation memory map
+      _blockWorld.UpdateNavMemoryMap();        
       
       /////////// Update visualization ////////////
       
@@ -1079,6 +1084,9 @@ namespace Anki {
       
       // Draw All Objects by calling their Visualize() methods.
       _blockWorld.DrawAllObjects();
+      
+      // Nav memory map
+      _blockWorld.DrawNavMemoryMap();
       
       // Always draw robot w.r.t. the origin, not in its current frame
       Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToOrigin();
@@ -1512,19 +1520,27 @@ namespace Anki {
       }
 
     }
-
-    static bool HasSuffix(const char* inFilename, const char* inSuffix)
+    
+    // Read the animation groups in a dir
+    void Robot::ReadAnimationGroupFile(const char* filename)
     {
-      const size_t filenameLen = strlen(inFilename);
-      const size_t suffixLen   = strlen(inSuffix);
-      
-      if (filenameLen < suffixLen)
-      {
-        return false;
-      }
-      
-      const int cmp = strcmp(&inFilename[filenameLen-suffixLen], inSuffix);
-      return (cmp == 0);
+      Json::Value animGroupDef;
+      const bool success = _dataPlatform->readAsJson(filename, animGroupDef);
+      if (success && !animGroupDef.empty()) {
+        
+        std::string fullName(filename);
+        
+        // remove path
+        auto slashIndex = fullName.find_last_of("/");
+        std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
+        // remove extension
+        auto dotIndex = jsonName.find_last_of(".");
+        std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
+
+        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
+        
+        _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
+      }      
     }
     
     void Robot::LoadBehaviors()
@@ -1542,7 +1558,7 @@ namespace Anki {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr)
         {
-          if ((ent->d_type == DT_REG) && HasSuffix(ent->d_name, ".json"))
+          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
           {
             std::string fullFileName = behaviorFolder + ent->d_name;
             
@@ -1568,14 +1584,20 @@ namespace Anki {
       // Disable super-verbose warnings about clipping face parameters in json files
       // To help find bad/deprecated animations, try removing this.
       ProceduralFaceParams::EnableClippingWarning(false);
-      
+
+      ReadAnimationDirImpl("assets/animations/");
+      ReadAnimationDirImpl("config/basestation/animations/");
+    }
+    
+    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
+    {
       if (_dataPlatform == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
       const std::string animationFolder =
-        _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animations/");
+        _dataPlatform->pathToResource(Util::Data::Scope::Resources, animationDir);
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -1624,6 +1646,64 @@ namespace Anki {
       }
       
       ProceduralFaceParams::EnableClippingWarning(true);
+    }
+    
+    // Read the animationGroups in a dir
+    void Robot::ReadAnimationGroupDir()
+    {
+      if (_dataPlatform == nullptr) { return; }
+      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
+      
+      const std::string animationGroupFolder =
+      _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
+      s32 loadedFileCount = 0;
+      DIR* dir = opendir(animationGroupFolder.c_str());
+      if ( dir != nullptr) {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr) {
+          
+          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
+            std::string fullFileName = animationGroupFolder + ent->d_name;
+            struct stat attrib{0};
+            int result = stat(fullFileName.c_str(), &attrib);
+            if (result == -1) {
+              PRINT_NAMED_WARNING("Robot.ReadAnimationGroupFile", "could not get mtime for %s", fullFileName.c_str());
+              continue;
+            }
+            bool loadFile = false;
+            auto mapIt = _loadedAnimationGroupFiles.find(fullFileName);
+            if (mapIt == _loadedAnimationGroupFiles.end()) {
+              _loadedAnimationGroupFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
+              loadFile = true;
+            } else {
+              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
+                mapIt->second = attrib.st_mtimespec.tv_sec;
+                loadFile = true;
+              } else {
+                //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());
+              }
+            }
+            if (loadFile) {
+              ReadAnimationGroupFile(fullFileName.c_str());
+              ++loadedFileCount;
+            }
+          }
+        }
+        closedir(dir);
+      } else {
+        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "folder not found %s", animationGroupFolder.c_str());
+      }
+      
+      // TODO: Implement external interface
+      /*
+      // Tell UI about available animationGroups
+      if (HasExternalInterface()) {
+        std::vector<std::string> animNames(_cannedAnimationGroups.GetAnimationGroupNames());
+        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
+        }
+      }
+       */
     }
 
     Result Robot::SyncTime()
@@ -2956,7 +3036,6 @@ namespace Anki {
       return poseUpdated;
     }
     
-
     void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
@@ -2964,15 +3043,14 @@ namespace Anki {
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
     {
-      ASSERT_NAMED((int)LEDId::NUM_BACKPACK_LEDS == 5, "Robot.wrong.number.of.backpack.ligths");
-      std::array<Anki::Cozmo::LightState, 5> lights;
-      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i){
-        lights[i].onColor = onColor[i];
-        lights[i].offColor = offColor[i];
-        lights[i].onPeriod_ms = onPeriod_ms[i];
-        lights[i].offPeriod_ms = offPeriod_ms[i];
-        lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
-        lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+      std::array<Anki::Cozmo::LightState, (size_t)LEDId::NUM_BACKPACK_LEDS> lights;
+      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i) {
+        lights[i].onColor  = ENCODED_COLOR(onColor[i]);
+        lights[i].offColor = ENCODED_COLOR(offColor[i]);
+        lights[i].onFrames  = MS_TO_LED_FRAMES(onPeriod_ms[i]);
+        lights[i].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
+        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
+        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
       }
 
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
@@ -3067,12 +3145,12 @@ namespace Anki {
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
           const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-          lights[i].onColor = ledState.onColor;
-          lights[i].offColor = ledState.offColor;
-          lights[i].onPeriod_ms = ledState.onPeriod_ms;
-          lights[i].offPeriod_ms = ledState.offPeriod_ms;
-          lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
-          lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
+          lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+          lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+          lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+          lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+          lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+          lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
 
         if( DEBUG_BLOCK_LIGHTS ) {
@@ -3109,12 +3187,13 @@ namespace Anki {
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          lights[i].onColor = onColor[i];
-          lights[i].offColor = offColor[i];
-          lights[i].onPeriod_ms = onPeriod_ms[i];
-          lights[i].offPeriod_ms = offPeriod_ms[i];
-          lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
-          lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+          lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+          lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+          lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+          lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+          lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
 
         if( DEBUG_BLOCK_LIGHTS ) {
@@ -3276,12 +3355,12 @@ namespace Anki {
       ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
       for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
         const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-        lights[i].onColor = ledState.onColor;
-        lights[i].offColor = ledState.offColor;
-        lights[i].onPeriod_ms = ledState.onPeriod_ms;
-        lights[i].offPeriod_ms = ledState.offPeriod_ms;
-        lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
-        lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
+        lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+        lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+        lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+        lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
       }
       return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }

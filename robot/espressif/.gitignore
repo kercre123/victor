@@ -1,3 +1,2 @@
 *.S
 *.hex
-app/include/version.h

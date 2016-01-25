@@ -12,16 +12,11 @@
 *
 *
 **/
-#include <assert.h>
 #include <math.h>
 #include "anki/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "trig_fast.h"
-#ifdef TARGET_K02
 #include "anki/cozmo/robot/logging.h"
-#else
-#include "anki/common/robot/errorHandling.h"
-#endif
 
 // For larger input values to atan, use approximations
 // at fixed steps. (Essentially extends the LUT with courser
@@ -253,7 +248,7 @@ float asin_fast(float x)
 
 float atan2_fast(float y, float x)
 {
-  //AnkiAssert( !(y == 0 && x == 0)); Cleanup with K02 logging
+  AnkiAssert( !(y == 0 && x == 0), 254);
 
   if (x>0) {
     return atan_fast(y/x);
@@ -272,7 +267,7 @@ float atan2_fast(float y, float x)
 
 float atan2_acc(float y, float x)
 {
-  //AnkiAssert(y != 0 || x != 0); Cleanup with K02 logging
+  AnkiAssert(y != 0 || x != 0, 255);
 
   float arg = y/x;
   float atan_val = asinf( arg / sqrtf(arg*arg + 1));

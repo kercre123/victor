@@ -31,19 +31,21 @@ namespace Anki
       
 
       // Light up one of the backpack LEDs to the specified 24-bit RGB color
-      void SetLED(LEDId led_id, u32 color)
+      void SetLED(LEDId led_id, u16 color)
       {
         u8 led_channel = led_id & 0x3; // so that LED_BACKPACK_RIGHT maps to 0
         volatile u32* channel = &g_dataToBody.backpackColors[ led_channel ];
         if (led_id == LED_BACKPACK_LEFT) {
           // Use red color channel for intensity
-          *channel = (*channel & 0xffff00ff) | ((color & 0x00ff0000) >> 8);
+          *channel = (*channel & 0xffff00ff) | (((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT) << ( 8+3));
         } else if (led_id == LED_BACKPACK_RIGHT) {
           // Use red color channel for intensity
-          *channel = (*channel & 0xff00ffff) |  (color & 0x00ff0000);
+          *channel = (*channel & 0xff00ffff) | (((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT) << (16+3));
         } else {
-          // RGB -> BGR
-          *channel = ((color & 0xff) << 16) |  (color & 0xff00) | ((color & 0xff0000) >> 16) ;
+          // RGB encoded -> BGR expanded
+          *channel = (((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT) << (16+3)) | 
+                     (((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT) << ( 8+3)) |
+                     (((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT) << ( 0+3));
         }
       }
 
@@ -66,6 +68,13 @@ namespace Anki
           default:
             return g_dataToHead.cliffLevel < DROP_LEVEL;
         }
+      }
+      
+      // This will eventually go away when real prox detection is working.
+      u8 GetForwardProxSensor()
+      {
+        // Physical robot never detects obstacles for now.
+        return 0;
       }
     }
   }

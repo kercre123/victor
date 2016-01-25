@@ -80,9 +80,7 @@ namespace Anki
 
       f32 Length() const;
     }; // class Point<Type>
-
-    typedef Point<float> Point2f;
-
+    
 #if 0
 #pragma mark --- 3D Point Class Declaration ---
 #endif
@@ -188,37 +186,6 @@ namespace Anki
       // bottom - top
       Type get_height() const;
     }; // class Rectangle<Type>
-
-#if 0
-#pragma mark --- Pose2d Class Declaration ---
-#endif
-    class Pose2d
-    {
-    public:
-      // Constructors:
-      Pose2d() : coord(0,0), angle(0) {}
-      Pose2d(const float x, const float y, const Radians angle) : coord(x,y), angle(angle) {};
-      Pose2d(const Pose2d &other) {
-        *this = other;
-      }
-
-      // Accessors:
-      float   GetX()     const {return coord.x;}
-      float   GetY()     const {return coord.y;}
-      Point2f get_xy()    const {return coord;}
-      Radians GetAngle() const {return angle;}
-
-      float& x() {return coord.x;}
-      float& y() {return coord.y;}
-
-      void operator=(const Pose2d &other) {
-        this->coord = other.coord;
-        this->angle = other.angle;
-      }
-
-      Point2f coord;
-      Radians angle;
-    }; // class Pose2d
 
     // Compute the difference between two 3D poses (Rotations+Translations)
     // All R matrices should be 3x3.

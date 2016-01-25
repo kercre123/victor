@@ -45,6 +45,9 @@ private:
 
   void ProcessVizObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizSimpleQuadVectorMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizAppendPathSegmentLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -64,6 +67,10 @@ private:
   void DrawRobot(Anki::Cozmo::VizRobotMarkerType type);
   void DrawPredockPose();
   void DrawQuad(const float xUpperLeft,  const float yUpperLeft, const float zUpperLeft,
+    const float xLowerLeft,  const float yLowerLeft, const float zLowerLeft,
+    const float xUpperRight, const float yUpperRight, const float zUpperRight,
+    const float xLowerRight, const float yLowerRight, const float zLowerRight);
+  void DrawQuadFill(const float xUpperLeft,  const float yUpperLeft, const float zUpperLeft,
     const float xLowerLeft,  const float yLowerLeft, const float zLowerLeft,
     const float xUpperRight, const float yUpperRight, const float zUpperRight,
     const float xLowerRight, const float yLowerRight, const float zLowerRight);
@@ -108,6 +115,11 @@ private:
   //using VizQuadTypeMap_t = std::unordered_map<uint32_t, VizQuadMap_t>;
   //VizQuadTypeMap_t quadMap_;
   std::unordered_map<uint32_t, std::unordered_map<uint32_t, VizInterface::Quad> > _quadMap;
+  
+  // quad arrays injected by name instead of requiring one ID per quad
+  using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
+  std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapReady;    // ready to draw
+  std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapIncoming; // incoming from the socket
 
   // Color map
   //using VizColorDef_t = std::unordered_map<uint32_t, VizInterface::DefineColor>;

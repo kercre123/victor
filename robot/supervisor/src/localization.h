@@ -1,9 +1,12 @@
 #ifndef LOCALIZATION_H
 #define LOCALIZATION_H
-
+#include "localization_geometry.h"
+#ifndef TARGET_K02
+#include "anki/common/robot/array2d_declarations.h"
+#include "anki/common/robot/geometry_declarations.h"
+#endif
 #include "radians.h"
 #include "anki/types.h"
-#include "anki/common/robot/geometry.h"
 
 namespace Anki {
   namespace Cozmo {

@@ -547,7 +547,7 @@ namespace Anki {
     {
     public:
       // Note that the rotation information in pose will be ignored
-      FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle);
+      FacePoseAction(const Pose3d& pose, Radians maxTurnAngle);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
@@ -555,7 +555,7 @@ namespace Anki {
     protected:
       virtual ActionResult Init(Robot& robot) override;
       
-      FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle);
+      FacePoseAction(Radians maxTurnAngle);
       void SetPose(const Pose3d& pose);
       virtual Radians GetHeadAngle(f32 heightDiff);
       
@@ -613,12 +613,14 @@ namespace Anki {
       // to face the object, then tilt its head. To disallow turning, set
       // maxTurnAngle to zero.
       
-      FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+      FaceObjectAction(ObjectID objectID,
+                       Radians maxTurnAngle,
                        bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
-      FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
-                       Radians turnAngleTol, Radians maxTurnAngle,
+      FaceObjectAction(ObjectID objectID,
+                       Vision::Marker::Code whichCode,
+                       Radians maxTurnAngle,
                        bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
@@ -1332,6 +1334,20 @@ namespace Anki {
       bool NeedsAlteredAnimation(Robot& robot) const;
       
     }; // class PlayAnimationAction
+    
+    class PlayAnimationGroupAction : public PlayAnimationAction
+    {
+    public:
+      explicit PlayAnimationGroupAction(const std::string& animGroupName,
+                                        u32 numLoops = 1,
+                                        bool interruptRunning = true);
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      
+      std::string   _animGroupName;
+
+    }; // class PlayAnimationGroupAction
     
     
     class DeviceAudioAction : public IAction

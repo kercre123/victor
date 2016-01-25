@@ -171,6 +171,14 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
 
 Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
+  _state = State::Interrupted;
+  SetStateName("Interrupted");
+  
+  return Result::RESULT_OK;
+}
+  
+void BehaviorFollowMotion::StopInternal(Robot& robot, double currentTime_sec)
+{
   robot.GetActionList().Cancel(_actionRunning);
   
   _actionRunning = (u32)ActionConstants::INVALID_TAG;
@@ -182,7 +190,7 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
   _state = State::Interrupted;
   SetStateName("Interrupted");
   
-  return Result::RESULT_OK;
+  LiftShouldBeUnlocked(robot);
 }
   
 void BehaviorFollowMotion::StartTracking(Robot& robot)
@@ -243,7 +251,7 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
           // Robot gets more happy/excited and less calm when he sees motion.
           robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
                                                EmotionType::Excited, kEmotionChangeSmall,
-                                               EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
+                                               EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact", MoodManager::GetCurrentTimeInSeconds());
           
           // Turn to face the motion, also drop the lift, and lock it from animations
           PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad,

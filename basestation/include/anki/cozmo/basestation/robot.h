@@ -43,6 +43,7 @@
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
@@ -51,6 +52,7 @@
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/tracePrinter.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -486,9 +488,16 @@ public:
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
-
+  
     // Read the animations in a dir
     void ReadAnimationDir();
+    void ReadAnimationDirImpl(const std::string& animationDir);
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupDir();
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
@@ -672,6 +681,15 @@ public:
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   
+  const std::string& GetAnimationNameFromGroup(const std::string& name) const {
+    auto group = _animationGroups.GetAnimationGroup(name);
+    if(group != nullptr && !group->IsEmpty()) {
+      return group->GetAnimationName(GetMoodManager());
+    }
+    static const std::string empty("");
+    return empty;
+  }
+  
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -833,7 +851,8 @@ public:
     std::string _lastPlayedAnimationId;
 
     std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    
+    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+  
     ///////// Modifiers ////////
     
     void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
@@ -851,6 +870,7 @@ public:
     ///////// Animation /////////
     
     CannedAnimationContainer _cannedAnimations;
+    AnimationGroupContainer  _animationGroups;
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
@@ -873,10 +893,12 @@ public:
     ImageDeChunker* _imageDeChunker;
     uint8_t _imuSeqID = 0;
     std::ofstream _imuLogFileStream;
+    TracePrinter _traceHandler;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -884,6 +906,7 @@ public:
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).

@@ -336,7 +336,6 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
     objectID = msg.objectID;
   }
   FaceObjectAction* action = new FaceObjectAction(objectID,
-                                             Radians(msg.turnAngleTol),
                                              Radians(msg.maxTurnAngle),
                                              msg.visuallyVerifyWhenDone,
                                              msg.headTrackWhenDone);
@@ -356,7 +355,6 @@ IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::Fa
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
   FacePoseAction* action = new FacePoseAction(pose,
-                                              Radians(msg.turnAngleTol),
                                               Radians(msg.maxTurnAngle));
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
@@ -420,6 +418,11 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       auto & playAnimation = actionUnion.Get_playAnimation();
       return new PlayAnimationAction(playAnimation.animationName, playAnimation.numLoops);
     }
+    case RobotActionUnionTag::playAnimationGroup:
+    {
+      auto & playAnimationGroup = actionUnion.Get_playAnimationGroup();
+      return new PlayAnimationGroupAction(playAnimationGroup.animationGroupName, playAnimationGroup.numLoops);
+    }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
 
@@ -428,6 +431,12 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionUnionTag::placeRelObject:
       return GetPlaceRelActionHelper(robot, actionUnion.Get_placeRelObject());
+          
+    case RobotActionUnionTag::placeObjectOnGround:
+      return GetPlaceObjectOnGroundActionHelper(robot, actionUnion.Get_placeObjectOnGround());
+          
+    case RobotActionUnionTag::placeObjectOnGroundHere:
+      return new PlaceObjectOnGroundAction();
       
     case RobotActionUnionTag::setHeadAngle:
       return GetMoveHeadToAngleActionHelper(robot, actionUnion.Get_setHeadAngle());
@@ -564,6 +573,12 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     {
       const ExternalInterface::PlayAnimation& msg = event.GetData().Get_PlayAnimation();
       newAction = new PlayAnimationAction(msg.animationName, msg.numLoops);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::PlayAnimationGroup:
+    {
+      const ExternalInterface::PlayAnimationGroup& msg = event.GetData().Get_PlayAnimationGroup();
+      newAction = new PlayAnimationGroupAction(msg.animationGroupName, msg.numLoops);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::FaceObject:

@@ -123,7 +123,8 @@ def main(scriptArgs):
   if not os.path.exists(options.audioPath):
     UtilLog.error('audio path not found [%s]' % options.audioPath)
     return False
-  audioProjectPath = os.path.join(options.audioPath, 'gyp/audioengine.gyp')
+  audioProjectPath = options.audioPath
+  audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioengine.gyp')
 
 
   # do not check for coretech external, and gyp if we are only updating list files
@@ -176,17 +177,21 @@ def main(scriptArgs):
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'generated/clad/engine', 'resources'],
    ['project/gyp/cozmoEngine.lst'])
+  generator.processFolder(['cozmoAPI/src/anki/cozmo', 'cozmoAPI/include' ], ['project/gyp/cozmoAPI.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
    ['project/gyp/ctrlRobot.lst'], ['reliableSequenceId.c'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'simulator/src/game'], ['project/gyp/ctrlKeyboard.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
   generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
   # copy the webots' physics.c into the generated folder
   util.File.mkdir_p(webotsPhysicsPath)
   util.File.cp(os.path.join(webotsPath, 'resources/projects/plugins/physics/physics.c'), webotsPhysicsPath)
-  generator.processFolder(['simulator/plugins/physics/cozmo_physics', webotsPhysicsPath], ['project/gyp/pluginPhysics.lst'])
+  generator.processFolder(['simulator/plugins/physics/cozmo_physics', webotsPhysicsPath], ['project/gyp/pluginPhysics.lst'],['libcozmo_physics.dylib'])
   # this is too big of a scope, we need to manualy maintain ctrlLightCube.lst for now
   # generator.processFolder(['simulator/controllers/block_controller', 'robot/sim_hal/', 'robot/supervisor/src/'], ['project/gyp/ctrlLightCube.lst'])
   
@@ -215,7 +220,10 @@ def main(scriptArgs):
   ankiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
   ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
   coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
-  audioProjectPath = os.path.relpath(audioProjectPath, configurePath)
+  audioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
+  audioProjectPath = os.path.relpath(options.audioPath, configurePath)
+
+  print "Set audio project relpath: %s" % audioProjectPath
 
   # mac
   if 'mac' in options.platforms:
@@ -251,7 +259,7 @@ def main(scriptArgs):
                                     gtestPath, 
                                     ankiUtilProjectPath, 
                                     coretechInternalProjectPath,
-                                    audioProjectPath
+                                    audioProjectGypPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -295,7 +303,7 @@ def main(scriptArgs):
                                   gtestPath, 
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
-                                  audioProjectPath
+                                  audioProjectGypPath
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -335,7 +343,7 @@ def main(scriptArgs):
                                     gtestPath, 
                                     ankiUtilProjectPath, 
                                     coretechInternalProjectPath,
-                                    audioProjectPath
+                                    audioProjectGypPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
       gyp.main(gypArgs)
@@ -410,7 +418,7 @@ def main(scriptArgs):
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
                                   ndk_root,
-                                  audioProjectPath
+                                  audioProjectGypPath
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
@@ -458,7 +466,7 @@ def main(scriptArgs):
                                     gtestPath,
                                     ankiUtilProjectPath,
                                     coretechInternalProjectPath,
-                                    audioProjectPath
+                                    audioProjectGypPath
                                   )
       os.environ['CC_target'] = '/usr/bin/clang'
       os.environ['CXX_target'] = '/usr/bin/clang++'
@@ -467,9 +475,10 @@ def main(scriptArgs):
       gyp.main(gypArgs)
       print "***********************HERE-configure.py2"
 
-  #pre build setup: decompress audio libs
-  if (subprocess.call([os.path.join(projectRoot, 'lib/audio/gyp/decompressAudioLibs.sh')]) != 0):
-    Logger.error('error decompressing audio libs')
+  # Configure Anki Audio project
+  audio_config_script = os.path.join(audioProjectPath, 'configure.py')
+  if (subprocess.call(audio_config_script) != 0):
+    Logger.error('error Anki Audio project Configure')
 
   return True
 

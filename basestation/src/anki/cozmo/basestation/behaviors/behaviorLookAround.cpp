@@ -162,7 +162,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
     {
       if (0 < _recentObjects.size())
       {
-        robot.GetMoodManager().AddToEmotion(EmotionType::Excited, kEmotionChangeVerySmall, "ExamineObject");
+        robot.GetMoodManager().AddToEmotion(EmotionType::Excited, kEmotionChangeVerySmall, "ExamineObject", currentTime_sec);
         _currentState = State::ExamineFoundObject;
       }
       return Status::Running;
@@ -176,7 +176,8 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
         
-        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(2), DEG_TO_RAD(1440), false, true);
+        FaceObjectAction* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, true);
+        faceObjectAction->SetPanTolerance(DEG_TO_RAD(2));
         _actionsInProgress.insert(faceObjectAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
         
@@ -338,6 +339,11 @@ Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_se
   return Result::RESULT_OK;
 }
   
+void BehaviorLookAround::StopInternal(Robot& robot, double currentTime_sec)
+{
+  ResetBehavior(robot, currentTime_sec);
+}
+  
 void BehaviorLookAround::ResetBehavior(Robot& robot, float currentTime_sec)
 {
   _lastLookAroundTime = currentTime_sec;
@@ -360,7 +366,7 @@ void BehaviorLookAround::HandleObjectObserved(const EngineToGameEvent& event, Ro
   // We'll get continuous updates about objects in view, so only care about new ones whose markers we can see
   if (familyList.count(msg.objectFamily) > 0 && msg.markersVisible && 0 == _oldBoringObjects.count(msg.objectID))
   {
-    robot.GetMoodManager().AddToEmotion(EmotionType::Excited, kEmotionChangeVerySmall, "FoundObject");
+    robot.GetMoodManager().AddToEmotion(EmotionType::Excited, kEmotionChangeVerySmall, "FoundObject", MoodManager::GetCurrentTimeInSeconds());
     _recentObjects.insert(msg.objectID);
     
     ObservableObject* object = robot.GetBlockWorld().GetObjectByID(msg.objectID);

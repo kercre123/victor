@@ -12,6 +12,7 @@
 #include "clad/types/imu.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
+#include "clad/types/nvStorage.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -250,6 +251,8 @@ union EngineToRobot
   EraseFlash                    eraseFlash                  = 0x80,
   WriteFlash                    writeFlash                  = 0x81,
   OTAUpgrade                    triggerOTAUpgrade           = 0x82,
+  NVStorage::NVStorageBlob      writeNV                     = 0x83,
+  NVStorage::NVEntryTag         readNV                      = 0x84,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
@@ -265,6 +268,8 @@ union EngineToRobot
   // Anim future expansion                                  = 0x9C,
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
+  // Anim future expansion                                  = 0x9F,
+
   
   // WiFi to RTIP messages, not actually sent by engine
   bool                          radioConnected              = 0xFC,

@@ -85,9 +85,9 @@ void Anki::Cozmo::HAL::DAC::Tone(void) {
   for (int i = 0; i < 16; i++) {
     DAC_WRITE[i] = 0x100 + 0xFF * sinf(i * M_PI_2 / 16);
   }
-  
-  MicroWait(100000);
-  
+}
+
+void Anki::Cozmo::HAL::DAC::Mute(void) {
   for (int i = 0; i < 16; i++) {
     DAC_WRITE[i] = 0;
   }

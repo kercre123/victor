@@ -623,7 +623,9 @@ namespace Cozmo {
             if( obj != nullptr &&
                 obj->IsExistenceConfirmed() ) {
 
-              searchAction->AddAction( new FacePoseAction(obj->GetPose(), DEG_TO_RAD(5), 0.5 * PI_F) );
+              FacePoseAction* faceAction = new FacePoseAction(obj->GetPose(), 0.5 * PI_F);
+              faceAction->SetPanTolerance(DEG_TO_RAD(5));
+              searchAction->AddAction( faceAction );
             }
           }
 
@@ -685,7 +687,8 @@ namespace Cozmo {
     if( ! robot.IsCarryingObject() ) {
       Pose3d lastFacePose;
       if( robot.GetFaceWorld().GetLastObservedFace(lastFacePose) > 0 ) {
-        IActionRunner* lookAtFaceAction = new FacePoseAction(lastFacePose, DEG_TO_RAD(5), PI_F);
+        FacePoseAction* lookAtFaceAction = new FacePoseAction(lastFacePose, PI_F);
+        lookAtFaceAction->SetPanTolerance( DEG_TO_RAD(5) );
         StartActing(robot, lookAtFaceAction);
         BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TurnTowardsAFace.FindingOldFace",
                                "Moving to last face pose");
@@ -788,17 +791,17 @@ namespace Cozmo {
   Result BehaviorBlockPlay::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     _interrupted = true;
-
+    
+    return RESULT_OK;
+  }
+  
+  void BehaviorBlockPlay::StopInternal(Robot& robot, double currentTime_sec)
+  {
     if(_lastActionTag != static_cast<u32>(ActionConstants::INVALID_TAG)) {
       // Make sure we don't stay in tracking when we leave this action
       // TODO: this will cancel any action we were doing. Cancel all tracking actions?
       robot.GetActionList().Cancel(_lastActionTag);
     }
-    
-    HeadShouldBeUnlocked(robot);
-    LiftShouldBeUnlocked(robot);
-    BodyShouldBeUnlocked(robot);
-    return RESULT_OK;
   }
   
   void BehaviorBlockPlay::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
@@ -1597,8 +1600,10 @@ namespace Cozmo {
      
       if( robot.IsCarryingObject() ) {
         // look at the block, then react to it
+        FacePoseAction* faceObjectAction = new FacePoseAction(oObject->GetPose(), PI_F);
+        faceObjectAction->SetPanTolerance(DEG_TO_RAD(5));
         StartActing(robot,
-                    new FacePoseAction(oObject->GetPose(), DEG_TO_RAD(5), PI_F),
+                    faceObjectAction,
                     [this,&robot](ActionResult ret){
                       PlayAnimation(robot, "ID_reactTo2ndBlock_01");
                       return false;

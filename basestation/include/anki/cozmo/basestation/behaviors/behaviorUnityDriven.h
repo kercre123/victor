@@ -35,8 +35,6 @@ public:
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return _isRunnable; }
   
-  virtual bool IsShortInterruption() const override { return _isShortInterruption; }
-  
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
     
 protected:
@@ -44,6 +42,7 @@ protected:
   virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
+  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   
@@ -51,7 +50,6 @@ private:
   
   float _externalScore;
   
-  bool  _isShortInterruption;
   bool  _isScoredExternally;
   
   bool  _isRunnable;

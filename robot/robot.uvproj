@@ -778,6 +778,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
             </File>
+            <File>
+              <FileName>localization_geometry.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\localization_geometry.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1760,6 +1765,11 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>localization_geometry.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\localization_geometry.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -73,7 +73,7 @@ static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops, determined through experimentation
-#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
+#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-28)/2)
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
 /// The last state we've received from the RTIP updating the Body bootloader state
@@ -113,8 +113,7 @@ void processDrop(DropToWiFi* drop)
   if (unlikely(drop->droplet & bootloaderStatus)) os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, 4);
   else if (drop->payloadLen > 0)
   {
-    const uint8 jpegOffset = (drop->droplet & jpegLenMask) * 4;
-    AcceptRTIPMessage(drop->payload + jpegOffset, drop->payloadLen);
+    AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
   }
 }
 
@@ -125,7 +124,6 @@ void processDrop(DropToWiFi* drop)
  */
 bool makeDrop(uint8_t* payload, uint8_t length)
 {
-  static int8_t screenTxFraction = 0;
   if ((outgoingPhase + (DROP_TO_RTIP_SIZE/2)) > (DMA_BUF_SIZE/2)) // Will roll over making this drop
   {
     if (txFillCount > (DMA_BUF_COUNT-4))
@@ -155,12 +153,7 @@ bool makeDrop(uint8_t* payload, uint8_t length)
   // Fill in the drop itself
   if (PumpAudioData(drop.audioData)) drop.droplet |= audioDataValid;
   
-  if (screenTxFraction++ < TX_SCREEN_DATA_EVERY)
-  {
-    drop.screenInd = PumpScreenData(drop.screenData);
-    drop.droplet  |= screenDataValid;
-  }
-  else if (screenTxFraction >= TX_SCREEN_DATA_OUTOF) screenTxFraction = 0;
+  drop.droplet |= PumpScreenData(drop.screenData);
   
   if (payload != NULL)
   {
@@ -562,25 +555,19 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   return 0;
 }
 
-bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen)
+bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
 {
   if (unlikely(outgoingPhase < PHASE_FLAGS))
   {
     return false;
   }
+  else if (msgLen > DROP_TO_RTIP_MAX_VAR_PAYLOAD)
+  {
+    return false;
+  }
   else
   {
-    uint16_t queued = 0;
-    while (queued < msgLen)
-    {
-      uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-      if (makeDrop(msgData + queued, payloadLen) == false)
-      {
-        return false;
-      }
-      queued += payloadLen;
-    }
-    return true;
+    return makeDrop(msgData, msgLen);
   }
 }
 

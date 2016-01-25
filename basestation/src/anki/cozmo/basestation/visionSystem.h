@@ -57,7 +57,10 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
-namespace Anki {  
+namespace Anki {
+namespace Embedded {
+  typedef Point<float> Point2f;
+}
 namespace Cozmo {
     
   // Forward declaration:

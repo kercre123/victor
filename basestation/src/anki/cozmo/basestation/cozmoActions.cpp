@@ -671,7 +671,7 @@ namespace Anki {
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
-          IActionRunner* faceObjectAction = new FaceObjectAction(_objectID, Radians(0), Radians(0), true, false);
+          IActionRunner* faceObjectAction = new FaceObjectAction(_objectID, Radians(0), true, false);
 
           PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                             GetTag(),
@@ -1249,21 +1249,19 @@ namespace Anki {
     
 #pragma mark ---- FacePoseAction ----
     
-    FacePoseAction::FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle)
+    FacePoseAction::FacePoseAction(const Pose3d& pose, Radians maxTurnAngle)
     : PanAndTiltAction(0,0,false,true)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
-      PanAndTiltAction::SetPanTolerance(turnAngleTol);
     }
     
-    FacePoseAction::FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle)
+    FacePoseAction::FacePoseAction(Radians maxTurnAngle)
     : PanAndTiltAction(0,0,false,true)
     , _isPoseSet(false)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
-      PanAndTiltAction::SetPanTolerance(turnAngleTol);
     }
     
     Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
@@ -1339,22 +1337,22 @@ namespace Anki {
 
 #pragma mark ---- FaceObjectAction ----
     
-    FaceObjectAction::FaceObjectAction(ObjectID objectID, Radians turnAngleTol,
+    FaceObjectAction::FaceObjectAction(ObjectID objectID,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
     : FaceObjectAction(objectID, Vision::Marker::ANY_CODE,
-                       turnAngleTol, maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
+                       maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
     {
       
     }
     
-    FaceObjectAction::FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
-                                       Radians turnAngleTol,
+    FaceObjectAction::FaceObjectAction(ObjectID objectID,
+                                       Vision::Marker::Code whichCode,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FacePoseAction(turnAngleTol, maxTurnAngle)
+    : FacePoseAction(maxTurnAngle)
     , _facePoseCompoundActionDone(false)
     , _visuallyVerifyAction()
     , _objectID(objectID)
@@ -2234,7 +2232,7 @@ namespace Anki {
       // NOTE: This also disables tracking head to object if there was any
       _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
                                                   _dockMarker->GetCode(),
-                                                  0, 0, true, false);
+                                                  0, true, false);
 
       PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                         GetTag(),
@@ -2773,7 +2771,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, move the lift out of the
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
-              _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false);
+              _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), true, false);
 
               PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                                 GetTag(),
@@ -3372,7 +3370,7 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, 0, true, false);
+        _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
         _faceAndVerifyAction->SetEmitCompletionSignal(false);
 
         PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
@@ -3881,6 +3879,22 @@ namespace Anki {
       completionUnion.Set_animationCompleted(std::move( info ));
     }
     
+    
+#pragma mark ---- PlayAnimationAction ----
+    
+    PlayAnimationGroupAction::PlayAnimationGroupAction(const std::string& animGroupName,
+                                             u32 numLoops, bool interruptRunning)
+    : PlayAnimationAction("", numLoops, interruptRunning),
+    _animGroupName(animGroupName)
+    {
+      
+    }
+    
+    ActionResult PlayAnimationGroupAction::Init(Robot& robot)
+    {
+      _animName = robot.GetAnimationNameFromGroup(_animGroupName);
+      return PlayAnimationAction::Init(robot);
+    }
 
 #pragma mark ---- DeviceAudioAction ----
     

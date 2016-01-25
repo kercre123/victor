@@ -27,6 +27,8 @@
 namespace Anki {
 namespace Cozmo {
 
+  static const char* kNameKey = "Name";
+  
   Animation::Animation(const std::string& name)
   : _name(name)
   , _isInitialized(false)
@@ -34,17 +36,9 @@ namespace Cozmo {
     
   }
   
-  Result Animation::DefineFromJson(const std::string& name, Json::Value &jsonRoot)
+  Result Animation::DefineFromJson(const std::string& name, const Json::Value &jsonRoot)
   {
-    /*
-    if(!jsonRoot.isMember("Name")) {
-      PRINT_NAMED_ERROR("Animation.DefineFromJson.NoName",
-                        "Missing 'Name' field for animation.");
-      return RESULT_FAIL;
-    }
-     */
-    
-    _name = name; //jsonRoot["Name"].asString();
+    _name = name;
     
     // Clear whatever is in the existing animation
     Clear();
@@ -52,16 +46,26 @@ namespace Cozmo {
     const s32 numFrames = jsonRoot.size();
     for(s32 iFrame = 0; iFrame < numFrames; ++iFrame)
     {
-      Json::Value& jsonFrame = jsonRoot[iFrame];
+      const Json::Value& jsonFrame = jsonRoot[iFrame];
       
-      if(!jsonFrame.isMember("Name")) {
-        PRINT_NAMED_ERROR("Animation.DefineFromJson.NoFrameName",
-                          "Missing 'Name' field for frame %d of '%s' animation.",
+      if(!jsonFrame.isObject()) {
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameMissing",
+                          "frame %d of '%s' animation is missing or incorrect type.",
                           iFrame, _name.c_str());
         return RESULT_FAIL;
       }
       
-      const std::string& frameName = jsonFrame["Name"].asString();
+      const Json::Value& jsonFrameName = jsonFrame[kNameKey];
+      
+      if(!jsonFrameName.isString()) {
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameNameMissing",
+                          "Missing '%s' field for frame %d of '%s' animation.",
+                          kNameKey, iFrame, _name.c_str());
+        return RESULT_FAIL;
+      }
+      
+      const std::string& frameName = jsonFrameName.asString();
+      
       
       Result addResult = RESULT_FAIL;
       

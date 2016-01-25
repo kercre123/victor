@@ -5,19 +5,16 @@
 
 #include "anki/types.h"
 
-static const int MAX_QUEUE = 16;
-
 #define SLAVE_WRITE(x)  (x << 1)
 #define SLAVE_READ(x)   ((x << 1) | 1)
 
 
-typedef void (*i2c_callback)(const void *data, int count);
+typedef void (*i2c_callback)();
 
 enum I2C_FLAGS {
   I2C_NONE = 0,
   I2C_OPTIONAL = 1,
   I2C_FORCE_START = 2,
-  I2C_READ = 4
 };
 
 namespace Anki
@@ -29,17 +26,18 @@ namespace Anki
       namespace I2C
       {
         void Init(void);
-        void Restart(void);
         void Enable(void);
         void Disable(void);
         void ForceStop(void);
+        void FullStop(void);
+        void Flush(void);
         
-        bool Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb, uint8_t flags = I2C_NONE) ;
-        bool Read (uint8_t slave, uint8_t *bytes, int len, i2c_callback cb, uint8_t flags = I2C_NONE) ;
+        void SetupRead(void* target, int size, i2c_callback cb = NULL);
+        void Write(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags = I2C_NONE) ;
+        void Read (uint8_t slave, uint8_t flags = I2C_NONE) ;
 
         void WriteReg(uint8_t slave, uint8_t addr, uint8_t data);
         uint8_t ReadReg(uint8_t slave, uint8_t addr);
-        void WriteAndVerify(uint8_t slave, uint8_t addr, uint8_t data);
       }
     }
   }
