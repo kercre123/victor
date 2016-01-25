@@ -75,7 +75,7 @@ namespace Anki.UI {
       }
     }
 
-    protected override void Awake() {
+    protected override void Start() {
       SetLocalizedText(m_Text);
       SetVerticesDirty();
       SetLayoutDirty();
