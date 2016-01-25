@@ -13,37 +13,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   FriendshipLevels:
   - FriendshipLevelName: Stranger
+    PointsRequired: 0
     StatsIntroduced:
       _Mask: 1
     MaxGoals: 1
     MinTarget: 2
     MaxTarget: 5
-    PointsRequired: 0
   - FriendshipLevelName: Acquaintance
+    PointsRequired: 10
     StatsIntroduced:
       _Mask: 4
     MaxGoals: 2
     MinTarget: 3
     MaxTarget: 6
-    PointsRequired: 10
   - FriendshipLevelName: Friend
+    PointsRequired: 50
     StatsIntroduced:
       _Mask: 2
     MaxGoals: 2
     MinTarget: 4
     MaxTarget: 7
-    PointsRequired: 50
   - FriendshipLevelName: Best Friend
+    PointsRequired: 100
     StatsIntroduced:
       _Mask: 0
     MaxGoals: 3
     MinTarget: 4
     MaxTarget: 8
-    PointsRequired: 100
   - FriendshipLevelName: BFF5EVR
+    PointsRequired: 500
     StatsIntroduced:
       _Mask: 0
     MaxGoals: 4
     MinTarget: 4
     MaxTarget: 10
-    PointsRequired: 500
