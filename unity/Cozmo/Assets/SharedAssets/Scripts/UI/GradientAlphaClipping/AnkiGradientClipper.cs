@@ -69,8 +69,18 @@ namespace Cozmo {
       }
 
       private void OnEnable() {
-        _ClippingMaterial.SetVector("_Clipping", new Vector4(_TopClipping, _LeftClipping, 
-          _BottomClipping, _RightClipping));
+        UpdateMaterial();
+      }
+
+      #if UNITY_EDITOR
+      private void Update() {
+        UpdateMaterial();
+      }
+      #endif
+
+      private void UpdateMaterial() {
+        _ClippingMaterial.SetVector("_Clipping", new Vector4(_RightClipping, 
+          _TopClipping, _LeftClipping, _BottomClipping));
 
         _ClippingMaterial.SetVector("_AtlasUV", new Vector4(_XMinNormalizedUV,
           _YMinNormalizedUV,

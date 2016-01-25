@@ -354,7 +354,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11414392
 MonoBehaviour:
@@ -387,7 +387,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11414808
 MonoBehaviour:
@@ -438,7 +438,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11422892
 MonoBehaviour:
@@ -471,7 +471,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11423644
 MonoBehaviour:
@@ -504,7 +504,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11428130
 MonoBehaviour:
@@ -537,7 +537,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11429578
 MonoBehaviour:
@@ -626,7 +626,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11433772
 MonoBehaviour:
@@ -677,7 +677,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11436522
 MonoBehaviour:
@@ -800,7 +800,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!114 &11460286
 MonoBehaviour:
@@ -968,7 +968,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Text Label FPO
+  m_Text: Text Label FPO FPO FPO FPO
   _AllUppercase: 0
 --- !u!222 &22212506
 CanvasRenderer:

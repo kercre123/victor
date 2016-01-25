@@ -54,19 +54,19 @@
 				// translate atlas UV to sprite UV
 				float2 spriteUV = (i.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
 
-				// make the top left of the gradient frame
-				float2 topLeftClipPosition = (1 - spriteUV.xy) * 2 / _Clipping.xy;
-				float2 topLeftAlpha = 1 - topLeftClipPosition.xy;
+				// make the top right of the gradient frame
+				float2 topRightClipPosition = (1 - spriteUV.xy) * 2 / _Clipping.xy;
+				float2 topRightAlpha = 1 - topRightClipPosition.xy;
 
-				float topLeftMaxAlpha = max(topLeftAlpha.x,topLeftAlpha.y);
+				float topRightMaxAlpha = max(topRightAlpha.x,topRightAlpha.y);
 
-				// make the bottom right of the gradient frame
-				float2 bottomRightClipPosition = (spriteUV.xy) * 2 / _Clipping.zw;
-				float2 bottomRightAlpha = 1 - bottomRightClipPosition.xy;
+				// make the bottom left of the gradient frame
+				float2 bottomLeftClipPosition = (spriteUV.xy) * 2 / _Clipping.zw;
+				float2 bottomLeftAlpha = 1 - bottomLeftClipPosition.xy;
 
-				float bottomRightMaxAlpha = max(bottomRightAlpha.x,bottomRightAlpha.y);
+				float bottomLeftMaxAlpha = max(bottomLeftAlpha.x,bottomLeftAlpha.y);
 
-				col.a = min(col.a, max(topLeftMaxAlpha, bottomRightMaxAlpha));
+				col.a = min(col.a, max(topRightMaxAlpha, bottomLeftMaxAlpha));
 
 				return col;
 			}
