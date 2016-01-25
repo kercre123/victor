@@ -326,7 +326,10 @@ void FTM2_IRQHandler(void)
   if (line & 1) {
     // After receiving odd line, need to turn DMA back on
     DMA_TCD0_DOFF = 1;
-    DMA_TCD0_DADDR = (uint32_t)dmaBuff_;
+    // Per erratum e8011: Repeat writes to SADDR, DADDR, or NBYTES until they stick
+    do
+      DMA_TCD0_DADDR = (uint32_t)dmaBuff_;
+    while (DMA_TCD0_DADDR != (uint32_t)dmaBuff_);
   } else {        
     DMA_TCD0_DOFF = 0;
   }

@@ -70,7 +70,16 @@ class CozmoCLI(IDataReceiver):
 
     def ReceiveData(self, buffer, sourceAddress):
         now = time.time()
-        msg = RobotInterface.RobotToEngine.unpack(buffer)
+        try:
+            msg = RobotInterface.RobotToEngine.unpack(buffer)
+        except:
+            if len(buffer):
+                sys.stderr.write("Couldn't unpack message {:x}{:d}{linesep}".format(buffer[0], len(buffer), linesep=os.linesep))
+            else:
+                sys.stderr.write("Can't unpack an empty message")
+                sys.stderr.write(os.linesep)
+            sys.stderr.flush()
+            return
         if msg.tag == msg.Tag.printText:
             sys.stdout.write("ROBOT PRINT ({:d}): {}".format(msg.printText.level, msg.printText.text))
         elif msg.tag == msg.Tag.trace:

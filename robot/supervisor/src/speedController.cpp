@@ -30,7 +30,6 @@
 
 //#include <math.h>
 //#include "hal/portable.h"
-#include <assert.h>
 #include <math.h>
 #include "anki/types.h"
 #include "speedController.h"

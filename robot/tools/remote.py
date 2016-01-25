@@ -20,7 +20,7 @@ class Remote:
         self.upgrader = None
         self.animStreamer = None
         self.image = None
-        robotInterface.Init()
+        robotInterface.Init(False)
         pygame.init()
         self.imageReceiver = minipegReceiver.MinipegReceiver(self.receiveImage)
         self.run()
@@ -60,7 +60,7 @@ class Remote:
                             self.animStreamer = None
                     elif key[pygame.K_u]:
                         self.upgrader = fota.Upgrader()
-                        fota.UpgradeAll(self.upgrader, wifiImage="espressif.bin", rtipImage="robot.safe", bodyImage="syscon.safe")
+                        fota.UpgradeAll(self.upgrader, wifiImage="releases/esp.user.bin", rtipImage="releases/robot.safe", bodyImage="releases/syscon.safe")
                     elif key[pygame.K_j]: # J
                         if nextJogTime == float("Inf"):
                             nextJogTime = time.time()

@@ -20,7 +20,6 @@
 #include "anki/cozmo/robot/logging.h"
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -57,7 +56,7 @@ namespace Cozmo {
   }
 
   void TimeProfiler::MarkNextProfile_Internal() {
-    assert(timeProfIdx_ < MAX_NUM_PROFILES);
+    AnkiAssert(timeProfIdx_ < MAX_NUM_PROFILES, 280);
     timeProfiles_[timeProfIdx_] = HAL::GetMicroCounter();
 
     // Update total time
@@ -73,7 +72,7 @@ namespace Cozmo {
   }
 
   void TimeProfiler::MarkNextProfile(const char* profName) {
-    assert(timeProfIdx_ < MAX_NUM_PROFILES);
+    AnkiAssert(timeProfIdx_ < MAX_NUM_PROFILES, 280);
 
     if (numCyclesInProfile_ == 0) {
       strncpy(timeProfName_[timeProfIdx_], profName, MAX_PROF_NAME_LENGTH);

@@ -41,35 +41,35 @@ python: $(OUTPUT_PYTHON)
 
 %_switch_group_anim.def : %.clad $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR)robot/$*_switch_group_anim.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_group_anim.def; fi
-	$(CLAD_CPP_SWITCH) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	python $(CLAD_CPP_SWITCH) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_group_anim.def
 
 %_switch.def : %.clad $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR)robot/$*_switch.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch.def; fi
-	$(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	python $(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch.def
 
 %_declarations.def : %.clad $(CLAD_CPP_DECL)
 	if test -f $(OUTPUT_DIR)robot/$*_declarations.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_declarations.def; fi
-	$(CLAD_CPP_DECL)   -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	python $(CLAD_CPP_DECL)   -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_declarations.def
 
 %_send_helper.h : %.clad $(CLAD_CPPLITE_SEND_HELPER)
 	if test -f $(OUTPUT_DIR)robot/$*_send_helper.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*_send_helper.h; fi
-	$(CLAD_CPPLITE_SEND_HELPER) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	python $(CLAD_CPPLITE_SEND_HELPER) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_send_helper.h
 
 %.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPPLITE)
 	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
 	if test -f $(OUTPUT_DIR)robot/$*.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*.h; fi
 	if test -f $(OUTPUT_DIR)robot/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)robot/$*.cpp; fi
-	$(CLAD_CPPLITE) --max-message-size 1400 -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/robot/ $*.clad
+	python $(CLAD_CPPLITE) --max-message-size 1400 -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.h
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.cpp
 
 %.py : %.clad $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
 	if test -f $(OUTPUT_DIR_PYTHON)robot/$*.py; then chmod -f 777 $(OUTPUT_DIR_PYTHON)robot/$*.py; fi
-	$(CLAD_PYTHON) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR_PYTHON)robot $*.clad
+	python $(CLAD_PYTHON) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR_PYTHON)robot $*.clad
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)robot/$*.py
 
 cpplilib: cpp

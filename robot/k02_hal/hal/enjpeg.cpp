@@ -486,7 +486,7 @@ void JPEGCompress(int line, int height)
       xpitch = ypitch;
     
     // Write the data to the drop buffer
-    Anki::Cozmo::HAL::SPI::FinalizeDrop(buflen, eof);
+    SPI::FinalizeDrop(buflen, eof);
   }
 }
 
