@@ -57,6 +57,11 @@ public class DailySummaryPanel : MonoBehaviour {
   [SerializeField]
   private AnkiTextLabel _NextFriendshipLevelBottom;
 
+  // Config file for friendship progression
+  [SerializeField]
+  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
+  private FriendshipProgressionConfig _Config;
+
   private void Awake() {
     _CloseButton.onClick.AddListener(HandleCloseClicked);
   }
@@ -72,7 +77,7 @@ public class DailySummaryPanel : MonoBehaviour {
 
     _Title.text = string.Format(_Title.DisplayText, month, day);
 
-    _DailyProgressBar.SetProgress(data.Progress.Total / (float)data.Goals.Total);
+    _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(data.Progress, data.Goals));
 
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var stat = (ProgressionStatType)i;
@@ -102,10 +107,10 @@ public class DailySummaryPanel : MonoBehaviour {
   }
 
   // Creates a goal badge
-  private GoalBadge CreateGoalBadge(ProgressionStatType type, int goal, int progress) {
-    GoalBadge newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalBadge>();
-    newBadge.Initialize(type.ToString(),goal,progress);
-    newBadge.Expand(true);
+  private GoalCell CreateGoalBadge(ProgressionStatType type, int goal, int progress) {
+    GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
+    newBadge.Initialize(type.ToString(), goal, progress);
+    newBadge.ShowText(true);
     return newBadge;
   }
 
@@ -142,13 +147,13 @@ public class DailySummaryPanel : MonoBehaviour {
 
   private IEnumerator FriendshipBarCoroutine(TimelineEntryData data) {
 
-    var levelConfig = RobotEngineManager.Instance.GetFriendshipLevelConfig();
+    var levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
 
     int startingPoints = data.StartingFriendshipPoints;
     float pointsRequired, startingPercent, endingPercent;
 
     // first go through all levels that we reached
-    for(int level = data.StartingFriendshipLevel; 
+    for (int level = data.StartingFriendshipLevel; 
           level < data.EndingFriendshipLevel; level++) {
       // play the idle which displays the labels we want
       _FriendBarAnimator.Play(level % 2 == 0 ? kIdleAnimationName : kIdleAnimationNameB);

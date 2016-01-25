@@ -197,16 +197,16 @@ namespace Cozmo.HomeHub {
 
     private ChallengeState DetermineCurrentChallengeState(ChallengeData dataToTest, List<string> completedChallenges) {
       // If the challenge is in the completed challenges list, it has been completed
-      ChallengeState challengeState = ChallengeState.LOCKED;
+      ChallengeState challengeState = ChallengeState.Locked;
       if (completedChallenges.Contains(dataToTest.ChallengeID)) {
-        challengeState = ChallengeState.COMPLETED;
+        challengeState = ChallengeState.Completed;
       }
       else {
         Robot currentRobot = RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null;
         if (dataToTest.ChallengeReqs.MeetsRequirements(currentRobot, completedChallenges)) {
           // Otherwise, it is locked or unlocked based on its requirements
           // TODO: Add case for when the challenge is unlocked, but not actionable
-          challengeState = ChallengeState.UNLOCKED;
+          challengeState = ChallengeState.Unlocked;
         }
       }
       return challengeState;
@@ -217,17 +217,17 @@ namespace Cozmo.HomeHub {
       if (won && !DataPersistenceManager.Instance.Data.CompletedChallengeIds.Contains(completedChallenge.ChallengeId)) {
         // Add the current challenge to the completed list
         DataPersistenceManager.Instance.Data.CompletedChallengeIds.Add(completedChallenge.ChallengeId);
-        _ChallengeStatesById[completedChallenge.ChallengeId].currentState = ChallengeState.FRESHLY_COMPLETED;
+        _ChallengeStatesById[completedChallenge.ChallengeId].currentState = ChallengeState.FreshlyCompleted;
 
         // Check all the locked challenges to see if any new ones unlocked.
         foreach (ChallengeStatePacket challengeState in _ChallengeStatesById.Values) {
-          if (challengeState.currentState == ChallengeState.LOCKED) {
+          if (challengeState.currentState == ChallengeState.Locked) {
             var lastState = challengeState.currentState;
             challengeState.currentState = DetermineCurrentChallengeState(challengeState.data, 
               DataPersistenceManager.Instance.Data.CompletedChallengeIds);
 
-            if (lastState == ChallengeState.LOCKED && challengeState.currentState == ChallengeState.UNLOCKED) {
-              challengeState.currentState = ChallengeState.FRESHLY_UNLOCKED;
+            if (lastState == ChallengeState.Locked && challengeState.currentState == ChallengeState.Unlocked) {
+              challengeState.currentState = ChallengeState.FreshlyUnlocked;
             }
           }
         }
@@ -284,13 +284,13 @@ namespace Cozmo.HomeHub {
   }
 
   public enum ChallengeState {
-    LOCKED,
-    UNLOCKED,
-    COMPLETED,
+    Locked,
+    Unlocked,
+    Completed,
 
     // these are used by the UI to know when to play animations.
     // TimelineView will then bump them into unlocked or completed
-    FRESHLY_COMPLETED,
-    FRESHLY_UNLOCKED
+    FreshlyCompleted,
+    FreshlyUnlocked
   }
 }

@@ -33,11 +33,11 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     _ConsoleLogPaneView = null;
 
     _LastToggleValues = new Dictionary<LogPacket.ELogKind, bool>();
-    _LastToggleValues.Add(LogPacket.ELogKind.INFO, true);
-    _LastToggleValues.Add(LogPacket.ELogKind.WARNING, true);
-    _LastToggleValues.Add(LogPacket.ELogKind.ERROR, true);
-    _LastToggleValues.Add(LogPacket.ELogKind.EVENT, true);
-    _LastToggleValues.Add(LogPacket.ELogKind.DEBUG, true);
+    _LastToggleValues.Add(LogPacket.ELogKind.Info, true);
+    _LastToggleValues.Add(LogPacket.ELogKind.Warning, true);
+    _LastToggleValues.Add(LogPacket.ELogKind.Error, true);
+    _LastToggleValues.Add(LogPacket.ELogKind.Event, true);
+    _LastToggleValues.Add(LogPacket.ELogKind.Debug, true);
 
     DAS.AddTarget(this);
 
@@ -54,23 +54,23 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   void IDASTarget.Info(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.INFO, eventName, eventValue, context);
+    SaveLogPacket(LogPacket.ELogKind.Info, eventName, eventValue, context);
   }
 
   void IDASTarget.Error(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.ERROR, eventName, eventValue, context);
+    SaveLogPacket(LogPacket.ELogKind.Error, eventName, eventValue, context);
   }
 
   void IDASTarget.Warn(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.WARNING, eventName, eventValue, context);
+    SaveLogPacket(LogPacket.ELogKind.Warning, eventName, eventValue, context);
   }
 
   void IDASTarget.Event(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.EVENT, eventName, eventValue, context);
+    SaveLogPacket(LogPacket.ELogKind.Event, eventName, eventValue, context);
   }
 
   void IDASTarget.Debug(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.DEBUG, eventName, eventValue, context);
+    SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, context);
   }
 
   private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context) {
@@ -167,11 +167,11 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
 public class LogPacket {
   public enum ELogKind {
-    INFO,
-    WARNING,
-    ERROR,
-    DEBUG,
-    EVENT
+    Info,
+    Warning,
+    Error,
+    Debug,
+    Event
   }
 
   public ELogKind LogKind {
@@ -205,23 +205,23 @@ public class LogPacket {
     string logKindStr = "";
     string colorStr = "";
     switch (LogKind) {
-    case ELogKind.INFO:
+    case ELogKind.Info:
       logKindStr = "INFO";
       colorStr = "ffffff";
       break;
-    case ELogKind.WARNING:
+    case ELogKind.Warning:
       logKindStr = "WARN";
       colorStr = "ffcc00";
       break;
-    case ELogKind.ERROR:
+    case ELogKind.Error:
       logKindStr = "ERROR";
       colorStr = "ff0000";
       break;
-    case ELogKind.EVENT:
+    case ELogKind.Event:
       logKindStr = "EVENT";
       colorStr = "0099ff";
       break;
-    case ELogKind.DEBUG:
+    case ELogKind.Debug:
       logKindStr = "DEBUG";
       colorStr = "00cc00";
       break;

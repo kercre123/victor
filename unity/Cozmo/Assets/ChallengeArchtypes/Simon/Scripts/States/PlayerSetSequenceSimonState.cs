@@ -23,7 +23,7 @@ namespace Simon {
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _TargetSequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Human);
 
-      GameObject sequenceDisplay = _GameInstance.ShowHowToPlaySlide("CreatePattern");
+      GameObject sequenceDisplay = _GameInstance.ShowGameStateSlide("CreatePattern");
       _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
       _SequenceDisplay.SetSequenceText(0, _TargetSequenceLength);
 
@@ -59,7 +59,7 @@ namespace Simon {
 
     private void OnBlockTapped(int id, int times) {
       _CurrentRobot.SetHeadAngle(Random.Range(-0.6f, 0f));
-      if (Time.time - _LastTappedTime < 0.8f || _StartLightBlinkTime != -1) {
+      if (Time.time - _LastTappedTime < 0.4f || _StartLightBlinkTime != -1) {
         return;
       }
 

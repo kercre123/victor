@@ -62,8 +62,7 @@ namespace CubeSlap {
 
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
 
-      InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SeekState(), numCubes, true, InitialCubesDone);
+      InitialCubesState initCubeState = new InitialCubesState(new SeekState(), numCubes, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 
@@ -129,14 +128,14 @@ namespace CubeSlap {
       // If the animation completes and the cube is beneath Cozmo,
       // Cozmo has won.
       if (_CliffFlagTrown) {
-        ShowHowToPlaySlide(kCozmoWinPounce);
+        ShowGameStateSlide(kCozmoWinPounce);
         OnFailure();
         return;
       }
       else {
         // If the animation completes Cozmo is not on top of the Cube,
         // The player has won this round
-        ShowHowToPlaySlide(kPlayerWin);
+        ShowGameStateSlide(kPlayerWin);
         OnSuccess();
       }
     }
@@ -168,10 +167,10 @@ namespace CubeSlap {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
       if (_SuccessCount >= _SuccessGoal) {
-        RaiseMiniGameWin();
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleWinGameAnimationDone));
       }
       else if (AttemptsLeft <= 0) {
-        RaiseMiniGameLose();
+        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleLoseGameAnimationDone));
       }
       else if (_SlapFlagThrown) {
         _SlapFlagThrown = false;
@@ -180,6 +179,14 @@ namespace CubeSlap {
       else {
         _StateMachine.SetNextState(new SeekState());
       }
+    }
+
+    public void HandleWinGameAnimationDone(bool success) {
+      RaiseMiniGameWin();
+    }
+
+    public void HandleLoseGameAnimationDone(bool success) {
+      RaiseMiniGameLose();
     }
 
     public void HandleRetractDone(bool success) {

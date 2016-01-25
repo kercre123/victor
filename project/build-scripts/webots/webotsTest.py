@@ -78,7 +78,7 @@ def runWebots(options, resultQueue):
     '--disable-modules-download',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
-    os.path.join(options.projectRoot, 'simulator/worlds/' +  generatedWorldFileName),
+    os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/simulator/worlds/' +  generatedWorldFileName),
     ]
 
   if options.showGraphics:
@@ -188,7 +188,7 @@ def runAll(options):
     UtilLog.info('Running test: ' + test + ' in world ' + baseWorldFile)
     
     # Check if world file contains valid test name place holder
-    baseWorldFile = open('simulator/worlds/' + baseWorldFile, 'r')
+    baseWorldFile = open('lib/anki/cozmo-engine/simulator/worlds/' + baseWorldFile, 'r')
     baseWorldData = baseWorldFile.read()
     baseWorldFile.close()
     if worldFileTestNamePlaceHolder not in baseWorldData:
@@ -198,7 +198,7 @@ def runAll(options):
 
     # Generate world file with appropriate args passed into test controller
     generatedWorldData = baseWorldData.replace(worldFileTestNamePlaceHolder, test)
-    generatedWorldFile = open(os.path.join(options.projectRoot, 'simulator/worlds/' + generatedWorldFileName), 'w+')
+    generatedWorldFile = open(os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/simulator/worlds/' + generatedWorldFileName), 'w+')
     generatedWorldFile.write(generatedWorldData)
     generatedWorldFile.close()
 
