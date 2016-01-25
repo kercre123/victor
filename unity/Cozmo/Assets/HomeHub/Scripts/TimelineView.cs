@@ -87,6 +87,8 @@ namespace Cozmo.HomeHub {
 
       _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _RightTopPane).GetComponent<DailyGoalPanel>();
 
+      _CozmoWidgeInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _RightBottomPane).GetComponent<CozmoWidget>();
+
       UpdateDailySession();
 
       PopulateTimeline(DataPersistenceManager.Instance.Data.Sessions);
@@ -95,12 +97,12 @@ namespace Cozmo.HomeHub {
 
       _DailyGoalInstance.transform.SetSiblingIndex(0);
 
-      _CozmoWidgeInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _RightBottomPane).GetComponent<CozmoWidget>();
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
-      _CozmoWidgeInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
     }
 
     private void UpdateDailySession() {
+
+      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      _CozmoWidgeInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
 
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
 
@@ -131,9 +133,6 @@ namespace Cozmo.HomeHub {
       DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
 
       DataPersistenceManager.Instance.Save();
-
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
-      _CozmoWidgeInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
     }
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
