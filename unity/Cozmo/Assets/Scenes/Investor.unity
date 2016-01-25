@@ -798,6 +798,11 @@ Prefab:
       value: 
       objectReference: {fileID: 11482156, guid: 0a14ae0a8099b4285a7bc241e2ba822e,
         type: 2}
+    - target: {fileID: 11464276, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: _RobotStateTextFieldPrefab
+      value: 
+      objectReference: {fileID: 11455370, guid: 689e303582fa0435b8ce1a821c97d2cb,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
   m_IsPrefabParent: 0
