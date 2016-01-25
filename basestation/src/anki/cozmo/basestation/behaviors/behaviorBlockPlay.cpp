@@ -284,16 +284,19 @@ namespace Cozmo {
         // state really....)
 
         if( ! robot.IsCarryingObject() )  {
-          if( _faceID != Face::UnknownFace ) {
-            TrackFaceAction* action = new TrackFaceAction(_faceID);
-            // NOTE: don't use StartActing for this, because it is a continuous action
-            robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
-                                   "EnableTrackToFace %lld", _faceID);
-          }
-          else if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
-            PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
-                             "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
+          if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
+            if( _faceID != Face::UnknownFace ) {
+              TrackFaceAction* action = new TrackFaceAction(_faceID);
+              // NOTE: don't use StartActing for this, because it is a continuous action
+              robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
+                                     "EnableTrackToFace %lld (was tracking %lld)",
+                                     _faceID,
+                                     robot.GetMoveComponent().GetTrackToFace());
+            }
+            else 
+              PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
+                               "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
             robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
           }
         }
