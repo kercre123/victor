@@ -611,19 +611,20 @@ namespace UnityEditor {
     private FieldInfo[] GetFields(Type type) {
       FieldInfo[] fields;
       if (!_FieldInfoCache.TryGetValue(type, out fields)) {
-        var publicFields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
-          .Where(f => f.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0);
+        fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+          .Where(f => f.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0).ToArray();
         
-        IEnumerable<FieldInfo> tmpFields = publicFields;
         var subType = type;
         // look for inherited serialized fields
         while (subType != null && subType != typeof(System.Object) && subType != typeof(System.Enum)) {
           var privateFields = subType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-          .Where(f => f.GetCustomAttributes(typeof(SerializeField), true).Length > 0);
-          tmpFields = tmpFields.Concat(privateFields).ToArray();
+            .Where(f => f.GetCustomAttributes(typeof(SerializeField), true).Length > 0);
+
+          privateFields = privateFields.Where(x => !fields.Any(y => y.Name == x.Name));
+
+          fields = fields.Concat(privateFields).ToArray();
           subType = subType.BaseType;
         }
-        fields = tmpFields.ToArray();
         _FieldInfoCache[type] = fields;
       }
       return fields;
