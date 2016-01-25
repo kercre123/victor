@@ -71,6 +71,13 @@ namespace Cozmo {
       public Material SoftClippingMaterial {
         get { return _SoftClippingMaterial; }
       }
+
+      [SerializeField]
+      private Material _GrayscaleMaterial;
+
+      public Material GrayscaleMaterial {
+        get { return _GrayscaleMaterial; }
+      }
     }
   }
 }
