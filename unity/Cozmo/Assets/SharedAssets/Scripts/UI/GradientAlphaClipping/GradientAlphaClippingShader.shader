@@ -2,15 +2,9 @@
 {
 	Properties
   	{
-    	_TopClipping ("Top Clipping", Float) = 0.5
-    	_BottomClipping ("Bottom Clipping", Float) = 0.5
-    	_LeftClipping ("Left Clipping", Float) = 0.5
-    	_RightClipping ("Right Clipping", Float) = 0.5
+    	_Clipping ("DEV ONLY Clipping", Vector) = (0.5, 0.5, 0.5, 0.5)
 
-    	_XMinUV ("DEV ONLY X Min UV", Float) = 0.5
-    	_XMaxUV ("DEV ONLY X Max UV", Float) = 0.5
-    	_YMinUV ("DEV ONLY Y Min UV", Float) = 0.5
-    	_YMaxUV ("DEV ONLY Y Max UV", Float) = 0.5
+    	_AtlasUV ("DEV ONLY UV", Vector) = (0.5, 0.5, 0.5, 0.5)
     }
 	SubShader
 	{
@@ -48,15 +42,8 @@
 				return o;
 			}
 
-      		float _TopClipping;
-      		float _BottomClipping;
-      		float _LeftClipping;
-      		float _RightClipping;
-
-      		float _XMinUV;
-      		float _XMaxUV;
-      		float _YMinUV;
-      		float _YMaxUV;
+      		float4 _Clipping;
+      		float4 _AtlasUV;
 			
 			sampler2D _MainTex;
 
@@ -65,30 +52,21 @@
 				fixed4 col = tex2D(_MainTex, i.uv);
 
 				// translate atlas UV to sprite UV
-				float xSpriteUV = (i.uv.x - _XMinUV) / (_XMaxUV - _XMinUV);
-				float ySpriteUV = (i.uv.y - _YMinUV) / (_YMaxUV - _YMinUV);
+				float2 spriteUV = (i.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
 
-				// make the top of the gradient frame
-				float topClipPosition = (1 - ySpriteUV) * 2 / _TopClipping;
-				float topAlpha = 1 - topClipPosition;
+				// make the top left of the gradient frame
+				float2 topLeftClipPosition = (1 - spriteUV.xy) * 2 / _Clipping.xy;
+				float2 topLeftAlpha = 1 - topLeftClipPosition.xy;
 
-				// make the bottom of the gradient frame
-				float bottomClipPosition = (ySpriteUV) * 2 / _BottomClipping;
-				float bottomAlpha = 1 - bottomClipPosition;
+				float topLeftMaxAlpha = max(topLeftAlpha.x,topLeftAlpha.y);
 
-				float verticalAlpha = max(topAlpha,bottomAlpha);
+				// make the bottom right of the gradient frame
+				float2 bottomRightClipPosition = (spriteUV.xy) * 2 / _Clipping.zw;
+				float2 bottomRightAlpha = 1 - bottomRightClipPosition.xy;
 
-				// make the left of the gradient frame
-				float leftClipPosition = (1 - xSpriteUV) * 2 / _LeftClipping;
-				float leftAlpha = 1 - leftClipPosition;
+				float bottomRightMaxAlpha = max(bottomRightAlpha.x,bottomRightAlpha.y);
 
-				// make the right of the gradient frame
-				float rightClipPosition = (xSpriteUV) * 2 / _RightClipping;
-				float rightAlpha = 1 - rightClipPosition;
-
-				float horizontalAlpha = max(leftAlpha,rightAlpha);
-
-				col.a = min(col.a, max(verticalAlpha, horizontalAlpha));
+				col.a = min(col.a, max(topLeftMaxAlpha, bottomRightMaxAlpha));
 
 				return col;
 			}

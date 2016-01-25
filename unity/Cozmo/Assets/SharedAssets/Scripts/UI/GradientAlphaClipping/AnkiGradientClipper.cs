@@ -11,6 +11,7 @@ namespace Cozmo {
     /// <see cref="RectMask2D"/> to handle backgrounds with a fully transparent 
     /// border.  
     /// </summary>
+    [ExecuteInEditMode]
     public class AnkiGradientClipper : MonoBehaviour {
 
       private static SimpleObjectPool<Material> _ClippingMaterialPool;
@@ -67,20 +68,20 @@ namespace Cozmo {
         _YMaxNormalizedUV = _Graphic.textureRect.yMax / textureAtlasPixelHeight;
       }
 
-      private void Start() {
-        _ClippingMaterial.SetFloat("_TopClipping", _TopClipping);
-        _ClippingMaterial.SetFloat("_BottomClipping", _BottomClipping);
-        _ClippingMaterial.SetFloat("_LeftClipping", _LeftClipping);
-        _ClippingMaterial.SetFloat("_RightClipping", _RightClipping);
+      private void OnEnable() {
+        _ClippingMaterial.SetVector("_Clipping", new Vector4(_TopClipping, _LeftClipping, 
+          _BottomClipping, _RightClipping));
 
-        _ClippingMaterial.SetFloat("_XMinUV", _XMinNormalizedUV);
-        _ClippingMaterial.SetFloat("_XMaxUV", _XMaxNormalizedUV);
-        _ClippingMaterial.SetFloat("_YMinUV", _YMinNormalizedUV);
-        _ClippingMaterial.SetFloat("_YMaxUV", _YMaxNormalizedUV);
+        _ClippingMaterial.SetVector("_AtlasUV", new Vector4(_XMinNormalizedUV,
+          _YMinNormalizedUV,
+          _XMaxNormalizedUV - _XMinNormalizedUV,
+          _YMaxNormalizedUV - _YMinNormalizedUV));
       }
 
       private void OnDestroy() {
-        _ClippingMaterialPool.ReturnToPool(_ClippingMaterial);
+        if (_ClippingMaterialPool != null) {
+          _ClippingMaterialPool.ReturnToPool(_ClippingMaterial);
+        }
       }
 
       private Material CreateClippingMaterial() {
