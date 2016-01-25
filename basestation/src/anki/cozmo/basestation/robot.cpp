@@ -1572,10 +1572,7 @@ namespace Anki {
       if (_dataPlatform == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
-      
-      // TODO: PNG face animation loading is being removed for the demo to improve load times.
-      // We should evaluate whether to maintain this going forward
-      //FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
+      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
       const std::string animationFolder =
         _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animations/");
