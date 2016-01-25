@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using Cozmo.UI;
 using DG.Tweening;
-using DataPersistence;
 using System.Collections;
 using System.Collections.Generic;
 
