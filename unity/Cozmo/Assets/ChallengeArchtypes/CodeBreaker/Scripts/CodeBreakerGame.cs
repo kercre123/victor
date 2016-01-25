@@ -37,8 +37,7 @@ namespace CodeBreaker {
 
       // INGO Potentially we'll need to clamp the #cubes?
       // TODO: Potentially show a slide for showing Cozmo a # of cubes; need a consistent solution across games
-      InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new HowToPlayState(), _Config.NumCubesInCode, true, InitialCubesDone);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(), _Config.NumCubesInCode, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -59,7 +58,7 @@ namespace CodeBreaker {
     #region UI
 
     public void ShowReadySlide(string readySlideTextLocKey, string buttonTextLocKey, ReadyButtonClickedHandler readyButtonCallback) {
-      GameObject howToPlaySlide = ShowHowToPlaySlide(kHowToPlaySlideName);
+      GameObject howToPlaySlide = ShowGameStateSlide(kHowToPlaySlideName);
       _ReadySlide = howToPlaySlide.GetComponent<CodeBreakerReadySlide>();
       if (_ReadySlide != null) {
         _ReadySlide.SetSlideText(Localization.Get(readySlideTextLocKey));
@@ -76,7 +75,7 @@ namespace CodeBreaker {
     }
 
     public void ShowGamePanel(SubmitButtonClickedHandler submitButtonCallback) {
-      GameObject gamePanelObject = ShowHowToPlaySlide(kGamePanelSlideName);
+      GameObject gamePanelObject = ShowGameStateSlide(kGamePanelSlideName);
       _GamePanelSlide = gamePanelObject.GetComponent<CodeBreakerPanel>();
       if (_GamePanelSlide != null) {
         _GamePanelSlide.EnableButton = true;

@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Cozmo.HubWorld {
+namespace Cozmo.HomeHub {
   public class HubWorldPane : MonoBehaviour {
 
     public delegate void HubWorldPaneOpenHandler(HubWorldPane hubWorldPane);
@@ -17,7 +17,7 @@ namespace Cozmo.HubWorld {
       }
     }
 
-    private HubWorld _HubWorldInstance = null;
+    private HomeHub _HubWorldInstance = null;
 
     [SerializeField]
     private Button _LoadHubWorldButton;
@@ -37,12 +37,12 @@ namespace Cozmo.HubWorld {
       _CompleteChallengeButton.onClick.RemoveListener(HandleCompleteChallengeClicked);
     }
 
-    public void Initialize(HubWorld hubWorld) {
+    public void Initialize(HomeHub hubWorld) {
       _HubWorldInstance = hubWorld;
 
-      var challengeDataList = typeof(HubWorld).GetField("_ChallengeDataList", 
-                                                        System.Reflection.BindingFlags.NonPublic | 
-                                                        System.Reflection.BindingFlags.Instance)
+      var challengeDataList = typeof(HomeHub).GetField("_ChallengeDataList", 
+                                System.Reflection.BindingFlags.NonPublic |
+                                System.Reflection.BindingFlags.Instance)
                                               .GetValue(hubWorld) as ChallengeDataList;
 
       _ChallengeIdSelect.options = challengeDataList.ChallengeData.Select(c => new Dropdown.OptionData(c.ChallengeID)).ToList();
@@ -52,7 +52,7 @@ namespace Cozmo.HubWorld {
     }
 
     private void HandleLoadHubWorldButtonClicked() {
-      _HubWorldInstance.TestLoadHubWorld();
+      // _HubWorldInstance.TestLoadHubWorld();
     }
 
     private void HandleCompleteChallengeClicked() {

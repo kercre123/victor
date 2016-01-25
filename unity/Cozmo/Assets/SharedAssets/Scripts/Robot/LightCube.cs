@@ -19,6 +19,15 @@ public class LightCube : ObservedObject {
       base.ClearData();
       MessageDelay = 0f;
     }
+
+    public void SetFlashingLED(Color onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {
+      OnColor = onColor.ToUInt();
+      OffColor = 0;
+      OnPeriodMs = onDurationMs;
+      OffPeriodMs = offDurationMs;
+      TransitionOnPeriodMs = transitionMs;
+      TransitionOffPeriodMs = transitionMs;
+    }
   }
 
   public bool IsMoving { get; private set; }
@@ -151,11 +160,11 @@ public class LightCube : ObservedObject {
   }
 
   public void SetLEDs(Color onColor) {
-    SetLEDs(CozmoPalette.ColorToUInt(onColor));
+    SetLEDs(onColor.ToUInt());
   }
 
   public void SetFlashingLEDs(Color onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {
-    SetLEDs(CozmoPalette.ColorToUInt(onColor), 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
+    SetLEDs(onColor.ToUInt(), 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
 
   public void SetFlashingLEDs(uint onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {

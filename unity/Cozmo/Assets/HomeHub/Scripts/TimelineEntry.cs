@@ -1,0 +1,47 @@
+﻿using UnityEngine;
+using System.Collections;
+using UnityEngine.UI;
+using System;
+using DataPersistence;
+
+public class TimelineEntry : MonoBehaviour {
+
+  [SerializeField]
+  private Image _Fillbar;
+
+  [SerializeField]
+  private GameObject _TimelineNodeActive;
+
+  [SerializeField]
+  private GameObject _TimelineNodeInactive;
+
+  [SerializeField]
+  private Button _FillbarButton;
+
+  [SerializeField]
+  private Button _TimelineNodeButton;
+
+  private Date _Date;
+
+  public event Action<Date> OnSelect;
+
+  private void Awake() {
+    _FillbarButton.onClick.AddListener(HandleClick);
+    _TimelineNodeButton.onClick.AddListener(HandleClick);
+  }
+    
+  private void HandleClick() {
+    if (OnSelect != null) {
+      OnSelect(_Date);
+    }
+  }
+
+  public void Inititialize(Date date, bool active, float progress) {
+    _Date = date;
+    _Fillbar.fillAmount = progress;
+
+    _FillbarButton.gameObject.SetActive(active);
+    _TimelineNodeActive.SetActive(active);
+    _TimelineNodeInactive.SetActive(!active);
+  }
+}

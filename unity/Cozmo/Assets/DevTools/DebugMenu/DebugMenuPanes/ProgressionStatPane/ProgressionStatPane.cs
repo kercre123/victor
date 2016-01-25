@@ -20,7 +20,7 @@ public class ProgressionStatPane : MonoBehaviour {
         GameObject statLine = UIManager.CreateUIElement(_StatLinePrefab.gameObject, _UIContainer);
         SingleStat statComp = statLine.GetComponent<SingleStat>();
         ProgressionStatType statEnum = (ProgressionStatType)i;
-        statComp.Init(statEnum.ToString(), robot.ProgressionStats[i], statEnum);
+        statComp.Init(statEnum.ToString(), robot.GetProgressionStat(statEnum), statEnum);
       }
     }
   }

@@ -16,11 +16,11 @@ MonoBehaviour:
   _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: cubeSlap.title
-  _ChallengeSubtitleLocKey: cubeSlap.subtitle
   _ChallengeDescriptionLocKey: cubeSlap.description
   _ChallengeIcon: {fileID: 21300000, guid: a851a9b6a744d405a89f9076be1d7dff, type: 3}
-  _ChallengeKeyArt: {fileID: 21300000, guid: a851a9b6a744d405a89f9076be1d7dff, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
+  _HowToPlayDialogContentPrefab: {fileID: 131798, guid: 9981867c3655b4dbca3b75d21c3d9dd3,
+    type: 2}
   MinigameConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}

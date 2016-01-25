@@ -45,10 +45,10 @@ namespace Vortex {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
-      InitializeMinigameObjects();
+      InitializeMinigameObjects(minigameConfig.NumCubesRequired());
     }
 
-    protected void InitializeMinigameObjects() {
+    protected void InitializeMinigameObjects(int numCubes) {
       DAS.Info(this, "VortexGame::Start");
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<VortexPanel>();
 
@@ -60,9 +60,8 @@ namespace Vortex {
 
       LightCube.TappedAction += HandleBlockTapped;
 
-      InitialCubesState initCubeState = new InitialCubesState();
       // we need at least one for cozmo and one for at least one player but if we find more cool, stateintro will deal with it.
-      initCubeState.InitialCubeRequirements(new StateIntro(), 2, false, null);
+      InitialCubesState initCubeState = new InitialCubesState(new StateIntro(), numCubes, null);
       _StateMachine.SetNextState(initCubeState);
 
       _RoundNumber = 0;
@@ -156,7 +155,7 @@ namespace Vortex {
         if (_PlayerDataList[i].blockID != -1 &&
             CurrentRobot.LightCubes.TryGetValue(_PlayerDataList[i].blockID, out lightcube)) {
           lightcube.SetLEDs(0);
-          lightcube.Lights[i].OnColor = CozmoPalette.ColorToUInt(_PlayerDataList[i].color);
+          lightcube.Lights[i].OnColor = _PlayerDataList[i].color.ToUInt();
         }
       }
     }
@@ -182,7 +181,7 @@ namespace Vortex {
         lightcube.SetLEDs(0);
         for (int j = 0; j < lightcube.Lights.Length; ++j) {
           if (j < player.currTaps) {
-            lightcube.Lights[j].OnColor = CozmoPalette.ColorToUInt(player.color);
+            lightcube.Lights[j].OnColor = player.color.ToUInt();
           }
         }
       }
@@ -209,7 +208,7 @@ namespace Vortex {
           _PlayerDataList[known_players].robotID = CurrentRobot.ID;
         }
         for (int j = 0; j < lightCube.Value.Lights.Length; ++j) {
-          lightCube.Value.Lights[j].OnColor = CozmoPalette.ColorToUInt(set_color);
+          lightCube.Value.Lights[j].OnColor = set_color.ToUInt();
         }
         _PlayerDataList[known_players].blockID = lightCube.Key;
         _PlayerDataList[known_players].color = set_color;

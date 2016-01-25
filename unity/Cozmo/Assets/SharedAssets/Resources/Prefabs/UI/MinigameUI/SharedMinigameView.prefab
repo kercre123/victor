@@ -104,7 +104,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -131,13 +131,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 0
+  _OptionalCloseDialogButton: {fileID: 0}
+  DimBackground: 0
   _QuitGameButtonPrefab: {fileID: 174042, guid: 5cfc3c18e14be4897ab6b17b0035f685,
     type: 2}
   _CozmoStatusPrefab: {fileID: 11442220, guid: cf9f13de2c8374a4789d98c4120fb2e9, type: 2}
   _ChallengeProgressWidgetPrefab: {fileID: 11418008, guid: 1f104ca012b8a4d35b83f167e041a8a4,
     type: 2}
   _TitleWidgetPrefab: {fileID: 11452892, guid: 62681a27bea6f49c3b1874082b891f74, type: 2}
+  _ContinueButtonShelfPrefab: {fileID: 11406718, guid: cdef2c77c17824e13b0234e36ac1c4c1,
+    type: 2}
   _HowToSlideContainer: {fileID: 22405404}
+  _OpenAnimationFinished: 0
 --- !u!222 &22241334
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -256,6 +261,11 @@ Prefab:
       propertyPath: _ChallengeProgressWidgetPrefab
       value: 
       objectReference: {fileID: 11418008, guid: 1f104ca012b8a4d35b83f167e041a8a4,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _ContinueButtonShelfPrefab
+      value: 
+      objectReference: {fileID: 11406718, guid: cdef2c77c17824e13b0234e36ac1c4c1,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

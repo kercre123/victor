@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f4e8e58e7fe44714ac3795faf293f12, type: 3}
+  m_Name: FriendshipProgressionConfig
+  m_EditorClassIdentifier: 
+  FriendshipLevels:
+  - FriendshipLevelName: Stranger
+    StatsIntroduced:
+      _Mask: 1
+    MaxGoals: 1
+    MinTarget: 2
+    MaxTarget: 5
+    PointsRequired: 0
+  - FriendshipLevelName: Acquaintance
+    StatsIntroduced:
+      _Mask: 4
+    MaxGoals: 2
+    MinTarget: 3
+    MaxTarget: 6
+    PointsRequired: 10
+  - FriendshipLevelName: Friend
+    StatsIntroduced:
+      _Mask: 2
+    MaxGoals: 2
+    MinTarget: 4
+    MaxTarget: 7
+    PointsRequired: 50
+  - FriendshipLevelName: Best Friend
+    StatsIntroduced:
+      _Mask: 0
+    MaxGoals: 3
+    MinTarget: 4
+    MaxTarget: 8
+    PointsRequired: 100
+  - FriendshipLevelName: BFF5EVR
+    StatsIntroduced:
+      _Mask: 0
+    MaxGoals: 4
+    MinTarget: 4
+    MaxTarget: 10
+    PointsRequired: 500

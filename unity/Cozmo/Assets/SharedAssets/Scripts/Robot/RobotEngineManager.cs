@@ -32,18 +32,31 @@ public class RobotEngineManager : MonoBehaviour {
 
   [SerializeField]
   private TextAsset _AlternateConfiguration;
+  #region FriendshipProgression and DailyGoals
+  [SerializeField]
+  private FriendshipProgressionConfig _FriendshipProgConfig;
+
+  public readonly int[] DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+
+  public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
+    if (DailyGoals[(int)type] > 0) {
+      return true;
+    }
+    return false;
+  }
+  #endregion
 
   private DisconnectionReason _LastDisconnectionReason = DisconnectionReason.None;
 
   public event Action<string> ConnectedToClient;
   public event Action<DisconnectionReason> DisconnectedFromClient;
   public event Action<int> RobotConnected;
-  public event Action<bool,RobotActionType> SuccessOrFailure;
+  public event Action<uint, bool,RobotActionType> SuccessOrFailure;
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
-  public event Action<Anki.Cozmo.ProgressionStatType, uint> OnProgressionStatRecieved;
+  public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
 
@@ -469,13 +482,13 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     
     RobotActionType actionType = (RobotActionType)message.actionType;
-    bool success = (message.result == ActionResult.SUCCESS) || ((actionType == RobotActionType.PLAY_ANIMATION || actionType == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
+    bool success = message.result == ActionResult.SUCCESS;
     CurrentRobot.TargetLockedObject = null;
 
     CurrentRobot.LocalBusyTimer = 0f;
 
     if (SuccessOrFailure != null) {
-      SuccessOrFailure(success, actionType);
+      SuccessOrFailure(message.idTag, success, actionType);
     }
 
     if (actionType == RobotActionType.PLAY_ANIMATION) {
@@ -651,6 +664,10 @@ public class RobotEngineManager : MonoBehaviour {
 
     Message.ForceAddRobot = ForceAddRobotMessage;
     SendMessage();
+  }
+
+  public FriendshipProgressionConfig GetFriendshipProgressConfig() {
+    return _FriendshipProgConfig;
   }
 
 }

@@ -21,7 +21,6 @@
 		462D5BC61B0576230027DC17 /* libopencv_features2d.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 462D5BC41B0576230027DC17 /* libopencv_features2d.a */; };
 		468C75E91A96C18D001011B7 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75E81A96C18D001011B7 /* libc++.dylib */; };
 		46D2C2401B4F9D6B00FC7553 /* libcozmoEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2371B4F9D6B00FC7553 /* libcozmoEngine.a */; };
-		46D2C2411B4F9D6B00FC7553 /* libcozmoGame.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2381B4F9D6B00FC7553 /* libcozmoGame.a */; };
 		46D2C2421B4F9D6B00FC7553 /* libctiCommon.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2391B4F9D6B00FC7553 /* libctiCommon.a */; };
 		46D2C2431B4F9D6B00FC7553 /* libctiMessaging.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C23A1B4F9D6B00FC7553 /* libctiMessaging.a */; };
 		46D2C2441B4F9D6B00FC7553 /* libctiPlanning.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C23B1B4F9D6B00FC7553 /* libctiPlanning.a */; };
@@ -40,6 +39,7 @@
 		56B7960F1442E1770026B3DD /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56B795C11442E1100026B3DD /* CoreMotion.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 		56BCBA390FCF049A0030C3B2 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56BCBA380FCF049A0030C3B2 /* SystemConfiguration.framework */; };
 		56FD43960ED4745200FE3770 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56FD43950ED4745200FE3770 /* CFNetwork.framework */; };
+		6F7F7CE91C506C4F0021E9E4 /* libcozmoAPI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7F7CE81C506C4F0021E9E4 /* libcozmoAPI.a */; };
 		7F36C11113C5C673007FBDD9 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C10E13C5C673007FBDD9 /* CoreMedia.framework */; };
 		7F36C11213C5C673007FBDD9 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C10F13C5C673007FBDD9 /* CoreVideo.framework */; };
 		7F36C11313C5C673007FBDD9 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C11013C5C673007FBDD9 /* AVFoundation.framework */; settings = {ATTRIBUTES = (Required, ); }; };
@@ -90,6 +90,7 @@
 		E02DBE886C3416B7691AEDCF /* Bulk_Generics_12.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 354F9DD6543375C01F0F563A /* Bulk_Generics_12.cpp */; };
 		0D78E9A191593119EF9382D6 /* Bulk_Generics_13.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 581C3019FF21F798AFDFAD2C /* Bulk_Generics_13.cpp */; };
 		082FCAF36C8FBE066A8E2E2C /* Bulk_Generics_14.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01DD5C8FC2BF3C8315D74F4E /* Bulk_Generics_14.cpp */; };
+		67FBFE6F502C4C942A56AC92 /* Bulk_Generics_15.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 186913D684A9FD1C99F3D945 /* Bulk_Generics_15.cpp */; };
 		61A741AA05DC425FD2B553A5 /* Bulk_Generics_2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0213C4137261AE8E2114739 /* Bulk_Generics_2.cpp */; };
 		E012A297444367E49097530F /* Bulk_Generics_3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1050D66FDD44AF93A60F66BC /* Bulk_Generics_3.cpp */; };
 		8C6D820A5209AC167AE02C23 /* Bulk_Generics_4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */; };
@@ -255,7 +256,6 @@
 		468C75DF1A96C17D001011B7 /* libzlib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzlib.a; path = opencv/libzlib.a; sourceTree = SOURCE_ROOT; };
 		468C75E81A96C18D001011B7 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
 		46D2C2371B4F9D6B00FC7553 /* libcozmoEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcozmoEngine.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		46D2C2381B4F9D6B00FC7553 /* libcozmoGame.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcozmoGame.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		46D2C2391B4F9D6B00FC7553 /* libctiCommon.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libctiCommon.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		46D2C23A1B4F9D6B00FC7553 /* libctiMessaging.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libctiMessaging.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		46D2C23B1B4F9D6B00FC7553 /* libctiPlanning.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libctiPlanning.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -276,6 +276,7 @@
 		56B796191442E1B80026B3DD /* GameKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameKit.framework; path = System/Library/Frameworks/GameKit.framework; sourceTree = SDKROOT; };
 		56BCBA380FCF049A0030C3B2 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		56FD43950ED4745200FE3770 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		6F7F7CE81C506C4F0021E9E4 /* libcozmoAPI.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcozmoAPI.a; path = "../../build/ios/derived-data/CozmoWorkspace_IOS-fggtfdgqgyeoisazvfijdlnajitk/Build/Products/Debug-iphoneos/libcozmoAPI.a"; sourceTree = "<group>"; };
 		7F36C10E13C5C673007FBDD9 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		7F36C10F13C5C673007FBDD9 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7F36C11013C5C673007FBDD9 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -327,6 +328,7 @@
 		354F9DD6543375C01F0F563A /* Bulk_Generics_12.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_12.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_12.cpp; sourceTree = "<group>"; };
 		581C3019FF21F798AFDFAD2C /* Bulk_Generics_13.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_13.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_13.cpp; sourceTree = "<group>"; };
 		01DD5C8FC2BF3C8315D74F4E /* Bulk_Generics_14.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_14.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_14.cpp; sourceTree = "<group>"; };
+		186913D684A9FD1C99F3D945 /* Bulk_Generics_15.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_15.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_15.cpp; sourceTree = "<group>"; };
 		F0213C4137261AE8E2114739 /* Bulk_Generics_2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_2.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_2.cpp; sourceTree = "<group>"; };
 		1050D66FDD44AF93A60F66BC /* Bulk_Generics_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_3.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_3.cpp; sourceTree = "<group>"; };
 		8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_4.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_4.cpp; sourceTree = "<group>"; };
@@ -477,7 +479,6 @@
 				46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */,
 				46D2C2EF1B4FA4E900FC7553 /* libCSharpBinding.a in Frameworks */,
 				46D2C2401B4F9D6B00FC7553 /* libcozmoEngine.a in Frameworks */,
-				46D2C2411B4F9D6B00FC7553 /* libcozmoGame.a in Frameworks */,
 				46D2C2421B4F9D6B00FC7553 /* libctiCommon.a in Frameworks */,
 				46D2C2431B4F9D6B00FC7553 /* libctiMessaging.a in Frameworks */,
 				46D2C2441B4F9D6B00FC7553 /* libctiPlanning.a in Frameworks */,
@@ -489,6 +490,7 @@
 				462D5BC51B0576230027DC17 /* libopencv_video.a in Frameworks */,
 				462D5BC61B0576230027DC17 /* libopencv_features2d.a in Frameworks */,
 				462D5BBB1B0576230027DC17 /* libopencv_calib3d.a in Frameworks */,
+				6F7F7CE91C506C4F0021E9E4 /* libcozmoAPI.a in Frameworks */,
 				462D5BBC1B0576230027DC17 /* libopencv_highgui.a in Frameworks */,
 				462D5BBD1B0576230027DC17 /* libopencv_core.a in Frameworks */,
 				462D5BBE1B0576230027DC17 /* liblibpng.a in Frameworks */,
@@ -543,6 +545,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6F7F7CE81C506C4F0021E9E4 /* libcozmoAPI.a */,
 				4E3C5ED01C055A8B008399F7 /* libCozmoFxPlugIn.a */,
 				85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */,
 				ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */,
@@ -555,7 +558,6 @@
 				46D2C2F81B4FA6AC00FC7553 /* libctiCommonRobot.a */,
 				46D2C2EE1B4FA4E900FC7553 /* libCSharpBinding.a */,
 				46D2C2371B4F9D6B00FC7553 /* libcozmoEngine.a */,
-				46D2C2381B4F9D6B00FC7553 /* libcozmoGame.a */,
 				46D2C2391B4F9D6B00FC7553 /* libctiCommon.a */,
 				46D2C23A1B4F9D6B00FC7553 /* libctiMessaging.a */,
 				46D2C23B1B4F9D6B00FC7553 /* libctiPlanning.a */,
@@ -668,6 +670,7 @@
 				354F9DD6543375C01F0F563A /* Bulk_Generics_12.cpp */,
 				581C3019FF21F798AFDFAD2C /* Bulk_Generics_13.cpp */,
 				01DD5C8FC2BF3C8315D74F4E /* Bulk_Generics_14.cpp */,
+				186913D684A9FD1C99F3D945 /* Bulk_Generics_15.cpp */,
 				F0213C4137261AE8E2114739 /* Bulk_Generics_2.cpp */,
 				1050D66FDD44AF93A60F66BC /* Bulk_Generics_3.cpp */,
 				8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */,
@@ -953,7 +956,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -1094,6 +1097,7 @@
 				E02DBE886C3416B7691AEDCF /* Bulk_Generics_12.cpp in Sources */,
 				0D78E9A191593119EF9382D6 /* Bulk_Generics_13.cpp in Sources */,
 				082FCAF36C8FBE066A8E2E2C /* Bulk_Generics_14.cpp in Sources */,
+				67FBFE6F502C4C942A56AC92 /* Bulk_Generics_15.cpp in Sources */,
 				61A741AA05DC425FD2B553A5 /* Bulk_Generics_2.cpp in Sources */,
 				E012A297444367E49097530F /* Bulk_Generics_3.cpp in Sources */,
 				8C6D820A5209AC167AE02C23 /* Bulk_Generics_4.cpp in Sources */,
@@ -1352,7 +1356,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF5008A954540054247B /* Release */,

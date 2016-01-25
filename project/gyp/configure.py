@@ -121,7 +121,8 @@ def main(scriptArgs):
   if not os.path.exists(options.audioPath):
     UtilLog.error('audio path not found [%s]' % options.audioPath)
     return False
-  audioProjectPath = os.path.join(options.audioPath, 'gyp/audioengine.gyp')
+  audioProjectPath = options.audioPath
+  audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioengine.gyp')
 
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
@@ -199,12 +200,9 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['game/src/anki/cozmo', 'game/include',
-    'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
-    'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
-  generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'lib/anki/cozmo-engine/simulator/src/game'], ['project/gyp/ctrlKeyboard.lst'])
-  generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'lib/anki/cozmo-engine/simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
-  generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
+  # generator.processFolder(['game/src/anki/cozmo', 'game/include',
+  #   'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
+  #   'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
 
   if options.updateListsOnly:
@@ -242,9 +240,10 @@ def main(scriptArgs):
   cgCozmoEngineProjectPath = os.path.relpath(os.path.join(options.cozmoEnginePath, 'project/gyp/cozmoEngine.gyp'), configurePath)
   cgMexProjectPath = os.path.relpath(os.path.join(options.cozmoEnginePath, 'project/gyp/cozmoEngineMex.gyp'), configurePath)
   cozmoConfigPath = os.path.join(options.cozmoEnginePath, 'resources')
-  ceAudioProjectPath = os.path.relpath(audioProjectPath, cozmoEngineConfigurePath)
-  cgAudioProjectPath = os.path.relpath(audioProjectPath, configurePath)
-
+  audioProjectPath = os.path.relpath(audioProjectPath, configurePath)
+  ceAudioProjectGypPath = os.path.relpath(audioProjectGypPath, cozmoEngineConfigurePath)
+  cgAudioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
+        
   buildMex = 'no'
   if options.mex:
     buildMex = 'yes'
@@ -312,8 +311,8 @@ def main(scriptArgs):
                                     cgMexProjectPath,
                                     buildMex,
                                     options.cozmoAssetPath,
-                                    ceAudioProjectPath,
-                                    cgAudioProjectPath,
+                                    ceAudioProjectGypPath,
+                                    cgAudioProjectGypPath,
                                     externalsPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
@@ -372,8 +371,8 @@ def main(scriptArgs):
                                   cgAnkiUtilProjectPath,
                                   cgCoretechInternalProjectPath,
                                   cgCozmoEngineProjectPath,
-                                  ceAudioProjectPath,
-                                  cgAudioProjectPath,
+                                  ceAudioProjectGypPath,
+                                  cgAudioProjectGypPath,
 				  externalsPath
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
@@ -463,8 +462,8 @@ def main(scriptArgs):
                                   cgCoretechInternalProjectPath,
                                   cgCozmoEngineProjectPath,
                                   ndk_root,
-                                  ceAudioProjectPath,
-                                  cgAudioProjectPath,
+                                  ceAudioProjectGypPath,
+                                  cgAudioProjectGypPath,
 				  externalsPath
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
@@ -476,9 +475,10 @@ def main(scriptArgs):
     gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
     gyp.main(gypArgs)
 
-  #pre build setup: decompress audio libs
-  if (subprocess.call([os.path.join(projectRoot, 'lib/anki/cozmo-engine/lib/audio/gyp/decompressAudioLibs.sh')]) != 0):
-    Logger.error('error decompressing audio libs')
+  # Configure Anki Audio project
+  audio_config_script = os.path.join(audioProjectPath, 'configure.py')
+  if (subprocess.call(audio_config_script) != 0):
+    Logger.error('error Anki Audio project Configure')
 
   return True
 

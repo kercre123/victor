@@ -10,12 +10,11 @@ namespace TreasureHunt {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
-      InitializeMinigameObjects();
+      InitializeMinigameObjects(minigameConfig.NumCubesRequired());
     }
 
-    protected void InitializeMinigameObjects() {
-      InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, true, InitialCubesDone);
+    protected void InitializeMinigameObjects(int numCubes) {
+      InitialCubesState initCubeState = new InitialCubesState(new LookForGoldCubeState(), numCubes, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
     }
@@ -69,28 +68,28 @@ namespace TreasureHunt {
 
       if (dotVal > 0.5f) {
         // front
-        cube.Lights[0].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+        cube.Lights[0].OnColor = Color.yellow.ToUInt();
       }
       else if (dotVal < -0.5f) {
         // back
-        cube.Lights[2].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+        cube.Lights[2].OnColor = Color.yellow.ToUInt();
       }
       else {
         float crossSign = cubeToTarget.x * cubeForward.y - cubeToTarget.y * cubeForward.x;
         if (crossSign < 0.0f) {
           // left
-          cube.Lights[1].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+          cube.Lights[1].OnColor = Color.yellow.ToUInt();
         }
         else {
           // right
-          cube.Lights[3].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+          cube.Lights[3].OnColor = Color.yellow.ToUInt();
         }
       }
     }
 
     public void SetHoveringLight(LightCube cube) {
       for (int i = 0; i < cube.Lights.Length; ++i) {
-        cube.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+        cube.Lights[i].OnColor = Color.yellow.ToUInt();
       }
     }
 
@@ -99,7 +98,7 @@ namespace TreasureHunt {
       distance = Vector2.Distance(blockPosition, GoldPosition);
       return distance < 15.0f;
     }
-      
+
     protected override void CleanUpOnDestroy() {
     }
   }

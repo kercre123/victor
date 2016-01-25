@@ -82,7 +82,7 @@ namespace Anki
         rectTransform.offsetMin = Vector2.zero;
         rectTransform.offsetMax = Vector2.zero;
         rectTransform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-    		rectTransform.anchoredPosition3D = new Vector3 (0, 0, 0); // raul: Z was being initialized to horrendous values
+        rectTransform.anchoredPosition3D = new Vector3 (0, 0, 0); // raul: Z was being initialized to horrendous values
 
         if (hadSuperView) {
           addSubview.DidMoveToSuperview();

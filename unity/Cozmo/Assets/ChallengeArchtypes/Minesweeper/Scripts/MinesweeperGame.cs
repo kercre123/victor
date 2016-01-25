@@ -50,15 +50,14 @@ public class MinesweeperGame : GameBase {
     _GridStatus = new CellStatus[_Config.Rows, _Config.Columns];
 
     ResetGrid();
-    var initialCubeState = new InitialCubesState();
-    initialCubeState.InitialCubeRequirements(new SetupGridState(), 2, false);
+    var initialCubeState = new InitialCubesState(new SetupGridState(), _Config.NumCubesRequired());
     _StateMachine.SetNextState(initialCubeState);
   }
 
   public void SetupPanel() {
     var panelObject = UIManager.CreateUIElement(_MinesweeperPanelPrefab);
 
-    panelObject.transform.SetParent(SharedMinigameViewInstance.transform, false);
+    panelObject.transform.SetParent(SharedMinigameViewInstanceParent, false);
 
     _Panel = panelObject.GetComponent<MinesweeperPanel>();
 

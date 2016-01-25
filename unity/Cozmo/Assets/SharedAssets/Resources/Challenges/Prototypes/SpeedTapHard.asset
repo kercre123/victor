@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
+  m_Name: SpeedTapHard
+  m_EditorClassIdentifier: 
+  _MinigamePrefab: {fileID: 141604, guid: 5cdde45f3f19243c593dc39faf8bf354, type: 2}
+  _ChallengeID: SpeedTapHard
+  _EnableHubWorldChallenge: 1
+  _EnableDevWorldChallenge: 1
+  _ChallengeTitleLocKey: speedTapHard.title
+  _ChallengeDescriptionLocKey: speedTapHard.description
+  _ChallengeIcon: {fileID: 21300000, guid: 9f55d61e2661643428baa66ce302b81a, type: 3}
+  _ChallengeReqs:
+    ChallengeGateKeys: []
+    StatGateArray: []
+  _HowToPlayDialogContentPrefab: {fileID: 130530, guid: d0e86b96079394d7cae781167d54473d,
+    type: 2}
+  MinigameConfig: {fileID: 11400000, guid: c2293b34d9fac45f59383aee9fdf7b97, type: 2}
