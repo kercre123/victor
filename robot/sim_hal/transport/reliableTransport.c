@@ -551,9 +551,7 @@ bool ReliableTransport_Update(ReliableConnection* connection)
   //printState(connection);
   if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_PRETIMEOUT)
   {
-    // TODO: DEMO_ONLY put the helpful print line back (or just don't merge this to master) when not for the demo
-    //printf("Transport time since\nlast receive:\n %u ms\n", (unsigned int)(currentTime - connection->latestRecvTime));
-    printf("");
+    printf("Transport time since\nlast receive:\n %u ms\n", (unsigned int)(currentTime - connection->latestRecvTime));
   }
   if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_TIMEOUT)
   {
