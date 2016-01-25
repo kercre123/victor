@@ -120,5 +120,10 @@ namespace Anki.UI {
       }
     }
 
+    public override Material GetModifiedMaterial(Material baseMaterial) {
+      Material newMaterial = base.GetModifiedMaterial(baseMaterial);
+      // newMaterial = baseMaterial;
+      return newMaterial;
+    }
   }
 }
