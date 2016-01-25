@@ -95,7 +95,9 @@ namespace Cozmo {
       EngineToGameTag::ObjectMoved
     }});
 
-
+    SubscribeToTags({
+      GameToEngineTag::ClearAllObjects
+    });
   }
   
 #pragma mark -
@@ -832,6 +834,45 @@ namespace Cozmo {
     }
   }
 
+  void BehaviorBlockPlay::AlwaysHandle(const GameToEngineEvent& event, const Robot& robot)
+  {
+    switch(event.GetData().GetTag())
+    {
+      case GameToEngineTag::ClearAllObjects: {
+
+
+        if( _trackedObject.IsSet() ) {
+          _objectsToTurnOffLights.insert(_trackedObject);
+        }
+
+        if( _objectToPickUp.IsSet() ) {
+          _objectsToTurnOffLights.insert(_objectToPickUp);
+        }
+
+        if( _objectToPlaceOn.IsSet() ) {
+          _objectsToTurnOffLights.insert(_objectToPlaceOn);
+        }
+
+        
+        PRINT_NAMED_INFO("BehaviorBlockPlay.TrackedObject.Clear.ClearAllObjects",
+                         "cleared tracked object. was %d",
+                         _trackedObject.IsSet() ? _trackedObject.GetValue() : -1);
+        _trackedObject.UnSet();
+        _objectToPickUp.UnSet();
+        _objectToPlaceOn.UnSet();
+
+        SetCurrState(State::TrackingFace);
+
+        break;
+      }
+
+      default:
+        PRINT_NAMED_ERROR("BehaviorBlockPlay.AlwaysHandle.InvalidTag",
+                          "Received unexpected event with tag %hhu.", event.GetData().GetTag());
+        _lastHandlerResult = RESULT_FAIL;
+        break;
+    }
+  }
   
   void BehaviorBlockPlay::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
   {
@@ -1834,7 +1875,7 @@ namespace Cozmo {
       _objectsToIgnore.erase(it);
 
       // flag this so we turn off lights as soon as we can
-      _objectsToTurnOffLights.push_back(objectID);
+      _objectsToTurnOffLights.insert(objectID);
     }
     
     return RESULT_OK;

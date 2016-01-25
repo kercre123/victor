@@ -95,6 +95,8 @@ namespace Cozmo {
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
+
+    virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) override;
     
     // Handlers for signals coming from the engine
     Result HandleObservedObjectWhileRunning(Robot& robot,
@@ -185,7 +187,7 @@ namespace Cozmo {
     // blocks that should be ignored (which happens at the end of the demo)
     std::set<ObjectID> _objectsToIgnore;
 
-    std::vector<ObjectID> _objectsToTurnOffLights;
+    std::set<ObjectID> _objectsToTurnOffLights;
 
     // used for moving the lift to track (grab at) the cube
     const f32 _maxObjectDistToMoveLift = 145.0f;
