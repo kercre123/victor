@@ -281,8 +281,7 @@ def parse_engine_arguments():
 #################################
 
 def install_dependencies(options):
-    # TODO: is this fast engouh to run as part of every configure run? should this be a tool on its own?
-    options.deps = [] #, 'ninja']
+    options.deps = ['ninja', 'python3']
     if options.deps:
         print_status('Checking dependencies...')
         installer = ankibuild.installBuildDeps.DependencyInstaller(options);
