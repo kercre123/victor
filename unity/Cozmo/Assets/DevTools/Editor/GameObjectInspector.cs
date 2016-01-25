@@ -271,32 +271,32 @@ namespace UnityEditor {
     #region Anki Prefab Proxy Methods
 
     private class LocalPrefabReferenceMapping {
-      public string fieldName;
-      public Transform sourceTransform;
+      public string FieldName;
+      public Transform SourceTransform;
 
-      public GameObject sourcePrefab;
+      public GameObject SourcePrefab;
            
-      public Transform destinationTransform;
+      public Transform DestinationTransform;
 
-      public GameObject destinationPrefab;
+      public GameObject DestinationPrefab;
     }
 
     private class GlobalPrefabReferenceMapping {
-      public string fieldName;
-      public Transform sourceTransform;
+      public string FieldName;
+      public Transform SourceTransform;
 
-      public GameObject sourcePrefab;
+      public GameObject SourcePrefab;
 
-      public Object destination;
+      public Object Destination;
     }
 
     private class PrefabValueMapping {
-      public string fieldName;
-      public Transform sourceTransform;
+      public string FieldName;
+      public Transform SourceTransform;
 
-      public GameObject sourcePrefab;
+      public GameObject SourcePrefab;
 
-      public object value;
+      public object Value;
     }
 
     private bool IsChild(Transform parent, Transform child) {
@@ -315,12 +315,12 @@ namespace UnityEditor {
 
       for (int i = referenceMappings.Count - 1; i >= 0; i--) {
         var refMap = referenceMappings[i];
-        if (IsChild(proxy.transform, refMap.sourceTransform) || IsChild(proxy.transform, refMap.destinationTransform)) {
+        if (IsChild(proxy.transform, refMap.SourceTransform) || IsChild(proxy.transform, refMap.DestinationTransform)) {
 
           proxy.ModifiedLocalReferences.Add(new PrefabProxy.ModifiedLocalReferenceField() {
-            ObjectPath = RelativePath(proxy.transform, refMap.sourceTransform),
-            FieldName = refMap.fieldName,
-            ReferencePath = RelativePath(proxy.transform, refMap.destinationTransform)
+            ObjectPath = RelativePath(proxy.transform, refMap.SourceTransform),
+            FieldName = refMap.FieldName,
+            ReferencePath = RelativePath(proxy.transform, refMap.DestinationTransform)
           });
 
           referenceMappings.RemoveAt(i);
@@ -333,12 +333,12 @@ namespace UnityEditor {
 
       for (int i = referenceMappings.Count - 1; i >= 0; i--) {
         var refMap = referenceMappings[i];
-        if (IsChild(proxy.transform, refMap.sourceTransform)) {
+        if (IsChild(proxy.transform, refMap.SourceTransform)) {
 
           proxy.ModifiedGlobalReferences.Add(new PrefabProxy.ModifiedGlobalReferenceField() {
-            ObjectPath = RelativePath(proxy.transform, refMap.sourceTransform),
-            FieldName = refMap.fieldName,
-            Reference = refMap.destination
+            ObjectPath = RelativePath(proxy.transform, refMap.SourceTransform),
+            FieldName = refMap.FieldName,
+            Reference = refMap.Destination
           });
 
           referenceMappings.RemoveAt(i);
@@ -351,13 +351,13 @@ namespace UnityEditor {
 
       for (int i = valueMappings.Count - 1; i >= 0; i--) {
         var refMap = valueMappings[i];
-        if (IsChild(proxy.transform, refMap.sourceTransform)) {
+        if (IsChild(proxy.transform, refMap.SourceTransform)) {
 
           var entry = new PrefabProxy.ModifiedValueField() {
-            ObjectPath = RelativePath(proxy.transform, refMap.sourceTransform),
-            FieldName = refMap.fieldName
+            ObjectPath = RelativePath(proxy.transform, refMap.SourceTransform),
+            FieldName = refMap.FieldName
           };
-          entry.SetObjectValue(refMap.value);
+          entry.SetObjectValue(refMap.Value);
 
           proxy.ModifiedValues.Add(entry);
 
@@ -475,7 +475,7 @@ namespace UnityEditor {
             }
           }
 
-          GameObject destinationPrefabProxyPrefab = null;
+          GameObject DestinationPrefabProxyPrefab = null;
           bool isLocal = false;
           bool changed = false;
 
@@ -486,7 +486,7 @@ namespace UnityEditor {
             if (prefabProxy != null || fieldPrefabProxy != null) {
               isLocal = true;
               if (fieldPrefabProxy != null) {
-                destinationPrefabProxyPrefab = fieldPrefabProxy.GetComponent<PrefabProxy>().Prefab;
+                DestinationPrefabProxyPrefab = fieldPrefabProxy.GetComponent<PrefabProxy>().Prefab;
               }
 
               // two different prefab proxies
@@ -504,21 +504,21 @@ namespace UnityEditor {
           if (isLocal) {
             if (changed) {
               localReferences.Add(new LocalPrefabReferenceMapping() {
-                fieldName = newTypeString,
-                sourceTransform = node,
-                sourcePrefab = prefab,
-                destinationPrefab = destinationPrefabProxyPrefab,
-                destinationTransform = objectTransform
+                FieldName = newTypeString,
+                SourceTransform = node,
+                SourcePrefab = prefab,
+                DestinationPrefab = DestinationPrefabProxyPrefab,
+                DestinationTransform = objectTransform
               });
             }
           }
           else {
             if (prefab != null && val != prefabVal) {
               globalReferences.Add(new GlobalPrefabReferenceMapping() {
-                sourceTransform = node,
-                sourcePrefab = prefab,
-                fieldName = newTypeString,
-                destination = (Object)val
+                SourceTransform = node,
+                SourcePrefab = prefab,
+                FieldName = newTypeString,
+                Destination = (Object)val
               });
             }
           }
@@ -563,10 +563,10 @@ namespace UnityEditor {
                 (childList != null && childPrefabList != null &&
                 childList.Count != childPrefabList.Count)) && prefab != null) {
               values.Add(new PrefabValueMapping() {
-                fieldName = newTypeString,
-                sourcePrefab = prefab,
-                sourceTransform = node,
-                value = childList
+                FieldName = newTypeString,
+                SourcePrefab = prefab,
+                SourceTransform = node,
+                Value = childList
               });
             }
           }
@@ -596,10 +596,10 @@ namespace UnityEditor {
 
             if (!EqualityComparer<object>.Default.Equals(childObj, childPrefabObj) && prefab != null) {
               values.Add(new PrefabValueMapping() {
-                fieldName = newTypeString,
-                sourcePrefab = prefab,
-                sourceTransform = node,
-                value = childObj
+                FieldName = newTypeString,
+                SourcePrefab = prefab,
+                SourceTransform = node,
+                Value = childObj
               });
             }
           }
@@ -650,10 +650,10 @@ namespace UnityEditor {
 
           if (prefabComponent == null) {
             values.Add(new PrefabValueMapping() {
-              fieldName = type.FullName,
-              sourceTransform = node,
-              sourcePrefab = prefab,
-              value = null
+              FieldName = type.FullName,
+              SourceTransform = node,
+              SourcePrefab = prefab,
+              Value = null
             });
           }
         }
