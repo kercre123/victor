@@ -42,11 +42,8 @@ namespace Cozmo {
   class Reward;
   class Robot;
   
-  template <typename Type>
-  class AnkiEvent;
-  
   namespace ExternalInterface {
-    class MessageGameToEngine;
+    class BehaviorManagerMessageUnion;
   }
   
   class BehaviorManager
@@ -95,7 +92,7 @@ namespace Cozmo {
     void ClearAllBehaviorOverrides();
     bool OverrideBehaviorScore(const std::string& behaviorName, float newScore);
     
-    void HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+    void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
 
   private:
     

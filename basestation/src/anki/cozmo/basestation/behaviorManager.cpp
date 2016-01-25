@@ -423,83 +423,67 @@ namespace Cozmo {
     return false;
   }
   
-  void BehaviorManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message)
   {
-    const auto& eventData = event.GetData();
-    
-    switch (eventData.GetTag())
+    switch (message.GetTag())
     {
-      case ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage:
+      case ExternalInterface::BehaviorManagerMessageUnionTag::EnableAllBehaviorGroups:
       {
-        const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message = eventData.Get_BehaviorManagerMessage().BehaviorManagerMessageUnion;
-        
-        switch (message.GetTag())
+        if (_behaviorChooser)
         {
-          case ExternalInterface::BehaviorManagerMessageUnionTag::EnableAllBehaviorGroups:
-          {
-            if (_behaviorChooser)
-            {
-              _behaviorChooser->ClearBannedBehaviorGroups();
-            }
-            else
-            {
-              PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableAllBehaviorGroups.NullChooser",
-                                  "Ignoring EnableAllBehaviorGroups");
-            }
-            break;
-          }
-          case ExternalInterface::BehaviorManagerMessageUnionTag::EnableBehaviorGroup:
-          {
-            const auto& msg = message.Get_EnableBehaviorGroup();
-            if (_behaviorChooser)
-            {
-              _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, false);
-            }
-            else
-            {
-              PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableBehaviorGroup.NullChooser",
-                                  "Ignoring EnableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
-            }
-            break;
-          }
-          case ExternalInterface::BehaviorManagerMessageUnionTag::DisableBehaviorGroup:
-          {
-            const auto& msg = message.Get_DisableBehaviorGroup();
-            if (_behaviorChooser)
-            {
-              _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, true);
-            }
-            else
-            {
-              PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.DisableBehaviorGroup.NullChooser",
-                                  "Ignoring DisableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
-            }
-            break;
-          }
-          case ExternalInterface::BehaviorManagerMessageUnionTag::ClearAllBehaviorScoreOverrides:
-          {
-            ClearAllBehaviorOverrides();
-            break;
-          }
-          case ExternalInterface::BehaviorManagerMessageUnionTag::OverrideBehaviorScore:
-          {
-            const auto& msg = message.Get_OverrideBehaviorScore();
-            OverrideBehaviorScore(msg.behaviorName, msg.newScore);
-            break;
-          }
-          default:
-            PRINT_NAMED_ERROR("BehaviorManager.HandleEvent.UnhandledMessageUnionTag",
-                              "Unexpected tag %u '%s'", (uint32_t)message.GetTag(),
-                              BehaviorManagerMessageUnionTagToString(message.GetTag()));
-            assert(0);
+          _behaviorChooser->ClearBannedBehaviorGroups();
         }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableAllBehaviorGroups.NullChooser",
+                              "Ignoring EnableAllBehaviorGroups");
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::EnableBehaviorGroup:
+      {
+        const auto& msg = message.Get_EnableBehaviorGroup();
+        if (_behaviorChooser)
+        {
+          _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, false);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableBehaviorGroup.NullChooser",
+                              "Ignoring EnableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::DisableBehaviorGroup:
+      {
+        const auto& msg = message.Get_DisableBehaviorGroup();
+        if (_behaviorChooser)
+        {
+          _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, true);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.DisableBehaviorGroup.NullChooser",
+                              "Ignoring DisableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::ClearAllBehaviorScoreOverrides:
+      {
+        ClearAllBehaviorOverrides();
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::OverrideBehaviorScore:
+      {
+        const auto& msg = message.Get_OverrideBehaviorScore();
+        OverrideBehaviorScore(msg.behaviorName, msg.newScore);
         break;
       }
       default:
       {
-        PRINT_NAMED_ERROR("ProgressionManager.HandleEvent.UnhandledMessageGameToEngineTag",
-                          "Unexpected tag %u '%s'", (uint32_t)eventData.GetTag(),
-                          MessageGameToEngineTagToString(eventData.GetTag()));
+        PRINT_NAMED_ERROR("BehaviorManager.HandleEvent.UnhandledMessageUnionTag",
+                          "Unexpected tag %u '%s'", (uint32_t)message.GetTag(),
+                          BehaviorManagerMessageUnionTagToString(message.GetTag()));
         assert(0);
         break;
       }

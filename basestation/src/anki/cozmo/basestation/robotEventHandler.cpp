@@ -823,8 +823,9 @@ void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface
 void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   const auto& eventData = event.GetData();
-  const RobotID_t robotID = eventData.Get_ProgressionMessage().robotID;
-  
+  const auto& message = eventData.Get_BehaviorManagerMessage();
+  const RobotID_t robotID = message.robotID;
+
   Robot* robot = _robotManager.GetRobotByID(robotID);
   
   // We need a robot
@@ -834,7 +835,7 @@ void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInter
   }
   else
   {
-    robot->GetBehaviorManager().HandleEvent(event);
+    robot->GetBehaviorManager().HandleMessage(message.BehaviorManagerMessageUnion);
   }
 }
   
