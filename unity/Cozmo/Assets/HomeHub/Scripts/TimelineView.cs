@@ -97,12 +97,11 @@ namespace Cozmo.HomeHub {
 
       _DailyGoalInstance.transform.SetSiblingIndex(0);
 
+      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      _CozmoWidgeInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
     }
 
     private void UpdateDailySession() {
-
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
-      _CozmoWidgeInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
 
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
 
