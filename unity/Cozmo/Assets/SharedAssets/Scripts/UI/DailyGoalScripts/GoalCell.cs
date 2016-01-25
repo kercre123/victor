@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Cozmo {
   namespace UI {
-    public class GoalCell : MonoBehaviour  {
+    public class GoalCell : MonoBehaviour {
       [SerializeField]
       private ProgressBar _GoalProgressBar;
 
@@ -26,6 +26,7 @@ namespace Cozmo {
       private Image _GoalIcon;
 
       private float _GoalProg;
+
       public float Progress {
         get {
           return _GoalProg;
@@ -67,14 +68,24 @@ namespace Cozmo {
         else {
           _GoalCurrent = progress;
         }
-        SetProgress((float)_GoalCurrent/(float)_GoalTarget);
+        SetProgress((float)_GoalCurrent / (float)_GoalTarget);
       }
 
-      public void Initialize(string name, int goal, int currProg, Anki.Cozmo.ProgressionStatType type = Anki.Cozmo.ProgressionStatType.Count) {
-        GoalLabelText = string.Format("+{0} {1}",goal,name);
+      /// <summary>
+      /// Initialize the GoalCell with the target ProgressionStatType, Goal, Current Progress, and Whether or not it should
+      /// update OnProgressionStatRecieved. (Set that to false if you intend to use goal cell for history.)
+      /// </summary>
+      /// <param name="type">Type.</param>
+      /// <param name="goal">Goal.</param>
+      /// <param name="currProg">Curr prog.</param>
+      /// <param name="update">If set to <c>true</c> update.</param>
+      public void Initialize(Anki.Cozmo.ProgressionStatType type, int goal, int currProg, bool update = true) {
+        GoalLabelText = string.Format("+{0} {1}", goal, type.ToString());
         _GoalTarget = goal;
         Type = type;
-        RobotEngineManager.Instance.OnProgressionStatRecieved += OnProgressionStatUpdate;
+        if (update) {
+          RobotEngineManager.Instance.OnProgressionStatRecieved += OnProgressionStatUpdate;
+        }
         _GoalIcon.sprite = ProgressionStatIconMap.Instance.GetIconForStat(type);
         SetProgress(currProg);
       }
@@ -83,10 +94,10 @@ namespace Cozmo {
       public void ShowText(bool show) {
         Sequence fadeTween = DOTween.Sequence();
         if (show) { 
-          fadeTween.Append(_GoalLabel.DOFade(1.0f,0.25f));
+          fadeTween.Append(_GoalLabel.DOFade(1.0f, 0.25f));
         }
         else {
-          fadeTween.Append(_GoalLabel.DOFade(0.0f,0.25f));
+          fadeTween.Append(_GoalLabel.DOFade(0.0f, 0.25f));
         }
         fadeTween.Play();
       }
@@ -102,12 +113,12 @@ namespace Cozmo {
       }
 
       // Use this for initialization
-      void Start () {
+      void Start() {
       
       }
       
       // Update is called once per frame
-      void Update () {
+      void Update() {
       
       }
     }

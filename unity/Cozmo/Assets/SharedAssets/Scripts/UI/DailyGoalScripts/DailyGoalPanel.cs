@@ -49,14 +49,14 @@ public class DailyGoalPanel : BaseView {
       lvl = _DebugLevel;
     }
     if (lvl > _Config.FriendshipLevels.Length) {
-      lvl = _Config.FriendshipLevels.Length-1;
+      lvl = _Config.FriendshipLevels.Length - 1;
     }
     DAS.Event(this, string.Format("GoalGeneration({0},{1})", lvl, rob.GetFriendshipLevelName(lvl)));
     StatBitMask possibleStats = StatBitMask.None;
     int totalGoals = 0;
     int min = 0;
     int max = 0;
-    for (int i = 0; i < lvl; i++) {
+    for (int i = 0; i <= lvl; i++) {
       possibleStats |= _Config.FriendshipLevels[i].StatsIntroduced;
     }
     totalGoals = _Config.FriendshipLevels[lvl].MaxGoals;
@@ -97,8 +97,7 @@ public class DailyGoalPanel : BaseView {
     DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     RobotEngineManager.Instance.DailyGoals[(int)type] += target;
-    string newName = type.ToString();
-    newBadge.Initialize(newName, target, goal, type);
+    newBadge.Initialize(type, target, goal);
     _GoalCells.Add(newBadge);
     newBadge.OnProgChanged += UpdateTotalProgress;
     return newBadge;
@@ -113,7 +112,7 @@ public class DailyGoalPanel : BaseView {
     for (int i = 0; i < _GoalCells.Count; i++) {
       curr += _GoalCells[i].Progress;
     }
-    _TotalProgressBar.SetProgress(curr/total);
+    _TotalProgressBar.SetProgress(curr / total);
   }
 
   protected override void CleanUp() {

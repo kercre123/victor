@@ -82,7 +82,7 @@ public class DailySummaryPanel : MonoBehaviour {
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var stat = (ProgressionStatType)i;
       if (data.Goals[stat] > 0) {
-        CreateGoalBadge(stat, data.Goals[stat], data.Progress[stat]);
+        CreateGoalCell(stat, data.Goals[stat], data.Progress[stat]);
       }
     }
 
@@ -107,9 +107,9 @@ public class DailySummaryPanel : MonoBehaviour {
   }
 
   // Creates a goal badge
-  private GoalCell CreateGoalBadge(ProgressionStatType type, int goal, int progress) {
+  private GoalCell CreateGoalCell(ProgressionStatType type, int goal, int progress) {
     GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
-    newBadge.Initialize(type.ToString(), goal, progress);
+    newBadge.Initialize(type, goal, progress, false);
     newBadge.ShowText(true);
     return newBadge;
   }
