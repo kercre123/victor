@@ -21,7 +21,7 @@ namespace Simon {
       _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
 
-      GameObject sequenceDisplay = _GameInstance.ShowHowToPlaySlide("WatchCozmoPattern");
+      GameObject sequenceDisplay = _GameInstance.ShowGameStateSlide("WatchCozmoPattern");
       _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
       _SequenceDisplay.SetSequenceText(0, _SequenceLength);
 

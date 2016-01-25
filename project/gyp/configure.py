@@ -200,12 +200,9 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['game/src/anki/cozmo', 'game/include',
-    'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
-    'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
-  generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'lib/anki/cozmo-engine/simulator/src/game'], ['project/gyp/ctrlKeyboard.lst'])
-  generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'lib/anki/cozmo-engine/simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
-  generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
+  # generator.processFolder(['game/src/anki/cozmo', 'game/include',
+  #   'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
+  #   'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
 
   if options.updateListsOnly:
@@ -246,7 +243,7 @@ def main(scriptArgs):
   audioProjectPath = os.path.relpath(audioProjectPath, configurePath)
   ceAudioProjectGypPath = os.path.relpath(audioProjectGypPath, cozmoEngineConfigurePath)
   cgAudioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
-
+        
   buildMex = 'no'
   if options.mex:
     buildMex = 'yes'
@@ -478,12 +475,10 @@ def main(scriptArgs):
     gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
     gyp.main(gypArgs)
 
-
   # Configure Anki Audio project
   audio_config_script = os.path.join(audioProjectPath, 'configure.py')
   if (subprocess.call(audio_config_script) != 0):
     Logger.error('error Anki Audio project Configure')
-
 
   return True
 

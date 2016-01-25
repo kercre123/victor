@@ -27,7 +27,6 @@ public abstract class GameBase : MonoBehaviour {
     CloseMinigameImmediately();
   }
 
-  // TODO: Modify so that it passes the rewards
   public delegate void MiniGameWinHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameWin;
@@ -43,7 +42,6 @@ public abstract class GameBase : MonoBehaviour {
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
-  // TODO: Modify so that it passes the rewards
   public delegate void MiniGameLoseHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameLose;
@@ -63,7 +61,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
-  public SharedMinigameView SharedMinigameViewInstance { get { return _SharedMinigameViewInstance; } }
+  protected Transform SharedMinigameViewInstanceParent { get { return _SharedMinigameViewInstance.transform; } }
 
   protected ChallengeData _ChallengeData;
   private ChallengeEndedDialog _ChallengeEndViewInstance;
@@ -72,7 +70,7 @@ public abstract class GameBase : MonoBehaviour {
   protected StateMachine _StateMachine = new StateMachine();
 
   [SerializeField]
-  protected HowToPlaySlide[] _HowToPlayPrefabs;
+  protected GameStateSlide[] _GameStateSlides;
 
   private StatContainer _RewardedXp;
 
@@ -100,13 +98,12 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    TitleText = Localization.Get(data.ChallengeTitleLocKey);
-    TitleIcon = data.ChallengeIcon;
+    ShowTitleWidget(Localization.Get(data.ChallengeTitleLocKey), data.ChallengeIcon);
     CreateDefaultQuitButton();
   }
 
   protected virtual int CalculateTimeStatRewards() {
-    return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f) + 1;
+    return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f);
   }
 
   protected virtual int CalculateNoveltyStatRewards() {
@@ -120,7 +117,7 @@ public abstract class GameBase : MonoBehaviour {
 
     int noveltyPoints = 0;
     bool found = false;
-    foreach(var challenge in completedChallenges) {
+    foreach (var challenge in completedChallenges) {
       if (challenge.ChallengeId == this._ChallengeData.ChallengeID || noveltyPoints == maxPoints) {
         found = true;
         break;
@@ -336,30 +333,47 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Title Widget
 
-  protected string TitleText {
-    set {
-      _SharedMinigameViewInstance.TitleText = value;
-    }
+  protected void ShowTitleWidget(string titleText, Sprite titleIcon) {
+    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon, _ChallengeData.HowToPlayDialogContentPrefab);
+    _SharedMinigameViewInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
+    _SharedMinigameViewInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
   }
 
-  public Sprite TitleIcon {
-    set {
-      _SharedMinigameViewInstance.TitleIcon = value;
-    }
+  public void OpenHowToPlayView() {
+    _SharedMinigameViewInstance.OpenHowToPlayView();
+  }
+
+  public void CloseHowToPlayView() {
+    _SharedMinigameViewInstance.CloseHowToPlayView();
+  }
+
+  private void HandleHowToPlayViewOpened() {
+    PauseGame();
+  }
+
+  private void HandleHowToPlayViewClosed() {
+    ResumeGame();
   }
 
   #endregion
 
   #region How To Play Slides
 
+  public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
+    GameObject slideObject = _SharedMinigameViewInstance.ShowGameStateSlide(UIPrefabHolder.Instance.InitialCubesSlide);
+    ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
+    cubeSlide.Initialize(numCubesRequired);
+    return cubeSlide;
+  }
+
   /// <summary>
   /// Returns an instance of the slide created. Null if the creation failed.
   /// </summary>]
-  public GameObject ShowHowToPlaySlide(string slideName) {
+  public GameObject ShowGameStateSlide(string slideName) {
     // Search through the array for a slide of the same name
     GameObject slideObject = null;
-    HowToPlaySlide foundSlideData = null;
-    foreach (var slide in _HowToPlayPrefabs) {
+    GameStateSlide foundSlideData = null;
+    foreach (var slide in _GameStateSlides) {
       if (slide != null && slide.slideName == slideName) {
         foundSlideData = slide;
         break;
@@ -373,7 +387,7 @@ public abstract class GameBase : MonoBehaviour {
     // If found, show that slide.
     if (foundSlideData != null) {
       if (foundSlideData.slidePrefab != null) {
-        slideObject = _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlideData);
+        slideObject = _SharedMinigameViewInstance.ShowGameStateSlide(foundSlideData);
       }
       else {
         DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
@@ -388,15 +402,43 @@ public abstract class GameBase : MonoBehaviour {
     return slideObject;
   }
 
-  public void HideHowToPlaySlide() {
-    _SharedMinigameViewInstance.HideHowToPlaySlide();
+  public void HideGameStateSlide() {
+    _SharedMinigameViewInstance.HideGameStateSlide();
+  }
+
+  #endregion
+
+  #region ContinueGameShelfWidget
+
+  public void ShowContinueButtonShelf() {
+    _SharedMinigameViewInstance.ShowContinueButtonShelf();
+  }
+
+  public void HideContinueButtonShelf() {
+    _SharedMinigameViewInstance.HideContinueButtonShelf();
+  }
+
+  public void SetContinueButtonShelfText(string text) {
+    _SharedMinigameViewInstance.SetContinueButtonShelfText(text);
+  }
+
+  public void SetContinueButtonText(string text) {
+    _SharedMinigameViewInstance.SetContinueButtonText(text);
+  }
+
+  public void SetContinueButtonListener(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler) {
+    _SharedMinigameViewInstance.SetContinueButtonListener(buttonClickHandler);
+  }
+
+  public void EnableContinueButton(bool enable) {
+    _SharedMinigameViewInstance.EnableContinueButton(enable);
   }
 
   #endregion
 }
 
 [System.Serializable]
-public class HowToPlaySlide {
+public class GameStateSlide {
   public string slideName;
   public CanvasGroup slidePrefab;
 }

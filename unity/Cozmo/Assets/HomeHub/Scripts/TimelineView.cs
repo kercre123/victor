@@ -22,6 +22,12 @@ namespace Cozmo.HomeHub {
     private RectTransform _ChallengeContainer;
 
     [SerializeField]
+    private RectTransform _RightTopPane;
+
+    [SerializeField]
+    private RectTransform _RightBottomPane;
+
+    [SerializeField]
     private UnityEngine.UI.ScrollRect _ScrollRect;
 
     [SerializeField]
@@ -43,13 +49,16 @@ namespace Cozmo.HomeHub {
     HomeHubChallengeListView _ChallengeListViewPrefab;
     HomeHubChallengeListView _ChallengeListViewInstance;
 
-
     [SerializeField]
     DailyGoalPanel _DailyGoalPrefab;
     DailyGoalPanel _DailyGoalInstance;
 
     [SerializeField]
     DailySummaryPanel _DailySummaryPrefab;
+
+    [SerializeField]
+    CozmoWidget _CozmoWidgetPrefab;
+    CozmoWidget _CozmoWidgeInstance;
 
     [SerializeField]
     FriendshipFormulaConfiguration _FriendshipFormulaConfig;
@@ -76,7 +85,9 @@ namespace Cozmo.HomeHub {
       _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
       _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
-      _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _ContentPane).GetComponent<DailyGoalPanel>();
+      _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _RightTopPane).GetComponent<DailyGoalPanel>();
+
+      _CozmoWidgeInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _RightBottomPane).GetComponent<CozmoWidget>();
 
       UpdateDailySession();
 
@@ -84,12 +95,14 @@ namespace Cozmo.HomeHub {
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
       _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
 
-
-      _DailyGoalInstance.transform.SetSiblingIndex(1);
+      _DailyGoalInstance.transform.SetSiblingIndex(0);
 
     }
 
     private void UpdateDailySession() {
+
+      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      _CozmoWidgeInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
 
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
 
@@ -143,7 +156,7 @@ namespace Cozmo.HomeHub {
     private void SetScrollRectStartPosition() {
       _ScrollRect.horizontalNormalizedPosition = _TimelinePane.rect.width / _ContentPane.rect.width;
     }
-      
+
     private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
       int timelineIndex = 0;
 

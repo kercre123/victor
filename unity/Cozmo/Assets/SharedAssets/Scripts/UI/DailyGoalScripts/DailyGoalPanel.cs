@@ -5,58 +5,38 @@ using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 
+// Panel for generating and displaying the ProgressionStat goals for the Day.
 public class DailyGoalPanel : BaseView {
+  
+  private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
 
-  private readonly int[] _DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
-  private readonly List<GoalBadge> _GoalUIBadges = new List<GoalBadge>();
+  // Force a specific Friendship level for Goal Generation testing,
+  // must also set _UseDebug to true.
   [SerializeField]
-  private string _DebugLevel = "";
+  private int _DebugLevel = -1;
   [SerializeField]
   private bool _UseDebug = false;
+
+  // Prefab for GoalCells
   [SerializeField]
-  private GoalBadge _GoalBadgePrefab;
+  private GoalCell _GoalCellPrefab;
+
+  // Progress bar for tracking total progress for all Goals
   [SerializeField]
   private ProgressBar _TotalProgressBar;
-  [SerializeField]
-  private readonly float _ExpandWidth = 800f;
-  [SerializeField]
-  private readonly float _CollapseWidth = 400f;
+
+  // Container for Daily Goal Cells to be children of
   [SerializeField]
   private Transform _GoalContainer;
+
+  // Config file for friendship progression
+  private FriendshipProgressionConfig _Config;
   [SerializeField]
-  private DailyGoalConfig _Config;
+  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
-  private bool _Expanded = true;
-  public bool Expand {
-    get {
-      return _Expanded;
-    }
-    set {
-      // Expand between half and full size
-      if (_Expanded != value) {
-        _Expanded = value;
-        for (int i = 0; i < _GoalUIBadges.Count; i++) {
-          _GoalUIBadges[i].Expand(value);
-        }
-        RectTransform trans = GetComponent<RectTransform>();
-        // TODO: DOScaleX does this wrong. Identify a different way to animate the scaling for this element.
-        if (_Expanded) {
-          trans.sizeDelta = new Vector2(_ExpandWidth, 0.0f);
-        }
-        else {
-          trans.sizeDelta = new Vector2(_CollapseWidth, 0.0f);
-        }
-      }
-    }
-  }
 
-  public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
-    for (int i = 0; i < _DailyGoals.Length; i++) {
-      if (_DailyGoals[i] > 0) {
-        return true;
-      }
-    }
-    return false;
+  void Awake() {
+    _Config = RobotEngineManager.Instance.GetFriendshipProgressConfig();
   }
 
   // Using current friendship level and the appropriate config file,
@@ -64,24 +44,26 @@ public class DailyGoalPanel : BaseView {
   public StatContainer GenerateDailyGoals() {
     Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
-    string name = rob.GetFriendshipLevelName(rob.FriendshipLevel);
-    if (_UseDebug && _DebugLevel != "") {
-      name = _DebugLevel;
+    int lvl = rob.FriendshipLevel;
+    if (_UseDebug && _DebugLevel != -1) {
+      lvl = _DebugLevel;
     }
-    DAS.Event(this, string.Format("GoalGeneration({0})", name));
+    if (lvl >= _Config.FriendshipLevels.Length) {
+      lvl = _Config.FriendshipLevels.Length - 1;
+    }
+    DAS.Event(this, string.Format("GoalGeneration({0},{1})", lvl, rob.GetFriendshipLevelName(lvl)));
     StatBitMask possibleStats = StatBitMask.None;
     int totalGoals = 0;
     int min = 0;
     int max = 0;
-    for (int i = 0; i < _Config.FriendshipLevels.Length; i++) {
+    // Iterate through each level and add in the stats introduced for that level
+    for (int i = 0; i <= lvl; i++) {
       possibleStats |= _Config.FriendshipLevels[i].StatsIntroduced;
-      if (_Config.FriendshipLevels[i].FriendshipLevelName == name) {
-        totalGoals = _Config.FriendshipLevels[i].MaxGoals;
-        min = _Config.FriendshipLevels[i].MinTarget;
-        max = _Config.FriendshipLevels[i].MaxTarget;
-        break;
-      }
     }
+    totalGoals = _Config.FriendshipLevels[lvl].MaxGoals;
+    min = _Config.FriendshipLevels[lvl].MinTarget;
+    max = _Config.FriendshipLevels[lvl].MaxTarget;
+
     // Don't generate more goals than possible stats
     if (totalGoals > possibleStats.Count) {
       DAS.Warn(this, "More Goals than Potential Stats");
@@ -93,8 +75,10 @@ public class DailyGoalPanel : BaseView {
       Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
       possibleStats[targetStat] = false;
       goals[targetStat] = Random.Range(min, max);
-      CreateGoalBadge(targetStat, goals[targetStat], 0);
+      CreateGoalCell(targetStat, goals[targetStat], 0);
     }
+
+    _TotalProgressBar.SetProgress(0f);
     return goals;
   }
 
@@ -102,47 +86,25 @@ public class DailyGoalPanel : BaseView {
     for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
       var targetStat = (Anki.Cozmo.ProgressionStatType)i;
       if (goals[targetStat] > 0) {
-        CreateGoalBadge(targetStat, goals[targetStat], progress[targetStat]);
+        CreateGoalCell(targetStat, goals[targetStat], progress[targetStat]);
       }
     }
+    _TotalProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(progress, goals));
   }
 
-
-  // Creates a goal badge based on a progression stat
-  public GoalBadge CreateGoalBadge(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
-    _DailyGoals[(int)type] += target;
+  // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
+  // Currently this will be additive so if multiple Goals are created with the same required type, they will be combined
+  public GoalCell CreateGoalCell(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
     DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
-    return CreateGoalBadge(type.ToString(), target, goal);
-  }
-
-  // Creates a goal badge based on an arbitrary string
-  public GoalBadge CreateGoalBadge(string name, int target, int goal) {
-    GoalBadge newBadge = UIManager.CreateUIElement(_GoalBadgePrefab.gameObject, _GoalContainer).GetComponent<GoalBadge>();
-    newBadge.Initialize(name, target, goal);
-    _GoalUIBadges.Add(newBadge);
-    newBadge.Expand(_Expanded);
-    newBadge.OnProgChanged += UpdateTotalProgress;
+    GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
+    RobotEngineManager.Instance.DailyGoals[(int)type] += target;
+    newBadge.Initialize(type, target, goal);
+    _GoalCells.Add(newBadge);
     return newBadge;
   }
 
-  // Listens for any goal Badge values you listen to changing.
-  // On Change, updates the total progress achieved by all goalbadges.
-  public void UpdateTotalProgress() {
-    float total = _GoalUIBadges.Count;
-    float curr = 0.0f;
-    for (int i = 0; i < _GoalUIBadges.Count; i++) {
-      curr += _GoalUIBadges[i].Progress;
-    }
-    _TotalProgressBar.SetProgress(curr/total);
-  }
-
   protected override void CleanUp() {
-    for (int i = 0; i < _GoalUIBadges.Count; i++) {
-      //TODO: Dismiss GoalBadges through themselves
-      _GoalUIBadges[i].OnProgChanged -= UpdateTotalProgress;
-      Destroy(_GoalUIBadges[i].gameObject);
-    }
-    _GoalUIBadges.Clear();
+    _GoalCells.Clear();
   }
 
 }

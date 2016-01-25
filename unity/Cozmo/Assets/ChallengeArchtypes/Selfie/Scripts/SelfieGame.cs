@@ -21,7 +21,7 @@ public class SelfieGame : GameBase {
       return;
     }
     var go = GameObject.Instantiate<GameObject>(_CameraPanelPrefab);
-    go.transform.SetParent(SharedMinigameViewInstance.transform, false);
+    go.transform.SetParent(SharedMinigameViewInstanceParent, false);
     _CameraPanel = go.GetComponent<CameraPanel>();
 
     _StateMachine.SetNextState(new PickupCozmoState());

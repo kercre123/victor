@@ -78,7 +78,7 @@ def runWebots(options, resultQueue):
     '--disable-modules-download',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
-    os.path.join(options.projectRoot, 'simulator/worlds/' +  generatedWorldFileName),
+    os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/simulator/worlds/' +  generatedWorldFileName),
     ]
 
   if options.showGraphics:
@@ -102,6 +102,22 @@ def runWebots(options, resultQueue):
   UtilLog.info('webots run took %f seconds' % (ranForS))
 
 
+def WaitUntil(conditionFcn, timeout, period=0.25):
+  mustend = time.time() + timeout
+  while time.time() < mustend:
+    if conditionFcn(): return True
+    time.sleep(period)
+  return False
+
+def IsWebotsRunning():
+  process = subprocess.Popen("ps -ax | grep [/]Applications/Webots/webots.app", shell=True, stdout=subprocess.PIPE)
+  result = process.communicate()[0]
+  if len(result) > 0:
+    return True
+  return False
+  
+def IsWebotsNotRunning():
+  return not IsWebotsRunning()
 
 # sleep for some time, then kill webots if needed
 def stopWebots(options):
@@ -114,8 +130,23 @@ def stopWebots(options):
   # execute
   subprocess.call(runCommand)
 
+  if (WaitUntil(IsWebotsNotRunning, 3, 0.5)):
+    cleanWebots(options)
+    return True
+    
+  print 'ERROR: Webots instance was running, but did not die when killed'
+  return False
+    
+
 # cleans up webots IPC facilities
 def cleanWebots(options):
+  # Are there other Webots processes running? If so, don't kill anything
+  # since they may be in use!
+  if IsWebotsRunning():
+    print 'INFO: An instance of Webots is running. Will not kill IPC facilities'
+    return True
+
+
   # kill webots IPC leftovers
   runCommand = [
     os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/simulator/kill_ipcs.sh'), 
@@ -157,7 +188,7 @@ def runAll(options):
     UtilLog.info('Running test: ' + test + ' in world ' + baseWorldFile)
     
     # Check if world file contains valid test name place holder
-    baseWorldFile = open('simulator/worlds/' + baseWorldFile, 'r')
+    baseWorldFile = open('lib/anki/cozmo-engine/simulator/worlds/' + baseWorldFile, 'r')
     baseWorldData = baseWorldFile.read()
     baseWorldFile.close()
     if worldFileTestNamePlaceHolder not in baseWorldData:
@@ -167,7 +198,7 @@ def runAll(options):
 
     # Generate world file with appropriate args passed into test controller
     generatedWorldData = baseWorldData.replace(worldFileTestNamePlaceHolder, test)
-    generatedWorldFile = open(os.path.join(options.projectRoot, 'simulator/worlds/' + generatedWorldFileName), 'w+')
+    generatedWorldFile = open(os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/simulator/worlds/' + generatedWorldFileName), 'w+')
     generatedWorldFile.write(generatedWorldData)
     generatedWorldFile.close()
 
@@ -250,12 +281,7 @@ def main(scriptArgs):
   parser = argparse.ArgumentParser(
   	# formatter_class=argparse.ArgumentDefaultsHelpFormatter,
   	formatter_class=argparse.RawDescriptionHelpFormatter,
-  	description='runs valgrind on set of unittest', 
-  	epilog=textwrap.dedent('''
-      available modes description:
-      	short - runs all unittests that run under 100 milliseconds
-      	all - runs all unittests
-	'''),
+  	description='Runs Webots functional tests', 
   	version=version
   	)
   parser.add_argument('--debug', '-d', '--verbose', dest='debug', action='store_true',
@@ -294,6 +320,9 @@ def main(scriptArgs):
     UtilLog.error("ERROR build failed")
     return 1
 
+  # Kill webots in case it's running
+  stopWebots(options)
+
   # run the tests
   (testsSucceeded, testResults) = runAll(options)
   tarball(options)
@@ -303,9 +332,9 @@ def main(scriptArgs):
     print key + ' : ' + str(val)
 
   returnValue = 0;
-  cleanResult = cleanWebots(options)
-  if not cleanResult:
-    # how do we notify the build system tha there is something wrong, but it is not this build specific?
+  stopResult = stopWebots(options)
+  if not stopResult:
+    # how do we notify the build system that there is something wrong, but it is not this build specific?
     returnValue = returnValue + 1
 
 

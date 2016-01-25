@@ -30,7 +30,7 @@ namespace DataPersistence {
 
     public Date(int year, int month, int day) {
       if (month < 1 || month > 12 || day < 1 || day > DaysInTheMonth((Month)month, year)) {
-        var validDate = new Date(year, 1, 1).AddMonths(month).AddDays(day);
+        var validDate = new Date(year, 1, 1).AddMonths(month - 1).AddDays(day - 1);
         Year = validDate.Year;
         Month = validDate.Month;
         Day = validDate.Day;
@@ -50,7 +50,7 @@ namespace DataPersistence {
       int newYear = Year;
       int newMonth = Month;
 
-      while(months > 0) {
+      while (months > 0) {
         int overflow = months + newMonth - 12;
         if (overflow > 0) {
           months = overflow;
@@ -70,7 +70,7 @@ namespace DataPersistence {
           newMonth = 12;
         }
         else {
-          newMonth -= months;
+          newMonth += months;
           months = 0;
         }
       }
@@ -102,7 +102,7 @@ namespace DataPersistence {
           days = 0;
         }
       }
-      while(days < 0) {
+      while (days < 0) {
         int underflow = days + newDay - 1;
         if (underflow < 0) {
           newMonth--;
@@ -115,7 +115,7 @@ namespace DataPersistence {
           newDay = daysInMonth;
         }
         else {
-          newDay -= days;
+          newDay += days;
           days = 0;
         }
       }
@@ -168,21 +168,21 @@ namespace DataPersistence {
       }
       return false;
     }
-      
+
     public override int GetHashCode() {
       // assuming date is valid, this will be good for most of time.
       return Year << 9 | Month << 5 | Day;
     }
 
-    public static bool operator== (Date a, Date b) {
+    public static bool operator==(Date a, Date b) {
       return a.Year == b.Year && a.Month == b.Month && a.Day == b.Day;
     }
 
-    public static bool operator!= (Date a, Date b) {
+    public static bool operator!=(Date a, Date b) {
       return a.Year != b.Year || a.Month != b.Month || a.Day != b.Day;
     }
 
-    public static bool operator< (Date a, Date b) {
+    public static bool operator<(Date a, Date b) {
       if (a.Year == b.Year) {
         if (a.Month == b.Month) {
           return a.Day < b.Day;
@@ -192,7 +192,7 @@ namespace DataPersistence {
       return a.Year < b.Year;
     }
 
-    public static bool operator> (Date a, Date b) {
+    public static bool operator>(Date a, Date b) {
       if (a.Year == b.Year) {
         if (a.Month == b.Month) {
           return a.Day > b.Day;

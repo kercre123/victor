@@ -19,7 +19,7 @@ namespace Simon {
       base.Enter();
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.ShowHowToPlaySlide("RepeatPattern");
+      _GameInstance.ShowGameStateSlide("RepeatPattern");
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_01);
@@ -93,7 +93,7 @@ namespace Simon {
 
     private void OnBlockTapped(int id, int times) {
       _CurrentRobot.SetHeadAngle(Random.Range(-0.6f, 0f));
-      if (Time.time - _LastTappedTime < 0.8f || _StartLightBlinkTime != -1) {
+      if (Time.time - _LastTappedTime < 0.4f || _StartLightBlinkTime != -1) {
         return;
       }
 

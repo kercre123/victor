@@ -11,6 +11,9 @@ namespace Anki.UI {
   [AddComponentMenu("Anki/Text", 01)]
   public class AnkiTextLabel : UnityEngine.UI.Text {
 
+    [SerializeField]
+    private bool _AllUppercase = false;
+
     private string _LocalizedTextKey = String.Empty;
     private string _DisplayText = String.Empty;
 
@@ -54,17 +57,25 @@ namespace Anki.UI {
     }
 
     private void SetLocalizedText(string text) {
+      string displayText;
       if (!IsLocalizationKey(text)) {
         m_Text = text;
-        _DisplayText = text;
-        return;
+        displayText = text;
+      }
+      else {
+        _LocalizedTextKey = text.Substring(1);
+        displayText = Localization.Get(_LocalizedTextKey);
       }
 
-      _LocalizedTextKey = text.Substring(1);
-      _DisplayText = Localization.Get(_LocalizedTextKey);
+      if (_AllUppercase) {
+        _DisplayText = displayText.ToUpper();
+      }
+      else {
+        _DisplayText = displayText;
+      }
     }
 
-    protected override void Awake() {
+    protected override void Start() {
       SetLocalizedText(m_Text);
       SetVerticesDirty();
       SetLayoutDirty();
@@ -109,5 +120,10 @@ namespace Anki.UI {
       }
     }
 
+    public override Material GetModifiedMaterial(Material baseMaterial) {
+      Material newMaterial = base.GetModifiedMaterial(baseMaterial);
+      // newMaterial = baseMaterial;
+      return newMaterial;
+    }
   }
 }
