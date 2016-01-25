@@ -369,7 +369,7 @@ namespace UnityEditor {
     private string FullPath(Transform a) {
       string path = "";
       while (a != null) {
-        if (a.name != string.Empty) {
+        if (a.parent == null || a.parent.GetComponent<PrefabProxy>() == null) {
           path = "/" + a.name + path;
         }
         a = a.parent;
