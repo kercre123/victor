@@ -42,6 +42,13 @@ namespace Cozmo {
   class Reward;
   class Robot;
   
+  template <typename Type>
+  class AnkiEvent;
+  
+  namespace ExternalInterface {
+    class MessageGameToEngine;
+  }
+  
   class BehaviorManager
   {
   public:
@@ -67,11 +74,6 @@ namespace Cozmo {
     // behavior does not exist or the selected behavior is not runnable.
     Result SelectNextBehavior(const std::string& name, double currentTime_sec);
     
-    // Add a new behavior to the available ones to be selected from.
-    // The new behavior will be stored in the current IBehaviorChooser, which will
-    // be responsible for destroying it when the chooser is destroyed
-    Result AddBehavior(IBehavior* newBehavior);
-    
     // Specify the minimum time we should stay in each behavior before
     // considering switching
     void SetMinBehaviorTime(float time_sec) { _minBehaviorTime_sec = time_sec; }
@@ -92,6 +94,8 @@ namespace Cozmo {
     
     void ClearAllBehaviorOverrides();
     bool OverrideBehaviorScore(const std::string& behaviorName, float newScore);
+    
+    void HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 
   private:
     

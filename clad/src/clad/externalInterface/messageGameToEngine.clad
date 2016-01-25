@@ -8,6 +8,7 @@
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/proceduralEyeParameters.clad"
 #include "clad/types/demoBehaviorState.clad"
+#include "clad/types/behaviorGroup.clad"
 #include "clad/types/behaviorType.clad"
 #include "clad/types/behaviorChooserType.clad"
 #include "clad/types/emotionTypes.clad"
@@ -397,6 +398,43 @@ message ActivateBehaviorChooser {
 // ExecuteBehavior
 message ExecuteBehavior {
   BehaviorType behaviorType
+}
+
+message EnableAllBehaviorGroups
+{
+}
+
+message EnableBehaviorGroup
+{
+  BehaviorGroup behaviorGroup
+}
+
+message DisableBehaviorGroup
+{
+  BehaviorGroup behaviorGroup
+}
+
+message ClearAllBehaviorScoreOverrides
+{
+}
+
+message OverrideBehaviorScore
+{
+  string    behaviorName,
+  float_32  newScore
+}
+
+union BehaviorManagerMessageUnion {
+  EnableAllBehaviorGroups EnableAllBehaviorGroups,
+  EnableBehaviorGroup EnableBehaviorGroup,
+  DisableBehaviorGroup DisableBehaviorGroup,
+  ClearAllBehaviorScoreOverrides ClearAllBehaviorScoreOverrides,
+  OverrideBehaviorScore OverrideBehaviorScore
+}
+
+message BehaviorManagerMessage {
+  uint_8  robotID,
+  BehaviorManagerMessageUnion  BehaviorManagerMessageUnion
 }
 
 // AbortPath

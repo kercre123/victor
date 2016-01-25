@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
 #include "anki/types.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/noncopyable.h"
@@ -52,6 +53,13 @@ public:
   virtual ~IBehaviorChooser() { }
   
   virtual const char* GetName() const = 0;
+  
+  void ClearBannedBehaviorGroups() { _bannedBehaviorGroups.ClearFlags(); }
+  void SetBannedBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) { _bannedBehaviorGroups.SetBitFlag(behaviorGroup, newVal); }
+
+protected:
+  
+  BehaviorGroupFlags  _bannedBehaviorGroups;
 }; // class IBehaviorChooser
   
   
