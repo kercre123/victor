@@ -165,16 +165,17 @@ namespace Vision {
   private:
     
     Result Init();
-    Result RegisterNewUser(HFEATURE& hFeature);
-    Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
+    Result RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime);
+    Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime);
     
     bool _isInitialized = false;
     FaceTracker::DetectionMode _detectionMode;
     bool _enrollNewFaces = true;
     
-    static const s32 MaxFaces = 10; // detectable at once
+    static const s32   MaxFaces = 10; // detectable at once
     static const INT32 MaxAlbumDataPerFace = 10; // can't be more than 10
     static const INT32 MaxAlbumFaces = 100; // can't be more than 1000
+    static const s32   TimeBetweenEnrollmentUpdates_ms = 2000;
     
     static_assert(MaxAlbumFaces <= 1000 && MaxAlbumFaces > 1,
                   "MaxAlbumFaces should be between 1 and 1000 for OKAO Library.");
@@ -184,6 +185,14 @@ namespace Vision {
     INT32 _lastRegisteredUserID = 0;
     
     std::list<TrackedFace> _faces;
+    
+    // Track the index of the oldest data for each registered user, so we can
+    // replace the oldest one each time
+    struct EnrollmentStatus {
+      INT32        oldestData = 0;
+      TimeStamp_t  lastEnrollmentTimeStamp = 0;
+    };
+    std::map<INT32,EnrollmentStatus> _enrollmentStatus;
     
     //u8* _workingMemory = nullptr;
     //u8* _backupMemory  = nullptr;
@@ -425,7 +434,7 @@ namespace Vision {
     }
   } // SetFeatureHelper()
   
-  Result FaceTracker::Impl::RegisterNewUser(HFEATURE& hFeature)
+  Result FaceTracker::Impl::RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime)
   {
     INT32 numUsersInAlbum = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
@@ -463,13 +472,17 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+    auto & enrollStatus = _enrollmentStatus[_lastRegisteredUserID];
+    enrollStatus.oldestData = 0;
+    enrollStatus.lastEnrollmentTimeStamp = obsTime;
+    
     PRINT_NAMED_INFO("FaceTrackerImpl.RegisterNewUser.Success",
                      "Added user number %d to album", _lastRegisteredUserID);
     
     return RESULT_OK;
   } // RegisterNewUser()
   
-  Result FaceTracker::Impl::UpdateExistingUser(INT32 userID, HFEATURE& hFeature)
+  Result FaceTracker::Impl::UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime)
   {
     INT32 numUserData = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, userID, &numUserData);
@@ -479,14 +492,25 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+    INT32 dataToReplace = numUserData;
     if(numUserData >= MaxAlbumDataPerFace) {
-      //PRINT_NAMED_INFO("FaceTrackerImpl.UpdateExistingUser.MaxNumDataPerUser",
-      //                 "Reached maximum of %d data for user %d. Replacing last.",
-      //                 MaxAlbumDataPerFace, userID);
-      numUserData = MaxAlbumDataPerFace - 1;
+      
+      // Replace the oldest face data
+      // TODO: Consider other methods (e.g. lowest/highest score)
+      auto enrollStatusIter = _enrollmentStatus.find(userID);
+      ASSERT_NAMED(enrollStatusIter != _enrollmentStatus.end(), "Missing enrollment status");
+      auto & enrollStatus = enrollStatusIter->second;
+      if(obsTime - enrollStatus.lastEnrollmentTimeStamp > TimeBetweenEnrollmentUpdates_ms) {
+        dataToReplace = enrollStatus.oldestData;
+        enrollStatus.lastEnrollmentTimeStamp = obsTime;
+        enrollStatus.oldestData++;
+        if(enrollStatus.oldestData == MaxAlbumDataPerFace) {
+          enrollStatus.oldestData = 0;
+        }
+      }
       
       // TODO: Is clearing necessary if we're about to replace it anyway?
-      okaoResult = OKAO_FR_ClearData(_okaoFaceAlbum, userID, numUserData);
+      okaoResult = OKAO_FR_ClearData(_okaoFaceAlbum, userID, dataToReplace);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_ERROR("FaceTrackerImpl.UpdateExistingUser.ClearDataFailed",
                           "Failed to clear data %d for user %d",
@@ -494,8 +518,8 @@ namespace Vision {
         return RESULT_FAIL;
       }
     }
-    
-    okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID, numUserData);
+
+    okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID, dataToReplace);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.UpdateExistingUser.RegisterFailed",
                         "Failed to trying to register data %d for existing user %d",
@@ -727,7 +751,7 @@ namespace Vision {
         // Nobody in album yet, add this person
         PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingFirstUser",
                          "Adding first user to empty album");
-        Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle);
+        Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, frameOrig.GetTimestamp());
         if(RESULT_OK != lastResult) {
           return lastResult;
         }
@@ -758,6 +782,11 @@ namespace Vision {
               ++lastResult;
             }
             
+            Result result = UpdateExistingUser(minID, _okaoRecognitionFeatureHandle, frameOrig.GetTimestamp());
+            if(RESULT_OK != result) {
+              return result;
+            }
+            
             for(INT32 iResult = 0; iResult < lastResult; ++iResult)
             {
               if(userIDs[iResult] != minID)
@@ -766,12 +795,7 @@ namespace Vision {
                                  "Merging face %d with %d b/c its score %d is > %d",
                                  userIDs[iResult], minID, scores[iResult], MergeThreshold);
                 
-                Result lastResult = UpdateExistingUser(minID, _okaoRecognitionFeatureHandle);
-                
-                if(RESULT_OK != lastResult) {
-                  return lastResult;
-                }
-                
+                // TODO: Make RemoveUser helper that does this
                 okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userIDs[iResult]);
                 if(OKAO_NORMAL != okaoResult) {
                   PRINT_NAMED_ERROR("FaceTrackerImpl.Update.ClearUserFailed",
@@ -779,6 +803,8 @@ namespace Vision {
                                     userIDs[iResult], minID);
                   return RESULT_FAIL;
                 }
+                _enrollmentStatus.erase(userIDs[iResult]);
+
               }
               ++iResult;
             }
@@ -789,7 +815,7 @@ namespace Vision {
             // No match found, add new user
             PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingNewUser",
                              "Observed new person. Adding to album.");
-            Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle);
+            Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, frameOrig.GetTimestamp());
             if(RESULT_OK != lastResult) {
               return lastResult;
             }
