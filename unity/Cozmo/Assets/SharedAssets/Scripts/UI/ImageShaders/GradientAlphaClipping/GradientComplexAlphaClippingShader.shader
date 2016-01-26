@@ -1,8 +1,9 @@
-﻿Shader "UI/Cozmo/GradientSimpleClippingShader"
+﻿Shader "UI/Cozmo/GradientComplexClippingShader"
 {
 	Properties
   	{
-    	_Clipping ("DEV ONLY Clipping", Vector) = (0.5, 0.5, 0.5, 0.5)
+    	_ClippingSize ("DEV ONLY Clipping Start", Vector) = (0.5, 0.5, 0.5, 0.5)
+    	_ClippingEnd ("DEV ONLY Clipping End", Vector) = (0.5, 0.5, 0.5, 0.5)
 
     	_AtlasUV ("DEV ONLY UV", Vector) = (0.5, 0.5, 0.5, 0.5)
     }
@@ -42,7 +43,8 @@
 				return o;
 			}
 
-      		float4 _Clipping;
+      		float4 _ClippingSize;
+      		float4 _ClippingEnd;
       		float4 _AtlasUV;
 			
 			sampler2D _MainTex;
@@ -56,13 +58,13 @@
 
 				// make the top right of the gradient frame
 				float2 topRightClipPosition = (1 - spriteUV.xy) * 2;
-				float2 topRightAlpha = topRightClipPosition / _Clipping.xy;
+				float2 topRightAlpha = (topRightClipPosition - _ClippingEnd.xy) / _ClippingSize.xy;
 
 				float topRightMinAlpha = min(topRightAlpha.x,topRightAlpha.y);
 
 				// make the bottom left of the gradient frame
 				float2 bottomLeftClipPosition = (spriteUV.xy) * 2;
-				float2 bottomLeftAlpha = bottomLeftClipPosition / _Clipping.zw;
+				float2 bottomLeftAlpha = (bottomLeftClipPosition - _ClippingEnd.zw) / _ClippingSize.zw;
 
 				float bottomLeftMinAlpha = min(bottomLeftAlpha.x,bottomLeftAlpha.y);
 

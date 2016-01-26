@@ -413,7 +413,7 @@ GameObject:
   - 4: {fileID: 484926}
   - 114: {fileID: 11480754}
   m_Layer: 0
-  m_Name: Testing
+  m_Name: ShaderTesting
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1431,10 +1431,15 @@ MonoBehaviour:
   _BackgroundImage: {fileID: 11440928}
   _MaskingFrame: {fileID: 11465638}
   _Graphic: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  _TopClipping: 1
-  _BottomClipping: 1
-  _LeftClipping: 1
-  _RightClipping: 1
+  _TopClippingStart: .5
+  _BottomClippingStart: .5
+  _LeftClippingStart: .5
+  _RightClippingStart: .5
+  _SpecifyEndClipping: 1
+  _TopClippingEnd: .300000012
+  _BottomClippingEnd: .300000012
+  _LeftClippingEnd: .300000012
+  _RightClippingEnd: .300000012
 --- !u!114 &11472932
 MonoBehaviour:
   m_ObjectHideFlags: 1

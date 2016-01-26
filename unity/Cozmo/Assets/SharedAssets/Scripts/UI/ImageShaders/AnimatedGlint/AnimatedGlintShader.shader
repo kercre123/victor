@@ -60,7 +60,7 @@
 
 				// offset UV
 				spriteUV = spriteUV + _UVOffset.xy;
-				spriteUV = clamp(spriteUV, 0, 1);
+				spriteUV = saturate(spriteUV);
 
 				// sample glint texture
 				fixed4 glintCol = tex2D(_GlintTex, spriteUV);
