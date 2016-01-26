@@ -619,7 +619,8 @@ namespace Vision {
       okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
                                               dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
                                               _okaoPartDetectionResultHandle);
-      s32 faceID = -1;
+      
+      Vision::TrackedFace::ID_t faceID = Vision::TrackedFace::UnknownFace;
       if(numUsersInAlbum == 0 && _enrollNewFaces) {
         // Nobody in album yet, add this person
         PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingFirstUser",
@@ -692,18 +693,15 @@ namespace Vision {
             }
             faceID = _lastRegisteredUserID;
           }
-
-          if(faceID < 0) {
-            PRINT_NAMED_WARNING("FaceTrackerImpl.Update.InvalidFaceID", "");
-          } else {
-            face.SetID(faceID);
-            face.SetName("KnownFace" + std::to_string(face.GetID()));
-          }
-
-          
         }
       }
       TOC("FaceRecTime");
+      face.SetID(faceID); // could be unknown!
+      if(faceID != Vision::TrackedFace::UnknownFace) {
+        face.SetName("KnownFace" + std::to_string(face.GetID()));
+      } else {
+        face.SetName("UnknownFace");
+      }
       
     } // FOR each face
     
