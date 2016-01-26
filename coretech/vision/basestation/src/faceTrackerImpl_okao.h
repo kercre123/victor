@@ -58,6 +58,9 @@ namespace Vision {
     
     static bool IsRecognitionSupported() { return true; }
     
+    void EnableNewFaceEnrollment(bool enable) { _enrollNewFaces = enable; }
+    bool IsNewFaceEnrollmentEnabled() const   { return _enrollNewFaces; }
+    
   private:
     
     Result Init();
@@ -66,6 +69,7 @@ namespace Vision {
     
     bool _isInitialized = false;
     FaceTracker::DetectionMode _detectionMode;
+    bool _enrollNewFaces = true;
     
     static const s32 MaxFaces = 10; // detectable at once
     static const INT32 MaxAlbumDataPerFace = 10; // can't be more than 10
@@ -616,7 +620,7 @@ namespace Vision {
                                               dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
                                               _okaoPartDetectionResultHandle);
       s32 faceID = -1;
-      if(numUsersInAlbum == 0) {
+      if(numUsersInAlbum == 0 && _enrollNewFaces) {
         // Nobody in album yet, add this person
         PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingFirstUser",
                          "Adding first user to empty album");
@@ -678,7 +682,7 @@ namespace Vision {
             
             faceID = minID;
 
-          } else {
+          } else if(_enrollNewFaces) {
             // No match found, add new user
             PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingNewUser",
                              "Observed new person. Adding to album.");

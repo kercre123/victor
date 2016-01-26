@@ -44,6 +44,9 @@ namespace Vision {
     
     void EnableDisplay(bool enabled);
     
+    void EnableNewFaceEnrollment(bool enable);
+    bool IsNewFaceEnrollmentEnabled() const;
+    
     static bool IsRecognitionSupported();
     
   private:
