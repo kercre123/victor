@@ -98,7 +98,7 @@ public class DailyGoalPanel : MonoBehaviour {
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
   // Currently this will be additive so if multiple Goals are created with the same required type, they will be combined
   public GoalCell CreateGoalCell(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
-    DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
+    DAS.Event(this, string.Format("CreateGoalCell({0},{1})", type, target));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     RobotEngineManager.Instance.DailyGoals[(int)type] += target;
     newBadge.Initialize(type, target, goal);
