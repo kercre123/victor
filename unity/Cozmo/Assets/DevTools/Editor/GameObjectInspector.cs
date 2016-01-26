@@ -404,6 +404,19 @@ namespace UnityEditor {
       return rightPath;
     }
 
+    private Transform GetTransformAtFullPath(string fullPath) {
+      string[] path = fullPath.Split('/');
+      var node = GameObject.Find(path[1]).transform;
+
+      for (int i = 2; i < path.Length; i++) {
+        node = node.FindChild(path[i]);
+        while (node.GetComponent<PrefabProxy>()) {
+          node = node.GetChild(0);
+        }
+      }
+      return node;
+    }
+
     private void GenerateReferenceMappings(GameObject gameObject, List<LocalPrefabReferenceMapping> localReferences, List<GlobalPrefabReferenceMapping> globalReferences, List<PrefabValueMapping> values) {
       GenerateReferenceMappingsRecursive(gameObject.transform, gameObject.transform, null, null, localReferences, globalReferences, values);
     }
@@ -675,10 +688,11 @@ namespace UnityEditor {
       }
 
       for (int i = 0; i < node.childCount; i++) {
+        var child = node.GetChild(i);
         GenerateReferenceMappingsRecursive(root, 
           node.GetChild(i),
           nextPrefab, 
-          nextPrefabNode != null ? nextPrefabNode : (prefabNode != null ? prefabNode.GetChild(i) : null), 
+          nextPrefabNode != null ? nextPrefabNode : (prefabNode != null ? prefabNode.FindChild(child.name) : null), 
           localReferences, 
           globalReferences, 
           values);
@@ -1116,6 +1130,7 @@ namespace UnityEditor {
               }, "The version control requires you to check out the prefab before applying changes.");
               if (flag2) {
                 // ************************** BEGIN ANKI EDIT ******************************
+                var expansionSettings = HierarchyExpansionUtility.GetCurrentStatusForGameObject(gameObject2);
                 CleanupPrefabProxiesForSerialization(gameObject2);
                 // *************************** END ANKI EDIT *******************************
                 PrefabUtility.ReplacePrefab(gameObject2, prefabParent, ReplacePrefabOptions.ConnectToPrefab);
@@ -1123,6 +1138,7 @@ namespace UnityEditor {
 
                 // ************************** BEGIN ANKI EDIT ******************************
                 RestorePrefabProxies(gameObject2);
+                HierarchyExpansionUtility.SetCurrentStatusForGameObject(gameObject2, expansionSettings);
                 // *************************** END ANKI EDIT *******************************
 
                 GUIUtility.ExitGUI();
@@ -1136,6 +1152,90 @@ namespace UnityEditor {
           }
         }
       }
+
+      // ************************** BEGIN ANKI EDIT ******************************
+      var prefabProxyTransform = GetPrefabProxyTransform(gameObject != null ? gameObject.transform.parent : null);
+      if (prefabProxyTransform != null && !EditorApplication.isPlayingOrWillChangePlaymode) {
+
+        float num5 = (width - 52 - 5) / 3;
+        Rect position2 = new Rect(52 + num5 * 0, 44 + y, num5, 15);
+        Rect position3 = new Rect(52 + num5 * 1, 44 + y, num5, 15);
+        Rect position4 = new Rect(52 + num5 * 2, 44 + y, num5, 15);
+
+        GUIContent gUIContent2 = EditorGUIUtility_TextContent("Prefab Proxy");
+        float x = GUI.skin.label.CalcSize(gUIContent2).x;
+
+        Rect position6 = new Rect(52 - x - 5, 44 + y, x, 18);
+        GUI.Label(position6, gUIContent2);
+
+        var fullPath = FullPath(gameObject.transform);
+
+        var prefabProxy = prefabProxyTransform.GetComponent<PrefabProxy>();
+        Transform lastParent = null;
+        while (prefabProxyTransform != null) {
+          lastParent = prefabProxyTransform.parent;
+          prefabProxyTransform = GetPrefabProxyTransform(lastParent);
+        }
+        bool enabled2 = GUI.enabled;
+        GameObject gameObject2 = PrefabUtility.FindValidUploadPrefabInstanceRoot(lastParent.gameObject);
+        GUI.enabled = (gameObject2 != null && !AnimationMode.InAnimationMode());
+
+
+        if (GUI.Button(position2, "Select", "MiniButtonLeft")) {
+          Selection.activeObject = prefabProxy;
+          EditorGUIUtility.PingObject(Selection.activeObject);
+        }
+
+        if (GUI.Button(position3, "Revert", "MiniButtonMid")) {
+          this.CalculatePrefabStatus();
+
+          var expansionSettings = HierarchyExpansionUtility.GetCurrentStatusForGameObject(gameObject2);
+          // Refresh all prefab proxy values first
+          CleanupPrefabProxiesForSerialization(gameObject2);
+          RestorePrefabProxies(gameObject2);
+
+          // now clear the prefab proxy for the current proxy
+          for (int i = prefabProxy.transform.childCount - 1; i >= 0; i--) {
+            GameObject.DestroyImmediate(prefabProxy.transform.GetChild(i).gameObject);
+          }
+          // wipe out the modified fields
+          prefabProxy.ModifiedValues.Clear();
+          prefabProxy.ModifiedGlobalReferences.Clear();
+          // remove all local references that point from this object to the parent,
+          // but leave all references from the parent to this object
+          prefabProxy.ModifiedLocalReferences.RemoveAll(r => !r.ObjectPath.StartsWith(".."));
+
+          // now reexpand the proxy.
+          prefabProxy.Expand();
+
+          Selection.activeGameObject = GetTransformAtFullPath(fullPath).gameObject;
+          HierarchyExpansionUtility.SetCurrentStatusForGameObject(gameObject2, expansionSettings);
+
+          GUIUtility.ExitGUI();
+        }
+
+        if (GUI.Button(position4, "Apply", "MiniButtonRight")) {
+          Object prefabParent = PrefabUtility.GetPrefabParent(gameObject2);
+          string assetPath = AssetDatabase.GetAssetPath(prefabParent);
+          bool flag2 = Provider_PromptAndCheckoutIfNeeded(new string[] {
+            assetPath
+          }, "The version control requires you to check out the prefab before applying changes.");
+          if (flag2) {
+            var expansionSettings = HierarchyExpansionUtility.GetCurrentStatusForGameObject(gameObject2);
+            CleanupPrefabProxiesForSerialization(gameObject2);
+            PrefabUtility.ReplacePrefab(gameObject2, prefabParent, ReplacePrefabOptions.ConnectToPrefab);
+            RestorePrefabProxies(gameObject2);
+
+            Selection.activeGameObject = GetTransformAtFullPath(fullPath).gameObject;
+            HierarchyExpansionUtility.SetCurrentStatusForGameObject(gameObject2, expansionSettings);
+
+            GUIUtility.ExitGUI();
+          }
+          GUI.enabled = enabled2;
+        }
+      }
+      // *************************** END ANKI EDIT *******************************
+
       EditorGUI.EndDisabledGroup();
       base.serializedObject.ApplyModifiedProperties();
       return true;
@@ -1192,7 +1292,14 @@ namespace UnityEditor {
     }
 
     protected override void OnHeaderGUI() {
-      Rect rect = GUILayoutUtility.GetRect(0, (float)((!this.m_HasInstance) ? 40 : 60));
+      // ************************** BEGIN ANKI EDIT ******************************
+      //Rect rect = GUILayoutUtility.GetRect(0, (float)((!this.m_HasInstance) ? 40 : 60));
+      var go = target as GameObject;
+      if (go == null) {
+        return;
+      }
+      Rect rect = GUILayoutUtility.GetRect(0, (float)((!this.m_HasInstance && !GetPrefabProxyTransform(go != null ? go.transform.parent : null)) ? 40 : 60));
+      // *************************** END ANKI EDIT *******************************
       this.DrawInspector(rect);
     }
 
