@@ -595,7 +595,7 @@ namespace Anki {
     , _isPanAbsolute(isPanAbsolute)
     , _isTiltAbsolute(isTiltAbsolute)
     {
-      RegisterSubAction(_compoundAction);
+
     }
     
     void PanAndTiltAction::SetMaxPanSpeed(f32 maxSpeed_radPerSec)
@@ -683,6 +683,7 @@ namespace Anki {
     {
       CompoundActionParallel* newCompoundParallel = new CompoundActionParallel();
       _compoundAction = newCompoundParallel;
+      RegisterSubAction(_compoundAction);
       
       newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
       
@@ -754,7 +755,7 @@ namespace Anki {
     , _visuallyVerifyWhenDone(visuallyVerifyWhenDone)
     , _headTrackWhenDone(headTrackWhenDone)
     {
-      RegisterSubAction(_visuallyVerifyAction);
+      
     }
     
     Radians FaceObjectAction::GetHeadAngle(f32 heightDiff)
@@ -773,6 +774,8 @@ namespace Anki {
     ActionResult FaceObjectAction::Init()
     {
       _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
+      RegisterSubAction(_visuallyVerifyAction);
+      
       ObservableObject* object = _robot->GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
@@ -872,7 +875,7 @@ namespace Anki {
           }
         }
       }
-      
+      PRINT_NAMED_INFO("FaceObjectAction.CheckIfDone", "_compoundAction returned success");
       // If we get here, _compoundAction completed returned SUCCESS. So we can
       // can continue with our additional checks:
       if (_visuallyVerifyWhenDone) {
@@ -892,9 +895,10 @@ namespace Anki {
                               "slot unknown. Using DriveAndManipulateSlot");
           inSlot = Robot::DriveAndManipulateSlot;
         }
+         PRINT_NAMED_INFO("FaceObjectAction.CheckIfDone", "Queueing new action");
         _robot->GetActionList().QueueActionNext(inSlot, new TrackObjectAction(_objectID));
       }
-      
+      PRINT_NAMED_INFO("FaceObjectAction.CheckIfDone", "End");
       return ActionResult::SUCCESS;
     } // FaceObjectAction::CheckIfDone()
     
@@ -913,125 +917,13 @@ namespace Anki {
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     
-#pragma mark ---- PlaceObjectOnGroundAction ----
-    
-    PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
-    {
-      RegisterSubAction(_faceAndVerifyAction);
-    }
-    
-    const std::string& PlaceObjectOnGroundAction::GetName() const
-    {
-      static const std::string name("PlaceObjectOnGroundAction");
-      return name;
-    }
-    
-    ActionResult PlaceObjectOnGroundAction::Init()
-    {
-      ActionResult result = ActionResult::RUNNING;
-      
-      // Robot must be carrying something to put something down!
-      if(_robot->IsCarryingObject() == false) {
-        PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
-                          "Robot %d executing PlaceObjectOnGroundAction but not carrying object.", _robot->GetID());
-        _interactionResult = ObjectInteractionResult::NOT_CARRYING;
-        result = ActionResult::FAILURE_ABORT;
-      } else {
-        
-        _carryingObjectID  = _robot->GetCarryingObject();
-        _carryObjectMarker = _robot->GetCarryingMarker();
-        
-        if(_robot->PlaceObjectOnGround() == RESULT_OK)
-        {
-          result = ActionResult::SUCCESS;
-        } else {
-          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
-                            "Robot's SendPlaceObjectOnGround method reported failure.");
-          _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
-          result = ActionResult::FAILURE_ABORT;
-        }
-        
-        _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
-        _faceAndVerifyAction->SetEmitCompletionSignal(false);
-        
-      } // if/else IsCarryingObject()
-      
-      // If we were moving, stop moving.
-      _robot->GetMoveComponent().StopAllMotors();
-      
-      return result;
-      
-    } // CheckPreconditions()
-    
-    ActionResult PlaceObjectOnGroundAction::CheckIfDone()
-    {
-      ActionResult actionResult = ActionResult::RUNNING;
-      
-      // Wait for robot to report it is done picking/placing and that it's not
-      // moving
-      if (!_robot->IsPickingOrPlacing() && !_robot->GetMoveComponent().IsMoving())
-      {
-        // Stopped executing docking path, and should have placed carried block
-        // and backed out by now, and have head pointed at an angle to see
-        // where we just placed or picked up from.
-        // So we will check if we see a block with the same
-        // ID/Type as the one we were supposed to be picking or placing, in the
-        // right position.
-        
-        actionResult = _faceAndVerifyAction->Update();
-        
-        if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
-          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone",
-                            "FaceAndVerify action reported failure, just deleting object %d.",
-                            _carryingObjectID.GetValue());
-          _robot->GetBlockWorld().ClearObject(_carryingObjectID);
-          _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
-        }
-        
-      } // if robot is not picking/placing or moving
-      
-      if(ActionResult::SUCCESS == actionResult) {
-        _interactionResult = ObjectInteractionResult::SUCCESS;
-      }
-      
-      return actionResult;
-      
-    } // CheckIfDone()
-    
-    void  PlaceObjectOnGroundAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-    {
-      ObjectInteractionCompleted info;
-      info.numObjects = 1;
-      info.objectIDs[0] = _carryingObjectID;
-      info.result = _interactionResult;
-      
-      completionUnion.Set_objectInteractionCompleted(std::move(info));
-    }
-    
-#pragma mark ---- PlaceObjectOnGroundAtPoseAction ----
-    
-    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
-                                                                     const PathMotionProfile motionProfile,
-                                                                     const bool useExactRotation,
-                                                                     const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToPlaceCarriedObjectAction(placementPose,
-                                          true,
-                                          motionProfile,
-                                          useExactRotation,
-                                          useManualSpeed),
-      new PlaceObjectOnGroundAction()})
-    {
-      
-    }
-    
 #pragma mark ---- TraverseObjectAction ----
     
     TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
     : _objectID(objectID)
     , _useManualSpeed(useManualSpeed)
     {
-      RegisterSubAction(_chosenAction);
+  
     }
     
     const std::string& TraverseObjectAction::GetName() const
@@ -1063,11 +955,13 @@ namespace Anki {
           CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = bridgeAction;
+          RegisterSubAction(_chosenAction);
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
           AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = rampAction;
+          RegisterSubAction(_chosenAction);
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
@@ -1183,7 +1077,7 @@ namespace Anki {
     , _moveLiftToHeightAction()
     , _moveLiftToHeightActionDone(false)
     {
-      RegisterSubAction(_moveLiftToHeightAction);
+      
     }
     
     const std::string& VisuallyVerifyObjectAction::GetName() const
@@ -1220,6 +1114,7 @@ namespace Anki {
       
       // Get lift out of the way
       _moveLiftToHeightAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV);
+      RegisterSubAction(_moveLiftToHeightAction);
       _moveLiftToHeightAction->SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
@@ -1353,293 +1248,6 @@ namespace Anki {
       } else {
         return ActionResult::RUNNING;
       }
-    }
-    
-#pragma mark ---- PlayAnimationAction ----
-    
-    PlayAnimationAction::PlayAnimationAction(const std::string& animName,
-                                             u32 numLoops, bool interruptRunning)
-    : _animName(animName)
-    , _name("PlayAnimation" + animName + "Action")
-    , _numLoops(numLoops)
-    , _interruptRunning(interruptRunning)
-    {
-      
-    }
-    
-    ActionResult PlayAnimationAction::Init()
-    {
-      _startedPlaying = false;
-      _stoppedPlaying = false;
-      _wasAborted     = false;
-      
-      if (NeedsAlteredAnimation(*_robot))
-      {
-        const Animation* streamingAnimation = _robot->GetAnimationStreamer().GetStreamingAnimation();
-        const Animation* ourAnimation = _robot->GetCannedAnimation(_animName);
-        
-        _alteredAnimation = std::unique_ptr<Animation>(new Animation(*ourAnimation));
-        assert(_alteredAnimation);
-        
-        bool useStreamingProcFace = !streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
-        
-        if (useStreamingProcFace)
-        {
-          // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
-          auto lastFrame = streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
-          ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
-          _alteredAnimation->AddKeyFrameByTime(frameCopy);
-        }
-        else
-        {
-          // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
-          auto lastFrame = streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
-          FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
-          _alteredAnimation->AddKeyFrameByTime(frameCopy);
-        }
-      }
-      
-      // If we've set our altered animation, use that
-      if (_alteredAnimation)
-      {
-        _animTag = _robot->GetAnimationStreamer().SetStreamingAnimation(*_robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
-      }
-      else // do the normal thing
-      {
-        _animTag = _robot->PlayAnimation(_animName, _numLoops, _interruptRunning);
-      }
-      
-      if(_animTag == AnimationStreamer::NotAnimatingTag) {
-        // TEMP: ask andrew, this was causing a cutoff when one animation tried to interrupt another, but then failed, but then in the failed animations Cleanup, cleared the streaming animation
-        _wasAborted = true;
-        return ActionResult::FAILURE_ABORT;
-      }
-      
-      using namespace RobotInterface;
-      using namespace ExternalInterface;
-      
-      auto startLambda = [this](const AnkiEvent<RobotToEngine>& event)
-      {
-        if(this->_animTag == event.GetData().Get_animStarted().tag) {
-          PRINT_NAMED_INFO("PlayAnimation.StartAnimationHandler", "Animation tag %d started", this->_animTag);
-          _startedPlaying = true;
-        }
-      };
-      
-      auto endLambda = [this](const AnkiEvent<RobotToEngine>& event)
-      {
-        if(_startedPlaying && this->_animTag == event.GetData().Get_animEnded().tag) {
-          PRINT_NAMED_INFO("PlayAnimation.EndAnimationHandler", "Animation tag %d ended", this->_animTag);
-          _stoppedPlaying = true;
-        }
-      };
-      
-      auto cancelLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
-      {
-        if(this->_animTag == event.GetData().Get_AnimationAborted().tag) {
-          PRINT_NAMED_INFO("PlayAnimation.AbortAnimationHandler",
-                           "Animation tag %d was aborted from running in slot %d, probably "
-                           "by another animation in another slot.",
-                           this->_animTag, this->GetSlotHandle());
-          _wasAborted = true;
-        }
-      };
-      
-      _startSignalHandle = _robot->GetRobotMessageHandler()->Subscribe(_robot->GetID(), RobotToEngineTag::animStarted, startLambda);
-      
-      _endSignalHandle   = _robot->GetRobotMessageHandler()->Subscribe(_robot->GetID(), RobotToEngineTag::animEnded,   endLambda);
-      
-      _abortSignalHandle = _robot->GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted, cancelLambda);
-      
-      if(_animTag != 0) {
-        return ActionResult::SUCCESS;
-      } else {
-        return ActionResult::FAILURE_ABORT;
-      }
-    }
-    
-    bool PlayAnimationAction::NeedsAlteredAnimation(Robot& robot) const
-    {
-      // Animations that don't interrupt never need to be altered
-      if (!_interruptRunning)
-      {
-        return false;
-      }
-      
-      const Animation* streamingAnimation = _robot->GetAnimationStreamer().GetStreamingAnimation();
-      // Nothing is currently streaming so no need for alteration
-      if (nullptr == streamingAnimation)
-      {
-        return false;
-      }
-      
-      // The streaming animation has no face tracks, so no need for alteration
-      if (streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty() &&
-          streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty())
-      {
-        return false;
-      }
-      
-      // Now actually check our animation to see if we have an initial face frame
-      const Animation* ourAnimation = _robot->GetCannedAnimation(_animName);
-      assert(ourAnimation);
-      
-      bool animHasInitialFaceFrame = false;
-      if (nullptr != ourAnimation)
-      {
-        auto procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
-        // If our track is not empty and starts at beginning
-        if (!procFaceTrack.IsEmpty() && procFaceTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
-        {
-          animHasInitialFaceFrame = true;
-        }
-        
-        auto faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
-        // If our track is not empty and starts at beginning
-        if (!faceAnimTrack.IsEmpty() && faceAnimTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
-        {
-          animHasInitialFaceFrame = true;
-        }
-      }
-      
-      // If we have an initial face frame, no need to alter the animation
-      return !animHasInitialFaceFrame;
-    }
-    
-    ActionResult PlayAnimationAction::CheckIfDone()
-    {
-      if(_stoppedPlaying) {
-        return ActionResult::SUCCESS;
-      } else if(_wasAborted) {
-        return ActionResult::FAILURE_ABORT;
-      } else {
-        return ActionResult::RUNNING;
-      }
-    }
-    
-    void PlayAnimationAction::Cleanup()
-    {
-      // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
-      // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
-      // to clean up
-      if(!_stoppedPlaying && !_wasAborted) {
-        _robot->GetAnimationStreamer().SetStreamingAnimation(*_robot, nullptr);
-      }
-    }
-    
-    void PlayAnimationAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-    {
-      AnimationCompleted info;
-      info.animationName = _animName;
-      completionUnion.Set_animationCompleted(std::move( info ));
-    }
-    
-#pragma mark ---- PlayAnimationGroupAction ----
-    
-    PlayAnimationGroupAction::PlayAnimationGroupAction(const std::string& animGroupName,
-                                                       u32 numLoops, bool interruptRunning)
-    : PlayAnimationAction("", numLoops, interruptRunning),
-    _animGroupName(animGroupName)
-    {
-      
-    }
-    
-    ActionResult PlayAnimationGroupAction::Init()
-    {
-      _animName = _robot->GetAnimationNameFromGroup(_animGroupName);
-      return PlayAnimationAction::Init();
-    }
-    
-#pragma mark ---- DeviceAudioAction ----
-    
-    DeviceAudioAction::DeviceAudioAction(const Audio::EventType event,
-                                         const Audio::GameObjectType gameObj,
-                                         const bool waitUntilDone)
-    : _actionType( AudioActionType::Event )
-    , _name( "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)) )
-    , _waitUntilDone( waitUntilDone )
-    , _event( event )
-    , _gameObj( gameObj )
-    { }
-    
-    // Stop All Events on Game Object, pass in Invalid to stop all audio
-    DeviceAudioAction::DeviceAudioAction(const Audio::GameObjectType gameObj)
-    : _actionType( AudioActionType::StopEvents )
-    , _name( "StopAudioEvents_GameObj_" + std::string(EnumToString(gameObj)) )
-    , _gameObj( gameObj )
-    { }
-    
-    // Change Music state
-    DeviceAudioAction::DeviceAudioAction(const Audio::MusicGroupStates state)
-    : _actionType( AudioActionType::SetState )
-    , _name( "PlayAudioMusicState_" + std::string(EnumToString(state)) )
-    , _stateGroup( Audio::GameStateGroupType::Music )
-    , _state( static_cast<Audio::GameStateType>(state) )
-    { }
-    
-    void DeviceAudioAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-    {
-      DeviceAudioCompleted info;
-      info.eventType = _event;
-      completionUnion.Set_deviceAudioCompleted(std::move( info ));
-    }
-    
-    ActionResult DeviceAudioAction::Init()
-    {
-      using namespace Audio;
-      switch ( _actionType ) {
-        case AudioActionType::Event:
-        {
-          if (_waitUntilDone) {
-            
-            const AudioEngineClient::CallbackFunc callback = [this] ( AudioCallback callback )
-            {
-              const AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
-              if (AudioCallbackInfoTag::callbackComplete == tag ||
-                  AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
-                _isCompleted = true;
-              }
-            };
-            
-            _robot->GetRobotAudioClient()->PostEvent(_event, _gameObj, callback);
-          }
-          else {
-            _robot->GetRobotAudioClient()->PostEvent(_event, _gameObj);
-            _isCompleted = true;
-          }
-        }
-          break;
-          
-        case AudioActionType::StopEvents:
-        {
-          _robot->GetRobotAudioClient()->StopAllEvents(_gameObj);
-          _isCompleted = true;
-        }
-          break;
-          
-        case AudioActionType::SetState:
-        {
-          // FIXME: This is temp until we add boot process which will start music at launch
-          if (Audio::GameStateGroupType::Music == _stateGroup) {
-            static bool didStartMusic = false;
-            if (!didStartMusic) {
-              _robot->GetRobotAudioClient()->PostEvent( EventType::PLAY_MUSIC, GameObjectType::Default );
-              didStartMusic = true;
-            }
-          }
-          
-          _robot->GetRobotAudioClient()->PostGameState(_stateGroup, _state);
-          _isCompleted = true;
-        }
-          break;
-      }
-      
-      return ActionResult::SUCCESS;
-    }
-    
-    ActionResult DeviceAudioAction::CheckIfDone()
-    {
-      return _isCompleted ? ActionResult::SUCCESS : ActionResult::RUNNING;
     }
   }
 }

@@ -22,7 +22,10 @@ namespace Anki {
     
     ICompoundAction::ICompoundAction(std::initializer_list<IActionRunner*> actions)
     {
+      PRINT_NAMED_WARNING("ICompoundAction.NewCompoundAction", "Making new compound action with %i actions", (int)actions.size());
       for(IActionRunner* action : actions) {
+        PRINT_NAMED_WARNING("ICompoundAction.NewCompoundActionRobot", "Robot is %p\n", action->GetRobot());
+        
         if(action == nullptr) {
           PRINT_NAMED_WARNING("ICompoundAction.NullActionPointer",
                               "Refusing to add a null action pointer to group.\n");
@@ -58,12 +61,17 @@ namespace Anki {
         _name += "+";
       }
       
+      PRINT_NAMED_INFO("AddAction", "Adding new action %i, %s", action->GetType(), action->GetName().c_str());
+      PRINT_NAMED_INFO("ICompoundAction.AddAction", "Robot is %p", GetRobot());
+      
       // All added actions have the same message display setting as the parent
       // compound action in which they are included
       action->EnableMessageDisplay(IsMessageDisplayEnabled());
       
       // As part of a compound action this should not emit completion
       action->SetEmitCompletionSignal(false);
+      
+      action->SetRobot(*GetRobot());
       
       _actions.emplace_back(false, action);
       _name += action->GetName();
@@ -79,12 +87,20 @@ namespace Anki {
     
     void ICompoundAction::Cleanup()
     {
+      PRINT_NAMED_INFO("ICompoundAction.Cleanup", "Robot is %p", _robot);
       for(auto action : _actions) {
         // Call any actions' Cleanup() methods if they aren't done
         const bool isDone = action.first;
         if(!isDone) {
+          // It is possible for the second action in the compound action to have a null robot pointer at this
+          // point so make sure it is set so things like EmitCompletionSignal() can succeed.
+          if(nullptr == action.second->GetRobot())
+          {
+            action.second->SetRobot(*GetRobot());
+          }
+          PRINT_NAMED_INFO("ICompoundAction.Cleanup", "cancelling %p, %p", action.second, action.second->GetRobot());
           action.second->Cancel();
-          action.second->Update();
+          //action.second->Update();
           action.first = true;
         }
       }
@@ -102,6 +118,7 @@ namespace Anki {
     : ICompoundAction(actions)
     , _delayBetweenActionsInSeconds(0)
     {
+      PRINT_NAMED_WARNING("Compound.NewCompoundAction", "Making new compound action with %i actions", (int)actions.size());
       Reset();
     }
     
@@ -129,6 +146,8 @@ namespace Anki {
         assert(isDone == false);
         
         IActionRunner* currentAction = _currentActionPair->second;
+        currentAction->SetRobot(*GetRobot());
+        PRINT_NAMED_INFO("CompoundActionSequential.UpdateInternal", "Robot is %p", GetRobot());
         assert(currentAction != nullptr); // should not have been allowed in by constructor
         
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -164,6 +183,7 @@ namespace Anki {
                 // Otherwise, we are still running. Go ahead and immediately do an
                 // update on the next action now to get its initialization and
                 // precondition checking going, to reduce lag between actions.
+                _currentActionPair->second->SetRobot(*GetRobot());
                 subResult = _currentActionPair->second->Update();
                 
                 // In the special case that the sub-action sucessfully completed
@@ -256,6 +276,7 @@ namespace Anki {
           IActionRunner* currentAction = currentActionPair.second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
           
+          currentAction->SetRobot(*GetRobot());
           const ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());
           switch(subResult)

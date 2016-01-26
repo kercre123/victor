@@ -27,7 +27,6 @@ namespace Anki {
       
       virtual void AddAction(IActionRunner* action);
       
-      
       // Call any unfinished constituent actions' Cleanup() methods
       virtual void Cleanup() override final;
       
@@ -41,6 +40,8 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
+      
+      virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
       
     protected:
       

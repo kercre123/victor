@@ -13,6 +13,7 @@
 #include "driveToActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -212,7 +213,6 @@ namespace Anki {
                 }
               }
             }
-            
           }
         }
         
@@ -275,9 +275,17 @@ namespace Anki {
         result = GetPossiblePoses(*_robot, object, possiblePoses, alreadyInPosition);
       }
       
+      PRINT_NAMED_INFO("DriveToObjectAction.InitHelper", "Robot is %p", _robot);
+      
+      CompoundActionSequential* newCompoundSequential = new CompoundActionSequential();
+      _compoundAction = newCompoundSequential;
+      RegisterSubAction(_compoundAction);
+      
       // In case we are re-running this action, make sure compound actions are cleared.
       // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)
-      _compoundAction.ClearActions();
+      newCompoundSequential->ClearActions();
+      
+      PRINT_NAMED_INFO("DriveToObjectAction.InitHelper", "Robot is %p", _robot);
       
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
@@ -286,21 +294,22 @@ namespace Anki {
           
           _driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
           
-          _compoundAction.AddAction(_driveToPoseAction);
+          newCompoundSequential->AddAction(_driveToPoseAction);
         }
         
         
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
-          _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), true, false));
+          FaceObjectAction* faceObjectAction = new FaceObjectAction(_objectID, Radians(0), true, false);
+          newCompoundSequential->AddAction(faceObjectAction);
         }
         
-        _compoundAction.SetEmitCompletionSignal(false);
+        newCompoundSequential->SetEmitCompletionSignal(false);
         
         // Go ahead and do the first Update on the compound action, so we don't
         // "waste" the first CheckIfDone call just initializing it
-        result = _compoundAction.Update();
+        result = _compoundAction->Update();
         if(ActionResult::RUNNING == result || ActionResult::SUCCESS == result) {
           result = ActionResult::SUCCESS;
         }
@@ -312,6 +321,10 @@ namespace Anki {
     
     ActionResult DriveToObjectAction::Init()
     {
+      PRINT_NAMED_INFO("DriveToObjectAction.Init", "Init1");
+      
+      PRINT_NAMED_INFO("DriveToObjectAction.Init", "Init2");
+      
       ActionResult result = ActionResult::SUCCESS;
       
       ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetObjectByID(_objectID));
@@ -327,9 +340,10 @@ namespace Anki {
                           _robot->GetID(), _objectID.GetValue());
         result = ActionResult::FAILURE_ABORT;
       } else {
-        
+        PRINT_NAMED_INFO("DriveToObjectAction.Init", "Init3");
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
         result = InitHelper(object);
+        PRINT_NAMED_INFO("DriveToObjectAction.Init", "Ini4");
         
       } // if/else object==nullptr
       
@@ -338,7 +352,7 @@ namespace Anki {
     
     ActionResult DriveToObjectAction::CheckIfDone()
     {
-      ActionResult result = _compoundAction.Update();
+      ActionResult result = _compoundAction->Update();
       
       if(result == ActionResult::SUCCESS) {
         // We completed driving to the pose and visually verifying the object
@@ -388,7 +402,13 @@ namespace Anki {
     
     void DriveToObjectAction::Cleanup()
     {
-      _compoundAction.Cleanup();
+      PRINT_NAMED_INFO("DriveToObject.Cleanup", "Robot is %p, %p", _robot, _compoundAction);
+      if(nullptr != _compoundAction)
+      {
+        PRINT_NAMED_INFO("DriveToObject.Cleanup", "_compoundAction not null");
+        _compoundAction->Cleanup();
+      }
+      PRINT_NAMED_INFO("DriveToObject.Cleanup", "Done");
     }
     
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
@@ -468,7 +488,7 @@ namespace Anki {
     
     ActionResult DriveToPlaceCarriedObjectAction::CheckIfDone()
     {
-      ActionResult result = _compoundAction.Update();
+      ActionResult result = _compoundAction->Update();
       
       // We completed driving to the pose. Unlike driving to an object for
       // pickup, we can't re-verify the accuracy of our final position, so
@@ -795,6 +815,7 @@ namespace Anki {
     
     void DriveToPoseAction::Cleanup()
     {
+      PRINT_NAMED_INFO("DriveToPose.Cleanup", "Robot is %p", _robot);
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
       _robot->AbortDrivingToPose();

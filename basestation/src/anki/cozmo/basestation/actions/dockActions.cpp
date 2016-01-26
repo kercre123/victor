@@ -14,6 +14,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "util/helpers/templateHelpers.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/charger.h"
 
@@ -59,7 +61,7 @@ namespace Anki {
     :  _dockObjectID(objectID)
     , _useManualSpeed(useManualSpeed)
     {
-      RegisterSubAction(_faceAndVerifyAction);
+      
     }
 
     void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2)
@@ -229,22 +231,25 @@ namespace Anki {
       // Set dock markers
       _dockMarker = preActionPoses[closestIndex].GetMarker();
       _dockMarker2 = GetDockMarker2(preActionPoses, closestIndex);
-      
+      PRINT_NAMED_INFO("IDockAction.Init", "Here");
       // Set up a visual verification action to make sure we can still see the correct
       // marker of the selected object before proceeding
       // NOTE: This also disables tracking head to object if there was any
       _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
-      
+      RegisterSubAction(_faceAndVerifyAction);
+      PRINT_NAMED_INFO("IDockAction.Init", "Here");
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->SetEmitCompletionSignal(false);
       
       // Go ahead and Update the FaceObjectAction once now, so we don't
       // waste a tick doing so in CheckIfDone (since this is the first thing
       // that will be done in CheckIfDone anyway)
+      PRINT_NAMED_INFO("IDockAction.Init", "before update");
       ActionResult faceObjectResult = _faceAndVerifyAction->Update();
-      
+      PRINT_NAMED_INFO("IDockAction.Init", "after update");
+
       if(ActionResult::SUCCESS == faceObjectResult ||
          ActionResult::RUNNING == faceObjectResult)
       {
@@ -357,6 +362,7 @@ namespace Anki {
 
     void IDockAction::Cleanup()
     {
+      PRINT_NAMED_INFO("IDockAction.Cleanup", "Robot is %p", _robot);
       // Make sure we back to looking for markers (and stop tracking) whenever
       // and however this action finishes
       _robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
@@ -607,6 +613,7 @@ namespace Anki {
     
     void PickupObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
+      PRINT_NAMED_INFO("PickupObjectAction.GetCompletionUnion", "Begining %p", _robot);
       ObjectInteractionCompleted info;
       
       switch(_dockAction)
@@ -772,6 +779,119 @@ namespace Anki {
       
     } // Verify()
     
+#pragma mark ---- PlaceObjectOnGroundAction ----
+    
+    PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
+    {
+      
+    }
+    
+    const std::string& PlaceObjectOnGroundAction::GetName() const
+    {
+      static const std::string name("PlaceObjectOnGroundAction");
+      return name;
+    }
+    
+    ActionResult PlaceObjectOnGroundAction::Init()
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      // Robot must be carrying something to put something down!
+      if(_robot->IsCarryingObject() == false) {
+        PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
+                          "Robot %d executing PlaceObjectOnGroundAction but not carrying object.", _robot->GetID());
+        _interactionResult = ObjectInteractionResult::NOT_CARRYING;
+        result = ActionResult::FAILURE_ABORT;
+      } else {
+        
+        _carryingObjectID  = _robot->GetCarryingObject();
+        _carryObjectMarker = _robot->GetCarryingMarker();
+        
+        if(_robot->PlaceObjectOnGround() == RESULT_OK)
+        {
+          result = ActionResult::SUCCESS;
+        } else {
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
+                            "Robot's SendPlaceObjectOnGround method reported failure.");
+          _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
+          result = ActionResult::FAILURE_ABORT;
+        }
+        
+        _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
+        RegisterSubAction(_faceAndVerifyAction);
+        _faceAndVerifyAction->SetEmitCompletionSignal(false);
+        
+      } // if/else IsCarryingObject()
+      
+      // If we were moving, stop moving.
+      _robot->GetMoveComponent().StopAllMotors();
+      
+      return result;
+      
+    } // CheckPreconditions()
+    
+    ActionResult PlaceObjectOnGroundAction::CheckIfDone()
+    {
+      ActionResult actionResult = ActionResult::RUNNING;
+      
+      // Wait for robot to report it is done picking/placing and that it's not
+      // moving
+      if (!_robot->IsPickingOrPlacing() && !_robot->GetMoveComponent().IsMoving())
+      {
+        // Stopped executing docking path, and should have placed carried block
+        // and backed out by now, and have head pointed at an angle to see
+        // where we just placed or picked up from.
+        // So we will check if we see a block with the same
+        // ID/Type as the one we were supposed to be picking or placing, in the
+        // right position.
+        
+        actionResult = _faceAndVerifyAction->Update();
+        
+        if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone",
+                            "FaceAndVerify action reported failure, just deleting object %d.",
+                            _carryingObjectID.GetValue());
+          _robot->GetBlockWorld().ClearObject(_carryingObjectID);
+          _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
+        }
+        
+      } // if robot is not picking/placing or moving
+      
+      if(ActionResult::SUCCESS == actionResult) {
+        _interactionResult = ObjectInteractionResult::SUCCESS;
+      }
+      
+      return actionResult;
+      
+    } // CheckIfDone()
+    
+    void  PlaceObjectOnGroundAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    {
+      ObjectInteractionCompleted info;
+      info.numObjects = 1;
+      info.objectIDs[0] = _carryingObjectID;
+      info.result = _interactionResult;
+      
+      completionUnion.Set_objectInteractionCompleted(std::move(info));
+    }
+    
+#pragma mark ---- PlaceObjectOnGroundAtPoseAction ----
+    
+    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
+                                                                     const PathMotionProfile motionProfile,
+                                                                     const bool useExactRotation,
+                                                                     const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToPlaceCarriedObjectAction(placementPose,
+                                          true,
+                                          motionProfile,
+                                          useExactRotation,
+                                          useManualSpeed),
+      new PlaceObjectOnGroundAction()})
+    {
+      
+    }
+    
 #pragma mark ---- PlaceRelObjectAction ----
     
     PlaceRelObjectAction::PlaceRelObjectAction(ObjectID objectID,
@@ -782,7 +902,6 @@ namespace Anki {
     {
       SetPlacementOffset(placementOffsetX_mm, 0, 0);
       SetPlaceOnGround(placeOnGround);
-      RegisterSubAction(_placementVerifyAction);
       SetPostDockLiftMovingAnimation(placeOnGround ? "LiftEffortPlaceLow" : "LiftEffortPlaceHigh");
     }
     
@@ -890,6 +1009,7 @@ namespace Anki {
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), true, false);
+              RegisterSubAction(_placementVerifyAction);
               _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
@@ -938,6 +1058,7 @@ namespace Anki {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+                  RegisterSubAction(_placementVerifyAction);
                   
                   // Disable completion signals since this is inside another action
                   _placementVerifyAction->SetEmitCompletionSignal(false);
@@ -981,7 +1102,6 @@ namespace Anki {
     : IDockAction(objectID, useManualSpeed)
     {
       _dockAction = DockAction::DA_ROLL_LOW;
-      RegisterSubAction(_rollVerifyAction);
       SetPostDockLiftMovingAnimation("LiftEffortRoll");
     }
     
@@ -1095,6 +1215,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
+              RegisterSubAction(_rollVerifyAction);
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetEmitCompletionSignal(false);

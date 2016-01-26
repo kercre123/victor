@@ -49,7 +49,8 @@ namespace Anki {
       IActionRunner();
       virtual ~IActionRunner() { }
       
-      void SetRobot(Robot& robot) { _robot = &robot; }
+      void SetRobot(Robot& robot);
+      inline Robot* GetRobot() { return _robot; }
       
       ActionResult Update();
       
@@ -133,7 +134,7 @@ namespace Anki {
       
     protected:
       
-      Robot* _robot;
+      Robot* _robot = nullptr;
       
       virtual ActionResult UpdateInternal() = 0;
       

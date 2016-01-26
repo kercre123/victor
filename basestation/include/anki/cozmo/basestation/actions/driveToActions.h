@@ -208,7 +208,7 @@ namespace Anki {
       f32                        _predockOffsetDistX_mm;
       bool                       _useManualSpeed;
       DriveToPoseAction*         _driveToPoseAction = nullptr;
-      CompoundActionSequential   _compoundAction;
+      IActionRunner*             _compoundAction;
       
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;

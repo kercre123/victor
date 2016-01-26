@@ -224,6 +224,53 @@ namespace Anki {
     }; // class PickupObjectAction
     
     
+    class PlaceObjectOnGroundAction : public IAction
+    {
+    public:
+      
+      PlaceObjectOnGroundAction();
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
+      
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      
+    protected:
+      
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+      
+      // Need longer than default for check if done:
+      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
+      
+      ObjectID                    _carryingObjectID;
+      const Vision::KnownMarker*  _carryObjectMarker = nullptr;
+      IActionRunner*              _faceAndVerifyAction = nullptr;
+      ObjectInteractionResult     _interactionResult = ObjectInteractionResult::INCOMPLETE;
+      
+    }; // class PlaceObjectOnGroundAction
+    
+    
+    // Common compound action
+    // @param placementPose    - The pose in which the carried object should be placed.
+    // @param useExactRotation - If true, then the carried object is placed in the exact
+    //                           6D pose represented by placement pose. Otherwise,
+    //                           x,y and general axis alignment with placementPose rotation
+    //                           are the only constraints.
+    class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
+    {
+    public:
+      PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
+                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
+                                      const bool useExactRotation = false,
+                                      const bool useManualSpeed = false);
+      
+      virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
+    };
+    
+    
     // If carrying an object, places it on or relative to the specified object.
     class PlaceRelObjectAction : public IDockAction
     {
