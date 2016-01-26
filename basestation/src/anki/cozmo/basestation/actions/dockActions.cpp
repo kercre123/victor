@@ -231,7 +231,7 @@ namespace Anki {
       // Set dock markers
       _dockMarker = preActionPoses[closestIndex].GetMarker();
       _dockMarker2 = GetDockMarker2(preActionPoses, closestIndex);
-      PRINT_NAMED_INFO("IDockAction.Init", "Here");
+
       // Set up a visual verification action to make sure we can still see the correct
       // marker of the selected object before proceeding
       // NOTE: This also disables tracking head to object if there was any
@@ -239,16 +239,14 @@ namespace Anki {
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
       RegisterSubAction(_faceAndVerifyAction);
-      PRINT_NAMED_INFO("IDockAction.Init", "Here");
+
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->SetEmitCompletionSignal(false);
       
       // Go ahead and Update the FaceObjectAction once now, so we don't
       // waste a tick doing so in CheckIfDone (since this is the first thing
       // that will be done in CheckIfDone anyway)
-      PRINT_NAMED_INFO("IDockAction.Init", "before update");
       ActionResult faceObjectResult = _faceAndVerifyAction->Update();
-      PRINT_NAMED_INFO("IDockAction.Init", "after update");
 
       if(ActionResult::SUCCESS == faceObjectResult ||
          ActionResult::RUNNING == faceObjectResult)
@@ -362,7 +360,6 @@ namespace Anki {
 
     void IDockAction::Cleanup()
     {
-      PRINT_NAMED_INFO("IDockAction.Cleanup", "Robot is %p", _robot);
       // Make sure we back to looking for markers (and stop tracking) whenever
       // and however this action finishes
       _robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
@@ -613,7 +610,6 @@ namespace Anki {
     
     void PickupObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
-      PRINT_NAMED_INFO("PickupObjectAction.GetCompletionUnion", "Begining %p", _robot);
       ObjectInteractionCompleted info;
       
       switch(_dockAction)

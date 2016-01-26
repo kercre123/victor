@@ -61,9 +61,6 @@ namespace Anki {
         _name += "+";
       }
       
-      PRINT_NAMED_INFO("AddAction", "Adding new action %i, %s", action->GetType(), action->GetName().c_str());
-      PRINT_NAMED_INFO("ICompoundAction.AddAction", "Robot is %p", GetRobot());
-      
       // All added actions have the same message display setting as the parent
       // compound action in which they are included
       action->EnableMessageDisplay(IsMessageDisplayEnabled());
@@ -87,7 +84,6 @@ namespace Anki {
     
     void ICompoundAction::Cleanup()
     {
-      PRINT_NAMED_INFO("ICompoundAction.Cleanup", "Robot is %p", _robot);
       for(auto action : _actions) {
         // Call any actions' Cleanup() methods if they aren't done
         const bool isDone = action.first;
@@ -98,7 +94,6 @@ namespace Anki {
           {
             action.second->SetRobot(*GetRobot());
           }
-          PRINT_NAMED_INFO("ICompoundAction.Cleanup", "cancelling %p, %p", action.second, action.second->GetRobot());
           action.second->Cancel();
           //action.second->Update();
           action.first = true;
@@ -147,7 +142,6 @@ namespace Anki {
         
         IActionRunner* currentAction = _currentActionPair->second;
         currentAction->SetRobot(*GetRobot());
-        PRINT_NAMED_INFO("CompoundActionSequential.UpdateInternal", "Robot is %p", GetRobot());
         assert(currentAction != nullptr); // should not have been allowed in by constructor
         
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

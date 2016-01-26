@@ -875,7 +875,7 @@ namespace Anki {
           }
         }
       }
-      PRINT_NAMED_INFO("FaceObjectAction.CheckIfDone", "_compoundAction returned success");
+
       // If we get here, _compoundAction completed returned SUCCESS. So we can
       // can continue with our additional checks:
       if (_visuallyVerifyWhenDone) {
@@ -895,10 +895,10 @@ namespace Anki {
                               "slot unknown. Using DriveAndManipulateSlot");
           inSlot = Robot::DriveAndManipulateSlot;
         }
-         PRINT_NAMED_INFO("FaceObjectAction.CheckIfDone", "Queueing new action");
+
         _robot->GetActionList().QueueActionNext(inSlot, new TrackObjectAction(_objectID));
       }
-      PRINT_NAMED_INFO("FaceObjectAction.CheckIfDone", "End");
+
       return ActionResult::SUCCESS;
     } // FaceObjectAction::CheckIfDone()
     

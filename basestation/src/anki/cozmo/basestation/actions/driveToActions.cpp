@@ -275,8 +275,6 @@ namespace Anki {
         result = GetPossiblePoses(*_robot, object, possiblePoses, alreadyInPosition);
       }
       
-      PRINT_NAMED_INFO("DriveToObjectAction.InitHelper", "Robot is %p", _robot);
-      
       CompoundActionSequential* newCompoundSequential = new CompoundActionSequential();
       _compoundAction = newCompoundSequential;
       RegisterSubAction(_compoundAction);
@@ -284,8 +282,6 @@ namespace Anki {
       // In case we are re-running this action, make sure compound actions are cleared.
       // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)
       newCompoundSequential->ClearActions();
-      
-      PRINT_NAMED_INFO("DriveToObjectAction.InitHelper", "Robot is %p", _robot);
       
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
@@ -321,10 +317,6 @@ namespace Anki {
     
     ActionResult DriveToObjectAction::Init()
     {
-      PRINT_NAMED_INFO("DriveToObjectAction.Init", "Init1");
-      
-      PRINT_NAMED_INFO("DriveToObjectAction.Init", "Init2");
-      
       ActionResult result = ActionResult::SUCCESS;
       
       ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetObjectByID(_objectID));
@@ -340,11 +332,8 @@ namespace Anki {
                           _robot->GetID(), _objectID.GetValue());
         result = ActionResult::FAILURE_ABORT;
       } else {
-        PRINT_NAMED_INFO("DriveToObjectAction.Init", "Init3");
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
         result = InitHelper(object);
-        PRINT_NAMED_INFO("DriveToObjectAction.Init", "Ini4");
-        
       } // if/else object==nullptr
       
       return result;
@@ -402,13 +391,10 @@ namespace Anki {
     
     void DriveToObjectAction::Cleanup()
     {
-      PRINT_NAMED_INFO("DriveToObject.Cleanup", "Robot is %p, %p", _robot, _compoundAction);
       if(nullptr != _compoundAction)
       {
-        PRINT_NAMED_INFO("DriveToObject.Cleanup", "_compoundAction not null");
         _compoundAction->Cleanup();
       }
-      PRINT_NAMED_INFO("DriveToObject.Cleanup", "Done");
     }
     
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
@@ -815,7 +801,6 @@ namespace Anki {
     
     void DriveToPoseAction::Cleanup()
     {
-      PRINT_NAMED_INFO("DriveToPose.Cleanup", "Robot is %p", _robot);
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
       _robot->AbortDrivingToPose();
