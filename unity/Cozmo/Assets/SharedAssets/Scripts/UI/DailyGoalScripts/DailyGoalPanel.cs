@@ -84,7 +84,7 @@ public class DailyGoalPanel : MonoBehaviour {
         CreateGoalCell(targetStat, goals[targetStat], progress[targetStat]);
       }
     }
-    _TotalProgressBar.SetProgress(DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateFriendshipProgress(progress, goals));
+    _TotalProgressBar.SetProgress(DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateDailyGoalProgress(progress, goals));
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager

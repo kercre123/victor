@@ -33,8 +33,43 @@ public class DailyGoalManager : MonoBehaviour {
   public float GetDailyProgress() {
     StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
     StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
-    return _FriendshipFormulaConfig.CalculateFriendshipProgress(prog, goal);
+    return _FriendshipFormulaConfig.CalculateDailyGoalProgress(prog, goal);
   }
+
+  /// <summary>
+  ///  Returns a value between -1 and 1 based on how close AND far you are from completing daily goal
+  /// </summary>
+  /// <returns>The minigame need.</returns>
+  public float GetMinigameNeed_Extremes() {
+    float prog = GetDailyProgress();
+    // Calculate how far you are from 50% complete
+    // range from 0 -> 1.0
+    prog = Mathf.Abs(prog - 0.5f) * 2;
+    // Multiply scale back out to -1 -> 1
+    prog = (prog - 0.5f) * 2;
+    return prog;
+  }
+
+  /// <summary>
+  ///  Returns a value between -1 and 1 based on how close you are to completing daily goal
+  /// </summary>
+  /// <returns>The minigame need.</returns>
+  public float GetMinigameNeed_Close() {
+    float prog = GetDailyProgress();
+    prog = (prog - 0.5f) * 2;
+    return prog;
+  }
+
+  /// <summary>
+  ///  Returns a value between -1 and 1 based on how far you are to completing daily goal
+  /// </summary>
+  /// <returns>The minigame need.</returns>
+  public float GetMinigameNeed_Far() {
+    float prog = GetDailyProgress();
+    prog = (0.5f - prog) * 2;
+    return prog;
+  }
+
 
   private DailyGoalPanel _GoalPanelRef;
 

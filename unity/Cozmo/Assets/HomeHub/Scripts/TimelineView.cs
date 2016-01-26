@@ -156,12 +156,12 @@ namespace Cozmo.HomeHub {
     }
 
     private void UpdateDailySession() {
-
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
-
+      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       // check if the current session is still valid
       if (currentSession != null) {  
         _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
+        currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.Social, DailyGoalManager.Instance.GetMinigameNeed(), "DailyGoalProgress");
         return;
       }
 
@@ -181,7 +181,7 @@ namespace Cozmo.HomeHub {
 
       newSession.Goals.Set(goals);
 
-      RobotEngineManager.Instance.CurrentRobot.SetProgressionStats(newSession.Progress);
+      currentRobot.SetProgressionStats(newSession.Progress);
       _DailyGoalInstance.SetDailyGoals(newSession.Progress, newSession.Goals);
 
       DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
