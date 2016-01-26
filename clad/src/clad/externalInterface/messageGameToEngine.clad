@@ -384,6 +384,11 @@ message VisionWhileMoving {
     uint_8 enable // True or false
 }
 
+// Set the face ID to treat as "Owner"
+message SetOwnerFace {
+  int_32 ownerID = -1 // Use ownerID < 0 to tell Cozmo to treat next "stable" face detection as owner
+}
+
 // SetBehaviorSystemEnabled
 message SetBehaviorSystemEnabled {
   bool enabled

@@ -46,9 +46,6 @@ namespace Vision {
     void SetID(ID_t newID);
     void SetTimeStamp(TimeStamp_t timestamp);
     
-    u32  GetNumTimesObserved() const { return _numTimesObserved; }
-    void SetNumTimesObserved(u32 N) { _numTimesObserved = N; }
-    
     const std::string& GetName() const;
     void SetName(std::string&& newName);
     
@@ -75,6 +72,18 @@ namespace Vision {
       Contour,
       
       NumFeatures
+    };
+    
+    // TODO: Cladify this enum
+    // (There's no clad in coretech-internal/vision yet, so for now, just do it here)
+    enum Expression {
+      Neutral = 0,
+      Happiness,
+      Surprise,
+      Anger,
+      Sadness,
+      
+      NumExpressions
     };
     
     using Feature = std::vector<Point2f>;
@@ -104,24 +113,32 @@ namespace Vision {
     
     f32 GetIntraEyeDistance() const;
     
+    // Return the histogram over all expressions
+    std::array<f32, NumExpressions> GetExpressionValues() const;
+    
+    // Return the expression with highest value
+    Expression GetMaxExpression() const;
+    
+    // Set a particular expression value
+    void SetExpressionValue(Expression whichExpression, f32 newValue);
+    
+    static const char* GetExpressionName(Expression whichExpression);
+    
   private:
     
-    ID_t _id;
-    std::string _name;
+    ID_t           _id;
+    std::string    _name;
     
-    float _score;
-    bool _isBeingTracked;
-    TimeStamp_t _timestamp;
-    
-    // Start at one: a first observation has to have led to the creation of the
-    // TrackedFace
-    u32 _numTimesObserved = 1;
+    float          _score;
+    bool           _isBeingTracked;
+    TimeStamp_t    _timestamp;
     
     Rectangle<f32> _rect;
     
     Point2f _leftEyeCen, _rightEyeCen;
     
     std::array<Feature, NumFeatures> _features;
+    std::array<f32, NumExpressions> _expression{};
     
     Radians _roll, _pitch, _yaw;
     

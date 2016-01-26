@@ -136,9 +136,7 @@ namespace Cozmo {
     
     // Length of time in seconds to keep interacting with the same face non-stop
     constexpr static float kFaceInterestingDuration_sec = 3.5;
-    // Ignore faces that haven't been seen at least this many times
-    constexpr static int   kMinNumFaceObservations = 2;
-    
+
     // Average length of time in seconds to watch one face when multiple faces
     // are present, and +/- variability in seconds on that average.
     constexpr static float kMultiFaceInterestingDuration_sec = 2.0;

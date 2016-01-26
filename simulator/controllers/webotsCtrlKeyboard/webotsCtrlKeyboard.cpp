@@ -234,7 +234,9 @@ namespace Anki {
         printf("         Update controller gains:  k\n");
         printf("             Cycle sound schemes:  m\n");
         printf("                 Request IMU log:  o\n");
-        printf("            Toggle face tracking:  f (Shift+f)\n");
+        printf("           Toggle face detection:  f (Shift+f)\n");
+        printf("          Turn towards last face:  Alt+f\n");
+        printf("              Reset 'owner' face:  Alt+Shift+f\n");
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
         printf("        Force-add specifed robot:  Shift+r\n");
@@ -1438,10 +1440,13 @@ namespace Anki {
                 
               case (s32)'F':
               {
-                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
+                const bool altPressed   = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                if (shiftPressed && !altPressed) {
+                  // SHIFT+F: Disable face detection
                   SendEnableVisionMode(VisionMode::DetectingFaces, false);
-                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  // Turn to face the pose of the last observed face:
+                } else if(altPressed && !shiftPressed) {
+                  // ALT+F: Turn to face the pose of the last observed face:
                   printf("Turning to face ID = %llu\n", _lastFace.faceID);
                   ExternalInterface::FacePose facePose; // construct w/ defaults for speed
                   facePose.world_x = _lastFace.world_x;
@@ -1451,7 +1456,13 @@ namespace Anki {
                   facePose.maxTurnAngle = M_PI;
                   facePose.robotID = 1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(facePose)));
+                } else if(altPressed && shiftPressed) {
+                  // ALT+SHIFT+F: Set owner to next observed face
+                  ExternalInterface::SetOwnerFace setOwnerFace;
+                  setOwnerFace.ownerID = -1;
+                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(setOwnerFace)));
                 } else {
+                  // Just F: Enable face detection
                   SendEnableVisionMode(VisionMode::DetectingFaces, true);
                 }
                 break;
