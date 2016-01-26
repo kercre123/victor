@@ -210,7 +210,7 @@ namespace Cozmo {
                          _ownerID, NumObservationsToSetOwner);
       }
       
-#     if !USE_POSE_FOR_ID
+#     if 0 // !USE_POSE_FOR_ID
       // Remove any known faces whose poses overlap with this observed face
       for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); /* in loop */)
       {
