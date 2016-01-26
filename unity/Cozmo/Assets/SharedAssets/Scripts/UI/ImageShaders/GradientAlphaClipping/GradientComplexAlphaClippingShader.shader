@@ -33,19 +33,38 @@
 			{
 				float2 uv : TEXCOORD0;
 				float4 vertex : SV_POSITION;
+				float2 topRightAlpha : TEXCOORD1;
+				float2 bottomLeftAlpha : TEXCOORD2;
 			};
+
+      		float4 _AtlasUV;
+      		float4 _ClippingEnd;
+      		float4 _ClippingSize;
 
 			v2f vert (appdata v)
 			{
 				v2f o;
 				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
 				o.uv = v.uv;
+
+				// translate atlas UV to sprite UV
+				float2 spriteUV = (v.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
+
+				// precalculate denominator
+				float4 denominator = 2 / _ClippingSize;
+				float4 offset = _ClippingEnd / _ClippingSize;
+
+				// make the top right of the gradient frame
+				float2 topRightAlpha = denominator.xy - spriteUV.xy * denominator.xy - offset.xy;
+
+				// make the bottom left of the gradient frame
+				float2 bottomLeftAlpha = spriteUV.xy * denominator.zw - offset.zw;
+
+				o.topRightAlpha = topRightAlpha;
+				o.bottomLeftAlpha = bottomLeftAlpha;
+
 				return o;
 			}
-
-      		float4 _ClippingSize;
-      		float4 _ClippingEnd;
-      		float4 _AtlasUV;
 			
 			sampler2D _MainTex;
 
@@ -53,22 +72,8 @@
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
 
-				// translate atlas UV to sprite UV
-				float2 spriteUV = (i.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
-
-				// make the top right of the gradient frame
-				float2 topRightClipPosition = (1 - spriteUV.xy) * 2;
-				float2 topRightAlpha = (topRightClipPosition - _ClippingEnd.xy) / _ClippingSize.xy;
-
-				float topRightMinAlpha = min(topRightAlpha.x,topRightAlpha.y);
-
-				// make the bottom left of the gradient frame
-				float2 bottomLeftClipPosition = (spriteUV.xy) * 2;
-				float2 bottomLeftAlpha = (bottomLeftClipPosition - _ClippingEnd.zw) / _ClippingSize.zw;
-
-				float bottomLeftMinAlpha = min(bottomLeftAlpha.x,bottomLeftAlpha.y);
-
-				col.a = min(col.a, 1 - min(topRightMinAlpha, bottomLeftMinAlpha));
+				float2 minAlpha2 = min(i.topRightAlpha,i.bottomLeftAlpha);
+				col.a = min(col.a, 1 - min(minAlpha2.x, minAlpha2.y));
 
 				return col;
 			}

@@ -32,38 +32,42 @@
 			struct v2f
 			{
 				float2 uv : TEXCOORD0;
+				float2 spriteUV : TEXCOORD1;
 				float4 vertex : SV_POSITION;
 			};
+
+      		float4 _AtlasUV;
+      		float _GlintWidthToMaskWidthRatio;
+			float4 _UVOffset;
 
 			v2f vert (appdata v)
 			{
 				v2f o;
 				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
-				o.uv = v.uv;
+				o.uv = v.uv;	
+
+				// translate atlas UV to sprite UV
+				float2 spriteUV = (v.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
+				spriteUV.x = spriteUV.x * _GlintWidthToMaskWidthRatio;
+
+				// offset UV
+				spriteUV = spriteUV + _UVOffset.xy;
+
+				o.spriteUV = spriteUV;
+
 				return o;
 			}
 			
 			sampler2D _MainTex;
 			sampler2D _GlintTex;
-			float4 _UVOffset;
-      		float4 _AtlasUV;
-      		float _GlintWidthToMaskWidthRatio;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
 				// sample masking image
 				fixed4 col = tex2D(_MainTex, i.uv);
 
-				// translate atlas UV to sprite UV
-				float2 spriteUV = (i.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
-				spriteUV.x = spriteUV.x * _GlintWidthToMaskWidthRatio;
-
-				// offset UV
-				spriteUV = spriteUV + _UVOffset.xy;
-				spriteUV = saturate(spriteUV);
-
 				// sample glint texture
-				fixed4 glintCol = tex2D(_GlintTex, spriteUV);
+				fixed4 glintCol = tex2D(_GlintTex, i.spriteUV);
 
 				// set alpha to 0 if mask or glint texture says so. 
 				col.a = min(col.a, glintCol.a);
