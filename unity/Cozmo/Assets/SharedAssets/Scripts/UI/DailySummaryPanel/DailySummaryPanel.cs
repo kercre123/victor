@@ -75,7 +75,7 @@ public class DailySummaryPanel : MonoBehaviour {
     int day = data.Date.Day;
     int month = data.Date.Month;
 
-    _Title.text = string.Format(_Title.DisplayText, month, day);
+    _Title.FormattingArgs = new object[] {month, day};
 
     _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(data.Progress, data.Goals));
 

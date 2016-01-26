@@ -304,7 +304,7 @@ namespace Cozmo.Util {
       return default(T);
     }
 
-    public static TDest[] Selectlist<TSource, TDest>(this IList<TSource> list, Func<TSource, TDest> selector) {
+    public static TDest[] SelectArray<TSource, TDest>(this IList<TSource> list, Func<TSource, TDest> selector) {
       TDest[] result = new TDest[list.Count];
       for (int i = 0, len = list.Count; i < len; i++) {
         result[i] = selector(list[i]);
