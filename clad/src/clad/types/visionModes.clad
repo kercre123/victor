@@ -5,7 +5,7 @@
 namespace Anki {
 namespace Cozmo {
 
-  enum int_8 VisionMode
+  enum uint_8 VisionMode
   {
     Idle                = 0x00,
     DetectingMarkers    = 0x01,

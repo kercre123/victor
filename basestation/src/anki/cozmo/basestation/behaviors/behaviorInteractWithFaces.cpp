@@ -38,9 +38,16 @@ namespace Cozmo {
   
   using namespace ExternalInterface;
 
-  static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
+  //static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
   static const char * const kMinorFriendlyReactAnimName = "ID_react2face_2nd";
   static const char * const kStrongScaredReactAnimName = "ID_react2face_disgust";
+  
+  static const std::vector<const char *> kReactionAnimNames = {
+    "ID_react2face_A01",
+    "ID_react2face_B01",
+    "ID_react2face_C01",
+    "ID_react2face_D01",
+  };
   
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -195,32 +202,27 @@ namespace Cozmo {
       _newFaceAnimCooldownTime = currentTime_sec;
     }
     
+    // Always turn to look at the face before any reaction
+    FacePoseAction* facePoseAction = new FacePoseAction(face->GetHeadPose(), DEG_TO_RAD(179));
+    facePoseAction->SetPanTolerance( DEG_TO_RAD(0.5) );
+    robot.GetActionList().QueueAction(IBehavior::sActionSlot, QueueActionPosition::NOW, facePoseAction);
+                                      
+    
     // If we haven't played our init anim yet for this face and it's been awhile
-    // since we did so, do so now and start tracking afterward
-    QueueActionPosition queueTrackingPosition = QueueActionPosition::NOW;
-    if (!dataIter->second._playedInitAnim && currentTime_sec >= _newFaceAnimCooldownTime)
+    // since we did so, do so now and start face-specific reaction and tracking afterward
+    if (!dataIter->second._playedNewFaceAnim && currentTime_sec >= _newFaceAnimCooldownTime)
     {
-      robot.GetActionList().Cancel();
-      robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), DEG_TO_RAD(179)));
-      
-      
-      auto friendlyAnimName = kMinorFriendlyReactAnimName;
-      if (0 == kCurrentFriendlyAnimCount)
-      {
-        friendlyAnimName = kStrongFriendlyReactAnimName;
-      }
-      ++kCurrentFriendlyAnimCount;
-      kCurrentFriendlyAnimCount = kCurrentFriendlyAnimCount % kStrongFriendlyAnimRatio;
-      
-      PlayAnimation(robot, friendlyAnimName, QueueActionPosition::AT_END);
+      PlayAnimation(robot, kMinorFriendlyReactAnimName, QueueActionPosition::AT_END);
+      dataIter->second._playedNewFaceAnim = true;
       
       robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
                                            EmotionType::Social, kEmotionChangeMedium,
                                            EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew", currentTime_sec);
-      dataIter->second._playedInitAnim = true;
       _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
-      queueTrackingPosition = QueueActionPosition::AT_END;
     }
+    
+    // Play the reaction animation corresponding to this face ID
+    PlayAnimation(robot, kReactionAnimNames[dataIter->second._whichReactionAnim], QueueActionPosition::AT_END);
     
     dataIter->second._trackingStart_sec = currentTime_sec;
     
@@ -231,7 +233,7 @@ namespace Cozmo {
     trackAction->SetMoveEyes(true);
     _trackActionTag = trackAction->GetTag();
     trackAction->SetUpdateTimeout(kTrackingTimeout_sec);
-    robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, queueTrackingPosition, trackAction);
+    robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::AT_END, trackAction);
     
     UpdateBaselineFace(robot, face);
     
@@ -445,12 +447,13 @@ namespace Cozmo {
                              "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
                              watchingFaceDuration, _currentMultiFaceInterestingDuration_sec);
             
-            _currentMultiFaceInterestingDuration_sec = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec, kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
+            _currentMultiFaceInterestingDuration_sec = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec,
+                                                                               kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
             break;
           }
         }
         
-        // We're just watching one face, see it's time for cooldown
+        // We're just watching one face, see if it's time for cooldown
         else if(watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
           robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
@@ -467,6 +470,9 @@ namespace Cozmo {
         }
         
         // If we get this far, we're still apparently tracking the same face
+        //PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.Update.TrackingFace",
+        //                  "Been tracking face %llu for %.1fsec, %lu others available",
+        //                  faceID, watchingFaceDuration, _interestingFacesData.size()-1);
         
         // Update cozmo's face based on our currently tracked face
         //UpdateRobotFace(robot);
@@ -722,6 +728,24 @@ namespace Cozmo {
       {
         dataIter = insertRet.first;
         dataIter->second._lastSeen_sec = event.GetCurrentTime();
+        
+        if(_reactionAnimCtr < 0) {
+          // Randomly choose first reaction animation
+          _reactionAnimCtr = GetRNG().RandIntInRange(0, (s32)kReactionAnimNames.size()-1);
+        } else {
+          // Rotate through other reactions
+          ++_reactionAnimCtr;
+          if(_reactionAnimCtr == kReactionAnimNames.size()) {
+            _reactionAnimCtr = 0;
+          }
+        }
+        
+        // Assign the reaction for this face. For as long as we maintain the face ID,
+        // this will be the reaciton animation we play when we see this face
+        PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.AssigningReaction",
+                         "Assign reaction anim '%s' to face ID %llu",
+                         kReactionAnimNames[_reactionAnimCtr], dataIter->first);
+        dataIter->second._whichReactionAnim = _reactionAnimCtr;
       }
     }
     

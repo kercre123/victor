@@ -671,7 +671,16 @@ namespace Anki {
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
-          _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), true, false));
+          IActionRunner* faceObjectAction = new FaceObjectAction(_objectID, Radians(0), true, false);
+
+          PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                            GetTag(),
+                            GetName().c_str(),
+                            faceObjectAction->GetTag(),
+                            faceObjectAction->GetName().c_str());
+
+          _compoundAction.AddAction(faceObjectAction);
+
         }
         
         _compoundAction.SetEmitCompletionSignal(false);
@@ -1370,6 +1379,13 @@ namespace Anki {
     ActionResult FaceObjectAction::Init(Robot &robot)
     {
       _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
+
+      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                        GetTag(),
+                        GetName().c_str(),
+                        _visuallyVerifyAction->GetTag(),
+                        _visuallyVerifyAction->GetName().c_str());
+
       ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
@@ -1562,6 +1578,13 @@ namespace Anki {
       _moveLiftToHeightAction->SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
+
+      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                        GetTag(),
+                        GetName().c_str(),
+                        _moveLiftToHeightAction->GetTag(),
+                        _moveLiftToHeightAction->GetName().c_str());
+
       
       // Go ahead and do the first update on moving the lift, so we don't "waste"
       // the first tick of CheckIfDone initializing the sub-action.
@@ -1618,7 +1641,8 @@ namespace Anki {
             }
             
             PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.WrongMarker",
-                             "Have seen object %d, but not marker code %d. Have seen: %s",
+                             "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
+                             GetTag(),
                              _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
           }
         } // if(!_markerSeen)
@@ -2065,6 +2089,9 @@ namespace Anki {
         _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
         return ActionResult::FAILURE_ABORT;
       }
+
+      // select the object so it shows up properly in viz
+      robot.GetBlockWorld().SelectObject(_dockObjectID);
       
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
@@ -2087,6 +2114,7 @@ namespace Anki {
       //float closestDistSq = std::numeric_limits<float>::max();
       Point2f closestPoint(std::numeric_limits<float>::max());
       size_t closestIndex = preActionPoses.size();
+      float closestDistSq = std::numeric_limits<float>::max();
       
       for(size_t index=0; index < preActionPoses.size(); ++index) {
         Pose3d preActionPose;
@@ -2097,31 +2125,45 @@ namespace Anki {
         
         const Point2f preActionXY(preActionPose.GetTranslation().x(),
                                   preActionPose.GetTranslation().y());
-        //const float distSq = (currentXY - preActionXY).LengthSq();
-        const Point2f dist = (currentXY - preActionXY).Abs();
-        if(dist < closestPoint) {
-          //closestDistSq = distSq;
-          closestPoint = dist;
+        const Point2f dist = (currentXY - preActionXY);
+        const float distSq = dist.LengthSq();
+
+        PRINT_NAMED_DEBUG("IDockAction.Init.CheckPoint",
+                          "considering point (%f, %f) dist = %f",
+                          dist.x(), dist.y(),
+                          dist.Length());
+        
+        if(distSq < closestDistSq) {
+          closestPoint = dist.GetAbs();
           closestIndex  = index;
+          closestDistSq = distSq;
         }
       }
-        
+
+      PRINT_NAMED_INFO("IDockAction.Init.ClosestPoint",
+                       "Closest point (%f, %f) robot (%f, %f) dist = %f",
+                       closestPoint.x(), closestPoint.y(),
+                       currentXY.x(), currentXY.y(),
+                       closestPoint.Length());      
+      
       //const f32 closestDist = sqrtf(closestDistSq);
       
+      // by default, even if we aren't checking for pre-dock poses, we shouldn't be too far away, otherwise we
+      // may be selecting a different marker / face to dock with
+      f32 preActionPoseDistThresh = DEFAULT_PREDOCK_POSE_DISTANCE_MM * 1.1f;
       
       if (_doNearPredockPoseCheck) {
-        f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), dockObject,
-                                                                        _preActionPoseAngleTolerance);
-        
-        if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
-          PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
-                           "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
-                           closestPoint.x(), closestPoint.y());
-          _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
-          return ActionResult::FAILURE_RETRY;
-        }
+        preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), dockObject,
+                                                                    _preActionPoseAngleTolerance);
       }
-      
+        
+      if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
+        PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
+                         "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
+                         closestPoint.x(), closestPoint.y());
+        _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
+        return ActionResult::FAILURE_RETRY;
+      }      
     
       if(SelectDockAction(robot, dockObject) != RESULT_OK) {
         PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
@@ -2192,6 +2234,12 @@ namespace Anki {
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
 
+      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                        GetTag(),
+                        GetName().c_str(),
+                        _faceAndVerifyAction->GetTag(),
+                        _faceAndVerifyAction->GetName().c_str());
+
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->SetEmitCompletionSignal(false);
       
@@ -2207,8 +2255,6 @@ namespace Anki {
       } else {
         return faceObjectResult;
       }
-
-      
       
     } // Init()
     
@@ -2726,6 +2772,13 @@ namespace Anki {
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), true, false);
+
+              PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                                GetTag(),
+                                GetName().c_str(),
+                                _placementVerifyAction->GetTag(),
+                                _placementVerifyAction->GetName().c_str());
+              
               _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
@@ -2774,6 +2827,13 @@ namespace Anki {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+
+                  PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                                    GetTag(),
+                                    GetName().c_str(),
+                                    _placementVerifyAction->GetTag(),
+                                    _placementVerifyAction->GetName().c_str());
+
                   
                   // Disable completion signals since this is inside another action
                   _placementVerifyAction->SetEmitCompletionSignal(false);
@@ -2933,6 +2993,12 @@ namespace Anki {
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
+              
+              PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                                GetTag(),
+                                GetName().c_str(),
+                                _rollVerifyAction->GetTag(),
+                                _rollVerifyAction->GetName().c_str());
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetEmitCompletionSignal(false);
@@ -3306,6 +3372,12 @@ namespace Anki {
         
         _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
         _faceAndVerifyAction->SetEmitCompletionSignal(false);
+
+        PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                          GetTag(),
+                          GetName().c_str(),
+                          _faceAndVerifyAction->GetTag(),
+                          _faceAndVerifyAction->GetName().c_str());
         
       } // if/else IsCarryingObject()
       
@@ -3684,7 +3756,6 @@ namespace Anki {
       }
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
-        // TEMP: ask andrew, this was causing a cutoff when one animation tried to interrupt another, but then failed, but then in the failed animations Cleanup, cleared the streaming animation
         _wasAborted = true;
         return ActionResult::FAILURE_ABORT;
       }

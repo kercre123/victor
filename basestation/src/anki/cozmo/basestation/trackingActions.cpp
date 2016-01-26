@@ -561,8 +561,8 @@ bool TrackMotionAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     
 #   if DEBUG_TRACKING_ACTIONS
     PRINT_NAMED_INFO("TrackMotionAction.GetAngles.Motion",
-                     "Motion area=%d, centroid=(%.1f,%.1f)",
-                     _motionObservation.img_area,
+                     "Motion area=%.1f%%, centroid=(%.1f,%.1f)",
+                     _motionObservation.img_area * 100.f,
                      motionCentroid.x(), motionCentroid.y());
 #   endif
     

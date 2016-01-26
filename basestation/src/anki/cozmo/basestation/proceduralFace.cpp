@@ -78,13 +78,33 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
   
 void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)
 {
-  JsonTools::GetValueOptional(jsonRoot, kFaceAngleKey, _faceAngle);
-  JsonTools::GetValueOptional(jsonRoot, kFaceCenterXKey, _faceCenter.x());
-  JsonTools::GetValueOptional(jsonRoot, kFaceCenterYKey, _faceCenter.y());
-  JsonTools::GetValueOptional(jsonRoot, kFaceScaleXKey, _faceScale.x());
-  JsonTools::GetValueOptional(jsonRoot, kFaceScaleYKey, _faceScale.y());
-  JsonTools::GetArrayOptional(jsonRoot, kLeftEyeKey, _eyeParams[WhichEye::Left]);
-  JsonTools::GetArrayOptional(jsonRoot, kRightEyeKey, _eyeParams[WhichEye::Right]);
+  std::vector<Value> eyeParams;
+  if(JsonTools::GetVectorOptional(jsonRoot, kLeftEyeKey, eyeParams)) {
+    SetEyeArrayHelper(WhichEye::Left, eyeParams);
+  }
+  eyeParams.clear();
+  if(JsonTools::GetVectorOptional(jsonRoot, kRightEyeKey, eyeParams)) {
+    SetEyeArrayHelper(WhichEye::Right, eyeParams);
+  }
+  
+  f32 jsonFaceAngle=0;
+  if(JsonTools::GetValueOptional(jsonRoot, kFaceAngleKey, jsonFaceAngle)) {
+    SetFaceAngle(jsonFaceAngle);
+  }
+  
+  f32 jsonFaceCenX=0, jsonFaceCenY=0;
+  if(JsonTools::GetValueOptional(jsonRoot, kFaceCenterXKey, jsonFaceCenX) &&
+     JsonTools::GetValueOptional(jsonRoot, kFaceCenterYKey, jsonFaceCenY))
+  {
+    SetFacePosition({jsonFaceCenX, jsonFaceCenY});
+  }
+  
+  f32 jsonFaceScaleX=1.f,jsonFaceScaleY=1.f;
+  if(JsonTools::GetValueOptional(jsonRoot, kFaceScaleXKey, jsonFaceScaleX) &&
+     JsonTools::GetValueOptional(jsonRoot, kFaceScaleYKey, jsonFaceScaleY))
+  {
+    SetFaceScale({jsonFaceScaleX, jsonFaceScaleY});
+  }
 }
   
 void ProceduralFace::SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg)
@@ -210,27 +230,27 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
 void ProceduralFace::GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax)
 {
   // Left edge of left eye
-  xmin = (NominalLeftEyeX +
-          GetParameter(WhichEye::Left, Parameter::EyeCenterX) -
-          GetParameter(WhichEye::Left, Parameter::EyeScaleX) * NominalEyeWidth/2);
+  const Value leftHalfWidth = GetParameter(WhichEye::Left, Parameter::EyeScaleX) * NominalEyeWidth/2;
+  const Value rightHalfWidth = GetParameter(WhichEye::Right, Parameter::EyeScaleX) * NominalEyeWidth/2;
+  xmin = (ProceduralFace::NominalLeftEyeX +
+          _faceScale.x() * (GetParameter(WhichEye::Left, Parameter::EyeCenterX) - leftHalfWidth));
   
   // Right edge of right eye
-  xmax = (NominalRightEyeX +
-          GetParameter(WhichEye::Right, Parameter::EyeCenterX) +
-          GetParameter(WhichEye::Right, Parameter::EyeScaleX) * NominalEyeWidth/2);
+  xmax = (ProceduralFace::NominalRightEyeX +
+          _faceScale.x()*(GetParameter(WhichEye::Right, Parameter::EyeCenterX) + rightHalfWidth));
+  
   
   // Min of the top edges of the two eyes
   const Value leftHalfHeight = GetParameter(WhichEye::Left, Parameter::EyeScaleY) * NominalEyeHeight/2;
   const Value rightHalfHeight = GetParameter(WhichEye::Right, Parameter::EyeScaleY) * NominalEyeHeight/2;
-  ymin = (NominalEyeY +
-          std::min(GetParameter(WhichEye::Left, Parameter::EyeCenterY) - leftHalfHeight,
-                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) - rightHalfHeight));
+  ymin = (NominalEyeY + _faceScale.y() * (std::min(GetParameter(WhichEye::Left, Parameter::EyeCenterY) - leftHalfHeight,
+                                                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) - rightHalfHeight)));
   
   // Max of the bottom edges of the two eyes
-  ymax = (NominalEyeY +
-          std::max(GetParameter(WhichEye::Left, Parameter::EyeCenterY) + leftHalfHeight,
-                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) + rightHalfHeight));
-}
+  ymax = (NominalEyeY + _faceScale.y() * (std::max(GetParameter(WhichEye::Left, Parameter::EyeCenterY) + leftHalfHeight,
+                                                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) + rightHalfHeight)));
+  
+} // GetEyeBoundingBox()
   
 void ProceduralFace::SetFacePosition(Point<2, Value> center)
 {
@@ -245,8 +265,8 @@ void ProceduralFace::SetFacePosition(Point<2, Value> center)
   // The most we can move left is the distance b/w left edge of left eye and the
   // left edge of the screen. The most we can move right is the distance b/w the
   // right edge of the right eye and the right edge of the screen
-  _faceCenter.x() = CLIP(center.x(), -(xmin-1), ProceduralFace::WIDTH-(xmax+1));
-  _faceCenter.y() = CLIP(center.y(), -(ymin-1), ProceduralFace::HEIGHT-(ymax+1));
+  _faceCenter.x() = CLIP(center.x(), -xmin, ProceduralFace::WIDTH-xmax);
+  _faceCenter.y() = CLIP(center.y(), -ymin, ProceduralFace::HEIGHT-ymax);
 }
   
 void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)

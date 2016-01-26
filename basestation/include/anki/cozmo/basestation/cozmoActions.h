@@ -588,7 +588,7 @@ namespace Anki {
       // Max amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
       // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
+      virtual f32 GetWaitToVerifyTime() const { return 0.5f; }
       
       ObjectID                _objectID;
       Vision::Marker::Code    _whichCode;
@@ -1305,12 +1305,14 @@ namespace Anki {
       
       virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
       
+      virtual f32 GetTimeoutInSeconds() const override { return 60.0f; }
+
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot& robot) override;
-      
+
       std::string               _animName;
       std::string               _name;
       u32                       _numLoops;

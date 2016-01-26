@@ -209,10 +209,7 @@ namespace Cozmo {
     // ==================== Static Member Vars ====================
             
     static const char* kBaseDefaultName;
-    
-    // A random number generator for all behaviors to share
-    static Util::RandomGenerator sRNG;
-            
+                
     // ==================== Member Vars ====================
     
     std::string _name;
@@ -260,6 +257,7 @@ namespace Cozmo {
   }
   
   inline Util::RandomGenerator& IBehavior::GetRNG() const {
+    static Util::RandomGenerator sRNG;
     return sRNG;
   }
   
