@@ -29,22 +29,122 @@
 
 #include <list>
 
-#define SHOW_TIMING 0
+#define SHOW_TIMING 1
 
 #if SHOW_TIMING
 #  include <chrono>
-static std::chrono::time_point<std::chrono::system_clock> __TICTOC__;
-#  define TIC __TICTOC__ = std::chrono::system_clock::now()
-#  define TOC(__MSG__) PRINT_NAMED_INFO(__MSG__, "%llums", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-__TICTOC__).count())
-#else
-#  define TIC
-#  define TOC(__MSG__)
+#  include <unordered_map>
 #endif
 
 namespace Anki {
+
+#if SHOW_TIMING
+  class Profiler
+  {
+  public:
+    
+    // Calls Print() on destruction
+    ~Profiler();
+    
+    // Start named timer (create if first call, un-pause otherwise)
+    void Tic(const char* timerName);
+    
+    // Pause named timer and return time since last tic in milliseconds
+    double Toc(const char* timerName);
+    
+    // Pause named timer and return average time in milliseconds for all tic/toc
+    // pairs up to now
+    double AverageToc(const char* timerName);
+    
+    // Print average time per tic/toc pair for each registered timer
+    void Print() const;
+    
+  private:
+    
+    struct Timer {
+      std::chrono::time_point<std::chrono::system_clock> startTime;
+      std::chrono::milliseconds currentTime;
+      std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
+      s32 count = 0;
+    };
+    
+    using TimerContainer = std::unordered_map<const char*, Profiler::Timer>;
+    
+    // Helper used by Toc and AverageToc
+    void UpdateTimer(TimerContainer::iterator& timerIter);
+
+    TimerContainer _timers;
+    
+  }; // class Profiler
+  
+  void Profiler::Tic(const char* timerName)
+  {
+    // Note will construct timer if matching name doesn't already exist
+    _timers[timerName].startTime = std::chrono::system_clock::now();
+  }
+  
+  void Profiler::UpdateTimer(std::unordered_map<const char*, Profiler::Timer>::iterator& timerIter)
+  {
+    ASSERT_NAMED(timerIter != _timers.end(), "Bad timer iterator");
+    
+    timerIter->second.currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - timerIter->second.startTime);
+    timerIter->second.totalTime += timerIter->second.currentTime;
+    ++(timerIter->second.count);
+  }
+  
+  double Profiler::Toc(const char* timerName)
+  {
+    auto timerIter = _timers.find(timerName);
+    if(timerIter != _timers.end()) {
+      UpdateTimer(timerIter);
+      return (u32)timerIter->second.currentTime.count();
+    } else {
+      return 0;
+    }
+  }
+  
+  double Profiler::AverageToc(const char* timerName)
+  {
+    auto timerIter = _timers.find(timerName);
+    if(timerIter != _timers.end()) {
+      UpdateTimer(timerIter);
+      if(timerIter->second.count > 0) {
+        return (double)(timerIter->second.totalTime.count() / (double)timerIter->second.count);
+      } else {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
+  }
+  
+  Profiler::~Profiler()
+  {
+    Print();
+  }
+  
+  void Profiler::Print() const
+  {
+    for(auto & timer : _timers)
+    {
+      PRINT_NAMED_INFO("Profiler", "%s averaged %.2fms over %d calls",
+                       timer.first,
+                       (timer.second.count > 0 ? (double)timer.second.totalTime.count() / (double)timer.second.count : 0),
+                       timer.second.count);
+    }
+  }
+#else 
+  class Profiler {
+  public:
+    void Tic(const char*) { }
+    void Toc(const char*) { }
+  };
+  
+#endif // SHOW_TIMING
+  
 namespace Vision {
   
-  class FaceTracker::Impl
+  class FaceTracker::Impl : public Profiler
   {
   public:
     Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
@@ -421,7 +521,8 @@ namespace Vision {
                  "Image must be continuous to pass straight into OKAO Detector");
     
     INT32 okaoResult = OKAO_NORMAL;
-    TIC;
+    //TIC;
+    Tic("FaceDetect");
     const INT32 nWidth  = frameOrig.GetNumCols();
     const INT32 nHeight = frameOrig.GetNumRows();
     RAWIMAGE* dataPtr = const_cast<UINT8*>(frameOrig.GetDataPointer());
@@ -440,7 +541,7 @@ namespace Vision {
                         "OKAO Result Code=%d", okaoResult);
       return RESULT_FAIL;
     }
-    TOC("FaceDetectTime");
+    Toc("FaceDetect");
     
     _faces.clear();
     
@@ -482,7 +583,7 @@ namespace Vision {
       face.SetTimeStamp(frameOrig.GetTimestamp());
       
       // Try finding face parts
-      TIC;
+      Tic("FacePartDetection");
       okaoResult = OKAO_PT_SetPositionFromHandle(_okaoPartDetectorHandle, _okaoDetectionResultHandle, detectionIndex);
 
       if(OKAO_NORMAL != okaoResult) {
@@ -554,10 +655,10 @@ namespace Vision {
                               DEG_TO_RAD(pitch_deg),
                               DEG_TO_RAD(yaw_deg));
       
-      TOC("FacePartDetection");
+      Toc("FacePartDetection");
       
       // Expression detection
-      TIC;
+      Tic("ExpressionRecognition");
       okaoResult = OKAO_EX_SetPointFromHandle(_okaoEstimateExpressionHandle, _okaoPartDetectionResultHandle);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoSetExpressionPointFail",
@@ -605,7 +706,7 @@ namespace Vision {
         }
         
       }
-      TOC("ExpressionRecognitionTime");
+      Toc("ExpressionRecognition");
       
       // Face Recognition:
       INT32 numUsersInAlbum = 0;
@@ -615,7 +716,7 @@ namespace Vision {
         return RESULT_FAIL;
       }
       
-      TIC;
+      Tic("FaceRecognition");
       okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
                                               dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
                                               _okaoPartDetectionResultHandle);
@@ -695,13 +796,13 @@ namespace Vision {
           }
         }
       }
-      TOC("FaceRecTime");
       face.SetID(faceID); // could be unknown!
       if(faceID != Vision::TrackedFace::UnknownFace) {
         face.SetName("KnownFace" + std::to_string(face.GetID()));
       } else {
         face.SetName("UnknownFace");
       }
+      Toc("FaceRecognition");
       
     } // FOR each face
     
