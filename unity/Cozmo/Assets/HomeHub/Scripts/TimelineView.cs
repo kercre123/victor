@@ -182,11 +182,11 @@ namespace Cozmo.HomeHub {
       newSession.Goals.Set(goals);
 
       RobotEngineManager.Instance.CurrentRobot.SetProgressionStats(newSession.Progress);
+      _DailyGoalInstance.SetDailyGoals(newSession.Goals, newSession.Progress);
 
       DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
 
       DataPersistenceManager.Instance.Save();
-      _DailyGoalInstance.SetDailyGoals(currentSession.Goals, currentSession.Progress);
     }
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
