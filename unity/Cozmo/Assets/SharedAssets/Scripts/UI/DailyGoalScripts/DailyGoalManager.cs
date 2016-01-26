@@ -21,11 +21,12 @@ public class DailyGoalManager : MonoBehaviour {
     return _FriendshipFormulaConfig;
   }
 
-  public readonly int[] DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
-
   public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
-    if (DailyGoals[(int)type] > 0) {
-      return true;
+    int val = 0;
+    if (DataPersistenceManager.Instance.CurrentSession.Goals.TryGetValue(type, out val)) {
+      if (val > 0) {
+        return true;
+      }
     }
     return false;
   }

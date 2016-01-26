@@ -92,7 +92,6 @@ public class DailyGoalPanel : MonoBehaviour {
   public GoalCell CreateGoalCell(Anki.Cozmo.ProgressionStatType type, int prog, int goal) {
     DAS.Event(this, string.Format("CreateGoalCell({0},{1})", type, prog));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
-    DailyGoalManager.Instance.DailyGoals[(int)type] += prog;
     newBadge.Initialize(type, prog, goal);
     _GoalCells.Add(newBadge);
     return newBadge;
