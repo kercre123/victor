@@ -72,6 +72,11 @@ namespace Cozmo {
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
    
+#   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+    // Force the NN library to load _now_, not on first use
+    VisionMarker::GetNearestNeighborLibrary();
+#   endif
+    
   } // VisionSystem()
   
   VisionSystem::~VisionSystem()
@@ -168,7 +173,16 @@ namespace Cozmo {
       } else {
         StopTracking();
       }
-    } else {
+    } else if(whichMode == VisionMode::Idle) {
+      if(enabled) {
+        // "Enabling" idle means to turn everything off
+        PRINT_NAMED_INFO("VisionSystem.EnableMode.Idle",
+                         "Disabling all vision modes");
+        _mode = static_cast<u32>(VisionMode::Idle);
+      } else {
+        PRINT_NAMED_WARNING("VisionSystem.EnableMode.InvalidRequest", "Ignoring request to 'disable' idle mode.");
+      }
+    }else {
       if(enabled) {
         const bool modeAlreadyEnabled = _mode & static_cast<u32>(whichMode);
         if(!modeAlreadyEnabled) {
@@ -1260,7 +1274,7 @@ namespace Cozmo {
   }
   
   
-  Result VisionSystem::DetectMotion(const Vision::ImageRGB &image)
+  Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
     const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
                                 _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
@@ -1272,7 +1286,16 @@ namespace Cozmo {
                            NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
                                 _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
                                 DEG_TO_RAD(0.1)));
-    
+    Vision::ImageRGB image;
+    f32 scaleMultiplier = 1.f;
+    const bool useHalfRes = true;
+    if(useHalfRes) {
+      image = Vision::ImageRGB(imageIn.GetNumRows()/2,imageIn.GetNumCols()/2);
+      imageIn.Resize(image, Vision::ResizeMethod::NearestNeighbor);
+      scaleMultiplier = 2.f;
+    } else {
+      image = imageIn;
+    }
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
     if(headSame && poseSame && !_poseData.isMoving && !_prevImage.IsEmpty() &&
@@ -1341,7 +1364,7 @@ namespace Cozmo {
                                          //        const size_t minAreaDivisor = 36; // 1/6 of each image dimension
                                          //#       endif
       const size_t minArea = image.GetNumElements() / minAreaDivisor;
-      size_t imgRegionArea = 0;
+      f32 imgRegionArea    = 0.f;
       f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea) {
         imgRegionArea = GetCentroid(foregroundMotion, minArea, centroid);
@@ -1351,6 +1374,8 @@ namespace Cozmo {
       if(_poseData.groundPlaneVisible && _prevPoseData.groundPlaneVisible)
       {
         Quad2f imgQuad = _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography);
+        
+        imgQuad *= 1.f / scaleMultiplier;
         
         const Anki::Rectangle<s32> boundingRect(imgQuad); // Not Embedded::
         Vision::Image groundPlaneForegroundMotion;
@@ -1403,6 +1428,10 @@ namespace Cozmo {
         
         if(groundRegionArea > 0.f)
         {
+          // Switch centroid back to original resolution, since that's where the
+          // homography information is valid
+          groundPlaneCentroid *= scaleMultiplier;
+          
           // Make ground region area into a fraction of the ground ROI area
           groundRegionArea /= imgQuadArea;
           
@@ -1423,7 +1452,7 @@ namespace Cozmo {
       if(imgRegionArea > 0 || groundRegionArea > 0.f)
       {
         PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
-                         "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
+                         "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
                          "-- %.1f%% of ground area at (%.1f,%.1f)",
                          imgRegionArea, centroid.x(), centroid.y(),
                          groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
@@ -1438,7 +1467,9 @@ namespace Cozmo {
           ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
                        centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
                        "Motion centroid should be within image bounds.");
-          centroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
+          
+          // make relative to image center *at processing resolution*
+          centroid -= _camera.GetCalibration().GetCenter() * (1.f/scaleMultiplier);
           
           // Filter so as not to move too much from last motion detection,
           // IFF we observed motion in the previous check
@@ -1450,9 +1481,11 @@ namespace Cozmo {
             _prevCentroidFilterWeight = 0.1f;
           }
           
-          msg.img_x = centroid.x();
-          msg.img_y = centroid.y();
-          msg.img_area = static_cast<u32>(imgRegionArea);
+          // Convert area to fraction of image area (to be resolution-independent)
+          // Using scale multiplier to return the coordinates in original image coordinates
+          msg.img_x = centroid.x() * scaleMultiplier;
+          msg.img_y = centroid.y() * scaleMultiplier;
+          msg.img_area = imgRegionArea / static_cast<f32>(image.GetNumElements());
         } else {
           msg.img_area = 0;
           msg.img_x = 0;
@@ -1515,6 +1548,14 @@ namespace Cozmo {
       //_prevRatioImg = ratio12;
       
     } // if(headSame && poseSame)
+    
+    // Store a copy of the current image for next time (at correct resolution!)
+    // NOTE: Now _prevImage should correspond to _prevRobotState
+    // TODO: switch to just swapping pointers between current and previous image
+#   if USE_THREE_FRAME_MOTION_DETECTION
+    _prevImage.CopyTo(_prevPrevImage);
+#   endif
+    image.CopyTo(_prevImage);
     
     return RESULT_OK;
   } // DetectMotion()
@@ -1907,6 +1948,7 @@ namespace Cozmo {
       }
     }
     
+    /*
     // Store a copy of the current image for next time
     // NOTE: Now _prevImage should correspond to _prevRobotState
     // TODO: switch to just swapping pointers between current and previous image
@@ -1914,6 +1956,7 @@ namespace Cozmo {
     _prevImage.CopyTo(_prevPrevImage);
 #   endif
     inputImage.CopyTo(_prevImage);
+    */
     
     return lastResult;
   } // Update()

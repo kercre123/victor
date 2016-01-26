@@ -45,7 +45,7 @@ protected:
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
 
-  float _maxPounceDist = 101.0f;
+  float _maxPounceDist = 110.0f;
   float _minGroundAreaForPounce = 0.01f;
   float _maxTimeBetweenPoses = 4.0f;
   

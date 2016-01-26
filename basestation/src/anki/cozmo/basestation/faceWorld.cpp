@@ -7,7 +7,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#define USE_POSE_FOR_ID 0
+#define USE_POSE_FOR_ID 1
 
 
 namespace Anki {
@@ -68,6 +68,8 @@ namespace Cozmo {
       // NOTE: RemoveFace increments the iterator for us
       RemoveFace(knownFaceIter);
     }
+
+    _lastObservedFaceTimeStamp = 0;
   }
   
   void FaceWorld::RemoveFaceByID(Vision::TrackedFace::ID_t faceID)
@@ -151,9 +153,13 @@ namespace Cozmo {
     
     if(foundMatch) {
       const Vision::TrackedFace::ID_t matchedID = knownFace->face.GetID();
-      //PRINT_NAMED_INFO("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
-      //                 "Updating face with ID=%lld from t=%d to %d",
-      //                 matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp());
+      
+      // Verbose! Useful for debugging
+      //PRINT_NAMED_DEBUG("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
+      //                  "Updating face with ID=%lld from t=%d to %d, observed %d times",
+      //                  matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp(),
+      //                  face.GetNumTimesObserved());
+      
       knownFace->face = face;
       knownFace->face.SetID(matchedID);
     }
@@ -171,12 +177,14 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       knownFace = &insertResult.first->second;
+      
       ++_idCtr;
     }
       
 #   else // USE_POSE_FOR_ID==0
       
     auto insertResult = _knownFaces.insert({face.GetID(), face});
+    knownFace = &insertResult.first->second;
     
     if(insertResult.second) {
       PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
@@ -187,7 +195,7 @@ namespace Cozmo {
       insertResult.first->second.face = face;
     }
     
-    knownFace = &insertResult.first->second;
+    
   
 #   endif // if USE_POSE_FOR_ID
     
@@ -235,11 +243,18 @@ namespace Cozmo {
       
       // Update the last observed face pose.
       // If more than one was observed in the same timestamp then take the closest one.
-      if ((_lastObservedFaceTimeStamp != knownFace->face.GetTimeStamp()) ||
-         (ComputeDistanceBetween(_robot.GetPose(), _lastObservedFacePose) >
-          ComputeDistanceBetween(_robot.GetPose(), knownFace->face.GetHeadPose()))) {
+      if (((_lastObservedFaceTimeStamp != knownFace->face.GetTimeStamp()) ||
+          (ComputeDistanceBetween(_robot.GetPose(), _lastObservedFacePose) >
+           ComputeDistanceBetween(_robot.GetPose(), knownFace->face.GetHeadPose())))) 
+      {
         _lastObservedFacePose = knownFace->face.GetHeadPose();
         _lastObservedFaceTimeStamp = knownFace->face.GetTimeStamp();
+
+      // Draw 3D face
+      knownFace->vizHandle = VizManager::getInstance()->DrawHumanHead(0,
+                                                                      humanHeadSize,
+                                                                      knownFace->face.GetHeadPose(),
+                                                                      ::Anki::NamedColors::DARKGRAY);
       }
 
       // Draw 3D face
@@ -329,7 +344,7 @@ namespace Cozmo {
   }
   
   
-  TimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& p)
+  TimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& p) const
   {
     if (_lastObservedFaceTimeStamp > 0) {
       p = _lastObservedFacePose;

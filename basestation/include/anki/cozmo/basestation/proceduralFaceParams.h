@@ -111,7 +111,8 @@ public:
   static void EnableClippingWarning(bool enable);
   
   // Get the bounding edge of the current eyes in screen pixel space, at their current
-  // size and position, without taking into account the current FacePosition (a.k.a. face center)
+  // size and position, without taking into account the current FacePosition (a.k.a.
+  // face center) or face angle.
   void GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax);
   
 private:

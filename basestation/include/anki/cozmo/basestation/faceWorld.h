@@ -41,8 +41,10 @@ namespace Cozmo {
 
     // Returns time of the last observed face.
     // 0 if no face was ever observed.
-    TimeStamp_t GetLastObservedFace(Pose3d& p);
+    TimeStamp_t GetLastObservedFace(Pose3d& p) const;
     
+    // Removes all known faces and resets the last observed face timer to 0, so
+    // GetLastObservedFace() will return 0.
     void ClearAllFaces();
     
   private:
@@ -65,7 +67,7 @@ namespace Cozmo {
     
     TimeStamp_t _deletionTimeout_ms = 4000;
 
-    //Vision::TrackedFace::ID_t _idCtr = 0;
+    Vision::TrackedFace::ID_t _idCtr = 0;
     
     Pose3d      _lastObservedFacePose;
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
