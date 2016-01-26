@@ -1,7 +1,5 @@
 #include "anki/cozmo/robot/hal.h"
-#ifndef TARGET_K02
-#include "anki/common/robot/errorHandling.h"
-#endif
+#include "anki/cozmo/robot/logging.h"
 #include "localization.h"
 #include "pickAndPlaceController.h"
 #include "imuFilter.h"
@@ -118,12 +116,12 @@ namespace Anki {
         PoseStamp *p2 = &(hist_[pose2_idx]);
 
         if (p1->t > p2->t) {
-          PRINT("ERROR (InterpolatePose): pose2 is older than pose1\n");
+          AnkiWarn( 55, "Localization.InterpolatePose.PosesOutOfOrder", 300, "pose2 is older than pose1", 0);
           return RESULT_FAIL;
         }
 
         if (targetTime < p1->t || targetTime > p2->t) {
-          PRINT("ERROR (InterpolatePose): targetTime is outside of expected time range\n");
+          AnkiWarn( 56, "Localization.InterpolatePose.TargetTimeOOR", 301, "targetTime is outside expected range", 0);
           return RESULT_FAIL;
         }
 
@@ -195,11 +193,12 @@ namespace Anki {
         u16 i;
         if (t == 0) {
           // If t==0, this is considered to be a command to just update the current pose
-          PRINT("Setting pose to %f %f %f\n", x, y, angle);
+          AnkiInfo( 57, "Localization.UpdatePoseWithKeyFrame.SettingPose", 302, "x= %f, y= %f, angle= %f", 3, x, y, angle);
           SetCurrentMatPose(x, y, angle);
           return RESULT_OK;
         } else if (GetHistIdx(t, i) == RESULT_FAIL) {
-          PRINT("ERROR: Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)\n", t, hStart_, hist_[hStart_].t, hEnd_, hist_[hEnd_].t);
+          AnkiWarn( 58, "Localization.UpdatePoseWithKeyFrame.TimeNotFound", 303, "Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)", 5,
+                   t, hStart_, hist_[hStart_].t, hEnd_, hist_[hEnd_].t);
           return RESULT_FAIL;
         }
 
@@ -212,7 +211,7 @@ namespace Anki {
           // We last updated our pose at lastKeyFrameUpdate. Ignore any new information
           // timestamped older than lastKeyFrameUpdate.
           #if(DEBUG_POSE_HISTORY)
-          PRINT("Ignoring keyframe %d at time %d\n", frameID, t);
+          AnkiInfo( 59, "Localization.UpdatePoseWithKeyFrame.IgnoreOldKeyframe", 304, "Ignoring keyframe %d at time %d\n", 2, frameID, t);
           #endif
           return RESULT_OK;
         }
@@ -281,7 +280,7 @@ namespace Anki {
       {
         // Check that there are actually poses in history
         if (hSize_ <= 0) {
-          PRINT("WARN: Localization.GetHistPoseAtTime - No history!\n");
+          AnkiWarn( 60, "Localization.GetHistPoseAtTime.NoHistory", 305, "", 0);
           return RESULT_FAIL;
         }
 
@@ -289,7 +288,8 @@ namespace Anki {
         // then the time requested is too old.
         // Return the oldest historical pose just because it's better than nothing
         if (hist_[hStart_].t > t) {
-          PRINT("WARN: Localization.GetHistPoseAtTime - History starts at time %d, pose requested at time %d. Returning oldest pose.\n", hist_[hStart_].t, t);
+          AnkiWarn( 61, "Localization.GetHistPoseAtTime.TimeTooOld", 306, "History starts at time %d, pose requested at time %d. Returning oldest pose.\n", 2,
+                   hist_[hStart_].t, t);
           GetHistPoseAtIndex(hStart_, p);
           return RESULT_FAIL;
         }
@@ -298,7 +298,8 @@ namespace Anki {
         // the time requested is too new.
         // Return the newest histrical pose just because it's better than nothing
         if (hist_[hEnd_].t < t) {
-          PRINT("WARN: Localization.GetHistPoseAtTime - History ends at time %d, pose requested at time %d. Returning newest pose.\n", hist_[hEnd_].t, t);
+          AnkiWarn( 62, "Localization.GetHistPoseAtTime.TimeTooNew", 307, "History ends at time %d, pose requested at time %d. Returning newest pose.\n", 2,
+                   hist_[hEnd_].t, t);
           GetHistPoseAtIndex(hEnd_, p);
           return RESULT_FAIL;
         }

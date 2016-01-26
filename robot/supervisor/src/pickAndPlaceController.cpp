@@ -262,9 +262,6 @@ namespace Anki {
           }
 
           case MOVING_LIFT_PREDOCK:
-#if(DEBUG_PAP_CONTROLLER)
-            PERIODIC_PRINT(200, "PAP: MLP %d %d\n", LiftController::IsInPosition(), HeadController::IsInPosition());
-#endif
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
 
               if (action_ == DA_PLACE_LOW_BLIND) {
