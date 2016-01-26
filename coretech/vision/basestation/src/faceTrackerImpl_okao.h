@@ -66,13 +66,12 @@ namespace Anki {
       std::chrono::milliseconds currentTime;
       std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
       s32 count = 0;
+      
+      void Update();
     };
     
     using TimerContainer = std::unordered_map<const char*, Profiler::Timer>;
     
-    // Helper used by Toc and AverageToc
-    void UpdateTimer(TimerContainer::iterator& timerIter);
-
     TimerContainer _timers;
     
   }; // class Profiler
@@ -83,21 +82,21 @@ namespace Anki {
     _timers[timerName].startTime = std::chrono::system_clock::now();
   }
   
-  void Profiler::UpdateTimer(std::unordered_map<const char*, Profiler::Timer>::iterator& timerIter)
+  void Profiler::Timer::Update()
   {
-    ASSERT_NAMED(timerIter != _timers.end(), "Bad timer iterator");
-    
-    timerIter->second.currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - timerIter->second.startTime);
-    timerIter->second.totalTime += timerIter->second.currentTime;
-    ++(timerIter->second.count);
+    using namespace std::chrono;
+    currentTime = duration_cast<milliseconds>(system_clock::now() - startTime);
+    totalTime += currentTime;
+    ++count;
   }
   
   double Profiler::Toc(const char* timerName)
   {
     auto timerIter = _timers.find(timerName);
     if(timerIter != _timers.end()) {
-      UpdateTimer(timerIter);
-      return (u32)timerIter->second.currentTime.count();
+      Timer& timer = timerIter->second;
+      timer.Update();
+      return (u32)timer.currentTime.count();
     } else {
       return 0;
     }
@@ -107,9 +106,10 @@ namespace Anki {
   {
     auto timerIter = _timers.find(timerName);
     if(timerIter != _timers.end()) {
-      UpdateTimer(timerIter);
-      if(timerIter->second.count > 0) {
-        return (double)(timerIter->second.totalTime.count() / (double)timerIter->second.count);
+      Timer& timer = timerIter->second;
+      timer.Update();
+      if(timer.count > 0) {
+        return (double)(timer.totalTime.count() / (double)timer.count);
       } else {
         return 0;
       }
@@ -125,12 +125,13 @@ namespace Anki {
   
   void Profiler::Print() const
   {
-    for(auto & timer : _timers)
+    for(auto & timerPair : _timers)
     {
+      const Timer& timer = timerPair.second;
       PRINT_NAMED_INFO("Profiler", "%s averaged %.2fms over %d calls",
-                       timer.first,
-                       (timer.second.count > 0 ? (double)timer.second.totalTime.count() / (double)timer.second.count : 0),
-                       timer.second.count);
+                       timerPair.first,
+                       (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0),
+                       timer.count);
     }
   }
 #else 
