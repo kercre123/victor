@@ -4,20 +4,6 @@ using System.Collections;
 
 namespace Cozmo.UI {
   public class AnkiAnimateGlint : MonoBehaviour {
-    private static SimpleObjectPool<Material> _GlintMaterialPool;
-
-    private static SimpleObjectPool<Material> GetMaterialPool() {
-      if (_GlintMaterialPool == null) {
-        _GlintMaterialPool = new SimpleObjectPool<Material>(CreateGlintMaterial, 1);
-      }
-      return _GlintMaterialPool;
-    }
-
-    private static Material CreateGlintMaterial() {
-      Material glintMaterial = new Material(UIPrefabHolder.Instance.AnimatedGlintShader){ hideFlags = HideFlags.HideAndDontSave };
-      glintMaterial.name = "Animated Glint Material (Generated)";
-      return glintMaterial;
-    }
 
     [SerializeField]
     private Image _MaskImage;
@@ -40,7 +26,7 @@ namespace Cozmo.UI {
 
     private void Awake() {
       _AnimateGlint = false;
-      _GlintMaterial = GetMaterialPool().GetObjectFromPool();
+      _GlintMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.AnimatedGlintShader);
       _MaskImage.material = _GlintMaterial;
       _MaskImage.material.SetTexture("_GlintTex", _GlintTexture);
       _MaskImage.material.SetVector("_AtlasUV", UIPrefabHolder.GetAtlasUVs(_MaskImage.sprite));
@@ -59,9 +45,7 @@ namespace Cozmo.UI {
     }
 
     private void OnDestroy() {
-      if (_GlintMaterialPool != null && _GlintMaterial != null) {
-        _GlintMaterialPool.ReturnToPool(_GlintMaterial);
-      }
+      MaterialPool.ReturnMaterial(_GlintMaterial);
     }
 
     private void UpdateMaterial() {

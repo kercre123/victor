@@ -6,21 +6,6 @@ namespace Cozmo.UI {
   [ExecuteInEditMode, RequireComponent(typeof(Image))]
   public class AnkiGrayscaleIcon : MonoBehaviour {
 
-    private static SimpleObjectPool<Material> _GrayscaleMaterialPool;
-
-    private static SimpleObjectPool<Material> GetMaterialPool() {
-      if (_GrayscaleMaterialPool == null) {
-        _GrayscaleMaterialPool = new SimpleObjectPool<Material>(CreateGrayscaleMaterial, 1);
-      }
-      return _GrayscaleMaterialPool;
-    }
-
-    private static Material CreateGrayscaleMaterial() {
-      Material grayScaleMaterial = new Material(UIPrefabHolder.Instance.GrayscaleShader){ hideFlags = HideFlags.HideAndDontSave };
-      grayScaleMaterial.name = "Grayscale Material (Generated)";
-      return grayScaleMaterial;
-    }
-
     [SerializeField]
     private Image _ImageToGrayscale;
 
@@ -39,11 +24,11 @@ namespace Cozmo.UI {
         if (value != _IsGrayscale) {
           _IsGrayscale = value;
           if (_IsGrayscale) {
-            _GrayscaleMaterialInstance = GetMaterialPool().GetObjectFromPool();
+            _GrayscaleMaterialInstance = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GrayscaleShader);
             _ImageToGrayscale.material = _GrayscaleMaterialInstance;
           }
           else {
-            _GrayscaleMaterialPool.ReturnToPool(_GrayscaleMaterialInstance);
+            MaterialPool.ReturnMaterial(_GrayscaleMaterialInstance);
             _GrayscaleMaterialInstance = null;
             _ImageToGrayscale.material = null;
           }
@@ -66,9 +51,7 @@ namespace Cozmo.UI {
     #endif
 
     private void OnDestroy() {
-      if (_GrayscaleMaterialPool != null && _GrayscaleMaterialInstance != null) {
-        _GrayscaleMaterialPool.ReturnToPool(_GrayscaleMaterialInstance);
-      }
+      MaterialPool.ReturnMaterial(_GrayscaleMaterialInstance);
     }
   }
 }

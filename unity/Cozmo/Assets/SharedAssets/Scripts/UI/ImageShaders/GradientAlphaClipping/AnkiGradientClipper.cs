@@ -14,21 +14,6 @@ namespace Cozmo {
     [ExecuteInEditMode]
     public class AnkiGradientClipper : MonoBehaviour {
 
-      private static SimpleObjectPool<Material> _ClippingMaterialPool;
-
-      private static SimpleObjectPool<Material> GetMaterialPool() {
-        if (_ClippingMaterialPool == null) {
-          _ClippingMaterialPool = new SimpleObjectPool<Material>(CreateClippingMaterial, 1);
-        }
-        return _ClippingMaterialPool;
-      }
-
-      private static Material CreateClippingMaterial() {
-        Material clippingMaterial = new Material(UIPrefabHolder.Instance.GradiantSimpleClippingShader){ hideFlags = HideFlags.HideAndDontSave };
-        clippingMaterial.name = "Gradiant Clipping Material (Generated)";
-        return clippingMaterial;
-      }
-
       [SerializeField]
       private Image _BackgroundImage;
 
@@ -60,7 +45,7 @@ namespace Cozmo {
         _MaskingFrame.sprite = _Graphic;
         _BackgroundImage.sprite = _Graphic;
 
-        _ClippingMaterial = GetMaterialPool().GetObjectFromPool();
+        _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantSimpleClippingShader);
         _MaskingFrame.material = _ClippingMaterial;
 
         _ClippingMaterial.SetVector("_AtlasUV", UIPrefabHolder.GetAtlasUVs(_Graphic));
@@ -82,9 +67,7 @@ namespace Cozmo {
       }
 
       private void OnDestroy() {
-        if (_ClippingMaterialPool != null) {
-          _ClippingMaterialPool.ReturnToPool(_ClippingMaterial);
-        }
+        MaterialPool.ReturnMaterial(_ClippingMaterial);
       }
     }
   }
