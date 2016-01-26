@@ -172,7 +172,7 @@ namespace Cozmo.HomeHub {
       }
 
       // start a new session
-      var goals = _DailyGoalInstance.GenerateDailyGoals();
+      StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
 
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
         StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
@@ -186,6 +186,7 @@ namespace Cozmo.HomeHub {
       DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
 
       DataPersistenceManager.Instance.Save();
+      _DailyGoalInstance.SetDailyGoals(currentSession.Goals, currentSession.Progress);
     }
 
     private void CompleteSession(TimelineEntryData timelineEntry) {

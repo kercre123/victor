@@ -10,13 +10,6 @@ public class DailyGoalPanel : MonoBehaviour {
   
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
 
-  // Force a specific Friendship level for Goal Generation testing,
-  // must also set _UseDebug to true.
-  [SerializeField]
-  private int _DebugLevel = -1;
-  [SerializeField]
-  private bool _UseDebug = false;
-
   // Prefab for GoalCells
   [SerializeField]
   private GoalCell _GoalCellPrefab;
@@ -92,7 +85,7 @@ public class DailyGoalPanel : MonoBehaviour {
         CreateGoalCell(targetStat, goals[targetStat], progress[targetStat]);
       }
     }
-    _TotalProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(progress, goals));
+    _TotalProgressBar.SetProgress(DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateFriendshipProgress(progress, goals));
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
@@ -100,7 +93,7 @@ public class DailyGoalPanel : MonoBehaviour {
   public GoalCell CreateGoalCell(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
     DAS.Event(this, string.Format("CreateGoalCell({0},{1})", type, target));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
-    RobotEngineManager.Instance.DailyGoals[(int)type] += target;
+    DailyGoalManager.Instance.DailyGoals[(int)type] += target;
     newBadge.Initialize(type, target, goal);
     _GoalCells.Add(newBadge);
     return newBadge;

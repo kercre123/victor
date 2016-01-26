@@ -1,0 +1,96 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class DailyGoalManager : MonoBehaviour {
+  
+  #region FriendshipProgression and DailyGoals
+
+  // Config file for friendship progression and daily goal generation
+  [SerializeField]
+  private FriendshipProgressionConfig _FriendshipProgConfig;
+
+  public FriendshipProgressionConfig GetFriendshipProgressConfig() {
+    return _FriendshipProgConfig;
+  }
+
+  [SerializeField]
+  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
+
+  public FriendshipFormulaConfiguration GetFriendForumulaConfig() {
+    return _FriendshipFormulaConfig;
+  }
+
+  public readonly int[] DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
+
+  public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
+    if (DailyGoals[(int)type] > 0) {
+      return true;
+    }
+    return false;
+  }
+
+  private DailyGoalPanel _GoalPanelRef;
+
+  #endregion
+
+  private static DailyGoalManager _Instance = null;
+
+  public static DailyGoalManager Instance {
+    get {
+      if (_Instance == null) {
+        DAS.Error("DailyGoalManager", "Don't reference DailyGoalManager before Start");
+      }
+      return _Instance;
+    }
+    set {
+      if (_Instance != null) {
+        DAS.Error("DailyGoalManager", "There shouldn't be more than one DailyGoalManager");
+      }
+      _Instance = value;
+    }
+  }
+
+  void Awake() {
+    Instance = this;
+  }
+	
+  // Using current friendship level and the appropriate config file,
+  // generate a series of random goals for the day.
+  public StatContainer GenerateDailyGoals() {
+    Robot rob = RobotEngineManager.Instance.CurrentRobot;
+    FriendshipProgressionConfig config = _FriendshipProgConfig;
+
+    int lvl = rob.FriendshipLevel;
+    if (lvl >= config.FriendshipLevels.Length) {
+      lvl = config.FriendshipLevels.Length - 1;
+    }
+    DAS.Event(this, string.Format("GoalGeneration({0},{1})", lvl, rob.GetFriendshipLevelName(lvl)));
+    StatBitMask possibleStats = StatBitMask.None;
+    int totalGoals = 0;
+    int min = 0;
+    int max = 0;
+    // Iterate through each level and add in the stats introduced for that level
+    for (int i = 0; i <= lvl; i++) {
+      possibleStats |= config.FriendshipLevels[i].StatsIntroduced;
+    }
+    totalGoals = config.FriendshipLevels[lvl].MaxGoals;
+    min = config.FriendshipLevels[lvl].MinTarget;
+    max = config.FriendshipLevels[lvl].MaxTarget;
+
+    // Don't generate more goals than possible stats
+    if (totalGoals > possibleStats.Count) {
+      DAS.Warn(this, "More Goals than Potential Stats");
+      totalGoals = possibleStats.Count;
+    }
+    StatContainer goals = new StatContainer();
+    // Generate Goals from the possible stats
+    for (int i = 0; i < totalGoals; i++) {
+      Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
+      possibleStats[targetStat] = false;
+      goals[targetStat] = Random.Range(min, max);
+    }
+    return goals;
+  }
+
+
+}

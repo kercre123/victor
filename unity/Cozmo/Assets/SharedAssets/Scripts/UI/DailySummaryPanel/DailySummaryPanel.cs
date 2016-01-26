@@ -143,7 +143,7 @@ public class DailySummaryPanel : BaseView {
 
   private IEnumerator FriendshipBarCoroutine(TimelineEntryData data) {
 
-    var levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    var levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
 
     int startingPoints = data.StartingFriendshipPoints;
     float pointsRequired, startingPercent, endingPercent;
