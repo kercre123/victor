@@ -491,6 +491,7 @@ public:
   
     // Read the animations in a dir
     void ReadAnimationDir();
+    void ReadAnimationDirImpl(const std::string& animationDir);
 
     // Read the animation groups in a dir
     void ReadAnimationGroupDir();

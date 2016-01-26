@@ -109,13 +109,16 @@ namespace Cozmo {
     AnimationStreamer::Tag            _eyeDartLayerTag = AnimationStreamer::NotAnimatingTag;
     AnimationStreamer::ParamContainer _originalLiveIdleParams;
     
+    s32 _reactionAnimCtr = -1;
+    
     struct FaceData
     {
       double _lastSeen_sec = 0;
       double _trackingStart_sec = 0;
       double _cumulativeTrackingTime_sec = 0;
       double _coolDownUntil_sec = 0;
-      bool   _playedInitAnim = false;
+      bool   _playedNewFaceAnim = false;
+      size_t _whichReactionAnim;
     };
     
     // ID of face we are currently tracking
@@ -133,7 +136,7 @@ namespace Cozmo {
     
     // Length of time in seconds to keep interacting with the same face non-stop
     constexpr static float kFaceInterestingDuration_sec = 3.5;
-    
+
     // Average length of time in seconds to watch one face when multiple faces
     // are present, and +/- variability in seconds on that average.
     constexpr static float kMultiFaceInterestingDuration_sec = 2.0;

@@ -28,7 +28,7 @@ namespace Anki {
 namespace Cozmo {
 namespace UpgradeController {
 
-#define DEBUG_OTA
+//#define DEBUG_OTA
 
 #define FLASH_STAGED_FLAG_ADDRESS ((BOOT_CONFIG_SECTOR * SECTOR_SIZE) + 0x100)
 
@@ -100,7 +100,7 @@ LOCAL bool TaskEraseFlash(uint32 param)
       }
       else
       {
-        os_printf("Timed out erasing sector %x\r\n", sector);
+        AnkiWarn( 29, "UpgradeController", 291, "Timed out erasing sector %x\r\n", 1, sector);
         resp.address = msg->start;
         resp.length  = 0; // Indicates failure
         resp.writeNotErase = false;
@@ -133,16 +133,16 @@ LOCAL bool TaskWriteFlash(uint32 param)
       resp.address = msg->address;
       resp.length  = msg->data_length;
       resp.writeNotErase = true;
-      RobotInterface::SendMessage(resp);
+      RobotInterface::SendMessage(resp, true, true);
       break;
     }
     case SPI_FLASH_RESULT_ERR:
     {
-      os_printf("Failed to write to address %x\r\n", msg->address);
+      AnkiWarn( 29, "UpgradeController", 292, "Failed to write to address %x", 1, msg->address);
       resp.address = msg->address;
       resp.length  = 0; // Indicates failure
       resp.writeNotErase = true;
-      RobotInterface::SendMessage(resp);
+      RobotInterface::SendMessage(resp, true, true);
       break;
     }
     case SPI_FLASH_RESULT_TIMEOUT:
@@ -154,11 +154,11 @@ LOCAL bool TaskWriteFlash(uint32 param)
       }
       else
       {
-        os_printf("Timed out writting to address %x\r\n", msg->address);
+        AnkiWarn( 29, "UpgradeController", 293, "Timed out writting to address %x", 1, msg->address);
         resp.address = msg->address;
         resp.length  = 0; // Indicates failure
         resp.writeNotErase = true;
-        RobotInterface::SendMessage(resp);
+        RobotInterface::SendMessage(resp, true, true);
         break;
       }
     }
@@ -177,7 +177,7 @@ LOCAL bool TaskOtaAsset(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
   // TODO Do something with this new asset update
-  AnkiInfo( 29, "UpgradeController", 173, "Asset OTA successful\r\n", 0);
+  AnkiInfo( 29, "UpgradeController", 173, "Asset OTA successful", 0);
   os_free(state);
   return false;
 }
@@ -201,8 +201,7 @@ LOCAL bool TaskOtaWiFi(uint32 param)
   {
     case SPI_FLASH_RESULT_OK:
     {
-      // TODO tell RTIP we're going away
-      os_printf("WiFi OTA rebooting for version %d\r\n", state->version);
+      AnkiInfo( 29, "UpgradeController", 294, "WiFi OTA rebooting for version %d", 1, state->version);
       os_free(state);
       if (state->phase)
       {
@@ -315,7 +314,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         }
         else // Done writing firmware
         {
-          AnkiInfo( 29, "UpgradeController", 180, "RTIP OTA transfer complete\r\n", 0);
+          AnkiInfo( 29, "UpgradeController", 180, "RTIP OTA transfer complete", 0);
           if (flashStagedFlags[0] != 0xFFFFffff)
           {
             uint32 flag = 0;
@@ -580,7 +579,7 @@ LOCAL bool TaskCheckSig(uint32 param)
     {
       case RobotInterface::OTA_none:
       {
-        AnkiInfo( 29, "UpgradeController", 187, "Successfully confirmed flash signature for OTA none\r\n", 0);
+        AnkiInfo( 29, "UpgradeController", 187, "Successfully confirmed flash signature for OTA none", 0);
         os_free(state);
         return false;
       }
@@ -673,6 +672,9 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
   }
   else
   {
+    // TODO tell the RTIP we're going away, in the mean time, at least tell it the connection is going away
+    i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
+    
     RobotInterface::EraseFlash* taskMsg = static_cast<RobotInterface::EraseFlash*>(os_zalloc(msg.Size()));
     if (taskMsg == NULL)
     {

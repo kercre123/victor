@@ -11,6 +11,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -26,13 +27,13 @@ namespace Cozmo {
 
   // Static initializations
   const ActionList::SlotHandle IBehavior::sActionSlot = Robot::DriveAndManipulateSlot;
-  Util::RandomGenerator IBehavior::sRNG;
   
   const char* IBehavior::kBaseDefaultName = "no_name";
   
   static const char* kNameKey              = "name";
   static const char* kEmotionScorersKey    = "emotionScorers";
   static const char* kRepetitionPenaltyKey = "repetitionPenalty";
+  static const char* kBehaviorGroupsKey    = "behaviorGroups";
   
   
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
@@ -75,6 +76,35 @@ namespace Cozmo {
     if (_repetitionPenalty.GetNumNodes() == 0)
     {
       _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
+    }
+    
+    // Behavior Groups
+    
+    ClearBehaviorGroups();
+    
+    const Json::Value& behaviorGroupsJson = config[kBehaviorGroupsKey];
+    if (behaviorGroupsJson.isArray())
+    {
+      const uint32_t numBehaviorGroups = behaviorGroupsJson.size();
+      
+      const Json::Value kNullValue;
+      
+      for (uint32_t i = 0; i < numBehaviorGroups; ++i)
+      {
+        const Json::Value& behaviorGroupJson = behaviorGroupsJson.get(i, kNullValue);
+        
+        const char* behaviorGroupString = behaviorGroupJson.isString() ? behaviorGroupJson.asCString() : "";
+        const BehaviorGroup behaviorGroup = BehaviorGroupFromString(behaviorGroupString);
+        
+        if (behaviorGroup != BehaviorGroup::Count)
+        {
+          SetBehaviorGroup(behaviorGroup, true);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("IBehavior.BadBehaviorGroup", "Failed to read group %u '%s'", i, behaviorGroupString);
+        }
+      }
     }
     
     return true;
@@ -154,6 +184,12 @@ namespace Cozmo {
   }
 
 #pragma mark --- IReactionaryBehavior ----
+  
+  IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& config)
+    : IBehavior(robot, config)
+  {
+    SetBehaviorGroup(BehaviorGroup::Reactionary, true);
+  }
   
   void IReactionaryBehavior::SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags)
   {

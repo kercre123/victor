@@ -188,8 +188,7 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
 
   _prePouncePitch = robot.GetPitchAngle();
   
-  // TEMP: 
-  std::string _pounceAnimation = "invDemo_P05_CatchFwd"; // TEMP: 
+  std::string _pounceAnimation = "invDemo_P05_CatchFwd";
 
   // disable idle
   _previousIdleAnimation = robot.GetIdleAnimationName();
@@ -222,14 +221,15 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
 {
   // Arbitrarily tuned for robot A0
   const float liftHeightThresh = 37.5f;
-  const float bodyAngleThresh = 0.025f;
+  const float bodyAngleThresh = 0.02f;
 
   float robotBodyAngleDelta = robot.GetPitchAngle() - _prePouncePitch;
     
   // check the lift angle, after some time, transition state
-  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%f -> %f)",
+  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
                    robot.GetLiftHeight(),
                    RAD_TO_DEG(robotBodyAngleDelta),
+                   robotBodyAngleDelta,
                    RAD_TO_DEG(_prePouncePitch),
                    RAD_TO_DEG(robot.GetPitchAngle()));
 

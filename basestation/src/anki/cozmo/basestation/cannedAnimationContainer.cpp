@@ -83,7 +83,7 @@ namespace Cozmo {
     return v;
   }
   
-  Result CannedAnimationContainer::DefineFromJson(const Json::Value& jsonRoot, std::string& loadedAnimName)
+  Result CannedAnimationContainer::DefineFromJson(const Json::Value& jsonRoot, std::string& animationName)
   {
     
     Json::Value::Members animationNames = jsonRoot.getMemberNames();
@@ -97,52 +97,59 @@ namespace Cozmo {
     }
      */
     
-    for(auto const& animationName : animationNames)
-    {
-      if(animationName == FaceAnimationManager::ProceduralAnimName) {
-        PRINT_NAMED_WARNING("CannedAnimationContainer.DefineFromJson.ReservedName",
-                            "Skipping animation with reserved name '%s'.",
-                            FaceAnimationManager::ProceduralAnimName.c_str());
-        continue;
-      }
-      
-      if(RESULT_OK != AddAnimation(animationName)) {
-        PRINT_NAMED_INFO("CannedAnimationContainer.DefineFromJson.ReplaceName",
-                          "Replacing existing animation named '%s'.\n",
-                          animationName.c_str());
-      }
-      
-      Animation* animation = GetAnimation(animationName);
-      if(animation == nullptr) {
-        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
-                          "Could not GetAnimation named '%s'.",
-                          animationName.c_str());
-        return RESULT_FAIL;
-      }
-      
-      Result lastResult = animation->DefineFromJson(animationName,
-                                                    jsonRoot[animationName]);
-      
-      // Sanity check
-      if(animation->GetName() != animationName) {
-        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
-                          "Animation's internal name ('%s') doesn't match container's name for it ('%s').\n",
-                          animation->GetName().c_str(),
-                          animationName.c_str());
-        return RESULT_FAIL;
-      }
-      
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
-                          "Failed to define animation '%s' from Json.\n",
-                          animationName.c_str());
-        return lastResult;
-      }
-
-
-      loadedAnimName = animationName;
-    } // for each animation
+    if(animationNames.empty()) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.EmptyFile",
+                        "Found no animations in JSON");
+      return RESULT_FAIL;
+    } else if(animationNames.size() != 1) {
+      PRINT_NAMED_WARNING("CannedAnimationContainer.DefineFromJson.TooManyAnims",
+                          "Expecting only one animation per json file, found %lu. "
+                          "Will use first: %s",
+                          animationNames.size(), animationNames[0].c_str());
+    }
     
+    animationName = animationNames[0];
+    
+    if(animationName == FaceAnimationManager::ProceduralAnimName) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.ReservedName",
+                        "Skipping animation with reserved name '%s'.",
+                        FaceAnimationManager::ProceduralAnimName.c_str());
+      return RESULT_FAIL;
+    }
+    
+    if(RESULT_OK != AddAnimation(animationName)) {
+      PRINT_NAMED_INFO("CannedAnimationContainer.DefineFromJson.ReplaceName",
+                       "Replacing existing animation named '%s'.\n",
+                       animationName.c_str());
+    }
+    
+    Animation* animation = GetAnimation(animationName);
+    if(animation == nullptr) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
+                        "Could not GetAnimation named '%s'.",
+                        animationName.c_str());
+      return RESULT_FAIL;
+    }
+    
+    Result lastResult = animation->DefineFromJson(animationName,
+                                                  jsonRoot[animationName]);
+    
+    // Sanity check
+    if(animation->GetName() != animationName) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
+                        "Animation's internal name ('%s') doesn't match container's name for it ('%s').\n",
+                        animation->GetName().c_str(),
+                        animationName.c_str());
+      return RESULT_FAIL;
+    }
+    
+    if(lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
+                        "Failed to define animation '%s' from Json.\n",
+                        animationName.c_str());
+      return lastResult;
+    }
+
     return RESULT_OK;
   } // CannedAnimationContainer::DefineFromJson()
   

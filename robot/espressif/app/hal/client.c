@@ -21,6 +21,7 @@
 static struct espconn* socket;
 static ReliableConnection* clientConnection;
 static uint32_t clientConnectionId;
+static bool sendHoldoff;
 
 bool clientConnected(void)
 {
@@ -42,6 +43,8 @@ void clientUpdate(void)
 static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   struct espconn* src = (struct espconn*)arg;
+  
+  sendHoldoff = false;
   
   if (unlikely(!clientConnected()))
   {
@@ -91,6 +94,7 @@ sint8 clientInit()
 
   clientConnection = NULL;
   clientConnectionId = 0;
+  sendHoldoff = false;
 
   socket = (struct espconn *)os_zalloc(sizeof(struct espconn));
   os_memset( socket, 0, sizeof( struct espconn ) );
@@ -158,15 +162,23 @@ bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
                     socket->proto.udp->remote_ip[2], socket->proto.udp->remote_ip[3], socket->proto.udp->remote_port);
 #endif
 
-  const int8 err = espconn_send(socket, data, len);
-  if (err < 0) // I think a negative number is an error. 0 is OK, I don't know what positive numbers are
+  if (sendHoldoff)
   {
-    printf("Failed to queue UDP packet %d\r\n", err);
     return false;
   }
   else
   {
-    return true;
+    const int8 err = espconn_send(socket, data, len);
+    if (err < 0) // I think a negative number is an error. 0 is OK, I don't know what positive numbers are
+    {
+      printf("FQUP %d\r\n", err);
+      sendHoldoff = true;
+      return false;
+    }
+    else
+    {
+      return true;
+    }
   }
 }
 

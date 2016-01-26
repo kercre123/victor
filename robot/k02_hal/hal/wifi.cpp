@@ -45,20 +45,20 @@ namespace HAL {
       const uint8_t rind = txRind;
       uint8_t wind = txWind;
       const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
-      if (available > (size + 4)) // Room for message plus header plus one more so we can tell empty from full
-      {
-        const uint16_t sizeWHeader = size+1;
-        const u8* msgPtr = (u8*)buffer;
-        txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
-        txBuf[wind++] = (reliable ? RTIP_CLAD_MSG_RELIABLE_FLAG : 0x00) | \
-                        (hot      ? RTIP_CLAD_MSG_HOT_FLAG      : 0x00) | \
-                        ((sizeWHeader >> 8) & RTIP_CLAD_SIZE_HIGH_MASK); // Size high byte plus flags
-        txBuf[wind++] = msgID;
-        for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
-        txWind = wind;
-        return true;
-      }
-      else return false;
+      while (available < (size + 4))
+			{ // Wait for room for message plus tag plus header plus one more so we can tell empty from full
+				if (!reliable) return false;
+			}
+      const uint16_t sizeWHeader = size+1;
+      const u8* msgPtr = (u8*)buffer;
+      txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
+      txBuf[wind++] = (reliable ? RTIP_CLAD_MSG_RELIABLE_FLAG : 0x00) |
+                      (hot      ? RTIP_CLAD_MSG_HOT_FLAG      : 0x00) |
+                      ((sizeWHeader >> 8) & RTIP_CLAD_SIZE_HIGH_MASK); // Size high byte plus flags
+      txBuf[wind++] = msgID;
+      for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
+      txWind = wind;
+      return true;
     }
   }
 
@@ -113,25 +113,26 @@ namespace HAL {
       else
       {
         uint8_t available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-        RobotInterface::EngineToRobot msg;
         while (available)
         {
-          if (available >= msg.MIN_SIZE) // First pass, read the minimum there could possible be for any message
+					uint32_t cladBuffer[(DROP_TO_RTIP_MAX_VAR_PAYLOAD/4)+1];
+					RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
+					uint8_t* msgBuffer = msg->GetBuffer();
+          if (available >= msg->MIN_SIZE) // First pass, read the minimum there could possible be for any message
           {
             uint8_t i;
-            uint8_t* msgBuffer = msg.GetBuffer();
-            for (i=0; i<msg.MIN_SIZE; i++) msgBuffer[i] = rxBuf[rind++];
-            uint8_t size = msg.Size();
+            for (i=0; i<msg->MIN_SIZE; i++) msgBuffer[i] = rxBuf[rind++];
+            uint8_t size = msg->Size();
             if (available >= size) // Second pass, read the minimum there could possibly be for this message type
             {
               for (; i<size; i++) msgBuffer[i] = rxBuf[rind++];
-              size = msg.Size();
+              size = msg->Size();
               if (available >= size) // Final pass, read the full size of this actual message
               {
                 for (; i<size; i++) msgBuffer[i] = rxBuf[rind++];
                 rxRind = rind;
                 available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-                Messages::ProcessMessage(msg);
+                Messages::ProcessMessage(*msg);
                 continue;
               }
             }

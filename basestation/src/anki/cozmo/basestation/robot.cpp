@@ -63,6 +63,8 @@
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 #define MIN_DISTANCE_FOR_MINANGLE_PLANNER 1.0f
 
+#define DEBUG_BLOCK_LIGHTS 0
+
 namespace Anki {
   namespace Cozmo {
     
@@ -711,7 +713,7 @@ namespace Anki {
           return RESULT_OK;
         }
 
-        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
+        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
         const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
         
         assert(t_prev < t);
@@ -1123,10 +1125,11 @@ namespace Anki {
       
       // Sending debug string to game and viz
       char buffer [128];
+
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c lock:%c%c%c %s:%s ",
+               "r:%c%c%c%c lock:%c%c%c %2dHz %s:%s ",
                GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
                GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
                GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -1134,6 +1137,7 @@ namespace Anki {
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+               (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                behaviorChooserName,
                behaviorName.c_str());
       
@@ -1507,6 +1511,12 @@ namespace Anki {
       if (success && !animDefs.empty()) {
         //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
+        
+        if(std::string(filename).find(animationId) == std::string::npos) {
+          PRINT_NAMED_WARNING("Robot.ReadAnimationFile.AnimationNameMismatch",
+                              "Animation name '%s' does not match seem to match "
+                              "filename '%s'", animationId.c_str(), filename);
+        }
       }
 
     }
@@ -1571,13 +1581,23 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
     {
+      // Disable super-verbose warnings about clipping face parameters in json files
+      // To help find bad/deprecated animations, try removing this.
+      ProceduralFaceParams::EnableClippingWarning(false);
+
+      ReadAnimationDirImpl("assets/animations/");
+      ReadAnimationDirImpl("config/basestation/animations/");
+    }
+    
+    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
+    {
       if (_dataPlatform == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
       const std::string animationFolder =
-        _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animations/");
+        _dataPlatform->pathToResource(Util::Data::Scope::Resources, animationDir);
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -1624,6 +1644,8 @@ namespace Anki {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
+      
+      ProceduralFaceParams::EnableClippingWarning(true);
     }
     
     // Read the animationGroups in a dir
@@ -3130,6 +3152,13 @@ namespace Anki {
           lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
           lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
+
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
     }
@@ -3167,6 +3196,12 @@ namespace Anki {
           lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
 
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+        
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
 

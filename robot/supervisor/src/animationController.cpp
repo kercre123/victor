@@ -14,7 +14,6 @@ extern "C" {
 }
 #define ONCHIP
 #else // Not on Espressif
-#include <assert.h>
 #include <string.h>
 #include "headController.h"
 #include "liftController.h"
@@ -743,7 +742,7 @@ namespace AnimationController {
 
       if(terminatorFound) {
         _isPlaying = false;
-        assert(_haveReceivedTerminationFrame > 0);
+        AnkiAssert(_haveReceivedTerminationFrame > 0, 281);
         _haveReceivedTerminationFrame--;
         --_numAudioFramesBuffered;
         ++_numAudioFramesPlayed; // end of anim considered "audio" for counting

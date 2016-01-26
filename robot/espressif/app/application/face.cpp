@@ -32,7 +32,7 @@ namespace Face {
 
   // 96 characters from ASCII 32 to 127, each 5x8 pixels in 5 bytes oriented vertically
   const int CHAR_WIDTH = 5, CHAR_HEIGHT = 8, CHAR_START = 32, CHAR_END = 127;
-static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
+  static const u32 FONT[] ICACHE_RODATA_ATTR STORE_ATTR = {
      0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x5F,0x00,0x00, 0x00,0x07,0x00,0x07,0x00, 0x14,0x7F,0x14,0x7F,0x14,
      0x24,0x2A,0x7F,0x2A,0x12, 0x23,0x13,0x08,0x64,0x62, 0x36,0x49,0x56,0x20,0x50, 0x00,0x08,0x07,0x03,0x00,
      0x00,0x1C,0x22,0x41,0x00, 0x00,0x41,0x22,0x1C,0x00, 0x2A,0x1C,0x7F,0x1C,0x2A, 0x08,0x08,0x3E,0x08,0x08,
@@ -60,39 +60,38 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
   };
 
   u64 m_frame[COLS];
-  u64 m_frameActive[COLS];
   ScreenRect m_rects[WORKING_RECTS]; // Extra rect for working
   ScreenRect *m_activeRect;
   RectScanStatus m_scanStatus;
   int m_remainingRects;
-  bool m_frameChanged;
+  bool m_rectLock;
 
   bool _textMode;
   
   static void ResetScan() {
-    m_scanStatus.x = m_activeRect->left;
-    m_scanStatus.y = m_activeRect->top;
-    m_scanStatus.transmitRect = true;
+    if (m_remainingRects > 0) {
+      m_scanStatus.x = m_activeRect->left;
+      m_scanStatus.y = m_activeRect->top;
+      m_scanStatus.transmitRect = true;
+    }
   }
 
   static void ResetScreen() {
     m_remainingRects = 1;
     m_activeRect = &m_rects[0];
-    m_frameChanged = true;
     
     m_activeRect->left = 0;
     m_activeRect->top = 0;
     m_activeRect->right = COLS - 1;
     m_activeRect->bottom = PAGES - 1;
-    memset(m_frameActive, 0, sizeof(m_frameActive));
+
+    memset(m_frame, 0, sizeof(m_frame));
 
     ResetScan();
   }
 
   Result Init()
   {
-    memset(m_frame, 0, sizeof(m_frame));
-
     // Setup a single frame transfer
     ResetScreen();
 
@@ -174,9 +173,11 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
     return false;
   }
 
-  static void CreateRects() {
-    if (!m_frameChanged) return ;
-    m_frameChanged = false;
+  static void CreateRects(u64* frame) {
+    // We cannot create new rects while we are currently transmitting
+    if (m_remainingRects > 0) return ;
+
+    m_rectLock = true;
 
     m_activeRect = &m_rects[0];
     m_remainingRects = 0;
@@ -184,7 +185,7 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
     for (int y = 0; y < PAGES; y++) {
       for (int x = 0; x < COLS; x++) {
         // Find dirty pixels
-        if (PIXEL(m_frameActive, x, y) == PIXEL(m_frame, x, y)) {
+        if (PIXEL(m_frame, x, y) == PIXEL(frame, x, y)) {
           continue ;
         }
 
@@ -197,9 +198,9 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
         // Find bounding rectangle for horizontal strip
         // ... while coping the dirty data in
         do {
-          PIXEL(m_frameActive, x, y) = PIXEL(m_frame, x, y);
+          PIXEL(m_frame, x, y) = PIXEL(frame, x, y);
           working->right = x;
-        } while(++x < COLS && PIXEL(m_frameActive, x, y) != PIXEL(m_frame, x, y));
+        } while(++x < COLS && PIXEL(m_frame, x, y) != PIXEL(frame, x, y));
 
         // Keep our rectangle count down
         if (m_remainingRects > MAX_RECTS) {
@@ -210,15 +211,10 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
 
     // Reduce total rect count
     while (ConsolidateRects()) ;
-  }
 
-  extern "C" void ManageScreen()
-  {
-    // Generate new bounding boxes
-    if (m_remainingRects == 0) {
-      CreateRects();
-      ResetScan();
-    }    
+    ResetScan();
+
+    m_rectLock = false;
   }
 
   // Pump face buffer data out to OLED
@@ -226,16 +222,8 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
   {
     static u8 transmitChain = 0;
 
-    // Stampede protection
-    if (transmitChain == MAX_TX_CHAIN_COUNT) {
-      transmitChain = 0;
-      return 0;
-    }
-
-    ManageScreen();
-
-    // We still Don't have data, abort early
-    if (m_remainingRects == 0) {
+    // Stampede protection / Idle state
+    if (m_rectLock || m_remainingRects == 0 || transmitChain == MAX_TX_CHAIN_COUNT) {
       transmitChain = 0;
       return 0;
     }
@@ -243,34 +231,36 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
     // We are transmitting, so increment stampede counter
     transmitChain++;
 
+    // We need to update the bounding box
     if (m_scanStatus.transmitRect) {
       m_scanStatus.transmitRect = false;
       memcpy(dest, (uint8_t*) m_activeRect, sizeof(ScreenRect));
 
       return screenDataValid | screenRectData;
-    } else {
-      for (int i = 0; i < MAX_SCREEN_BYTES_PER_DROP; i++) {
-        *(dest++) = PIXEL(m_frameActive, m_scanStatus.x, m_scanStatus.y);
+    }
 
-        // Advance cursor through the rectangle
-        if (++m_scanStatus.x > m_activeRect->right) {
-          m_scanStatus.x = m_activeRect->left;
+    // Transmit the screen bytes
+    for (int i = 0; i < MAX_SCREEN_BYTES_PER_DROP; i++) {
+      *(dest++) = PIXEL(m_frame, m_scanStatus.x, m_scanStatus.y);
 
-          if (++m_scanStatus.y > m_activeRect->bottom) {
-            // Overflow to next rectangle
-            m_activeRect++;
-            m_remainingRects--;
+      // Advance cursor through the rectangle
+      if (++m_scanStatus.x > m_activeRect->right) {
+        m_scanStatus.x = m_activeRect->left;
 
-            ResetScan();
-            break ;
-          }
+        if (++m_scanStatus.y > m_activeRect->bottom) {
+          // Overflow to next rectangle
+          m_activeRect++;
+          m_remainingRects--;
+          ResetScan();
+
+          break ;
         }
       }
-
-      return screenDataValid;
     }
+
+    return screenDataValid;
   }
-  
+
   // Display text on the screen until turned off
   extern "C" void FacePrintf(const char *format, ...)
   {
@@ -285,10 +275,10 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
     _textMode = true;
 
     // Build the result into the framebuffer
+    u64 frame[COLS];
     int x = 0, y = 0;
     char* cptr = buffer;
-    memset(m_frame, 0, sizeof(m_frame));
-    m_frameChanged = true;
+    memset(frame, 0, sizeof(frame));
 
     // Go character by character until we hit the end
     while (*cptr)
@@ -308,8 +298,8 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
         continue;
 
       // Copy the character from the font buffer to the display buffer
-      const u8* fptr = FONT + (c - CHAR_START) * CHAR_WIDTH;
-      u8* gptr = (u8*)(m_frame) + y + x * (CHAR_WIDTH + 1) * (ROWS / CHAR_HEIGHT);
+      const u32* fptr = FONT + (c - CHAR_START) * CHAR_WIDTH;
+      u8* gptr = (u8*)(frame) + y + x * (CHAR_WIDTH + 1) * (ROWS / CHAR_HEIGHT);
       for (int i = 0; i < CHAR_WIDTH; i++)
       {
         *gptr = *fptr++;
@@ -317,14 +307,17 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
       }
       x++;
     }
+
+    Face::CreateRects((u64*) frame);
   }
   
   // Return display to normal function
   extern "C" void FaceUnPrintf(void)
   {
     _textMode = false;
-    m_frameChanged = true;
-    memset(m_frame, 0, sizeof(m_frame));
+    m_rectLock = true;
+    ResetScreen();
+    m_rectLock = false;
   }
   
 } // Face
@@ -332,17 +325,18 @@ static const u8 FONT[] /*ICACHE_RODATA_ATTR STORE_ATTR*/ = {
 namespace HAL {
   void FaceAnimate(u8* image, const u16 length)
   {
-    if (Face::_textMode) return; // Ignore when in text mode
+    if (Face::_textMode || Face::m_remainingRects > 0) return; // Ignore when in text mode
+
     else if (length == MAX_FACE_FRAME_SIZE) // If it's this size, it's raw
     {
-      memcpy(Face::m_frame, image, MAX_FACE_FRAME_SIZE);
+      Face::CreateRects((u64*) image);
     }
     else
     {
-      FaceDisplayDecode(image, ROWS, COLS, Face::m_frame);
+      u64 frame[COLS];
+      FaceDisplayDecode(image, ROWS, COLS, frame);
+      Face::CreateRects(frame);
     }
-
-    Anki::Cozmo::Face::m_frameChanged = true;
   }
 }
 

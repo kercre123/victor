@@ -24,6 +24,11 @@ InvestorDemoMotionBehaviorChooser::InvestorDemoMotionBehaviorChooser(Robot& robo
 
   // enable live idle animation
   robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+  
+  // pick the appropriate vision modes
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingFaces, false);
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, false);
 }
 
 void InvestorDemoMotionBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)

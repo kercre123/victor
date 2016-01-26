@@ -97,6 +97,8 @@ namespace Cozmo {
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
+
+    virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) override;
     
     // Handlers for signals coming from the engine
     Result HandleObservedObjectWhileRunning(Robot& robot,
@@ -121,8 +123,11 @@ namespace Cozmo {
                                  double currentTime_sec);
     Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
 
-
     void TrackBlockWithLift(Robot& robot, const Pose3d& objectPose);
+
+    // tries to move the robot towards a face, properly handling things like if the robot is holding a cube,
+    // if it has seen a face, etc
+    void TurnTowardsAFace(Robot& robot);
     
     void InitState(const Robot& robot);
     void SetCurrState(State s);
@@ -174,9 +179,6 @@ namespace Cozmo {
     // ID of player face that Cozmo will interact with for this behavior
     Face::ID_t _faceID;
     
-    // This is the last known pose of a face that has been tracked
-    Pose3d _lastKnownFacePose;
-    bool   _hasValidLastKnownFacePose;
     double _noFacesStartTime = -1.0;
     
     float _oldHeadAngle_rads = 0.0f;
@@ -187,7 +189,7 @@ namespace Cozmo {
     // blocks that should be ignored (which happens at the end of the demo)
     std::set<ObjectID> _objectsToIgnore;
 
-    std::vector<ObjectID> _objectsToTurnOffLights;
+    std::set<ObjectID> _objectsToTurnOffLights;
 
     // used for moving the lift to track (grab at) the cube
     const f32 _maxObjectDistToMoveLift = 145.0f;

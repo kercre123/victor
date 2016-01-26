@@ -2,10 +2,7 @@
 #define m_header_start                 0x00001000
 #define m_header_size                  0x00000080
 
-#define m_interrupts_start             0x00001400
-#define m_interrupts_size              0x00000400
-
-#define m_text_start                   (m_interrupts_start + m_interrupts_size)
+#define m_text_start                   (m_header_start + m_header_size)
 #define m_text_size                    (0x10000 - m_text_start)
 
 ; 8KB - 768 bytes for camera - 1.5KB for stack

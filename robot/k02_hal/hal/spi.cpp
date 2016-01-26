@@ -40,11 +40,7 @@ static bool ProcessDrop(void) {
     DropToRTIP* drop = (DropToRTIP*)target;
 
     if (drop->droplet & screenDataValid) {
-      if (drop->droplet & screenRectData) {
-        OLED::BoundRect(drop->screenData);
-      } else {
-        OLED::FeedFace(drop->screenData);
-      }
+      OLED::FeedFace(drop->droplet & screenRectData, drop->screenData);
     }
     
     DAC::Feed(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
@@ -101,7 +97,9 @@ static bool ProcessDrop(void) {
 void Anki::Cozmo::HAL::SPI::StartDMA(void) {
   // Start sending out junk
   SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
-  DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
+  do  // Per erratum e8011: Repeat writes to SADDR, DADDR, or NBYTES until they stick
+    DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
+  while (DMA_TCD3_SADDR != (uint32_t)spi_write_buff);
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
   
   // Swap buffers
@@ -116,25 +114,26 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) {
   drop_tx->preamble = TO_WIFI_PREAMBLE;
   
   // This is where a drop should be 
-  drop_tx->droplet  = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
   while (jpeglen & 0x3) drop_tx->payload[jpeglen++] = 0xff;
-  
+  if (eof)
+  {
+    *((u32*)(drop_tx->payload + jpeglen)) = GetTimeStamp() - 70;
+    jpeglen += 4;
+  }
+	drop_tx->droplet = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
   
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;
-  if (remainingSpace > 0)
-  {
-    drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
-    if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(BodyState))) // Have nothing to send so transmit body state info
-    {
-      BodyState bodyState;
-      bodyState.state = UART::recoveryMode;
-      bodyState.count = UART::RecoveryStateUpdated;
-      memcpy(drop_addr, &bodyState, sizeof(BodyState));
-      drop_tx->payloadLen = sizeof(BodyState);
-      drop_tx->droplet |= bootloaderStatus;
-    }
-  }
+	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
+	if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(BodyState))) // Have nothing to send so transmit body state info
+	{
+		BodyState bodyState;
+		bodyState.state = UART::recoveryMode;
+		bodyState.count = UART::RecoveryStateUpdated;
+		memcpy(drop_addr, &bodyState, sizeof(BodyState));
+		drop_tx->payloadLen = sizeof(BodyState);
+		drop_tx->droplet |= bootloaderStatus;
+	}
 }
 
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {

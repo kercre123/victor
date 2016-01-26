@@ -971,7 +971,7 @@ namespace Cozmo {
         
         // Update navMemory map
         if ( nullptr != _navMemoryMap ) {
-          _navMemoryMap->AddObstacleQuad(observedObject->GetBoundingQuadXY());
+          _navMemoryMap->AddObstacleQuad(observedObject->GetBoundingQuadXY(), NavMemoryMapTypes::EObstacleType::Cube);
         }
         
         _didObjectsChange = true;
@@ -2714,7 +2714,7 @@ namespace Cozmo {
               
               ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
               if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
-                 object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+                 object->IsExistenceConfirmed())
               {
                 //PRINT_INFO("currID: %d", block.first);
                 if (currSelectedObjectFound) {
@@ -2755,7 +2755,7 @@ namespace Cozmo {
             for (auto const & objectsByID : objectsByType.second) {
               const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
               if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
-                object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+                object->IsExistenceConfirmed())
               {
                 firstObject = objectsByID.first;
                 break;
@@ -2836,7 +2836,12 @@ namespace Cozmo {
         for(auto & objectsByType : objectsByFamily.second) {
           for(auto & objectsByID : objectsByType.second) {
             ObservableObject* object = objectsByID.second;
-            object->Visualize();
+            if(object->IsExistenceConfirmed()) {
+              object->Visualize();
+            } else {
+              // Draw unconfirmed objects in a special color
+              object->Visualize(NamedColors::LIGHTGRAY);
+            }
           }
         }
       }

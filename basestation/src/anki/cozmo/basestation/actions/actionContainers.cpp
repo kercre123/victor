@@ -317,7 +317,7 @@ namespace Anki {
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueAFront.NullActionPointer",
-                          "Refusing to queue a null action pointer.\n");
+                          "Refusing to queue a null action pointer.");
         return RESULT_FAIL;
       }
       
@@ -342,6 +342,10 @@ namespace Anki {
         } else {
           // Current front action is not interruptible, so just use QueueNow and
           // cancel it
+          PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
+                           "Could not interrupt %s. Will cancel and queue %s now.",
+                           _queue.front()->GetName().c_str(),
+                           action->GetName().c_str());
           result = QueueNow(action, numRetries);
         }
       }
