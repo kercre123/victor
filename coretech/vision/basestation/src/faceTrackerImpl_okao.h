@@ -615,13 +615,16 @@ namespace Vision {
       okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
                                               dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
                                               _okaoPartDetectionResultHandle);
-      
+      s32 faceID = -1;
       if(numUsersInAlbum == 0) {
         // Nobody in album yet, add this person
+        PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingFirstUser",
+                         "Adding first user to empty album");
         Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle);
         if(RESULT_OK != lastResult) {
           return lastResult;
         }
+        faceID = _lastRegisteredUserID;
       } else {
         INT32 resultNum = 0;
         const s32 MaxResults = 2;
@@ -673,16 +676,26 @@ namespace Vision {
               ++iResult;
             }
             
-            face.SetID(minID);
-            face.SetName("KnownFace" + std::to_string(face.GetID()));
+            faceID = minID;
 
           } else {
             // No match found, add new user
+            PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingNewUser",
+                             "Observed new person. Adding to album.");
             Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle);
             if(RESULT_OK != lastResult) {
               return lastResult;
             }
+            faceID = _lastRegisteredUserID;
           }
+
+          if(faceID < 0) {
+            PRINT_NAMED_WARNING("FaceTrackerImpl.Update.InvalidFaceID", "");
+          } else {
+            face.SetID(faceID);
+            face.SetName("KnownFace" + std::to_string(face.GetID()));
+          }
+
           
         }
       }
