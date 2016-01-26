@@ -266,7 +266,7 @@ namespace Anki {
         }
       }
       
-      // Draw name
+      // Draw name & most likely expression
       std::string name;
       if(face.GetID() < 0) {
         name = "Unknown";
@@ -275,6 +275,8 @@ namespace Anki {
       } else {
         name = face.GetName() + "[" + std::to_string(face.GetID()) + "]";
       }
+      name += "-";
+      name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       
       // Draw bounding rectangle (?)

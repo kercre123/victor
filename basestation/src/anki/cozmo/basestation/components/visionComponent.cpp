@@ -56,7 +56,7 @@ namespace Cozmo {
 
   void VisionComponent::SetCameraCalibration(const Robot& robot, const Vision::CameraCalibration& camCalib)
   {
-    if(_camCalib != camCalib)
+    if(_camCalib != camCalib || !_isCamCalibSet)
     {
       _camCalib = camCalib;
       _camera.SetSharedCalibration(&_camCalib);

@@ -5,7 +5,7 @@
   # initially to empty. They will be filled in below in the 'conditions' as
   # needed:
   # (NOTE: This is duplicated from coretech-internal.gyp!)
-  'face_library': 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
+  'face_library': 'opencv', # one of: 'opencv', 'faciometric', 'facesdk', or 'okao'
   'face_library_path':         [ ],
   'face_library_includes':     [ ],
   'face_library_libs':         [ ],
@@ -96,6 +96,32 @@
         'libstlport_shared.so',
       ],
     }],
+    
+    # OKAO Vision:
+    ['face_library=="okao"', {
+      'face_library_includes': [
+        '<(coretech_external_path)/okaoVision/include',
+      ],
+      'face_library_libs': [
+        'libeOkao.a',      # Common
+        'libeOkaoDt.a',    # Face Detection
+        'libeOkaoPt.a',    # Face Parts Detection
+        'libeOkaoEx.a',    # Facial Expression estimation
+        'libeOkaoFr.a',    # Face Recognition
+      ],
+    }],
+    
+    ['OS=="mac" and face_library=="okao"', {
+      'face_library_lib_path': [
+        '<(coretech_external_path)/okaoVision/lib/MacOSX',
+      ],
+    }],
+    ['OS=="ios" and face_library=="okao"', {
+      'face_library_lib_path': [
+        '<(coretech_external_path)/okaoVision/lib/iOS',
+      ],
+    }],
+    
   ], # conditions
   
 }, # variables
@@ -105,6 +131,7 @@
     'FACE_TRACKER_FACIOMETRIC=0',
     'FACE_TRACKER_FACESDK=1',
     'FACE_TRACKER_OPENCV=2',
+    'FACE_TRACKER_OKAO=3',
   ],
   'conditions': [
     ['face_library=="faciometric"', {
@@ -115,6 +142,9 @@
     }],
     ['face_library=="opencv"', {
       'defines' : ['FACE_TRACKER_PROVIDER=FACE_TRACKER_OPENCV'],
+    }],
+    ['face_library=="okao"', {
+      'defines' : ['FACE_TRACKER_PROVIDER=FACE_TRACKER_OKAO'],
     }],
   ],
   'xcode_settings': {
