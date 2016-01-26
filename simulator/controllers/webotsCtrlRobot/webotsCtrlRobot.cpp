@@ -13,7 +13,6 @@
 #include <stdio.h>
 
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/robot/debug.h"
 #include "testModeController.h"
 #include "anki/cozmo/simulator/robot/keyboardController.h"
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
@@ -37,7 +36,7 @@ int main(int argc, char **argv)
   }
 
 
-#if(FREE_DRIVE_DUBINS_TEST || ENABLE_KEYBOARD_CONTROL)
+#if(ENABLE_KEYBOARD_CONTROL)
   Sim::KeyboardController::Enable();
 #endif
 

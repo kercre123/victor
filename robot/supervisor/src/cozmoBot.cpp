@@ -1,7 +1,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
-#include "anki/cozmo/robot/debug.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/powerMessages.h"
 #include "timeProfiler.h"

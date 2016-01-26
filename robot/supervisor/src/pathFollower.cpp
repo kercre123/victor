@@ -1,4 +1,3 @@
-#include "anki/cozmo/robot/debug.h"
 #include "dockingController.h"
 #include "pathFollower.h"
 #include "localization.h"
@@ -430,46 +429,6 @@ namespace Anki
 
       Result Update()
       {
-
-#if(FREE_DRIVE_DUBINS_TEST)
-        // Test code to visualize Dubins path online
-        f32 start_x,start_y;
-        Radians start_theta;
-        Localization::GetDriveCenterPose(start_x,start_y,start_theta);
-        path_.Clear();
-
-        const f32 end_x = 0;
-        const f32 end_y = 250;
-        const f32 end_theta = 0.5*PI;
-        const f32 start_radius = 50;
-        const f32 end_radius = 50;
-        const f32 targetSpeed = 100;
-        const f32 accel = 200;
-        const f32 decel = 200;
-        const f32 final_straight_approach_length = 0.1;
-        f32 path_length;
-        u8 numSegments = Planning::GenerateDubinsPath(path_,
-                                                      start_x, start_y, start_theta.ToFloat(),
-                                                      end_x, end_y, end_theta,
-                                                      start_radius, end_radius,
-                                                      targetSpeed, accel, decel,
-                                                      final_straight_approach_length,
-                                                      &path_length);
-        const f32 distToTarget = sqrtf((start_x - end_x)*(start_x - end_x) + (start_y - end_y)*(start_y - end_y));
-        PERIODIC_PRINT(500, "Dubins Test: pathLength %f, distToTarget %f\n", path_length, distToTarget);
-
-        // Test threshold for whether to use Dubins path or not)
-
-        AnkiConditionalWarn((path_length <= 2 * distToTarget), 33, "PathFollower", 223, " Dubins path exceeds 2x dist to target (%f %f)\n", 2, path_length, distToTarget);
-
-        //path_.PrintPath();
-#if(ENABLE_PATH_VIZ)
-        SetPathForViz();
-        Viz::ShowPath(0, true);
-#endif
-#endif
-
-
         if (currPathSegment_ < 0) {
           SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
           return RESULT_FAIL;

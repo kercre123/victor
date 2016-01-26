@@ -1,7 +1,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/debug.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "headController.h"
@@ -1150,7 +1149,6 @@ namespace Anki {
       Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3)
       {
         Result ret = RESULT_OK;
-#if(!FREE_DRIVE_DUBINS_TEST)
         testMode_ = mode;
 
         switch(testMode_) {
@@ -1220,22 +1218,19 @@ namespace Anki {
             ret = RESULT_FAIL;
             break;
         }
-#endif
+        
         return ret;
-
       }
 
 
       Result Update()
       {
-#if(!FREE_DRIVE_DUBINS_TEST)
         // Don't run Update until robot is finished initializing
         if (Robot::GetOperationMode() == Robot::WAITING) {
           if (updateFunc) {
             return updateFunc();
           }
         }
-#endif
         return RESULT_OK;
       }
 
