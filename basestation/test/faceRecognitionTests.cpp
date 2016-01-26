@@ -11,7 +11,7 @@
 #include <dirent.h>
 #include <regex>
 
-#define SHOW_IMAGES 1
+#define SHOW_IMAGES 0
 
 extern Anki::Util::Data::DataPlatform* dataPlatform;
 
