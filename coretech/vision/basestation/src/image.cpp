@@ -25,6 +25,21 @@ namespace Vision {
 #pragma mark --- ImageBase ---
   
   template<typename T>
+  Result ImageBase<T>::Load(const std::string& filename)
+  {
+    
+    this->get_CvMat_() = cv::imread(filename, (GetNumChannels() == 1 ?
+                                               CV_LOAD_IMAGE_GRAYSCALE :
+                                               CV_LOAD_IMAGE_COLOR));
+    
+    if(IsEmpty()) {
+      return RESULT_FAIL;
+    } else {
+      return RESULT_OK;
+    }
+  }
+  
+  template<typename T>
   ImageBase<T>& ImageBase<T>::operator= (const ImageBase<T> &other)
   {
     SetTimestamp(other.GetTimestamp());
@@ -92,6 +107,22 @@ namespace Vision {
     DrawLine(quad[CornerName::TopLeft], quad[CornerName::BottomLeft], color, thickness);
     DrawLine(quad[CornerName::TopRight], quad[CornerName::BottomRight], color, thickness);
     DrawLine(quad[CornerName::BottomLeft], quad[CornerName::BottomRight], color, thickness);
+  }
+  
+  template<typename T>
+  void ImageBase<T>::DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness)
+  {
+    DrawLine(rect.GetTopLeft(), rect.GetTopRight(), color, thickness);
+    DrawLine(rect.GetTopLeft(), rect.GetBottomLeft(), color, thickness);
+    DrawLine(rect.GetTopRight(), rect.GetBottomRight(), color, thickness);
+    DrawLine(rect.GetBottomLeft(), rect.GetBottomRight(), color, thickness);
+  }
+  
+  template<typename T>
+  void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
+                              const ColorRGBA& color, f32 scale)
+  {
+    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor((color)));
   }
   
   template<typename T>

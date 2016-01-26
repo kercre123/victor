@@ -39,6 +39,14 @@ public:
   static const int WIDTH  = FaceAnimationManager::IMAGE_WIDTH;
   static const int HEIGHT = FaceAnimationManager::IMAGE_HEIGHT;
   
+  // Nominal positions/sizes for everything (these are things that aren't
+  // parameterized at dynamically, but could be if we want)
+  static constexpr s32   NominalEyeHeight       = 40;
+  static constexpr s32   NominalEyeWidth        = 30;
+  static constexpr s32   NominalLeftEyeX        = 32;
+  static constexpr s32   NominalRightEyeX       = 96;
+  static constexpr s32   NominalEyeY            = 32;
+  
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
   
@@ -96,11 +104,27 @@ public:
                    float fraction,
                    bool usePupilSaccades = false);
   
+  // Adjust settings to make the robot look at a give place. You specify the
+  // (x,y) position of the face center and the normalize factor which is the
+  // maximum distance in x or y this LookAt is relative to. The eyes are then
+  // shifted, scaled, and squeezed together as needed to create the effect of
+  // the robot looking there.
+  //  - lookUpMaxScale controls how big the eyes get when looking up (negative y)
+  //  - lookDownMinScale controls how small the eyes get when looking down (positive y)
+  //  - outerEyeScaleIncrease controls the differentiation between inner/outer eye height
+  //    when looking left or right
+  void LookAt(f32 x, f32 y, f32 xmax, f32 ymax,
+              f32 lookUpMaxScale = 1.1f, f32 lookDownMinScale=0.85f, f32 outerEyeScaleIncrease=0.1f);
+  
   // Combine the input params with those from our instance
   ProceduralFace& Combine(const ProceduralFace& otherFace);
   
   // E.g. for unit tests
   static void EnableClippingWarning(bool enable);
+  
+  // Get the bounding edge of the current eyes in screen pixel space, at their current
+  // size and position, without taking into account the current FacePosition (a.k.a. face center)
+  void GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax);
   
 private:
   
@@ -150,10 +174,6 @@ inline ProceduralFace::Value ProceduralFace::GetFaceAngle() const {
 inline void ProceduralFace::SetFaceAngle(Value angle) {
   // TODO: Define face angle limits?
   _faceAngle = angle;
-}
-
-inline void ProceduralFace::SetFacePosition(Point<2, Value> center) {
-  _faceCenter = center;
 }
 
 inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFacePosition() const {

@@ -792,6 +792,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
             </File>
+            <File>
+              <FileName>localization_geometry.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\localization_geometry.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1793,6 +1798,11 @@
               <FileName>trig_fast.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>localization_geometry.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\localization_geometry.cpp</FilePath>
             </File>
           </Files>
         </Group>

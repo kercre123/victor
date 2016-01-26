@@ -9,7 +9,8 @@ namespace Battery {
 
   // Update the state of the battery
   void manage(void* userdata = NULL);
-
+  void setHeadlight(bool status);
+  
   // Turn on power to the head
   void powerOn();
 

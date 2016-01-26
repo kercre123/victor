@@ -96,6 +96,42 @@ void ProceduralFace::SetFromMessage(const ExternalInterface::DisplayProceduralFa
   SetEyeArrayHelper(WhichEye::Right, msg.rightEye);
 }
   
+void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
+                                  f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease)
+{
+  SetFacePosition({xShift, yShift});
+  
+  // Amount "outer" eye will increase in scale depending on how far left/right we look
+  const f32 yscaleLR = 1.f + outerEyeScaleIncrease * std::min(1.f, std::abs(xShift)/xmax);
+  
+  // Amount both eyes will increase/decrease in size depending on how far we look
+  // up or down
+  const f32 yscaleUD = (lookUpMaxScale-lookDownMinScale)*std::min(1.f, (1.f - (yShift + ymax)/(2.f*ymax))) + lookDownMinScale;
+  
+  if(xShift < 0) {
+    SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
+    SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
+  } else {
+    SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
+    SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
+  }
+  
+  //SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
+  
+  // If looking down (positive y), push eyes together (IOD=interocular distance)
+  const f32 MaxIOD = 2.f;
+  f32 reduceIOD = 0.f;
+  if(yShift > 0) {
+    reduceIOD = MaxIOD*std::min(1.f, yShift/ymax);
+  }
+  SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
+  SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
+  
+  //PRINT_NAMED_DEBUG("ProceduraFaceParams.LookAt",
+  //                  "shift=(%.1f,%.1f), up/down scale=%.3f, left/right scale=%.3f), reduceIOD=%.3f",
+  //                  xShift, yShift, yscaleUD, yscaleLR, reduceIOD);
+}
+  
 template<typename T>
 inline static T LinearBlendHelper(const T value1, const T value2, const float blendFraction)
 {
@@ -170,6 +206,48 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
     LinearBlendHelper(face1.GetFaceScale().y(), face2.GetFaceScale().y(), blendFraction)});
   
 } // Interpolate()
+  
+void ProceduralFace::GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax)
+{
+  // Left edge of left eye
+  xmin = (NominalLeftEyeX +
+          GetParameter(WhichEye::Left, Parameter::EyeCenterX) -
+          GetParameter(WhichEye::Left, Parameter::EyeScaleX) * NominalEyeWidth/2);
+  
+  // Right edge of right eye
+  xmax = (NominalRightEyeX +
+          GetParameter(WhichEye::Right, Parameter::EyeCenterX) +
+          GetParameter(WhichEye::Right, Parameter::EyeScaleX) * NominalEyeWidth/2);
+  
+  // Min of the top edges of the two eyes
+  const Value leftHalfHeight = GetParameter(WhichEye::Left, Parameter::EyeScaleY) * NominalEyeHeight/2;
+  const Value rightHalfHeight = GetParameter(WhichEye::Right, Parameter::EyeScaleY) * NominalEyeHeight/2;
+  ymin = (NominalEyeY +
+          std::min(GetParameter(WhichEye::Left, Parameter::EyeCenterY) - leftHalfHeight,
+                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) - rightHalfHeight));
+  
+  // Max of the bottom edges of the two eyes
+  ymax = (NominalEyeY +
+          std::max(GetParameter(WhichEye::Left, Parameter::EyeCenterY) + leftHalfHeight,
+                   GetParameter(WhichEye::Right, Parameter::EyeCenterY) + rightHalfHeight));
+}
+  
+void ProceduralFace::SetFacePosition(Point<2, Value> center)
+{
+  // Try not to let the eyes drift off the face
+  // NOTE: (1) if you set center and *then* change eye centers/scales, you could still go off screen
+  //       (2) this also doesn't take lid height into account, so if the top lid is half closed and
+  //           you move the eyes way down, it could look like they disappeared, for example
+  
+  Value xmin=0, xmax=0, ymin=0, ymax=0;
+  GetEyeBoundingBox(xmin, xmax, ymin, ymax);
+  
+  // The most we can move left is the distance b/w left edge of left eye and the
+  // left edge of the screen. The most we can move right is the distance b/w the
+  // right edge of the right eye and the right edge of the screen
+  _faceCenter.x() = CLIP(center.x(), -(xmin-1), ProceduralFace::WIDTH-(xmax+1));
+  _faceCenter.y() = CLIP(center.y(), -(ymin-1), ProceduralFace::HEIGHT-(ymax+1));
+}
   
 void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
 {

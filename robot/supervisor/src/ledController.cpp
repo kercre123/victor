@@ -15,102 +15,72 @@
 
 #include <cassert>
 
+#define GET_RED(color) ((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT)
+#define GET_GRN(color) ((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT)
+#define GET_BLU(color) ((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT)
+#define TIMESTAMP_TO_FRAMES(ts) ((u16)((ts) / 30))
+
+
 namespace Anki {
-namespace Cozmo {    
-  // Transitions are not allowed to be more than 2 seconds apart
-  // This rule (workaround?) unjams the controller when SetTimeStamp changes the time underneath us
-  const int MAX_TRANSITION_MS = 2000;
-  
-  // Alpha blending (w/ black) without using floating point:
-  //  See also: http://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
-  inline u32 AlphaBlend(const u32 onColor, const u32 offColor, const u8 alpha)
+namespace Cozmo {
+  inline u16 AlphaBlend(const u16 onColor, const u16 offColor, const float alpha)
   {
-    u32 result;
-    
-    const u8* fg = (const u8*)(&onColor);
-    const u8* bg = (const u8*)(&offColor);
-    u8* result_u8 = (u8*)(&result);
-    
-    const u32 alpha_u32    = alpha + 1;
-    const u32 invAlpha_u32 = 256 - alpha;
-    result_u8[3] = (unsigned char)((alpha_u32 * fg[3] + invAlpha_u32 * bg[3]) >> 8);
-    result_u8[2] = (unsigned char)((alpha_u32 * fg[2] + invAlpha_u32 * bg[2]) >> 8);
-    result_u8[1] = (unsigned char)((alpha_u32 * fg[1] + invAlpha_u32 * bg[1]) >> 8);
-    result_u8[0] = 0xff;
-    
-    return result;
+    const float onRed  = GET_RED(onColor);
+    const float onGrn  = GET_GRN(onColor);
+    const float onBlu  = GET_BLU(onColor);
+    const float offRed = GET_RED(offColor);
+    const float offGrn = GET_GRN(offColor);
+    const float offBlu = GET_BLU(offColor);
+    const float invAlpha = 1.0f - alpha;
+
+    return ((u16)int(onRed * alpha + offRed * invAlpha)) << LED_ENC_RED_SHIFT |
+           ((u16)int(onGrn * alpha + offGrn * invAlpha)) << LED_ENC_GRN_SHIFT |
+           ((u16)int(onBlu * alpha + offBlu * invAlpha)) << LED_ENC_BLU_SHIFT |
+           (alpha >= 0.5f ? onColor & LED_ENC_IR : offColor & LED_ENC_IR);
   }
 
-  bool GetCurrentLEDcolor(LightState& ledParams, TimeStamp_t currentTime,
-                          u32& newColor)
+  bool GetCurrentLEDcolor(const LightState& ledParams, const TimeStamp_t currentTime, TimeStamp_t& phaseTime,
+                          u16& newColor)
   {
-    bool colorUpdated = false;
-
-    int timeLeft = ledParams.nextSwitchTime - currentTime;
-    if (timeLeft <= 0 || timeLeft >= MAX_TRANSITION_MS)
-    {
-      switch(ledParams.state)
-      {
-        case LED_STATE_ON:
-          // Check for the special case that LED is just "on" and if so,
-          // just stay in this state.
-          if(ledParams.offPeriod_ms > 0 ||
-             ledParams.transitionOffPeriod_ms > 0 ||
-             ledParams.transitionOnPeriod_ms > 0)
-          {
-            // Time to start turning off
-            newColor = ledParams.onColor;
-            ledParams.nextSwitchTime = currentTime + ledParams.transitionOffPeriod_ms;
-            ledParams.state = LED_STATE_TURNING_OFF;
-            colorUpdated = true;
-          } else {
-            ledParams.nextSwitchTime = currentTime + ledParams.onPeriod_ms;
-          }
-          break;
-          
-        case LED_STATE_OFF:
-          // Time to start turning on
-          newColor = ledParams.offColor;
-          ledParams.nextSwitchTime = currentTime + ledParams.transitionOnPeriod_ms;
-          ledParams.state = LED_STATE_TURNING_ON;
-          colorUpdated = true;
-          break;
-          
-        case LED_STATE_TURNING_ON:
-          // Time to be fully on:
-          newColor = ledParams.onColor;
-          ledParams.nextSwitchTime = currentTime + ledParams.onPeriod_ms;
-          ledParams.state = LED_STATE_ON;
-          colorUpdated = true;
-          break;
-          
-        case LED_STATE_TURNING_OFF:
-          // Time to be fully off
-          newColor = ledParams.offColor;
-          ledParams.nextSwitchTime = currentTime + ledParams.offPeriod_ms;
-          ledParams.state = LED_STATE_OFF;
-          colorUpdated = true;
-          break;
-          
-        default:
-          // Should never get here
-          assert(0);
-      }
-      
-    } else if(ledParams.state == LED_STATE_TURNING_OFF) {
-      // Compute alpha b/w 0 and 255 w/ no floating point:
-      const u8 alpha = ((ledParams.nextSwitchTime - currentTime)<<8) / ledParams.transitionOffPeriod_ms;
-      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, alpha);
-      colorUpdated = true;
-    } else if(ledParams.state == LED_STATE_TURNING_ON) {
-      // Compute alpha b/w 0 and 255 w/ no floating point:
-      const u8 alpha = 255 - ((ledParams.nextSwitchTime - currentTime)<<8) / ledParams.transitionOnPeriod_ms;
-      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, alpha);
-      colorUpdated = true;
-    } // if(currentTime > nextSwitchTime)
-
-    return colorUpdated;
+    // Check for constant color
+    if (ledParams.onFrames == 255 || (ledParams.onColor == ledParams.offColor)) {
+      newColor = ledParams.onColor;
+      return true;
+    }
     
+    u16 phaseFrame = TIMESTAMP_TO_FRAMES(currentTime - phaseTime);
+    if (phaseFrame > 1024)
+    {
+      phaseTime = currentTime; // Someone changed currentTime under us or something else went wrong so reset
+      phaseFrame = 0;
+    }
+    
+    if (phaseFrame <= ledParams.transitionOnFrames) // Still turning on
+    {
+      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame)/float(ledParams.transitionOnFrames));
+      return true;
+    }
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames))
+    {
+      newColor = ledParams.onColor;
+      return false;
+    }
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames))
+    {
+      const u16 offPhase = phaseFrame - (ledParams.transitionOnFrames + ledParams.onFrames);
+      newColor = AlphaBlend(ledParams.offColor, ledParams.onColor, float(offPhase)/float(ledParams.transitionOffFrames));
+      return true;
+    }
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offFrames))
+    {
+      newColor = ledParams.offColor;
+      return false;
+    }
+
+    newColor = ledParams.offColor;
+    phaseTime = currentTime;
+    return true;
+
   } // GetCurrentLEDcolor()
 
 } // namespace Anki

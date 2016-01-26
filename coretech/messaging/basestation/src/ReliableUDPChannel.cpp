@@ -339,17 +339,17 @@ void ReliableUDPChannel::ConfigureReliableTransport()
     // Set parameters for all reliable transport instances
     Util::ReliableTransport::SetSendAckOnReceipt(false);
     Util::ReliableTransport::SetSendUnreliableMessagesImmediately(false);
-    Util::ReliableTransport::SetSendPacketsImmediately(false);
-    Util::ReliableTransport::SetSendLatestPacketOnSendMessage(false);
-    Util::ReliableTransport::SetMaxPacketsToReSendOnAck(1);
+    Util::ReliableTransport::SetMaxPacketsToReSendOnAck(0);
     Util::ReliableTransport::SetMaxPacketsToSendOnSendMessage(1);
     // Set parameters for all reliable connections
     Util::ReliableConnection::SetTimeBetweenPingsInMS(33.3); // Heartbeat interval
-    Util::ReliableConnection::SetTimeBetweenResendsInMS(133.3); // 4x heartbeat interval
+    Util::ReliableConnection::SetTimeBetweenResendsInMS(33.3);
+    Util::ReliableConnection::SetMaxTimeSinceLastSend( Util::ReliableConnection::GetTimeBetweenResendsInMS() - 1.0 );
     Util::ReliableConnection::SetConnectionTimeoutInMS(5000.0);
     Util::ReliableConnection::SetPacketSeparationIntervalInMS(2.0);
     Util::ReliableConnection::SetMaxPingRoundTripsToTrack(10);
     Util::ReliableConnection::SetSendSeparatePingMessages(false);
+    Util::ReliableConnection::SetSendPacketsImmediately(false);
     Util::ReliableConnection::SetMaxPacketsToReSendOnUpdate(1);
 }
 

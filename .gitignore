@@ -6,11 +6,21 @@
 *.cache
 *.swp
 *.TMP
+.vagrant
 matlab.mat
 TAGS
 
 # Webots
 *.wbproj
+simulator/controllers/webotsCtrlViz/webotsCtrlViz
+simulator/controllers/webotsCtrlRobot/webotsCtrlRobot
+simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
+simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
+simulator/controllers/webotsCtrlGameEngine/resources
+simulator/controllers/webotsCtrlGameEngine/temp
+simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest
+simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
+simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 
 # Mac OS
 *.DS_Store
@@ -230,3 +240,4 @@ generated/cladCsharp/clad
 JLinkLog.txt
 *.lst
 robot/cube/lst/block.m51
+resources/config/basestation/AnkiLogStringTables.json

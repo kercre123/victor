@@ -12,7 +12,6 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
-#include "util/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
@@ -23,6 +22,8 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "clad/vizInterface/messageViz.h"
+#include "util/logging/logging.h"
+#include "util/math/math.h"
 #include <fstream>
 
 #if ANKICORETECH_USE_OPENCV
@@ -265,7 +266,7 @@ namespace Anki {
         }
       }
       
-      // Draw name
+      // Draw name & most likely expression
       std::string name;
       if(face.GetID() < 0) {
         name = "Unknown";
@@ -274,6 +275,8 @@ namespace Anki {
       } else {
         name = face.GetName() + "[" + std::to_string(face.GetID()) + "]";
       }
+      name += "-";
+      name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       
       // Draw bounding rectangle (?)
@@ -291,7 +294,7 @@ namespace Anki {
     void VizManager::EraseCuboid(const u32 blockID)
     {
       CORETECH_ASSERT(blockID < _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
-      EraseVizObject(_VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID] + blockID);
+      EraseVizObject(VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID] + blockID);
     }
 
     void VizManager::EraseAllCuboids()
@@ -532,6 +535,54 @@ namespace Anki {
       EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_MAT_MARKER);
     }
     
+    // ==== Draw functions by identifier =====
+
+    void VizManager::DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageBegin{identifier}));
+      
+      // split quad vector into several messages
+      if ( !quads.empty() )
+      {
+        // calculate some initial sizes
+        const size_t maxBufferSize = Anki::Util::numeric_cast<size_t>((std::underlying_type<VizConstants>::type)VizConstants::MaxMessageSize);
+        const size_t maxBufferForQuads = maxBufferSize - (identifier.length()+1);
+        size_t quadsPerMessage = maxBufferForQuads / sizeof(SimpleQuadVector::value_type);
+        size_t remainingQuads = quads.size();
+        CORETECH_ASSERT(quadsPerMessage>0);
+        
+        // sadly we can't create one message and send it several times, because MessageViz doesn't support it (it needs
+        // to embed the tag) for receiving end processing, and we can't initialize messages with a range of vectors, so
+        // I have to create copies :(
+        SimpleQuadVector partQuads;
+        partQuads.reserve( quadsPerMessage );
+        
+        // while we have quads to send
+        while ( remainingQuads > 0 )
+        {
+          // how many are we sending in this message?
+          quadsPerMessage = Anki::Util::Min(quadsPerMessage, remainingQuads);
+          
+          // clear the destination vector and insert as many as we are sending, from where we left off
+          partQuads.clear();
+          partQuads.insert( partQuads.end(), quads.end() - remainingQuads, quads.end() - remainingQuads + quadsPerMessage );
+          
+          remainingQuads -= quadsPerMessage;
+          
+          // send message
+          SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessage{identifier, partQuads}));
+        }
+      }
+      
+      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageEnd{identifier}));
+    }
+    
+    void VizManager::EraseQuadVector(const std::string& identifier)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageBegin{identifier}));
+      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageEnd{identifier}));
+    }
+    
     // =============== Circle methods ==================
     
     void VizManager::EraseCircle(u32 polyID)
@@ -582,9 +633,10 @@ namespace Anki {
                                     const s32 numAnimAudioFramesFree,
                                     const u8 videoFrameRateHz,
                                     const u8 imageProcFrameRateHz,
+                                    const u8 enabledAnimTracks,
                                     const u8 animTag)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, animTag)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, enabledAnimTracks, animTag)));
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)

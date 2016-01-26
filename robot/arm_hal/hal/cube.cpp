@@ -177,7 +177,7 @@ namespace Anki
         #endif
       }
 
-      Result SetBlockLight(const u32 blockID, const LightState* lights)
+      Result SetBlockLight(const u32 blockID, const u16* colors)
       {
         if (blockID >= MAX_CUBES) {
           return RESULT_FAIL;
@@ -188,10 +188,11 @@ namespace Anki
         static const int order[] = {0,3,2,1};
 
         for (int c = 0; c < NUM_BLOCK_LEDS; c++) {
-          uint32_t color = lights[order[c]].onColor;
+          uint16_t color = colors[order[c]];
 
-          for (int ch = 24; ch > 0; ch -= 8) {
-            uint8_t status = (color >> ch) & 0xFF;
+          // IR is ignored right now
+          for (int ch = 10; ch >= 0; ch -= 5) {
+            uint8_t status = ((color >> ch) & 0x1F) << 3;
             uint32_t bright = status;
             sum += bright * bright;
             *(light++) = bright;

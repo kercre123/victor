@@ -1,11 +1,13 @@
 extern "C" {
 #include "client.h"
+#include "foregroundTask.h"
 }
 #include "messages.h"
 #include "anki/cozmo/robot/esp.h"
 #include "anki/cozmo/robot/logging.h"
 #include "animationController.h"
 #include "rtip.h"
+#include "nvStorage.h"
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
@@ -18,10 +20,30 @@ namespace Anki {
         return RESULT_OK;
       }
       
+      bool taskReadNVAndSend(u32 tag)
+      {
+        NVStorage::NVStorageBlob entry;
+        entry.tag = tag;
+        const NVStorage::NVResult result = NVStorage::Read(entry);
+        if (result == NVStorage::NV_OKAY)
+        {
+          RobotInterface::SendMessage(entry);
+        }
+        else
+        {
+          NVStorage::NVOpResult msg;
+          msg.tag = tag;
+          msg.result = result;
+          msg.write = false;
+          RobotInterface::SendMessage(msg);
+        }
+        return false;
+      }
+      
       void ProcessMessage(u8* buffer, u16 bufferSize)
       {
         RobotInterface::EngineToRobot msg;
-        AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, "Messages: Received message too big! %02x[%d] > \n", buffer[0], bufferSize);
+        AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 1, "Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
         memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
         if (msg.tag < 0x80) // Message for RTIP not us
         {
@@ -29,7 +51,7 @@ namespace Anki {
         }
         else
         {
-          AnkiConditionalWarnAndReturn(msg.IsValid(), "Messages: Received invalid message: %02x[%d]\n", buffer[0], bufferSize);
+          AnkiConditionalWarnAndReturn(msg.IsValid(), 1, "Messages", 257, "Received invalid message: %02x[%d]", 2, buffer[0], bufferSize);
           switch(msg.tag)
           {
             case RobotInterface::EngineToRobot::Tag_eraseFlash:
@@ -45,6 +67,20 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
             {
               UpgradeController::Trigger(msg.triggerOTAUpgrade);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_writeNV:
+            {
+              NVStorage::NVOpResult result;
+              result.tag    = msg.writeNV.tag;
+              result.write  = true;
+              result.result = NVStorage::Write(msg.writeNV);
+              RobotInterface::SendMessage(result);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_readNV:
+            {
+              foregroundTaskPost(taskReadNVAndSend, msg.readNV);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_abortAnimation:
@@ -65,7 +101,7 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
             {
               if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
-                AnkiWarn("Messages: Failed to buffer a keyframe! Clearing Animation buffer!\n");
+                AnkiWarn( 1, "Messages", 258, "Failed to buffer a keyframe! Clearing Animation buffer!\n", 0);
                 AnimationController::Clear();
               }
               break;
@@ -87,7 +123,7 @@ namespace Anki {
             }
             default:
             {
-              AnkiWarn("Messages: Received message not expected here tag=%02x\n", msg.tag);
+              AnkiWarn( 1, "Messages", 259, "Received message not expected here tag=%02x\n", 1, msg.tag);
             }
           }
         }
@@ -127,16 +163,41 @@ namespace Anki {
     } // namespace Messages
     
     namespace RobotInterface {
-      int SendLog(const RobotInterface::LogLevel level, ...)
+      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
       {
-        va_list argptr;
-        va_start(argptr, level);
-        const char* fmt = va_arg(argptr, const char*);
-        /*const int numArgs =*/ va_arg(argptr, int);
-        Messages::SendText(level, fmt, argptr);
-        va_end(argptr);
+        static u32 missedMessages = 0;
+        PrintTrace m;
+        if (missedMessages > 0)
+        {
+          m.level = ANKI_LOG_LEVEL_WARN;
+          m.name  = 1;
+          m.stringId = 2;
+          m.value_length = 1;
+          m.value[0] = missedMessages + 1;
+        }
+        else
+        {
+          m.level = level;
+          m.name  = name;
+          m.stringId = formatId;
+          va_list argptr;
+          va_start(argptr, numArgs);
+          for (m.value_length=0; m.value_length < numArgs; m.value_length++)
+          {
+            m.value[m.value_length] = va_arg(argptr, int);
+          }
+          va_end(argptr);
+        }
+        if (SendMessage(m))
+        {
+          missedMessages = 0;
+        }
+        else
+        {
+          missedMessages++;
+        }
         return 0;
       }
-    }
+    } // namespace RobotInterface
   } // namespace Cozmo
 } // namespace Anki

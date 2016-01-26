@@ -36,7 +36,7 @@ const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
 // the drive center is the location between the two wheels)
-const f32 DRIVE_CENTER_OFFSET = 0.f;
+const f32 DRIVE_CENTER_OFFSET = -15.f;
 
 // The height of the lift at various configurations
 // Actual limit in proto is closer to 20.4mm, but there is a weird
@@ -132,6 +132,12 @@ const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
 
 // How fast (in mm/sec) can a wheel spin at max
 const f32 MAX_WHEEL_SPEED_MMPS = 220.f;
+
+// Maximum angular velocity
+// Determined experimentally by turning robot in place at max speed.
+// Speed, in radians, should be (MAX_WHEEL_SPEED_MMPS / WHEEL_DIST_HALF_MM), but tread slip makes this not true.
+const f32 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC = 250;
+const f32 MAX_BODY_ROTATION_SPEED_RAD_PER_SEC = DEG_TO_RAD_F32(MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
 
 
 /***************************************************************************

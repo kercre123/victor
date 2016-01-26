@@ -4,22 +4,13 @@ ifndef PDIR
 
 endif
 
-ifeq ($(COMPILE), gcc)
-	AR = xtensa-lx106-elf-ar
-	CC = xtensa-lx106-elf-gcc
-	NM = xtensa-lx106-elf-nm
-	CPP = xtensa-lx106-elf-cpp
-  CXX = xtensa-lx106-elf-g++
-	OBJCOPY = xtensa-lx106-elf-objcopy
-	OBJDUMP = xtensa-lx106-elf-objdump
-else
-	AR = xt-ar
-	CC = xt-xcc
-	NM = xt-nm
-	CPP = xt-cpp
-	OBJCOPY = xt-objcopy
-	OBJDUMP = xt-objdump
-endif
+AR = /opt/xtensa-lx106-elf/bin/xtensa-lx106-elf-ar
+CC = /opt/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc
+NM = /opt/xtensa-lx106-elf/bin/xtensa-lx106-elf-nm
+CPP = /opt/xtensa-lx106-elf/bin/xtensa-lx106-elf-cpp
+CXX = /opt/xtensa-lx106-elf/bin/xtensa-lx106-elf-g++
+OBJCOPY = /opt/xtensa-lx106-elf/bin/xtensa-lx106-elf-objcopy
+OBJDUMP = /opt/xtensa-lx106-elf/bin/xtensa-lx106-elf-objdump
 
 BOOT?=none
 APP?=0
@@ -226,7 +217,7 @@ $$(LIBODIR)/$(1).a: $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1)) $$(DEPENDS_$(1)
 	@mkdir -p $$(LIBODIR)
 	$$(if $$(filter %.a,$$?),mkdir -p $$(EXTRACT_DIR)_$(1))
 	$$(if $$(filter %.a,$$?),cd $$(EXTRACT_DIR)_$(1); $$(foreach lib,$$(filter %.a,$$?),$$(AR) xo $$(UP_EXTRACT_DIR)/$$(lib);))
-	$$(AR) ru $$@ $$(filter %.o,$$?) $$(if $$(filter %.a,$$?),$$(EXTRACT_DIR)_$(1)/*.o) $$(OBJODIR)/*.o
+	$$(AR) ru $$@ $$(filter %.o,$$?) $$(if $$(filter %.a,$$?),$$(EXTRACT_DIR)_$(1)/*.o)
 	$$(if $$(filter %.a,$$?),$$(RM) -r $$(EXTRACT_DIR)_$(1))
 endef
 endif
@@ -338,16 +329,16 @@ $(OBJODIR)/%.d: %.c
 	rm -f $@.$$$$
 
 $(OBJODIR)/%.o: %.cpp
-	@mkdir -p $(OBJODIR);
-	$(CXX) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CFLAGS)) $(CXXFLAGS) $(COPTS_$(*F)) -o $(OBJODIR)/$(notdir $@) -c $<
+	@mkdir -p $(dir $@);
+	$(CXX) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CFLAGS)) $(CXXFLAGS) $(COPTS_$(*F)) -o $@ -c $<
 
 $(OBJODIR)/%.d: %.cpp
-	@mkdir -p $(OBJODIR);
+	@mkdir -p $(dir $@);
 	@echo DEPEND: $(CC) -M $(CFLAGS) $<
-	@set -e; rm -f $(OBJODIR)/$(notdir $@); \
-	$(CXX) -M $(CFLAGS) $(CXXFLAGS) $< > $(OBJODIR)/$(notdir $@).$$$$; \
-	sed 's,\($*\.o\)[ :]*,$(OBJODIR)/\1 $(OBJODIR)/$(notdir $@) : ,g' < $@.$$$$ > $(OBJODIR)/$(notdir $@); \
-	rm -f $(OBJODIR)/$(notdir $@).$$$$
+	@set -e; rm -f $@; \
+	$(CXX) -M $(CFLAGS) $(CXXFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\.o\)[ :]*,$(OBJODIR)/\1 $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
 $(OBJODIR)/%.o: %.s
 	@mkdir -p $(OBJODIR);
@@ -394,5 +385,3 @@ $(foreach image,$(GEN_IMAGES),$(eval $(call MakeImage,$(basename $(image)))))
 #
 
 INCLUDES += $(INCLUDES) -I $(PDIR)include -I $(PDIR)include/$(TARGET)
-PDIR := ../$(PDIR)
-sinclude $(PDIR)Makefile

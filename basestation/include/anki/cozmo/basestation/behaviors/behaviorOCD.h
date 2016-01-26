@@ -47,6 +47,8 @@ namespace Cozmo {
     // Finish placing current object if there is one, otherwise good to go
     virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
     
+    virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
+    
     // Offset at which low block should be placed wrt
     // another low block. (Twice block width)
     constexpr static f32 kLowPlacementOffsetMM = 88.f;

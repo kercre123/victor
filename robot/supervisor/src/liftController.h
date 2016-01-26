@@ -22,10 +22,11 @@ namespace Anki {
       
       Result Init();
 
-      // Enable/Disable commands to the motor via HAL functions
-      // Mostly for debug.
+      // Enable/Disable motor.
+      // When disabled, lift goes limp. If autoReEnable, lift will re-enable
+      // if it doesn't move for a certain period of time
       void Enable();
-      void Disable();
+      void Disable(bool autoReEnable = false);
       
       // Moves lift all the way down and sets that position to 0
       void StartCalibrationRoutine();

@@ -81,6 +81,8 @@ namespace Anki {
         return _robots[robotID];
       }
       
+      PRINT_NAMED_WARNING("RobotManager.GetRobotByID.InvalidID", "No robot with ID=%d", robotID);
+      
       return nullptr;
     }
     

@@ -38,7 +38,7 @@ public:
   
   void Update(const Anki::Util::GraphEvaluator2d& decayGraph, double currentTime, float timeDelta);
   
-  void  Add(float baseValue, const char* uniqueIdString);
+  void  Add(float penalizedDeltaValue);
   void  SetValue(float newValue);
   
   float GetValue() const { return _value; }

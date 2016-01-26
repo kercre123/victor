@@ -84,7 +84,7 @@ namespace Anki {
         const bool isDone = action.first;
         if(!isDone) {
           action.second->Cancel();
-          action.second->Cleanup(robot);
+          action.second->Update(robot);
           action.first = true;
         }
       }
@@ -207,6 +207,7 @@ namespace Anki {
             case ActionResult::FAILURE_TIMEOUT:
             case ActionResult::FAILURE_PROCEED:
             case ActionResult::CANCELLED:
+            case ActionResult::INTERRUPTED:
 #             if USE_ACTION_CALLBACKS
               RunCallbacks(subResult);
 #             endif

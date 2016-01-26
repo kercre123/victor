@@ -7,8 +7,7 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 LiveIdleAnimationParameter {
-  BlinkCloseTime_ms,
-  BlinkOpenTime_ms,
+  EnableKeepFaceAlive,
   BlinkSpacingMinTime_ms,
   BlinkSpacingMaxTime_ms,
   TimeBeforeWiggleMotions_ms,
@@ -34,7 +33,11 @@ enum uint_8 LiveIdleAnimationParameter {
   EyeDartMaxDistance_pix,
   EyeDartMinScale,
   EyeDartMaxScale,
-
+  EyeDartMinDuration_ms,
+  EyeDartMaxDuration_ms,
+  EyeDartOuterEyeScaleIncrease,
+  EyeDartUpMaxScale,
+  EyeDartDownMinScale,
   NumParameters
 }
 

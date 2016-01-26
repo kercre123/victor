@@ -115,6 +115,8 @@ static const uint8_t BW_200 = 0x19;           // Maybe?
 static const float ACC_RANGE_CONST  = 9.58f;
 static const float GYRO_RANGE_CONST = 2.663E-4f;
 
+static bool readyForIMU = true;
+static IMUData imu_state;
 
 void Anki::Cozmo::HAL::IMU::Init(void) {
   // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
@@ -130,17 +132,19 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   UART::DebugPrintf("IMU status after power up: %02x %02x %02x\n", I2C::ReadReg(ADDR_IMU, 0x0), I2C::ReadReg(ADDR_IMU, 0x2), I2C::ReadReg(ADDR_IMU, 0x3));
 #endif
 
-  I2C::WriteAndVerify(ADDR_IMU, ACC_RANGE, RANGE_2G);
-  I2C::WriteAndVerify(ADDR_IMU, ACC_CONF, BW_200);
-  I2C::WriteAndVerify(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
-  I2C::WriteAndVerify(ADDR_IMU, GYR_RANGE, RANGE_500DPS);
+  I2C::WriteReg(ADDR_IMU, ACC_RANGE, RANGE_2G);
+  I2C::WriteReg(ADDR_IMU, ACC_CONF, BW_200);
+  I2C::WriteReg(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
+  I2C::WriteReg(ADDR_IMU, GYR_RANGE, RANGE_500DPS);
+
+  ReadID();
 
   Manage();
 }
 
-static void copy_state(const void *data, int count) {
+static void copy_state() {
   using namespace Anki::Cozmo::HAL;
-  memcpy(&IMU::IMUState, data, count);
+  memcpy(&IMU::IMUState, &imu_state, sizeof(IMUData));
 
 #ifdef IMU_DEBUG
   for (int i = 0; i < sizeof(IMUData); i++)
@@ -149,20 +153,21 @@ static void copy_state(const void *data, int count) {
 #endif
 }
 
-void Anki::Cozmo::HAL::IMU::Manage(void) {
-  // Eventually, this should probably be synced to the body
-  static const uint8_t DATA_8 = 0x0C;
-  static int imu_update = 0;
-  static IMUData imu_state;
+void Anki::Cozmo::HAL::IMU::Update(void) {
+  readyForIMU = true;
+}
 
-  imu_update += IMU_UPDATE_FREQUENCY;
-  if (imu_update < DROPS_PER_SECOND) {
+void Anki::Cozmo::HAL::IMU::Manage(void) {
+  if (!readyForIMU) {
     return ;
   }
-  imu_update -= DROPS_PER_SECOND;
+  readyForIMU = false;
 
-  I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), NULL, I2C_FORCE_START);
-  I2C::Read(SLAVE_READ(ADDR_IMU), (uint8_t*) &imu_state, sizeof(IMUData), &copy_state);
+  // Configure I2C bus to read IMU data
+  I2C::SetupRead(&imu_state, sizeof(IMUData), copy_state);
+
+  I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), I2C_FORCE_START);
+  I2C::Read(SLAVE_READ(ADDR_IMU));
 }
 
 uint8_t Anki::Cozmo::HAL::IMU::ReadID(void) {

@@ -55,6 +55,49 @@ namespace Vision {
     _headPose.SetParent(&camera.GetPose());
   }
   
+  std::array<f32, TrackedFace::NumExpressions> TrackedFace::GetExpressionValues() const
+  {
+    return _expression;
+  }
+  
+  // Return the expression with highest value
+  TrackedFace::Expression TrackedFace::GetMaxExpression() const
+  {
+    Expression maxExpression = (Expression)0;
+    f32 maxValue = _expression[0];
+    for(s32 crntExpression = 1; crntExpression < NumExpressions; ++crntExpression)
+    {
+      if(_expression[crntExpression] > maxValue) {
+        maxValue = _expression[crntExpression];
+        maxExpression = (Expression)crntExpression;
+      }
+    }
+    return maxExpression;
+  }
+  
+  void TrackedFace::SetExpressionValue(Expression whichExpression, f32 newValue)
+  {
+    _expression[whichExpression] = newValue;
+  }
+  
+  const char* TrackedFace::GetExpressionName(Expression whichExpression)
+  {
+    static const std::map<Expression, const char*> NameLUT{
+      {Neutral,    "Neutral"},
+      {Happiness,  "Happineess"},
+      {Surprise,   "Surpries"},
+      {Anger,      "Anger"},
+      {Sadness,    "Sadness"},
+    };
+    
+    auto iter = NameLUT.find(whichExpression);
+    if(iter != NameLUT.end()) {
+      return iter->second;
+    } else {
+      return "Unknown";
+    }
+  }
+  
 } // namespace Vision
 } // namespace Anki
 

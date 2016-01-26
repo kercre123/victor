@@ -23,7 +23,6 @@ using namespace ExternalInterface;
   
 BehaviorUnityDriven::BehaviorUnityDriven(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _isShortInterruption(false)
   , _isScoredExternally(false)
   , _isRunnable(true)
   , _wasInterrupted(false)
@@ -67,6 +66,11 @@ Result BehaviorUnityDriven::InterruptInternal(Robot& robot, double currentTime_s
   return Result::RESULT_OK;
 }
 
+  
+void BehaviorUnityDriven::StopInternal(Robot& robot, double currentTime_sec)
+{
+}
+  
 
 float BehaviorUnityDriven::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
 {

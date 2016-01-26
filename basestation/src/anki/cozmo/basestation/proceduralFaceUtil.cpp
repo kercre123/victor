@@ -51,8 +51,8 @@ namespace Cozmo {
     assert(faceImg.rows == ProceduralFace::HEIGHT &&
            faceImg.cols == ProceduralFace::WIDTH);
     
-    const s32 eyeWidth  = NominalEyeWidth;
-    const s32 eyeHeight = NominalEyeHeight;
+    const s32 eyeWidth  = ProceduralFace::NominalEyeWidth;
+    const s32 eyeHeight = ProceduralFace::NominalEyeHeight;
     
     // Left/right here will be in terms of the left eye. We will mirror to get
     // the right eye. So
@@ -169,8 +169,8 @@ namespace Cozmo {
     }
     
     Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
-                                Point<2, Value>(NominalLeftEyeX, NominalEyeY) :
-                                Point<2, Value>(NominalRightEyeX, NominalEyeY);
+                                Point<2, Value>(ProceduralFace::NominalLeftEyeX, ProceduralFace::NominalEyeY) :
+                                Point<2, Value>(ProceduralFace::NominalRightEyeX, ProceduralFace::NominalEyeY);
     eyeCenter.x() += _faceData.GetParameter(whichEye, Parameter::EyeCenterX);
     eyeCenter.y() += _faceData.GetParameter(whichEye, Parameter::EyeCenterY);
     

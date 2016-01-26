@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
@@ -62,7 +63,8 @@ namespace Anki {
       
       DriveToPoseAction(const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
+                        const bool useManualSpeed = false); // Note that SetGoal(s) must be called befure Update()!
+      
       DriveToPoseAction(const std::vector<Pose3d>& poses,
                         const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
@@ -74,6 +76,16 @@ namespace Anki {
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
+      // Set single goal
+      Result SetGoal(const Pose3d& pose,
+                     const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                     const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+      
+      // Set possible goal options
+      Result SetGoals(const std::vector<Pose3d>& poses,
+                      const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                      const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
       
@@ -90,19 +102,22 @@ namespace Anki {
         return ignoredTracks;
       }
       
-
+      // Specify sounds to be played when movement starts, while driving, and once
+      // the pose is reached. Use "" for any sound you don't want.
+      // NOTE: these really specify the names of sound-only animations
+      void SetSounds(const std::string& startSound,
+                     const std::string& driveSound,
+                     const std::string& stopSound);
+      
+      // Set the min/max time between end of last drive sound and beginning of next.
+      // Actual gap will be randomly selected between these two values.
+      void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
+      
     protected:
 
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot &robot) override;
-      
-      Result SetGoal(const Pose3d& pose);
-      Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
-      
-      // Set possible goal options
-      Result SetGoals(const std::vector<Pose3d>& poses);
-      Result SetGoals(const std::vector<Pose3d>& poses, const Point3f& distThreshold, const Radians& angleThreshold);
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
@@ -126,9 +141,40 @@ namespace Anki {
 
       float _timeToAbortPlanning;
       
-      Signal::SmartHandle _signalHandle;
+      // For playing sound
+      std::string _startSound   = "";
+      std::string _drivingSound = "";
+      std::string _stopSound    = "";
+      f32         _drivingSoundSpacingMin_sec = 0.5f;
+      f32         _drivingSoundSpacingMax_sec = 1.5f;
+      f32         _nextDrivingSoundTime = 0.f;
+      u32         _driveSoundActionTag = (u32)ActionConstants::INVALID_TAG;
+      
+      Signal::SmartHandle _originChangedHandle;
+      Signal::SmartHandle _soundCompletedHandle;
       
     }; // class DriveToPoseAction
+    
+    inline void DriveToPoseAction::SetSounds(const std::string& startSound,
+                                             const std::string& driveSound,
+                                             const std::string& stopSound)
+     {
+      _startSound   = startSound;
+      _drivingSound = driveSound;
+      _stopSound    = stopSound;
+    }
+    
+    inline void DriveToPoseAction::SetDriveSoundSpacing(f32 min_sec, f32 max_sec)
+    {
+      if(max_sec <= min_sec) {
+        PRINT_NAMED_WARNING("DriveToPoseAction.SetDriveSoundSpacing.InvalidMinMax",
+                            "Min (%.3f) should be less than max (%.3f)",
+                            min_sec, max_sec);
+        return;
+      }
+      _drivingSoundSpacingMin_sec = min_sec;
+      _drivingSoundSpacingMax_sec = max_sec;
+    }
     
     
     // Uses the robot's planner to select the best pre-action pose for the
@@ -163,6 +209,13 @@ namespace Anki {
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
       
+      // These just wrap the corresponding methods for the internally-used DriveToPose
+      void SetSounds(const std::string& startSound,
+                     const std::string& driveSound,
+                     const std::string& stopSound);
+      void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
+
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -181,13 +234,27 @@ namespace Anki {
       f32                        _distance_mm;
       f32                        _predockOffsetDistX_mm;
       bool                       _useManualSpeed;
+      DriveToPoseAction*         _driveToPoseAction = nullptr;
       CompoundActionSequential   _compoundAction;
       
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
       
       PathMotionProfile          _pathMotionProfile;
+      
     }; // DriveToObjectAction
+    
+    inline void DriveToObjectAction::SetSounds(const std::string& startSound,
+                                               const std::string& driveSound,
+                                               const std::string& stopSound)
+    {
+      _driveToPoseAction->SetSounds(startSound, driveSound, stopSound);
+    }
+    
+    inline void DriveToObjectAction::SetDriveSoundSpacing(f32 min_sec, f32 max_sec)
+    {
+      _driveToPoseAction->SetDriveSoundSpacing(min_sec, max_sec);
+    }
     
     
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
@@ -226,11 +293,15 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
+      
       // Modify default parameters (must be called before Init() to have an effect)
-      void SetMaxSpeed(f32 maxSpeed_radPerSec)           { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetMaxSpeed(f32 maxSpeed_radPerSec);
       void SetAccel(f32 accel_radPerSec2)                { _accel_radPerSec2 = accel_radPerSec2; }
       void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
+      
+      void SetMoveEyes(bool enable) { _moveEyes = enable; }
       
     protected:
       
@@ -248,11 +319,13 @@ namespace Anki {
       Radians _angleTolerance = POINT_TURN_ANGLE_TOL;
       Radians _variability = 0;
       bool    _isAbsoluteAngle;
-      f32     _maxSpeed_radPerSec = 50.f;
+      f32     _maxSpeed_radPerSec = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       f32     _accel_radPerSec2 = 10.f;
-      u32     _eyeShiftTag = 0;
-      bool    _eyeShiftRemoved = false;
       Radians _halfAngle = 0.f;
+      
+      bool    _wasKeepFaceAliveEnabled;
+      bool    _moveEyes = true;
+      AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       
     }; // class TurnInPlaceAction
     
@@ -271,6 +344,8 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
 
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
+      
       void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
       void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
       
@@ -302,12 +377,19 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
+      
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
       // TODO: Use setters for variability and tolerance too
       void SetMaxSpeed(f32 maxSpeed_radPerSec)   { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetAccel(f32 accel_radPerSec2)        { _accel_radPerSec2 = accel_radPerSec2; }
+      void SetDuration(f32 duration_sec)         { _duration_sec = duration_sec; }
+      
+      // Enable/disable eye movement while turning. If hold is true, the eyes will
+      // remain in their final position until the next time something moves the head.
+      void SetMoveEyes(bool enable, bool hold=false) { _moveEyes = enable; _holdEyes = hold; }
       
     protected:
       
@@ -328,10 +410,15 @@ namespace Anki {
       
       f32         _maxSpeed_radPerSec = 15.f;
       f32         _accel_radPerSec2   = 20.f;
-      
-      u32         _eyeShiftTag = 0;
-      bool        _eyeShiftRemoved = false;
+      f32         _duration_sec = 0.f;
+      bool        _moveEyes = true;
+      bool        _holdEyes = false;
       Radians     _halfAngle;
+      bool        _wasKeepFaceAliveEnabled;
+      
+      AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+
+      bool        _motionStarted = false;
       
     };  // class MoveHeadToAngleAction
     
@@ -356,6 +443,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
+      
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::LIFT_TRACK; }
 
       // how long this action should take (which, in turn, effects lift speed)
       void SetDuration(float duration_sec) { _duration = duration_sec; }
@@ -385,6 +474,7 @@ namespace Anki {
       
       std::string _name;
       bool        _inPosition;
+      bool        _motionStarted = false;
       
     }; // class MoveLiftToHeightAction
     
@@ -407,36 +497,44 @@ namespace Anki {
         return (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
       }
       
+      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::BODY_TRACK; }
+      
       // Modify default parameters (must be called before Init() to have an effect)
-      void SetMaxPanSpeed(f32 maxSpeed_radPerSec)        { _maxPanSpeed_radPerSec = maxSpeed_radPerSec; }
-      void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
+      void SetMaxPanSpeed(f32 maxSpeed_radPerSec);
+      void SetPanAccel(f32 accel_radPerSec2);
       void SetPanTolerance(const Radians& angleTol_rad);
-      void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
-      void SetTiltAccel(f32 accel_radPerSec2)            { _tiltAccel_radPerSec2 = accel_radPerSec2; }
+      void SetMaxTiltSpeed(f32 maxSpeed_radPerSec);
+      void SetTiltAccel(f32 accel_radPerSec2);
       void SetTiltTolerance(const Radians& angleTol_rad);
 
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Cleanup(Robot& robot) override;
       
       void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
       
     private:
-      CompoundActionParallel _compoundAction;
+      IActionRunner*   _compoundAction;
       
       Radians _bodyPanAngle;
       Radians _headTiltAngle;
       bool    _isPanAbsolute;
       bool    _isTiltAbsolute;
       
-      Radians _panAngleTol = DEG_TO_RAD(5);
-      f32     _maxPanSpeed_radPerSec = 50.f;
-      f32     _panAccel_radPerSec2 = 10.f;
-      Radians _tiltAngleTol = DEG_TO_RAD(5);
-      f32     _maxTiltSpeed_radPerSec = 15.f;
-      f32     _tiltAccel_radPerSec2 = 20.f;
+      const f32 _kDefaultPanAngleTol  = DEG_TO_RAD(5);
+      const f32 _kDefaultMaxPanSpeed  = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
+      const f32 _kDefaultPanAccel     = 10.f;
+      const f32 _kDefaultTiltAngleTol = DEG_TO_RAD(5);
+      const f32 _kDefaultMaxTiltSpeed = 15.f;
+      const f32 _kDefaultTiltAccel    = 20.f;
+      
+      Radians _panAngleTol            = _kDefaultPanAngleTol;
+      f32     _maxPanSpeed_radPerSec  = _kDefaultMaxPanSpeed;
+      f32     _panAccel_radPerSec2    = _kDefaultPanAccel;
+      Radians _tiltAngleTol           = _kDefaultTiltAngleTol;
+      f32     _maxTiltSpeed_radPerSec = _kDefaultMaxTiltSpeed;
+      f32     _tiltAccel_radPerSec2   = _kDefaultTiltAccel;
       
       std::string _name = "PanAndTiltAction";
       
@@ -449,7 +547,7 @@ namespace Anki {
     {
     public:
       // Note that the rotation information in pose will be ignored
-      FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle);
+      FacePoseAction(const Pose3d& pose, Radians maxTurnAngle);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
@@ -457,7 +555,7 @@ namespace Anki {
     protected:
       virtual ActionResult Init(Robot& robot) override;
       
-      FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle);
+      FacePoseAction(Radians maxTurnAngle);
       void SetPose(const Pose3d& pose);
       virtual Radians GetHeadAngle(f32 heightDiff);
       
@@ -492,13 +590,14 @@ namespace Anki {
       // TODO: Can this default be reduced?
       virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
       
-      ObjectID             _objectID;
-      Vision::Marker::Code _whichCode;
-      f32                  _waitToVerifyTime;
-      
-      
-      MoveLiftToHeightAction  _moveLiftToHeightAction;
-      bool                 _moveLiftToHeightActionDone;
+      ObjectID                _objectID;
+      Vision::Marker::Code    _whichCode;
+      f32                     _waitToVerifyTime;
+      bool                    _objectSeen;
+      bool                    _markerSeen;
+      IActionRunner*          _moveLiftToHeightAction;
+      bool                    _moveLiftToHeightActionDone;
+      Signal::SmartHandle     _observedObjectHandle;
       
     }; // class VisuallyVerifyObjectAction
     
@@ -514,12 +613,14 @@ namespace Anki {
       // to face the object, then tilt its head. To disallow turning, set
       // maxTurnAngle to zero.
       
-      FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+      FaceObjectAction(ObjectID objectID,
+                       Radians maxTurnAngle,
                        bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
-      FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
-                       Radians turnAngleTol, Radians maxTurnAngle,
+      FaceObjectAction(ObjectID objectID,
+                       Vision::Marker::Code whichCode,
+                       Radians maxTurnAngle,
                        bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
@@ -527,12 +628,6 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
       
       virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
-      
-      // We don't want to ignore movement commands for Body during FaceObjectAction
-      virtual u8 GetMovementTracksToIgnore() const override
-      {
-        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
-      }
       
     protected:
       
@@ -543,7 +638,7 @@ namespace Anki {
       
       bool                 _facePoseCompoundActionDone;
       
-      VisuallyVerifyObjectAction    _visuallyVerifyAction;
+      IActionRunner*    _visuallyVerifyAction;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
@@ -562,6 +657,9 @@ namespace Anki {
       
       virtual ~IDockAction() { }
       
+      // Set whether or not to check if robot is near predock pose before docking.
+      void SetDoNearPredockPoseCheck(bool doCheck) { _doNearPredockPoseCheck = doCheck; }
+      
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
@@ -577,6 +675,9 @@ namespace Anki {
       // Set whether or not to place carried object on ground
       void SetPlaceOnGround(bool placeOnGround);
       
+      // Sets the animation to play when lift moves after docking.
+      // The animation should only contain a sound track!
+      void SetPostDockLiftMovingAnimation(const std::string& animName);
       
       virtual u8 GetAnimTracksToDisable() const override {
         return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
@@ -616,6 +717,14 @@ namespace Anki {
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
+      // Subclasses should call this because it sets the interaction result
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override {
+        // TODO: Annoying we have to copy this out, bet the Get_() method is const...
+        ObjectInteractionCompleted interactionCompleted = completionUnion.Get_objectInteractionCompleted();
+        interactionCompleted.result = _interactionResult;
+        completionUnion.Set_objectInteractionCompleted(interactionCompleted);
+      }
+      
       ObjectID                   _dockObjectID;
       DockAction                 _dockAction;
       const Vision::KnownMarker* _dockMarker                     = nullptr;
@@ -631,10 +740,18 @@ namespace Anki {
       bool                       _placeObjectOnGroundIfCarrying  = false;
       f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
       f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
+      ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
+      bool                       _doNearPredockPoseCheck         = true;
       
     private:
+
+      // Handler for when lift begins to move so that we can play an accompanying sound
+      Signal::SmartHandle        _liftMovingSignalHandle;
       
-      u32                        _squintLayerTag;
+      // Name of animation to play when moving lift post-dock
+      std::string                _liftMovingAnimation = "";
+      
+      AnimationStreamer::Tag     _squintLayerTag = AnimationStreamer::NotAnimatingTag;
       
     }; // class IDockAction
 
@@ -795,6 +912,49 @@ namespace Anki {
     }; // class PopAWheelieAction
 
     
+    // Interface for all classes below which first drive to an object and then
+    // do something with it.
+    class IDriveToInteractWithObject : public CompoundActionSequential
+    {
+    public:
+
+      // Wrappers for the sounds available in DriveToObjectAction, which is the
+      // first action in the sequence for all derived classes
+      void SetSounds(const std::string& startSound,
+                     const std::string& driveSound,
+                     const std::string& stopSound);
+      
+      void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
+      
+    protected:
+      // Not directly instantiable
+      IDriveToInteractWithObject(const ObjectID& objectID,
+                                 const PreActionPose::ActionType& actionType,
+                                 const PathMotionProfile motionProfile,
+                                 const f32 distanceFromMarker_mm,
+                                 const bool useApproachAngle,
+                                 const f32 approachAngle_rad,
+                                 const bool useManualSpeed);
+      
+    private:
+      DriveToObjectAction* _driveToObjectAction;
+      
+    }; // class IDriveToInteractWithObject
+    
+    inline void IDriveToInteractWithObject::SetSounds(const std::string& startSound,
+                                                      const std::string& driveSound,
+                                                      const std::string& stopSound)
+    {
+      assert(nullptr != _driveToObjectAction);
+      _driveToObjectAction->SetSounds(startSound, driveSound, stopSound);
+    }
+    
+    inline void IDriveToInteractWithObject::SetDriveSoundSpacing(f32 min_sec, f32 max_sec)
+    {
+      assert(nullptr != _driveToObjectAction);
+      _driveToObjectAction->SetDriveSoundSpacing(min_sec, max_sec);
+    }
+    
 
     // Compound action for driving to an object, visually verifying it can still be seen,
     // and then driving to it until it is at the specified distance (i.e. distanceFromMarker_mm)
@@ -803,7 +963,7 @@ namespace Anki {
     // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
     //                            approach angle closest to approachAngle_rad is considered.
     // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
-    class DriveToAlignWithObjectAction : public CompoundActionSequential
+    class DriveToAlignWithObjectAction : public IDriveToInteractWithObject
     {
     public:
       DriveToAlignWithObjectAction(const ObjectID& objectID,
@@ -830,7 +990,7 @@ namespace Anki {
     // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
     //                            approach angle closest to approachAngle_rad is considered.
     // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
-    class DriveToPickupObjectAction : public CompoundActionSequential
+    class DriveToPickupObjectAction : public IDriveToInteractWithObject
     {
     public:
       DriveToPickupObjectAction(const ObjectID& objectID,
@@ -854,7 +1014,7 @@ namespace Anki {
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then placing an object on it.
     // @param objectID         - object to place carried object on
-    class DriveToPlaceOnObjectAction : public CompoundActionSequential
+    class DriveToPlaceOnObjectAction : public IDriveToInteractWithObject
     {
     public:
      
@@ -887,7 +1047,7 @@ namespace Anki {
     // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
     //                            approach angle closest to approachAngle_rad is considered.
     // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
-    class DriveToPlaceRelObjectAction : public CompoundActionSequential
+    class DriveToPlaceRelObjectAction : public IDriveToInteractWithObject
     {
     public:
       // Place carried object on ground at specified placementOffset from objectID,
@@ -917,7 +1077,7 @@ namespace Anki {
     // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
     //                            approach angle closest to approachAngle_rad is considered.
     // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
-    class DriveToRollObjectAction : public CompoundActionSequential
+    class DriveToRollObjectAction : public IDriveToInteractWithObject
     {
     public:
       DriveToRollObjectAction(const ObjectID& objectID,
@@ -941,7 +1101,7 @@ namespace Anki {
     // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
     //                            approach angle closest to approachAngle_rad is considered.
     // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
-    class DriveToPopAWheelieAction : public CompoundActionSequential
+    class DriveToPopAWheelieAction : public IDriveToInteractWithObject
     {
     public:
       DriveToPopAWheelieAction(const ObjectID& objectID,
@@ -972,6 +1132,8 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const override;
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -983,6 +1145,7 @@ namespace Anki {
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker = nullptr;
       IActionRunner*              _faceAndVerifyAction = nullptr;
+      ObjectInteractionResult     _interactionResult = ObjectInteractionResult::INCOMPLETE;
       
     }; // class PlaceObjectOnGroundAction
     
@@ -1148,15 +1311,14 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot& robot) override;
       
-      //AnimationID_t _animID;
-      std::string   _animName;
-      std::string   _name;
-      u32           _numLoops;
-      bool          _startedPlaying;
-      bool          _stoppedPlaying;
-      bool          _wasAborted;
-      u8            _animTag;
-      bool          _interruptRunning;
+      std::string               _animName;
+      std::string               _name;
+      u32                       _numLoops;
+      bool                      _startedPlaying;
+      bool                      _stoppedPlaying;
+      bool                      _wasAborted;
+      AnimationStreamer::Tag    _animTag = AnimationStreamer::NotAnimatingTag;
+      bool                      _interruptRunning;
       
       // For responding to AnimationStarted and AnimationEnded events
       Signal::SmartHandle _startSignalHandle;
@@ -1170,6 +1332,20 @@ namespace Anki {
       bool NeedsAlteredAnimation(Robot& robot) const;
       
     }; // class PlayAnimationAction
+    
+    class PlayAnimationGroupAction : public PlayAnimationAction
+    {
+    public:
+      explicit PlayAnimationGroupAction(const std::string& animGroupName,
+                                        u32 numLoops = 1,
+                                        bool interruptRunning = true);
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      
+      std::string   _animGroupName;
+
+    }; // class PlayAnimationGroupAction
     
     
     class DeviceAudioAction : public IAction

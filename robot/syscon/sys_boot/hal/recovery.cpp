@@ -6,6 +6,7 @@
 #include "recovery.h"
 #include "sha1.h"
 #include "timer.h"
+#include "battery.h"
 #include "../../hal/hardware.h"
 #include "../../../include/anki/cozmo/robot/spineData.h"
 
@@ -209,6 +210,7 @@ void EnterRecovery(void) {
 
   for (;;) {
     do {
+      Battery::manage();
       toggleTargetPin();
       WriteWord(COMMAND_HEADER);
       WriteWord(state);

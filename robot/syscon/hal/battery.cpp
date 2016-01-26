@@ -106,6 +106,14 @@ void Battery::init()
   RTOS::schedule(Battery::manage);
 }
 
+void Battery::setHeadlight(bool status) {
+  if (status) {
+    nrf_gpio_pin_set(PIN_IR_FORWARD);
+  } else {
+    nrf_gpio_pin_clear(PIN_IR_FORWARD);
+  }
+}
+
 void Battery::powerOn()
 {
   // Let power drain out - 10ms is plenty long enough

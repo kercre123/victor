@@ -82,19 +82,15 @@ namespace Anki {
       // completion signal that is emitted.
       virtual RobotActionType GetType() const = 0;
       
-      // Override this to take care of anything that needs to be done on Retry.
-      // This should take care of anything that might otherwise be done by the
-      // constructor (i.e. before Init() is ever called.) For example, if your
-      // action allocates a new IAction[Runner] as a member as part of Init()
-      // but only deletes it upon destruction, you probably want to delete it
-      // in Reset() as well.
-      virtual void Reset() = 0;
-      
       // If this method returns true, then it means the derived class is interruptible,
-      // can safely re-queued using "NOW_AND_RESUME", and will pick back up safely
+      // can safely be re-queued using "NOW_AND_RESUME", and will pick back up safely
       // after the newly-queued action completes. Otherwise, this action will just
-      // be cancelled when NOW_AND_RESUME is used.
-      virtual bool Interrupt() { return false; }
+      // be cancelled when NOW_AND_RESUME is used. Note that this relies on
+      // sub-classes implementing InterruptInternal() and Reset().
+      bool Interrupt();
+      
+      // Override this to take care of anything that needs to be done on Retry/Interrupt.
+      virtual void Reset() = 0;
       
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
@@ -118,7 +114,7 @@ namespace Anki {
       // completion signal with an action finishes. Note that this public because
       // subclasses that are composed of other actions may want to make use of
       // the completion info of their constituent actions.
-      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const { }
 
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
@@ -137,6 +133,9 @@ namespace Anki {
       
       virtual ActionResult UpdateInternal(Robot& robot) = 0;
       
+      // By default, actions are not interruptable
+      virtual bool InterruptInternal() { return false; }
+      
       bool RetriesRemain();
       
       // Derived actions can use this to set custom status messages here.
@@ -149,8 +148,8 @@ namespace Anki {
       // action is reset and run again.
       void RegisterSubAction(IActionRunner* &subAction);
 
-      // Call cleanup on any registered sub actions and then delete them
-      void ClearSubActions(Robot& robot);
+      // Call Cancel and Update on any registered sub actions and then delete them
+      void CancelAndDeleteSubActions(Robot& robot);
       
     private:
       
@@ -168,6 +167,7 @@ namespace Anki {
       bool          _suppressTrackLocking   = false;
       bool          _isRunning              = false;
       bool          _isCancelled            = false;
+      bool          _isInterrupted          = false;
       bool          _displayMessages        = true;
       bool          _emitCompletionSignal   = true;
       

@@ -162,16 +162,6 @@ namespace Anki
       //
       const f32 MOTOR_MAX_POWER = 1.0f;
 
-      ///////////////////
-      // TODO: The following are constants for a naive linear approximation of power to speed,
-      // which is definitely a non-linear relationship. Eventually, we should figure out the true
-      // relationship on the robot so that the simulator can approximate it.
-
-      // The max angular speed the head can move when max power is commanded.
-      const f32 MAX_HEAD_SPEED = 2*PI; // rad/s
-
-      //////////////////////
-
       //
       // Simulator-only functions - not needed by real hardware
       // TBD:  If these aren't hardware features, can they go elsewhere?
@@ -379,7 +369,7 @@ namespace Anki
         sharpID       latest;   // Most up to date sensor value
       } ProximityValues;
 
-
+/*
       // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
       // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
       //       - returns data (from last function call)
@@ -389,7 +379,12 @@ namespace Anki
       // Only call once every 5ms (1 main loop)
       // current order is left -> right -> forward
       void GetProximity(ProximityValues *prox);
-
+*/
+      
+      // Returns distance in mm
+      // If 0, nothing is detected
+      u8 GetForwardProxSensor();
+      
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
       // BATTERY
@@ -409,7 +404,7 @@ namespace Anki
       // UI LEDs
 
       // Light up one of the eye LEDs to the specified 24-bit RGB color
-      void SetLED(LEDId led_id, u32 color);
+      void SetLED(LEDId led_id, u16 color);
 
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
@@ -486,7 +481,7 @@ namespace Anki
       void FlashBlockIDs();
 
       // Set the color and flashing of each LED on a block separately
-      Result SetBlockLight(const u32 blockID, const LightState* lights);
+      Result SetBlockLight(const u32 blockID, const u16* colors);
 
       void ManageCubes(void);
 

@@ -17,9 +17,9 @@
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "anki/cozmo/robot/logging.h"
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -56,7 +56,7 @@ namespace Cozmo {
   }
 
   void TimeProfiler::MarkNextProfile_Internal() {
-    assert(timeProfIdx_ < MAX_NUM_PROFILES);
+    AnkiAssert(timeProfIdx_ < MAX_NUM_PROFILES, 280);
     timeProfiles_[timeProfIdx_] = HAL::GetMicroCounter();
 
     // Update total time
@@ -72,7 +72,7 @@ namespace Cozmo {
   }
 
   void TimeProfiler::MarkNextProfile(const char* profName) {
-    assert(timeProfIdx_ < MAX_NUM_PROFILES);
+    AnkiAssert(timeProfIdx_ < MAX_NUM_PROFILES, 280);
 
     if (numCyclesInProfile_ == 0) {
       strncpy(timeProfName_[timeProfIdx_], profName, MAX_PROF_NAME_LENGTH);
@@ -91,10 +91,7 @@ namespace Cozmo {
 
   const char* TimeProfiler::GetProfName(u32 index)
   {
-    if (isProfiling_) {
-      PRINT("WARN (TimeProfiler): GetProfName called in middle of profile. Ignoring.\n");
-      return NULL;
-    }
+    AnkiConditionalWarnAndReturnValue((!isProfiling_), NULL, 3, "TimeProfiler", 27, "GetProfName called in middle of profile. Ignoring.", 0);
 
     if (index < timeProfIdx_) {
       return (const char*)&timeProfName_[index];
@@ -104,10 +101,7 @@ namespace Cozmo {
   }
 
   u32 TimeProfiler::ComputeStats(u32 *avgTimes[], u32 *maxTimes[]) {
-    if (isProfiling_) {
-      PRINT("WARN (TimeProfiler): ComputeStats called in middle of profile. Ignoring.\n");
-      return 0;
-    }
+    AnkiConditionalWarnAndReturnValue((!isProfiling_), 0, 3, "TimeProfiler", 28, "ComputeStats called in middle of profile. Ignoring.", 0);
 
     // Compute average time
     for(u8 i=0; i<timeProfIdx_; ++i) {
