@@ -81,10 +81,10 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private Shader _GradiantClippingShader;
+      private Shader _GradiantSimpleClippingShader;
 
-      public Shader GradiantClippingShader {
-        get { return _GradiantClippingShader; }
+      public Shader GradiantSimpleClippingShader {
+        get { return _GradiantSimpleClippingShader; }
       }
 
       [SerializeField]

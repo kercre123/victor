@@ -1,4 +1,4 @@
-﻿Shader "UI/Cozmo/GradientClippingShader"
+﻿Shader "UI/Cozmo/GradientSimpleClippingShader"
 {
 	Properties
   	{

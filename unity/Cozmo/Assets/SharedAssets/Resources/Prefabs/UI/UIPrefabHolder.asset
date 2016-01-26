@@ -24,7 +24,7 @@ MonoBehaviour:
   _ShowCozmoCubeSlide:
     slideName: ShowCozmoCubesSlide
     slidePrefab: {fileID: 22534124, guid: 95d62b6d570b642638e6e63c769a1b62, type: 2}
-  _GradiantClippingShader: {fileID: 4800000, guid: 0dfa90152ecd34e089deb029fc0ac2b0,
+  _GradiantSimpleClippingShader: {fileID: 4800000, guid: 0dfa90152ecd34e089deb029fc0ac2b0,
     type: 3}
   _GrayscaleShader: {fileID: 4800000, guid: 7ec20e72d8cc74e7191ddb125a92534c, type: 3}
   _AnimatedGlintShader: {fileID: 4800000, guid: 8dbae1ed93862487f9ac75c7fef22a07,

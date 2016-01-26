@@ -24,7 +24,7 @@ namespace Cozmo {
       }
 
       private static Material CreateClippingMaterial() {
-        Material clippingMaterial = new Material(UIPrefabHolder.Instance.GradiantClippingShader){ hideFlags = HideFlags.HideAndDontSave };
+        Material clippingMaterial = new Material(UIPrefabHolder.Instance.GradiantSimpleClippingShader){ hideFlags = HideFlags.HideAndDontSave };
         clippingMaterial.name = "Gradiant Clipping Material (Generated)";
         return clippingMaterial;
       }
