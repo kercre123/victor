@@ -507,7 +507,7 @@ namespace Anki {
                 case DA_PICKUP_HIGH:
                 case DA_PLACE_HIGH:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(15));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(20));
                   break;
                 } // HIGH
                 case DA_PICKUP_LOW:

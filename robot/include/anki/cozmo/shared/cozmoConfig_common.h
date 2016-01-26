@@ -27,7 +27,7 @@ const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(3.f);
 
 // Safe head angle for the proximity sensors to be usable with the lift
 // either up or down
-const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = -0.32f;
+const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = DEG_TO_RAD(-15.f);
 
 // Theoretically equivalent to ORIGIN_TO_LOW_LIFT_DIST_MM...
 const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
