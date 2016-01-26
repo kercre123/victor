@@ -39,6 +39,8 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private GraphSpline _GraphSpline;
 
+    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
+
     public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
@@ -134,22 +136,26 @@ namespace Cozmo.HomeHub {
       DataPersistenceManager.Instance.Save();
     }
 
+    private void UpdateFriendshipPoints(TimelineEntryData timelineEntry, int friendshipPoints) {
+      timelineEntry.AwardedFriendshipPoints = friendshipPoints;
+      DataPersistenceManager.Instance.Data.FriendshipLevel
+      = timelineEntry.EndingFriendshipLevel
+        = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
+      DataPersistenceManager.Instance.Data.FriendshipPoints
+      = timelineEntry.EndingFriendshipPoints
+        = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
+      timelineEntry.Complete = true;
+    }
+
     private void CompleteSession(TimelineEntryData timelineEntry) {
 
       int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress));
 
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
 
-      timelineEntry.AwardedFriendshipPoints = friendshipPoints;
-      DataPersistenceManager.Instance.Data.FriendshipLevel
-          = timelineEntry.EndingFriendshipLevel
-          = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
-      DataPersistenceManager.Instance.Data.FriendshipPoints
-          = timelineEntry.EndingFriendshipPoints
-          = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
-      timelineEntry.Complete = true;
+      UpdateFriendshipPoints(timelineEntry, friendshipPoints);
 
-      ShowDailySessionPanel(timelineEntry);
+      ShowDailySessionPanel(timelineEntry, HandleOnFriendshipBarAnimateComplete);
     }
 
     private void SetScrollRectStartPosition() {
@@ -202,26 +208,22 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void ShowDailySessionPanel(TimelineEntryData session) {
+    private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
       var summaryPanel = UIManager.CreateUIElement(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
       summaryPanel.Initialize(session);
-      summaryPanel.FriendshipBarAnimateComplete += HandleOnFriendshipBarAnimateComplete;
+      if (onComplete != null) {
+        summaryPanel.FriendshipBarAnimateComplete += onComplete;
+      }
     }
 
     private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
       TimeSpan deltaTime = (DataPersistenceManager.Today - DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date);
       int friendshipPoints = (int)deltaTime.TotalDays;
 
-      if (friendshipPoints > 0) {
-        data.AwardedFriendshipPoints = friendshipPoints;
-        DataPersistenceManager.Instance.Data.FriendshipLevel
-        = data.EndingFriendshipLevel
-          = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
-        DataPersistenceManager.Instance.Data.FriendshipPoints
-        = data.EndingFriendshipPoints
-          = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
-        data.Complete = true;
+      summaryPanel.FriendshipBarAnimateComplete -= HandleOnFriendshipBarAnimateComplete;
 
+      if (friendshipPoints < 0) {
+        UpdateFriendshipPoints(data, friendshipPoints);
         summaryPanel.AnimateFriendshipBar(data);
       }
 
