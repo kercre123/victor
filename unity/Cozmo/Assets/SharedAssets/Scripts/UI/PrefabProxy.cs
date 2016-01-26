@@ -368,7 +368,7 @@ public class PrefabProxy : MonoBehaviour {
     else {
       _Instance = (GameObject)GameObject.Instantiate(Prefab);
 
-      _Instance.name = string.Empty;
+      _Instance.name = name+"(Proxy)";
 
       _Instance.transform.SetParent(transform);
 

@@ -64,6 +64,13 @@ namespace Cozmo {
       public GameStateSlide InitialCubesSlide {
         get { return _ShowCozmoCubeSlide; }
       }
+
+      [SerializeField]
+      private Material _SoftClippingMaterial;
+
+      public Material SoftClippingMaterial {
+        get { return _SoftClippingMaterial; }
+      }
     }
   }
 }

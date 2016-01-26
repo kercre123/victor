@@ -24,3 +24,5 @@ MonoBehaviour:
   _ShowCozmoCubeSlide:
     slideName: ShowCozmoCubesSlide
     slidePrefab: {fileID: 22534124, guid: 95d62b6d570b642638e6e63c769a1b62, type: 2}
+  _SoftClippingMaterial: {fileID: 2100000, guid: 1e93e3b270e374746bd4f5bad1b6d0d1,
+    type: 2}
