@@ -1,4 +1,4 @@
-#include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/cozmo/basestation/proceduralFaceUtil.h"
 
 #include "anki/vision/basestation/trackedFace.h"
 

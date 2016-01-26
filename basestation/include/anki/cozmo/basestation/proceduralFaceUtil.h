@@ -3,7 +3,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/matrix.h"
-#include "anki/cozmo/basestation/proceduralFaceParams.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 
 #include <opencv2/core/core.hpp>
 

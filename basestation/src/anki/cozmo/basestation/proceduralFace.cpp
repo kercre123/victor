@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2015
  *
  **/
-#include "anki/cozmo/basestation/proceduralFaceParams.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
