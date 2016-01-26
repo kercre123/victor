@@ -15,6 +15,7 @@
 
 #include "navMeshQuadTreeTypes.h"
 
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "util/helpers/templateHelpers.h"
@@ -48,7 +49,7 @@ public:
   void SetRoot(const NavMeshQuadTreeNode* node) { _root = node; }
 
   // notification when the content type changes for the given node
-  void OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, EContentType oldContent, EContentType newContent);
+  void OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent);
 
   // notification when a node is going to be removed entirely
   void OnNodeDestroyed(const NavMeshQuadTreeNode* node);
@@ -56,6 +57,9 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Processing
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // retrieve the borders for the given combination of content types
+  void GetBorders(ENodeContentType innerType, ENodeContentType outerType, NavMemoryMapTypes::BorderVector& outBorders);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug
@@ -67,59 +71,89 @@ public:
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  struct BorderWaypoint {
+    BorderWaypoint()
+      : from(nullptr), to(nullptr), direction(EDirection::Invalid), isEnd(false), isSeed(false) {}
+    BorderWaypoint(const NavMeshQuadTreeNode* f, const NavMeshQuadTreeNode* t, EDirection dir, bool end)
+      : from(f), to(t), direction(dir), isEnd(end), isSeed(false) {}
+    const NavMeshQuadTreeNode* from;  // inner quad
+    const NavMeshQuadTreeNode* to;    // outer quad
+    EDirection direction; // neighbor 4-direction between from and to
+    bool isEnd; // true if this is the last waypoint of a border, for example when the obstacle finishes
+    bool isSeed; // just a flag fore debugging. True if this waypoint was the first in a border
+  };
+  
+  struct BorderCombination {
+    using BorderWaypointVector = std::vector<BorderWaypoint>;
+    BorderCombination() : dirty(true) {}
+    bool dirty; // flag when border is dirty (needs recalculation)
+    BorderWaypointVector waypoints;
+  };
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // true if we have a need to cache the given content type, false otherwise
-  static bool IsCached(EContentType contentType);
+  static bool IsCached(ENodeContentType contentType);
   
   // returns a color used to represent the given contentType for debugging purposes
-  static ColorRGBA GetDebugColor(EContentType contentType);
+  static ColorRGBA GetDebugColor(ENodeContentType contentType);
+  
+  // returns a number that represents the given combination inner-outer
+  static uint32_t GetBorderTypeKey(ENodeContentType innerType, ENodeContentType outerType);
+
+  // given a border waypoint, calculate its center in 3D
+  static Vec3f CalculateBorderWaypointCenter(const BorderWaypoint& waypoint);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Modification
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // sets all current borders are dirty/invalid, in need of being recalculated
+  void InvalidateBorders();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Processing borders
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // adds border information
-  void AddBorderWaypoint(const NavMeshQuadTreeNode* from, const NavMeshQuadTreeNode* to);
+  void AddBorderWaypoint(const NavMeshQuadTreeNode* from, const NavMeshQuadTreeNode* to, EDirection dir);
   
   // flags the last border waypoint as finishing a border, so that it doesn't connect with the next one
   void FinishBorder();
   
   // iterate over current nodes and finding borders between the specified types
   // note this deletes previous borders for other types (in the future we may prefer to find them all at the same time)
-  void FindBorders(EContentType innerType, EContentType outerType);
-
+  void FindBorders(ENodeContentType innerType, ENodeContentType outerType);
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // add quads from the given contentType to the vector for rendering
-  void AddQuadsToDraw(EContentType contentType,
+  void AddQuadsToDraw(ENodeContentType contentType,
     VizManager::SimpleQuadVector& quadVector, const ColorRGBA& color, float zOffset) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  struct BorderWaypoint {
-    BorderWaypoint() : from(nullptr), to(nullptr), isEnd(false), isSeed(false) {}
-    BorderWaypoint(const NavMeshQuadTreeNode* f, const NavMeshQuadTreeNode* t, bool end) : from(f), to(t), isEnd(end), isSeed(false) {}
-    const NavMeshQuadTreeNode* from;  // inner quad
-    const NavMeshQuadTreeNode* to;    // outer quad
-    bool isEnd; // true if this is the last waypoint of a border, for example when the obstacle finishes
-    bool isSeed; // just a flag fore debugging. True if this waypoint was the first in a border
-  };
-  
   using NodeSet = std::unordered_set<const NavMeshQuadTreeNode*>;
-  using NodeSetPerType = std::unordered_map<EContentType, NodeSet, Anki::Util::EnumHasher>;
-  using BorderWaypointVector = std::vector<BorderWaypoint>;
+  using NodeSetPerType = std::unordered_map<ENodeContentType, NodeSet, Anki::Util::EnumHasher>;
+  using BorderMap = std::map<uint32_t, BorderCombination>;
 
   // cache of nodes/quads classified per type for faster processing
   NodeSetPerType _nodeSets;
   
-  // borders detected in the last search
-  BorderWaypointVector _borders;
+  // borders detected in the last search for each combination of content types (inner + outer)
+  BorderMap _bordersPerContentCombination;
+  
+  // used during process for easier/faster access to the proper combination
+  BorderCombination* _currentBorderCombination;
   
   // pointer to the root of the tree
   const NavMeshQuadTreeNode* _root;

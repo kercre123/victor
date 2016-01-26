@@ -45,15 +45,12 @@ public:
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // notify the navmesh that the given quad is considered free of obstacles
-  void AddClearQuad(const Quad2f& quad);
+  // notify the navmesh that the given quad has the specified content
+  void AddQuad(const Quad2f& quad, ENodeContentType nodeType);
   
-  // notify the navmesh of an obstacle
-  void AddObstacle(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType);
-
-  // notify the navmesh of a cliff
-  void AddCliff(const Quad2f& quad);
-
+  // return the Processor associated to this QuadTree for queries
+  NavMeshQuadTreeProcessor& GetProcessor() { return _processor; }
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

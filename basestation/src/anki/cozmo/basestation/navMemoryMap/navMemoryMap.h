@@ -12,7 +12,6 @@
 #ifndef ANKI_COZMO_NAV_MEMORY_MAP_H
 #define ANKI_COZMO_NAV_MEMORY_MAP_H
 
-#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
 #include "navMeshQuadTree.h"
 
@@ -24,6 +23,8 @@ class NavMemoryMap : public INavMemoryMap
 {
 public:
 
+  using EContentType = NavMemoryMapTypes::EContentType;
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -34,17 +35,16 @@ public:
   // From INavMemoryMap
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // add a quad that with the specified content type
+  virtual void AddQuad(const Quad2f& quad, EContentType type) override;
+  
+  // retrieve the borders currently found in the map between the given types. This query is not const
+  // so that the memory map can calculate and cache values upon being requested, rather than when
+  // the map is modified. Function is expected to clear the vector before returning the new borders
+  virtual void CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders) override;
+
   // Draw the memory map
   virtual void Draw() const override;
-  
-  // add a quad that is clear of obstacles
-  virtual void AddClearQuad(const Quad2f& quad) override;
-
-  // add a quad representing an obstacle
-  virtual void AddObstacleQuad(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType) override;
-  
-  // add a quad representing a cliff
-  virtual void AddCliffQuad(const Quad2f& quad) override;
   
 private:
 
