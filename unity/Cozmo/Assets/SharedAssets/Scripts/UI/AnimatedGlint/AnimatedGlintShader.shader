@@ -1,11 +1,12 @@
-﻿Shader "UI/Cozmo/GradientClippingShader"
+﻿Shader "UI/Cozmo/AnimatedGlintShader"
 {
 	Properties
-  	{
-    	_Clipping ("DEV ONLY Clipping", Vector) = (0.5, 0.5, 0.5, 0.5)
-
+	{
+		_MaskTex ("Masking Texture", 2D) = "white" {}
+    	_UVOffset ("DEV ONLY UV", Vector) = (0, 0, 0, 0)
     	_AtlasUV ("DEV ONLY UV", Vector) = (0.5, 0.5, 0.5, 0.5)
-    }
+    	_WidthToHeightRatio ("DEV ONLY UV", Float) = 1
+	}
 	SubShader
 	{
 		// No culling or depth
@@ -41,32 +42,34 @@
 				o.uv = v.uv;
 				return o;
 			}
-
-      		float4 _Clipping;
-      		float4 _AtlasUV;
 			
 			sampler2D _MainTex;
+			sampler2D _MaskTex;
+			float4 _UVOffset;
+      		float4 _AtlasUV;
+      		float _WidthToHeightRatio;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
+				// sample masking image
 				fixed4 col = tex2D(_MainTex, i.uv);
 
 				// translate atlas UV to sprite UV
 				float2 spriteUV = (i.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
+				spriteUV.x = spriteUV.x * _WidthToHeightRatio;
 
-				// make the top right of the gradient frame
-				float2 topRightClipPosition = (1 - spriteUV.xy) * 2 / _Clipping.xy;
-				float2 topRightAlpha = 1 - topRightClipPosition.xy;
+				// offset UV
+				spriteUV = spriteUV + _UVOffset.xy;
+				spriteUV = clamp(spriteUV, 0, 1);
 
-				float topRightMaxAlpha = max(topRightAlpha.x,topRightAlpha.y);
+				// sample glint texture
+				fixed4 glintCol = tex2D(_MaskTex, spriteUV);
 
-				// make the bottom left of the gradient frame
-				float2 bottomLeftClipPosition = (spriteUV.xy) * 2 / _Clipping.zw;
-				float2 bottomLeftAlpha = 1 - bottomLeftClipPosition.xy;
+				// set alpha to 0 if mask or glint texture says so. 
+				col.a = min(col.a, glintCol.a);
 
-				float bottomLeftMaxAlpha = max(bottomLeftAlpha.x,bottomLeftAlpha.y);
-
-				col.a = min(col.a, max(topRightMaxAlpha, bottomLeftMaxAlpha));
+				// set color to color of the glint texture
+				col.rgb = glintCol.rgb;
 
 				return col;
 			}

@@ -42,10 +42,6 @@ namespace Cozmo {
       private float _RightClipping;
 
       private Material _ClippingMaterial;
-      private float _XMinNormalizedUV;
-      private float _XMaxNormalizedUV;
-      private float _YMinNormalizedUV;
-      private float _YMaxNormalizedUV;
 
       private void Awake() {
         if (_ClippingMaterialPool == null) {
@@ -59,13 +55,7 @@ namespace Cozmo {
         _ClippingMaterial.name = "Custom Clipping Material";
         _MaskingFrame.material = _ClippingMaterial;
 
-        float textureAtlasPixelWidth = _Graphic.texture.width;
-        _XMinNormalizedUV = _Graphic.textureRect.xMin / textureAtlasPixelWidth;
-        _XMaxNormalizedUV = _Graphic.textureRect.xMax / textureAtlasPixelWidth;
-
-        float textureAtlasPixelHeight = _Graphic.texture.height;
-        _YMinNormalizedUV = _Graphic.textureRect.yMin / textureAtlasPixelHeight;
-        _YMaxNormalizedUV = _Graphic.textureRect.yMax / textureAtlasPixelHeight;
+        _ClippingMaterial.SetVector("_AtlasUV", UIPrefabHolder.GetAtlasUVs(_Graphic));
       }
 
       private void OnEnable() {
@@ -81,11 +71,6 @@ namespace Cozmo {
       private void UpdateMaterial() {
         _ClippingMaterial.SetVector("_Clipping", new Vector4(_RightClipping, 
           _TopClipping, _LeftClipping, _BottomClipping));
-
-        _ClippingMaterial.SetVector("_AtlasUV", new Vector4(_XMinNormalizedUV,
-          _YMinNormalizedUV,
-          _XMaxNormalizedUV - _XMinNormalizedUV,
-          _YMaxNormalizedUV - _YMinNormalizedUV));
       }
 
       private void OnDestroy() {

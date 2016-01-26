@@ -1,4 +1,4 @@
-﻿Shader "UI/Cozmo/Unlit/GrayscaleShader"
+﻿Shader "UI/Cozmo/GrayscaleShader"
 {
 	SubShader
 	{
