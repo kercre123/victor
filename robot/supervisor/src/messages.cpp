@@ -30,8 +30,8 @@
 #include "pathFollower.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
-#ifndef TARGET_K02
 #include "testModeController.h"
+#ifndef TARGET_K02
 #include "animationController.h"
 #endif
 
@@ -202,11 +202,9 @@ namespace Anki {
         // Don't modify localization while running path following test.
         // The point of the test is to see how well it follows a path
         // assuming perfect localization.
-        #ifndef TARGET_K02
         if (TestModeController::GetMode() == TM_PATH_FOLLOW) {
           return;
         }
-        #endif
 
         // TODO: Double-check that size matches expected size?
 
@@ -414,13 +412,7 @@ namespace Anki {
 
       void Process_startControllerTestMode(const StartControllerTestMode& msg)
       {
-#ifndef TARGET_K02
-        if (msg.mode < TM_NUM_TESTS) {
-          TestModeController::Start((TestMode)(msg.mode), msg.p1, msg.p2, msg.p3);
-        } else {
-          PRINT("Unknown test mode %d received\n", msg.mode);
-        }
-#endif
+        TestModeController::Start((TestMode)(msg.mode), msg.p1, msg.p2, msg.p3);
       }
 
       void Process_imageRequest(const RobotInterface::ImageRequest& msg)
