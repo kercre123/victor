@@ -2,10 +2,10 @@
 {
 	Properties
 	{
-		_MaskTex ("Masking Texture", 2D) = "white" {}
+		_GlintTex ("Glint Texture", 2D) = "white" {}
     	_UVOffset ("DEV ONLY UV", Vector) = (0, 0, 0, 0)
     	_AtlasUV ("DEV ONLY UV", Vector) = (0.5, 0.5, 0.5, 0.5)
-    	_WidthToHeightRatio ("DEV ONLY UV", Float) = 1
+    	_GlintWidthToMaskWidthRatio ("DEV ONLY UV", Float) = 1
 	}
 	SubShader
 	{
@@ -44,10 +44,10 @@
 			}
 			
 			sampler2D _MainTex;
-			sampler2D _MaskTex;
+			sampler2D _GlintTex;
 			float4 _UVOffset;
       		float4 _AtlasUV;
-      		float _WidthToHeightRatio;
+      		float _GlintWidthToMaskWidthRatio;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
@@ -56,14 +56,14 @@
 
 				// translate atlas UV to sprite UV
 				float2 spriteUV = (i.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
-				spriteUV.x = spriteUV.x * _WidthToHeightRatio;
+				spriteUV.x = spriteUV.x * _GlintWidthToMaskWidthRatio;
 
 				// offset UV
 				spriteUV = spriteUV + _UVOffset.xy;
 				spriteUV = clamp(spriteUV, 0, 1);
 
 				// sample glint texture
-				fixed4 glintCol = tex2D(_MaskTex, spriteUV);
+				fixed4 glintCol = tex2D(_GlintTex, spriteUV);
 
 				// set alpha to 0 if mask or glint texture says so. 
 				col.a = min(col.a, glintCol.a);

@@ -8,6 +8,19 @@ namespace Cozmo.UI {
 
     private static SimpleObjectPool<Material> _GrayscaleMaterialPool;
 
+    private static SimpleObjectPool<Material> GetMaterialPool() {
+      if (_GrayscaleMaterialPool == null) {
+        _GrayscaleMaterialPool = new SimpleObjectPool<Material>(CreateGrayscaleMaterial, 1);
+      }
+      return _GrayscaleMaterialPool;
+    }
+
+    private static Material CreateGrayscaleMaterial() {
+      Material grayScaleMaterial = new Material(UIPrefabHolder.Instance.GrayscaleShader){ hideFlags = HideFlags.HideAndDontSave };
+      grayScaleMaterial.name = "Grayscale Material (Generated)";
+      return grayScaleMaterial;
+    }
+
     [SerializeField]
     private Image _ImageToGrayscale;
 
@@ -26,11 +39,7 @@ namespace Cozmo.UI {
         if (value != _IsGrayscale) {
           _IsGrayscale = value;
           if (_IsGrayscale) {
-            if (_GrayscaleMaterialPool == null) {
-              _GrayscaleMaterialPool = new SimpleObjectPool<Material>(CreateGrayscaleMaterial, 1);
-            }
-            _GrayscaleMaterialInstance = _GrayscaleMaterialPool.GetObjectFromPool();
-            _GrayscaleMaterialInstance.name = "Custom Grayscale Material";
+            _GrayscaleMaterialInstance = GetMaterialPool().GetObjectFromPool();
             _ImageToGrayscale.material = _GrayscaleMaterialInstance;
           }
           else {
@@ -60,10 +69,6 @@ namespace Cozmo.UI {
       if (_GrayscaleMaterialPool != null && _GrayscaleMaterialInstance != null) {
         _GrayscaleMaterialPool.ReturnToPool(_GrayscaleMaterialInstance);
       }
-    }
-
-    private Material CreateGrayscaleMaterial() {
-      return new Material(UIPrefabHolder.Instance.GrayscaleMaterial){ hideFlags = HideFlags.HideAndDontSave };
     }
   }
 }

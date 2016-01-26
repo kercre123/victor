@@ -4,9 +4,26 @@ using System.Collections;
 
 namespace Cozmo.UI {
   public class AnkiAnimateGlint : MonoBehaviour {
+    private static SimpleObjectPool<Material> _GlintMaterialPool;
+
+    private static SimpleObjectPool<Material> GetMaterialPool() {
+      if (_GlintMaterialPool == null) {
+        _GlintMaterialPool = new SimpleObjectPool<Material>(CreateGlintMaterial, 1);
+      }
+      return _GlintMaterialPool;
+    }
+
+    private static Material CreateGlintMaterial() {
+      Material glintMaterial = new Material(UIPrefabHolder.Instance.AnimatedGlintShader){ hideFlags = HideFlags.HideAndDontSave };
+      glintMaterial.name = "Animated Glint Material (Generated)";
+      return glintMaterial;
+    }
 
     [SerializeField]
-    private Image _Image;
+    private Image _MaskImage;
+
+    [SerializeField]
+    private Texture _GlintTexture;
 
     [SerializeField]
     private float _LoopSpeed = 5;
@@ -17,19 +34,23 @@ namespace Cozmo.UI {
     private Vector2 _UVOffset;
     private float _SecondsSinceLastLoop = -1f;
     private bool _AnimateGlint = true;
-    private float _WidthToHeightRatio;
+    private float _GlintWidthToMaskWidthRatio;
+
+    private Material _GlintMaterial;
 
     private void Awake() {
       _AnimateGlint = false;
-      _Image.material.SetVector("_AtlasUV", UIPrefabHolder.GetAtlasUVs(_Image.sprite));
+      _GlintMaterial = GetMaterialPool().GetObjectFromPool();
+      _MaskImage.material = _GlintMaterial;
+      _MaskImage.material.SetTexture("_GlintTex", _GlintTexture);
+      _MaskImage.material.SetVector("_AtlasUV", UIPrefabHolder.GetAtlasUVs(_MaskImage.sprite));
     }
 
     private void Start() {
       RectTransform rectTransform = this.transform as RectTransform;
-      Texture glintTexture = _Image.material.GetTexture("_MaskTex");
-      _WidthToHeightRatio = rectTransform.rect.width / glintTexture.width;
-      _Image.material.SetFloat("_WidthToHeightRatio", _WidthToHeightRatio);
-      _UVOffset = new Vector2(Random.Range(-_WidthToHeightRatio, _WidthToHeightRatio), 0);
+      _GlintWidthToMaskWidthRatio = rectTransform.rect.width / _GlintTexture.width;
+      _MaskImage.material.SetFloat("_GlintWidthToMaskWidthRatio", _GlintWidthToMaskWidthRatio);
+      _UVOffset = new Vector2(Random.Range(-_GlintWidthToMaskWidthRatio, _GlintWidthToMaskWidthRatio), 0);
       _AnimateGlint = true;
     }
 
@@ -37,18 +58,24 @@ namespace Cozmo.UI {
       UpdateMaterial();
     }
 
+    private void OnDestroy() {
+      if (_GlintMaterialPool != null && _GlintMaterial != null) {
+        _GlintMaterialPool.ReturnToPool(_GlintMaterial);
+      }
+    }
+
     private void UpdateMaterial() {
       if (_AnimateGlint) {
         _UVOffset.x -= _LoopSpeed * Time.deltaTime;
         _UVOffset.y = 0;
 
-        if (_UVOffset.x < -_WidthToHeightRatio) {
-          _UVOffset.x += 2 * _WidthToHeightRatio;
+        if (_UVOffset.x < -_GlintWidthToMaskWidthRatio) {
+          _UVOffset.x += 2 * _GlintWidthToMaskWidthRatio;
           _SecondsSinceLastLoop = 0f;
           _AnimateGlint = false;
         }
 
-        _Image.material.SetVector("_UVOffset", new Vector4(_UVOffset.x,
+        _MaskImage.material.SetVector("_UVOffset", new Vector4(_UVOffset.x,
           _UVOffset.y, 0, 0));
       }
       else {

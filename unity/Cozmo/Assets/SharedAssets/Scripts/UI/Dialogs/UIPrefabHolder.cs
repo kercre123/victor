@@ -81,17 +81,24 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private Material _SoftClippingMaterial;
+      private Shader _GradiantClippingShader;
 
-      public Material SoftClippingMaterial {
-        get { return _SoftClippingMaterial; }
+      public Shader GradiantClippingShader {
+        get { return _GradiantClippingShader; }
       }
 
       [SerializeField]
-      private Material _GrayscaleMaterial;
+      private Shader _GrayscaleShader;
 
-      public Material GrayscaleMaterial {
-        get { return _GrayscaleMaterial; }
+      public Shader GrayscaleShader {
+        get { return _GrayscaleShader; }
+      }
+
+      [SerializeField]
+      private Shader _AnimatedGlintShader;
+
+      public Shader AnimatedGlintShader {
+        get { return _AnimatedGlintShader; }
       }
     }
   }
