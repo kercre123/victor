@@ -161,7 +161,7 @@ namespace Cozmo.HomeHub {
 
       // check if the current session is still valid
       if (currentSession != null) {  
-        _DailyGoalInstance.SetDailyGoals(currentSession.Goals, currentSession.Progress);
+        _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
         return;
       }
 
@@ -182,7 +182,7 @@ namespace Cozmo.HomeHub {
       newSession.Goals.Set(goals);
 
       RobotEngineManager.Instance.CurrentRobot.SetProgressionStats(newSession.Progress);
-      _DailyGoalInstance.SetDailyGoals(newSession.Goals, newSession.Progress);
+      _DailyGoalInstance.SetDailyGoals(newSession.Progress, newSession.Goals);
 
       DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
 

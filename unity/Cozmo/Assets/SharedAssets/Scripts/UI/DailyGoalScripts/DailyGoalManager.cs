@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using DataPersistence;
 using System.Collections;
 
 public class DailyGoalManager : MonoBehaviour {
@@ -27,6 +28,12 @@ public class DailyGoalManager : MonoBehaviour {
       return true;
     }
     return false;
+  }
+
+  public float GetDailyProgress() {
+    StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
+    StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
+    return _FriendshipFormulaConfig.CalculateFriendshipProgress(prog, goal);
   }
 
   private DailyGoalPanel _GoalPanelRef;
@@ -83,7 +90,8 @@ public class DailyGoalManager : MonoBehaviour {
       totalGoals = possibleStats.Count;
     }
     StatContainer goals = new StatContainer();
-    // Generate Goals from the possible stats
+    // Generate Goals from the possible stats, set stats to false as you pick them
+    // to prevent duplicates.
     for (int i = 0; i < totalGoals; i++) {
       Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
       possibleStats[targetStat] = false;
