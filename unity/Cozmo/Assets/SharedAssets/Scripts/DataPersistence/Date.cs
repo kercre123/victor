@@ -174,9 +174,8 @@ namespace DataPersistence {
       return Year << 9 | Month << 5 | Day;
     }
 
-    public static Date operator-(Date a, Date b) {
-      System.DateTime result = (System.DateTime(a.Year, a.Month, a.Day) - System.DateTime(b.Year, b.Month, b.Day));
-      return new Date(result.Year, result.Month, result.Day);
+    public static System.TimeSpan operator-(Date a, Date b) {
+      return new System.DateTime(a.Year, a.Month, a.Day) - new System.DateTime(b.Year, b.Month, b.Day);
     }
 
     public static bool operator==(Date a, Date b) {

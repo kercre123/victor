@@ -205,6 +205,26 @@ namespace Cozmo.HomeHub {
     private void ShowDailySessionPanel(TimelineEntryData session) {
       var summaryPanel = UIManager.CreateUIElement(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
       summaryPanel.Initialize(session);
+      summaryPanel.FriendshipBarAnimateComplete += HandleOnFriendshipBarAnimateComplete;
+    }
+
+    private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
+      TimeSpan deltaTime = (DataPersistenceManager.Today - DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date);
+      int friendshipPoints = (int)deltaTime.TotalDays;
+
+      if (friendshipPoints > 0) {
+        data.AwardedFriendshipPoints = friendshipPoints;
+        DataPersistenceManager.Instance.Data.FriendshipLevel
+        = data.EndingFriendshipLevel
+          = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
+        DataPersistenceManager.Instance.Data.FriendshipPoints
+        = data.EndingFriendshipPoints
+          = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
+        data.Complete = true;
+
+        summaryPanel.AnimateFriendshipBar(data);
+      }
+
     }
 
   }
