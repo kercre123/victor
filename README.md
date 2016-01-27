@@ -10,7 +10,7 @@ At this point, only Mac and iOS are supported. The engine itself supports more p
 
 ### Brew
 
-Install CMAKE using [brew](http://brew.sh/).
+First install [brew](http://brew.sh/). Then use brew to install the following dependencies:
 
     brew install cmake
     brew install python3
