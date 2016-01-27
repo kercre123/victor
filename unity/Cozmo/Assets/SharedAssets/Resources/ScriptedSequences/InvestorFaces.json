@@ -4,7 +4,7 @@
   "ActivateOnConditionMet": true,
   "Repeatable": true,
   "Condition": null,
-  "Nodes": [    
+  "Nodes": [
     {
       "Name": "Faces (loop)",
       "Id": 1,
@@ -36,7 +36,7 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
-      "ExitOnActionsComplete": true,
+      "ExitOnActionsComplete": false,
       "Conditions": [],
       "Actions": [
         {
@@ -52,7 +52,17 @@
       ],
       "ExitConditions": [
         {
-          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+          "$type": "ScriptedSequences.Conditions.OrCondition, Assembly-CSharp",
+          "Conditions": [
+            {
+              "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
+              "AnyAnimation": false,
+              "AnimationName": "ID_idle_brickout"
+            },
+            {
+              "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+            }
+          ]
         }
       ]
     },
@@ -80,9 +90,9 @@
       "Name": "Goodnight",
       "Id": 4,
       "Sequencial": true,
-      "Final": true,
+      "Final": false,
       "FailOnError": false,
-      "ExitOnActionsComplete": true,
+      "ExitOnActionsComplete": false,
       "Conditions": [],
       "Actions": [
         {
@@ -90,20 +100,89 @@
           "BehaviorChooser": "Selection"
         },
         {
-          "$type": "ScriptedSequences.Actions.PlayMusic, Assembly-CSharp",
-          "MusicState": "SILENCE",
-          "WaitToEnd": true
+          "$type": "ScriptedSequences.Actions.TurnOffAllBlockLights, Assembly-CSharp"
         },
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "ID_ByeBye",
           "LoopForever": false,
           "WaitToEnd": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.PlayAudio, Assembly-CSharp",
+          "EventType": "PLAY_SFX_UI_ID_COZMO_OFF",
+          "GameObjectType": "UI",
+          "WaitToEnd": true,
+          "StopSoundOnEnd": true
         }
       ],
       "ExitConditions": [
         {
-          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+          "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
+          "AnyAnimation": false,
+          "AnimationName": "ID_ByeBye"
+        }
+      ]
+    },
+    {
+      "Name": "Fade Volume To Zero",
+      "Id": 5,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": false,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
+          "VolumeChannel": "ROBOT_VOLUME",
+          "TargetVolume": 0.0,
+          "Duration": 6.0,
+          "Curve": "Linear"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.FadeAudio, Assembly-CSharp",
+          "VolumeChannel": "MUSIC_VOLUME",
+          "TargetVolume": 0.0,
+          "Duration": 6.0,
+          "Curve": "Linear"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "ID_sleeping_02",
+          "LoopForever": false,
+          "WaitToEnd": true
+        }
+      ],
+      "ExitConditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
+          "AnyAnimation": false,
+          "AnimationName": "ID_sleeping_02"
+        }
+      ]
+    },
+    {
+      "Name": "End",
+      "Id": 6,
+      "Sequencial": true,
+      "Final": true,
+      "FailOnError": false,
+      "ExitOnActionsComplete": false,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "ID_end",
+          "LoopForever": false,
+          "WaitToEnd": true
+        }
+      ],
+      "ExitConditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
+          "AnyAnimation": false,
+          "AnimationName": "ID_end"
         }
       ]
     }

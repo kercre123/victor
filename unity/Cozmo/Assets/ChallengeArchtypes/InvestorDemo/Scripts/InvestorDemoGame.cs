@@ -21,6 +21,11 @@ namespace InvestorDemo {
         return;
       }
       InitializeMinigameObjects();
+
+      // Enable idle vision mode, which means "turn off" all vision processing.
+      // We will rely on each demo behavior chooser to enable its required 
+      // vision modes.
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.Idle, true);
     }
 
     protected override void InitializeView(ChallengeData data) {
@@ -28,7 +33,9 @@ namespace InvestorDemo {
     }
 
     protected void InitializeMinigameObjects() {
-      CurrentRobot.SetRobotVolume(0.5f);
+      CurrentRobot.SetRobotVolume(1.0f);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicVolume(1.0f);
+      Anki.Cozmo.Audio.AudioClient.Instance.PostParameter(Anki.Cozmo.Audio.ParameterType.UI_VOLUME, 100.0f, Anki.Cozmo.Audio.GameObjectType.Invalid);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
 
