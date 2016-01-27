@@ -39,6 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b62f3ecc7743434ca9e31bd187a36a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _ChallengeList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
   _FriendshipProgConfig: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1,
     type: 2}
   _FriendshipFormulaConfig: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,

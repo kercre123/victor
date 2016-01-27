@@ -4,7 +4,10 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class DailyGoalManager : MonoBehaviour {
-  
+
+  [SerializeField]
+  private ChallengeDataList _ChallengeList;
+
   #region FriendshipProgression and DailyGoals
 
   // Config file for friendship progression and daily goal generation
