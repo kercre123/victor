@@ -19,6 +19,9 @@ namespace DataPersistence {
     private Button _StartNewSessionButton;
 
     [SerializeField]
+    private Text _SessionDays;
+
+    [SerializeField]
     private Button _WinGameButton;
 
     [SerializeField]
@@ -67,9 +70,13 @@ namespace DataPersistence {
     private void StartNewSessionButtonClicked() {
 
       var field = typeof(TimelineEntryData).GetField("Date");
-      // move every day back one in time.
-      DataPersistenceManager.Instance.Data.Sessions.ForEach(x => field.SetValue(x, x.Date.AddDays(-1)));
-      DataPersistenceManager.Instance.Save();
+
+      int days = -1;
+      int.TryParse(_SessionDays.text, out days);
+      if (days < 0) {
+        DataPersistenceManager.Instance.Data.Sessions.ForEach(x => field.SetValue(x, x.Date.AddDays(days)));
+        DataPersistenceManager.Instance.Save();
+      }
 
       TryReloadHomeHub();
     }
