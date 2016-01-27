@@ -751,14 +751,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
     return;
   }
   
-  // TODO: This needs fixing
-  /*
-  ProceduralFace procFace;
-  procFace.GetParams().SetFromMessage(msg);
-  procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
-  
-  robot->SetProceduralFace(procFace);
-   */
+  robot->GetAnimationStreamer().GetLastProceduralFace()->SetFromMessage(msg);
 }
   
   void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)

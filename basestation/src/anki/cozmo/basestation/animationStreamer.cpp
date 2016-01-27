@@ -39,6 +39,7 @@ namespace Cozmo {
   , _animationContainer(container)
   , _liveAnimation(LiveAnimation)
   , _audioClient( audioClient )
+  ,_lastProceduralFace(new ProceduralFace)
   {
     _liveAnimation.SetIsLive(true);
   }
@@ -665,12 +666,17 @@ namespace Cozmo {
     
     // Combine the robot's current face with anything the currently-streaming
     // animation does to the face, plus anything present in any face "layers".
-    ProceduralFace procFace;
+    ProceduralFace procFace = *_lastProceduralFace;
     
     if(nullptr != anim) {
       // Note that shouldReplace==true in this case because the animation frames
       // actually replace what's on the face.
       faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, procFace, true);
+      
+      if (faceUpdated && storeFace)
+      {
+        *_lastProceduralFace = procFace;
+      }
     }
     
 #   if DEBUG_ANIMATION_STREAMING
