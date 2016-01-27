@@ -33,6 +33,8 @@
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 
+#include "anki/common/basestation/utils/timer.h"
+
 #define DEBUG_BEHAVIOR_MGR 0
 
 namespace Anki {
@@ -385,6 +387,9 @@ namespace Cozmo {
     Util::SafeDelete(_behaviorChooser);
     
     _behaviorChooser = newChooser;
+
+    // force the new behavior chooser to select something now, instead of waiting for it to be ready
+    SelectNextBehavior(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
   }
   
   void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)

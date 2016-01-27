@@ -152,26 +152,31 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
   // next, do a point turn to the new angle
   Radians turn0Angle = atan2( _targetVec.y() - curr.GetY(), _targetVec.x() - curr.GetX() );
   Radians deltaTheta = turn0Angle - curr.GetAngle();
-  if( deltaTheta.getAbsoluteVal().ToFloat() > MINIMAL_ANGLE_PLANNER_THETA_THRESHOLD ) {
-  
-    _path.AppendPointTurn(0,
-                          curr.GetX(), curr.GetY(), turn0Angle.ToFloat(),
-                          deltaTheta < 0 ?
-                          -MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED
-                          : MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED,
-                          MINIMAL_ANGLE_PLANNER_ROT_ACCEL,
-                          MINIMAL_ANGLE_PLANNER_ROT_DECEL,
-                          true);
-
-    PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Turn0", "%f", deltaTheta.ToFloat());
-
-    curr.SetRotation( turn0Angle );
-  }
+  // wait to apply the turn until we see if we need to drive straight first
 
   float straightDist = std::sqrt( std::pow( _targetVec.x() - curr.GetX(), 2 ) +
                                   std::pow( _targetVec.y() - curr.GetY(), 2 ) );
 
   if( straightDist > MINIMAL_ANGLE_PLANNER_LENGTH_THRESHOLD ) {
+
+    // if we need to drive straight, then apply the previous turn (if there was one) first
+    if( deltaTheta.getAbsoluteVal().ToFloat() > MINIMAL_ANGLE_PLANNER_THETA_THRESHOLD ) {
+  
+      _path.AppendPointTurn(0,
+                            curr.GetX(), curr.GetY(), turn0Angle.ToFloat(),
+                            deltaTheta < 0 ?
+                            -MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED
+                            : MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED,
+                            MINIMAL_ANGLE_PLANNER_ROT_ACCEL,
+                            MINIMAL_ANGLE_PLANNER_ROT_DECEL,
+                            true);
+
+      PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Turn0", "%f", deltaTheta.ToFloat());
+
+      curr.SetRotation( turn0Angle );
+    }
+
+    
     Pose2d nextPose(curr);
     nextPose.TranslateBy(straightDist);
 
@@ -200,7 +205,12 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
                           true);
 
     PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Turn1", "%f", deltaTheta.ToFloat());
+
+    curr.SetRotation( _finalTargetAngle );
   }
+
+  PRINT_NAMED_INFO("MinimalAnglePlanner.FinalPosition", "(%f, %f, %fdeg)",
+                   curr.GetX(), curr.GetY(), RAD_TO_DEG( curr.GetAngle().ToFloat() ));
 
   _hasValidPath = true;
 
