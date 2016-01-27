@@ -43,6 +43,16 @@ message Object
   float_32   objParameters[4] // for object-specific parameters
 }
 
+// SegmentPrimitive
+message SegmentPrimitive
+{
+  string identifier,
+  uint_32 color,
+  float_32 origin[3],
+  float_32 dest[3],
+  bool clearPrevious  // if set to true, previous segments with same ID will be erased, otherwise drawn together
+}
+
 // VizQuad
 message Quad
 {
@@ -77,7 +87,7 @@ message SimpleQuadVectorMessageBegin
   string identifier,
 }
 
-// SimpleQuadVectorMessage: a group of simpple quads
+// SimpleQuadVectorMessage: a group of simple quads
 message SimpleQuadVectorMessage
 {
   string identifier,
@@ -139,6 +149,12 @@ message EraseObject
   uint_32 objectID,
   uint_32 lower_bound_id,
   uint_32 upper_bound_id,
+}
+
+// EraseSegmentPrimitives
+message EraseSegmentPrimitives
+{
+  string identifier,
 }
 
 // EraseQuad

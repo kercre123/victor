@@ -20,6 +20,7 @@
 
 #include <limits>
 #include <typeinfo>
+#include <type_traits>
 #include <set>
 #include <unordered_map>
 
@@ -29,7 +30,8 @@ namespace Cozmo {
 CONSOLE_VAR(bool , kRenderContentTypes , "NavMeshQuadTreeProcessor", false); // renders registered content nodes for webots
 CONSOLE_VAR(bool , kRenderSeeds        , "NavMeshQuadTreeProcessor", false); // renders seeds differently for debugging purposes
 CONSOLE_VAR(bool , kRenderBordersFrom  , "NavMeshQuadTreeProcessor", false); // renders detected borders for webots (origin)
-CONSOLE_VAR(bool , kRenderBordersTo    , "NavMeshQuadTreeProcessor", true); // renders detected borders for webots (destination)
+CONSOLE_VAR(bool , kRenderBordersToDot , "NavMeshQuadTreeProcessor", true); // renders detected borders for webots (destination) as dots
+CONSOLE_VAR(bool , kRenderBordersToQuad, "NavMeshQuadTreeProcessor", false); // renders detected borders for webots (destination) as neighbor quads
 CONSOLE_VAR(float, kRenderZOffset      , "NavMeshQuadTreeProcessor", 20.0f); // adds Z offset to all quads
 CONSOLE_VAR(bool , kDebugFindBorders   , "NavMeshQuadTreeProcessor", false); // prints debug information in console
 
@@ -38,10 +40,10 @@ if ( kDebugFindBorders ) {                                                      
   do{::Anki::Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, "NMQTProcessor", {}, format, ##__VA_ARGS__);}while(0); \
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTreeProcessor::NavMeshQuadTreeProcessor()
-: _root(nullptr)
+: _currentBorderCombination(nullptr)
+, _root(nullptr)
 , _contentGfxDirty(false)
 , _borderGfxDirty(false)
 {
@@ -49,7 +51,7 @@ NavMeshQuadTreeProcessor::NavMeshQuadTreeProcessor()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, EContentType oldContent, EContentType newContent)
+void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent)
 {
   CORETECH_ASSERT(node->GetContentType() == newContent);
 
@@ -73,13 +75,17 @@ void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNod
     // flag as dirty
     _contentGfxDirty = true;
   }
+  
+  // invalidate all borders. Note this is not optimal, we could invalidate only affected borders (if such
+  // processing could be done easily), or at least discarding changes by parent quad
+  InvalidateBorders();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::OnNodeDestroyed(const NavMeshQuadTreeNode* node)
 {
   // if old content type is cached
-  const EContentType oldContent = node->GetContentType();
+  const ENodeContentType oldContent = node->GetContentType();
   if ( IsCached(oldContent) )
   {
     // remove the node from that cache
@@ -89,6 +95,132 @@ void NavMeshQuadTreeProcessor::OnNodeDestroyed(const NavMeshQuadTreeNode* node)
     // flag as dirty
     _contentGfxDirty = true;
   }
+  
+  // invalidate all borders. Note this is not optimal, we could invalidate only affected borders (if such
+  // processing could be done easily), or at least discarding changes by parent quad
+  InvalidateBorders();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeContentType outerType) const
+{
+  // check cached version if available and current
+  const uint32_t borderComboKey = GetBorderTypeKey(innerType, outerType);
+  const auto comboMatchIt = _bordersPerContentCombination.find( borderComboKey );
+  if ( comboMatchIt != _bordersPerContentCombination.end() )
+  {
+    if ( !comboMatchIt->second.dirty ) {
+      const bool hasBorders = !comboMatchIt->second.waypoints.empty();
+      return hasBorders;
+    }
+  }
+  
+  // no chached version, pick in the cached nodes if any would be seed
+  const bool hasSeed = HasBorderSeed(innerType, outerType);
+  return hasSeed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentType outerType, NavMemoryMapTypes::BorderVector& outBorders)
+{
+  // grab the border combination info
+  const uint32_t borderComboKey = GetBorderTypeKey(innerType, outerType);
+  const BorderCombination& borderCombination = _bordersPerContentCombination[borderComboKey];
+  
+  // if it's dirty, recalculate now
+  if ( borderCombination.dirty )
+  {
+    FindBorders(innerType, outerType);
+    CORETECH_ASSERT(!borderCombination.dirty);
+  }
+
+  outBorders.clear();
+  if ( !borderCombination.waypoints.empty() )
+  {
+    // -- convert from borderCombination info to borderVector
+  
+    // epsilon to merge waypoints into the same line
+    const float kDotBorderEpsilon = 0.9848f; // cos(10deg) = 0.984807...
+    EDirection firstNeighborDir = borderCombination.waypoints[0].direction;
+    Point3f curOrigin = CalculateBorderWaypointCenter(borderCombination.waypoints[0]);
+    Point3f curDest   = curOrigin;
+    
+    // note: curNeighborDirection could be first, last, average, ... all should yield same result, so I'm doing first
+  
+    // iterate all waypoints (even 0)
+    size_t idx = 0;
+    const size_t count = borderCombination.waypoints.size();
+    do
+    {
+      const bool isEnd = (borderCombination.waypoints[idx].isEnd);
+      bool canMergeIntoPreviousLine = false;
+
+      // get border center for this waypoint
+      Point3f borderCenter  = CalculateBorderWaypointCenter( borderCombination.waypoints[idx] );
+    
+      Vec3f curDir = curDest - curOrigin;
+    
+      // if we currently don't have a line (but a point)
+      if ( NEAR_ZERO( curDir.LengthSq() ) )
+      {
+        // we can continue this line
+        canMergeIntoPreviousLine = true;
+      }
+      else
+      {
+        // there's already a line, can we continue it?
+        curDir.MakeUnitLength();
+        Vec3f stepDir = borderCenter - curDest;
+        stepDir.MakeUnitLength();
+        // calculate dotProduct and see if they are close enough in the same direction
+        const float dotProduct = DotProduct(curDir, stepDir);
+        canMergeIntoPreviousLine = dotProduct >= kDotBorderEpsilon;
+      }
+      
+      //  canMergeIntoPrev ; isEnd ; expected
+      //               0        0   ==> AddLine(), origin <- dest, dest <- center
+      //               0        1   ==> AddLine(), origin <- dest, dest <- center, AddLine(), resetDir
+      //               1        0   ==>                            dest <- center
+      //               1        1   ==>                            dest <- center, AddLine(), resetDir
+      // -->
+      // if ( !canMerge ) { AddLine(), origin <- dest }
+      // dest <- center
+      // if ( isEnd ) { AddLine() }
+      
+      if ( !canMergeIntoPreviousLine )
+      {
+        // add border
+        const EDirection lastNeighborDir = borderCombination.waypoints[idx-1].direction;
+        outBorders.emplace_back( MakeBorder(curOrigin, curDest, firstNeighborDir, lastNeighborDir) );
+        
+        // origin <- dest
+        curOrigin = curDest;
+        firstNeighborDir = lastNeighborDir;
+      }
+      
+      curDest = borderCenter;
+      
+      if ( isEnd )
+      {
+        // add border
+        const EDirection lastNeighborDir = borderCombination.waypoints[idx].direction;
+        outBorders.emplace_back( MakeBorder(curOrigin, curDest, firstNeighborDir, lastNeighborDir) );
+        
+        // if there are more waypoints, reset current data so that the next waypoint doesn't start on us
+        const size_t nextIdx = idx+1;
+        if ( nextIdx < count ) {
+          firstNeighborDir = borderCombination.waypoints[nextIdx].direction;
+          curOrigin = CalculateBorderWaypointCenter(borderCombination.waypoints[nextIdx]);
+          curDest   = curOrigin;
+        }
+      }
+      
+      ++idx;
+    } while ( idx < count );
+    
+  } // has waypoints
+  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -102,7 +234,7 @@ void NavMeshQuadTreeProcessor::Draw() const
     // add registered types
     for ( const auto& it : _nodeSets )
     {
-      EContentType type = it.first;
+      ENodeContentType type = it.first;
       AddQuadsToDraw(type, quadVector, GetDebugColor(type), kRenderZOffset);
     }
     
@@ -112,36 +244,59 @@ void NavMeshQuadTreeProcessor::Draw() const
   }
 
   // borders
-  if ( _borderGfxDirty && (kRenderBordersFrom || kRenderBordersTo) )
+  if ( _borderGfxDirty && (kRenderBordersFrom || kRenderBordersToDot || kRenderBordersToQuad) )
   {
 
     VizManager::SimpleQuadVector quadVector;
 
     // add quads from borders
-    for ( const auto& it : _borders )
+    for ( const auto& comboIt : _bordersPerContentCombination )
     {
-      // from quad
-      if ( kRenderBordersFrom || (kRenderSeeds && it.isSeed) )
+      for ( const auto& it : comboIt.second.waypoints )
       {
-        Anki::ColorRGBA fromColor = GetDebugColor( it.from->GetContentType() );
-        fromColor.SetAlpha(0.6f);
-        const float fromSideLen = it.from->GetSideLen();
-        Point3f from3D = it.from->GetCenter();
-        from3D.z() += (kRenderZOffset + .1f);
-        quadVector.emplace_back(VizManager::MakeSimpleQuad(fromColor, from3D, fromSideLen));
-      }
-    
-      // to quad
-      if ( kRenderBordersTo )
-      {
-        Anki::ColorRGBA toColor = GetDebugColor( it.to->GetContentType() );
-        if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
-        toColor.SetAlpha(0.6f);
-        const float toSideLen = it.to->GetSideLen();
-        Point3f to3D = it.to->GetCenter();
-        to3D.z() += (kRenderZOffset + .1f);
-        if ( kRenderSeeds && it.isSeed) { to3D.z() += 1.0f; };
-        quadVector.emplace_back(VizManager::MakeSimpleQuad(toColor, to3D, toSideLen));
+        // from quad
+        if ( kRenderBordersFrom || (kRenderSeeds && it.isSeed) )
+        {
+          Anki::ColorRGBA fromColor = GetDebugColor( it.from->GetContentType() );
+          fromColor.SetAlpha(0.6f);
+          const float fromSideLen = it.from->GetSideLen();
+          Point3f from3D = it.from->GetCenter();
+          from3D.z() += (kRenderZOffset + .1f);
+          quadVector.emplace_back(VizManager::MakeSimpleQuad(fromColor, from3D, fromSideLen));
+        }
+      
+        // to quad
+        if ( kRenderBordersToQuad )
+        {
+          Anki::ColorRGBA toColor = GetDebugColor( it.to->GetContentType() );
+          if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
+          const float alpha = comboIt.second.dirty ? 0.2f : 0.8f;
+          toColor.SetAlpha(alpha);
+          const float toSideLen = it.to->GetSideLen();
+          Point3f to3D = it.to->GetCenter();
+          const float renderOffset = comboIt.second.dirty ? (kRenderZOffset*0.5f) : kRenderZOffset;
+          to3D.z() += (renderOffset + .1f);
+          if ( kRenderSeeds && it.isSeed) { to3D.z() += 1.0f; };
+          quadVector.emplace_back(VizManager::MakeSimpleQuad(toColor, to3D, toSideLen));
+        }
+
+        // to dot
+        if ( kRenderBordersToDot )
+        {
+          Anki::ColorRGBA toColor = GetDebugColor( it.to->GetContentType() );
+          if ( kRenderBordersToQuad ) { toColor = Anki::NamedColors::WHITE; }
+          if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
+          if ( it.isEnd ) { toColor = Anki::NamedColors::MAGENTA; }
+          const float alpha = comboIt.second.dirty ? 0.2f : 0.8f;
+          toColor.SetAlpha(alpha);
+          const float toSideLen = 5.0f;
+          Point3f border3D = CalculateBorderWaypointCenter( it );
+          const float renderOffset = comboIt.second.dirty ? (kRenderZOffset*0.5f) : kRenderZOffset;
+          border3D.z() += (renderOffset + .5f);
+          if ( kRenderSeeds && it.isSeed) { border3D.z() += 1.0f; };
+          quadVector.emplace_back(VizManager::MakeSimpleQuad(toColor, border3D, toSideLen));
+        }
+
       }
     }
   
@@ -152,40 +307,123 @@ void NavMeshQuadTreeProcessor::Draw() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeProcessor::IsCached(EContentType contentType)
+bool NavMeshQuadTreeProcessor::IsCached(ENodeContentType contentType)
 {
-  const bool isCached = (contentType == EContentType::ObstacleCube        ) ||
-                        (contentType == EContentType::ObstacleUnrecognized);
+  const bool isCached = (contentType == ENodeContentType::ObstacleCube        ) ||
+                        (contentType == ENodeContentType::ObstacleUnrecognized);
   return isCached;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(EContentType contentType)
+ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
 {
   ColorRGBA ret = Anki::NamedColors::BLACK;
   switch (contentType) {
-    case EContentType::Clear:                { ret = ColorRGBA(0.2f, 0.6f, 0.2f, 0.3f); break; };
-    case EContentType::Unknown:              { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
-    case EContentType::ObstacleCube:         { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
-    case EContentType::ObstacleUnrecognized: { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
-    default: {
-      CORETECH_ASSERT(!"supported");
-    }
+    case ENodeContentType::Invalid:              { CORETECH_ASSERT(!"not supported"); break; };
+    case ENodeContentType::Subdivided:           { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
+    case ENodeContentType::Clear:                { ret = ColorRGBA(1.0f, 0.0f, 1.0f, 0.3f); break; };
+    case ENodeContentType::Unknown:              { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
+    case ENodeContentType::ObstacleCube:         { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::ObstacleUnrecognized: { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::Cliff:                { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
   }
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeProcessor::AddBorderWaypoint(const NavMeshQuadTreeNode* from, const NavMeshQuadTreeNode* to)
+uint32_t NavMeshQuadTreeProcessor::GetBorderTypeKey(ENodeContentType innerType, ENodeContentType outerType)
 {
-  _borders.emplace_back( from, to, false );
+  static_assert( sizeof(std::underlying_type<ENodeContentType>::type) < 2, "Can't fit keys in 4 bytes" );
+  
+  // key = innerType << X | outerType, where X is sizeof(outerType)
+  uint32_t key = 0;
+  key |= static_cast<std::underlying_type<ENodeContentType>::type>(innerType);
+  key <<= (8*(sizeof(std::underlying_type<ENodeContentType>::type)));
+  key |= static_cast<std::underlying_type<ENodeContentType>::type>(outerType);
+
+  return key;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Vec3f NavMeshQuadTreeProcessor::CalculateBorderWaypointCenter(const BorderWaypoint& waypoint)
+{
+  Point3f borderCenter {};
+
+  // get direction in 3D
+  const Vec3f& borderDir = EDirectionToNormalVec3f(waypoint.direction);
+  // find center from the smaller node towards the other one
+  if ( waypoint.from->GetLevel() <= waypoint.to->GetLevel() ) {
+    borderCenter = waypoint.from->GetCenter() + (borderDir * waypoint.from->GetSideLen() * 0.5f);
+  } else {
+    borderCenter = waypoint.to->GetCenter() - (borderDir * waypoint.to->GetSideLen()  * 0.5f);
+  }
+  return borderCenter;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NavMemoryMapTypes::Border NavMeshQuadTreeProcessor::MakeBorder(const Point3f& origin, const Point3f& dest,
+  EDirection firstEDirection, EDirection lastEDirection)
+{
+  // Border.from   = origin
+  // Border.to     = dest
+  // Border.normal = perpendicular to (dest-origin) in same side as neighborDir (first or last, both should be in the same)
+  const Vec3f& normalFromEDirection = EDirectionToNormalVec3f(firstEDirection);
+
+  Vec3f perpendicular{};
+  
+  // create a perpendicular to the border line, and check if it's the one in the same side as the neighbor direction
+  Vec3f borderLine = dest - origin;
+  const float length = borderLine.MakeUnitLength();
+  if ( NEAR_ZERO(length) )
+  {
+    // origin and dest fall in the same place, use average of the neighbor directions
+    const Vec3f& normalFromEDirectionLast = EDirectionToNormalVec3f(lastEDirection);
+    perpendicular = (normalFromEDirection + normalFromEDirectionLast) * 0.5f;
+  }
+  else
+  {
+    perpendicular = {-borderLine.y(), borderLine.x(), borderLine.z()};
+    const float dotPerpendicularAndNeighbor = DotProduct(perpendicular, normalFromEDirection);
+    if ( dotPerpendicularAndNeighbor <= 0.0f )
+    {
+      // the dot product between the perpendicular we chose randomly and the expected direction from
+      // the neighbor direction is <0. This means it's the wrong perpendicular, so we just correct
+      // the sign of x,y (2d)
+      perpendicular.x() = -perpendicular.x();
+      perpendicular.y() = -perpendicular.y();
+    }
+  }
+
+  NavMemoryMapTypes::Border ret{origin, dest, perpendicular};
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeProcessor::InvalidateBorders()
+{
+  // set all borders as dirty
+  for ( auto& comboIt : _bordersPerContentCombination )
+  {
+    comboIt.second.dirty = true;
+  }
+  
+  // all gfx are dirty true
+  _borderGfxDirty = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeProcessor::AddBorderWaypoint(const NavMeshQuadTreeNode* from, const NavMeshQuadTreeNode* to, EDirection dir)
+{
+  CORETECH_ASSERT(nullptr != _currentBorderCombination);
+  _currentBorderCombination->waypoints.emplace_back( from, to, dir, false );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::FinishBorder()
 {
-  if ( !_borders.empty() ) {
-    _borders.back().isEnd = true;
+  CORETECH_ASSERT(nullptr != _currentBorderCombination);
+  if ( !_currentBorderCombination->waypoints.empty() ) {
+    _currentBorderCombination->waypoints.back().isEnd = true;
   }
 }
 
@@ -309,21 +547,23 @@ bool CheckedInfo::AreAllDirectionsComplete() const
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType outerType)
+void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentType outerType)
 {
   using namespace FindBordersHelpers;
   
   DEBUG_FIND_BORDER("------------------------------------------------------");
   DEBUG_FIND_BORDER("Starting FindBorders...");
+  const uint32_t borderComboKey = GetBorderTypeKey(innerType, outerType);
+  _currentBorderCombination = &_bordersPerContentCombination[borderComboKey];
 
   CORETECH_ASSERT(IsCached(innerType));
-  NodeSet& innerSet = _nodeSets[innerType];
+  const NodeSet& innerSet = _nodeSets[innerType];
 
-  _borders.clear();
+  _currentBorderCombination->waypoints.clear();
   _borderGfxDirty = true;
   
   // map with what is visited for every inner node
-  std::map<const NavMeshQuadTreeNode*, CheckedInfo> checkedNodes;
+  std::unordered_map<const NavMeshQuadTreeNode*, CheckedInfo> checkedNodes;
 
   // reserve space for this node's neighbors
   NavMeshQuadTreeNode::NodeCPtrVector neighbors;
@@ -333,7 +573,7 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
   const EClockDirection clockDir = EClockDirection::CW;
     
   // for every node, try to see if they are an innerContent with at least one outerContent neighbor
-  for( auto& candidateSeed : innerSet )
+  for( const auto& candidateSeed : innerSet )
   {
     DEBUG_FIND_BORDER("[%p] Checking node for seeds", candidateSeed);
     
@@ -406,8 +646,8 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
         DEBUG_FIND_BORDER("[%p] Found outer for seed %zu in dir %s", candidateSeed, candidateOuterIdx, EDirectionToString(candidateDir));
       
         // add first waypoint
-        AddBorderWaypoint( candidateSeed, neighbors[candidateOuterIdx] );
-        _borders.back().isSeed = true;
+        AddBorderWaypoint( candidateSeed, neighbors[candidateOuterIdx], candidateDir );
+        _currentBorderCombination->waypoints.back().isSeed = true;
 
         // this node can be seed of the group, prepare the variables for iteration:
         // neighbors = already set
@@ -454,6 +694,7 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
                 for ( size_t idx=0; idx<neighbors.size(); ++idx) {
                   if ( neighbors[idx] == curInnerNode ) {
                     fromNeighborIdx = idx; // we pretend to point at the same node we come from
+                    break;
                   }
                 }
                 CORETECH_ASSERT(fromNeighborIdx < neighbors.size()); // should always find it
@@ -467,6 +708,9 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
                 // back, either for a new border or the same one
                 CheckedInfo& nextCheckedInfo = checkedNodes[nextNode];
                 nextCheckedInfo.InitDirection(fromDir, neighbors.size());
+                
+                // Flag where we come from, cause we know that it's not an outer
+                nextCheckedInfo.MarkChecked(fromDir, fromNeighborIdx);
 
                 // jump to the new node
                 curDir = fromDir;
@@ -483,7 +727,11 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
                 {
                   DEBUG_FIND_BORDER("[%p] (%s,%zu) 'OuterType' looped iterating neighbors. Finishing border and seed",
                   curInnerNode, EDirectionToString(curDir), nextNeighborIdx);
+                  
+                  // we could add also this node as a waypoint, but then it belongs to two borders; consider.
+                  // AddBorderWaypoint( curInnerNode, nextNode );
               
+                  // in any case, a border ends here
                   FinishBorder();
 
                   // we are no longer seeding, we have to go back to find a seeding point
@@ -494,7 +742,7 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
                   DEBUG_FIND_BORDER("[%p] It's 'OuterType'. Adding border", nextNode);
               
                   // it's an outer node, add as border
-                  AddBorderWaypoint( curInnerNode, nextNode );
+                  AddBorderWaypoint( curInnerNode, nextNode, curDir );
                 }
 
                 // flag checked
@@ -559,10 +807,78 @@ void NavMeshQuadTreeProcessor::FindBorders(EContentType innerType, EContentType 
   CORETECH_ASSERT(checkedNodes.size() == innerSet.size());
   
   DEBUG_FIND_BORDER("FINISHED FindBorders!");
+  _currentBorderCombination->dirty = false;
+  _currentBorderCombination = nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeProcessor::AddQuadsToDraw(EContentType contentType,
+bool NavMeshQuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeContentType outerType) const
+{
+  DEBUG_FIND_BORDER("------------------------------------------------------");
+  DEBUG_FIND_BORDER("Starting HasBorderSeed...");
+
+  CORETECH_ASSERT(IsCached(innerType));
+  const auto innerSetMatchIt = _nodeSets.find(innerType);
+  if ( innerSetMatchIt == _nodeSets.end() ) {
+    // we don't have any nodes of innerType, there can't be any seeds
+    return false;
+  }
+  
+  // reserve space for any node's neighbors
+  NavMeshQuadTreeNode::NodeCPtrVector neighbors;
+  CORETECH_ASSERT( _root->GetLevel() < 32 );
+  neighbors.reserve( 1 << _root->GetLevel() ); // hope this doesn't grow too quickly
+  
+  // for every node, try to see if they are an innerContent with at least one outerContent neighbor
+  const NodeSet& innerSet = innerSetMatchIt->second;
+  for( const auto& candidateSeed : innerSet )
+  {
+    DEBUG_FIND_BORDER("[%p] Checking node for seeds", candidateSeed);
+    
+    // start from a given neighbor
+    EDirection candidateDir = EDirection::North;
+    const EClockDirection clockDir = EClockDirection::CW;
+    
+    do
+    {
+      DEBUG_FIND_BORDER("[%p] Checking direction '%s'", candidateSeed, EDirectionToString(candidateDir));
+
+      // grab neighbors of current direction
+      neighbors.clear();
+      candidateSeed->AddSmallestNeighbors(candidateDir, clockDir, neighbors);
+
+      size_t candidateOuterIdx = 0;
+      
+      // look for an outer neighbor within this direction
+      const size_t neighborCount = neighbors.size();
+      while ( candidateOuterIdx < neighborCount )
+      {
+          // if it's an outer, we have found a seed
+          if ( neighbors[candidateOuterIdx]->GetContentType() == outerType ) {
+            break;
+          }
+        
+        ++candidateOuterIdx;
+      }
+      
+      const bool foundOuter = (candidateOuterIdx < neighborCount);
+      if ( foundOuter ) {
+        DEBUG_FIND_BORDER("[%p] Found outer in '%s/%zu'", candidateSeed, EDirectionToString(candidateDir), candidateOuterIdx);
+        return true;
+      }
+      
+      candidateDir = GetNextDirection( candidateDir, clockDir );
+      
+    } while ( candidateDir != EDirection::North ); // until iterated all directions
+    
+  } // for every seed
+  
+  DEBUG_FIND_BORDER("Finished HasBorders without finding any seed");
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeProcessor::AddQuadsToDraw(ENodeContentType contentType,
   VizManager::SimpleQuadVector& quadVector, const ColorRGBA& color, float zOffset) const
 {
   // find the set of quads for that content type
