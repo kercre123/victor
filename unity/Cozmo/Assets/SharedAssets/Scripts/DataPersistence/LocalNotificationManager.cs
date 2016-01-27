@@ -49,7 +49,12 @@ public class LocalNotificationManager : MonoBehaviour {
 #endif
   }
 
-  public void Awake() {
+  // StartupManager initializes localization in Start
+  public void Start() {
+#if UNITY_IOS
+    NotificationServices.RegisterForNotifications(NotificationType.Alert | NotificationType.Badge | NotificationType.Sound);
+#endif
+
     CancelScheduledNotifications();
 
     if (NotificationsToSchedule != null) {      

@@ -44,7 +44,7 @@ public class LocalNotificationManagerEditor : Editor {
 
   private float DrawTimeWidget(string title, float time) {
     int hour = Mathf.FloorToInt(time);
-    int minute = Mathf.FloorToInt(60 * (time - hour));
+    int minute = Mathf.RoundToInt(60 * (time - hour));
 
     int ampm = hour / 12;
     hour = hour % 12;
