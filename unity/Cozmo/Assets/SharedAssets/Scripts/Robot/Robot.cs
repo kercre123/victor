@@ -562,16 +562,20 @@ public class Robot : IDisposable {
   #region Friendship Points
 
   public void InitializeFriendshipPoints() {
+    ProgressionStatMessage.robotID = ID;
+
     // Set FriendshipPoints and Level from Save Data.
     FriendshipLevel = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipLevel;
     FriendshipPoints = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipPoints;
 
     FriendshipPointsMessage.newVal = FriendshipPoints;
-    RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+    ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipPoints = FriendshipPointsMessage;
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
 
     FriendshipLevelMessage.newVal = FriendshipLevel;
-    RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
+    ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipLevel = FriendshipLevelMessage;
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
 
     // Now initialize progress stats
@@ -583,9 +587,12 @@ public class Robot : IDisposable {
   }
 
   public void AddToFriendshipPoints(int deltaValue) {
+    ProgressionStatMessage.robotID = ID;
+    
     FriendshipPoints += deltaValue;
     FriendshipPointsMessage.newVal = FriendshipPoints;
-    RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+    ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipPoints = FriendshipPointsMessage;
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
 
     ComputeFriendshipLevel();
@@ -620,11 +627,14 @@ public class Robot : IDisposable {
       if (OnFriendshipLevelUp != null) {
         OnFriendshipLevelUp(FriendshipLevel);
       }
-      RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
+      ProgressionStatMessage.robotID = ID;
+      ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipLevel = FriendshipLevelMessage;
+      RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
       RobotEngineManager.Instance.SendMessage();
 
       FriendshipPointsMessage.newVal = FriendshipPoints;
-      RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+      ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipPoints = FriendshipPointsMessage;
+      RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
       RobotEngineManager.Instance.SendMessage();
 
     }
