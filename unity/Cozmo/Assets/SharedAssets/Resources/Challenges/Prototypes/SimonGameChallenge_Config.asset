@@ -15,3 +15,18 @@ MonoBehaviour:
   MaxSequenceLength: 8
   MaxAttempts: 3
   NumCubesInPattern: 3
+  CozmoGuessCubeCorrectPercentage:
+    serializedVersion: 2
+    m_Curve:
+    - time: -.0479925163
+      value: .990719199
+      inSlope: -.106584691
+      outSlope: -.106584691
+      tangentMode: 0
+    - time: 5.01523256
+      value: .581688702
+      inSlope: -.297731221
+      outSlope: -.297731221
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
