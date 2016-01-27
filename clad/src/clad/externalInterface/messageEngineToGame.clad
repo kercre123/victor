@@ -301,6 +301,12 @@ message VerifyDebugConsoleVarMessage {
   ConsoleVarUnion varValue
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  GAME  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// The behavior wants the UI to pop up a game request
+message RequestGameStart {}
 
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
