@@ -6,6 +6,9 @@ using System.Linq;
 
 public class GraphEvaluator2d {
 
+  [JsonIgnore]
+  const float kVerticalEpsilon = 0.001f;
+
   // By Default Vector2 serializes with a bunch of extra crap. This just serializes to x,y
   public struct Point2 {
     public float x;
@@ -41,10 +44,22 @@ public class GraphEvaluator2d {
   public GraphEvaluator2d() {
   }
 
-
   public static implicit operator GraphEvaluator2d(AnimationCurve curve) {
     GraphEvaluator2d graph = new GraphEvaluator2d();
-    graph.Nodes.AddRange(curve.keys.Select(x => new Point2(x.time, x.value)));
+    for (int i = 0; i < curve.keys.Length; i++) {
+      var key = curve.keys[i];
+      float t = key.time;
+      if (i > 0) {
+        var last = curve.keys[i - 1];
+        // shrink miniscule gaps to vertical drops
+        if (key.time - curve.keys[i - 1].time <= kVerticalEpsilon) {
+          t = last.time;
+        }
+      }
+      t = (float)Math.Round(t, 3);
+      float v = (float)Math.Round(key.value, 2);
+      graph.Nodes.Add(new Point2(t, v));
+    }
     return graph;
   }
 
@@ -61,6 +76,10 @@ public class GraphEvaluator2d {
       Keyframe keyB = new Keyframe(graph.Nodes[i].x, graph.Nodes[i].y);
 
       var delta = (graph.Nodes[i] - graph.Nodes[i - 1]);
+      if (delta.x < Mathf.Epsilon) {
+        delta.x += kVerticalEpsilon;
+        keyB.time += kVerticalEpsilon;
+      }
       keyA.outTangent = keyB.inTangent = delta.y / delta.x;
 
       curve.MoveKey(i - 1, keyA);

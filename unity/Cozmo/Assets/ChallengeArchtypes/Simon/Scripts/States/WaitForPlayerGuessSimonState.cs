@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo.Audio;
-using AnimationGroups;
 
 namespace Simon {
   public class WaitForPlayerGuessSimonState : State {

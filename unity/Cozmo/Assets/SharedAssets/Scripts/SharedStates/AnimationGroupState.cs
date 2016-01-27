@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using AnimationGroups;
 
 public class AnimationGroupState : State {
 

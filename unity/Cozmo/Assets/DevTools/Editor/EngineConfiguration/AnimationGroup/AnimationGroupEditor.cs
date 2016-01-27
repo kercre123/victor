@@ -32,34 +32,6 @@ public class AnimationGroupEditor : EditorWindow {
 
   public static string[] AnimationGroupNameOptions { get { return _AnimationGroupNameOptions; } }
 
-  // custom Unity Style for a toolbar button
-  private static GUIStyle _ToolbarButtonStyle;
-
-  public static GUIStyle ToolbarButtonStyle {
-    get {
-      if (_ToolbarButtonStyle == null) {
-        _ToolbarButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
-        _ToolbarButtonStyle.normal.textColor = Color.white;
-        _ToolbarButtonStyle.active.textColor = Color.white;
-      }
-      return _ToolbarButtonStyle;
-    }
-  }
-
-  // custom Unity Style for a toolbar button
-  private static GUIStyle _ToolbarStyle;
-
-  public static GUIStyle ToolbarStyle {
-    get {
-      if (_ToolbarStyle == null) {
-        _ToolbarStyle = new GUIStyle(EditorStyles.toolbar);
-        _ToolbarStyle.normal.textColor = Color.white;
-        _ToolbarStyle.active.textColor = Color.white;
-      }
-      return _ToolbarStyle;
-    }
-  }
-
   static AnimationGroupEditor() {
     LoadAnimationGroups();
   }
@@ -122,9 +94,9 @@ public class AnimationGroupEditor : EditorWindow {
 
   private void DrawToolbar() {
 
-    EditorGUILayout.BeginHorizontal(ToolbarStyle);
+    EditorGUILayout.BeginHorizontal(EditorDrawingUtility.ToolbarStyle);
 
-    if (GUILayout.Button("Load", ToolbarButtonStyle)) {
+    if (GUILayout.Button("Load", EditorDrawingUtility.ToolbarButtonStyle)) {
       GenericMenu menu = new GenericMenu();
 
       foreach (var file in _AnimationGroupFiles.Where(x => x.EndsWith(".json"))) {
@@ -141,7 +113,7 @@ public class AnimationGroupEditor : EditorWindow {
 
 
 
-    if (_RecentFiles.Count > 0 && GUILayout.Button("Load Recent", ToolbarButtonStyle)) {
+    if (_RecentFiles.Count > 0 && GUILayout.Button("Load Recent", EditorDrawingUtility.ToolbarButtonStyle)) {
 
       GenericMenu menu = new GenericMenu();
 
@@ -157,7 +129,7 @@ public class AnimationGroupEditor : EditorWindow {
       menu.ShowAsContext();
     }
 
-    if (GUILayout.Button("New AnimationGroup", ToolbarButtonStyle)) {
+    if (GUILayout.Button("New AnimationGroup", EditorDrawingUtility.ToolbarButtonStyle)) {
       if (CheckDiscardUnsavedAnimationGroup()) {
         _CurrentAnimationGroup = new AnimationGroup();
         GUI.FocusControl("EditNameField");
@@ -167,7 +139,7 @@ public class AnimationGroupEditor : EditorWindow {
 
 
     if (_CurrentAnimationGroup != null) {
-      if (GUILayout.Button("Save", ToolbarButtonStyle)) {         
+      if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {         
         if (string.IsNullOrEmpty(_CurrentAnimationGroupFile)) {
           _CurrentAnimationGroupFile = EditorUtility.SaveFilePanel("Save AnimationGroup", sAnimationGroupDirectory, _CurrentAnimationGroupName, "json");
         }
@@ -225,39 +197,13 @@ public class AnimationGroupEditor : EditorWindow {
     unfolded = EditorGUILayout.Foldout(unfolded, "Emotion Scorers ("+entry.MoodScorer.Count+")");
     if (unfolded) {
       EditorGUI.indentLevel++;
-      EditorDrawingUtility.DrawList("", entry.MoodScorer, DrawEmotionScorer, () => new EmotionScorer());
+      EditorDrawingUtility.DrawList("", entry.MoodScorer, EditorDrawingUtility.DrawEmotionScorer, () => new EmotionScorer());
       EditorGUI.indentLevel--;
     }
     _ExpandedFoldouts[entry] = unfolded;
 
     EditorGUILayout.EndVertical();
     return entry;
-  }
-
-  public EmotionScorer DrawEmotionScorer(EmotionScorer emotionScorer) {
-    EditorGUILayout.BeginVertical();
-
-    emotionScorer.EmotionType = (Anki.Cozmo.EmotionType)EditorGUILayout.EnumPopup("Emotion", emotionScorer.EmotionType);
-
-    emotionScorer.Curve = EditorGUILayout.CurveField("Score Graph", emotionScorer.Curve, Color.green, new Rect(-1, 0, 2, 1));
-
-    emotionScorer.TrackDelta = EditorGUILayout.Toggle("Track Delta", emotionScorer.TrackDelta);
-
-    // linearize the curve
-    for (int i = 1; i < emotionScorer.Curve.keys.Length; i++) {    
-      var keyA = emotionScorer.Curve.keys[i - 1];
-      var keyB = emotionScorer.Curve.keys[i];
-
-      keyB.inTangent = keyA.outTangent = 
-        (keyB.value - keyA.value) /
-        (keyB.time - keyA.time);
-
-      emotionScorer.Curve.MoveKey(i - 1, keyA);
-      emotionScorer.Curve.MoveKey(i, keyB);
-    }
-
-    EditorGUILayout.EndVertical();
-    return emotionScorer;
   }
     
   [MenuItem("Cozmo/Animation Group Editor %g")]

@@ -1,0 +1,203 @@
+﻿using UnityEngine;
+using System.Collections;
+using UnityEditor;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.IO;
+using Newtonsoft.Json;
+using Anki.Cozmo;
+
+public class BehaviorEditor : EditorWindow {
+
+  private static string[] _BehaviorFiles;
+
+  private static string[] _BehaviorNameOptions;
+
+  private static Behavior _CurrentBehavior;
+  private static string _CurrentBehaviorFile;
+  private static string _CurrentBehaviorName;
+
+
+  private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
+
+  public static string sBehaviorDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/behaviors/"; } }
+
+
+  public static string[] BehaviorNameOptions { get { return _BehaviorNameOptions; } }
+
+  static BehaviorEditor() {
+    LoadBehaviors();
+  }
+
+  private static void LoadBehaviors() {
+    if (Directory.Exists(sBehaviorDirectory)) {
+      _BehaviorFiles = Directory.GetFiles(sBehaviorDirectory);
+      _BehaviorNameOptions = _BehaviorFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
+    }
+    else {
+      _BehaviorFiles = new string[0];
+      _BehaviorNameOptions = _BehaviorFiles;
+    }
+  }
+
+  private bool CheckDiscardUnsavedBehavior() {
+    bool canOpen = true;
+    if (_CurrentBehavior != null && (string.IsNullOrEmpty(_CurrentBehaviorFile) || JsonConvert.SerializeObject(_CurrentBehavior, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(_CurrentBehaviorFile))) {
+      canOpen = EditorUtility.DisplayDialog("Warning", "Opening an Behavior will Discard Unsaved Changes. Are you Sure?", "Yes");
+    }
+    return canOpen;
+  }
+
+  private void LoadFile(string path) {
+    if (CheckDiscardUnsavedBehavior()) {
+      try {
+        _CurrentBehavior = null;
+        _CurrentBehaviorFile = null;
+        _CurrentBehaviorName = null;
+
+        string json = File.ReadAllText(path);
+        _CurrentBehavior = JsonConvert.DeserializeObject<Behavior>(json, GlobalSerializerSettings.JsonSettings);
+        _CurrentBehaviorFile = path;
+        _CurrentBehaviorName = Path.GetFileNameWithoutExtension(path);
+        _RecentFiles.Add(path);
+      }
+      catch (Exception ex) {
+        Debug.LogException(ex);
+      }
+    }
+  }
+
+  public void OnGUI() {
+    DrawToolbar();
+
+    if (_CurrentBehavior != null) {
+
+      _CurrentBehaviorName = EditorGUILayout.TextField("File Name", _CurrentBehaviorName ?? string.Empty);
+
+      DrawBehavior(_CurrentBehavior);
+    }
+  }
+
+  private void DrawToolbar() {
+
+    EditorGUILayout.BeginHorizontal(EditorDrawingUtility.ToolbarStyle);
+
+    if (GUILayout.Button("Load", EditorDrawingUtility.ToolbarButtonStyle)) {
+      GenericMenu menu = new GenericMenu();
+
+      foreach (var file in _BehaviorFiles.Where(x => x.EndsWith(".json"))) {
+        Action<string> closureAction = (string f) => {
+
+          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
+            LoadFile(f);
+          });
+        };
+        closureAction(file);
+      }
+      menu.ShowAsContext();
+    }
+
+
+
+    if (_RecentFiles.Count > 0 && GUILayout.Button("Load Recent", EditorDrawingUtility.ToolbarButtonStyle)) {
+
+      GenericMenu menu = new GenericMenu();
+
+      foreach (var file in _RecentFiles) {
+        Action<string> closureAction = (string f) => {
+
+          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
+            LoadFile(f);
+          });
+        };
+        closureAction(file);
+      }
+      menu.ShowAsContext();
+    }
+
+    if (GUILayout.Button("New Behavior", EditorDrawingUtility.ToolbarButtonStyle)) {
+      if (CheckDiscardUnsavedBehavior()) {
+        _CurrentBehavior = new Behavior();
+        GUI.FocusControl("EditNameField");
+        _CurrentBehaviorFile = null;
+      }
+    }
+
+
+    if (_CurrentBehavior != null) {
+      if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {         
+        if (string.IsNullOrEmpty(_CurrentBehaviorFile)) {
+          _CurrentBehaviorFile = EditorUtility.SaveFilePanel("Save Behavior", sBehaviorDirectory, _CurrentBehaviorName, "json");
+        }
+
+        if (!string.IsNullOrEmpty(_CurrentBehaviorFile)) {
+        
+          string newFileName = Path.Combine(sBehaviorDirectory, _CurrentBehaviorName + ".json");
+
+          bool good = true;
+          if (Path.GetFileName(_CurrentBehaviorFile) != Path.GetFileName(newFileName)) {
+            if (EditorUtility.DisplayDialog("Alert!", "Behavior has been renamed. Save Anyway?", "Yes", "No")) {
+              if (File.Exists(_CurrentBehaviorFile) && EditorUtility.DisplayDialog("Alert!", "Should we delete the old file?\n" + _CurrentBehaviorFile, "Yes", "No")) {
+                File.Delete(_CurrentBehaviorFile);
+              }
+              _CurrentBehaviorFile = newFileName;
+            }
+            else {
+              good = false;
+            }
+          }
+
+          if (good) {
+            _RecentFiles.Add(_CurrentBehaviorFile);
+
+            File.WriteAllText(_CurrentBehaviorFile, JsonConvert.SerializeObject(_CurrentBehavior, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
+
+            // Reload groups
+            LoadBehaviors();
+            EditorUtility.DisplayDialog("Save Successful!", "Behavior '" + _CurrentBehaviorName + "' has been saved to " + _CurrentBehaviorFile, "OK");
+          }
+        }
+
+      }
+    }
+
+    GUILayout.FlexibleSpace();
+
+    EditorGUILayout.EndHorizontal();
+  }
+
+  public Behavior DrawBehavior(Behavior entry) {
+    EditorGUILayout.BeginVertical();
+
+    entry.BehaviorType = (BehaviorType)EditorGUILayout.EnumPopup("Behavior Type", entry.BehaviorType);
+
+    if (entry.BehaviorType == BehaviorType.PlayAnim) {
+      entry.AnimName = AnimationGroupEditor.AnimationNameOptions[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(AnimationGroupEditor.AnimationNameOptions, entry.AnimName)), AnimationGroupEditor.AnimationNameOptions)];
+    }
+
+    entry.Name = EditorGUILayout.TextField("Name", entry.Name ?? string.Empty);
+
+    EditorDrawingUtility.DrawList("Emotion Scorers", entry.EmotionScorers, EditorDrawingUtility.DrawEmotionScorer, () => new EmotionScorer());
+
+    entry.RepetitionPenalty = EditorGUILayout.CurveField("Repetition Penalty", entry.RepetitionPenalty);
+
+    EditorDrawingUtility.DrawList("Behavior Groups", entry.BehaviorGroups, bg => (BehaviorGroup)EditorGUILayout.EnumPopup(bg), () => BehaviorGroup.Reactionary);
+
+    EditorGUILayout.EndVertical();
+    return entry;
+  }
+
+
+
+
+
+  [MenuItem("Cozmo/Behavior Editor %y")]
+  public static void OpenBehaviorEditor() {
+    BehaviorEditor window = (BehaviorEditor)EditorWindow.GetWindow(typeof(BehaviorEditor));
+    window.titleContent = new GUIContent("Behavior Editor");
+    window.Show();
+  }
+
+
+}
