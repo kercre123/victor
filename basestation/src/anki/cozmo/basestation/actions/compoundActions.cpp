@@ -22,10 +22,7 @@ namespace Anki {
     
     ICompoundAction::ICompoundAction(std::initializer_list<IActionRunner*> actions)
     {
-      PRINT_NAMED_WARNING("ICompoundAction.NewCompoundAction", "Making new compound action with %i actions", (int)actions.size());
       for(IActionRunner* action : actions) {
-        PRINT_NAMED_WARNING("ICompoundAction.NewCompoundActionRobot", "Robot is %p\n", action->GetRobot());
-        
         if(action == nullptr) {
           PRINT_NAMED_WARNING("ICompoundAction.NullActionPointer",
                               "Refusing to add a null action pointer to group.\n");
@@ -95,7 +92,7 @@ namespace Anki {
             action.second->SetRobot(*GetRobot());
           }
           action.second->Cancel();
-          //action.second->Update();
+          action.second->Update();
           action.first = true;
         }
       }
@@ -113,7 +110,6 @@ namespace Anki {
     : ICompoundAction(actions)
     , _delayBetweenActionsInSeconds(0)
     {
-      PRINT_NAMED_WARNING("Compound.NewCompoundAction", "Making new compound action with %i actions", (int)actions.size());
       Reset();
     }
     

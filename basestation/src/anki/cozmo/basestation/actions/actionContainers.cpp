@@ -463,16 +463,13 @@ namespace Anki {
       if(IsEmpty()) {
         PRINT_STREAM_INFO("ActionQueue.Print", "ActionQueue is empty.\n");
       } else {
-//        std::stringstream ss;
-//        ss << "ActionQueue with " << _queue.size() << " actions: ";
-        PRINT_STREAM_INFO("ActionQueue.Print", "ActionQueue contains " << _queue.size() << " actions:\n");
+        std::stringstream ss;
+        ss << "ActionQueue with " << _queue.size() << " actions: ";
         for(auto action : _queue) {
-//          ss << action->GetName() << ", ";
-          PRINT_STREAM_INFO("ActionList.Print", action->GetName() << ", ");
+          ss << action->GetName() << ", ";
         }
-//        PRINT_STREAM_INFO("ActionQueue.Print", ss.str());
+        PRINT_STREAM_INFO("ActionQueue.Print", ss.str());
       }
-      
     } // Print()
     
   } // namespace Cozmo

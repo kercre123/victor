@@ -132,8 +132,6 @@ namespace Anki {
       void SetSlotHandle(ActionList::SlotHandle inSlot) { _inSlot = inSlot; }
       ActionList::SlotHandle GetSlotHandle() const { return _inSlot; }
       
-      bool IsRunning() { return _isRunning; }
-      
     protected:
       
       Robot* _robot = nullptr;

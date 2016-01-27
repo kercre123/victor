@@ -246,7 +246,7 @@ namespace Anki {
     
 #pragma mark ---- IAction ----
     
-    IAction::IAction() : IActionRunner()
+    IAction::IAction()
     {
       Reset();
     }
