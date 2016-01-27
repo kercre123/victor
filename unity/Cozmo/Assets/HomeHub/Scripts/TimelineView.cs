@@ -70,6 +70,8 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
+    [SerializeField]
+    Cozmo.UI.ProgressBar _BatteryBar;
 
     public void CloseView() {
       // TODO: Play some close animations before destroying view
