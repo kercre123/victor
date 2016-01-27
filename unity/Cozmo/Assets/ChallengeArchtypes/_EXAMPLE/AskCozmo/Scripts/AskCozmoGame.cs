@@ -74,7 +74,7 @@ namespace AskCozmo {
         CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleAnimationDone);
         Progress += 0.25f;
         if (Progress >= 1) {
-          RaiseMiniGameWin();
+          RaiseMiniGameWin("Everybody is a winner");
         }
       }
       else {
@@ -84,7 +84,7 @@ namespace AskCozmo {
 
       AttemptsLeft--;
       if (AttemptsLeft <= 0) {
-        RaiseMiniGameLose();
+        RaiseMiniGameLose("Everybody is a loser");
       }
 
       _CurrentSlideName = GetNextSlide();

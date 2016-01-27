@@ -99,10 +99,10 @@ namespace SpeedTap {
         int roundsLeft = _Rounds - losingScore - winningScore;
         if (winningScore > losingScore + roundsLeft) {
           if (_PlayerRoundsWon > _CozmoRoundsWon) {
-            RaiseMiniGameWin();
+            RaiseMiniGameWin("WINNER: COZMO", "Cozmo " + _CozmoRoundsWon + ", " + "Player " + _PlayerRoundsWon);
           }
           else {
-            RaiseMiniGameLose();
+            RaiseMiniGameLose("WINNER: PLAYER", "Cozmo " + _CozmoRoundsWon + ", " + "Player " + _PlayerRoundsWon);
           }
         }
         ResetScore();
