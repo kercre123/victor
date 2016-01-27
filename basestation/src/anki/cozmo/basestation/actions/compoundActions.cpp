@@ -65,6 +65,8 @@ namespace Anki {
       // As part of a compound action this should not emit completion
       action->SetEmitCompletionSignal(false);
       
+      // An action can be added to a compound action after it has been queued in which case
+      // this is where its robot pointer gets set
       action->SetRobot(*GetRobot());
       
       _actions.emplace_back(false, action);

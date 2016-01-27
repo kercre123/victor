@@ -32,7 +32,7 @@ namespace Cozmo {
 #pragma mark ITrackAction
   
 ITrackAction::ITrackAction()
-  : _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
+: _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
 {
   
 }
@@ -287,8 +287,8 @@ void ITrackAction::Cleanup()
 #pragma mark TrackObjectAction
 
 TrackObjectAction::TrackObjectAction(const ObjectID& objectID, bool trackByType)
-  : _objectID(objectID)
-  , _trackByType(trackByType)
+: _objectID(objectID)
+, _trackByType(trackByType)
 {
 
 }

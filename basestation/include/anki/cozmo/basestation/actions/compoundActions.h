@@ -40,9 +40,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
-      
-      virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
-      
+
     protected:
       
       // Call the constituent actions' Reset() methods and mark them each not done.

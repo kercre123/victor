@@ -89,6 +89,34 @@ ActionResult TestInterruptAction::CheckIfDone()
   return (_complete) ? ActionResult::SUCCESS : ActionResult::RUNNING;
 }
 
+// Simple compound action with a function to expose its internal list of actions
+class TestCompoundActionSequential : public CompoundActionSequential
+{
+public:
+  TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions);
+  virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
+};
+
+TestCompoundActionSequential::TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions)
+: CompoundActionSequential(actions)
+{
+  
+}
+
+// Simple parallel action with a function to expose its internal list of actions
+class TestCompoundActionParallel : public CompoundActionParallel
+{
+public:
+  TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions);
+  virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
+};
+
+TestCompoundActionParallel::TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions)
+: CompoundActionParallel(actions)
+{
+  
+}
+
 // Simple Interruptable action that can be set to complete
 class TestActionWithinAction : public IAction
 {
@@ -118,7 +146,7 @@ TestActionWithinAction::TestActionWithinAction(std::string name, RobotActionType
 
 ActionResult TestActionWithinAction::Init()
 {
-  CompoundActionSequential* compound = new CompoundActionSequential();
+  TestCompoundActionSequential* compound = new TestCompoundActionSequential({});
   _compoundAction = compound;
   EXPECT_TRUE(RegisterSubAction(_compoundAction));
   
@@ -131,7 +159,7 @@ ActionResult TestActionWithinAction::Init()
 ActionResult TestActionWithinAction::CheckIfDone()
 {
   bool result = true;
-  for(auto action : ((ICompoundAction*)_compoundAction)->GetActions())
+  for(auto action : ((TestCompoundActionSequential*)_compoundAction)->GetActions())
   {
     result &= ((TestAction*)action.second)->_complete;
   }
@@ -310,8 +338,6 @@ TEST(QueueAction, InterruptAction)
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   
   // Interrupt test2 for test1 which is now current
-  r.GetActionList().Update();
-  
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   
@@ -477,7 +503,7 @@ TEST(QueueAction, ParallelActionImmediateComplete)
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
   testAction2->_complete = true;
-  CompoundActionParallel* compoundAction = new CompoundActionParallel({testAction1, testAction2});
+  TestCompoundActionParallel* compoundAction = new TestCompoundActionParallel({testAction1, testAction2});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -500,7 +526,7 @@ TEST(QueueAction, ParallelActionOneCompleteBefore)
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
-  CompoundActionParallel* compoundAction = new CompoundActionParallel({testAction1, testAction2});
+  TestCompoundActionParallel* compoundAction = new TestCompoundActionParallel({testAction1, testAction2});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -672,7 +698,7 @@ TEST(QueueAction, QueueActionWithinAction)
   r.GetActionList().Update();
   
   // Sets the subActions of testActionWithinAction to be complete so that testActionWithinAction can complete
-  auto subActions = ((ICompoundAction*)testActionWithinAction->GetAction())->GetActions();
+  auto subActions = ((TestCompoundActionSequential*)testActionWithinAction->GetAction())->GetActions();
   for(auto action : subActions)
   {
     // Set during Init() when RegisterSubActions() is called
@@ -691,7 +717,7 @@ TEST(QueueAction, ActionFailureRetry)
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
-  CompoundActionSequential* compoundAction = new CompoundActionSequential({testAction1, testAction2});
+  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({testAction1, testAction2});
   testAction1->_complete = true;
   testAction2->_complete = true;
   testAction2->SetNumRetries(3);
