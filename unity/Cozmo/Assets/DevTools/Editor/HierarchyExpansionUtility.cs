@@ -85,8 +85,6 @@ public static class HierarchyExpansionUtility {
     }
     item = _ITreeViewDataSource_FindItem.Invoke(data, new object[]{ obj.GetInstanceID() });
 
-    Debug.Log("Setting " + obj.name + " to Expanded: " + expanded);
-
     _ITreeViewDataSource_SetExpanded.Invoke(data, new object[] { item, expanded });
   }
 
