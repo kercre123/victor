@@ -246,7 +246,7 @@ namespace Anki {
 
         if (++cnt == (200 * interval_seconds)) {
           u32 numTicsPerSec = (cnt * 1000000) / (cycleStartTime - startTime);
-          PRINT("TicsPerSec %d\n", numTicsPerSec);
+          AnkiInfo( 94, "CozmoBot.TicsPerSec", 347, "%d", 1, numTicsPerSec);
           startTime = cycleStartTime;
           cnt = 0;
         }
