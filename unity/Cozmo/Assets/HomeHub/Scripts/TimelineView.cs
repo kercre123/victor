@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
 using System.Linq;
+using Anki.UI;
+using Cozmo.UI;
 
 namespace Cozmo.HomeHub {
   public class TimelineView : MonoBehaviour {
@@ -39,9 +41,12 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private GraphSpline _GraphSpline;
 
-    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
+    [SerializeField]
+    private AnkiButton _EndSessionButton;
 
-    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
+    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
+
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -98,7 +103,7 @@ namespace Cozmo.HomeHub {
       _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
 
       _DailyGoalInstance.transform.SetSiblingIndex(0);
-
+      _EndSessionButton.onClick.AddListener(HandleEndSessionButtonTap);
       Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       _CozmoWidgeInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
     }
@@ -225,6 +230,25 @@ namespace Cozmo.HomeHub {
         summaryPanel.AnimateFriendshipBar(data);
       }
 
+    }
+
+    private void HandleEndSessionButtonTap() {
+      // Open confirmation dialog instead
+      AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(false);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm);
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleEndSessionCancel);
+      alertView.TitleLocKey = LocalizationKeys.kEndSessionViewTitle;
+      alertView.DescriptionLocKey = LocalizationKeys.kEndSessionViewDescription;
+    }
+
+    private void HandleEndSessionCancel() {
+      DAS.Info(this, "HandleEndSessionCancel");
+    }
+
+    private void HandleEndSessionConfirm() {
+      DAS.Info(this, "HandleEndSessionConfirm");
     }
 
   }

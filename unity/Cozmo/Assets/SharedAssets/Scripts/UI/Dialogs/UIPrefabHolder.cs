@@ -46,6 +46,13 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private AlertView _AlertViewPrefab_NoText;
+
+      public AlertView AlertViewPrefab_NoText {
+        get { return _AlertViewPrefab_NoText; }
+      }
+
+      [SerializeField]
       private Cozmo.MinigameWidgets.SharedMinigameView _SharedMinigameViewPrefab;
 
       public Cozmo.MinigameWidgets.SharedMinigameView SharedMinigameViewPrefab {

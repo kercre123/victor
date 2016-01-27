@@ -135,6 +135,9 @@ public static class LocalizationKeys {
   public const string kButtonClose = "button.close";
   public const string kLabelPlusCount = "label.plusCount";
   public const string kDailySummaryTitle = "dailySummary.title";
+  public const string kEndSessionViewTitle = "endSession.title";
+  public const string kEndSessionViewDescription = "endSession.description";
+  public const string kDailyGoalTitle = "dailyGoal.title";
 
   #endregion
 }
