@@ -50,7 +50,7 @@ namespace DataPersistence {
       _WinGameButton.onClick.AddListener(WinGameButtonClicked);
       _LoseGameButton.onClick.AddListener(LoseGameButtonClicked);
     }
-      
+
     private void HandleResetSaveDataButtonClicked() {
       // use reflection to change readonly field
       typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
@@ -111,6 +111,7 @@ namespace DataPersistence {
       }
 
     }
+
     private void WinGameButtonClicked() {
       var homeHub = GetHomeHub();
       if (homeHub != null) {

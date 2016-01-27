@@ -18,7 +18,7 @@ public class DailySummaryPanel : MonoBehaviour {
   private const string kLevelReachedAnimationNameB = "LevelReachedB";
   private const string kMaxLevelAnimationNameB = "MaxLevelB";
 
-
+  public Cozmo.HomeHub.TimelineView.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
 
   [SerializeField]
   private Button _CloseButton;
@@ -103,6 +103,10 @@ public class DailySummaryPanel : MonoBehaviour {
       CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, subContainer);
     }
 
+    AnimateFriendshipBar(data);
+  }
+
+  public void AnimateFriendshipBar(TimelineEntryData data) {
     StartCoroutine(FriendshipBarCoroutine(data));
   }
 
@@ -223,6 +227,9 @@ public class DailySummaryPanel : MonoBehaviour {
     }
 
     yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent));
+    if (FriendshipBarAnimateComplete != null) {
+      FriendshipBarAnimateComplete(data, this);
+    }
   }
 
   // sets the labels on the friendship timeline

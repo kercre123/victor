@@ -45,7 +45,7 @@ namespace DataPersistence {
     public Date AddYears(int years) {
       return new Date(Year + years, Month, Day);
     }
-      
+
     public Date AddMonths(int months) {
       int newYear = Year;
       int newMonth = Month;
@@ -172,6 +172,10 @@ namespace DataPersistence {
     public override int GetHashCode() {
       // assuming date is valid, this will be good for most of time.
       return Year << 9 | Month << 5 | Day;
+    }
+
+    public static System.TimeSpan operator-(Date a, Date b) {
+      return new System.DateTime(a.Year, a.Month, a.Day) - new System.DateTime(b.Year, b.Month, b.Day);
     }
 
     public static bool operator==(Date a, Date b) {
