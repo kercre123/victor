@@ -480,8 +480,7 @@ namespace Anki {
         {
           case RobotInterface::controller_wheel:
           {
-            WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError,
-                                      msg.kp, msg.ki, msg.maxIntegralError);
+            WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
             break;
           }
           case RobotInterface::controller_head:
