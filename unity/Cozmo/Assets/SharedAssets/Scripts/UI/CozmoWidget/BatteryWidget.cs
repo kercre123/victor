@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using Cozmo.UI;
 
-public class BatteryWidget : BaseView {
+public class BatteryWidget : MonoBehaviour {
 
   [SerializeField]
   Cozmo.UI.ProgressBar _BatteryBar;
@@ -18,7 +18,7 @@ public class BatteryWidget : BaseView {
     _BatteryBar.SetProgress(value);
   }
 
-  protected override void CleanUp() {
+  public void OnDestroy() {
     RobotEngineManager.Instance.OnEmotionRecieved -= UpdateBatteryLife;
   }
 }
