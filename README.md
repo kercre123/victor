@@ -1,12 +1,10 @@
 # cozmo-game
 
-Cozmo unity gameplay code. 
+Cozmo Unity gameplay code. 
 
-Please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
+If you are contributing to the Unity/C# codebase, please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
 
 # Building cozmo-game
-
-At this point, only Mac and iOS are supported. The engine itself supports more platforms. See [products-cozmo](https://github.com/anki/products-cozmo).
 
 ### Brew
 
@@ -17,9 +15,9 @@ First install [brew](http://brew.sh/). Then use brew to install the following de
 
 ### coretech-external
 
-Get the latest coretech-external binaries [here](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). The latest results click Artifacts->View and download the .tar.gz
+Get the latest [coretech-external binaries](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). Click the most recent Artifacts->View. Download and extract the .tar.gz
 
-Have your paths (eg. ~/.bash_profile) setup correctly it must include the line:
+Have your paths (eg. open ~/.bash_profile) setup correctly it must include the line:
 
     export CORETECH_EXTERNAL_DIR="<PATH_TO_CORETECH_EXTERNAL>"
 
@@ -31,7 +29,7 @@ Once you set your paths you need to restart your terminal for the settings to ta
 
 We are using [Unity 5.2.2f1](http://unity3d.com/get-unity/download/archive).
 
-A dev scene that includes a simple list of challenges for Cozmo. Used in a development environment.
+A dev scene that includes a simple list of challenges for Cozmo. Useful for skipping the metagame stuff to work on the individual challenges.
 
     /unity/Cozmo/Assets/Scenes/Dev.unity
 
