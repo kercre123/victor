@@ -51,6 +51,24 @@ static void GetSubDirs(const std::string& parentDir, std::vector<std::string>& s
   ASSERT_FALSE(subDirs.empty());
 }
 
+// Helper for splitting a full path in to path, filename, and extension
+static void SplitPath(const std::string& fullpath, std::string& path, std::string& filename, std::string& ext)
+{
+  // TODO: Make more robust to windows file system
+  auto fnameStart = fullpath.find_last_of("/") + 1;
+  if(fnameStart == std::string::npos) {
+    fnameStart = 0;
+  }
+  auto extStart = fullpath.find_last_of(".");
+  auto fnameLength = std::string::npos;
+  if(extStart != std::string::npos) {
+    fnameLength = extStart - fnameStart;
+    ext = fullpath.substr(extStart, std::string::npos);
+  }
+  path     = fullpath.substr(0, fnameStart);
+  filename = fullpath.substr(fnameStart, fnameLength);
+}
+
 // Helper lambda to pass an image file into the vision component and
 // then update FaceWorld with any resulting detections
 static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& faceTracker,
@@ -69,7 +87,12 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
   Vision::ImageRGB dispImg(img);
 # endif
   
-  lastResult = faceTracker.Update(img);
+  // Show the same frame N times to fake face being still in video for a few frames
+  const s32 fakeVideoFrames = 1; // min == 1!
+  for(s32 i=0; i<fakeVideoFrames; ++i) {
+    lastResult = faceTracker.Update(img);
+  }
+  
   ASSERT_TRUE(RESULT_OK == lastResult);
   
   for(auto & face : faceTracker.GetFaces()) {
@@ -94,7 +117,9 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
   }
   
 # if SHOW_IMAGES
-  dispImg.Display(dispName);
+  if(nullptr != dispName) {
+    dispImg.Display(dispName);
+  }
 # endif
   
   lastResult = robot.GetFaceWorld().Update();
@@ -152,7 +177,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
       
       // Use this one image as the training image for this owner
       Recognize(robot, img, faceTracker, ownerTrainFile, "CurrentOwner", true);
-      
+    
       auto knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDs();
       EXPECT_EQ(knownFaceIDs.size(), 1);
       if(knownFaceIDs.empty()) {
@@ -252,7 +277,7 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
     return;
   }
   
-  const std::string dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "test/faceRecognitionTests/");
+  const std::string dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "test/faceRecVideoTests/");
   
   Vision::Image img;
   
@@ -271,9 +296,9 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
                                   Vision::FaceTracker::DetectionMode::SingleImage);
 
   
-  // Enroll the first image of each person
+  // Enroll the first N images of each person
   faceTracker.EnableNewFaceEnrollment(true);
-  s32 ctr=0;
+  const s32 NumToEnroll = 30;
   std::map<std::string, Vision::TrackedFace::ID_t> expectedIDs;
   for(auto & ownerDir : peopleDirs)
   {
@@ -281,27 +306,39 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
     
     GetImageFiles(ownerDir, ownerTrainFiles);
     ASSERT_FALSE(ownerTrainFiles.empty());
+    ASSERT_GT(ownerTrainFiles.size(), NumToEnroll);
     
-    // Use this one image as the training image for this owner
-    Recognize(robot, img, faceTracker, ownerTrainFiles[0], ("User" + std::to_string(ctr++)).c_str(), true);
+    for(s32 iEnroll = 0; iEnroll < NumToEnroll; ++iEnroll) {
+      const char* displayName = nullptr;
+      std::string path, filename, ext;
+      if(iEnroll == 0) {
+        SplitPath(ownerTrainFiles[iEnroll], path, filename, ext);
+        SplitPath(path.substr(0,path.size()-1), path, filename, ext);
+        displayName = filename.c_str();
+      }
       
-    auto knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
-    ASSERT_EQ(knownFaceIDs.size(), 1);
-    if(knownFaceIDs.empty()) {
-      // TODO: Remove this and fail if knownFaceIDs is empty
-      PRINT_NAMED_WARNING("FaceRecognition.PairwiseComparison.NoOwnerFaceDetected",
-                          "File: %s", ownerTrainFiles[0].c_str());
-      continue;
-    }
+      Recognize(robot, img, faceTracker, ownerTrainFiles[iEnroll], displayName, true);
     
-    expectedIDs[ownerDir] = knownFaceIDs.begin()->second;
+      auto knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
+      EXPECT_EQ(knownFaceIDs.size(), 1);
+      if(knownFaceIDs.empty()) {
+        // TODO: Remove this and fail if knownFaceIDs is empty
+        PRINT_NAMED_WARNING("FaceRecognition.PairwiseComparison.NoOwnerFaceDetected",
+                            "File: %s", ownerTrainFiles[iEnroll].c_str());
+        continue;
+      }
+    
+      expectedIDs[ownerDir] = knownFaceIDs.begin()->second;
+    }
   }
   
+  /*
   auto knownIDs = robot.GetFaceWorld().GetKnownFaceIDs();
   ASSERT_EQ(knownIDs.size(), peopleDirs.size());
   for(s32 i=0; i<knownIDs.size(); ++i) {
     ASSERT_EQ(knownIDs[i], i+1);
   }
+   */
   
   // Check to make sure every image in every dir is recognized correctly and
   // don't enroll any faces as new
@@ -321,7 +358,7 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
       
       // Get the faces observed in the current image
       auto observedFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
-      ASSERT_EQ(observedFaceIDs.size(), 1);
+      EXPECT_EQ(observedFaceIDs.size(), 1);
       if(observedFaceIDs.empty()) {
         // TODO: Remove this and fail if observedFaceIDs is empty
         PRINT_NAMED_WARNING("FaceRecognition.PairwiseComparison.NoTestFaceDetected",
