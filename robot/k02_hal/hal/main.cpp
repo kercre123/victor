@@ -41,12 +41,17 @@ namespace Anki
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
       u32 GetID() { return 0; } ///< Stub for K02 for now, need to get this from Espressif Flash storage
 
+      void HALInit(void) {
+        DAC::Sync();
+      }
+      
       // This method is called at 7.5KHz (once per scan line)
       // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(void)
       {
         I2C::Enable();
+        SPI::ManageDrop();
         UART::Transmit();
         IMU::Manage();
       }

@@ -28,6 +28,15 @@ transmissionWord spi_rx_buff[RX_SIZE];
 
 static int totalDrops = 0;
 
+static bool audioUpdated = false;
+static uint8_t AudioBackBuffer[MAX_AUDIO_BYTES_PER_DROP];
+
+void Anki::Cozmo::HAL::SPI::ManageDrop(void) {
+  // This should probably bias
+  DAC::Feed(AudioBackBuffer);
+  DAC::EnableAudio(audioUpdated);
+}
+
 static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
   static int pwmCmdCounter = 0;
@@ -38,13 +47,14 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
+    
+    // Buffer the data that needs to be fed into the devices for next cycle
+    audioUpdated = drop->droplet & audioDataValid;
+    memcpy(AudioBackBuffer, drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
 
     if (drop->droplet & screenDataValid) {
       OLED::FeedFace(drop->droplet & screenRectData, drop->screenData);
     }
-    
-    DAC::Feed(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
-    DAC::EnableAudio(drop->droplet & audioDataValid);
 
     uint8_t *payload_data = (uint8_t*) drop->payload;
     totalDrops++;
@@ -77,7 +87,7 @@ static bool ProcessDrop(void) {
       case DROP_BodyUpgradeData:
       {
         BodyUpgradeData bud;
-          memcpy(&bud, payload_data+1, sizeof(bud));
+        memcpy(&bud, payload_data+1, sizeof(bud));
         UART::SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
         break;
       }
@@ -150,21 +160,11 @@ void DMA2_IRQHandler(void) {
   DMA_CDNE = DMA_CDNE_CDNE(2);
   DMA_CINT = 2;
 
-  static bool allowReset = true;
-  static int droppedDrops = 0;
-  
   I2C::Disable();
 
   // Don't check for silence, we had a drop
   if (ProcessDrop()) {
-    if (allowReset) {
-      droppedDrops = 0;
-      allowReset = false;
-    }
-    
     return ;
-  } else {
-    droppedDrops ++;
   }
 
   // Check for silence in the 
@@ -233,7 +233,7 @@ void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   DMA_TCD3_CITER_ELINKNO  = TX_SIZE;                          // Set current interation count
   DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
-  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration               
+  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration
 
   NVIC_EnableIRQ(DMA2_IRQn);
   NVIC_EnableIRQ(DMA3_IRQn);
