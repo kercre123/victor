@@ -36,7 +36,7 @@ public abstract class GameBase : MonoBehaviour {
 
     _WonChallenge = true;
     string primaryText = primaryTextOverride;
-    if (!string.IsNullOrEmpty(primaryText)) {
+    if (string.IsNullOrEmpty(primaryText)) {
       primaryText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
     }
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
@@ -48,10 +48,9 @@ public abstract class GameBase : MonoBehaviour {
 
   public void RaiseMiniGameLose(string primaryTextOverride = "", string secondaryTextOverride = "") {
     _StateMachine.Stop();
-
     _WonChallenge = false;
     string primaryText = primaryTextOverride;
-    if (!string.IsNullOrEmpty(primaryText)) {
+    if (string.IsNullOrEmpty(primaryText)) {
       primaryText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     }
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);

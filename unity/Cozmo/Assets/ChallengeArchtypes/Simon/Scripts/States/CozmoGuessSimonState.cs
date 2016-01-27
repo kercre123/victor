@@ -109,7 +109,7 @@ namespace Simon {
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
       BlackoutLights();
-      _GameInstance.RaiseMiniGameWin();
+      _GameInstance.RaiseMiniGameWin("WINNER: PLAYER", "Guess Length: " + _CurrentSequence.Count);
     }
 
     private void BlackoutLights() {
