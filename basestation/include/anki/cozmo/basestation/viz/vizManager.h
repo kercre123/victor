@@ -302,7 +302,7 @@ namespace Anki {
       // related to a given object
       
       void DrawSegment(const std::string& identifier,
-        const Point3f& from, const Point3f& to, const ColorRGBA& color, bool clearPrevious);
+        const Point3f& from, const Point3f& to, const ColorRGBA& color, bool clearPrevious, float zOffset=0.0f);
       void EraseSegments(const std::string& identifier);
       
       // vector of simple quads (note a simple quad is an axis aligned quad with a color)
