@@ -33,9 +33,10 @@ enum class EContentType : uint8_t {
 // struct that defines a border
 struct Border {
   Border() : from{}, to{}, normal{} {}
+  Border(const Point3f& f, const Point3f& t, const Vec3f& n) : from(f), to(t), normal(n) {}
   Point3f from;
   Point3f to;
-  Point3f normal; // perpendicular to the segment, in outwards direction with respect to the content.
+  Vec3f normal; // perpendicular to the segment, in outwards direction with respect to the content.
   // Note the normal could be embedded in the order 'from->to', but a separate variable makes it easier to use
 };
 using BorderVector = std::vector<Border>;

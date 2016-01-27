@@ -116,17 +116,83 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
   }
 
   outBorders.clear();
-  if ( !borderCombination.waypoints.empty() ) {
-    outBorders.push_back( NavMemoryMapTypes::Border() );
-  }
+  if ( !borderCombination.waypoints.empty() )
+  {
+    // -- convert from borderCombination info to borderVector
   
-//  // convert from borderCombination info to borderVector
-//  for( const auto& borderWaypoint : borderCombination.waypoints )
-//  {
-//    const Vec3f& borderDir = EDirectionToNormalVec3f(borderWaypoint.direction);
-//    Point3f borderCenter  = CalculateBorderWaypointCenter( borderWaypoint );
-//  }
+    // epsilon to merge waypoints into the same line
+    const float kDotBorderEpsilon = 0.9848f; // cos(10deg) = 0.984807...
+    EDirection firstNeighborDir = borderCombination.waypoints[0].direction;
+    Point3f curOrigin = CalculateBorderWaypointCenter(borderCombination.waypoints[0]);
+    Point3f curDest   = curOrigin;
+    
+    // note: curNeighborDirection could be first, last, average, ... all should yield same result, so I'm doing first
   
+    // iterate all waypoints (even 0)
+    size_t idx = 0;
+    const size_t count = borderCombination.waypoints.size();
+    do
+    {
+      const bool isLast = (idx == count-1);
+      bool canContinueLine = true;
+    
+      // get border center for this waypoint
+      Point3f borderCenter  = CalculateBorderWaypointCenter( borderCombination.waypoints[idx] );
+      Vec3f curDir = curDest - curOrigin;
+      
+      // if we currently don't have a line (but a point)
+      if ( NEAR_ZERO( curDir.LengthSq() ) )
+      {
+        // we can continue this line
+        canContinueLine = true;
+      }
+      else
+      {
+        // there's already a line, can we continue it?
+        curDir.MakeUnitLength();
+        Vec3f stepDir = borderCenter - curDest;
+        stepDir.MakeUnitLength();
+        // calculate dotProduct and see if they are close enough in the same direction
+        const float dotProduct = DotProduct(curDir, stepDir);
+        canContinueLine = dotProduct >= kDotBorderEpsilon;
+      }
+
+      //  canContinueLine ; isLast ; expected
+      //               0        0   ==> AddLine(), origin <- dest, dest <- center
+      //               0        1   ==> AddLine(), origin <- dest, dest <- center, AddLine()
+      //               1        0   ==>                            dest <- center
+      //               1        1   ==>                            dest <- center, AddLine()
+      // -->
+      // if ( !canContinue ) { AddLine(), origin <- dest }
+      // dest <- center
+      // if ( last ) { AddLine() }
+      
+      if ( !canContinueLine )
+      {
+        // add border
+        const EDirection lastNeighborDir = borderCombination.waypoints[idx-1].direction;
+        outBorders.emplace_back( MakeBorder(curOrigin, curDest, firstNeighborDir, lastNeighborDir) );
+        
+        // origin <- dest
+        curOrigin = curDest;
+        firstNeighborDir = lastNeighborDir;
+      }
+      
+      curDest = borderCenter;
+      
+      if ( isLast )
+      {
+        // add border
+        const EDirection lastNeighborDir = borderCombination.waypoints[idx].direction;
+        outBorders.emplace_back( MakeBorder(curOrigin, curDest, firstNeighborDir, lastNeighborDir) );
+      }
+      
+      ++idx;
+    } while ( idx < count );
+    
+  } // has waypoints
+
+  //todo_render_borders_as_arrows;
 
 }
 
@@ -264,6 +330,44 @@ Vec3f NavMeshQuadTreeProcessor::CalculateBorderWaypointCenter(const BorderWaypoi
     borderCenter = waypoint.to->GetCenter() - (borderDir * waypoint.to->GetSideLen()  * 0.5f);
   }
   return borderCenter;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NavMemoryMapTypes::Border NavMeshQuadTreeProcessor::MakeBorder(const Point3f& origin, const Point3f& dest,
+  EDirection firstEDirection, EDirection lastEDirection)
+{
+  // Border.from   = origin
+  // Border.to     = dest
+  // Border.normal = perpendicular to (dest-origin) in same side as neighborDir (first or last, both should be in the same)
+  const Vec3f& normalFromEDirection = EDirectionToNormalVec3f(firstEDirection);
+
+  Vec3f perpendicular{};
+  
+  // create a perpendicular to the border line, and check if it's the one in the same side as the neighbor direction
+  Vec3f borderLine = dest - origin;
+  const float length = borderLine.MakeUnitLength();
+  if ( NEAR_ZERO(length) )
+  {
+    // origin and dest fall in the same place, use average of the neighbor directions
+    const Vec3f& normalFromEDirectionLast = EDirectionToNormalVec3f(lastEDirection);
+    perpendicular = (normalFromEDirection + normalFromEDirectionLast) * 0.5f;
+  }
+  else
+  {
+    perpendicular = {borderLine.y(), borderLine.x(), borderLine.z()};
+    const float dotPerpendicularAndNeighbor = DotProduct(perpendicular, normalFromEDirection);
+    if ( dotPerpendicularAndNeighbor <= 0.0f )
+    {
+      // the dot product between the perpendicular we chose randomly and the expected direction from
+      // the neighbor direction is <0. This means it's the wrong perpendicular, so we just correct
+      // the sign of x,y (2d)
+      perpendicular.x() = -perpendicular.x();
+      perpendicular.y() = -perpendicular.y();
+    }
+  }
+
+  NavMemoryMapTypes::Border ret{origin, dest, perpendicular};
+  return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

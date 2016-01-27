@@ -109,6 +109,9 @@ private:
   // given a border waypoint, calculate its center in 3D
   static Vec3f CalculateBorderWaypointCenter(const BorderWaypoint& waypoint);
 
+  // given 3d points and their neighbor directions, calculate a 3D border definition (line + normal)
+  static NavMemoryMapTypes::Border MakeBorder(const Point3f& origin, const Point3f& dest, EDirection firstEDirection, EDirection lastEDirection);
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
