@@ -44,6 +44,15 @@ namespace Cozmo {
       [SerializeField]
       private RectTransform _HowToSlideContainer;
 
+      [SerializeField]
+      private Anki.UI.AnkiButton _HowToPlayButton;
+
+      [SerializeField]
+      private HowToPlayView _HowToPlayViewPrefab;
+      private HowToPlayView _HowToPlayViewInstance;
+
+      private GameObject _HowToPlayViewContentPrefab;
+
       private CanvasGroup _CurrentSlide;
       private string _CurrentSlideName;
       private Sequence _SlideInTween;
@@ -55,6 +64,10 @@ namespace Cozmo {
       public CanvasGroup CurrentSlide { get { return _CurrentSlide; } }
 
       public bool _OpenAnimationStarted = false;
+
+      void Start() {
+        _HowToPlayButton.onClick.AddListener(HandleHowToPlayButtonTap);
+      }
 
       #region Base View
 
@@ -77,6 +90,7 @@ namespace Cozmo {
         if (_TransitionOutSlide != null) {
           Destroy(_TransitionOutSlide.gameObject);
         }
+        _HowToPlayButton.onClick.RemoveAllListeners();
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -257,19 +271,42 @@ namespace Cozmo {
         GameObject widgetObj = UIManager.CreateUIElement(_TitleWidgetPrefab.gameObject, this.transform);
         _TitleWidgetInstance = widgetObj.GetComponent<ChallengeTitleWidget>();
 
-        _TitleWidgetInstance.Initialize(titleText, titleSprite, howToPlayContentsPrefab);
-        _TitleWidgetInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
-        _TitleWidgetInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
+        _TitleWidgetInstance.Initialize(titleText, titleSprite);
 
         AddWidget(_TitleWidgetInstance);
+
+        _HowToPlayViewContentPrefab = howToPlayContentsPrefab;
+      }
+
+      private void HandleHowToPlayButtonTap() {
+        OpenHowToPlayDialog();
+      }
+
+      public void OpenHowToPlayDialog() {
+        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
+        _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
+        _HowToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
+
+        if (HowToPlayViewOpened != null) {
+          HowToPlayViewOpened();
+        }
       }
 
       public void OpenHowToPlayView() {
-        _TitleWidgetInstance.OpenHowToPlayDialog();
+        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
+        _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
+        _HowToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
+
+        if (HowToPlayViewOpened != null) {
+          HowToPlayViewOpened();
+        }
       }
 
       public void CloseHowToPlayView() {
-        _TitleWidgetInstance.CloseHowToPlayView();
+        if (_HowToPlayViewInstance != null) {
+          _HowToPlayViewInstance.CloseView();
+          _HowToPlayViewInstance = null;
+        }
       }
 
       private void HandleHowToPlayViewOpened() {
