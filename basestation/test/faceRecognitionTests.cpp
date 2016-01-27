@@ -1,4 +1,5 @@
 #include "util/helpers/includeGTest.h"
+#include "util/fileUtils/fileUtils.h"
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -18,56 +19,8 @@ extern Anki::Util::Data::DataPlatform* dataPlatform;
 using namespace Anki;
 using namespace Anki::Cozmo;
 
-// Helper for getting all image files (jpeg and png) from a given directory
-static void GetImageFiles(const std::string& inDir, std::vector<std::string>& filenames)
-{
-  static const std::regex imageFilenameMatcher("[^.].*\\.(jpg|jpeg|png|JPG|JPEG|PNG)\0");
-  
-  DIR* dir = opendir(inDir.c_str());
-  ASSERT_TRUE(nullptr != dir);
-  
-  dirent *entry;
-  while((entry = readdir(dir)) != nullptr) {
-    if(entry->d_type == DT_REG && std::regex_match(entry->d_name, imageFilenameMatcher)) {
-      filenames.push_back(inDir + entry->d_name);
-    }
-  }
-}
 
-// Helper for getting subdirectories from a given directory
-static void GetSubDirs(const std::string& parentDir, std::vector<std::string>& subDirs)
-{
-  DIR* dir = opendir(parentDir.c_str());
-  ASSERT_TRUE(nullptr != dir);
-  
-  dirent* entry = nullptr;
-  while ( (entry = readdir(dir)) != nullptr) {
-    if(entry->d_type == DT_DIR && entry->d_name[0] != '.') {
-      PRINT_NAMED_INFO("FaceRecognition.PairwiseComparison.AddingPersonDir", "Person: %s", entry->d_name);
-      subDirs.push_back(parentDir + entry->d_name + "/");
-    }
-  }
-  closedir(dir);
-  ASSERT_FALSE(subDirs.empty());
-}
-
-// Helper for splitting a full path in to path, filename, and extension
-static void SplitPath(const std::string& fullpath, std::string& path, std::string& filename, std::string& ext)
-{
-  // TODO: Make more robust to windows file system
-  auto fnameStart = fullpath.find_last_of("/") + 1;
-  if(fnameStart == std::string::npos) {
-    fnameStart = 0;
-  }
-  auto extStart = fullpath.find_last_of(".");
-  auto fnameLength = std::string::npos;
-  if(extStart != std::string::npos) {
-    fnameLength = extStart - fnameStart;
-    ext = fullpath.substr(extStart, std::string::npos);
-  }
-  path     = fullpath.substr(0, fnameStart);
-  filename = fullpath.substr(fnameStart, fnameLength);
-}
+static const char* imageFileExtensions = "jpg|jpeg|png";
 
 // Helper lambda to pass an image file into the vision component and
 // then update FaceWorld with any resulting detections
@@ -149,7 +102,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
   
   // Find all directories of face images, one per person
   std::vector<std::string> peopleDirs;
-  GetSubDirs(dataPath, peopleDirs);
+  Util::FileUtils::ListAllDirectories(dataPath, peopleDirs);
 
   struct {
     s32 falsePosCount = 0;
@@ -159,9 +112,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
   
   for(auto & ownerDir : peopleDirs)
   {
-    std::vector<std::string> ownerTrainFiles;
-    
-    GetImageFiles(ownerDir, ownerTrainFiles);
+    auto ownerTrainFiles = Util::FileUtils::FilesInDirectory(dataPath+ownerDir, imageFileExtensions);
     ASSERT_FALSE(ownerTrainFiles.empty());
     
     for(auto & ownerTrainFile : ownerTrainFiles)
@@ -176,7 +127,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
       robot.GetFaceWorld().ClearAllFaces();
       
       // Use this one image as the training image for this owner
-      Recognize(robot, img, faceTracker, ownerTrainFile, "CurrentOwner", true);
+      Recognize(robot, img, faceTracker, dataPath+ownerDir+"/"+ownerTrainFile, "CurrentOwner", true);
     
       auto knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDs();
       EXPECT_EQ(knownFaceIDs.size(), 1);
@@ -198,13 +149,12 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
       {
         const bool shouldBeOwner = (testDir == ownerDir);
         
-        std::vector<std::string> testFiles;
-        GetImageFiles(testDir, testFiles);
+        auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+testDir, imageFileExtensions);
         ASSERT_FALSE(testFiles.empty());
         
         for(auto & testFile : testFiles)
         {
-          Recognize(robot, img, faceTracker, testFile, "TestImage", shouldBeOwner);
+          Recognize(robot, img, faceTracker, dataPath+testDir+"/"+testFile, "TestImage", shouldBeOwner);
           ++stats.totalCount;
           
           // Get the faces observed in the current image
@@ -283,7 +233,7 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
   
   // Find all directories of face images, one per person
   std::vector<std::string> peopleDirs;
-  GetSubDirs(dataPath, peopleDirs);
+  Util::FileUtils::ListAllDirectories(dataPath, peopleDirs);
   
   struct {
     s32 falsePosCount = 0;
@@ -302,22 +252,14 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
   std::map<std::string, Vision::TrackedFace::ID_t> expectedIDs;
   for(auto & ownerDir : peopleDirs)
   {
-    std::vector<std::string> ownerTrainFiles;
+    auto ownerTrainFiles = Util::FileUtils::FilesInDirectory(dataPath+ownerDir, imageFileExtensions);
     
-    GetImageFiles(ownerDir, ownerTrainFiles);
     ASSERT_FALSE(ownerTrainFiles.empty());
     ASSERT_GT(ownerTrainFiles.size(), NumToEnroll);
     
     for(s32 iEnroll = 0; iEnroll < NumToEnroll; ++iEnroll) {
-      const char* displayName = nullptr;
-      std::string path, filename, ext;
-      if(iEnroll == 0) {
-        SplitPath(ownerTrainFiles[iEnroll], path, filename, ext);
-        SplitPath(path.substr(0,path.size()-1), path, filename, ext);
-        displayName = filename.c_str();
-      }
-      
-      Recognize(robot, img, faceTracker, ownerTrainFiles[iEnroll], displayName, true);
+      const char* displayName = (iEnroll == 0 ? ownerDir.c_str() : nullptr);
+      Recognize(robot, img, faceTracker, dataPath+ownerDir+"/"+ownerTrainFiles[iEnroll], displayName, true);
     
       auto knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
       EXPECT_EQ(knownFaceIDs.size(), 1);
@@ -347,13 +289,12 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
   {
     const Vision::TrackedFace::ID_t expectedID = expectedIDs[testDir];
     
-    std::vector<std::string> testFiles;
-    GetImageFiles(testDir, testFiles);
+    auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+"/"+testDir, imageFileExtensions);
     ASSERT_FALSE(testFiles.empty());
     
     for(auto & testFile : testFiles)
     {
-      Recognize(robot, img, faceTracker, testFile, "TestImage", true);
+      Recognize(robot, img, faceTracker, dataPath+testDir+"/"+testFile, "TestImage", true);
       ++stats.totalCount;
       
       // Get the faces observed in the current image
