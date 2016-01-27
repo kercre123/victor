@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using DataPersistence;
 using System.Collections;
+using System.Collections.Generic;
 
 public class DailyGoalManager : MonoBehaviour {
   
@@ -35,6 +36,26 @@ public class DailyGoalManager : MonoBehaviour {
     StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
     StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
     return _FriendshipFormulaConfig.CalculateDailyGoalProgress(prog, goal);
+  }
+
+  /// <summary>
+  /// Returns the current goal that's the furthest from being complete.
+  /// Use to help determine which minigame cozmo wants to play
+  /// </summary>
+  /// <returns>The stat.</returns>
+  public Anki.Cozmo.ProgressionStatType PrimaryStat() {
+    int greatestVal = 0;
+    Anki.Cozmo.ProgressionStatType greatestType = Anki.Cozmo.ProgressionStatType.Count;
+    foreach (KeyValuePair<Anki.Cozmo.ProgressionStatType, int> kVp in DataPersistenceManager.Instance.CurrentSession.Goals) {
+      int currProg = 0;
+      DataPersistenceManager.Instance.CurrentSession.Progress.TryGetValue(kVp.Key, out currProg);
+      int currGoal = kVp.Value - currProg;
+      if (currGoal > greatestVal) {
+        greatestVal = currGoal;
+        greatestType = kVp.Key;
+      }
+    }
+    return greatestType;
   }
 
   /// <summary>
