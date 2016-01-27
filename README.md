@@ -60,7 +60,7 @@ Useful worlds:
 
  * cozmoViz.wbt - Includes a keyboard controller and the engine. Used to talk to a physical robot.
 
- * cozmoVizForunity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
+ * cozmoVizForUnity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
 
  * PatternPlay.wbt - Simulated environment for a virtual robot. Useful for using Unity to run simulated games. You can create your own versions of this ideal for the game you are testing.
 
