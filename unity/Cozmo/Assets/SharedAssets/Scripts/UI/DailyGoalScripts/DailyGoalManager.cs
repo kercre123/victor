@@ -8,6 +8,9 @@ public class DailyGoalManager : MonoBehaviour {
   [SerializeField]
   private ChallengeDataList _ChallengeList;
 
+  // The Last Challenge ID Cozmo has requested to play
+  private string _lastChallengeID;
+
   #region FriendshipProgression and DailyGoals
 
   // Config file for friendship progression and daily goal generation
@@ -43,7 +46,8 @@ public class DailyGoalManager : MonoBehaviour {
 
   public string GetDesiredMinigameID() {
     ChallengeData randC = _ChallengeList.ChallengeData[Random.Range(0, _ChallengeList.ChallengeData.Length)];
-    return randC.ChallengeID;
+    _lastChallengeID = randC.ChallengeID;
+    return _lastChallengeID;
   }
 
   /// <summary>
