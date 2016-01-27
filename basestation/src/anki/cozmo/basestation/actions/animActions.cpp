@@ -40,7 +40,7 @@ namespace Anki {
       _stoppedPlaying = false;
       _wasAborted     = false;
       
-      if (NeedsAlteredAnimation(*_robot))
+      if (NeedsAlteredAnimation())
       {
         const Animation* streamingAnimation = _robot->GetAnimationStreamer().GetStreamingAnimation();
         const Animation* ourAnimation = _robot->GetCannedAnimation(_animName);
@@ -125,7 +125,7 @@ namespace Anki {
       }
     }
 
-    bool PlayAnimationAction::NeedsAlteredAnimation(Robot& robot) const
+    bool PlayAnimationAction::NeedsAlteredAnimation() const
     {
       // Animations that don't interrupt never need to be altered
       if (!_interruptRunning)

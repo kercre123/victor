@@ -133,7 +133,7 @@ ActionResult ITrackAction::CheckIfDone()
   const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // See if there are new relative pan/tilt angles from the derived class
-  if(GetAngles(*_robot, absPanAngle, absTiltAngle))
+  if(GetAngles(absPanAngle, absTiltAngle))
   {
 
     if( absTiltAngle > _maxHeadAngle ) {
@@ -327,7 +327,7 @@ void TrackObjectAction::Cleanup()
   _robot->GetMoveComponent().UnSetTrackToObject();
 }
   
-bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)
+bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
 {
   ObservableObject* matchingObject = nullptr;
   
@@ -335,7 +335,7 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(true);
     
-    matchingObject = robot.GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
+    matchingObject = _robot->GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
     
     if(nullptr == matchingObject) {
       // Did not see an object of the right type during latest blockworld update
@@ -347,10 +347,10 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
       return false;
     } else if(ActiveIdentityState::Identified == matchingObject->GetIdentityState()) {
       // We've possibly switched IDs that we're tracking. Keep MovementComponent's ID in sync.
-      robot.GetMoveComponent().SetTrackToObject(matchingObject->GetID());
+      _robot->GetMoveComponent().SetTrackToObject(matchingObject->GetID());
     }
   } else {
-    matchingObject = robot.GetBlockWorld().GetObjectByID(_objectID);
+    matchingObject = _robot->GetBlockWorld().GetObjectByID(_objectID);
     if(nullptr == matchingObject) {
       PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.ObjectNoLongerExists",
                           "Object %d no longer exists in BlockWorld",
@@ -386,7 +386,7 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
   
   for(auto marker : observedMarkers) {
     Pose3d markerPoseWrtRobot;
-    if(false == marker->GetPose().GetWithRespectTo(robot.GetPose(), markerPoseWrtRobot)) {
+    if(false == marker->GetPose().GetWithRespectTo(_robot->GetPose(), markerPoseWrtRobot)) {
       PRINT_NAMED_ERROR("TrackObjectAction.GetAngles.PoseOriginError",
                         "Could not get pose of observed marker w.r.t. robot");
       return false;
@@ -419,7 +419,7 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
   ASSERT_NAMED(minDistSq > 0.f, "Distance to closest marker should be > 0.");
   
   absTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
-  absPanAngle  = std::atan2(yDist, xDist) + robot.GetPose().GetRotation().GetAngleAroundZaxis();
+  absPanAngle  = std::atan2(yDist, xDist) + _robot->GetPose().GetRotation().GetAngleAroundZaxis();
   
   return true;
   
@@ -458,9 +458,9 @@ void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) 
   completionUnion.Set_trackFaceCompleted(std::move(completion));
 }
   
-bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)
+bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
 {
-  const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(_faceID);
+  const Vision::TrackedFace* face = _robot->GetFaceWorld().GetFace(_faceID);
   
   if(nullptr == face) {
     // No such face
@@ -474,7 +474,7 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
   _lastFaceUpdate = face->GetTimeStamp();
   
   Pose3d headPoseWrtRobot;
-  if(false == face->GetHeadPose().GetWithRespectTo(robot.GetPose(), headPoseWrtRobot)) {
+  if(false == face->GetHeadPose().GetWithRespectTo(_robot->GetPose(), headPoseWrtRobot)) {
     PRINT_NAMED_ERROR("TrackFaceAction.GetAngles.PoseOriginError",
                       "Could not get pose of face w.r.t. robot.");
     return false;
@@ -499,7 +499,7 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
   ASSERT_NAMED(xyDistSq > 0.f, "Distance to tracked face should be > 0.");
   
   absTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
-  absPanAngle  = std::atan2(yDist, xDist) + robot.GetPose().GetRotation().GetAngleAroundZaxis();
+  absPanAngle  = std::atan2(yDist, xDist) + _robot->GetPose().GetRotation().GetAngleAroundZaxis();
 
   return true;
 } // GetAngles()
@@ -532,7 +532,7 @@ ActionResult TrackMotionAction::InitInternal()
 } // InitInternal()
 
   
-bool TrackMotionAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)
+bool TrackMotionAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
 {
   if(_gotNewMotionObservation && _motionObservation.img_area > 0)
   {
@@ -541,16 +541,16 @@ bool TrackMotionAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     const Point2f motionCentroid(_motionObservation.img_x, _motionObservation.img_y);
     
     // Note: we start with relative angles here, but make them absolute below.
-    robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
+    _robot->GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
     
     // Find pose of robot at time motion was observed
     RobotPoseStamp* poseStamp = nullptr;
     TimeStamp_t junkTime;
-    if(RESULT_OK != robot.GetPoseHistory()->ComputeAndInsertPoseAt(_motionObservation.timestamp, junkTime, &poseStamp)) {
+    if(RESULT_OK != _robot->GetPoseHistory()->ComputeAndInsertPoseAt(_motionObservation.timestamp, junkTime, &poseStamp)) {
       PRINT_NAMED_ERROR("TrackMotionAction.GetAngles.PoseHistoryError",
                         "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
                         _motionObservation.timestamp,
-                        robot.GetLastMsgTimestamp());
+                        _robot->GetLastMsgTimestamp());
       return false;
     }
     

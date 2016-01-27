@@ -195,7 +195,7 @@ namespace Anki {
       virtual ActionResult CheckIfDone() override;
       
       ActionResult InitHelper(ActionableObject* object);
-      ActionResult GetPossiblePoses(const Robot& robot, ActionableObject* object,
+      ActionResult GetPossiblePoses(ActionableObject* object,
                                     std::vector<Pose3d>& possiblePoses,
                                     bool& alreadyInPosition);
       

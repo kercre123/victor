@@ -195,17 +195,17 @@ namespace Anki {
       return  (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
     
-    ActionResult IActionRunner::RegisterSubAction(IActionRunner* &subAction)
+    bool IActionRunner::RegisterSubAction(IActionRunner* &subAction)
     {
       _subActions.push_back(&subAction);
       if(nullptr == GetRobot())
       {
         PRINT_NAMED_INFO("IActionRunner.RegisterSubAction",
                          "Parent action's robot pointer is null, returning Failure_Abort");
-        return ActionResult::FAILURE_ABORT;
+        return false;
       }
       subAction->SetRobot(*GetRobot());
-      return ActionResult::SUCCESS;
+      return true;
     }
     
     void IActionRunner::CancelAndDeleteSubActions()

@@ -50,7 +50,7 @@ namespace Anki {
       virtual ~IActionRunner() { }
       
       void SetRobot(Robot& robot);
-      inline Robot* GetRobot() { return _robot; }
+      Robot* GetRobot() { return _robot; }
       
       ActionResult Update();
       
@@ -152,7 +152,7 @@ namespace Anki {
       // cleanup methods get called. Also, just before Init(), in case the
       // action is reset and run again.
       // Call after new-ing subAction inside of Init()
-      ActionResult RegisterSubAction(IActionRunner* &subAction);
+      bool RegisterSubAction(IActionRunner* &subAction);
 
       // Call Cancel and Update on any registered sub actions and then delete them
       void CancelAndDeleteSubActions();

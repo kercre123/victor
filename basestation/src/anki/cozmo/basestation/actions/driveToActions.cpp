@@ -119,7 +119,7 @@ namespace Anki {
       _approachAngle_rad = angle_rad;
     }
     
-    ActionResult DriveToObjectAction::GetPossiblePoses(const Robot& robot, ActionableObject* object,
+    ActionResult DriveToObjectAction::GetPossiblePoses(ActionableObject* object,
                                                        std::vector<Pose3d>& possiblePoses,
                                                        bool& alreadyInPosition)
     {
@@ -272,12 +272,12 @@ namespace Anki {
         }
       } else {
         
-        result = GetPossiblePoses(*_robot, object, possiblePoses, alreadyInPosition);
+        result = GetPossiblePoses(object, possiblePoses, alreadyInPosition);
       }
       
       CompoundActionSequential* newCompoundSequential = new CompoundActionSequential();
       _compoundAction = newCompoundSequential;
-      if(RegisterSubAction(_compoundAction) != ActionResult::SUCCESS)
+      if(!RegisterSubAction(_compoundAction))
       {
         return ActionResult::FAILURE_ABORT;
       }
@@ -380,7 +380,7 @@ namespace Anki {
           
           std::vector<Pose3d> possiblePoses; // don't really need these
           bool inPosition = false;
-          result = GetPossiblePoses(*_robot, object, possiblePoses, inPosition);
+          result = GetPossiblePoses(object, possiblePoses, inPosition);
           
           if(!inPosition) {
             PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone", "Robot not in position, will return FAILURE_RETRY.");

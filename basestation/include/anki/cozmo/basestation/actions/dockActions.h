@@ -97,9 +97,9 @@ namespace Anki {
       
       // Pure virtual methods that must be implemented by derived classes in
       // order to define the parameters of docking and how to verify success.
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) = 0;
+      virtual Result SelectDockAction(ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
-      virtual ActionResult Verify(Robot& robot) = 0;
+      virtual ActionResult Verify() = 0;
       
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
@@ -162,9 +162,9 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) override;
+      virtual ActionResult Verify() override;
       
     }; // class PopAWheelieAction
     
@@ -188,9 +188,9 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
       
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) override;
+      virtual ActionResult Verify() override;
       
     }; // class AlignWithObjectAction
     
@@ -214,9 +214,9 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
       
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) override;
+      virtual ActionResult Verify() override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -292,9 +292,9 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
       
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) override;
+      virtual ActionResult Verify() override;
       
       // For verifying if we successfully picked up the object
       //Pose3d _dockObjectOrigPose;
@@ -330,9 +330,9 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) override;
+      virtual ActionResult Verify() override;
       
       // For verifying if we successfully rolled the object
       Pose3d _dockObjectOrigPose;
@@ -356,9 +356,9 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) override;
+      virtual ActionResult Verify() override;
       
       // Crossing a bridge _does_ require the second dockMarker,
       // so override the virtual method for setting it
@@ -378,9 +378,9 @@ namespace Anki {
       
     protected:
       
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) override;
+      virtual ActionResult Verify() override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
@@ -401,9 +401,9 @@ namespace Anki {
       
     protected:
       
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) override;
+      virtual ActionResult Verify() override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       

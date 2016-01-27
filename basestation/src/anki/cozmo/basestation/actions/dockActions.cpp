@@ -170,7 +170,7 @@ namespace Anki {
         }
       }
       
-      if(SelectDockAction(*_robot, dockObject) != RESULT_OK) {
+      if(SelectDockAction(dockObject) != RESULT_OK) {
         PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
                           "");
         // NOTE: SelectDockAction should set _interactionResult on failure
@@ -238,7 +238,7 @@ namespace Anki {
       _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
-      if(RegisterSubAction(_faceAndVerifyAction) != ActionResult::SUCCESS)
+      if(!RegisterSubAction(_faceAndVerifyAction))
       {
         return ActionResult::FAILURE_ABORT;
       }
@@ -349,7 +349,7 @@ namespace Anki {
           //PRINT_NAMED_INFO("IDockAction.CheckIfDone",
           //                 "Robot has stopped moving and picking/placing. Will attempt to verify success.");
           
-          actionResult = Verify(*_robot);
+          actionResult = Verify();
         }
       }
       
@@ -434,7 +434,7 @@ namespace Anki {
       IDockAction::GetCompletionUnion(completionUnion);
     }
     
-    Result PopAWheelieAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result PopAWheelieAction::SelectDockAction(ActionableObject* object)
     {
       Pose3d objectPose;
       if(object->GetPose().GetWithRespectTo(*_robot->GetPose().GetParent(), objectPose) == false) {
@@ -466,7 +466,7 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    ActionResult PopAWheelieAction::Verify(Robot& robot)
+    ActionResult PopAWheelieAction::Verify()
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
       
@@ -544,14 +544,14 @@ namespace Anki {
     }
     
     
-    Result AlignWithObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result AlignWithObjectAction::SelectDockAction(ActionableObject* object)
     {
       _dockAction = DockAction::DA_ALIGN;
       return RESULT_OK;
     } // SelectDockAction()
     
     
-    ActionResult AlignWithObjectAction::Verify(Robot& robot)
+    ActionResult AlignWithObjectAction::Verify()
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
       
@@ -646,7 +646,7 @@ namespace Anki {
       IDockAction::GetCompletionUnion(completionUnion);
     }
     
-    Result PickupObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result PickupObjectAction::SelectDockAction(ActionableObject* object)
     {
       // Record the object's original pose (before picking it up) so we can
       // verify later whether we succeeded.
@@ -674,7 +674,7 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    ActionResult PickupObjectAction::Verify(Robot& robot)
+    ActionResult PickupObjectAction::Verify()
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
       
@@ -817,7 +817,7 @@ namespace Anki {
         }
         
         _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
-        if(RegisterSubAction(_faceAndVerifyAction) != ActionResult::SUCCESS)
+        if(!RegisterSubAction(_faceAndVerifyAction))
         {
           return ActionResult::FAILURE_ABORT;
         }
@@ -970,7 +970,7 @@ namespace Anki {
       IDockAction::GetCompletionUnion(completionUnion);
     }
     
-    Result PlaceRelObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result PlaceRelObjectAction::SelectDockAction(ActionableObject* object)
     {
       if (!_robot->IsCarryingObject()) {
         PRINT_STREAM_INFO("PlaceRelObjectAction.SelectDockAction", "Can't place if not carrying an object. Aborting.");
@@ -989,7 +989,7 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    ActionResult PlaceRelObjectAction::Verify(Robot& robot)
+    ActionResult PlaceRelObjectAction::Verify()
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
       
@@ -1011,7 +1011,7 @@ namespace Anki {
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), true, false);
-              if(RegisterSubAction(_placementVerifyAction) != ActionResult::SUCCESS)
+              if(!RegisterSubAction(_placementVerifyAction))
               {
                 return ActionResult::FAILURE_ABORT;
               }
@@ -1063,7 +1063,7 @@ namespace Anki {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
-                  if(RegisterSubAction(_placementVerifyAction) != ActionResult::SUCCESS)
+                  if(!RegisterSubAction(_placementVerifyAction))
                   {
                     return ActionResult::FAILURE_ABORT;
                   }
@@ -1160,7 +1160,7 @@ namespace Anki {
       IDockAction::GetCompletionUnion(completionUnion);
     }
     
-    Result RollObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result RollObjectAction::SelectDockAction(ActionableObject* object)
     {
       // Record the object's original pose (before picking it up) so we can
       // verify later whether we succeeded.
@@ -1202,7 +1202,7 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    ActionResult RollObjectAction::Verify(Robot& robot)
+    ActionResult RollObjectAction::Verify()
     {
       ActionResult result = ActionResult::RUNNING;
       
@@ -1223,7 +1223,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
-              if(RegisterSubAction(_rollVerifyAction) != ActionResult::SUCCESS)
+              if(!RegisterSubAction(_rollVerifyAction))
               {
                 return ActionResult::FAILURE_ABORT;
               }
@@ -1293,7 +1293,7 @@ namespace Anki {
       return name;
     }
     
-    Result AscendOrDescendRampAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result AscendOrDescendRampAction::SelectDockAction(ActionableObject* object)
     {
       Ramp* ramp = dynamic_cast<Ramp*>(object);
       if(ramp == nullptr) {
@@ -1330,7 +1330,7 @@ namespace Anki {
     } // SelectDockAction()
     
     
-    ActionResult AscendOrDescendRampAction::Verify(Robot& robot)
+    ActionResult AscendOrDescendRampAction::Verify()
     {
       // TODO: Need to do some kind of verification here?
       PRINT_NAMED_INFO("AscendOrDescendRampAction.Verify.RampAscentOrDescentComplete",
@@ -1353,7 +1353,7 @@ namespace Anki {
       return name;
     }
     
-    Result MountChargerAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result MountChargerAction::SelectDockAction(ActionableObject* object)
     {
       Charger* charger = dynamic_cast<Charger*>(object);
       if(charger == nullptr) {
@@ -1375,7 +1375,7 @@ namespace Anki {
     } // SelectDockAction()
     
     
-    ActionResult MountChargerAction::Verify(Robot& robot)
+    ActionResult MountChargerAction::Verify()
     {
       // Verify that robot is on charger
       if (_robot->IsOnCharger()) {
@@ -1410,13 +1410,13 @@ namespace Anki {
       return preActionPoses[indexForOtherEnd].GetMarker();
     }
     
-    Result CrossBridgeAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result CrossBridgeAction::SelectDockAction(ActionableObject* object)
     {
       _dockAction = DockAction::DA_CROSS_BRIDGE;
       return RESULT_OK;
     } // SelectDockAction()
     
-    ActionResult CrossBridgeAction::Verify(Robot& robot)
+    ActionResult CrossBridgeAction::Verify()
     {
       // TODO: Need some kind of verificaiton here?
       PRINT_NAMED_INFO("CrossBridgeAction.Verify.BridgeCrossingComplete",

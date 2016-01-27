@@ -96,7 +96,7 @@ protected:
   // Implementation-specific method for computing the absolute angles needed
   // to turn and face whatever is being tracked.
   // Return true if new angles were provided, false if same as last time.
-  virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) = 0;
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) = 0;
   
   virtual bool InterruptInternal() override final;
   
@@ -147,7 +147,7 @@ protected:
   virtual void Cleanup() override;
   
   // Required by ITrackAction:
-  virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
   
 private:
   
@@ -179,7 +179,7 @@ protected:
   virtual void Cleanup() override;
   
   // Required by ITrackAction:
-  virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
   
 private:
 
@@ -205,7 +205,7 @@ protected:
   virtual ActionResult InitInternal() override;
   
   // Required by ITrackAction:
-  virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
   
 private:
   

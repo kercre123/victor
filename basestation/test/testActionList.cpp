@@ -120,7 +120,7 @@ ActionResult TestActionWithinAction::Init()
 {
   CompoundActionSequential* compound = new CompoundActionSequential();
   _compoundAction = compound;
-  EXPECT_EQ(RegisterSubAction(_compoundAction), ActionResult::SUCCESS);
+  EXPECT_TRUE(RegisterSubAction(_compoundAction));
   
   compound->AddAction(new TestAction("Test1", RobotActionType::WAIT));
   compound->AddAction(new TestAction("Test2", RobotActionType::WAIT));

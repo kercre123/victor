@@ -85,12 +85,10 @@ namespace Anki {
         // Call any actions' Cleanup() methods if they aren't done
         const bool isDone = action.first;
         if(!isDone) {
-          // It is possible for the second action in the compound action to have a null robot pointer at this
+          // Some of the actions in the compound action may not have had their robot set at this
           // point so make sure it is set so things like EmitCompletionSignal() can succeed.
-          if(nullptr == action.second->GetRobot())
-          {
-            action.second->SetRobot(*GetRobot());
-          }
+          action.second->SetRobot(*GetRobot());
+          
           action.second->Cancel();
           action.second->Update();
           action.first = true;
@@ -137,8 +135,8 @@ namespace Anki {
         assert(isDone == false);
         
         IActionRunner* currentAction = _currentActionPair->second;
-        currentAction->SetRobot(*GetRobot());
         assert(currentAction != nullptr); // should not have been allowed in by constructor
+        currentAction->SetRobot(*GetRobot());
         
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
@@ -265,7 +263,7 @@ namespace Anki {
         if(!isDone) {
           IActionRunner* currentAction = currentActionPair.second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
-          
+
           currentAction->SetRobot(*GetRobot());
           const ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());

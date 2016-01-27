@@ -85,7 +85,7 @@ namespace Anki {
       _targetAngle = rotatedPose.GetRotation().GetAngleAroundZaxis();
       
       Radians currentAngle;
-      _inPosition = IsBodyInPosition(*_robot, currentAngle);
+      _inPosition = IsBodyInPosition(currentAngle);
       
       if(!_inPosition) {
         RobotInterface::SetBodyAngle setBodyAngle;
@@ -119,7 +119,7 @@ namespace Anki {
       return ActionResult::SUCCESS;
     }
     
-    bool TurnInPlaceAction::IsBodyInPosition(const Robot& robot, Radians& currentAngle) const
+    bool TurnInPlaceAction::IsBodyInPosition(Radians& currentAngle) const
     {
       currentAngle = _robot->GetPose().GetRotation().GetAngleAroundZaxis();
       const bool inPosition = NEAR(currentAngle-_targetAngle, 0.f, _angleTolerance);
@@ -133,7 +133,7 @@ namespace Anki {
       Radians currentAngle;
       
       if(!_inPosition) {
-        _inPosition = IsBodyInPosition(*_robot, currentAngle);
+        _inPosition = IsBodyInPosition(currentAngle);
       }
       
       // When we've turned at least halfway, remove eye dart
@@ -285,7 +285,7 @@ namespace Anki {
       }
     }
     
-    bool MoveHeadToAngleAction::IsHeadInPosition(const Robot& robot) const
+    bool MoveHeadToAngleAction::IsHeadInPosition() const
     {
       const bool inPosition = NEAR(Radians(_robot->GetHeadAngle()) - _headAngle, 0.f, _angleTolerance);
       
@@ -296,7 +296,7 @@ namespace Anki {
     {
       ActionResult result = ActionResult::SUCCESS;
       
-      _inPosition = IsHeadInPosition(*_robot);
+      _inPosition = IsHeadInPosition();
       
       if(!_inPosition) {
         if(RESULT_OK != _robot->GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
@@ -338,7 +338,7 @@ namespace Anki {
       ActionResult result = ActionResult::RUNNING;
       
       if(!_inPosition) {
-        _inPosition = IsHeadInPosition(*_robot);
+        _inPosition = IsHeadInPosition();
       }
       
       if(!_holdEyes && AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
@@ -457,7 +457,7 @@ namespace Anki {
       }
     }
     
-    bool MoveLiftToHeightAction::IsLiftInPosition(const Robot& robot) const
+    bool MoveLiftToHeightAction::IsLiftInPosition() const
     {
       const bool inPosition = (NEAR(_heightWithVariation, _robot->GetLiftHeight(), _heightTolerance) &&
                                !_robot->GetMoveComponent().IsLiftMoving());
@@ -529,7 +529,7 @@ namespace Anki {
         _heightTolerance = newHeightTolerance;
       }
       
-      _inPosition = IsLiftInPosition(*_robot);
+      _inPosition = IsLiftInPosition();
       
       if(!_inPosition) {
         if(_robot->GetMoveComponent().MoveLiftToHeight(_heightWithVariation,
@@ -548,7 +548,7 @@ namespace Anki {
       ActionResult result = ActionResult::RUNNING;
       
       if(!_inPosition) {
-        _inPosition = IsLiftInPosition(*_robot);
+        _inPosition = IsLiftInPosition();
       }
       
       // TODO: Somehow verify robot got command to move lift before declaring success
@@ -589,8 +589,7 @@ namespace Anki {
     
     PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
                                        bool isPanAbsolute, bool isTiltAbsolute)
-    : _compoundAction{}
-    , _bodyPanAngle(bodyPan)
+    : _bodyPanAngle(bodyPan)
     , _headTiltAngle(headTilt)
     , _isPanAbsolute(isPanAbsolute)
     , _isTiltAbsolute(isTiltAbsolute)
@@ -683,7 +682,7 @@ namespace Anki {
     {
       CompoundActionParallel* newCompoundParallel = new CompoundActionParallel();
       _compoundAction = newCompoundParallel;
-      if(RegisterSubAction(_compoundAction) != ActionResult::SUCCESS)
+      if(!RegisterSubAction(_compoundAction))
       {
         return ActionResult::FAILURE_ABORT;
       }
@@ -777,7 +776,7 @@ namespace Anki {
     ActionResult FaceObjectAction::Init()
     {
       _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
-      if(RegisterSubAction(_visuallyVerifyAction) != ActionResult::SUCCESS)
+      if(!RegisterSubAction(_visuallyVerifyAction))
       {
         return ActionResult::FAILURE_ABORT;
       }
@@ -961,7 +960,7 @@ namespace Anki {
           CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = bridgeAction;
-          if(RegisterSubAction(_chosenAction) != ActionResult::SUCCESS)
+          if(!RegisterSubAction(_chosenAction))
           {
             return ActionResult::FAILURE_ABORT;
           }
@@ -970,7 +969,7 @@ namespace Anki {
           AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = rampAction;
-          if(RegisterSubAction(_chosenAction) != ActionResult::SUCCESS)
+          if(!RegisterSubAction(_chosenAction))
           {
             return ActionResult::FAILURE_ABORT;
           }
@@ -1126,7 +1125,7 @@ namespace Anki {
       
       // Get lift out of the way
       _moveLiftToHeightAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV);
-      if(RegisterSubAction(_moveLiftToHeightAction) != ActionResult::SUCCESS)
+      if(!RegisterSubAction(_moveLiftToHeightAction))
       {
         return ActionResult::FAILURE_ABORT;
       }

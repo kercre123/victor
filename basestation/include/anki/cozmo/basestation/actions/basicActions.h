@@ -56,7 +56,7 @@ namespace Anki {
       
     private:
       
-      bool IsBodyInPosition(const Robot& robot, Radians& currentAngle) const;
+      bool IsBodyInPosition(Radians& currentAngle) const;
       
       bool    _inPosition = false;
       bool    _turnStarted = false;
@@ -150,7 +150,7 @@ namespace Anki {
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
       
     private:
-      IActionRunner*   _compoundAction;
+      IActionRunner* _compoundAction = nullptr;
       
       Radians _bodyPanAngle;
       Radians _headTiltAngle;
@@ -207,7 +207,7 @@ namespace Anki {
       
     private:
       
-      bool IsHeadInPosition(const Robot& robot) const;
+      bool IsHeadInPosition() const;
       
       Radians     _headAngle;
       Radians     _angleTolerance;
@@ -271,7 +271,7 @@ namespace Anki {
       
     private:
       
-      bool IsLiftInPosition(const Robot& robot) const;
+      bool IsLiftInPosition() const;
       
       f32         _height_mm;
       f32         _heightTolerance;
@@ -378,7 +378,7 @@ namespace Anki {
       
       bool                 _facePoseCompoundActionDone;
       
-      IActionRunner*    _visuallyVerifyAction;
+      IActionRunner*       _visuallyVerifyAction;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;

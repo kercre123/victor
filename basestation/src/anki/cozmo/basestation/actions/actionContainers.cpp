@@ -75,25 +75,25 @@ namespace Anki {
       return RESULT_OK;
     } // QueueAction()
     
-    inline Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueNext(action, numRetries);
     }
     
-    inline Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueAtEnd(action, numRetries);
     }
     
-    inline Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueNow(action, numRetries);
     }
     
-    inline Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueAtFront(action, numRetries);

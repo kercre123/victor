@@ -62,7 +62,7 @@ namespace Anki {
       // For handling playing an altered copy of an animation
       std::unique_ptr<Animation> _alteredAnimation;
       
-      bool NeedsAlteredAnimation(Robot& robot) const;
+      bool NeedsAlteredAnimation() const;
       
     }; // class PlayAnimationAction
 
