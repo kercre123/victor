@@ -28,31 +28,40 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private Dropdown _ChallengeIdSelect;
 
+
+    [SerializeField]
+    private Button _SelfieAlbumButton;
+
+
+    [SerializeField]
+    private GameObject _SelfieAlbumPrefab;
+
+    [SerializeField]
+    private ChallengeDataList _ChallengeDataList;
+
     private void Start() {
+      _ChallengeIdSelect.options = _ChallengeDataList.ChallengeData.Select(c => new Dropdown.OptionData(c.ChallengeID)).ToList();
+
+      _LoadHubWorldButton.onClick.AddListener(HandleLoadHubWorldButtonClicked);
+      _CompleteChallengeButton.onClick.AddListener(HandleCompleteChallengeClicked);
+      _SelfieAlbumButton.onClick.AddListener(HandleLoadSelfieAlbumButtonClicked);
+
+
       RaiseHubWorldPaneOpened(this);
     }
 
     private void OnDestroy() {
       _LoadHubWorldButton.onClick.RemoveListener(HandleLoadHubWorldButtonClicked);
       _CompleteChallengeButton.onClick.RemoveListener(HandleCompleteChallengeClicked);
-    }
-
-    public void Initialize(HomeHub hubWorld) {
-      _HubWorldInstance = hubWorld;
-
-      var challengeDataList = typeof(HomeHub).GetField("_ChallengeDataList", 
-                                System.Reflection.BindingFlags.NonPublic |
-                                System.Reflection.BindingFlags.Instance)
-                                              .GetValue(hubWorld) as ChallengeDataList;
-
-      _ChallengeIdSelect.options = challengeDataList.ChallengeData.Select(c => new Dropdown.OptionData(c.ChallengeID)).ToList();
-
-      _LoadHubWorldButton.onClick.AddListener(HandleLoadHubWorldButtonClicked);
-      _CompleteChallengeButton.onClick.AddListener(HandleCompleteChallengeClicked);
+      _SelfieAlbumButton.onClick.RemoveListener(HandleLoadSelfieAlbumButtonClicked);
     }
 
     private void HandleLoadHubWorldButtonClicked() {
       // _HubWorldInstance.TestLoadHubWorld();
+    }
+
+    private void HandleLoadSelfieAlbumButtonClicked() {
+      UIManager.CreateUIElement(_SelfieAlbumPrefab);
     }
 
     private void HandleCompleteChallengeClicked() {

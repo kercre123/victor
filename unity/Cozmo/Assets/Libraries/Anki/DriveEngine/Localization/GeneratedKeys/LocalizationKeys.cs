@@ -105,6 +105,18 @@ public static class LocalizationKeys {
   public const string kCubeSlapTextHowToPlay = "cubeSlap.text.howToPlay";
   public const string kSimonGameTextHowToPlay = "simonGame.text.howToPlay";
   public const string kSpeedTapTextHowToPlay = "speedTap.text.howToPlay";
+  public const string kSpeedTapTextHowToPlayNoRed = "speedTap.text.howToPlayNoRed";
+  public const string kSpeedTapTextHowToPlayLightCountSameColorNoRed = "speedTap.text.howToPlayLightCountSameColorNoRed";
+  public const string kSpeedTapTextHowToPlayLightCountNoColor = "speedTap.text.howToPlayLightCountNoColor";
+
+  #endregion
+
+  #region NotificationStrings
+
+  public const string kNotificationLocal1 = "notification.local1";
+  public const string kNotificationLocal2 = "notification.local2";
+  public const string kNotificationLocal3 = "notification.local3";
+  public const string kNotificationLocal4 = "notification.local4";
 
   #endregion
 

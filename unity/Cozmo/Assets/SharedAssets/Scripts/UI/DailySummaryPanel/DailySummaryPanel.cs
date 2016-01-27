@@ -18,7 +18,7 @@ public class DailySummaryPanel : MonoBehaviour {
   private const string kLevelReachedAnimationNameB = "LevelReachedB";
   private const string kMaxLevelAnimationNameB = "MaxLevelB";
 
-
+  public Cozmo.HomeHub.TimelineView.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
 
   [SerializeField]
   private Button _CloseButton;
@@ -75,14 +75,14 @@ public class DailySummaryPanel : MonoBehaviour {
     int day = data.Date.Day;
     int month = data.Date.Month;
 
-    _Title.text = string.Format(_Title.DisplayText, month, day);
+    _Title.FormattingArgs = new object[] {month, day};
 
     _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(data.Progress, data.Goals));
 
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var stat = (ProgressionStatType)i;
       if (data.Goals[stat] > 0) {
-        CreateGoalBadge(stat, data.Goals[stat], data.Progress[stat]);
+        CreateGoalCell(stat, data.Goals[stat], data.Progress[stat]);
       }
     }
 
@@ -103,13 +103,17 @@ public class DailySummaryPanel : MonoBehaviour {
       CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, subContainer);
     }
 
+    AnimateFriendshipBar(data);
+  }
+
+  public void AnimateFriendshipBar(TimelineEntryData data) {
     StartCoroutine(FriendshipBarCoroutine(data));
   }
 
   // Creates a goal badge
-  private GoalCell CreateGoalBadge(ProgressionStatType type, int goal, int progress) {
+  private GoalCell CreateGoalCell(ProgressionStatType type, int goal, int progress) {
     GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
-    newBadge.Initialize(type.ToString(), goal, progress);
+    newBadge.Initialize(type, goal, progress, false);
     newBadge.ShowText(true);
     return newBadge;
   }
@@ -223,6 +227,9 @@ public class DailySummaryPanel : MonoBehaviour {
     }
 
     yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent));
+    if (FriendshipBarAnimateComplete != null) {
+      FriendshipBarAnimateComplete(data, this);
+    }
   }
 
   // sets the labels on the friendship timeline

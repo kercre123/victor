@@ -211,11 +211,12 @@ public class AnimationGroupEditor : EditorWindow {
     EditorGUILayout.EndHorizontal();
   }
 
-  private void DrawAnimationGroup(AnimationGroup animGroup) {
-    DrawList("Animations", animGroup.Animations, DrawAnimationGroupEntry, () => new AnimationGroup.AnimationGroupEntry());
+  private AnimationGroup DrawAnimationGroup(AnimationGroup animGroup) {
+    EditorDrawingUtility.DrawList("Animations", animGroup.Animations, DrawAnimationGroupEntry, () => new AnimationGroup.AnimationGroupEntry());
+    return animGroup;
   }
 
-  public void DrawAnimationGroupEntry(AnimationGroup.AnimationGroupEntry entry) {
+  public AnimationGroup.AnimationGroupEntry DrawAnimationGroupEntry(AnimationGroup.AnimationGroupEntry entry) {
     EditorGUILayout.BeginVertical();
     entry.Name = _AnimationNameOptions[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(_AnimationNameOptions, entry.Name)), _AnimationNameOptions)];
 
@@ -224,15 +225,16 @@ public class AnimationGroupEditor : EditorWindow {
     unfolded = EditorGUILayout.Foldout(unfolded, "Emotion Scorers ("+entry.MoodScorer.Count+")");
     if (unfolded) {
       EditorGUI.indentLevel++;
-      DrawList("", entry.MoodScorer, DrawEmotionScorer, () => new EmotionScorer());
+      EditorDrawingUtility.DrawList("", entry.MoodScorer, DrawEmotionScorer, () => new EmotionScorer());
       EditorGUI.indentLevel--;
     }
     _ExpandedFoldouts[entry] = unfolded;
 
     EditorGUILayout.EndVertical();
+    return entry;
   }
 
-  public void DrawEmotionScorer(EmotionScorer emotionScorer) {
+  public EmotionScorer DrawEmotionScorer(EmotionScorer emotionScorer) {
     EditorGUILayout.BeginVertical();
 
     emotionScorer.EmotionType = (Anki.Cozmo.EmotionType)EditorGUILayout.EnumPopup("Emotion", emotionScorer.EmotionType);
@@ -255,34 +257,9 @@ public class AnimationGroupEditor : EditorWindow {
     }
 
     EditorGUILayout.EndVertical();
+    return emotionScorer;
   }
-
-  public void DrawList<T>(string label, List<T> list, Action<T> drawControls, Func<T> createFunc) {
-
-    EditorGUILayout.BeginHorizontal();
-    GUILayout.Label(label);
-    if (GUILayout.Button("+", GUILayout.Width(30))) {
-      list.Insert(0, createFunc());
-    }
-    EditorGUILayout.EndHorizontal();
-
-    for (int i = 0; i < list.Count; i++) {
-      EditorGUILayout.BeginHorizontal();
-      drawControls(list[i]);
-
-
-      if (GUILayout.Button("-", GUILayout.Width(30))) {
-        list.RemoveAt(i);
-        i--;
-      }
-
-      if (GUILayout.Button("+", GUILayout.Width(30))) {        
-        list.Insert(i + 1, createFunc());
-      }
-        
-      EditorGUILayout.EndHorizontal();
-    }
-  }
+    
   [MenuItem("Cozmo/Animation Group Editor %g")]
   public static void OpenAnimationGroupEditor() {
     AnimationGroupEditor window = (AnimationGroupEditor)EditorWindow.GetWindow(typeof(AnimationGroupEditor));

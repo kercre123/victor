@@ -1,6 +1,6 @@
 # cozmo-game
 
-Cozmo unity gameplay code. Also includes the current animation tool in /animation-tool/
+Cozmo unity gameplay code. 
 
 Please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
 

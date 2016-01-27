@@ -16,6 +16,21 @@ namespace Cozmo {
         }
       }
 
+      public static Vector4 GetAtlasUVs(Sprite graphic) {
+        float textureAtlasPixelWidth = graphic.texture.width;
+        float xMinNormalizedUV = graphic.textureRect.xMin / textureAtlasPixelWidth;
+        float xMaxNormalizedUV = graphic.textureRect.xMax / textureAtlasPixelWidth;
+
+        float textureAtlasPixelHeight = graphic.texture.height;
+        float yMinNormalizedUV = graphic.textureRect.yMin / textureAtlasPixelHeight;
+        float yMaxNormalizedUV = graphic.textureRect.yMax / textureAtlasPixelHeight;
+
+        return new Vector4(xMinNormalizedUV,
+          yMinNormalizedUV,
+          xMaxNormalizedUV - xMinNormalizedUV,
+          yMaxNormalizedUV - yMinNormalizedUV);
+      }
+
       [SerializeField]
       private GameObject _FullScreenButtonPrefab;
 
@@ -63,6 +78,34 @@ namespace Cozmo {
 
       public GameStateSlide InitialCubesSlide {
         get { return _ShowCozmoCubeSlide; }
+      }
+
+      [SerializeField]
+      private Shader _GradiantSimpleClippingShader;
+
+      public Shader GradiantSimpleClippingShader {
+        get { return _GradiantSimpleClippingShader; }
+      }
+
+      [SerializeField]
+      private Shader _GradiantComplexClippingShader;
+
+      public Shader GradiantComplexClippingShader {
+        get { return _GradiantComplexClippingShader; }
+      }
+
+      [SerializeField]
+      private Shader _GrayscaleShader;
+
+      public Shader GrayscaleShader {
+        get { return _GrayscaleShader; }
+      }
+
+      [SerializeField]
+      private Shader _AnimatedGlintShader;
+
+      public Shader AnimatedGlintShader {
+        get { return _AnimatedGlintShader; }
       }
     }
   }

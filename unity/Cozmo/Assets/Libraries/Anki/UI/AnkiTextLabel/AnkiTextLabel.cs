@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using Cozmo.Util;
 
 namespace Anki.UI {
   /// <summary>
@@ -16,6 +17,8 @@ namespace Anki.UI {
 
     private string _LocalizedTextKey = String.Empty;
     private string _DisplayText = String.Empty;
+
+    private object[] _FormattingArgs = null;
 
     // m_Text is a protected member that holds the string to display
 
@@ -33,10 +36,10 @@ namespace Anki.UI {
         }
         else if (m_Text != value) {
           m_Text = value;
-          SetLocalizedText(m_Text);
-
-          SetVerticesDirty();
-          SetLayoutDirty();
+          if (SetLocalizedText(m_Text)) {
+            SetVerticesDirty();
+            SetLayoutDirty();
+          }
         }
       }
     }
@@ -52,11 +55,21 @@ namespace Anki.UI {
       }
     }
 
+    public object[] FormattingArgs {
+      get {
+        return _FormattingArgs;
+      }
+      set {
+        _FormattingArgs = value;
+        Start();
+      }
+    }
+
     private bool IsLocalizationKey(string text) {
       return ((text != String.Empty) && (text.Length > 1) && ('#' == text[0]));
     }
 
-    private void SetLocalizedText(string text) {
+    private bool SetLocalizedText(string text) {
       string displayText;
       if (!IsLocalizationKey(text)) {
         m_Text = text;
@@ -67,18 +80,26 @@ namespace Anki.UI {
         displayText = Localization.Get(_LocalizedTextKey);
       }
 
+      if (_FormattingArgs != null) {
+        displayText = string.Format(displayText, _FormattingArgs);
+      }
+
       if (_AllUppercase) {
-        _DisplayText = displayText.ToUpper();
+        displayText = displayText.ToUpper();
       }
-      else {
+        
+      if (_DisplayText != displayText) {
         _DisplayText = displayText;
+        return true;
       }
+      return false;
     }
 
     protected override void Start() {
-      SetLocalizedText(m_Text);
-      SetVerticesDirty();
-      SetLayoutDirty();
+      if (SetLocalizedText(m_Text)) {
+        SetVerticesDirty();
+        SetLayoutDirty();      
+      }
     }
 
     //
@@ -120,5 +141,10 @@ namespace Anki.UI {
       }
     }
 
+    public override Material GetModifiedMaterial(Material baseMaterial) {
+      Material newMaterial = base.GetModifiedMaterial(baseMaterial);
+      // newMaterial = baseMaterial;
+      return newMaterial;
+    }
   }
 }
