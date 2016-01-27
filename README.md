@@ -13,6 +13,7 @@ At this point, only Mac and iOS are supported. The engine itself supports more p
 Install CMAKE using [brew](http://brew.sh/).
 
     brew install cmake
+    brew install python3
 
 ### coretech-external
 
