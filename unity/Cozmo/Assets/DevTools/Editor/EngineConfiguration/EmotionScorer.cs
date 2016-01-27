@@ -10,7 +10,7 @@ public class EmotionScorer {
   public EmotionType EmotionType;
 
   [JsonProperty("scoreGraph")]
-  public GraphEvaluator2d GraphEvaluator;
+  public GraphEvaluator2d GraphEvaluator = new GraphEvaluator2d();
 
   [JsonProperty("trackDelta")]
   public bool TrackDelta;

@@ -99,7 +99,8 @@ public static class EditorDrawingUtility {
 
     emotionScorer.EmotionType = (Anki.Cozmo.EmotionType)EditorGUILayout.EnumPopup("Emotion", emotionScorer.EmotionType);
 
-    emotionScorer.GraphEvaluator = EditorGUILayout.CurveField("Score Graph", emotionScorer.GraphEvaluator, Color.green, new Rect(-1, 0, 2, 1));
+    int trackDeltaMultiplier = emotionScorer.TrackDelta ? 2 : 1;
+    emotionScorer.GraphEvaluator = EditorGUILayout.CurveField("Score Graph", emotionScorer.GraphEvaluator, Color.green, new Rect(-1 * trackDeltaMultiplier, 0, 2 * trackDeltaMultiplier, 1));
 
     emotionScorer.TrackDelta = EditorGUILayout.Toggle("Track Delta", emotionScorer.TrackDelta);
 
