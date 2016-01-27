@@ -51,7 +51,7 @@ public class MinesweeperGame : GameBase {
 
     ResetGrid();
     var initialCubeState = new InitialCubesState();
-    initialCubeState.InitialCubeRequirements(new SetupGridState(), 2, false);
+    initialCubeState.InitialCubeRequirements(new SetupGridState(), _Config.NumCubesRequired(), false);
     _StateMachine.SetNextState(initialCubeState);
   }
 

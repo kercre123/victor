@@ -14,15 +14,9 @@ namespace ScriptedSequences.Editor.ActionHelpers {
     public PlayCozmoAnimationHelper(PlayCozmoAnimation condition, ScriptedSequenceEditor editor, List<ScriptedSequenceAction> list) : base(condition, editor, list) {}
     public PlayCozmoAnimationHelper(PlayCozmoAnimation condition, ScriptedSequenceEditor editor, Action<ScriptedSequenceAction> replaceAction) : base(condition, editor, replaceAction) {}
 
-    private static string[] _Options;
-
-    static PlayCozmoAnimationHelper()
-    {
-      _Options = typeof(AnimationName).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Where(f => f.FieldType == typeof(string)).Select(f => (string)f.GetValue(null)).ToArray();
-    }
-
     protected override void DrawControls(Vector2 mousePosition, EventType eventType) {
-      Value.AnimationName = _Options[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(_Options, Value.AnimationName)), _Options)];
+      var options = AnimationGroupEditor.AnimationNameOptions;
+      Value.AnimationName = options[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(options, Value.AnimationName)), options)];
 
       Value.LoopForever = EditorGUILayout.Toggle(
         new GUIContent("Loop Forever", 

@@ -18,8 +18,8 @@ MonoBehaviour:
   _ChallengeTitleLocKey: speedTapNoRed.title
   _ChallengeSubtitleLocKey: speedTapNoRed.subtitle
   _ChallengeDescriptionLocKey: speedTapNoRed.description
-  _ChallengeIcon: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
-  _ChallengeKeyArt: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 23407fd3c16d14f8c8ba715add67389b, type: 3}
+  _ChallengeKeyArt: {fileID: 21300000, guid: 23407fd3c16d14f8c8ba715add67389b, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []

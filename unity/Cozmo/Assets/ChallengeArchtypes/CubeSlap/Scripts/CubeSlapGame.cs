@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using AnimationGroups;
 
 namespace CubeSlap {
   
@@ -27,6 +28,8 @@ namespace CubeSlap {
     private float _BaseSlapChance;
     private int _MaxFakeouts;
 
+    private int _SlapCount;
+
     private LightCube _CurrentTarget = null;
 
     [SerializeField]
@@ -47,10 +50,10 @@ namespace CubeSlap {
       _SuccessCount = 0;
       NumSegments = _SuccessGoal;
       Progress = 0.0f;
-      InitializeMinigameObjects();
+      InitializeMinigameObjects(config.NumCubesRequired());
     }
 
-    protected void InitializeMinigameObjects() {
+    protected void InitializeMinigameObjects(int numCubes) {
 
       CurrentRobot.SetBehaviorSystem(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -60,7 +63,7 @@ namespace CubeSlap {
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
 
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SeekState(), 1, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new SeekState(), numCubes, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 
@@ -158,7 +161,7 @@ namespace CubeSlap {
 
     public void OnFailure() {
       TryDecrementAttempts();
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
     }
 
     public void HandleAnimationDone(bool success) {
@@ -189,6 +192,10 @@ namespace CubeSlap {
 
     public void ResetSlapChance() {
       _CurrentSlapChance = _BaseSlapChance;
+    }
+
+    protected override int CalculateExcitementStatRewards() {
+      return (MaxAttempts - AttemptsLeft);
     }
  
   }

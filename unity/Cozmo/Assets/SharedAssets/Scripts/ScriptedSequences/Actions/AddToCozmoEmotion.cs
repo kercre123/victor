@@ -11,6 +11,8 @@ namespace ScriptedSequences.Actions {
     public EmotionType Emotion;
     [Description("The amount to change the emotion. The scale for emotions is [-1,1].")]
     public float Delta;
+    [Description("The source of emotional change")]
+    public string Source;
 
     public override ISimpleAsyncToken Act() {
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -22,7 +24,7 @@ namespace ScriptedSequences.Actions {
         return token;
       }
 
-      robot.AddToEmotion(Emotion, Delta);
+      robot.AddToEmotion(Emotion, Delta, Source);
       token.Succeed();
       return token;
     }

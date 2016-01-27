@@ -16,19 +16,13 @@ Install CMAKE using [brew](http://brew.sh/).
 
 The robotics simulation environment we use is Webots. We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg).
 
-Move the OpenCV libraries inside of Webots out of the way:
+### coretech-external
 
-    cd /Applications/Webots/lib
-    mkdir opencv_unused
-    mv libopencv* opencv_unused
+Get the latest coretech-external binaries [here](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). The latest results click Artifacts->View and download the .tar.gz
 
-### Build coretech-external
+Have your paths (eg. ~/.bash_profile) setup correctly it must include the line:
 
-Instructions [here](https://github.com/anki/coretech-external).
-
-Make sure you have your paths (eg. ~/.bash_profile) setup correctly it must include the line:
-
-    export CORETECH_EXTERNAL_DIR="$HOME/coretech-external"
+    export CORETECH_EXTERNAL_DIR="<PATH_TO_CORETECH_EXTERNAL>"
 
 Once you set your paths you need to restart your terminal for the settings to take effect. Alternatively you can refresh your environment:
 
@@ -40,15 +34,14 @@ To run the configure python scripts you'll need xcpretty.
 
     sudo gem install xcpretty
 
-Run ./configure.py from the root of your cosmo-game folder.
+Build everything from the cozmo-game folder.
 
     cd <path-to-cozmo-repository>
-    ./configure.py
     ./configure.py build
 
 ### Webots
 
-The Webots worlds can be found in cozmo-game/simulator/worlds
+The Webots worlds can be found in cozmo-game/lib/anki/cozmo-engine/simulator/worlds
 
 Useful worlds:
 
@@ -70,7 +63,7 @@ A dev scene that includes a simple list of challenges for Cozmo. Used in a devel
 
 The production scene used for when we deploy. This is where the final experience will live.
 
-    <path-to-cozmo-repository>/Assets/Scenes/HubWorld.unity
+    <path-to-cozmo-repository>/Assets/Scenes/HomeHub.unity
 
 
 # Optional Info

@@ -38,9 +38,9 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private AlertView _ChallengeEndViewPrefab;
+      private ChallengeEndedDialog _ChallengeEndViewPrefab;
 
-      public AlertView ChallengeEndViewPrefab {
+      public ChallengeEndedDialog ChallengeEndViewPrefab {
         get { return _ChallengeEndViewPrefab; }
       }
 
@@ -49,6 +49,13 @@ namespace Cozmo {
 
       public Anki.UI.AnkiButton DefaultButtonPrefab {
         get { return _DefaultButtonPrefab; }
+      }
+
+      [SerializeField]
+      private Anki.UI.AnkiTextLabel _DefaultTextPrefab;
+
+      public Anki.UI.AnkiTextLabel DefaultTextPrefab {
+        get { return _DefaultTextPrefab; }
       }
     }
   }

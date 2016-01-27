@@ -128,6 +128,10 @@ public class UIManager : MonoBehaviour {
     return _Instance._OverlayCanvas.worldCamera;
   }
 
+  public static Canvas GetUICanvas() {
+    return _Instance._OverlayCanvas;
+  }
+
   public static void DisableTouchEvents() {
     _Instance._EventSystemScript.gameObject.SetActive(false);
   }

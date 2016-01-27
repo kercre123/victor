@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections;
 using System;
 using Anki.Cozmo.Audio;
+using AnimationGroups;
+using Cozmo.Util;
 
 namespace SpeedTap {
 
@@ -9,7 +11,27 @@ namespace SpeedTap {
 
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
-    public Color MatchColor;
+
+    public readonly Color[] PlayerWinColors = new Color[4];
+    public readonly Color[] CozmoWinColors = new Color[4];
+
+    public Color PlayerWinColor { 
+      get { 
+        return PlayerWinColors[0]; 
+      } 
+      set {
+        PlayerWinColors.Fill(value);
+      }
+    }
+
+    public Color CozmoWinColor { 
+      get { 
+        return CozmoWinColors[0]; 
+      } 
+      set {
+        CozmoWinColors.Fill(value);
+      }
+    }
 
     public ISpeedTapRules Rules;
 
@@ -19,6 +41,9 @@ namespace SpeedTap {
     private int _CozmoRoundsWon;
     private int _Rounds;
     private int _MaxScorePerRound;
+    // how many rounds were close in score? used to calculate
+    // excitement score rewards.
+    private int _CloseRoundCount = 0;
 
     public event Action PlayerTappedBlockEvent;
 
@@ -62,7 +87,11 @@ namespace SpeedTap {
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorWin, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationGroupState(AnimationGroupName.kWin, HandleRoundAnimationDone)));
+        }
+
+        if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
+          _CloseRoundCount++;
         }
 
         int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
@@ -81,17 +110,17 @@ namespace SpeedTap {
     }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      InitializeMinigameObjects();
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       Rules = GetRules(speedTapConfig.RuleSet);
+      InitializeMinigameObjects(speedTapConfig.NumCubesRequired());
     }
 
     // Use this for initialization
-    protected void InitializeMinigameObjects() { 
+    protected void InitializeMinigameObjects(int cubesRequired) { 
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), 2, false, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), cubesRequired, false, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
@@ -186,9 +215,15 @@ namespace SpeedTap {
         return new LightCountSameColorNoTap();
       case SpeedTapRuleSet.LightCountNoColor:
         return new LightCountNoColorSpeedTapRules();
+      case SpeedTapRuleSet.LightCountSameColorNoRed:
+        return new LightCountSameColorNoRed();
       default:
         return new DefaultSpeedTapRules();
       }
+    }
+
+    protected override int CalculateExcitementStatRewards() {
+      return 1 + _CloseRoundCount * 2;
     }
   }
 }

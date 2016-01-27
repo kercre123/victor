@@ -1,21 +1,23 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
-using Anki.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
     public class ChallengeTitleWidget : MonoBehaviour, IMinigameWidget {
 
       [SerializeField]
-      private AnkiTextLabel _ChallengeTitleLabel;
+      private Cozmo.UI.IconTextLabel _ChallengeTitleLabel;
 
       public string TitleLabelText {
-        get {
-          return _ChallengeTitleLabel.text;
-        }
         set {
-          _ChallengeTitleLabel.text = value;
+          _ChallengeTitleLabel.SetText(value);
+        }
+      }
+
+      public Sprite TitleIcon {
+        set {
+          _ChallengeTitleLabel.SetIcon(value);
         }
       }
 

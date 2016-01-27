@@ -1294,7 +1294,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     EditorGUI.indentLevel--;
   }
 
-  [MenuItem("Cozmo/Sequences/Scripted Sequence Editor %t")]
+  [MenuItem("Cozmo/Sequences/Scripted Sequence Editor %k")]
   public static void OpenScriptedSequenceEditor() {
     ScriptedSequenceEditor window = (ScriptedSequenceEditor)EditorWindow.GetWindow(typeof(ScriptedSequenceEditor));
     window.titleContent = new GUIContent("Scripted Sequence Editor");

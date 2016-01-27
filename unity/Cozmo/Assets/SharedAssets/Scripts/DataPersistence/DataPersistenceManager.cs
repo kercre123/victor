@@ -3,6 +3,7 @@ using UnityEngine;
 using System.IO;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using Cozmo.Util;
 
 namespace DataPersistence {
   public class DataPersistenceManager {
@@ -10,6 +11,13 @@ namespace DataPersistence {
     private static string sSaveFilePath = Application.persistentDataPath + "/SaveData.json";
 
     private static string sBackupSaveFilePath = sSaveFilePath + ".bak";
+
+    public static Date Today {
+      get {
+        // Roll over at 4 am
+        return DateTime.Now.AddHours(-4).Date;
+      }
+    }
 
     private DataPersistenceManager() { 
       if (File.Exists(sSaveFilePath)) {
@@ -51,6 +59,16 @@ namespace DataPersistence {
     }
 
     public readonly SaveData Data;
+
+    public TimelineEntryData CurrentSession { 
+      get { 
+        var lastSession = Data.Sessions.LastOrDefault();
+        if (lastSession != null && lastSession.Date == DataPersistenceManager.Today) {            
+          return lastSession;
+        }
+        return null;
+      } 
+    }
 
     public void Save() {
       try {

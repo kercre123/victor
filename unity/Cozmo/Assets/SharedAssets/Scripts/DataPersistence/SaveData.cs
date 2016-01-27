@@ -9,5 +9,13 @@ namespace DataPersistence {
     public Conversations.ConversationHistory ConversationHistory = new Conversations.ConversationHistory();
 
     public List<string> CompletedChallengeIds = new List<string>();
+
+    public List<TimelineEntryData> Sessions = new List<TimelineEntryData>();
+
+    public int FriendshipPoints;
+
+    public int FriendshipLevel;
+
+    public StatContainer CurrentStats;
   }
 }
