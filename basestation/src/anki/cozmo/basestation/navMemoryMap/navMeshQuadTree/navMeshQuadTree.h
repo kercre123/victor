@@ -50,6 +50,7 @@ public:
   
   // return the Processor associated to this QuadTree for queries
   NavMeshQuadTreeProcessor& GetProcessor() { return _processor; }
+  const NavMeshQuadTreeProcessor& GetProcessor() const { return _processor; }
   
 private:
 

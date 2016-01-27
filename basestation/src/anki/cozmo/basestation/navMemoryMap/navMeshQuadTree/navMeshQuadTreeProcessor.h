@@ -58,6 +58,10 @@ public:
   // Processing
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // returns true if we have borders detected of the given type, or we think we do without having to actually calcualte
+  // them at this moment (which is slightly more costly and requires non-const access)
+  bool HasBorders(ENodeContentType innerType, ENodeContentType outerType) const;
+
   // retrieve the borders for the given combination of content types
   void GetBorders(ENodeContentType innerType, ENodeContentType outerType, NavMemoryMapTypes::BorderVector& outBorders);
   
@@ -132,6 +136,9 @@ private:
   // iterate over current nodes and finding borders between the specified types
   // note this deletes previous borders for other types (in the future we may prefer to find them all at the same time)
   void FindBorders(ENodeContentType innerType, ENodeContentType outerType);
+  
+  // checks if currently we have a node of innerType that would become a seed if we computed borders
+  bool HasBorderSeed(ENodeContentType innerType, ENodeContentType outerType) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render

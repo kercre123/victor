@@ -102,6 +102,25 @@ void NavMeshQuadTreeProcessor::OnNodeDestroyed(const NavMeshQuadTreeNode* node)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeContentType outerType) const
+{
+  // check cached version if available and current
+  const uint32_t borderComboKey = GetBorderTypeKey(innerType, outerType);
+  const auto comboMatchIt = _bordersPerContentCombination.find( borderComboKey );
+  if ( comboMatchIt != _bordersPerContentCombination.end() )
+  {
+    if ( !comboMatchIt->second.dirty ) {
+      const bool hasBorders = !comboMatchIt->second.waypoints.empty();
+      return hasBorders;
+    }
+  }
+  
+  // no chached version, pick in the cached nodes if any would be seed
+  const bool hasSeed = HasBorderSeed(innerType, outerType);
+  return hasSeed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentType outerType, NavMemoryMapTypes::BorderVector& outBorders)
 {
   // grab the border combination info
@@ -790,6 +809,72 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
   DEBUG_FIND_BORDER("FINISHED FindBorders!");
   _currentBorderCombination->dirty = false;
   _currentBorderCombination = nullptr;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeContentType outerType) const
+{
+  DEBUG_FIND_BORDER("------------------------------------------------------");
+  DEBUG_FIND_BORDER("Starting HasBorderSeed...");
+
+  CORETECH_ASSERT(IsCached(innerType));
+  const auto innerSetMatchIt = _nodeSets.find(innerType);
+  if ( innerSetMatchIt == _nodeSets.end() ) {
+    // we don't have any nodes of innerType, there can't be any seeds
+    return false;
+  }
+  
+  // reserve space for any node's neighbors
+  NavMeshQuadTreeNode::NodeCPtrVector neighbors;
+  CORETECH_ASSERT( _root->GetLevel() < 32 );
+  neighbors.reserve( 1 << _root->GetLevel() ); // hope this doesn't grow too quickly
+  
+  // for every node, try to see if they are an innerContent with at least one outerContent neighbor
+  const NodeSet& innerSet = innerSetMatchIt->second;
+  for( const auto& candidateSeed : innerSet )
+  {
+    DEBUG_FIND_BORDER("[%p] Checking node for seeds", candidateSeed);
+    
+    // start from a given neighbor
+    EDirection candidateDir = EDirection::North;
+    const EClockDirection clockDir = EClockDirection::CW;
+    
+    do
+    {
+      DEBUG_FIND_BORDER("[%p] Checking direction '%s'", candidateSeed, EDirectionToString(candidateDir));
+
+      // grab neighbors of current direction
+      neighbors.clear();
+      candidateSeed->AddSmallestNeighbors(candidateDir, clockDir, neighbors);
+
+      size_t candidateOuterIdx = 0;
+      
+      // look for an outer neighbor within this direction
+      const size_t neighborCount = neighbors.size();
+      while ( candidateOuterIdx < neighborCount )
+      {
+          // if it's an outer, we have found a seed
+          if ( neighbors[candidateOuterIdx]->GetContentType() == outerType ) {
+            break;
+          }
+        
+        ++candidateOuterIdx;
+      }
+      
+      const bool foundOuter = (candidateOuterIdx < neighborCount);
+      if ( foundOuter ) {
+        DEBUG_FIND_BORDER("[%p] Found outer in '%s/%zu'", candidateSeed, EDirectionToString(candidateDir), candidateOuterIdx);
+        return true;
+      }
+      
+      candidateDir = GetNextDirection( candidateDir, clockDir );
+      
+    } while ( candidateDir != EDirection::North ); // until iterated all directions
+    
+  } // for every seed
+  
+  DEBUG_FIND_BORDER("Finished HasBorders without finding any seed");
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -201,9 +201,9 @@ namespace Anki
       // Navigation memory
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-      // WARNING: const method returning non-const pointer. Totally valid, but not good practice (arguably)
       // return pointer to current INavMemoryMap (it may be null if not enabled)
-      INavMemoryMap* GetNavMemoryMap() const { return _navMemoryMap.get(); }
+      const INavMemoryMap* GetNavMemoryMap() const { return _navMemoryMap.get(); }
+      INavMemoryMap* GetNavMemoryMap() { return _navMemoryMap.get(); }
       
       // update memory map
       void UpdateNavMemoryMap();      

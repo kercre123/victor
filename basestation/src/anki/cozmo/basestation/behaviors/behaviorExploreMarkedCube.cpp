@@ -36,15 +36,18 @@ BehaviorExploreMarkedCube::~BehaviorExploreMarkedCube()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
+  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  if ( nullptr == memoryMap ) {
+    // should not happen in prod, but at the moment it's null in master
+    return false;
+  }
   
-  INavMemoryMap::BorderVector borders;
-  INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown, borders);
+  const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown);
 
-  if ( borders.empty() ) {
-    PRINT_NAMED_INFO("RSAM", "IsRunnable NO");
-  } else {
+  if ( hasBorders ) {
     PRINT_NAMED_INFO("RSAM", "IsRunnable YES");
+  } else {
+    PRINT_NAMED_INFO("RSAM", "IsRunnable NO");
   }
   return false;
 }
@@ -52,6 +55,12 @@ bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot, double currentTim
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
+//  INavMemoryMap::BorderVector borders;
+//  INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+//  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown, borders);
+// const bool hasBorders = !borders.empty();
+
+
   PRINT_NAMED_INFO("RSAM", "Init");
   return Result::RESULT_OK;
 }

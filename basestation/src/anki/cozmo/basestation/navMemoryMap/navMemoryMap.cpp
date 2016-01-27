@@ -61,6 +61,16 @@ void NavMemoryMap::AddQuad(const Quad2f& quad, EContentType type)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMemoryMap::HasBorders(EContentType innerType, EContentType outerType) const
+{
+  const NavMeshQuadTreeTypes::ENodeContentType innerNodeType = ConvertContentType(innerType);
+  const NavMeshQuadTreeTypes::ENodeContentType outerNodeType = ConvertContentType(outerType);
+  
+  const bool hasBorders = _navMesh.GetProcessor().HasBorders(innerNodeType, outerNodeType);
+  return hasBorders;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMemoryMap::CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders)
 {
   const NavMeshQuadTreeTypes::ENodeContentType innerNodeType = ConvertContentType(innerType);

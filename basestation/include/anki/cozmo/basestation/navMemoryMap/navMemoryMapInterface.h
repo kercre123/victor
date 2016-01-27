@@ -51,6 +51,11 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // check whether the given content types would have any borders at the moment. This method is expected to
+  // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
+  // whether a border exists, without requiring calculating all of them
+  virtual bool HasBorders(EContentType innerType, EContentType outerType) const = 0;
   
   // retrieve the borders currently found in the map between the given types. This query is not const
   // so that the memory map can calculate and cache values upon being requested, rather than when
