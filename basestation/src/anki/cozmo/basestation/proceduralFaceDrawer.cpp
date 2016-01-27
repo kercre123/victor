@@ -1,4 +1,4 @@
-#include "anki/cozmo/basestation/proceduralFaceUtil.h"
+#include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 
 #include "anki/vision/basestation/trackedFace.h"
 
@@ -8,9 +8,9 @@
 namespace Anki {
 namespace Cozmo {
 
-  u8 ProceduralFaceUtil::_firstScanLine = 0;
+  u8 ProceduralFaceDrawer::_firstScanLine = 0;
   
-  SmallMatrix<2,3,f32> ProceduralFaceUtil::GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
+  SmallMatrix<2,3,f32> ProceduralFaceDrawer::GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
                                                                    f32 tX, f32 tY, f32 x0, f32 y0)
   {
     //
@@ -46,7 +46,7 @@ namespace Cozmo {
   } // GetTransformationMatrix()
 
   
-  void ProceduralFaceUtil::DrawEye(const ProceduralFace& _faceData, WhichEye whichEye, cv::Mat_<u8>& faceImg)
+  void ProceduralFaceDrawer::DrawEye(const ProceduralFace& _faceData, WhichEye whichEye, cv::Mat_<u8>& faceImg)
   {
     assert(faceImg.rows == ProceduralFace::HEIGHT &&
            faceImg.cols == ProceduralFace::WIDTH);
@@ -205,7 +205,7 @@ namespace Cozmo {
     
   } // DrawEye()
   
-  cv::Mat_<u8> ProceduralFaceUtil::GetFace(const ProceduralFace& _faceData)
+  cv::Mat_<u8> ProceduralFaceDrawer::DrawFace(const ProceduralFace& _faceData)
   {
     cv::Mat_<u8> faceImg(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
     faceImg.setTo(0);
@@ -233,7 +233,7 @@ namespace Cozmo {
     return faceImg;
   } // DrawFace()
 
-  bool ProceduralFaceUtil::GetNextBlinkFrame(ProceduralFace& _faceData, TimeStamp_t& offset)
+  bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& _faceData, TimeStamp_t& offset)
   {
     static ProceduralFace originalFace;
     

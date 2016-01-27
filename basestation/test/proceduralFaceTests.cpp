@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/proceduralFaceUtil.h"
+#include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 #include "anki/common/basestation/math/point_impl.h"
 
 // Sweep all parameters and make sure we don't trigger an assert or crash when
@@ -48,7 +48,7 @@ TEST(ProceduralFace, ParameterSweep)
             procFace.SetParameter(ProceduralFace::Left, (Param)iParam, value);
             procFace.SetParameter(ProceduralFace::Right, (Param)iParam, value);
             
-            EXPECT_NO_FATAL_FAILURE(ProceduralFaceUtil::GetFace(procFace));
+            EXPECT_NO_FATAL_FAILURE(ProceduralFaceDrawer::DrawFace(procFace));
           }
         //}
       }

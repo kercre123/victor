@@ -2,7 +2,7 @@
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "anki/cozmo/basestation/proceduralFaceUtil.h"
+#include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
@@ -491,7 +491,7 @@ namespace Cozmo {
 
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                                        ProceduralFace& faceParams,
+                                        ProceduralFace& procFace,
                                         bool shouldReplace)
   {
     bool paramsSet = false;
@@ -501,7 +501,7 @@ namespace Cozmo {
       ProceduralFaceKeyFrame& currentKeyFrame = track.GetCurrentKeyFrame();
       if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
       {
-        ProceduralFace interpolatedParams;
+        ProceduralFace interpolatedFace;
         
         const ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
         if (nextFrame != nullptr) {
@@ -524,7 +524,7 @@ namespace Cozmo {
             // We're on the way to the next frame, but not too close to it: interpolate.
             else if (nextFrame->GetTriggerTime() - currStreamTime >= IKeyFrame::SAMPLE_LENGTH_MS) {
              */
-              interpolatedParams = currentKeyFrame.GetInterpolatedFaceParams(*nextFrame, currTime_ms - startTime_ms);
+              interpolatedFace = currentKeyFrame.GetInterpolatedFace(*nextFrame, currTime_ms - startTime_ms);
               paramsSet = true;
             //}
             
@@ -536,7 +536,7 @@ namespace Cozmo {
         } else {
           // There's no next frame to interpolate towards: just send this keyframe
           // and move forward
-          interpolatedParams = currentKeyFrame.GetFace();
+          interpolatedFace = currentKeyFrame.GetFace();
           track.MoveToNextKeyFrame();
           paramsSet = true;
         }
@@ -551,11 +551,11 @@ namespace Cozmo {
           
           if (shouldReplace)
           {
-            faceParams = interpolatedParams;
+            procFace = interpolatedFace;
           }
           else
           {
-            faceParams.Combine(interpolatedParams);
+            procFace.Combine(interpolatedFace);
           }
         }
       } // if(nextFrame != nullptr
@@ -630,7 +630,7 @@ namespace Cozmo {
       bool moreBlinkFrames = false;
       do {
         TimeStamp_t timeInc;
-        moreBlinkFrames = ProceduralFaceUtil::GetNextBlinkFrame(blinkFace, timeInc);
+        moreBlinkFrames = ProceduralFaceDrawer::GetNextBlinkFrame(blinkFace, timeInc);
         totalOffset += timeInc;
         faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(blinkFace, totalOffset));
       } while(moreBlinkFrames);
@@ -758,7 +758,7 @@ namespace Cozmo {
         const ProceduralFace::WhichEye L = ProceduralFace::WhichEye::Left;
         const ProceduralFace::WhichEye R = ProceduralFace::WhichEye::Right;
 
-        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.CombinedFaceParams",
+        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.CombinedFace",
                           "Face: shift=(%.2f,%.2f) scale=(%.2f,%.2f), "
                           "Left: shift=(%.2f,%.2f) scale=(%.2f,%.2f), "
                           "Right: shift=(%.2f,%.2f) scale=(%.2f,%.2f)",
@@ -783,7 +783,7 @@ namespace Cozmo {
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
     AnimKeyFrame::FaceImage faceImageMsg;
-    Result rleResult = FaceAnimationManager::CompressRLE(ProceduralFaceUtil::GetFace(procFace), faceImageMsg.image);
+    Result rleResult = FaceAnimationManager::CompressRLE(ProceduralFaceDrawer::DrawFace(procFace), faceImageMsg.image);
     
     if(RESULT_OK != rleResult) {
       PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",

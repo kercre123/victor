@@ -1,5 +1,5 @@
-#ifndef __Anki_Cozmo_ProceduralFaceUtil_H__
-#define __Anki_Cozmo_ProceduralFaceUtil_H__
+#ifndef __Anki_Cozmo_ProceduralFaceDrawer_H__
+#define __Anki_Cozmo_ProceduralFaceDrawer_H__
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/matrix.h"
@@ -16,7 +16,7 @@ namespace Anki {
   
 namespace Cozmo {
 
-  class ProceduralFaceUtil
+  class ProceduralFaceDrawer
   {
   public:
     // Closes eyes and switches interlacing. Call until it returns false, which
@@ -26,7 +26,7 @@ namespace Cozmo {
     static bool GetNextBlinkFrame(ProceduralFace& _faceData, TimeStamp_t& offset);
     
     // Actually draw the face with the current parameters
-    static cv::Mat_<u8> GetFace(const ProceduralFace& _faceData);
+    static cv::Mat_<u8> DrawFace(const ProceduralFace& _faceData);
     
   private:
     
@@ -49,7 +49,7 @@ namespace Cozmo {
   
 #pragma mark Inlined Methods
   
-  inline void ProceduralFaceUtil::SwitchInterlacing() {
+  inline void ProceduralFaceDrawer::SwitchInterlacing() {
     _firstScanLine = 1 - _firstScanLine;
   }
   
@@ -57,4 +57,4 @@ namespace Cozmo {
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Anki_Cozmo_ProceduralFaceUtil_H__
+#endif // __Anki_Cozmo_ProceduralFaceDrawer_H__
