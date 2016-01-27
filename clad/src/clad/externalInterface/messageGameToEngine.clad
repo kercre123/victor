@@ -8,6 +8,7 @@
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/proceduralEyeParameters.clad"
 #include "clad/types/demoBehaviorState.clad"
+#include "clad/types/behaviorGroup.clad"
 #include "clad/types/behaviorType.clad"
 #include "clad/types/behaviorChooserType.clad"
 #include "clad/types/emotionTypes.clad"
@@ -16,6 +17,7 @@
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/externalInterface/messageShared.clad"
+#include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
 #include "clad/types/globalVizOrigin.clad"
@@ -404,6 +406,12 @@ message ExecuteBehavior {
   BehaviorType behaviorType
 }
 
+// Any message intended for a specific robot's behaviorManager
+message BehaviorManagerMessage {
+  uint_8  robotID,
+  BehaviorManagerMessageUnion  BehaviorManagerMessageUnion
+}
+
 // AbortPath
 message AbortPath {
 }
@@ -678,21 +686,21 @@ message ForceDelocalizeRobot {
 
 // Mood / Emotions
 
-message GetEmotions {
+structure GetEmotions {
 }
 
-message SetEmotion {
+structure SetEmotion {
   EmotionType emotionType,
   float_32 newVal
 }
 
-message AddToEmotion {
+structure AddToEmotion {
   EmotionType emotionType,
   float_32 deltaVal,
   string uniqueIdString
 }
 
-message TriggerEmotionEvent {
+structure TriggerEmotionEvent {
   string emotionEventName
 }
 
@@ -710,24 +718,24 @@ message MoodMessage {
 
 // Progression / Stats
 
-message GetProgressionStats {
+structure GetProgressionStats {
 }
 
-message SetProgressionStat {
+structure SetProgressionStat {
   ProgressionStatType statType,
   int_32 newVal
 }
 
-message AddToProgressionStat {
+structure AddToProgressionStat {
   ProgressionStatType statType,
   int_32 deltaVal
 }
 
-message SetFriendshipPoints {
+structure SetFriendshipPoints {
   int_32 newVal
 }
 
-message SetFriendshipLevel {
+structure SetFriendshipLevel {
   int_32 newVal
 }
 
