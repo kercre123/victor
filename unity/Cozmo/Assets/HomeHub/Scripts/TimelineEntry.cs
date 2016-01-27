@@ -13,6 +13,9 @@ public class TimelineEntry : MonoBehaviour {
   private GameObject _TimelineNodeActive;
 
   [SerializeField]
+  private GameObject _TimelineNodeComplete;
+
+  [SerializeField]
   private GameObject _TimelineNodeInactive;
 
   [SerializeField]
@@ -29,7 +32,7 @@ public class TimelineEntry : MonoBehaviour {
     _FillbarButton.onClick.AddListener(HandleClick);
     _TimelineNodeButton.onClick.AddListener(HandleClick);
   }
-    
+
   private void HandleClick() {
     if (OnSelect != null) {
       OnSelect(_Date);
@@ -42,6 +45,9 @@ public class TimelineEntry : MonoBehaviour {
 
     _FillbarButton.gameObject.SetActive(active);
     _TimelineNodeActive.SetActive(active);
+    if (progress == 1.0f) {
+      _TimelineNodeComplete.SetActive(active);
+    }
     _TimelineNodeInactive.SetActive(!active);
   }
 }
