@@ -31,7 +31,8 @@ class TestAction : public IAction
     virtual const std::string& GetName() const override { return _name; }
     virtual RobotActionType GetType() const override { return _type; }
     Robot* GetRobot() { return _robot; }
-    bool _complete;
+    int _numRetries = 0;
+    bool _complete = false;
   protected:
     virtual ActionResult Init() override;
     virtual ActionResult CheckIfDone() override;
@@ -42,7 +43,6 @@ class TestAction : public IAction
 TestAction::TestAction(std::string name, RobotActionType type)
 {
   _name = name;
-  _complete = false;
   _type = type;
 }
 
@@ -50,7 +50,12 @@ ActionResult TestAction::Init() { return ActionResult::SUCCESS; }
 
 ActionResult TestAction::CheckIfDone()
 {
-  return (_complete) ? ActionResult::SUCCESS : ActionResult::RUNNING;
+  if(_numRetries > 0)
+  {
+    _numRetries--;
+    return ActionResult::FAILURE_RETRY;
+  }
+  return (_complete ? ActionResult::SUCCESS : ActionResult::RUNNING);
 }
 
 // Simple Interruptable action that can be set to complete
@@ -115,7 +120,7 @@ ActionResult TestActionWithinAction::Init()
 {
   CompoundActionSequential* compound = new CompoundActionSequential();
   _compoundAction = compound;
-  RegisterSubAction(_compoundAction);
+  EXPECT_EQ(RegisterSubAction(_compoundAction), ActionResult::SUCCESS);
   
   compound->AddAction(new TestAction("Test1", RobotActionType::WAIT));
   compound->AddAction(new TestAction("Test2", RobotActionType::WAIT));
@@ -678,5 +683,44 @@ TEST(QueueAction, QueueActionWithinAction)
   r.GetActionList().Update();
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("TestActionWithinAction"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+}
+
+TEST(QueueAction, ActionFailureRetry)
+{
+  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
+  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
+  CompoundActionSequential* compoundAction = new CompoundActionSequential({testAction1, testAction2});
+  testAction1->_complete = true;
+  testAction2->_complete = true;
+  testAction2->SetNumRetries(3);
+  testAction2->_numRetries = 1;
+  
+  EXPECT_NE(testAction1->GetRobot(), &r);
+  EXPECT_NE(testAction2->GetRobot(), &r);
+  EXPECT_NE(compoundAction->GetRobot(), &r);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, compoundAction);
+  
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(compoundAction->GetRobot(), &r);
+  
+  r.GetActionList().Update();
+  
+  // Both actions are set to complete but testAction2 is going to retry once
+  // so check both actions are still in the compound action
+  auto actions = compoundAction->GetActions();
+  EXPECT_EQ(actions.size(), 2);
+  EXPECT_EQ(actions.front().second->GetName(), "Test1");
+  EXPECT_EQ(actions.back().second->GetName(), "Test2");
+  
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(compoundAction->GetRobot(), &r);
+  EXPECT_EQ(testAction1->GetRobot(), &r);
+  EXPECT_EQ(testAction2->GetRobot(), &r);
+  
+  r.GetActionList().Update();
+  
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
 }

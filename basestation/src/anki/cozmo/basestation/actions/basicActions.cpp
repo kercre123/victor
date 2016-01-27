@@ -683,7 +683,10 @@ namespace Anki {
     {
       CompoundActionParallel* newCompoundParallel = new CompoundActionParallel();
       _compoundAction = newCompoundParallel;
-      RegisterSubAction(_compoundAction);
+      if(RegisterSubAction(_compoundAction) != ActionResult::SUCCESS)
+      {
+        return ActionResult::FAILURE_ABORT;
+      }
       
       newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
       
@@ -774,7 +777,10 @@ namespace Anki {
     ActionResult FaceObjectAction::Init()
     {
       _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
-      RegisterSubAction(_visuallyVerifyAction);
+      if(RegisterSubAction(_visuallyVerifyAction) != ActionResult::SUCCESS)
+      {
+        return ActionResult::FAILURE_ABORT;
+      }
       
       ObservableObject* object = _robot->GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
@@ -955,13 +961,19 @@ namespace Anki {
           CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = bridgeAction;
-          RegisterSubAction(_chosenAction);
+          if(RegisterSubAction(_chosenAction) != ActionResult::SUCCESS)
+          {
+            return ActionResult::FAILURE_ABORT;
+          }
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
           AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = rampAction;
-          RegisterSubAction(_chosenAction);
+          if(RegisterSubAction(_chosenAction) != ActionResult::SUCCESS)
+          {
+            return ActionResult::FAILURE_ABORT;
+          }
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
@@ -1114,7 +1126,10 @@ namespace Anki {
       
       // Get lift out of the way
       _moveLiftToHeightAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV);
-      RegisterSubAction(_moveLiftToHeightAction);
+      if(RegisterSubAction(_moveLiftToHeightAction) != ActionResult::SUCCESS)
+      {
+        return ActionResult::FAILURE_ABORT;
+      }
       _moveLiftToHeightAction->SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;

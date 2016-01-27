@@ -238,7 +238,10 @@ namespace Anki {
       _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
-      RegisterSubAction(_faceAndVerifyAction);
+      if(RegisterSubAction(_faceAndVerifyAction) != ActionResult::SUCCESS)
+      {
+        return ActionResult::FAILURE_ABORT;
+      }
 
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->SetEmitCompletionSignal(false);
@@ -814,7 +817,10 @@ namespace Anki {
         }
         
         _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
-        RegisterSubAction(_faceAndVerifyAction);
+        if(RegisterSubAction(_faceAndVerifyAction) != ActionResult::SUCCESS)
+        {
+          return ActionResult::FAILURE_ABORT;
+        }
         _faceAndVerifyAction->SetEmitCompletionSignal(false);
         
       } // if/else IsCarryingObject()
@@ -1005,7 +1011,10 @@ namespace Anki {
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), true, false);
-              RegisterSubAction(_placementVerifyAction);
+              if(RegisterSubAction(_placementVerifyAction) != ActionResult::SUCCESS)
+              {
+                return ActionResult::FAILURE_ABORT;
+              }
               _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
@@ -1054,7 +1063,10 @@ namespace Anki {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
-                  RegisterSubAction(_placementVerifyAction);
+                  if(RegisterSubAction(_placementVerifyAction) != ActionResult::SUCCESS)
+                  {
+                    return ActionResult::FAILURE_ABORT;
+                  }
                   
                   // Disable completion signals since this is inside another action
                   _placementVerifyAction->SetEmitCompletionSignal(false);
@@ -1211,7 +1223,10 @@ namespace Anki {
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
-              RegisterSubAction(_rollVerifyAction);
+              if(RegisterSubAction(_rollVerifyAction) != ActionResult::SUCCESS)
+              {
+                return ActionResult::FAILURE_ABORT;
+              }
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetEmitCompletionSignal(false);

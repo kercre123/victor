@@ -277,7 +277,10 @@ namespace Anki {
       
       CompoundActionSequential* newCompoundSequential = new CompoundActionSequential();
       _compoundAction = newCompoundSequential;
-      RegisterSubAction(_compoundAction);
+      if(RegisterSubAction(_compoundAction) != ActionResult::SUCCESS)
+      {
+        return ActionResult::FAILURE_ABORT;
+      }
       
       // In case we are re-running this action, make sure compound actions are cleared.
       // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)

@@ -132,6 +132,8 @@ namespace Anki {
       void SetSlotHandle(ActionList::SlotHandle inSlot) { _inSlot = inSlot; }
       ActionList::SlotHandle GetSlotHandle() const { return _inSlot; }
       
+      bool IsRunning() { return _isRunning; }
+      
     protected:
       
       Robot* _robot = nullptr;
@@ -151,7 +153,8 @@ namespace Anki {
       // If this action's cleanup gets called, all registered sub actions'
       // cleanup methods get called. Also, just before Init(), in case the
       // action is reset and run again.
-      void RegisterSubAction(IActionRunner* &subAction);
+      // Call after new-ing subAction inside of Init()
+      ActionResult RegisterSubAction(IActionRunner* &subAction);
 
       // Call Cancel and Update on any registered sub actions and then delete them
       void CancelAndDeleteSubActions();
