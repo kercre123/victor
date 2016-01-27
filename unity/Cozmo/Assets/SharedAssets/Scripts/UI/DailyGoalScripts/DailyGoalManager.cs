@@ -41,6 +41,11 @@ public class DailyGoalManager : MonoBehaviour {
     return _FriendshipFormulaConfig.CalculateDailyGoalProgress(prog, goal);
   }
 
+  public string GetDesiredMinigameID() {
+    ChallengeData randC = _ChallengeList.ChallengeData[Random.Range(0, _ChallengeList.ChallengeData.Length)];
+    return randC.ChallengeID;
+  }
+
   /// <summary>
   /// Returns the current goal that's the furthest from being complete.
   /// Use to help determine which minigame cozmo wants to play
