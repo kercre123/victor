@@ -61,69 +61,7 @@ void NavMeshQuadTree::Draw() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
-{
-  // render approx last quad added
-  if ( kRenderLastAddedQuad )
-  {
-    VizManager::SimpleQuadVector quadVector;
-    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
-    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
-    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::DARKGREEN, center, size));
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddClearQuad", quadVector);
-  }
-
-  // if the root does not contain the quad, expand
-  if ( !_root.Contains( quad ) )
-  {
-    Expand( quad );
-  }
-
-  // add clear quad now
-  _gfxDirty = _root.AddClearQuad(quad, _processor) || _gfxDirty;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddObstacle(const Quad2f& quad, NavMemoryMapTypes::EObstacleType obstacleType)
-{
-  // render approx last quad added
-  if ( kRenderLastAddedQuad )
-  {
-    VizManager::SimpleQuadVector quadVector;
-    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
-    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
-    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::ORANGE, center, size));
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddObstacle", quadVector);
-  }
-
-  // if the root does not contain the quad, expand
-  if ( !_root.Contains( quad ) )
-  {
-    Expand( quad );
-  }
-
-  // add the proper obstacle type in the node
-  bool changed = false;
-  switch( obstacleType ) {
-    case NavMemoryMapTypes::EObstacleType::Cube: {
-      changed = _root.AddObstacleCube(quad, _processor);
-      break;
-    }
-    case NavMemoryMapTypes::EObstacleType::Unrecognized: {
-      changed = _root.AddObstacleUnrecognized(quad, _processor);
-      break;
-    }
-    default: {
-      ASSERT_NAMED(false, "NavMeshQuadTree.AddObstacle.InvalidObstacleEnum");
-    }
-  }
-
-  // add obstacle now
-  _gfxDirty = changed || _gfxDirty;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddCliff(const Quad2f& quad)
+void NavMeshQuadTree::AddQuad(const Quad2f& quad, ENodeContentType nodeType)
 {
   // render approx last quad added
   if ( kRenderLastAddedQuad )
@@ -132,7 +70,7 @@ void NavMeshQuadTree::AddCliff(const Quad2f& quad)
     Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
     float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
     quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::YELLOW, center, size));
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddCliff", quadVector);
+    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddQuad", quadVector);
   }
 
   // if the root does not contain the quad, expand
@@ -141,8 +79,8 @@ void NavMeshQuadTree::AddCliff(const Quad2f& quad)
     Expand( quad );
   }
 
-  // add cliff now
-  _gfxDirty = _root.AddCliff(quad, _processor) || _gfxDirty;
+  // add quad now
+  _gfxDirty = _root.AddQuad(quad, nodeType, _processor) || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

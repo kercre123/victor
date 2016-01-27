@@ -450,11 +450,6 @@ public:
     // Returns "" if no non-idle animation is streaming.
     const std::string GetStreamingAnimationName() const;
     
-    const ProceduralFace& GetProceduralFace() const { return _proceduralFace; }
-    const ProceduralFace& GetLastProceduralFace() const { return _lastProceduralFace; }
-    void SetProceduralFace(const ProceduralFace& face);
-    void MarkProceduralFaceAsSent();
-    
     // Returns the number of animation bytes or audio frames played on the robot since
     // it was initialized with SyncTime.
     s32 GetNumAnimationBytesPlayed() const;
@@ -875,7 +870,6 @@ public:
     CannedAnimationContainer _cannedAnimations;
     AnimationGroupContainer  _animationGroups;
     AnimationStreamer        _animationStreamer;
-    ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed         = 0;
     s32 _numAnimationBytesStreamed       = 0;

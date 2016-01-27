@@ -23,6 +23,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 
 #include <list>
+#include <memory>
 
 // This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
 // Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
@@ -38,6 +39,7 @@ namespace Cozmo {
   
   // Forward declaration
   class Robot;
+  class ProceduralFace;
   
   class IExternalInterface;
   namespace ExternalInterface {
@@ -112,6 +114,8 @@ namespace Cozmo {
     // too much delay when we want to layer something on "now". This is number of
     // audio frames.
     static const s32 NUM_AUDIO_FRAMES_LEAD;
+    
+    ProceduralFace* GetLastProceduralFace() { return _lastProceduralFace.get(); }
 
   private:
     
@@ -167,7 +171,7 @@ namespace Cozmo {
     // ready to play) into the passed-in procedural face params.
     bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                       ProceduralFaceParams& faceParams,
+                       ProceduralFace& procFace,
                        bool shouldReplace);
     
     bool HaveFaceLayersToSend();
@@ -249,6 +253,7 @@ namespace Cozmo {
     
     Audio::RobotAudioClient& _audioClient;
     
+    std::unique_ptr<ProceduralFace> _lastProceduralFace;
   }; // class AnimationStreamer
   
 } // namespace Cozmo

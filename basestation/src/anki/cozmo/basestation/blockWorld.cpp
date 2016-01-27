@@ -511,7 +511,7 @@ namespace Cozmo {
   void BlockWorld::UpdateNavMemoryMap()
   {
     if ( nullptr != _navMemoryMap ) {
-      _navMemoryMap->AddClearQuad(_robot->GetBoundingQuadXY());
+      _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::Clear );
     }
   }
   
@@ -971,7 +971,7 @@ namespace Cozmo {
         
         // Update navMemory map
         if ( nullptr != _navMemoryMap ) {
-          _navMemoryMap->AddObstacleQuad(observedObject->GetBoundingQuadXY(), NavMemoryMapTypes::EObstacleType::Cube);
+          _navMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(), INavMemoryMap::EContentType::ObstacleCube);
         }
         
         _didObjectsChange = true;
@@ -1768,7 +1768,7 @@ namespace Cozmo {
               // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
               // the navmesh that it should be clear, since we saw the marker
               Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
-              _navMemoryMap->AddClearQuad(clearVisionQuad);
+              _navMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::Clear);
             }
           }
           
@@ -1897,7 +1897,7 @@ namespace Cozmo {
           {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
         };
         p.ApplyTo(cliffquad, cliffquad);
-        _navMemoryMap->AddCliffQuad(cliffquad);
+        _navMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::Cliff);
       }
     
       // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid

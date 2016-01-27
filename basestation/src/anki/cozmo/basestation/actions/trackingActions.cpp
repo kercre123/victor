@@ -242,10 +242,10 @@ ActionResult ITrackAction::CheckIfDone()
       const f32 outerEyeScaleIncrease = 0.1f;
       
       ProceduralFace procFace;
-      procFace.GetParams().LookAt(eyeShiftX, eyeShiftY,
-                                  static_cast<f32>(ProceduralFace::WIDTH/4),
-                                  static_cast<f32>(ProceduralFace::HEIGHT/4),
-                                  maxLookUpScale, minLookDownScale, outerEyeScaleIncrease);
+      procFace.LookAt(eyeShiftX, eyeShiftY,
+                      static_cast<f32>(ProceduralFace::WIDTH/4),
+                      static_cast<f32>(ProceduralFace::HEIGHT/4),
+                      maxLookUpScale, minLookDownScale, outerEyeScaleIncrease);
       
       if(_eyeShiftTag == AnimationStreamer::NotAnimatingTag) {
         // Start a new eye shift layer

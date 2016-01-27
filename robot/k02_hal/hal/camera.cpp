@@ -303,6 +303,7 @@ void DMA0_IRQHandler(void)
   timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
   NVIC_SetPriority(FTM2_IRQn, 1);
+  HALInit();
 }
 
 extern "C"

@@ -211,11 +211,13 @@ static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags)
     write_queue(I2C_CTRL_SEND, *(bytes++));
   }
 
-  if (ena) Enable();
+  if (ena) {
+    Enable();
 
-  if (!_active) {
-    _active = true;
-    I2C0_Proc();
+    if (!_active) {
+      _active = true;
+      I2C0_Proc();
+    }
   }
 
   _send_reset = true;

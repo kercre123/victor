@@ -116,10 +116,6 @@ namespace Anki {
         SetupMiscHandlers(*_externalInterface);
       }
       
-      _proceduralFace.MarkAsSentToRobot(false);
-      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
-      _lastProceduralFace.MarkAsSentToRobot(true);
-      
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
@@ -135,7 +131,7 @@ namespace Anki {
       if (nullptr != neutralFaceAnim)
       {
         auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
-        ProceduralFaceParams::SetResetData(frame->GetFace().GetParams());
+        ProceduralFace::SetResetData(frame->GetFace());
       }
       else
       {
@@ -1432,30 +1428,6 @@ namespace Anki {
     {
       return _animationStreamer.GetIdleAnimationName();
     }
-  
-    void Robot::SetProceduralFace(const ProceduralFace& face)
-    {
-      // First one
-      if(_lastProceduralFace.GetTimeStamp() == 0) {
-        _lastProceduralFace = face;
-        _lastProceduralFace.MarkAsSentToRobot(true);
-        _proceduralFace.MarkAsSentToRobot(true);
-      } else {
-        if(_proceduralFace.HasBeenSentToRobot()) {
-          // If the current face has already been sent, make it the
-          // last procedural face (sent). Otherwise, we'll just
-          // replace the current face and leave "last" as is.
-          std::swap(_lastProceduralFace, _proceduralFace);
-        }
-        _proceduralFace = face;
-        _proceduralFace.MarkAsSentToRobot(false);
-      }
-    }
-    
-    void Robot::MarkProceduralFaceAsSent()
-    {
-      _proceduralFace.MarkAsSentToRobot(true);
-    }
     
     const std::string Robot::GetStreamingAnimationName() const
     {
@@ -1466,12 +1438,12 @@ namespace Anki {
                           TimeStamp_t duration_ms, const std::string& name)
     {
       ProceduralFace procFace;
-      ProceduralFaceParams::Value xMin=0, xMax=0, yMin=0, yMax=0;
-      procFace.GetParams().GetEyeBoundingBox(xMin, xMax, yMin, yMax);
-      procFace.GetParams().LookAt(xPix, yPix,
-                                  std::max(xMin, ProceduralFace::WIDTH-xMax),
-                                  std::max(yMin, ProceduralFace::HEIGHT-yMax),
-                                  1.1f, 0.85f, 0.1f);
+      ProceduralFace::Value xMin=0, xMax=0, yMin=0, yMax=0;
+      procFace.GetEyeBoundingBox(xMin, xMax, yMin, yMax);
+      procFace.LookAt(xPix, yPix,
+                      std::max(xMin, ProceduralFace::WIDTH-xMax),
+                      std::max(yMin, ProceduralFace::HEIGHT-yMax),
+                      1.1f, 0.85f, 0.1f);
       
       ProceduralFaceKeyFrame keyframe(procFace, duration_ms);
       
@@ -1583,7 +1555,7 @@ namespace Anki {
     {
       // Disable super-verbose warnings about clipping face parameters in json files
       // To help find bad/deprecated animations, try removing this.
-      ProceduralFaceParams::EnableClippingWarning(false);
+      ProceduralFace::EnableClippingWarning(false);
 
       ReadAnimationDirImpl("assets/animations/");
       ReadAnimationDirImpl("config/basestation/animations/");
@@ -1645,7 +1617,7 @@ namespace Anki {
         }
       }
       
-      ProceduralFaceParams::EnableClippingWarning(true);
+      ProceduralFace::EnableClippingWarning(true);
     }
     
     // Read the animationGroups in a dir

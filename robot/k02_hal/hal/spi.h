@@ -17,6 +17,8 @@ namespace Anki
         void Init(void);
         void StartDMA(void);
 
+        void ManageDrop(void);
+          
         // Finalize the drop for transmission next time
         void FinalizeDrop(int jpeglen, bool eof);
       }
