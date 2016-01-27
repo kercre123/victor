@@ -287,6 +287,7 @@ void NavMeshQuadTreeProcessor::Draw() const
           if ( kRenderBordersToQuad ) { toColor = Anki::NamedColors::WHITE; }
           if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
           if ( it.isEnd ) { toColor = Anki::NamedColors::MAGENTA; }
+          if ( kRenderSeeds && it.isSeed && it.isEnd ) { toColor = Anki::NamedColors::ORANGE; }
           const float alpha = comboIt.second.dirty ? 0.2f : 0.8f;
           toColor.SetAlpha(alpha);
           const float toSideLen = 5.0f;
@@ -728,8 +729,13 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
                   DEBUG_FIND_BORDER("[%p] (%s,%zu) 'OuterType' looped iterating neighbors. Finishing border and seed",
                   curInnerNode, EDirectionToString(curDir), nextNeighborIdx);
                   
-                  // we could add also this node as a waypoint, but then it belongs to two borders; consider.
-                  // AddBorderWaypoint( curInnerNode, nextNode );
+                  // also add the point. Even though it belongs now to two borders, it will create the proper normals
+                  // add it only if it would add to a running segment. If it would create a segment on its own, then
+                  // we can discard it, since it's already in the other one
+                  if ( !_currentBorderCombination->waypoints.empty() && !_currentBorderCombination->waypoints.back().isEnd )
+                  {
+                    AddBorderWaypoint( curInnerNode, nextNode, curDir );
+                  }
               
                   // in any case, a border ends here
                   FinishBorder();
@@ -774,13 +780,13 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
           // we are no longer iterating neighbors, check if we want to continue next direction
           if ( continueSeeding )
           {
-            // we still want to iterate, go to next direction
-            DEBUG_FIND_BORDER("[%p] Moving to new direction %s", curInnerNode, EDirectionToString(curDir) );
-
             // go to next direction
             curDir = GetNextDirection(curDir, clockDir);
             nextNeighborIdx = 0;
-          
+
+            // we still want to iterate, go to next direction
+            DEBUG_FIND_BORDER("[%p] Moving to new direction %s", curInnerNode, EDirectionToString(curDir) );
+            
             // need to grab this again in case we jumped to next node
             CheckedInfo& curNodeCheckedInfo = checkedNodes[curInnerNode];
           
