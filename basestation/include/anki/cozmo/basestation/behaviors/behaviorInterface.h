@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "util/random/randomGenerator.h"
@@ -135,12 +136,8 @@ namespace Cozmo {
     
     virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
     
-    // Behavior groups stored as bit flags - a behavior can belong to many groups
-    using BehaviorGroupFlagStorage = uint32_t;
-    using BehaviorGroupFlags = Util::BitFlags<BehaviorGroupFlagStorage, BehaviorGroup>;
-    
     bool IsBehaviorGroup(BehaviorGroup behaviorGroup) const { return _behaviorGroups.IsBitFlagSet(behaviorGroup); }
-    bool MatchesAnyBehaviorGroups(BehaviorGroupFlagStorage flags) const { return _behaviorGroups.AreAnyBitsInMaskSet(flags); }
+    bool MatchesAnyBehaviorGroups(BehaviorGroupFlags::StorageType flags) const { return _behaviorGroups.AreAnyBitsInMaskSet(flags); }
     bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags& groupFlags) const { return MatchesAnyBehaviorGroups(groupFlags.GetFlags()); }
     
   protected:

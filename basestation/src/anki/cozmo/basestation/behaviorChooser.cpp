@@ -79,6 +79,11 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
   float bestScore = 0.0f;
   for (IBehavior* behavior : _behaviorList)
   {
+    if (behavior->MatchesAnyBehaviorGroups(_bannedBehaviorGroups))
+    {
+      continue;
+    }
+        
     VizInterface::BehaviorScoreData scoreData;
     
     scoreData.behaviorScore = behavior->EvaluateScore(robot, currentTime_sec);

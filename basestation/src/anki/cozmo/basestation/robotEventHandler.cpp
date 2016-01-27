@@ -104,6 +104,12 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
       _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
     }
+
+    // Custom handlers for BehaviorManager events
+    {
+      auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
+    }
   }
 }
   
@@ -815,6 +821,26 @@ void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface
     robot->GetProgressionManager().HandleEvent(event);
   }
 }
+  
+void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const auto& eventData = event.GetData();
+  const auto& message = eventData.Get_BehaviorManagerMessage();
+  const RobotID_t robotID = message.robotID;
+
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleBehaviorManagerEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetBehaviorManager().HandleMessage(message.BehaviorManagerMessageUnion);
+  }
+}
+  
 
 } // namespace Cozmo
 } // namespace Anki

@@ -662,6 +662,9 @@ public:
     const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
           MoodManager& GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
+    const BehaviorManager& GetBehaviorManager() const { return _behaviorMgr; }
+          BehaviorManager& GetBehaviorManager()       { return _behaviorMgr; }
+
     const BehaviorFactory& GetBehaviorFactory() const { return _behaviorMgr.GetBehaviorFactory(); }
           BehaviorFactory& GetBehaviorFactory()       { return _behaviorMgr.GetBehaviorFactory(); }
   
