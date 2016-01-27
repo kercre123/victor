@@ -65,13 +65,10 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     CozmoWidget _CozmoWidgetPrefab;
-    CozmoWidget _CozmoWidgeInstance;
+    CozmoWidget _CozmoWidgetInstance;
 
     [SerializeField]
     FriendshipFormulaConfiguration _FriendshipFormulaConfig;
-
-    [SerializeField]
-    Cozmo.UI.ProgressBar _BatteryBar;
 
     public void CloseView() {
       // TODO: Play some close animations before destroying view
@@ -96,7 +93,7 @@ namespace Cozmo.HomeHub {
 
       _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _RightTopPane).GetComponent<DailyGoalPanel>();
 
-      _CozmoWidgeInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _RightBottomPane).GetComponent<CozmoWidget>();
+      _CozmoWidgetInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _RightBottomPane).GetComponent<CozmoWidget>();
 
       UpdateDailySession();
 
@@ -107,7 +104,7 @@ namespace Cozmo.HomeHub {
       _DailyGoalInstance.transform.SetSiblingIndex(0);
       _EndSessionButton.onClick.AddListener(HandleEndSessionButtonTap);
       Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
-      _CozmoWidgeInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
+      _CozmoWidgetInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
     }
 
     private void UpdateDailySession() {
