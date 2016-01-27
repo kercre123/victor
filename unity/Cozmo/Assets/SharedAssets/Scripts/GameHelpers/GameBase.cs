@@ -203,14 +203,16 @@ public abstract class GameBase : MonoBehaviour {
     _RewardedXp = new StatContainer();
 
     foreach (var statType in StatContainer.sKeys) {
-      // TODO: Check that this is a goal xp
-      int grantedXp = ComputeXpForStat(statType);
-      if (grantedXp != 0) {
-        _RewardedXp[statType] = grantedXp;
-        _ChallengeEndViewInstance.AddReward(statType, grantedXp);
+      // Check that this is a goal xp
+      if (RobotEngineManager.Instance.HasGoalForStat(statType)) {
+        int grantedXp = ComputeXpForStat(statType);
+        if (grantedXp != 0) {
+          _RewardedXp[statType] = grantedXp;
+          _ChallengeEndViewInstance.AddReward(statType, grantedXp);
 
-        // Grant right away even if there are animations in the daily goal ui
-        CurrentRobot.AddToProgressionStat(statType, grantedXp);
+          // Grant right away even if there are animations in the daily goal ui
+          CurrentRobot.AddToProgressionStat(statType, grantedXp);
+        }
       }
     }
   }

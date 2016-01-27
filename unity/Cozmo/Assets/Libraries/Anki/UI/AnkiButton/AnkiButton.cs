@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Anki.UI;
+using Cozmo.UI;
 
 namespace Anki {
   namespace UI {
@@ -64,6 +65,9 @@ namespace Anki {
 
       [SerializeField]
       private CanvasGroup _AlphaController;
+
+      [SerializeField]
+      private AnkiAnimateGlint _GlintAnimator;
 
       public AnkiButtonImage[] ButtonGraphics;
 
@@ -247,6 +251,10 @@ namespace Anki {
           _TextLabel.color = TextEnabledColor;
           _TextLabel.transform.localPosition = _TextDefaultPosition;
         }
+
+        if (_GlintAnimator != null) {
+          _GlintAnimator.enabled = true;
+        }
       }
 
       private void ShowPressedState() {
@@ -263,6 +271,10 @@ namespace Anki {
           _TextLabel.color = TextPressedColor;
           _TextLabel.transform.localPosition = _TextPressedPosition;
         }
+
+        if (_GlintAnimator != null) {
+          _GlintAnimator.enabled = true;
+        }
       }
 
       private void ShowDisabledState() {
@@ -274,9 +286,14 @@ namespace Anki {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
           }
         }
+
         if (_TextLabel != null) {
           _TextLabel.color = TextDisabledColor;
           _TextLabel.transform.localPosition = _TextDefaultPosition;
+        }
+
+        if (_GlintAnimator != null) {
+          _GlintAnimator.enabled = false;
         }
       }
 
