@@ -56,6 +56,13 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizShowObjectsMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SetVizOrigin,
             std::bind(&PhysVizController::ProcessVizSetOriginMessage, this, std::placeholders::_1));
+  
+  // primitives
+  Subscribe(VizInterface::MessageVizTag::SegmentPrimitive,
+            std::bind(&PhysVizController::ProcessVizSegmentPrimitiveMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EraseSegmentPrimitives,
+            std::bind(&PhysVizController::ProcessVizEraseSegmentPrimitivesMessage, this, std::placeholders::_1));
+  
 
   // simple quad messages
   Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageBegin,
@@ -307,6 +314,23 @@ void PhysVizController::Draw(int pass, const char *view)
          );
       } // for each quadInVector
     } // for each vector in map
+    
+    // Draw segment primitives
+    glBegin(GL_LINES);
+    for ( const auto& segmentVectorPerIdentifier : _segmentPrimitives )
+    {
+      for ( const auto& segmentInVector : segmentVectorPerIdentifier.second )
+      {
+        // Set color for the segment
+        Anki::ColorRGBA segmentColor(segmentInVector.color);
+        glColor4ub(segmentColor.r(), segmentColor.g(), segmentColor.b(), segmentColor.alpha());
+        
+        // draw segment
+        glVertex3f(segmentInVector.origin[0], segmentInVector.origin[1], segmentInVector.origin[2] );
+        glVertex3f(segmentInVector.dest[0], segmentInVector.dest[1], segmentInVector.dest[2]);
+      }
+    }
+    glEnd();
 
     // Restore default color
     glColor4ub(::Anki::NamedColors::DEFAULT.r(),
@@ -349,6 +373,22 @@ void PhysVizController::ProcessVizObjectMessage(const AnkiEvent<VizInterface::Me
     payload.color);
 
   _objectMap[payload.objectID] = VizInterface::Object(payload);
+}
+
+void PhysVizController::ProcessVizSegmentPrimitiveMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SegmentPrimitive();
+  PRINT("Processing SegmentPrimitive (%s)\n", payload.identifier.c_str());
+  
+  if ( payload.clearPrevious ) {
+    _segmentPrimitives[payload.identifier].clear();
+  }
+  
+  _segmentPrimitives[payload.identifier].emplace_back( payload.color, payload.origin, payload.dest );
+  
+  // some limits to catch when things get out of control in a loop
+  CORETECH_ASSERT(_segmentPrimitives.size() < 128);
+  CORETECH_ASSERT(_segmentPrimitives[payload.identifier].size() < 1024);
 }
 
 void PhysVizController::ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -422,6 +462,14 @@ void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterfac
   } else {
     _objectMap.erase(payload.objectID);
   }
+}
+
+void PhysVizController::ProcessVizEraseSegmentPrimitivesMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_EraseSegmentPrimitives();
+  PRINT("Processing EraseSegmentPrimitives (%s)\n", payload.identifier.c_str());
+  
+  _segmentPrimitives.erase(payload.identifier);
 }
 
 void PhysVizController::ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)

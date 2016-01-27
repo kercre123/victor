@@ -133,18 +133,19 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
     const size_t count = borderCombination.waypoints.size();
     do
     {
-      const bool isLast = (idx == count-1);
-      bool canContinueLine = true;
-    
+      const bool isEnd = (borderCombination.waypoints[idx].isEnd);
+      bool canMergeIntoPreviousLine = false;
+
       // get border center for this waypoint
       Point3f borderCenter  = CalculateBorderWaypointCenter( borderCombination.waypoints[idx] );
+    
       Vec3f curDir = curDest - curOrigin;
-      
+    
       // if we currently don't have a line (but a point)
       if ( NEAR_ZERO( curDir.LengthSq() ) )
       {
         // we can continue this line
-        canContinueLine = true;
+        canMergeIntoPreviousLine = true;
       }
       else
       {
@@ -154,20 +155,20 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
         stepDir.MakeUnitLength();
         // calculate dotProduct and see if they are close enough in the same direction
         const float dotProduct = DotProduct(curDir, stepDir);
-        canContinueLine = dotProduct >= kDotBorderEpsilon;
+        canMergeIntoPreviousLine = dotProduct >= kDotBorderEpsilon;
       }
-
-      //  canContinueLine ; isLast ; expected
-      //               0        0   ==> AddLine(), origin <- dest, dest <- center
-      //               0        1   ==> AddLine(), origin <- dest, dest <- center, AddLine()
-      //               1        0   ==>                            dest <- center
-      //               1        1   ==>                            dest <- center, AddLine()
-      // -->
-      // if ( !canContinue ) { AddLine(), origin <- dest }
-      // dest <- center
-      // if ( last ) { AddLine() }
       
-      if ( !canContinueLine )
+      //  canMergeIntoPrev ; isEnd ; expected
+      //               0        0   ==> AddLine(), origin <- dest, dest <- center
+      //               0        1   ==> AddLine(), origin <- dest, dest <- center, AddLine(), resetDir
+      //               1        0   ==>                            dest <- center
+      //               1        1   ==>                            dest <- center, AddLine(), resetDir
+      // -->
+      // if ( !canMerge ) { AddLine(), origin <- dest }
+      // dest <- center
+      // if ( isEnd ) { AddLine() }
+      
+      if ( !canMergeIntoPreviousLine )
       {
         // add border
         const EDirection lastNeighborDir = borderCombination.waypoints[idx-1].direction;
@@ -180,19 +181,26 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
       
       curDest = borderCenter;
       
-      if ( isLast )
+      if ( isEnd )
       {
         // add border
         const EDirection lastNeighborDir = borderCombination.waypoints[idx].direction;
         outBorders.emplace_back( MakeBorder(curOrigin, curDest, firstNeighborDir, lastNeighborDir) );
+        
+        // if there are more waypoints, reset current data so that the next waypoint doesn't start on us
+        const size_t nextIdx = idx+1;
+        if ( nextIdx < count ) {
+          firstNeighborDir = borderCombination.waypoints[nextIdx].direction;
+          curOrigin = CalculateBorderWaypointCenter(borderCombination.waypoints[nextIdx]);
+          curDest   = curOrigin;
+        }
       }
       
       ++idx;
     } while ( idx < count );
     
   } // has waypoints
-
-  //todo_render_borders_as_arrows;
+  
 
 }
 
@@ -259,6 +267,7 @@ void NavMeshQuadTreeProcessor::Draw() const
           Anki::ColorRGBA toColor = GetDebugColor( it.to->GetContentType() );
           if ( kRenderBordersToQuad ) { toColor = Anki::NamedColors::WHITE; }
           if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
+          if ( it.isEnd ) { toColor = Anki::NamedColors::MAGENTA; }
           const float alpha = comboIt.second.dirty ? 0.2f : 0.8f;
           toColor.SetAlpha(alpha);
           const float toSideLen = 5.0f;
@@ -354,7 +363,7 @@ NavMemoryMapTypes::Border NavMeshQuadTreeProcessor::MakeBorder(const Point3f& or
   }
   else
   {
-    perpendicular = {borderLine.y(), borderLine.x(), borderLine.z()};
+    perpendicular = {-borderLine.y(), borderLine.x(), borderLine.z()};
     const float dotPerpendicularAndNeighbor = DotProduct(perpendicular, normalFromEDirection);
     if ( dotPerpendicularAndNeighbor <= 0.0f )
     {

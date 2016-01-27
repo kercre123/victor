@@ -536,6 +536,31 @@ namespace Anki {
     }
     
     // ==== Draw functions by identifier =====
+    
+    void VizManager::DrawSegment(const std::string& identifier,
+      const Point3f& from, const Point3f& to, const ColorRGBA& color, bool clearPrevious)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SegmentPrimitive
+        {identifier,
+         color.AsRGBA(),
+         { {Anki::Util::numeric_cast<float>(MM_TO_M(from.x())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(from.y())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(from.z()+50.0f))}
+         },
+         { {Anki::Util::numeric_cast<float>(MM_TO_M(to.x())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(to.y())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(to.z()+50.0f))}
+         },
+         clearPrevious
+        })
+      );
+    }
+    
+    void VizManager::EraseSegments(const std::string& identifier)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::EraseSegmentPrimitives{identifier}));
+    }
+    
 
     void VizManager::DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads)
     {
