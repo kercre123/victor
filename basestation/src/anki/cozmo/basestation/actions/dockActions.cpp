@@ -115,6 +115,9 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
+      // select the object so it shows up properly in viz
+      _robot->GetBlockWorld().SelectObject(_dockObjectID);
+      
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
@@ -136,6 +139,7 @@ namespace Anki {
       //float closestDistSq = std::numeric_limits<float>::max();
       Point2f closestPoint(std::numeric_limits<float>::max());
       size_t closestIndex = preActionPoses.size();
+      float closestDistSq = std::numeric_limits<float>::max();
       
       for(size_t index=0; index < preActionPoses.size(); ++index) {
         Pose3d preActionPose;
@@ -146,28 +150,44 @@ namespace Anki {
         
         const Point2f preActionXY(preActionPose.GetTranslation().x(),
                                   preActionPose.GetTranslation().y());
-        //const float distSq = (currentXY - preActionXY).LengthSq();
-        const Point2f dist = (currentXY - preActionXY).Abs();
-        if(dist < closestPoint) {
-          //closestDistSq = distSq;
-          closestPoint = dist;
+        const Point2f dist = (currentXY - preActionXY);
+        const float distSq = dist.LengthSq();
+        
+        PRINT_NAMED_DEBUG("IDockAction.Init.CheckPoint",
+                          "considering point (%f, %f) dist = %f",
+                          dist.x(), dist.y(),
+                          dist.Length());
+        
+        if(distSq < closestDistSq) {
+          closestPoint = dist.GetAbs();
           closestIndex  = index;
+          closestDistSq = distSq;
         }
       }
       
+      PRINT_NAMED_INFO("IDockAction.Init.ClosestPoint",
+                       "Closest point (%f, %f) robot (%f, %f) dist = %f",
+                       closestPoint.x(), closestPoint.y(),
+                       currentXY.x(), currentXY.y(),
+                       closestPoint.Length());
+      
       //const f32 closestDist = sqrtf(closestDistSq);
       
+      // by default, even if we aren't checking for pre-dock poses, we shouldn't be too far away, otherwise we
+      // may be selecting a different marker / face to dock with
+      f32 preActionPoseDistThresh = DEFAULT_PREDOCK_POSE_DISTANCE_MM * 1.1f;
+      
       if (_doNearPredockPoseCheck) {
-        f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(_robot->GetPose(), dockObject,
-                                                                        _preActionPoseAngleTolerance);
-        
-        if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
-          PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
-                           "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
-                           closestPoint.x(), closestPoint.y());
-          _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
-          return ActionResult::FAILURE_RETRY;
-        }
+        preActionPoseDistThresh = ComputePreActionPoseDistThreshold(_robot->GetPose(), dockObject,
+                                                                    _preActionPoseAngleTolerance);
+      }
+      
+      if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
+        PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
+                        "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
+                        closestPoint.x(), closestPoint.y());
+        _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
+        return ActionResult::FAILURE_RETRY;
       }
       
       if(SelectDockAction(dockObject) != RESULT_OK) {
@@ -238,6 +258,7 @@ namespace Anki {
       _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
+      
       if(!RegisterSubAction(_faceAndVerifyAction))
       {
         return ActionResult::FAILURE_ABORT;
@@ -317,9 +338,9 @@ namespace Anki {
           
           const f32 DockSquintScaleY = 0.35f;
           const f32 DockSquintScaleX = 1.05f;
-          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
-          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
-          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
+          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
+          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
+          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
           
           squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame()); // need start frame at t=0 to get interpolation
           squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 250));
@@ -817,6 +838,7 @@ namespace Anki {
         }
         
         _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
+        
         if(!RegisterSubAction(_faceAndVerifyAction))
         {
           return ActionResult::FAILURE_ABORT;
@@ -1063,6 +1085,7 @@ namespace Anki {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+                  
                   if(!RegisterSubAction(_placementVerifyAction))
                   {
                     return ActionResult::FAILURE_ABORT;
@@ -1223,6 +1246,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
+              
               if(!RegisterSubAction(_rollVerifyAction))
               {
                 return ActionResult::FAILURE_ABORT;

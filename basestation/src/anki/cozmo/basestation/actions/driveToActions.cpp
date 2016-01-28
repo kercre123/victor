@@ -301,6 +301,12 @@ namespace Anki {
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
           FaceObjectAction* faceObjectAction = new FaceObjectAction(_objectID, Radians(0), true, false);
+          PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                            GetTag(),
+                            GetName().c_str(),
+                            faceObjectAction->GetTag(),
+                            faceObjectAction->GetName().c_str());
+
           newCompoundSequential->AddAction(faceObjectAction);
         }
         

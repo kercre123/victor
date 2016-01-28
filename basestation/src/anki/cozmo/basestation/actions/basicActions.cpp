@@ -776,6 +776,7 @@ namespace Anki {
     ActionResult FaceObjectAction::Init()
     {
       _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
+      
       if(!RegisterSubAction(_visuallyVerifyAction))
       {
         return ActionResult::FAILURE_ABORT;
@@ -1187,8 +1188,8 @@ namespace Anki {
             }
             
             PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.WrongMarker",
-                             "Have seen object %d, but not marker code %d. Have seen: %s",
-                             _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
+                             "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
+                             GetTag(), _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
           }
         } // if(!_markerSeen)
         

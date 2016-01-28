@@ -197,6 +197,12 @@ namespace Anki {
     
     bool IActionRunner::RegisterSubAction(IActionRunner* &subAction)
     {
+      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                        GetTag(),
+                        GetName().c_str(),
+                        subAction->GetTag(),
+                        subAction->GetName().c_str());
+      
       _subActions.push_back(&subAction);
       if(nullptr == GetRobot())
       {

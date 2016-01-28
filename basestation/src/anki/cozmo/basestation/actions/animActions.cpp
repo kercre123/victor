@@ -77,7 +77,6 @@ namespace Anki {
       }
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
-        // TEMP: ask andrew, this was causing a cutoff when one animation tried to interrupt another, but then failed, but then in the failed animations Cleanup, cleared the streaming animation
         _wasAborted = true;
         return ActionResult::FAILURE_ABORT;
       }
