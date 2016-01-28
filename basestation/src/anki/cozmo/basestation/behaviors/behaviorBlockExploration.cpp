@@ -100,6 +100,8 @@ namespace Anki {
           }
           break;
         }
+        case State::StartDriving:
+        case State::DrivingAround:
         case State::StartLooking:
         case State::LookingForObject:
         case State::PickUpObject:
@@ -163,7 +165,7 @@ namespace Anki {
         }
       }
       
-      _currentState = State::StartLooking;
+      _currentState = State::StartDriving;
       return Result::RESULT_OK;
     }
     
@@ -185,7 +187,7 @@ namespace Anki {
           
           break; // Jump down and return Status::Complete
         }
-        case State::StartLooking:
+        case State::StartDriving:
         {
           IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
           _actionsInProgress.insert(moveHeadAction->GetTag());
@@ -196,10 +198,23 @@ namespace Anki {
           robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
           
           if (StartMoving(robot) == RESULT_OK) {
-            _currentState = State::LookingForObject;
+            _currentState = State::DrivingAround;
           }
+          return Status::Running;
+        }
+        case State::StartLooking:
+        {
+          // Turn in place
+          TurnInPlaceAction* turnAction = new TurnInPlaceAction(DEG_TO_RAD(kDegreesToRotate), false);
+          turnAction->SetMaxSpeed(DEG_TO_RAD(kDegreesRotatePerSec));
+          _currentLookActionID = turnAction->GetTag();
+          _actionsInProgress.insert(_currentLookActionID);
+          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, turnAction);
+          
+          _currentState = State::LookingForObject;
         }
           // NOTE INTENTIONAL FALLTHROUGH
+        case State::DrivingAround:
         case State::LookingForObject:
         {
           if (!_selectedObjectID.IsUnknown())
@@ -219,6 +234,8 @@ namespace Anki {
           robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupObjectAction);
           
           _currentState = State::PickingUpObject;
+          
+          return Status::Running;
         }
         case State::PickingUpObject:
         {
@@ -441,7 +458,7 @@ namespace Anki {
       
       if (msg.idTag == _currentDriveActionID)
       {
-        if(_currentState == State::StartLooking || _currentState == State::LookingForObject) {
+        if(_currentState == State::StartDriving || _currentState == State::DrivingAround) {
           // If we're back to center, time to go inactive
           if (Destination::Center == _currentDestination)
           {
@@ -451,6 +468,13 @@ namespace Anki {
           {
             _currentState = State::StartLooking;
           }
+        }
+      }
+      else if(msg.idTag == _currentLookActionID)
+      {
+        if(_currentState == State::StartLooking || _currentState == State::LookingForObject) {
+          _currentState = State::StartDriving;
+          
           
           if (_numDestinationsLeft > 0)
           {

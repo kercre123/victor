@@ -56,6 +56,8 @@ namespace Anki {
     private:
       enum class State {
         Inactive,
+        StartDriving,
+        DrivingAround,
         StartLooking,
         LookingForObject,
         PickUpObject,
@@ -78,6 +80,9 @@ namespace Anki {
       constexpr static f32 kBlockExplorationCooldownDuration = 7;
       // How fast to rotate when looking around
       constexpr static f32 kDegreesRotatePerSec = 25;
+
+      // How far to rotate when looking around
+      constexpr static f32 kDegreesToRotate = 63;
       // The default radius (in mm) we assume exists for us to move around in
       constexpr static f32 kDefaultSafeRadius = 150;
       // Number of destinations we want to reach before resting for a bit (needs to be at least 2)
@@ -89,6 +94,7 @@ namespace Anki {
       Pose3d _moveAreaCenter;
       f32 _safeRadius = kDefaultSafeRadius;
       u32 _currentDriveActionID = 0;
+      u32 _currentLookActionID = 0;
       u32 _currentPickupObjectActionID = 0;
       u32 _currentPlaceObjectActionID = 0;
       u32 _numDestinationsLeft = kDestinationsToReach;
