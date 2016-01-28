@@ -46,6 +46,8 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
+  public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
+  public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
 
   #region Audio Callback events
 
@@ -315,6 +317,12 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.DebugString:
       ReceivedSpecificMessage(message.DebugString);
       break;
+    case G2U.MessageEngineToGame.Tag.RequestGameStart:
+      ReceivedSpecificMessage(message.RequestGameStart);
+      break;
+    case G2U.MessageEngineToGame.Tag.DenyGameStart:
+      ReceivedSpecificMessage(message.DenyGameStart);
+      break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
@@ -578,6 +586,18 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.CliffEvent message) {
     if (OnCliffEvent != null) {
       OnCliffEvent(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+    if (OnRequestGameStart != null) {
+      OnRequestGameStart(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
+    if (OnDenyGameStart != null) {
+      OnDenyGameStart(message);
     }
   }
 
