@@ -93,5 +93,47 @@ public static class EditorDrawingUtility {
       EditorGUILayout.EndHorizontal();
     }
   }
+
+  public static EmotionScorer DrawEmotionScorer(EmotionScorer emotionScorer) {
+    EditorGUILayout.BeginVertical();
+
+    emotionScorer.EmotionType = (Anki.Cozmo.EmotionType)EditorGUILayout.EnumPopup("Emotion", emotionScorer.EmotionType);
+
+    int trackDeltaMultiplier = emotionScorer.TrackDelta ? 2 : 1;
+    emotionScorer.GraphEvaluator = EditorGUILayout.CurveField("Score Graph", emotionScorer.GraphEvaluator, Color.green, new Rect(-1 * trackDeltaMultiplier, 0, 2 * trackDeltaMultiplier, 1));
+
+    emotionScorer.TrackDelta = EditorGUILayout.Toggle("Track Delta", emotionScorer.TrackDelta);
+
+    EditorGUILayout.EndVertical();
+    return emotionScorer;
+  }
+
+  // custom Unity Style for a toolbar button
+  private static GUIStyle _ToolbarButtonStyle;
+
+  public static GUIStyle ToolbarButtonStyle {
+    get {
+      if (_ToolbarButtonStyle == null) {
+        _ToolbarButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
+        _ToolbarButtonStyle.normal.textColor = Color.white;
+        _ToolbarButtonStyle.active.textColor = Color.white;
+      }
+      return _ToolbarButtonStyle;
+    }
+  }
+
+  // custom Unity Style for a toolbar button
+  private static GUIStyle _ToolbarStyle;
+
+  public static GUIStyle ToolbarStyle {
+    get {
+      if (_ToolbarStyle == null) {
+        _ToolbarStyle = new GUIStyle(EditorStyles.toolbar);
+        _ToolbarStyle.normal.textColor = Color.white;
+        _ToolbarStyle.active.textColor = Color.white;
+      }
+      return _ToolbarStyle;
+    }
+  }
 }
 

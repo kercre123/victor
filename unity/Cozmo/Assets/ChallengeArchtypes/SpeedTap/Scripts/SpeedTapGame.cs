@@ -2,7 +2,6 @@ using UnityEngine;
 using System.Collections;
 using System;
 using Anki.Cozmo.Audio;
-using AnimationGroups;
 using Cozmo.Util;
 
 namespace SpeedTap {
