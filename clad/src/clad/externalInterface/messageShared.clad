@@ -13,6 +13,8 @@ message Ping {
     uint_32 counter        // should count sequentially if no drops
 }
 
+// Either the engine or the game have decided that the recent game request has been denied
+message DenyGameStart {}
 
 } // namespace ExternalInterface
 } // namespace Cozmo
