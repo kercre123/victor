@@ -247,10 +247,11 @@ public:
     void SetPose(const Pose3d &newPose);
     void SetHeadAngle(const f32& angle);
     void SetLiftAngle(const f32& angle);
-  
-    // Get 3D bounding box of the robot at its current pose or a given pose
-    void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
-    void GetBoundingBox(const Pose3d& atPose, std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
+
+// #notImplemented
+//    // Get 3D bounding box of the robot at its current pose or a given pose
+//    void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
+//    void GetBoundingBox(const Pose3d& atPose, std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
 
     // Get the bounding quad of the robot at its current or a given pose
     Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
