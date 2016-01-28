@@ -162,15 +162,29 @@ namespace Vision {
     void EnableNewFaceEnrollment(bool enable) { _enrollNewFaces = enable; }
     bool IsNewFaceEnrollmentEnabled() const   { return _enrollNewFaces; }
     
+    void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
+    bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
+    
   private:
     
     Result Init();
     Result RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime);
     Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime);
     
+    Result DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                           INT32 detectionIndex, Vision::TrackedFace& face);
+    
+    Result EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                              Vision::TrackedFace& face);
+    
+    Result RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                         const DETECTION_INFO& detectionInfo, TimeStamp_t timestamp,
+                         Vision::TrackedFace::ID_t& faceID);
+
     bool _isInitialized = false;
     FaceTracker::DetectionMode _detectionMode;
     bool _enrollNewFaces = true;
+    bool _detectEmotion = true;
     
     static const s32   MaxFaces = 10; // detectable at once
     static const INT32 MaxAlbumDataPerFace = 10; // can't be more than 10
@@ -185,6 +199,9 @@ namespace Vision {
     INT32 _lastRegisteredUserID = 0;
     
     std::list<TrackedFace> _faces;
+    
+    // Mapping from tracking ID to recognition (identity) ID
+    std::map<INT32, Vision::TrackedFace::ID_t> _trackID_to_recID;
     
     // Track the index of the oldest data for each registered user, so we can
     // replace the oldest one each time
@@ -258,6 +275,10 @@ namespace Vision {
       case FaceTracker::DetectionMode::Video:
       {
         _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_MOVIE, MaxFaces);
+        if(NULL == _okaoDetectorHandle) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoDetectionHandleAllocFail.VideoMode", "");
+          return RESULT_FAIL_MEMORY;
+        }
         
         // Adjust some detection parameters
         // TODO: Expose these for setting at runtime
@@ -273,11 +294,33 @@ namespace Vision {
           return RESULT_FAIL_INVALID_PARAMETER;
         }
 
+        okaoResult = OKAO_DT_MV_SetDirectionMask(_okaoDetectorHandle, false);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetDirectionMaskFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+        
+        okaoResult = OKAO_DT_MV_SetPoseExtension(_okaoDetectorHandle, true, true);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetPoseExtensionFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+        
+        okaoResult = OKAO_DT_MV_SetAccuracy(_okaoDetectorHandle, TRACKING_ACCURACY_HIGH);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetAccuracyFailed", "");
+          return RESULT_FAIL_INVALID_PARAMETER;
+        }
+        
         break;
       }
         
       case FaceTracker::DetectionMode::SingleImage:
         _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_STILL, MaxFaces);
+        if(NULL == _okaoDetectorHandle) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoDetectionHandleAllocFail.StillMode", "");
+          return RESULT_FAIL_MEMORY;
+        }
         break;
         
       default:
@@ -286,15 +329,16 @@ namespace Vision {
         return RESULT_FAIL;
     }
     
-        
-    if(NULL == _okaoDetectorHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoDetectionHandleAllocFail", "");
-      return RESULT_FAIL_MEMORY;
-    }
-    
-    okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_HALF_PROFILE, ROLL_ANGLE_ULR45);
+    okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_HALF_PROFILE,
+                                  ROLL_ANGLE_U45 | ROLL_ANGLE_2 | ROLL_ANGLE_10);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetAngleFailed", "");
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+    
+    okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, 500);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetThresholdFailed", "");
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
@@ -492,7 +536,7 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    INT32 dataToReplace = numUserData;
+    INT32 dataToReplace = numUserData-1;
     if(numUserData >= MaxAlbumDataPerFace) {
       
       // Replace the oldest face data
@@ -513,8 +557,8 @@ namespace Vision {
       okaoResult = OKAO_FR_ClearData(_okaoFaceAlbum, userID, dataToReplace);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_ERROR("FaceTrackerImpl.UpdateExistingUser.ClearDataFailed",
-                          "Failed to clear data %d for user %d",
-                          numUserData, userID);
+                          "Failed to clear data %d for user %d. OKAO result=%d",
+                          numUserData, userID, okaoResult);
         return RESULT_FAIL;
       }
     }
@@ -529,6 +573,238 @@ namespace Vision {
     
     return RESULT_OK;
   } // UpdateExistingUser()
+  
+  bool IsRecognizable(const DETECTION_INFO& detectionInfo)
+  {
+    if(detectionInfo.nConfidence > 500 &&
+       detectionInfo.nPose == POSE_YAW_FRONT &&
+       (detectionInfo.nAngle < 45 || detectionInfo.nAngle > 315))
+    {
+      return true;
+    }
+    return false;
+  }
+  
+  Result FaceTracker::Impl::DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                                            INT32 detectionIndex,
+                                            Vision::TrackedFace& face)
+  {
+    INT32 okaoResult = OKAO_PT_SetPositionFromHandle(_okaoPartDetectorHandle, _okaoDetectionResultHandle, detectionIndex);
+    
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoSetPositionFail",
+                        "OKAO Result Code=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    okaoResult = OKAO_PT_DetectPoint_GRAY(_okaoPartDetectorHandle, dataPtr,
+                                          nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3, _okaoPartDetectionResultHandle);
+    
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoPartDetectionFail",
+                        "OKAO Result Code=%d%s", okaoResult,
+                        (OKAO_ERR_PROCESSCONDITION == okaoResult ?
+                         " (Unsupported yaw angle)" : ""));
+      return RESULT_FAIL;
+    }
+    
+    okaoResult = OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX,
+                                   _facialParts, _facialPartConfs);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetFacePartResultFail",
+                        "OKAO Result Code=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    // Set eye centers
+    face.SetLeftEyeCenter(Point2f(_facialParts[PT_POINT_LEFT_EYE].x,
+                                  _facialParts[PT_POINT_LEFT_EYE].y));
+    
+    face.SetRightEyeCenter(Point2f(_facialParts[PT_POINT_RIGHT_EYE].x,
+                                   _facialParts[PT_POINT_RIGHT_EYE].y));
+    
+    // Set other facial features
+    SetFeatureHelper(_facialParts, {
+      PT_POINT_LEFT_EYE_OUT, PT_POINT_LEFT_EYE, PT_POINT_LEFT_EYE_IN
+    }, TrackedFace::FeatureName::LeftEye, face);
+    
+    SetFeatureHelper(_facialParts, {
+      PT_POINT_RIGHT_EYE_IN, PT_POINT_RIGHT_EYE, PT_POINT_RIGHT_EYE_OUT
+    }, TrackedFace::FeatureName::RightEye, face);
+    
+    SetFeatureHelper(_facialParts, {
+      PT_POINT_NOSE_LEFT, PT_POINT_NOSE_RIGHT
+    }, TrackedFace::FeatureName::Nose, face);
+    
+    SetFeatureHelper(_facialParts, {
+      PT_POINT_MOUTH_LEFT, PT_POINT_MOUTH_UP, PT_POINT_MOUTH_RIGHT,
+      PT_POINT_MOUTH, PT_POINT_MOUTH_LEFT,
+    }, TrackedFace::FeatureName::UpperLip, face);
+    
+    
+    // Fill in head orientation
+    INT32 roll_deg=0, pitch_deg=0, yaw_deg=0;
+    okaoResult = OKAO_PT_GetFaceDirection(_okaoPartDetectionResultHandle, &pitch_deg, &yaw_deg, &roll_deg);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetFaceDirectionFail",
+                        "OKAO Result Code=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    //PRINT_NAMED_INFO("FaceTrackerImpl.Update.HeadOrientation",
+    //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
+    //                 roll_deg, pitch_deg, yaw_deg);
+    
+    face.SetHeadOrientation(DEG_TO_RAD(roll_deg),
+                            DEG_TO_RAD(pitch_deg),
+                            DEG_TO_RAD(yaw_deg));
+    
+    return RESULT_OK;
+  }
+  
+  Result FaceTracker::Impl::EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                                               Vision::TrackedFace& face)
+  {
+    INT32 okaoResult = OKAO_EX_SetPointFromHandle(_okaoEstimateExpressionHandle, _okaoPartDetectionResultHandle);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoSetExpressionPointFail",
+                        "OKAO Result Code=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    okaoResult = OKAO_EX_Estimate_GRAY(_okaoEstimateExpressionHandle, dataPtr, nWidth, nHeight,
+                                       GRAY_ORDER_Y0Y1Y2Y3, _okaoExpressionResultHandle);
+    if(OKAO_NORMAL != okaoResult) {
+      if(OKAO_ERR_PROCESSCONDITION == okaoResult) {
+        // This might happen, depending on face parts
+        PRINT_NAMED_INFO("FaceTrackerImpl.Update.OkaoEstimateExpressionNotPossible", "");
+      } else {
+        // This should not happen
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoEstimateExpressionFail",
+                          "OKAO Result Code=%d", okaoResult);
+        return RESULT_FAIL;
+      }
+    } else {
+      
+      okaoResult = OKAO_EX_GetResult(_okaoExpressionResultHandle, EX_EXPRESSION_KIND_MAX, _expressionValues);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetExpressionResultFail",
+                          "OKAO Result Code=%d", okaoResult);
+        return RESULT_FAIL;
+      }
+      
+      static const TrackedFace::Expression TrackedFaceExpressionLUT[EX_EXPRESSION_KIND_MAX] = {
+        TrackedFace::Neutral,
+        TrackedFace::Happiness,
+        TrackedFace::Surprise,
+        TrackedFace::Anger,
+        TrackedFace::Sadness
+      };
+      
+      for(INT32 okaoExpressionVal = 0; okaoExpressionVal < EX_EXPRESSION_KIND_MAX; ++okaoExpressionVal) {
+        face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExpressionVal],
+                                _expressionValues[okaoExpressionVal]);
+      }
+      
+    }
+
+    return RESULT_OK;
+  } // EstimateExpression()
+  
+  Result FaceTracker::Impl::RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                                          const DETECTION_INFO& detectionInfo, TimeStamp_t timestamp,
+                                          Vision::TrackedFace::ID_t& faceID)
+  {
+    INT32 okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
+                                                  dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
+                                                  _okaoPartDetectionResultHandle);
+    
+    const bool allowAddNewFace = _enrollNewFaces && IsRecognizable(detectionInfo);
+    
+    INT32 numUsersInAlbum = 0;
+    okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetNumUsersInAlbumFailed", "");
+      return RESULT_FAIL;
+    }
+    
+    if(numUsersInAlbum == 0 && allowAddNewFace) {
+      // Nobody in album yet, add this person
+      PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingFirstUser",
+                       "Adding first user to empty album");
+      Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp);
+      if(RESULT_OK != lastResult) {
+        return lastResult;
+      }
+      faceID = _lastRegisteredUserID;
+    } else {
+      INT32 resultNum = 0;
+      const s32 MaxResults = 2;
+      INT32 userIDs[MaxResults], scores[MaxResults];
+      okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, MaxResults, userIDs, scores, &resultNum);
+      
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoFaceRecognitionIdentifyFailed",
+                            "OKAO Result Code=%d", okaoResult);
+      } else {
+        const INT32 RecognitionThreshold = 750; // TODO: Expose this parameter
+        const INT32 MergeThreshold       = 500; // TODO: Expose this parameter
+        //const f32   RelativeRecogntionThreshold = 1.5; // Score of top result must be this times the score of the second best result
+        
+        if(resultNum > 0 && scores[0] > RecognitionThreshold)
+        {
+          INT32 minID = userIDs[0];
+          
+          // Merge all results that are above threshold together, keeping the lowest ID
+          INT32 lastResult = 1;
+          while(lastResult < resultNum && scores[lastResult] > MergeThreshold) {
+            minID = std::min(userIDs[lastResult], minID);
+            ++lastResult;
+          }
+          
+          Result result = UpdateExistingUser(minID, _okaoRecognitionFeatureHandle, timestamp);
+          if(RESULT_OK != result) {
+            return result;
+          }
+          
+          for(INT32 iResult = 0; iResult < lastResult; ++iResult)
+          {
+            if(userIDs[iResult] != minID)
+            {
+              PRINT_NAMED_INFO("FaceTrackerImpl.Update.MergingRecords",
+                               "Merging face %d with %d b/c its score %d is > %d",
+                               userIDs[iResult], minID, scores[iResult], MergeThreshold);
+              
+              // TODO: Make RemoveUser helper that does this
+              okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userIDs[iResult]);
+              if(OKAO_NORMAL != okaoResult) {
+                PRINT_NAMED_ERROR("FaceTrackerImpl.Update.ClearUserFailed",
+                                  "Failed to clear user %d after merging it with %d",
+                                  userIDs[iResult], minID);
+                return RESULT_FAIL;
+              }
+              _enrollmentStatus.erase(userIDs[iResult]);
+              
+            }
+            ++iResult;
+          }
+          
+          faceID = minID;
+          
+        } else if(allowAddNewFace) {
+          // No match found, add new user
+          PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingNewUser",
+                           "Observed new person. Adding to album.");
+          Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp);
+          if(RESULT_OK != lastResult) {
+            return lastResult;
+          }
+          faceID = _lastRegisteredUserID;
+        }
+      }
+    }
+
+    return RESULT_OK;
+  } // RecognizeFace()
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig)
   {
@@ -575,7 +851,7 @@ namespace Vision {
       DETECTION_INFO detectionInfo;
       okaoResult = OKAO_DT_GetRawResultInfo(_okaoDetectionResultHandle, detectionIndex,
                                             &detectionInfo);
-      
+
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetResultInfoFail",
                           "Detection index %d of %d. OKAO Result Code=%d",
@@ -587,8 +863,19 @@ namespace Vision {
       _faces.emplace_back();
       
       TrackedFace& face = _faces.back();
-      face.SetID(detectionInfo.nID);
 
+      const INT32 trackerID = detectionInfo.nID;
+      if(detectionInfo.nDetectionMethod == DET_METHOD_DETECTED_HIGH) {
+        // This face was found via detection
+        _trackID_to_recID[trackerID] = Vision::TrackedFace::UnknownFace;
+        face.SetIsBeingTracked(false);
+      } else {
+        // This face was found via tracking: keep its existing recognition ID
+        ASSERT_NAMED(_trackID_to_recID.find(trackerID) != _trackID_to_recID.end(),
+                     "A tracked face should already have a recognition ID entry");
+        face.SetIsBeingTracked(true);
+      }
+ 
       POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
       okaoResult = OKAO_CO_ConvertCenterToSquare(detectionInfo.ptCenter,
                                                  detectionInfo.nHeight,
@@ -608,228 +895,59 @@ namespace Vision {
       face.SetTimeStamp(frameOrig.GetTimestamp());
       
       // Try finding face parts
+      bool facePartsFound = false;
       Tic("FacePartDetection");
-      okaoResult = OKAO_PT_SetPositionFromHandle(_okaoPartDetectorHandle, _okaoDetectionResultHandle, detectionIndex);
-
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoSetPositionFail",
-                          "Detection index %d of %d. OKAO Result Code=%d",
-                          detectionIndex, numDetections, okaoResult);
-        return RESULT_FAIL;
+      Result partDetectResult = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
+      if(RESULT_OK != partDetectResult) {
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FacePartDetectionFailed",
+                            "Detection index %d of %d. Will not attempt expression/face recognition",
+                            detectionIndex, numDetections);
+      } else {
+        facePartsFound = true;
       }
-      okaoResult = OKAO_PT_DetectPoint_GRAY(_okaoPartDetectorHandle, dataPtr,
-                                            nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3, _okaoPartDetectionResultHandle);
-      
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoPartDetectionFail",
-                          "Detection index %d of %d. OKAO Result Code=%d",
-                          detectionIndex, numDetections, okaoResult);
-        return RESULT_FAIL;
-      }
-      
-      okaoResult = OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX,
-                                     _facialParts, _facialPartConfs);
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetFacePartResultFail",
-                          "Detection index %d of %d. OKAO Result Code=%d",
-                          detectionIndex, numDetections, okaoResult);
-        return RESULT_FAIL;
-      }
-
-      // Set eye centers
-      face.SetLeftEyeCenter(Point2f(_facialParts[PT_POINT_LEFT_EYE].x,
-                                    _facialParts[PT_POINT_LEFT_EYE].y));
-      
-      face.SetRightEyeCenter(Point2f(_facialParts[PT_POINT_RIGHT_EYE].x,
-                                     _facialParts[PT_POINT_RIGHT_EYE].y));
-
-      // Set other facial features
-      SetFeatureHelper(_facialParts, {
-        PT_POINT_LEFT_EYE_OUT, PT_POINT_LEFT_EYE, PT_POINT_LEFT_EYE_IN
-      }, TrackedFace::FeatureName::LeftEye, face);
-      
-      SetFeatureHelper(_facialParts, {
-        PT_POINT_RIGHT_EYE_IN, PT_POINT_RIGHT_EYE, PT_POINT_RIGHT_EYE_OUT
-      }, TrackedFace::FeatureName::RightEye, face);
-
-      SetFeatureHelper(_facialParts, {
-        PT_POINT_NOSE_LEFT, PT_POINT_NOSE_RIGHT
-      }, TrackedFace::FeatureName::Nose, face);
-      
-      SetFeatureHelper(_facialParts, {
-        PT_POINT_MOUTH_LEFT, PT_POINT_MOUTH_UP, PT_POINT_MOUTH_RIGHT,
-        PT_POINT_MOUTH, PT_POINT_MOUTH_LEFT,
-      }, TrackedFace::FeatureName::UpperLip, face);
-
-      
-      // Fill in head orientation
-      INT32 roll_deg=0, pitch_deg=0, yaw_deg=0;
-      okaoResult = OKAO_PT_GetFaceDirection(_okaoPartDetectionResultHandle, &pitch_deg, &yaw_deg, &roll_deg);
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetFaceDirectionFail",
-                          "Detection index %d of %d. OKAO Result Code=%d",
-                          detectionIndex, numDetections, okaoResult);
-        return RESULT_FAIL;
-      }
-      
-      //PRINT_NAMED_INFO("FaceTrackerImpl.Update.HeadOrientation",
-      //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
-      //                 roll_deg, pitch_deg, yaw_deg);
-      
-      face.SetHeadOrientation(DEG_TO_RAD(roll_deg),
-                              DEG_TO_RAD(pitch_deg),
-                              DEG_TO_RAD(yaw_deg));
-      
       Toc("FacePartDetection");
       
-      // Expression detection
-      Tic("ExpressionRecognition");
-      okaoResult = OKAO_EX_SetPointFromHandle(_okaoEstimateExpressionHandle, _okaoPartDetectionResultHandle);
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoSetExpressionPointFail",
-                          "Detection index %d of %d. OKAO Result Code=%d",
-                          detectionIndex, numDetections, okaoResult);
-        return RESULT_FAIL;
-      }
-      
-      okaoResult = OKAO_EX_Estimate_GRAY(_okaoEstimateExpressionHandle, dataPtr, nWidth, nHeight,
-                                         GRAY_ORDER_Y0Y1Y2Y3, _okaoExpressionResultHandle);
-      if(OKAO_NORMAL != okaoResult) {
-        if(OKAO_ERR_PROCESSCONDITION == okaoResult) {
-          // This might happen, depending on face parts
-          PRINT_NAMED_INFO("FaceTrackerImpl.Update.OkaoEstimateExpression",
-                           "Could not estimate expression for face %d of %d using detected parts.",
-                           detectionIndex, numDetections);
-        } else {
-          // This should not happen
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoEstimateExpressionFail",
-                            "Detection index %d of %d. OKAO Result Code=%d",
-                            detectionIndex, numDetections, okaoResult);
-          return RESULT_FAIL;
+      if(_detectEmotion && facePartsFound)
+      {
+        // Expression detection
+        Tic("ExpressionRecognition");
+        Result expResult = EstimateExpression(nWidth, nHeight, dataPtr, face);
+        Toc("ExpressionRecognition");
+        if(RESULT_OK != expResult) {
+          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.EstimateExpressiongFailed",
+                              "Detection index %d of %d.",
+                              detectionIndex, numDetections);
         }
-      } else {
-        
-        okaoResult = OKAO_EX_GetResult(_okaoExpressionResultHandle, EX_EXPRESSION_KIND_MAX, _expressionValues);
-        if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetExpressionResultFail",
-                            "Detection index %d of %d. OKAO Result Code=%d",
-                            detectionIndex, numDetections, okaoResult);
-          return RESULT_FAIL;
-        }
-        
-        static const TrackedFace::Expression TrackedFaceExpressionLUT[EX_EXPRESSION_KIND_MAX] = {
-          TrackedFace::Neutral,
-          TrackedFace::Happiness,
-          TrackedFace::Surprise,
-          TrackedFace::Anger,
-          TrackedFace::Sadness
-        };
-        
-        for(INT32 okaoExpressionVal = 0; okaoExpressionVal < EX_EXPRESSION_KIND_MAX; ++okaoExpressionVal) {
-          face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExpressionVal],
-                                  _expressionValues[okaoExpressionVal]);
-        }
-        
-      }
-      Toc("ExpressionRecognition");
+      } // if(_detectEmotion)
       
       // Face Recognition:
-      INT32 numUsersInAlbum = 0;
-      okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetNumUsersInAlbumFailed", "");
-        return RESULT_FAIL;
-      }
-      
-      Tic("FaceRecognition");
-      okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
-                                              dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
-                                              _okaoPartDetectionResultHandle);
-      
-      Vision::TrackedFace::ID_t faceID = Vision::TrackedFace::UnknownFace;
-      if(numUsersInAlbum == 0 && _enrollNewFaces) {
-        // Nobody in album yet, add this person
-        PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingFirstUser",
-                         "Adding first user to empty album");
-        Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, frameOrig.GetTimestamp());
-        if(RESULT_OK != lastResult) {
-          return lastResult;
-        }
-        faceID = _lastRegisteredUserID;
-      } else {
-        INT32 resultNum = 0;
-        const s32 MaxResults = 2;
-        INT32 userIDs[MaxResults], scores[MaxResults];
-        okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, MaxResults, userIDs, scores, &resultNum);
-        
-        if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoFaceRecognitionIdentifyFailed",
-                              "Detection index %d of %d. OKAO Result Code=%d",
-                              detectionIndex, numDetections, okaoResult);
+      Vision::TrackedFace::ID_t faceID = _trackID_to_recID[trackerID];
+      if(Vision::TrackedFace::UnknownFace == faceID && facePartsFound)
+      {
+        // We have not recognized this tracked face yet. Do so now.
+        Tic("FaceRecognition");
+        Result recognitionResult = RecognizeFace(nWidth, nHeight, dataPtr,
+                                                 detectionInfo, frameOrig.GetTimestamp(),
+                                                 faceID);
+        if(RESULT_OK != recognitionResult) {
+          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceRecognitionFailed",
+                              "Detection index %d of %d.",
+                              detectionIndex, numDetections);
+          faceID = Vision::TrackedFace::UnknownFace;
         } else {
-          const INT32 RecognitionThreshold = 750; // TODO: Expose this parameter
-          const INT32 MergeThreshold       = 500; // TODO: Expose this parameter
-          //const f32   RelativeRecogntionThreshold = 1.5; // Score of top result must be this times the score of the second best result
-          
-          if(resultNum > 0 && scores[0] > RecognitionThreshold)
-          {
-            INT32 minID = userIDs[0];
-
-            // Merge all results that are above threshold together, keeping the lowest ID
-            INT32 lastResult = 1;
-            while(lastResult < resultNum && scores[lastResult] > MergeThreshold) {
-              minID = std::min(userIDs[lastResult], minID);
-              ++lastResult;
-            }
-            
-            Result result = UpdateExistingUser(minID, _okaoRecognitionFeatureHandle, frameOrig.GetTimestamp());
-            if(RESULT_OK != result) {
-              return result;
-            }
-            
-            for(INT32 iResult = 0; iResult < lastResult; ++iResult)
-            {
-              if(userIDs[iResult] != minID)
-              {
-                PRINT_NAMED_INFO("FaceTrackerImpl.Update.MergingRecords",
-                                 "Merging face %d with %d b/c its score %d is > %d",
-                                 userIDs[iResult], minID, scores[iResult], MergeThreshold);
-                
-                // TODO: Make RemoveUser helper that does this
-                okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userIDs[iResult]);
-                if(OKAO_NORMAL != okaoResult) {
-                  PRINT_NAMED_ERROR("FaceTrackerImpl.Update.ClearUserFailed",
-                                    "Failed to clear user %d after merging it with %d",
-                                    userIDs[iResult], minID);
-                  return RESULT_FAIL;
-                }
-                _enrollmentStatus.erase(userIDs[iResult]);
-
-              }
-              ++iResult;
-            }
-            
-            faceID = minID;
-
-          } else if(_enrollNewFaces) {
-            // No match found, add new user
-            PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingNewUser",
-                             "Observed new person. Adding to album.");
-            Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, frameOrig.GetTimestamp());
-            if(RESULT_OK != lastResult) {
-              return lastResult;
-            }
-            faceID = _lastRegisteredUserID;
-          }
+          // We've now assigned an identity to this tracker ID so we don't have to
+          // keep trying to recognize it while we're successfully tracking!
+          _trackID_to_recID[trackerID] = faceID;
         }
-      }
+        Toc("FaceRecognition");
+      } // if(Vision::TrackedFace::UnknownFace == faceID))
+      
       face.SetID(faceID); // could be unknown!
       if(faceID != Vision::TrackedFace::UnknownFace) {
         face.SetName("KnownFace" + std::to_string(face.GetID()));
       } else {
         face.SetName("UnknownFace");
       }
-      Toc("FaceRecognition");
       
     } // FOR each face
     
