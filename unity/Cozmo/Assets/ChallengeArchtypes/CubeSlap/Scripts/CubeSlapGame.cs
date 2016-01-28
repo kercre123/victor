@@ -19,7 +19,8 @@ namespace CubeSlap {
     private float _MinSlapDelay;
     private float _MaxSlapDelay;
     private int _Rounds;
-    private int _SuccessCount;
+    private int _CozmoSuccessCount;
+    private int _CozmoFailCount;
     private bool _CliffFlagTrown = false;
     // Flag to keep track if we've actually done the Pounce animation this round
     private bool _SlapFlagThrown = false;
@@ -45,7 +46,8 @@ namespace CubeSlap {
       _MaxSlapDelay = config.MaxSlapDelay;
       _BaseSlapChance = config.StartingSlapChance;
       _MaxFakeouts = config.MaxFakeouts;
-      _SuccessCount = 0;
+      _CozmoSuccessCount = 0;
+      _CozmoFailCount = 0;
       InitializeMinigameObjects(config.NumCubesRequired());
     }
 
@@ -149,23 +151,25 @@ namespace CubeSlap {
     }
 
     public void OnSuccess() {
-      _SuccessCount++;
+      _CozmoFailCount++;
       _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
     }
 
     public void OnFailure() {
-      TryDecrementAttempts();
+      _CozmoSuccessCount++;
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
     }
 
     public void HandleAnimationDone(bool success) {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
-      if (_SuccessCount >= (int)(_Rounds / 2.0f)) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleWinGameAnimationDone));
-      }
-      else if (AttemptsLeft <= 0) {
-        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleLoseGameAnimationDone));
+      if (_CozmoFailCount + _CozmoSuccessCount >= _Rounds) {
+        if (_CozmoSuccessCount > _CozmoFailCount) {
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleLoseGameAnimationDone));
+        }
+        else {
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleWinGameAnimationDone));
+        }
       }
       else if (_SlapFlagThrown) {
         _SlapFlagThrown = false;
@@ -197,7 +201,7 @@ namespace CubeSlap {
     }
 
     protected override int CalculateExcitementStatRewards() {
-      return _SuccessCount;
+      return _CozmoSuccessCount;
     }
  
   }
