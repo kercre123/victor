@@ -125,7 +125,7 @@ namespace Anki {
       Radians newAngle(GetAngle() + other.GetAngle());
       Rotation2d newRotation(newAngle);
       Point2f newTranslation(GetRotation() * other.GetTranslation());
-      newTranslation += coord;
+      newTranslation += trans;
       
       return Pose2d(newTranslation, newAngle);
     }

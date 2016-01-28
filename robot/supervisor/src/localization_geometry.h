@@ -70,34 +70,38 @@ namespace Anki
     {
     public:
       // Constructors:
-      Pose2d() : coord(0,0), rot(0) {}
-      Pose2d(const float x, const float y, const Radians angle) : coord(x,y), rot(angle) {};
-      Pose2d(const Point2f translation, const Rotation2d rotation) : coord(translation), rot(rotation) {};
+      Pose2d() : trans(0,0), rot(0) {}
+      Pose2d(const float x, const float y, const Radians angle) : trans(x,y), rot(angle) {};
+      Pose2d(const Point2f translation, const Rotation2d rotation) : trans(translation), rot(rotation) {};
       Pose2d(const Pose2d &other) {
         *this = other;
       }
 
       // Accessors:
-      float   GetX()     const {return coord.x;}
-      float   GetY()     const {return coord.y;}
+      float   GetX()     const {return trans.x;}
+      float   GetY()     const {return trans.y;}
       Radians GetAngle() const {return rot.GetAngle();}
 
-      const Point2f& GetTranslation() const {return coord;}
+      const Point2f& GetTranslation() const {return trans;}
       const Rotation2d& GetRotation() const {return rot;}
       
-      float& x() {return coord.x;}
-      float& y() {return coord.y;}
+      float& x() {return trans.x;}
+      float& y() {return trans.y;}
       Radians& angle() {return rot.angle();}
 
       void operator=(const Pose2d &other) {
-        this->coord = other.coord;
+        this->trans = other.trans;
         this->rot = other.rot;
       }
       Pose2d operator*(const Pose2d& other);
+      
+      // Returns pose of p with respect to this pose.
+      // Note: These are tree-less poses so no pose chaining occurs.
+      //       This pose and pose p should be wrt the same parent.
       Pose2d GetWithRespectTo(const Pose2d& p) const;
 
     private:
-      Point2f coord;
+      Point2f trans;
       Rotation2d rot;
     }; // class Pose2d
   } // namespace Embedded

@@ -534,8 +534,14 @@ namespace Anki
         Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         f32 currSpeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
 
-        acc_start_frac = MAX(std::fabsf(acc_start_frac), 0.01f);
-        acc_end_frac   = MAX(std::fabsf(acc_end_frac),   0.01f);
+        // Check for valid fractions
+        if (acc_start_frac < 0 || acc_end_frac < 0) {
+          AnkiWarn( 95, "PathFollower.DriveStraight.NegativeFraction", 349, "start: %f, end: %f", 2, acc_start_frac, acc_end_frac);
+          return false;
+        }
+        
+        acc_start_frac = MAX(acc_start_frac, 0.01f);
+        acc_end_frac   = MAX(acc_end_frac,   0.01f);
         
         if (!vpg.StartProfile_fixedDuration(0, currSpeed, acc_start_frac * duration_sec,
                                             dist_mm, acc_end_frac * duration_sec,

@@ -112,8 +112,9 @@ static const uint8_t INT_OPEN_DRAIN = 0x44;
 static const uint8_t RANGE_500DPS = 0x02;
 static const uint8_t BW_200 = 0x19;           // Maybe?
 
-static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;
-static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f) *0.975; //HACK: 0.975 fudge factor because of slightly-faster-than-actual rates being reported
+static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;           //In 2g mode, 16384 LSB/g
+static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f) *0.975; //In FS500 mode, 65.6 deg/s / LSB
+                                                                         //HACK: 0.975 fudge factor because of slightly-faster-than-actual rates being reported
 
 static bool readyForIMU = true;
 static IMUData imu_state;
