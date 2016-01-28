@@ -17,9 +17,11 @@ First install [brew](http://brew.sh/). Then use brew to install the following de
 
 Get the latest [coretech-external binaries](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). Click the most recent Artifacts->View. Download and extract the .tar.gz
 
-Have your paths (eg. open ~/.bash_profile) setup correctly it must include the line:
+Modify your paths (eg. open ~/.bash_profile) to include the line:
 
     export CORETECH_EXTERNAL_DIR="<PATH_TO_CORETECH_EXTERNAL>"
+
+Make sure you don't use something like OS X's default textedit because they use non-ascii quotes “” which will cause the path variables to not work properly. We recommend [sublime text](http://www.sublimetext.com/2) for your text editing needs.
 
 Once you set your paths you need to restart your terminal for the settings to take effect. Alternatively you can refresh your environment:
 
@@ -36,6 +38,10 @@ A dev scene that includes a simple list of challenges for Cozmo. Useful for skip
 The production scene used for when we deploy. This is where the final experience will live.
 
     /unity/Cozmo/Assets/Scenes/HomeHub.unity
+
+### Xcode
+
+We are using XCode Version 7.2 (7C68). Install from the OS X App Store.
 
 ### Build Script
 
@@ -60,7 +66,7 @@ Useful worlds:
 
  * cozmoViz.wbt - Includes a keyboard controller and the engine. Used to talk to a physical robot.
 
- * cozmoVizForunity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
+ * cozmoVizForUnity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
 
  * PatternPlay.wbt - Simulated environment for a virtual robot. Useful for using Unity to run simulated games. You can create your own versions of this ideal for the game you are testing.
 

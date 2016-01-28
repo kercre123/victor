@@ -49,6 +49,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '#simonGame.text.howToPlay'
+  _AllUppercase: 0
 --- !u!222 &22226256
 CanvasRenderer:
   m_ObjectHideFlags: 1
