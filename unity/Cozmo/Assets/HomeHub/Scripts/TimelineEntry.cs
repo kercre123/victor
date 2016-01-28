@@ -45,9 +45,7 @@ public class TimelineEntry : MonoBehaviour {
 
     _FillbarButton.gameObject.SetActive(active);
     _TimelineNodeActive.SetActive(active);
-    if (progress == 1.0f) {
-      _TimelineNodeComplete.SetActive(active);
-    }
+    _TimelineNodeComplete.SetActive(progress == 1.0f);
     _TimelineNodeInactive.SetActive(!active);
   }
 }

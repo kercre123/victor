@@ -166,7 +166,6 @@ MonoBehaviour:
   _GoalContainer: {fileID: 22416974}
   _FriendshipFormulaConfig: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
     type: 2}
-  _Title: {fileID: 11414914}
 --- !u!114 &11414914
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -198,7 +197,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '...'
+  m_Text: '#dailyGoal.title'
   _AllUppercase: 0
 --- !u!114 &11417702
 MonoBehaviour:

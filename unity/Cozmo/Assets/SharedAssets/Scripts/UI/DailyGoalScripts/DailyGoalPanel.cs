@@ -34,13 +34,8 @@ public class DailyGoalPanel : BaseView {
   [SerializeField]
   private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
-  [SerializeField]
-  private Text _Title;
-
-
   void Awake() {
     _Config = RobotEngineManager.Instance.GetFriendshipProgressConfig();
-    _Title.text = Localization.Get(LocalizationKeys.kDailyGoalTitle);
   }
 
   // Using current friendship level and the appropriate config file,
