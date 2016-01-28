@@ -41,7 +41,7 @@ The production scene used for when we deploy. This is where the final experience
 
 ### Xcode
 
-We are using XCode Version 7.2 (7C68). Install from the OS X App Store.
+We are using XCode Version 7.2 (7C68). Install from the OS X App Store. Make sure you open XCode at least once after installing / updating because it may ask for accepting terms of service before permitting us to run it from build scripts.
 
 ### Build Script
 
