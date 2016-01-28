@@ -79,13 +79,15 @@ namespace Anki {
         f32 slipFactor_ = 1.f;
         
 
-        // Pose history
+
+        ///// Pose history ////
+        
+        // The number of mainExecution tics in between history entries (min: 1)
+        const u8 POSE_HISTORY_RES_IN_CYCLES = 6;
+        
         // Never need to erase elements, just overwrite with new data.
-#ifdef TARGET_K02
-        const u16 POSE_HISTORY_SIZE = 100/5; // 100ms of history devided by 5ms intervals
-#else
-        const u16 POSE_HISTORY_SIZE = 300;
-#endif
+        const u8 POSE_HISTORY_SIZE = 600/(TIME_STEP * POSE_HISTORY_RES_IN_CYCLES); // 600ms of history
+
         PoseStamp hist_[POSE_HISTORY_SIZE];
         u16 hStart_ = 0;
         u16 hEnd_ = 0;
@@ -107,7 +109,7 @@ namespace Anki {
         lastKeyframeUpdate_ = 0;
       }
 
-#ifndef TARGET_K02
+
       // Interpolates the pose at time targetTime which should be between historical pose1 time and historical pose2 time.
       // Puts result in history at index poseResult_idx.
       Result InterpolatePose(int pose1_idx, int pose2_idx, f32 targetTime, int poseResult_idx)
@@ -140,7 +142,7 @@ namespace Anki {
 
         return RESULT_OK;
       }
-#endif
+
 
       Result GetHistIdx(TimeStamp_t t, u16& idx)
       {
@@ -161,11 +163,6 @@ namespace Anki {
             idx = 0;
           }
 
-#ifdef TARGET_K02
-          if (hist_[idx].t >= t) {
-            return RESULT_OK;
-          }
-#else
           if (hist_[idx].t == t) {
             return RESULT_OK;
           } else if (hist_[idx].t > t) {
@@ -175,7 +172,6 @@ namespace Anki {
             //       Maybe just pick the closest pose?
             return InterpolatePose(prevIdx, idx, t, idx);
           }
-#endif
           prevIdx = idx;
         }
 
@@ -717,7 +713,11 @@ namespace Anki {
 
 
         // Add new current pose to history
-        AddPoseToHist();
+        static u8 addPoseToHistTicCnt = 0;
+        if (++addPoseToHistTicCnt >= POSE_HISTORY_RES_IN_CYCLES) {
+          AddPoseToHist();
+          addPoseToHistTicCnt = 0;
+        }
 
 #if(DEBUG_LOCALIZATION)
         PRINT("LOC: %f, %f, %f\n", x_, y_, orientation_.getDegrees());
