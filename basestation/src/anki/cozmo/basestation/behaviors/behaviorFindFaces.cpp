@@ -46,7 +46,16 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   
 bool BehaviorFindFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
-  return true;
+  if(_currentState == State::Inactive) {
+    
+    Pose3d facePose;
+    auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
+    
+    return (lastFaceTime < SEC_TO_MILIS(currentTime_sec - kMinimumTimeSinceSeenLastFace_sec));
+  }
+  else {
+    return true;
+  }
 }
 
 void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
