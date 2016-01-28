@@ -203,7 +203,7 @@ public abstract class GameBase : MonoBehaviour {
 
     foreach (var statType in StatContainer.sKeys) {
       // Check that this is a goal xp
-      if (RobotEngineManager.Instance.HasGoalForStat(statType)) {
+      if (DailyGoalManager.Instance.HasGoalForStat(statType)) {
         int grantedXp = ComputeXpForStat(statType);
         if (grantedXp != 0) {
           _RewardedXp[statType] = grantedXp;
