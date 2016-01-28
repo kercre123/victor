@@ -38,6 +38,7 @@ struct Border {
   Point3f to;
   Vec3f normal; // perpendicular to the segment, in outwards direction with respect to the content.
   // Note the normal could be embedded in the order 'from->to', but a separate variable makes it easier to use
+  Point3f GetCenter() const { return (from + to) * 0.5f; }
 };
 using BorderVector = std::vector<Border>;
 

@@ -29,9 +29,10 @@ namespace Cozmo {
 
 CONSOLE_VAR(bool , kRenderContentTypes , "NavMeshQuadTreeProcessor", false); // renders registered content nodes for webots
 CONSOLE_VAR(bool , kRenderSeeds        , "NavMeshQuadTreeProcessor", false); // renders seeds differently for debugging purposes
-CONSOLE_VAR(bool , kRenderBordersFrom  , "NavMeshQuadTreeProcessor", false); // renders detected borders for webots (origin)
-CONSOLE_VAR(bool , kRenderBordersToDot , "NavMeshQuadTreeProcessor", true); // renders detected borders for webots (destination) as dots
-CONSOLE_VAR(bool , kRenderBordersToQuad, "NavMeshQuadTreeProcessor", false); // renders detected borders for webots (destination) as neighbor quads
+CONSOLE_VAR(bool , kRenderBordersFrom  , "NavMeshQuadTreeProcessor", false); // renders detected borders (origin quad)
+CONSOLE_VAR(bool , kRenderBordersToDot , "NavMeshQuadTreeProcessor", false); // renders detected borders (border center) as dots
+CONSOLE_VAR(bool , kRenderBordersToQuad, "NavMeshQuadTreeProcessor", false); // renders detected borders (destination quad)
+CONSOLE_VAR(bool , kRenderBorder3DLines, "NavMeshQuadTreeProcessor", true); // renders borders returned as 3D lines (instead of quads)
 CONSOLE_VAR(float, kRenderZOffset      , "NavMeshQuadTreeProcessor", 20.0f); // adds Z offset to all quads
 CONSOLE_VAR(bool , kDebugFindBorders   , "NavMeshQuadTreeProcessor", false); // prints debug information in console
 
@@ -220,7 +221,19 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
     
   } // has waypoints
   
-
+  // debug render of lines returned to systems quering for borders
+  if ( kRenderBorder3DLines )
+  {
+    VizManager::getInstance()->EraseSegments("NavMeshQuadTreeProcessorBorderSegments");
+    for ( const auto& b : outBorders )
+    {
+      const Vec3f centerLine = (b.from + b.to)*0.5f;
+      VizManager::getInstance()->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
+        b.from, b.to, Anki::NamedColors::YELLOW, false, 50.0f);
+      VizManager::getInstance()->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
+        centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::BLUE, false, 50.0f);
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
