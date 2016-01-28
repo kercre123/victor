@@ -24,10 +24,16 @@ namespace Cozmo.HomeHub {
     private RectTransform _ChallengeContainer;
 
     [SerializeField]
-    private RectTransform _RightTopPane;
+    private RectTransform _DailyGoalsContainer;
 
     [SerializeField]
-    private RectTransform _RightBottomPane;
+    private RectTransform _CozmoWidgetContainer;
+
+    [SerializeField]
+    private RectTransform _LockedPaneScrollContainer;
+
+    [SerializeField]
+    private RectTransform _LockedPaneNoScrollContainer;
 
     [SerializeField]
     private UnityEngine.UI.ScrollRect _ScrollRect;
@@ -79,9 +85,9 @@ namespace Cozmo.HomeHub {
       _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
       _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
-      _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _RightTopPane).GetComponent<DailyGoalPanel>();
+      _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _DailyGoalsContainer).GetComponent<DailyGoalPanel>();
 
-      _CozmoWidgetInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _RightBottomPane).GetComponent<CozmoWidget>();
+      _CozmoWidgetInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _CozmoWidgetContainer).GetComponent<CozmoWidget>();
 
       UpdateDailySession();
 
@@ -93,6 +99,12 @@ namespace Cozmo.HomeHub {
       _EndSessionButton.onClick.AddListener(HandleEndSessionButtonTap);
       Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       _CozmoWidgetInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
+
+      _ScrollRect.onValueChanged.AddListener(HandleTimelineViewScroll);
+    }
+
+    void HandleTimelineViewScroll(Vector2 arg0) {
+          
     }
 
     private void UpdateDailySession() {

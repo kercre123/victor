@@ -17,7 +17,9 @@ public class ParentLayoutContentSizeFitter : MonoBehaviour {
   IEnumerator ResizeParent() {
     yield return null;
     LayoutElement layoutElement = transform.parent.GetComponent<LayoutElement>();
-    layoutElement.minWidth = GetComponent<RectTransform>().rect.width;
-    layoutElement.minHeight = GetComponent<RectTransform>().rect.height;
+    if (layoutElement != null) {
+      layoutElement.minWidth = GetComponent<RectTransform>().rect.width;
+      layoutElement.minHeight = GetComponent<RectTransform>().rect.height;
+    }
   }
 }
