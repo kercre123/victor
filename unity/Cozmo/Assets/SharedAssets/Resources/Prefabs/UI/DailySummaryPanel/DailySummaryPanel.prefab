@@ -254,7 +254,7 @@ GameObject:
   - 224: {fileID: 22453680}
   - 222: {fileID: 22264470}
   - 114: {fileID: 11445222}
-  - 114: {fileID: 11419916}
+  - 114: {fileID: 11459170}
   m_Layer: 5
   m_Name: CloseButton
   m_TagString: Untagged
@@ -770,7 +770,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11488030}
   m_HandleRect: {fileID: 22483714}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -878,47 +878,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11419916
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 151344}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1392445389, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Navigation:
-    m_Mode: 3
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: .960784316, g: .960784316, b: .960784316, a: 1}
-    m_PressedColor: {r: .784313738, g: .784313738, b: .784313738, a: 1}
-    m_DisabledColor: {r: .784313738, g: .784313738, b: .784313738, a: .501960814}
-    m_ColorMultiplier: 1
-    m_FadeDuration: .100000001
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 11445222}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
-      Culture=neutral, PublicKeyToken=null
 --- !u!114 &11421684
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1047,7 +1006,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d50df73de9d7c4cd8be879cc630d807f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _CloseButton: {fileID: 11419916}
+  _CloseDialogOnTapOutside: 1
+  _OptionalCloseDialogButton: {fileID: 11459170}
+  DimBackground: 0
   _Title: {fileID: 11465290}
   _FriendBarAnimator: {fileID: 9524222}
   _FriendBar: {fileID: 11440056}
@@ -1267,6 +1228,34 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11459170
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 151344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77974af3fab774304a313844ada243f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Interactable: 1
+  _DASEventName: CloseDailySummary
+  _TextLabel: {fileID: 0}
+  _TextLabelOffset: -5
+  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: .5, g: .5, b: .5, a: 1}
+  TextDisabledColor: {r: .5, g: .5, b: .5, a: 1}
+  _AlphaController: {fileID: 0}
+  _GlintAnimator: {fileID: 0}
+  ButtonGraphics:
+  - targetImage: {fileID: 11445222}
+    enabledSprite: {fileID: 21300000, guid: 798d9d6e6b1d047e8995648362971ebe, type: 3}
+    enabledColor: {r: 1, g: 1, b: 1, a: 1}
+    pressedSprite: {fileID: 0}
+    pressedColor: {r: .610294104, g: .610294104, b: .610294104, a: 1}
+    disabledSprite: {fileID: 0}
+    disabledColor: {r: .611764729, g: .611764729, b: .611764729, a: 1}
 --- !u!114 &11459176
 MonoBehaviour:
   m_ObjectHideFlags: 1

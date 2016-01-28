@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 // Panel for generating and displaying the ProgressionStat goals for the Day.
-public class DailyGoalPanel : BaseView {
+public class DailyGoalPanel : MonoBehaviour {
   
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
 
@@ -34,8 +34,12 @@ public class DailyGoalPanel : BaseView {
   [SerializeField]
   private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
-  void Awake() {
+  private void Awake() {
     _Config = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+  }
+
+  private void OnDestroy() {
+    _GoalCells.Clear();
   }
 
   // Using current friendship level and the appropriate config file,
@@ -101,9 +105,4 @@ public class DailyGoalPanel : BaseView {
     _GoalCells.Add(newBadge);
     return newBadge;
   }
-
-  protected override void CleanUp() {
-    _GoalCells.Clear();
-  }
-
 }

@@ -238,12 +238,14 @@ namespace Anki {
       }
 
       private void ShowEnabledState() {
-        foreach (AnkiButtonImage graphic in ButtonGraphics) {
-          if (graphic.targetImage != null && graphic.enabledSprite != null) {
-            SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor);
-          }
-          else {
-            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+        if (ButtonGraphics != null) {
+          foreach (AnkiButtonImage graphic in ButtonGraphics) {
+            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+              SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor);
+            }
+            else {
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+            }
           }
         }
 

@@ -8,7 +8,7 @@ using Anki.UI;
 using Cozmo.UI;
 
 namespace Cozmo.HomeHub {
-  public class TimelineView : MonoBehaviour {
+  public class TimelineView : BaseView {
 
     public static int kTimelineHistoryLength = 14;
 
@@ -70,19 +70,7 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
-    public void CloseView() {
-      // TODO: Play some close animations before destroying view
-      GameObject.Destroy(gameObject);
-    }
-
-    public void CloseViewImmediately() {
-      GameObject.Destroy(gameObject);
-    }
-
-    public void OnDestroy() {
-      if (_ChallengeListViewInstance != null) {
-        GameObject.Destroy(_ChallengeListViewInstance.gameObject);
-      }
+    protected override void CleanUp() {
     }
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
@@ -211,7 +199,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
-      var summaryPanel = UIManager.CreateUIElement(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
+      var summaryPanel = UIManager.OpenView(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
       summaryPanel.Initialize(session);
       if (onComplete != null) {
         summaryPanel.FriendshipBarAnimateComplete += onComplete;
