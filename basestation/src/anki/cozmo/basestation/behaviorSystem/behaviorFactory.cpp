@@ -29,6 +29,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
+#include "anki/cozmo/basestation/behaviors/behaviorBlockExploration.h"
 
 
 namespace Anki {
@@ -130,6 +131,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::FindFaces:
     {
       newBehavior = new BehaviorFindFaces(robot, config);
+      break;
+    }
+    case BehaviorType::BlockExploration:
+    {
+      newBehavior = new BehaviorBlockExploration(robot, config);
       break;
     }
     case BehaviorType::Count:
