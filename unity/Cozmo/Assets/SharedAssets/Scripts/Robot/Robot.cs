@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
+using Cozmo.Util;
 
 /// <summary>
 ///   our unity side representation of cozmo's current state
@@ -712,7 +713,16 @@ public class Robot : IDisposable {
   }
 
   private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
-    ProgressionStats[index] = value;
+    bool valueChanged = ProgressionStats[index] != value;
+    if (valueChanged) {
+      ProgressionStats[index] = value;
+      var session = DataPersistence.DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+      if (session != null) {
+        session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
+      }
+      DataPersistence.DataPersistenceManager.Instance.Save();
+    }
+
   }
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
