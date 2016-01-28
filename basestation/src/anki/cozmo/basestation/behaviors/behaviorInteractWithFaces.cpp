@@ -803,7 +803,7 @@ namespace Cozmo {
         _currentTilt = 0.f;
       }
       
-      face.GetParams().SetFaceAngle(_currentTilt);
+      face.SetFaceAngle(_currentTilt);
 
       tiltTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(face, 250));
       robot.GetAnimationStreamer().RemovePersistentFaceLayer(_tiltLayerTag);

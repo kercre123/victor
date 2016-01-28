@@ -52,7 +52,7 @@ public:
   uint8_t GetLevel() const { return _level; }
   float GetSideLen() const { return _sideLen; }
   const Point3f& GetCenter() const { return _center; }
-  EContentType GetContentType() const { return _contentType; }
+  ENodeContentType GetContentType() const { return _contentType; }
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
   bool Contains(const Quad2f& quad) const;
@@ -65,15 +65,8 @@ public:
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // process a clear quad that affected this node's parent. Returns true if the node changed
-  bool AddClearQuad(const Quad2f& quad, NavMeshQuadTreeProcessor& processor);
-  
-  // process an obstacle that affected this node's parent. Returns true if the node changed
-  bool AddObstacleCube(const Quad2f& quad, NavMeshQuadTreeProcessor& processor);
-  bool AddObstacleUnrecognized(const Quad2f& quad, NavMeshQuadTreeProcessor& processor);
-
-  // process a cliff that affected this node's parent. Returns true if the node changed
-  bool AddCliff(const Quad2f& quad, NavMeshQuadTreeProcessor& processor);
+  // helper for the specific add functions. It properly processes the quad down the tree for the given content
+  bool AddQuad(const Quad2f& quad, ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
@@ -132,7 +125,7 @@ private:
   // type are not allowed to preserve information). This is a necessity now to prevent Cliffs from being
   // removed by Clear. Note that eventually we have to support that since it's possible that the player
   // actually covers the cliff with something transitable
-  bool CanOverrideChildrenWithContent(EContentType contentType) const;
+  bool CanOverrideChildrenWithContent(ENodeContentType contentType) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
@@ -140,19 +133,16 @@ private:
 
   // subdivide/merge children
   void Subdivide(NavMeshQuadTreeProcessor& processor);
-  void Merge(EContentType newContentType, NavMeshQuadTreeProcessor& processor);
+  void Merge(ENodeContentType newContentType, NavMeshQuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge(NavMeshQuadTreeProcessor& processor);
   
-  // helper for the specific add functions. It properly processes the quad down the tree for the given content
-  bool AddQuad(const Quad2f& quad, EContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
-  
   // sets the content type to the detected one.
   // try checks por priority first, then calls force
-  void TrySetDetectedContentType(EContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
+  void TrySetDetectedContentType(ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
   // force sets the type and updates shared container
-  void ForceSetDetectedContentType(EContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
+  void ForceSetDetectedContentType(ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
   
   // sets a new parent to this node. Used on expansions
   void ChangeParent(const NavMeshQuadTreeNode* newParent) { _parent = newParent; }
@@ -194,7 +184,7 @@ private:
   EQuadrant _quadrant;
   
   // information about what's in this quad
-  EContentType _contentType;
+  ENodeContentType _contentType;
     
 }; // class
   
