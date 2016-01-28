@@ -2,6 +2,7 @@
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
@@ -38,6 +39,7 @@ namespace Cozmo {
   , _animationContainer(container)
   , _liveAnimation(LiveAnimation)
   , _audioClient( audioClient )
+  ,_lastProceduralFace(new ProceduralFace)
   {
     _liveAnimation.SetIsLive(true);
   }
@@ -489,7 +491,7 @@ namespace Cozmo {
 
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                                        ProceduralFaceParams& faceParams,
+                                        ProceduralFace& procFace,
                                         bool shouldReplace)
   {
     bool paramsSet = false;
@@ -499,7 +501,7 @@ namespace Cozmo {
       ProceduralFaceKeyFrame& currentKeyFrame = track.GetCurrentKeyFrame();
       if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
       {
-        ProceduralFaceParams interpolatedParams;
+        ProceduralFace interpolatedFace;
         
         const ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
         if (nextFrame != nullptr) {
@@ -522,7 +524,7 @@ namespace Cozmo {
             // We're on the way to the next frame, but not too close to it: interpolate.
             else if (nextFrame->GetTriggerTime() - currStreamTime >= IKeyFrame::SAMPLE_LENGTH_MS) {
              */
-              interpolatedParams = currentKeyFrame.GetInterpolatedFaceParams(*nextFrame, currTime_ms - startTime_ms);
+              interpolatedFace = currentKeyFrame.GetInterpolatedFace(*nextFrame, currTime_ms - startTime_ms);
               paramsSet = true;
             //}
             
@@ -534,7 +536,7 @@ namespace Cozmo {
         } else {
           // There's no next frame to interpolate towards: just send this keyframe
           // and move forward
-          interpolatedParams = currentKeyFrame.GetFace().GetParams();
+          interpolatedFace = currentKeyFrame.GetFace();
           track.MoveToNextKeyFrame();
           paramsSet = true;
         }
@@ -549,11 +551,11 @@ namespace Cozmo {
           
           if (shouldReplace)
           {
-            faceParams = interpolatedParams;
+            procFace = interpolatedFace;
           }
           else
           {
-            faceParams.Combine(interpolatedParams);
+            procFace.Combine(interpolatedFace);
           }
         }
       } // if(nextFrame != nullptr
@@ -601,7 +603,7 @@ namespace Cozmo {
       
       const f32 normDist = 5.f;
       ProceduralFace procFace;
-      procFace.GetParams().LookAt(xDart, yDart, normDist, normDist,
+      procFace.LookAt(xDart, yDart, normDist, normDist,
                                   GetParam<f32>(Param::EyeDartUpMaxScale),
                                   GetParam<f32>(Param::EyeDartDownMinScale),
                                   GetParam<f32>(Param::EyeDartOuterEyeScaleIncrease));
@@ -621,18 +623,14 @@ namespace Cozmo {
     // Blinks
     if(_nextBlink_ms <= 0)
     {
-      ProceduralFace blinkFace(robot.GetProceduralFace());
-      
-      // Now we clear out the current face params so that the layer generated
-      // below starts as the nominal face
-      blinkFace.SetParams(ProceduralFaceParams());
+      ProceduralFace blinkFace;
       
       FaceTrack faceTrack;
       TimeStamp_t totalOffset = 0;
       bool moreBlinkFrames = false;
       do {
         TimeStamp_t timeInc;
-        moreBlinkFrames = blinkFace.GetNextBlinkFrame(timeInc);
+        moreBlinkFrames = ProceduralFaceDrawer::GetNextBlinkFrame(blinkFace, timeInc);
         totalOffset += timeInc;
         faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(blinkFace, totalOffset));
       } while(moreBlinkFrames);
@@ -668,17 +666,18 @@ namespace Cozmo {
     
     // Combine the robot's current face with anything the currently-streaming
     // animation does to the face, plus anything present in any face "layers".
-    ProceduralFaceParams faceParams = robot.GetProceduralFace().GetParams();
+    ProceduralFace procFace = *_lastProceduralFace;
     
     if(nullptr != anim) {
       // Note that shouldReplace==true in this case because the animation frames
       // actually replace what's on the face.
-      faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, faceParams, true);
+      faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, procFace, true);
+      
+      if (faceUpdated && storeFace)
+      {
+        *_lastProceduralFace = procFace;
+      }
     }
-    
-    // Keep track of the face params after using the anim track because that's what we want to store off afterward,
-    // not the face after being adjusted by layers.
-    const ProceduralFaceParams animatedFaceParams = faceParams;
     
 #   if DEBUG_ANIMATION_STREAMING
     if(!_faceLayers.empty()) {
@@ -703,7 +702,7 @@ namespace Cozmo {
       // Note that shouldReplace==false here because face layers do not replace
       // what's on the face, by definition, they layer on top of what's already there.
       faceUpdated |= GetFaceHelper(faceLayer.track, faceLayer.startTime_ms,
-                                   faceLayer.streamTime_ms, faceParams, false);
+                                   faceLayer.streamTime_ms, procFace, false);
 
       faceLayer.streamTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
@@ -752,8 +751,6 @@ namespace Cozmo {
     if(faceUpdated) {
       // ...turn the final procedural face into an RLE-encoded image suitable for
       // streaming to the robot
-      ProceduralFace procFace(robot.GetProceduralFace());
-      procFace.SetParams(faceParams);
       
 #     if DEBUG_ANIMATION_STREAMING
       {
@@ -761,31 +758,24 @@ namespace Cozmo {
         const ProceduralFace::WhichEye L = ProceduralFace::WhichEye::Left;
         const ProceduralFace::WhichEye R = ProceduralFace::WhichEye::Right;
 
-        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.CombinedFaceParams",
+        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.CombinedFace",
                           "Face: shift=(%.2f,%.2f) scale=(%.2f,%.2f), "
                           "Left: shift=(%.2f,%.2f) scale=(%.2f,%.2f), "
                           "Right: shift=(%.2f,%.2f) scale=(%.2f,%.2f)",
-                          faceParams.GetFacePosition().x(), faceParams.GetFacePosition().y(),
-                          faceParams.GetFaceScale().x(), faceParams.GetFaceScale().y(),
-                          faceParams.GetParameter(L, Param::EyeCenterX),
-                          faceParams.GetParameter(L, Param::EyeCenterY),
-                          faceParams.GetParameter(L, Param::EyeScaleX),
-                          faceParams.GetParameter(L, Param::EyeScaleY),
-                          faceParams.GetParameter(R, Param::EyeCenterX),
-                          faceParams.GetParameter(R, Param::EyeCenterY),
-                          faceParams.GetParameter(R, Param::EyeScaleX),
-                          faceParams.GetParameter(R, Param::EyeScaleY));
+                          procFace.GetFacePosition().x(), procFace.GetFacePosition().y(),
+                          procFace.GetFaceScale().x(), procFace.GetFaceScale().y(),
+                          procFace.GetParameter(L, Param::EyeCenterX),
+                          procFace.GetParameter(L, Param::EyeCenterY),
+                          procFace.GetParameter(L, Param::EyeScaleX),
+                          procFace.GetParameter(L, Param::EyeScaleY),
+                          procFace.GetParameter(R, Param::EyeCenterX),
+                          procFace.GetParameter(R, Param::EyeCenterY),
+                          procFace.GetParameter(R, Param::EyeScaleX),
+                          procFace.GetParameter(R, Param::EyeScaleY));
       }
 #     endif
       
       BufferFaceToSend(procFace);
-      
-      if (storeFace)
-      {
-        // Also store the updated face in the robot using params prior to face layer application
-        procFace.SetParams(animatedFaceParams);
-        robot.SetProceduralFace(procFace);
-      }
     }
   } // UpdateFace()
   
@@ -793,7 +783,7 @@ namespace Cozmo {
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
     AnimKeyFrame::FaceImage faceImageMsg;
-    Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), faceImageMsg.image);
+    Result rleResult = FaceAnimationManager::CompressRLE(ProceduralFaceDrawer::DrawFace(procFace), faceImageMsg.image);
     
     if(RESULT_OK != rleResult) {
       PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
@@ -1319,58 +1309,6 @@ namespace Cozmo {
     
   } // UpdateAmountToSend()
   
-  Result StreamProceduralFace(Robot& robot,
-                              const ProceduralFace& lastFace,
-                              const ProceduralFace& nextFace,
-                              Animation& liveAnimation)
-  {
-    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
-    const TimeStamp_t nextTime = nextFace.GetTimeStamp();
-    
-    // Either interpolate from the last procedural face's timestamp if it's not too
-    // old, or for a fixed max duration so we get a smooth change but don't
-    // queue up tons of frames right now trying to get to the current face
-    // (which would cause an unwanted delay).
-    const TimeStamp_t maxDuration = 4*IKeyFrame::SAMPLE_LENGTH_MS;
-    TimeStamp_t lastInterpTime = lastTime;
-    if(nextTime > maxDuration) {
-      lastInterpTime = std::max(lastTime, nextTime - maxDuration);
-    }
-    
-    ProceduralFace proceduralFace;
-    proceduralFace.SetTimeStamp(lastInterpTime + IKeyFrame::SAMPLE_LENGTH_MS);
-
-    while(proceduralFace.GetTimeStamp() <= nextTime)
-    {
-      // Calculate next interpolation time
-      auto nextInterpFrameTime = proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS;
-      
-      // Interpolate based on time
-      f32 blendFraction = 1.f;
-      // If there are more blending frames after this one actually calculate the blend. Otherwise this is the last
-      // frame and we should finish the interpolation
-      if (nextInterpFrameTime <= nextTime)
-      {
-        blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
-                                       static_cast<f32>(nextTime - lastInterpTime)));
-      }
-      
-      const bool useSaccades = true;
-      proceduralFace.GetParams().Interpolate(lastFace.GetParams(), nextFace.GetParams(), blendFraction, useSaccades);
-      
-      // Add this procedural face as a keyframe in the live animation
-      if(RESULT_OK != liveAnimation.AddKeyFrameToBack(ProceduralFaceKeyFrame(proceduralFace))) {
-        PRINT_NAMED_ERROR("AnimationStreamer.StreamProceduralFace.AddFrameFailed", "");
-        return RESULT_FAIL;
-      }
-      
-      // Increment the procedural face time for the next interpolated frame
-      proceduralFace.SetTimeStamp(nextInterpFrameTime);
-    }
-    
-    return RESULT_OK;
-  } // StreamProceduralFace()
-  
 
   
   void AnimationStreamer::SetDefaultParams()
@@ -1451,7 +1389,7 @@ namespace Cozmo {
 #         endif
           
           ProceduralFace procFace;
-          procFace.GetParams().LookAt(x, y, ProceduralFace::WIDTH/2, ProceduralFace::HEIGHT/2);
+          procFace.LookAt(x, y, ProceduralFace::WIDTH/2, ProceduralFace::HEIGHT/2);
           FaceTrack faceTrack;
           faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, IKeyFrame::SAMPLE_LENGTH_MS));
           AddFaceLayer("LiveIdleTurn", std::move(faceTrack));

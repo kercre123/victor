@@ -2316,9 +2316,9 @@ namespace Anki {
           
           const f32 DockSquintScaleY = 0.35f;
           const f32 DockSquintScaleX = 1.05f;
-          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
-          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
-          squintFace.GetParams().SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
+          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
+          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
+          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
           
           squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame()); // need start frame at t=0 to get interpolation
           squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 250));

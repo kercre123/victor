@@ -262,9 +262,6 @@ namespace Anki {
           }
 
           case MOVING_LIFT_PREDOCK:
-#if(DEBUG_PAP_CONTROLLER)
-            PERIODIC_PRINT(200, "PAP: MLP %d %d\n", LiftController::IsInPosition(), HeadController::IsInPosition());
-#endif
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
 
               if (action_ == DA_PLACE_LOW_BLIND) {
@@ -507,7 +504,7 @@ namespace Anki {
                 case DA_PICKUP_HIGH:
                 case DA_PLACE_HIGH:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(15));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(20));
                   break;
                 } // HIGH
                 case DA_PICKUP_LOW:

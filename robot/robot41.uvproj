@@ -674,6 +674,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
+            <File>
+              <FileName>testModeController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

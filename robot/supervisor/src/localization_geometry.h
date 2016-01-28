@@ -27,8 +27,10 @@ namespace Anki
 
       Point2f(const Point2f& pt);
 
-      bool operator== (const Point2f &point2) const;
 
+      bool operator== (const Point2f &point2) const;
+      Point2f operator+(const Point2f& other) const;
+      Point2f operator-(const Point2f& other) const;
       Point2f& operator*= (const float value);
       Point2f& operator/= (const float value);
       Point2f& operator+= (const Point2f &point2);
@@ -43,32 +45,64 @@ namespace Anki
       float Length() const;
     }; // class Point2f
 
+    
+    class Rotation2d
+    {
+    public:
+      Rotation2d();
+      Rotation2d(Radians angle_rad);
+      
+      Rotation2d operator*(const Rotation2d& other) const;
+      Point2f operator*(const Point2f& p) const;
+      
+      Radians& angle() {return _angle;}
+      
+      Radians GetAngle() const;
+      Rotation2d GetInverse() const;
+      void Invert();
+      
+    private:
+      Radians _angle;
+    };
+
+    
     class Pose2d
     {
     public:
       // Constructors:
-      Pose2d() : coord(0,0), angle(0) {}
-      Pose2d(const float x, const float y, const Radians angle) : coord(x,y), angle(angle) {};
+      Pose2d() : trans(0,0), rot(0) {}
+      Pose2d(const float x, const float y, const Radians angle) : trans(x,y), rot(angle) {};
+      Pose2d(const Point2f translation, const Rotation2d rotation) : trans(translation), rot(rotation) {};
       Pose2d(const Pose2d &other) {
         *this = other;
       }
 
       // Accessors:
-      float   GetX()     const {return coord.x;}
-      float   GetY()     const {return coord.y;}
-      Point2f get_xy()    const {return coord;}
-      Radians GetAngle() const {return angle;}
+      float   GetX()     const {return trans.x;}
+      float   GetY()     const {return trans.y;}
+      Radians GetAngle() const {return rot.GetAngle();}
 
-      float& x() {return coord.x;}
-      float& y() {return coord.y;}
+      const Point2f& GetTranslation() const {return trans;}
+      const Rotation2d& GetRotation() const {return rot;}
+      
+      float& x() {return trans.x;}
+      float& y() {return trans.y;}
+      Radians& angle() {return rot.angle();}
 
       void operator=(const Pose2d &other) {
-        this->coord = other.coord;
-        this->angle = other.angle;
+        this->trans = other.trans;
+        this->rot = other.rot;
       }
+      Pose2d operator*(const Pose2d& other);
+      
+      // Returns pose of p with respect to this pose.
+      // Note: These are tree-less poses so no pose chaining occurs.
+      //       This pose and pose p should be wrt the same parent.
+      Pose2d GetWithRespectTo(const Pose2d& p) const;
 
-      Point2f coord;
-      Radians angle;
+    private:
+      Point2f trans;
+      Rotation2d rot;
     }; // class Pose2d
   } // namespace Embedded
 } // namespace Anki
