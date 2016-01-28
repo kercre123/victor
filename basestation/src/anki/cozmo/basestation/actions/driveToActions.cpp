@@ -85,8 +85,7 @@ namespace Anki {
     , _approachAngle_rad(approachAngle_rad)
     , _pathMotionProfile(motionProfile)
     {
-      // Goal options will be set later
-      _driveToPoseAction = new DriveToPoseAction(motionProfile, true, useManualSpeed);
+
     }
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
@@ -102,8 +101,7 @@ namespace Anki {
     , _approachAngle_rad(0)
     , _pathMotionProfile(motionProfile)
     {
-      // Goal options will be set later
-      _driveToPoseAction = new DriveToPoseAction(motionProfile, true, useManualSpeed);
+
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -285,17 +283,16 @@ namespace Anki {
       // In case we are re-running this action, make sure compound actions are cleared.
       // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)
       newCompoundSequential->ClearActions();
-      
+
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
-          
+
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
+          _driveToPoseAction = new DriveToPoseAction(_pathMotionProfile, true, _useManualSpeed);
           _driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
-          
           newCompoundSequential->AddAction(_driveToPoseAction);
         }
-        
         
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
@@ -835,6 +832,7 @@ namespace Anki {
                                                      useApproachAngle,
                                                      approachAngle_rad,
                                                      useManualSpeed);
+
       AddAction(_driveToObjectAction);
     }
     

@@ -207,7 +207,6 @@ namespace Anki {
       f32                        _distance_mm;
       f32                        _predockOffsetDistX_mm;
       bool                       _useManualSpeed;
-      DriveToPoseAction*         _driveToPoseAction = nullptr;
       IActionRunner*             _compoundAction;
       
       bool                       _useApproachAngle;
@@ -215,6 +214,9 @@ namespace Anki {
       
       PathMotionProfile          _pathMotionProfile;
       
+    private:
+      DriveToPoseAction*         _driveToPoseAction = nullptr;
+
     }; // DriveToObjectAction
     
     inline void DriveToObjectAction::SetSounds(const std::string& startSound,
