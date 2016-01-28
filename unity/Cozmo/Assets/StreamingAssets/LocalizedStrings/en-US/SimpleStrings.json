@@ -56,5 +56,14 @@
   },
   "dailySummary.title": {
     "translation": "DAILY SUMMARY FOR {0}/{1}"
+  },
+  "endSession.title": {
+    "translation": "END SESSION?"
+  },
+  "endSession.description": {
+    "translation": "Need a break? Tap END SESSION and send Cozmo back to his charger."
+  },
+  "dailyGoal.title": {
+    "translation": "DAILY GOALS"
   }
 }

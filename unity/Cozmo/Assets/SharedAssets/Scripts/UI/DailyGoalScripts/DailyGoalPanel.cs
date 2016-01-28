@@ -34,7 +34,6 @@ public class DailyGoalPanel : BaseView {
   [SerializeField]
   private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
-
   void Awake() {
     _Config = RobotEngineManager.Instance.GetFriendshipProgressConfig();
   }
