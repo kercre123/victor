@@ -433,7 +433,7 @@ namespace Anki {
 
             // Get distance between marker and current robot pose
             Embedded::Pose2d currPose = Localization::GetCurrPose();
-            distToMarker = lastMarkerPoseObservedInValidFOV_.get_xy().Dist(currPose.get_xy());
+            distToMarker = lastMarkerPoseObservedInValidFOV_.GetTranslation().Dist(currPose.GetTranslation());
 
             if (PathFollower::IsTraversingPath() &&
                 !IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH - 5.f) &&
@@ -567,7 +567,7 @@ namespace Anki {
           mode_ = APPROACH_FOR_DOCK;
 
           // Set approach start pose
-          Localization::GetDriveCenterPose(approachStartPose_.x(), approachStartPose_.y(), approachStartPose_.angle);
+          Localization::GetDriveCenterPose(approachStartPose_.x(), approachStartPose_.y(), approachStartPose_.angle());
 
 #if(RESET_LOC_ON_BLOCK_UPDATE)
           // If there is no localization (as is currently the case on the robot)
@@ -617,7 +617,7 @@ namespace Anki {
         // robot's current pose
         Anki::Embedded::Pose2d histPose;
         if ((t == 0) || (t == HAL::GetTimeStamp())) {
-          Localization::GetCurrentMatPose(histPose.x(), histPose.y(), histPose.angle);
+          Localization::GetCurrentMatPose(histPose.x(), histPose.y(), histPose.angle());
         }  else {
           Localization::GetHistPoseAtTime(t, histPose);
         }
@@ -633,9 +633,9 @@ namespace Anki {
         // Compute absolute block pose using error relative to pose at the time image was taken.
         f32 distToBlock = sqrtf((rel_x * rel_x) + (rel_y * rel_y));
         f32 rel_angle_to_block = atan2_acc(rel_y, rel_x);
-        blockPose_.x() = histPose.x() + distToBlock * cosf(rel_angle_to_block + histPose.angle.ToFloat());
-        blockPose_.y() = histPose.y() + distToBlock * sinf(rel_angle_to_block + histPose.angle.ToFloat());
-        blockPose_.angle = histPose.angle + rel_rad;
+        blockPose_.x() = histPose.x() + distToBlock * cosf(rel_angle_to_block + histPose.GetAngle().ToFloat());
+        blockPose_.y() = histPose.y() + distToBlock * sinf(rel_angle_to_block + histPose.GetAngle().ToFloat());
+        blockPose_.angle() = histPose.GetAngle() + rel_rad;
 
 
         // Field of view check
@@ -674,15 +674,15 @@ namespace Anki {
 
 
         // Compute dock pose
-        dockPose_.x() = blockPose_.x() - dockOffsetDistX_ * cosf(blockPose_.angle.ToFloat());
-        dockPose_.y() = blockPose_.y() - dockOffsetDistX_ * sinf(blockPose_.angle.ToFloat());
+        dockPose_.x() = blockPose_.x() - dockOffsetDistX_ * cosf(blockPose_.GetAngle().ToFloat());
+        dockPose_.y() = blockPose_.y() - dockOffsetDistX_ * sinf(blockPose_.GetAngle().ToFloat());
 #if(DOCK_ANGLE_DAMPING)
         if (!dockPoseAngleInitialized_) {
-          dockPose_.angle = blockPose_.angle;
+          dockPose_.angle() = blockPose_.GetAngle();
           dockPoseAngleInitialized_ = true;
         } else {
-          Radians angDiff = blockPose_.angle - dockPose_.angle;
-          dockPose_.angle = dockPose_.angle + CLIP(angDiff, -0.01, 0.01);
+          Radians angDiff = blockPose_.GetAngle() - dockPose_.GetAngle();
+          dockPose_.angle() = dockPose_.GetAngle() + CLIP(angDiff, -0.01, 0.01);
         }
 #else
         dockPose_.angle = blockPose_.angle;
@@ -712,10 +712,10 @@ namespace Anki {
 
           numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
                                                              approachStartPose_.y(),
-                                                             approachStartPose_.angle.ToFloat(),
+                                                             approachStartPose_.GetAngle().ToFloat(),
                                                              dockPose_.x(),
                                                              dockPose_.y(),
-                                                             dockPose_.angle.ToFloat(),
+                                                             dockPose_.GetAngle().ToFloat(),
                                                              DOCK_PATH_START_RADIUS_MM,
                                                              DOCK_PATH_END_RADII_MM[endRadiiIdx],
                                                              dockSpeed_mmps_,
@@ -753,8 +753,8 @@ namespace Anki {
 
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
-          f32 x_start_mm = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.angle.ToFloat());
-          f32 y_start_mm = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.angle.ToFloat());
+          f32 x_start_mm = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.GetAngle().ToFloat());
+          f32 y_start_mm = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.GetAngle().ToFloat());
 
           PathFollower::ClearPath();
           PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),

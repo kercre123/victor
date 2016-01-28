@@ -85,8 +85,11 @@ namespace Anki {
 
         u32 lastMotionDetectedTime_us = 0;
         const u32 MOTION_DETECT_TIMEOUT_US = 250000;
-        const f32 ACCEL_MOTION_THRESHOLD = 60.f;
+#       ifdef TARGET_K02
+        const f32 GYRO_MOTION_THRESHOLD = 0.04f;
+#       else
         const f32 GYRO_MOTION_THRESHOLD = 0.24f;
+#       endif
 
 
         // Recorded buffer
@@ -639,13 +642,10 @@ namespace Anki {
         }
         // Was motion detected by accel or gyro?
         for(u8 i=0; i<3; ++i) {
-          // Check accelerometer
-          f32 dAccel = ABS(accel_robot_frame_filt[i] - prev_accel_robot_frame_filt[i]);
-          prev_accel_robot_frame_filt[i] = accel_robot_frame_filt[i];
-          if (dAccel > ACCEL_MOTION_THRESHOLD) {
-            lastMotionDetectedTime_us = currTime;
-          }
-
+          // TODO: Gyro seems to be sensitive enough that it's sufficient for detecting motion, but if
+          //       that's not the case, check for changes in gravity vector.
+          // ...
+          
           // Check gyro
           if (ABS(gyro_robot_frame_filt[i]) > GYRO_MOTION_THRESHOLD) {
             lastMotionDetectedTime_us = currTime;

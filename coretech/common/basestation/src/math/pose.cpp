@@ -71,7 +71,7 @@ namespace Anki {
   {
     Radians newAngle(_angle + other._angle);
     RotationMatrix2d newRotation(newAngle);
-    Point2f newTranslation(newRotation * other._translation);
+    Point2f newTranslation(GetRotationMatrix() * other._translation);
     newTranslation += _translation;
     
     return Pose2d(newAngle, newTranslation);

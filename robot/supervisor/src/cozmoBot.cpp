@@ -1,7 +1,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
-#include "anki/cozmo/robot/debug.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/powerMessages.h"
 #include "timeProfiler.h"
@@ -247,19 +246,18 @@ namespace Anki {
 
         if (++cnt == (200 * interval_seconds)) {
           u32 numTicsPerSec = (cnt * 1000000) / (cycleStartTime - startTime);
-          PRINT("TicsPerSec %d\n", numTicsPerSec);
+          AnkiInfo( 94, "CozmoBot.TicsPerSec", 347, "%d", 1, numTicsPerSec);
           startTime = cycleStartTime;
           cnt = 0;
         }
 */
 
-#ifndef TARGET_K02
+
         //////////////////////////////////////////////////////////////
         // Test Mode
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, TEST);
         TestModeController::Update();
-#endif
 
 
         //////////////////////////////////////////////////////////////

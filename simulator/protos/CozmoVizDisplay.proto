@@ -11,6 +11,10 @@ PROTO CozmoVizDisplay
   field SFFloat behaviorSelectionPixelSize 0.0
   field SFVec2f moodPos 1.0 0.35
   field SFVec2f behaviorSelectionPos 1.0 0.63
+
+  field SFFloat dockDisplayPixelSize 0.0
+  field SFFloat infoDisplayPixelSize 1.0
+  field SFFloat camDisplayPixelSize 1.0
 ]
 {
 Supervisor {
@@ -38,7 +42,7 @@ Supervisor {
       width 200
       height 240
       windowPosition 1 1
-      pixelSize 1
+      pixelSize %{=fields.dockDisplayPixelSize.value}%
     }
 
 
@@ -64,7 +68,7 @@ Supervisor {
       width 300
       height 200
       windowPosition 1 1
-      pixelSize 1
+      pixelSize %{=fields.infoDisplayPixelSize.value}%
     }
     
     DEF DISPLAY_PLANE Display {
@@ -141,24 +145,25 @@ Supervisor {
       %{ if fields.streamResolution.value == "VGA" then }%
       width 640
       height 480
-      pixelSize 0.5
+      #pixelSize 0.5
       %{ elseif fields.streamResolution.value == "QVGA" then }%
       width 320
       height 240
-      pixelSize 1
+      #pixelSize 1
       %{ elseif fields.streamResolution.value == "QQVGA" then }%
       width 160
       height 120
-      pixelSize 2
+      #pixelSize 2
       %{ elseif fields.streamResolution.value == "QQQVGA" then }%
       width 80
       height 60
-      pixelSize 4
+      #pixelSize 4
       %{ elseif fields.streamResolution.value == "CVGA" then }%
       width 400
       height 296
-      pixelSize 1
+      #pixelSize 1
       %{ end }%
+      pixelSize %{=fields.camDisplayPixelSize.value}%
       windowPosition 0 1
     }
   ]

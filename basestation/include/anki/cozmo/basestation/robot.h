@@ -916,6 +916,9 @@ public:
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
+    void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  
     void SetupMiscHandlers(IExternalInterface& externalInterface);
     void SetupVisionHandlers(IExternalInterface& externalInterface);
     void SetupGainsHandlers(IExternalInterface& externalInterface);
