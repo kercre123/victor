@@ -2,6 +2,7 @@
 using DataPersistence;
 using System.Collections;
 using System.Collections.Generic;
+using Cozmo.UI;
 
 public class DailyGoalManager : MonoBehaviour {
 
@@ -167,6 +168,25 @@ public class DailyGoalManager : MonoBehaviour {
       goals[targetStat] = Random.Range(min, max);
     }
     return goals;
+  }
+
+  private void HandleAskForMinigame() {
+    // Open confirmation dialog instead
+    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
+    // Hook up callbacks
+    alertView.SetCloseButtonEnabled(false);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
+    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
+    alertView.TitleLocKey = LocalizationKeys.kEndSessionViewTitle;
+    alertView.DescriptionLocKey = LocalizationKeys.kEndSessionViewDescription;
+  }
+
+  private void LearnToCopeWithMiniGameRejection() {
+    DAS.Info(this, "HandleEndSessionCancel");
+  }
+
+  private void HandleMiniGameConfirm() {
+    DAS.Info(this, "HandleEndSessionConfirm");
   }
 
 

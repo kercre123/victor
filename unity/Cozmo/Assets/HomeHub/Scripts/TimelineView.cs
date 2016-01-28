@@ -162,7 +162,7 @@ namespace Cozmo.HomeHub {
       if (currentSession != null) {  
         _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
         // TODO: Replace Social here with the actual PlayMinigame emotion
-        currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.Social, DailyGoalManager.Instance.GetMinigameNeed_Extremes(), "DailyGoalProgress");
+        currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, DailyGoalManager.Instance.GetMinigameNeed_Extremes(), "DailyGoalProgress");
         return;
       }
 
