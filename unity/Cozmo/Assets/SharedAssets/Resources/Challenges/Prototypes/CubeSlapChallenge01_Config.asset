@@ -13,7 +13,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinSlapDelay: 1.5
   MaxSlapDelay: 3
-  MaxAttempts: 3
-  SuccessGoal: 3
+  Rounds: 5
   StartingSlapChance: .200000003
   MaxFakeouts: 4
