@@ -20,7 +20,7 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 
-static const char* imageFileExtensions = "jpg|jpeg|png";
+static const std::vector<const char*> imageFileExtensions = {"jpg", "jpeg", "png"};
 
 // Helper lambda to pass an image file into the vision component and
 // then update FaceWorld with any resulting detections
@@ -46,7 +46,7 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     lastResult = faceTracker.Update(img);
   }
   
-  ASSERT_TRUE(RESULT_OK == lastResult);
+  EXPECT_TRUE(RESULT_OK == lastResult);
   
   for(auto & face : faceTracker.GetFaces()) {
     //PRINT_NAMED_INFO("FaceRecognition.PairwiseComparison.Recognize",
@@ -65,13 +65,17 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     const ColorRGBA& drawColor = ((shouldBeOwner && face.GetID()==1) || (!shouldBeOwner && face.GetID()!=1) ?
                                   NamedColors::GREEN : NamedColors::RED);
     dispImg.DrawRect(face.GetRect(), drawColor, 2);
-    dispImg.DrawText(face.GetRect().GetTopLeft(), std::to_string(face.GetID()), drawColor, 1.5f);
+    std::string label = std::to_string(face.GetID());
+    if(face.IsBeingTracked()) {
+      label += "(T)";
+    }
+    dispImg.DrawText(face.GetRect().GetTopLeft(), label, drawColor, 1.5f);
 #   endif
   }
   
 # if SHOW_IMAGES
   if(nullptr != dispName) {
-    dispImg.Display(dispName);
+    dispImg.Display(dispName, 30);
   }
 # endif
   
@@ -112,7 +116,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
   
   for(auto & ownerDir : peopleDirs)
   {
-    auto ownerTrainFiles = Util::FileUtils::FilesInDirectory(dataPath+ownerDir, imageFileExtensions);
+    auto ownerTrainFiles = Util::FileUtils::FilesInDirectory(dataPath+ownerDir, true, imageFileExtensions);
     ASSERT_FALSE(ownerTrainFiles.empty());
     
     for(auto & ownerTrainFile : ownerTrainFiles)
@@ -127,7 +131,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
       robot.GetFaceWorld().ClearAllFaces();
       
       // Use this one image as the training image for this owner
-      Recognize(robot, img, faceTracker, dataPath+ownerDir+"/"+ownerTrainFile, "CurrentOwner", true);
+      Recognize(robot, img, faceTracker, ownerTrainFile, "CurrentOwner", true);
     
       auto knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDs();
       EXPECT_EQ(knownFaceIDs.size(), 1);
@@ -149,12 +153,12 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
       {
         const bool shouldBeOwner = (testDir == ownerDir);
         
-        auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+testDir, imageFileExtensions);
+        auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+testDir, true, imageFileExtensions);
         ASSERT_FALSE(testFiles.empty());
         
         for(auto & testFile : testFiles)
         {
-          Recognize(robot, img, faceTracker, dataPath+testDir+"/"+testFile, "TestImage", shouldBeOwner);
+          Recognize(robot, img, faceTracker, testFile, "TestImage", shouldBeOwner);
           ++stats.totalCount;
           
           // Get the faces observed in the current image
@@ -214,7 +218,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
 } // FaceRecognition.SinglePersonPairwiseComparison
 
 
-TEST(FaceRecognition, MultiPersonPairwiseComparison)
+TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
 {
   Result lastResult = RESULT_OK;
   
@@ -222,7 +226,7 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
   Robot robot(1, &msgHandler, nullptr, dataPlatform);
   
   if(false == Vision::FaceTracker::IsRecognitionSupported()) {
-    PRINT_NAMED_WARNING("FaceRecognition.PairwiseComparison.RecognitionNotSupported",
+    PRINT_NAMED_WARNING("FaceRecognition.SinglePersonVideoRecognitionAndTracking.RecognitionNotSupported",
                         "Skipping test because the compiled face tracker does not support recognition");
     return;
   }
@@ -235,109 +239,75 @@ TEST(FaceRecognition, MultiPersonPairwiseComparison)
   std::vector<std::string> peopleDirs;
   Util::FileUtils::ListAllDirectories(dataPath, peopleDirs);
   
-  struct {
-    s32 falsePosCount = 0;
-    s32 falseNegCount = 0;
-    s32 totalCount = 0;
-  } stats;
-  
-  Vision::FaceTracker faceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                                               "/config/basestation/vision"),
-                                  Vision::FaceTracker::DetectionMode::SingleImage);
-
-  
-  // Enroll the first N images of each person
-  faceTracker.EnableNewFaceEnrollment(true);
-  const s32 NumToEnroll = 30;
-  std::map<std::string, Vision::TrackedFace::ID_t> expectedIDs;
-  for(auto & ownerDir : peopleDirs)
-  {
-    auto ownerTrainFiles = Util::FileUtils::FilesInDirectory(dataPath+ownerDir, imageFileExtensions);
-    
-    ASSERT_FALSE(ownerTrainFiles.empty());
-    ASSERT_GT(ownerTrainFiles.size(), NumToEnroll);
-    
-    for(s32 iEnroll = 0; iEnroll < NumToEnroll; ++iEnroll) {
-      const char* displayName = (iEnroll == 0 ? ownerDir.c_str() : nullptr);
-      Recognize(robot, img, faceTracker, dataPath+ownerDir+"/"+ownerTrainFiles[iEnroll], displayName, true);
-    
-      auto knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
-      EXPECT_EQ(knownFaceIDs.size(), 1);
-      if(knownFaceIDs.empty()) {
-        // TODO: Remove this and fail if knownFaceIDs is empty
-        PRINT_NAMED_WARNING("FaceRecognition.PairwiseComparison.NoOwnerFaceDetected",
-                            "File: %s", ownerTrainFiles[iEnroll].c_str());
-        continue;
-      }
-    
-      expectedIDs[ownerDir] = knownFaceIDs.begin()->second;
-    }
-  }
-  
-  /*
-  auto knownIDs = robot.GetFaceWorld().GetKnownFaceIDs();
-  ASSERT_EQ(knownIDs.size(), peopleDirs.size());
-  for(s32 i=0; i<knownIDs.size(); ++i) {
-    ASSERT_EQ(knownIDs[i], i+1);
-  }
-   */
-  
   // Check to make sure every image in every dir is recognized correctly and
   // don't enroll any faces as new
-  faceTracker.EnableNewFaceEnrollment(false);
+  //faceTracker.EnableNewFaceEnrollment(false);
   for(auto & testDir : peopleDirs)
   {
-    const Vision::TrackedFace::ID_t expectedID = expectedIDs[testDir];
+    // All-new tracker and face world for each person for this test
+    Vision::FaceTracker faceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                                                 "/config/basestation/vision"),
+                                    Vision::FaceTracker::DetectionMode::Video);
+    robot.GetFaceWorld().ClearAllFaces();
     
-    auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+"/"+testDir, imageFileExtensions);
+    
+    auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+testDir, true, imageFileExtensions);
     ASSERT_FALSE(testFiles.empty());
+    
+    struct {
+      s32 totalFrames = 0;
+      s32 facesDetected = 0;
+      s32 facesRecognized = 0;
+      s32 numFaceIDs = 0;
+    } stats;
+
+    std::set<Vision::TrackedFace::ID_t> allIDs;
     
     for(auto & testFile : testFiles)
     {
-      Recognize(robot, img, faceTracker, dataPath+testDir+"/"+testFile, "TestImage", true);
-      ++stats.totalCount;
+      Recognize(robot, img, faceTracker, testFile, "TestImage", true);
+      stats.totalFrames++;
       
       // Get the faces observed in the current image
       auto observedFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
       EXPECT_EQ(observedFaceIDs.size(), 1);
       if(observedFaceIDs.empty()) {
         // TODO: Remove this and fail if observedFaceIDs is empty
-        PRINT_NAMED_WARNING("FaceRecognition.PairwiseComparison.NoTestFaceDetected",
+        PRINT_NAMED_WARNING("FaceRecognition.SinglePersonVideoRecognitionAndTracking.NoTestFaceDetected",
                             "File: %s", testFile.c_str());
-        ++stats.falseNegCount;
-        continue;
-      }
-      
-      const Vision::TrackedFace::ID_t observedID = observedFaceIDs.begin()->second;
-      
-      if(observedID != expectedID) {
-        if(observedID == Vision::TrackedFace::UnknownFace) {
-        // Did not match any person
-          ++stats.falseNegCount;
-        } else {
-          // Matched wrong person
-          ++stats.falsePosCount;
+      } else {
+        stats.facesDetected++;
+        
+        const Vision::TrackedFace::ID_t observedID = observedFaceIDs.begin()->second;
+        
+        if(observedFaceIDs.size() > 1) {
+          PRINT_NAMED_WARNING("FaceRecogntion.SinglePersonVideoRecognitionAndTracking.MultipleFacesDetected",
+                              "Detected %lu faces instead of one. Using first.", observedFaceIDs.size());
         }
-      }      
+        
+        if(observedID != Vision::TrackedFace::UnknownFace)
+        {
+          stats.facesRecognized++;
+          allIDs.insert(observedID);
+        }
+      }
+
     } // for each testFile
+    
+    stats.numFaceIDs = (s32)allIDs.size();
+    
+    PRINT_NAMED_INFO("FaceRecognition.SinglePersonVideoRecognitionAndTracking.Stats",
+                     "%s: %d images, %d faces detected (%.1f%%), %d faces recognized (%.1f%%), %d IDs assigned",
+                     testDir.c_str(),
+                     stats.totalFrames, stats.facesDetected,
+                     (f32)(stats.facesDetected*100)/(f32)stats.totalFrames,
+                     stats.facesRecognized,
+                     (f32)(stats.facesRecognized*100)/(f32)stats.facesDetected,
+                     stats.numFaceIDs);
+
   } // for each testDir
 
-  // Display stats:
-  const f32 falsePosRate = (f32)(100*stats.falsePosCount)/(f32)stats.totalCount;
-  const f32 falseNegRate = (f32)(100*stats.falseNegCount)/(f32)stats.totalCount;
-  PRINT_NAMED_INFO("FaceRecognition.MultiPersonPairwiseComparison.Stats",
-                   "%lu People, Total comparisons = %d, FalsePos = %d (%.1f%%), FalseNeg = %d (%.1f%%)",
-                   peopleDirs.size(),
-                   stats.totalCount,
-                   stats.falsePosCount,
-                   falsePosRate,
-                   stats.falseNegCount,
-                   falseNegRate);
-  
-  EXPECT_LT(falsePosRate, 1.f); // Less than 1% false positives
-  EXPECT_LT(falseNegRate, 10.f); // Less than 10% false negatives
-  
   ASSERT_TRUE(RESULT_OK == lastResult);
   
-} // FaceRecognition.MultiPersonPairwiseComparison
+} // FaceRecognition.SinglePersonVideoRecognitionAndTracking
 
