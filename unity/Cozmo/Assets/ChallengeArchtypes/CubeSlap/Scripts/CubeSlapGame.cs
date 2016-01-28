@@ -18,8 +18,9 @@ namespace CubeSlap {
 
     private float _MinSlapDelay;
     private float _MaxSlapDelay;
-    private int _SuccessGoal;
-    private int _SuccessCount;
+    private int _Rounds;
+    private int _CozmoSuccessCount;
+    private int _CozmoFailCount;
     private bool _CliffFlagTrown = false;
     // Flag to keep track if we've actually done the Pounce animation this round
     private bool _SlapFlagThrown = false;
@@ -40,15 +41,13 @@ namespace CubeSlap {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       CubeSlapConfig config = minigameConfig as CubeSlapConfig;
-      MaxAttempts = config.MaxAttempts;
-      _SuccessGoal = config.SuccessGoal;
+      _Rounds = config.Rounds;
       _MinSlapDelay = config.MinSlapDelay;
       _MaxSlapDelay = config.MaxSlapDelay;
       _BaseSlapChance = config.StartingSlapChance;
       _MaxFakeouts = config.MaxFakeouts;
-      _SuccessCount = 0;
-      NumSegments = _SuccessGoal;
-      Progress = 0.0f;
+      _CozmoSuccessCount = 0;
+      _CozmoFailCount = 0;
       InitializeMinigameObjects(config.NumCubesRequired());
     }
 
@@ -152,24 +151,25 @@ namespace CubeSlap {
     }
 
     public void OnSuccess() {
-      _SuccessCount++;
-      Progress = ((float)_SuccessCount / (float)_SuccessGoal);
+      _CozmoFailCount++;
       _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
     }
 
     public void OnFailure() {
-      TryDecrementAttempts();
+      _CozmoSuccessCount++;
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
     }
 
     public void HandleAnimationDone(bool success) {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
-      if (_SuccessCount >= _SuccessGoal) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleWinGameAnimationDone));
-      }
-      else if (AttemptsLeft <= 0) {
-        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleLoseGameAnimationDone));
+      if (_CozmoFailCount + _CozmoSuccessCount >= _Rounds) {
+        if (_CozmoSuccessCount > _CozmoFailCount) {
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleLoseGameAnimationDone));
+        }
+        else {
+          _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleWinGameAnimationDone));
+        }
       }
       else if (_SlapFlagThrown) {
         _SlapFlagThrown = false;
@@ -201,7 +201,7 @@ namespace CubeSlap {
     }
 
     protected override int CalculateExcitementStatRewards() {
-      return (MaxAttempts - AttemptsLeft);
+      return _CozmoSuccessCount;
     }
  
   }
