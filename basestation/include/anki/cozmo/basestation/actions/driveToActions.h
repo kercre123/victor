@@ -87,6 +87,13 @@ namespace Anki {
       // Actual gap will be randomly selected between these two values.
       void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
       
+      // Defaults for playing sound
+      static constexpr auto DefaultStartSound   = "";
+      static constexpr auto DefaultDrivingSound = "";
+      static constexpr auto DefaultStopSound    = "";
+      static constexpr f32  DefaultDrivingSoundSpacingMin_sec = 0.5f;
+      static constexpr f32  DefaultDrivingSoundSpacingMax_sec = 1.5f;
+
     protected:
       
       virtual ActionResult Init() override;
@@ -116,13 +123,13 @@ namespace Anki {
       float _timeToAbortPlanning;
       
       // For playing sound
-      std::string _startSound   = "";
-      std::string _drivingSound = "";
-      std::string _stopSound    = "";
-      f32         _drivingSoundSpacingMin_sec = 0.5f;
-      f32         _drivingSoundSpacingMax_sec = 1.5f;
+      std::string _startSound   = DriveToPoseAction::DefaultStartSound;
+      std::string _drivingSound = DriveToPoseAction::DefaultDrivingSound;
+      std::string _stopSound    = DriveToPoseAction::DefaultStopSound;
+      f32         _drivingSoundSpacingMin_sec = DriveToPoseAction::DefaultDrivingSoundSpacingMin_sec;
+      f32         _drivingSoundSpacingMax_sec = DriveToPoseAction::DefaultDrivingSoundSpacingMax_sec;
       f32         _nextDrivingSoundTime = 0.f;
-      u32         _driveSoundActionTag = (u32)ActionConstants::INVALID_TAG;
+      u32         _driveSoundActionTag  = (u32)ActionConstants::INVALID_TAG;
       
       Signal::SmartHandle _originChangedHandle;
       Signal::SmartHandle _soundCompletedHandle;
@@ -216,11 +223,11 @@ namespace Anki {
     
     private:
       // For playing sound
-      std::string _startSound   = "";
-      std::string _drivingSound = "";
-      std::string _stopSound    = "";
-      f32         _drivingSoundSpacingMin_sec = 0.5f;
-      f32         _drivingSoundSpacingMax_sec = 1.5f;
+      std::string _startSound   = DriveToPoseAction::DefaultStartSound;
+      std::string _drivingSound = DriveToPoseAction::DefaultDrivingSound;
+      std::string _stopSound    = DriveToPoseAction::DefaultStopSound;
+      f32         _drivingSoundSpacingMin_sec = DriveToPoseAction::DefaultDrivingSoundSpacingMin_sec;
+      f32         _drivingSoundSpacingMax_sec = DriveToPoseAction::DefaultDrivingSoundSpacingMax_sec;
 
     }; // DriveToObjectAction
     
