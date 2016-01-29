@@ -289,8 +289,11 @@ namespace Anki {
 
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
-          _driveToPoseAction = new DriveToPoseAction(_pathMotionProfile, true, _useManualSpeed);
+          DriveToPoseAction* _driveToPoseAction = new DriveToPoseAction(_pathMotionProfile, true, _useManualSpeed);
           _driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
+          _driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
+          _driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+
           newCompoundSequential->AddAction(_driveToPoseAction);
         }
         
@@ -492,7 +495,6 @@ namespace Anki {
 #pragma mark ---- DriveToPoseAction ----
     
     DriveToPoseAction::DriveToPoseAction(const PathMotionProfile motionProf,
-                                         
                                          const bool forceHeadDown,
                                          const bool useManualSpeed) //, const Pose3d& pose)
     :  _isGoalSet(false)
@@ -505,7 +507,7 @@ namespace Anki {
     , _maxReplanPlanningTime(DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S)
     , _timeToAbortPlanning(-1.0f)
     {
-      
+
     }
     
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,

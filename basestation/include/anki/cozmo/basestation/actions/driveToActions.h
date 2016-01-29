@@ -213,9 +213,14 @@ namespace Anki {
       Radians                    _approachAngle_rad;
       
       PathMotionProfile          _pathMotionProfile;
-      
+    
     private:
-      DriveToPoseAction*         _driveToPoseAction = nullptr;
+      // For playing sound
+      std::string _startSound   = "";
+      std::string _drivingSound = "";
+      std::string _stopSound    = "";
+      f32         _drivingSoundSpacingMin_sec = 0.5f;
+      f32         _drivingSoundSpacingMax_sec = 1.5f;
 
     }; // DriveToObjectAction
     
@@ -223,12 +228,15 @@ namespace Anki {
                                                const std::string& driveSound,
                                                const std::string& stopSound)
     {
-      _driveToPoseAction->SetSounds(startSound, driveSound, stopSound);
+      _startSound   = startSound;
+      _drivingSound = driveSound;
+      _stopSound    = stopSound;
     }
     
     inline void DriveToObjectAction::SetDriveSoundSpacing(f32 min_sec, f32 max_sec)
     {
-      _driveToPoseAction->SetDriveSoundSpacing(min_sec, max_sec);
+      _drivingSoundSpacingMin_sec = min_sec;
+      _drivingSoundSpacingMax_sec = max_sec;
     }
     
     
