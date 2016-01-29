@@ -225,7 +225,8 @@ namespace Anki {
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
         printf("         Clear all known objects:  Alt+c\n");
-        printf("                      Creep mode:  Shift+c\n");
+        printf("         Select behavior by type:  Shift+c\n");
+        printf("         Select behavior by name:  Alt+Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
@@ -867,11 +868,16 @@ namespace Anki {
                                   ExternalInterface::SetBehaviorSystemEnabled(true)));
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
-                
+
+                    if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                      SendMessage(ExternalInterface::MessageGameToEngine(
+                                    ExternalInterface::ExecuteBehaviorByName(behaviorName)));
+                    }
+                    else {
+                      SendMessage(ExternalInterface::MessageGameToEngine(
+                                    ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
+                    }                
                   }
-                  
                 }
                 else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendClearAllObjects();
