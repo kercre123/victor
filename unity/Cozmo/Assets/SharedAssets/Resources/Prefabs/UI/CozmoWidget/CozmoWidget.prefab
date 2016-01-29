@@ -112,7 +112,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 4
+    m_Alignment: 3
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
@@ -292,8 +292,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 25.7999992}
-  m_SizeDelta: {x: 0, y: -51.5}
+  m_AnchoredPosition: {x: -123, y: 19}
+  m_SizeDelta: {x: -247, y: -39}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22459832
 RectTransform:
@@ -326,8 +326,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: .5}
   m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: 0, y: -50}
-  m_SizeDelta: {x: 189, y: 63}
+  m_AnchoredPosition: {x: 130, y: 12}
+  m_SizeDelta: {x: 246.5, y: 61}
   m_Pivot: {x: 0, y: .5}
 --- !u!224 &22491210
 RectTransform:
@@ -345,8 +345,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 94.5, y: -70.3000031}
-  m_SizeDelta: {x: 189.100006, y: 140.5}
+  m_AnchoredPosition: {x: 185, y: -50}
+  m_SizeDelta: {x: 370, y: 100}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:

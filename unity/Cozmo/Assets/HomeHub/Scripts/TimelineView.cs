@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
@@ -10,7 +11,10 @@ using Cozmo.UI;
 namespace Cozmo.HomeHub {
   public class TimelineView : BaseView {
 
-    public static int kTimelineHistoryLength = 14;
+    public static int kGeneratedTimelineHistoryLength = 14;
+
+    [SerializeField]
+    private float _TimelineStartOffset = 150f;
 
     [SerializeField]
     private GameObject _TimelineEntryPrefab;
@@ -33,7 +37,10 @@ namespace Cozmo.HomeHub {
     private RectTransform _LockedPaneScrollContainer;
 
     [SerializeField]
-    private RectTransform _LockedPaneNoScrollContainer;
+    private RectTransform _LockedPaneRightNoScrollContainer;
+
+    [SerializeField]
+    private RectTransform _LockedPaneLeftNoScrollContainer;
 
     [SerializeField]
     private UnityEngine.UI.ScrollRect _ScrollRect;
@@ -42,7 +49,13 @@ namespace Cozmo.HomeHub {
     private RectTransform _ContentPane;
 
     [SerializeField]
+    private RectTransform _ViewportPane;
+
+    [SerializeField]
     private RectTransform _TimelinePane;
+
+    [SerializeField]
+    private RectTransform _MiddlePane;
 
     [SerializeField]
     private GraphSpline _GraphSpline;
@@ -77,6 +90,7 @@ namespace Cozmo.HomeHub {
     FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
     protected override void CleanUp() {
+      _ScrollRect.onValueChanged.RemoveAllListeners();
     }
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
@@ -103,8 +117,42 @@ namespace Cozmo.HomeHub {
       _ScrollRect.onValueChanged.AddListener(HandleTimelineViewScroll);
     }
 
-    void HandleTimelineViewScroll(Vector2 arg0) {
-          
+    private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
+      int timelineIndex = 0;
+
+      var today = DataPersistenceManager.Today;
+
+      var startDate = today.AddDays(-kGeneratedTimelineHistoryLength);
+
+      while (timelineEntries.Count > 0 && timelineEntries[0].Date < startDate) {
+        timelineEntries.RemoveAt(0);
+      }
+
+      List<float> graphPoints = new List<float>();
+      for (int i = 0; i < kGeneratedTimelineHistoryLength; i++) {
+        var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
+
+        var date = startDate.AddDays(i);
+        var entry = spawnedObject.GetComponent<TimelineEntry>();
+
+        bool active = false;
+        float progress = 0f;
+        if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
+          var state = timelineEntries[timelineIndex];
+          progress = _FriendshipFormulaConfig.CalculateFriendshipProgress(state.Progress, state.Goals);
+          active = true;
+          timelineIndex++;
+        }
+
+        entry.Inititialize(date, active, progress);
+        graphPoints.Add(progress);
+
+        entry.OnSelect += HandleTimelineEntrySelected;
+
+        _TimelineEntries.Add(entry);
+      }
+
+      _GraphSpline.Initialize(graphPoints);
     }
 
     private void UpdateDailySession() {
@@ -140,17 +188,6 @@ namespace Cozmo.HomeHub {
       DataPersistenceManager.Instance.Save();
     }
 
-    private void UpdateFriendshipPoints(TimelineEntryData timelineEntry, int friendshipPoints) {
-      timelineEntry.AwardedFriendshipPoints = friendshipPoints;
-      DataPersistenceManager.Instance.Data.FriendshipLevel
-      = timelineEntry.EndingFriendshipLevel
-        = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
-      DataPersistenceManager.Instance.Data.FriendshipPoints
-      = timelineEntry.EndingFriendshipPoints
-        = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
-      timelineEntry.Complete = true;
-    }
-
     private void CompleteSession(TimelineEntryData timelineEntry) {
 
       int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress));
@@ -160,46 +197,15 @@ namespace Cozmo.HomeHub {
       ShowDailySessionPanel(timelineEntry, HandleOnFriendshipBarAnimateComplete);
     }
 
-    private void SetScrollRectStartPosition() {
-      _ScrollRect.horizontalNormalizedPosition = _TimelinePane.rect.width / _ContentPane.rect.width;
-    }
-
-    private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
-      int timelineIndex = 0;
-
-      var today = DataPersistenceManager.Today;
-
-      var startDate = today.AddDays(-kTimelineHistoryLength);
-
-      while (timelineEntries.Count > 0 && timelineEntries[0].Date < startDate) {
-        timelineEntries.RemoveAt(0);
-      }
-
-      List<float> graphPoints = new List<float>();
-      for (int i = 0; i < kTimelineHistoryLength; i++) {
-        var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
-
-        var date = startDate.AddDays(i);
-        var entry = spawnedObject.GetComponent<TimelineEntry>();
-
-        bool active = false;
-        float progress = 0f;
-        if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
-          var state = timelineEntries[timelineIndex];
-          progress = _FriendshipFormulaConfig.CalculateFriendshipProgress(state.Progress, state.Goals);
-          active = true;
-          timelineIndex++;
-        }
-
-        entry.Inititialize(date, active, progress);
-        graphPoints.Add(progress);
-
-        entry.OnSelect += HandleTimelineEntrySelected;
-
-        _TimelineEntries.Add(entry);
-      }
-
-      _GraphSpline.Initialize(graphPoints);
+    private void UpdateFriendshipPoints(TimelineEntryData timelineEntry, int friendshipPoints) {
+      timelineEntry.AwardedFriendshipPoints = friendshipPoints;
+      DataPersistenceManager.Instance.Data.FriendshipLevel
+      = timelineEntry.EndingFriendshipLevel
+        = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
+      DataPersistenceManager.Instance.Data.FriendshipPoints
+      = timelineEntry.EndingFriendshipPoints
+        = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
+      timelineEntry.Complete = true;
     }
 
     private void HandleTimelineEntrySelected(Date date) {
@@ -228,8 +234,55 @@ namespace Cozmo.HomeHub {
         UpdateFriendshipPoints(data, friendshipPoints);
         summaryPanel.AnimateFriendshipBar(data);
       }
-
     }
+
+    #region Daily Goal locking
+
+    private void SetScrollRectStartPosition() {
+      _ScrollRect.horizontalNormalizedPosition = 
+        CalculateHorizontalNormalizedPosition(_TimelinePane.rect.width - _TimelineStartOffset);
+    }
+
+    private void HandleTimelineViewScroll(Vector2 dragDelta) {
+      float currentScrollPosition = _ScrollRect.horizontalNormalizedPosition;
+      if (currentScrollPosition <= GetDailyGoalOnRightHorizontalNormalizedPosition()) {
+        if (_LockedPaneScrollContainer.parent != _LockedPaneRightNoScrollContainer) {
+          _LockedPaneScrollContainer.SetParent(_LockedPaneRightNoScrollContainer, true);
+          _LockedPaneScrollContainer.localPosition = Vector3.zero;
+        }
+      }
+      else if (currentScrollPosition >= GetDailyGoalOnLeftHorizontalNormalizedPosition()) {
+        if (_LockedPaneScrollContainer.parent != _LockedPaneLeftNoScrollContainer) {
+          _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, true);
+          _LockedPaneScrollContainer.localPosition = Vector3.zero;
+        }
+      }
+      else if (_LockedPaneScrollContainer.parent != _MiddlePane) {
+        _LockedPaneScrollContainer.SetParent(_MiddlePane, true);
+        _LockedPaneScrollContainer.localPosition = Vector3.zero;
+      }
+    }
+
+    private float GetDailyGoalOnLeftHorizontalNormalizedPosition() {
+      return _TimelinePane.rect.width / GetScrollRectNormalizedWidth();
+    }
+
+    private float GetDailyGoalOnRightHorizontalNormalizedPosition() {
+      return (_TimelinePane.rect.width + _CozmoWidgetContainer.rect.width - _ViewportPane.rect.width)
+      / GetScrollRectNormalizedWidth();
+    }
+
+    private float CalculateHorizontalNormalizedPosition(float pixelsToLeftOfScreen) {
+      return Mathf.Clamp01(pixelsToLeftOfScreen / GetScrollRectNormalizedWidth());
+    }
+
+    private float GetScrollRectNormalizedWidth() {
+      return (_ContentPane.rect.width - _ViewportPane.rect.width);
+    }
+
+    #endregion
+
+    #region End Session
 
     private void HandleEndSessionButtonTap() {
       // Open confirmation dialog instead
@@ -250,6 +303,7 @@ namespace Cozmo.HomeHub {
       DAS.Info(this, "HandleEndSessionConfirm");
     }
 
+    #endregion
   }
 }
 
