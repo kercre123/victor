@@ -67,20 +67,6 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private Anki.UI.AnkiButton _DefaultButtonPrefab;
-
-      public Anki.UI.AnkiButton DefaultButtonPrefab {
-        get { return _DefaultButtonPrefab; }
-      }
-
-      [SerializeField]
-      private Anki.UI.AnkiTextLabel _DefaultTextPrefab;
-
-      public Anki.UI.AnkiTextLabel DefaultTextPrefab {
-        get { return _DefaultTextPrefab; }
-      }
-
-      [SerializeField]
       private GameStateSlide _ShowCozmoCubeSlide;
 
       public GameStateSlide InitialCubesSlide {
