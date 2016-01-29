@@ -11,7 +11,8 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -109,6 +110,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       if (lastObservedFaceTime > 0 &&
           (robot.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeSinceLastObservedFace_ms)) {
         PRINT_NAMED_INFO("BehaviorReactToPoke.TurnToFace.TurningToLastObservedFace","time = %d", lastObservedFaceTime);
+
         FacePoseAction* action = new FacePoseAction(facePose, DEG_TO_RAD(180));
         action->SetPanTolerance(DEG_TO_RAD(3));
         action->SetMaxPanSpeed(DEG_TO_RAD(1080));

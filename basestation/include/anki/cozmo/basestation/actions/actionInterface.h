@@ -18,7 +18,7 @@
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
-#include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
 
 #include "clad/types/actionTypes.h"
 
@@ -49,7 +49,10 @@ namespace Anki {
       IActionRunner();
       virtual ~IActionRunner() { }
       
-      ActionResult Update(Robot& robot);
+      void SetRobot(Robot& robot);
+      Robot* GetRobot() { return _robot; }
+      
+      ActionResult Update();
       
       void Cancel() { _isCancelled = true; }
       
@@ -67,7 +70,7 @@ namespace Anki {
       // Note that this is also called on cancellation, so this should also cleanup
       // after the action when stopped mid-way through (and, for example, abort
       // [physical] robot functions).
-      virtual void Cleanup(Robot& robot) { }
+      virtual void Cleanup() { }
       
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.
@@ -114,7 +117,7 @@ namespace Anki {
       // completion signal with an action finishes. Note that this public because
       // subclasses that are composed of other actions may want to make use of
       // the completion info of their constituent actions.
-      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const { }
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const { }
 
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
@@ -131,7 +134,9 @@ namespace Anki {
       
     protected:
       
-      virtual ActionResult UpdateInternal(Robot& robot) = 0;
+      Robot* _robot = nullptr;
+      
+      virtual ActionResult UpdateInternal() = 0;
       
       // By default, actions are not interruptable
       virtual bool InterruptInternal() { return false; }
@@ -146,10 +151,11 @@ namespace Anki {
       // If this action's cleanup gets called, all registered sub actions'
       // cleanup methods get called. Also, just before Init(), in case the
       // action is reset and run again.
-      void RegisterSubAction(IActionRunner* &subAction);
+      // Call after new-ing subAction inside of Init()
+      bool RegisterSubAction(IActionRunner* &subAction);
 
       // Call Cancel and Update on any registered sub actions and then delete them
-      void CancelAndDeleteSubActions(Robot& robot);
+      void CancelAndDeleteSubActions();
       
     private:
       
@@ -158,7 +164,7 @@ namespace Anki {
       // This is called when the action stops running, as long as it is not
       // marked as being part of a compound action. This calls the overload-able
       // GetCompletionUnion() method above.
-      void EmitCompletionSignal(Robot& robot, ActionResult result) const;
+      void EmitCompletionSignal(ActionResult result) const;
 
       u8            _numRetriesRemaining = 0;
       
@@ -219,11 +225,11 @@ namespace Anki {
       // methods. Those are the virtual methods that specific classes should
       // implement to get desired action behaviors. Note that this method
       // is final and cannot be overridden by specific individual actions.
-      virtual ActionResult UpdateInternal(Robot& robot) override final;
+      virtual ActionResult UpdateInternal() override final;
 
       // Derived Actions should implement these.
-      virtual ActionResult  Init(Robot& robot) { return ActionResult::SUCCESS; } // Optional: default is no preconditions to meet
-      virtual ActionResult  CheckIfDone(Robot& robot) = 0;
+      virtual ActionResult  Init() { return ActionResult::SUCCESS; } // Optional: default is no preconditions to meet
+      virtual ActionResult  CheckIfDone() = 0;
       
       //
       // Timing delays:

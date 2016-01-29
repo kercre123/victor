@@ -15,7 +15,8 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -194,7 +195,7 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
   robot.SetIdleAnimation("NONE");
   
   _state = State::Pouncing;
-  IActionRunner* animAction = new PlayAnimationAction( _pounceAnimation );
+  IActionRunner* animAction = new PlayAnimationAction(_pounceAnimation );
 
   IActionRunner* actionToRun = animAction;
 
@@ -241,11 +242,11 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    newAction = new PlayAnimationAction( "ID_catch_success" );
+    newAction = new PlayAnimationAction("ID_catch_success" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new PlayAnimationAction( "ID_catch_fail" );
+    newAction = new PlayAnimationAction("ID_catch_fail" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   

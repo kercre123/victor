@@ -43,7 +43,7 @@ namespace Anki {
       
       ~ActionQueue();
       
-      Result   Update(Robot& robot);
+      Result   Update();
       
       // Queue action to run right after the current action, before anything else in the queue
       Result   QueueNext(IActionRunner    *action, u8 numRetries = 0);
@@ -91,11 +91,11 @@ namespace Anki {
       
       static const SlotHandle UnknownSlot = -1;
       
-      ActionList();
+      ActionList(Robot& robot);
       ~ActionList();
       
       // Updates the current action of each queue in each slot
-      Result     Update(Robot& robot);
+      Result     Update();
       
       // Add a new action to be run concurrently, generating a new slot, whose
       // handle is returned. If there is no desire to queue anything to run after
@@ -144,28 +144,10 @@ namespace Anki {
       
       std::map<SlotHandle, ActionQueue> _queues;
       
+    private:
+      Robot* _robot;
+      
     }; // class ActionList
-    
-    
-    inline Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
-    {
-      return _queues[atSlot].QueueNext(action, numRetries);
-    }
-    
-    inline Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
-    {
-      return _queues[atSlot].QueueAtEnd(action, numRetries);
-    }
-    
-    inline Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
-    {
-      return _queues[atSlot].QueueNow(action, numRetries);
-    }
-    
-    inline Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
-    {
-      return _queues[atSlot].QueueAtFront(action, numRetries);
-    }
     
     inline size_t ActionList::GetQueueLength(SlotHandle atSlot)
     {

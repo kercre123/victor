@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -62,7 +62,7 @@ namespace Anki {
     // NOTE: THere should be no way for Update() to fail independently of its
     // call to UpdateInternal(). Otherwise, there's a possibility for an
     // IAction's Cleanup() method not be called on failure.
-    ActionResult IActionRunner::Update(Robot& robot)
+    ActionResult IActionRunner::Update()
     {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
@@ -73,9 +73,10 @@ namespace Anki {
                          AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
                          GetName().c_str(),
                          GetTag());
+
 #       endif
-        robot.GetMoveComponent().LockAnimTracks(disableTracks);
-        robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
+        _robot->GetMoveComponent().LockAnimTracks(disableTracks);
+        _robot->GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
       }
 
       if( ! _isRunning ) {
@@ -84,10 +85,9 @@ namespace Anki {
                             GetTag(),
                             GetName().c_str());
         }
-                          
+
         _isRunning = true;
       }
-
       ActionResult result = ActionResult::RUNNING;
       if(_isCancelled) {
         if(_displayMessages) {
@@ -102,7 +102,7 @@ namespace Anki {
         }
         result = ActionResult::INTERRUPTED;
       } else {
-        result = UpdateInternal(robot);
+        result = UpdateInternal();
       }
       
       if(result != ActionResult::RUNNING) {
@@ -113,20 +113,20 @@ namespace Anki {
                            (result==ActionResult::SUCCESS ? "succeeded" :
                             result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
         }
-      
+
         // Clean up after any registered sub actions and the action itself
-        CancelAndDeleteSubActions(robot);
-        Cleanup(robot);
-        
+        CancelAndDeleteSubActions();
+        Cleanup();
+
         if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
         {
           // Notify any listeners about this action's completion.
           // Note that I do this here so that compound actions only emit one signal,
           // not a signal for each constituent action.
           // TODO: Populate the signal with any action-specific info?
-          EmitCompletionSignal(robot, result);
+          EmitCompletionSignal(result);
         }
-        
+
         if(!_suppressTrackLocking) {
           uint8_t disableTracks = GetAnimTracksToDisable();
 #         if DEBUG_ANIM_TRACK_LOCKING
@@ -136,8 +136,9 @@ namespace Anki {
                            GetName().c_str(),
                            GetTag());
 #         endif
-          robot.GetMoveComponent().UnlockAnimTracks(disableTracks);
-          robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+
+          _robot->GetMoveComponent().UnlockAnimTracks(disableTracks);
+          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
 
         if( DEBUG_ACTION_RUNNING && _displayMessages ) {
@@ -147,17 +148,17 @@ namespace Anki {
         }
         _isRunning = false;
       }
-      
+
       return result;
     }
     
-    void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void IActionRunner::EmitCompletionSignal(ActionResult result) const
     {
       ActionCompletedUnion completionUnion;
 
-      GetCompletionUnion(robot, completionUnion);
+      GetCompletionUnion(completionUnion);
       
-      robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionUnion)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, GetType(), result, completionUnion)));
     }
     
     bool IActionRunner::RetriesRemain()
@@ -194,12 +195,26 @@ namespace Anki {
       return  (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
     
-    void IActionRunner::RegisterSubAction(IActionRunner* &subAction)
+    bool IActionRunner::RegisterSubAction(IActionRunner* &subAction)
     {
+      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+                        GetTag(),
+                        GetName().c_str(),
+                        subAction->GetTag(),
+                        subAction->GetName().c_str());
+      
       _subActions.push_back(&subAction);
+      if(nullptr == GetRobot())
+      {
+        PRINT_NAMED_INFO("IActionRunner.RegisterSubAction",
+                         "Parent action's robot pointer is null, returning Failure_Abort");
+        return false;
+      }
+      subAction->SetRobot(*GetRobot());
+      return true;
     }
     
-    void IActionRunner::CancelAndDeleteSubActions(Robot& robot)
+    void IActionRunner::CancelAndDeleteSubActions()
     {
       if(!_subActions.empty())
       {
@@ -214,7 +229,7 @@ namespace Anki {
               }
             
               (*subAction)->Cancel();
-              (*subAction)->Update(robot);
+              (*subAction)->Update();
             } // if running
             else if( DEBUG_ACTION_RUNNING && _displayMessages ) {
               PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions.Skip",
@@ -227,6 +242,11 @@ namespace Anki {
           } // if not null
         }
       }
+    }
+    
+    void IActionRunner::SetRobot(Robot& robot)
+    {
+      _robot = &robot;
     }
     
     
@@ -244,7 +264,7 @@ namespace Anki {
       _timeoutTime = -1.f;
     }
     
-    ActionResult IAction::UpdateInternal(Robot& robot)
+    ActionResult IAction::UpdateInternal()
     {
       ActionResult result = ActionResult::RUNNING;
       SetStatus(GetName());
@@ -257,7 +277,7 @@ namespace Anki {
       if(_timeoutTime < 0.f) {
         _timeoutTime = currentTimeInSeconds + GetTimeoutInSeconds();
       }
-      
+
       // Fail if we have exceeded timeout time
       if(currentTimeInSeconds >= _timeoutTime) {
         if(IsMessageDisplayEnabled()) {
@@ -278,13 +298,14 @@ namespace Anki {
           // Before calling Init(), clean up any subactions, in case this is not
           // the first call to Init() -- i.e., if this is a retry or resume after
           // being interrupted.
-          CancelAndDeleteSubActions(robot);
-          
+          CancelAndDeleteSubActions();
+
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively
           // just wait for the preconditions to be met. Otherwise, a failure
           // will get propagated out as the return value of the Update method.
-          result = Init(robot);
+          result = Init();
+
           if(result == ActionResult::SUCCESS) {
             if(IsMessageDisplayEnabled()) {
               PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
@@ -304,16 +325,15 @@ namespace Anki {
             // after preconditions are met
             _waitUntilTime = currentTimeInSeconds + GetCheckIfDoneDelayInSeconds();
           }
-          
         }
-        
+
         // Re-check if preconditions are met, since they could have _just_ been met
         if(_preconditionsMet && currentTimeInSeconds >= _waitUntilTime) {
           //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.", GetName().c_str());
           SetStatus(GetName() + ": check if done");
           
           // Pre-conditions already met, just run until done
-          result = CheckIfDone(robot);
+          result = CheckIfDone();
         }
       } // if(currentTimeInSeconds > _waitUntilTime)
       
@@ -321,7 +341,7 @@ namespace Anki {
         if(IsMessageDisplayEnabled()) {
           PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
                            "Robot %d failed running action %s. Retrying.",
-                           robot.GetID(), GetName().c_str());
+                           _robot->GetID(), GetName().c_str());
         }
         
         Reset();
@@ -333,7 +353,6 @@ namespace Anki {
         RunCallbacks(result);
       }
 #     endif
-      
       return result;
     } // UpdateInternal()
     
