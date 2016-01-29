@@ -478,13 +478,10 @@ namespace Cozmo {
     
     for(auto invertImage : imageInversions)
     {
-      GetImageHelper(inputImageGray, grayscaleImage);
-      
       if(invertImage) {
-        u8* restrict pImage = grayscaleImage[0];
-        for(s32 i=0; i<grayscaleImage.get_numElements(); ++i) {
-          pImage[i] = 255-pImage[i];
-        }
+        GetImageHelper(inputImageGray.GetNegative(), grayscaleImage);
+      } else {
+        GetImageHelper(inputImageGray, grayscaleImage);
       }
       
       PreprocessImage(grayscaleImage);
