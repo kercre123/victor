@@ -277,7 +277,7 @@ namespace Anki {
     
     void UiGameController::HandleDebugStringBase(ExternalInterface::DebugString const& msg)
     {
-      PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
+      //PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
       HandleDebugString(msg);
     }
     
