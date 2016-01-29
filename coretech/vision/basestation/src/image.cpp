@@ -214,7 +214,20 @@ namespace Vision {
     
   }
 #endif
+  
+  Image& Image::Negate()
+  {
+    cv::bitwise_not(get_CvMat_(), get_CvMat_());
+    return *this;
+  }
  
+  Image Image::GetNegative() const
+  {
+    Image output;
+    cv::bitwise_not(get_CvMat_(), output.get_CvMat_());
+    return output;
+  }
+  
   s32 Image::GetConnectedComponents(Array2d<s32>& labelImage,
                                     std::vector<std::vector< Point2<s32> > >& regionPoints) const
   {
