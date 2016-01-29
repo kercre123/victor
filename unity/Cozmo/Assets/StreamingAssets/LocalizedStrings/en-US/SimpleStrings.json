@@ -65,5 +65,11 @@
   },
   "dailyGoal.title": {
     "translation": "DAILY GOALS"
+  },
+  "requestGame.title": {
+    "translation": "LET'S PLAY"
+  },
+  "requestGame.description": {
+    "translation": "Cozmo wants to play {0}! Do You?"
   }
 }

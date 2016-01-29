@@ -58,6 +58,7 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _TimelineViewInstance.Initialize(_ChallengeStatesById);
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("ID_idle_brickout");
+      DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -84,6 +85,21 @@ namespace Cozmo.HomeHub {
 
       // Play minigame immediately
       PlayMinigame(_ChallengeStatesById[challengeClicked].data);
+    }
+
+    private void HandleStartChallengeRequest(string challengeRequested) {
+
+      // Keep track of the current challenge
+      _CurrentChallengePlaying = new CompletedChallengeData() {
+        ChallengeId = challengeRequested,
+        StartTime = System.DateTime.UtcNow,
+      };
+
+      // Close dialog
+      CloseTimelineDialog();
+
+      // Play minigame immediately
+      PlayMinigame(_ChallengeStatesById[challengeRequested].data);
     }
 
     private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -168,6 +184,7 @@ namespace Cozmo.HomeHub {
         _TimelineViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
         _TimelineViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
       }
+      DailyGoalManager.Instance.MinigameConfirmed -= HandleStartChallengeRequest;
     }
 
     private void LoadChallengeData(ChallengeDataList sourceChallenges, 

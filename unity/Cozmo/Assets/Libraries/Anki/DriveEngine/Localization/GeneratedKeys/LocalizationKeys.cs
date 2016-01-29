@@ -138,6 +138,8 @@ public static class LocalizationKeys {
   public const string kEndSessionViewTitle = "endSession.title";
   public const string kEndSessionViewDescription = "endSession.description";
   public const string kDailyGoalTitle = "dailyGoal.title";
+  public const string kRequestGameTitle = "requestGame.title";
+  public const string kRequestGameDescription = "requestGame.description";
 
   #endregion
 }

@@ -26,7 +26,7 @@ public class FriendshipFormulaConfiguration : ScriptableObject {
     return total;
   }
 
-  public float CalculateFriendshipProgress(StatContainer progress, StatContainer goal) {
+  public float CalculateDailyGoalProgress(StatContainer progress, StatContainer goal) {
     float totalProgress = 0f, totalGoal = 0f;
     for (int i = 0; i < _Multipliers.Length; i++) {
       var stat = (Anki.Cozmo.ProgressionStatType)i;

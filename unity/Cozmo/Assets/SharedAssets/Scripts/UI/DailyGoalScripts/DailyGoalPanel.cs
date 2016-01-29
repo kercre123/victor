@@ -10,13 +10,6 @@ public class DailyGoalPanel : MonoBehaviour {
   
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
 
-  // Force a specific Friendship level for Goal Generation testing,
-  // must also set _UseDebug to true.
-  [SerializeField]
-  private int _DebugLevel = -1;
-  [SerializeField]
-  private bool _UseDebug = false;
-
   // Prefab for GoalCells
   [SerializeField]
   private GoalCell _GoalCellPrefab;
@@ -35,7 +28,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
   private void Awake() {
-    _Config = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    _Config = DailyGoalManager.Instance.GetFriendshipProgressConfig();
   }
 
   private void OnDestroy() {
@@ -48,9 +41,8 @@ public class DailyGoalPanel : MonoBehaviour {
     Robot rob = RobotEngineManager.Instance.CurrentRobot;
 
     int lvl = rob.FriendshipLevel;
-    if (_UseDebug && _DebugLevel != -1) {
-      lvl = _DebugLevel;
-    }
+
+
     if (lvl >= _Config.FriendshipLevels.Length) {
       lvl = _Config.FriendshipLevels.Length - 1;
     }
@@ -85,23 +77,22 @@ public class DailyGoalPanel : MonoBehaviour {
     return goals;
   }
 
-  public void SetDailyGoals(StatContainer goals, StatContainer progress) {
+  public void SetDailyGoals(StatContainer progress, StatContainer goals) {
     for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
       var targetStat = (Anki.Cozmo.ProgressionStatType)i;
       if (goals[targetStat] > 0) {
         CreateGoalCell(targetStat, goals[targetStat], progress[targetStat]);
       }
     }
-    _TotalProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(progress, goals));
+    _TotalProgressBar.SetProgress(DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateDailyGoalProgress(progress, goals));
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
   // Currently this will be additive so if multiple Goals are created with the same required type, they will be combined
-  public GoalCell CreateGoalCell(Anki.Cozmo.ProgressionStatType type, int target, int goal) {
-    DAS.Event(this, string.Format("CreateGoalBadge({0},{1})", type, target));
+  public GoalCell CreateGoalCell(Anki.Cozmo.ProgressionStatType type, int prog, int goal) {
+    DAS.Event(this, string.Format("CreateGoalCell({0},{1})", type, prog));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
-    RobotEngineManager.Instance.DailyGoals[(int)type] += target;
-    newBadge.Initialize(type, target, goal);
+    newBadge.Initialize(type, prog, goal);
     _GoalCells.Add(newBadge);
     return newBadge;
   }

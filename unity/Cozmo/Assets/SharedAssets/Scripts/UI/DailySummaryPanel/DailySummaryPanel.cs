@@ -69,7 +69,7 @@ public class DailySummaryPanel : BaseView {
 
     _Title.FormattingArgs = new object[] { month, day };
 
-    _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(data.Progress, data.Goals));
+    _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateDailyGoalProgress(data.Progress, data.Goals));
 
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var stat = (ProgressionStatType)i;
@@ -143,7 +143,7 @@ public class DailySummaryPanel : BaseView {
 
   private IEnumerator FriendshipBarCoroutine(TimelineEntryData data) {
 
-    var levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    var levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
 
     int startingPoints = data.StartingFriendshipPoints;
     float pointsRequired, startingPercent, endingPercent;

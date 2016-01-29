@@ -152,7 +152,7 @@ namespace Cozmo.HomeHub {
         float progress = 0f;
         if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
           var state = timelineEntries[timelineIndex];
-          progress = _FriendshipFormulaConfig.CalculateFriendshipProgress(state.Progress, state.Goals);
+          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(state.Progress, state.Goals);
           active = true;
           timelineIndex++;
         }
@@ -169,12 +169,12 @@ namespace Cozmo.HomeHub {
     }
 
     private void UpdateDailySession() {
-
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
-
+      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       // check if the current session is still valid
       if (currentSession != null) {  
-        _DailyGoalInstance.SetDailyGoals(currentSession.Goals, currentSession.Progress);
+        _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
+        currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, DailyGoalManager.Instance.GetMinigameNeed_Extremes(), "DailyGoalProgress");
         return;
       }
 
@@ -185,7 +185,7 @@ namespace Cozmo.HomeHub {
       }
 
       // start a new session
-      var goals = _DailyGoalInstance.GenerateDailyGoals();
+      StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
 
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
         StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
@@ -194,7 +194,8 @@ namespace Cozmo.HomeHub {
 
       newSession.Goals.Set(goals);
 
-      RobotEngineManager.Instance.CurrentRobot.SetProgressionStats(newSession.Progress);
+      currentRobot.SetProgressionStats(newSession.Progress);
+      _DailyGoalInstance.SetDailyGoals(newSession.Progress, newSession.Goals);
 
       DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
 
