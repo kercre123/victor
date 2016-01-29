@@ -1,10 +1,13 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using DataPersistence;
 using System.Collections;
 using System.Collections.Generic;
 using Cozmo.UI;
 
 public class DailyGoalManager : MonoBehaviour {
+
+  public Action<string> MinigameConfirmed;
 
   [SerializeField]
   private ChallengeDataList _ChallengeList;
@@ -48,7 +51,7 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   public string GetDesiredMinigameID() {
-    ChallengeData randC = _ChallengeList.ChallengeData[Random.Range(0, _ChallengeList.ChallengeData.Length)];
+    ChallengeData randC = _ChallengeList.ChallengeData[UnityEngine.Random.Range(0, _ChallengeList.ChallengeData.Length)];
     _lastChallengeID = randC.ChallengeID;
     return _lastChallengeID;
   }
@@ -169,7 +172,7 @@ public class DailyGoalManager : MonoBehaviour {
     for (int i = 0; i < totalGoals; i++) {
       Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
       possibleStats[targetStat] = false;
-      goals[targetStat] = Random.Range(min, max);
+      goals[targetStat] = UnityEngine.Random.Range(min, max);
     }
     return goals;
   }
@@ -202,6 +205,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleMiniGameConfirm() {
     DAS.Info(this, "HandleMiniGameConfirm");
+    MinigameConfirmed.Invoke(_lastChallengeID);
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
