@@ -60,13 +60,14 @@ protected:
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // notified of an action being completed
-  void HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg, double currentTime_sec);
+  void HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg);
   
 private:
 
@@ -101,6 +102,9 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // set of points the robot is interested in visiting towards clearing borders
+  VantagePointVector _currentVantagePoints;
 
   // tag for the current move action we have ordered
   uint32_t _currentActionTag;

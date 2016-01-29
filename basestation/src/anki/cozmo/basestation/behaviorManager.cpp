@@ -187,14 +187,8 @@ namespace Cozmo {
     }
     
     // Initialize next behavior and make it the current one
-    if (nullptr != _nextBehavior && _currentBehavior != _nextBehavior) {
-      const bool isResuming = (_nextBehavior == _resumeBehavior);
-      if (_nextBehavior->Init(currentTime_sec, isResuming) != RESULT_OK) {
-        PRINT_NAMED_ERROR("BehaviorManager.SwitchToNextBehavior.InitFailed",
-                          "Failed to initialize %s behavior.",
-                          _nextBehavior->GetName().c_str());
-      }
-      
+    if (nullptr != _nextBehavior)
+    {
       #if SEND_MOOD_TO_VIZ_DEBUG
       {
         VizInterface::NewBehaviorSelected newBehaviorSelected;
@@ -203,13 +197,15 @@ namespace Cozmo {
       }
       #endif // SEND_MOOD_TO_VIZ_DEBUG
       
+      const bool isResuming = (_nextBehavior == _resumeBehavior);
+      const bool isSameBehavior = (_nextBehavior == _currentBehavior);
       _resumeBehavior = nullptr;
-      if (_currentBehavior && _nextBehavior->IsShortInterruption() && _currentBehavior->WantsToResume())
+      if (!isSameBehavior && _currentBehavior && _nextBehavior->IsShortInterruption() && _currentBehavior->WantsToResume())
       {
         _resumeBehavior = _currentBehavior;
       }
 
-      SetCurrentBehavior(_nextBehavior, currentTime_sec);
+      SetCurrentBehavior(_nextBehavior, currentTime_sec, isResuming);
       _nextBehavior = nullptr;
     }
   }
@@ -238,8 +234,10 @@ namespace Cozmo {
       }
     }
     else if (nullptr == _currentBehavior ||
-             currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec ||
-             ( nullptr != _currentBehavior && ! _currentBehavior->IsRunnable(_robot, currentTime_sec) ))
+             currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec )
+    // This check should not be needed. The current behavior should decide when it's done and
+    // return Status::Complete, which will trigger a new selection immediately
+    // ( nullptr != _currentBehavior && ! _currentBehavior->IsRunnable(_robot, currentTime_sec) ))
     {
       // We've been in the current behavior long enough to consider switching
       lastResult = SelectNextBehavior(currentTime_sec);
@@ -269,16 +267,14 @@ namespace Cozmo {
       {
         case IBehavior::Status::Running:
           // Nothing to do! Just keep on truckin'....
-          _currentBehavior->SetIsRunning(true);
           break;
           
         case IBehavior::Status::Complete:
           // Behavior complete, try to select and switch to next
-          _currentBehavior->SetIsRunning(false);
           lastResult = SelectNextBehavior(currentTime_sec);
           if(lastResult != RESULT_OK) {
-            PRINT_NAMED_WARNING("BehaviorManager.Update.SelectNextFailed",
-                                "Failed trying to select next behavior, continuing with current.");
+            PRINT_NAMED_WARNING("BehaviorManager.Update.Complete.SelectNextFailed",
+                                "Failed trying to select next behavior.");
             lastResult = RESULT_OK;
           }
           SwitchToNextBehavior(currentTime_sec);
@@ -289,11 +285,20 @@ namespace Cozmo {
                             "Behavior '%s' failed to Update().",
                             _currentBehavior->GetName().c_str());
           lastResult = RESULT_FAIL;
-          _currentBehavior->SetIsRunning(false);
           
           // Force a re-init so if we reselect this behavior
           _forceReInit = true;
           SelectNextBehavior(currentTime_sec);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("BehaviorManager.Update.Failure.SelectNextFailed",
+                                "Failed trying to select next behavior.");
+            lastResult = RESULT_OK;
+          }
+          SwitchToNextBehavior(currentTime_sec);
+          // WARNING: While working here I realized that lastResult is not updated with the result of SelectNextBehavior
+          // this may be because we want to notify outside that the current behavior failed. But we actually try to
+          // recover from it nicely, so we may want to update lastResult after all. It seems calling code is ignoring
+          // the result code anyway..
           break;
           
         default:
@@ -373,7 +378,7 @@ namespace Cozmo {
     // These behavior pointers might be invalidated, so clear them
     // SetCurrentBehavior ensures that any existing current behavior is stopped first
     
-    SetCurrentBehavior(nullptr, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+    SetCurrentBehavior(nullptr, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), false);
     _nextBehavior = nullptr;
     _forceSwitchBehavior = nullptr;
     _resumeBehavior = nullptr;
@@ -392,13 +397,31 @@ namespace Cozmo {
     SelectNextBehavior(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
   }
   
-  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
+  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec, bool isResuming)
   {
-    if (_currentBehavior && (newBehavior != _currentBehavior))
-    {
+    // stop current
+    if (_currentBehavior) {
+      _currentBehavior->SetIsRunning(false);
       _currentBehavior->Stop(currentTime_sec);
     }
+    
+    // set current <- new
     _currentBehavior = newBehavior;
+    
+    // initialize new
+    if (_currentBehavior) {
+    
+      const Result initRet = _nextBehavior->Init(currentTime_sec, isResuming);
+      if ( initRet != RESULT_OK ) {
+        PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
+                        "Failed to initialize %s behavior.",
+                        _currentBehavior->GetName().c_str());
+      }
+      
+      // flag as the running behavior
+      _currentBehavior->SetIsRunning(true);
+    }
+    
   }
 
   IBehavior* BehaviorManager::LoadBehaviorFromJson(const Json::Value& behaviorJson)

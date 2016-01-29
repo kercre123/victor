@@ -12,6 +12,7 @@
  **/
 #include "behaviorExploreMarkedCube.h"
 
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "util/console/consoleInterface.h"
@@ -22,7 +23,7 @@
 namespace Anki {
 namespace Cozmo {
   
-CONSOLE_VAR(uint8_t, kMaxBorderGoals, "BehaviorExploreMarkedCube", 3); // max number of goals to ask the planner
+CONSOLE_VAR(uint8_t, kMaxBorderGoals, "BehaviorExploreMarkedCube", 1); // max number of goals to ask the planner
 CONSOLE_VAR(uint8_t, kDistanceMinFactor, "BehaviorExploreMarkedCube", 2.0f); // minimum factor applied to the robot size to find destination from border center
 CONSOLE_VAR(uint8_t, kDistanceMaxFactor, "BehaviorExploreMarkedCube", 4.0f); // maximum factor applied to the robot size to find destination from border center
 
@@ -31,6 +32,7 @@ BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::V
 : IBehavior(robot, config)
 , _currentActionTag(Util::numeric_cast<uint32_t>( (std::underlying_type<ActionConstants>::type)ActionConstants::INVALID_TAG))
 {
+  SetDefaultName("BehaviorExploreMarkedCube");
 
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction
@@ -52,63 +54,73 @@ bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot, double currentTim
     return false;
   }
   const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown);
-  //return hasBorders;
-
-  if ( hasBorders ) {
-    PRINT_NAMED_INFO("RSAM", "IsRunnable YES");
-  } else {
-    PRINT_NAMED_INFO("RSAM", "IsRunnable NO");
-  }
-  
-  INavMemoryMap::BorderVector borders;
-  INavMemoryMap* memoryMapTest = robot.GetBlockWorld().GetNavMemoryMap();
-  memoryMapTest->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown, borders);
-  
-  BorderScoreVector borderGoals;
-  PickGoals(robot, borderGoals);
-
-  // for every goal, pick a target point to look at the cube from there. Those are the goals we will feed the planner
-  VantagePointVector vantagePoints;
-  GenerateVantagePoints(robot, borderGoals, vantagePoints);
-
-    VizManager::getInstance()->EraseSegments("RSAM2");
-    for ( const auto& bG : borderGoals )
-    {
-      const NavMemoryMapTypes::Border& b = bG.borderInfo;
-      VizManager::getInstance()->DrawSegment("RSAM2", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
-      Vec3f centerLine = (b.from + b.to)*0.5f;
-      VizManager::getInstance()->DrawSegment("RSAM2", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
-    }
-  
-    // render vantage points - delete me
-    VizManager::getInstance()->EraseSegments("BehaviorExploreMarkedCube::GenerateVantagePoints");
-    for ( const auto& p : vantagePoints )
-    {
-      Point3f testOrigin{};
-      Point3f testDir = X_AXIS_3D() * 20.0f;
-      testOrigin = p * testOrigin;
-      testDir = p * testDir;
-      VizManager::getInstance()->DrawSegment("BehaviorExploreMarkedCube::GenerateVantagePoints", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
-    }
-  
-  return false;
+  return hasBorders;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
-//  PickGoals();
-//  if ( outGoals.empty() )
-//      PRINT_NAMED_ERROR("BehaviorExploreMarkedCube.BadInit", "Behavior was initialized, but no borders where found!");
-  return Result::RESULT_OK;
+  // ask the robot memory map about borders
+  INavMemoryMap::BorderVector borders;
+  INavMemoryMap* memoryMapTest = robot.GetBlockWorld().GetNavMemoryMap();
+  memoryMapTest->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown, borders);
   
+  // select borders we want to visit
+  BorderScoreVector borderGoals;
+  PickGoals(robot, borderGoals);
+
+  // for every goal, pick a target point to look at the cube from there. Those are the goals we will feed the planner
+  GenerateVantagePoints(robot, borderGoals, _currentVantagePoints);
+
+  // debugging
+  {
+    // border goals
+    VizManager::getInstance()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
+    for ( const auto& bG : borderGoals )
+    {
+      const NavMemoryMapTypes::Border& b = bG.borderInfo;
+      VizManager::getInstance()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
+      Vec3f centerLine = (b.from + b.to)*0.5f;
+      VizManager::getInstance()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
+    }
+
+    // vantage points
+    for ( const auto& p : _currentVantagePoints )
+    {
+      Point3f testOrigin{};
+      Point3f testDir = X_AXIS_3D() * 20.0f;
+      testOrigin = p * testOrigin;
+      testDir = p * testDir;
+      VizManager::getInstance()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
+    }
+  }
+
+  // we shouldn't be running if we don't have borders/vantage points
+  if ( _currentVantagePoints.empty() ) {
+    PRINT_NAMED_ERROR("BehaviorExploreMarkedCube::InitInternal", "Could not calculate vantage points from borders!");
+    return RESULT_FAIL;
+  }
+  
+  // request the action
+  DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _currentVantagePoints );
+  _currentActionTag = driveToPoseAction->GetTag();
+  robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveToPoseAction);
+
+  return Result::RESULT_OK;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robot& robot, double currentTime_sec)
 {
-  PRINT_NAMED_INFO("RSAM", "Update");
+  // while we are moving towards a vantage point, wait patiently
+  if ( _currentActionTag != static_cast<std::underlying_type<ActionConstants>::type>(ActionConstants::INVALID_TAG) )
+  {
+    // PRINT_NAMED_INFO("RSAM", "Waiting for the move to action to finish");
+    return Status::Running;
+  }
+  
+  // done
   Status retval = Status::Complete;
   return retval;
 }
@@ -116,12 +128,31 @@ BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
+  // Note: at the moment anything can interrupt us, revisit rules of interruption
+  _currentActionTag = static_cast<std::underlying_type<ActionConstants>::type>(ActionConstants::INVALID_TAG);
+  
   return Result::RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreMarkedCube::StopInternal(Robot& robot, double currentTime_sec)
 {
+  VizManager::getInstance()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
+}
+
+void BehaviorExploreMarkedCube::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case EngineToGameTag::RobotCompletedAction:
+      HandleActionCompleted( event.GetData().Get_RobotCompletedAction() );
+      break;
+      
+    default:
+      PRINT_NAMED_ERROR("BehaviorExploreMarkedCube.HandleWhileNotRunning.InvalidTag",
+                        "Received unexpected event with tag %hhu.", event.GetData().GetTag());
+      break;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,9 +161,7 @@ void BehaviorExploreMarkedCube::HandleWhileRunning(const EngineToGameEvent& even
   switch(event.GetData().GetTag())
   {
     case EngineToGameTag::RobotCompletedAction:
-      HandleActionCompleted(robot,
-        event.GetData().Get_RobotCompletedAction(),
-        event.GetCurrentTime());
+      HandleActionCompleted( event.GetData().Get_RobotCompletedAction() );
       break;
       
     default:
@@ -143,9 +172,17 @@ void BehaviorExploreMarkedCube::HandleWhileRunning(const EngineToGameEvent& even
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg, double currentTime_sec)
+void BehaviorExploreMarkedCube::HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg)
 {
-
+  // we completed our action, clear the tag so that the main loop knows
+  if ( _currentActionTag == msg.idTag )
+  {
+    if ( !IsRunning() ) {
+      PRINT_NAMED_INFO("BehaviorExploreMarkedCube", "Out action completed while not running.");
+    }
+  
+    _currentActionTag = Util::numeric_cast<uint32_t>((std::underlying_type<ActionConstants>::type)ActionConstants::INVALID_TAG);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -204,6 +241,11 @@ void BehaviorExploreMarkedCube::PickGoals(const Robot& robot, BorderScoreVector&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreMarkedCube::GenerateVantagePoints(const Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const
 {
+  // check assumptions
+  ASSERT_NAMED(nullptr != robot.GetPose().GetParent(), "BehaviorExploreMarkedCube.PickGoals.RobotPoseHasParent");
+  ASSERT_NAMED(robot.GetPose().GetParent()->IsOrigin(), "BehaviorExploreMarkedCube.PickGoals.RobotPoseParentIsOrigin");
+  const Pose3d* origin = robot.GetPose().GetParent();
+
   Util::RandomGenerator rng; // TODO: rsam replay-ability issue
 
   // TODO Shouldn't this be asked to the robot instance instead? Otherwise we only support 1 robot size
@@ -227,7 +269,7 @@ void BehaviorExploreMarkedCube::GenerateVantagePoints(const Robot& robot, const 
     float rotRads = isPositiveAngle ? -std::acos(fwdAngleCos) : std::acos(fwdAngleCos);
     
     // add pose to vector
-    outVantagePoints.emplace_back(rotRads, kUpVector, vantagePointPos);
+    outVantagePoints.emplace_back(rotRads, kUpVector, vantagePointPos, origin);
   }
 
 }
