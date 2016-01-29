@@ -9,6 +9,8 @@ public class DailyGoalManager : MonoBehaviour {
   [SerializeField]
   private ChallengeDataList _ChallengeList;
 
+  private AlertView _RequestDialog = null;
+
   // The Last Challenge ID Cozmo has requested to play
   private string _lastChallengeID;
 
@@ -173,6 +175,10 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+    if (_RequestDialog != null) {
+      // Avoid dupes
+      return;
+    }
     // TODO: When the message has the appropriate 
     AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
     // Hook up callbacks
@@ -181,10 +187,14 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
     alertView.TitleLocKey = LocalizationKeys.kEndSessionViewTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kEndSessionViewDescription;
+    _RequestDialog = alertView;
   }
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
+    if (_RequestDialog != null) {
+      _RequestDialog.CloseView();
+    }
     RobotEngineManager.Instance.SendDenyGameStart();
   }
 
@@ -194,6 +204,9 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
     DAS.Info(this, "HandleExternalRejection"); 
+    if (_RequestDialog != null) {
+      _RequestDialog.CloseView();
+    }
   }
 
 }
