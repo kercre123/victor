@@ -44,11 +44,13 @@ private:
   }
 
   void ProcessVizObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizSegmentPrimitiveMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSimpleQuadVectorMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizEraseSegmentPrimitivesMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizAppendPathSegmentLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizAppendPathSegmentArcMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -120,6 +122,19 @@ private:
   using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
   std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapReady;    // ready to draw
   std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapIncoming; // incoming from the socket
+  
+  struct Segment {
+    Segment() : color(0) {}
+    Segment(uint32_t c, const std::array<float, 3>& o, const std::array<float, 3>& d) :
+      color(c), origin(o), dest(d) {}
+    uint32_t color;
+    std::array<float, 3> origin;
+    std::array<float, 3> dest;
+  };
+  
+  // segment primitives
+  using SegmentVector = std::vector<Segment>;
+  std::map<std::string, SegmentVector> _segmentPrimitives;
 
   // Color map
   //using VizColorDef_t = std::unordered_map<uint32_t, VizInterface::DefineColor>;

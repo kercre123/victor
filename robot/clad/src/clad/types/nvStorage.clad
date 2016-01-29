@@ -1,0 +1,86 @@
+/** CLAD definitions for robot non-volatile storage
+ * WARNING For backwards forward compatibility, all structures must be left as defined and new versions added with their
+ * Own unique identifier when needed.
+ */
+ 
+namespace Anki {
+namespace Cozmo {
+namespace NVStorage {
+
+  enum uint_32 NVEntryTag
+  {
+    NVEntry_Invalid = 0xFFFFffff,
+    NVEntry_APConfig = 0,
+    NVEntry_StaConfig,
+    NVEntry_CameraCalibration,
+    NVEntry_SDKModeUnlocked,
+  }
+
+  enum int_8 NVResult {
+    NV_OKAY = 0,
+    NV_NOT_FOUND = -1,
+    NV_NO_ROOM   = -2,
+    NV_ERROR     = -3,
+    NV_TIMEOUT   = -4,
+  }
+
+  /// Used to store a retrive serialized NV storage structures without caring whats in them
+  message NVStorageBlob
+  {
+    uint_32 tag,
+    uint_8  blob[uint_32:1024],
+  }
+  
+  message NVOpResult {
+    NVEntryTag tag,
+    NVResult   result,
+    bool       write,
+  }
+
+  structure WiFiAPConfig
+  {
+    uint_32 ip_domain,
+    uint_8  ssid[32],
+    uint_8  psk[64],
+    uint_8  channel,
+    uint_8  beacon_interval,
+  }
+  
+  enum uint_8 WiFiStaModeFlags
+  {
+    WiFiOff        = 0x00,
+    WiFiStationOn  = 0x01,
+    WiFiAPOn       = 0x02,
+    WiFiStaticIP   = 0x04,
+  }
+
+  structure WiFiStaConfig
+  {
+    uint_32 staticIP,
+    uint_32 staticNetmask,
+    uint_32 staticGateway,
+    uint_8  ssid[32],
+    uint_8  psk[64],
+    uint_8  bssid[6],
+    uint_8  mode, ///< Packed with WiFiStaConfig above
+  }
+
+}
+
+namespace RobotInterface {
+  
+  message CameraCalibration
+  {
+    float_32 focalLength_x,
+    float_32 focalLength_y,
+    float_32 center_x,
+    float_32 center_y,
+    float_32 skew,
+    uint_16  nrows,
+    uint_16  ncols,
+    bool     isPhysicalRobots,
+  }
+  
+}
+}
+}

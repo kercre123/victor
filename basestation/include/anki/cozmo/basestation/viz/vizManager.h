@@ -60,6 +60,7 @@ namespace Anki {
         WORLD_ORIGIN,
         VISION_MODE,
         BEHAVIOR_STATE,
+        ANIMATION_NAME,
         DEBUG_STRING
       } TextLabelType;
       
@@ -300,6 +301,10 @@ namespace Anki {
       // one of them, but a group. Used for debugging purposes where the underlaying geometry is not directly
       // related to a given object
       
+      void DrawSegment(const std::string& identifier,
+        const Point3f& from, const Point3f& to, const ColorRGBA& color, bool clearPrevious, float zOffset=0.0f);
+      void EraseSegments(const std::string& identifier);
+      
       // vector of simple quads (note a simple quad is an axis aligned quad with a color)
       using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
       void DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads);
@@ -365,6 +370,7 @@ namespace Anki {
                           const s32 numAnimAudioFramesFree,
                           const u8 videoFrameRateHz,
                           const u8 imageProcFrameRateHz,
+                          const u8 enabledAnimTracks,
                           const u8 animTag);
       
       void SetOrigin(const SetVizOrigin& msg);

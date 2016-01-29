@@ -11,14 +11,19 @@
  **/
 
 #include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/components/animTrackHelpers.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/helpers/templateHelpers.h"
+
+#define DEBUG_ANIM_TRACK_LOCKING 0
+
+#define DEBUG_ACTION_RUNNING 0
 
 namespace Anki {
   
@@ -45,6 +50,15 @@ namespace Anki {
       }
     }
     
+    bool IActionRunner::Interrupt()
+    {
+      _isInterrupted = InterruptInternal();
+      if(_isInterrupted) {
+        Reset();
+      }
+      return _isInterrupted;
+    }
+    
     // NOTE: THere should be no way for Update() to fail independently of its
     // call to UpdateInternal(). Otherwise, there's a possibility for an
     // IAction's Cleanup() method not be called on failure.
@@ -52,8 +66,25 @@ namespace Anki {
     {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
-        robot.GetMoveComponent().LockAnimTracks(GetAnimTracksToDisable());
+        uint8_t disableTracks = GetAnimTracksToDisable();
+#       if DEBUG_ANIM_TRACK_LOCKING
+        PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
+                         disableTracks,
+                         AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
+                         GetName().c_str(),
+                         GetTag());
+#       endif
+        robot.GetMoveComponent().LockAnimTracks(disableTracks);
         robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
+      }
+
+      if( ! _isRunning ) {
+        if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+          PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s running",
+                            GetTag(),
+                            GetName().c_str());
+        }
+                          
         _isRunning = true;
       }
 
@@ -61,10 +92,15 @@ namespace Anki {
       if(_isCancelled) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
-                           "Cancelling %s.", GetName().c_str());
+                           "Cancelling [%d] %s.", _idTag, GetName().c_str());
         }
         result = ActionResult::CANCELLED;
-        
+      } else if(_isInterrupted) {
+        if(_displayMessages) {
+          PRINT_NAMED_INFO("IActionRunner.Update.InterruptAction",
+                           "Interrupting [%d] %s", _idTag, GetName().c_str());
+        }
+        result = ActionResult::INTERRUPTED;
       } else {
         result = UpdateInternal(robot);
       }
@@ -79,10 +115,10 @@ namespace Anki {
         }
       
         // Clean up after any registered sub actions and the action itself
-        ClearSubActions(robot);
+        CancelAndDeleteSubActions(robot);
         Cleanup(robot);
         
-        if (_emitCompletionSignal)
+        if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
         {
           // Notify any listeners about this action's completion.
           // Note that I do this here so that compound actions only emit one signal,
@@ -92,21 +128,27 @@ namespace Anki {
         }
         
         if(!_suppressTrackLocking) {
-          robot.GetMoveComponent().UnlockAnimTracks(GetAnimTracksToDisable());
+          uint8_t disableTracks = GetAnimTracksToDisable();
+#         if DEBUG_ANIM_TRACK_LOCKING
+          PRINT_NAMED_INFO("IActionRunner.Update.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                           disableTracks,
+                           AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
+                           GetName().c_str(),
+                           GetTag());
+#         endif
+          robot.GetMoveComponent().UnlockAnimTracks(disableTracks);
           robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+        }
+
+        if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+          PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
+                            GetTag(),
+                            GetName().c_str());
         }
         _isRunning = false;
       }
       
       return result;
-    }
-    
-    void IActionRunner::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
-    {
-      ObjectInteractionCompleted info;
-      info.numObjects = 0;
-      info.objectIDs.fill(-1);
-      completionUnion.Set_objectInteractionCompleted( std::move(info) );
     }
     
     void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
@@ -157,17 +199,33 @@ namespace Anki {
       _subActions.push_back(&subAction);
     }
     
-    void IActionRunner::ClearSubActions(Robot& robot)
+    void IActionRunner::CancelAndDeleteSubActions(Robot& robot)
     {
-      if(_subActions.empty())
+      if(!_subActions.empty())
       {
         for(auto subAction : _subActions) {
-          if(nullptr != (*subAction)) {
-            (*subAction)->Cleanup(robot);
+          if( nullptr != (*subAction) ) {
+            if( (*subAction)->_isRunning ) {
+              if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+                PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions",
+                                  "Removing subAction %s [%d] (parent action is %s [%d])",
+                                  (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
+                                  GetName().c_str(), GetTag());
+              }
+            
+              (*subAction)->Cancel();
+              (*subAction)->Update(robot);
+            } // if running
+            else if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+              PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions.Skip",
+                                "skipping sub action  %s [%d] because it isn't running (parent action is %s [%d])",
+                                (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
+                                GetName().c_str(), GetTag());
+            }
+            
             Util::SafeDelete(*subAction);
-          }
+          } // if not null
         }
-        _subActions.clear();
       }
     }
     
@@ -220,7 +278,7 @@ namespace Anki {
           // Before calling Init(), clean up any subactions, in case this is not
           // the first call to Init() -- i.e., if this is a retry or resume after
           // being interrupted.
-          ClearSubActions(robot);
+          CancelAndDeleteSubActions(robot);
           
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively

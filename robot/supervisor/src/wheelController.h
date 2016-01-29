@@ -25,8 +25,7 @@ namespace Anki {
     
     
     //Set the gains for the PI controllers (same gains for left and right wheel)
-    void SetGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
-                  const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);
+    void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
 
     // Enable/Disable the wheel controller.
     // Mostly only useful for test mode or special simluation modes.

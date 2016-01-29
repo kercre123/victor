@@ -51,6 +51,12 @@ public:
   const ProgressionStat&  GetStat(ProgressionStatType statType) const { return GetStatByIndex((size_t)statType); }
   ProgressionStat&        GetStat(ProgressionStatType statType)       { return GetStatByIndex((size_t)statType); }
   
+  const ProgressionStat& GetFriendshipPoints() const { return _friendshipPoints; }
+  ProgressionStat& GetFriendshipPoints() { return _friendshipPoints; }
+  
+  const ProgressionStat& GetFriendshipLevel() const { return _friendshipLevel; }
+  ProgressionStat& GetFriendshipLevel() { return _friendshipLevel; }
+  
   void SendStatsToGame() const;
 
 private:
@@ -71,6 +77,8 @@ private:
 
   // ============================== Private Member Vars ==============================
 
+  ProgressionStat     _friendshipPoints;
+  ProgressionStat     _friendshipLevel;
   ProgressionStat     _stats[(size_t)ProgressionStatType::Count];
   Robot*              _robot;
 };

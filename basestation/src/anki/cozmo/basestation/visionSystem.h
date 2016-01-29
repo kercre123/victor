@@ -57,7 +57,10 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
-namespace Anki {  
+namespace Anki {
+namespace Embedded {
+  typedef Point<float> Point2f;
+}
 namespace Cozmo {
     
   // Forward declaration:
@@ -221,6 +224,7 @@ namespace Cozmo {
 #   endif
     
     // Previous image for doing background subtraction, e.g. for saliency
+    // NOTE: previous images stored at resolution of motion detection processing.
     Vision::ImageRGB _prevImage;
     Vision::ImageRGB _prevPrevImage;
     TimeStamp_t      _lastMotionTime = 0;

@@ -1,0 +1,50 @@
+/**
+ * File: navMeshQuadTreeTypes.cpp
+ *
+ * Author: Raul
+ * Date:   01/13/2016
+ *
+ * Description: Type definitions for navMeshQuadTree.
+ *
+ * Copyright: Anki, Inc. 2016
+ **/
+#include "navMeshQuadTreeTypes.h"
+
+#include "anki/common/basestation/exceptions.h"
+
+namespace Anki {
+namespace Cozmo {
+namespace NavMeshQuadTreeTypes {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* EDirectionToString(EDirection dir)
+{
+  switch (dir) {
+    case NavMeshQuadTreeTypes::EDirection::North:   { return "N"; };
+    case NavMeshQuadTreeTypes::EDirection::East:    { return "E"; };
+    case NavMeshQuadTreeTypes::EDirection::South:   { return "S"; };
+    case NavMeshQuadTreeTypes::EDirection::West:    { return "W"; };
+    case NavMeshQuadTreeTypes::EDirection::Invalid: { return "Invalid"; };
+  }
+  return "Error";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Vec3f EDirectionToNormalVec3f(EDirection dir)
+{
+  switch (dir) {
+    case NavMeshQuadTreeTypes::EDirection::North:   { return Vec3f{ 1.0f,  0.0f, 0.0f}; };
+    case NavMeshQuadTreeTypes::EDirection::East:    { return Vec3f{ 0.0f, -1.0f, 0.0f}; };
+    case NavMeshQuadTreeTypes::EDirection::South:   { return Vec3f{-1.0f,  0.0f, 0.0f}; };
+    case NavMeshQuadTreeTypes::EDirection::West:    { return Vec3f{ 0.0f,  1.0f, 0.0f}; };
+    case NavMeshQuadTreeTypes::EDirection::Invalid: {};
+  }
+  
+  CORETECH_ASSERT(!"Invalid direction");
+  return Vec3f{0.0f, 0.0f, 0.0f};
+}
+
+
+} // namespace
+} // namespace
+} // namespace

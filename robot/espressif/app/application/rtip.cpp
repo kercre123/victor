@@ -30,9 +30,9 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
   const uint32_t timeSinceLastCall = now - lastCallTime;
   const uint32_t flushed = BYTES_PER_TICK * timeSinceLastCall / TICK_TIME;
   sentThisTick = flushed > sentThisTick ? 0 : sentThisTick - flushed;
-  AnkiConditionalErrorAndReturnValue((msg.Size() + sentThisTick) <= BYTES_PER_TICK,  false, "RTIP.SendMessage: Not enough buffer on RTIP\r\n")
-  AnkiConditionalErrorAndReturnValue(msg.Size() <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, "RTIP.SendMessage: Message too large for RTIP, %d > %d\r\n", msg.Size(), DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-  AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(msg.GetBuffer(), msg.Size()), false, "RTIP.SendMessage: Couldn't forward message to RTIP\r\n");
+  AnkiConditionalErrorAndReturnValue((msg.Size() + sentThisTick) <= BYTES_PER_TICK,  false, 30, "RTIP", 197, "SendMessage: Not enough buffer on RTIP", 0);
+  AnkiConditionalErrorAndReturnValue(msg.Size() <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, 30, "RTIP", 198, "SendMessage: Message too large for RTIP, %d > %d", 2, msg.Size(), DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+  AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(msg.GetBuffer(), msg.Size()), false, 30, "RTIP", 199, "SendMessage: Couldn't forward message to RTIP", 0);
   return true;
 }
 
@@ -45,7 +45,8 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
   {
     if (length > (RELAY_BUFFER_SIZE - relayQueued))
     {
-      os_printf("ERROR: RTIP message overflow! %d > %d - %d\r\n", length, RELAY_BUFFER_SIZE, relayQueued);
+      AnkiError( 50, "RTIP.AcceptRTIPMessage", 288, "overflow! %d > %d - %d", 3, length, RELAY_BUFFER_SIZE, relayQueued);
+      AnkiConditionalError(relayQueued < 2, 50, "RTIP.AcceptRTIPMessage", 290, "Waiting for message of size %d", 1, (relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8)));
       relayQueued = 0;
       return false;
     }
@@ -56,16 +57,15 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
       while (relayQueued > 2) // Have a header +
       {
         const uint16 size = relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8);
-        if (relayQueued >= size)
+        const uint16 sizeWHeader = size + 2;
+        if (relayQueued >= sizeWHeader)
         {
           const bool reliable = relayBuffer[1] & RTIP_CLAD_MSG_RELIABLE_FLAG;
           const bool hot      = relayBuffer[1] & RTIP_CLAD_MSG_HOT_FLAG;
-          if (clientSendMessage(relayBuffer + 2, size, 0, reliable, hot) == false) //<-- GLOBAL_INVALID_TAG = 0, fighting include nightmare
-          {
-            os_printf("ERROR: Couldn't relay message from RTIP over wifi\r\n");
-          }
+          //GLOBAL_INVALID_TAG = 0, fighting include nightmare
+          AnkiConditionalError(clientSendMessage(relayBuffer + 2, size, 0, reliable, hot), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, relayBuffer[2], size);
           relayQueued -= size + 2;
-          os_memcpy(relayBuffer, relayBuffer + size + 2, relayQueued);
+          os_memcpy(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
         }
         else
         {

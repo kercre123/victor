@@ -266,7 +266,7 @@ namespace Anki {
         }
       }
       
-      // Draw name
+      // Draw name & most likely expression
       std::string name;
       if(face.GetID() < 0) {
         name = "Unknown";
@@ -275,6 +275,8 @@ namespace Anki {
       } else {
         name = face.GetName() + "[" + std::to_string(face.GetID()) + "]";
       }
+      name += "-";
+      name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       
       // Draw bounding rectangle (?)
@@ -534,6 +536,31 @@ namespace Anki {
     }
     
     // ==== Draw functions by identifier =====
+    
+    void VizManager::DrawSegment(const std::string& identifier,
+      const Point3f& from, const Point3f& to, const ColorRGBA& color, bool clearPrevious, float zOffset)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SegmentPrimitive
+        {identifier,
+         color.AsRGBA(),
+         { {Anki::Util::numeric_cast<float>(MM_TO_M(from.x())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(from.y())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(from.z()+zOffset))}
+         },
+         { {Anki::Util::numeric_cast<float>(MM_TO_M(to.x())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(to.y())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(to.z()+zOffset))}
+         },
+         clearPrevious
+        })
+      );
+    }
+    
+    void VizManager::EraseSegments(const std::string& identifier)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::EraseSegmentPrimitives{identifier}));
+    }
+    
 
     void VizManager::DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads)
     {
@@ -631,9 +658,10 @@ namespace Anki {
                                     const s32 numAnimAudioFramesFree,
                                     const u8 videoFrameRateHz,
                                     const u8 imageProcFrameRateHz,
+                                    const u8 enabledAnimTracks,
                                     const u8 animTag)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, animTag)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, enabledAnimTracks, animTag)));
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)

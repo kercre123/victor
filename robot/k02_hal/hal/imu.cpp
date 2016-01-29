@@ -112,9 +112,12 @@ static const uint8_t INT_OPEN_DRAIN = 0x44;
 static const uint8_t RANGE_500DPS = 0x02;
 static const uint8_t BW_200 = 0x19;           // Maybe?
 
-static const float ACC_RANGE_CONST  = 9.58f;
-static const float GYRO_RANGE_CONST = 2.663E-4f;
+static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;           //In 2g mode, 16384 LSB/g
+static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f) *0.975; //In FS500 mode, 65.6 deg/s / LSB
+                                                                         //HACK: 0.975 fudge factor because of slightly-faster-than-actual rates being reported
 
+static bool readyForIMU = true;
+static IMUData imu_state;
 
 void Anki::Cozmo::HAL::IMU::Init(void) {
   // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
@@ -130,17 +133,19 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   UART::DebugPrintf("IMU status after power up: %02x %02x %02x\n", I2C::ReadReg(ADDR_IMU, 0x0), I2C::ReadReg(ADDR_IMU, 0x2), I2C::ReadReg(ADDR_IMU, 0x3));
 #endif
 
-  I2C::WriteAndVerify(ADDR_IMU, ACC_RANGE, RANGE_2G);
-  I2C::WriteAndVerify(ADDR_IMU, ACC_CONF, BW_200);
-  I2C::WriteAndVerify(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
-  I2C::WriteAndVerify(ADDR_IMU, GYR_RANGE, RANGE_500DPS);
+  I2C::WriteReg(ADDR_IMU, ACC_RANGE, RANGE_2G);
+  I2C::WriteReg(ADDR_IMU, ACC_CONF, BW_200);
+  I2C::WriteReg(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
+  I2C::WriteReg(ADDR_IMU, GYR_RANGE, RANGE_500DPS);
+
+  ReadID();
 
   Manage();
 }
 
-static void copy_state(const void *data, int count) {
+static void copy_state() {
   using namespace Anki::Cozmo::HAL;
-  memcpy(&IMU::IMUState, data, count);
+  memcpy(&IMU::IMUState, &imu_state, sizeof(IMUData));
 
 #ifdef IMU_DEBUG
   for (int i = 0; i < sizeof(IMUData); i++)
@@ -149,24 +154,21 @@ static void copy_state(const void *data, int count) {
 #endif
 }
 
-static bool readyForIMU = false;
-
 void Anki::Cozmo::HAL::IMU::Update(void) {
   readyForIMU = true;
 }
 
 void Anki::Cozmo::HAL::IMU::Manage(void) {
-  // Eventually, this should probably be synced to the body
-  static const uint8_t DATA_8 = 0x0C;
-  static IMUData imu_state;
-
   if (!readyForIMU) {
     return ;
   }
   readyForIMU = false;
 
-  I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), NULL, I2C_FORCE_START);
-  I2C::Read(SLAVE_READ(ADDR_IMU), (uint8_t*) &imu_state, sizeof(IMUData), &copy_state);
+  // Configure I2C bus to read IMU data
+  I2C::SetupRead(&imu_state, sizeof(IMUData), copy_state);
+
+  I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), I2C_FORCE_START);
+  I2C::Read(SLAVE_READ(ADDR_IMU));
 }
 
 uint8_t Anki::Cozmo::HAL::IMU::ReadID(void) {
@@ -179,11 +181,10 @@ void Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
   #define ACC_CONVERT(raw)  (ACC_RANGE_CONST  * raw)
   #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * raw)
 
-  // Don't know that any of these are correct, need to figure out axis
   imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[2]);
   imuData.rate_x = GYRO_CONVERT(IMU::IMUState.gyro[2]);
-  imuData.acc_y  = ACC_CONVERT(-IMU::IMUState.acc[1]);
-  imuData.rate_y = GYRO_CONVERT(-IMU::IMUState.gyro[1]);
+  imuData.acc_y  = ACC_CONVERT(IMU::IMUState.acc[1]);
+  imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1]);
   imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0]);
   imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0]);
 }

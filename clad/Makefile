@@ -45,7 +45,7 @@ vpath %.clad $(INPUT_ENGINE_DIR):$(INPUT_VIZ_DIR):$(INPUT_ROBOT_DIR)
 vpath %.h $(OUTPUT_DIR_ENGINE)/
 vpath %.cpp $(OUTPUT_DIR_ENGINE)/
 vpath %.cs $(OUTPUT_DIR_CSHARP)/
-vpath % $(OUTPUT_DIR_PYTHON)/
+vpath %.py $(OUTPUT_DIR_PYTHON)/
 
 .PHONY: show clean $(OUTPUT_VIZ_LST)
 

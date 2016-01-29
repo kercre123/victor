@@ -32,9 +32,10 @@ namespace Anki
 
         void DebugInit(void);
         void DebugPrintf(const char *format, ...);
+        void DebugPrintProfile(int value);
         void DebugPutc(char c);
         void WaitForSync();
-        
+
         extern volatile bool HeadDataReceived;
         extern volatile uint16_t RecoveryStateUpdated;
         extern volatile RECOVERY_STATE recoveryMode;

@@ -13,9 +13,10 @@
 #ifndef ANKI_COZMO_NAV_MEMORY_MAP_INTERFACE_H
 #define ANKI_COZMO_NAV_MEMORY_MAP_INTERFACE_H
 
+#include "navMemoryMapTypes.h"
 
+#include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -28,22 +29,38 @@ class INavMemoryMap
 public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // import types from NavMemoryMapTypes
+  using BorderVector = NavMemoryMapTypes::BorderVector;
+  using EContentType = NavMemoryMapTypes::EContentType;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   virtual ~INavMemoryMap() {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Object information
+  // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // add a quad that is clear of obstacles
-  virtual void AddClearQuad(const Quad2f& quad) = 0;
+  // add a quad that with the specified content type
+  virtual void AddQuad(const Quad2f& quad, EContentType type) = 0;
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Query
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // add a quad representing an obstacle
-  virtual void AddObstacleQuad(const Quad2f& quad) = 0;
-
-  // add a quad representing a cliff
-  virtual void AddCliffQuad(const Quad2f& quad) = 0;
+  // check whether the given content types would have any borders at the moment. This method is expected to
+  // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
+  // whether a border exists, without requiring calculating all of them
+  virtual bool HasBorders(EContentType innerType, EContentType outerType) const = 0;
+  
+  // retrieve the borders currently found in the map between the given types. This query is not const
+  // so that the memory map can calculate and cache values upon being requested, rather than when
+  // the map is modified. Function is expected to clear the vector before returning the new borders
+  virtual void CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders) = 0;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug

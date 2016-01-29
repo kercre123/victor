@@ -279,6 +279,11 @@ namespace Anki {
       } else {
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
+        PRINT_NAMED_DEBUG("ActionQueue.QueueNow.CancelingPrevious", "Canceling %s [%d] in favor of action %s [%d]",
+                          _queue.front()->GetName().c_str(),
+                          _queue.front()->GetTag(),
+                          action->GetName().c_str(),
+                          action->GetTag());
         _queue.front()->Cancel();
         return QueueNext(action, numRetries);
       }
@@ -288,7 +293,7 @@ namespace Anki {
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueAFront.NullActionPointer",
-                          "Refusing to queue a null action pointer.\n");
+                          "Refusing to queue a null action pointer.");
         return RESULT_FAIL;
       }
       
@@ -300,18 +305,23 @@ namespace Anki {
       } else {
         // Try to interrupt whatever is running and put this new action in front of it
         if(_queue.front()->Interrupt()) {
-          // Current front action is interruptible. Reset it so it's ready to be
-          // re-run and put the new action in front of it in the queue.
+          // Current front action is interruptible. Add it to the list of interrupted
+          // actions to get updated once more on the next Update() call (when we'll
+          // have a robot reference), and put the new action in front of it in the queue.
           PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
                            "Interrupting %s to put %s in front of it.",
                            _queue.front()->GetName().c_str(),
                            action->GetName().c_str());
-          _queue.front()->Reset();
+          _interruptedActions.push_back(_queue.front());
           action->SetNumRetries(numRetries);
           _queue.push_front(action);
         } else {
           // Current front action is not interruptible, so just use QueueNow and
           // cancel it
+          PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
+                           "Could not interrupt %s. Will cancel and queue %s now.",
+                           _queue.front()->GetName().c_str(),
+                           action->GetName().c_str());
           result = QueueNow(action, numRetries);
         }
       }
@@ -356,6 +366,17 @@ namespace Anki {
     Result ActionQueue::Update(Robot& robot)
     {
       Result lastResult = RESULT_OK;
+      
+      // Update any interrupted actions (but leave them in the queue)
+      for(auto interruptedAction : _interruptedActions) {
+        ActionResult result = interruptedAction->Update(robot);
+        if(ActionResult::INTERRUPTED != result) {
+          PRINT_NAMED_WARNING("ActionQueue.Update.InterruptFailed",
+                              "Expecting interrupted %s action to return INTERRUPTED result on Update",
+                              interruptedAction->GetName().c_str());
+        }
+      }
+      _interruptedActions.clear();
       
       if(!_queue.empty())
       {

@@ -341,9 +341,9 @@ namespace Cozmo {
     // keyframe and the one in the next keyframe.
     //RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
     
-    // Returns the interpolated face params between the current keyframe and the next.
-    // If the nextFrame is nullptr, then this frame's procedural face params are returned.
-    ProceduralFaceParams GetInterpolatedFaceParams(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms);
+    // Returns the interpolated face between the current keyframe and the next.
+    // If the nextFrame is nullptr, then this frame's procedural face are returned.
+    ProceduralFace GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms);
     
     static const std::string& GetClassName() {
       static const std::string ClassName("ProceduralFaceKeyFrame");

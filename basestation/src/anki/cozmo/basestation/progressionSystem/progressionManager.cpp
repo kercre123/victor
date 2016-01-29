@@ -34,6 +34,8 @@ void ProgressionManager::Reset()
   {
     GetStatByIndex(i).Reset();
   }
+  _friendshipLevel.Reset();
+  _friendshipPoints.Reset();
 }
 
 
@@ -73,7 +75,19 @@ void ProgressionManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageG
         case ExternalInterface::ProgressionMessageUnionTag::AddToProgressionStat:
         {
           const Anki::Cozmo::ExternalInterface::AddToProgressionStat& msg = progressionMessage.Get_AddToProgressionStat();
-          GetStat(msg.statType).SetValue(msg.deltaVal);
+          GetStat(msg.statType).Add(msg.deltaVal);
+          break;
+        }
+        case ExternalInterface::ProgressionMessageUnionTag::SetFriendshipLevel:
+        {
+          const Anki::Cozmo::ExternalInterface::SetFriendshipLevel& msg = progressionMessage.Get_SetFriendshipLevel();
+          GetFriendshipLevel().SetValue(msg.newVal);
+          break;
+        }
+        case ExternalInterface::ProgressionMessageUnionTag::SetFriendshipPoints:
+        {
+          const Anki::Cozmo::ExternalInterface::SetFriendshipPoints& msg = progressionMessage.Get_SetFriendshipPoints();
+          GetFriendshipPoints().SetValue(msg.newVal);
           break;
         }
         default:

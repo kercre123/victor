@@ -7,8 +7,10 @@ namespace Anki {
       namespace DAC {
         void Init(void);
         void Tone(void);
+        void Mute(void);
         void EnableAudio(bool enable);
-        void Feed(uint8_t* samples, int length);
+        void Feed(uint8_t* samples);
+        void Sync();
       }
     }
   }

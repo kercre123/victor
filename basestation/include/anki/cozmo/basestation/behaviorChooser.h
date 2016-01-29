@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
 #include "anki/types.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/noncopyable.h"
@@ -52,6 +53,13 @@ public:
   virtual ~IBehaviorChooser() { }
   
   virtual const char* GetName() const = 0;
+  
+  void ClearBannedBehaviorGroups() { _bannedBehaviorGroups.ClearFlags(); }
+  void SetBannedBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) { _bannedBehaviorGroups.SetBitFlag(behaviorGroup, newVal); }
+
+protected:
+  
+  BehaviorGroupFlags  _bannedBehaviorGroups;
 }; // class IBehaviorChooser
   
   
@@ -79,7 +87,9 @@ public:
   virtual ~SimpleBehaviorChooser();
   
 protected:
-  std::vector<IBehavior*> _behaviorList;
+  
+  using BehaviorList = std::vector<IBehavior*>;
+  BehaviorList      _behaviorList;
 };
   
 // Builds upon the SimpleBehaviorChooser to also directly trigger a specific behavior on certain events
@@ -96,6 +106,8 @@ public:
   virtual IBehavior* GetReactionaryBehavior(
     const Robot& robot,
     const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override;
+  
+  virtual const char* GetName() const override { return "Reactionary"; }
   
   // We need to clean up the behaviors we've been given to hold onto
   virtual ~ReactionaryBehaviorChooser();

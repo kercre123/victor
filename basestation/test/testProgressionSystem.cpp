@@ -24,21 +24,23 @@ TEST(ProgressionSystem, TestStats)
 {
   ProgressionManager progressionManager;
   
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Speed).GetValue(),  0);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Stacking).GetValue(),  0);
-  progressionManager.GetStat(ProgressionStatType::Speed).Add(10);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Speed).GetValue(), 10);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Stacking).GetValue(),  0);
-  
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(),  0);
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Novelty).GetValue(),  0);
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Time).GetValue(),  0);
+  progressionManager.GetStat(ProgressionStatType::Excitement).Add(10);
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(), 10);
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Novelty).GetValue(),  0);
+
   // Check we clamp correctly when added beyond the max
-  progressionManager.GetStat(ProgressionStatType::Speed).Add(ProgressionStat::kStatValueMax);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Speed).GetValue(), ProgressionStat::kStatValueMax);
+  progressionManager.GetStat(ProgressionStatType::Excitement).Add(ProgressionStat::kStatValueMax);
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(), ProgressionStat::kStatValueMax);
 
   // Check we clamp correctly when adding enough to overflow
-  progressionManager.GetStat(ProgressionStatType::Speed).Add( std::numeric_limits<ProgressionStat::ValueType>::max() );
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Speed).GetValue(), ProgressionStat::kStatValueMax);
+  progressionManager.GetStat(ProgressionStatType::Excitement).Add( std::numeric_limits<ProgressionStat::ValueType>::max() );
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(), ProgressionStat::kStatValueMax);
   
   progressionManager.Reset();
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Speed).GetValue(), 0);
-  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Stacking).GetValue(),  0);
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Excitement).GetValue(),  0);
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Novelty).GetValue(),  0);
+  EXPECT_EQ(progressionManager.GetStat(ProgressionStatType::Time).GetValue(),  0);
 }

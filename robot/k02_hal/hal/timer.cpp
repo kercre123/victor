@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
+#include "hal/uart.h"
 #include "MK02F12810.h"
 
 namespace Anki
@@ -52,6 +53,18 @@ namespace Anki
         __enable_irq();
         
         return now;
+      }
+      
+      // Convert a profile value into microseconds and pretty-print it on debug UART
+      namespace UART {
+        void DebugPrintProfile(int value)
+        {
+          while (value < 0)
+            value += MAX_COUNT;
+          //value = ((u64)(value) * SYSTICK_RECIP) >> 32;
+          value /= 240;
+          UART::DebugPrintf("%05d ", value);
+        }
       }
     }
   }

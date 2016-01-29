@@ -15,7 +15,6 @@
 #include "util/console/consoleSystem.h"
 #include "clad/types/debugConsoleTypes.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"

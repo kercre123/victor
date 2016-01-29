@@ -56,7 +56,8 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::FacePose,
       ExternalInterface::MessageGameToEngineTag::TurnInPlace,
       ExternalInterface::MessageGameToEngineTag::TrackToObject,
-      ExternalInterface::MessageGameToEngineTag::TrackToFace
+      ExternalInterface::MessageGameToEngineTag::TrackToFace,
+      ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
     };
     
     // Subscribe to desired events
@@ -99,6 +100,12 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     {
       auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
       _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
+    }
+
+    // Custom handlers for BehaviorManager events
+    {
+      auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
   }
 }
@@ -334,20 +341,36 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
   } else {
     objectID = msg.objectID;
   }
-  return new FaceObjectAction(objectID,
-                              Radians(msg.turnAngleTol),
-                              Radians(msg.maxTurnAngle),
-                              msg.visuallyVerifyWhenDone,
-                              msg.headTrackWhenDone);
+  FaceObjectAction* action = new FaceObjectAction(objectID,
+                                             Radians(msg.maxTurnAngle),
+                                             msg.visuallyVerifyWhenDone,
+                                             msg.headTrackWhenDone);
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
 }
   
-IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::FacePose& facePose)
+IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::FacePose& msg)
 {
-  Pose3d pose(0, Z_AXIS_3D(), {facePose.world_x, facePose.world_y, facePose.world_z},
+  Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
-  return new FacePoseAction(pose,
-                            Radians(facePose.turnAngleTol),
-                            Radians(facePose.maxTurnAngle));
+  FacePoseAction* action = new FacePoseAction(pose,
+                                              Radians(msg.maxTurnAngle));
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
 }
   
 IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
@@ -365,6 +388,7 @@ IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::T
 IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
 {
   TrackObjectAction* action = new TrackObjectAction(trackObject.objectID);
+  action->SetMoveEyes(true);
   
   // TODO: Support body-only mode
   if(trackObject.headOnly) {
@@ -373,7 +397,16 @@ IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface:
   
   return action;
 }
-
+  
+IActionRunner* GetMoveHeadToAngleActionHelper(Robot& robot, const ExternalInterface::SetHeadAngle& setHeadAngle)
+{
+  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(setHeadAngle.angle_rad);
+  action->SetMaxSpeed(setHeadAngle.max_speed_rad_per_sec);
+  action->SetAccel(setHeadAngle.accel_rad_per_sec2);
+  action->SetDuration(setHeadAngle.duration_sec);
+  return action;
+}
+  
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
 {
@@ -391,6 +424,11 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       auto & playAnimation = actionUnion.Get_playAnimation();
       return new PlayAnimationAction(playAnimation.animationName, playAnimation.numLoops);
     }
+    case RobotActionUnionTag::playAnimationGroup:
+    {
+      auto & playAnimationGroup = actionUnion.Get_playAnimationGroup();
+      return new PlayAnimationGroupAction(playAnimationGroup.animationGroupName, playAnimationGroup.numLoops);
+    }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
 
@@ -407,8 +445,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return new PlaceObjectOnGroundAction();
       
     case RobotActionUnionTag::setHeadAngle:
-      // TODO: Provide a means to pass in the speed/acceleration values to the action
-      return new MoveHeadToAngleAction(actionUnion.Get_setHeadAngle().angle_rad);
+      return GetMoveHeadToAngleActionHelper(robot, actionUnion.Get_setHeadAngle());
       
     case RobotActionUnionTag::setLiftHeight:
       // TODO: Provide a means to pass in the speed/acceleration values to the action
@@ -498,7 +535,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::PickupObject:
     {
-      numRetries = 1;
+      numRetries = 0;
       newAction = GetPickupActionHelper(robot, event.GetData().Get_PickupObject());
       break;
     }
@@ -544,6 +581,12 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = new PlayAnimationAction(msg.animationName, msg.numLoops);
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::PlayAnimationGroup:
+    {
+      const ExternalInterface::PlayAnimationGroup& msg = event.GetData().Get_PlayAnimationGroup();
+      newAction = new PlayAnimationGroupAction(msg.animationGroupName, msg.numLoops);
+      break;
+    }
     case ExternalInterface::MessageGameToEngineTag::FaceObject:
     {
       newAction = GetFaceObjectActionHelper(robot, event.GetData().Get_FaceObject());
@@ -571,7 +614,11 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = GetTrackObjectActionHelper(robot, event.GetData().Get_TrackToObject());
       break;
     }
-    
+    case ExternalInterface::MessageGameToEngineTag::SetHeadAngle:
+    {
+      newAction = GetMoveHeadToAngleActionHelper(robot, event.GetData().Get_SetHeadAngle());
+      break;
+    }
     default:
     {
       PRINT_STREAM_ERROR("RobotEventHandler.HandleEvents",
@@ -666,7 +713,12 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     }
     else {
       // In the normal case directly set the lift height
-      robot->GetMoveComponent().MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
+      MoveLiftToHeightAction* action = new MoveLiftToHeightAction(msg.height_mm);
+      action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
+      action->SetLiftAccel(msg.accel_rad_per_sec2);
+      action->SetDuration(msg.duration_sec);
+      
+      robot->GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, action);
     }
   }
 }
@@ -705,11 +757,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
     return;
   }
   
-  ProceduralFace procFace;
-  procFace.GetParams().SetFromMessage(msg);
-  procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
-  
-  robot->SetProceduralFace(procFace);
+  robot->GetAnimationStreamer().GetLastProceduralFace()->SetFromMessage(msg);
 }
   
   void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -767,6 +815,26 @@ void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface
     robot->GetProgressionManager().HandleEvent(event);
   }
 }
+  
+void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const auto& eventData = event.GetData();
+  const auto& message = eventData.Get_BehaviorManagerMessage();
+  const RobotID_t robotID = message.robotID;
+
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleBehaviorManagerEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetBehaviorManager().HandleMessage(message.BehaviorManagerMessageUnion);
+  }
+}
+  
 
 } // namespace Cozmo
 } // namespace Anki

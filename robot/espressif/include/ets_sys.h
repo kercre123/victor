@@ -96,11 +96,6 @@ typedef void (*int_handler_t)(void*);
 
 /// Anki added missing function prototypes see
 // https://github.com/esp8266/Arduino/blob/e95596e368a89f136d28506696226ba24617419c/hardware/esp8266com/esp8266/tools/sdk/include/ets_sys.h
-void *pvPortMalloc(size_t xWantedSize) __attribute__((malloc, alloc_size(1)));
-void *pvPortRealloc(void* ptr, size_t xWantedSize) __attribute__((alloc_size(2)));
-void pvPortFree(void *ptr);
-void *vPortMalloc(size_t xWantedSize) __attribute__((malloc, alloc_size(1)));
-void vPortFree(void *ptr);
 void *ets_memcpy(void *dest, const void *src, size_t n);
 void *ets_memset(void *s, int c, size_t n);
 void ets_timer_arm_new(ETSTimer *a, int b, int c, int isMstimer);

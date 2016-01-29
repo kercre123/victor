@@ -200,6 +200,10 @@ namespace Anki
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Navigation memory
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      // return pointer to current INavMemoryMap (it may be null if not enabled)
+      const INavMemoryMap* GetNavMemoryMap() const { return _navMemoryMap.get(); }
+      INavMemoryMap* GetNavMemoryMap() { return _navMemoryMap.get(); }
       
       // update memory map
       void UpdateNavMemoryMap();      

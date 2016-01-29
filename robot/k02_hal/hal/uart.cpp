@@ -6,6 +6,7 @@
 
 #include "spi.h"
 #include "uart.h"
+#include "spine.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -54,11 +55,12 @@ inline void transmit_mode(TRANSFER_MODE mode) {
     case TRANSMIT_SEND:
       // Special case mode where we force the head to enter recovery mode
       if (enter_recovery) {
-        g_dataToBody.cubeStatus.ledDark = 0;
+        memset(&g_dataToBody.spineMessage, 0, sizeof(g_dataToBody.spineMessage));
         g_dataToBody.recover = recovery_secret_code;
         enter_recovery = false;
       }
 
+      Anki::Cozmo::HAL::Spine::Dequeue(g_dataToBody.spineMessage);
       memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
       g_dataToBody.recover = 0; // Don't keep sending this
 

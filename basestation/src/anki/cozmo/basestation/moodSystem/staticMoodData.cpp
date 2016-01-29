@@ -41,7 +41,7 @@ void StaticMoodData::InitDecayGraphs()
 {
   for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
   {
-    Anki::Util::GraphEvaluator2d& decayGraph = _emotionDecayGraphs[i];
+    Util::GraphEvaluator2d& decayGraph = _emotionDecayGraphs[i];
     if (decayGraph.GetNumNodes() == 0)
     {
       decayGraph.AddNode(  0.0f, 1.0f);
@@ -55,7 +55,7 @@ void StaticMoodData::InitDecayGraphs()
 }
 
 
-bool StaticMoodData::VerifyDecayGraph(const Anki::Util::GraphEvaluator2d& newGraph, bool warnOnErrors)
+bool StaticMoodData::VerifyDecayGraph(const Util::GraphEvaluator2d& newGraph, bool warnOnErrors)
 {
   const size_t numNodes = newGraph.GetNumNodes();
   if (numNodes == 0)
@@ -72,7 +72,7 @@ bool StaticMoodData::VerifyDecayGraph(const Anki::Util::GraphEvaluator2d& newGra
   float lastY = 0.0f;
   for (size_t i=0; i < numNodes; ++i)
   {
-    const Anki::Util::GraphEvaluator2d::Node& node = newGraph.GetNode(i);
+    const Util::GraphEvaluator2d::Node& node = newGraph.GetNode(i);
     
     if (node._y < 0.0f)
     {
@@ -98,7 +98,7 @@ bool StaticMoodData::VerifyDecayGraph(const Anki::Util::GraphEvaluator2d& newGra
 }
 
 
-bool StaticMoodData::SetDecayGraph(EmotionType emotionType, const Anki::Util::GraphEvaluator2d& newGraph)
+bool StaticMoodData::SetDecayGraph(EmotionType emotionType, const Util::GraphEvaluator2d& newGraph)
 {
   const size_t index = (size_t)emotionType;
   assert((index >= 0) && (index < (size_t)EmotionType::Count));
@@ -116,12 +116,12 @@ bool StaticMoodData::SetDecayGraph(EmotionType emotionType, const Anki::Util::Gr
 }
 
 
-const Anki::Util::GraphEvaluator2d& StaticMoodData::GetDecayGraph(EmotionType emotionType)
+const Util::GraphEvaluator2d& StaticMoodData::GetDecayGraph(EmotionType emotionType) const
 {
   const size_t index = (size_t)emotionType;
   assert((index >= 0) && (index < (size_t)EmotionType::Count));
   
-  Anki::Util::GraphEvaluator2d& decayGraph = _emotionDecayGraphs[index];
+  const Util::GraphEvaluator2d& decayGraph = _emotionDecayGraphs[index];
   assert(decayGraph.GetNumNodes() > 0);
   
   return decayGraph;
@@ -131,11 +131,13 @@ const Anki::Util::GraphEvaluator2d& StaticMoodData::GetDecayGraph(EmotionType em
 static const char* kDecayGraphsKey   = "decayGraphs";
 static const char* kEmotionTypeKey   = "emotionType";
 static const char* kEventMapperKey   = "eventMapper";
+static const char* kDefaultRepetitionPenaltyKey = "defaultRepetitionPenalty";
   
   
 bool StaticMoodData::ReadFromJson(const Json::Value& inJson)
 {
   _emotionEventMapper.Clear();
+  _defaultRepetitionPenalty.Clear();
   
   const Json::Value& decayGraphsJson = inJson[kDecayGraphsKey];
   if (decayGraphsJson.isNull())
@@ -144,7 +146,7 @@ bool StaticMoodData::ReadFromJson(const Json::Value& inJson)
     return false;
   }
   
-  Anki::Util::GraphEvaluator2d defaultDecayGraph;
+  Util::GraphEvaluator2d defaultDecayGraph;
   bool decayGraphsSet[(size_t)EmotionType::Count] = {0};
   
   // Per emotion graph
@@ -153,7 +155,7 @@ bool StaticMoodData::ReadFromJson(const Json::Value& inJson)
   {
     const Json::Value& decayGraphJson = decayGraphsJson.get(i, kNullGraphValue);
 
-    Anki::Util::GraphEvaluator2d decayGraph;
+    Util::GraphEvaluator2d decayGraph;
     if (decayGraphJson.isNull() || !decayGraph.ReadFromJson(decayGraphJson))
     {
       PRINT_NAMED_WARNING("StaticMoodData.ReadFromJson.BadDecayGraph", "DecayGraph %u failed to read", i);
@@ -210,6 +212,22 @@ bool StaticMoodData::ReadFromJson(const Json::Value& inJson)
     PRINT_NAMED_WARNING("StaticMoodData.ReadFromJson.BadEventMapper", "EventMapper '%s' failed to read", kEventMapperKey);
     return false;
   }
+  
+  const Json::Value& defaultRepetitionPenaltyJson = inJson[kDefaultRepetitionPenaltyKey];
+  if (!defaultRepetitionPenaltyJson.isNull())
+  {
+    if (!_defaultRepetitionPenalty.ReadFromJson(defaultRepetitionPenaltyJson))
+    {
+      PRINT_NAMED_WARNING("StaticMoodData.ReadFromJson.BadDefaultRepetitionPenalty", "'%s' failed to read", kDefaultRepetitionPenaltyKey);
+    }
+  }
+  
+  // Ensure there is a valid graph
+  if (_defaultRepetitionPenalty.GetNumNodes() == 0)
+  {
+    PRINT_NAMED_WARNING("StaticMoodData.ReadFromJson.EmptyDefaultRepetitionPenalty", "'%s' missing or bad - defaulting to no penalty", kDefaultRepetitionPenaltyKey);
+    _defaultRepetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
+  }
 
   return true;
 }
@@ -225,7 +243,7 @@ bool StaticMoodData::WriteToJson(Json::Value& outJson) const
     
     for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
     {
-      const Anki::Util::GraphEvaluator2d& decayGraph = _emotionDecayGraphs[i];
+      const Util::GraphEvaluator2d& decayGraph = _emotionDecayGraphs[i];
       const char* emotionTypeName = EmotionTypeToString((EmotionType)i);
 
       Json::Value graphJson;

@@ -138,9 +138,9 @@ def main(scriptArgs):
   generator.processFolder(['planning/basestation/src', 'planning/include', 'planning/shared/src'], ['project/gyp/planning.lst'])
   generator.processFolder(['planning/basestation/test'], ['project/gyp/planning-standalone.lst'])
   generator.processFolder(['planning/basestation/test'], ['project/gyp/planning-test.lst'])
-  generator.processFolder(['planning/robot/src', 'planning/shared/src'], ['project/gyp/planning-robot.lst'])
+  generator.processFolder(['planning/shared/src'], ['project/gyp/planning-robot.lst'])
   generator.processFolder(['messaging/basestation/src', 'messaging/include', 'messaging/shared/src'], ['project/gyp/messaging.lst'])
-  generator.processFolder(['messaging/robot/src', 'messaging/shared/src'], ['project/gyp/messaging-robot.lst'])
+  generator.processFolder(['messaging/shared/src'], ['project/gyp/messaging-robot.lst'])
   if options.updateListsOnly:
     # TODO: remove dependency on abspath. 
     # there is a bug due to 'os.chdir' and user passed rel path

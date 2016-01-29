@@ -78,7 +78,7 @@ void little_sleep(std::chrono::microseconds us)
 }
 
 
-void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner)
+void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner, int minPlanTimeMs = 2)
 {
   bool done = false;
   int ms = 0;
@@ -107,7 +107,9 @@ void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner)
 
   ASSERT_TRUE(done) << "planner didn't finish";
 
-  EXPECT_GT(ms, 2) << "the planner might be fast, but not that fast!";
+  std::cout<<"planner took "<<ms<<"ms\n";
+  
+  EXPECT_GE(ms, minPlanTimeMs) << "the planner might be fast, but not that fast!";
   EXPECT_LT(ms, maxTimeMs) << "shouldn't use all the available time";
 
   printf("planner finished after %dms\n", ms);
@@ -129,7 +131,7 @@ TEST(LatticePlanner, PlanOnceEmpty)
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
-  ExpectPlanComplete(100, planner);
+  ExpectPlanComplete(100, planner, 0);
 
   size_t selectedTargetIdx = 100;
   Planning::Path path;
@@ -155,7 +157,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
-  ExpectPlanComplete(100, planner);
+  ExpectPlanComplete(100, planner, 0);
 
   size_t selectedTargetIdx = 100;
   Planning::Path path;
@@ -174,7 +176,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   ret = planner->ComputePath(start2, goal2);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
-  ExpectPlanComplete(100, planner);
+  ExpectPlanComplete(100, planner, 0);
 
   selectedTargetIdx = 200;
 
@@ -297,7 +299,7 @@ TEST(LatticePlanner, StopPlanning)
   ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
     
-  ExpectPlanComplete(1000, planner);
+  ExpectPlanComplete(1000, planner, 6);
 
   size_t selectedTargetIdx = 100;
 

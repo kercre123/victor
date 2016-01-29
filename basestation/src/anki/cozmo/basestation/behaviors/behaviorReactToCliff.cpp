@@ -66,7 +66,7 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec, 
 {
   robot.GetMoodManager().AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
                                        EmotionType::Calm,  -kEmotionChangeSmall,
-                                       EmotionType::Brave, -kEmotionChangeSmall, "CliffReact");
+                                       EmotionType::Brave, -kEmotionChangeSmall, "CliffReact", currentTime_sec);
 
   return Result::RESULT_OK;
 }
@@ -81,7 +81,7 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
       {
         robot.GetMoodManager().AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
                                              EmotionType::Calm,  -kEmotionChangeSmall,
-                                             EmotionType::Brave, -kEmotionChangeSmall, "CliffDetected");
+                                             EmotionType::Brave, -kEmotionChangeSmall, "CliffDetected", currentTime_sec);
         _currentState = State::CliffDetected;
         return Status::Running;
       }
@@ -135,6 +135,10 @@ Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_
     return Result::RESULT_FAIL;
   }
   return Result::RESULT_OK;
+}
+  
+void BehaviorReactToCliff::StopInternal(Robot& robot, double currentTime_sec)
+{
 }
 
 void BehaviorReactToCliff::HandleCliffEvent(const EngineToGameEvent& event)

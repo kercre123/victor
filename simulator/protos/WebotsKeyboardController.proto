@@ -1,0 +1,226 @@
+PROTO WebotsKeyboardController [
+  field SFString name "WebotsKeyboardController"
+
+  # Volume
+  field SFFloat robotVolume 1.0
+
+  # Animation to send
+  field SFString animationToSendName "ANIM_TEST"
+  field SFInt32  animationNumLoops 1
+  field SFString idleAnimationName "_LIVE_"
+  
+  # Behavior to send
+  #  Use "DISABLED" to disable behaviors
+  field SFString behaviorName "DISABLED"
+
+  # BehaviorChooser to send
+  field SFString behaviorChooserName "InvestorDemoFacesAndBlocks"
+
+  field SFString controllerArgs ""
+  field SFVec3f translation 0 0 0.08
+  field SFRotation rotation 0 0 1 0
+
+  field SFColor poseMarkerDiffuseColor 0.1 0.8 0.1
+
+  # Slow speed in mm/s (hold shift)
+  field SFFloat driveSpeedSlow 20
+
+  # Normal speed in mm/s 
+  field SFFloat driveSpeedNormal 60 
+
+  # Turbo speed in mm/s (hold alt)
+  field SFFloat driveSpeedTurbo 150
+
+  # Point turn speed (deg/s), no target angle 
+  field SFFloat pointTurnSpeed_degPerSec 45
+  
+  # Path speeds
+  field SFFloat pathSpeed_mmps  60
+  field SFFloat pathAccel_mmps2 100
+  field SFFloat pathDecel_mmps2 500
+  field SFFloat pathPointTurnSpeed_radPerSec 1.5
+  field SFFloat pathPointTurnAccel_radPerSec2 10
+  field SFFloat pathPointTurnDecel_radPerSec2 50
+  field SFFloat pathReverseSpeed_mmps 30
+
+  # Docking speed/accel
+  field SFFloat dockSpeed_mmps  100
+  field SFFloat dockAccel_mmps2 200
+
+  # Value between 0 and 1 which determines how much the robot turns with 
+  # the left/right arrow keys when going forward or backward.
+  # At 1, it will turn one wheel at driveSpeed and the other not at all.
+  # At 0, it won't turn at all.
+  field SFFloat steeringCurvature 1.0
+
+  # Whether or not to use the specified approachAngle
+  field SFBool useApproachAngle FALSE
+  field SFFloat approachAngle_deg 0
+
+  # Whether or not to use the exact rotation as specified in exactPlacementRotation
+  field SFBool useExactPlacementRotation FALSE
+  field SFRotation exactPlacementRotation 0 0 1 0
+
+  # Offset at which to place an object on the ground
+  # when performing pickAndPlace on an object with placeObjectOnGroundIfCarrying enabled.
+  # Only works if actually carrying an object!
+  field SFFloat placeOnGroundOffsetX_mm 88
+
+  # The desired distance between robot origin and the marker face on 
+  # AlignWithObject action
+  field SFFloat alignWithObjectDistToMarker_mm 20
+
+  # Hacky way for me to modify values that I want to send to robot via keyboard controller
+  field SFFloat lWheelKp 0.0005
+  field SFFloat lWheelKi 0.00005
+  field SFFloat lWheelMaxErrorSum 5000
+  field SFFloat rWheelKp 0.0005
+  field SFFloat rWheelKi 0.00005
+  field SFFloat rWheelMaxErrorSum 5000
+
+  field SFFloat headKp 4
+  field SFFloat headKi 0.02
+  field SFFloat headKd 4000
+  field SFFloat headMaxErrorSum 10
+
+  field SFFloat liftKp 3
+  field SFFloat liftKi 0.1
+  field SFFloat liftKd 1250
+  field SFFloat liftMaxErrorSum 4
+
+  field SFFloat headSpeedDegPerSec 360
+  field SFFloat headAccelDegPerSec2 2500
+
+  # If non-zero, this is how much time it will take for the head to move
+  # to a commanded angle (via keys '4', '5', and '6')
+  field SFFloat headDurationSec 0
+
+  field SFFloat liftSpeedDegPerSec 120
+  field SFFloat liftAccelDegPerSec2 600
+
+  # If non-zero, this is how much time it will take for the lift to move
+  # to a commanded height (via keys '1', '2', and '3')
+  field SFFloat liftDurationSec 0
+
+  field SFFloat steerK1 0.1
+  field SFFloat steerK2 12
+  field SFFloat steerDistOffsetCap_mm 20
+  field SFFloat steerAngOffsetCap_rad 0.5
+
+  # Vision system params
+  field SFString streamResolution "CVGA"
+  field SFInt32 camera_autoexposureOn 1
+  field SFFloat camera_exposureTime 0.2
+  field SFInt32 camera_integerCountsIncrement 3
+  field SFFloat camera_minExposureTime 0.02
+  field SFFloat camera_maxExposureTime 0.98
+  field SFInt32 camera_highValue 250  
+  field SFFloat camera_percentileToMakeHigh 0.97
+  field SFInt32 camera_limitFramerate 1
+
+  # Face detect params
+  field SFFloat fd_scaleFactor 1.1
+  field SFInt32 fd_minNeighbors 2
+  field SFInt32 fd_minObjectHeight 30
+  field SFInt32 fd_minObjectWidth 30
+  field SFInt32 fd_maxObjectHeight 240
+  field SFInt32 fd_maxObjectWidth 320
+
+  # Test mode params
+  field SFInt32 driveTest_flags 1
+  field SFInt32 driveTest_wheel_power 20
+  field SFInt32 liftTest_flags 0  
+  field SFInt32 liftTest_nodCycleTimeMS 2000  
+  field SFInt32 headTest_flags 0
+  field SFInt32 headTest_nodCycleTimeMS 2000  
+
+  # Force-add robot options
+  field SFBool   forceAddRobot FALSE
+  field SFString forcedRobotIP "172.31.1.1"
+  field SFInt32  forcedRobotID 1
+  field SFBool   forcedRobotIsSimulated FALSE  
+  
+  # Cozmo engine location
+  field SFString engineIP "127.0.0.1"
+  
+  # UI camera display
+  field SFFloat  uiCamDisplayPixelSize 0.0
+
+  # UI device ID 
+  # TODO: Get rid of this. The UI should not be assigning it's own ID.
+  field SFInt32  deviceID 1
+]
+{
+Supervisor {
+
+  translation IS translation
+  rotation IS rotation
+  
+  children [
+    
+    Transform {
+      translation -0.015 0 0
+      rotation 0 0 1 -1.5707963
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor IS poseMarkerDiffuseColor
+            }
+          }
+          geometry Cone {
+            bottomRadius 0.01
+            height 0.03
+          }
+        }
+      ]
+    }
+      
+    DEF CAM_DISPLAY_PLANE Display {
+      children [
+        DEF SHAPE Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1 1 1
+              specularColor 0 0 0
+              transparency 0.6
+            }
+          }
+          geometry Plane {
+		 # Make display plane have no dims in 3D view so as to be invisible
+	         size 0 0
+          }
+        }
+      ]
+      name "uiCamDisplay"
+
+      %{ if fields.streamResolution.value == "VGA" then }%
+      width 640
+      height 480
+      #pixelSize 0.5
+      %{ elseif fields.streamResolution.value == "CVGA" then }%
+      width 400
+      height 296
+      #pixelSize 1
+      %{ elseif fields.streamResolution.value == "QVGA" then }%
+      width 320
+      height 240
+      #pixelSize 1
+      %{ elseif fields.streamResolution.value == "QQVGA" then }%
+      width 160
+      height 120
+      #pixelSize 2
+      %{ elseif fields.streamResolution.value == "QQQVGA" then }%
+      width 80
+      height 60
+      #pixelSize 4
+      %{ end }%
+      pixelSize %{=fields.uiCamDisplayPixelSize.value}%
+      windowPosition 1 0
+    }
+  ]
+  name IS name
+  controller "webotsCtrlKeyboard"
+  controllerArgs IS controllerArgs
+} # Supervisor definition
+} # PROTO definition

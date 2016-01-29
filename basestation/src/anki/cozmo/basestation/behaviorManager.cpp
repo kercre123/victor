@@ -26,10 +26,14 @@
 
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 
+#include "anki/common/basestation/utils/timer.h"
+
 #include "clad/types/behaviorChooserType.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
+
+#include "anki/common/basestation/utils/timer.h"
 
 #define DEBUG_BEHAVIOR_MGR 0
 
@@ -205,7 +209,7 @@ namespace Cozmo {
         _resumeBehavior = _currentBehavior;
       }
 
-      _currentBehavior = _nextBehavior;
+      SetCurrentBehavior(_nextBehavior, currentTime_sec);
       _nextBehavior = nullptr;
     }
   }
@@ -269,8 +273,14 @@ namespace Cozmo {
           break;
           
         case IBehavior::Status::Complete:
-          // Behavior complete, switch to next
+          // Behavior complete, try to select and switch to next
           _currentBehavior->SetIsRunning(false);
+          lastResult = SelectNextBehavior(currentTime_sec);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("BehaviorManager.Update.SelectNextFailed",
+                                "Failed trying to select next behavior, continuing with current.");
+            lastResult = RESULT_OK;
+          }
           SwitchToNextBehavior(currentTime_sec);
           break;
           
@@ -360,11 +370,12 @@ namespace Cozmo {
   
   void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   {
-    // These behavior pointers are going to be invalidated, so clear them. Leave current behavior, since it
-    // lives in the factory and doesn't get deleted
-    // TEMP: // TODO:(bn) ask Wesley about this
+    // These behavior pointers might be invalidated, so clear them
+    // SetCurrentBehavior ensures that any existing current behavior is stopped first
     
-    _nextBehavior = _forceSwitchBehavior = nullptr;
+    SetCurrentBehavior(nullptr, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+    _nextBehavior = nullptr;
+    _forceSwitchBehavior = nullptr;
     _resumeBehavior = nullptr;
 
     if( _behaviorChooser != nullptr ) {
@@ -376,12 +387,112 @@ namespace Cozmo {
     Util::SafeDelete(_behaviorChooser);
     
     _behaviorChooser = newChooser;
+
+    // force the new behavior chooser to select something now, instead of waiting for it to be ready
+    SelectNextBehavior(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
   }
   
+  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
+  {
+    if (_currentBehavior && (newBehavior != _currentBehavior))
+    {
+      _currentBehavior->Stop(currentTime_sec);
+    }
+    _currentBehavior = newBehavior;
+  }
+
   IBehavior* BehaviorManager::LoadBehaviorFromJson(const Json::Value& behaviorJson)
   {
     IBehavior* newBehavior = _behaviorFactory->CreateBehavior(behaviorJson, _robot);
     return newBehavior;
+  }
+  
+  void BehaviorManager::ClearAllBehaviorOverrides()
+  {
+    const BehaviorFactory::NameToBehaviorMap& nameToBehaviorMap = _behaviorFactory->GetBehaviorMap();
+    for(const auto& it : nameToBehaviorMap)
+    {
+      IBehavior* behavior = it.second;
+      behavior->SetOverrideScore(-1.0f);
+    }
+  }
+  
+  bool BehaviorManager::OverrideBehaviorScore(const std::string& behaviorName, float newScore)
+  {
+    IBehavior* behavior = _behaviorFactory->FindBehaviorByName(behaviorName);
+    if (behavior)
+    {
+      behavior->SetOverrideScore(newScore);
+      return true;
+    }
+    return false;
+  }
+  
+  void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message)
+  {
+    switch (message.GetTag())
+    {
+      case ExternalInterface::BehaviorManagerMessageUnionTag::EnableAllBehaviorGroups:
+      {
+        if (_behaviorChooser)
+        {
+          _behaviorChooser->ClearBannedBehaviorGroups();
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableAllBehaviorGroups.NullChooser",
+                              "Ignoring EnableAllBehaviorGroups");
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::EnableBehaviorGroup:
+      {
+        const auto& msg = message.Get_EnableBehaviorGroup();
+        if (_behaviorChooser)
+        {
+          _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, false);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableBehaviorGroup.NullChooser",
+                              "Ignoring EnableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::DisableBehaviorGroup:
+      {
+        const auto& msg = message.Get_DisableBehaviorGroup();
+        if (_behaviorChooser)
+        {
+          _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, true);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.DisableBehaviorGroup.NullChooser",
+                              "Ignoring DisableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::ClearAllBehaviorScoreOverrides:
+      {
+        ClearAllBehaviorOverrides();
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::OverrideBehaviorScore:
+      {
+        const auto& msg = message.Get_OverrideBehaviorScore();
+        OverrideBehaviorScore(msg.behaviorName, msg.newScore);
+        break;
+      }
+      default:
+      {
+        PRINT_NAMED_ERROR("BehaviorManager.HandleEvent.UnhandledMessageUnionTag",
+                          "Unexpected tag %u '%s'", (uint32_t)message.GetTag(),
+                          BehaviorManagerMessageUnionTagToString(message.GetTag()));
+        assert(0);
+        break;
+      }
+    }
   }
   
 } // namespace Cozmo

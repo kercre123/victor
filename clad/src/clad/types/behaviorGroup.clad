@@ -1,0 +1,25 @@
+// File: behaviorGroup
+// Author: Mark Wesley
+// Created: 01/14/16
+// Copyright: Anki, inc. 2016
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 BehaviorGroup {
+
+    Reactionary = 0,
+    ShortInterruption,
+    AffectsBlocks,
+    ChangesPosition,
+    ChangesOrientation,
+    MovesLift,
+    MiniGame,
+    
+    Count
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

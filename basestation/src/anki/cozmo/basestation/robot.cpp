@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
@@ -63,6 +64,8 @@
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 #define MIN_DISTANCE_FOR_MINANGLE_PLANNER 1.0f
 
+#define DEBUG_BLOCK_LIGHTS 0
+
 namespace Anki {
   namespace Cozmo {
     
@@ -88,6 +91,7 @@ namespace Anki {
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
     , _imageDeChunker(new ImageDeChunker())
+    , _traceHandler(dataPlatform)
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -112,10 +116,6 @@ namespace Anki {
         SetupMiscHandlers(*_externalInterface);
       }
       
-      _proceduralFace.MarkAsSentToRobot(false);
-      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
-      _lastProceduralFace.MarkAsSentToRobot(true);
-      
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
@@ -123,6 +123,7 @@ namespace Anki {
       _lastDebugStringHash = 0;
 
       ReadAnimationDir();
+      ReadAnimationGroupDir();
       
       // Set up the neutral face to use when resetting procedural animations
       static const char* neutralFaceAnimName = "neutral_face";
@@ -130,7 +131,7 @@ namespace Anki {
       if (nullptr != neutralFaceAnim)
       {
         auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
-        ProceduralFaceParams::SetResetData(frame->GetFace().GetParams());
+        ProceduralFace::SetResetData(frame->GetFace());
       }
       else
       {
@@ -427,16 +428,15 @@ namespace Anki {
       SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
       
       SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
+
+      GetMoveComponent().Update(msg);
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      _isMoving = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_MOVING);
-      _isHeadMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
-      _isLiftMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
       _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
-      _hasMovedSinceLocalization |= _isMoving || _isPickedUp;
+      _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _isPickedUp;
       
       Pose3d newPose;
       
@@ -566,6 +566,7 @@ namespace Anki {
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
                                                 (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+                                                _enabledAnimTracks,
                                                 _animationTag);
       
       return lastResult;
@@ -708,7 +709,7 @@ namespace Anki {
           return RESULT_OK;
         }
 
-        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
+        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
         const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
         
         assert(t_prev < t);
@@ -1120,17 +1121,19 @@ namespace Anki {
       
       // Sending debug string to game and viz
       char buffer [128];
+
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c lock:%c%c%c %s:%s ",
-               IsLiftMoving() ? 'L' : ' ',
-               IsHeadMoving() ? 'H' : ' ',
-               IsMoving() ? 'B' : ' ',
+               "r:%c%c%c%c lock:%c%c%c %2dHz %s:%s ",
+               GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
+               GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
+               GetMoveComponent().IsMoving() ? 'B' : ' ',
                IsCarryingObject() ? 'C' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'B' : ' ',
+               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+               (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                behaviorChooserName,
                behaviorName.c_str());
       
@@ -1425,124 +1428,38 @@ namespace Anki {
     {
       return _animationStreamer.GetIdleAnimationName();
     }
-  
-    void Robot::SetProceduralFace(const ProceduralFace& face)
-    {
-      // First one
-      if(_lastProceduralFace.GetTimeStamp() == 0) {
-        _lastProceduralFace = face;
-        _lastProceduralFace.MarkAsSentToRobot(true);
-        _proceduralFace.MarkAsSentToRobot(true);
-      } else {
-        if(_proceduralFace.HasBeenSentToRobot()) {
-          // If the current face has already been sent, make it the
-          // last procedural face (sent). Otherwise, we'll just
-          // replace the current face and leave "last" as is.
-          std::swap(_lastProceduralFace, _proceduralFace);
-        }
-        _proceduralFace = face;
-        _proceduralFace.MarkAsSentToRobot(false);
-      }
-    }
-    
-    void Robot::MarkProceduralFaceAsSent()
-    {
-      _proceduralFace.MarkAsSentToRobot(true);
-    }
     
     const std::string Robot::GetStreamingAnimationName() const
     {
       return _animationStreamer.GetStreamingAnimationName();
     }
 
-    u32 Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent)
+    void Robot::ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
+                          TimeStamp_t duration_ms, const std::string& name)
     {
-      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent);
-    }
-    
-    u32 Robot::ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                                 TimeStamp_t duration_ms, bool makePersistent)
-    {
-      u32 layerTag = 0;
+      ProceduralFace procFace;
+      ProceduralFace::Value xMin=0, xMax=0, yMin=0, yMax=0;
+      procFace.GetEyeBoundingBox(xMin, xMax, yMin, yMax);
+      procFace.LookAt(xPix, yPix,
+                      std::max(xMin, ProceduralFace::WIDTH-xMax),
+                      std::max(yMin, ProceduralFace::HEIGHT-yMax),
+                      1.1f, 0.85f, 0.1f);
       
-      // Clip, but retain sign
-      xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
-      yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
+      ProceduralFaceKeyFrame keyframe(procFace, duration_ms);
       
-      //PRINT_NAMED_DEBUG("Robot.ShiftAndScaleEyes", "shift=(%.3f,%.3f) scale=(%.3f,%.3f)",
-      //                  xPix, yPix, xScale, yScale);
-      
-      AnimationStreamer::FaceTrack faceTrack;
-      
-      if(duration_ms == 0) {
-        // Dart over three frames: go 2/3 of the distance in the first frame,
-        // 2/9 the second (that's 2/3 of the remaining 1/3) and then the final 1/9
-        // at the end.
-        
-        const f32 dist = std::sqrt(xPix*xPix + yPix*yPix);
-        const f32 divisor = (dist > 0 ? 1.f/dist : 1.f); // prevent divide by zero when (xPix==yPix==0)
-        const f32 cosAngle = xPix * divisor;
-        const f32 sinAngle = yPix * divisor;
-        
-        ProceduralFace procFace;
-        ProceduralFaceParams& faceParams = procFace.GetParams();
-        
-        TimeStamp_t t=0;
-        for(auto frac : {0.666667f, 0.888889f, 1.f})
-        {
-          const f32 x = frac * dist * cosAngle;
-          const f32 y = frac * dist * sinAngle;
-          faceParams.SetFacePosition(Point2f(x,y));
-          
-          // Scale "further" eye down a little and "closer" eye up a little
-          const f32 MaxScaleAdj = 0.25f;
-          f32 leftScaleY = 1.f, rightScaleY = 1.f;
-          const f32 xScaleAdj = std::abs(x) * MaxScaleAdj / (0.5f * ProceduralFace::WIDTH);
-          if(x > 0) {
-            leftScaleY  += xScaleAdj;
-            rightScaleY -= xScaleAdj;
-          } else if(x < 0) {
-            leftScaleY  -= xScaleAdj;
-            rightScaleY += xScaleAdj;
-          }
-
-          const f32 scaleY = (frac*(yScale-1.f)+1.f) - std::abs(y) / (0.5f * ProceduralFace::HEIGHT) * 0.2f;
-          
-          faceParams.SetParameter(ProceduralFace::WhichEye::Left,
-                                  ProceduralEyeParameter::EyeScaleY, leftScaleY * scaleY);
-          faceParams.SetParameter(ProceduralFace::WhichEye::Right,
-                                  ProceduralEyeParameter::EyeScaleY, rightScaleY * scaleY);
-          
-          const f32 scaleX = frac*(xScale-1.f)+1.f;
-          faceParams.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, scaleX);
-          
-          ASSERT_NAMED(!(std::isnan(leftScaleY) || std::isnan(rightScaleY) ||
-                         std::isnan(scaleY) || std::isnan(scaleX) ||
-                         std::isnan(x) || std::isnan(y)),
-                       "Shift/scale values should be non-nan!");
-          
-          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
+      if(AnimationStreamer::NotAnimatingTag == tag) {
+        AnimationStreamer::FaceTrack faceTrack;
+        if(duration_ms > 0) {
+          // Add an initial no-adjustment frame so we have something to interpolate
+          // from on our way to the specified shift
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame());
         }
+        faceTrack.AddKeyFrameToBack(std::move(keyframe));
+        tag = GetAnimationStreamer().AddPersistentFaceLayer(name, std::move(faceTrack));
       } else {
-        //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
-        
-        ProceduralFace procFace;
-        ProceduralFaceParams& params = procFace.GetParams();
-        params.SetFacePosition({xPix, yPix});
-        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
-        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
-        
-        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration_ms));
+        GetAnimationStreamer().AddToPersistentFaceLayer(tag, std::move(keyframe));
       }
-      
-      if(makePersistent) {
-        layerTag = _animationStreamer.AddPersistentFaceLayer(std::move(faceTrack));
-      } else {
-        _animationStreamer.AddFaceLayer(std::move(faceTrack));
-      }
-      
-      return layerTag;
-    } // ShiftAndScaleEyes()
+    }
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
@@ -1564,24 +1481,38 @@ namespace Anki {
       Json::Value animDefs;
       const bool success = _dataPlatform->readAsJson(filename, animDefs);
       if (success && !animDefs.empty()) {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
+        //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
+        
+        if(std::string(filename).find(animationId) == std::string::npos) {
+          PRINT_NAMED_WARNING("Robot.ReadAnimationFile.AnimationNameMismatch",
+                              "Animation name '%s' does not match seem to match "
+                              "filename '%s'", animationId.c_str(), filename);
+        }
       }
 
     }
-
-    static bool HasSuffix(const char* inFilename, const char* inSuffix)
+    
+    // Read the animation groups in a dir
+    void Robot::ReadAnimationGroupFile(const char* filename)
     {
-      const size_t filenameLen = strlen(inFilename);
-      const size_t suffixLen   = strlen(inSuffix);
-      
-      if (filenameLen < suffixLen)
-      {
-        return false;
-      }
-      
-      const int cmp = strcmp(&inFilename[filenameLen-suffixLen], inSuffix);
-      return (cmp == 0);
+      Json::Value animGroupDef;
+      const bool success = _dataPlatform->readAsJson(filename, animGroupDef);
+      if (success && !animGroupDef.empty()) {
+        
+        std::string fullName(filename);
+        
+        // remove path
+        auto slashIndex = fullName.find_last_of("/");
+        std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
+        // remove extension
+        auto dotIndex = jsonName.find_last_of(".");
+        std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
+
+        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
+        
+        _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
+      }      
     }
     
     void Robot::LoadBehaviors()
@@ -1599,7 +1530,7 @@ namespace Anki {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr)
         {
-          if ((ent->d_type == DT_REG) && HasSuffix(ent->d_name, ".json"))
+          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
           {
             std::string fullFileName = behaviorFolder + ent->d_name;
             
@@ -1607,7 +1538,7 @@ namespace Anki {
             const bool success = _dataPlatform->readAsJson(fullFileName, behaviorJson);
             if (success && !behaviorJson.empty())
             {
-              PRINT_NAMED_INFO("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+              //PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
               _behaviorMgr.LoadBehaviorFromJson(behaviorJson);
             }
             else
@@ -1622,13 +1553,23 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
     {
+      // Disable super-verbose warnings about clipping face parameters in json files
+      // To help find bad/deprecated animations, try removing this.
+      ProceduralFace::EnableClippingWarning(false);
+
+      ReadAnimationDirImpl("assets/animations/");
+      ReadAnimationDirImpl("config/basestation/animations/");
+    }
+    
+    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
+    {
       if (_dataPlatform == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
       const std::string animationFolder =
-        _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animations/");
+        _dataPlatform->pathToResource(Util::Data::Scope::Resources, animationDir);
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -1675,6 +1616,66 @@ namespace Anki {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
+      
+      ProceduralFace::EnableClippingWarning(true);
+    }
+    
+    // Read the animationGroups in a dir
+    void Robot::ReadAnimationGroupDir()
+    {
+      if (_dataPlatform == nullptr) { return; }
+      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
+      
+      const std::string animationGroupFolder =
+      _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
+      s32 loadedFileCount = 0;
+      DIR* dir = opendir(animationGroupFolder.c_str());
+      if ( dir != nullptr) {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr) {
+          
+          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
+            std::string fullFileName = animationGroupFolder + ent->d_name;
+            struct stat attrib{0};
+            int result = stat(fullFileName.c_str(), &attrib);
+            if (result == -1) {
+              PRINT_NAMED_WARNING("Robot.ReadAnimationGroupFile", "could not get mtime for %s", fullFileName.c_str());
+              continue;
+            }
+            bool loadFile = false;
+            auto mapIt = _loadedAnimationGroupFiles.find(fullFileName);
+            if (mapIt == _loadedAnimationGroupFiles.end()) {
+              _loadedAnimationGroupFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
+              loadFile = true;
+            } else {
+              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
+                mapIt->second = attrib.st_mtimespec.tv_sec;
+                loadFile = true;
+              } else {
+                //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());
+              }
+            }
+            if (loadFile) {
+              ReadAnimationGroupFile(fullFileName.c_str());
+              ++loadedFileCount;
+            }
+          }
+        }
+        closedir(dir);
+      } else {
+        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "folder not found %s", animationGroupFolder.c_str());
+      }
+      
+      // TODO: Implement external interface
+      /*
+      // Tell UI about available animationGroups
+      if (HasExternalInterface()) {
+        std::vector<std::string> animNames(_cannedAnimationGroups.GetAnimationGroupNames());
+        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
+        }
+      }
+       */
     }
 
     Result Robot::SyncTime()
@@ -2431,10 +2432,14 @@ namespace Anki {
       }
     }
     
-    void Robot::UnSetCarryingObjects()
+    void Robot::UnSetCarryingObjects(bool topOnly)
     {
       std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
       for (auto& objID : carriedObjectIDs) {
+        if (topOnly && objID != _carryingObjectOnTopID) {
+          continue;
+        }
+        
         ObservableObject* object = _blockWorld.GetObjectByID(objID);
         if(object == nullptr) {
           PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
@@ -2457,16 +2462,29 @@ namespace Anki {
           }
         }
       }
-      
-      // Tell the robot it's not carrying anything
-      if (_carryingObjectID.IsSet()) {
-        SendSetCarryState(CarryState::CARRY_NONE);
-      }
 
-      // Even if the above failed, still mark the robot's carry ID as unset
-      _carryingObjectID.UnSet();
+      if (!topOnly) {      
+        // Tell the robot it's not carrying anything
+        if (_carryingObjectID.IsSet()) {
+          SendSetCarryState(CarryState::CARRY_NONE);
+        }
+
+        // Even if the above failed, still mark the robot's carry ID as unset
+        _carryingObjectID.UnSet();
+      }
       _carryingObjectOnTopID.UnSet();
     }
+    
+    void Robot::UnSetCarryObject(ObjectID objID)
+    {
+      // If it's the bottom object in the stack, unset all carried objects.
+      if (_carryingObjectID == objID) {
+        UnSetCarryingObjects(false);
+      } else if (_carryingObjectOnTopID == objID) {
+        UnSetCarryingObjects(true);
+      }
+    }
+    
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {
@@ -2990,7 +3008,6 @@ namespace Anki {
       return poseUpdated;
     }
     
-
     void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
@@ -2998,15 +3015,14 @@ namespace Anki {
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
     {
-      ASSERT_NAMED((int)LEDId::NUM_BACKPACK_LEDS == 5, "Robot.wrong.number.of.backpack.ligths");
-      std::array<Anki::Cozmo::LightState, 5> lights;
-      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i){
-        lights[i].onColor = onColor[i];
-        lights[i].offColor = offColor[i];
-        lights[i].onPeriod_ms = onPeriod_ms[i];
-        lights[i].offPeriod_ms = offPeriod_ms[i];
-        lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
-        lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+      std::array<Anki::Cozmo::LightState, (size_t)LEDId::NUM_BACKPACK_LEDS> lights;
+      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i) {
+        lights[i].onColor  = ENCODED_COLOR(onColor[i]);
+        lights[i].offColor = ENCODED_COLOR(offColor[i]);
+        lights[i].onFrames  = MS_TO_LED_FRAMES(onPeriod_ms[i]);
+        lights[i].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
+        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
+        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
       }
 
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
@@ -3101,13 +3117,20 @@ namespace Anki {
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
           const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-          lights[i].onColor = ledState.onColor;
-          lights[i].offColor = ledState.offColor;
-          lights[i].onPeriod_ms = ledState.onPeriod_ms;
-          lights[i].offPeriod_ms = ledState.offPeriod_ms;
-          lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
-          lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
+          lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+          lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+          lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+          lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+          lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+          lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
+
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
     }
@@ -3136,14 +3159,21 @@ namespace Anki {
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          lights[i].onColor = onColor[i];
-          lights[i].offColor = offColor[i];
-          lights[i].onPeriod_ms = onPeriod_ms[i];
-          lights[i].offPeriod_ms = offPeriod_ms[i];
-          lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
-          lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+          lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+          lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+          lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+          lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+          lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
 
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+        
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
 
@@ -3297,12 +3327,12 @@ namespace Anki {
       ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
       for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
         const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-        lights[i].onColor = ledState.onColor;
-        lights[i].offColor = ledState.offColor;
-        lights[i].onPeriod_ms = ledState.onPeriod_ms;
-        lights[i].offPeriod_ms = ledState.offPeriod_ms;
-        lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
-        lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
+        lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+        lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+        lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+        lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
       }
       return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }

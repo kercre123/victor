@@ -120,15 +120,14 @@ void Emotion::Update(const Anki::Util::GraphEvaluator2d& decayGraph, double curr
 }
 
 
-void Emotion::Add(float baseValue, const char* uniqueIdString)
+void Emotion::Add(float penalizedDeltaValue)
 {
-  const float penalizedValue = baseValue; // TODD - penalize repetition // emotion can track it's recent stuff but only mood manager knows about other emotion changes - e.g. what if there were 1000s of other emotion influences before doing the same happy again?
   const float oldValue = _value;
-  const float newValue = Anki::Util::Clamp(_value + penalizedValue, kEmotionValueMin, kEmotionValueMax);
+  const float newValue = Anki::Util::Clamp(_value + penalizedDeltaValue, kEmotionValueMin, kEmotionValueMax);
   _value = newValue;
   
-  const bool isSufficentChangeToResetDecay = (Util::Abs(penalizedValue) > 0.05f); // penalty can prevent reset (if it scales value too far), but clamping at min/max cannot prevent it
-  const bool isChangeInOppositeDirectionToDecay = ((oldValue >= 0.0f) == (penalizedValue >= 0.0f)); // only true if penalizedValue is driving value away from zero
+  const bool isSufficentChangeToResetDecay = (Util::Abs(penalizedDeltaValue) > 0.05f); // penalty can prevent reset (if it scales value too far), but clamping at min/max cannot prevent it
+  const bool isChangeInOppositeDirectionToDecay = ((oldValue >= 0.0f) == (penalizedDeltaValue >= 0.0f)); // only true if penalizedValue is driving value away from zero
   
   if (isSufficentChangeToResetDecay && isChangeInOppositeDirectionToDecay)
   {

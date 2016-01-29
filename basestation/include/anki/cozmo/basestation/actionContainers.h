@@ -74,8 +74,9 @@ namespace Anki {
       
       void Print() const;
       
-    protected:
+    private:
       std::list<IActionRunner*> _queue;
+      std::list<IActionRunner*> _interruptedActions;
       
     }; // class ActionQueue
     

@@ -22,6 +22,7 @@
 #include "wheelController.h"
 #include "pathFollower.h"
 #include "pickAndPlaceController.h"
+#include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -84,8 +85,11 @@ namespace Anki {
 
         u32 lastMotionDetectedTime_us = 0;
         const u32 MOTION_DETECT_TIMEOUT_US = 250000;
-        const f32 ACCEL_MOTION_THRESHOLD = 60.f;
+#       ifdef TARGET_K02
+        const f32 GYRO_MOTION_THRESHOLD = 0.04f;
+#       else
         const f32 GYRO_MOTION_THRESHOLD = 0.24f;
+#       endif
 
 
         // Recorded buffer
@@ -263,13 +267,11 @@ namespace Anki {
 #ifndef TARGET_K02
         TestModeController::Start(TM_NONE);
 #endif
-        HAL::SetLED(INDICATOR_LED_ID, LED_RED);
+        HAL::SetLED(INDICATOR_LED_ID, LED_ENC_RED);
       }
       void TurnOffIndicatorLight()
       {
-#ifndef TARGET_K02
-        HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
-#endif
+        HAL::SetLED(INDICATOR_LED_ID, LED_ENC_OFF);
       }
 
       void StartPathFollowTest()
@@ -293,9 +295,9 @@ namespace Anki {
       {
         // TEST WITH LIGHT
         if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, LED_RED);
+          HAL::SetLED(INDICATOR_LED_ID, LED_ENC_RED);
         } else {
-          HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
+          HAL::SetLED(INDICATOR_LED_ID, LED_ENC_OFF);
         }
 
         pickedUp_ = pickupDetected;
@@ -313,13 +315,13 @@ namespace Anki {
 
       void EnablePickupParalysis(bool enable)
       {
-        PRINT("Pickup paralysis %s", enable ? "ENABLED\n" : "DISABLED\n");
+        if (enable) { AnkiEvent( 21, "Pickup paralysis", 158, "ENABLED", 0); }
+        else        { AnkiEvent( 21, "Pickup paralysis", 159, "DISABLED", 0); }
         enablePickupParalysis_ = enable;
       }
 
       void HandlePickupParalysis()
       {
-#ifndef TARGET_K02
         static bool wasParalyzed = false;
         if (enablePickupParalysis_) {
           if (IsPickedUp() && !wasParalyzed) {
@@ -341,7 +343,6 @@ namespace Anki {
           WheelController::Enable();
           wasParalyzed = false;
         }
-#endif
       }
 
 #ifndef TARGET_K02
@@ -410,18 +411,17 @@ namespace Anki {
           peakAccelStartTime = currTime;
           return;
         }
-#ifndef TARGET_K02
         // Only check for poke when wheels are not being driven
         if (!WheelController::AreWheelsMoving()) {
 
           // Check for a gyro rotation spike
           const f32 peakGyroThresh = 4.f;
           const u32 maxGyroPeakDuration_ms = 75;
-          if (std::fabsf(gyro_robot_frame_filt[2]) > peakGyroThresh) {
+          if (fabsf(gyro_robot_frame_filt[2]) > peakGyroThresh) {
             peakGyroMaxTime = currTime;
-          } else if (std::fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
+          } else if (fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
             if ((peakGyroMaxTime > peakGyroStartTime) && (peakGyroMaxTime - peakGyroStartTime < maxGyroPeakDuration_ms)) {
-              PRINT("POKE DETECTED (GYRO)\n");
+              AnkiEvent( 22, "POKE DETECTED", 160, "(GYRO)", 0);
               peakGyroStartTime = currTime;
               lastPokeDetectTime = currTime;
 
@@ -436,11 +436,11 @@ namespace Anki {
           if (!HeadController::IsMoving() && !LiftController::IsMoving()) {
             const f32 peakAccelThresh = 4000.f;
             const u32 maxAccelPeakDuration_ms = 75;
-            if (std::fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
+            if (fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
               peakAccelMaxTime = currTime;
-            } else if (std::fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
+            } else if (fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
               if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
-                PRINT("POKE DETECTED (ACCEL)\n");
+                AnkiEvent( 22, "POKE DETECTED", 161, "(ACCEL)", 0);
                 peakAccelStartTime = currTime;
                 lastPokeDetectTime = currTime;
 
@@ -458,7 +458,6 @@ namespace Anki {
           peakGyroStartTime = currTime;
           peakAccelStartTime = currTime;
         }
-#endif
       }
 
       void DetectFalling()
@@ -532,7 +531,6 @@ namespace Anki {
           }
 
         } else {
-#ifndef TARGET_K02
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
           if (!WheelController::AreWheelsPowered()
@@ -544,7 +542,7 @@ namespace Anki {
                 //|| ABS(gyro_robot_frame_filt[2]) > 5.f  // Not checking z-rotation since it is being used to trigger naive poke detection
                 ) {
               if (++pdUnexpectedMotionCnt_ > 40) {
-                PRINT("PDWhileStationary: acc (%f, %f, %f), gyro (%f, %f, %f)\n",
+                AnkiEvent( 23, "PDWhileStationary", 162, "acc (%f, %f, %f), gyro (%f, %f, %f)", 6,
                       pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_,
                       gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);
                 SetPickupDetect(true);
@@ -553,7 +551,6 @@ namespace Anki {
           } else {
             pdUnexpectedMotionCnt_ = 0;
           }
-#endif
 
           // Do conservative check for pickup.
           // Only when we're really sure it's moving!
@@ -562,7 +559,7 @@ namespace Anki {
             ++pdRiseCnt_;
             if (pdRiseCnt_ > 40) {
               SetPickupDetect(true);
-              PRINT("PickupDetect: accX = %f, accY = %f, accZ = %f\n",
+              AnkiEvent( 24, "PickupDetect", 163, "accX = %f, accY = %f, accZ = %f", 3,
                     pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_);
             }
           } else {
@@ -601,7 +598,7 @@ namespace Anki {
                 // Call activation function
                 if (eventActivationCallbacks[e]) {
 #if(DEBUG_IMU_FILTER)
-                  PRINT("IMUFilter: Activation callback %d\n", e);
+                  AnkiDebug( 25, "IMUFilter", 164, "Activation callback %d", 1, e);
 #endif
                   eventActivationCallbacks[e]();
                 }
@@ -622,7 +619,7 @@ namespace Anki {
                 // Call deactivation function
                 if (eventDeactivationCallbacks[e]) {
 #if(DEBUG_IMU_FILTER)
-                  PRINT("IMUFilter: Deactivation callback %d\n", e);
+                  AnkiDebug( 25, "IMUFilter", 165, "Deactivation callback %d", 1, e);
 #endif
                   eventDeactivationCallbacks[e]();
                 }
@@ -639,21 +636,16 @@ namespace Anki {
       void DetectMotion()
       {
         u32 currTime = HAL::GetMicroCounter();
-#ifndef TARGET_K02
         // Are wheels or head being powered?
         if (WheelController::AreWheelsPowered() || !HeadController::IsInPosition()) {
           lastMotionDetectedTime_us = currTime;
         }
-#endif
         // Was motion detected by accel or gyro?
         for(u8 i=0; i<3; ++i) {
-          // Check accelerometer
-          f32 dAccel = ABS(accel_robot_frame_filt[i] - prev_accel_robot_frame_filt[i]);
-          prev_accel_robot_frame_filt[i] = accel_robot_frame_filt[i];
-          if (dAccel > ACCEL_MOTION_THRESHOLD) {
-            lastMotionDetectedTime_us = currTime;
-          }
-
+          // TODO: Gyro seems to be sensitive enough that it's sufficient for detecting motion, but if
+          //       that's not the case, check for changes in gravity vector.
+          // ...
+          
           // Check gyro
           if (ABS(gyro_robot_frame_filt[i]) > GYRO_MOTION_THRESHOLD) {
             lastMotionDetectedTime_us = currTime;
@@ -664,7 +656,7 @@ namespace Anki {
       void UpdatePitch()
       {
         f32 headAngle = HeadController::GetAngleRad();
-        
+
         // If not moving then reset pitch angle with accelerometer.
         // Otherwise, update it with gyro.
         if (!MotionDetected()) {
@@ -673,10 +665,10 @@ namespace Anki {
           f32 dAngle = -gyro_robot_frame_filt[1] * CONTROL_DT;
           pitch_ += dAngle;
         }
-        
+
         //PERIODIC_PRINT(50, "Pitch %f deg\n", RAD_TO_DEG_F32(pitch_));
       }
-      
+
       Result Update()
       {
         Result retVal = RESULT_OK;
@@ -777,11 +769,11 @@ namespace Anki {
 
         static u32 measurement_cycles = 0;
         if (measurement_cycles++ == 400) {
-          PRINT("Max gyro: %f %f %f\n",
+          AnkiDebug( 25, "IMUFilter", 166, "Max gyro: %f %f %f", 3,
                          max_gyro[0],
                          max_gyro[1],
                          max_gyro[2]);
-          PRINT("Max accel_delta: %f %f %f\n",
+          AnkiDebug( 25, "IMUFilter", 167, "Max accel_delta: %f %f %f", 3,
                          max_accel[0],
                          max_accel[1],
                          max_accel[2]);
@@ -884,7 +876,7 @@ namespace Anki {
             ++imuChunkMsg_.chunkId;
 
             if (imuChunkMsg_.chunkId == imuChunkMsg_.totalNumChunks) {
-              PRINT("IMU RECORDING COMPLETE (time %dms)\n", HAL::GetTimeStamp());
+              AnkiDebug( 26, "IMU RECORDING COMPLETE", 168, "(time %dms)", 1, HAL::GetTimeStamp());
               isRecording_ = false;
             }
           }
@@ -924,7 +916,7 @@ namespace Anki {
 
       void RecordAndSend(const u32 length_ms)
       {
-        PRINT("STARTING IMU RECORDING (time = %dms)\n", HAL::GetTimeStamp());
+        AnkiDebug( 27, "STARTING IMU RECORDING", 169, "(time = %dms)", 1, HAL::GetTimeStamp());
         isRecording_ = true;
         recordDataIdx_ = 0;
         imuChunkMsg_.seqId++;

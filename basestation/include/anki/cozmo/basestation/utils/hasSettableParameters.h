@@ -68,10 +68,10 @@ namespace Cozmo {
 
     // Get a snapshot of all parameters
     using ParamContainer = std::map<Param_t,Value_t>;
-    const ParamContainer& GetAllParams() const { return _params; }
+    const ParamContainer& GetAllParams();
     
     // Set all parameters at once, e.g. from a snapshot taken using GetAllParams()
-    void SetAllParams(const ParamContainer& allParams) { _params = allParams; }
+    void SetAllParams(const ParamContainer& allParams);
     
     // Accessors for valid ranges:
     // Note that derived classes can set these up in SetDefaultParams() as well.

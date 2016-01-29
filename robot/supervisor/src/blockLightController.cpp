@@ -17,65 +17,59 @@
 #include "clad/types/activeObjectTypes.h"
 #include "anki/cozmo/robot/ledController.h"
 #include "anki/cozmo/robot/hal.h"
+#include <string.h>
 
 namespace Anki {
 namespace Cozmo {
 namespace BlockLightController {
   namespace {
-    
-    // The next block to have its lights updated
-    u8 _nextBlockToUpdate = 0;
 
     // Assumes a block comms resolution of TIME_STEP
-    const u32 MAX_NUM_CUBES= 4; // This whole module needs to be refactored. Hard code this for now
-    
+    const u8 MAX_NUM_CUBES = 4; // This whole module needs to be refactored. Hard code this for now
+
     // Parameters for each LED on each block
     LightState _ledParams[MAX_NUM_CUBES][NUM_CUBE_LEDS];
-    
+    // Keep track of where we are in the fase cycle for each LED
+    TimeStamp_t _ledPhases[MAX_NUM_CUBES][NUM_CUBE_LEDS];
+
     // Messages to be sent to each block
-    // TODO: The structure of this message will change to something simpler.
-    CubeLights _blockMsg[MAX_NUM_CUBES];
-    
+    uint16_t _blockMsg[MAX_NUM_CUBES][NUM_CUBE_LEDS];
+
   }; // "private" variables
-  
-  
+
+
   Result SetLights(u8 blockID, const LightState *params)
   {
-    for (u8 i=0; i < NUM_CUBE_LEDS; ++i) {
-      _ledParams[blockID][i] = params[i];
-      _ledParams[blockID][i].nextSwitchTime = 0;
-      _ledParams[blockID][i].state = LED_STATE_OFF;
-    }
+    memcpy(_ledParams[blockID], params, sizeof(LightState)*NUM_CUBE_LEDS);
     return RESULT_OK;
   }
-  
+
   void ApplyLEDParams(u8 blockID, TimeStamp_t currentTime)
   {
     bool blockLEDsUpdated = false;
-    CubeLights &m = _blockMsg[blockID];
-    
+    uint16_t* m = _blockMsg[blockID];
+
     for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
-      u32 newColor;
-      if (GetCurrentLEDcolor(_ledParams[blockID][i], currentTime, newColor)) {
-        m.lights[i].onColor = newColor;   // Currently, onColor is the only thing that matters in this message.
+      u16 newColor;
+      if (GetCurrentLEDcolor(_ledParams[blockID][i], currentTime, _ledPhases[blockID][i], newColor)) {
+        m[i] = newColor;   // Currently, onColor is the only thing that matters in this message.
         blockLEDsUpdated = true;
       }
     }
-    
+
     if (blockLEDsUpdated) {
-      HAL::SetBlockLight(blockID, m.lights);
+      HAL::SetBlockLight(blockID, m);
     }
   }
 
-  
+
   Result Update()
   {
-    if (++_nextBlockToUpdate >= MAX_NUM_CUBES)
-      _nextBlockToUpdate = 0;
-    
-    // Apply LED settings to the block
-    ApplyLEDParams(_nextBlockToUpdate, HAL::GetTimeStamp());
-    
+    for (int i=0; i<MAX_NUM_CUBES; ++i) {
+      // Apply LED settings to the block
+      ApplyLEDParams(i, HAL::GetTimeStamp());
+    }
+
     return RESULT_OK;
   }
 } // namespace BlockLightController

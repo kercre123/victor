@@ -11,6 +11,7 @@
 #include "speedController.h"
 #include "wheelController.h"
 #include "messages.h"
+#include "anki/cozmo/robot/logging.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -30,12 +31,8 @@ namespace Anki {
       // Speed filtering rate
       const f32 ENCODER_FILTERING_COEFF = 0.9f;
 
-
-      f32 Kp_l_ = DEFAULT_WHEEL_KP;
-      f32 Ki_l_ = DEFAULT_WHEEL_KI;
-
-      f32 Kp_r_ = DEFAULT_WHEEL_KP;
-      f32 Ki_r_ = DEFAULT_WHEEL_KI;
+      f32 Kp_ = DEFAULT_WHEEL_KP;
+      f32 Ki_ = DEFAULT_WHEEL_KI;
 
       f32 MAX_ERROR_SUM_LEFT = 5000.f;
       f32 MAX_ERROR_SUM_RIGHT = 5000.f;
@@ -75,16 +72,11 @@ namespace Anki {
     void ResetIntegralGainSums(void);
 
     //sets the wheel PID controller constants
-    void SetGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
-                  const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight) {
-      PRINT("New wheelController gains: kLeft (p=%f, i=%f, maxSum=%f) kRight (p=%f, i=%f maxSum=%f)\n", kpLeft, kiLeft, maxIntegralErrorLeft, kpRight, kiRight, maxIntegralErrorRight);
-      Kp_l_ = kpLeft;
-      Ki_l_ = kiLeft;
-      MAX_ERROR_SUM_LEFT = maxIntegralErrorLeft;
-
-      Kp_r_ = kpRight;
-      Ki_r_ = kiRight;
-      MAX_ERROR_SUM_RIGHT = maxIntegralErrorRight;
+    void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError) {
+      AnkiInfo( 13, "WheelController", 114, "New gains: kp=%f, ki=%f, maxSum=%f", 3, kp, ki, maxIntegralError);
+      Kp_ = kp;
+      Ki_ = ki;
+      MAX_ERROR_SUM_LEFT = maxIntegralError;
     }
 
     void Enable()
@@ -106,8 +98,7 @@ namespace Anki {
       }
     }
 
-
-    f32 ComputeLeftWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
+    f32 ComputeWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
     {
       f32 x = ABS(desired_speed_mmps);
 
@@ -116,48 +107,23 @@ namespace Anki {
 #     else
       // Piecewise linear
       f32 out_ol = 0;
-      if (x > 10) {
-        out_ol = (float)(0.003319096 * (double)x + 0.10109226);
+      if (x > 30) {
+        out_ol = (float)(0.00305136086 * (double)x + 0.12128379883);
       } else {
-        // power = speed  * 0.2 power /  10 mm/s
-        out_ol = 0.02f * x;
+        // power = speed  * 0.2 power /  30 mm/s
+        out_ol = 0.00666667f * x;
       }
 #     endif
-
+      
       if (desired_speed_mmps < 0) {
         out_ol *= -1;
       }
-      f32 out_corr = ( (Kp_l_ * error) + (error_sum * Ki_l_) );
+      f32 out_corr = ( (Kp_ * error) + (error_sum * Ki_) );
       f32 out_total = out_ol + out_corr;
       return out_total;
     }
 
-    f32 ComputeRightWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
-    {
-      f32 x = ABS(desired_speed_mmps);
-
-#     ifdef SIMULATOR
-      f32 out_ol = x * 0.004f;
-#     else
-      // Piecewise linear
-      f32 out_ol = 0;
-      if (x > 10) {
-        out_ol = (float)(0.00336296136 * (double)x + 0.10104465883);
-      } else {
-        // power = speed  * 0.2 power /  10 mm/s
-        out_ol = 0.02f * x;
-      }
-#     endif
-
-      if (desired_speed_mmps < 0) {
-        out_ol *= -1;
-      }
-      f32 out_corr = ( (Kp_r_ * error) + (error_sum * Ki_r_) );
-      f32 out_total = out_ol + out_corr;
-      return out_total;
-    }
-
-
+    
     //Run the wheel controller
     void Run()
     {
@@ -165,10 +131,10 @@ namespace Anki {
 //      if(!coastMode_ && !coastUntilStop_) {
 
 #if(DEBUG_WHEEL_CONTROLLER)
-        PRINT(" WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n",
+        AnkiDebug( 13, "WheelController", 115, "speeds: %f (L), %f (R)   (Curr: %d, %d)", 4,
                 filterWheelSpeedL_, filterWheelSpeedR_,
                 measuredWheelSpeedL_, measuredWheelSpeedR_);
-        PRINT(" WHEEL desired speeds: %f (L), %f (R)\n",
+        AnkiDebug( 13, "WheelController", 116, "desired speeds: %f (L), %f (R)", 2,
                 desiredWheelSpeedL_, desiredWheelSpeedR_);
 #endif
 
@@ -177,12 +143,12 @@ namespace Anki {
         f32 errorR = (desiredWheelSpeedR_ - filterWheelSpeedR_);
 
         // Compute power to command to motors
-        f32 outl = ComputeLeftWheelPower(desiredWheelSpeedL_, errorL, error_sumL_);
-        f32 outr = ComputeRightWheelPower(desiredWheelSpeedR_, errorR, error_sumR_);
+        f32 outl = ComputeWheelPower(desiredWheelSpeedL_, errorL, error_sumL_);
+        f32 outr = ComputeWheelPower(desiredWheelSpeedR_, errorR, error_sumR_);
 
 
 #if(DEBUG_WHEEL_CONTROLLER)
-        PRINT(" WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorL, errorR, error_sumL_, error_sumR_);
+        AnkiDebug( 13, "WheelController", 117, "error: %f (L), %f (R)   error_sum: %f (L), %f (R)", 4, errorL, errorR, error_sumL_, error_sumR_);
 #endif
 
         /*
@@ -237,7 +203,7 @@ namespace Anki {
       }
 
 #if(DEBUG_WHEEL_CONTROLLER)
-      PRINT(" WHEEL power: %f (L), %f (R)\n", power_l_, power_r_);
+      AnkiDebug( 13, "WheelController", 118, "power: %f (L), %f (R)\n", 2, power_l_, power_r_);
 #endif
 
       //Command the computed motor power values
@@ -339,8 +305,8 @@ namespace Anki {
 
     bool AreWheelsMoving()
     {
-      return (std::fabsf(filterWheelSpeedL_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S) ||
-             (std::fabsf(filterWheelSpeedR_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S);
+      return (fabsf(filterWheelSpeedL_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S) ||
+             (fabsf(filterWheelSpeedR_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S);
     }
 
     void ResetIntegralGainSums(void)

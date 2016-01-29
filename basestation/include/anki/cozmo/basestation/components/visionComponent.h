@@ -28,7 +28,7 @@
 #include <mutex>
 
 namespace Anki {
-  
+
 // Forward declaration
 namespace Util {
 namespace Data {
@@ -195,4 +195,3 @@ struct DockingErrorSignal;
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
-

@@ -21,6 +21,8 @@ enum uint_8 BehaviorType {
   UnityDriven,
   PounceOnMotion,
   FindFaces,
+  BlockExploration,
+  ExploreMarkedCube,
 
   Count
 }

@@ -7,34 +7,62 @@
 #include "MK02F12810.h"
 #include "hal/hardware.h"
 
-// Internal Settings
-typedef struct {  
-  uint8_t slave_address;
+#define I2C_C1_COMMON (I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK)
 
-  uint8_t flags;
-  
-  const void* buffer;
-  uint8_t* data;
-  int count;
-  int size;
-  
-  i2c_callback callback;
-} I2C_Queue;
+// Internal Settings
+enum I2C_Control {
+  // These are top level modes
+  I2C_CTRL_STOP = I2C_C1_COMMON,
+  I2C_CTRL_READ = I2C_C1_COMMON | I2C_C1_MST_MASK,  
+  I2C_CTRL_SEND = I2C_C1_COMMON | I2C_C1_MST_MASK | I2C_C1_TX_MASK,
+    
+  // These are modifiers
+  I2C_CTRL_NACK = I2C_C1_TXAK_MASK,
+  I2C_CTRL_RST  = I2C_C1_RSTA_MASK
+};
 
 static const uint8_t UNUSED_SLAVE = 0xFF;
+static const int MAX_QUEUE = 128; // 256 bytes worth of i2c buffer (excessive)
 
-static I2C_Queue i2c_queue[MAX_QUEUE];
-static int _fifo_start;
-static int _fifo_end;
-static int _fifo_count;
-static bool enabled = false;
+static uint8_t _active_slave = UNUSED_SLAVE;
 
-static bool _active = false;
-static bool _reselected = false;
+extern "C" void (*I2C0_Proc)(void);
 
-static inline void start_transaction();
+// Queue registers
+static uint16_t i2c_queue[MAX_QUEUE];
+static volatile int _fifo_count;
+static volatile int _fifo_start;
+static volatile int _fifo_end;
 
-extern "C" void I2C0_IRQHandler(void);
+// Random state values
+static volatile bool _active = false;
+static bool _enabled = false;
+static bool _send_reset = false;
+
+// Read buffer
+static volatile void* _read_target = NULL;
+static uint8_t* _read_buffer = NULL;
+static volatile int _read_size = 0;
+static volatile int _read_count = 0;
+static volatile i2c_callback _read_callback = NULL;
+
+static void Write_Handler(void);
+static void Read_Handler(void);
+
+static inline void write_queue(uint8_t mode, uint8_t data = 0) {
+  i2c_queue[_fifo_start++] = (mode << 8) | data;
+  if (_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
+  _fifo_count++;
+}
+
+static inline void read_queue(uint8_t& mode, uint8_t& data) {
+  uint16_t temp = i2c_queue[_fifo_end++];
+  if (_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
+  _fifo_count--;
+  
+  mode = temp >> 8;
+  data = temp;
+}
 
 // Send a stop condition first thing to make sure perfs are not holding the bus
 static inline void SendEmergencyStop(void) {
@@ -50,8 +78,8 @@ static inline void SendEmergencyStop(void) {
   GPIO_IN(GPIO_I2C_SDA, PIN_I2C_SDA);
   SOURCE_SETUP(GPIO_I2C_SDA, PIN_I2C_SDA, SourceGPIO);
   
-  // Clock the output until the data line goes high
-  for (int i = 0; i < 100 || !GPIO_READ(GPIO_I2C_SDA); i++) {
+  // Clock the output 100 times
+  for (int i = 0; i < 100; i++) {
     GPIO_RESET(GPIO_I2C_SCL, PIN_I2C_SCL);
     MicroWait(1);
     GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
@@ -64,10 +92,11 @@ void Anki::Cozmo::HAL::I2C::Init()
   SendEmergencyStop();
   
   // Clear our FIFO
+  _fifo_count = 0;
   _fifo_start = 0;
   _fifo_end = 0;
-  _fifo_count = 0;
 
+  I2C0_Proc = &Write_Handler;
   _active = false;
  
   // Enable clocking on I2C, PortB, PortE, and DMA
@@ -85,7 +114,7 @@ void Anki::Cozmo::HAL::I2C::Init()
 
   // Configure i2c
   I2C0_F  = I2C_F_ICR(0x1A);
-  I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK | I2C_C1_MST_MASK;
+  I2C0_C1 = I2C_C1_COMMON;
   
   // Enable IRQs
   NVIC_SetPriority(I2C0_IRQn, 0);
@@ -93,219 +122,188 @@ void Anki::Cozmo::HAL::I2C::Init()
 }
 
 void Anki::Cozmo::HAL::I2C::Enable(void) {
-  enabled = true;
+  if (_enabled) return ;
+
+  _enabled = true;
   NVIC_EnableIRQ(I2C0_IRQn);
+  
+  if (!_active && _fifo_count > 0) {
+    _active = true;
+    I2C0_Proc();
+  }
 }
 
 void Anki::Cozmo::HAL::I2C::Disable(void) {
-  enabled = false;
+  _enabled = false;
   NVIC_DisableIRQ(I2C0_IRQn);
 }
 
 // Register calls
-static volatile bool i2c_data_active;
-static void i2cRegCallback(const void* data, int size) {
-  i2c_data_active = false;
-}
-
 void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) {
   uint8_t cmd[2] = { addr, data };
 
-  i2c_data_active = true;
-
-  Write(SLAVE_WRITE(slave), cmd, sizeof(cmd), i2cRegCallback, I2C_FORCE_START);
-
-  while(i2c_data_active) __asm { WFI } ;
+  Write(SLAVE_WRITE(slave), cmd, sizeof(cmd), I2C_FORCE_START);
 }
 
 uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
   uint8_t resp;
 
-  i2c_data_active = true;
+  SetupRead(&resp, sizeof(resp));
+
+  Write(SLAVE_WRITE(slave), &addr, sizeof(addr), I2C_FORCE_START);
+  Read(SLAVE_READ(slave));
   
-  Write(SLAVE_WRITE(slave), &addr, sizeof(addr), NULL, I2C_FORCE_START);
-  Read(SLAVE_READ(slave), &resp, sizeof(resp), i2cRegCallback);
-  
-  while(i2c_data_active) ;
+  Flush();
   
   return resp;
 }
 
-void Anki::Cozmo::HAL::I2C::WriteAndVerify(uint8_t slave, uint8_t addr, uint8_t data) {
-  uint8_t resp;
-  WriteReg(slave, addr, data);
-  resp = ReadReg(slave, addr);
-  
-  while (resp != data) ;
+void Anki::Cozmo::HAL::I2C::Flush(void) {
+  while (_active || _fifo_count > 0) {
+    Enable();
+    __asm { WFI }
+  }
 }
 
-// This should only be used during 
 void Anki::Cozmo::HAL::I2C::ForceStop(void) {
+  _active_slave = UNUSED_SLAVE;
+  _send_reset = false;
+  write_queue(I2C_CTRL_STOP);
+}
+
+// This is a carpet bomb stop on the i2c bus that should not be used inside IRQs
+void Anki::Cozmo::HAL::I2C::FullStop(void) {
+  _active_slave = UNUSED_SLAVE;
+  _send_reset = false;
+
+  Flush();
   I2C0_C1 &= ~I2C_C1_MST_MASK;
   MicroWait(1);
+  Enable();
 }
 
-static bool Enqueue(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb, uint8_t flags) {
+void Anki::Cozmo::HAL::I2C::SetupRead(void* target, int size, i2c_callback cb) {
+  _read_target = target;
+  _read_size = size;
+  _read_callback = cb;
+}
+
+static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags) {
   using namespace Anki::Cozmo::HAL::I2C;
   
-  if (_fifo_count >= MAX_QUEUE) {
-    return false;
-  }
-
-  bool unsafe = enabled;
-  if (unsafe) Disable();
-  I2C_Queue *active = &i2c_queue[_fifo_start];
-  if (++_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
-  
-  active->callback = cb;
-  active->size = active->count = len;
-  active->buffer = active->data = (uint8_t*) bytes;
-  active->slave_address = slave;
-  active->flags = flags;
-
-  _fifo_count++;
-
-  if (!_active) {
-    start_transaction();
-  }
-  if (unsafe) Enable();
-  
-  return true;
-}
-
-bool Anki::Cozmo::HAL::I2C::Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb, uint8_t flags) {
-  return Enqueue(slave, bytes, len, cb, flags);
-}
-
-bool Anki::Cozmo::HAL::I2C::Read(uint8_t slave, uint8_t *bytes, int len, i2c_callback cb, uint8_t flags) {
-  return Enqueue(slave, bytes, len, cb, flags | I2C_READ);
-}
-
-
-static inline uint8_t* next_byte() {
-  I2C_Queue *active = &i2c_queue[_fifo_end];
-  uint8_t *data = (uint8_t*)(active->data++);
-  active->count--;
-  return data;
-}
-
-static inline I2C_Queue *getActive() {
-  return  &i2c_queue[_fifo_end];
-}
-
-static inline void send_nack(bool nack) {
-  if (nack) {
-    I2C0_C1 |= I2C_C1_TXAK_MASK;
-  } else {
-    I2C0_C1 &= ~I2C_C1_TXAK_MASK;
-  }
-}
-
-static void next_transaction() {
-  if (++_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
-  _fifo_count--;
-}
-
-static void start_transaction() {
-  using namespace Anki::Cozmo::HAL;
-  static uint8_t _active_slave = UNUSED_SLAVE;
-
-  // Find a non-optional transaction
-  I2C_Queue *active;
-  
-  for(;;) {
-    if (_fifo_count <= 0) {
-      _active = false;
-      return ;
-    }
+  bool ena = _enabled;
+  Disable();
     
-    active = getActive();
-
-    if (~active->flags & I2C_OPTIONAL || active->slave_address != _active_slave) {
-      active->flags &= ~I2C_OPTIONAL;
-      break ;
-    }
+  if (slave != _active_slave || flags & I2C_FORCE_START) {
+    // Select the device
+    _active_slave = slave;
     
-    next_transaction();
-  }
-
-  _active = true;
-
-  // Send a stop and transmit the slave address
-  if (active->slave_address != _active_slave || active->flags & I2C_FORCE_START || ~I2C0_C1 & I2C_C1_MST_MASK) {
-    if (I2C0_C1 & I2C_C1_MST_MASK) {
-      I2C0_C1 |= I2C_C1_RSTA_MASK | I2C_C1_TX_MASK;
+    if (_send_reset) {
+      write_queue(I2C_CTRL_RST | I2C_CTRL_SEND, slave);
     } else {
-      I2C0_C1 |= I2C_C1_MST_MASK | I2C_C1_TX_MASK;
-      MicroWait(1);
+      write_queue(I2C_CTRL_SEND, slave);
     }
-    
-    I2C0_D = active->slave_address;
-
-    active->flags &= ~I2C_FORCE_START;
-    _active_slave = active->slave_address;
-    _reselected = true;
+  } else if (flags & I2C_OPTIONAL) {
     return ;
   }
-
-  _reselected = false;
-
   
-  if (active->flags & I2C_READ) {
-    I2C0_C1 &= ~I2C_C1_TX_MASK;
-    send_nack(active->count == 1);
-    uint8_t throwaway = I2C0_D;
+  while (len-- > 0) {
+    write_queue(I2C_CTRL_SEND, *(bytes++));
+  }
+
+  if (ena) {
+    Enable();
+
+    if (!_active) {
+      _active = true;
+      I2C0_Proc();
+    }
+  }
+
+  _send_reset = true;
+}
+
+void Anki::Cozmo::HAL::I2C::Write(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags) {
+  Enqueue(slave, bytes, len, flags);
+}
+
+void Anki::Cozmo::HAL::I2C::Read(uint8_t slave, uint8_t flags) {
+  Enqueue(slave, NULL, 0, flags);
+  
+  // Send a nack on first transmission if size is 1
+  if (_read_size == 1) {
+    write_queue(I2C_CTRL_READ | I2C_CTRL_NACK);
   } else {
-    I2C0_C1 |= I2C_C1_TX_MASK;
-    I2C0_D = *next_byte();
+    write_queue(I2C_CTRL_READ);
   }
 }
 
-static inline bool send_byte(void) {
+static void Read_Handler(void) {
   using namespace Anki::Cozmo::HAL;
-  
-  I2C_Queue *active = getActive();
 
-  if (active->count == 2) {
-    send_nack(true);
-  } else if (active->count == 1) {
-    I2C0_C1 |= I2C_C1_TX_MASK;
-    *next_byte() = I2C0_D;
-    return false;
-  }
+  I2C0_S |= I2C_S_IICIF_MASK;
   
-  *next_byte() = I2C0_D;
-  return true;
+  bool complete = false;
+
+  _read_count--;
+
+  // Check how many bytes are left
+  if (_read_count == 1) {
+    // Send nack on last byte
+    I2C0_C1 |= I2C_C1_TXAK_MASK;
+  } if (_read_count <= 0) {
+    I2C0_C1 |= I2C_C1_TX_MASK;
+    I2C0_Proc = &Write_Handler;
+    complete = true;
+  } 
+
+  *(_read_buffer++) = I2C0_D;
+
+  if (complete) {
+    if (_read_callback) {
+      _read_callback();
+    }
+    Write_Handler();
+  }
 }
 
-extern "C"
-void I2C0_IRQHandler(void) {
+__attribute__((section("CODERAM")))
+static void Write_Handler(void) {
   using namespace Anki::Cozmo::HAL;
   
-  // Clear interrupt
   I2C0_S |= I2C_S_IICIF_MASK;
 
-  I2C_Queue *active = getActive();
-  
-  // We need to start the transaction again because the slave address did not match
-  if (_reselected) {
-    start_transaction();
+  if (!_fifo_count) {
+    _active = false;
     return ;
-  }
-  
-  // Handle next queued byte
-  if (active->flags & I2C_READ) {
-    if (send_byte()) return ;
-  } else if (active->count) {
-    I2C0_D = *next_byte();
-    return ;
-  }
-  
-  if (active->callback) {
-    active->callback(active->buffer, active->size);
   }
 
-  // Packet completed, continue on our merry way.
-  next_transaction();
-  start_transaction();
+  uint8_t data;
+  uint8_t mode;
+  read_queue(mode, data);
+
+  if (I2C0_C1 != mode) {
+    I2C0_C1 = mode;
+  }
+  
+  switch (mode) {
+    default:
+      I2C0_D = data;
+      return ;
+
+    case I2C_CTRL_READ | I2C_CTRL_NACK:
+    case I2C_CTRL_READ:
+      {
+        _read_count = _read_size;
+        _read_buffer = (uint8_t*) _read_target;
+        I2C0_Proc = &Read_Handler;
+      
+        int ignore = I2C0_D;
+      }
+      return ;
+
+    case I2C_CTRL_STOP:
+      _active = false;
+      break ;
+  }
 }
