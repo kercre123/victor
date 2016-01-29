@@ -50,11 +50,7 @@ namespace Cozmo.HomeHub {
 
     private void ShowTimelineDialog() {
       // Create dialog with the game prefabs
-      GameObject newView = GameObject.Instantiate(_TimelineViewPrefab.gameObject);
-      newView.transform.position = Vector3.zero;
-      newView.transform.SetParent(UIManager.GetUICanvas().transform, false);
-
-      _TimelineViewInstance = newView.GetComponent<TimelineView>();
+      _TimelineViewInstance = UIManager.OpenView(_TimelineViewPrefab) as TimelineView;
       _TimelineViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _TimelineViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _TimelineViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;

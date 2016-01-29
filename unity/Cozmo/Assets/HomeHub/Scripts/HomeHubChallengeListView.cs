@@ -6,7 +6,7 @@ using Cozmo.UI;
 using Cozmo.HubWorld;
 
 namespace Cozmo.HomeHub {
-  public class HomeHubChallengeListView : BaseView {
+  public class HomeHubChallengeListView : MonoBehaviour {
 
     [SerializeField]
     private HubWorldButton _UnlockedChallengeButtonPrefab;
@@ -49,12 +49,6 @@ namespace Cozmo.HomeHub {
       buttonScript.Initialize(challengeData);
       buttonScript.OnButtonClicked += handler;
       return newButton;
-    }
-
-    protected override void CleanUp() {
-      foreach (KeyValuePair<string, GameObject> kvp in _ChallengeButtons) {
-        GameObject.Destroy(kvp.Value);
-      }
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {

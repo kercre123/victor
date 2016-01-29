@@ -6,7 +6,7 @@ using DataPersistence;
 using Cozmo.UI;
 using Anki.Cozmo;
 
-public class DailySummaryPanel : MonoBehaviour {
+public class DailySummaryPanel : BaseView {
 
   // Animation Names
   private const string kIdleAnimationName = "Idle";
@@ -19,9 +19,6 @@ public class DailySummaryPanel : MonoBehaviour {
   private const string kMaxLevelAnimationNameB = "MaxLevelB";
 
   public Cozmo.HomeHub.TimelineView.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
-
-  [SerializeField]
-  private Button _CloseButton;
 
   [SerializeField]
   private AnkiTextLabel _Title;
@@ -62,20 +59,15 @@ public class DailySummaryPanel : MonoBehaviour {
   private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
   private FriendshipProgressionConfig _Config;
 
-  private void Awake() {
-    _CloseButton.onClick.AddListener(HandleCloseClicked);
-  }
+  protected override void CleanUp() {
 
-  private void HandleCloseClicked() {
-    // Probably want to do something better than this.
-    GameObject.Destroy(gameObject);
   }
 
   public void Initialize(TimelineEntryData data) {
     int day = data.Date.Day;
     int month = data.Date.Month;
 
-    _Title.FormattingArgs = new object[] {month, day};
+    _Title.FormattingArgs = new object[] { month, day };
 
     _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(data.Progress, data.Goals));
 

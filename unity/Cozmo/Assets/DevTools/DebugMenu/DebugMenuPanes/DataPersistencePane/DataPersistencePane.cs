@@ -86,9 +86,9 @@ namespace DataPersistence {
 
       var today = DataPersistenceManager.Today;
 
-      var startDate = today.AddDays(-TimelineView.kTimelineHistoryLength);
+      var startDate = today.AddDays(-TimelineView.kGeneratedTimelineHistoryLength);
 
-      for (int i = 0; i < TimelineView.kTimelineHistoryLength; i++) {
+      for (int i = 0; i < TimelineView.kGeneratedTimelineHistoryLength; i++) {
         var date = startDate.AddDays(i);
 
         var entry = new TimelineEntryData(date);
