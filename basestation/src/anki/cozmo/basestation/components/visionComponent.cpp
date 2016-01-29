@@ -15,7 +15,6 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/visionSystem.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
@@ -269,7 +268,7 @@ namespace Cozmo {
         
         // Wait for initialization to complete (i.e. Matlab to start up, if needed)
         while(!_visionSystem->IsInitialized()) {
-          usleep(500);
+          std::this_thread::sleep_for(std::chrono::microseconds(500));
         }
         
         if(_runMode == RunMode::Asynchronous) {
@@ -345,8 +344,8 @@ namespace Cozmo {
             
             if(!_nextImg.IsEmpty()) {
               PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
-                               "Setting next image with t=%d, but existing next image from t=%d not yet processed.",
-                               image.GetTimestamp(), _nextImg.GetTimestamp());
+                               "Setting next image with t=%d, but existing next image from t=%d not yet processed (currently on t=%d).",
+                               image.GetTimestamp(), _nextImg.GetTimestamp(), _currentImg.GetTimestamp());
             }
             
             // TODO: Avoid the copying here (shared memory?)
@@ -471,7 +470,7 @@ namespace Cozmo {
     while (_running) {
       
       if(_paused) {
-        usleep(100);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
         continue;
       }
       
@@ -507,7 +506,7 @@ namespace Cozmo {
         _nextImg = {};
         Unlock();
       } else {
-        usleep(100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
       }
       
     } // while(_running)

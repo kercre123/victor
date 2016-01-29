@@ -39,7 +39,7 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
@@ -450,11 +450,6 @@ public:
     // Returns "" if no non-idle animation is streaming.
     const std::string GetStreamingAnimationName() const;
     
-    const ProceduralFace& GetProceduralFace() const { return _proceduralFace; }
-    const ProceduralFace& GetLastProceduralFace() const { return _lastProceduralFace; }
-    void SetProceduralFace(const ProceduralFace& face);
-    void MarkProceduralFaceAsSent();
-    
     // Returns the number of animation bytes or audio frames played on the robot since
     // it was initialized with SyncTime.
     s32 GetNumAnimationBytesPlayed() const;
@@ -661,6 +656,9 @@ public:
 
     const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
           MoodManager& GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+
+    const BehaviorManager& GetBehaviorManager() const { return _behaviorMgr; }
+          BehaviorManager& GetBehaviorManager()       { return _behaviorMgr; }
 
     const BehaviorFactory& GetBehaviorFactory() const { return _behaviorMgr.GetBehaviorFactory(); }
           BehaviorFactory& GetBehaviorFactory()       { return _behaviorMgr.GetBehaviorFactory(); }
@@ -872,7 +870,6 @@ public:
     CannedAnimationContainer _cannedAnimations;
     AnimationGroupContainer  _animationGroups;
     AnimationStreamer        _animationStreamer;
-    ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed         = 0;
     s32 _numAnimationBytesStreamed       = 0;
@@ -918,6 +915,9 @@ public:
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  
+    void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void SetupMiscHandlers(IExternalInterface& externalInterface);
     void SetupVisionHandlers(IExternalInterface& externalInterface);

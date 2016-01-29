@@ -17,7 +17,8 @@ enum uint_8 EmotionType {
     Excited,
     Social,
     Winning,
-    
+    WantToPlay,
+
     Count
 }
 

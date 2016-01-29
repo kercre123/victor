@@ -34,7 +34,6 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -512,7 +511,7 @@ namespace Cozmo {
   void BlockWorld::UpdateNavMemoryMap()
   {
     if ( nullptr != _navMemoryMap ) {
-      _navMemoryMap->AddClearQuad(_robot->GetBoundingQuadXY());
+      _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::Clear );
     }
   }
   
@@ -972,7 +971,7 @@ namespace Cozmo {
         
         // Update navMemory map
         if ( nullptr != _navMemoryMap ) {
-          _navMemoryMap->AddObstacleQuad(observedObject->GetBoundingQuadXY(), NavMemoryMapTypes::EObstacleType::Cube);
+          _navMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(), INavMemoryMap::EContentType::ObstacleCube);
         }
         
         _didObjectsChange = true;
@@ -1769,7 +1768,7 @@ namespace Cozmo {
               // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
               // the navmesh that it should be clear, since we saw the marker
               Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
-              _navMemoryMap->AddClearQuad(clearVisionQuad);
+              _navMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::Clear);
             }
           }
           
@@ -1898,7 +1897,7 @@ namespace Cozmo {
           {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
         };
         p.ApplyTo(cliffquad, cliffquad);
-        _navMemoryMap->AddCliffQuad(cliffquad);
+        _navMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::Cliff);
       }
     
       // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
@@ -2715,7 +2714,7 @@ namespace Cozmo {
               
               ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
               if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
-                 object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+                 object->IsExistenceConfirmed())
               {
                 //PRINT_INFO("currID: %d", block.first);
                 if (currSelectedObjectFound) {
@@ -2756,7 +2755,7 @@ namespace Cozmo {
             for (auto const & objectsByID : objectsByType.second) {
               const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
               if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
-                object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+                object->IsExistenceConfirmed())
               {
                 firstObject = objectsByID.first;
                 break;
@@ -2837,7 +2836,12 @@ namespace Cozmo {
         for(auto & objectsByType : objectsByFamily.second) {
           for(auto & objectsByID : objectsByType.second) {
             ObservableObject* object = objectsByID.second;
-            object->Visualize();
+            if(object->IsExistenceConfirmed()) {
+              object->Visualize();
+            } else {
+              // Draw unconfirmed objects in a special color
+              object->Visualize(NamedColors::LIGHTGRAY);
+            }
           }
         }
       }

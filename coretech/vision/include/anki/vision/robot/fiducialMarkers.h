@@ -201,6 +201,10 @@ namespace Anki
 
       static void SetDataPath(const std::string& dataPath);
       
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+      static NearestNeighborLibrary& GetNearestNeighborLibrary();
+#     endif
+      
     protected:
       // The constructor isn't always called, so initialize has to be checked in multiple places
       // TODO: make less hacky
@@ -216,9 +220,7 @@ namespace Anki
         f32& brightValue, f32& darkValue,
         bool& enoughContrast);
 
-#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
-      static NearestNeighborLibrary& GetNearestNeighborLibrary();
-#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
 #     elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN

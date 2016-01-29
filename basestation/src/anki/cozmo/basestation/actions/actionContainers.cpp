@@ -11,8 +11,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/cozmo/basestation/actionContainers.h"
-#include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 
 #include "util/logging/logging.h"
 
@@ -21,9 +21,9 @@ namespace Anki {
     
 #pragma mark ---- ActionList ----
     
-    ActionList::ActionList()
+    ActionList::ActionList(Robot& robot)
     {
-      
+      _robot = &robot;
     }
     
     ActionList::~ActionList()
@@ -74,6 +74,30 @@ namespace Anki {
       
       return RESULT_OK;
     } // QueueAction()
+    
+    Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      action->SetRobot(*_robot);
+      return _queues[atSlot].QueueNext(action, numRetries);
+    }
+    
+    Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      action->SetRobot(*_robot);
+      return _queues[atSlot].QueueAtEnd(action, numRetries);
+    }
+    
+    Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      action->SetRobot(*_robot);
+      return _queues[atSlot].QueueNow(action, numRetries);
+    }
+    
+    Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      action->SetRobot(*_robot);
+      return _queues[atSlot].QueueAtFront(action, numRetries);
+    }
     
     bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
     {
@@ -138,13 +162,13 @@ namespace Anki {
       
     } // Print()
     
-    Result ActionList::Update(Robot& robot)
+    Result ActionList::Update()
     {
       Result lastResult = RESULT_OK;
       
       for(auto queueIter = _queues.begin(); queueIter != _queues.end(); )
       {
-        lastResult = queueIter->second.Update(robot);
+        lastResult = queueIter->second.Update();
         
         // If the queue is complete, remove it
         if(queueIter->second.IsEmpty()) {
@@ -293,7 +317,7 @@ namespace Anki {
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueAFront.NullActionPointer",
-                          "Refusing to queue a null action pointer.\n");
+                          "Refusing to queue a null action pointer.");
         return RESULT_FAIL;
       }
       
@@ -318,6 +342,10 @@ namespace Anki {
         } else {
           // Current front action is not interruptible, so just use QueueNow and
           // cancel it
+          PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
+                           "Could not interrupt %s. Will cancel and queue %s now.",
+                           _queue.front()->GetName().c_str(),
+                           action->GetName().c_str());
           result = QueueNow(action, numRetries);
         }
       }
@@ -359,13 +387,13 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result ActionQueue::Update(Robot& robot)
+    Result ActionQueue::Update()
     {
       Result lastResult = RESULT_OK;
       
       // Update any interrupted actions (but leave them in the queue)
       for(auto interruptedAction : _interruptedActions) {
-        ActionResult result = interruptedAction->Update(robot);
+        ActionResult result = interruptedAction->Update();
         if(ActionResult::INTERRUPTED != result) {
           PRINT_NAMED_WARNING("ActionQueue.Update.InterruptFailed",
                               "Expecting interrupted %s action to return INTERRUPTED result on Update",
@@ -382,7 +410,7 @@ namespace Anki {
         VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN,
                                            "Action: %s", currentAction->GetName().c_str());
         
-        const ActionResult actionResult = currentAction->Update(robot);
+        const ActionResult actionResult = currentAction->Update();
         
         if(actionResult != ActionResult::RUNNING) {
           // Current action just finished, pop it
@@ -432,7 +460,6 @@ namespace Anki {
     
     void ActionQueue::Print() const
     {
-      
       if(IsEmpty()) {
         PRINT_STREAM_INFO("ActionQueue.Print", "ActionQueue is empty.\n");
       } else {
@@ -443,7 +470,6 @@ namespace Anki {
         }
         PRINT_STREAM_INFO("ActionQueue.Print", ss.str());
       }
-      
     } // Print()
     
   } // namespace Cozmo

@@ -33,6 +33,8 @@
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 
+#include "anki/common/basestation/utils/timer.h"
+
 #define DEBUG_BEHAVIOR_MGR 0
 
 namespace Anki {
@@ -385,6 +387,9 @@ namespace Cozmo {
     Util::SafeDelete(_behaviorChooser);
     
     _behaviorChooser = newChooser;
+
+    // force the new behavior chooser to select something now, instead of waiting for it to be ready
+    SelectNextBehavior(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
   }
   
   void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
@@ -421,6 +426,73 @@ namespace Cozmo {
       return true;
     }
     return false;
+  }
+  
+  void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message)
+  {
+    switch (message.GetTag())
+    {
+      case ExternalInterface::BehaviorManagerMessageUnionTag::EnableAllBehaviorGroups:
+      {
+        if (_behaviorChooser)
+        {
+          _behaviorChooser->ClearBannedBehaviorGroups();
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableAllBehaviorGroups.NullChooser",
+                              "Ignoring EnableAllBehaviorGroups");
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::EnableBehaviorGroup:
+      {
+        const auto& msg = message.Get_EnableBehaviorGroup();
+        if (_behaviorChooser)
+        {
+          _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, false);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableBehaviorGroup.NullChooser",
+                              "Ignoring EnableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::DisableBehaviorGroup:
+      {
+        const auto& msg = message.Get_DisableBehaviorGroup();
+        if (_behaviorChooser)
+        {
+          _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, true);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.DisableBehaviorGroup.NullChooser",
+                              "Ignoring DisableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
+        }
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::ClearAllBehaviorScoreOverrides:
+      {
+        ClearAllBehaviorOverrides();
+        break;
+      }
+      case ExternalInterface::BehaviorManagerMessageUnionTag::OverrideBehaviorScore:
+      {
+        const auto& msg = message.Get_OverrideBehaviorScore();
+        OverrideBehaviorScore(msg.behaviorName, msg.newScore);
+        break;
+      }
+      default:
+      {
+        PRINT_NAMED_ERROR("BehaviorManager.HandleEvent.UnhandledMessageUnionTag",
+                          "Unexpected tag %u '%s'", (uint32_t)message.GetTag(),
+                          BehaviorManagerMessageUnionTagToString(message.GetTag()));
+        assert(0);
+        break;
+      }
+    }
   }
   
 } // namespace Cozmo

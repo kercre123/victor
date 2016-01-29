@@ -184,7 +184,7 @@ namespace Anki
         DMA_TCD0_DADDR = (uint32_t)dmaBuff_;
         DMA_TCD0_CITER_ELINKNO = 1; // Current major loop iteration (1 per interrupt)
         DMA_TCD0_BITER_ELINKNO = 1; // Beginning major loop iteration (1 per interrupt)
-        DMA_TCD0_DLASTSGA = -TOTAL_COLS*BYTES_PER_PIX;    // Point back at start of buffer after each loop
+        DMA_TCD0_DLASTSGA = (uint32_t)-TOTAL_COLS*BYTES_PER_PIX;    // Point back at start of buffer after each loop
 
         // Hook DMA start request 0 to HSYNC
         DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_CAM_HSYNC));
@@ -303,6 +303,7 @@ void DMA0_IRQHandler(void)
   timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
   NVIC_SetPriority(FTM2_IRQn, 1);
+  HALInit();
 }
 
 extern "C"

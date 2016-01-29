@@ -12,15 +12,16 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
-#include "anki/cozmo/basestation/trackingActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#define DO_BACK_UP_AFTER_POUNCE 0
+#define DO_BACK_UP_AFTER_POUNCE 1
 
 namespace Anki {
 namespace Cozmo {
@@ -58,20 +59,16 @@ float BehaviorFollowMotion::EvaluateScoreInternal(const Robot& robot, double cur
 
 Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
-  // Store whatever modes the vision system was using so we can restore once this
-  // behavior completes
-  // NOTE: if vision modes are enabled _while_ this behavior is running, they will be
-  //       disabled when it finishes!
-  
-  _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
-  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
 
-#if DO_BACK_UP_AFTER_POUNCE
-  if( _totalDriveForwardDist > 5.0f ) {
+# if DO_BACK_UP_AFTER_POUNCE
+  if( _initialReactionAnimPlayed ) {
+      PRINT_NAMED_INFO("BehaviorFollowMotion.Init.CheckBackup",
+                   "have driven %f forward",
+                   _totalDriveForwardDist);
     _state = State::BackingUp;
     SetStateName("BackUp");
   }
-#endif
+# endif
 
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
@@ -188,11 +185,11 @@ void BehaviorFollowMotion::StopInternal(Robot& robot, double currentTime_sec)
   _actionRunning = (u32)ActionConstants::INVALID_TAG;
   _lastInterruptTime_sec = currentTime_sec;
   _holdHeadDownUntil = -1.0f;
+
+  LiftShouldBeUnlocked(robot);
   
-  PRINT_NAMED_DEBUG("BehaviorFollowMotion.StopInternal", "restoring original vision modes");
-  
-  // Restore original vision modes
-  robot.GetVisionComponent().SetModes(_originalVisionModes);
+  _state = State::Interrupted;
+  SetStateName("Interrupted");
   
   LiftShouldBeUnlocked(robot);
 }
@@ -201,6 +198,7 @@ void BehaviorFollowMotion::StartTracking(Robot& robot)
 {
   TrackMotionAction* action = new TrackMotionAction();
   action->SetMaxHeadAngle( DEG_TO_RAD( 5.0f ) );
+  action->SetMoveEyes(true);
   _actionRunning = action->GetTag();
   
   robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
@@ -280,8 +278,8 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
     case State::Tracking:
     {
       PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.Motion",
-                       "Motion area=%d, centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
-                       motionObserved.img_area,
+                       "Motion area=%.1f%%, centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
+                       motionObserved.img_area * 100.f,
                        motionCentroid.x(), motionCentroid.y(),
                        relHeadAngle_rad.getDegrees(), relBodyPanAngle_rad.getDegrees());
       

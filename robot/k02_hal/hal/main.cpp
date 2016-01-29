@@ -16,6 +16,7 @@
 #include "spi.h"
 #include "dac.h"
 #include "wifi.h"
+#include "spine.h"
 #include "hal/i2c.h"
 #include "hal/imu.h"
 
@@ -41,12 +42,17 @@ namespace Anki
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
       u32 GetID() { return 0; } ///< Stub for K02 for now, need to get this from Espressif Flash storage
 
+      void HALInit(void) {
+        DAC::Sync();
+      }
+      
       // This method is called at 7.5KHz (once per scan line)
       // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(void)
       {
         I2C::Enable();
+        SPI::ManageDrop();
         UART::Transmit();
         IMU::Manage();
       }
@@ -75,7 +81,7 @@ int main (void)
 
   DAC::Init();
   DAC::Tone();
-  
+  MicroWait(10);
   DAC::Mute();
 
   // Wait for Espressif to toggle out 4 words of I2SPI
@@ -114,6 +120,7 @@ int main (void)
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
+    Anki::Cozmo::HAL::Spine::Manage(g_dataToHead.spineMessage);
     Anki::Cozmo::HAL::IMU::Update();
     Anki::Cozmo::HAL::WiFi::Update();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);

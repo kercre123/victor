@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -64,6 +63,8 @@
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 #define MIN_DISTANCE_FOR_MINANGLE_PLANNER 1.0f
 
+#define DEBUG_BLOCK_LIGHTS 0
+
 namespace Anki {
   namespace Cozmo {
     
@@ -77,6 +78,7 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
+    , _actionList(*this)
     , _movementComponent(*this)
     , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, dataPlatform)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
@@ -114,10 +116,6 @@ namespace Anki {
         SetupMiscHandlers(*_externalInterface);
       }
       
-      _proceduralFace.MarkAsSentToRobot(false);
-      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
-      _lastProceduralFace.MarkAsSentToRobot(true);
-      
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
@@ -133,7 +131,7 @@ namespace Anki {
       if (nullptr != neutralFaceAnim)
       {
         auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
-        ProceduralFaceParams::SetResetData(frame->GetFace().GetParams());
+        ProceduralFace::SetResetData(frame->GetFace());
       }
       else
       {
@@ -711,7 +709,7 @@ namespace Anki {
           return RESULT_OK;
         }
 
-        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
+        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
         const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
         
         assert(t_prev < t);
@@ -964,7 +962,7 @@ namespace Anki {
 
       
       //////// Update Robot's State Machine /////////////
-      Result actionResult = _actionList.Update(*this);
+      Result actionResult = _actionList.Update();
       if(actionResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.", GetID());
       }
@@ -1123,10 +1121,11 @@ namespace Anki {
       
       // Sending debug string to game and viz
       char buffer [128];
+
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c lock:%c%c%c %s:%s ",
+               "r:%c%c%c%c lock:%c%c%c %2dHz %s:%s ",
                GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
                GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
                GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -1134,6 +1133,7 @@ namespace Anki {
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
                _movementComponent.IsAnimTrackLocked(AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+               (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                behaviorChooserName,
                behaviorName.c_str());
       
@@ -1428,30 +1428,6 @@ namespace Anki {
     {
       return _animationStreamer.GetIdleAnimationName();
     }
-  
-    void Robot::SetProceduralFace(const ProceduralFace& face)
-    {
-      // First one
-      if(_lastProceduralFace.GetTimeStamp() == 0) {
-        _lastProceduralFace = face;
-        _lastProceduralFace.MarkAsSentToRobot(true);
-        _proceduralFace.MarkAsSentToRobot(true);
-      } else {
-        if(_proceduralFace.HasBeenSentToRobot()) {
-          // If the current face has already been sent, make it the
-          // last procedural face (sent). Otherwise, we'll just
-          // replace the current face and leave "last" as is.
-          std::swap(_lastProceduralFace, _proceduralFace);
-        }
-        _proceduralFace = face;
-        _proceduralFace.MarkAsSentToRobot(false);
-      }
-    }
-    
-    void Robot::MarkProceduralFaceAsSent()
-    {
-      _proceduralFace.MarkAsSentToRobot(true);
-    }
     
     const std::string Robot::GetStreamingAnimationName() const
     {
@@ -1462,12 +1438,12 @@ namespace Anki {
                           TimeStamp_t duration_ms, const std::string& name)
     {
       ProceduralFace procFace;
-      ProceduralFaceParams::Value xMin=0, xMax=0, yMin=0, yMax=0;
-      procFace.GetParams().GetEyeBoundingBox(xMin, xMax, yMin, yMax);
-      procFace.GetParams().LookAt(xPix, yPix,
-                                  std::max(xMin, ProceduralFace::WIDTH-xMax),
-                                  std::max(yMin, ProceduralFace::HEIGHT-yMax),
-                                  1.1f, 0.85f, 0.1f);
+      ProceduralFace::Value xMin=0, xMax=0, yMin=0, yMax=0;
+      procFace.GetEyeBoundingBox(xMin, xMax, yMin, yMax);
+      procFace.LookAt(xPix, yPix,
+                      std::max(xMin, ProceduralFace::WIDTH-xMax),
+                      std::max(yMin, ProceduralFace::HEIGHT-yMax),
+                      1.1f, 0.85f, 0.1f);
       
       ProceduralFaceKeyFrame keyframe(procFace, duration_ms);
       
@@ -1507,6 +1483,12 @@ namespace Anki {
       if (success && !animDefs.empty()) {
         //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
+        
+        if(std::string(filename).find(animationId) == std::string::npos) {
+          PRINT_NAMED_WARNING("Robot.ReadAnimationFile.AnimationNameMismatch",
+                              "Animation name '%s' does not match seem to match "
+                              "filename '%s'", animationId.c_str(), filename);
+        }
       }
 
     }
@@ -1571,6 +1553,10 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
     {
+      // Disable super-verbose warnings about clipping face parameters in json files
+      // To help find bad/deprecated animations, try removing this.
+      ProceduralFace::EnableClippingWarning(false);
+
       ReadAnimationDirImpl("assets/animations/");
       ReadAnimationDirImpl("config/basestation/animations/");
     }
@@ -1630,6 +1616,8 @@ namespace Anki {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
+      
+      ProceduralFace::EnableClippingWarning(true);
     }
     
     // Read the animationGroups in a dir
@@ -3136,6 +3124,13 @@ namespace Anki {
           lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
           lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
+
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
     }
@@ -3173,6 +3168,12 @@ namespace Anki {
           lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
 
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+        
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
 

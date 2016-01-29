@@ -14,9 +14,12 @@
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/actionInterface.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
-#include "anki/cozmo/basestation/trackingActions.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
@@ -100,6 +103,12 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     {
       auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
       _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
+    }
+
+    // Custom handlers for BehaviorManager events
+    {
+      auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
   }
 }
@@ -198,8 +207,7 @@ IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::Pla
   
   if(static_cast<bool>(msg.usePreDockPose)) {
 
-    return new DriveToPlaceOnObjectAction(robot,
-                                          selectedObjectID,
+    return new DriveToPlaceOnObjectAction(selectedObjectID,
                                           msg.motionProf,
                                           msg.useApproachAngle,
                                           msg.approachAngle_rad,
@@ -335,10 +343,11 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
   } else {
     objectID = msg.objectID;
   }
+
   FaceObjectAction* action = new FaceObjectAction(objectID,
-                                             Radians(msg.maxTurnAngle),
-                                             msg.visuallyVerifyWhenDone,
-                                             msg.headTrackWhenDone);
+                                                  Radians(msg.maxTurnAngle),
+                                                  msg.visuallyVerifyWhenDone,
+                                                  msg.headTrackWhenDone);
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -354,8 +363,8 @@ IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::Fa
 {
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
-  FacePoseAction* action = new FacePoseAction(pose,
-                                              Radians(msg.maxTurnAngle));
+  
+  FacePoseAction* action = new FacePoseAction(pose, Radians(msg.maxTurnAngle));
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -751,11 +760,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
     return;
   }
   
-  ProceduralFace procFace;
-  procFace.GetParams().SetFromMessage(msg);
-  procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
-  
-  robot->SetProceduralFace(procFace);
+  robot->GetAnimationStreamer().GetLastProceduralFace()->SetFromMessage(msg);
 }
   
   void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -813,6 +818,26 @@ void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface
     robot->GetProgressionManager().HandleEvent(event);
   }
 }
+  
+void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const auto& eventData = event.GetData();
+  const auto& message = eventData.Get_BehaviorManagerMessage();
+  const RobotID_t robotID = message.robotID;
+
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleBehaviorManagerEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetBehaviorManager().HandleMessage(message.BehaviorManagerMessageUnion);
+  }
+}
+  
 
 } // namespace Cozmo
 } // namespace Anki

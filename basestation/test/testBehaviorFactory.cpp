@@ -110,7 +110,7 @@ void VerifyBehavior(const IBehavior* inBehavior, BehaviorFactory& behaviorFactor
       EXPECT_EQ(inBehavior->IsBehaviorGroup(i), ShouldBehaviorGroupBeSetForTest(i));
     }
 
-    IBehavior::BehaviorGroupFlags groupFlags;
+    BehaviorGroupFlags groupFlags;
     EXPECT_FALSE(inBehavior->MatchesAnyBehaviorGroups(groupFlags));
     
     // Set every flag _but_ the set ones

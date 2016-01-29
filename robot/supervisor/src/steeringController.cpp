@@ -448,7 +448,7 @@ namespace Anki {
     void ExecutePointTurn(f32 angularVel, f32 angularAccel)
     {
       if (std::fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
-        PRINT("WARN: ExecutePointTurn speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
+        AnkiWarn( 53, "SteeringController.ExecutePointTurn", 298, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(angularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         angularVel = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, angularVel);
       }
@@ -477,7 +477,7 @@ namespace Anki {
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
     {
       if (std::fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
-        PRINT("WARN: ExecutePointTurn speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
+        AnkiWarn( 53, "SteeringController.ExecutePointTurn", 298, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(maxAngularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         maxAngularVel = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxAngularVel);
       }

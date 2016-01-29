@@ -868,6 +868,11 @@
               <FileType>8</FileType>
               <FilePath>.\generated\clad\robot\clad\robotInterface\otaMessages.cpp</FilePath>
             </File>
+            <File>
+              <FileName>nvStorage.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\nvStorage.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1855,6 +1860,11 @@
               <FileName>otaMessages.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\generated\clad\robot\clad\robotInterface\otaMessages.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>nvStorage.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\nvStorage.cpp</FilePath>
             </File>
           </Files>
         </Group>

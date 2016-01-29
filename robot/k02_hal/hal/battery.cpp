@@ -21,8 +21,8 @@ namespace Anki
 
       bool BatteryIsOnCharger()
       {
-        // Let's say we consider it to be on charger if 0.2V is detected. 
-        return (g_dataToHead.VExt * 10)/65535 > 2; 
+        // Let's say we consider it to be on charger if 4.0V is detected. 
+        return (g_dataToHead.VExt / 65536.0f) > 4.0f; 
       }
     }
   }

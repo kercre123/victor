@@ -1,8 +1,5 @@
 #include "anki/cozmo/robot/hal.h"
-#ifndef TARGET_K02
-#include "anki/common/robot/errorHandling.h"
-#include "anki/common/robot/matrix.h"
-#endif
+#include "anki/cozmo/robot/logging.h"
 #include "localization.h"
 #include "pickAndPlaceController.h"
 #include "imuFilter.h"
@@ -82,37 +79,20 @@ namespace Anki {
         f32 slipFactor_ = 1.f;
         
 
-        // Pose history
+
+        ///// Pose history ////
+        
+        // The number of mainExecution tics in between history entries (min: 1)
+        const u8 POSE_HISTORY_RES_IN_CYCLES = 6;
+        
         // Never need to erase elements, just overwrite with new data.
-#ifdef TARGET_K02
-        const u16 POSE_HISTORY_SIZE = 100/5; // 100ms of history devided by 5ms intervals
-#else
-        const u16 POSE_HISTORY_SIZE = 300;
-#endif
+        const u8 POSE_HISTORY_SIZE = 600/(TIME_STEP * POSE_HISTORY_RES_IN_CYCLES); // 600ms of history
+
         PoseStamp hist_[POSE_HISTORY_SIZE];
         u16 hStart_ = 0;
         u16 hEnd_ = 0;
         u16 hSize_ = 0;
 
-#ifndef TARGET_K02
-        // MemoryStack for rotation matrices and operations on them
-        const s32 SCRATCH_BUFFER_SIZE = 75*4 + 128;
-        char scratchBuffer[SCRATCH_BUFFER_SIZE];
-        Embedded::MemoryStack scratch(scratchBuffer, SCRATCH_BUFFER_SIZE);
-
-        // Poses
-        Embedded::Point3<f32> currPoseTrans;
-        Embedded::Array<f32> currPoseRot(3,3,scratch);
-
-        Embedded::Point3<f32> p0Trans;
-        Embedded::Array<f32> p0Rot(3,3,scratch);
-
-        Embedded::Point3<f32> pDiffTrans;
-        Embedded::Array<f32> pDiffRot(3,3,scratch);
-
-        Embedded::Point3<f32> keyPoseTrans;
-        Embedded::Array<f32> keyPoseRot(3,3,scratch);
-  #endif
         // The time of the last keyframe that was used to update the robot's pose.
         // Using this to limit how often keyframes are used to compute the robot's
         // current pose so that we don't have to do multiple
@@ -129,7 +109,7 @@ namespace Anki {
         lastKeyframeUpdate_ = 0;
       }
 
-#ifndef TARGET_K02
+
       // Interpolates the pose at time targetTime which should be between historical pose1 time and historical pose2 time.
       // Puts result in history at index poseResult_idx.
       Result InterpolatePose(int pose1_idx, int pose2_idx, f32 targetTime, int poseResult_idx)
@@ -138,12 +118,12 @@ namespace Anki {
         PoseStamp *p2 = &(hist_[pose2_idx]);
 
         if (p1->t > p2->t) {
-          PRINT("ERROR (InterpolatePose): pose2 is older than pose1\n");
+          AnkiWarn( 55, "Localization.InterpolatePose.PosesOutOfOrder", 300, "pose2 is older than pose1", 0);
           return RESULT_FAIL;
         }
 
         if (targetTime < p1->t || targetTime > p2->t) {
-          PRINT("ERROR (InterpolatePose): targetTime is outside of expected time range\n");
+          AnkiWarn( 56, "Localization.InterpolatePose.TargetTimeOOR", 301, "targetTime is outside expected range", 0);
           return RESULT_FAIL;
         }
 
@@ -162,7 +142,7 @@ namespace Anki {
 
         return RESULT_OK;
       }
-#endif
+
 
       Result GetHistIdx(TimeStamp_t t, u16& idx)
       {
@@ -183,11 +163,6 @@ namespace Anki {
             idx = 0;
           }
 
-#ifdef TARGET_K02
-          if (hist_[idx].t >= t) {
-            return RESULT_OK;
-          }
-#else
           if (hist_[idx].t == t) {
             return RESULT_OK;
           } else if (hist_[idx].t > t) {
@@ -197,7 +172,6 @@ namespace Anki {
             //       Maybe just pick the closest pose?
             return InterpolatePose(prevIdx, idx, t, idx);
           }
-#endif
           prevIdx = idx;
         }
 
@@ -215,11 +189,12 @@ namespace Anki {
         u16 i;
         if (t == 0) {
           // If t==0, this is considered to be a command to just update the current pose
-          PRINT("Setting pose to %f %f %f\n", x, y, angle);
+          AnkiInfo( 57, "Localization.UpdatePoseWithKeyFrame.SettingPose", 302, "x= %f, y= %f, angle= %f", 3, x, y, angle);
           SetCurrentMatPose(x, y, angle);
           return RESULT_OK;
         } else if (GetHistIdx(t, i) == RESULT_FAIL) {
-          PRINT("ERROR: Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)\n", t, hStart_, hist_[hStart_].t, hEnd_, hist_[hEnd_].t);
+          AnkiWarn( 58, "Localization.UpdatePoseWithKeyFrame.TimeNotFound", 303, "Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)", 5,
+                   t, hStart_, hist_[hStart_].t, hEnd_, hist_[hEnd_].t);
           return RESULT_FAIL;
         }
 
@@ -232,84 +207,31 @@ namespace Anki {
           // We last updated our pose at lastKeyFrameUpdate. Ignore any new information
           // timestamped older than lastKeyFrameUpdate.
           #if(DEBUG_POSE_HISTORY)
-          PRINT("Ignoring keyframe %d at time %d\n", frameID, t);
+          AnkiInfo( 59, "Localization.UpdatePoseWithKeyFrame.IgnoreOldKeyframe", 304, "Ignoring keyframe %d at time %d\n", 2, frameID, t);
           #endif
           return RESULT_OK;
         }
-
 
 
         // Compute new pose based on key frame pose and the diff between the historical
         // pose at time t and the latest pose.
 
         // Historical pose
-        p0Trans.x = hist_[i].x;
-        p0Trans.y = hist_[i].y;
-        p0Trans.z = 0;
-
-        f32 s0 = sinf(hist_[i].angle);
-        f32 c0 = cosf(hist_[i].angle);
-        p0Rot[0][0] = c0;    p0Rot[0][1] = -s0;    p0Rot[0][2] = 0;
-        p0Rot[1][0] = s0;    p0Rot[1][1] =  c0;    p0Rot[1][2] = 0;
-        p0Rot[2][0] =  0;    p0Rot[2][1] =   0;    p0Rot[2][2] = 1;
-
+        Embedded::Pose2d histPose( hist_[i].x, hist_[i].y, hist_[i].angle);
+        
         // Current pose
-        currPoseTrans.x = x_;
-        currPoseTrans.y = y_;
-        currPoseTrans.z = 0;
-
-        f32 s1 = sinf(orientation_.ToFloat());
-        f32 c1 = cosf(orientation_.ToFloat());
-        currPoseRot[0][0] = c1;    currPoseRot[0][1] = -s1;    currPoseRot[0][2] = 0;
-        currPoseRot[1][0] = s1;    currPoseRot[1][1] =  c1;    currPoseRot[1][2] = 0;
-        currPoseRot[2][0] =  0;    currPoseRot[2][1] =   0;    currPoseRot[2][2] = 1;
-
+        Embedded::Pose2d currPose( x_, y_, orientation_.ToFloat() );
+        
         // Compute the difference between the historical pose and the current pose
-        if (ComputePoseDiff(p0Rot, p0Trans, currPoseRot, currPoseTrans, pDiffRot, pDiffTrans, scratch) == RESULT_FAIL) {
-          PRINT("Failed to compute pose diff\n");
-          return RESULT_FAIL;
-        }
-
+        Embedded::Pose2d currPoseWrtHistPose = currPose.GetWithRespectTo(histPose);
+        
         // Compute pose of the keyframe
-        keyPoseTrans.x = x;
-        keyPoseTrans.y = y;
-        keyPoseTrans.z = 0;
-
-        f32 sk = sinf(angle);
-        f32 ck = cosf(angle);
-        keyPoseRot[0][0] = ck;    keyPoseRot[0][1] = -sk;    keyPoseRot[0][2] = 0;
-        keyPoseRot[1][0] = sk;    keyPoseRot[1][1] =  ck;    keyPoseRot[1][2] = 0;
-        keyPoseRot[2][0] =  0;    keyPoseRot[2][1] =   0;    keyPoseRot[2][2] = 1;
-
-        #if(DEBUG_POSE_HISTORY)
-        PRINT("pHist: %f %f %f (frame %d, curFrame %d)\n", hist_[i].x, hist_[i].y, hist_[i].angle, hist_[i].frame, frameId_);
-        PRINT("pCurr: %f %f %f\n", currPoseTrans.x, currPoseTrans.y, orientation_.ToFloat());
-        PRINT("pKey: %f %f %f\n", x, y, angle);
-        #endif
-
+        Embedded::Pose2d keyPose(x, y, angle );
 
         // Apply the pose diff to the keyframe pose to get the new curr pose
-        Embedded::Matrix::Multiply(keyPoseRot, pDiffRot, currPoseRot);
-        currPoseTrans = keyPoseRot*pDiffTrans + keyPoseTrans;
-
-        // NOTE: Expecting only rotation about the z-axis.
-        //       If this is not the case, we need to do something more mathy.
-        f32 newAngle = acosf(currPoseRot[0][0]);
-        if (currPoseRot[0][1] > 0) {
-          newAngle *= -1;
-        }
-
-        SetCurrentMatPose(currPoseTrans.x, currPoseTrans.y, newAngle);
-
-        #if(DEBUG_POSE_HISTORY)
-        f32 pDiffAngle = acosf(pDiffRot[0][0]);
-        if (pDiffRot[0][1] > 0) {
-          pDiffAngle *= -1;
-        }
-        PRINT("pDiff: %f %f %f\n", pDiffTrans.x, pDiffTrans.y, pDiffAngle);
-        PRINT("pCurrNew: %f %f %f\n", x_, y_, orientation_.ToFloat());
-        #endif
-
+        Embedded::Pose2d newCurrPose = keyPose * currPoseWrtHistPose;
+        SetCurrentMatPose(newCurrPose.GetX(), newCurrPose.GetY(), newCurrPose.GetAngle());
+        
         lastKeyframeUpdate_ = HAL::GetTimeStamp();
 
         return RESULT_OK;
@@ -345,7 +267,7 @@ namespace Anki {
 
         p.x() = hist_[idx].x;
         p.y() = hist_[idx].y;
-        p.angle = hist_[idx].angle;
+        p.angle() = hist_[idx].angle;
 
         return RESULT_OK;
       }
@@ -354,7 +276,7 @@ namespace Anki {
       {
         // Check that there are actually poses in history
         if (hSize_ <= 0) {
-          PRINT("WARN: Localization.GetHistPoseAtTime - No history!\n");
+          AnkiWarn( 60, "Localization.GetHistPoseAtTime.NoHistory", 305, "", 0);
           return RESULT_FAIL;
         }
 
@@ -362,7 +284,8 @@ namespace Anki {
         // then the time requested is too old.
         // Return the oldest historical pose just because it's better than nothing
         if (hist_[hStart_].t > t) {
-          PRINT("WARN: Localization.GetHistPoseAtTime - History starts at time %d, pose requested at time %d. Returning oldest pose.\n", hist_[hStart_].t, t);
+          AnkiWarn( 61, "Localization.GetHistPoseAtTime.TimeTooOld", 306, "History starts at time %d, pose requested at time %d. Returning oldest pose.\n", 2,
+                   hist_[hStart_].t, t);
           GetHistPoseAtIndex(hStart_, p);
           return RESULT_FAIL;
         }
@@ -371,7 +294,8 @@ namespace Anki {
         // the time requested is too new.
         // Return the newest histrical pose just because it's better than nothing
         if (hist_[hEnd_].t < t) {
-          PRINT("WARN: Localization.GetHistPoseAtTime - History ends at time %d, pose requested at time %d. Returning newest pose.\n", hist_[hEnd_].t, t);
+          AnkiWarn( 62, "Localization.GetHistPoseAtTime.TimeTooNew", 307, "History ends at time %d, pose requested at time %d. Returning newest pose.\n", 2,
+                   hist_[hEnd_].t, t);
           GetHistPoseAtIndex(hEnd_, p);
           return RESULT_FAIL;
         }
@@ -789,7 +713,11 @@ namespace Anki {
 
 
         // Add new current pose to history
-        AddPoseToHist();
+        static u8 addPoseToHistTicCnt = 0;
+        if (++addPoseToHistTicCnt >= POSE_HISTORY_RES_IN_CYCLES) {
+          AddPoseToHist();
+          addPoseToHistTicCnt = 0;
+        }
 
 #if(DEBUG_LOCALIZATION)
         PRINT("LOC: %f, %f, %f\n", x_, y_, orientation_.getDegrees());
@@ -846,20 +774,20 @@ namespace Anki {
 
       void ConvertToDriveCenterPose(const Anki::Embedded::Pose2d &robotOriginPose, Anki::Embedded::Pose2d &driveCenterPose)
       {
-        f32 angle = robotOriginPose.angle.ToFloat();
+        f32 angle = robotOriginPose.GetAngle().ToFloat();
 
         driveCenterPose.x() = robotOriginPose.GetX() + GetDriveCenterOffset() * cosf(angle);
         driveCenterPose.y() = robotOriginPose.GetY() + GetDriveCenterOffset() * sinf(angle);
-        driveCenterPose.angle = robotOriginPose.angle;
+        driveCenterPose.angle() = robotOriginPose.GetAngle();
       }
 
       void ConvertToOriginPose(const Anki::Embedded::Pose2d &driveCenterPose, Anki::Embedded::Pose2d &robotOriginPose)
       {
-        f32 angle = driveCenterPose.angle.ToFloat();
+        f32 angle = driveCenterPose.GetAngle().ToFloat();
 
         robotOriginPose.x() = driveCenterPose.GetX() - GetDriveCenterOffset() * cosf(angle);
         robotOriginPose.y() = driveCenterPose.GetY() - GetDriveCenterOffset() * sinf(angle);
-        robotOriginPose.angle = driveCenterPose.angle;
+        robotOriginPose.angle() = driveCenterPose.GetAngle();
       }
 
       Radians GetCurrentMatOrientation()

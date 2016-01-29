@@ -42,6 +42,12 @@ namespace Vision {
     
     static bool IsRecognitionSupported() { return false; }
     
+    void EnableNewFaceEnrollment(bool enable) { }
+    bool IsNewFaceEnrollmentEnabled() const { return false; }
+    
+    std::vector<u8> GetSerializedAlbum() { return std::vector<u8>(); }
+    Result SetSerializedAlbum(const std::vector<u8>& serializedAlbum) { return RESULT_FAIL; }
+    
   private:
     
     bool _isInitialized = false;

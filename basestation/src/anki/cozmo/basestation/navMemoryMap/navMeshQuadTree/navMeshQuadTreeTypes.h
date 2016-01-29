@@ -12,6 +12,8 @@
 #ifndef ANKI_COZMO_NAV_MESH_QUAD_TREE_TYPES_H
 #define ANKI_COZMO_NAV_MESH_QUAD_TREE_TYPES_H
 
+#include "anki/common/basestation/math/point.h"
+
 #include <cstdint>
 #include <type_traits>
 
@@ -24,7 +26,8 @@ namespace NavMeshQuadTreeTypes {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // content detected in nodes
-enum class EContentType : uint8_t {
+enum class ENodeContentType : uint8_t {
+  Invalid,              // invalid type (not set)
   Subdivided,           // we are subdivided, children hold more detailed info
   Unknown,              // no idea
   Clear,                // what we know about the node is clear (could be partial info)
@@ -63,7 +66,10 @@ inline NavMeshQuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDir
 inline NavMeshQuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir );
 
 // EDirection to String
-inline const char* EDirectionToString(EDirection dir);
+const char* EDirectionToString(EDirection dir);
+
+// EDirection to Vec3f
+Vec3f EDirectionToNormalVec3f(EDirection dir);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline NavMeshQuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
@@ -89,19 +95,6 @@ inline NavMeshQuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockD
     next = dir == EDirection::North ? EDirection::South : (EDirection)((std::underlying_type<EClockDirection>::type)dir-1);
   }
   return next;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline const char* EDirectionToString(EDirection dir)
-{
-  switch (dir) {
-    case NavMeshQuadTreeTypes::EDirection::North:   { return "N"; };
-    case NavMeshQuadTreeTypes::EDirection::East:    { return "E" ;};
-    case NavMeshQuadTreeTypes::EDirection::West:    { return "W"; };
-    case NavMeshQuadTreeTypes::EDirection::South:   { return "S"; };
-    case NavMeshQuadTreeTypes::EDirection::Invalid: { return "Invalid"; };
-  }
-  return "Error";
 }
 
 } // namespace

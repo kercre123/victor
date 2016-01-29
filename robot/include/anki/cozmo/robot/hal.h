@@ -483,7 +483,8 @@ namespace Anki
       // Set the color and flashing of each LED on a block separately
       Result SetBlockLight(const u32 blockID, const u16* colors);
 
-      void ManageCubes(void);
+      void DiscoverProp(uint32_t id);
+      void GetPropState(int id, int x, int y, int z, int shocks);
 
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT

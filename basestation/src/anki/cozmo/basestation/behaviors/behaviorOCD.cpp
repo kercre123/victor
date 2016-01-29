@@ -13,7 +13,10 @@
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -571,7 +574,7 @@ namespace Cozmo {
         
         if(_objectToPlaceOn.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
-          placementAction = new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn);
+          placementAction = new DriveToPlaceOnObjectAction(_objectToPlaceOn);
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO", "Chose to place on top of object %d.",
                            _objectToPlaceOn.GetValue());
         } else {
