@@ -17,6 +17,18 @@ namespace Cozmo.HomeHub {
     private float _TimelineStartOffset = 150f;
 
     [SerializeField]
+    private float _MaxDailyGoalWidth = 800f;
+
+    [SerializeField]
+    private float _MinDailyGoalWidth = 400f;
+
+    [SerializeField]
+    private float _RightDailyGoalOffset = 150f;
+
+    [SerializeField]
+    private float _LeftDailyGoalOffset = 5f;
+
+    [SerializeField]
     private GameObject _TimelineEntryPrefab;
 
     private readonly List<TimelineEntry> _TimelineEntries = new List<TimelineEntry>();
@@ -55,7 +67,7 @@ namespace Cozmo.HomeHub {
     private RectTransform _TimelinePane;
 
     [SerializeField]
-    private RectTransform _MiddlePane;
+    private LayoutElement _MiddlePane;
 
     [SerializeField]
     private GraphSpline _GraphSpline;
@@ -109,12 +121,13 @@ namespace Cozmo.HomeHub {
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
       _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
 
-      _DailyGoalInstance.transform.SetSiblingIndex(0);
       _EndSessionButton.onClick.AddListener(HandleEndSessionButtonTap);
       Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       _CozmoWidgetInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
 
+      // Locking and expanding daily goals init
       _ScrollRect.onValueChanged.AddListener(HandleTimelineViewScroll);
+      _MiddlePane.minWidth = _MaxDailyGoalWidth; 
     }
 
     private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
@@ -241,9 +254,11 @@ namespace Cozmo.HomeHub {
     private void SetScrollRectStartPosition() {
       _ScrollRect.horizontalNormalizedPosition = 
         CalculateHorizontalNormalizedPosition(_TimelinePane.rect.width - _TimelineStartOffset);
+      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MaxDailyGoalWidth, -_RightDailyGoalOffset);
+      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth, _LeftDailyGoalOffset);
     }
 
-    private void HandleTimelineViewScroll(Vector2 dragDelta) {
+    private void HandleTimelineViewScroll(Vector2 scrollPosition) {
       float currentScrollPosition = _ScrollRect.horizontalNormalizedPosition;
       if (currentScrollPosition <= GetDailyGoalOnRightHorizontalNormalizedPosition()) {
         if (_LockedPaneScrollContainer.parent != _LockedPaneRightNoScrollContainer) {
@@ -256,10 +271,17 @@ namespace Cozmo.HomeHub {
           _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, true);
           _LockedPaneScrollContainer.localPosition = Vector3.zero;
         }
+        float pixelsOnLeft = GetScrollRectNormalizedWidth() * _ScrollRect.horizontalNormalizedPosition;
+        float dailyGoalPaneOverhang = pixelsOnLeft - _TimelinePane.rect.width;
+        float dailyGoalDisplayWidth = _MiddlePane.minWidth - dailyGoalPaneOverhang;
+        dailyGoalDisplayWidth = Mathf.Clamp(dailyGoalDisplayWidth, _MinDailyGoalWidth, _MaxDailyGoalWidth);
+        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth, _LeftDailyGoalOffset);
       }
-      else if (_LockedPaneScrollContainer.parent != _MiddlePane) {
-        _LockedPaneScrollContainer.SetParent(_MiddlePane, true);
-        _LockedPaneScrollContainer.localPosition = Vector3.zero;
+      else {
+        if (_LockedPaneScrollContainer.parent != _MiddlePane) {
+          _LockedPaneScrollContainer.SetParent(_MiddlePane.transform, true);
+          _LockedPaneScrollContainer.localPosition = Vector3.zero;
+        }
       }
     }
 
@@ -278,6 +300,11 @@ namespace Cozmo.HomeHub {
 
     private float GetScrollRectNormalizedWidth() {
       return (_ContentPane.rect.width - _ViewportPane.rect.width);
+    }
+
+    private void SetNoScrollContainerWidth(RectTransform container, float width, float xOffset) {
+      container.sizeDelta = new Vector2(width, 0);
+      container.localPosition = new Vector3(width * 0.5f + xOffset, 0, 0);
     }
 
     #endregion
