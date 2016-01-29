@@ -145,13 +145,15 @@ namespace HeadController {
       switch (HAL::GetID()) {
         case 0x3AA0:
         case 0x3A94:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(-3);
+          HEAD_CAL_OFFSET = DEG_TO_RAD(0);
           break;
+        case 0x3aa7:
+        case 0x3a99:
         case 0x40:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(2);
+          HEAD_CAL_OFFSET = DEG_TO_RAD(5);
           break;
         default:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(2);
+          HEAD_CAL_OFFSET = DEG_TO_RAD(0);
       }
 
       currentAngle_ = MIN_HEAD_ANGLE + HEAD_CAL_OFFSET;

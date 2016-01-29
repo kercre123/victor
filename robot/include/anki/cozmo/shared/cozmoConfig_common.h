@@ -8,7 +8,7 @@
 const f32 WHEEL_DIAMETER_MM  = 29.f;
 const f32 HALF_WHEEL_CIRCUM  = WHEEL_DIAMETER_MM * M_PI_2;
 const f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
-const f32 WHEEL_DIST_MM      = 47.7f; // approx distance b/w the center of the front treads
+const f32 WHEEL_DIST_MM      = 46.f; // approx distance b/w the center of the front treads
 const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
 const f32 WHEEL_BASE_MM      = 48.f;
 
@@ -18,7 +18,7 @@ const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2);
 const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5);
 const f32 POINT_TURN_ANGLE_TOL = DEG_TO_RAD(1.7);
 
-const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-20.f);
+const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-23.f);
 const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
 
 // Head angle may exceed limits by this amount before
@@ -69,10 +69,10 @@ const f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
 const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
 
 // camera relative to neck joint
-const f32 HEAD_CAM_POSITION[3]   = {17.7f, 0.f, -8.f};
+const f32 HEAD_CAM_POSITION[3]   = {17.52f, 0.f, -8.f};
 
 // Upper shoulder joint relative to robot origin
-const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 31.3f + WHEEL_RAD_TO_MM}; // relative to robot origin
+const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 30.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
 
 // IMU position relative to neck joint
 const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
