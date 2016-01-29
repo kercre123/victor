@@ -19,7 +19,6 @@
 #include "anki/cozmo/basestation/soundManager.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 

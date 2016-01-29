@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "clad/robotInterface/messageRobotToEngine.h"

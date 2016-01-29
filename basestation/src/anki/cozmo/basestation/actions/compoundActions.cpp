@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/basestation/actions/compoundActions.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -65,26 +65,34 @@ namespace Anki {
       // As part of a compound action this should not emit completion
       action->SetEmitCompletionSignal(false);
       
+      // An action can be added to a compound action after it has been queued in which case
+      // this is where its robot pointer gets set
+      action->SetRobot(*GetRobot());
+      
       _actions.emplace_back(false, action);
       _name += action->GetName();
       _name += "]";
     }
     
-    void ICompoundAction::ClearActions(Robot& robot)
+    void ICompoundAction::ClearActions()
     {
-      Cleanup(robot);
+      Cleanup();
       _actions.clear();
       Reset();
     }
     
-    void ICompoundAction::Cleanup(Robot& robot)
+    void ICompoundAction::Cleanup()
     {
       for(auto action : _actions) {
         // Call any actions' Cleanup() methods if they aren't done
         const bool isDone = action.first;
         if(!isDone) {
+          // Some of the actions in the compound action may not have had their robot set at this
+          // point so make sure it is set so things like EmitCompletionSignal() can succeed.
+          action.second->SetRobot(*GetRobot());
+          
           action.second->Cancel();
-          action.second->Update(robot);
+          action.second->Update();
           action.first = true;
         }
       }
@@ -113,7 +121,7 @@ namespace Anki {
       _wasJustReset = true;
     }
     
-    ActionResult CompoundActionSequential::UpdateInternal(Robot& robot)
+    ActionResult CompoundActionSequential::UpdateInternal()
     {
       SetStatus(GetName());
       
@@ -130,11 +138,12 @@ namespace Anki {
         
         IActionRunner* currentAction = _currentActionPair->second;
         assert(currentAction != nullptr); // should not have been allowed in by constructor
+        currentAction->SetRobot(*GetRobot());
         
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
         {
-          ActionResult subResult = currentAction->Update(robot);
+          ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());
           switch(subResult)
           {
@@ -164,7 +173,8 @@ namespace Anki {
                 // Otherwise, we are still running. Go ahead and immediately do an
                 // update on the next action now to get its initialization and
                 // precondition checking going, to reduce lag between actions.
-                subResult = _currentActionPair->second->Update(robot);
+                _currentActionPair->second->SetRobot(*GetRobot());
+                subResult = _currentActionPair->second->Update();
                 
                 // In the special case that the sub-action sucessfully completed
                 // immediately, don't return SUCCESS if there are more actions left!
@@ -240,7 +250,7 @@ namespace Anki {
       
     }
     
-    ActionResult CompoundActionParallel::UpdateInternal(Robot& robot)
+    ActionResult CompoundActionParallel::UpdateInternal()
     {
       // Return success unless we encounter anything still running or failed in loop below.
       // Note that we will return SUCCESS on the call following the one where the
@@ -255,8 +265,9 @@ namespace Anki {
         if(!isDone) {
           IActionRunner* currentAction = currentActionPair.second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
-          
-          const ActionResult subResult = currentAction->Update(robot);
+
+          currentAction->SetRobot(*GetRobot());
+          const ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());
           switch(subResult)
           {
