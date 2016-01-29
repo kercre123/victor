@@ -604,8 +604,14 @@ namespace Anki
         Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         f32 currAngSpeed = -SpeedController::GetCurrentMeasuredVehicleSpeed() / radius_mm;
 
-        acc_start_frac = MAX(std::fabsf(acc_start_frac), 0.01f);
-        acc_end_frac   = MAX(std::fabsf(acc_end_frac),   0.01f);
+        // Check for valid fractions
+        if (acc_start_frac < 0 || acc_end_frac < 0) {
+          AnkiWarn( 96, "PathFollower.DriveArc.NegativeFraction", 349, "start: %f, end: %f", 2, acc_start_frac, acc_end_frac);
+          return false;
+        }
+        
+        acc_start_frac = MAX(acc_start_frac, 0.01f);
+        acc_end_frac   = MAX(acc_end_frac,   0.01f);
         
         if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, acc_start_frac * duration_sec,
                                             sweep_rad, acc_end_frac * duration_sec,
@@ -671,8 +677,14 @@ namespace Anki
         Radians curr_angle;
         Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
 
-        acc_start_frac = MAX(std::fabsf(acc_start_frac), 0.01f);
-        acc_end_frac   = MAX(std::fabsf(acc_end_frac),   0.01f);
+        // Check for valid fractions
+        if (acc_start_frac < 0 || acc_end_frac < 0) {
+          AnkiWarn( 97, "PathFollower.DrivePointTurn.NegativeFraction", 349, "start: %f, end: %f", 2, acc_start_frac, acc_end_frac);
+          return false;
+        }
+        
+        acc_start_frac = MAX(acc_start_frac, 0.01f);
+        acc_end_frac   = MAX(acc_end_frac,   0.01f);
         
         if (!vpg.StartProfile_fixedDuration(0, 0, acc_start_frac * duration_sec,
                                             sweep_rad, acc_end_frac * duration_sec,
