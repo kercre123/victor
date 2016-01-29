@@ -179,14 +179,16 @@ public class DailyGoalManager : MonoBehaviour {
       // Avoid dupes
       return;
     }
+    GetDesiredMinigameID();
     // TODO: When the message has the appropriate 
     AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
-    alertView.TitleLocKey = LocalizationKeys.kEndSessionViewTitle;
-    alertView.DescriptionLocKey = LocalizationKeys.kEndSessionViewDescription;
+    alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
+    alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
+    alertView.SetMessageArgs(new object[] { _lastChallengeID });
     _RequestDialog = alertView;
   }
 

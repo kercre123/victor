@@ -139,7 +139,7 @@ namespace Cozmo.HomeHub {
         float progress = 0f;
         if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
           var state = timelineEntries[timelineIndex];
-          progress = _FriendshipFormulaConfig.CalculateFriendshipProgress(state.Progress, state.Goals);
+          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(state.Progress, state.Goals);
           active = true;
           timelineIndex++;
         }

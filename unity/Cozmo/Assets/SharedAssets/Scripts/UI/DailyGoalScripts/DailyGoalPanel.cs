@@ -28,7 +28,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
   private void Awake() {
-    _Config = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    _Config = DailyGoalManager.Instance.GetFriendshipProgressConfig();
   }
 
   private void OnDestroy() {
