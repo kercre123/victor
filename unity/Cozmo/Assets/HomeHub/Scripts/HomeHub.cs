@@ -96,7 +96,6 @@ namespace Cozmo.HomeHub {
       };
 
       // Close dialog
-      // TODO: Don't close the hub dialog during minigames
       CloseTimelineDialog();
 
       // Play minigame immediately

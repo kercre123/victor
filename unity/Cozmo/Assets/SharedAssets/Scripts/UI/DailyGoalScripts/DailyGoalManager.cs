@@ -81,12 +81,10 @@ public class DailyGoalManager : MonoBehaviour {
   /// </summary>
   /// <returns>The minigame need.</returns>
   public float GetMinigameNeed_Extremes() {
-    float prog = GetDailyProgress();
+    float prog = (GetDailyProgress() * 2.0f) - 1;
     // Calculate how far you are from 50% complete
     // range from 0 -> 1.0
-    prog = Mathf.Abs(prog - 0.5f) * 2.0f;
-    // Multiply scale back out to -1 -> 1
-    prog = (prog - 0.5f) * 2.0f;
+    prog = (Mathf.Abs(prog) * 2.0f) - 1;
     return prog;
   }
 
@@ -109,9 +107,6 @@ public class DailyGoalManager : MonoBehaviour {
     prog = (0.5f - prog) * 2.0f;
     return prog;
   }
-
-
-  private DailyGoalPanel _GoalPanelRef;
 
   #endregion
 
