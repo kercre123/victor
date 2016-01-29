@@ -450,127 +450,160 @@ namespace Cozmo {
     Array<u8> grayscaleImage(captureHeight, captureWidth,
                              _memory._onchipScratch, Flags::Buffer(false,false,false));
     
-    GetImageHelper(inputImageGray, grayscaleImage);
-    
-    PreprocessImage(grayscaleImage);
-    
-    Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory._markers;
-    const s32 maxMarkers = markers.get_maximumSize();
-    
-    FixedLengthList<Array<f32> > homographies(maxMarkers, _memory._ccmScratch);
-    
-    markers.set_size(maxMarkers);
-    homographies.set_size(maxMarkers);
-    
-    for(s32 i=0; i<maxMarkers; i++) {
-      Array<f32> newArray(3, 3, _memory._ccmScratch);
-      homographies[i] = newArray;
-    }
-    
-    // TODO: Re-enable DebugStream for Basestation
-    //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
-    
-#   if USE_MATLAB_DETECTOR
-    const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
-#   else
-    const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
-    
-    // Convert "basestation" detection parameters to "embedded" parameters
-    // TODO: Merge the fiducial detection parameters structs
-    Embedded::FiducialDetectionParameters embeddedParams;
-    embeddedParams.useIntegralImageFiltering = true;
-    embeddedParams.scaleImage_numPyramidLevels = _detectionParameters.scaleImage_numPyramidLevels;
-    embeddedParams.scaleImage_thresholdMultiplier = _detectionParameters.scaleImage_thresholdMultiplier;
-    embeddedParams.component1d_minComponentWidth = _detectionParameters.component1d_minComponentWidth;
-    embeddedParams.component1d_maxSkipDistance =  _detectionParameters.component1d_maxSkipDistance;
-    embeddedParams.component_minimumNumPixels = _detectionParameters.component_minimumNumPixels;
-    embeddedParams.component_maximumNumPixels = _detectionParameters.component_maximumNumPixels;
-    embeddedParams.component_sparseMultiplyThreshold = _detectionParameters.component_sparseMultiplyThreshold;
-    embeddedParams.component_solidMultiplyThreshold = _detectionParameters.component_solidMultiplyThreshold;
-    embeddedParams.component_minHollowRatio = _detectionParameters.component_minHollowRatio;
-    embeddedParams.cornerMethod = cornerMethod;
-    embeddedParams.minLaplacianPeakRatio = _detectionParameters.minLaplacianPeakRatio;
-    embeddedParams.quads_minQuadArea = _detectionParameters.quads_minQuadArea;
-    embeddedParams.quads_quadSymmetryThreshold = _detectionParameters.quads_quadSymmetryThreshold;
-    embeddedParams.quads_minDistanceFromImageEdge = _detectionParameters.quads_minDistanceFromImageEdge;
-    embeddedParams.decode_minContrastRatio = _detectionParameters.decode_minContrastRatio;
-    embeddedParams.maxConnectedComponentSegments = _detectionParameters.maxConnectedComponentSegments;
-    embeddedParams.maxExtractedQuads = _detectionParameters.maxExtractedQuads;
-    embeddedParams.refine_quadRefinementIterations = _detectionParameters.quadRefinementIterations;
-    embeddedParams.refine_numRefinementSamples = _detectionParameters.numRefinementSamples;
-    embeddedParams.refine_quadRefinementMaxCornerChange = _detectionParameters.quadRefinementMaxCornerChange;
-    embeddedParams.refine_quadRefinementMinCornerChange = _detectionParameters.quadRefinementMinCornerChange;
-    embeddedParams.returnInvalidMarkers = _detectionParameters.keepUnverifiedMarkers;
-    embeddedParams.doCodeExtraction = true;
-    
-    const Result result = DetectFiducialMarkers(grayscaleImage,
-                                                markers,
-                                                homographies,
-                                                embeddedParams,
-                                                _memory._ccmScratch,
-                                                _memory._onchipScratch,
-                                                _memory._offchipScratch);
-#   endif // USE_MATLAB_DETECTOR
-    
-    if(result != RESULT_OK) {
-      return result;
-    }
-    
-    EndBenchmark("VisionSystem_LookForMarkers");
-    
-    // TODO: Re-enable DebugStream for Basestation
-    /*
-     DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
-     
-     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
-     const VisionMarker crntMarker = markers[i_marker];
-     
-     MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
-     }
-     
-     MatlabVisualization::SendDrawNow();
-     */
-    
-    const s32 numMarkers = _memory._markers.get_size();
-    markerQuads.reserve(numMarkers);
-    
-    for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+    std::list<bool> imageInversions;
+    switch(_detectionParameters.markerAppearance)
     {
-      const VisionMarker& crntMarker = _memory._markers[i_marker];
-      
-      // Construct a basestation quad from an embedded one:
-      Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
-        crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
-      
-      markerQuads.emplace_back(quad);
-      
-      Vision::ObservedMarker obsMarker(inputImageGray.GetTimestamp(),
-                                       crntMarker.markerType,
-                                       quad, _camera);
-      
-      _visionMarkerMailbox.putMessage(obsMarker);
-      
-      // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
-      if(!IsModeEnabled(VisionMode::Tracking)     &&
-         _markerToTrack.IsSpecified() &&
-         _markerToTrack.Matches(crntMarker))
-      {
-        if((lastResult = InitTemplate(grayscaleImage, crntMarker.corners)) != RESULT_OK) {
-          PRINT_NAMED_ERROR("VisionSystem.LookForMarkers.InitTemplateFailed","");
-          return lastResult;
-        }
-
-        // Template initialization succeeded, switch to tracking mode:
-        EnableMode(VisionMode::Tracking, true);
+      case VisionMarkerAppearance::BLACK_ON_WHITE:
+        // "Normal" appearance
+        imageInversions.push_back(false);
+        break;
         
-      } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
-    } // for(each marker)
+      case VisionMarkerAppearance::WHITE_ON_BLACK:
+        // Use same code as for black-on-white, but invert the image first
+        imageInversions.push_back(true);
+        break;
+        
+      case VisionMarkerAppearance::BOTH:
+        // Will run detection twice, with and without inversion
+        imageInversions.push_back(false);
+        imageInversions.push_back(true);
+        break;
+        
+      default:
+        PRINT_NAMED_WARNING("VisionSystem.DetectMarkers.BadMarkerAppearanceSetting",
+                            "Will use normal processing without inversion.");
+        imageInversions.push_back(false);
+        break;
+    }
+    
+    for(auto invertImage : imageInversions)
+    {
+      if(invertImage) {
+        GetImageHelper(inputImageGray.GetNegative(), grayscaleImage);
+      } else {
+        GetImageHelper(inputImageGray, grayscaleImage);
+      }
+      
+      PreprocessImage(grayscaleImage);
+      
+      Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory._markers;
+      const s32 maxMarkers = markers.get_maximumSize();
+      
+      FixedLengthList<Array<f32> > homographies(maxMarkers, _memory._ccmScratch);
+      
+      markers.set_size(maxMarkers);
+      homographies.set_size(maxMarkers);
+      
+      for(s32 i=0; i<maxMarkers; i++) {
+        Array<f32> newArray(3, 3, _memory._ccmScratch);
+        homographies[i] = newArray;
+      }
+      
+      // TODO: Re-enable DebugStream for Basestation
+      //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
+      
+#     if USE_MATLAB_DETECTOR
+      const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
+#     else
+      const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+      
+      // Convert "basestation" detection parameters to "embedded" parameters
+      // TODO: Merge the fiducial detection parameters structs
+      Embedded::FiducialDetectionParameters embeddedParams;
+      embeddedParams.useIntegralImageFiltering = true;
+      embeddedParams.scaleImage_numPyramidLevels = _detectionParameters.scaleImage_numPyramidLevels;
+      embeddedParams.scaleImage_thresholdMultiplier = _detectionParameters.scaleImage_thresholdMultiplier;
+      embeddedParams.component1d_minComponentWidth = _detectionParameters.component1d_minComponentWidth;
+      embeddedParams.component1d_maxSkipDistance =  _detectionParameters.component1d_maxSkipDistance;
+      embeddedParams.component_minimumNumPixels = _detectionParameters.component_minimumNumPixels;
+      embeddedParams.component_maximumNumPixels = _detectionParameters.component_maximumNumPixels;
+      embeddedParams.component_sparseMultiplyThreshold = _detectionParameters.component_sparseMultiplyThreshold;
+      embeddedParams.component_solidMultiplyThreshold = _detectionParameters.component_solidMultiplyThreshold;
+      embeddedParams.component_minHollowRatio = _detectionParameters.component_minHollowRatio;
+      embeddedParams.cornerMethod = cornerMethod;
+      embeddedParams.minLaplacianPeakRatio = _detectionParameters.minLaplacianPeakRatio;
+      embeddedParams.quads_minQuadArea = _detectionParameters.quads_minQuadArea;
+      embeddedParams.quads_quadSymmetryThreshold = _detectionParameters.quads_quadSymmetryThreshold;
+      embeddedParams.quads_minDistanceFromImageEdge = _detectionParameters.quads_minDistanceFromImageEdge;
+      embeddedParams.decode_minContrastRatio = _detectionParameters.decode_minContrastRatio;
+      embeddedParams.maxConnectedComponentSegments = _detectionParameters.maxConnectedComponentSegments;
+      embeddedParams.maxExtractedQuads = _detectionParameters.maxExtractedQuads;
+      embeddedParams.refine_quadRefinementIterations = _detectionParameters.quadRefinementIterations;
+      embeddedParams.refine_numRefinementSamples = _detectionParameters.numRefinementSamples;
+      embeddedParams.refine_quadRefinementMaxCornerChange = _detectionParameters.quadRefinementMaxCornerChange;
+      embeddedParams.refine_quadRefinementMinCornerChange = _detectionParameters.quadRefinementMinCornerChange;
+      embeddedParams.returnInvalidMarkers = _detectionParameters.keepUnverifiedMarkers;
+      embeddedParams.doCodeExtraction = true;
+      
+      const Result result = DetectFiducialMarkers(grayscaleImage,
+                                                  markers,
+                                                  homographies,
+                                                  embeddedParams,
+                                                  _memory._ccmScratch,
+                                                  _memory._onchipScratch,
+                                                  _memory._offchipScratch);
+#     endif // USE_MATLAB_DETECTOR
+      
+      if(result != RESULT_OK) {
+        return result;
+      }
+      
+      EndBenchmark("VisionSystem_LookForMarkers");
+      
+      // TODO: Re-enable DebugStream for Basestation
+      /*
+       DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
+       
+       for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
+       const VisionMarker crntMarker = markers[i_marker];
+       
+       MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
+       }
+       
+       MatlabVisualization::SendDrawNow();
+       */
+      
+      const s32 numMarkers = _memory._markers.get_size();
+      markerQuads.reserve(numMarkers);
+      
+      for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+      {
+        const VisionMarker& crntMarker = _memory._markers[i_marker];
+        
+        // Construct a basestation quad from an embedded one:
+        Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
+          crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
+        
+        markerQuads.emplace_back(quad);
+        
+        Vision::ObservedMarker obsMarker(inputImageGray.GetTimestamp(),
+                                         crntMarker.markerType,
+                                         quad, _camera);
+        
+        _visionMarkerMailbox.putMessage(obsMarker);
+        
+        // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
+        if(!IsModeEnabled(VisionMode::Tracking)     &&
+           _markerToTrack.IsSpecified() &&
+           _markerToTrack.Matches(crntMarker))
+        {
+          if((lastResult = InitTemplate(grayscaleImage, crntMarker.corners)) != RESULT_OK) {
+            PRINT_NAMED_ERROR("VisionSystem.LookForMarkers.InitTemplateFailed","");
+            return lastResult;
+          }
+          
+          // Template initialization succeeded, switch to tracking mode:
+          EnableMode(VisionMode::Tracking, true);
+          
+        } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
+      } // for(each marker)
+    } // for(invertImage)
     
     return RESULT_OK;
   } // DetectMarkers()

@@ -127,6 +127,10 @@ namespace Vision {
     s32 GetConnectedComponents(Array2d<s32>& labelImage,
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
     
+    // Get image negatives (i.e. invert black-on-white to white-on-black)
+    Image& Negate();
+    Image  GetNegative() const;
+    
     virtual s32 GetNumChannels() const override { return 1; }
     
   }; // class Image
