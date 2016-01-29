@@ -210,7 +210,6 @@ namespace Vision {
     // Mapping from tracking ID to recognition (identity) ID
     struct TrackingData {
       Vision::TrackedFace::ID_t assignedID = Vision::TrackedFace::UnknownFace;
-      DETECTION_INFO            detectionInfo;
     };
     std::map<INT32, TrackingData> _trackingData;
     
@@ -218,7 +217,6 @@ namespace Vision {
     // replace the oldest one each time
     struct EnrollmentStatus {
       INT32        oldestData = 0;
-      //DETECTION_INFO detectionInfo[MaxAlbumDataPerFace];
       TimeStamp_t  lastEnrollmentTimeStamp = 0;
     };
     std::map<INT32,EnrollmentStatus> _enrollmentStatus;
@@ -504,31 +502,6 @@ namespace Vision {
     }
   } // SetFeatureHelper()
   
-  
-  s32 GetDataIndex(const DETECTION_INFO& detectionInfo)
-  {
-    const s32 closeAreaThreshold = 100*100;
-    s32 closeFar = 0;
-    if(detectionInfo.nWidth*detectionInfo.nHeight < closeAreaThreshold) {
-      closeFar = 1;
-    }
-    
-    s32 yaw = -1;
-    switch(detectionInfo.nPose)
-    {
-      case POSE_YAW_FRONT:       yaw = 0;   break;
-      case POSE_YAW_LF_PROFILE:  yaw = 1;   break;
-      case POSE_YAW_RF_PROFILE:  yaw = 2;   break;
-      case POSE_YAW_LH_PROFILE:  yaw = 3;   break;
-      case POSE_YAW_RH_PROFILE:  yaw = 4;   break;
-      default:
-        ASSERT_NAMED(false, "Unexpected yaw pose encountered: no matching index");
-    }
-    
-    const s32 index = yaw + closeFar*5;
-    return index;
-  }
-  
   bool IsRecognizable(const DETECTION_INFO& detectionInfo)
   {
     if(detectionInfo.nConfidence > 500 &&
@@ -539,54 +512,7 @@ namespace Vision {
     }
     return false;
   }
-  
-  bool IsPoseBetter(INT32 current, INT32 proposed)
-  {
-    if(current == proposed) {
-      return true;
-    }
-    switch(current) {
-      case POSE_YAW_FRONT:
-        // Can't be better than frontal pose
-        return false;
-        
-      case POSE_YAW_HEAD:
-        //case POSE_YAW_UNKNOWN:
-        // anything is better than "head" or unknown pose
-        return true;
-        
-      case POSE_YAW_LF_PROFILE:
-      case POSE_YAW_RF_PROFILE:
-        // only front is better than left/right frontal profile
-        return (proposed == POSE_YAW_FRONT);
-        
-      case POSE_YAW_LH_PROFILE:
-      case POSE_YAW_RH_PROFILE:
-        // front or left/right frontal are better than "head" (full) profile
-        return (proposed == POSE_YAW_FRONT || proposed == POSE_YAW_LF_PROFILE || proposed == POSE_YAW_RF_PROFILE);
-        
-      default:
-        ASSERT_NAMED(false, "Unhandled Okao pose");
-    }
-  }
-  
-  bool IsBetterForRecognition(const DETECTION_INFO& current, const DETECTION_INFO& proposed)
-  {
-    if(!IsRecognizable(proposed)) {
-      return false;
-    }
-    
-    if(proposed.nConfidence >= current.nConfidence &&
-       (proposed.nHeight*proposed.nWidth) >= (current.nHeight*current.nWidth) &&
-       IsPoseBetter(current.nPose, proposed.nPose))
-    {
-      return true;
-    }
-    
-    return false;
-  }
 
-  
   Result FaceTracker::Impl::RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime,
                                             const DETECTION_INFO& detectionInfo)
   {
