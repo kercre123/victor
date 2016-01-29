@@ -901,12 +901,14 @@ namespace Anki {
     
 #pragma mark ---- PlaceObjectOnGroundAtPoseAction ----
     
-    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
+    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Robot& robot,
+                                                                     const Pose3d& placementPose,
                                                                      const PathMotionProfile motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
     : CompoundActionSequential({
-      new DriveToPlaceCarriedObjectAction(placementPose,
+      new DriveToPlaceCarriedObjectAction(robot,
+                                          placementPose,
                                           true,
                                           motionProfile,
                                           useExactRotation,

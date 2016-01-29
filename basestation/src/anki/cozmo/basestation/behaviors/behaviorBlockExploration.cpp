@@ -245,7 +245,7 @@ namespace Anki {
         }
         case State::ReturnObjectToCenter:
         {
-          PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(_moveAreaCenter);
+          PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, _moveAreaCenter);
           _currentPlaceObjectActionID = placeObjectAction->GetTag();
           _actionsInProgress.insert(_currentPlaceObjectActionID);
           robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, placeObjectAction);

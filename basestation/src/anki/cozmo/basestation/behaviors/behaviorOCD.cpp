@@ -613,7 +613,7 @@ namespace Cozmo {
             Pose3d pose = carriedObject->GetPose().GetWithRespectToOrigin();
             pose.SetRotation(0, Z_AXIS_3D());
             
-            placementAction = new PlaceObjectOnGroundAtPoseAction(pose);
+            placementAction = new PlaceObjectOnGroundAtPoseAction(robot, pose);
             BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO",
                              "Placing first object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg",
                              pose.GetTranslation().x(),
@@ -642,7 +642,7 @@ namespace Cozmo {
             return result;
           }
           
-          placementAction = new PlaceObjectOnGroundAtPoseAction(pose);
+          placementAction = new PlaceObjectOnGroundAtPoseAction(robot, pose);
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.LINE",
                            "Placing object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg (near object %d)",
                            pose.GetTranslation().x(), pose.GetTranslation().y(), pose.GetTranslation().z(),
@@ -654,7 +654,7 @@ namespace Cozmo {
           Pose3d pose = carriedObject->GetPose().GetWithRespectToOrigin();
           pose.RotateBy(pose.GetRotation().GetInverse());
           
-          placementAction = new PlaceObjectOnGroundAtPoseAction(pose);
+          placementAction = new PlaceObjectOnGroundAtPoseAction(robot, pose);
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.LINE",
                            "Placing first object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg",
                            pose.GetTranslation().x(),
