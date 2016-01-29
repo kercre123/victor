@@ -99,20 +99,6 @@ namespace Anki {
         // Currently applied power
         f32 power_ = 0;
 
-        // Nodding
-        //f32 preNodHeight_    = 0.f;
-        f32 nodLowHeight_    = 0.f;
-        f32 nodHighHeight_   = 0.f;
-        s32 numNodsDesired_  = 0;
-        s32 numNodsComplete_ = 0;
-        bool isNodding_ = false;
-        f32 nodEaseInFraction_  = 0.5f;
-        f32 nodEaseOutFraction_ = 0.5f;
-        f32 nodHalfPeriod_sec_  = 0.5f;
-
-        // Tapping
-        const u8 MAX_NUM_TAPS_REMAINING = 10;
-
 
         // Calibration parameters
         typedef enum {
@@ -448,7 +434,6 @@ namespace Anki {
 
       void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
       {
-        isNodding_ = false;
         SetDesiredHeight_internal(height_mm, acc_start_frac, acc_end_frac, duration_seconds);
       }
 
@@ -597,23 +582,6 @@ namespace Anki {
         power_ = CLIP(power_, -1.0, 1.0);
         HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
 
-
-
-        if(isNodding_ && inPosition_)
-        {
-          if (GetLastCommandedHeightMM() == nodHighHeight_) {
-            angleErrorSum_ = 0;
-            SetDesiredHeight_internal(nodLowHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-          } else if (GetLastCommandedHeightMM() == nodLowHeight_) {
-            angleErrorSum_ = 0;
-            SetDesiredHeight_internal(nodHighHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-            ++numNodsComplete_;
-            if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
-              StopNodding();
-            }
-          }
-        }
-
         return RESULT_OK;
       }
 
@@ -629,74 +597,7 @@ namespace Anki {
 
       void Stop()
       {
-        isNodding_ = false;
         SetAngularVelocity(0);
-      }
-
-      void StartNodding(const f32 lowHeight, const f32 highHeight,
-                        const u16 period_ms, const s32 numLoops,
-                        const f32 easeInFraction, const f32 easeOutFraction)
-      {
-        AnkiConditionalWarnAndReturn(enable_, 17, "LiftController.StartNodding.Disabled", 154, "StartNodding() command ignored: LiftController is disabled.\n", 0);
-
-        //preNodHeight_  = GetHeightMM();
-        nodLowHeight_  = lowHeight;
-        nodHighHeight_ = highHeight;
-        numNodsDesired_  = numLoops;
-        numNodsComplete_ = 0;
-        isNodding_ = true;
-        nodEaseInFraction_ = easeInFraction;
-        nodEaseOutFraction_ = easeOutFraction;
-        nodHalfPeriod_sec_ = static_cast<f32>(period_ms) * 0.5f * 0.001f;
-
-        SetMaxSpeedAndAccel(10, 20);
-        SetDesiredHeight_internal(nodLowHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-
-      } // StartNodding()
-
-
-      void StopNodding()
-      {
-        AnkiConditionalWarnAndReturn(enable_, 18, "LiftController.StopNodding.Disabled", 155, "StopNodding() command ignored: LiftController is disabled.\n", 0);
-
-        //SetDesiredHeight_internal(preNodHeight_);
-        isNodding_ = false;
-      }
-
-      bool IsNodding()
-      {
-        return isNodding_;
-      }
-
-      void TapBlockOnGround(u8 numTaps)
-      {
-        //PRINT("RECVD TapBlockOnGround %d\n", numTaps);
-
-        if (isNodding_) {
-          // If already nodding, just increase the number of nods to do
-          numNodsDesired_ += numTaps;
-          if (numNodsDesired_ > MAX_NUM_TAPS_REMAINING) {
-            numNodsDesired_ = MAX_NUM_TAPS_REMAINING;
-          }
-        } else {
-          // Add tap if the lift is already in a low position
-          if (GetDesiredHeight() <= LIFT_HEIGHT_LOWDOCK + 5) {
-            ++numTaps;
-          }
-
-#ifdef SIMULATOR
-          StartNodding(LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_LOWDOCK + 30,
-                       300, numTaps, 0, 0.5);
-#else
-          StartNodding(LIFT_HEIGHT_LOWDOCK+13, LIFT_HEIGHT_LOWDOCK + 25,
-                       300, numTaps, 0, 0.5);
-#endif
-        }
-      }
-
-      void StopTapping()
-      {
-
       }
 
     } // namespace LiftController

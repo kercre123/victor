@@ -61,17 +61,6 @@ namespace HeadController {
       VelocityProfileGenerator vpg_;
 
 
-      // Nodding
-      bool isNodding_ = false;
-      //f32 preNodAngle_  = 0.f;
-      f32 nodLowAngle_  = 0.f;
-      f32 nodHighAngle_ = 0.f;
-      s32 numNodsDesired_ = 0;
-      s32 numNodsComplete_ = 0;
-      f32 nodHalfPeriod_sec_ = 0.5f;
-      f32 nodEaseOutFraction_ = 0.5f;
-      f32 nodEaseInFraction_  = 0.5f;
-
       // Calibration parameters
       typedef enum {
         HCS_IDLE,
@@ -169,7 +158,6 @@ namespace HeadController {
 
     void Stop()
     {
-      isNodding_ = false;
       SetAngularVelocity(0);
     }
 
@@ -396,11 +384,6 @@ namespace HeadController {
 
     void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
     {
-      // Stop nodding if we were
-      if(IsNodding()) {
-        isNodding_ = false;
-      }
-
       SetDesiredAngle_internal(angle, acc_start_frac, acc_end_frac, duration_seconds);
     }
 
@@ -503,18 +486,6 @@ namespace HeadController {
 
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
       } // if not in position
-      else if(isNodding_)
-      { // inPosition and Nodding
-        if (GetLastCommandedAngle() == nodHighAngle_) {
-          SetDesiredAngle_internal(nodLowAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-        } else if (GetLastCommandedAngle() == nodLowAngle_) {
-          SetDesiredAngle_internal(nodHighAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-          ++numNodsComplete_;
-          if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
-            StopNodding();
-          }
-        }
-      } // else if(isNodding)
 
       return RESULT_OK;
     }
@@ -527,43 +498,6 @@ namespace HeadController {
       MAX_ERROR_SUM = maxIntegralError;
       AnkiInfo( 7, "HeadController", 99, "New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
             Kp_, Ki_, Kd_, MAX_ERROR_SUM);
-    }
-
-    void StartNodding(const f32 lowAngle, const f32 highAngle,
-                      const u16 period_ms, const s32 numLoops,
-                      const f32 easeInFraction, const f32 easeOutFraction)
-    {
-      //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, 8, "HeadNodStart.WrongKeyFrameType", 100, "\n", 0);
-
-      AnkiConditionalWarnAndReturn(enable_, 9, "HeadController.StartNodding.Disabled", 101, "StartNodding() command ignored: HeadController is disabled.\n", 0);
-
-      //preNodAngle_ = GetAngleRad();
-      nodLowAngle_  = lowAngle;
-      nodHighAngle_ = highAngle;
-
-      numNodsDesired_  = numLoops;
-      numNodsComplete_ = 0;
-      isNodding_ = true;
-      nodEaseOutFraction_ = easeOutFraction;
-      nodEaseInFraction_  = easeInFraction;
-
-      nodHalfPeriod_sec_ = static_cast<f32>(period_ms) * .5f * 0.001f;
-      SetDesiredAngle_internal(nodLowAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-
-    } // StartNodding()
-
-
-    void StopNodding()
-    {
-      AnkiConditionalWarnAndReturn(enable_, 10, "HeadController.StopNodding.Disabled", 102, "StopNodding() command ignored: HeadController is disabled.\n", 0);
-
-      //SetDesiredAngle_internal(preNodAngle_);
-      isNodding_ = false;
-    }
-
-    bool IsNodding()
-    {
-      return isNodding_;
     }
 
   } // namespace HeadController
