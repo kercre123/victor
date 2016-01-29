@@ -186,7 +186,7 @@ void BehaviorExploreMarkedCube::HandleActionCompleted(const ExternalInterface::R
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::PickGoals(const Robot& robot, BorderScoreVector& outGoals) const
+void BehaviorExploreMarkedCube::PickGoals(Robot& robot, BorderScoreVector& outGoals) const
 {
   // check assumptions
   ASSERT_NAMED(nullptr != robot.GetPose().GetParent(), "BehaviorExploreMarkedCube.PickGoals.RobotPoseHasParent");
@@ -239,7 +239,7 @@ void BehaviorExploreMarkedCube::PickGoals(const Robot& robot, BorderScoreVector&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::GenerateVantagePoints(const Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const
+void BehaviorExploreMarkedCube::GenerateVantagePoints(Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const
 {
   // check assumptions
   ASSERT_NAMED(nullptr != robot.GetPose().GetParent(), "BehaviorExploreMarkedCube.PickGoals.RobotPoseHasParent");

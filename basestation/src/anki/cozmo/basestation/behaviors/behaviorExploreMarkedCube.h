@@ -90,14 +90,12 @@ private:
   // Border processing
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // TODO remove the const from robot, it's const for testing from IsRunnable
-  
   // select the border segments we want to explore. It queries the robot's nav memory map to retrieve borders
   // and then selects a few of them among them, returning them in the outGoals vector
-  void PickGoals(const Robot& robot, BorderScoreVector& outGoals) const;
+  void PickGoals(Robot& robot, BorderScoreVector& outGoals) const;
 
   // given a set of border goals, generate the vantage points for the robot to observe/clear those borders
-  void GenerateVantagePoints(const Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const;
+  void GenerateVantagePoints(Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const;
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
