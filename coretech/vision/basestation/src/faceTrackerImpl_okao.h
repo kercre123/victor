@@ -165,6 +165,9 @@ namespace Vision {
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
     bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
     
+    std::vector<u8> GetSerializedAlbum();
+    Result SetSerializedAlbum(const std::vector<u8>&serializedAlbum);
+    
   private:
     
     Result Init();
@@ -1113,11 +1116,6 @@ namespace Vision {
       } // if(facePartsFound)
       
       face.SetID(faceID); // could be unknown!
-      if(faceID != Vision::TrackedFace::UnknownFace) {
-        face.SetName("KnownFace" + std::to_string(face.GetID()));
-      } else {
-        face.SetName("UnknownFace");
-      }
       
     } // FOR each face
     
@@ -1128,6 +1126,52 @@ namespace Vision {
   {
     return _faces;
   }
+  
+  
+  std::vector<u8> FaceTracker::Impl::GetSerializedAlbum()
+  {
+    std::vector<u8> serializedAlbum;
+    
+    UINT32 albumSize = 0;
+    INT32 okaoResult = OKAO_FR_GetSerializedAlbumSize(_okaoFaceAlbum, &albumSize);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.GetSizeFail",
+                        "OKAO Result=%d", okaoResult);
+    } else {
+      serializedAlbum.resize(albumSize);
+      okaoResult = OKAO_FR_SerializeAlbum(_okaoFaceAlbum, &(serializedAlbum[0]), albumSize);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.SerializeFail",
+                          "OKAO Result=%d", okaoResult);
+      }
+    }
+    
+    return serializedAlbum;
+  } // GetSerializedAlbum()
+  
+  
+  Result FaceTracker::Impl::SetSerializedAlbum(const std::vector<u8>&serializedAlbum)
+  {
+    FR_ERROR error;
+    HALBUM restoredAlbum = OKAO_FR_RestoreAlbum(_okaoCommonHandle, const_cast<UINT8*>(&(serializedAlbum[0])), (UINT32)serializedAlbum.size(), &error);
+    if(NULL == restoredAlbum) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.SetSerializedAlbum.RestoreFail",
+                        "OKAO Result=%d", error);
+      return RESULT_FAIL;
+    }
+    
+    INT32 okaoResult = OKAO_FR_DeleteAlbumHandle(_okaoFaceAlbum);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.SetSerializedAlbum.DeleteOldAlbumFail",
+                        "OKAO Result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    _okaoFaceAlbum = restoredAlbum;
+    
+    return RESULT_OK;
+  } // SetSerializedAlbum()
+  
   
 } // namespace Vision
 } // namespace Anki

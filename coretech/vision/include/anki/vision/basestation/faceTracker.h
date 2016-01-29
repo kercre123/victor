@@ -49,12 +49,19 @@ namespace Vision {
     
     static bool IsRecognitionSupported();
     
+    void AssignNametoID(TrackedFace::ID_t faceID, const std::string& name);
+    
+    Result SaveAlbum(const std::string& filename);
+    Result LoadAlbum(const std::string& filename);
+    
   private:
     
     // Forward declaration
     class Impl;
     
     std::unique_ptr<Impl> _pImpl;
+    
+    std::map<TrackedFace::ID_t, std::string> _names;
     
   }; // class FaceTracker
   
