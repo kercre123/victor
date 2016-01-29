@@ -66,7 +66,7 @@ int main(void)
   Motors::init();
   Lights::init();
   Random::init();
-  //Radio::init();
+  Radio::init();
   Battery::powerOn();
 
   // Let the test fixtures run, if nessessary

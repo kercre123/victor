@@ -16,6 +16,7 @@
 #include "spi.h"
 #include "dac.h"
 #include "wifi.h"
+#include "spine.h"
 #include "hal/i2c.h"
 #include "hal/imu.h"
 
@@ -80,7 +81,7 @@ int main (void)
 
   DAC::Init();
   DAC::Tone();
-  
+  MicroWait(10);
   DAC::Mute();
 
   // Wait for Espressif to toggle out 4 words of I2SPI
@@ -119,6 +120,7 @@ int main (void)
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
+    Anki::Cozmo::HAL::Spine::Manage(g_dataToHead.spineMessage);
     Anki::Cozmo::HAL::IMU::Update();
     Anki::Cozmo::HAL::WiFi::Update();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
