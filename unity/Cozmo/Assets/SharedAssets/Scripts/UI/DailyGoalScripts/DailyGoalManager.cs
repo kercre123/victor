@@ -130,7 +130,7 @@ public class DailyGoalManager : MonoBehaviour {
   void Awake() {
     Instance = this;
     RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
-    RobotEngineManager.Instance.OnDenyGameStart += LearnToCopeWithMiniGameRejection;
+    RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
   }
 	
   // Using current friendship level and the appropriate config file,
@@ -172,7 +172,7 @@ public class DailyGoalManager : MonoBehaviour {
     return goals;
   }
 
-  private void HandleAskForMinigame() {
+  private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     // TODO: When the message has the appropriate 
     AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
     // Hook up callbacks
@@ -184,13 +184,16 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   private void LearnToCopeWithMiniGameRejection() {
-    DAS.Info(this, "HandleEndSessionCancel");
+    DAS.Info(this, "LearnToCopeWithMiniGameRejection");
     RobotEngineManager.Instance.SendDenyGameStart();
   }
 
   private void HandleMiniGameConfirm() {
-    DAS.Info(this, "HandleEndSessionConfirm");
+    DAS.Info(this, "HandleMiniGameConfirm");
   }
 
+  private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
+    DAS.Info(this, "HandleExternalRejection"); 
+  }
 
 }
