@@ -129,6 +129,8 @@ public class DailyGoalManager : MonoBehaviour {
 
   void Awake() {
     Instance = this;
+    RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
+    RobotEngineManager.Instance.OnDenyGameStart += LearnToCopeWithMiniGameRejection;
   }
 	
   // Using current friendship level and the appropriate config file,
@@ -171,7 +173,7 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   private void HandleAskForMinigame() {
-    // Open confirmation dialog instead
+    // TODO: When the message has the appropriate 
     AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
@@ -183,6 +185,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "HandleEndSessionCancel");
+    RobotEngineManager.Instance.SendDenyGameStart();
   }
 
   private void HandleMiniGameConfirm() {

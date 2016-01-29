@@ -79,6 +79,7 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.GetAllDebugConsoleVarMessage _GetAllDebugConsoleVarMessage = new U2G.GetAllDebugConsoleVarMessage();
   private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
+  private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
 
   private void Awake() {
     #if ANIMATION_TOOL
@@ -642,6 +643,11 @@ public class RobotEngineManager : MonoBehaviour {
     _RunDebugConsoleFuncMessage.funcName = funcName;
     _RunDebugConsoleFuncMessage.funcArgs = funcArgs;
     Message.RunDebugConsoleFuncMessage = _RunDebugConsoleFuncMessage;
+    SendMessage();
+  }
+
+  public void SendDenyGameStart() {
+    Message.DenyGameStart = _DenyGameStartMessage;
     SendMessage();
   }
 
