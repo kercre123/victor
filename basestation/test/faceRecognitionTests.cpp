@@ -70,12 +70,14 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     const ColorRGBA& drawColor = ((shouldBeOwner && face.GetID()==1) || (!shouldBeOwner && face.GetID()!=1) ?
                                   NamedColors::GREEN : NamedColors::RED);
     dispImg.DrawRect(face.GetRect(), drawColor, 2);
+    dispImg.DrawPoint(face.GetLeftEyeCenter(), drawColor, 2);
+    dispImg.DrawPoint(face.GetRightEyeCenter(), drawColor, 2);
     
-    std::string label = std::to_string(face.GetID());
+    std::string label = face.GetName();
     if(face.IsBeingTracked()) {
       label += "*";
     }
-    dispImg.DrawText(face.GetRect().GetTopLeft(), label, drawColor, 1.5f);
+    dispImg.DrawText(face.GetRect().GetTopLeft(), label, drawColor, 1.25f);
 #   endif
   }
   
@@ -255,10 +257,24 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
   
   std::set<Vision::TrackedFace::ID_t> allIDs;
   
-  // Check to make sure every image in every dir is recognized correctly and
-  // don't enroll any faces as new
-  for(auto & testDir : {"andrew", "kevin", "peter", "andrew2", "kevin+peter"})
+  struct TestDirData {
+    const char* dirName;
+    bool isForTraining;
+  };
+  
+  const std::vector<TestDirData> testDirData = {
+    {.dirName = "andrew",       .isForTraining = true},
+    {.dirName = "kevin",        .isForTraining = true},
+    {.dirName = "peter",        .isForTraining = true},
+    {.dirName = "andrew2",      .isForTraining = false},
+    {.dirName = "kevin+peter",  .isForTraining = false},
+  };
+  
+  for(auto & test : testDirData)
   {
+    const char* testDir = test.dirName;
+    bool isNameSet = !test.isForTraining;
+    
     auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+testDir, true, imageFileExtensions);
     ASSERT_FALSE(testFiles.empty());
     
@@ -295,6 +311,10 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
         {
           stats.facesRecognized++;
           allIDs.insert(observedID);
+          if(!isNameSet) {
+            faceTracker.AssignNametoID(observedID, testDir);
+            isNameSet = true;
+          }
         }
       }
 
