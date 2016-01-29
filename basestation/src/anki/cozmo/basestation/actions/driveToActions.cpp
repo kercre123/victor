@@ -289,12 +289,12 @@ namespace Anki {
 
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
-          DriveToPoseAction* _driveToPoseAction = new DriveToPoseAction(_pathMotionProfile, true, _useManualSpeed);
-          _driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
-          _driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
-          _driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_pathMotionProfile, true, _useManualSpeed);
+          driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
+          driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
+          driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
 
-          newCompoundSequential->AddAction(_driveToPoseAction);
+          newCompoundSequential->AddAction(driveToPoseAction);
         }
         
         // Make sure we can see the object, unless we are carrying it (i.e. if we
