@@ -13,7 +13,9 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorBlockExploration.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -243,7 +245,7 @@ namespace Anki {
         }
         case State::ReturnObjectToCenter:
         {
-          PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, _moveAreaCenter);
+          PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(_moveAreaCenter);
           _currentPlaceObjectActionID = placeObjectAction->GetTag();
           _actionsInProgress.insert(_currentPlaceObjectActionID);
           robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, placeObjectAction);
