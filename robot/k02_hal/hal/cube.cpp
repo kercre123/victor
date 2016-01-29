@@ -9,6 +9,7 @@
 #include "clad/types/activeObjectTypes.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "uart.h"
 
 AcceleratorPacket g_AccelStatus[MAX_CUBES];
 uint16_t g_LedStatus[MAX_CUBES][NUM_BLOCK_LEDS];
@@ -20,7 +21,7 @@ namespace Anki
     namespace HAL
     {
       void DiscoverProp(uint32_t id) {
-        // This is ignored for now
+        // This currently does nothing
       }
       
       void GetPropState(int id, int x, int y, int z, int shocks) {

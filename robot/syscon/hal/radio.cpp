@@ -39,6 +39,7 @@ struct LEDPacket {
 
 struct AccessorySlot {
   bool              active;
+  bool              allocated;
   int               last_received;
   uint32_t          id;
   LEDPacket         tx_state;
@@ -65,9 +66,7 @@ static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
 static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
 
 static const int LOCATE_TIMEOUT = TICK_LOOP;      // One entire cozmo period
-#ifdef ALLOW_TIMEOUT
 static const int ACCESSORY_TIMEOUT = 400;         // 2s timeout before accessory is considered lost
-#endif
 static const int PACKET_SIZE = 17;
 static const int MAX_ACCESSORIES = TICK_LOOP;
 
@@ -216,6 +215,7 @@ void Radio::init() {
 
 static int LocateAccessory(uint32_t id) {
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
+    if (!accessories[i].allocated) continue ;
     if (accessories[i].id == id) return i;
   }
 
@@ -225,7 +225,7 @@ static int LocateAccessory(uint32_t id) {
 static int FreeAccessory(void) {
   #ifdef AUTO_GATHER
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    if (!accessories[i].active) return i;
+    if (!accessories[i].allocated) return i;
   }
   #endif
 
@@ -391,7 +391,7 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   
   AccessorySlot* acc = &accessories[slot];
   acc->id = accessory;
-  acc->active = true;
+  acc->allocated = true;
 }
 
 void Radio::manage(void* userdata) {
@@ -442,22 +442,14 @@ void Radio::manage(void* userdata) {
     AccessorySlot* acc = &accessories[currentAccessory];
     EnterState(RADIO_TALKING);
 
-    #ifdef ALLOW_TIMEOUT
-      if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
-        // Broadcast to the appropriate device
-        uesb_write_tx_payload(&TalkAddress, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
-      } else {
-        // Timeslice is empty, send a dummy command on the channel so people know to stay away
-        acc->active = false;
-        send_dummy_byte();
-      }
-    #else
-      if (acc->active) {
-        uesb_write_tx_payload(&TalkAddress, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
-      } else {
-        send_dummy_byte();
-      }
-    #endif
+    if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
+      // Broadcast to the appropriate device
+      uesb_write_tx_payload(&TalkAddress, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
+    } else {
+      // Timeslice is empty, send a dummy command on the channel so people know to stay away
+      acc->active = false;
+      send_dummy_byte();
+    }
 
     break ;
   }
