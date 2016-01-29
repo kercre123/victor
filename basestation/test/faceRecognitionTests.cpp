@@ -33,8 +33,13 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
   timestamp += 30; // fake time
   img.SetTimestamp(timestamp);
   
-  lastResult = img.Load(filename);
-  ASSERT_TRUE(RESULT_OK == lastResult);
+  if(filename.empty()) {
+    ASSERT_NAMED(!img.IsEmpty(), "Expected non-empty image by now");
+    img.FillWith(128);
+  } else {
+    lastResult = img.Load(filename);
+    ASSERT_TRUE(RESULT_OK == lastResult);
+  }
   
 # if SHOW_IMAGES
   Vision::ImageRGB dispImg(img);
@@ -65,9 +70,10 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     const ColorRGBA& drawColor = ((shouldBeOwner && face.GetID()==1) || (!shouldBeOwner && face.GetID()!=1) ?
                                   NamedColors::GREEN : NamedColors::RED);
     dispImg.DrawRect(face.GetRect(), drawColor, 2);
+    
     std::string label = std::to_string(face.GetID());
     if(face.IsBeingTracked()) {
-      label += "(T)";
+      label += "*";
     }
     dispImg.DrawText(face.GetRect().GetTopLeft(), label, drawColor, 1.5f);
 #   endif
@@ -233,24 +239,26 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
   
   const std::string dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "test/faceRecVideoTests/");
   
+  // All-new tracker and face world for each person for this test
+  Vision::FaceTracker faceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                                               "/config/basestation/vision"),
+                                  Vision::FaceTracker::DetectionMode::Video);
+  robot.GetFaceWorld().ClearAllFaces();
+  
+  const s32 NumBlankFramesBetweenPeople = 15;
+  
   Vision::Image img;
   
   // Find all directories of face images, one per person
   std::vector<std::string> peopleDirs;
   Util::FileUtils::ListAllDirectories(dataPath, peopleDirs);
   
+  std::set<Vision::TrackedFace::ID_t> allIDs;
+  
   // Check to make sure every image in every dir is recognized correctly and
   // don't enroll any faces as new
-  //faceTracker.EnableNewFaceEnrollment(false);
-  for(auto & testDir : peopleDirs)
+  for(auto & testDir : {"andrew", "kevin", "peter", "andrew2", "kevin+peter"})
   {
-    // All-new tracker and face world for each person for this test
-    Vision::FaceTracker faceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                                                 "/config/basestation/vision"),
-                                    Vision::FaceTracker::DetectionMode::Video);
-    robot.GetFaceWorld().ClearAllFaces();
-    
-    
     auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+testDir, true, imageFileExtensions);
     ASSERT_FALSE(testFiles.empty());
     
@@ -260,8 +268,6 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
       s32 facesRecognized = 0;
       s32 numFaceIDs = 0;
     } stats;
-
-    std::set<Vision::TrackedFace::ID_t> allIDs;
     
     for(auto & testFile : testFiles)
     {
@@ -297,14 +303,20 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
     stats.numFaceIDs = (s32)allIDs.size();
     
     PRINT_NAMED_INFO("FaceRecognition.SinglePersonVideoRecognitionAndTracking.Stats",
-                     "%s: %d images, %d faces detected (%.1f%%), %d faces recognized (%.1f%%), %d IDs assigned",
-                     testDir.c_str(),
+                     "%s: %d images, %d faces detected (%.1f%%), %d faces recognized (%.1f%%), %d total IDs assigned",
+                     testDir,
                      stats.totalFrames, stats.facesDetected,
                      (f32)(stats.facesDetected*100)/(f32)stats.totalFrames,
                      stats.facesRecognized,
                      (f32)(stats.facesRecognized*100)/(f32)stats.facesDetected,
                      stats.numFaceIDs);
 
+    // Show the system blank frames before next video so it stops tracking
+    for(s32 iBlank=0; iBlank<NumBlankFramesBetweenPeople; ++iBlank) {
+      Recognize(robot, img, faceTracker, "", "TestImage", true);
+      auto observedFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
+      EXPECT_TRUE(observedFaceIDs.empty());
+    }
   } // for each testDir
 
   ASSERT_TRUE(RESULT_OK == lastResult);

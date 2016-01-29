@@ -168,8 +168,11 @@ namespace Vision {
   private:
     
     Result Init();
-    Result RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime);
-    Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime);
+    Result RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime,
+                           const DETECTION_INFO& detectionInfo);
+    
+    Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime,
+                              const DETECTION_INFO& detectionInfo);
     
     Result DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                            INT32 detectionIndex, Vision::TrackedFace& face);
@@ -180,7 +183,11 @@ namespace Vision {
     Result RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                          const DETECTION_INFO& detectionInfo, TimeStamp_t timestamp,
                          Vision::TrackedFace::ID_t& faceID);
+    
+    Result MergeFaces(Vision::TrackedFace::ID_t keepID, Vision::TrackedFace::ID_t mergeID);
 
+    Result RemoveUser(INT32 userID);
+    
     bool _isInitialized = false;
     FaceTracker::DetectionMode _detectionMode;
     bool _enrollNewFaces = true;
@@ -201,12 +208,17 @@ namespace Vision {
     std::list<TrackedFace> _faces;
     
     // Mapping from tracking ID to recognition (identity) ID
-    std::map<INT32, Vision::TrackedFace::ID_t> _trackID_to_recID;
+    struct TrackingData {
+      Vision::TrackedFace::ID_t assignedID = Vision::TrackedFace::UnknownFace;
+      DETECTION_INFO            detectionInfo;
+    };
+    std::map<INT32, TrackingData> _trackingData;
     
     // Track the index of the oldest data for each registered user, so we can
     // replace the oldest one each time
     struct EnrollmentStatus {
       INT32        oldestData = 0;
+      //DETECTION_INFO detectionInfo[MaxAlbumDataPerFace];
       TimeStamp_t  lastEnrollmentTimeStamp = 0;
     };
     std::map<INT32,EnrollmentStatus> _enrollmentStatus;
@@ -223,6 +235,7 @@ namespace Vision {
     HEXPRESSION _okaoEstimateExpressionHandle  = NULL;
     HEXPRESSION _okaoExpressionResultHandle    = NULL;
     HFEATURE    _okaoRecognitionFeatureHandle  = NULL;
+    HFEATURE    _okaoRecogMergeFeatureHandle   = NULL;
     HALBUM      _okaoFaceAlbum                 = NULL;
     
     // Space for detected face parts / expressions
@@ -378,6 +391,12 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
     
+    _okaoRecogMergeFeatureHandle = OKAO_FR_CreateFeatureHandle(_okaoCommonHandle);
+    if(NULL == _okaoRecognitionFeatureHandle) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoMergeFeatureHandleAllocFail", "");
+      return RESULT_FAIL_MEMORY;
+    }
+    
     _okaoFaceAlbum = OKAO_FR_CreateAlbumHandle(_okaoCommonHandle, MaxAlbumFaces, MaxAlbumDataPerFace);
     if(NULL == _okaoFaceAlbum) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoAlbumHandleAllocFail", "");
@@ -404,6 +423,13 @@ namespace Vision {
         PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoAlbumHandleDeleteFail", "");
       }
     }
+    
+    if(NULL != _okaoRecogMergeFeatureHandle) {
+      if(OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecogMergeFeatureHandle)) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoRecognitionMergeFeatureHandleDeleteFail", "");
+      }
+    }
+    
     if(NULL != _okaoRecognitionFeatureHandle) {
       if(OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecognitionFeatureHandle)) {
         PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoRecognitionFeatureHandleDeleteFail", "");
@@ -478,7 +504,91 @@ namespace Vision {
     }
   } // SetFeatureHelper()
   
-  Result FaceTracker::Impl::RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime)
+  
+  s32 GetDataIndex(const DETECTION_INFO& detectionInfo)
+  {
+    const s32 closeAreaThreshold = 100*100;
+    s32 closeFar = 0;
+    if(detectionInfo.nWidth*detectionInfo.nHeight < closeAreaThreshold) {
+      closeFar = 1;
+    }
+    
+    s32 yaw = -1;
+    switch(detectionInfo.nPose)
+    {
+      case POSE_YAW_FRONT:       yaw = 0;   break;
+      case POSE_YAW_LF_PROFILE:  yaw = 1;   break;
+      case POSE_YAW_RF_PROFILE:  yaw = 2;   break;
+      case POSE_YAW_LH_PROFILE:  yaw = 3;   break;
+      case POSE_YAW_RH_PROFILE:  yaw = 4;   break;
+      default:
+        ASSERT_NAMED(false, "Unexpected yaw pose encountered: no matching index");
+    }
+    
+    const s32 index = yaw + closeFar*5;
+    return index;
+  }
+  
+  bool IsRecognizable(const DETECTION_INFO& detectionInfo)
+  {
+    if(detectionInfo.nConfidence > 500 &&
+       detectionInfo.nPose == POSE_YAW_FRONT &&
+       (detectionInfo.nAngle < 45 || detectionInfo.nAngle > 315))
+    {
+      return true;
+    }
+    return false;
+  }
+  
+  bool IsPoseBetter(INT32 current, INT32 proposed)
+  {
+    if(current == proposed) {
+      return true;
+    }
+    switch(current) {
+      case POSE_YAW_FRONT:
+        // Can't be better than frontal pose
+        return false;
+        
+      case POSE_YAW_HEAD:
+        //case POSE_YAW_UNKNOWN:
+        // anything is better than "head" or unknown pose
+        return true;
+        
+      case POSE_YAW_LF_PROFILE:
+      case POSE_YAW_RF_PROFILE:
+        // only front is better than left/right frontal profile
+        return (proposed == POSE_YAW_FRONT);
+        
+      case POSE_YAW_LH_PROFILE:
+      case POSE_YAW_RH_PROFILE:
+        // front or left/right frontal are better than "head" (full) profile
+        return (proposed == POSE_YAW_FRONT || proposed == POSE_YAW_LF_PROFILE || proposed == POSE_YAW_RF_PROFILE);
+        
+      default:
+        ASSERT_NAMED(false, "Unhandled Okao pose");
+    }
+  }
+  
+  bool IsBetterForRecognition(const DETECTION_INFO& current, const DETECTION_INFO& proposed)
+  {
+    if(!IsRecognizable(proposed)) {
+      return false;
+    }
+    
+    if(proposed.nConfidence >= current.nConfidence &&
+       (proposed.nHeight*proposed.nWidth) >= (current.nHeight*current.nWidth) &&
+       IsPoseBetter(current.nPose, proposed.nPose))
+    {
+      return true;
+    }
+    
+    return false;
+  }
+
+  
+  Result FaceTracker::Impl::RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime,
+                                            const DETECTION_INFO& detectionInfo)
   {
     INT32 numUsersInAlbum = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
@@ -517,7 +627,7 @@ namespace Vision {
     }
     
     auto & enrollStatus = _enrollmentStatus[_lastRegisteredUserID];
-    enrollStatus.oldestData = 0;
+    //enrollStatus.detectionInfo[GetDataIndex(detectionInfo)] = detectionInfo;
     enrollStatus.lastEnrollmentTimeStamp = obsTime;
     
     PRINT_NAMED_INFO("FaceTrackerImpl.RegisterNewUser.Success",
@@ -525,9 +635,24 @@ namespace Vision {
     
     return RESULT_OK;
   } // RegisterNewUser()
+
   
-  Result FaceTracker::Impl::UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime)
+  Result FaceTracker::Impl::UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime,
+                                               const DETECTION_INFO& detectionInfo)
   {
+    /*
+    const INT32 dataToReplace = GetDataIndex(detectionInfo);
+
+    // TODO: Is clearing necessary if we're about to replace it anyway?
+    INT32 okaoResult = OKAO_FR_ClearData(_okaoFaceAlbum, userID, dataToReplace);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.UpdateExistingUser.ClearDataFailed",
+                        "Failed to clear data %d for user %d. OKAO result=%d",
+                        dataToReplace, userID, okaoResult);
+      return RESULT_FAIL;
+    }
+    */
+
     INT32 numUserData = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, userID, &numUserData);
     if(OKAO_NORMAL != okaoResult) {
@@ -538,6 +663,7 @@ namespace Vision {
     
     INT32 dataToReplace = numUserData-1;
     if(numUserData >= MaxAlbumDataPerFace) {
+      
       
       // Replace the oldest face data
       // TODO: Consider other methods (e.g. lowest/highest score)
@@ -563,27 +689,26 @@ namespace Vision {
       }
     }
 
+    
     okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID, dataToReplace);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.UpdateExistingUser.RegisterFailed",
                         "Failed to trying to register data %d for existing user %d",
-                        numUserData, userID);
+                        dataToReplace, userID);
       return RESULT_FAIL;
     }
+    
+    /*
+    auto enrollStatusIter = _enrollmentStatus.find(userID);
+    ASSERT_NAMED(enrollStatusIter != _enrollmentStatus.end(),
+                 "Enrollment status should exist for use when updating");
+    enrollStatusIter->second.detectionInfo[dataToReplace] = detectionInfo;
+    enrollStatusIter->second.lastEnrollmentTimeStamp      = timestamp;
+    */
     
     return RESULT_OK;
   } // UpdateExistingUser()
   
-  bool IsRecognizable(const DETECTION_INFO& detectionInfo)
-  {
-    if(detectionInfo.nConfidence > 500 &&
-       detectionInfo.nPose == POSE_YAW_FRONT &&
-       (detectionInfo.nAngle < 45 || detectionInfo.nAngle > 315))
-    {
-      return true;
-    }
-    return false;
-  }
   
   Result FaceTracker::Impl::DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                                             INT32 detectionIndex,
@@ -710,6 +835,19 @@ namespace Vision {
     return RESULT_OK;
   } // EstimateExpression()
   
+  Result FaceTracker::Impl::RemoveUser(INT32 userID)
+  {
+    INT32 okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userID);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.RemoveUser.ClearUserFailed",
+                        "OKAO result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    _enrollmentStatus.erase(userID);
+    
+    return RESULT_OK;
+  }
+  
   Result FaceTracker::Impl::RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                                           const DETECTION_INFO& detectionInfo, TimeStamp_t timestamp,
                                           Vision::TrackedFace::ID_t& faceID)
@@ -723,15 +861,15 @@ namespace Vision {
     INT32 numUsersInAlbum = 0;
     okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetNumUsersInAlbumFailed", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.RecognizeFace.OkaoGetNumUsersInAlbumFailed", "");
       return RESULT_FAIL;
     }
     
     if(numUsersInAlbum == 0 && allowAddNewFace) {
       // Nobody in album yet, add this person
-      PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingFirstUser",
+      PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingFirstUser",
                        "Adding first user to empty album");
-      Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp);
+      Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp, detectionInfo);
       if(RESULT_OK != lastResult) {
         return lastResult;
       }
@@ -743,7 +881,7 @@ namespace Vision {
       okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, MaxResults, userIDs, scores, &resultNum);
       
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoFaceRecognitionIdentifyFailed",
+        PRINT_NAMED_WARNING("FaceTrackerImpl.RecognizeFace.OkaoFaceRecognitionIdentifyFailed",
                             "OKAO Result Code=%d", okaoResult);
       } else {
         const INT32 RecognitionThreshold = 750; // TODO: Expose this parameter
@@ -761,28 +899,27 @@ namespace Vision {
             ++lastResult;
           }
           
-          Result result = UpdateExistingUser(minID, _okaoRecognitionFeatureHandle, timestamp);
-          if(RESULT_OK != result) {
-            return result;
-          }
+          //const INT32 dataToReplace = GetDataIndex(detectionInfo);
+          //auto enrollStatusIter = _enrollmentStatus.find(minID);
+          
+          //if(IsBetterForRecognition(enrollStatusIter->second.detectionInfo[dataToReplace], detectionInfo))
+          //{
+            Result result = UpdateExistingUser(minID, _okaoRecognitionFeatureHandle, timestamp, detectionInfo);
+            if(RESULT_OK != result) {
+              return result;
+            }
+          //}
           
           for(INT32 iResult = 0; iResult < lastResult; ++iResult)
           {
             if(userIDs[iResult] != minID)
             {
-              PRINT_NAMED_INFO("FaceTrackerImpl.Update.MergingRecords",
+              PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.MergingRecords",
                                "Merging face %d with %d b/c its score %d is > %d",
                                userIDs[iResult], minID, scores[iResult], MergeThreshold);
               
-              // TODO: Make RemoveUser helper that does this
-              okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userIDs[iResult]);
-              if(OKAO_NORMAL != okaoResult) {
-                PRINT_NAMED_ERROR("FaceTrackerImpl.Update.ClearUserFailed",
-                                  "Failed to clear user %d after merging it with %d",
-                                  userIDs[iResult], minID);
-                return RESULT_FAIL;
-              }
-              _enrollmentStatus.erase(userIDs[iResult]);
+              // TODO: check return val
+              RemoveUser(userIDs[iResult]);
               
             }
             ++iResult;
@@ -792,9 +929,9 @@ namespace Vision {
           
         } else if(allowAddNewFace) {
           // No match found, add new user
-          PRINT_NAMED_INFO("FaceTrackerImpl.Update.AddingNewUser",
+          PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingNewUser",
                            "Observed new person. Adding to album.");
-          Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp);
+          Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp, detectionInfo);
           if(RESULT_OK != lastResult) {
             return lastResult;
           }
@@ -805,6 +942,68 @@ namespace Vision {
 
     return RESULT_OK;
   } // RecognizeFace()
+  
+  Result FaceTracker::Impl::MergeFaces(Vision::TrackedFace::ID_t keepID,
+                                       Vision::TrackedFace::ID_t mergeID)
+  {
+    INT32 okaoResult = OKAO_NORMAL;
+    
+    INT32 numKeepData = 0;
+    okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, (INT32)keepID, &numKeepData);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.MergeFaces.GetNumKeepDataFail",
+                        "OKAO result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    INT32 numMergeData = 0;
+    okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, (INT32)mergeID, &numMergeData);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.MergeFaces.GetNumMergeDataFail",
+                        "OKAO result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    // TODO: Better way of deciding which (not just how many) registered data to keep
+    
+    while((numMergeData+numKeepData) >= MaxAlbumDataPerFace)
+    {
+      --numMergeData;
+      if((numMergeData+numKeepData) < MaxAlbumDataPerFace) {
+        break;
+      }
+      --numKeepData;
+    }
+    ASSERT_NAMED((numMergeData+numKeepData) < MaxAlbumDataPerFace,
+                 "Total merge and keep data should be less than max data per face");
+    
+    
+    for(s32 iMerge=0; iMerge < numMergeData; ++iMerge) {
+      
+      okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, (INT32)mergeID, iMerge,
+                                               _okaoRecogMergeFeatureHandle);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.MergeFaces.GetFeatureFail",
+                          "OKAO result=%d", okaoResult);
+        return RESULT_FAIL;
+      }
+      
+      okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, _okaoRecogMergeFeatureHandle,
+                                        (INT32)keepID, numKeepData + iMerge);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.MergeFaces.RegisterDataFail",
+                          "OKAO result=%d", okaoResult);
+        return RESULT_FAIL;
+      }
+    }
+    
+    // After merging it, remove the old user that just got merged
+    // TODO: check return val
+    RemoveUser((INT32)mergeID);
+    
+    return RESULT_OK;
+    
+  } // MergeFaces()
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig)
   {
@@ -867,11 +1066,11 @@ namespace Vision {
       const INT32 trackerID = detectionInfo.nID;
       if(detectionInfo.nDetectionMethod == DET_METHOD_DETECTED_HIGH) {
         // This face was found via detection
-        _trackID_to_recID[trackerID] = Vision::TrackedFace::UnknownFace;
+        _trackingData[trackerID].assignedID = Vision::TrackedFace::UnknownFace;
         face.SetIsBeingTracked(false);
       } else {
         // This face was found via tracking: keep its existing recognition ID
-        ASSERT_NAMED(_trackID_to_recID.find(trackerID) != _trackID_to_recID.end(),
+        ASSERT_NAMED(_trackingData.find(trackerID) != _trackingData.end(),
                      "A tracked face should already have a recognition ID entry");
         face.SetIsBeingTracked(true);
       }
@@ -921,26 +1120,71 @@ namespace Vision {
       } // if(_detectEmotion)
       
       // Face Recognition:
-      Vision::TrackedFace::ID_t faceID = _trackID_to_recID[trackerID];
-      if(Vision::TrackedFace::UnknownFace == faceID && facePartsFound)
+      TrackingData& trackingData = _trackingData[trackerID];
+      Vision::TrackedFace::ID_t faceID = trackingData.assignedID;
+      if(facePartsFound)
       {
-        // We have not recognized this tracked face yet. Do so now.
+        Vision::TrackedFace::ID_t recognizedID = Vision::TrackedFace::UnknownFace;
+        //INT32 recognitionScore = 0;
+        
         Tic("FaceRecognition");
         Result recognitionResult = RecognizeFace(nWidth, nHeight, dataPtr,
                                                  detectionInfo, frameOrig.GetTimestamp(),
-                                                 faceID);
+                                                 recognizedID);
         if(RESULT_OK != recognitionResult) {
+          // Full-on failure of recognition, just leave faceID whatever it was
           PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceRecognitionFailed",
                               "Detection index %d of %d.",
                               detectionIndex, numDetections);
-          faceID = Vision::TrackedFace::UnknownFace;
+        } else if(Vision::TrackedFace::UnknownFace == recognizedID) {
+          // We did not recognize the tracked face in its current position, just leave
+          // the faceID alone
+          
+          // (Nothing to do)
+          
+        } else if(Vision::TrackedFace::UnknownFace == faceID) {
+          // We have not yet assigned a recognition ID to this tracker ID. Use the
+          // one we just found via recognition.
+          faceID = recognizedID;
+          
+          
+        } else if(faceID != recognizedID) {
+          // We recognized this face as a different ID than the one currently
+          // assigned to the tracking ID. Trust the tracker that they are in
+          // fact the same and merge the two, keeping the original (minimum ID)
+          
+          Result mergeResult = RESULT_OK;
+          if(faceID < recognizedID) {
+            PRINT_NAMED_INFO("FaceTrackerImpl.Update.MergingFaces",
+                             "Tracking %d: merging recognized ID=%llu into existing ID=%llu",
+                             trackerID, recognizedID, faceID);
+            mergeResult = MergeFaces(faceID, recognizedID);
+          } else {
+            PRINT_NAMED_INFO("FaceTrackerImpl.Update.MergingFaces",
+                             "Tracking %d: merging existing ID=%llu into recognized ID=%llu",
+                             trackerID, faceID, recognizedID);
+            mergeResult = MergeFaces(recognizedID, faceID);
+            faceID = recognizedID;
+          }
+          
+          if(RESULT_OK != mergeResult) {
+            PRINT_NAMED_WARNING("FaceTrackerImpl.Update.MergeFail",
+                                "Trying to merge %llu with %llu", faceID, recognizedID);
+          }
+          
+          // TODO: Notify the world somehow that an ID we were tracking got merged?
         } else {
-          // We've now assigned an identity to this tracker ID so we don't have to
-          // keep trying to recognize it while we're successfully tracking!
-          _trackID_to_recID[trackerID] = faceID;
+          // We recognized this person as the same ID already assigned to its tracking ID
+          faceID = recognizedID;
         }
+        
+        // We've now assigned an identity to this tracker ID so we don't have to
+        // keep trying to recognize it while we're successfully tracking!
+        trackingData.assignedID = faceID;
+        //trackingData.detectionInfo = detectionInfo;
+        
         Toc("FaceRecognition");
-      } // if(Vision::TrackedFace::UnknownFace == faceID))
+      } // if(facePartsFound)
       
       face.SetID(faceID); // could be unknown!
       if(faceID != Vision::TrackedFace::UnknownFace) {
