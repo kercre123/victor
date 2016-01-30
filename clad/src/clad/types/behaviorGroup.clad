@@ -16,6 +16,7 @@ enum uint_8 BehaviorGroup {
     ChangesOrientation,
     MovesLift,
     MiniGame,
+    RequestSpeedTap,
     
     Count
 }
