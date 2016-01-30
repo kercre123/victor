@@ -47,7 +47,7 @@ namespace Spine {
     case SET_PROP_STATE:
       uint16_t colors[4];
       memcpy(&colors, (void*)&msg.SetPropState.colors, sizeof(colors));
-      //Radio::setPropState(msg.SetPropState.slot, colors);
+      Radio::setPropState(msg.SetPropState.slot, colors);
       break ;
     }
   }
