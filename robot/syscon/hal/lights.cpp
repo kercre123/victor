@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "lights.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
@@ -123,6 +125,12 @@ void Lights::manage(void *clr)
 {
   uint8_t *in_colors = (uint8_t*) clr;
 
+  static int fade_out = 0xFF;
+  if (fade_out > 0) {
+    memset(colors, fade_out--, sizeof(colors));
+    return ;
+  }
+  
   // This is a packed structure now channels are 1-11, channel 0 is unused  
   int pos = 0;
   for (int x = 0; x < numCharlieChannels; x++) {

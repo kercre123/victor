@@ -204,9 +204,9 @@ void Radio::init() {
   // Set all the cubes to white until something better comes along
   for (int slot = 0; slot < MAX_ACCESSORIES; slot++) {
     static const uint16_t reset_state[] = {
-      0x7FFF,
-      0x7FFF,
-      0x7FFF,
+      0x001F,
+      0x03E0,
+      0x7C00,
       0x7FFF
     };
     setPropState(slot, reset_state);
