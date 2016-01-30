@@ -1,5 +1,7 @@
 // This enables AnkiAsserts(), which are always no-ops by default (see config.h)
+#ifndef _DEBUG
 #define _DEBUG
+#endif
 
 #include "anki/cozmo/robot/hal.h"
 #include "animationController.h"
