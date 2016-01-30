@@ -160,33 +160,27 @@ namespace Cozmo {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = _config[AnkiUtil::kP_UI_ADVERTISING_PORT];
     
     _isHost = config["asHost"].asBool();
+      
+    if(_isEngineStarted) {
+      delete _cozmoEngine;
+    }
     
-    //if(_runState == CozmoGame::WAITING_FOR_UI_DEVICES) {
-      
-      if(_isEngineStarted) {
-        delete _cozmoEngine;
-      }
-      
-      PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.");
-      CozmoEngine* engineHost = new CozmoEngine(&_uiMsgHandler, _dataPlatform);
-      engineHost->ListenForRobotConnections(true);
-      _cozmoEngine = engineHost;
+    PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.");
+  
+    // Create the CozmoContext here with the ExternalInterface and DataPlatform
+    CozmoEngine* engineHost = new CozmoEngine(&_uiMsgHandler, _dataPlatform);
+    engineHost->ListenForRobotConnections(true);
+    _cozmoEngine = engineHost;
+  
+    // Init the engine with the given configuration info:
+    lastResult = _cozmoEngine->Init(config);
     
-      // Init the engine with the given configuration info:
-      lastResult = _cozmoEngine->Init(config);
-      
-      if(lastResult == RESULT_OK) {
-        _isEngineStarted = true;
-      } else {
-        PRINT_NAMED_ERROR("CozmoGameImpl.StartEngine",
-                          "Failed to initialize the engine.");
-      }
-    /*
+    if(lastResult == RESULT_OK) {
+      _isEngineStarted = true;
     } else {
       PRINT_NAMED_ERROR("CozmoGameImpl.StartEngine",
-                        "Engine already running, must start from stopped state.");
+                        "Failed to initialize the engine.");
     }
-     */
     
     _runState = CozmoGame::WAITING_FOR_UI_DEVICES;
     

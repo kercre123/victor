@@ -10,6 +10,7 @@
  */
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
