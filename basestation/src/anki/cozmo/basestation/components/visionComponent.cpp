@@ -15,7 +15,6 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/visionSystem.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"

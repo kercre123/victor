@@ -15,7 +15,7 @@
 #define __Anki_Cozmo_Basestation_TrackingActions_H__
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
 
 #include "clad/types/actionTypes.h"
@@ -84,19 +84,19 @@ protected:
 
   ITrackAction();
   
-  virtual void Cleanup(Robot &robot) override;
+  virtual void Cleanup() override;
   
   // Note that derived classes should override InitInternal, which is called by Init
-  virtual ActionResult Init(Robot& robot) override final;
-  virtual ActionResult InitInternal(Robot& robot) = 0;
+  virtual ActionResult Init() override final;
+  virtual ActionResult InitInternal() = 0;
   
   // Derived classes must implement Init(), but cannot implement CheckIfDone().
-  virtual ActionResult CheckIfDone(Robot& robot) override final;
+  virtual ActionResult CheckIfDone() override final;
   
   // Implementation-specific method for computing the absolute angles needed
   // to turn and face whatever is being tracked.
   // Return true if new angles were provided, false if same as last time.
-  virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) = 0;
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) = 0;
   
   virtual bool InterruptInternal() override final;
   
@@ -143,11 +143,11 @@ public:
 
 protected:
   
-  virtual ActionResult InitInternal(Robot& robot) override;
-  virtual void Cleanup(Robot& robot) override;
+  virtual ActionResult InitInternal() override;
+  virtual void Cleanup() override;
   
   // Required by ITrackAction:
-  virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
   
 private:
   
@@ -171,15 +171,15 @@ public:
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_FACE; }
 
-  virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
+  virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
   
 protected:
   
-  virtual ActionResult InitInternal(Robot& robot) override;
-  virtual void Cleanup(Robot& robot) override;
+  virtual ActionResult InitInternal() override;
+  virtual void Cleanup() override;
   
   // Required by ITrackAction:
-  virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
   
 private:
 
@@ -202,10 +202,10 @@ public:
   
 protected:
   
-  virtual ActionResult InitInternal(Robot& robot) override;
+  virtual ActionResult InitInternal() override;
   
   // Required by ITrackAction:
-  virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
   
 private:
   

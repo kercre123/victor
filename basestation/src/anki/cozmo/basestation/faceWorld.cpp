@@ -1,7 +1,6 @@
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 

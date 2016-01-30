@@ -124,11 +124,14 @@ void processDrop(DropToWiFi* drop)
  */
 bool makeDrop(uint8_t* payload, uint8_t length)
 {
+  // If we're going to roll over, zero out the next buffer
   if ((outgoingPhase + (DROP_TO_RTIP_SIZE/2)) > (DMA_BUF_SIZE/2)) // Will roll over making this drop
   {
-    if (txFillCount > (DMA_BUF_COUNT-4))
+    // Check against overflow - we can't avoid it, because either animations and RT could suddenly jam 100 drops in here 
+    if (txFillCount > (DMA_BUF_COUNT-3))
     {
       i2spiTxOverflowCount++;
+      os_put_char('!'); os_put_char('D'); os_put_char('O'); // !DO = Drop Overflow
       //os_printf("i2spi tx overflow: %d, %d\r\n", i2spiTxOverflowCount, i2spiTxUnderflowCount);
       return false;
     }
@@ -146,7 +149,27 @@ bool makeDrop(uint8_t* payload, uint8_t length)
     }
     txFillCount++;
   }
+  
+  // Figure out where we're going to put the next drop
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr) + outgoingPhase;
+  uint16_t* txBuf2 = NULL;
+  int16_t halfWordsWritten = DROP_TO_RTIP_SIZE/2;
 
+  if (((DMA_BUF_SIZE/2) - outgoingPhase) >= (DROP_TO_RTIP_SIZE/2)) // Whole drop fits here
+  {
+    outgoingPhase += DROP_SPACING/2;
+  }
+  else // Split across two buffers
+  {
+    halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
+    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+    txBuf2 = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
+  }
+  
+  // DANGER:  makeDrop() is recursive - since PumpAudioData() calls i2spiQueueMessage() calls makeDrop() - looping several times!
+  // So, you have to make sure EVERYTHING is finished/incremented/ready for the next function call BEFORE this point
+  // XXX:  This can easily run out of stack space if an animation is 'evil' - we may need a better approach to i2spiQueueMessage
   DropToRTIP drop;
   os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
   drop.preamble = TO_RTIP_PREAMBLE;
@@ -161,21 +184,10 @@ bool makeDrop(uint8_t* payload, uint8_t length)
     drop.payloadLen = length;
   }
   // Copy into the DMA buffer
-  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-  if (((DMA_BUF_SIZE/2) - outgoingPhase) >= (DROP_TO_RTIP_SIZE/2)) // Whole drop fits here
-  {
-    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE/2);
-    outgoingPhase += DROP_SPACING/2;
-  }
-  else // Split across two buffers
-  {
-    const int16_t halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
-    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten);
-    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-    txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
-    outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
-  }
+  halfWordCopy(txBuf, (uint16_t*)&drop, halfWordsWritten);  // First half
+  if (NULL != txBuf2)   // Second half
+    halfWordCopy(txBuf2, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
+  
   return true;
 }
 
@@ -272,7 +284,8 @@ void i2spiTask(os_event_t *event)
       else // When running
       {
         if (txFillCount > 0) txFillCount--; // We just transmitted one 
-        while ((txFillCount < 8) && makeDrop(NULL, 0)) // Fill in drops until we are as far ahead as we want to be
+        // Fill in drops to get ahead, but not TOO far ahead, or there won't be space for SendMessages()
+        while ((txFillCount < (DMA_BUF_COUNT-6)) && makeDrop(NULL, 0))
         {
           i2spiTxUnderflowCount++; // Keep track of the underflow
         }

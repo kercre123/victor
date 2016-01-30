@@ -23,8 +23,11 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorBlockPlay.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
-#include "anki/cozmo/basestation/trackingActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -542,7 +545,7 @@ namespace Cozmo {
         PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PlacingBlock.Place",
                          "Executing place object action");
         
-        DriveToPlaceOnObjectAction* placeAction = new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn, _motionProfile);
+        DriveToPlaceOnObjectAction* placeAction = new DriveToPlaceOnObjectAction(_objectToPlaceOn, _motionProfile);
         SetDriveToObjectSounds(placeAction);
         StartActing(robot, placeAction);
         break;
@@ -1397,14 +1400,15 @@ namespace Cozmo {
               // back up and drop the block, then re-init to start over
               StartActing(robot,
                           new CompoundActionSequential({
-                new PlayAnimationAction("ID_rollBlock_fail_01"),
-                new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
-                new PlaceObjectOnGroundAction()}),
-                          [this,&robot](ActionResult ret){
-                            _isActing = false;
-                            InitState(robot);
-                            return true;
-                          });
+                              new PlayAnimationAction("ID_rollBlock_fail_01"),
+                              new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
+                              new PlaceObjectOnGroundAction()}),
+                              [this,&robot](ActionResult ret){
+                                _isActing = false;
+                                InitState(robot);
+                                return true;
+                              }
+                          );
               break;
             }
           } // switch(objectInteractionResult)

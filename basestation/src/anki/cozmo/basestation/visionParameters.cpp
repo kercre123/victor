@@ -40,6 +40,8 @@ namespace Anki {
         detectionWidth  = Vision::CameraResInfo[static_cast<size_t>(detectionResolution)].width;
         detectionHeight = Vision::CameraResInfo[static_cast<size_t>(detectionResolution)].height;
 
+        markerAppearance = VisionMarkerAppearance::BLACK_ON_WHITE;
+        
 #ifdef SIMULATOR
         scaleImage_thresholdMultiplier = 32768; // 0.5*(2^16)=32768
   #error "SIMULATOR flag not supported in basestation"

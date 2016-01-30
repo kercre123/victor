@@ -38,10 +38,58 @@ struct AcceleratorPacket {
   uint16_t  timestamp;
 };
 
-struct LEDPacket {
-  uint8_t ledStatus[16]; // 4-LEDs, three colors
-  uint8_t ledDark;       // Dark byte
+#define UNPACK_COLORS(w) \
+  (((w >> 10) & 0x1F) * 0x21) >> 2, \
+  (((w >>  5) & 0x1F) * 0x21) >> 2, \
+  (((w >>  0) & 0x1F) * 0x21) >> 2
+
+#define UNPACK_IR(w) (w & 0x8000 ? 0xFF : 0)
+
+#define PACK_COLORS(i,r,g,b) (  \
+  (i ? 0x8000 : 0) |            \
+  (((b >> 3) & 0x1F) <<  0) |   \
+  (((g >> 3) & 0x1F) <<  5) |   \
+  (((r >> 3) & 0x1F) << 10) |   \
+)
+
+enum SpineProtocolOp {
+  NO_OPERATION,
+  ASSIGN_PROP,
+  SET_PROP_STATE,
+  GET_PROP_STATE,
+  PROP_DISCOVERED
 };
+
+__packed struct SpineProtocol {
+  uint8_t opcode;
+
+  __packed union {
+    __packed struct {
+      uint8_t slot;
+      uint16_t colors[4];
+    } SetPropState;
+
+    __packed struct {
+      uint8_t slot;
+      int8_t  x, y, z;
+      uint8_t shockCount;
+    } GetPropState;
+
+    __packed struct {
+      uint8_t slot;
+      uint32_t prop_id;
+    } AssignProp;
+
+    __packed struct {
+      uint32_t prop_id;
+    } PropDiscovered;
+
+    uint8_t raw[13];
+  };
+} ;
+
+static_assert(sizeof(SpineProtocol) == 14,
+  "Spine protocol is incorrect size");
 
 union GlobalDataToHead
 {
@@ -53,16 +101,12 @@ union GlobalDataToHead
     Fixed VBat;
     Fixed VExt;
     u8    chargeStat;
-
-    u8                cubeToUpdate;
-    AcceleratorPacket cubeStatus;
+    SpineProtocol  spineMessage;
   };
 
   // Force alignment
   uint8_t _RESERVED[64];
 };
-
-// TODO: get static_assert to work so we can verify sizeof
 
 union GlobalDataToBody
 {
@@ -71,10 +115,9 @@ union GlobalDataToBody
     int16_t motorPWM[4];
     u32 backpackColors[4];
     
-    u8          cubeToUpdate;
-    LEDPacket   cubeStatus;
-    uint32_t    recover;
-    u8          flags;
+    SpineProtocol  spineMessage;
+    uint32_t       recover;
+    u8             flags;
   };
 
   // Force alignment

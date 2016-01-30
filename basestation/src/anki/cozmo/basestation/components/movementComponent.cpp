@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/trackingActions.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 

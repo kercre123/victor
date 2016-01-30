@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_COMPOUND_ACTIONS_H
 #define ANKI_COZMO_COMPOUND_ACTIONS_H
 
-#include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -27,13 +27,12 @@ namespace Anki {
       
       virtual void AddAction(IActionRunner* action);
       
-      
       // Call any unfinished constituent actions' Cleanup() methods
-      virtual void Cleanup(Robot& robot) override final;
+      virtual void Cleanup() override final;
       
       // First calls cleanup on any constituent actions and then removes them
       // from this compound action completely.
-      void ClearActions(Robot& robot);
+      void ClearActions();
       
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
@@ -41,7 +40,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
-      
+
     protected:
       
       // Call the constituent actions' Reset() methods and mark them each not done.
@@ -70,7 +69,7 @@ namespace Anki {
     private:
       virtual void Reset() override;
       
-      virtual ActionResult UpdateInternal(Robot& robot) override final;
+      virtual ActionResult UpdateInternal() override final;
       
       f32 _delayBetweenActionsInSeconds;
       f32 _waitUntilTime;
@@ -98,7 +97,7 @@ namespace Anki {
       
     protected:
       
-      virtual ActionResult UpdateInternal(Robot& robot) override final;
+      virtual ActionResult UpdateInternal() override final;
       
     }; // class CompoundActionParallel
     
