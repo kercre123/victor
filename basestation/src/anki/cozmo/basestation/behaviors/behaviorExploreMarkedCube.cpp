@@ -12,7 +12,7 @@
  **/
 #include "behaviorExploreMarkedCube.h"
 
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "util/console/consoleInterface.h"
