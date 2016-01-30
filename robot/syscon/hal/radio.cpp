@@ -327,18 +327,16 @@ extern "C" void uesb_event_handler(void)
       AccessorySlot* acc = &accessories[currentAccessory];   
       acc->last_received = 0;
 
-      AcceleratorPacket ap;
-      memcpy(&acc, rx_payload.data, sizeof(acc));
+      AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
 
       SpineProtocol msg;
-      msg.opcode = PROP_DISCOVERED;
-      msg.GetPropState.x = ap.x;
-      msg.GetPropState.x = ap.y;
-      msg.GetPropState.x = ap.z;
-      msg.GetPropState.shockCount = ap.shockCount;
+      msg.opcode = GET_PROP_STATE;
+      msg.GetPropState.x = ap->x;
+      msg.GetPropState.x = ap->y;
+      msg.GetPropState.x = ap->z;
+      msg.GetPropState.shockCount = ap->shockCount;
       Spine::enqueue(msg);
 
-   
       send_dummy_byte();
       break ;
     }

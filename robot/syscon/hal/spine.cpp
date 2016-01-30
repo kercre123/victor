@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nrf.h"
 #include "anki/cozmo/robot/spineData.h"
 
 #include "radio.h"
@@ -10,7 +11,7 @@ static const int FIFO_LIMIT = 4;
 static SpineProtocol queue[FIFO_LIMIT];
 
 static int fifoStart = 0;
-static int fifoEnd = 0;
+static int fifoEnd = 0; 
 static int fifoCount = 0;
 
 namespace Spine {
@@ -19,10 +20,11 @@ namespace Spine {
       return ;
     }
 
+    NVIC_DisableIRQ(UART0_IRQn);
     fifoCount++;
     memcpy(&queue[fifoEnd], &msg, sizeof(SpineProtocol));
-      
-    if (++fifoEnd > FIFO_LIMIT) fifoEnd = 0;
+    if (++fifoEnd >= FIFO_LIMIT) fifoEnd = 0;
+    NVIC_EnableIRQ(UART0_IRQn);
   }
   
   void dequeue(SpineProtocol& msg) {
@@ -30,10 +32,11 @@ namespace Spine {
       return ;
     }
     
+    NVIC_DisableIRQ(RADIO_IRQn);
     fifoCount--;
     memcpy(&msg, &queue[fifoStart], sizeof(SpineProtocol));
-    
-    if (++fifoStart > FIFO_LIMIT) fifoStart = 0;
+    if (++fifoStart >= FIFO_LIMIT) fifoStart = 0;
+    NVIC_EnableIRQ(RADIO_IRQn);
   }
 
   void processMessage(SpineProtocol& msg) {
@@ -44,7 +47,7 @@ namespace Spine {
     case SET_PROP_STATE:
       uint16_t colors[4];
       memcpy(&colors, (void*)&msg.SetPropState.colors, sizeof(colors));
-      Radio::setPropState(msg.SetPropState.slot, colors);
+      //Radio::setPropState(msg.SetPropState.slot, colors);
       break ;
     }
   }

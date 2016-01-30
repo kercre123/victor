@@ -150,12 +150,7 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>hex[(id &gt;&gt; 4) &amp; 0xF]</ItemText>
-        </Ww>
-        <Ww>
-          <count>1</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>hex[(id &gt;&gt; 0) &amp; 0xF]</ItemText>
+          <ItemText>g_LedStatus</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
