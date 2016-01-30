@@ -110,12 +110,16 @@ void user_rf_pre_init(void)
 /// Forward declarations
 int NVCheckIntegrity(const bool recollect, const bool defragment);
 void NVWipeAll(void);
+void crashHandlerInit(void);
 
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
  */
 static void system_init_done(void)
 {
+  // Set up our own crash handler, so we can record crashes in more detail
+  crashHandlerInit();
+
   // Check bootloader config and clear if nessisary
   // Do this before i2spiInit so we don't desynchronize
   checkAndClearBootloaderConfig();
