@@ -140,23 +140,8 @@ void BehaviorExploreMarkedCube::StopInternal(Robot& robot, double currentTime_se
   VizManager::getInstance()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
 }
 
-void BehaviorExploreMarkedCube::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
-{
-  switch(event.GetData().GetTag())
-  {
-    case EngineToGameTag::RobotCompletedAction:
-      HandleActionCompleted( event.GetData().Get_RobotCompletedAction() );
-      break;
-      
-    default:
-      PRINT_NAMED_ERROR("BehaviorExploreMarkedCube.HandleWhileNotRunning.InvalidTag",
-                        "Received unexpected event with tag %hhu.", event.GetData().GetTag());
-      break;
-  }
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+void BehaviorExploreMarkedCube::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {
@@ -165,7 +150,7 @@ void BehaviorExploreMarkedCube::HandleWhileRunning(const EngineToGameEvent& even
       break;
       
     default:
-      PRINT_NAMED_ERROR("BehaviorExploreMarkedCube.HandleWhileRunning.InvalidTag",
+      PRINT_NAMED_ERROR("BehaviorExploreMarkedCube.AlwaysHandle.InvalidTag",
                         "Received unexpected event with tag %hhu.", event.GetData().GetTag());
       break;
   }
@@ -178,7 +163,7 @@ void BehaviorExploreMarkedCube::HandleActionCompleted(const ExternalInterface::R
   if ( _currentActionTag == msg.idTag )
   {
     if ( !IsRunning() ) {
-      PRINT_NAMED_INFO("BehaviorExploreMarkedCube", "Out action completed while not running.");
+      PRINT_NAMED_INFO("BehaviorExploreMarkedCube", "Our action completed while not running.");
     }
   
     _currentActionTag = Util::numeric_cast<uint32_t>((std::underlying_type<ActionConstants>::type)ActionConstants::INVALID_TAG);

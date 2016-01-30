@@ -58,9 +58,10 @@ protected:
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
-  
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
+
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+//  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+//  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
