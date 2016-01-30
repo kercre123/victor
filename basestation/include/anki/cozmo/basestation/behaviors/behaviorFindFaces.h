@@ -53,6 +53,9 @@ private:
     PauseToSee
   };
   
+  // The length of time in seconds it has to have been since we last
+  // saw a face in order to enter this behavior
+  constexpr static double kMinimumTimeSinceSeenLastFace_sec = 180; // 3 minutes
   // Min angle to move relative to current, in degrees
   constexpr static float kPanMin = 35;
   // Max angle to move relative to current, in degrees
