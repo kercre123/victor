@@ -335,12 +335,17 @@ public abstract class GameBase : MonoBehaviour {
   #region Title Widget
 
   protected void ShowTitleWidget(string titleText, Sprite titleIcon) {
-    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon, _ChallengeData.HowToPlayDialogContentPrefab);
-    _SharedMinigameViewInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
-    _SharedMinigameViewInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
+    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon);
   }
 
+  #endregion
+
+  #region How To Play Button
+
   public void OpenHowToPlayView() {
+    _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentPrefab);
+    _SharedMinigameViewInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
+    _SharedMinigameViewInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
     _SharedMinigameViewInstance.OpenHowToPlayView();
   }
 

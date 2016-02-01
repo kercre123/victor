@@ -29,11 +29,9 @@ namespace Cozmo {
       }
 
       public void EnableInteractivity() {
-        _QuitButtonInstance.Interactable = true;
       }
 
       public void DisableInteractivity() {
-        _QuitButtonInstance.Interactable = false;
       }
 
       // TODO: Don't hardcode this

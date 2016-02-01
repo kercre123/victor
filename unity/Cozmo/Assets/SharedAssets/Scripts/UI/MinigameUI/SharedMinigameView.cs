@@ -42,16 +42,11 @@ namespace Cozmo {
       private ContinueGameShelfWidget _ContinueButtonShelfInstance;
 
       [SerializeField]
+      private HowToPlayButton _HowToPlayButtonPrefab;
+      private HowToPlayButton _HowToPlayButtonInstance;
+
+      [SerializeField]
       private RectTransform _HowToSlideContainer;
-
-      [SerializeField]
-      private Anki.UI.AnkiButton _HowToPlayButton;
-
-      [SerializeField]
-      private HowToPlayView _HowToPlayViewPrefab;
-      private HowToPlayView _HowToPlayViewInstance;
-
-      private GameObject _HowToPlayViewContentPrefab;
 
       private CanvasGroup _CurrentSlide;
       private string _CurrentSlideName;
@@ -64,10 +59,6 @@ namespace Cozmo {
       public CanvasGroup CurrentSlide { get { return _CurrentSlide; } }
 
       public bool _OpenAnimationStarted = false;
-
-      void Start() {
-        _HowToPlayButton.onClick.AddListener(HandleHowToPlayButtonTap);
-      }
 
       #region Base View
 
@@ -90,7 +81,6 @@ namespace Cozmo {
         if (_TransitionOutSlide != null) {
           Destroy(_TransitionOutSlide.gameObject);
         }
-        _HowToPlayButton.onClick.RemoveAllListeners();
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -263,7 +253,7 @@ namespace Cozmo {
 
       #region Challenge Title Widget
 
-      public void CreateTitleWidget(string titleText, Sprite titleSprite, GameObject howToPlayContentsPrefab) {
+      public void CreateTitleWidget(string titleText, Sprite titleSprite) {
         if (_TitleWidgetInstance != null) {
           return;
         }
@@ -274,40 +264,42 @@ namespace Cozmo {
         _TitleWidgetInstance.Initialize(titleText, titleSprite);
 
         AddWidget(_TitleWidgetInstance);
-
-        _HowToPlayViewContentPrefab = howToPlayContentsPrefab;
       }
 
-      private void HandleHowToPlayButtonTap() {
-        OpenHowToPlayDialog();
-      }
+      #endregion
 
-      public void OpenHowToPlayDialog() {
-        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
-        _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
-        _HowToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
+      #region How To Play Widget
 
-        if (HowToPlayViewOpened != null) {
-          HowToPlayViewOpened();
+      public void CreateHowToPlayButton(GameObject howToPlayContentsPrefab) {
+
+        if (_HowToPlayButtonInstance != null) {
+          return;
         }
+
+        GameObject newButton = UIManager.CreateUIElement(_HowToPlayButtonPrefab, this.transform);
+
+        _HowToPlayButtonInstance = newButton.GetComponent<HowToPlayButton>();
+
+        _HowToPlayButtonInstance.Initialize(howToPlayContentsPrefab);
+        _HowToPlayButtonInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
+        _HowToPlayButtonInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
+
+        AddWidget(_HowToPlayButtonInstance);
       }
 
       public void OpenHowToPlayView() {
-        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
-        _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
-        _HowToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
-
-        if (HowToPlayViewOpened != null) {
-          HowToPlayViewOpened();
+        if (_HowToPlayButtonInstance != null) {
+          _HowToPlayButtonInstance.OpenHowToPlayView();
         }
       }
 
       public void CloseHowToPlayView() {
-        if (_HowToPlayViewInstance != null) {
-          _HowToPlayViewInstance.CloseView();
-          _HowToPlayViewInstance = null;
+        if (_HowToPlayButtonInstance != null) {
+          _HowToPlayButtonInstance.CloseHowToPlayView();
         }
       }
+
+
 
       private void HandleHowToPlayViewOpened() {
         if (HowToPlayViewOpened != null) {
