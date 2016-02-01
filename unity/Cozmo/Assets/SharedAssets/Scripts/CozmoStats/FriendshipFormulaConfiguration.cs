@@ -31,9 +31,7 @@ public class FriendshipFormulaConfiguration : ScriptableObject {
     for (int i = 0; i < _Multipliers.Length; i++) {
       var stat = (Anki.Cozmo.ProgressionStatType)i;
 
-      int p = Mathf.Min(progress[stat], goal[stat]);
-
-      totalProgress += p * _Multipliers[i];
+      totalProgress += progress[stat] * _Multipliers[i];
       totalGoal += goal[stat] * _Multipliers[i];
     }
     if (totalGoal > 0f) {

@@ -71,5 +71,8 @@
   },
   "requestGame.description": {
     "translation": "Cozmo wants to play {0}! Do You?"
+  },
+  "dailyGoal.FriendBonus": {
+    "translation": "Friend Bonus"
   }
 }
