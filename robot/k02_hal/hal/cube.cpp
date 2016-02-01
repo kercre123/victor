@@ -5,43 +5,14 @@
 #include "uart.h"
 #include "hal/portable.h"
 #include "messages.h"
+#include "cube.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "uart.h"
 
-//#define OLD_CUBE_EXPERIMENT 1 // for testing
-
-#define MAX_CUBES 20
-#define NUM_BLOCK_LEDS 4
-
-static LEDPacket         g_LedStatus[MAX_CUBES];
-static AcceleratorPacket g_AccelStatus[MAX_CUBES];
-
-uint32_t isqrt(uint32_t a_nInput)
-{
-    uint32_t op  = a_nInput;
-    uint32_t res = 0;
-    uint32_t one = 1uL << 30; // The second-to-top bit is set: use 1u << 14 for uint16_t type; use 1uL<<30 for uint32_t type
-
-
-    // "one" starts at the highest power of four <= than the argument.
-    while (one > op)
-    {
-        one >>= 2;
-    }
-
-    while (one != 0)
-    {
-        if (op >= res + one)
-        {
-            op = op - (res + one);
-            res = res +  2 * one;
-        }
-        res >>= 1;
-        one >>= 2;
-    }
-    return res;
-}
+AcceleratorPacket g_AccelStatus[MAX_CUBES];
+uint16_t g_LedStatus[MAX_CUBES][NUM_BLOCK_LEDS];
 
 namespace Anki
 {
@@ -49,30 +20,23 @@ namespace Anki
   {
     namespace HAL
     {
-      void ManageCubes(void) {
-        #ifndef OLD_CUBE_EXPERIMENT
-        // LED status
-        static int blockID = 0;
-
-        blockID = (blockID+1) % MAX_CUBES;
-        memcpy((void*)&g_dataToBody.cubeStatus, &g_LedStatus[blockID], sizeof(LEDPacket));
-        g_dataToBody.cubeToUpdate = blockID;
-
+      void DiscoverProp(uint32_t id) {
+        // This currently does nothing
+      }
+      
+      void GetPropState(int id, int x, int y, int z, int shocks) {
         // Tap detection
-        if (g_dataToHead.source != SPI_SOURCE_BODY){
-          return ;
-        }
-
-        uint8_t id = g_dataToHead.cubeToUpdate;
-
         if (id >= MAX_CUBES) {
           return ;
         }
 
-        uint8_t shocks = g_dataToHead.cubeStatus.shockCount;
         uint8_t count = shocks - g_AccelStatus[id].shockCount;
-        memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
 
+        g_AccelStatus[id].x = x;
+        g_AccelStatus[id].y = y;
+        g_AccelStatus[id].z = z;
+        g_AccelStatus[id].shockCount = shocks;
+        
         //DisplayStatus(id);
 
         if (count > 0 && count < 16) {
@@ -82,7 +46,6 @@ namespace Anki
           m.objectID = id;
           RobotInterface::SendMessage(m);
         }
-
 
         // Detect if block moved from accel data
         const u8 START_MOVING_COUNT_THRESH = 5;  // Determines number of motion tics that much be observed before Moving msg is sent
@@ -149,7 +112,6 @@ namespace Anki
           RobotInterface::SendMessage(m);
           isMoving[id] = false;
         }
-        #endif
       }
 
       Result SetBlockLight(const u32 blockID, const u16* colors)
@@ -158,25 +120,7 @@ namespace Anki
           return RESULT_FAIL;
         }
 
-        uint8_t *light  = g_LedStatus[blockID].ledStatus;
-        uint32_t sum = 0;
-        static const int order[] = {0,3,2,1};
-
-        for (int c = 0; c < NUM_BLOCK_LEDS; c++) {
-          uint16_t color = colors[order[c]];
-
-          // IR is ignored right now
-          for (int ch = 10; ch >= 0; ch -= 5) {
-            uint8_t status = ((color >> ch) & 0x1F) << 3;
-            uint32_t bright = status;
-            sum += bright * bright;
-            *(light++) = bright;
-          }
-        }
-
-        uint32_t sq_sum = isqrt(sum);
-
-        g_LedStatus[blockID].ledDark = (sq_sum & ~0xFF) ? 0 : (0x255 - sq_sum);
+        memcpy(g_LedStatus[blockID], colors, sizeof(g_LedStatus[blockID]));
 
         return RESULT_OK;
       }

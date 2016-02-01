@@ -6,6 +6,8 @@
 #include "nrf51_bitfields.h"
 #include "nrf_gpio.h"
 
+#include "anki/cozmo/robot/spineData.h"
+
 #include "micro_esb.h"
   
 #include "hardware.h"
@@ -15,8 +17,7 @@
 #include "timer.h"
 #include "head.h"
 #include "rng.h"
-
-#include "anki/cozmo/robot/spineData.h"
+#include "spine.h"
 
 #define ABS(x)   ((x < 0) ? -x : x)
 
@@ -31,12 +32,17 @@ enum RadioState {
   RADIO_TALKING         // We are communicating to cubes
 };
 
+struct LEDPacket {
+  uint8_t ledStatus[16]; // 4-LEDs, three colors
+  uint8_t ledDark;       // Dark byte
+};
+
 struct AccessorySlot {
   bool              active;
+  bool              allocated;
   int               last_received;
   uint32_t          id;
   LEDPacket         tx_state;
-  AcceleratorPacket rx_state;
 };
 
 struct AdvertisePacket {
@@ -61,7 +67,6 @@ static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
 
 static const int LOCATE_TIMEOUT = TICK_LOOP;      // One entire cozmo period
 static const int ACCESSORY_TIMEOUT = 400;         // 2s timeout before accessory is considered lost
-
 static const int PACKET_SIZE = 17;
 static const int MAX_ACCESSORIES = TICK_LOOP;
 
@@ -90,10 +95,6 @@ static const int RADIO_WAKEUP_OFFSET = 18;
 
 static const int MAX_ADDRESS_BIT_RUN = 3;
 static const int BASE_PIPE = 1;
-
-static const int MAX_CHARGERS = 1;
-static const int MAX_CUBES = 6;
-
 
 // Global head / body sync values
 extern GlobalDataToHead g_dataToHead;
@@ -147,6 +148,33 @@ static inline uint32_t fixAddress(uint32_t word) {
   return word;
 }
 
+// Integer square root calculator
+uint32_t isqrt(uint32_t a_nInput)
+{
+    uint32_t op  = a_nInput;
+    uint32_t res = 0;
+    uint32_t one = 1uL << 30; // The second-to-top bit is set: use 1u << 14 for uint16_t type; use 1uL<<30 for uint32_t type
+
+
+    // "one" starts at the highest power of four <= than the argument.
+    while (one > op)
+    {
+        one >>= 2;
+    }
+
+    while (one != 0)
+    {
+        if (op >= res + one)
+        {
+            op = op - (res + one);
+            res = res +  2 * one;
+        }
+        res >>= 1;
+        one >>= 2;
+    }
+    return res;
+}
+
 void Radio::init() {
   const uesb_config_t uesb_config = {
     UESB_BITRATE_1MBPS,
@@ -172,24 +200,22 @@ void Radio::init() {
   uesb_start();
 
   RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
-}
 
-static inline uint8_t AccType(uint32_t id) {
-  return id >> 24;
-}
-
-static int CountAccessories(uint8_t type) {
-  int count = 0;
-
-  for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    if (accessories[i].active && AccType(accessories[i].id) == type)  count++;
+  // Set all the cubes to white until something better comes along
+  for (int slot = 0; slot < MAX_ACCESSORIES; slot++) {
+    static const uint16_t reset_state[] = {
+      0x001F,
+      0x03E0,
+      0x7C00,
+      0x7FFF
+    };
+    setPropState(slot, reset_state);
   }
-
-  return count;
 }
 
 static int LocateAccessory(uint32_t id) {
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
+    if (!accessories[i].allocated) continue ;
     if (accessories[i].id == id) return i;
   }
 
@@ -197,9 +223,11 @@ static int LocateAccessory(uint32_t id) {
 }
 
 static int FreeAccessory(void) {
+  #ifdef AUTO_GATHER
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    if (!accessories[i].active) return i;
+    if (!accessories[i].allocated) return i;
   }
+  #endif
 
   return -1;
 }
@@ -272,6 +300,11 @@ extern "C" void uesb_event_handler(void)
       // Attempt to locate existing accessory and repair
       slot = LocateAccessory(packet.id);
       if (slot < 0) {
+        SpineProtocol msg;
+        msg.opcode = PROP_DISCOVERED;
+        msg.PropDiscovered.prop_id = packet.id;
+        Spine::enqueue(msg);
+        
         // Attempt to allocate a slot for it
         slot = FreeAccessory();
 
@@ -279,18 +312,6 @@ extern "C" void uesb_event_handler(void)
         if (slot < 0) {
           break ;
         }
-        
-        // We don't want more than one charger paired (sorry about it)
-        if ((AccType(packet.id) == ACCESSORY_CHARGER && CountAccessories(ACCESSORY_CHARGER) >= MAX_CHARGERS) ||
-            (AccType(packet.id) == ACCESSORY_CUBE && CountAccessories(ACCESSORY_CUBE) >= MAX_CUBES)) {
-          break ;
-        }
-      }
-
-      // If we are not re-establishing an existing connection, clear the active state
-      if (!accessories[slot].active) {
-        memset(&accessories[slot].rx_state, 0, sizeof(accessories[slot].rx_state));
-        memset(&accessories[slot].tx_state, 0xff, sizeof(accessories[slot].tx_state));
       }
 
       // We are loading the slot
@@ -305,7 +326,16 @@ extern "C" void uesb_event_handler(void)
     case RADIO_TALKING:
       AccessorySlot* acc = &accessories[currentAccessory];   
       acc->last_received = 0;
-      memcpy(&acc->rx_state, rx_payload.data, sizeof(AcceleratorPacket));
+
+      AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
+
+      SpineProtocol msg;
+      msg.opcode = GET_PROP_STATE;
+      msg.GetPropState.x = ap->x;
+      msg.GetPropState.x = ap->y;
+      msg.GetPropState.x = ap->z;
+      msg.GetPropState.shockCount = ap->shockCount;
+      Spine::enqueue(msg);
 
       send_dummy_byte();
       break ;
@@ -320,23 +350,49 @@ extern "C" void uesb_event_handler(void)
   }
 }
 
-void Radio::manage(void* userdata) {
-  // This maintains the spine communication for cube updates (this will eventually be reworked
-  if (Head::spokenTo) {
-    AccessorySlot* acc = &accessories[g_dataToHead.cubeToUpdate];
-    
-    // Transmit to cube our line status
-    if (g_dataToBody.cubeToUpdate < MAX_ACCESSORIES) {
-      memcpy(&g_dataToHead.cubeStatus, &acc->rx_state, sizeof(AcceleratorPacket));    
-      memcpy(&acc->tx_state, &g_dataToBody.cubeStatus, sizeof(LEDPacket));
-    }
-
-    // Transmit to the head our cube status
-    if (++g_dataToHead.cubeToUpdate >= MAX_ACCESSORIES) {
-      g_dataToHead.cubeToUpdate = 0;
-    }
+void Radio::setPropState(unsigned int slot, const uint16_t *state) {
+  if (slot > MAX_ACCESSORIES) {
+    return ;
   }
 
+  AccessorySlot* acc = &accessories[slot];
+  LEDPacket packet = {
+    {
+      UNPACK_COLORS(state[0]),
+      UNPACK_COLORS(state[1]),
+      UNPACK_COLORS(state[2]),
+      UNPACK_COLORS(state[3]),
+      UNPACK_IR(state[0]),
+      UNPACK_IR(state[1]),
+      UNPACK_IR(state[2]),
+      UNPACK_IR(state[3])
+    }
+  };
+  
+  int sum = 0;
+  for (int i = 0; i < sizeof(packet.ledStatus); i++) {
+    int byte = packet.ledStatus[i];
+    sum += byte * byte;
+  }
+
+  int sq_sum = isqrt(sum);
+
+  packet.ledDark = (sq_sum & ~0xFF) ? 0 : (0x255 - sq_sum);
+  
+  memcpy(&acc->tx_state, &packet, sizeof(LEDPacket));
+}
+
+void Radio::assignProp(unsigned int slot, uint32_t accessory) {
+  if (slot > MAX_ACCESSORIES) {
+    return ;
+  }
+  
+  AccessorySlot* acc = &accessories[slot];
+  acc->id = accessory;
+  acc->allocated = true;
+}
+
+void Radio::manage(void* userdata) {
   // Handle per 5ms channel updates
   switch (radioState) {
   case RADIO_FIND_CHANNEL:
@@ -383,7 +439,7 @@ void Radio::manage(void* userdata) {
 
     AccessorySlot* acc = &accessories[currentAccessory];
     EnterState(RADIO_TALKING);
-    
+
     if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
       // Broadcast to the appropriate device
       uesb_write_tx_payload(&TalkAddress, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));

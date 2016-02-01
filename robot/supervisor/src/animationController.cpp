@@ -1,3 +1,8 @@
+// This enables AnkiAsserts(), which are always no-ops by default (see config.h)
+#ifndef _DEBUG
+#define _DEBUG
+#endif
+
 #include "anki/cozmo/robot/hal.h"
 #include "animationController.h"
 #include "clad/types/animationKeyFrames.h"
@@ -12,6 +17,7 @@ extern "C" {
   #include "client.h"
   #include "anki/cozmo/robot/drop.h"
 }
+extern "C" void FacePrintf(const char *format, ...);
 #define ONCHIP
 #else // Not on Espressif
 #include <string.h>
@@ -239,7 +245,7 @@ namespace AnimationController {
   static s32 GetFromBuffer(RobotInterface::EngineToRobot* msg)
   {
     s32 readSoFar;
-    memset(msg, 0, sizeof(RobotInterface::EngineToRobot)); // Memset 0, presumably sets all size fields to 0
+    memset(msg, 0, sizeof(RobotInterface::EngineToRobot)); // Memset 0 - sets size to 1
     readSoFar  = GetFromBuffer(msg->GetBuffer(), RobotInterface::EngineToRobot::MIN_SIZE); // Read in enough to know what it is
     readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in the minimum size for the type to get length fields
     readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in anything left now that we know how big minimum fields are
@@ -349,6 +355,7 @@ namespace AnimationController {
 
   extern "C" bool PumpAudioData(uint8_t* dest)
   {
+    static bool currentlyUpdating = false;
     if(IsReadyToPlay()) {
       #ifdef TARGET_ESPRESSIF
       if (_audioReadInd == 0)
@@ -356,18 +363,29 @@ namespace AnimationController {
       if (HAL::AudioReady())
       #endif
       {
+        // XXX: This code is secretly recursive on the Espressif: PumpAudioData() -> Update() -> RTIP::SendMessage() -> PumpAudioData()
+        // That dependency loop trashes keyFrameBuffer when we run out of audio - so currentlyUpdating inserts crackles instead of crashing
+        if (currentlyUpdating)
+          return false;           // XXX: Crackles are bad - break the dependency
+        
         START_TIME_PROFILE(Anim, AUDIOPLAY);
 
         // Next thing in the buffer should be audio or silence:
         RobotInterface::EngineToRobot::Tag msgID = PeekBufferTag();
         RobotInterface::EngineToRobot msg;
 
-        // If the next message is not audio, then delete it until it is.
-        while(msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
-              msgID != RobotInterface::EngineToRobot::Tag_animAudioSample) {
-          AnkiWarn( 2, "AnimationController", 12, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead). Dumping message. (FYI AudioSample_ID = 0x%02x)", 2, msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
-          GetFromBuffer(&msg);
-          msgID = PeekBufferTag();
+        // If the next message is not audio, the animation queue has completely desynchronized
+        // We almost certainly are looking at the middle of a message (and not start), so we can't continue
+        // If it's not an animationController bug, it's most likely a mismatch between basestation and Espressif CLAD builds
+        if (msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
+              msgID != RobotInterface::EngineToRobot::Tag_animAudioSample)
+        {
+          // Shut down, and report back what happened
+          Clear();
+          RobotInterface::AnimationEnded aem;
+          aem.tag = _currentTag;
+          RobotInterface::SendMessage(aem);
+          return false;
         }
 
         switch(msgID)
@@ -443,7 +461,9 @@ namespace AnimationController {
           AnkiDebug( 2, "AnimationController", 14, "Update()\tari = %d\tnafb = %d", 2, _audioReadInd, _numAudioFramesBuffered);
 #         endif
           _audioReadInd = 0;
+          currentlyUpdating = true;
           Update(); // Done with audio message, grab next thing from buffer
+          currentlyUpdating = false;
 #         if DEBUG_ANIMATION_CONTROLLER
           _currentTime_ms += 33;
 #         endif

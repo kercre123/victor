@@ -127,7 +127,7 @@ namespace Anki {
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 
 #if defined(TARGET_ESPRESSIF)
-	#define ANKI_ASSERT_SHOW FacePrintf("ASSERT in " __FILE__ ", line %d", __LINE__)
+	#define ANKI_ASSERT_SHOW Face::FacePrintf("ASSERT in " __FILE__ ", line %d", __LINE__)
 #elif defined(TARGET_K02)
  #define ANKI_ASSERT_SHOW for (int i=0; i<5; ++i) Anki::Cozmo::HAL::SetLED(i, 0x7c00)
 #else
@@ -150,7 +150,7 @@ namespace Anki {
 }
 
 #if defined(TARGET_ESPRESSIF)
-	void FacePrintf(const char *format, ...); // Forward declaration instead of include because we don't want that include everywhere this is.
+	extern "C" void FacePrintf(const char *format, ...); // Forward declaration instead of include because we don't want that include everywhere this is.
 #elif defined(TARGET_K02)
  // Forward declaration instead of include because we don't want that include everywhere this is.
  namespace Anki { namespace Cozmo { namespace HAL {

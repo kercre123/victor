@@ -249,7 +249,8 @@ namespace Anki {
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
-      DriveToPlaceCarriedObjectAction(const Pose3d& placementPose,
+      DriveToPlaceCarriedObjectAction(const Robot& robot,
+                                      const Pose3d& placementPose,
                                       const bool placeOnGround,
                                       const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                       const bool useExactRotation = false,

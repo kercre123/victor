@@ -1162,11 +1162,6 @@ namespace Anki {
       return SendBlockMessage(blockID, m);
     }
 
-    void HAL::ManageCubes(void)
-    {
-      // Stub
-    }
-
     void HAL::FacePrintf(const char *format, ...)
     {
       // Stub

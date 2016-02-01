@@ -534,6 +534,11 @@
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\cube.cpp</FilePath>
             </File>
+            <File>
+              <FileName>spine.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\spine.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

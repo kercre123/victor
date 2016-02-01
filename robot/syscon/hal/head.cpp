@@ -12,6 +12,8 @@
 
 #include "anki/cozmo/robot/spineData.h"
 
+#include "spine.h"
+
 #define MAX(a, b) ((a > b) ? a : b)
 
 uint8_t txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
@@ -119,7 +121,9 @@ inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
+  Spine::dequeue(g_dataToHead.spineMessage);
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
+  g_dataToHead.spineMessage.opcode = NO_OPERATION;
   txRxIndex = 0;
 
   setTransmitMode(TRANSMIT_SEND);
@@ -149,6 +153,7 @@ void UART0_IRQHandler()
     // We received a full packet
     if (++txRxIndex >= sizeof(GlobalDataToBody)) {
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
+      Spine::processMessage(g_dataToBody.spineMessage);
       Head::spokenTo = true;
       
       // Secret recovery flag, set dark byte to zero, and set secret to a magic number
