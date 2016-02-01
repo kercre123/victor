@@ -10,8 +10,6 @@ namespace Cozmo {
 
       public delegate void QuitButtonHandler();
 
-      public event QuitButtonHandler QuitViewOpened;
-      public event QuitButtonHandler QuitViewClosed;
       public event QuitButtonHandler QuitGameConfirmed;
 
       [SerializeField]
@@ -26,12 +24,6 @@ namespace Cozmo {
       public void DestroyWidgetImmediately() {
         _QuitButtonInstance.onClick.RemoveAllListeners();
         Destroy(gameObject);
-      }
-
-      public void EnableInteractivity() {
-      }
-
-      public void DisableInteractivity() {
       }
 
       // TODO: Don't hardcode this
@@ -70,11 +62,6 @@ namespace Cozmo {
         if (_ConfimedQuit) {
           if (QuitGameConfirmed != null) {
             QuitGameConfirmed();
-          }
-        }
-        else {
-          if (QuitViewClosed != null) {
-            QuitViewClosed();
           }
         }
         _ConfimedQuit = false;

@@ -14,12 +14,6 @@ namespace Cozmo {
         _ChallengeTitleLabel.SetIcon(titleIcon);
       }
 
-      public void EnableInteractivity() {
-      }
-
-      public void DisableInteractivity() {
-      }
-
       #region IMinigameWidget
 
       public void DestroyWidgetImmediately() {

@@ -11,11 +11,6 @@ namespace Cozmo {
       public delegate void SharedMinigameViewHandler();
 
       public event SharedMinigameViewHandler QuitMiniGameConfirmed;
-      public event SharedMinigameViewHandler QuitMiniGameViewOpened;
-      public event SharedMinigameViewHandler QuitMiniGameViewClosed;
-
-      public event SharedMinigameViewHandler HowToPlayViewOpened;
-      public event SharedMinigameViewHandler HowToPlayViewClosed;
 
       [SerializeField]
       private GameObject _QuitGameButtonPrefab;
@@ -106,18 +101,6 @@ namespace Cozmo {
 
       #endregion
 
-      public void EnableInteractivity() {
-        foreach (IMinigameWidget widget in _ActiveWidgets) {
-          widget.EnableInteractivity();
-        }
-      }
-
-      public void DisableInteractivity() {
-        foreach (IMinigameWidget widget in _ActiveWidgets) {
-          widget.DisableInteractivity();
-        }
-      }
-
       private void AddWidget(IMinigameWidget widgetToAdd) {
         _ActiveWidgets.Add(widgetToAdd);
         if (_OpenAnimationStarted) {
@@ -136,24 +119,9 @@ namespace Cozmo {
         GameObject newButton = UIManager.CreateUIElement(_QuitGameButtonPrefab, this.transform);
 
         _QuitButtonInstance = newButton.GetComponent<QuitMinigameButton>();
-
-        _QuitButtonInstance.QuitViewOpened += HandleQuitViewOpened;
-        _QuitButtonInstance.QuitViewClosed += HandleQuitViewClosed;
         _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
 
         AddWidget(_QuitButtonInstance);
-      }
-
-      private void HandleQuitViewOpened() {
-        if (QuitMiniGameViewOpened != null) {
-          QuitMiniGameViewOpened();
-        }
-      }
-
-      private void HandleQuitViewClosed() {
-        if (QuitMiniGameViewClosed != null) {
-          QuitMiniGameViewClosed();
-        }
       }
 
       private void HandleQuitConfirmed() {
@@ -281,8 +249,6 @@ namespace Cozmo {
         _HowToPlayButtonInstance = newButton.GetComponent<HowToPlayButton>();
 
         _HowToPlayButtonInstance.Initialize(howToPlayContentsPrefab);
-        _HowToPlayButtonInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
-        _HowToPlayButtonInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
 
         AddWidget(_HowToPlayButtonInstance);
       }
@@ -296,20 +262,6 @@ namespace Cozmo {
       public void CloseHowToPlayView() {
         if (_HowToPlayButtonInstance != null) {
           _HowToPlayButtonInstance.CloseHowToPlayView();
-        }
-      }
-
-
-
-      private void HandleHowToPlayViewOpened() {
-        if (HowToPlayViewOpened != null) {
-          HowToPlayViewOpened();
-        }
-      }
-
-      private void HandleHowToPlayViewClosed() {
-        if (HowToPlayViewClosed != null) {
-          HowToPlayViewClosed();
         }
       }
 

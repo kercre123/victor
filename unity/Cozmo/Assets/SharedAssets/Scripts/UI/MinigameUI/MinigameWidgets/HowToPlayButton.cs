@@ -7,10 +7,6 @@ using Cozmo.UI;
 namespace Cozmo {
   namespace MinigameWidgets {
     public class HowToPlayButton : MonoBehaviour, IMinigameWidget {
-      public delegate void HowToPlayButtonHandler();
-
-      public event HowToPlayButtonHandler HowToPlayViewOpened;
-      public event HowToPlayButtonHandler HowToPlayViewClosed;
 
       [SerializeField]
       private AnkiButton _HowToPlayButtonInstance;
@@ -31,12 +27,6 @@ namespace Cozmo {
       public void DestroyWidgetImmediately() {
         _HowToPlayButtonInstance.onClick.RemoveAllListeners();
         Destroy(gameObject);
-      }
-
-      public void EnableInteractivity() {
-      }
-
-      public void DisableInteractivity() {
       }
 
       // TODO: Don't hardcode this
@@ -64,23 +54,12 @@ namespace Cozmo {
       public void OpenHowToPlayView() {
         _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
         _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
-        _HowToPlayViewInstance.ViewCloseAnimationFinished += HandleHowToPlayViewClosed;
-
-        if (HowToPlayViewOpened != null) {
-          HowToPlayViewOpened();
-        }
       }
 
       public void CloseHowToPlayView() {
         if (_HowToPlayViewInstance != null) {
           _HowToPlayViewInstance.CloseView();
           _HowToPlayViewInstance = null;
-        }
-      }
-
-      private void HandleHowToPlayViewClosed() {
-        if (HowToPlayViewClosed != null) {
-          HowToPlayViewClosed();
         }
       }
     }

@@ -70,13 +70,6 @@ namespace Cozmo {
         return close;
       }
 
-      public void EnableInteractivity() {
-      }
-
-      public void DisableInteractivity() {
-        
-      }
-
       #endregion
     }
   }
