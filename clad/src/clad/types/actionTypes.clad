@@ -8,7 +8,7 @@
 namespace Anki {
 namespace Cozmo {
 
-enum uint_32 ActionConstants {
+enum no_cpp_class uint_32 ActionConstants {
   INVALID_TAG = 0
 }
 
