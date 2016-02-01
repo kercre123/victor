@@ -11,6 +11,7 @@ static const uint32_t PROP_WHITELIST[] = {
 #ifdef __BRYON_ROBOT
   0x000000E7,
   0x0000010B,
+  0x000001EE,
   0x80000030, // 
 #else
 #endif

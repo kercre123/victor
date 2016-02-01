@@ -1,5 +1,5 @@
 /**
- * File: behaviorBlockExploration.cpp
+ * File: behaviorGatherBlocks.cpp
  *
  * Author: Trevor Dasch
  * Created: 1/27/16
@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorBlockExploration.h"
+#include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
@@ -38,11 +38,11 @@ namespace Anki {
     
     using namespace ExternalInterface;
     
-    BehaviorBlockExploration::BehaviorBlockExploration(Robot& robot, const Json::Value& config)
+    BehaviorGatherBlocks::BehaviorGatherBlocks(Robot& robot, const Json::Value& config)
     : IBehavior(robot, config)
     , _moveAreaCenter(robot.GetPose())
     {
-      SetDefaultName("BlockExploration");
+      SetDefaultName("GatherBlocks");
       
       SubscribeToTags({{
         EngineToGameTag::RobotObservedObject,
@@ -52,13 +52,13 @@ namespace Anki {
       
       if (GetEmotionScorerCount() == 0)
       {
-        // Boredom and Bravery -> BlockExploration
+        // Boredom and Bravery -> GatherBlocks
         AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
         AddEmotionScorer(EmotionScorer(EmotionType::Brave,  Anki::Util::GraphEvaluator2d({{-1.0f, 0.05f}, {0.0f, 0.7f}, {1.0f, 1.0f}}), false));
       }
     }
     
-    BehaviorBlockExploration::~BehaviorBlockExploration()
+    BehaviorGatherBlocks::~BehaviorGatherBlocks()
     {
       /* Necessary? (We have no robot available in the destructor!)
        if (_currentState != State::Inactive)
@@ -68,7 +68,7 @@ namespace Anki {
        */
     }
     
-    bool BehaviorBlockExploration::UnknownBlocksExist(const Robot& robot) const {
+    bool BehaviorGatherBlocks::UnknownBlocksExist(const Robot& robot) const {
       static const std::set<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
       for(auto family : familyList) {
         //Reset the list of unkown objects
@@ -87,7 +87,7 @@ namespace Anki {
       return false;
     }
     
-    bool BehaviorBlockExploration::IsRunnable(const Robot& robot, double currentTime_sec) const
+    bool BehaviorGatherBlocks::IsRunnable(const Robot& robot, double currentTime_sec) const
     {
       //check for unknown objects
       
@@ -96,7 +96,7 @@ namespace Anki {
       {
         case State::Inactive:
         {
-          if ((_lastBlockExplorationTime == 0.f) || (_lastBlockExplorationTime + kBlockExplorationCooldownDuration < currentTime_sec))
+          if ((_lastGatherBlocksTime == 0.f) || (_lastGatherBlocksTime + kGatherBlocksCooldownDuration < currentTime_sec))
           {
             return UnknownBlocksExist(robot);
           }
@@ -115,14 +115,14 @@ namespace Anki {
         }
         default:
         {
-          PRINT_NAMED_ERROR("BehaviorBlockExploration.IsRunnable.UnknownState",
+          PRINT_NAMED_ERROR("BehaviorGatherBlocks.IsRunnable.UnknownState",
                             "Reached unknown state %d.", _currentState);
         }
       }
       return false;
     }
     
-    void BehaviorBlockExploration::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+    void BehaviorGatherBlocks::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
     {
       switch(event.GetData().GetTag())
       {
@@ -139,14 +139,14 @@ namespace Anki {
           break;
           
         default:
-          PRINT_NAMED_ERROR("BehaviorBlockExploration.HandleWhileRunning.InvalidTag",
+          PRINT_NAMED_ERROR("BehaviorGatherBlocks.HandleWhileRunning.InvalidTag",
                             "Received event with unhandled tag %hhu.",
                             event.GetData().GetTag());
           break;
       }
     }
     
-    Result BehaviorBlockExploration::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+    Result BehaviorGatherBlocks::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
     {
       // Update explorable area center to current robot pose
       ResetSafeRegion(robot);
@@ -171,7 +171,7 @@ namespace Anki {
       return Result::RESULT_OK;
     }
     
-    IBehavior::Status BehaviorBlockExploration::UpdateInternal(Robot& robot, double currentTime_sec)
+    IBehavior::Status BehaviorGatherBlocks::UpdateInternal(Robot& robot, double currentTime_sec)
     {
 #if SAFE_ZONE_VIZ
       Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
@@ -182,7 +182,7 @@ namespace Anki {
         case State::Inactive:
         {
           // This is the last update before we stop running, so store off time
-          _lastBlockExplorationTime = currentTime_sec;
+          _lastGatherBlocksTime = currentTime_sec;
           
           // Reset our number of destinations for next time we run this behavior
           _numDestinationsLeft = kDestinationsToReach;
@@ -260,7 +260,7 @@ namespace Anki {
         }
         default:
         {
-          PRINT_NAMED_ERROR("BehaviorBlockExploration.Update.UnknownState",
+          PRINT_NAMED_ERROR("BehaviorGatherBlocks.Update.UnknownState",
                             "Reached unknown state %d.", _currentState);
         }
       }
@@ -272,7 +272,7 @@ namespace Anki {
       return Status::Complete;
     }
     
-    Result BehaviorBlockExploration::StartMoving(Robot& robot)
+    Result BehaviorGatherBlocks::StartMoving(Robot& robot)
     {
       // Check for a collision-free pose
       Pose3d destPose;
@@ -293,7 +293,7 @@ namespace Anki {
         }
         
         if (i == 1) {
-          PRINT_NAMED_WARNING("BehaviorBlockExploration.StartMoving.NoDestPoseFound", "attempts %d", MAX_NUM_CONSIDERED_DEST_POSES);
+          PRINT_NAMED_WARNING("BehaviorGatherBlocks.StartMoving.NoDestPoseFound", "attempts %d", MAX_NUM_CONSIDERED_DEST_POSES);
           
           // Try another destination
           _currentDestination = GetNextDestination(_currentDestination);
@@ -319,7 +319,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Pose3d BehaviorBlockExploration::GetDestinationPose(BehaviorBlockExploration::Destination destination)
+    Pose3d BehaviorGatherBlocks::GetDestinationPose(BehaviorGatherBlocks::Destination destination)
     {
       Pose3d destPose(_moveAreaCenter);
       
@@ -356,7 +356,7 @@ namespace Anki {
         default:
         {
           shouldRotate = false;
-          PRINT_NAMED_ERROR("BehaviorBlockExploration.GetDestinationPose.InvalidDestination",
+          PRINT_NAMED_ERROR("BehaviorGatherBlocks.GetDestinationPose.InvalidDestination",
                             "Reached invalid destination %d.", destination);
           break;
         }
@@ -380,20 +380,20 @@ namespace Anki {
       return destPose;
     }
     
-    Result BehaviorBlockExploration::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+    Result BehaviorGatherBlocks::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
     {
       ResetBehavior(robot, currentTime_sec);
       return Result::RESULT_OK;
     }
     
-    void BehaviorBlockExploration::StopInternal(Robot& robot, double currentTime_sec)
+    void BehaviorGatherBlocks::StopInternal(Robot& robot, double currentTime_sec)
     {
       ResetBehavior(robot, currentTime_sec);
     }
     
-    void BehaviorBlockExploration::ResetBehavior(Robot& robot, float currentTime_sec)
+    void BehaviorGatherBlocks::ResetBehavior(Robot& robot, float currentTime_sec)
     {
-      _lastBlockExplorationTime = currentTime_sec;
+      _lastGatherBlocksTime = currentTime_sec;
       _currentState = State::Inactive;
       robot.GetMoveComponent().StopAllMotors();
       ClearQueuedActions(robot);
@@ -402,7 +402,7 @@ namespace Anki {
       _selectedObjectID.SetToUnknown();
     }
     
-    void BehaviorBlockExploration::HandleObjectObserved(const EngineToGameEvent& event, Robot& robot)
+    void BehaviorGatherBlocks::HandleObjectObserved(const EngineToGameEvent& event, Robot& robot)
     {
       assert(IsRunning());
       
@@ -428,7 +428,7 @@ namespace Anki {
       }
     }
     
-    void BehaviorBlockExploration::UpdateSafeRegion(const Vec3f& objectPosition)
+    void BehaviorGatherBlocks::UpdateSafeRegion(const Vec3f& objectPosition)
     {
       Vec3f translationDiff = objectPosition - _moveAreaCenter.GetTranslation();
       // We're only going to care about the XY plane distance
@@ -452,7 +452,7 @@ namespace Anki {
       }
     }
     
-    void BehaviorBlockExploration::HandleCompletedAction(const EngineToGameEvent& event)
+    void BehaviorGatherBlocks::HandleCompletedAction(const EngineToGameEvent& event)
     {
       assert(IsRunning());
       
@@ -484,7 +484,7 @@ namespace Anki {
           }
           else
           {
-            PRINT_NAMED_WARNING("BehaviorBlockExploration.HandleCompletedAction", "Getting unexpected DriveAction completion messages");
+            PRINT_NAMED_WARNING("BehaviorGatherBlocks.HandleCompletedAction", "Getting unexpected DriveAction completion messages");
           }
           
           // If this was a successful drive action, move on to the next destination
@@ -509,9 +509,9 @@ namespace Anki {
       _actionsInProgress.erase(msg.idTag);
     }
     
-    BehaviorBlockExploration::Destination BehaviorBlockExploration::GetNextDestination(BehaviorBlockExploration::Destination current)
+    BehaviorGatherBlocks::Destination BehaviorGatherBlocks::GetNextDestination(BehaviorGatherBlocks::Destination current)
     {
-      static BehaviorBlockExploration::Destination previous = BehaviorBlockExploration::Destination::Center;
+      static BehaviorGatherBlocks::Destination previous = BehaviorGatherBlocks::Destination::Center;
       
       // If we've visited enough destinations, go back to center
       if (1 == _numDestinationsLeft)
@@ -539,7 +539,7 @@ namespace Anki {
       return *newDestIter;
     }
     
-    void BehaviorBlockExploration::HandleRobotPutDown(const EngineToGameEvent& event, Robot& robot)
+    void BehaviorGatherBlocks::HandleRobotPutDown(const EngineToGameEvent& event, Robot& robot)
     {
       const RobotPutDown& msg = event.GetData().Get_RobotPutDown();
       if (robot.GetID() == msg.robotID)
@@ -548,13 +548,13 @@ namespace Anki {
       }
     }
     
-    void BehaviorBlockExploration::ResetSafeRegion(Robot& robot)
+    void BehaviorGatherBlocks::ResetSafeRegion(Robot& robot)
     {
       _moveAreaCenter = robot.GetPose();
       _safeRadius = kDefaultSafeRadius;
     }
     
-    void BehaviorBlockExploration::ClearQueuedActions(Robot& robot)
+    void BehaviorGatherBlocks::ClearQueuedActions(Robot& robot)
     {
       for (auto tag : _actionsInProgress)
       {

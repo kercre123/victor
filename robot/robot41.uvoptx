@@ -150,12 +150,7 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>msg</ItemText>
-        </Ww>
-        <Ww>
-          <count>1</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>g_dataToHead / 65536.0f</ItemText>
+          <ItemText>g_LedStatus</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

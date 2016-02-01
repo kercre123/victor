@@ -204,9 +204,9 @@ void Radio::init() {
   // Set all the cubes to white until something better comes along
   for (int slot = 0; slot < MAX_ACCESSORIES; slot++) {
     static const uint16_t reset_state[] = {
-      0x7FFF,
-      0x7FFF,
-      0x7FFF,
+      0x001F,
+      0x03E0,
+      0x7C00,
       0x7FFF
     };
     setPropState(slot, reset_state);
@@ -327,18 +327,16 @@ extern "C" void uesb_event_handler(void)
       AccessorySlot* acc = &accessories[currentAccessory];   
       acc->last_received = 0;
 
-      AcceleratorPacket ap;
-      memcpy(&acc, rx_payload.data, sizeof(acc));
+      AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
 
       SpineProtocol msg;
-      msg.opcode = PROP_DISCOVERED;
-      msg.GetPropState.x = ap.x;
-      msg.GetPropState.x = ap.y;
-      msg.GetPropState.x = ap.z;
-      msg.GetPropState.shockCount = ap.shockCount;
+      msg.opcode = GET_PROP_STATE;
+      msg.GetPropState.x = ap->x;
+      msg.GetPropState.x = ap->y;
+      msg.GetPropState.x = ap->z;
+      msg.GetPropState.shockCount = ap->shockCount;
       Spine::enqueue(msg);
 
-   
       send_dummy_byte();
       break ;
     }

@@ -1,5 +1,5 @@
 /**
- * File: behaviorBlockExploration.h
+ * File: behaviorGatherBlocks.h
  *
  * Author: Trevor Dasch
  * Created: 1/27/16
@@ -11,8 +11,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorBlockExploration_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorBlockExploration_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorGatherBlocks_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorGatherBlocks_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/objectIDs.h"
@@ -28,21 +28,21 @@ namespace Anki {
     template<typename TYPE> class AnkiEvent;
     namespace ExternalInterface { class MessageEngineToGame; }
     
-    class BehaviorBlockExploration : public IBehavior
+    class BehaviorGatherBlocks : public IBehavior
     {
     protected:
       
       // Enforce creation through BehaviorFactory
       friend class BehaviorFactory;
-      BehaviorBlockExploration(Robot& robot, const Json::Value& config);
+      BehaviorGatherBlocks(Robot& robot, const Json::Value& config);
       
     public:
       
-      virtual ~BehaviorBlockExploration() override;
+      virtual ~BehaviorGatherBlocks() override;
       
       virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
       
-      void SetBlockExplorationHeadAngle(float angle_rads) { _lookAroundHeadAngle_rads = angle_rads; }
+      void SetGatherBlocksHeadAngle(float angle_rads) { _lookAroundHeadAngle_rads = angle_rads; }
       
     protected:
       
@@ -77,7 +77,7 @@ namespace Anki {
       };
       
       // How long to wait before we trying to look around again (among other factors)
-      constexpr static f32 kBlockExplorationCooldownDuration = 7;
+      constexpr static f32 kGatherBlocksCooldownDuration = 7;
       // How fast to rotate when looking around
       constexpr static f32 kDegreesRotatePerSec = 25;
 
@@ -90,7 +90,7 @@ namespace Anki {
       
       State _currentState = State::Inactive;
       Destination _currentDestination = Destination::North;
-      f32 _lastBlockExplorationTime = 0;
+      f32 _lastGatherBlocksTime = 0;
       Pose3d _moveAreaCenter;
       f32 _safeRadius = kDefaultSafeRadius;
       u32 _currentDriveActionID = 0;
@@ -123,4 +123,4 @@ namespace Anki {
   } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorBlockExploration_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorGatherBlocks_H__
