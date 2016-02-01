@@ -102,7 +102,7 @@ static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t
     return false;
   }
   else if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > /* +1 for tag, easier to assume it's there than check. */
-           (UnreliableTransport_MAX_BYTES_PER_PACKET - connection->pendingReliableBytes))
+           (ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - connection->pendingReliableBytes))
   {
     printf("WARN: No room for pending reliable message data. %d bytes, %d messages queued\r\n", connection->pendingReliableBytes, connection->numPendingReliableMessages);
     return false;
