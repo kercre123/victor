@@ -249,6 +249,7 @@ namespace Anki {
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
+        printf("    Respond 'no' to game request:  n\n");
         printf("                      Print help:  ?\n");
         printf("\n");
       }
@@ -1491,6 +1492,12 @@ namespace Anki {
                   // Send DemoState Default
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::Default)));
                 }
+                break;
+              }
+
+              case (s32)'N':
+              {
+                SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DenyGameStart()));
                 break;
               }
               
