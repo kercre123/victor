@@ -40,10 +40,12 @@ void clientUpdate(void)
   }
 }
 
+ReliableConnection g_conn;   // So we can check canaries when we crash
 static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   struct espconn* src = (struct espconn*)arg;
-  
+  static esp_udp s_dest;
+
   sendHoldoff = false;
   
   if (unlikely(!clientConnected()))
@@ -60,8 +62,8 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 #ifdef DEBUG_CLIENT
     printf("Initalizing new connection from  %d.%d.%d.%d:%d\r\n", remote->remote_ip[0], remote->remote_ip[1], remote->remote_ip[2], remote->remote_ip[3], remote->remote_port);
 #endif    
-    esp_udp* dest    = os_zalloc(sizeof(esp_udp));
-    clientConnection = os_zalloc(sizeof(ReliableConnection));
+    esp_udp* dest    = &s_dest;
+    clientConnection = &g_conn;
     if (unlikely(clientConnection == NULL || dest == NULL))
     {
       os_printf("DIE! Couldn't allocate memory for reliable connection!\r\n");
@@ -89,17 +91,20 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 sint8 clientInit()
 {
   int8 err;
-
+  static struct espconn s_socket;
+  static esp_udp s_udp;
+  
   printf("clientInit\r\n");
 
   clientConnection = NULL;
   clientConnectionId = 0;
   sendHoldoff = false;
 
-  socket = (struct espconn *)os_zalloc(sizeof(struct espconn));
+
+  socket = &s_socket;
   os_memset( socket, 0, sizeof( struct espconn ) );
   socket->type = ESPCONN_UDP;
-  socket->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
+  socket->proto.udp = &s_udp;
   os_memset(socket->proto.udp, 0, sizeof(esp_udp));
   socket->proto.udp->local_port = 5551;
 
@@ -213,8 +218,6 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   else
   {
     backgroundTaskOnDisconnect();
-    os_free(clientConnection->dest);
-    os_free(clientConnection);
     clientConnection = NULL;
     clientConnectionId = 0;
   }

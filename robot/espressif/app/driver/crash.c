@@ -6,6 +6,9 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "driver/uart.h"
+#include "transport/reliableTransport.h"
+
+ReliableConnection g_conn;   // So we can check canaries when we crash
 
 void c_puts(char* s)
 {
@@ -100,13 +103,10 @@ void crash_dump_hex(int* p, int cnt) {
 	for (i = 0; i < cnt; i++) {
 		if (i % NUM == 0) {
 			print8x((int )(p + i));
-			c_puts(" ");
+			c_puts("|");
 		}
-		c_puts(" ");
 		print8x(p[i]);
-		if ((i + 1) % NUM == 0) {
-			c_puts("\n");
-		}
+    c_puts((i + 1) % NUM ? " " : "\n");
 	}
 }
 
@@ -167,7 +167,13 @@ extern void crash_dump(int* sp) {
 	c_puts("), sp ");
 	print8x((int)sp);
 	c_puts("\n");
-
+  
+  c_puts("RT canaries: ");
+  print4x(g_conn.canary1);
+  print4x(g_conn.canary2);
+  print4x(g_conn.canary3);
+	c_puts("\n");
+  
   if (usestack) {
 		int excvaddr = get_excvaddr();
 		int depc = get_depc();
