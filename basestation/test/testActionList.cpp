@@ -23,12 +23,14 @@
 
 using namespace Anki::Cozmo;
 
+int numActionsDestroyed = 0;
+
 // Simple action that can be set to complete
 class TestAction : public IAction
 {
   public:
     TestAction(std::string name, RobotActionType type);
-    virtual ~TestAction() { }
+    virtual ~TestAction() { numActionsDestroyed++; }
     virtual const std::string& GetName() const override { return _name; }
     virtual RobotActionType GetType() const override { return _type; }
     Robot* GetRobot() { return _robot; }
@@ -64,7 +66,7 @@ class TestInterruptAction : public IAction
 {
 public:
   TestInterruptAction(std::string name, RobotActionType type);
-  virtual ~TestInterruptAction() { };
+  virtual ~TestInterruptAction() { numActionsDestroyed++; }
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
   Robot* GetRobot() { return _robot; }
@@ -96,7 +98,7 @@ class TestCompoundActionSequential : public CompoundActionSequential
 {
 public:
   TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions);
-  virtual ~TestCompoundActionSequential() { };
+  virtual ~TestCompoundActionSequential() { numActionsDestroyed++; }
   virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
 };
 
@@ -106,12 +108,13 @@ TestCompoundActionSequential::TestCompoundActionSequential(std::initializer_list
   
 }
 
+
 // Simple parallel action with a function to expose its internal list of actions
 class TestCompoundActionParallel : public CompoundActionParallel
 {
 public:
   TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions);
-  virtual ~TestCompoundActionParallel() { };
+  virtual ~TestCompoundActionParallel() { numActionsDestroyed++; }
   virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
 };
 
@@ -126,7 +129,7 @@ class TestActionWithinAction : public IAction
 {
 public:
   TestActionWithinAction(std::string name, RobotActionType type);
-  virtual ~TestActionWithinAction() { };
+  virtual ~TestActionWithinAction() { numActionsDestroyed++; }
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
   Robot* GetRobot() { return _robot; }
@@ -178,6 +181,7 @@ RobotInterface::MessageHandlerStub  msgHandler;
 // Tests queueing a single and letting it complete normally
 TEST(QueueAction, SingleActionFinishes)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction = new TestAction("Test", RobotActionType::WAIT);
   testAction->_complete = true;
@@ -194,11 +198,13 @@ TEST(QueueAction, SingleActionFinishes)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 1);
 }
 
 // Tets queueing a single action and cancelling it works
 TEST(QueueAction, SingleActionCancel)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction = new TestAction("Test", RobotActionType::WAIT);
   testAction->_complete = true;
@@ -215,11 +221,13 @@ TEST(QueueAction, SingleActionCancel)
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
+  EXPECT_EQ(numActionsDestroyed, 1);
 }
 
 // Tests queueing three actions and letting them complete normally
 TEST(QueueAction, ThreeActionsFinish)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   testAction1->_complete = true;
@@ -256,11 +264,13 @@ TEST(QueueAction, ThreeActionsFinish)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing three actions, cancelling the second and letting the rest complete normally
 TEST(QueueAction, ThreeActionsCancelSecond)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   testAction1->_complete = true;
@@ -292,11 +302,13 @@ TEST(QueueAction, ThreeActionsCancelSecond)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing three actions and cancelling all of them
 TEST(QueueAction, ThreeActionsCancelAll)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -315,12 +327,14 @@ TEST(QueueAction, ThreeActionsCancelAll)
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing two actions where the first one in interruptable so queueing the second action
 // interrupts the first. The second action completes and the interrupted action resumes and completes.
 TEST(QueueAction, InterruptAction)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction = new TestAction("Test1", RobotActionType::WAIT);
   TestInterruptAction* testInterruptAction = new TestInterruptAction("Test2", RobotActionType::TURN_IN_PLACE);
@@ -352,18 +366,20 @@ TEST(QueueAction, InterruptAction)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 2);
 }
 
 // Tests queueing a sequential compound action made of two actions and both actions complete at the same time
 TEST(QueueAction, CompoundActionSequentialSingle)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   r.SetLiftAngle(0);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
   testAction2->_complete = true;
-  CompoundActionSequential* compoundAction = new CompoundActionSequential({testAction1, testAction2});
+  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({testAction1, testAction2});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -378,16 +394,18 @@ TEST(QueueAction, CompoundActionSequentialSingle)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing a sequential compound action made of two actions and they complete at different times
 TEST(QueueAction, CompoundActionMultipleUpdates)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
-  CompoundActionSequential* compoundAction = new CompoundActionSequential({testAction1, testAction2});
+  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({testAction1, testAction2});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -408,17 +426,19 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing a sequential compound action that initially has two actions and a third action is added to
 // the compound action after an update
 TEST(QueueAction, CompoundActionAddAfterQueued)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
-  CompoundActionSequential* compoundAction = new CompoundActionSequential({testAction1, testAction2});
+  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({testAction1, testAction2});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -456,11 +476,13 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 4);
 }
 
 // Tests queueing an empty sequential compound action and adding three additional actions to it at various times
 TEST(QueueAction, CompoundActionAddAfterQueued2)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -490,11 +512,21 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
   EXPECT_EQ(testAction2->GetRobot(), &r);
   EXPECT_EQ(testAction3->GetRobot(), &r);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
+  
+  testAction1->_complete = true;
+  testAction2->_complete = true;
+  testAction3->_complete = true;
+  
+  r.GetActionList().Update();
+  r.GetActionList().Update();
+  
+  EXPECT_EQ(numActionsDestroyed, 4);
 }
 
 // Tests queueing a parallel compound action with two actions that complete immediately
 TEST(QueueAction, ParallelActionImmediateComplete)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -514,11 +546,13 @@ TEST(QueueAction, ParallelActionImmediateComplete)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing a parallel compound action with two actions where one completes before the other
 TEST(QueueAction, ParallelActionOneCompleteBefore)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -544,11 +578,13 @@ TEST(QueueAction, ParallelActionOneCompleteBefore)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing actions at the NOW position
 TEST(QueueAction, QueueNow)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -568,11 +604,13 @@ TEST(QueueAction, QueueNow)
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(numActionsDestroyed, 2);
 }
 
 // Tests queueing actions at the NEXT position
 TEST(QueueAction, QueueNext)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -606,11 +644,13 @@ TEST(QueueAction, QueueNext)
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(numActionsDestroyed, 2);
 }
 
 // Tests queueing actions at the AT_END position
 TEST(QueueAction, QueueAtEnd)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -644,11 +684,13 @@ TEST(QueueAction, QueueAtEnd)
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(numActionsDestroyed, 2);
 }
 
 //Tests queueing actions at the NOW_AND_CLEAR_REMAINING position
 TEST(QueueAction, QueueNowAndClearRemaining)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -674,11 +716,13 @@ TEST(QueueAction, QueueNowAndClearRemaining)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing an action that has sub-actions (ie. action within an action)
 TEST(QueueAction, QueueActionWithinAction)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestActionWithinAction* testActionWithinAction = new TestActionWithinAction("TestActionWithinAction", RobotActionType::UNKNOWN);
   
@@ -703,10 +747,12 @@ TEST(QueueAction, QueueActionWithinAction)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("TestActionWithinAction"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 4); //TestActionWithinAction has a compound action with 2 actions for a total of 4 actions
 }
 
 TEST(QueueAction, ActionFailureRetry)
 {
+  numActionsDestroyed = 0;
   Robot r(0, &msgHandler, nullptr, dataPlatform);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -742,4 +788,5 @@ TEST(QueueAction, ActionFailureRetry)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
