@@ -6,8 +6,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#define USE_POSE_FOR_ID 1
-
 
 namespace Anki {
 namespace Cozmo {
@@ -104,99 +102,98 @@ namespace Cozmo {
     
     KnownFace* knownFace = nullptr;
 
-#   if USE_POSE_FOR_ID
-    bool foundMatch = false;
-
-    // Look through known faces and compare pose and image rectangles:
-    f32 IOU_threshold = 0.5f;
-    for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); ++knownFaceIter)
+    if(false == Vision::FaceTracker::IsRecognitionSupported())
     {
+      // Can't get an ID from face recognition, so use pose instead
+      bool foundMatch = false;
       
-      // Note we're using really loose thresholds for checking pose sameness
-      // since our ability to accurately localize face's 3D pose is limited.
-      Vec3f Tdiff;
-      Radians angleDiff;
-      
-      const auto & knownRect = knownFaceIter->second.face.GetRect();
-      const f32 currentIOU = face.GetRect().ComputeOverlapScore(knownRect);
-      if(currentIOU > IOU_threshold)
+      // Look through known faces and compare pose and image rectangles:
+      f32 IOU_threshold = 0.5f;
+      for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); ++knownFaceIter)
       {
-        if(foundMatch) {
-          // If we had already found a match, delete the last one, because this
-          // new face matches multiple existing faces
-          assert(nullptr != knownFace);
-          RemoveFaceByID(knownFace->face.GetID());
-        }
         
-        IOU_threshold = currentIOU;
-        foundMatch = true;
-        knownFace = &knownFaceIter->second;
-      }
-      else
-      {
-        auto posDiffVec = knownFaceIter->second.face.GetHeadPose().GetTranslation() - face.GetHeadPose().GetTranslation();
-        float posDiffSq = posDiffVec.LengthSq();
-        if(posDiffSq <= headCenterPointThreshold * headCenterPointThreshold) {
+        // Note we're using really loose thresholds for checking pose sameness
+        // since our ability to accurately localize face's 3D pose is limited.
+        Vec3f Tdiff;
+        Radians angleDiff;
+        
+        const auto & knownRect = knownFaceIter->second.face.GetRect();
+        const f32 currentIOU = face.GetRect().ComputeOverlapScore(knownRect);
+        if(currentIOU > IOU_threshold)
+        {
           if(foundMatch) {
             // If we had already found a match, delete the last one, because this
             // new face matches multiple existing faces
             assert(nullptr != knownFace);
             RemoveFaceByID(knownFace->face.GetID());
           }
-        
-          knownFace = &knownFaceIter->second;
+          
+          IOU_threshold = currentIOU;
           foundMatch = true;
+          knownFace = &knownFaceIter->second;
         }
-      }
-    } // for each known face
-    
-    if(foundMatch) {
-      const Vision::TrackedFace::ID_t matchedID = knownFace->face.GetID();
+        else
+        {
+          auto posDiffVec = knownFaceIter->second.face.GetHeadPose().GetTranslation() - face.GetHeadPose().GetTranslation();
+          float posDiffSq = posDiffVec.LengthSq();
+          if(posDiffSq <= headCenterPointThreshold * headCenterPointThreshold) {
+            if(foundMatch) {
+              // If we had already found a match, delete the last one, because this
+              // new face matches multiple existing faces
+              assert(nullptr != knownFace);
+              RemoveFaceByID(knownFace->face.GetID());
+            }
+            
+            knownFace = &knownFaceIter->second;
+            foundMatch = true;
+          }
+        }
+      } // for each known face
       
-      // Verbose! Useful for debugging
-      //PRINT_NAMED_DEBUG("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
-      //                  "Updating face with ID=%lld from t=%d to %d, observed %d times",
-      //                  matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp(),
-      //                  face.GetNumTimesObserved());
-      
-      knownFace->face = face;
-      knownFace->face.SetID(matchedID);
-    }
-    
-    // Didn't find a match based on pose, so add a new face with a new ID:
-    else {
-      PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
-                       "Added new face with ID=%lld at t=%d.", _idCtr, face.GetTimeStamp());
-      face.SetID(_idCtr); // Use our own ID here for the new face
-      auto insertResult = _knownFaces.insert({_idCtr, face});
-      if(insertResult.second == false) {
-        PRINT_NAMED_ERROR("FaceWorld.UpdateFace.ExistingID",
-                          "Did not find a match by pose, but ID %lld already in use.",
-                          _idCtr);
-        return RESULT_FAIL;
+      if(foundMatch) {
+        const Vision::TrackedFace::ID_t matchedID = knownFace->face.GetID();
+        
+        // Verbose! Useful for debugging
+        //PRINT_NAMED_DEBUG("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
+        //                  "Updating face with ID=%lld from t=%d to %d, observed %d times",
+        //                  matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp(),
+        //                  face.GetNumTimesObserved());
+        
+        knownFace->face = face;
+        knownFace->face.SetID(matchedID);
       }
+      
+      // Didn't find a match based on pose, so add a new face with a new ID:
+      else {
+        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
+                         "Added new face with ID=%lld at t=%d.", _idCtr, face.GetTimeStamp());
+        face.SetID(_idCtr); // Use our own ID here for the new face
+        auto insertResult = _knownFaces.insert({_idCtr, face});
+        if(insertResult.second == false) {
+          PRINT_NAMED_ERROR("FaceWorld.UpdateFace.ExistingID",
+                            "Did not find a match by pose, but ID %lld already in use.",
+                            _idCtr);
+          return RESULT_FAIL;
+        }
+        knownFace = &insertResult.first->second;
+        
+        ++_idCtr;
+      }
+      
+    } else {
+      // Use face recognition to get ID
+      auto insertResult = _knownFaces.insert({face.GetID(), face});
       knownFace = &insertResult.first->second;
       
-      ++_idCtr;
-    }
-      
-#   else // USE_POSE_FOR_ID==0
-      
-    auto insertResult = _knownFaces.insert({face.GetID(), face});
-    knownFace = &insertResult.first->second;
-    
-    if(insertResult.second) {
-      PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
-                       "Added new face with ID=%lld at t=%d.",
-                       face.GetID(), face.GetTimeStamp());
-    } else {
-      // Update the existing face:
-      insertResult.first->second.face = face;
-    }
-    
-    
-  
-#   endif // if USE_POSE_FOR_ID
+      if(insertResult.second) {
+        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
+                         "Added new face with ID=%lld at t=%d.",
+                         face.GetID(), face.GetTimeStamp());
+      } else {
+        // Update the existing face:
+        insertResult.first->second.face = face;
+      }
+    } // if(false == Vision::FaceTracker::IsRecognitionSupported()
     
     // By now, we should have either created a new face or be pointing at an
     // existing one!
