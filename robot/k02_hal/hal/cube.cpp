@@ -119,9 +119,9 @@ namespace Anki
         if (blockID >= MAX_CUBES) {
           return RESULT_FAIL;
         }
-
+        
         memcpy(g_LedStatus[blockID], colors, sizeof(g_LedStatus[blockID]));
-
+        
         return RESULT_OK;
       }
     }

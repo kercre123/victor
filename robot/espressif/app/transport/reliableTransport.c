@@ -89,14 +89,20 @@ void ICACHE_FLASH_ATTR ReliableConnection_Init(ReliableConnection* self, void* d
 }
 
 /// Add a reliable message to the pending reliable message queue
-static bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const uint8_t tag)
+static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const uint8_t tag)
 {
-  if (bufferSize > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)
+  if (unlikely(connection->canary1 || connection->canary2 || connection->canary3))
+  {
+    printf("ERROR: ReliableConnection structure is corrupt! %x %x %x\r\n",
+           connection->canary1, connection->canary2, connection->canary3);
+    return false;
+  }
+  if (unlikely(bufferSize+1 > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)) // + 1 for tag byte. Easier to assume it's there than check
   {
     printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\r\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
     return false;
   }
-  else if (connection->numPendingReliableMessages >= ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH)
+  else if (unlikely(connection->numPendingReliableMessages >= ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH))
   {
     printf("WARN: No slots left for pending reliable messages\r\n");
     return false;
@@ -148,10 +154,15 @@ static bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, Relia
  * @param newestFirst If true (default), the pending message queue will be fifo, otherwise lifo
  * @return The number of messages which were appended
  */
-uint8_t AppendPendingMessages(ReliableConnection* connection, bool newestFirst)
+uint8_t ICACHE_FLASH_ATTR AppendPendingMessages(ReliableConnection* connection, bool newestFirst)
 {
   int16_t i; // Loop variable
-  if (connection->numPendingReliableMessages == 0) // Nothing to append
+  if (unlikely(connection->canary1 || connection->canary2 || connection->canary3))
+  {
+    printf("ERROR: ReliableConnection structure is corrupt! %x %x %x\r\n", connection->canary1, connection->canary2, connection->canary3);
+    return 0;
+  }
+  else if (connection->numPendingReliableMessages == 0) // Nothing to append
   {
     connection->latestUnackedMessageSentTime = GetMicroCounter();
     return 0;
@@ -207,7 +218,7 @@ uint8_t AppendPendingMessages(ReliableConnection* connection, bool newestFirst)
 }
 
 /// Send the contents of the TxBuf if possible
-bool SendTxBuf(ReliableConnection* connection)
+bool ICACHE_FLASH_ATTR SendTxBuf(ReliableConnection* connection)
 {
   AnkiReliablePacketHeader* header = (AnkiReliablePacketHeader*)connection->txBuf;
   // Last thing we've received is one previous to the next thing we're expecting by definition
@@ -228,7 +239,7 @@ bool SendTxBuf(ReliableConnection* connection)
 }
 
 /// Trigger sending reliable messages
-bool SendPendingMessages(ReliableConnection* connection, bool newestFirst)
+bool ICACHE_FLASH_ATTR SendPendingMessages(ReliableConnection* connection, bool newestFirst)
 {
   AppendPendingMessages(connection, newestFirst);
   if (haveDataToSend(connection))
@@ -241,7 +252,7 @@ bool SendPendingMessages(ReliableConnection* connection, bool newestFirst)
   }
 }
 
-bool ReliableTransport_Connect(ReliableConnection* connection)
+bool ICACHE_FLASH_ATTR ReliableTransport_Connect(ReliableConnection* connection)
 {
   if (QueueMessage(NULL, 0, connection, eRMT_ConnectionRequest, GLOBAL_INVALID_TAG) == false)
   {
@@ -254,7 +265,7 @@ bool ReliableTransport_Connect(ReliableConnection* connection)
   }
 }
 
-bool ReliableTransport_FinishConnection(ReliableConnection* connection)
+bool ICACHE_FLASH_ATTR ReliableTransport_FinishConnection(ReliableConnection* connection)
 {
   if (QueueMessage(NULL, 0, connection, eRMT_ConnectionResponse, GLOBAL_INVALID_TAG) == false)
   {
@@ -267,7 +278,7 @@ bool ReliableTransport_FinishConnection(ReliableConnection* connection)
   }
 }
 
-bool ReliableTransport_Disconnect(ReliableConnection* connection)
+bool ICACHE_FLASH_ATTR ReliableTransport_Disconnect(ReliableConnection* connection)
 {
   if (QueueMessage(NULL, 0, connection, eRMT_DisconnectRequest, GLOBAL_INVALID_TAG) == false)
   {
@@ -401,9 +412,9 @@ void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliable
   }
 }
 
-bool ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const bool hot, const uint8_t tag)
+bool ICACHE_FLASH_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const bool hot, const uint8_t tag)
 {
-  if (bufferSize > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)
+  if (bufferSize+1 > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE) // + 1 for tag byte. Easier to assume it's there than check
   {
     //printf("ERROR: ReliableTransport send message, %d is above MTU %d\r\n", bufferSize, (int)ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE);
     return false;
@@ -431,7 +442,7 @@ bool ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferS
   {
     const uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
     if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > // + 1 for tag byte. Easier to assume it's there than check
-        (ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - connection->txQueued))
+        (UnreliableTransport_MAX_BYTES_PER_PACKET - connection->txQueued))
     { // No room in the current packet
       // So finish this packet and send it out
       AppendPendingMessages(connection, false);
