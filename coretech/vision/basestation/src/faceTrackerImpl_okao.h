@@ -1132,18 +1132,23 @@ namespace Vision {
   {
     std::vector<u8> serializedAlbum;
     
-    UINT32 albumSize = 0;
-    INT32 okaoResult = OKAO_FR_GetSerializedAlbumSize(_okaoFaceAlbum, &albumSize);
-    if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.GetSizeFail",
-                        "OKAO Result=%d", okaoResult);
-    } else {
-      serializedAlbum.resize(albumSize);
-      okaoResult = OKAO_FR_SerializeAlbum(_okaoFaceAlbum, &(serializedAlbum[0]), albumSize);
+    if(_isInitialized)
+    {
+      UINT32 albumSize = 0;
+      INT32 okaoResult = OKAO_FR_GetSerializedAlbumSize(_okaoFaceAlbum, &albumSize);
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.SerializeFail",
+        PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.GetSizeFail",
                           "OKAO Result=%d", okaoResult);
+      } else {
+        serializedAlbum.resize(albumSize);
+        okaoResult = OKAO_FR_SerializeAlbum(_okaoFaceAlbum, &(serializedAlbum[0]), albumSize);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.SerializeFail",
+                            "OKAO Result=%d", okaoResult);
+        }
       }
+    } else {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.NotInitialized", "");
     }
     
     return serializedAlbum;
@@ -1152,6 +1157,16 @@ namespace Vision {
   
   Result FaceTracker::Impl::SetSerializedAlbum(const std::vector<u8>&serializedAlbum)
   {
+    // Initialize on first use
+    if(!_isInitialized) {
+      Result initResult = Init();
+      
+      if(!_isInitialized || initResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.SetSerializedAlbum.InitFailed", "");
+        return RESULT_FAIL;
+      }
+    }
+    
     FR_ERROR error;
     HALBUM restoredAlbum = OKAO_FR_RestoreAlbum(_okaoCommonHandle, const_cast<UINT8*>(&(serializedAlbum[0])), (UINT32)serializedAlbum.size(), &error);
     if(NULL == restoredAlbum) {

@@ -74,6 +74,9 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     dispImg.DrawPoint(face.GetRightEyeCenter(), drawColor, 2);
     
     std::string label = face.GetName();
+    if(label.empty()) {
+      label = std::to_string(face.GetID());
+    }
     if(face.IsBeingTracked()) {
       label += "*";
     }
@@ -242,9 +245,7 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
   const std::string dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "test/faceRecVideoTests/");
   
   // All-new tracker and face world for each person for this test
-  Vision::FaceTracker faceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                                               "/config/basestation/vision"),
-                                  Vision::FaceTracker::DetectionMode::Video);
+  Vision::FaceTracker* faceTracker = nullptr;
   robot.GetFaceWorld().ClearAllFaces();
   
   const s32 NumBlankFramesBetweenPeople = 15;
@@ -262,7 +263,7 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
     bool isForTraining;
   };
   
-  const std::vector<TestDirData> testDirData = {
+  std::vector<TestDirData> testDirData = {
     {.dirName = "andrew",       .isForTraining = true},
     {.dirName = "kevin",        .isForTraining = true},
     {.dirName = "peter",        .isForTraining = true},
@@ -270,75 +271,101 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
     {.dirName = "kevin+peter",  .isForTraining = false},
   };
   
-  for(auto & test : testDirData)
+  for(s32 iReload=0; iReload<2; ++iReload)
   {
-    const char* testDir = test.dirName;
-    bool isNameSet = !test.isForTraining;
+    faceTracker = new Vision::FaceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                                                       "/config/basestation/vision"),
+                                          Vision::FaceTracker::DetectionMode::Video);
     
-    auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+testDir, true, imageFileExtensions);
-    ASSERT_FALSE(testFiles.empty());
-    
-    struct {
-      s32 totalFrames = 0;
-      s32 facesDetected = 0;
-      s32 facesRecognized = 0;
-      s32 numFaceIDs = 0;
-    } stats;
-    
-    for(auto & testFile : testFiles)
-    {
-      Recognize(robot, img, faceTracker, testFile, "TestImage", true);
-      stats.totalFrames++;
+    if(iReload > 0) {
+      Result loadResult = faceTracker->LoadAlbum("testAlbum");
+      ASSERT_EQ(loadResult, RESULT_OK);
       
-      // Get the faces observed in the current image
-      auto observedFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
-      EXPECT_EQ(observedFaceIDs.size(), 1);
-      if(observedFaceIDs.empty()) {
-        // TODO: Remove this and fail if observedFaceIDs is empty
-        PRINT_NAMED_WARNING("FaceRecognition.SinglePersonVideoRecognitionAndTracking.NoTestFaceDetected",
-                            "File: %s", testFile.c_str());
-      } else {
-        stats.facesDetected++;
+      for(auto & test : testDirData)
+      {
+        test.isForTraining = false;
+      }
+    }
+    
+    for(auto & test : testDirData)
+    {
+      const char* testDir = test.dirName;
+      bool isNameSet = !test.isForTraining;
+      
+      auto testFiles = Util::FileUtils::FilesInDirectory(dataPath+testDir, true, imageFileExtensions);
+      ASSERT_FALSE(testFiles.empty());
+      
+      struct {
+        s32 totalFrames = 0;
+        s32 facesDetected = 0;
+        s32 facesRecognized = 0;
+        s32 numFaceIDs = 0;
+      } stats;
+      
+      for(auto & testFile : testFiles)
+      {
+        Recognize(robot, img, *faceTracker, testFile, "TestImage", true);
+        stats.totalFrames++;
         
-        const Vision::TrackedFace::ID_t observedID = observedFaceIDs.begin()->second;
-        
-        if(observedFaceIDs.size() > 1) {
-          PRINT_NAMED_WARNING("FaceRecogntion.SinglePersonVideoRecognitionAndTracking.MultipleFacesDetected",
-                              "Detected %lu faces instead of one. Using first.", observedFaceIDs.size());
-        }
-        
-        if(observedID != Vision::TrackedFace::UnknownFace)
-        {
-          stats.facesRecognized++;
-          allIDs.insert(observedID);
-          if(!isNameSet) {
-            faceTracker.AssignNametoID(observedID, testDir);
-            isNameSet = true;
+        // Get the faces observed in the current image
+        auto observedFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
+        EXPECT_EQ(observedFaceIDs.size(), 1);
+        if(observedFaceIDs.empty()) {
+          // TODO: Remove this and fail if observedFaceIDs is empty
+          PRINT_NAMED_WARNING("FaceRecognition.SinglePersonVideoRecognitionAndTracking.NoTestFaceDetected",
+                              "File: %s", testFile.c_str());
+        } else {
+          stats.facesDetected++;
+          
+          const Vision::TrackedFace::ID_t observedID = observedFaceIDs.begin()->second;
+          
+          if(observedFaceIDs.size() > 1) {
+            PRINT_NAMED_WARNING("FaceRecogntion.SinglePersonVideoRecognitionAndTracking.MultipleFacesDetected",
+                                "Detected %lu faces instead of one. Using first.", observedFaceIDs.size());
+          }
+          
+          if(observedID != Vision::TrackedFace::UnknownFace)
+          {
+            stats.facesRecognized++;
+            allIDs.insert(observedID);
+            if(!isNameSet) {
+              faceTracker->AssignNametoID(observedID, testDir);
+              isNameSet = true;
+            }
           }
         }
+        
+      } // for each testFile
+      
+      stats.numFaceIDs = (s32)allIDs.size();
+      
+      PRINT_NAMED_INFO("FaceRecognition.SinglePersonVideoRecognitionAndTracking.Stats",
+                       "%s: %d images, %d faces detected (%.1f%%), %d faces recognized (%.1f%%), %d total IDs assigned",
+                       testDir,
+                       stats.totalFrames, stats.facesDetected,
+                       (f32)(stats.facesDetected*100)/(f32)stats.totalFrames,
+                       stats.facesRecognized,
+                       (f32)(stats.facesRecognized*100)/(f32)stats.facesDetected,
+                       stats.numFaceIDs);
+      
+      // Show the system blank frames before next video so it stops tracking
+      for(s32 iBlank=0; iBlank<NumBlankFramesBetweenPeople; ++iBlank) {
+        Recognize(robot, img, *faceTracker, "", "TestImage", true);
+        auto observedFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
+        EXPECT_TRUE(observedFaceIDs.empty());
       }
-
-    } // for each testFile
-    
-    stats.numFaceIDs = (s32)allIDs.size();
-    
-    PRINT_NAMED_INFO("FaceRecognition.SinglePersonVideoRecognitionAndTracking.Stats",
-                     "%s: %d images, %d faces detected (%.1f%%), %d faces recognized (%.1f%%), %d total IDs assigned",
-                     testDir,
-                     stats.totalFrames, stats.facesDetected,
-                     (f32)(stats.facesDetected*100)/(f32)stats.totalFrames,
-                     stats.facesRecognized,
-                     (f32)(stats.facesRecognized*100)/(f32)stats.facesDetected,
-                     stats.numFaceIDs);
-
-    // Show the system blank frames before next video so it stops tracking
-    for(s32 iBlank=0; iBlank<NumBlankFramesBetweenPeople; ++iBlank) {
-      Recognize(robot, img, faceTracker, "", "TestImage", true);
-      auto observedFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(img.GetTimestamp());
-      EXPECT_TRUE(observedFaceIDs.empty());
-    }
   } // for each testDir
+   
+    Result saveResult = faceTracker->SaveAlbum("testAlbum");
+    ASSERT_EQ(saveResult, RESULT_OK);
+    
+    delete faceTracker;
+    
+  }
 
+  // Clean up after ourselves
+  Util::FileUtils::RemoveDirectory("testAlbum");
+  
   ASSERT_TRUE(RESULT_OK == lastResult);
   
 } // FaceRecognition.SinglePersonVideoRecognitionAndTracking

@@ -51,8 +51,8 @@ namespace Vision {
     
     void AssignNametoID(TrackedFace::ID_t faceID, const std::string& name);
     
-    Result SaveAlbum(const std::string& filename);
-    Result LoadAlbum(const std::string& filename);
+    Result SaveAlbum(const std::string& albumName);
+    Result LoadAlbum(const std::string& albumName);
     
   private:
     
