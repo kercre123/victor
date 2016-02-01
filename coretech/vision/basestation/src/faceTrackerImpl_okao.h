@@ -17,6 +17,7 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/rotation.h"
 #include "util/logging/logging.h"
+#include "util/helpers/boundedWhile.h"
 
 // Omron OKAO Vision
 #include <OkaoAPI.h>
@@ -534,9 +535,12 @@ namespace Vision {
 
     // Find unused ID
     BOOL isRegistered = true;
-    while(isRegistered)
+    BOUNDED_WHILE(2*MaxAlbumFaces, isRegistered)
     {
       ++_lastRegisteredUserID;
+      if(_lastRegisteredUserID >= MaxAlbumFaces) {
+        _lastRegisteredUserID = 0;
+      }
       
       okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _lastRegisteredUserID, 0, &isRegistered);
       
