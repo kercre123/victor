@@ -177,7 +177,7 @@ namespace Vision {
     Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime,
                               const DETECTION_INFO& detectionInfo);
     
-    Result DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+    bool   DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                            INT32 detectionIndex, Vision::TrackedFace& face);
     
     Result EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
@@ -639,26 +639,26 @@ namespace Vision {
   } // UpdateExistingUser()
   
   
-  Result FaceTracker::Impl::DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                                            INT32 detectionIndex,
-                                            Vision::TrackedFace& face)
+  bool FaceTracker::Impl::DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                                          INT32 detectionIndex,
+                                          Vision::TrackedFace& face)
   {
     INT32 okaoResult = OKAO_PT_SetPositionFromHandle(_okaoPartDetectorHandle, _okaoDetectionResultHandle, detectionIndex);
     
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoSetPositionFail",
                         "OKAO Result Code=%d", okaoResult);
-      return RESULT_FAIL;
+      return false;
     }
     okaoResult = OKAO_PT_DetectPoint_GRAY(_okaoPartDetectorHandle, dataPtr,
                                           nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3, _okaoPartDetectionResultHandle);
     
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoPartDetectionFail",
-                        "OKAO Result Code=%d%s", okaoResult,
-                        (OKAO_ERR_PROCESSCONDITION == okaoResult ?
-                         " (Unsupported yaw angle)" : ""));
-      return RESULT_FAIL;
+      if(OKAO_ERR_PROCESSCONDITION != okaoResult) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoPartDetectionFail",
+                          "OKAO Result Code=%d", okaoResult);
+      }
+      return false;
     }
     
     okaoResult = OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX,
@@ -666,7 +666,7 @@ namespace Vision {
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetFacePartResultFail",
                         "OKAO Result Code=%d", okaoResult);
-      return RESULT_FAIL;
+      return false;
     }
     
     // Set eye centers
@@ -712,7 +712,7 @@ namespace Vision {
                             DEG_TO_RAD(pitch_deg),
                             DEG_TO_RAD(yaw_deg));
     
-    return RESULT_OK;
+    return true;
   }
   
   Result FaceTracker::Impl::EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
@@ -1023,16 +1023,8 @@ namespace Vision {
       face.SetTimeStamp(frameOrig.GetTimestamp());
       
       // Try finding face parts
-      bool facePartsFound = false;
       Tic("FacePartDetection");
-      Result partDetectResult = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
-      if(RESULT_OK != partDetectResult) {
-        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FacePartDetectionFailed",
-                            "Detection index %d of %d. Will not attempt expression/face recognition",
-                            detectionIndex, numDetections);
-      } else {
-        facePartsFound = true;
-      }
+      bool facePartsFound = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
       Toc("FacePartDetection");
       
       if(_detectEmotion && facePartsFound)
