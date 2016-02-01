@@ -52,14 +52,16 @@ namespace Anki {
         // Angle of accelerometer wrt gravity horizontal
         f32 pitch_ = 0;
 
-        f32 gyro_filt[3];
-        f32 gyro_robot_frame_filt[3];
-        const f32 RATE_FILT_COEFF = 0.9f;
+        f32 gyro_filt[3]                = {0};    // Filtered gyro measurements
+        f32 gyro_robot_frame_filt[3]    = {0};    // Filtered gyro measurements in robot frame
+        const f32 RATE_FILT_COEFF       = 0.9f;   // IIR filter coefficient
+        
+        f32 gyro_drift_filt[3]          = {0};    // Filtered gyro drift offset. (Accumulate only when all axes are below GYRO_MOTION_THRESH)
+        const f32 RATE_DRIFT_FILT_COEFF = 0.1f;   // IIR filter coefficient
 
-        f32 accel_filt[3];
-        f32 accel_robot_frame_filt[3];
-        f32 prev_accel_robot_frame_filt[3] = {0,0,0};
-        const f32 ACCEL_FILT_COEFF = 0.1f;
+        f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
+        f32 accel_robot_frame_filt[3]   = {0};    // Filtered accelerometer measurements in robot frame
+        const f32 ACCEL_FILT_COEFF      = 0.1f;   // IIR filter coefficient
 
         // ==== Pickup detection ===
         bool pickupDetectEnabled_ = true;
@@ -651,6 +653,30 @@ namespace Anki {
             lastMotionDetectedTime_us = currTime;
           }
         }
+        
+/*
+        // Measure peak readings every 2 seconds
+        static f32 max_gyro[3] = {0,0,0};
+        for (int i=0; i<3; ++i) {
+          if(ABS(gyro_robot_frame_filt[i]) > max_gyro[i]) {
+            max_gyro[i] = ABS(gyro_robot_frame_filt[i]);
+          }
+        }
+        
+        static u32 measurement_cycles = 0;
+        if (measurement_cycles++ == 400) {
+          AnkiDebug( 25, "IMUFilter", 166, "Max gyro: %f %f %f", 3,
+                    max_gyro[0],
+                    max_gyro[1],
+                    max_gyro[2]);
+          
+          measurement_cycles = 0;
+          for (int i=0; i<3; ++i) {
+            max_gyro[i] = 0;
+          }
+        }
+*/
+        
       }
 
       void UpdatePitch()
@@ -687,9 +713,9 @@ namespace Anki {
 
         // Filter rotation speeds
         // TODO: Do this in hardware?
-        gyro_filt[0] = imu_data_.rate_x * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[1] = imu_data_.rate_y * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[2] = imu_data_.rate_z * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[0] = (imu_data_.rate_x - gyro_drift_filt[0]) * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[1] = (imu_data_.rate_y - gyro_drift_filt[1]) * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[2] = (imu_data_.rate_z - gyro_drift_filt[2]) * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
 
 
         // Compute head angle wrt to world horizontal plane
@@ -733,10 +759,6 @@ namespace Anki {
         const f32 accel_angle_imu_frame = atan2_fast(accel_filt[2], accel_filt[0]);
         const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
 
-        prev_accel_robot_frame_filt[0] = accel_robot_frame_filt[0];
-        prev_accel_robot_frame_filt[1] = accel_robot_frame_filt[1];
-        prev_accel_robot_frame_filt[2] = accel_robot_frame_filt[2];
-
         accel_robot_frame_filt[0] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
         accel_robot_frame_filt[1] = accel_filt[1];
         accel_robot_frame_filt[2] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
@@ -747,43 +769,6 @@ namespace Anki {
                        accel_robot_frame_filt[0],
                        accel_robot_frame_filt[1],
                        accel_robot_frame_filt[2]);
-#endif
-
-
-#if(0)
-        // Measure peak readings every 2 seconds
-        static f32 max_gyro[3] = {0,0,0};
-        static f32 max_accel[3] = {0,0,0};
-        for (int i=0; i<3; ++i) {
-          if(ABS(gyro_robot_frame_filt[i]) > max_gyro[i]) {
-            max_gyro[i] = ABS(gyro_robot_frame_filt[i]);
-          }
-
-          if (prev_accel_robot_frame_filt[i] != 0) {
-            f32 dAccel = ABS(accel_robot_frame_filt[i] - prev_accel_robot_frame_filt[i]);
-            if(dAccel > max_accel[i]) {
-              max_accel[i] = dAccel;
-            }
-          }
-        }
-
-        static u32 measurement_cycles = 0;
-        if (measurement_cycles++ == 400) {
-          AnkiDebug( 25, "IMUFilter", 166, "Max gyro: %f %f %f", 3,
-                         max_gyro[0],
-                         max_gyro[1],
-                         max_gyro[2]);
-          AnkiDebug( 25, "IMUFilter", 167, "Max accel_delta: %f %f %f", 3,
-                         max_accel[0],
-                         max_accel[1],
-                         max_accel[2]);
-
-            measurement_cycles = 0;
-          for (int i=0; i<3; ++i) {
-            max_accel[i] = 0;
-            max_gyro[i] = 0;
-          }
-        }
 #endif
 
         DetectMotion();
@@ -801,6 +786,13 @@ namespace Anki {
                                 imu_data_.acc_x, imu_data_.acc_y, imu_data_.acc_z);
           //MadgwickAHRSupdateIMU(gyro_filt[0], gyro_filt[1], gyro_filt[2],
           //                      accel_filt[0], accel_filt[1], accel_filt[2]);
+        } else if (ABS(imu_data_.rate_x) < GYRO_MOTION_THRESHOLD &&
+                   ABS(imu_data_.rate_y) < GYRO_MOTION_THRESHOLD &&
+                   ABS(imu_data_.rate_z) < GYRO_MOTION_THRESHOLD) {
+          // Update gyro drift offset while not moving
+          gyro_drift_filt[0] = imu_data_.rate_x * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[0] * (1.f - RATE_DRIFT_FILT_COEFF);
+          gyro_drift_filt[1] = imu_data_.rate_y * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[1] * (1.f - RATE_DRIFT_FILT_COEFF);
+          gyro_drift_filt[2] = imu_data_.rate_z * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[2] * (1.f - RATE_DRIFT_FILT_COEFF);
         }
 
         // XXX: DEBUG!
