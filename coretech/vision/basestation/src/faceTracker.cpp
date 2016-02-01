@@ -61,24 +61,7 @@ namespace Vision {
  
   std::list<TrackedFace> FaceTracker::GetFaces() const
   {
-    auto faces = _pImpl->GetFaces();
-    if(!_names.empty())
-    {
-      for(auto & face : faces) {
-        auto faceID = face.GetID();
-        if(TrackedFace::UnknownFace != faceID)
-        {
-          auto nameIter = _names.find(faceID);
-          if(nameIter != _names.end()) {
-            face.SetName(std::string(nameIter->second));
-          }
-        } else {
-          face.SetName("Unknown");
-        }
-      }
-    }
-    
-    return faces;
+    return _pImpl->GetFaces();
   }
   
   bool FaceTracker::IsRecognitionSupported()
@@ -96,115 +79,20 @@ namespace Vision {
     return _pImpl->IsNewFaceEnrollmentEnabled();
   }
   
-  void FaceTracker::AssignNametoID(TrackedFace::ID_t faceID, const std::string& name)
+  void FaceTracker::AssignNametoID(TrackedFace::ID_t faceID, const std::string &name)
   {
-    _names[faceID] = name;
+    _pImpl->AssignNametoID(faceID, name);
   }
   
   Result FaceTracker::SaveAlbum(const std::string& albumName)
   {
-    std::vector<u8> serializedAlbum = _pImpl->GetSerializedAlbum();
-    if(serializedAlbum.empty()) {
-      PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.EmptyAlbum",
-                        "No serialized data returned from private implementation");
-      return RESULT_FAIL;
-    }
-    
-    if(false == Util::FileUtils::CreateDirectory(albumName, false, true)) {
-      PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.DirCreationFail",
-                        "Tried to create: %s", albumName.c_str());
-    }
-    
-    const std::string dataFilename(albumName + "/data.bin");
-    FILE* file = fopen(dataFilename.c_str(), "wb");
-    if(nullptr == file) {
-      PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
-      return RESULT_FAIL;
-    }
-    
-    size_t bytesWritten = fwrite(&(serializedAlbum[0]), sizeof(u8), serializedAlbum.size(), file);
-    fclose(file);
-    
-    if(bytesWritten != serializedAlbum.size()) {
-      PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.FileWriteFail",
-                        "%lu bytes written instead of expected %lu",
-                        bytesWritten, serializedAlbum.size());
-      
-      return RESULT_FAIL;
-    }
-    
-    Json::Value json;
-    for(auto & nameData : _names)
-    {
-      json[nameData.second] = nameData.first;
-    }
-    
-    const std::string namesFilename(albumName + "/names.json");
-    Json::FastWriter writer;
-    std::fstream fs;
-    fs.open(namesFilename, std::ios::out);
-    if (!fs.is_open()) {
-      PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.NameFileOpenFail", "");
-      return RESULT_FAIL;
-    }
-    fs << writer.write(json);
-    fs.close();
-    
-    return RESULT_OK;
+    return _pImpl->SaveAlbum(albumName);
   }
   
   Result FaceTracker::LoadAlbum(const std::string& albumName)
   {
-    std::vector<u8> serializedAlbum;
-    
-    const std::string dataFilename(albumName + "/data.bin");
-    FILE* file = fopen(dataFilename.c_str(), "rb");
-    if(nullptr == file) {
-      PRINT_NAMED_ERROR("FaceTracker.LoadAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
-      return RESULT_FAIL;
-    }
-    
-    fseek(file, 0, SEEK_END);
-    size_t fileLength = ftell(file);
-    rewind(file);
-  
-    serializedAlbum.resize(fileLength);
-    size_t bytesRead = fread(&(serializedAlbum[0]), sizeof(u8), fileLength, file);
-    
-    if(bytesRead != fileLength) {
-      PRINT_NAMED_ERROR("FaceTracker.LoadAlbum.FileReadFail",
-                        "%lu bytes read instead of expected %lu",
-                        bytesRead, fileLength);
-      
-      return RESULT_FAIL;
-    }
-    
-    Result result = _pImpl->SetSerializedAlbum(serializedAlbum);
-    
-    // Now try to read the names data
-    if(RESULT_OK == result) {
-      Json::Value json;
-      const std::string namesFilename(albumName + "/names.json");
-      std::ifstream jsonFile(namesFilename);
-      Json::Reader reader;
-      bool success = reader.parse(jsonFile, json);
-      jsonFile.close();
-      if(! success) {
-        PRINT_NAMED_ERROR("FaceTracker.LoadAlbum.NameFileReadFail", "");
-        return RESULT_FAIL;
-      }
-      
-      _names.clear();
-      for(auto & entry : json.getMemberNames()) {
-        Vision::TrackedFace::ID_t faceID = json[entry].asLargestUInt();
-        _names[faceID] = entry;
-        PRINT_NAMED_INFO("FaceTracker.LoadAlbum.LoadedName", "Name: %s, ID=%llu", entry.c_str(), faceID);
-      }
-    }
-    
-    return result;
+    return _pImpl->LoadAlbum(albumName);
   }
-  
   
   /*
   void FaceTracker::EnableDisplay(bool enabled) {

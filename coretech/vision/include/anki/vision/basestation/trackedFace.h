@@ -47,7 +47,7 @@ namespace Vision {
     void SetTimeStamp(TimeStamp_t timestamp);
     
     const std::string& GetName() const;
-    void SetName(std::string&& newName);
+    void SetName(const std::string& newName);
     
     // Returns true if tracking is happening vs. false if face was just detected
     bool IsBeingTracked() const;
@@ -258,7 +258,7 @@ namespace Vision {
     return _name;
   }
   
-  inline void TrackedFace::SetName(std::string&& newName) {
+  inline void TrackedFace::SetName(const std::string& newName) {
     _name = newName;
   }
   

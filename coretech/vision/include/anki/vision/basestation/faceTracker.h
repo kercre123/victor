@@ -61,8 +61,6 @@ namespace Vision {
     
     std::unique_ptr<Impl> _pImpl;
     
-    std::map<TrackedFace::ID_t, std::string> _names;
-    
   }; // class FaceTracker
   
 } // namespace Vision
