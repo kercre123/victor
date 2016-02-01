@@ -9,11 +9,15 @@
 // This is a temporary mechanic until we get a message for the phone
 static const uint32_t PROP_WHITELIST[MAX_CUBES] = {
 #ifdef __BRYON_ROBOT
+  0x00000072,
+  0x00000091,
+  0x0000003C,
   0x000000E7,
-  0x0000010B,
-  //0x000001EE,
-  //0x80000030,
-#else
+#elif __KEVIN_ROBOT
+  0x000000DA,
+  0x000000A9,
+  0x00000020,
+  0x000000C3,
 #endif
 };
 

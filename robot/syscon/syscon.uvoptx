@@ -150,17 +150,17 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rx_payload</ItemText>
+          <ItemText>accessories</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>TalkAddress</ItemText>
+          <ItemText>currentAccessory</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>shocks</ItemText>
+          <ItemText>packet.id</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

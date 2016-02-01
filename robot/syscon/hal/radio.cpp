@@ -304,6 +304,7 @@ extern "C" void uesb_event_handler(void)
         SpineProtocol msg;
         msg.opcode = PROP_DISCOVERED;
         msg.PropDiscovered.prop_id = packet.id;
+                
         Spine::enqueue(msg);
         
         // Attempt to allocate a slot for it
