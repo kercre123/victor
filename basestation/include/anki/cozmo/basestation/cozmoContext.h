@@ -67,21 +67,22 @@ namespace Cozmo {
 class CozmoContext : private Util::noncopyable
 {
 public:
+  CozmoContext() { }
   CozmoContext(const Util::Data::DataPlatform& dataPlatform, IExternalInterface* externalInterface);
   virtual ~CozmoContext();
   
-  IExternalInterface* GetExternalInterface() { return _externalInterface; }
-  Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform.get(); }
-  Util::RandomGenerator* GetRandom() { return _random.get(); }
-  Comms::AdvertisementService*          GetAdvertisementService() { return _robotAdvertisementService.get(); }
-  RobotManager*                         GetRobotManager() { return _robotMgr.get(); }
-  RobotInterface::MessageHandler*       GetMessageHandler() { return _robotMsgHandler.get(); }
-  SpeechRecognition::KeyWordRecognizer* GetKeywordRecognizer() { return _keywordRecognizer.get(); }
-  Audio::AudioServer*                   GetAudioServer() { return _audioServer.get(); }
-  CozmoEngine*                          GetCozmoEngine() { return _cozmoEngine.get(); }
+  IExternalInterface*                   GetExternalInterface() const { return _externalInterface; }
+  Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform.get(); }
+  Util::RandomGenerator*                GetRandom() const { return _random.get(); }
+  Comms::AdvertisementService*          GetRobotAdvertisementService() const { return _robotAdvertisementService.get(); }
+  RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
+  RobotInterface::MessageHandler*       GetMessageHandler() const { return _robotMsgHandler.get(); }
+  SpeechRecognition::KeyWordRecognizer* GetKeywordRecognizer() const { return _keywordRecognizer.get(); }
+  Audio::AudioServer*                   GetAudioServer() const { return _audioServer.get(); }
   
 private:
-  // This is passed in and held onto, but not owned by the context
+  // This is passed in and held onto, but not owned by the context (yet.
+  // It really should be, and that refactoring will have to happen soon).
   IExternalInterface*                                     _externalInterface;
   
   // Context holds onto these things for everybody:
@@ -92,7 +93,6 @@ private:
   std::unique_ptr<RobotInterface::MessageHandler>         _robotMsgHandler;
   std::unique_ptr<SpeechRecognition::KeyWordRecognizer>   _keywordRecognizer;
   std::unique_ptr<Audio::AudioServer>                     _audioServer;
-  std::unique_ptr<CozmoEngine>                            _cozmoEngine;
 };
   
 

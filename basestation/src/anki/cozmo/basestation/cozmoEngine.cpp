@@ -32,21 +32,15 @@
 namespace Anki {
 namespace Cozmo {
 
-  CozmoEngine::CozmoEngine(IExternalInterface* externalInterface,Util::Data::DataPlatform* dataPlatform) :
-  _externalInterface(externalInterface)
- ,_dataPlatform(dataPlatform)
- , _isInitialized(false)
+CozmoEngine::CozmoEngine(IExternalInterface* externalInterface,Util::Data::DataPlatform* dataPlatform)
+  : _isInitialized(false)
 #if DEVICE_VISION_MODE != DEVICE_VISION_MODE_OFF
   ,_deviceVisionThread(dataPlatform)
 #endif
   , _isListeningForRobots(false)
-  , _robotAdvertisementService("RobotAdvertisementService")
-  , _robotMgr(externalInterface, dataPlatform)
-  , _robotMsgHandler(*(new RobotInterface::MessageHandler()))
-  , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
-  , _audioServer( nullptr )
+  , _context(new CozmoContext(*dataPlatform, externalInterface))
 {
-  ASSERT_NAMED(externalInterface != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
+  ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
@@ -55,24 +49,24 @@ namespace Cozmo {
                    "Starting RobotAdvertisementService, reg port %d, ad port %d",
                    ROBOT_ADVERTISEMENT_REGISTRATION_PORT, ROBOT_ADVERTISING_PORT);
   
-  _robotAdvertisementService.StartService(ROBOT_ADVERTISEMENT_REGISTRATION_PORT,
+  _context->GetRobotAdvertisementService()->StartService(ROBOT_ADVERTISEMENT_REGISTRATION_PORT,
                                           ROBOT_ADVERTISING_PORT);
   
   // Handle robot disconnection:
-  _signalHandles.emplace_back( _robotMgr.OnRobotDisconnected().ScopedSubscribe(
+  _signalHandles.emplace_back( _context->GetRobotManager()->OnRobotDisconnected().ScopedSubscribe(
                                                                                std::bind(&CozmoEngine::DisconnectFromRobot, this, std::placeholders::_1)
                                                                                ));
   // We'll use this callback for simple events we care about
   auto callback = std::bind(&CozmoEngine::HandleGameEvents, this, std::placeholders::_1);
-  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode, callback));
-  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ImageRequest, callback));
-  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
-  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
-  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
-  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
-  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ImageRequest, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
   
-  _debugConsoleManager.Init(_externalInterface);
+  _debugConsoleManager.Init(_context->GetExternalInterface());
 }
   
 
@@ -85,10 +79,6 @@ CozmoEngine::~CozmoEngine()
   }
   
   BaseStationTimer::removeInstance();
-  
-  delete(&_robotMsgHandler);
-  Util::SafeDelete(_keywordRecognizer);
-  Util::SafeDelete(_audioServer);
 }
 
 Result CozmoEngine::Init(const Json::Value& config) {
@@ -157,10 +147,10 @@ Result CozmoEngine::Init(const Json::Value& config) {
       VizManager::getInstance()->EnableImageSend(true);
     }
     
-    if (nullptr != _externalInterface)
+    if (nullptr != _context->GetExternalInterface())
     {
       // Have VizManager subscribe to the events it should care about
-      VizManager::getInstance()->SubscribeToEngineEvents(*_externalInterface);
+      VizManager::getInstance()->SubscribeToEngineEvents(*_context->GetExternalInterface());
     }
   }
   
@@ -199,12 +189,12 @@ bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
   if(_forceAddedRobots.count(whichRobot) > 0) {
     PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot",
                      "Manually deregistering force-added robot %d from advertising service.", whichRobot);
-    _robotAdvertisementService.DeregisterAllAdvertisers();
+    _context->GetRobotAdvertisementService()->DeregisterAllAdvertisers();
   }
   
   // Another exception for hosts: have to tell the basestation to add the robot as well
   AddRobot(whichRobot);
-  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotConnected(
+  _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotConnected(
                                                                                                          whichRobot, result
                                                                                                          )));
   return result;
@@ -228,7 +218,7 @@ Result CozmoEngine::Update(const float currTime_sec)
   std::vector<Comms::ConnectionId> advertisingRobots;
   _robotChannel.GetAdvertisingConnections(advertisingRobots);
   for(auto robot : advertisingRobots) {
-    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotAvailable(robot)));
+    _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotAvailable(robot)));
   }
   
   // TODO: Handle images coming from connected robots
@@ -271,7 +261,7 @@ void CozmoEngine::ProcessDeviceImage(const Vision::Image &image)
 
 void CozmoEngine::ReadAnimationsFromDisk()
 {
-  Robot* robot = _robotMgr.GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   if (robot != nullptr) {
     PRINT_NAMED_INFO("CozmoEngine.ReloadAnimations", "ReadAnimationDir");
     robot->ReadAnimationDir();
@@ -283,19 +273,15 @@ Result CozmoEngine::InitInternal()
   std::string hmmFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/en-us");
   std::string keywordFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
   std::string dictFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
-  _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
-  _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
+  _context->GetKeywordRecognizer()->Init(hmmFolder, keywordFile, dictFile);
+  _context->GetMessageHandler()->Init(&_robotChannel, _context->GetRobotManager());
   
   // Setup Audio Controller
   using namespace Audio;
-  AudioController* audioController = new AudioController( _dataPlatform );
   
   // Setup Unity Audio Client Connections
-  AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_externalInterface );
-  // Setup Audio Server
-  // Transfering ownership of controller & connections
-  _audioServer = new AudioServer( audioController );
-  _audioServer->RegisterClientConnection( unityConnection );
+  AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_context->GetExternalInterface() );
+  _context->GetAudioServer()->RegisterClientConnection( unityConnection );
   
   
   return RESULT_OK;
@@ -308,20 +294,20 @@ Result CozmoEngine::UpdateInternal(const BaseStationTime_t currTime_ns)
   _robotChannel.Update();
   
   if(_isListeningForRobots) {
-    _robotAdvertisementService.Update();
+    _context->GetRobotAdvertisementService()->Update();
   }
   
   // Update time
   BaseStationTimer::getInstance()->UpdateTime(currTime_ns);
   
   
-  _robotMsgHandler.ProcessMessages();
+  _context->GetMessageHandler()->ProcessMessages();
   
   // Let the robot manager do whatever it's gotta do to update the
   // robots in the world.
-  _robotMgr.UpdateAllRobots();
+  _context->GetRobotManager()->UpdateAllRobots();
   
-  _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
+  _context->GetKeywordRecognizer()->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
   return RESULT_OK;
 } // UpdateInternal()
 
@@ -341,7 +327,7 @@ void CozmoEngine::ForceAddRobot(AdvertisingRobot robotID,
     forcedRegistrationMsg.enableAdvertisement = 1;
     snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
     
-    _robotAdvertisementService.ProcessRegistrationMsg(forcedRegistrationMsg);
+    _context->GetRobotAdvertisementService()->ProcessRegistrationMsg(forcedRegistrationMsg);
     
     // Mark this robot as force-added so we can deregister it from the advertising
     // service manually once we connect to it.
@@ -356,8 +342,8 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
 {
   Result lastResult = RESULT_OK;
   
-  _robotMgr.AddRobot(robotID, &_robotMsgHandler);
-  Robot* robot = _robotMgr.GetRobotByID(robotID);
+  _context->GetRobotManager()->AddRobot(robotID, _context->GetMessageHandler());
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   if(nullptr == robot) {
     PRINT_NAMED_ERROR("CozmoEngine.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);
     lastResult = RESULT_FAIL;
@@ -370,30 +356,30 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     AudioEngineMessageHandler* engineMessageHandler = new AudioEngineMessageHandler();
     AudioEngineClientConnection* engineConnection = new AudioEngineClientConnection( engineMessageHandler );
     // Transfer ownership of connection to Audio Server
-    _audioServer->RegisterClientConnection( engineConnection );
+    _context->GetAudioServer()->RegisterClientConnection( engineConnection );
     
     // Set Robot Audio Client Message Handler to link to Connection and Robot Audio Buffer ( Audio played on Robot )
     RobotAudioClient* audioClient = robot->GetRobotAudioClient();
     audioClient->SetMessageHandler( engineConnection->GetMessageHandler() );
     // NOTE: Assume there is only 1 Robot
-    audioClient->SetAudioBuffer( _audioServer->GetAudioController()->GetRobotAudioBuffer() );
+    audioClient->SetAudioBuffer( _context->GetAudioServer()->GetAudioController()->GetRobotAudioBuffer() );
   }
   
   return lastResult;
 }
   
 Robot* CozmoEngine::GetFirstRobot() {
-  return _robotMgr.GetFirstRobot();
+  return _context->GetRobotManager()->GetFirstRobot();
 }
   
 int CozmoEngine::GetNumRobots() const {
-  const size_t N = _robotMgr.GetNumRobots();
+  const size_t N = _context->GetRobotManager()->GetNumRobots();
   assert(N < INT_MAX);
   return static_cast<int>(N);
 }
   
 Robot* CozmoEngine::GetRobotByID(const RobotID_t robotID) {
-  return _robotMgr.GetRobotByID(robotID);
+  return _context->GetRobotManager()->GetRobotByID(robotID);
 }
 
 void CozmoEngine::ListenForRobotConnections(bool listen)
@@ -403,7 +389,7 @@ void CozmoEngine::ListenForRobotConnections(bool listen)
 
 bool CozmoEngine::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThanTime)
 {
-  Robot* robot = _robotMgr.GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
   if(robot != nullptr) {
     return robot->GetCurrentImage(img, newerThanTime);
@@ -415,12 +401,12 @@ bool CozmoEngine::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, Ti
 }
 
 std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {
-  return _robotMgr.GetRobotIDList();
+  return _context->GetRobotManager()->GetRobotIDList();
 }
 
 void CozmoEngine::SetImageSendMode(RobotID_t robotID, ImageSendMode newMode)
 {
-  Robot* robot = _robotMgr.GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   if(robot != nullptr) {
     return robot->SetImageSendMode(newMode);
   }
