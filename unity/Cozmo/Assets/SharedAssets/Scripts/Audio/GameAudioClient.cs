@@ -51,6 +51,11 @@ namespace Anki {
           client.PostParameter(parameter, volume, GameObjectType.Invalid); // TODO Need to cast for Invalid GameObj to set global RTPCs
         }
 
+        static public void SetMusicVolume(float volume, int timeInMS = 0, CurveType curve = CurveType.Linear ) {
+          AudioClient client = AudioClient.Instance;
+          client.PostParameter(ParameterType.MUSIC_VOLUME, volume, GameObjectType.Invalid, timeInMS, curve);
+        }
+
         // Set Music States
         // We can move this, I just need a place to keep static state to start the music
         private static bool _didPlayMusic = false; 

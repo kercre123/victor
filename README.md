@@ -1,26 +1,27 @@
 # cozmo-game
 
-Cozmo unity gameplay code. Also includes the current animation tool in /animation-tool/
+Cozmo Unity gameplay code. 
 
-Please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
+If you are contributing to the Unity/C# codebase, please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
 
 # Building cozmo-game
 
-At this point, only Mac and iOS are supported. The engine itself supports more platforms. See [products-cozmo](https://github.com/anki/products-cozmo).
-
 ### Brew
 
-Install CMAKE using [brew](http://brew.sh/).
+First install [brew](http://brew.sh/). Then use brew to install the following dependencies:
 
     brew install cmake
+    brew install python3
 
 ### coretech-external
 
-Get the latest coretech-external binaries [here](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). The latest results click Artifacts->View and download the .tar.gz
+Get the latest [coretech-external binaries](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). Click the most recent Artifacts->View. Download and extract the .tar.gz
 
-Have your paths (eg. ~/.bash_profile) setup correctly it must include the line:
+Modify your paths (eg. open ~/.bash_profile) to include the line:
 
     export CORETECH_EXTERNAL_DIR="<PATH_TO_CORETECH_EXTERNAL>"
+
+Make sure you don't use something like OS X's default textedit because they use non-ascii quotes “” which will cause the path variables to not work properly. We recommend [sublime text](http://www.sublimetext.com/2) for your text editing needs.
 
 Once you set your paths you need to restart your terminal for the settings to take effect. Alternatively you can refresh your environment:
 
@@ -30,13 +31,17 @@ Once you set your paths you need to restart your terminal for the settings to ta
 
 We are using [Unity 5.2.2f1](http://unity3d.com/get-unity/download/archive).
 
-A dev scene that includes a simple list of challenges for Cozmo. Used in a development environment.
+A dev scene that includes a simple list of challenges for Cozmo. Useful for skipping the metagame stuff to work on the individual challenges.
 
     /unity/Cozmo/Assets/Scenes/Dev.unity
 
 The production scene used for when we deploy. This is where the final experience will live.
 
     /unity/Cozmo/Assets/Scenes/HomeHub.unity
+
+### Xcode
+
+We are using XCode Version 7.2 (7C68). Install from the OS X App Store. Make sure you open XCode at least once after installing / updating because it may ask for accepting terms of service before permitting us to run it from build scripts.
 
 ### Build Script
 
@@ -61,7 +66,7 @@ Useful worlds:
 
  * cozmoViz.wbt - Includes a keyboard controller and the engine. Used to talk to a physical robot.
 
- * cozmoVizForunity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
+ * cozmoVizForUnity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
 
  * PatternPlay.wbt - Simulated environment for a virtual robot. Useful for using Unity to run simulated games. You can create your own versions of this ideal for the game you are testing.
 

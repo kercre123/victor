@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
+using Cozmo.Util;
 
 /// <summary>
 ///   our unity side representation of cozmo's current state
@@ -562,16 +563,20 @@ public class Robot : IDisposable {
   #region Friendship Points
 
   public void InitializeFriendshipPoints() {
+    ProgressionStatMessage.robotID = ID;
+
     // Set FriendshipPoints and Level from Save Data.
     FriendshipLevel = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipLevel;
     FriendshipPoints = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipPoints;
 
     FriendshipPointsMessage.newVal = FriendshipPoints;
-    RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+    ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipPoints = FriendshipPointsMessage;
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
 
     FriendshipLevelMessage.newVal = FriendshipLevel;
-    RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
+    ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipLevel = FriendshipLevelMessage;
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
 
     // Now initialize progress stats
@@ -583,21 +588,24 @@ public class Robot : IDisposable {
   }
 
   public void AddToFriendshipPoints(int deltaValue) {
+    ProgressionStatMessage.robotID = ID;
+    
     FriendshipPoints += deltaValue;
     FriendshipPointsMessage.newVal = FriendshipPoints;
-    RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+    ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipPoints = FriendshipPointsMessage;
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
 
     ComputeFriendshipLevel();
   }
 
   public string GetFriendshipLevelName(int friendshipLevel) {
-    FriendshipProgressionConfig levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
     return levelConfig.FriendshipLevels[friendshipLevel].FriendshipLevelName;
   }
 
   public int GetFriendshipLevelByName(string friendshipName) {
-    FriendshipProgressionConfig levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
     for (int i = 0; i < levelConfig.FriendshipLevels.Length; ++i) {
       if (levelConfig.FriendshipLevels[i].FriendshipLevelName == friendshipName) {
         return i;
@@ -607,7 +615,7 @@ public class Robot : IDisposable {
   }
 
   private void ComputeFriendshipLevel() {
-    FriendshipProgressionConfig levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
     bool friendshipLevelChanged = false;
     while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length &&
            levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
@@ -620,11 +628,14 @@ public class Robot : IDisposable {
       if (OnFriendshipLevelUp != null) {
         OnFriendshipLevelUp(FriendshipLevel);
       }
-      RobotEngineManager.Instance.Message.SetFriendshipLevel = FriendshipLevelMessage;
+      ProgressionStatMessage.robotID = ID;
+      ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipLevel = FriendshipLevelMessage;
+      RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
       RobotEngineManager.Instance.SendMessage();
 
       FriendshipPointsMessage.newVal = FriendshipPoints;
-      RobotEngineManager.Instance.Message.SetFriendshipPoints = FriendshipPointsMessage;
+      ProgressionStatMessage.ProgressionMessageUnion.SetFriendshipPoints = FriendshipPointsMessage;
+      RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
       RobotEngineManager.Instance.SendMessage();
 
     }
@@ -702,7 +713,16 @@ public class Robot : IDisposable {
   }
 
   private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
-    ProgressionStats[index] = value;
+    bool valueChanged = ProgressionStats[index] != value;
+    if (valueChanged) {
+      ProgressionStats[index] = value;
+      var session = DataPersistence.DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+      if (session != null) {
+        session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
+      }
+      DataPersistence.DataPersistenceManager.Instance.Save();
+    }
+
   }
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
@@ -1276,9 +1296,6 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.ClearAllObjects = ClearAllObjectsMessage;
     RobotEngineManager.Instance.SendMessage();
     Reset();
-    
-    SetLiftHeight(0f);
-    SetHeadAngle();
   }
 
   public void VisionWhileMoving(bool enable) {

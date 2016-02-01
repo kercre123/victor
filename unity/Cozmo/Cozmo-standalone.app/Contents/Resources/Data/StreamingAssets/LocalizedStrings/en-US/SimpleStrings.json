@@ -1,0 +1,60 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "badge.new": {
+    "translation": "NEW!"
+  },
+  "button.tap": {
+    "translation": "Tap"
+  },
+  "button.quit": {
+    "translation": "QUIT"
+  },
+  "button.startChallenge": {
+    "translation": "START"
+  },
+  "button.yes": {
+    "translation": "YES"
+  },
+  "button.no": {
+    "translation": "NO"
+  },
+  "button.continue": {
+    "translation": "CONTINUE"
+  },
+  "button.again": {
+    "translation": "PLAY AGAIN"
+  },
+  "button.ready": {
+    "translation": "READY"
+  },
+  "label.percentComplete": {
+    "translation": "{0:P2} Complete"
+  },
+  "button.close": {
+    "translation": "CLOSE"
+  },
+  "label.plusCount": {
+    "translation": "+{0}"
+  },
+  "dailySummary.title": {
+    "translation": "DAILY SUMMARY FOR {0}/{1}"
+  }
+}

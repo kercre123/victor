@@ -32,19 +32,6 @@ public class RobotEngineManager : MonoBehaviour {
 
   [SerializeField]
   private TextAsset _AlternateConfiguration;
-  #region FriendshipProgression and DailyGoals
-  [SerializeField]
-  private FriendshipProgressionConfig _FriendshipProgConfig;
-
-  public readonly int[] DailyGoals = new int[(int)Anki.Cozmo.ProgressionStatType.Count];
-
-  public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
-    if (DailyGoals[(int)type] > 0) {
-      return true;
-    }
-    return false;
-  }
-  #endregion
 
   private DisconnectionReason _LastDisconnectionReason = DisconnectionReason.None;
 
@@ -59,6 +46,8 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
+  public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
+  public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
 
   #region Audio Callback events
 
@@ -90,6 +79,7 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.GetAllDebugConsoleVarMessage _GetAllDebugConsoleVarMessage = new U2G.GetAllDebugConsoleVarMessage();
   private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
+  private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
 
   private void Awake() {
     #if ANIMATION_TOOL
@@ -328,6 +318,12 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.DebugString:
       ReceivedSpecificMessage(message.DebugString);
       break;
+    case G2U.MessageEngineToGame.Tag.RequestGameStart:
+      ReceivedSpecificMessage(message.RequestGameStart);
+      break;
+    case G2U.MessageEngineToGame.Tag.DenyGameStart:
+      ReceivedSpecificMessage(message.DenyGameStart);
+      break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
@@ -448,11 +444,9 @@ public class RobotEngineManager : MonoBehaviour {
 
     DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
-    ObservedObject deleted = CurrentRobot.SeenObjects.Find(x => x == message.objectID);
-
-    CurrentRobot.SeenObjects.Remove(deleted);
-    CurrentRobot.VisibleObjects.Remove(deleted);
-    CurrentRobot.DirtyObjects.Remove(deleted);
+    CurrentRobot.SeenObjects.Remove(CurrentRobot.SeenObjects.Find(x => x == message.objectID));
+    CurrentRobot.VisibleObjects.Remove(CurrentRobot.VisibleObjects.Find(x => x == message.objectID));
+    CurrentRobot.DirtyObjects.Remove(CurrentRobot.DirtyObjects.Find(x => x == message.objectID));
     CurrentRobot.LightCubes.Remove((int)message.objectID);
 
   }
@@ -596,6 +590,18 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+    if (OnRequestGameStart != null) {
+      OnRequestGameStart(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
+    if (OnDenyGameStart != null) {
+      OnDenyGameStart(message);
+    }
+  }
+
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DebugString message) {
     if (CurrentRobot != null) {
       if (CurrentRobot.CurrentBehaviorString != message.text) {
@@ -640,6 +646,11 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
+  public void SendDenyGameStart() {
+    Message.DenyGameStart = _DenyGameStartMessage;
+    SendMessage();
+  }
+
   /// <summary>
   /// Forcibly adds a new robot.
   /// </summary>
@@ -666,10 +677,6 @@ public class RobotEngineManager : MonoBehaviour {
 
     Message.ForceAddRobot = ForceAddRobotMessage;
     SendMessage();
-  }
-
-  public FriendshipProgressionConfig GetFriendshipProgressConfig() {
-    return _FriendshipProgConfig;
   }
 
 }

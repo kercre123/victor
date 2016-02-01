@@ -9,14 +9,26 @@ namespace InvestorDemo {
     private UnityEngine.UI.Button _NextButton;
 
     [SerializeField]
+    private UnityEngine.UI.Button _MagicButton;
+
+    [SerializeField]
     private UnityEngine.UI.Text _CurrentActionText;
 
-    void OnEnable() {
+    private void OnEnable() {
       ObjectTagRegistryManager.Instance.RegisterTag("InvestorNextButton", _NextButton.gameObject);
+      _MagicButton.onClick.AddListener(HandleMagicButton);
     }
 
-    void OnDisable() {
+    private void OnDisable() {
       ObjectTagRegistryManager.Instance.RemoveTag("InvestorNextButton");
+    }
+
+    private void HandleMagicButton() {
+      DAS.Debug(this, "Magic Button!");
+      Anki.Cozmo.ExternalInterface.ClearAllObjects clearAllObjectsMessage = new Anki.Cozmo.ExternalInterface.ClearAllObjects();
+      clearAllObjectsMessage.robotID = (byte)RobotEngineManager.Instance.CurrentRobotID;
+      RobotEngineManager.Instance.Message.ClearAllObjects = clearAllObjectsMessage;
+      RobotEngineManager.Instance.SendMessage();
     }
 
     public void SetActionText(string text) {

@@ -26,9 +26,15 @@ public class PrefabProxy : MonoBehaviour {
       var go = GetGameObjectInternal(t, splitPath, 0);
 
       // if our path ends on a prefab proxy, expand it and return the expansion.
-      var proxy = go.GetComponent<PrefabProxy>();
-      if (proxy != null) {
-        return proxy.Expand();
+      if (go != null) {
+        var proxy = go.GetComponent<PrefabProxy>();
+        if (proxy != null) {
+          return proxy.Expand();
+        }
+      }
+      else {
+        DAS.Error(this, string.Format("Couldn't find a GameObject with path: '{0}' on GameObject: '{1}'!", 
+          path, gameObject.name));
       }
       return go;
     }
@@ -108,7 +114,7 @@ public class PrefabProxy : MonoBehaviour {
       if (!_TypeCache.TryGetValue(typeName, out type)) {
         
         type = Type.GetType(typeName);
-        if(type == null) {
+        if (type == null) {
           var assemblies = AppDomain.CurrentDomain.GetAssemblies();
           foreach (var asm in assemblies) {
             type = asm.GetType(typeName);
@@ -159,7 +165,7 @@ public class PrefabProxy : MonoBehaviour {
     }
   }
 
-  public delegate object FieldSetter(object obj, object value);
+  public delegate object FieldSetter(object obj,object value);
 
   private static FieldSetter BuildSetter(string[] typeSplit, int i, ref Type type) {
     Func<object, object> newGetter;
@@ -185,7 +191,7 @@ public class PrefabProxy : MonoBehaviour {
     else {
       var field = type.GetField(typeSplit[i]);
       var subType = type;
-      while(field == null && subType != null && subType != typeof(System.Object) && subType != typeof(System.Enum)) {
+      while (field == null && subType != null && subType != typeof(System.Object) && subType != typeof(System.Enum)) {
         field = subType.GetField(typeSplit[i], BindingFlags.Instance | BindingFlags.NonPublic);
         subType = subType.BaseType;
       }
@@ -199,7 +205,7 @@ public class PrefabProxy : MonoBehaviour {
         newSetter = (o, v) => {
           // because unity does weird things with null
           UnityEngine.Object uo = (UnityEngine.Object)v;
-          if(uo == null) {
+          if (uo == null) {
             field.SetValue(o, null);
           }
           else {
@@ -301,8 +307,8 @@ public class PrefabProxy : MonoBehaviour {
   public List<ModifiedGlobalReferenceField> ModifiedGlobalReferences = new List<ModifiedGlobalReferenceField>();
 
 
-	// Use this for initialization
-	private void Awake () {
+  // Use this for initialization
+  private void Awake() {
     Expand();
   }
 
@@ -347,7 +353,7 @@ public class PrefabProxy : MonoBehaviour {
       // layout element is a special case
       var oldLayoutElement = GetComponent<LayoutElement>();
 
-      if(oldLayoutElement != null) {
+      if (oldLayoutElement != null) {
         var newLayoutElement = _Instance.GetComponent<LayoutElement>() ?? _Instance.AddComponent<LayoutElement>();
 
         newLayoutElement.ignoreLayout = oldLayoutElement.ignoreLayout;
@@ -368,7 +374,7 @@ public class PrefabProxy : MonoBehaviour {
     else {
       _Instance = (GameObject)GameObject.Instantiate(Prefab);
 
-      _Instance.name = name+"(Proxy)";
+      _Instance.name = name + "(Proxy)";
 
       _Instance.transform.SetParent(transform);
 
@@ -396,7 +402,7 @@ public class PrefabProxy : MonoBehaviour {
 
       return _Instance;
     }
-	}
+  }
 
   private void ExpandReferences(GameObject instance) {
     for (int i = 0; i < ModifiedValues.Count; i++) {
@@ -423,11 +429,11 @@ public class PrefabProxy : MonoBehaviour {
       FieldSetter setter;
       object component;
 
-      if(ModifiedLocalReferences[i].FindField(instance, out component, out type, out setter)) {
+      if (ModifiedLocalReferences[i].FindField(instance, out component, out type, out setter)) {
         try {
           setter(component, ModifiedLocalReferences[i].GetReferencedObject(instance, type));
         }
-        catch( Exception ex) {
+        catch (Exception ex) {
           DAS.Error(this, "Error Applying Modified Local Reference " + ModifiedLocalReferences[i]);
           DAS.Error(this, ex);
         }
@@ -442,11 +448,11 @@ public class PrefabProxy : MonoBehaviour {
       FieldSetter setter;
       object component;
 
-      if(ModifiedGlobalReferences[i].FindField(instance, out component, out type, out setter)) {
+      if (ModifiedGlobalReferences[i].FindField(instance, out component, out type, out setter)) {
         try {
           setter(component, ModifiedGlobalReferences[i].Reference);
         }
-        catch( Exception ex) {
+        catch (Exception ex) {
           DAS.Error(this, "Error Applying Modified Global Reference " + ModifiedGlobalReferences[i]);
           DAS.Error(this, ex);
         }

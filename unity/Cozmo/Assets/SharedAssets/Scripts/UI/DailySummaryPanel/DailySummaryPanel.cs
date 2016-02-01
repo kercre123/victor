@@ -6,7 +6,7 @@ using DataPersistence;
 using Cozmo.UI;
 using Anki.Cozmo;
 
-public class DailySummaryPanel : MonoBehaviour {
+public class DailySummaryPanel : BaseView {
 
   // Animation Names
   private const string kIdleAnimationName = "Idle";
@@ -18,10 +18,7 @@ public class DailySummaryPanel : MonoBehaviour {
   private const string kLevelReachedAnimationNameB = "LevelReachedB";
   private const string kMaxLevelAnimationNameB = "MaxLevelB";
 
-
-
-  [SerializeField]
-  private Button _CloseButton;
+  public Cozmo.HomeHub.TimelineView.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
 
   [SerializeField]
   private AnkiTextLabel _Title;
@@ -62,22 +59,17 @@ public class DailySummaryPanel : MonoBehaviour {
   private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
   private FriendshipProgressionConfig _Config;
 
-  private void Awake() {
-    _CloseButton.onClick.AddListener(HandleCloseClicked);
-  }
+  protected override void CleanUp() {
 
-  private void HandleCloseClicked() {
-    // Probably want to do something better than this.
-    GameObject.Destroy(gameObject);
   }
 
   public void Initialize(TimelineEntryData data) {
     int day = data.Date.Day;
     int month = data.Date.Month;
 
-    _Title.text = string.Format(_Title.DisplayText, month, day);
+    _Title.FormattingArgs = new object[] { month, day };
 
-    _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateFriendshipProgress(data.Progress, data.Goals));
+    _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateDailyGoalProgress(data.Progress, data.Goals));
 
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var stat = (ProgressionStatType)i;
@@ -103,6 +95,10 @@ public class DailySummaryPanel : MonoBehaviour {
       CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, subContainer);
     }
 
+    AnimateFriendshipBar(data);
+  }
+
+  public void AnimateFriendshipBar(TimelineEntryData data) {
     StartCoroutine(FriendshipBarCoroutine(data));
   }
 
@@ -147,7 +143,7 @@ public class DailySummaryPanel : MonoBehaviour {
 
   private IEnumerator FriendshipBarCoroutine(TimelineEntryData data) {
 
-    var levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    var levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
 
     int startingPoints = data.StartingFriendshipPoints;
     float pointsRequired, startingPercent, endingPercent;
@@ -223,6 +219,9 @@ public class DailySummaryPanel : MonoBehaviour {
     }
 
     yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent));
+    if (FriendshipBarAnimateComplete != null) {
+      FriendshipBarAnimateComplete(data, this);
+    }
   }
 
   // sets the labels on the friendship timeline

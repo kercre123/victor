@@ -19,10 +19,10 @@
     ]
   },
   "minigame.text.playerWins": {
-    "translation": "You win!"
+    "translation": "WINNER: PLAYER"
   },
   "minigame.text.cozmoWins": {
-    "translation": "Cozmo wins!"
+    "translation": "WINNER: COZMO"
   },
   "minigame.quitView.title": {
     "translation": "Return to Main Menu?"

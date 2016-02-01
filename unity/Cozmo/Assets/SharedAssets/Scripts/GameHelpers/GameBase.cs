@@ -36,7 +36,7 @@ public abstract class GameBase : MonoBehaviour {
 
     _WonChallenge = true;
     string primaryText = primaryTextOverride;
-    if (!string.IsNullOrEmpty(primaryText)) {
+    if (string.IsNullOrEmpty(primaryText)) {
       primaryText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
     }
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
@@ -48,10 +48,9 @@ public abstract class GameBase : MonoBehaviour {
 
   public void RaiseMiniGameLose(string primaryTextOverride = "", string secondaryTextOverride = "") {
     _StateMachine.Stop();
-
     _WonChallenge = false;
     string primaryText = primaryTextOverride;
-    if (!string.IsNullOrEmpty(primaryText)) {
+    if (string.IsNullOrEmpty(primaryText)) {
       primaryText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     }
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
@@ -203,14 +202,16 @@ public abstract class GameBase : MonoBehaviour {
     _RewardedXp = new StatContainer();
 
     foreach (var statType in StatContainer.sKeys) {
-      // TODO: Check that this is a goal xp
-      int grantedXp = ComputeXpForStat(statType);
-      if (grantedXp != 0) {
-        _RewardedXp[statType] = grantedXp;
-        _ChallengeEndViewInstance.AddReward(statType, grantedXp);
+      // Check that this is a goal xp
+      if (DailyGoalManager.Instance.HasGoalForStat(statType)) {
+        int grantedXp = ComputeXpForStat(statType);
+        if (grantedXp != 0) {
+          _RewardedXp[statType] = grantedXp;
+          _ChallengeEndViewInstance.AddReward(statType, grantedXp);
 
-        // Grant right away even if there are animations in the daily goal ui
-        CurrentRobot.AddToProgressionStat(statType, grantedXp);
+          // Grant right away even if there are animations in the daily goal ui
+          CurrentRobot.AddToProgressionStat(statType, grantedXp);
+        }
       }
     }
   }

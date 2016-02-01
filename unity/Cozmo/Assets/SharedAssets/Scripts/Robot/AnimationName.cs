@@ -36,6 +36,7 @@ public static class AnimationName {
   public const string kccMisch = "ID_catCatch_mischievous";
   public const string kreactToMotion = "ID_MotionFollow_ReactToMotion";
   public const string kByeBye = "ID_ByeBye";
+  public const string kEnd = "ID_end";
 
   public const string kIdleBrickout = "ID_idle_brickout";
   public const string kIdleHumming = "ID_idle_humming";

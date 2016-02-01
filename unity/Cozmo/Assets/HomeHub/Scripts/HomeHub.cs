@@ -50,11 +50,7 @@ namespace Cozmo.HomeHub {
 
     private void ShowTimelineDialog() {
       // Create dialog with the game prefabs
-      GameObject newView = GameObject.Instantiate(_TimelineViewPrefab.gameObject);
-      newView.transform.position = Vector3.zero;
-      newView.transform.SetParent(UIManager.GetUICanvas().transform, false);
-
-      _TimelineViewInstance = newView.GetComponent<TimelineView>();
+      _TimelineViewInstance = UIManager.OpenView(_TimelineViewPrefab) as TimelineView;
       _TimelineViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _TimelineViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _TimelineViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
@@ -62,6 +58,7 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _TimelineViewInstance.Initialize(_ChallengeStatesById);
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("ID_idle_brickout");
+      DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -88,6 +85,21 @@ namespace Cozmo.HomeHub {
 
       // Play minigame immediately
       PlayMinigame(_ChallengeStatesById[challengeClicked].data);
+    }
+
+    private void HandleStartChallengeRequest(string challengeRequested) {
+
+      // Keep track of the current challenge
+      _CurrentChallengePlaying = new CompletedChallengeData() {
+        ChallengeId = challengeRequested,
+        StartTime = System.DateTime.UtcNow,
+      };
+
+      // Close dialog
+      CloseTimelineDialog();
+
+      // Play minigame immediately
+      PlayMinigame(_ChallengeStatesById[challengeRequested].data);
     }
 
     private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -172,6 +184,7 @@ namespace Cozmo.HomeHub {
         _TimelineViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
         _TimelineViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
       }
+      DailyGoalManager.Instance.MinigameConfirmed -= HandleStartChallengeRequest;
     }
 
     private void LoadChallengeData(ChallengeDataList sourceChallenges, 

@@ -16,6 +16,21 @@ namespace Cozmo {
         }
       }
 
+      public static Vector4 GetAtlasUVs(Sprite graphic) {
+        float textureAtlasPixelWidth = graphic.texture.width;
+        float xMinNormalizedUV = graphic.textureRect.xMin / textureAtlasPixelWidth;
+        float xMaxNormalizedUV = graphic.textureRect.xMax / textureAtlasPixelWidth;
+
+        float textureAtlasPixelHeight = graphic.texture.height;
+        float yMinNormalizedUV = graphic.textureRect.yMin / textureAtlasPixelHeight;
+        float yMaxNormalizedUV = graphic.textureRect.yMax / textureAtlasPixelHeight;
+
+        return new Vector4(xMinNormalizedUV,
+          yMinNormalizedUV,
+          xMaxNormalizedUV - xMinNormalizedUV,
+          yMaxNormalizedUV - yMinNormalizedUV);
+      }
+
       [SerializeField]
       private GameObject _FullScreenButtonPrefab;
 
@@ -28,6 +43,13 @@ namespace Cozmo {
 
       public AlertView AlertViewPrefab {
         get { return _AlertViewPrefab; }
+      }
+
+      [SerializeField]
+      private AlertView _AlertViewPrefab_NoText;
+
+      public AlertView AlertViewPrefab_NoText {
+        get { return _AlertViewPrefab_NoText; }
       }
 
       [SerializeField]
@@ -45,20 +67,6 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private Anki.UI.AnkiButton _DefaultButtonPrefab;
-
-      public Anki.UI.AnkiButton DefaultButtonPrefab {
-        get { return _DefaultButtonPrefab; }
-      }
-
-      [SerializeField]
-      private Anki.UI.AnkiTextLabel _DefaultTextPrefab;
-
-      public Anki.UI.AnkiTextLabel DefaultTextPrefab {
-        get { return _DefaultTextPrefab; }
-      }
-
-      [SerializeField]
       private GameStateSlide _ShowCozmoCubeSlide;
 
       public GameStateSlide InitialCubesSlide {
@@ -66,10 +74,31 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private Material _SoftClippingMaterial;
+      private Shader _GradiantSimpleClippingShader;
 
-      public Material SoftClippingMaterial {
-        get { return _SoftClippingMaterial; }
+      public Shader GradiantSimpleClippingShader {
+        get { return _GradiantSimpleClippingShader; }
+      }
+
+      [SerializeField]
+      private Shader _GradiantComplexClippingShader;
+
+      public Shader GradiantComplexClippingShader {
+        get { return _GradiantComplexClippingShader; }
+      }
+
+      [SerializeField]
+      private Shader _GrayscaleShader;
+
+      public Shader GrayscaleShader {
+        get { return _GrayscaleShader; }
+      }
+
+      [SerializeField]
+      private Shader _AnimatedGlintShader;
+
+      public Shader AnimatedGlintShader {
+        get { return _AnimatedGlintShader; }
       }
     }
   }

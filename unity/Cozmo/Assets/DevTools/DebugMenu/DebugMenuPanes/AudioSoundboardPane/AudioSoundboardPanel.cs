@@ -208,8 +208,7 @@ namespace Anki {
           ParameterType parameterType = _audioClient.GetParameters()[_ParameterDropdown.value];
           float sliderValue = _RTPCSlider.value;
           Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
-
-          // TODO: Add PostGameState call
+          _audioClient.PostParameter(parameterType, sliderValue, selectedGameObj);
           _AppendLogEvent("Post RTPC: " + parameterType.ToString() + " : " + sliderValue.ToString() + " GameObj: " + selectedGameObj.ToString());
         }
       }

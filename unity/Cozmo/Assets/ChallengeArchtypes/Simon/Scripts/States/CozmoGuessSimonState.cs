@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using AnimationGroups;
 
 namespace Simon {
   public class CozmoGuessSimonState : State {
@@ -43,7 +42,7 @@ namespace Simon {
       else {
         // Determine if Cozmo wins on the last color of the sequence
         float coinFlip = Random.Range(0f, 1f);
-        if (coinFlip > _GameInstance.CozmoWinPercentage) {
+        if (coinFlip > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
           _ShouldWinGame = false;
           int correctId = _CurrentSequence[_CurrentSequenceIndex];
           List<int> blockIds = new List<int>();
@@ -109,7 +108,7 @@ namespace Simon {
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
       BlackoutLights();
-      _GameInstance.RaiseMiniGameWin();
+      _GameInstance.RaiseMiniGameWin("WINNER: PLAYER", "Guess Length: " + _CurrentSequence.Count);
     }
 
     private void BlackoutLights() {
