@@ -127,7 +127,7 @@ public class DailyGoalManager : MonoBehaviour {
     }
   }
 
-  void Awake() {
+  void Start() {
     Instance = this;
     RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;

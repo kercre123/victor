@@ -89,6 +89,88 @@ NavMeshSettings:
 Transform:
   m_PrefabParentObject: {fileID: 470864, guid: 7b7a57b40595f4c89ae6caa8d458e89f, type: 2}
   m_PrefabInternal: {fileID: 1448825417}
+--- !u!1001 &31358387
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 1967355400}
+    m_Modifications:
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: -7.62939453e-06
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 700
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_AnchorMin.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_AnchorMin.y
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_AnchorMax.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_AnchorMax.y
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_Pivot.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22453604, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+      propertyPath: m_Pivot.y
+      value: .5
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+  m_IsPrefabParent: 0
 --- !u!1 &261074295
 GameObject:
   m_ObjectHideFlags: 0
@@ -694,6 +776,11 @@ Prefab:
 Transform:
   m_PrefabParentObject: {fileID: 434442, guid: a8b040144e658400aa27dad0eddfa730, type: 2}
   m_PrefabInternal: {fileID: 1822022317}
+--- !u!224 &1967355400 stripped
+RectTransform:
+  m_PrefabParentObject: {fileID: 22432476, guid: 4c907f46693e946a28129e509372244a,
+    type: 2}
+  m_PrefabInternal: {fileID: 667513731}
 --- !u!4 &2007970426 stripped
 Transform:
   m_PrefabParentObject: {fileID: 461244, guid: 66c2fdefd291b416c94c699822cbd062, type: 2}
