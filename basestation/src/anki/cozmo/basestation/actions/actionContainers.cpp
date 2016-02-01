@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 
 #include "util/logging/logging.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -262,6 +263,7 @@ namespace Anki {
         CORETECH_ASSERT(action != nullptr);
         
         if(withType == RobotActionType::UNKNOWN || action->GetType() == withType) {
+          Util::SafeDelete(action);
           _queue.erase(iter);
           found = true;
         }
@@ -284,6 +286,7 @@ namespace Anki {
                                 "Multiple actions with tag=%d found in queue.\n",
                                 idTag);
           }
+          Util::SafeDelete(action);
           _queue.erase(iter);
           found = true;
         }

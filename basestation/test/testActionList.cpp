@@ -28,6 +28,7 @@ class TestAction : public IAction
 {
   public:
     TestAction(std::string name, RobotActionType type);
+    virtual ~TestAction() { }
     virtual const std::string& GetName() const override { return _name; }
     virtual RobotActionType GetType() const override { return _type; }
     Robot* GetRobot() { return _robot; }
@@ -63,6 +64,7 @@ class TestInterruptAction : public IAction
 {
 public:
   TestInterruptAction(std::string name, RobotActionType type);
+  virtual ~TestInterruptAction() { };
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
   Robot* GetRobot() { return _robot; }
@@ -94,6 +96,7 @@ class TestCompoundActionSequential : public CompoundActionSequential
 {
 public:
   TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions);
+  virtual ~TestCompoundActionSequential() { };
   virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
 };
 
@@ -108,6 +111,7 @@ class TestCompoundActionParallel : public CompoundActionParallel
 {
 public:
   TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions);
+  virtual ~TestCompoundActionParallel() { };
   virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
 };
 
@@ -122,6 +126,7 @@ class TestActionWithinAction : public IAction
 {
 public:
   TestActionWithinAction(std::string name, RobotActionType type);
+  virtual ~TestActionWithinAction() { };
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
   Robot* GetRobot() { return _robot; }
@@ -273,7 +278,6 @@ TEST(QueueAction, ThreeActionsCancelSecond)
   r.GetActionList().Cancel(0, RobotActionType::TURN_IN_PLACE);
   
   EXPECT_EQ(testAction1->GetRobot(), &r);
-  EXPECT_EQ(testAction2->GetRobot(), &r);
   EXPECT_EQ(testAction3->GetRobot(), &r);
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
@@ -307,9 +311,6 @@ TEST(QueueAction, ThreeActionsCancelAll)
   r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
   r.GetActionList().Cancel(0, RobotActionType::WAIT);
   
-  EXPECT_EQ(testAction1->GetRobot(), &r);
-  EXPECT_EQ(testAction2->GetRobot(), &r);
-  EXPECT_EQ(testAction3->GetRobot(), &r);
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
