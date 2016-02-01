@@ -222,7 +222,7 @@ namespace Vision {
       INT32        oldestData = 0;
       TimeStamp_t  lastEnrollmentTimeStamp = 0;
     };
-    std::map<INT32,EnrollmentStatus> _enrollmentStatus;
+    std::map<Vision::TrackedFace::ID_t,EnrollmentStatus> _enrollmentStatus;
     
     //u8* _workingMemory = nullptr;
     //u8* _backupMemory  = nullptr;
