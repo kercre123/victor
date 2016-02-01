@@ -193,11 +193,11 @@ namespace Anki {
         {
           IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
           _actionsInProgress.insert(moveHeadAction->GetTag());
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          robot.GetActionList().QueueActionAtEnd(moveHeadAction);
           
           IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
           _actionsInProgress.insert(moveLiftAction->GetTag());
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
+          robot.GetActionList().QueueActionAtEnd(moveLiftAction);
           
           if (StartMoving(robot) == RESULT_OK) {
             _currentState = State::DrivingAround;
@@ -211,7 +211,7 @@ namespace Anki {
           turnAction->SetMaxSpeed(DEG_TO_RAD(kDegreesRotatePerSec));
           _currentLookActionID = turnAction->GetTag();
           _actionsInProgress.insert(_currentLookActionID);
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, turnAction);
+          robot.GetActionList().QueueActionAtEnd(turnAction);
           
           _currentState = State::LookingForObject;
         }
@@ -233,7 +233,7 @@ namespace Anki {
           DriveToPickupObjectAction* pickupObjectAction = new DriveToPickupObjectAction(_selectedObjectID);
           _currentPickupObjectActionID = pickupObjectAction->GetTag();
           _actionsInProgress.insert(_currentPickupObjectActionID);
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupObjectAction);
+          robot.GetActionList().QueueActionAtEnd(pickupObjectAction);
           
           _currentState = State::PickingUpObject;
           
@@ -248,7 +248,7 @@ namespace Anki {
           PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, _moveAreaCenter);
           _currentPlaceObjectActionID = placeObjectAction->GetTag();
           _actionsInProgress.insert(_currentPlaceObjectActionID);
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, placeObjectAction);
+          robot.GetActionList().QueueActionAtEnd(placeObjectAction);
           
           _currentState = State::ReturningObjectToCenter;
           
@@ -315,7 +315,7 @@ namespace Anki {
                                                             false);
       _currentDriveActionID = goToPoseAction->GetTag();
       _actionsInProgress.insert(_currentDriveActionID);
-      robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
+      robot.GetActionList().QueueActionAtEnd(goToPoseAction, 3);
       return RESULT_OK;
     }
     

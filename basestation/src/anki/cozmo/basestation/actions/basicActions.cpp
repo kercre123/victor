@@ -906,7 +906,7 @@ namespace Anki {
           inSlot = Robot::DriveAndManipulateSlot;
         }
 
-        _robot->GetActionList().QueueActionNext(inSlot, new TrackObjectAction(_objectID));
+        _robot->GetActionList().QueueActionNext(new TrackObjectAction(_objectID));
       }
 
       return ActionResult::SUCCESS;

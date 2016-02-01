@@ -105,12 +105,12 @@ namespace Anki {
       // Queue an action into a specific slot. If that slot does not exist
       // (perhaps because it completed before this call) it will be created.
       // These wrap correspondong QueueFoo() methods in ActionQueue.
-      Result     QueueActionNext(SlotHandle  atSlot, IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionNext(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionAtEnd(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionNow(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionAtFront(IActionRunner* action, u8 numRetries = 0);
       
-      Result     QueueAction(SlotHandle atSlot, QueueActionPosition inPosition,
+      Result     QueueAction(QueueActionPosition inPosition,
                              IActionRunner* action, u8 numRetries = 0);
       
       bool       IsEmpty() const;

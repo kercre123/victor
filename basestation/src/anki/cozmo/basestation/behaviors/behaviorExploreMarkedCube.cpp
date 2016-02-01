@@ -104,7 +104,7 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
   // request the action
   DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _currentVantagePoints );
   _currentActionTag = driveToPoseAction->GetTag();
-  robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveToPoseAction);
+  robot.GetActionList().QueueActionNow(driveToPoseAction);
 
   return Result::RESULT_OK;
 }

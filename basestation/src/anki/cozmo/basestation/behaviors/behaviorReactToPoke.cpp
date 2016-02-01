@@ -200,7 +200,7 @@ void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
   {
     
     _lastActionTag = action->GetTag();
-    robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, action);
+    robot.GetActionList().QueueActionAtEnd(action);
     _isActing = true;
   }
 

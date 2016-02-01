@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -32,36 +33,41 @@ namespace Anki {
       Clear();
     }
     
-    Result ActionList::QueueAction(SlotHandle inSlot, QueueActionPosition inPosition,
+    Result ActionList::QueueAction(QueueActionPosition inPosition,
                                    IActionRunner* action, u8 numRetries)
     {
       switch(inPosition)
       {
         case QueueActionPosition::NOW:
         {
-          QueueActionNow(inSlot, action, numRetries);
+          QueueActionNow(action, numRetries);
           break;
         }
         case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
         {
           // Cancel all queued actions and make this action the next thing in it
           Cancel();
-          QueueActionNext(inSlot, action, numRetries);
+          QueueActionNext(action, numRetries);
           break;
         }
         case QueueActionPosition::NEXT:
         {
-          QueueActionNext(inSlot, action, numRetries);
+          QueueActionNext(action, numRetries);
           break;
         }
         case QueueActionPosition::AT_END:
         {
-          QueueActionAtEnd(inSlot, action, numRetries);
+          QueueActionAtEnd(action, numRetries);
           break;
         }
         case QueueActionPosition::NOW_AND_RESUME:
         {
-          QueueActionAtFront(inSlot, action, numRetries);
+          QueueActionAtFront(action, numRetries);
+          break;
+        }
+        case QueueActionPosition::IN_PARALLEL:
+        {
+          AddConcurrentAction(action, numRetries);
           break;
         }
         default:
@@ -76,28 +82,28 @@ namespace Anki {
       return RESULT_OK;
     } // QueueAction()
     
-    Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionNext(IActionRunner* action, u8 numRetries)
     {
       action->SetRobot(*_robot);
-      return _queues[atSlot].QueueNext(action, numRetries);
+      return _queues[0].QueueNext(action, numRetries);
     }
     
-    Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionAtEnd(IActionRunner* action, u8 numRetries)
     {
       action->SetRobot(*_robot);
-      return _queues[atSlot].QueueAtEnd(action, numRetries);
+      return _queues[0].QueueAtEnd(action, numRetries);
     }
     
-    Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionNow(IActionRunner* action, u8 numRetries)
     {
       action->SetRobot(*_robot);
-      return _queues[atSlot].QueueNow(action, numRetries);
+      return _queues[0].QueueNow(action, numRetries);
     }
     
-    Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionAtFront(IActionRunner* action, u8 numRetries)
     {
       action->SetRobot(*_robot);
-      return _queues[atSlot].QueueAtFront(action, numRetries);
+      return _queues[0].QueueAtFront(action, numRetries);
     }
     
     bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
@@ -190,6 +196,8 @@ namespace Anki {
         return -1;
       }
       
+      action->SetRobot(*_robot);
+
       // Find an empty slot
       SlotHandle currentSlot = 0;
       while(_queues.find(currentSlot) != _queues.end()) {

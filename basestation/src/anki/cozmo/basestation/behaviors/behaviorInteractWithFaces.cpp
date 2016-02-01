@@ -206,7 +206,7 @@ namespace Cozmo {
     // Always turn to look at the face before any reaction
     FacePoseAction* facePoseAction = new FacePoseAction(face->GetHeadPose(), DEG_TO_RAD(179));
     facePoseAction->SetPanTolerance( DEG_TO_RAD(0.5) );
-    robot.GetActionList().QueueAction(IBehavior::sActionSlot, QueueActionPosition::NOW, facePoseAction);
+    robot.GetActionList().QueueAction(QueueActionPosition::NOW, facePoseAction);
                                       
     
     // If we haven't played our init anim yet for this face and it's been awhile
@@ -234,7 +234,7 @@ namespace Cozmo {
     trackAction->SetMoveEyes(true);
     _trackActionTag = trackAction->GetTag();
     trackAction->SetUpdateTimeout(kTrackingTimeout_sec);
-    robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::AT_END, trackAction);
+    robot.GetActionList().QueueAction(QueueActionPosition::AT_END, trackAction);
     
     UpdateBaselineFace(robot, face);
     
@@ -409,7 +409,7 @@ namespace Cozmo {
               new MoveHeadToAngleAction(headAngle),
             });
             _lastActionTag = moveHeadAction->GetTag();
-            robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, moveHeadAction);
+            robot.GetActionList().QueueActionNow(moveHeadAction);
             
             _isActing = true;
             break;
@@ -563,7 +563,7 @@ namespace Cozmo {
                                                 QueueActionPosition position)
   {
     PlayAnimationAction* animAction = new PlayAnimationAction(animName);
-    robot.GetActionList().QueueAction(IBehavior::sActionSlot, position, animAction);
+    robot.GetActionList().QueueAction(position, animAction);
     _lastActionTag = animAction->GetTag();
     _isActing = true;
   }

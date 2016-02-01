@@ -150,7 +150,7 @@ namespace Cozmo {
         _queuedActionTag = fidgetAction->GetTag();
         _currentActionMustComplete = fidgetIter->second->_mustComplete;
         
-        robot.GetActionList().QueueActionNext(IBehavior::sActionSlot, fidgetAction);
+        robot.GetActionList().QueueActionNext(fidgetAction);
         
         fidgetIter->second->_lastTimeUsed_sec = currentTime_sec;
       }

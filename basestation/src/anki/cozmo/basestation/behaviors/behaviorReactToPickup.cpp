@@ -90,7 +90,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double cur
       {
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
-        robot.GetActionList().QueueActionNow(0, newAction);
+        robot.GetActionList().QueueActionNow(newAction);
         animIndex = ++animIndex % _animReactions.size();
       }
       _waitingForAnimComplete = true;

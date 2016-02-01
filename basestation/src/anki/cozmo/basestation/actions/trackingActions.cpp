@@ -230,7 +230,7 @@ ActionResult ITrackAction::CheckIfDone()
     if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
-      _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation, 1, false));
+      _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_turningSoundAnimation, 1, false));
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }

@@ -634,7 +634,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
   }
   
   // Everything's ok and we have an action, so queue it
-  robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, newAction, numRetries);
+  robot.GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
 }
   
 void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -652,7 +652,14 @@ void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterfac
   
   // Put the action in the given position of the specified queue:
   action->SetTag(msg.idTag);
-  robot->GetActionList().QueueAction(msg.inSlot, msg.position, action, msg.numRetries);
+  if(msg.inSlot != Robot::DriveAndManipulateSlot)
+  {
+    robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, action, msg.numRetries);
+  }
+  else
+  {
+    robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
+  }
 }
   
 void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -686,7 +693,14 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
   
   // Put the action in the given position of the specified queue:
   compoundAction->SetTag(msg.idTag);
-  robot->GetActionList().QueueAction(msg.inSlot, msg.position, compoundAction, msg.numRetries);
+  if(msg.inSlot != Robot::DriveAndManipulateSlot)
+  {
+    robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, compoundAction, msg.numRetries);
+  }
+  else
+  {
+    robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
+  }
 }
   
 void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -712,7 +726,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
       
       // Put the block down right here
       IActionRunner* newAction = new PlaceObjectOnGroundAction();
-      robot->GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, newAction);
+      robot->GetActionList().QueueAction(QueueActionPosition::NOW, newAction);
     }
     else {
       // In the normal case directly set the lift height
@@ -721,7 +735,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
       action->SetLiftAccel(msg.accel_rad_per_sec2);
       action->SetDuration(msg.duration_sec);
       
-      robot->GetActionList().QueueAction(Robot::DriveAndManipulateSlot, QueueActionPosition::NOW, action);
+      robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
     }
   }
 }
