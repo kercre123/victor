@@ -11,6 +11,7 @@
  *
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
@@ -28,6 +29,7 @@ using namespace ExternalInterface;
 static const char* kRequestAnimNameKey = "request_animName";
 static const char* kDenyAnimNameKey = "deny_animName";
 static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
+static const char* kMinRequestDelay = "minRequestDelay_s";
 
 
 BehaviorRequestGameZeroBlocks::BehaviorRequestGameZeroBlocks(Robot& robot, const Json::Value& config)
@@ -70,6 +72,13 @@ BehaviorRequestGameZeroBlocks::BehaviorRequestGameZeroBlocks(Robot& robot, const
         _maxFaceAge_ms = val.asUInt();
       }
     }
+
+    {
+      const Json::Value& val = config[kMinRequestDelay];
+      if( val.isDouble() ) {
+        _minRequestDelay_s = val.asFloat();
+      }
+    }
   }
 
   SubscribeToTags({{
@@ -96,8 +105,10 @@ bool BehaviorRequestGameZeroBlocks::IsRunnable(const Robot& robot, double curren
   
   const bool hasFace = lastObservedFaceTime > 0 && lastObservedFaceTime + _maxFaceAge_ms > currTime_ms;
   const bool doingSoemthing = _isActing;
-  
-  return hasFace || doingSoemthing;
+
+  const bool ret = hasFace || doingSoemthing;
+
+  return ret;
 }
 
 Result BehaviorRequestGameZeroBlocks::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
@@ -120,6 +131,8 @@ Result BehaviorRequestGameZeroBlocks::InitInternal(Robot& robot, double currentT
     StartActing(robot, action);
 
     _state = State::LookingAtFace;
+
+    _requestTime_s = -1.0f;
   }
   
   return RESULT_OK;
@@ -147,6 +160,9 @@ Result BehaviorRequestGameZeroBlocks::InterruptInternal(Robot& robot, double cur
         return Result::RESULT_FAIL;
 
       case State::TrackingFace:
+        if( _requestTime_s >= 0.0f && currentTime_sec < _requestTime_s + _minRequestDelay_s ) {
+          return Result::RESULT_FAIL;
+        }
         // handled in StopInternal
         break;
     }
@@ -207,7 +223,10 @@ void BehaviorRequestGameZeroBlocks::HandleActionCompleted(Robot& robot,
       switch( _state ) {
         case State::LookingAtFace: {
           if( msg.result == ActionResult::SUCCESS ) {
-            StartActing( robot, new PlayAnimationAction(_requestAnimationName) );
+
+            IActionRunner* animationAction = new PlayAnimationAction(_requestAnimationName);
+            
+            StartActing( robot, animationAction );
             _state = State::PlayingRequstAnim;
             PRINT_NAMED_DEBUG("BehaviorRequestGameZeroBlocks.PlayRequestAnim",
                               "playing request animation '%s'",
@@ -227,6 +246,8 @@ void BehaviorRequestGameZeroBlocks::HandleActionCompleted(Robot& robot,
           PRINT_NAMED_INFO("BehaviorRequestGameZeroBlocks.Request",
                            "behavior is sending a game start request");
           robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::RequestGameStart() ) );
+
+          _minRequestDelay_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
           _state = State::TrackingFace;
 

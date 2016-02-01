@@ -74,12 +74,19 @@ private:
 
   State         _state = State::LookingAtFace;
 
-  Face::ID_t    _faceID = Face::UnknownFace;
-  
+  // params
+
   std::string   _requestAnimationName;
   std::string   _denyAnimationName;
 
   u32           _maxFaceAge_ms = 30000;
+  f32           _minRequestDelay_s = 3.0f;
+
+  // internal variables
+  
+  Face::ID_t    _faceID = Face::UnknownFace;
+  
+  f32           _requestTime_s = -1.0f;
   
   u32           _lastActionTag = 0;
   bool          _isActing = false;
