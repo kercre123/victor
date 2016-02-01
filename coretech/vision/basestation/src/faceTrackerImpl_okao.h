@@ -189,7 +189,8 @@ namespace Vision {
     
     Result RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                          const DETECTION_INFO& detectionInfo, TimeStamp_t timestamp,
-                         Vision::TrackedFace::ID_t& faceID);
+                         Vision::TrackedFace::ID_t& faceID,
+                         INT32& recognitionScore);
     
     Result MergeFaces(Vision::TrackedFace::ID_t keepID, Vision::TrackedFace::ID_t mergeID);
 
@@ -782,7 +783,8 @@ namespace Vision {
   
   Result FaceTracker::Impl::RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                                           const DETECTION_INFO& detectionInfo, TimeStamp_t timestamp,
-                                          Vision::TrackedFace::ID_t& faceID)
+                                          Vision::TrackedFace::ID_t& faceID,
+                                          INT32& recognitionScore)
   {
     INT32 okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
                                                   dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
@@ -797,6 +799,8 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+    const INT32 MaxScore = 1000;
+    
     if(numUsersInAlbum == 0 && allowAddNewFace) {
       // Nobody in album yet, add this person
       PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingFirstUser",
@@ -806,6 +810,7 @@ namespace Vision {
         return lastResult;
       }
       faceID = _lastRegisteredUserID;
+      recognitionScore = MaxScore;
     } else {
       INT32 resultNum = 0;
       const s32 MaxResults = 2;
@@ -873,6 +878,7 @@ namespace Vision {
           }
           
           faceID = oldestID;
+          recognitionScore = scores[0];
           
         } else if(allowAddNewFace) {
           // No match found, add new user
@@ -883,6 +889,7 @@ namespace Vision {
             return lastResult;
           }
           faceID = _lastRegisteredUserID;
+          recognitionScore = MaxScore;
         }
       }
     }
@@ -1061,15 +1068,15 @@ namespace Vision {
       // Face Recognition:
       TrackingData& trackingData = _trackingData[trackerID];
       Vision::TrackedFace::ID_t faceID = trackingData.assignedID;
+      INT32 recognitionScore = 0;
       if(facePartsFound)
       {
         Vision::TrackedFace::ID_t recognizedID = Vision::TrackedFace::UnknownFace;
-        //INT32 recognitionScore = 0;
         
         Tic("FaceRecognition");
         Result recognitionResult = RecognizeFace(nWidth, nHeight, dataPtr,
                                                  detectionInfo, frameOrig.GetTimestamp(),
-                                                 recognizedID);
+                                                 recognizedID, recognitionScore);
         if(RESULT_OK != recognitionResult) {
           // Full-on failure of recognition, just leave faceID whatever it was
           PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceRecognitionFailed",
@@ -1085,7 +1092,6 @@ namespace Vision {
           // We have not yet assigned a recognition ID to this tracker ID. Use the
           // one we just found via recognition.
           faceID = recognizedID;
-          
           
         } else if(faceID != recognizedID) {
           // We recognized this face as a different ID than the one currently
@@ -1137,6 +1143,7 @@ namespace Vision {
       } // if(facePartsFound)
       
       face.SetID(faceID); // could be unknown!
+      face.SetScore(recognitionScore); // could still be zero!
       if(TrackedFace::UnknownFace == faceID) {
         face.SetName("Unknown");
       } else {
