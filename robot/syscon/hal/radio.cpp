@@ -82,6 +82,7 @@ static const uint32_t ADVERTISE_BASE = 0xC2C2C2C2;
 
 static const int ROBOT_PAIR_PIPE = 1;
 static const int CUBE_ADVERT_PIPE = 2;
+static const int CUBE_TALK_PIPE = 0;
 
 static const int ADV_CHANNEL = 81;
 
@@ -107,14 +108,16 @@ static const uesb_address_desc_t AdvertiseAddress = {
   ADV_CHANNEL,
   UNUSED_BASE, 
   ADVERTISE_BASE,
-  ADVERTISE_PREFIX
+  ADVERTISE_PREFIX,
+  0xFF
 };
 
 static uesb_address_desc_t TalkAddress = {
   0,
   ADVERTISE_BASE,
   UNUSED_BASE,
-  COMMUNICATE_PREFIX 
+  COMMUNICATE_PREFIX,
+  0xFF
 };
 
 static AccessorySlot accessories[MAX_ACCESSORIES];
@@ -182,7 +185,6 @@ void Radio::init() {
     UESB_TX_POWER_0DBM,
     PACKET_SIZE,
     5,    // Address length
-    0xFF,
     2     // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
@@ -238,7 +240,7 @@ static void EnterState(RadioState state) {
   switch (state) {
     case RADIO_FIND_CHANNEL:
       locateTimeout = LOCATE_TIMEOUT;  
-      TalkAddress.rf_channel = 0;
+      TalkAddress.rf_channel = 0x20;
       memset(currentNoiseLevel, 0, sizeof(currentNoiseLevel));
       uesb_set_rx_address(&TalkAddress);
       break ;
@@ -251,11 +253,10 @@ static void EnterState(RadioState state) {
   }
 }
 
-static bool turn_around = false;
 static void send_dummy_byte(void) {
-  // This just send garbage
-  uesb_write_tx_payload(&TalkAddress, 1, NULL, 0);
-  turn_around  = true;
+  // This just send garbage and return to pairing mode when finished
+  EnterState(RADIO_PAIRING);
+  uesb_write_tx_payload(&TalkAddress, 0, NULL, 0);
 }
 
 static void send_capture_packet(void* userdata) {
@@ -324,7 +325,11 @@ extern "C" void uesb_event_handler(void)
       break ;
       
     case RADIO_TALKING:
-      AccessorySlot* acc = &accessories[currentAccessory];   
+      if (rx_payload.pipe != CUBE_TALK_PIPE) {
+        break ;
+      }
+      
+      AccessorySlot* acc = &accessories[currentAccessory];
       acc->last_received = 0;
 
       AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
@@ -332,8 +337,8 @@ extern "C" void uesb_event_handler(void)
       SpineProtocol msg;
       msg.opcode = GET_PROP_STATE;
       msg.GetPropState.x = ap->x;
-      msg.GetPropState.x = ap->y;
-      msg.GetPropState.x = ap->z;
+      msg.GetPropState.y = ap->y;
+      msg.GetPropState.z = ap->z;
       msg.GetPropState.shockCount = ap->shockCount;
       Spine::enqueue(msg);
 
@@ -341,13 +346,26 @@ extern "C" void uesb_event_handler(void)
       break ;
     }
   }
-  
-  if(rf_interrupts & UESB_INT_TX_SUCCESS_MSK) {
-    if (turn_around) {
-      turn_around  = false;
-      EnterState(RADIO_PAIRING);
-    }
-  }
+}
+
+// Calculate the weight of a 16-bit color word
+static inline int colorWeight(uint16_t w) {
+  static const int squared[] = {
+    0, 64, 256, 576, 
+    1089, 1681, 2401, 3249, 
+    4356, 5476, 6724, 8100, 
+    9801, 11449, 13225, 15129, 
+    17424, 19600, 21904, 24336, 
+    27225, 29929, 32761, 35721, 
+    39204, 42436, 45796, 49284, 
+    53361, 57121, 61009, 65025
+  };
+
+  return 
+    squared[(w >> 10) & 0x1F] +
+    squared[(w >>  5) & 0x1F] +
+    squared[(w >>  0) & 0x1F] +
+    squared[(w & 0x8000) ? 0x1F : 0];
 }
 
 void Radio::setPropState(unsigned int slot, const uint16_t *state) {
@@ -355,7 +373,13 @@ void Radio::setPropState(unsigned int slot, const uint16_t *state) {
     return ;
   }
 
-  AccessorySlot* acc = &accessories[slot];
+  int sum = 0;
+  for (int i = 0; i < 4; i++) {
+    sum += colorWeight(state[i]);
+  }
+
+  int sq_sum = isqrt(sum);
+
   LEDPacket packet = {
     {
       UNPACK_COLORS(state[0]),
@@ -366,19 +390,11 @@ void Radio::setPropState(unsigned int slot, const uint16_t *state) {
       UNPACK_IR(state[1]),
       UNPACK_IR(state[2]),
       UNPACK_IR(state[3])
-    }
+    },
+    (sq_sum >= 0xFF) ? 1 : (0x255 - sq_sum)
   };
-  
-  int sum = 0;
-  for (int i = 0; i < sizeof(packet.ledStatus); i++) {
-    int byte = packet.ledStatus[i];
-    sum += byte * byte;
-  }
 
-  int sq_sum = isqrt(sum);
-
-  packet.ledDark = (sq_sum & ~0xFF) ? 0 : (0x255 - sq_sum);
-  
+  AccessorySlot* acc = &accessories[slot];
   memcpy(&acc->tx_state, &packet, sizeof(LEDPacket));
 }
 
@@ -438,10 +454,10 @@ void Radio::manage(void* userdata) {
     if (currentAccessory >= MAX_ACCESSORIES) break ;
 
     AccessorySlot* acc = &accessories[currentAccessory];
-    EnterState(RADIO_TALKING);
 
     if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
       // Broadcast to the appropriate device
+      EnterState(RADIO_TALKING);
       uesb_write_tx_payload(&TalkAddress, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
     } else {
       // Timeslice is empty, send a dummy command on the channel so people know to stay away

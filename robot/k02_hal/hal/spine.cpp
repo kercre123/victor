@@ -7,15 +7,14 @@
 #define __BRYON_ROBOT
 
 // This is a temporary mechanic until we get a message for the phone
-static const uint32_t PROP_WHITELIST[] = {
+static const uint32_t PROP_WHITELIST[MAX_CUBES] = {
 #ifdef __BRYON_ROBOT
   0x000000E7,
   0x0000010B,
-  0x000001EE,
-  0x80000030, // 
+  //0x000001EE,
+  //0x80000030,
 #else
 #endif
-  0
 };
 
 namespace Anki {
@@ -32,20 +31,20 @@ namespace HAL {
       msg.SetPropState.slot = prop;
       memcpy((void*)&msg.SetPropState.colors, &g_LedStatus[prop], sizeof(msg.SetPropState.colors));
     } else {
-      if (!PROP_WHITELIST[index]) {
-        index = 0;
-      }
-    
       msg.opcode = ASSIGN_PROP;
       msg.AssignProp.slot = index;
-      msg.AssignProp.prop_id = PROP_WHITELIST[index++];
+      msg.AssignProp.prop_id = PROP_WHITELIST[index];
+      
+      if (++index >= MAX_CUBES) {
+        index = 0;
+      }
     }
     
     if (++prop > MAX_CUBES) {
       prop = 0;
     }
   }
-  
+
   void Spine::Manage(SpineProtocol& msg) {
     switch(msg.opcode) {
       case GET_PROP_STATE:
