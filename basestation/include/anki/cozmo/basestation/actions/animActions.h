@@ -32,6 +32,7 @@ namespace Anki {
       PlayAnimationAction(const std::string& animName,
                           u32 numLoops = 1,
                           bool interruptRunning = true);
+      virtual ~PlayAnimationAction();
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
@@ -44,7 +45,6 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      virtual void Cleanup() override;
       
       std::string               _animName;
       std::string               _name;

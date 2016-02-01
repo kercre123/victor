@@ -256,14 +256,16 @@ namespace Anki {
     bool ActionQueue::Cancel(RobotActionType withType)
     {
       bool found = false;
+      auto iter = _queue.begin();
       for(auto action : _queue)
       {
         CORETECH_ASSERT(action != nullptr);
         
         if(withType == RobotActionType::UNKNOWN || action->GetType() == withType) {
-          action->Cancel();
+          _queue.erase(iter);
           found = true;
         }
+        iter++;
       }
       return found;
     }
@@ -271,17 +273,21 @@ namespace Anki {
     bool ActionQueue::Cancel(u32 idTag)
     {
       bool found = false;
+      auto iter = _queue.begin();
       for(auto action : _queue)
       {
+        CORETECH_ASSERT(action != nullptr);
+        
         if(action->GetTag() == idTag) {
           if(found == true) {
             PRINT_NAMED_WARNING("ActionQueue.Cancel.DuplicateIdTags",
                                 "Multiple actions with tag=%d found in queue.\n",
                                 idTag);
           }
-          action->Cancel();
+          _queue.erase(iter);
           found = true;
         }
+        iter++;
       }
       
       return found;
@@ -308,7 +314,8 @@ namespace Anki {
                           _queue.front()->GetTag(),
                           action->GetName().c_str(),
                           action->GetTag());
-        _queue.front()->Cancel();
+        delete _queue.front();
+        _queue.erase(_queue.begin());
         return QueueNext(action, numRetries);
       }
     }
@@ -413,8 +420,12 @@ namespace Anki {
         const ActionResult actionResult = currentAction->Update();
         
         if(actionResult != ActionResult::RUNNING) {
-          // Current action just finished, pop it
-          PopCurrentAction();
+          // Verify current action is still current, if it is pop it
+          // Otherwise if the current action was cancelled then we will be popping a new action
+          if(currentAction == GetCurrentAction())
+          {
+            PopCurrentAction();
+          }
           
           if(actionResult != ActionResult::SUCCESS && actionResult != ActionResult::CANCELLED) {
             lastResult = RESULT_FAIL;

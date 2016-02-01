@@ -47,30 +47,18 @@ namespace Anki {
     public:
       
       IActionRunner();
-      virtual ~IActionRunner() { }
+      virtual ~IActionRunner();
       
-      void SetRobot(Robot& robot);
+      virtual void SetRobot(Robot& robot);
       Robot* GetRobot() { return _robot; }
       
       ActionResult Update();
-      
-      void Cancel() { _isCancelled = true; }
       
       // Tags can be used to identify specific actions. A unique tag is assigned
       // at construction, or it can be overridden with SetTag(). The Tag is
       // returned in the ActionCompletion signal as well.
       void SetTag(u32 tag);
       u32  GetTag() const  { return _idTag; }
-      
-      // Derived classes can implement any required cleanup by overriding this
-      // method. It is called when Update() is about return anything other than
-      // RUNNING (including cancellation). Note that it cannot change the ActionResult
-      // (so if Update is about to failure or success, nothing that Cleanup does
-      // can change that.)
-      // Note that this is also called on cancellation, so this should also cleanup
-      // after the action when stopped mid-way through (and, for example, abort
-      // [physical] robot functions).
-      virtual void Cleanup() { }
       
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.

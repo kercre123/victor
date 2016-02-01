@@ -27,9 +27,6 @@ namespace Anki {
       
       virtual void AddAction(IActionRunner* action);
       
-      // Call any unfinished constituent actions' Cleanup() methods
-      virtual void Cleanup() override final;
-      
       // First calls cleanup on any constituent actions and then removes them
       // from this compound action completely.
       void ClearActions();
@@ -40,6 +37,9 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
+      
+      // Sets the compound action's robot as well as the actions within the compound action
+      virtual void SetRobot(Robot& robot) override;
 
     protected:
       

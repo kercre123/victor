@@ -41,6 +41,16 @@ namespace Anki {
       _idTag = IActionRunner::sTagCounter;
     }
     
+    IActionRunner::~IActionRunner()
+    {
+      if(!_suppressTrackLocking)
+      {
+        // Force all tracks to unlock
+        _robot->GetMoveComponent().UnlockAnimTracks((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+        _robot->GetMoveComponent().UnignoreTrackMovement((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+      }
+    }
+    
     void IActionRunner::SetTag(u32 tag)
     {
       if (tag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
@@ -116,7 +126,6 @@ namespace Anki {
 
         // Clean up after any registered sub actions and the action itself
         CancelAndDeleteSubActions();
-        Cleanup();
 
         if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
         {
@@ -125,20 +134,6 @@ namespace Anki {
           // not a signal for each constituent action.
           // TODO: Populate the signal with any action-specific info?
           EmitCompletionSignal(result);
-        }
-
-        if(!_suppressTrackLocking) {
-          uint8_t disableTracks = GetAnimTracksToDisable();
-#         if DEBUG_ANIM_TRACK_LOCKING
-          PRINT_NAMED_INFO("IActionRunner.Update.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                           disableTracks,
-                           AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
-                           GetName().c_str(),
-                           GetTag());
-#         endif
-
-          _robot->GetMoveComponent().UnlockAnimTracks(disableTracks);
-          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
 
         if( DEBUG_ACTION_RUNNING && _displayMessages ) {
@@ -227,9 +222,6 @@ namespace Anki {
                                   (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
                                   GetName().c_str(), GetTag());
               }
-            
-              (*subAction)->Cancel();
-              (*subAction)->Update();
             } // if running
             else if( DEBUG_ACTION_RUNNING && _displayMessages ) {
               PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions.Skip",

@@ -63,6 +63,25 @@ namespace Anki {
     {
       
     }
+    
+    IDockAction::~IDockAction()
+    {
+      // Make sure we back to looking for markers (and stop tracking) whenever
+      // and however this action finishes
+      _robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
+      _robot->GetVisionComponent().EnableMode(VisionMode::Tracking, false);
+      
+      // Abort anything that shouldn't still be running
+      if(_robot->IsTraversingPath()) {
+        _robot->AbortDrivingToPose();
+      }
+      if(_robot->IsPickingOrPlacing()) {
+        _robot->AbortDocking();
+      }
+      
+      // Stop squinting
+      _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
+    }
 
     void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2)
     {
@@ -380,26 +399,6 @@ namespace Anki {
       
       return actionResult;
     } // CheckIfDone()
-
-
-    void IDockAction::Cleanup()
-    {
-      // Make sure we back to looking for markers (and stop tracking) whenever
-      // and however this action finishes
-      _robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-      _robot->GetVisionComponent().EnableMode(VisionMode::Tracking, false);
-      
-      // Abort anything that shouldn't still be running
-      if(_robot->IsTraversingPath()) {
-        _robot->AbortDrivingToPose();
-      }
-      if(_robot->IsPickingOrPlacing()) {
-        _robot->AbortDocking();
-      }
-      
-      // Stop squinting
-      _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
-    }
     
 #pragma mark ---- PopAWheelieAction ----
     

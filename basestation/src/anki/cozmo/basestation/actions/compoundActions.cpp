@@ -37,6 +37,8 @@ namespace Anki {
       for(auto & actionPair : _actions) {
         assert(actionPair.second != nullptr);
         // TODO: issue a warning when a group is deleted without all its actions completed?
+        // Ensure all actions have valid robot pointers since it may be possible they haven't been set
+        actionPair.second->SetRobot(*GetRobot());
         delete actionPair.second;
       }
     }
@@ -76,25 +78,16 @@ namespace Anki {
     
     void ICompoundAction::ClearActions()
     {
-      Cleanup();
       _actions.clear();
       Reset();
     }
     
-    void ICompoundAction::Cleanup()
+    void ICompoundAction::SetRobot(Robot& robot)
     {
-      for(auto action : _actions) {
-        // Call any actions' Cleanup() methods if they aren't done
-        const bool isDone = action.first;
-        if(!isDone) {
-          // Some of the actions in the compound action may not have had their robot set at this
-          // point so make sure it is set so things like EmitCompletionSignal() can succeed.
-          action.second->SetRobot(*GetRobot());
-          
-          action.second->Cancel();
-          action.second->Update();
-          action.first = true;
-        }
+      _robot = &robot;
+      for(auto actionPair : _actions)
+      {
+        actionPair.second->SetRobot(robot);
       }
     }
     

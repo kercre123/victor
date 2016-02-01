@@ -219,19 +219,27 @@ void MovementComponent::LockAnimTracks(uint8_t tracks)
 
 void MovementComponent::UnlockAnimTracks(uint8_t tracks)
 {
-  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  if(_animTrackLockCount.size() == (int)AnimConstants::NUM_TRACKS)
   {
-    uint8_t curTrack = (1 << i);
-    if ((tracks & curTrack) == curTrack)
+    for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
     {
-      --_animTrackLockCount[i];
-      
-      // If we just went from locked to not locked, inform the robot
-      if (_animTrackLockCount[i] == 0)
+      uint8_t curTrack = (1 << i);
+      if ((tracks & curTrack) == curTrack)
       {
-        _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
+        --_animTrackLockCount[i];
+
+        // If we just went from locked to not locked, inform the robot
+        if (_animTrackLockCount[i] == 0)
+        {
+          _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
+        }
+
+        // It doesn't matter if there are more unlocks than locks
+        if(_animTrackLockCount[i] < 0)
+        {
+          _animTrackLockCount[i] = 0;
+        }
       }
-      ASSERT_NAMED(_animTrackLockCount[i] >= 0, "Should have a matching number of anim track lock and unlocks!");
     }
   }
 #if DEBUG_ANIMATION_LOCKING
@@ -270,13 +278,21 @@ void MovementComponent::IgnoreTrackMovement(uint8_t tracks)
   
 void MovementComponent::UnignoreTrackMovement(uint8_t tracks)
 {
-  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  if(_ignoreTrackMovementCount.size() == (int)AnimConstants::NUM_TRACKS)
   {
-    uint8_t curTrack = (1 << i);
-    if ((tracks & curTrack) == curTrack)
+    for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
     {
-      --_ignoreTrackMovementCount[i];
-      ASSERT_NAMED(_ignoreTrackMovementCount[i] >= 0, "Should have a matching number of ignore/unignore track movement!");
+      uint8_t curTrack = (1 << i);
+      if ((tracks & curTrack) == curTrack)
+      {
+        --_ignoreTrackMovementCount[i];
+
+        // It doesn't matter if there are more unlocks than locks
+        if(_ignoreTrackMovementCount[i] < 0)
+        {
+          _ignoreTrackMovementCount[i] = 0;
+        }
+      }
     }
   }
 }

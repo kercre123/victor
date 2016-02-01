@@ -47,6 +47,7 @@ namespace Anki {
                         const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
                         const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
                         const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
+      virtual ~DriveToPoseAction();
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
@@ -98,7 +99,6 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      virtual void Cleanup() override;
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
@@ -177,6 +177,7 @@ namespace Anki {
                           const f32 distance_mm,
                           const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                           const bool useManualSpeed = false);
+      virtual ~DriveToObjectAction() { };
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
@@ -205,8 +206,6 @@ namespace Anki {
       ActionResult GetPossiblePoses(ActionableObject* object,
                                     std::vector<Pose3d>& possiblePoses,
                                     bool& alreadyInPosition);
-      
-      virtual void Cleanup() override;
       
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
