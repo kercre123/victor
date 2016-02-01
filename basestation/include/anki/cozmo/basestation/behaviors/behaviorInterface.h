@@ -21,6 +21,7 @@
 #include <set>
 
 #include "util/bitFlags/bitFlags.h"
+#include "util/logging/logging.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
@@ -239,6 +240,7 @@ namespace Cozmo {
   
   inline IBehavior::Status IBehavior::Update(double currentTime_sec)
   {
+    ASSERT_NAMED(IsRunning(), "IBehavior::UpdateNotRunning");
     return UpdateInternal(_robot, currentTime_sec);
   }
 
