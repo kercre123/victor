@@ -54,6 +54,9 @@ public class DailySummaryPanel : BaseView {
   [SerializeField]
   private AnkiTextLabel _NextFriendshipLevelBottom;
 
+  [SerializeField]
+  private BonusBarPanel _BonusBarPanel;
+
   // Config file for friendship progression
   [SerializeField]
   private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
@@ -69,7 +72,9 @@ public class DailySummaryPanel : BaseView {
 
     _Title.FormattingArgs = new object[] { month, day };
 
-    _DailyProgressBar.SetProgress(_FriendshipFormulaConfig.CalculateDailyGoalProgress(data.Progress, data.Goals));
+    float dailyProg = _FriendshipFormulaConfig.CalculateDailyGoalProgress(data.Progress, data.Goals);
+    _DailyProgressBar.SetProgress(dailyProg);
+    _BonusBarPanel.SetFriendshipBonus(dailyProg);
 
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var stat = (ProgressionStatType)i;

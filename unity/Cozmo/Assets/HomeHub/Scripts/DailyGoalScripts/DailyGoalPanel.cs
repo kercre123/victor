@@ -40,7 +40,7 @@ public class DailyGoalPanel : MonoBehaviour {
     }
     float dailyProg = DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateDailyGoalProgress(progress, goals);
     _TotalProgressBar.SetProgress(dailyProg);
-    _BonusBarPanel.ToggleFriendshipBonus(dailyProg >= 1.0f, dailyProg);
+    _BonusBarPanel.SetFriendshipBonus(dailyProg);
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager

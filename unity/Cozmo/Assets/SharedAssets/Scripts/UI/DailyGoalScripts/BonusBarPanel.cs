@@ -13,7 +13,8 @@ public class BonusBarPanel : MonoBehaviour {
   [SerializeField]
   private ProgressBar _BonusProgressBar;
 
-  public void ToggleFriendshipBonus(bool setActive, float prog) {
+  public void SetFriendshipBonus(float prog) {
+    bool setActive = (prog > 1.0f);
     _ActiveBonusContainer.SetActive(setActive);
     _InactiveBonusContainer.SetActive(!setActive);
     if (setActive) {
