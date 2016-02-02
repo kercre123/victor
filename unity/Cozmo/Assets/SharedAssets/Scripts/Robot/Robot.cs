@@ -362,7 +362,7 @@ public class Robot : IDisposable {
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
     AlignWithObjectMessage = new U2G.AlignWithObject();
     ProgressionStatMessage = new U2G.ProgressionMessage();
-	BehaviorManagerMessage = new U2G.BehaviorManagerMessage();
+    BehaviorManagerMessage = new U2G.BehaviorManagerMessage();
     MoodStatMessage = new U2G.MoodMessage();
     VisualizeQuadMessage = new U2G.VisualizeQuad();
     DisplayProceduralFaceMessage = new U2G.DisplayProceduralFace();
