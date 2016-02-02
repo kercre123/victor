@@ -7,11 +7,14 @@ namespace Cozmo {
     public class ChallengeTitleWidget : MonoBehaviour, IMinigameWidget {
 
       [SerializeField]
-      private Cozmo.UI.IconTextLabel _ChallengeTitleLabel;
+      private Cozmo.UI.IconProxy _ChallangeIcon;
+
+      [SerializeField]
+      private Anki.UI.AnkiTextLabel _ChallengeTitleLabel;
 
       public void Initialize(string titleText, Sprite titleIcon) {
-        _ChallengeTitleLabel.SetText(titleText);
-        _ChallengeTitleLabel.SetIcon(titleIcon);
+        _ChallengeTitleLabel.text = titleText;
+        _ChallangeIcon.SetIcon(titleIcon);
       }
 
       #region IMinigameWidget

@@ -7,7 +7,10 @@ using Anki.UI;
 public class ChallengeEndedDialog : BaseView {
 
   [SerializeField]
-  private IconTextLabel _ChallengeTitleLabel;
+  private AnkiTextLabel _ChallengeTitleLabel;
+
+  [SerializeField]
+  private IconProxy _ChallengeIcon;
 
   [SerializeField]
   private AnkiTextLabel _PrimaryInfoLabel;
@@ -26,8 +29,8 @@ public class ChallengeEndedDialog : BaseView {
   }
 
   public void SetupDialog(string titleText, Sprite titleIcon, string primaryText, string secondaryText) {
-    _ChallengeTitleLabel.SetText(titleText);
-    _ChallengeTitleLabel.SetIcon(titleIcon);
+    _ChallengeTitleLabel.text = titleText;
+    _ChallengeIcon.SetIcon(titleIcon);
 
     if (!string.IsNullOrEmpty(primaryText)) {
       _PrimaryInfoLabel.text = primaryText;

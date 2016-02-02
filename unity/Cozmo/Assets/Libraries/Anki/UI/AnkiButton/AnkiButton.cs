@@ -54,7 +54,7 @@ namespace Anki {
 
       [SerializeField]
       private float _TextLabelOffset = -5f;
-      private Vector3 _TextDefaultPosition;
+      private Vector3? _TextDefaultPosition = null;
       private Vector3 _TextPressedPosition;
 
       public Color TextEnabledColor = Color.white;
@@ -129,13 +129,22 @@ namespace Anki {
         return _Interactable;
       }
 
+      protected override void Awake() {
+        base.Awake();
+
+        foreach (AnkiButtonImage graphic in ButtonGraphics) {
+          if (graphic.targetImage != null) {
+            graphic.enabledSprite = graphic.targetImage.sprite;
+            graphic.enabledColor = graphic.targetImage.color;
+          }
+          else {
+            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+          }
+        }
+      }
+
       protected override void Start() {
         base.Start();
-        if (_TextLabel != null) {
-          _TextDefaultPosition = _TextLabel.gameObject.transform.localPosition;
-          _TextPressedPosition = _TextDefaultPosition;
-          _TextPressedPosition.y += _TextLabelOffset;
-        }
         UpdateVisuals();
       }
 
@@ -175,10 +184,20 @@ namespace Anki {
           return;
         }
 
+        SetUpTextOffset();
+
         // Set to pressed visual state
         ShowPressedState();
 
         _OnPress.Invoke();
+      }
+
+      private void SetUpTextOffset() {
+        if (_TextLabel != null && !_TextDefaultPosition.HasValue) {
+          _TextDefaultPosition = _TextLabel.gameObject.transform.localPosition;
+          _TextPressedPosition = _TextLabel.gameObject.transform.localPosition;
+          _TextPressedPosition.y += _TextLabelOffset;
+        }
       }
 
       private void Release() {
@@ -241,7 +260,7 @@ namespace Anki {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic.targetImage != null && graphic.enabledSprite != null) {
-              SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor);
+              SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor, graphic.ignoreSprite);
             }
             else {
               DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
@@ -249,66 +268,78 @@ namespace Anki {
           }
         }
 
-        if (_TextLabel != null) {
-          _TextLabel.color = TextEnabledColor;
-          _TextLabel.transform.localPosition = _TextDefaultPosition;
-        }
-
-        if (_GlintAnimator != null) {
-          _GlintAnimator.enabled = true;
-        }
+        ResetTextPosition(TextEnabledColor);
+        ShowGlint(true);
       }
 
       private void ShowPressedState() {
         foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (graphic.targetImage != null && graphic.enabledSprite != null) {
-            SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor);
+            SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
           }
           else {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
           }
         }
 
-        if (_TextLabel != null) {
-          _TextLabel.color = TextPressedColor;
-          _TextLabel.transform.localPosition = _TextPressedPosition;
-        }
-
-        if (_GlintAnimator != null) {
-          _GlintAnimator.enabled = true;
-        }
+        PressTextPosition();
+        ShowGlint(true);
       }
 
       private void ShowDisabledState() {
         foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (graphic.targetImage != null && graphic.enabledSprite != null) {
-            SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor);
+            SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
           }
           else {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
           }
         }
 
-        if (_TextLabel != null) {
-          _TextLabel.color = TextDisabledColor;
-          _TextLabel.transform.localPosition = _TextDefaultPosition;
-        }
+        ResetTextPosition(TextDisabledColor);
+        ShowGlint(false);
+      }
 
-        if (_GlintAnimator != null) {
-          _GlintAnimator.enabled = false;
+      private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor, bool ignoreSprite) {
+        if (!ignoreSprite) {
+          graphic.targetImage.overrideSprite = desiredSprite ?? graphic.enabledSprite;
+        }
+        graphic.targetImage.color = desiredColor;
+      }
+
+      private void ResetTextPosition(Color color) {
+        if (_TextLabel != null) {
+          _TextLabel.color = color;
+          if (_TextDefaultPosition.HasValue) {
+            _TextLabel.transform.localPosition = _TextDefaultPosition.Value;
+          }
         }
       }
 
-      private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor) {
-        graphic.targetImage.overrideSprite = desiredSprite ?? graphic.enabledSprite;
-        graphic.targetImage.color = desiredColor;
+      private void PressTextPosition() {
+        if (_TextLabel != null) {
+          _TextLabel.color = TextPressedColor;
+          _TextLabel.transform.localPosition = _TextPressedPosition;
+        }
+      }
+
+      private void ShowGlint(bool show) {
+        if (_GlintAnimator != null) {
+          _GlintAnimator.EnableGlint(show);
+        }
       }
 
       [Serializable]
       public class AnkiButtonImage {
         public Image targetImage;
+        public bool ignoreSprite = false;
+
+        [NonSerialized]
         public Sprite enabledSprite;
+
+        [NonSerialized]
         public Color enabledColor = Color.white;
+
         public Sprite pressedSprite;
         public Color pressedColor = Color.gray;
         public Sprite disabledSprite;
