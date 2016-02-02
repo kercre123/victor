@@ -55,24 +55,44 @@ public class UIManager : MonoBehaviour {
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
 
+  /// <summary>
+  /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
+  /// For BaseViews, use OpenView instead.
+  /// </summary>
   public static GameObject CreateUIElement(MonoBehaviour uiPrefab) {
     return CreateUIElement(uiPrefab.gameObject, Instance._OverlayCanvas.transform);
   }
 
+  /// <summary>
+  /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
+  /// For BaseViews, use OpenView instead.
+  /// </summary>
   public static GameObject CreateUIElement(MonoBehaviour uiPrefab, Transform parentTransform) {
     return CreateUIElement(uiPrefab.gameObject, parentTransform);
   }
 
+  /// <summary>
+  /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
+  /// For BaseViews, use OpenView instead.
+  /// </summary>
   public static GameObject CreateUIElement(GameObject uiPrefab) {
     return CreateUIElement(uiPrefab, Instance._OverlayCanvas.transform);
   }
 
+  /// <summary>
+  /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
+  /// For BaseViews, use OpenView instead.
+  /// </summary>
   public static GameObject CreateUIElement(GameObject uiPrefab, Transform parentTransform) {
     GameObject newUi = GameObject.Instantiate(uiPrefab);
     newUi.transform.SetParent(parentTransform, false);
     return newUi;
   }
 
+  /// <summary>
+  /// Creates a dialog using a script/prefab that extends from BaseView.
+  /// Plays open animations on that dialog by default. 
+  /// </summary>
   public static BaseView OpenView(BaseView viewPrefab, bool animateImmediately = true) {
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
 

@@ -95,6 +95,10 @@ namespace Cozmo {
         SetupButton(_SecondaryButton, Localization.Get(titleKey), action);
       }
 
+      public void SetMessageArgs(object[] args) {
+        _AlertMessageText.FormattingArgs = args;
+      }
+
       private void SetupButton(AnkiButton button, String title, Action action) {
         if (button != null) {
           button.gameObject.SetActive(true);

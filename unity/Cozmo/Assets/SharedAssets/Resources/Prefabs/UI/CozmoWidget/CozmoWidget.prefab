@@ -107,7 +107,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
-    m_FontSize: 64
+    m_FontSize: 40
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -156,9 +156,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d334043eac17841d89b85470bf1314c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _CloseDialogOnTapOutside: 0
-  _OptionalCloseDialogButton: {fileID: 0}
-  DimBackground: 0
   _CozmoFriendshipStatusText: {fileID: 11416022}
 --- !u!114 &11452398
 MonoBehaviour:
@@ -274,10 +271,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22456652}
   m_RootOrder: 1
-  m_AnchorMin: {x: .5, y: .5}
-  m_AnchorMax: {x: .5, y: .5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 256, y: 128}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22456652
 RectTransform:
@@ -293,11 +290,11 @@ RectTransform:
   - {fileID: 22444540}
   m_Father: {fileID: 22491210}
   m_RootOrder: 0
-  m_AnchorMin: {x: .699999988, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 189, y: 0}
-  m_SizeDelta: {x: 38, y: 0}
-  m_Pivot: {x: 1, y: .5}
+  m_AnchoredPosition: {x: -123, y: 19}
+  m_SizeDelta: {x: -247, y: -39}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22459832
 RectTransform:
   m_ObjectHideFlags: 1
@@ -313,7 +310,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -48.7000008, y: -86}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22463648
 RectTransform:
@@ -329,8 +326,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: .5}
   m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: 315, y: 0}
-  m_SizeDelta: {x: 450, y: 150}
+  m_AnchoredPosition: {x: 130, y: 12}
+  m_SizeDelta: {x: 246.5, y: 61}
   m_Pivot: {x: 0, y: .5}
 --- !u!224 &22491210
 RectTransform:
@@ -346,10 +343,10 @@ RectTransform:
   - {fileID: 22463648}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: .5}
-  m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 185, y: -50}
+  m_SizeDelta: {x: 370, y: 100}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:

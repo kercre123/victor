@@ -162,16 +162,6 @@ public abstract class GameBase : MonoBehaviour {
   /// </summary>
   protected abstract void CleanUpOnDestroy();
 
-  protected virtual void PauseGame() {
-    _SharedMinigameViewInstance.DisableInteractivity();
-  }
-
-  protected virtual void ResumeGame() {
-    if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.EnableInteractivity();
-    }
-  }
-
   public void CloseMinigameImmediately() {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
     CleanUpOnDestroy();
@@ -203,7 +193,7 @@ public abstract class GameBase : MonoBehaviour {
 
     foreach (var statType in StatContainer.sKeys) {
       // Check that this is a goal xp
-      if (RobotEngineManager.Instance.HasGoalForStat(statType)) {
+      if (DailyGoalManager.Instance.HasGoalForStat(statType)) {
         int grantedXp = ComputeXpForStat(statType);
         if (grantedXp != 0) {
           _RewardedXp[statType] = grantedXp;
@@ -234,17 +224,7 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void CreateDefaultQuitButton() {
     _SharedMinigameViewInstance.CreateQuitButton();
-    _SharedMinigameViewInstance.QuitMiniGameViewOpened += HandleQuitViewOpened;
-    _SharedMinigameViewInstance.QuitMiniGameViewClosed += HandleQuitViewClosed;
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-  }
-
-  private void HandleQuitViewOpened() {
-    PauseGame();
-  }
-
-  private void HandleQuitViewClosed() {
-    ResumeGame();
   }
 
   private void HandleQuitConfirmed() {
@@ -335,25 +315,20 @@ public abstract class GameBase : MonoBehaviour {
   #region Title Widget
 
   protected void ShowTitleWidget(string titleText, Sprite titleIcon) {
-    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon, _ChallengeData.HowToPlayDialogContentPrefab);
-    _SharedMinigameViewInstance.HowToPlayViewOpened += HandleHowToPlayViewOpened;
-    _SharedMinigameViewInstance.HowToPlayViewClosed += HandleHowToPlayViewClosed;
+    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon);
   }
 
+  #endregion
+
+  #region How To Play Button
+
   public void OpenHowToPlayView() {
+    _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentPrefab);
     _SharedMinigameViewInstance.OpenHowToPlayView();
   }
 
   public void CloseHowToPlayView() {
     _SharedMinigameViewInstance.CloseHowToPlayView();
-  }
-
-  private void HandleHowToPlayViewOpened() {
-    PauseGame();
-  }
-
-  private void HandleHowToPlayViewClosed() {
-    ResumeGame();
   }
 
   #endregion

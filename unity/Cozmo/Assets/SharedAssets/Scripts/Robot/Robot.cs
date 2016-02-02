@@ -539,12 +539,12 @@ public class Robot : IDisposable {
   }
 
   public string GetFriendshipLevelName(int friendshipLevel) {
-    FriendshipProgressionConfig levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
     return levelConfig.FriendshipLevels[friendshipLevel].FriendshipLevelName;
   }
 
   public int GetFriendshipLevelByName(string friendshipName) {
-    FriendshipProgressionConfig levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
     for (int i = 0; i < levelConfig.FriendshipLevels.Length; ++i) {
       if (levelConfig.FriendshipLevels[i].FriendshipLevelName == friendshipName) {
         return i;
@@ -554,7 +554,7 @@ public class Robot : IDisposable {
   }
 
   private void ComputeFriendshipLevel() {
-    FriendshipProgressionConfig levelConfig = RobotEngineManager.Instance.GetFriendshipProgressConfig();
+    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
     bool friendshipLevelChanged = false;
     while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length &&
            levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
