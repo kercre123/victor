@@ -49,10 +49,6 @@ namespace Audio {
   class AudioServer;
 }
   
-namespace SpeechRecognition {
-  class KeyWordRecognizer;
-}
-  
 } // namespace Cozmo
 } // namespace Anki
 
@@ -67,32 +63,32 @@ namespace Cozmo {
 class CozmoContext : private Util::noncopyable
 {
 public:
-  CozmoContext() { }
-  CozmoContext(const Util::Data::DataPlatform& dataPlatform, IExternalInterface* externalInterface);
+  CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
+  CozmoContext();
+  
   virtual ~CozmoContext();
   
   IExternalInterface*                   GetExternalInterface() const { return _externalInterface; }
-  Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform.get(); }
+  Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
+  
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
   Comms::AdvertisementService*          GetRobotAdvertisementService() const { return _robotAdvertisementService.get(); }
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
-  RobotInterface::MessageHandler*       GetMessageHandler() const { return _robotMsgHandler.get(); }
-  SpeechRecognition::KeyWordRecognizer* GetKeywordRecognizer() const { return _keywordRecognizer.get(); }
+  RobotInterface::MessageHandler*       GetRobotMsgHandler() const { return _robotMsgHandler.get(); }
   Audio::AudioServer*                   GetAudioServer() const { return _audioServer.get(); }
   
 private:
   // This is passed in and held onto, but not owned by the context (yet.
   // It really should be, and that refactoring will have to happen soon).
-  IExternalInterface*                                     _externalInterface;
+  IExternalInterface*                                     _externalInterface = nullptr;
+  Util::Data::DataPlatform*                               _dataPlatform = nullptr;
   
   // Context holds onto these things for everybody:
-  std::unique_ptr<Util::Data::DataPlatform>               _dataPlatform;
-  std::unique_ptr<Util::RandomGenerator>                  _random;
-  std::unique_ptr<Comms::AdvertisementService>            _robotAdvertisementService;
-  std::unique_ptr<RobotManager>                           _robotMgr;
-  std::unique_ptr<RobotInterface::MessageHandler>         _robotMsgHandler;
-  std::unique_ptr<SpeechRecognition::KeyWordRecognizer>   _keywordRecognizer;
-  std::unique_ptr<Audio::AudioServer>                     _audioServer;
+  std::shared_ptr<Audio::AudioServer>                     _audioServer;
+  std::shared_ptr<Util::RandomGenerator>                  _random;
+  std::shared_ptr<Comms::AdvertisementService>            _robotAdvertisementService;
+  std::shared_ptr<RobotManager>                           _robotMgr;
+  std::shared_ptr<RobotInterface::MessageHandler>         _robotMsgHandler;
 };
   
 

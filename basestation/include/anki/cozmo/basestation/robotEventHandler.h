@@ -27,6 +27,7 @@ class ActionList;
 class IActionRunner;
 class IExternalInterface;
 class RobotManager;
+class CozmoContext;
   
 enum class QueueActionPosition : uint8_t;
 
@@ -41,11 +42,10 @@ namespace ExternalInterface {
 class RobotEventHandler : private Util::noncopyable
 {
 public:
-  RobotEventHandler(RobotManager& manager, IExternalInterface* interface);
+  RobotEventHandler(const CozmoContext* context);
   
 protected:
-  RobotManager& _robotManager;
-  IExternalInterface* _externalInterface;
+  const CozmoContext* _context;
   std::vector<Signal::SmartHandle> _signalHandles;
     
   void HandleActionEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);

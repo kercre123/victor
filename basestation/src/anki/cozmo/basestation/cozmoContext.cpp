@@ -1,7 +1,6 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 //#include "anki/cozmo/game/comms/uiMessageHandler.h"
@@ -12,23 +11,28 @@
 namespace Anki {
 namespace Cozmo {
   
-CozmoContext::CozmoContext(const Util::Data::DataPlatform& dataPlatform, IExternalInterface* externalInterface)
+CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface)
   : _externalInterface(externalInterface)
-  , _dataPlatform(new Util::Data::DataPlatform(dataPlatform))
+  , _dataPlatform(dataPlatform)
   , _random(new Anki::Util::RandomGenerator())
   , _robotAdvertisementService(new Comms::AdvertisementService("RobotAdvertisementService"))
-  , _robotMgr(new RobotManager(externalInterface, _dataPlatform.get()))
+  , _robotMgr(new RobotManager(this))
   , _robotMsgHandler(new RobotInterface::MessageHandler())
-  , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
-  , _audioServer(new Audio::AudioServer(new Audio::AudioController(_dataPlatform.get())))
+{
+  // Only set up the audio server if we have a real dataPlatform
+  if (nullptr != dataPlatform)
+  {
+    _audioServer.reset(new Audio::AudioServer(new Audio::AudioController(dataPlatform)));
+  }
+}
+  
+CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 {
   
 }
  
 // Empty destructor needed in cpp for std::unique_ptr to have full class definitions for destruction
-CozmoContext::~CozmoContext()
-{
-}
-    
+CozmoContext::~CozmoContext() = default;
+  
 } // namespace Cozmo
 } // namespace Anki

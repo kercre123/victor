@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 #include <limits.h>
@@ -168,12 +169,12 @@ ActionResult TestActionWithinAction::CheckIfDone()
 
 
 extern Anki::Util::Data::DataPlatform* dataPlatform;
-RobotInterface::MessageHandlerStub  msgHandler;
+extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 // Tests queueing a single and letting it complete normally
 TEST(QueueAction, SingleActionFinishes)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction = new TestAction("Test", RobotActionType::WAIT);
   testAction->_complete = true;
   
@@ -195,7 +196,7 @@ TEST(QueueAction, SingleActionFinishes)
 // Tets queueing a single action and cancelling it works
 //TEST(QueueAction, SingleActionCancel)
 //{
-//  Robot r(0, &msgHandler, nullptr, dataPlatform);
+//  Robot r(0, cozmoContext);
 //  TestAction* testAction = new TestAction("Test", RobotActionType::WAIT);
 //  testAction->_complete = true;
 //  
@@ -216,7 +217,7 @@ TEST(QueueAction, SingleActionFinishes)
 // Tests queueing three actions and letting them complete normally
 TEST(QueueAction, ThreeActionsFinish)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   testAction1->_complete = true;
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -258,7 +259,7 @@ TEST(QueueAction, ThreeActionsFinish)
 // Tests queueing three actions, cancelling the second and letting the rest complete normally
 //TEST(QueueAction, ThreeActionsCancelSecond)
 //{
-//  Robot r(0, &msgHandler, nullptr, dataPlatform);
+//  Robot r(0, cozmoContext);
 //  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
 //  testAction1->_complete = true;
 //  TestAction* testAction2 = new TestAction("Test2", RobotActionType::TURN_IN_PLACE);
@@ -296,7 +297,7 @@ TEST(QueueAction, ThreeActionsFinish)
 // Tests queueing three actions and cancelling all of them
 //TEST(QueueAction, ThreeActionsCancelAll)
 //{
-//  Robot r(0, &msgHandler, nullptr, dataPlatform);
+//  Robot r(0, cozmoContext);
 //  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
 //  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
 //  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
@@ -323,7 +324,7 @@ TEST(QueueAction, ThreeActionsFinish)
 // interrupts the first. The second action completes and the interrupted action resumes and completes.
 TEST(QueueAction, InterruptAction)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction = new TestAction("Test1", RobotActionType::WAIT);
   TestInterruptAction* testInterruptAction = new TestInterruptAction("Test2", RobotActionType::TURN_IN_PLACE);
   
@@ -359,7 +360,7 @@ TEST(QueueAction, InterruptAction)
 // Tests queueing a sequential compound action made of two actions and both actions complete at the same time
 TEST(QueueAction, CompoundActionSequentialSingle)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   r.SetLiftAngle(0);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -385,7 +386,7 @@ TEST(QueueAction, CompoundActionSequentialSingle)
 // Tests queueing a sequential compound action made of two actions and they complete at different times
 TEST(QueueAction, CompoundActionMultipleUpdates)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
@@ -416,7 +417,7 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
 // the compound action after an update
 TEST(QueueAction, CompoundActionAddAfterQueued)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
@@ -464,7 +465,7 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
 // Tests queueing an empty sequential compound action and adding three additional actions to it at various times
 TEST(QueueAction, CompoundActionAddAfterQueued2)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
@@ -498,7 +499,7 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
 // Tests queueing a parallel compound action with two actions that complete immediately
 TEST(QueueAction, ParallelActionImmediateComplete)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
@@ -522,7 +523,7 @@ TEST(QueueAction, ParallelActionImmediateComplete)
 // Tests queueing a parallel compound action with two actions where one completes before the other
 TEST(QueueAction, ParallelActionOneCompleteBefore)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
@@ -553,7 +554,7 @@ TEST(QueueAction, ParallelActionOneCompleteBefore)
 // Tests queueing actions at the NOW position
 //TEST(QueueAction, QueueNow)
 //{
-//  Robot r(0, &msgHandler, nullptr, dataPlatform);
+//  Robot r(0, cozmoContext);
 //  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
 //  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
 //  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
@@ -579,7 +580,7 @@ TEST(QueueAction, ParallelActionOneCompleteBefore)
 // Tests queueing actions at the NEXT position
 TEST(QueueAction, QueueNext)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
@@ -617,7 +618,7 @@ TEST(QueueAction, QueueNext)
 // Tests queueing actions at the AT_END position
 TEST(QueueAction, QueueAtEnd)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
@@ -656,7 +657,7 @@ TEST(QueueAction, QueueAtEnd)
 //Tests queueing actions at the NOW_AND_CLEAR_REMAINING position
 //TEST(QueueAction, QueueNowAndClearRemaining)
 //{
-//  Robot r(0, &msgHandler, nullptr, dataPlatform);
+//  Robot r(0, cozmoContext);
 //  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
 //  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
 //  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
@@ -686,7 +687,7 @@ TEST(QueueAction, QueueAtEnd)
 // Tests queueing an action that has sub-actions (ie. action within an action)
 TEST(QueueAction, QueueActionWithinAction)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestActionWithinAction* testActionWithinAction = new TestActionWithinAction("TestActionWithinAction", RobotActionType::UNKNOWN);
   
   r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testActionWithinAction);
@@ -714,7 +715,7 @@ TEST(QueueAction, QueueActionWithinAction)
 
 TEST(QueueAction, ActionFailureRetry)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({testAction1, testAction2});

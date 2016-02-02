@@ -32,13 +32,14 @@
 namespace Anki {
 namespace Cozmo {
 
-CozmoEngine::CozmoEngine(IExternalInterface* externalInterface,Util::Data::DataPlatform* dataPlatform)
+CozmoEngine::CozmoEngine(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
 #if DEVICE_VISION_MODE != DEVICE_VISION_MODE_OFF
   ,_deviceVisionThread(dataPlatform)
 #endif
   , _isListeningForRobots(false)
-  , _context(new CozmoContext(*dataPlatform, externalInterface))
+  , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
+  , _context(new CozmoContext(dataPlatform, externalInterface))
 {
   ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {
@@ -79,6 +80,7 @@ CozmoEngine::~CozmoEngine()
   }
   
   BaseStationTimer::removeInstance();
+  Util::SafeDelete(_keywordRecognizer);
 }
 
 Result CozmoEngine::Init(const Json::Value& config) {
@@ -248,7 +250,7 @@ void CozmoEngine::ProcessDeviceImage(const Vision::Image &image)
   MessageVisionMarker msg;
   while(_deviceVisionThread.CheckMailbox(msg)) {
     // Pass marker detections along to UI/game for use
-    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DeviceDetectedVisionMarker(
+    _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DeviceDetectedVisionMarker(
                                                                                                                        msg.markerType,
                                                                                                                        msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
                                                                                                                        msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
@@ -270,11 +272,11 @@ void CozmoEngine::ReadAnimationsFromDisk()
   
 Result CozmoEngine::InitInternal()
 {
-  std::string hmmFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/en-us");
-  std::string keywordFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
-  std::string dictFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
-  _context->GetKeywordRecognizer()->Init(hmmFolder, keywordFile, dictFile);
-  _context->GetMessageHandler()->Init(&_robotChannel, _context->GetRobotManager());
+  std::string hmmFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/en-us");
+  std::string keywordFile = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
+  std::string dictFile = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
+  _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
+  _context->GetRobotMsgHandler()->Init(&_robotChannel, _context->GetRobotManager());
   
   // Setup Audio Controller
   using namespace Audio;
@@ -301,13 +303,13 @@ Result CozmoEngine::UpdateInternal(const BaseStationTime_t currTime_ns)
   BaseStationTimer::getInstance()->UpdateTime(currTime_ns);
   
   
-  _context->GetMessageHandler()->ProcessMessages();
+  _context->GetRobotMsgHandler()->ProcessMessages();
   
   // Let the robot manager do whatever it's gotta do to update the
   // robots in the world.
   _context->GetRobotManager()->UpdateAllRobots();
   
-  _context->GetKeywordRecognizer()->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
+  _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
   return RESULT_OK;
 } // UpdateInternal()
 
@@ -342,7 +344,7 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
 {
   Result lastResult = RESULT_OK;
   
-  _context->GetRobotManager()->AddRobot(robotID, _context->GetMessageHandler());
+  _context->GetRobotManager()->AddRobot(robotID);
   Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   if(nullptr == robot) {
     PRINT_NAMED_ERROR("CozmoEngine.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);

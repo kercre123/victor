@@ -71,6 +71,9 @@ namespace ExternalInterface {
   class MessageGameToEngine;
 }
 
+namespace SpeechRecognition {
+  class KeyWordRecognizer;
+}
 
 // Abstract base engine class
 class CozmoEngine
@@ -135,8 +138,6 @@ protected:
   
   std::vector<::Signal::SmartHandle> _signalHandles;
   
-  Util::Data::DataPlatform* _dataPlatform;
-  
   bool                      _isInitialized;
   Json::Value               _config;
   MultiClientChannel        _robotChannel;
@@ -152,6 +153,7 @@ protected:
   Result AddRobot(RobotID_t robotID);
   
   bool                         _isListeningForRobots;
+  SpeechRecognition::KeyWordRecognizer* _keywordRecognizer;
   
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
   
