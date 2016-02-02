@@ -3,7 +3,7 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, socket, threading, time, select, math, muencode
+import sys, os, socket, threading, time, select, math, muencode, pickle
 
 if sys.version_info.major < 3:
     sys.stdout.write("Python2.x is depricated{}".format(os.linesep))
@@ -114,6 +114,13 @@ class CozmoCLI(IDataReceiver):
                         'formatted': (self.formatTable[msg.trace.stringId][0] % tuple(msg.trace.value))
                 }
                 sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
+        elif msg.tag == msg.Tag.crashReport:
+            sys.stdout.write("Received crash report")
+            sys.stdout.write(os.linesep)
+            sys.stdout.flush()
+            fh = open("robot WiFi crash report {}.p".format(time.ctime()), "wb")
+            pickle.dump(msg.crashReport.dump, fh, 2)
+            fh.close()
         elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:
             sys.stdout.write(repr(msg.state))
             sys.stdout.write(os.linesep)

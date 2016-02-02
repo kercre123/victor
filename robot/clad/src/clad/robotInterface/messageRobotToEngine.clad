@@ -54,6 +54,11 @@ message FlashWriteAcknowledge
   bool    writeNotErase ///< True if acknowledging a write, false if acknowledging an erase
 }
 
+message CrashReport
+{
+  uint_32 dump[128]
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -97,6 +102,7 @@ union RobotToEngine {
   AnimationEnded             animEnded              = 0x87,
   NVStorage::NVStorageBlob   nvData                 = 0x88,
   NVStorage::NVOpResult      nvResult               = 0x98,
+  CrashReport                crashReport            = 0x99,
 }
 
 

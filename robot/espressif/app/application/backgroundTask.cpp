@@ -11,10 +11,10 @@ extern "C" {
 #include "backgroundTask.h"
 #include "client.h"
 #include "driver/i2spi.h"
+#include "driver/crash.h"
 }
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "anki/cozmo/robot/version.h"
 #include "anki/cozmo/robot/logging.h"
 #include "face.h"
 #include "upgradeController.h"
@@ -26,6 +26,10 @@ os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task
 
 #define EXPECTED_BT_INTERVAL_US 5000
 #define BT_MAX_RUN_TIME_US      2000
+
+extern const unsigned int COZMO_VERSION_COMMIT;
+extern const char* DAS_USER;
+extern const char* BUILD_DATE;
 
 namespace Anki {
 namespace Cozmo {
@@ -52,21 +56,26 @@ void WiFiFace(void)
   const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
   if (!clientConnected())
   {
-    struct softap_config ap_config;
-    if (wifi_softap_get_config(&ap_config) == false)
+    if (!crashHandlerHasReport())
     {
-      os_printf("WiFiFace couldn't read back config\r\n");
-    }
-    {
-      char fmtBuf[wifiFaceFmtSz];
-      char scrollLines[11];
-      unsigned int i;
-      memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
-      for (i=0; i<((system_get_time()/2000000) % 10); i++) scrollLines[i] = '\n';
-      scrollLines[i] = 0;
-      Face::FacePrintf(fmtBuf, scrollLines,
-                       ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                       COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
+      struct softap_config ap_config;
+      int* death = (int*)1234;
+      os_printf("I should be dead now: %d\r\n", *death);
+      if (wifi_softap_get_config(&ap_config) == false)
+      {
+        os_printf("WiFiFace couldn't read back config\r\n");
+      }
+      {
+        char fmtBuf[wifiFaceFmtSz];
+        char scrollLines[11];
+        unsigned int i;
+        memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
+        for (i=0; i<((system_get_time()/2000000) % 10); i++) scrollLines[i] = '\n';
+        scrollLines[i] = 0;
+        Face::FacePrintf(fmtBuf, scrollLines,
+                         ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
+                         COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
+      }
     }
   }
 }
@@ -149,6 +158,20 @@ bool readCameraCalAndSend(uint32_t tag)
   return false;
 }
 
+bool readAndSendCrashReport(uint32_t param)
+{
+  RobotInterface::CrashReport crMsg;
+  if (crashHandlerGetReport(crMsg.dump, crMsg.MAX_SIZE) > 0)
+  {
+    if (RobotInterface::SendMessage(crMsg))
+    {
+      crashHandlerClearReport();
+      return false;
+    }
+  }
+  return true;
+}
+
 } // BackgroundTask
 } // Cozmo
 } // Anki
@@ -185,6 +208,7 @@ extern "C" int8_t backgroundTaskInit(void)
 
 extern "C" void backgroundTaskOnConnect(void)
 {
+  if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   i2spiQueueMessage((u8*)"\xfc\x01", 2); // FC is the tag for a radio connection state message to the robot
   Anki::Cozmo::Face::FaceUnPrintf();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
