@@ -8,10 +8,9 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22411410}
-  - 222: {fileID: 22292390}
-  - 114: {fileID: 11415488}
+  - 114: {fileID: 11445962}
   m_Layer: 5
-  m_Name: Image
+  m_Name: IconProxy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -43,7 +42,6 @@ GameObject:
   m_Component:
   - 224: {fileID: 22401510}
   - 114: {fileID: 11452892}
-  - 114: {fileID: 11465594}
   m_Layer: 5
   m_Name: ChallengeTitleWidget
   m_TagString: Untagged
@@ -51,7 +49,7 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &11415488
+--- !u!114 &11445962
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -59,25 +57,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 125840}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
+  Prefab: {fileID: 116638, guid: 44454b3ff11754c71b8b19311c580825, type: 2}
+  ModifiedValues: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.MinigameWidgets.ChallengeTitleWidget:_ChallangeIcon
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!114 &11452454
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -122,32 +111,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d668c8e8f624471094bc13e3d35cb7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ChallengeTitleLabel: {fileID: 11465594}
---- !u!114 &11465594
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 158028}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f04ede6149c49471ea36352cc07cf6e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _Icon: {fileID: 11415488}
-  _TextLabel: {fileID: 11452454}
+  _ChallangeIcon: {fileID: 0}
+  _ChallengeTitleLabel: {fileID: 11452454}
 --- !u!222 &22229526
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 143852}
---- !u!222 &22292390
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 125840}
 --- !u!224 &22401510
 RectTransform:
   m_ObjectHideFlags: 1

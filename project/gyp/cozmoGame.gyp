@@ -335,7 +335,6 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
-              '<(cg-ce_gyp_path):cozmoAPI',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiMessaging',
@@ -355,7 +354,6 @@
             'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
-              '<(cg-ce_gyp_path):cozmoAPI',
               'CSharpBinding',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
@@ -496,7 +494,6 @@
             'type': 'none',
             'dependencies': [
               'AddAssetsToEngine',
-              '<(cg-ce_gyp_path):cozmoAPI',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-ce_gyp_path):robotClad',
               '<(cg-ce_gyp_path):cozmo_physics',
@@ -527,7 +524,6 @@
             'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
-              '<(cg-ce_gyp_path):cozmoAPI',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',

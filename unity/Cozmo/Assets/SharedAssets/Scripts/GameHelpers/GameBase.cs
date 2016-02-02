@@ -98,7 +98,7 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
     ShowTitleWidget(Localization.Get(data.ChallengeTitleLocKey), data.ChallengeIcon);
-    CreateDefaultQuitButton();
+    CreateDefaultBackButton();
   }
 
   protected virtual int CalculateTimeStatRewards() {
@@ -222,8 +222,19 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Default Quit button
 
-  protected void CreateDefaultQuitButton() {
+  protected void CreateDefaultBackButton() {
+    _SharedMinigameViewInstance.CreateQuickQuitButton();
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed -= HandleQuitConfirmed;
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
+  }
+
+  public void HideDefaultBackButton() {
+    _SharedMinigameViewInstance.HideQuickQuitButton();
+  }
+
+  public void CreateDefaultQuitButton() {
     _SharedMinigameViewInstance.CreateQuitButton();
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed -= HandleQuitConfirmed;
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
   }
 

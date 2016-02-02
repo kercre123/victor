@@ -59,10 +59,12 @@ namespace Cozmo {
 
       #endregion
 
-      public void OpenView() {
+      public void OpenView(bool? overrideCloseOnTapOutside = null) {
         RaiseViewOpened(this);
 
-        if (_CloseDialogOnTapOutside) {
+        bool shouldCloseOnTapOutside = overrideCloseOnTapOutside.HasValue ? 
+          overrideCloseOnTapOutside.Value : _CloseDialogOnTapOutside;
+        if (shouldCloseOnTapOutside) {
           GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.FullScreenButtonPrefab,
                                           this.transform);
 

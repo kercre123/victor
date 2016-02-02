@@ -24,6 +24,8 @@ public class HowToPlayState : State {
   private void HandleContinueButtonClicked() {
     // TODO: Check if the game has been run before; if so skip the HowToPlayState
     GameBase game = _StateMachine.GetGame();
+    game.HideDefaultBackButton();
+    game.CreateDefaultQuitButton();
     game.CloseHowToPlayView();
     game.HideContinueButtonShelf();
     _StateMachine.SetNextState(_NextState);

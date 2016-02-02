@@ -48,18 +48,30 @@ namespace Cozmo {
       }
 
       private void HandleHowToPlayButtonTap() {
-        OpenHowToPlayView();
+        if (!IsHowToPlayViewOpen) {
+          OpenHowToPlayView(null, null);
+        }
       }
 
-      public void OpenHowToPlayView() {
-        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab) as HowToPlayView;
+      public void OpenHowToPlayView(bool? overrideBackgroundDim, bool? overrideCloseOnTouchOutside) {
+        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab, 
+          animateImmediately: true,
+          overrideBackgroundDim: overrideBackgroundDim,
+          overrideCloseOnTouchOutside: overrideCloseOnTouchOutside
+        ) as HowToPlayView;
         _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
       }
 
       public void CloseHowToPlayView() {
-        if (_HowToPlayViewInstance != null) {
+        if (IsHowToPlayViewOpen) {
           _HowToPlayViewInstance.CloseView();
           _HowToPlayViewInstance = null;
+        }
+      }
+
+      public bool IsHowToPlayViewOpen {
+        get {
+          return _HowToPlayViewInstance != null;
         }
       }
     }
