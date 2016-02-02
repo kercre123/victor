@@ -10,15 +10,13 @@ namespace Cozmo.UI {
     public ChallengeDataList ChallengeDataList;
 
     [SerializeField]
-    private Image _Icon;
-    [SerializeField]
-    private Image _Background;
+    private IconProxy _Icon;
 
     public void Initialize(string challengeId) {
       var challengeData = ChallengeDataList.ChallengeData.FirstOrDefault(x => x.ChallengeID == challengeId);
 
       if (challengeData != null) {
-        _Icon.sprite = challengeData.ChallengeIcon;
+        _Icon.SetIcon(challengeData.ChallengeIcon);
       }
     }
   }

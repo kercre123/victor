@@ -21,7 +21,7 @@ public class ChallengeDetailsDialog : BaseView {
   private AnkiTextLabel _PlayersAndCubesLabel;
 
   [SerializeField]
-  private Image _ChallengeIcon;
+  private IconProxy _ChallengeIcon;
 
   [SerializeField]
   private AnkiButton _StartChallengeButton;
@@ -41,7 +41,7 @@ public class ChallengeDetailsDialog : BaseView {
       Localization.Get(LocalizationKeys.kChallengeDetailsLabelPlayersAndCubesNeeded),
       challengeData.MinigameConfig.NumPlayersRequired(),
       challengeData.MinigameConfig.NumCubesRequired());
-    _ChallengeIcon.sprite = challengeData.ChallengeIcon;
+    _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
     _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
     _ChallengeId = challengeData.ChallengeID;
   }
