@@ -8,6 +8,9 @@
 
 #define DEBUG_HEAD_CONTROLLER 0
 
+// If defined, angle is calibrated while power is still being applied, verus a short period of time after motor is "relaxed"
+#define CALIB_WHILE_APPLYING_POWER
+
 namespace Anki {
 namespace Cozmo {
 namespace HeadController {
@@ -71,6 +74,7 @@ namespace HeadController {
 
       HeadCalibState calState_ = HCS_IDLE;
       const f32 HEAD_CALIB_POWER = 0.5;
+      const f32 HEAD_CAL_OFFSET = DEG_TO_RAD(0);  // Dependent on HEAD_CALIB_POWER. Ideally 0.
       bool isCalibrated_ = false;
       u32 lastHeadMovedTime_ms = 0;
 
@@ -129,23 +133,6 @@ namespace HeadController {
 
     void ResetLowAnglePosition()
     {
-      // TODO: Ideally, this value is 0,
-      //       but it may need to be calibrated
-      Radians HEAD_CAL_OFFSET = 0;
-      switch (HAL::GetID()) {
-        case 0x3AA0:
-        case 0x3A94:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(0);
-          break;
-        case 0x3aa7:
-        case 0x3a99:
-        case 0x40:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(5);
-          break;
-        default:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(0);
-      }
-
       currentAngle_ = MAX_HEAD_ANGLE + HEAD_CAL_OFFSET;
       HAL::MotorResetPosition(HAL::MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
@@ -196,7 +183,12 @@ namespace HeadController {
             } else {
               lastHeadMovedTime_ms = HAL::GetTimeStamp();
             }
+#ifdef    CALIB_WHILE_APPLYING_POWER
+            // Fall through to HCS_SET_CURR_ANGLE and immediately set angle
+            lastHeadMovedTime_ms = 0;
+#else
             break;
+#endif
 
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
