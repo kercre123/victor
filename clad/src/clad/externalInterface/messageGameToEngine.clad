@@ -406,6 +406,10 @@ message ExecuteBehavior {
   BehaviorType behaviorType
 }
 
+message ExecuteBehaviorByName {
+  string behaviorName
+}
+
 // Any message intended for a specific robot's behaviorManager
 message BehaviorManagerMessage {
   uint_8  robotID,

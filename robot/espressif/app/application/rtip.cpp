@@ -36,7 +36,10 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
   return true;
 }
 
-#define RELAY_BUFFER_SIZE (256)
+
+#define RELAY_BUFFER_SIZE (384)
+ct_assert(RELAY_BUFFER_SIZE > RTIP_MAX_CLAD_MSG_SIZE + DROP_TO_WIFI_MAX_PAYLOAD);
+
 extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
 {
   static uint8 relayBuffer[RELAY_BUFFER_SIZE];

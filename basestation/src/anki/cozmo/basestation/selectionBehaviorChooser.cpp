@@ -35,10 +35,16 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
 {
   if (_robot.HasExternalInterface())
   {
-    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ExecuteBehavior,
-                                                                      std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
-                                                                                this, std::placeholders::_1)));
-  }
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                               ExternalInterface::MessageGameToEngineTag::ExecuteBehavior,
+                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
+                                         this, std::placeholders::_1)));
+
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                               ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByName,
+                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
+                                         this, std::placeholders::_1)));
+}
   
   // Setup None Behavior now since it's always the fallback
   _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorType::NoneBehavior, robot, config);
@@ -67,28 +73,55 @@ IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(const Robot& robot, doub
   
   return nullptr;
 }
-  
+
 void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
-  const ExternalInterface::ExecuteBehavior& msg = event.GetData().Get_ExecuteBehavior();
-  BehaviorType type = msg.behaviorType;
-  IBehavior* selectedBehavior = GetBehaviorByName(EnumToString(type));
-  if (nullptr == selectedBehavior)
-  {
-    selectedBehavior = AddNewBehavior(type);
-    if (nullptr == selectedBehavior)
-    {
-      PRINT_NAMED_ERROR("SelectionBehaviorChooser.HandleExecuteBehavior",
-                        "SelectionBehaviorChooser could not select the behavior %s.", EnumToString(type));
-      return;
-    }
-  }
 
-  if( selectedBehavior != nullptr ) {
-    PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehavior.SelectBehavior",
-                     "selecting behavior '%s'", EnumToString(type));
+  IBehavior* selectedBehavior = nullptr;
+
+  switch( event.GetData().GetTag() ) {
+    case ExternalInterface::MessageGameToEngineTag::ExecuteBehavior: {
+      const ExternalInterface::ExecuteBehavior& msg = event.GetData().Get_ExecuteBehavior();
+      BehaviorType type = msg.behaviorType;
+      selectedBehavior = GetBehaviorByName(EnumToString(type));
+
+      if (nullptr == selectedBehavior)
+      {
+        selectedBehavior = AddNewBehavior(type);
+        if (nullptr == selectedBehavior)
+        {
+          PRINT_NAMED_ERROR("SelectionBehaviorChooser.HandleExecuteBehavior",
+                            "SelectionBehaviorChooser could not select the behavior %s.", EnumToString(type));
+          return;
+        }
+      }
+
+      if( selectedBehavior != nullptr ) {
+        PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehavior.SelectBehavior",
+                         "selecting behavior type '%s'", EnumToString(type));
+      }
+
+      break;
+    }
+
+    case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByName: {
+      const ExternalInterface::ExecuteBehaviorByName& msg = event.GetData().Get_ExecuteBehaviorByName();
+      selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByName( msg.behaviorName );
+
+      if( selectedBehavior != nullptr ) {
+        PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehavior.SelectBehavior",
+                         "selecting behavior name '%s'", msg.behaviorName.c_str() );
+      }
+
+      break;
+    }
+
+    default:
+      PRINT_NAMED_ERROR("SelectionBehaviorChooser.HandleMessage.UnknownTag",
+                        "got a tag we didn't subscribe to");
+      break;
   }
-  
+    
   _selectedBehavior = selectedBehavior;
 }
   
