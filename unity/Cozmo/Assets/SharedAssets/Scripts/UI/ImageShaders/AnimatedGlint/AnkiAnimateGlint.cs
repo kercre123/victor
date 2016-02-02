@@ -25,6 +25,7 @@ namespace Cozmo.UI {
     private Material _GlintMaterial;
 
     private void Awake() {
+      _MaskImage.enabled = true;
       _AnimateGlint = false;
       _GlintMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.AnimatedGlintShader);
       _MaskImage.material = _GlintMaterial;
