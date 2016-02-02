@@ -39,7 +39,6 @@
 		56B7960F1442E1770026B3DD /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56B795C11442E1100026B3DD /* CoreMotion.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 		56BCBA390FCF049A0030C3B2 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56BCBA380FCF049A0030C3B2 /* SystemConfiguration.framework */; };
 		56FD43960ED4745200FE3770 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56FD43950ED4745200FE3770 /* CFNetwork.framework */; };
-		6F7F7CE91C506C4F0021E9E4 /* libcozmoAPI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7F7CE81C506C4F0021E9E4 /* libcozmoAPI.a */; };
 		7F36C11113C5C673007FBDD9 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C10E13C5C673007FBDD9 /* CoreMedia.framework */; };
 		7F36C11213C5C673007FBDD9 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C10F13C5C673007FBDD9 /* CoreVideo.framework */; };
 		7F36C11313C5C673007FBDD9 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C11013C5C673007FBDD9 /* AVFoundation.framework */; settings = {ATTRIBUTES = (Required, ); }; };
@@ -276,7 +275,6 @@
 		56B796191442E1B80026B3DD /* GameKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameKit.framework; path = System/Library/Frameworks/GameKit.framework; sourceTree = SDKROOT; };
 		56BCBA380FCF049A0030C3B2 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		56FD43950ED4745200FE3770 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
-		6F7F7CE81C506C4F0021E9E4 /* libcozmoAPI.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcozmoAPI.a; path = "../../build/ios/derived-data/CozmoWorkspace_IOS-fggtfdgqgyeoisazvfijdlnajitk/Build/Products/Debug-iphoneos/libcozmoAPI.a"; sourceTree = "<group>"; };
 		7F36C10E13C5C673007FBDD9 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		7F36C10F13C5C673007FBDD9 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7F36C11013C5C673007FBDD9 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -490,7 +488,6 @@
 				462D5BC51B0576230027DC17 /* libopencv_video.a in Frameworks */,
 				462D5BC61B0576230027DC17 /* libopencv_features2d.a in Frameworks */,
 				462D5BBB1B0576230027DC17 /* libopencv_calib3d.a in Frameworks */,
-				6F7F7CE91C506C4F0021E9E4 /* libcozmoAPI.a in Frameworks */,
 				462D5BBC1B0576230027DC17 /* libopencv_highgui.a in Frameworks */,
 				462D5BBD1B0576230027DC17 /* libopencv_core.a in Frameworks */,
 				462D5BBE1B0576230027DC17 /* liblibpng.a in Frameworks */,
@@ -545,7 +542,6 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				6F7F7CE81C506C4F0021E9E4 /* libcozmoAPI.a */,
 				4E3C5ED01C055A8B008399F7 /* libCozmoFxPlugIn.a */,
 				85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */,
 				ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */,
