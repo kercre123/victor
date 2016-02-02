@@ -168,7 +168,6 @@ ActionResult TestActionWithinAction::CheckIfDone()
 }
 
 
-extern Anki::Util::Data::DataPlatform* dataPlatform;
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 // Tests queueing a single and letting it complete normally
