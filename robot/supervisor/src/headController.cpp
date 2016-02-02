@@ -70,6 +70,7 @@ namespace HeadController {
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
+      const f32 HEAD_CALIB_POWER = 0.5;
       bool isCalibrated_ = false;
       u32 lastHeadMovedTime_ms = 0;
 
@@ -145,7 +146,7 @@ namespace HeadController {
           HEAD_CAL_OFFSET = DEG_TO_RAD(0);
       }
 
-      currentAngle_ = MIN_HEAD_ANGLE + HEAD_CAL_OFFSET;
+      currentAngle_ = MAX_HEAD_ANGLE + HEAD_CAL_OFFSET;
       HAL::MotorResetPosition(HAL::MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
       isCalibrated_ = true;
@@ -171,7 +172,7 @@ namespace HeadController {
             break;
 
           case HCS_LOWER_HEAD:
-            power_ = -0.7;
+            power_ = HEAD_CALIB_POWER;
             HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             calState_ = HCS_WAIT_FOR_STOP;
