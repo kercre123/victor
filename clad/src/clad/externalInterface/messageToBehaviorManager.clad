@@ -15,18 +15,22 @@ namespace ExternalInterface {
 // are within a BehaviorManagerMessageUnion in BehaviorManagerMessage message)
 // See BehaviorManagerMessage in messagesGameToEngine.clad for usage of the union
 
-structure EnableAllBehaviorGroups
+// SetEnable functions can be used to enable or disable depending on whether enable == true / false
+structure SetEnableAllBehaviors
 {
+  bool enable
 }
 
-structure EnableBehaviorGroup
+structure SetEnableBehaviorGroup
 {
-  BehaviorGroup behaviorGroup
+  BehaviorGroup behaviorGroup,
+  bool enable
 }
 
-structure DisableBehaviorGroup
+structure SetEnableBehavior
 {
-  BehaviorGroup behaviorGroup
+  string behaviorName,
+  bool enable
 }
 
 structure ClearAllBehaviorScoreOverrides
@@ -40,9 +44,9 @@ structure OverrideBehaviorScore
 }
 
 union BehaviorManagerMessageUnion {
-  EnableAllBehaviorGroups EnableAllBehaviorGroups,
-  EnableBehaviorGroup EnableBehaviorGroup,
-  DisableBehaviorGroup DisableBehaviorGroup,
+  SetEnableAllBehaviors SetEnableAllBehaviors,
+  SetEnableBehaviorGroup SetEnableBehaviorGroup,
+  SetEnableBehavior SetEnableBehavior,
   ClearAllBehaviorScoreOverrides ClearAllBehaviorScoreOverrides,
   OverrideBehaviorScore OverrideBehaviorScore
 }

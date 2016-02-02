@@ -23,6 +23,7 @@ enum uint_8 BehaviorType {
   FindFaces,
   GatherBlocks,
   ExploreMarkedCube,
+  RequestGameZeroBlocks,
 
   Count
 }

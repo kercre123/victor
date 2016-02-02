@@ -62,20 +62,18 @@ namespace Cozmo {
 // Forward declarations
 class Robot;
 class IExternalInterface;
+class CozmoContext;
   
 template <typename Type>
 class AnkiEvent;
 
-namespace SpeechRecognition {
-  class KeyWordRecognizer;
-}
 namespace ExternalInterface {
   class MessageGameToEngine;
 }
-namespace Audio {
-  class AudioServer;
-}
 
+namespace SpeechRecognition {
+  class KeyWordRecognizer;
+}
 
 // Abstract base engine class
 class CozmoEngine
@@ -136,13 +134,9 @@ public:
 
 protected:
 
-  IExternalInterface* _externalInterface;
-
   Anki::Util::PrintfLoggerProvider _loggerProvider;
   
   std::vector<::Signal::SmartHandle> _signalHandles;
-  
-  Util::Data::DataPlatform* _dataPlatform;
   
   bool                      _isInitialized;
   Json::Value               _config;
@@ -159,16 +153,13 @@ protected:
   Result AddRobot(RobotID_t robotID);
   
   bool                         _isListeningForRobots;
-  Comms::AdvertisementService  _robotAdvertisementService;
-  RobotManager                 _robotMgr;
-  RobotInterface::MessageHandler& _robotMsgHandler;
   SpeechRecognition::KeyWordRecognizer* _keywordRecognizer;
   
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
   
-  Audio::AudioServer* _audioServer;
-  
   Anki::Cozmo::DebugConsoleManager _debugConsoleManager;
+  
+  std::unique_ptr<CozmoContext>    _context;
   
 }; // class CozmoEngine
   

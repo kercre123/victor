@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 
 
 using namespace Anki::Cozmo;
@@ -146,8 +147,8 @@ void VerifyBehavior(const IBehavior* inBehavior, BehaviorFactory& behaviorFactor
 
 TEST(BehaviorFactory, CreateAndDestroyBehaviors)
 {
-  RobotInterface::MessageHandler messageHandler;
-  Robot testRobot(RobotID_t(0), &messageHandler, nullptr, nullptr);
+  CozmoContext context{};
+  Robot testRobot(0, &context);
   BehaviorFactory& behaviorFactory = testRobot.GetBehaviorFactory();
   
   const size_t kBaseBehaviorCount = behaviorFactory.GetBehaviorMap().size(); // some behaviors are added by default so likely >0

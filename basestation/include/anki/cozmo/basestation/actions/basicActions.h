@@ -444,6 +444,25 @@ namespace Anki {
       std::string _name;
       
     };
+
+  
+    // Dummy action that just never finishes, can be useful for testing or holding the queue
+    class HangAction : public IAction
+    {
+    public:
+      HangAction() {}
+      
+      virtual const std::string& GetName() const override { return _name; }
+      virtual RobotActionType GetType() const override { return RobotActionType::HANG; }
+      
+    protected:
+      
+      virtual ActionResult Init() override { return ActionResult::SUCCESS; }
+      virtual ActionResult CheckIfDone() override { return ActionResult::RUNNING; }
+      
+      std::string _name = "Hang";
+
+    };
   }
 }
 

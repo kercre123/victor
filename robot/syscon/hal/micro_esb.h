@@ -92,6 +92,7 @@ struct uesb_address_desc_t
   uint32_t                base0;
   uint32_t                base1;
   uint8_t                 prefix[8];
+  uint8_t                 rx_pipes_enabled;
 };
 
 struct uesb_config_t
@@ -102,8 +103,6 @@ struct uesb_config_t
   uesb_tx_power_t         tx_output_power;
   uint8_t                 payload_length;
   uint8_t                 rf_addr_length;
-
-  uint8_t                 rx_pipes_enabled;
 
   uint8_t                 radio_irq_priority;
 

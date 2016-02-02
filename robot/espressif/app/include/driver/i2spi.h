@@ -9,8 +9,12 @@
 #define DMA_BUF_SIZE (512) /// This must be 512 Espressif DMA to work and for logic in i2spi.c to work
 /// How often we will garuntee servicing the DMA buffers
 #define DMA_SERVICE_INTERVAL_MS (5)
-/// How many buffers are required given the above constraints. + 1 for ceiling function
-#define DMA_BUF_COUNT ((I2SPI_RAW_BYTES_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE) + 1)
+/// How many buffers are required given the above constraints.
+#define DMA_BUF_COUNT ((I2SPI_RAW_BYTES_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE))
+/// Buffer size for sending messages to the RTIP
+#define I2SPI_MESSAGE_BUF_SIZE (1024)
+/// Size mask for index math on message buffer
+#define I2SPI_MESSAGE_BUF_SIZE_MASK (I2SPI_MESSAGE_BUF_SIZE-1)
 
 /// Task priority level for processing I2SPI data
 #define I2SPI_PRIO USER_TASK_PRIO_2
@@ -36,7 +40,7 @@ int8_t i2spiInit(void);
  *               Must be no more than DROP_TO_RTIP_MAX_VAR_PAYLOAD
  * @return true if the data was successfully queued or false if it could not be queued.
  */
-bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen);
+bool i2spiQueueMessage(uint8_t* msgData, int msgLen);
 
 /** Switch the operating mode of the I2SPI interface
  * I2SPI_NORMAL is the default mode

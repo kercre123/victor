@@ -126,12 +126,19 @@ namespace Cozmo {
   
   void BehaviorManager::SetupOctDemoBehaviorChooser(const Json::Value &config)
   {
-    SetBehaviorChooser( new DemoBehaviorChooser(_robot, config) );
+    IBehaviorChooser* chooser = new DemoBehaviorChooser(_robot, config);
+    SetBehaviorChooser( chooser );
     
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+
+    // for now, these aren't working nicely, and wanted to test this system
+    chooser->EnableBehaviorGroup(BehaviorGroup::EmotionalReaction, false);
+
+    // disable mini game request until we get one from unity
+    chooser->EnableBehaviorGroup(BehaviorGroup::MiniGame, false);
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -417,6 +424,11 @@ namespace Cozmo {
                         "Failed to initialize %s behavior.",
                         _currentBehavior->GetName().c_str());
       }
+      else {
+        PRINT_NAMED_DEBUG("BehaviorManger.InitBehavior.Success",
+                          "Behavior '%s' initialized",
+                          _currentBehavior->GetName().c_str());
+      }
       
       // flag as the running behavior
       _currentBehavior->SetIsRunning(true);
@@ -455,44 +467,45 @@ namespace Cozmo {
   {
     switch (message.GetTag())
     {
-      case ExternalInterface::BehaviorManagerMessageUnionTag::EnableAllBehaviorGroups:
+      case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableAllBehaviors:
       {
+        const auto& msg = message.Get_SetEnableAllBehaviors();
         if (_behaviorChooser)
         {
-          _behaviorChooser->ClearBannedBehaviorGroups();
+          _behaviorChooser->EnableAllBehaviors(msg.enable);
         }
         else
         {
-          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableAllBehaviorGroups.NullChooser",
-                              "Ignoring EnableAllBehaviorGroups");
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.SetEnableAllBehaviorGroups.NullChooser",
+                              "Ignoring EnableAllBehaviorGroups(%d)", (int)msg.enable);
         }
         break;
       }
-      case ExternalInterface::BehaviorManagerMessageUnionTag::EnableBehaviorGroup:
+      case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableBehaviorGroup:
       {
-        const auto& msg = message.Get_EnableBehaviorGroup();
+        const auto& msg = message.Get_SetEnableBehaviorGroup();
         if (_behaviorChooser)
         {
-          _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, false);
+          _behaviorChooser->EnableBehaviorGroup(msg.behaviorGroup, msg.enable);
         }
         else
         {
-          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.EnableBehaviorGroup.NullChooser",
-                              "Ignoring EnableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
+          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.SetEnableBehaviorGroup.NullChooser",
+                              "Ignoring EnableBehaviorGroup('%s', %d)", BehaviorGroupToString(msg.behaviorGroup), (int)msg.enable);
         }
         break;
       }
-      case ExternalInterface::BehaviorManagerMessageUnionTag::DisableBehaviorGroup:
+      case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableBehavior:
       {
-        const auto& msg = message.Get_DisableBehaviorGroup();
+        const auto& msg = message.Get_SetEnableBehavior();
         if (_behaviorChooser)
         {
-          _behaviorChooser->SetBannedBehaviorGroup(msg.behaviorGroup, true);
+          _behaviorChooser->EnableBehavior(msg.behaviorName, msg.enable);
         }
         else
         {
           PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.DisableBehaviorGroup.NullChooser",
-                              "Ignoring DisableBehaviorGroup '%s'", BehaviorGroupToString(msg.behaviorGroup));
+                              "Ignoring DisableBehaviorGroup('%s', %d)", msg.behaviorName.c_str(), (int)msg.enable);
         }
         break;
       }

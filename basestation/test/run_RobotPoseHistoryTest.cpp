@@ -7,6 +7,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
 #define DIST_EQ_THRESH 0.00001
@@ -16,8 +17,8 @@ TEST(RobotPoseHistory, AddGetPose)
 {
   using namespace Anki;
   using namespace Cozmo;
-  RobotInterface::MessageHandlerStub messageHandlerStub;
-  Robot robot(1, &messageHandlerStub, nullptr, nullptr);
+  CozmoContext context{};
+  Robot robot(1, &context);
   
   RobotPoseHistory hist;
   RobotPoseStamp p;
@@ -132,9 +133,9 @@ TEST(RobotPoseHistory, GroundTruthPose)
   
   using namespace Anki;
   using namespace Cozmo;
-
-  RobotInterface::MessageHandlerStub messageHandlerStub;
-  Robot robot(1, &messageHandlerStub, nullptr, nullptr);
+  
+  CozmoContext context{};
+  Robot robot(1, &context);
   
   RobotPoseHistory hist;
   RobotPoseStamp p;
