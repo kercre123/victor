@@ -17,6 +17,9 @@ public class DailyGoalPanel : MonoBehaviour {
   private GoalCell _GoalCellPrefab;
 
   [SerializeField]
+  private Transform _BonusBarContainer;
+  [SerializeField]
+  private BonusBarPanel _BonusBarPrefab;
   private BonusBarPanel _BonusBarPanel;
 
   // Progress bar for tracking total progress for all Goals
@@ -26,6 +29,10 @@ public class DailyGoalPanel : MonoBehaviour {
   // Container for Daily Goal Cells to be children of
   [SerializeField]
   private Transform _GoalContainer;
+
+  void Awake() {
+    _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
+  }
 
   private void OnDestroy() {
     _GoalCells.Clear();

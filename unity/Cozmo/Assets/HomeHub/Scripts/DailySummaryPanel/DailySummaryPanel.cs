@@ -55,6 +55,9 @@ public class DailySummaryPanel : BaseView {
   private AnkiTextLabel _NextFriendshipLevelBottom;
 
   [SerializeField]
+  private Transform _BonusBarContainer;
+  [SerializeField]
+  private BonusBarPanel _BonusBarPrefab;
   private BonusBarPanel _BonusBarPanel;
 
   // Config file for friendship progression
@@ -71,6 +74,7 @@ public class DailySummaryPanel : BaseView {
     int month = data.Date.Month;
 
     _Title.FormattingArgs = new object[] { month, day };
+    _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
 
     float dailyProg = _FriendshipFormulaConfig.CalculateDailyGoalProgress(data.Progress, data.Goals);
     _DailyProgressBar.SetProgress(dailyProg);

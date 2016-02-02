@@ -19,7 +19,7 @@ public class BonusBarPanel : MonoBehaviour {
     _InactiveBonusContainer.SetActive(!setActive);
     if (setActive) {
       int mult = Mathf.CeilToInt(prog);
-      _BonusMultText.text = string.Format("x{0}", mult);
+      _BonusMultText.FormattingArgs = new object[] { mult };
       _BonusProgressBar.SetProgress(prog - Mathf.Floor(prog));
       // TODO : Set ProgressBar Image based on top mult earned.
     }

@@ -20,16 +20,16 @@ public class FriendshipFormulaConfiguration : ScriptableObject {
 
   // Returns the friendship score value earned, including the multiplier from exceeding the goal
   public float CalculateFriendshipScore(StatContainer stats, StatContainer goal) {
-    float total = 0f;
-    float goalTotal = 0f;
+    float statPointsEarned = 0f;
+    float statPointsNeeded = 0f;
     for (int i = 0; i < _Multipliers.Length; i++) {
       var stat = (Anki.Cozmo.ProgressionStatType)i;
-      total += _Multipliers[i] * stats[stat];
-      goalTotal += goal[stat] * _Multipliers[i];
+      statPointsEarned += _Multipliers[i] * stats[stat];
+      statPointsNeeded += goal[stat] * _Multipliers[i];
     }
-    float mult = Mathf.Ceil(total / goalTotal);
-    total *= mult;
-    return total;
+    float mult = Mathf.Ceil(statPointsEarned / statPointsNeeded);
+    statPointsEarned *= mult;
+    return statPointsEarned;
   }
 
   // Returns the % progression towards your daily goals

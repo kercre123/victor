@@ -54,6 +54,9 @@
   "label.plusCount": {
     "translation": "+{0}"
   },
+  "label.xCount": {
+    "translation": "x{0}"
+  },
   "dailySummary.title": {
     "translation": "DAILY SUMMARY FOR {0}/{1}"
   },
