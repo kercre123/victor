@@ -115,8 +115,7 @@ class CozmoCLI(IDataReceiver):
                 }
                 sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
         elif msg.tag == msg.Tag.crashReport:
-            sys.stdout.write("Received crash report")
-            sys.stdout.write(os.linesep)
+            sys.stdout.write("Received crash report {:d}{linesep}".format(msg.crashReport.which, linesep=os.linesep))
             sys.stdout.flush()
             fh = open("robot WiFi crash report {}.p".format(time.ctime()), "wb")
             pickle.dump(msg.crashReport.dump, fh, 2)

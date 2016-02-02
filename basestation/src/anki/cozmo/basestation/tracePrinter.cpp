@@ -5,7 +5,7 @@
 #include "util/logging/logging.h"
 #include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
+#include <fstream>
 
 namespace Anki {
 namespace Cozmo {
@@ -47,6 +47,24 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
     const std::string name = GetName(trace.name);
     const std::string mesg = GetFormatted(trace);
     printf("ROBOT-%s %s: %s\n", RobotInterface::EnumToString(trace.level), name.c_str(), mesg.c_str());
+  }
+}
+
+void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) const {
+  const RobotInterface::CrashReport& report = message.GetData().Get_crashReport();
+  printf("ROBOT Firmware crash report received: %d\n", (int)report.which);
+  char dumpFileName[512];
+  snprintf(dumpFileName, 512, "robot_fw_crash_%d_%lld.bin", (int)report.which, std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+  std::ofstream fileOut;
+  fileOut.open(dumpFileName, std::ios::out | std::ofstream::binary);
+  if( fileOut.is_open() ) {
+    fileOut.write(reinterpret_cast<const char*>(report.dump.begin()), report.dump.size()*sizeof(uint32_t));
+    fileOut.close();
+    printf("\treport written to \"%s\"\n", dumpFileName);
+  }
+  else
+  {
+    printf("\tCouldn't write report to file \"%s\"\n", dumpFileName);
   }
 }
 

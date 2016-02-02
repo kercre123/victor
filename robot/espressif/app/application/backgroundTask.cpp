@@ -161,6 +161,7 @@ bool readCameraCalAndSend(uint32_t tag)
 bool readAndSendCrashReport(uint32_t param)
 {
   RobotInterface::CrashReport crMsg;
+  crMsg.which = RobotInterface::WiFiCrash;
   if (crashHandlerGetReport(crMsg.dump, crMsg.MAX_SIZE) > 0)
   {
     if (RobotInterface::SendMessage(crMsg))

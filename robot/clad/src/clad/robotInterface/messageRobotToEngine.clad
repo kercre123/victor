@@ -54,9 +54,18 @@ message FlashWriteAcknowledge
   bool    writeNotErase ///< True if acknowledging a write, false if acknowledging an erase
 }
 
+enum int_8 CrashSource
+{
+  WiFiCrash,
+  RTIPCrash,
+  BodyCrash,
+  PropCrash,
+}
+
 message CrashReport
 {
-  uint_32 dump[128]
+  uint_32 dump[128],
+  CrashSource which,
 }
 
 /// *************** Overall message pipe ******************************* ///
