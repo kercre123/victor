@@ -471,10 +471,10 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     payload.imageChunkCount,
     payload.chunkId, payload.data.data(), (uint32_t)payload.data.size() );
 
-  if (_externalInterface != nullptr && GetImageSendMode() != ImageSendMode::Off) {
+  if (_context->GetExternalInterface() != nullptr && GetImageSendMode() != ImageSendMode::Off) {
     ExternalInterface::MessageEngineToGame msgWrapper;
     msgWrapper.Set_ImageChunk(payload);
-    _externalInterface->Broadcast(msgWrapper);
+    _context->GetExternalInterface()->Broadcast(msgWrapper);
 
     const bool wasLastChunk = payload.chunkId == payload.imageChunkCount-1;
 
@@ -532,7 +532,7 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
     _imuSeqID = payload.seqId;
     
     // Make sure imu capture folder exists
-    std::string imuLogsDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
+    std::string imuLogsDir = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
     if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
       PRINT_NAMED_ERROR("Robot.HandleImuData.CreateDirFailed","%s", imuLogsDir.c_str());
     }

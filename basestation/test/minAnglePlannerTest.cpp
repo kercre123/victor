@@ -16,22 +16,21 @@
 #define private public
 #define protected public
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/minimalAnglePlanner.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
 using namespace Anki;
 using namespace Cozmo;
 
-extern Anki::Util::Data::DataPlatform* dataPlatform;
+extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 TEST(MinAnglePlanner, Create)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );
@@ -40,8 +39,7 @@ TEST(MinAnglePlanner, Create)
 
 TEST(MinAnglePlanner, Straight)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );
@@ -70,8 +68,7 @@ TEST(MinAnglePlanner, Straight)
 
 TEST(MinAnglePlanner, Simple)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );
@@ -102,8 +99,7 @@ TEST(MinAnglePlanner, Simple)
 
 TEST(MinAnglePlanner, NoFinalTurn)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );
@@ -133,8 +129,7 @@ TEST(MinAnglePlanner, NoFinalTurn)
 
 TEST(MinAnglePlanner, StraightAndTurn)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );
@@ -163,8 +158,7 @@ TEST(MinAnglePlanner, StraightAndTurn)
 
 TEST(MinAnglePlanner, NoBackup)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );
@@ -194,8 +188,7 @@ TEST(MinAnglePlanner, NoBackup)
 
 TEST(MinAnglePlanner, TurnOnly)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );
@@ -223,8 +216,7 @@ TEST(MinAnglePlanner, TurnOnly)
 
 TEST(MinAnglePlanner, OldBug)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );

@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/multiClientComms.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include <memory>
 
 namespace Anki {
 namespace Cozmo {
@@ -100,7 +101,6 @@ namespace Cozmo {
     
     Json::Value                      _config;
     
-    CozmoEngine*                     _cozmoEngine;
     int                              _desiredNumUiDevices;
     int                              _desiredNumRobots;
 
@@ -114,6 +114,8 @@ namespace Cozmo {
 
     std::vector<AdvertisingUiDevice> _connectedUiDevices;
     Util::Data::DataPlatform*        _dataPlatform;
+    
+    std::unique_ptr<CozmoEngine>     _cozmoEngine;
     
   }; // CozmoGameImpl
 

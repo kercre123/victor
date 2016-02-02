@@ -13,21 +13,21 @@
 
 #ifndef __Anki_Cozmo_CozmoAPI_h__
 #define __Anki_Cozmo_CozmoAPI_h__
-
-#include "json/json.h"
 #include "util/helpers/noncopyable.h"
+#include "json/json.h"
 
 #include <thread>
 #include <atomic>
+#include <memory>
 
 namespace Anki {
   
-  // Forward declarations
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
-  }
+// Forward declarations
+namespace Util {
+namespace Data {
+  class DataPlatform;
+}
+}
   
 namespace Cozmo {
 
@@ -54,7 +54,8 @@ private:
   public:
     CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                         const Json::Value& config, bool& initResult);
-    ~CozmoInstanceRunner();
+    
+    virtual ~CozmoInstanceRunner();
     void Run();
     void Stop() { _isRunning.store(false); }
     
@@ -62,13 +63,13 @@ private:
     bool Update(const double currentTime_sec);
     
   private:
-    CozmoGame* _cozmoInstance;
+    std::unique_ptr<CozmoGame> _cozmoInstance;
     std::atomic<bool> _isRunning;
     
   }; // class CozmoInstanceRunner
   
   // Our running instance, if we have one
-  CozmoInstanceRunner* _cozmoRunner = nullptr;
+  std::unique_ptr<CozmoInstanceRunner> _cozmoRunner;
   std::thread _cozmoRunnerThread;
 }; // class CozmoAPI
   
