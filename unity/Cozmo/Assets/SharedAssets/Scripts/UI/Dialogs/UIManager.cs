@@ -93,13 +93,15 @@ public class UIManager : MonoBehaviour {
   /// Creates a dialog using a script/prefab that extends from BaseView.
   /// Plays open animations on that dialog by default. 
   /// </summary>
-  public static BaseView OpenView(BaseView viewPrefab, bool animateImmediately = true) {
+  public static BaseView OpenView(BaseView viewPrefab, bool animateImmediately = true, 
+                                  bool? overrideBackgroundDim = null, bool? overrideCloseOnTouchOutside = null) {
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
 
     BaseView baseViewScript = newView.GetComponent<BaseView>();
     Instance._OpenViews.Add(baseViewScript);
 
-    if (baseViewScript.DimBackground) {
+    bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : baseViewScript.DimBackground;
+    if (shouldDimBackground) {
       Instance._NumDialogsDimmingBackground++;
       if (Instance._NumDialogsDimmingBackground == 1) {
         // First dialog to dim the background, we need to create a dimmer
@@ -114,7 +116,7 @@ public class UIManager : MonoBehaviour {
     newView.transform.SetParent(Instance._OverlayCanvas.transform, false);
 
     if (animateImmediately) {
-      baseViewScript.OpenView();
+      baseViewScript.OpenView(overrideCloseOnTouchOutside);
     }
 
     return baseViewScript;
