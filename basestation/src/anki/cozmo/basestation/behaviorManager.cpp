@@ -136,6 +136,9 @@ namespace Cozmo {
 
     // for now, these aren't working nicely, and wanted to test this system
     chooser->EnableBehaviorGroup(BehaviorGroup::EmotionalReaction, false);
+
+    // disable mini game request until we get one from unity
+    chooser->EnableBehaviorGroup(BehaviorGroup::MiniGame, false);
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
