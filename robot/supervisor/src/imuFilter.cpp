@@ -54,14 +54,14 @@ namespace Anki {
 
         f32 gyro_filt[3]                = {0};    // Filtered gyro measurements
         f32 gyro_robot_frame_filt[3]    = {0};    // Filtered gyro measurements in robot frame
-        const f32 RATE_FILT_COEFF       = 0.9f;   // IIR filter coefficient
+        const f32 RATE_FILT_COEFF       = 1.f;    // IIR filter coefficient (1 == disable filter)
         
         f32 gyro_drift_filt[3]          = {0};    // Filtered gyro drift offset. (Accumulate only when all axes are below GYRO_MOTION_THRESH)
-        const f32 RATE_DRIFT_FILT_COEFF = 0.1f;   // IIR filter coefficient
+        const f32 RATE_DRIFT_FILT_COEFF = 0.01f;   // IIR filter coefficient (1 == disable filter)
 
         f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
         f32 accel_robot_frame_filt[3]   = {0};    // Filtered accelerometer measurements in robot frame
-        const f32 ACCEL_FILT_COEFF      = 0.1f;   // IIR filter coefficient
+        const f32 ACCEL_FILT_COEFF      = 0.1f;   // IIR filter coefficient (1 == disable filter)
 
         // ==== Pickup detection ===
         bool pickupDetectEnabled_ = true;
@@ -87,11 +87,7 @@ namespace Anki {
 
         u32 lastMotionDetectedTime_us = 0;
         const u32 MOTION_DETECT_TIMEOUT_US = 250000;
-#       ifdef TARGET_K02
-        const f32 GYRO_MOTION_THRESHOLD = 0.04f;
-#       else
-        const f32 GYRO_MOTION_THRESHOLD = 0.24f;
-#       endif
+        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD(3);  // Maximum expected drift from gyro
 
 
         // Recorded buffer
@@ -642,17 +638,18 @@ namespace Anki {
         if (WheelController::AreWheelsPowered() || !HeadController::IsInPosition()) {
           lastMotionDetectedTime_us = currTime;
         }
-        // Was motion detected by accel or gyro?
-        for(u8 i=0; i<3; ++i) {
-          // TODO: Gyro seems to be sensitive enough that it's sufficient for detecting motion, but if
-          //       that's not the case, check for changes in gravity vector.
-          // ...
-          
-          // Check gyro
-          if (ABS(gyro_robot_frame_filt[i]) > GYRO_MOTION_THRESHOLD) {
-            lastMotionDetectedTime_us = currTime;
-          }
+        
+        // Check gyro for motion
+        if (ABS(imu_data_.rate_x) > GYRO_MOTION_THRESHOLD ||
+            ABS(imu_data_.rate_y) > GYRO_MOTION_THRESHOLD ||
+            ABS(imu_data_.rate_z) > GYRO_MOTION_THRESHOLD) {
+          lastMotionDetectedTime_us = currTime;
         }
+        
+        // TODO: Gyro seems to be sensitive enough that it's sufficient for detecting motion, but if
+        //       that's not the case, check for changes in gravity vector.
+        // ...
+        
         
 /*
         // Measure peak readings every 2 seconds
@@ -777,18 +774,17 @@ namespace Anki {
         // XY-plane rotation rate is robot frame z-axis rotation rate
         rotSpeed_ = gyro_robot_frame_filt[2];
 
-        // Update orientation if motion detected or expected
-        if (MotionDetected()) {
-          f32 dAngle = rotSpeed_ * CONTROL_DT;
-          rot_ += dAngle;
+        // Update orientation
+        f32 dAngle = rotSpeed_ * CONTROL_DT;
+        rot_ += dAngle;
+        
+        MadgwickAHRSupdateIMU(imu_data_.rate_x, imu_data_.rate_y, imu_data_.rate_z,
+                              imu_data_.acc_x, imu_data_.acc_y, imu_data_.acc_z);
+        //MadgwickAHRSupdateIMU(gyro_filt[0], gyro_filt[1], gyro_filt[2],
+        //                      accel_filt[0], accel_filt[1], accel_filt[2]);
 
-          MadgwickAHRSupdateIMU(imu_data_.rate_x, imu_data_.rate_y, imu_data_.rate_z,
-                                imu_data_.acc_x, imu_data_.acc_y, imu_data_.acc_z);
-          //MadgwickAHRSupdateIMU(gyro_filt[0], gyro_filt[1], gyro_filt[2],
-          //                      accel_filt[0], accel_filt[1], accel_filt[2]);
-        } else if (ABS(imu_data_.rate_x) < GYRO_MOTION_THRESHOLD &&
-                   ABS(imu_data_.rate_y) < GYRO_MOTION_THRESHOLD &&
-                   ABS(imu_data_.rate_z) < GYRO_MOTION_THRESHOLD) {
+        
+        if (!MotionDetected()) {
           // Update gyro drift offset while not moving
           gyro_drift_filt[0] = imu_data_.rate_x * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[0] * (1.f - RATE_DRIFT_FILT_COEFF);
           gyro_drift_filt[1] = imu_data_.rate_y * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[1] * (1.f - RATE_DRIFT_FILT_COEFF);
