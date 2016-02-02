@@ -70,15 +70,6 @@ namespace Cozmo {
         return close;
       }
 
-      public void EnableInteractivity() {
-        _ContinueButton.Interactable = _ShouldButtonBeInteractive;
-      }
-
-      public void DisableInteractivity() {
-        _ContinueButton.Interactable = false;
-        
-      }
-
       #endregion
     }
   }

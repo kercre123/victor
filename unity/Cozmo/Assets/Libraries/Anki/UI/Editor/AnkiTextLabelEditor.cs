@@ -16,11 +16,13 @@ namespace Anki.Editor.UI {
     string _LocalizedStringFile;
     string _LocalizationKey;
     bool _Localized;
+    SerializedProperty _AllUppercase;
 
     protected override void OnEnable() {
       base.OnEnable();
       m_Text = serializedObject.FindProperty("m_Text");
       m_FontData = serializedObject.FindProperty("m_FontData");
+      _AllUppercase = serializedObject.FindProperty("_AllUppercase");
 
       var currentValue = m_Text.stringValue;
       if (currentValue.StartsWith("#")) {
@@ -43,11 +45,11 @@ namespace Anki.Editor.UI {
       m_Text.stringValue = _LocalizedString;
       if (_Localized) {
         int selectedFileIndex = EditorGUILayout.Popup("Localization File", 
-          Mathf.Max(0, 
-                    System.Array.IndexOf(
-                      LocalizationEditorUtility.LocalizationFiles, 
-                      _LocalizedStringFile)), 
-          LocalizationEditorUtility.LocalizationFiles);
+                                  Mathf.Max(0, 
+                                    System.Array.IndexOf(
+                                      LocalizationEditorUtility.LocalizationFiles, 
+                                      _LocalizedStringFile)), 
+                                  LocalizationEditorUtility.LocalizationFiles);
         _LocalizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
 
         _LocalizationKey = EditorGUILayout.TextField("Localization Key", _LocalizationKey);
@@ -74,6 +76,7 @@ namespace Anki.Editor.UI {
         _LocalizedString = m_Text.stringValue;
       }
 
+      EditorGUILayout.PropertyField(_AllUppercase, new GUIContent("All Caps"));
       EditorGUILayout.PropertyField(m_FontData);
       AppearanceControlsGUI();
       serializedObject.ApplyModifiedProperties();

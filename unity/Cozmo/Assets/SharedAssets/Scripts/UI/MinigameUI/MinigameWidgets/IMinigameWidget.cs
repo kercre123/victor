@@ -9,10 +9,6 @@ namespace Cozmo {
       Sequence OpenAnimationSequence();
 
       Sequence CloseAnimationSequence();
-
-      void EnableInteractivity();
-
-      void DisableInteractivity();
     }
   }
 }
