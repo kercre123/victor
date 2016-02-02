@@ -62,7 +62,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
-  DimBackground: 0
+  DimBackground: 1
   _AlphaController: {fileID: 22520846}
   _ContentsContainer: {fileID: 22449776}
 --- !u!114 &11497162
@@ -168,7 +168,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: DimBackground
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 165332}
