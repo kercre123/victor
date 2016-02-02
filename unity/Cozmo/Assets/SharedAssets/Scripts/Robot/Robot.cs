@@ -685,6 +685,52 @@ public class Robot : IDisposable {
 
   #endregion
 
+  #region Behavior Manager
+
+  public void SetEnableAllBehaviors(bool enabled) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+        ID, 
+        Singleton<SetEnableAllBehaviors>.Instance.Initialize(enabled)
+      );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+        ID, 
+        Singleton<SetEnableBehaviorGroup>.Instance.Initialize(behaviorGroup, enabled)
+      );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetEnableBehavior(string behaviorName, bool enabled) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+        ID, 
+        Singleton<SetEnableBehavior>.Instance.Initialize(behaviorName, enabled)
+      );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void ClearAllBehaviorScoreOverrides() {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(ID, Singleton<ClearAllBehaviorScoreOverrides>.Instance);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void OverrideBehaviorScore(string behaviorName, float newScore) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+        ID, 
+        Singleton<OverrideBehaviorScore>.Instance.Initialize(behaviorName, newScore)
+      );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  #endregion
+
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       DAS.Warn(this, "UpdateObservedObjectInfo received message about the Mat!");
