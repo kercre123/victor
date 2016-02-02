@@ -135,7 +135,7 @@ namespace Cozmo {
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
 
     // for now, these aren't working nicely, and wanted to test this system
-    chooser->SetBannedBehaviorGroup( BehaviorGroup::EmotionalReaction );
+    chooser->EnableBehaviorGroup(BehaviorGroup::EmotionalReaction, false);
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
