@@ -4,7 +4,9 @@
  * Author: Lee Crippen
  * Created: 1/29/2016
  *
- * Description:
+ * Description: Holds references to components and systems that are used often by all different parts of code,
+ *              where it is unclear who the appropriate owner of that system would be.
+ *              NOT intended to be a container to hold ALL systems and components, which would simply be lazy.
  *
  * Copyright: Anki, Inc. 2016
  *
