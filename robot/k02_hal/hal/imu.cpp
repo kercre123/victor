@@ -111,9 +111,10 @@ static const uint8_t RANGE_2G = 0x03;
 static const uint8_t INT_OPEN_DRAIN = 0x44;
 static const uint8_t RANGE_500DPS = 0x02;
 static const uint8_t BW_200 = 0x19;           // Maybe?
+static const uint8_t CONF_GYRO = 0x09;    // 4x oversample, 200Hz update
 
 static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;           //In 2g mode, 16384 LSB/g
-static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f) *0.975; //In FS500 mode, 65.6 deg/s / LSB
+static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f); //*0.975; //In FS500 mode, 65.6 deg/s / LSB
                                                                          //HACK: 0.975 fudge factor because of slightly-faster-than-actual rates being reported
 
 static bool readyForIMU = true;
@@ -137,7 +138,8 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   I2C::WriteReg(ADDR_IMU, ACC_CONF, BW_200);
   I2C::WriteReg(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
   I2C::WriteReg(ADDR_IMU, GYR_RANGE, RANGE_500DPS);
-
+  I2C::WriteReg(ADDR_IMU, GYR_CONF, CONF_GYRO);
+  
   ReadID();
 
   Manage();
