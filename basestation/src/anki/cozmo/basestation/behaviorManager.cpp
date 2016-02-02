@@ -126,12 +126,16 @@ namespace Cozmo {
   
   void BehaviorManager::SetupOctDemoBehaviorChooser(const Json::Value &config)
   {
-    SetBehaviorChooser( new DemoBehaviorChooser(_robot, config) );
+    IBehaviorChooser* chooser = new DemoBehaviorChooser(_robot, config);
+    SetBehaviorChooser( chooser );
     
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+
+    // for now, these aren't working nicely, and wanted to test this system
+    chooser->SetBannedBehaviorGroup( BehaviorGroup::EmotionalReaction );
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -416,6 +420,11 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
                         "Failed to initialize %s behavior.",
                         _currentBehavior->GetName().c_str());
+      }
+      else {
+        PRINT_NAMED_DEBUG("BehaviorManger.InitBehavior.Success",
+                          "Behavior '%s' initialized",
+                          _currentBehavior->GetName().c_str());
       }
       
       // flag as the running behavior

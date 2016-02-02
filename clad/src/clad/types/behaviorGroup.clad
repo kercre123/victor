@@ -17,6 +17,7 @@ enum uint_8 BehaviorGroup {
     MovesLift,
     MiniGame,
     RequestSpeedTap,
+    EmotionalReaction,
     
     Count
 }
