@@ -54,6 +54,9 @@
   "label.plusCount": {
     "translation": "+{0}"
   },
+  "label.xCount": {
+    "translation": "x{0}"
+  },
   "dailySummary.title": {
     "translation": "DAILY SUMMARY FOR {0}/{1}"
   },
@@ -71,5 +74,8 @@
   },
   "requestGame.description": {
     "translation": "Cozmo wants to play {0}! Do You?"
+  },
+  "dailyGoal.FriendBonus": {
+    "translation": "Friend Bonus"
   }
 }
