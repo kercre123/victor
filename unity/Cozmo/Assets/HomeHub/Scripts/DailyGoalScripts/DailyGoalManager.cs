@@ -50,9 +50,16 @@ public class DailyGoalManager : MonoBehaviour {
     return _FriendshipFormulaConfig.CalculateDailyGoalProgress(prog, goal);
   }
 
+  [SerializeField]
+  private RequestGameListConfig _RequestMinigameConfig;
+
+  public RequestGameListConfig GetRequestMinigameConfig() {
+    return _RequestMinigameConfig;
+  }
+
   public string GetDesiredMinigameID() {
-    ChallengeData randC = _ChallengeList.ChallengeData[UnityEngine.Random.Range(0, _ChallengeList.ChallengeData.Length)];
-    _lastChallengeID = randC.ChallengeID;
+    RequestGameConfig config = _RequestMinigameConfig.RequestList[UnityEngine.Random.Range(0, _RequestMinigameConfig.RequestList.Length)];
+    _lastChallengeID = config.ChallengeID;
     return _lastChallengeID;
   }
 
