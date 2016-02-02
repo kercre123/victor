@@ -4,7 +4,7 @@
 #include "spine.h"
 #include "cube.h"
 
-#define __BRYON_ROBOT
+#define __KEVIN_ROBOT
 
 // This is a temporary mechanic until we get a message for the phone
 static const uint32_t PROP_WHITELIST[MAX_CUBES] = {
@@ -13,7 +13,7 @@ static const uint32_t PROP_WHITELIST[MAX_CUBES] = {
   0x00000091,
   0x0000003C,
   0x000000E7,
-#elif __KEVIN_ROBOT
+#elseif __KEVIN_ROBOT
   0x000000DA,
   0x000000A9,
   0x00000020,
