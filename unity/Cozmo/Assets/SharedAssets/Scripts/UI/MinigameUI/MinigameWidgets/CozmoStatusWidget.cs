@@ -43,14 +43,6 @@ namespace Cozmo {
         return close;
       }
 
-      public void EnableInteractivity() {
-        // Nothing interactive to enable
-      }
-
-      public void DisableInteractivity() {
-        // Nothing interactive to disable
-      }
-
       #endregion
     }
   }
