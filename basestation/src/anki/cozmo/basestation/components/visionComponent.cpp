@@ -37,30 +37,28 @@
 namespace Anki {
 namespace Cozmo {
   
-  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode,
-                                   Util::Data::DataPlatform* dataPlatform,
-                                   IExternalInterface* externalInterface)
+  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, CozmoContext* context)
   : _camera(robotID)
   , _runMode(mode)
   {
     std::string dataPath("");
-    if(dataPlatform != nullptr) {
-      dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                              "/config/basestation/vision");
+    if(nullptr != context && nullptr != context->GetDataPlatform()) {
+      dataPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                            "/config/basestation/vision");
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Constructor.NullDataPlatform",
-                          "Insantiating VisionSystem with a empty DataPath.");
+                          "Insantiating VisionSystem with no context and/or data platform.");
     }
     
     _visionSystem = new VisionSystem(dataPath);
     
     // Set up event handlers
-    if(nullptr != externalInterface)
+    if(nullptr != context && nullptr != context->GetExternalInterface())
     {
       using namespace ExternalInterface;
       
       // EnableVisionMode
-      _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::EnableVisionMode,
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableVisionMode,
         [this] (const AnkiEvent<MessageGameToEngine>& event)
         {
           auto const& payload = event.GetData().Get_EnableVisionMode();
@@ -68,7 +66,7 @@ namespace Cozmo {
         }));
       
       // AssignNameToFace
-      _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::AssignNameToFace,
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::AssignNameToFace,
         [this] (const AnkiEvent<MessageGameToEngine>& event)
         {
           const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();

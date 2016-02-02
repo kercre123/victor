@@ -6,6 +6,7 @@
 
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
@@ -14,7 +15,7 @@
 
 #define SHOW_IMAGES 1
 
-extern Anki::Util::Data::DataPlatform* dataPlatform;
+extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -102,8 +103,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
   
   Result lastResult = RESULT_OK;
   
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
   
   if(false == Vision::FaceTracker::IsRecognitionSupported()) {
     PRINT_NAMED_WARNING("FaceRecognition.PairwiseComparison.RecognitionNotSupported",
@@ -111,7 +111,7 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
     return;
   }
   
-  const std::string dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "test/faceRecognitionTests/");
+  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "test/faceRecognitionTests/");
   
   Vision::Image img;
   
@@ -134,8 +134,8 @@ TEST(FaceRecognition, SinglePersonPairwiseComparison)
     {
       // Create a new face tracker for each owner train file, to start from
       // scratch
-      Vision::FaceTracker faceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                                                   "/config/basestation/vision"),
+      Vision::FaceTracker faceTracker(cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                                      "/config/basestation/vision"),
                                       Vision::FaceTracker::DetectionMode::SingleImage);
       
       // Start fresh with each owner
@@ -234,7 +234,7 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
   Result lastResult = RESULT_OK;
   
   RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
   
   if(false == Vision::FaceTracker::IsRecognitionSupported()) {
     PRINT_NAMED_WARNING("FaceRecognition.SinglePersonVideoRecognitionAndTracking.RecognitionNotSupported",
@@ -242,7 +242,7 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
     return;
   }
   
-  const std::string dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "test/faceRecVideoTests/");
+  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "test/faceRecVideoTests/");
   
   // All-new tracker and face world for each person for this test
   Vision::FaceTracker* faceTracker = nullptr;
@@ -273,8 +273,8 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
   
   for(s32 iReload=0; iReload<2; ++iReload)
   {
-    faceTracker = new Vision::FaceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                                                       "/config/basestation/vision"),
+    faceTracker = new Vision::FaceTracker(cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                                          "/config/basestation/vision"),
                                           Vision::FaceTracker::DetectionMode::Video);
     
     if(iReload > 0) {

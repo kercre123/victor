@@ -44,7 +44,7 @@ namespace Cozmo {
 
 // Forward declaration
 class Robot;
-class IExternalInterface;
+class CozmoContext;
   
 struct DockingErrorSignal;
 
@@ -57,9 +57,7 @@ struct DockingErrorSignal;
       Asynchronous
     };
     
-    VisionComponent(RobotID_t robotID, RunMode mode,
-                    Util::Data::DataPlatform* dataPlatform,
-                    IExternalInterface* externalInterface);
+    VisionComponent(RobotID_t robotID, RunMode mode, CozmoContext* context);
     
     virtual ~VisionComponent();
     

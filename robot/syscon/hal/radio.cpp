@@ -19,6 +19,11 @@
 #include "rng.h"
 #include "spine.h"
 
+#ifdef DUMP_DISCOVER
+#include "head.h"
+#endif
+
+
 #define ABS(x)   ((x < 0) ? -x : x)
 
 enum AccessoryType {
@@ -306,6 +311,10 @@ extern "C" void uesb_event_handler(void)
         msg.PropDiscovered.prop_id = packet.id;
                 
         Spine::enqueue(msg);
+        
+        #ifdef DUMP_DISCOVER
+        if (packet.id < 0x8000) UART::print("%x\r\n", (uint16_t) packet.id);
+        #endif
         
         // Attempt to allocate a slot for it
         slot = FreeAccessory();
