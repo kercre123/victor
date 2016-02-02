@@ -158,7 +158,7 @@ namespace Cozmo.HomeHub {
         }
 
         entry.Inititialize(date, active, progress);
-        graphPoints.Add(progress);
+        graphPoints.Add(Mathf.Min(progress, 1.0f));
 
         entry.OnSelect += HandleTimelineEntrySelected;
 
@@ -204,7 +204,7 @@ namespace Cozmo.HomeHub {
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
 
-      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress));
+      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress, timelineEntry.Goals));
 
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
       UpdateFriendshipPoints(timelineEntry, friendshipPoints);

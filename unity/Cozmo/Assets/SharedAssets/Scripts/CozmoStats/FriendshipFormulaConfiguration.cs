@@ -18,14 +18,21 @@ public class FriendshipFormulaConfiguration : ScriptableObject {
     } 
   }
 
-  public float CalculateFriendshipScore(StatContainer stats) {
+  // Returns the friendship score value earned, including the multiplier from exceeding the goal
+  public float CalculateFriendshipScore(StatContainer stats, StatContainer goal) {
     float total = 0f;
+    float goalTotal = 0f;
     for (int i = 0; i < _Multipliers.Length; i++) {
-      total += _Multipliers[i] * stats[(Anki.Cozmo.ProgressionStatType)i];
+      var stat = (Anki.Cozmo.ProgressionStatType)i;
+      total += _Multipliers[i] * stats[stat];
+      goalTotal += goal[stat] * _Multipliers[i];
     }
+    float mult = Mathf.Ceil(total / goalTotal);
+    total *= mult;
     return total;
   }
 
+  // Returns the % progression towards your daily goals
   public float CalculateDailyGoalProgress(StatContainer progress, StatContainer goal) {
     float totalProgress = 0f, totalGoal = 0f;
     for (int i = 0; i < _Multipliers.Length; i++) {
@@ -41,4 +48,5 @@ public class FriendshipFormulaConfiguration : ScriptableObject {
       return 0f;
     }
   }
+
 }
