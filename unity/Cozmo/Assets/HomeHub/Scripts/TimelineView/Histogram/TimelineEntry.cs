@@ -10,6 +10,9 @@ public class TimelineEntry : MonoBehaviour {
   private Image _Fillbar;
 
   [SerializeField]
+  private GameObject _TimelineNodeBonus;
+
+  [SerializeField]
   private GameObject _TimelineNodeActive;
 
   [SerializeField]
@@ -44,8 +47,9 @@ public class TimelineEntry : MonoBehaviour {
     _Fillbar.fillAmount = progress;
 
     _FillbarButton.gameObject.SetActive(active);
-    _TimelineNodeActive.SetActive(active);
-    _TimelineNodeComplete.SetActive(progress == 1.0f);
+    _TimelineNodeActive.SetActive(active && progress < 1.0f);
+    _TimelineNodeComplete.SetActive(progress >= 1.0f);
     _TimelineNodeInactive.SetActive(!active);
+    _TimelineNodeBonus.SetActive(progress > 1.0f);
   }
 }

@@ -332,6 +332,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &162574
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22498842}
+  m_Layer: 0
+  m_Name: BonusBarContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &164892
 GameObject:
   m_ObjectHideFlags: 1
@@ -727,7 +742,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 22483714}
   m_Direction: 2
   m_Value: 0
-  m_Size: .99999994
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -773,7 +788,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 22433294}
   m_Direction: 2
   m_Value: 1
-  m_Size: .999999583
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -977,6 +992,8 @@ MonoBehaviour:
   _CurrentFriendshipLevelBottom: {fileID: 11467842}
   _NextFriendshipLevelTop: {fileID: 11483090}
   _NextFriendshipLevelBottom: {fileID: 11464100}
+  _BonusBarContainer: {fileID: 22498842}
+  _BonusBarPrefab: {fileID: 11477656, guid: ea0dc2f73b17c4751a4c3c726e2fdb53, type: 2}
   _FriendshipFormulaConfig: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
     type: 2}
 --- !u!114 &11433650
@@ -1865,6 +1882,7 @@ RectTransform:
   - {fileID: 22480208}
   - {fileID: 22472810}
   - {fileID: 22494054}
+  - {fileID: 22498842}
   m_Father: {fileID: 22408916}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -1991,7 +2009,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 0, y: 52.9999847}
+  m_AnchoredPosition: {x: 0, y: -62}
   m_SizeDelta: {x: 400, y: 88}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22461176
@@ -2120,8 +2138,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 6.10351562e-05, y: 53}
-  m_SizeDelta: {x: 400, y: 105}
+  m_AnchoredPosition: {x: 6.10351562e-05, y: -62}
+  m_SizeDelta: {x: 400, y: 88}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22480208
 RectTransform:
@@ -2316,8 +2334,25 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 6.10351562e-05, y: 125}
+  m_AnchoredPosition: {x: 6.10351562e-05, y: 150}
   m_SizeDelta: {x: -40, y: 218}
+  m_Pivot: {x: .5, y: .5}
+--- !u!224 &22498842
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 162574}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22423886}
+  m_RootOrder: 6
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: -420}
+  m_SizeDelta: {x: 775, y: 133}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:

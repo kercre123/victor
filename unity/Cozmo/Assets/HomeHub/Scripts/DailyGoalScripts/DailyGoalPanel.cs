@@ -4,15 +4,23 @@ using Cozmo.UI;
 using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.UI;
 
 // Panel for generating and displaying the ProgressionStat goals for the Day.
 public class DailyGoalPanel : MonoBehaviour {
   
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
 
+
   // Prefab for GoalCells
   [SerializeField]
   private GoalCell _GoalCellPrefab;
+
+  [SerializeField]
+  private Transform _BonusBarContainer;
+  [SerializeField]
+  private BonusBarPanel _BonusBarPrefab;
+  private BonusBarPanel _BonusBarPanel;
 
   // Progress bar for tracking total progress for all Goals
   [SerializeField]
@@ -22,59 +30,12 @@ public class DailyGoalPanel : MonoBehaviour {
   [SerializeField]
   private Transform _GoalContainer;
 
-  // Config file for friendship progression
-  private FriendshipProgressionConfig _Config;
-  [SerializeField]
-  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
-
-  private void Awake() {
-    _Config = DailyGoalManager.Instance.GetFriendshipProgressConfig();
+  void Awake() {
+    _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
   }
 
   private void OnDestroy() {
     _GoalCells.Clear();
-  }
-
-  // Using current friendship level and the appropriate config file,
-  // generate a series of random goals for the day.
-  public StatContainer GenerateDailyGoals() {
-    Robot rob = RobotEngineManager.Instance.CurrentRobot;
-
-    int lvl = rob.FriendshipLevel;
-
-
-    if (lvl >= _Config.FriendshipLevels.Length) {
-      lvl = _Config.FriendshipLevels.Length - 1;
-    }
-    DAS.Event(this, string.Format("GoalGeneration({0},{1})", lvl, rob.GetFriendshipLevelName(lvl)));
-    StatBitMask possibleStats = StatBitMask.None;
-    int totalGoals = 0;
-    int min = 0;
-    int max = 0;
-    // Iterate through each level and add in the stats introduced for that level
-    for (int i = 0; i <= lvl; i++) {
-      possibleStats |= _Config.FriendshipLevels[i].StatsIntroduced;
-    }
-    totalGoals = _Config.FriendshipLevels[lvl].MaxGoals;
-    min = _Config.FriendshipLevels[lvl].MinTarget;
-    max = _Config.FriendshipLevels[lvl].MaxTarget;
-
-    // Don't generate more goals than possible stats
-    if (totalGoals > possibleStats.Count) {
-      DAS.Warn(this, "More Goals than Potential Stats");
-      totalGoals = possibleStats.Count;
-    }
-    StatContainer goals = new StatContainer();
-    // Generate Goals from the possible stats
-    for (int i = 0; i < totalGoals; i++) {
-      Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
-      possibleStats[targetStat] = false;
-      goals[targetStat] = Random.Range(min, max);
-      CreateGoalCell(targetStat, goals[targetStat], 0);
-    }
-
-    _TotalProgressBar.SetProgress(0f);
-    return goals;
   }
 
   public void SetDailyGoals(StatContainer progress, StatContainer goals) {
@@ -84,7 +45,9 @@ public class DailyGoalPanel : MonoBehaviour {
         CreateGoalCell(targetStat, goals[targetStat], progress[targetStat]);
       }
     }
-    _TotalProgressBar.SetProgress(DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateDailyGoalProgress(progress, goals));
+    float dailyProg = DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateDailyGoalProgress(progress, goals);
+    _TotalProgressBar.SetProgress(dailyProg);
+    _BonusBarPanel.SetFriendshipBonus(dailyProg);
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
@@ -95,5 +58,10 @@ public class DailyGoalPanel : MonoBehaviour {
     newBadge.Initialize(type, prog, goal);
     _GoalCells.Add(newBadge);
     return newBadge;
+  }
+
+  // Disable any UI elements that should not be shown when collapsed
+  public void Collapse(bool collapse) {
+    _BonusBarPanel.gameObject.SetActive(collapse);
   }
 }

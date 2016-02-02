@@ -21,6 +21,7 @@ namespace Cozmo.UI {
     private float _SecondsSinceLastLoop = -1f;
     private bool _AnimateGlint = true;
     private float _GlintWidthToMaskWidthRatio;
+    private bool _IsEnabled = true;
 
     private Material _GlintMaterial;
 
@@ -41,6 +42,13 @@ namespace Cozmo.UI {
       _AnimateGlint = true;
     }
 
+    public void EnableGlint(bool enable) {
+      _IsEnabled = enable;
+      Color maskColor = _MaskImage.color;
+      maskColor.a = enable ? 1 : 0;
+      _MaskImage.color = maskColor;
+    }
+
     private void Update() {
       UpdateMaterial();
     }
@@ -50,6 +58,10 @@ namespace Cozmo.UI {
     }
 
     private void UpdateMaterial() {
+      if (!_IsEnabled) {
+        return;
+      }
+
       if (_AnimateGlint) {
         _UVOffset.x -= _LoopSpeed * Time.deltaTime;
         _UVOffset.y = 0;

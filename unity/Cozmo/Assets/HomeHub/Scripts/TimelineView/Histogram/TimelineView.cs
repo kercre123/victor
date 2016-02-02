@@ -158,7 +158,7 @@ namespace Cozmo.HomeHub {
         }
 
         entry.Inititialize(date, active, progress);
-        graphPoints.Add(progress);
+        graphPoints.Add(Mathf.Min(progress, 1.0f));
 
         entry.OnSelect += HandleTimelineEntrySelected;
 
@@ -204,7 +204,7 @@ namespace Cozmo.HomeHub {
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
 
-      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress));
+      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress, timelineEntry.Goals));
 
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
       UpdateFriendshipPoints(timelineEntry, friendshipPoints);
@@ -265,12 +265,14 @@ namespace Cozmo.HomeHub {
         if (_LockedPaneScrollContainer.parent != _LockedPaneRightNoScrollContainer) {
           _LockedPaneScrollContainer.SetParent(_LockedPaneRightNoScrollContainer, true);
           _LockedPaneScrollContainer.localPosition = Vector3.zero;
+          _DailyGoalInstance.Collapse(false);
         }
       }
       else if (currentScrollPosition >= GetDailyGoalOnLeftHorizontalNormalizedPosition()) {
         if (_LockedPaneScrollContainer.parent != _LockedPaneLeftNoScrollContainer) {
           _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, true);
           _LockedPaneScrollContainer.localPosition = Vector3.zero;
+          _DailyGoalInstance.Collapse(false);
         }
         float pixelsOnLeft = GetScrollRectNormalizedWidth() * _ScrollRect.horizontalNormalizedPosition;
         float dailyGoalPaneOverhang = pixelsOnLeft - _TimelinePane.rect.width;
@@ -281,7 +283,8 @@ namespace Cozmo.HomeHub {
       else {
         if (_LockedPaneScrollContainer.parent != _MiddlePane) {
           _LockedPaneScrollContainer.SetParent(_MiddlePane.transform, true);
-          _LockedPaneScrollContainer.localPosition = Vector3.zero;
+          _LockedPaneScrollContainer.localPosition = Vector3.zero; 
+          _DailyGoalInstance.Collapse(true);
         }
       }
     }
