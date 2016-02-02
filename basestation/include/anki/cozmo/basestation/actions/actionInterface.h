@@ -60,7 +60,8 @@ namespace Anki {
       // at construction, or it can be overridden with SetTag(). The Tag is
       // returned in the ActionCompletion signal as well.
       void SetTag(u32 tag);
-      u32  GetTag() const  { return _idTag; }
+      u32  GetTag() const { return _idTag; }
+      u32  GetUnityTag() const;
       
       // Derived classes can implement any required cleanup by overriding this
       // method. It is called when Update() is about return anything other than
@@ -181,7 +182,8 @@ namespace Anki {
       
       ActionList::SlotHandle _inSlot = ActionList::UnknownSlot;
       
-      static u32    sTagCounter;
+      static u32                sTagCounter;
+      static std::map<u32, u32> sUnityToEngineTagMap;
       
 #   if USE_ACTION_CALLBACKS
     public:

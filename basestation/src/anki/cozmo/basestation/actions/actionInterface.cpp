@@ -29,12 +29,19 @@ namespace Anki {
   
   namespace Cozmo {
     
-    u32 IActionRunner::sTagCounter = 100000;
+    u32 IActionRunner::sTagCounter = 0;
+    std::map<u32, u32> IActionRunner::sUnityToEngineTagMap;
     
     IActionRunner::IActionRunner()
     {
       // Assign every action a unique tag
       if (++IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
+        ++IActionRunner::sTagCounter;
+      }
+      
+      // If this tag already exists find one that doesn't
+      while(!IActionRunner::sUnityToEngineTagMap.emplace(IActionRunner::sTagCounter, IActionRunner::sTagCounter).second)
+      {
         ++IActionRunner::sTagCounter;
       }
       
@@ -46,8 +53,24 @@ namespace Anki {
       if (tag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
         PRINT_NAMED_ERROR("IActionRunner.SetTag.InvalidTag", "INVALID_TAG==%d", ActionConstants::INVALID_TAG);
       } else {
-        _idTag = tag;
+        auto pair = IActionRunner::sUnityToEngineTagMap.emplace(tag, _idTag);
+        if(!pair.second) {
+          PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] already exists", tag);
+        }
       }
+    }
+    
+    u32 IActionRunner::GetUnityTag() const
+    {
+      for(auto pair : IActionRunner::sUnityToEngineTagMap)
+      {
+        // Since the mapping _idTag -> _idTag exists skip it by comparing pair.first to _idTag
+        if(pair.second == _idTag && pair.first != _idTag)
+        {
+          return pair.first;
+        }
+      }
+      return _idTag;
     }
     
     bool IActionRunner::Interrupt()
@@ -158,7 +181,7 @@ namespace Anki {
 
       GetCompletionUnion(completionUnion);
       
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, GetType(), result, completionUnion)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), GetUnityTag(), GetType(), result, completionUnion)));
     }
     
     bool IActionRunner::RetriesRemain()
