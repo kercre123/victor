@@ -227,6 +227,7 @@ bool ICACHE_FLASH_ATTR SendTxBuf(ReliableConnection* connection)
   if (UnreliableTransport_SendPacket(connection->txBuf, connection->txQueued) == false)
   {
     //printf("WARN: ReliableTransport could't send pending messages\r\n");
+    resetTxQueue(connection);
     return false;
   }
   else
