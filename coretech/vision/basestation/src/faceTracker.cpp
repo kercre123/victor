@@ -94,6 +94,11 @@ namespace Vision {
     return _pImpl->LoadAlbum(albumName);
   }
   
+  void FaceTracker::PrintTiming()
+  {
+    _pImpl->Print();
+  }
+  
   /*
   void FaceTracker::EnableDisplay(bool enabled) {
     _pImpl->EnableDisplay(enabled);

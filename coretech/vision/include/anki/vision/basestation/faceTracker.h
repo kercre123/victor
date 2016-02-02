@@ -54,6 +54,8 @@ namespace Vision {
     Result SaveAlbum(const std::string& albumName);
     Result LoadAlbum(const std::string& albumName);
     
+    void PrintTiming();
+    
   private:
     
     // Forward declaration
