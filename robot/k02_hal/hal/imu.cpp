@@ -177,6 +177,17 @@ uint8_t Anki::Cozmo::HAL::IMU::ReadID(void) {
   return I2C::ReadReg(ADDR_IMU, 0);
 }
 
+void Anki::Cozmo::HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)
+{
+  accel[0] = IMU::IMUState.acc[2];
+  accel[1] = IMU::IMUState.acc[1];
+  accel[2] = -IMU::IMUState.acc[0];
+  gyro[0] = IMU::IMUState.gyro[2];
+  gyro[1] = IMU::IMUState.gyro[1];
+  gyro[2] = -IMU::IMUState.gyro[0];
+  *timestamp = IMU::IMUState.timestamp;
+}
+
 void Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
 {
   // Accelerometer uses 12 most significant bits - gyro uses all 16

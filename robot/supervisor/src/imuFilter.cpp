@@ -36,6 +36,11 @@
 
 #define DEBUG_IMU_FILTER 0
 
+// Define type of data to send when IMURequest received
+#define RECORD_AND_SEND_RAW_DATA  0
+#define RECORD_AND_SEND_FILT_DATA 1
+#define RECORD_AND_SEND_MODE RECORD_AND_SEND_RAW_DATA
+
 
 namespace Anki {
   namespace Cozmo {
@@ -92,8 +97,15 @@ namespace Anki {
 
         // Recorded buffer
         bool isRecording_ = false;
+        
+#if(RECORD_AND_SEND_MODE == RECORD_AND_SEND_FILT_DATA)
         u8 recordDataIdx_ = 0;
         RobotInterface::IMUDataChunk imuChunkMsg_;
+#else
+        RobotInterface::IMURawDataChunk imuRawDataMsg_;
+        u16 totalIMUDataMsgsToSend_ = 0;
+        u16 sentIMUDataMsgs_ = 0;
+#endif
 
 
         // ====== Event detection vars ======
@@ -811,22 +823,7 @@ namespace Anki {
         // Recording IMU data for sending to basestation
         if (isRecording_) {
 
-          /*
-          // Scale accel range of -20000 to +20000mm/s2 (roughly -2g to +2g) to be between -127 and +127
-          const f32 accScaleFactor = 127.f/20000.f;
-
-          imuChunkMsg_.aX[recordDataIdx_] = (accel_robot_frame_filt[0] * accScaleFactor);
-          imuChunkMsg_.aY[recordDataIdx_] = (accel_robot_frame_filt[1] * accScaleFactor);
-          imuChunkMsg_.aZ[recordDataIdx_] = (accel_robot_frame_filt[2] * accScaleFactor);
-
-          // Scale gyro range of -2pi to +2pi rad/s to be between -127 and +127
-          const f32 gyroScaleFactor = 127.f/(2.f*PI_F);
-          imuChunkMsg_.gX[recordDataIdx_] = (gyro_robot_frame_filt[0] * gyroScaleFactor);
-          imuChunkMsg_.gY[recordDataIdx_] = (gyro_robot_frame_filt[1] * gyroScaleFactor);
-          imuChunkMsg_.gZ[recordDataIdx_] = (gyro_robot_frame_filt[2] * gyroScaleFactor);
-           */
-
-          /*
+#if(RECORD_AND_SEND_MODE == RECORD_AND_SEND_FILT_DATA)
           imuChunkMsg_.aX[recordDataIdx_] = accel_robot_frame_filt[0];
           imuChunkMsg_.aY[recordDataIdx_] = accel_robot_frame_filt[1];
           imuChunkMsg_.aZ[recordDataIdx_] = accel_robot_frame_filt[2];
@@ -834,27 +831,6 @@ namespace Anki {
           imuChunkMsg_.gX[recordDataIdx_] = gyro_robot_frame_filt[0];
           imuChunkMsg_.gY[recordDataIdx_] = gyro_robot_frame_filt[1];
           imuChunkMsg_.gZ[recordDataIdx_] = gyro_robot_frame_filt[2];
-          */
-
-
-
-
-          // Compute raw accel values in robot frame
-          const f32 xzAccelMagnitude = sqrtf(imu_data_.acc_x*imu_data_.acc_x + imu_data_.acc_z*imu_data_.acc_z);
-          const f32 accel_angle_imu_frame = atan2_fast(imu_data_.acc_z, imu_data_.acc_x);
-          const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
-
-          imuChunkMsg_.aX[recordDataIdx_] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
-          imuChunkMsg_.aY[recordDataIdx_] = imu_data_.acc_y;
-          imuChunkMsg_.aZ[recordDataIdx_] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
-
-          // Compute raw gyro values in robot frame
-          imuChunkMsg_.gX[recordDataIdx_] = imu_data_.rate_x + imu_data_.rate_z * tanf(headAngle);
-          imuChunkMsg_.gY[recordDataIdx_] = imu_data_.rate_y;
-          imuChunkMsg_.gZ[recordDataIdx_] = imu_data_.rate_z  / cosf(headAngle);;
-
-
-
 
 
           // Send message when it's full
@@ -868,6 +844,20 @@ namespace Anki {
               isRecording_ = false;
             }
           }
+#else
+      
+          // Raw IMU chunks
+          HAL::IMUReadRawData(imuRawDataMsg_.a, imuRawDataMsg_.g, &imuRawDataMsg_.timestamp);
+          ++sentIMUDataMsgs_;
+          if (sentIMUDataMsgs_ == totalIMUDataMsgsToSend_) {
+            AnkiDebug( 98, "IMU RAW RECORDING COMPLETE", 168, "(time %dms)", 1, HAL::GetTimeStamp());
+            isRecording_ = false;
+            imuRawDataMsg_.order = 2;  // 2 == last msg of sequence
+          }
+          RobotInterface::SendMessage(imuRawDataMsg_);
+          imuRawDataMsg_.order = 1;    // 1 == intermediate msg of sequence
+#endif
+
         }
 
 
@@ -906,10 +896,16 @@ namespace Anki {
       {
         AnkiDebug( 27, "STARTING IMU RECORDING", 169, "(time = %dms)", 1, HAL::GetTimeStamp());
         isRecording_ = true;
+#if(RECORD_AND_SEND_MODE == RECORD_AND_SEND_FILT_DATA)
         recordDataIdx_ = 0;
         imuChunkMsg_.seqId++;
         imuChunkMsg_.chunkId=0;
         imuChunkMsg_.totalNumChunks = length_ms / (TIME_STEP * IMU_CHUNK_SIZE);
+#else
+        imuRawDataMsg_.order = 0; // 0 == first message of sequence
+        sentIMUDataMsgs_ = 0;
+        totalIMUDataMsgsToSend_ = length_ms / TIME_STEP;
+#endif
       }
 
     } // namespace IMUFilter

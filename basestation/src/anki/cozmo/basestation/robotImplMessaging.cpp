@@ -68,6 +68,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
     std::bind(&Robot::HandleImuData, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuRawDataChunk,
+    std::bind(&Robot::HandleImuRawData, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::syncTimeAck,
     std::bind(&Robot::HandleSyncTimeAck, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::robotPoked,
@@ -560,6 +562,46 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
     _imuLogFileStream.close();
   }
 }
+
+
+void Robot::HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const RobotInterface::IMURawDataChunk& payload = message.GetData().Get_imuRawDataChunk();
+  
+  if (payload.order == 0) {
+    ++_imuSeqID;
+    
+    // Make sure imu capture folder exists
+    std::string imuLogsDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
+    if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
+      PRINT_NAMED_ERROR("Robot.HandleImuRawData.CreateDirFailed","%s", imuLogsDir.c_str());
+    }
+    
+    // Open imu log file
+    std::string imuLogFileName = std::string(imuLogsDir.c_str()) + "/imuRawLog_" + std::to_string(_imuSeqID) + ".dat";
+    PRINT_NAMED_INFO("Robot.HandleImuRawData.OpeningLogFile",
+                     "%s", imuLogFileName.c_str());
+    
+    _imuLogFileStream.open(imuLogFileName.c_str());
+    _imuLogFileStream << "timestamp aX aY aZ gX gY gZ\n";
+  }
+  
+  _imuLogFileStream
+    << payload.a.data()[0] << " "
+    << payload.a.data()[1] << " "
+    << payload.a.data()[2] << " "
+    << payload.g.data()[0] << " "
+    << payload.g.data()[1] << " "
+    << payload.g.data()[2] << " "
+    << static_cast<int>(payload.timestamp) << "\n";
+  
+  // Close file when last chunk received
+  if (payload.order == 2) {
+    PRINT_NAMED_INFO("Robot.HandleImuRawData.ClosingLogFile", "");
+    _imuLogFileStream.close();
+  }
+}
+
   
 void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
