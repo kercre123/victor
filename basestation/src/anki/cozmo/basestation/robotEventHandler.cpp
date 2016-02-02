@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
@@ -31,11 +32,10 @@
 namespace Anki {
 namespace Cozmo {
 
-RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* interface)
-  : _robotManager(manager)
-  , _externalInterface(interface)
+RobotEventHandler::RobotEventHandler(const CozmoContext* context)
+  : _context(context)
 {
-  if (_externalInterface != nullptr)
+  if (_context->GetExternalInterface() != nullptr)
   {
     // We'll use this callback for simple events we care about
     auto actionEventCallback = std::bind(&RobotEventHandler::HandleActionEvents, this, std::placeholders::_1);
@@ -66,49 +66,49 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     // Subscribe to desired events
     for (auto tag : tagList)
     {
-      _signalHandles.push_back(_externalInterface->Subscribe(tag, actionEventCallback));
+      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(tag, actionEventCallback));
     }
     
     // Custom handler for QueueSingleAction
     auto queueSingleActionCallback = std::bind(&RobotEventHandler::HandleQueueSingleAction, this, std::placeholders::_1);
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::QueueSingleAction, queueSingleActionCallback));
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::QueueSingleAction, queueSingleActionCallback));
     
     // Custom handler for QueueCompoundAction
     auto queueCompoundActionCallback = std::bind(&RobotEventHandler::HandleQueueCompoundAction, this, std::placeholders::_1);
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::QueueCompoundAction, queueCompoundActionCallback));
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::QueueCompoundAction, queueCompoundActionCallback));
     
     // Custom handler for SetLiftHeight
     auto setLiftHeightCallback = std::bind(&RobotEventHandler::HandleSetLiftHeight, this, std::placeholders::_1);
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
     
     // Custom handler for EnableLiftPower
     auto enableLiftPowerCallback = std::bind(&RobotEventHandler::HandleEnableLiftPower, this, std::placeholders::_1);
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::EnableLiftPower, enableLiftPowerCallback));
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::EnableLiftPower, enableLiftPowerCallback));
     
     // Custom handler for DisplayProceduralFace
     auto dispProcFaceCallback = std::bind(&RobotEventHandler::HandleDisplayProceduralFace, this, std::placeholders::_1);
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
     
     // Custom handler for ForceDelocalizeRobot
     auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
     
     // Custom handlers for Mood events
     {
       auto moodEventCallback = std::bind(&RobotEventHandler::HandleMoodEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::MoodMessage, moodEventCallback));
+      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::MoodMessage, moodEventCallback));
     }
 
     // Custom handlers for Progression events
     {
       auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
+      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
     }
 
     // Custom handlers for BehaviorManager events
     {
       auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
+      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
   }
 }
@@ -493,7 +493,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
 void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   RobotID_t robotID = 1; // We init the robotID to 1
-  Robot* robotPointer = _robotManager.GetRobotByID(robotID);
+  Robot* robotPointer = _context->GetRobotManager()->GetRobotByID(robotID);
   
   // If we don't have a valid robot there's nothing to do
   if (nullptr == robotPointer)
@@ -642,7 +642,7 @@ void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterfac
   const ExternalInterface::QueueSingleAction& msg = event.GetData().Get_QueueSingleAction();
   
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _robotManager.GetRobotByID(msg.robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
   if (nullptr == robot)
   {
     return;
@@ -660,7 +660,7 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
   const ExternalInterface::QueueCompoundAction& msg = event.GetData().Get_QueueCompoundAction();
   
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _robotManager.GetRobotByID(msg.robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
   if (nullptr == robot)
   {
     return;
@@ -693,7 +693,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
 {
   // TODO: get RobotID in a non-hack way
   RobotID_t robotID = 1;
-  Robot* robot = _robotManager.GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
   // We need a robot
   if (nullptr == robot)
@@ -730,7 +730,7 @@ void RobotEventHandler::HandleEnableLiftPower(const AnkiEvent<ExternalInterface:
 {
   // TODO: get RobotID in a non-hack way
   RobotID_t robotID = 1;
-  Robot* robot = _robotManager.GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
   // We need a robot
   if (nullptr == robot)
@@ -752,7 +752,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
 {
   const ExternalInterface::DisplayProceduralFace& msg = event.GetData().Get_DisplayProceduralFace();
 
-  Robot* robot = _robotManager.GetRobotByID(msg.robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
   
   // We need a robot
   if (nullptr == robot)
@@ -767,7 +767,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   {
     RobotID_t robotID = event.GetData().Get_ForceDelocalizeRobot().robotID;
 
-    Robot* robot = _robotManager.GetRobotByID(robotID);
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
     
     // We need a robot
     if (nullptr == robot) {
@@ -788,7 +788,7 @@ void RobotEventHandler::HandleMoodEvent(const AnkiEvent<ExternalInterface::Messa
   const auto& eventData = event.GetData();
   const RobotID_t robotID = eventData.Get_MoodMessage().robotID;
   
-  Robot* robot = _robotManager.GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
   // We need a robot
   if (nullptr == robot)
@@ -806,7 +806,7 @@ void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface
   const auto& eventData = event.GetData();
   const RobotID_t robotID = eventData.Get_ProgressionMessage().robotID;
   
-  Robot* robot = _robotManager.GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
   // We need a robot
   if (nullptr == robot)
@@ -825,7 +825,7 @@ void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInter
   const auto& message = eventData.Get_BehaviorManagerMessage();
   const RobotID_t robotID = message.robotID;
 
-  Robot* robot = _robotManager.GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
   // We need a robot
   if (nullptr == robot)
