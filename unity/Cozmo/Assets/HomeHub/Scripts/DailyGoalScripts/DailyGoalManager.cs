@@ -4,6 +4,7 @@ using DataPersistence;
 using System.Collections;
 using System.Collections.Generic;
 using Cozmo.UI;
+using Anki.Cozmo;
 
 public class DailyGoalManager : MonoBehaviour {
 
@@ -57,10 +58,26 @@ public class DailyGoalManager : MonoBehaviour {
     return _RequestMinigameConfig;
   }
 
-  public string GetDesiredMinigameID() {
+  public ChallengeData GetMinigameToRequest() {
     RequestGameConfig config = _RequestMinigameConfig.RequestList[UnityEngine.Random.Range(0, _RequestMinigameConfig.RequestList.Length)];
     _lastChallengeID = config.ChallengeID;
-    return _lastChallengeID;
+    for (int i = 0; i < _ChallengeList.ChallengeData.Length; i++) {
+      if (_ChallengeList.ChallengeData[i].ChallengeID == config.ChallengeID) {
+        return _ChallengeList.ChallengeData[i];
+      }
+    }
+    Debug.LogError(string.Format("Challenge ID not found in ChallengeList {0}", _lastChallengeID));
+    return null;
+  }
+
+  public BehaviorGroup GetRequestBehaviorGroup(string challengeID) {
+    for (int i = 0; i < _RequestMinigameConfig.RequestList.Length; i++) {
+      if (challengeID == _RequestMinigameConfig.RequestList[i].ChallengeID) {
+        return _RequestMinigameConfig.RequestList[i].RequestBehaviorGroup;
+      }
+    }
+    Debug.LogError(string.Format("Challenge ID not found in RequestMinigameList {0}", challengeID));
+    return BehaviorGroup.MiniGame;
   }
 
   /// <summary>
@@ -184,7 +201,16 @@ public class DailyGoalManager : MonoBehaviour {
       // Avoid dupes
       return;
     }
-    GetDesiredMinigameID();
+    ChallengeData data = GetMinigameToRequest();
+    // Do not reate the minigame message if the challenge is invalid.
+    if (data == null) {
+      return;
+    }
+    BehaviorGroup bGroup = GetRequestBehaviorGroup(data.ChallengeID);
+    // Do not reate the minigame message if the behavior group is invalid.
+    if (bGroup == BehaviorGroup.MiniGame) {
+      return;
+    }
     // TODO: When the message has the appropriate 
     AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
     // Hook up callbacks
@@ -193,7 +219,8 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
-    alertView.SetMessageArgs(new object[] { _lastChallengeID });
+    alertView.SetMessageArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(bGroup, true);
     _RequestDialog = alertView;
   }
 
