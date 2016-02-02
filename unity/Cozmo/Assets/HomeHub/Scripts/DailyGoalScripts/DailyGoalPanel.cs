@@ -11,20 +11,13 @@ public class DailyGoalPanel : MonoBehaviour {
   
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
 
-  [SerializeField]
-  private GameObject _ActiveBonusContainer;
-  [SerializeField]
-  private GameObject _InactiveBonusContainer;
-  [SerializeField]
-  private GameObject _BonusContainer;
-  [SerializeField]
-  private AnkiTextLabel _BonusMultText;
-  [SerializeField]
-  private ProgressBar _BonusProgressBar;
 
   // Prefab for GoalCells
   [SerializeField]
   private GoalCell _GoalCellPrefab;
+
+  [SerializeField]
+  private BonusBarPanel _BonusBarPanel;
 
   // Progress bar for tracking total progress for all Goals
   [SerializeField]
@@ -47,7 +40,7 @@ public class DailyGoalPanel : MonoBehaviour {
     }
     float dailyProg = DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateDailyGoalProgress(progress, goals);
     _TotalProgressBar.SetProgress(dailyProg);
-    ToggleFriendshipBonus(dailyProg >= 1.0f, dailyProg);
+    _BonusBarPanel.ToggleFriendshipBonus(dailyProg >= 1.0f, dailyProg);
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
@@ -60,19 +53,8 @@ public class DailyGoalPanel : MonoBehaviour {
     return newBadge;
   }
 
-  public void ToggleFriendshipBonus(bool setActive, float prog) {
-    _ActiveBonusContainer.SetActive(setActive);
-    _InactiveBonusContainer.SetActive(!setActive);
-    if (setActive) {
-      int mult = Mathf.CeilToInt(prog);
-      _BonusMultText.text = string.Format("x{0}", mult);
-      _BonusProgressBar.SetProgress(prog - Mathf.Floor(prog));
-      // TODO : Set ProgressBar Image based on top mult earned.
-    }
-  }
-
   // Disable any UI elements that should not be shown when collapsed
   public void Collapse(bool collapse) {
-    _BonusContainer.SetActive(collapse);
+    _BonusBarPanel.gameObject.SetActive(collapse);
   }
 }
