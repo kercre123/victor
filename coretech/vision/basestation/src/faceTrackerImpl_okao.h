@@ -353,10 +353,17 @@ namespace Vision {
         return RESULT_FAIL;
     }
     
-    okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_HALF_PROFILE,
-                                  ROLL_ANGLE_U45 | ROLL_ANGLE_2 | ROLL_ANGLE_10);
+    //okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_HALF_PROFILE,
+    //                              ROLL_ANGLE_U45 | ROLL_ANGLE_2 | ROLL_ANGLE_10);
+    okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_FRONT, ROLL_ANGLE_U45);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetAngleFailed", "");
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+    
+    okaoResult = OKAO_DT_SetSizeRange(_okaoDetectorHandle, 60, 640);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetSizeRangeFailed", "");
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
