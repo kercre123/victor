@@ -889,6 +889,11 @@ Prefab:
       propertyPath: m_AnchorMax.x
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _BonusBarPrefab
+      value: 
+      objectReference: {fileID: 11477656, guid: ea0dc2f73b17c4751a4c3c726e2fdb53,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 130834}

@@ -1223,8 +1223,7 @@ MonoBehaviour:
   _GlintAnimator: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11445222}
-    enabledSprite: {fileID: 21300000, guid: 798d9d6e6b1d047e8995648362971ebe, type: 3}
-    enabledColor: {r: 1, g: 1, b: 1, a: 1}
+    ignoreSprite: 0
     pressedSprite: {fileID: 0}
     pressedColor: {r: .610294104, g: .610294104, b: .610294104, a: 1}
     disabledSprite: {fileID: 0}
