@@ -30,9 +30,6 @@ CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 {
   
 }
- 
-// Empty destructor needed in cpp for std::unique_ptr to have full class definitions for destruction
-CozmoContext::~CozmoContext() = default;
   
 } // namespace Cozmo
 } // namespace Anki

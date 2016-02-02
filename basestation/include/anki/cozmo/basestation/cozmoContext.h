@@ -66,8 +66,6 @@ public:
   CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
   CozmoContext();
   
-  virtual ~CozmoContext();
-  
   IExternalInterface*                   GetExternalInterface() const { return _externalInterface; }
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
   
