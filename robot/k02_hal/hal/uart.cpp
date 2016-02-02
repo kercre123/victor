@@ -57,7 +57,6 @@ inline void transmit_mode(TRANSFER_MODE mode) {
       if (enter_recovery) {
         memset(&g_dataToBody.spineMessage, 0, sizeof(g_dataToBody.spineMessage));
         g_dataToBody.recover = recovery_secret_code;
-        enter_recovery = false;
       }
 
       Anki::Cozmo::HAL::Spine::Dequeue(g_dataToBody.spineMessage);
@@ -196,6 +195,7 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
           if ((rx_source & 0xFFFF) == RECOVERY_HEADER) {
             ChangeRecoveryState((RECOVERY_STATE)(__rev(rx_source) & 0xFFFF));
             txRxIndex = 0;
+            enter_recovery = false;
           }
         }
         
