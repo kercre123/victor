@@ -251,6 +251,7 @@ public class Robot : IDisposable {
   private readonly U2G.SetRobotVolume SetRobotVolumeMessage;
   private readonly U2G.AlignWithObject AlignWithObjectMessage;
   private readonly U2G.ProgressionMessage ProgressionStatMessage;
+  private readonly U2G.BehaviorManagerMessage BehaviorManagerMessage;
   private readonly U2G.SetFriendshipPoints FriendshipPointsMessage;
   private readonly U2G.SetFriendshipLevel FriendshipLevelMessage;
   private readonly U2G.MoodMessage MoodStatMessage;
@@ -361,6 +362,7 @@ public class Robot : IDisposable {
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
     AlignWithObjectMessage = new U2G.AlignWithObject();
     ProgressionStatMessage = new U2G.ProgressionMessage();
+	BehaviorManagerMessage = new U2G.BehaviorManagerMessage();
     MoodStatMessage = new U2G.MoodMessage();
     VisualizeQuadMessage = new U2G.VisualizeQuad();
     DisplayProceduralFaceMessage = new U2G.DisplayProceduralFace();
@@ -727,6 +729,50 @@ public class Robot : IDisposable {
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
     EmotionValues[(int)index] = value;
+  }
+
+  #endregion
+
+  #region Behavior Manager
+
+  public void SetEnableAllBehaviors(bool enabled) {
+    BehaviorManagerMessage.robotID = ID;
+    BehaviorManagerMessage.BehaviorManagerMessageUnion.SetEnableAllBehaviors = new G2U.SetEnableAllBehaviors(enabled);
+    
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = BehaviorManagerMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled) {
+    BehaviorManagerMessage.robotID = ID;
+    BehaviorManagerMessage.BehaviorManagerMessageUnion.SetEnableBehaviorGroup = new G2U.SetEnableBehaviorGroup(behaviorGroup, enabled);
+    
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = BehaviorManagerMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetEnableBehavior(string behaviorName, bool enabled) {
+    BehaviorManagerMessage.robotID = ID;
+    BehaviorManagerMessage.BehaviorManagerMessageUnion.SetEnableBehavior = new G2U.SetEnableBehavior(behaviorName, enabled);
+
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = BehaviorManagerMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void ClearAllBehaviorScoreOverrides() {
+    BehaviorManagerMessage.robotID = ID;
+    BehaviorManagerMessage.BehaviorManagerMessageUnion.ClearAllBehaviorScoreOverrides = new G2U.ClearAllBehaviorScoreOverrides();
+
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = BehaviorManagerMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void OverrideBehaviorScore(string behaviorName, float newScore) {
+    BehaviorManagerMessage.robotID = ID;
+    BehaviorManagerMessage.BehaviorManagerMessageUnion.OverrideBehaviorScore = new G2U.OverrideBehaviorScore(behaviorName, newScore);
+
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = BehaviorManagerMessage;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   #endregion
