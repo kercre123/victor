@@ -235,7 +235,8 @@ namespace Anki {
         printf("         Update controller gains:  k\n");
         printf("             Cycle sound schemes:  m\n");
         printf("                 Request IMU log:  o\n");
-        printf("           Toggle face detection:  f (Shift+f)\n");
+        printf("           Toggle face detection:  f\n");
+        printf(" Assign userName to current face:  Shift+f\n");
         printf("          Turn towards last face:  Alt+f\n");
         printf("              Reset 'owner' face:  Alt+Shift+f\n");
         printf("                      Test modes:  Alt + Testmode#\n");
@@ -1450,8 +1451,26 @@ namespace Anki {
                 const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
                 const bool altPressed   = modifier_key & webots::Supervisor::KEYBOARD_ALT;
                 if (shiftPressed && !altPressed) {
-                  // SHIFT+F: Disable face detection
-                  SendEnableVisionMode(VisionMode::DetectingFaces, false);
+                  // SHIFT+F: Associate name with current face
+                  webots::Field* userNameField = root_->getField("userName");
+                  if(nullptr != userNameField)
+                  {
+                    std::string userName = userNameField->getSFString();
+                    if(!userName.empty())
+                    {
+                      ExternalInterface::AssignNameToFace assignNameToFace;
+                      assignNameToFace.faceID = (s32) GetLastObservedFaceID();
+                      assignNameToFace.name = userName;
+                      printf("Assigning name '%s' to ID %d\n", assignNameToFace.name.c_str(), assignNameToFace.faceID);
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
+                    } else {
+                      printf("userName field is empty\n");
+                    }
+                    
+                  } else {
+                    printf("No 'userName' field\n");
+                  }
+                  
                 } else if(altPressed && !shiftPressed) {
                   // ALT+F: Turn to face the pose of the last observed face:
                   printf("Turning to face ID = %llu\n", _lastFace.faceID);
@@ -1469,8 +1488,10 @@ namespace Anki {
                   setOwnerFace.ownerID = -1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(setOwnerFace)));
                 } else {
-                  // Just F: Enable face detection
-                  SendEnableVisionMode(VisionMode::DetectingFaces, true);
+                  // Just F: Toggle face detection
+                  static bool isFaceDetectionEnabled = true;
+                  isFaceDetectionEnabled = !isFaceDetectionEnabled;
+                  SendEnableVisionMode(VisionMode::DetectingFaces, isFaceDetectionEnabled);
                 }
                 break;
               }

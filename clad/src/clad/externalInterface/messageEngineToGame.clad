@@ -149,14 +149,15 @@ message RobotObservedObject {
 message RobotObservedFace {
     int_64   faceID,
     uint_32  robotID,
-    uint_32 timestamp,
+    uint_32  timestamp,
     float_32 world_x,        // absolute 3D position in world coords
     float_32 world_y,        //     "
     float_32 world_z,        //     "
     float_32 quaternion_w,   // quaternion for 3D rotation (4 elements)
     float_32 quaternion_x,   //     "
     float_32 quaternion_y,   //     "
-    float_32 quaternion_z    //     "
+    float_32 quaternion_z,   //     "
+    string   name            // Empty if none assigned yet
 // TODO: Add expression / landmark locations
 }
 

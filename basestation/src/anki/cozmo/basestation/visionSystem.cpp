@@ -1188,6 +1188,20 @@ namespace Cozmo {
     return result;
   } // TrackerPredictionUpdate()
   
+  void VisionSystem::AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name)
+  {
+    if(!_isInitialized) {
+      PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
+                          "Cannot assign name '%s' to face ID %llu before being initialized",
+                          name.c_str(), faceID);
+      return;
+    }
+    
+    ASSERT_NAMED(_faceTracker != nullptr, "FaceTracker should not be null.");
+    
+    _faceTracker->AssignNametoID(faceID, name);
+  }
+  
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
                                    const std::vector<Quad2f>& markerQuads)
   {

@@ -42,16 +42,9 @@ namespace Vision {
   
 namespace Cozmo {
 
-namespace RobotInterface {
-  struct PanAndTilt;
-  class EngineToRobot;
-  class RobotToEngine;
-  enum class EngineToRobotTag : uint8_t;
-  enum class RobotToEngineTag : uint8_t;
-} // end namespace RobotInterface
-
 // Forward declaration
 class Robot;
+class IExternalInterface;
   
 struct DockingErrorSignal;
 
@@ -64,7 +57,10 @@ struct DockingErrorSignal;
       Asynchronous
     };
     
-    VisionComponent(RobotID_t robotID, RunMode mode, Util::Data::DataPlatform* dataPlatform);
+    VisionComponent(RobotID_t robotID, RunMode mode,
+                    Util::Data::DataPlatform* dataPlatform,
+                    IExternalInterface* externalInterface);
+    
     virtual ~VisionComponent();
     
     void SetRunMode(RunMode mode);
@@ -155,6 +151,8 @@ struct DockingErrorSignal;
     VisionSystem::PoseData   _nextPoseData;
     
     std::thread _processingThread;
+    
+    std::vector<Signal::SmartHandle> _signalHandles;
     
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
     void PopulateGroundPlaneHomographyLUT(const Robot& robot, f32 angleResolution_rad = DEG_TO_RAD(0.25f));

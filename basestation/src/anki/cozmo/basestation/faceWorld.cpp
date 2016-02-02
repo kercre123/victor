@@ -254,15 +254,23 @@ namespace Cozmo {
       }
 
       // Draw 3D face
-      const ColorRGBA& drawColor = (knownFace->face.GetID() == _ownerID ?
-                                    NamedColors::BLUE : NamedColors::GREEN);
+      ColorRGBA drawFaceColor;
+      if(knownFace->face.GetID() == _ownerID)
+      {
+        // Draw owner in orange
+        drawFaceColor = NamedColors::ORANGE;
+      } else {
+        // Rotate through other colors for other faces
+        drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)knownFace->face.GetID());
+      }
+      
       knownFace->vizHandle = VizManager::getInstance()->DrawHumanHead(1+static_cast<u32>(knownFace->face.GetID()),
                                                                       humanHeadSize,
                                                                       knownFace->face.GetHeadPose(),
-                                                                      drawColor);
+                                                                      drawFaceColor);
 
       // Draw box around recognized face (with ID) now that we have the real ID set
-      VizManager::getInstance()->DrawCameraFace(knownFace->face, drawColor);
+      VizManager::getInstance()->DrawCameraFace(knownFace->face, drawFaceColor);
 
       
       // Send out an event about this face being observed
@@ -278,7 +286,8 @@ namespace Cozmo {
                                                              q.w(),
                                                              q.x(),
                                                              q.y(),
-                                                             q.z())));
+                                                             q.z(),
+                                                             knownFace->face.GetName())));
       
     }
     

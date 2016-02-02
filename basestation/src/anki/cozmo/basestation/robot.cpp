@@ -80,7 +80,7 @@ namespace Anki {
     , _behaviorMgr(*this)
     , _actionList(*this)
     , _movementComponent(*this)
-    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, dataPlatform)
+    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, dataPlatform, externalInterface)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")

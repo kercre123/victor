@@ -391,6 +391,12 @@ message SetOwnerFace {
   int_32 ownerID = -1 // Use ownerID < 0 to tell Cozmo to treat next "stable" face detection as owner
 }
 
+// Assign a name to a specific face ID
+message AssignNameToFace {
+  int_32 faceID,
+  string name
+}
+
 // SetBehaviorSystemEnabled
 message SetBehaviorSystemEnabled {
   bool enabled

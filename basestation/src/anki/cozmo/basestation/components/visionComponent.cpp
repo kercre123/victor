@@ -30,13 +30,16 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
 namespace Cozmo {
   
-  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, Util::Data::DataPlatform* dataPlatform)
+  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode,
+                                   Util::Data::DataPlatform* dataPlatform,
+                                   IExternalInterface* externalInterface)
   : _camera(robotID)
   , _runMode(mode)
   {
@@ -50,6 +53,30 @@ namespace Cozmo {
     }
     
     _visionSystem = new VisionSystem(dataPath);
+    
+    // Set up event handlers
+    if(nullptr != externalInterface)
+    {
+      using namespace ExternalInterface;
+      
+      // EnableVisionMode
+      _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::EnableVisionMode,
+        [this] (const AnkiEvent<MessageGameToEngine>& event)
+        {
+          auto const& payload = event.GetData().Get_EnableVisionMode();
+          EnableMode(payload.mode, payload.enable);
+        }));
+      
+      // AssignNameToFace
+      _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::AssignNameToFace,
+        [this] (const AnkiEvent<MessageGameToEngine>& event)
+        {
+          const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
+          Lock();
+          _visionSystem->AssignNameToFace(msg.faceID, msg.name);
+          Unlock();
+        }));
+    }
     
   } // VisionSystem()
 

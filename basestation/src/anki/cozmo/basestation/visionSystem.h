@@ -187,6 +187,8 @@ namespace Cozmo {
     std::string GetModeName(VisionMode mode) const;
     std::string GetCurrentModeName() const;
     
+    void AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name);
+    
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,
                    const s32 integerCountsIncrement,
