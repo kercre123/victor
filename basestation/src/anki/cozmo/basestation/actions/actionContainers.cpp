@@ -257,17 +257,17 @@ namespace Anki {
     bool ActionQueue::Cancel(RobotActionType withType)
     {
       bool found = false;
-      auto iter = _queue.begin();
-      for(auto action : _queue)
+      for(auto iter = _queue.begin(); iter != _queue.end();)
       {
-        CORETECH_ASSERT(action != nullptr);
+        CORETECH_ASSERT(*iter != nullptr);
         
-        if(withType == RobotActionType::UNKNOWN || action->GetType() == withType) {
-          Util::SafeDelete(action);
-          _queue.erase(iter);
+        if(withType == RobotActionType::UNKNOWN || (*iter)->GetType() == withType) {
+          Util::SafeDelete(*iter);
+          iter = _queue.erase(iter);
           found = true;
+        } else {
+          ++iter;
         }
-        iter++;
       }
       return found;
     }
@@ -275,22 +275,22 @@ namespace Anki {
     bool ActionQueue::Cancel(u32 idTag)
     {
       bool found = false;
-      auto iter = _queue.begin();
-      for(auto action : _queue)
+      for(auto iter = _queue.begin(); iter != _queue.end();)
       {
-        CORETECH_ASSERT(action != nullptr);
+        CORETECH_ASSERT(*iter != nullptr);
         
-        if(action->GetTag() == idTag) {
+        if((*iter)->GetTag() == idTag) {
           if(found == true) {
             PRINT_NAMED_WARNING("ActionQueue.Cancel.DuplicateIdTags",
                                 "Multiple actions with tag=%d found in queue.\n",
                                 idTag);
           }
-          Util::SafeDelete(action);
-          _queue.erase(iter);
+          Util::SafeDelete(*iter);
+          iter = _queue.erase(iter);
           found = true;
+        } else {
+          ++iter;
         }
-        iter++;
       }
       
       return found;
@@ -317,8 +317,7 @@ namespace Anki {
                           _queue.front()->GetTag(),
                           action->GetName().c_str(),
                           action->GetTag());
-        delete _queue.front();
-        _queue.erase(_queue.begin());
+        PopCurrentAction();
         return QueueNext(action, numRetries);
       }
     }
@@ -466,7 +465,7 @@ namespace Anki {
           PRINT_NAMED_ERROR("ActionQueue.PopCurrentAction.NullActionPointer",
                             "About to delete and pop action pointer from queue, found it to be nullptr!\n");
         } else {
-          delete _queue.front();
+          Util::SafeDelete(_queue.front());
         }
         _queue.pop_front();
       }

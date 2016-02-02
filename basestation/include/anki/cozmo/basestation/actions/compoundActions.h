@@ -48,6 +48,9 @@ namespace Anki {
       
       std::list<std::pair<bool, IActionRunner*> > _actions;
       std::string _name;
+      
+    private:
+      void DeleteActions();
     };
     
     

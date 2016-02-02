@@ -43,7 +43,7 @@ namespace Anki {
     
     IActionRunner::~IActionRunner()
     {
-      if(!_suppressTrackLocking)
+      if(!_suppressTrackLocking && _robot != nullptr)
       {
         // Force all tracks to unlock
         _robot->GetMoveComponent().UnlockAnimTracks((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
