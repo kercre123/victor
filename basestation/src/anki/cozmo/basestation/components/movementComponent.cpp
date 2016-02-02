@@ -222,7 +222,6 @@ void MovementComponent::UnlockAnimTracks(uint8_t tracks)
     uint8_t curTrack = (1 << i);
     if ((tracks & curTrack) == curTrack)
     {
-      PRINT_NAMED_INFO("UnlockAnimTrack", "%d, %p", (int)_animTrackLockCount.size(), &_animTrackLockCount);
       --_animTrackLockCount[i];
 
       // If we just went from locked to not locked, inform the robot
