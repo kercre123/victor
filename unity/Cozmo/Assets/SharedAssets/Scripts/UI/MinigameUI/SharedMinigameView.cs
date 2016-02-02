@@ -18,6 +18,11 @@ namespace Cozmo {
       private QuitMinigameButton _QuitButtonInstance;
 
       [SerializeField]
+      private QuickQuitMinigameButton _QuickQuitGameButtonPrefab;
+
+      private QuickQuitMinigameButton _QuickQuitButtonInstance;
+
+      [SerializeField]
       private CozmoStatusWidget _CozmoStatusPrefab;
 
       private CozmoStatusWidget _CozmoStatusInstance;
@@ -109,6 +114,20 @@ namespace Cozmo {
         }
       }
 
+      private void HideWidget(IMinigameWidget widgetToHide) {
+        if (widgetToHide == null) {
+          return;
+        }
+
+        _ActiveWidgets.Remove(widgetToHide);
+
+        Sequence close = widgetToHide.CloseAnimationSequence();
+        close.AppendCallback(() => {
+          widgetToHide.DestroyWidgetImmediately();
+        });
+        close.Play();
+      }
+
       #region Quit Button
 
       public void CreateQuitButton() {
@@ -122,6 +141,26 @@ namespace Cozmo {
         _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
 
         AddWidget(_QuitButtonInstance);
+      }
+
+      public void CreateQuickQuitButton() {
+        if (_QuickQuitButtonInstance != null) {
+          return;
+        }
+
+        GameObject newButton = UIManager.CreateUIElement(_QuickQuitGameButtonPrefab, this.transform);
+
+        _QuickQuitButtonInstance = newButton.GetComponent<QuickQuitMinigameButton>();
+        _QuickQuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
+
+        AddWidget(_QuickQuitButtonInstance);
+      }
+
+      public void HideQuickQuitButton() {
+        if (_QuickQuitButtonInstance != null) {
+          HideWidget(_QuickQuitButtonInstance);
+          _QuickQuitButtonInstance = null;
+        }
       }
 
       private void HandleQuitConfirmed() {
@@ -343,19 +382,10 @@ namespace Cozmo {
       }
 
       public void HideContinueButtonShelf() {
-        if (_ContinueButtonShelfInstance == null) {
-          return;
+        if (_ContinueButtonShelfInstance != null) {
+          HideWidget(_ContinueButtonShelfInstance);
+          _ContinueButtonShelfInstance = null;
         }
-
-        ContinueGameShelfWidget oldShelf = _ContinueButtonShelfInstance;
-        _ActiveWidgets.Remove(_ContinueButtonShelfInstance);
-        _ContinueButtonShelfInstance = null;
-
-        Sequence close = oldShelf.CloseAnimationSequence();
-        close.AppendCallback(() => {
-          oldShelf.DestroyWidgetImmediately();
-        });
-        close.Play();
       }
 
       public void SetContinueButtonShelfText(string text) {
