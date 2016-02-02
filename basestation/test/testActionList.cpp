@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
+#include "anki/common/types.h"
 #include <limits.h>
 
 
@@ -748,5 +749,42 @@ TEST(QueueAction, ActionFailureRetry)
   
   r.GetActionList().Update();
   
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+}
+
+// Tests queueing duplicate actions
+TEST(QueueAction, QueueDuplicate)
+{
+  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
+  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
+  
+  r.GetActionList().QueueAction(0,QueueActionPosition::AT_END, testAction1);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().QueueAction(0,QueueActionPosition::AT_END, testAction2);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  
+  EXPECT_EQ(r.GetActionList().QueueAction(0,QueueActionPosition::AT_END, testAction1), Anki::RESULT_FAIL);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  
+  testAction1->_complete = true;
+  
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  testAction2->_complete = true;
+  
+  r.GetActionList().Update();
+  
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
 }

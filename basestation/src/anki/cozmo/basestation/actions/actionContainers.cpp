@@ -34,33 +34,34 @@ namespace Anki {
     Result ActionList::QueueAction(SlotHandle inSlot, QueueActionPosition inPosition,
                                    IActionRunner* action, u8 numRetries)
     {
+      Result result = RESULT_OK;
       switch(inPosition)
       {
         case QueueActionPosition::NOW:
         {
-          QueueActionNow(inSlot, action, numRetries);
+          result = QueueActionNow(inSlot, action, numRetries);
           break;
         }
         case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
         {
           // Cancel all queued actions and make this action the next thing in it
           Cancel();
-          QueueActionNext(inSlot, action, numRetries);
+          result = QueueActionNext(inSlot, action, numRetries);
           break;
         }
         case QueueActionPosition::NEXT:
         {
-          QueueActionNext(inSlot, action, numRetries);
+          result = QueueActionNext(inSlot, action, numRetries);
           break;
         }
         case QueueActionPosition::AT_END:
         {
-          QueueActionAtEnd(inSlot, action, numRetries);
+          result = QueueActionAtEnd(inSlot, action, numRetries);
           break;
         }
         case QueueActionPosition::NOW_AND_RESUME:
         {
-          QueueActionAtFront(inSlot, action, numRetries);
+          result = QueueActionAtFront(inSlot, action, numRetries);
           break;
         }
         default:
@@ -72,29 +73,49 @@ namespace Anki {
         }
       }
       
-      return RESULT_OK;
+      return result;
     } // QueueAction()
     
     Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
+      if(IsDuplicate(action))
+      {
+        PRINT_NAMED_INFO("ActionList.Queue", "Attempting to queue duplicate action %s [%d]", action->GetName().c_str(), action->GetTag());
+        return RESULT_FAIL;
+      }
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueNext(action, numRetries);
     }
     
     Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
+      if(IsDuplicate(action))
+      {
+        PRINT_NAMED_INFO("ActionList.Queue", "Attempting to queue duplicate action %s [%d]", action->GetName().c_str(), action->GetTag());
+        return RESULT_FAIL;
+      }
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueAtEnd(action, numRetries);
     }
     
     Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
+      if(IsDuplicate(action))
+      {
+        PRINT_NAMED_INFO("ActionList.Queue", "Attempting to queue duplicate action %s [%d]", action->GetName().c_str(), action->GetTag());
+        return RESULT_FAIL;
+      }
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueNow(action, numRetries);
     }
     
     Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
+      if(IsDuplicate(action))
+      {
+        PRINT_NAMED_INFO("ActionList.Queue", "Attempting to queue duplicate action %s [%d]", action->GetName().c_str(), action->GetTag());
+        return RESULT_FAIL;
+      }
       action->SetRobot(*_robot);
       return _queues[atSlot].QueueAtFront(action, numRetries);
     }
@@ -229,6 +250,19 @@ namespace Anki {
       }
 
       return qIter->second.GetCurrentAction()->GetTag() == idTag;
+    }
+    
+    bool ActionList::IsDuplicate(IActionRunner* action)
+    {
+      bool result = false;
+      for(auto &queue : _queues)
+      {
+        if(queue.second.IsDuplicate(action))
+        {
+          result = true;
+        }
+      }
+      return result;
     }
 
 #pragma mark ---- ActionQueue ----
@@ -456,6 +490,19 @@ namespace Anki {
         }
         _queue.pop_front();
       }
+    }
+    
+    bool ActionQueue::IsDuplicate(IActionRunner* action)
+    {
+      bool result = false;
+      for(auto &action1 : _queue)
+      {
+        if(action1 == action)
+        {
+          result = true;
+        }
+      }
+      return result;
     }
     
     void ActionQueue::Print() const

@@ -66,6 +66,8 @@ namespace Anki {
       
       bool     IsEmpty() const { return _queue.empty(); }
       
+      bool     IsDuplicate(IActionRunner* action);
+      
       size_t   Length() const { return _queue.size(); }
       
       IActionRunner* GetCurrentAction();
@@ -136,6 +138,8 @@ namespace Anki {
 
       // Returns true if the passed in action tag matches the action currently playing in the given slot
       bool       IsCurrAction(u32 idTag, SlotHandle fromSlot) const;
+      
+      bool       IsDuplicate(IActionRunner* action);
 
       
     protected:
