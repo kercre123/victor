@@ -59,8 +59,6 @@ void WiFiFace(void)
     if (!crashHandlerHasReport())
     {
       struct softap_config ap_config;
-      int* death = (int*)1234;
-      os_printf("I should be dead now: %d\r\n", *death);
       if (wifi_softap_get_config(&ap_config) == false)
       {
         os_printf("WiFiFace couldn't read back config\r\n");
