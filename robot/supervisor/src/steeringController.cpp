@@ -70,14 +70,13 @@ namespace Anki {
       Radians prevAngle_;
       f32 angularDistExpected_;
       f32 angularDistTraversed_;
-      const f32 ANGULAR_TRAVERSAL_DISTANCE_MARGIN = 0.1;
-
+      
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
 
       VelocityProfileGenerator vpg_;
 
-      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.4f;
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = DEG_TO_RAD(20.f);
 
     } // Private namespace
 
@@ -504,7 +503,7 @@ namespace Anki {
 
       if (useShortestDir) {
         // Update destAngle and maxAngularVel_ so that the shortest turn is executed to reach the goal
-        maxAngularVel_ = ABS(maxAngularVel) * (angularDistExpected_ > 0 ? 1 : -1);
+        maxAngularVel_ = ABS(maxAngularVel_) * (angularDistExpected_ > 0 ? 1 : -1);
         destAngle = currAngle + angularDistExpected_;
       } else {
         // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
@@ -567,7 +566,7 @@ namespace Anki {
         // Check if the angular dist to target is growing
         angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
         prevAngle_ = currAngle;
-        if (ABS(angularDistTraversed_) - ANGULAR_TRAVERSAL_DISTANCE_MARGIN > ABS(angularDistExpected_) ) {
+        if (ABS(angularDistTraversed_) > ABS(angularDistExpected_) ) {
           ExitPointTurn();
   #if(DEBUG_STEERING_CONTROLLER)
           AnkiDebug( 12, "POINT TURN", 111, "Stopping because turned more than expected", 0);
