@@ -958,6 +958,60 @@
             ], #end actions
           }, # end unittest target
 
+          #Eventually this should be able to move into it's own library.
+          {
+            'target_name': 'transferLibraryUnitTest',
+            'type': 'executable',
+            'include_dirs': [
+              '../../basestation/test',
+            ],
+            #TODO: DAS Library here
+            'dependencies': [
+              '<(ce-util_gyp_path):util',
+            ],
+            'sources': [ 
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/transferQueue/*.cpp)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/transferQueue/*.h)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/transferQueue/tests/*.cpp)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/transferQueue/tests/*.h)',
+            ],
+            'xcode_settings': {
+              'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
+            },
+            'libraries': [
+              '<(ce-gtest_path)/gtest.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+            ],
+            'actions': [
+              #Simlinks don't create a parent directory, so create it only if it doesn't exist...
+              {
+                'action_name': 'setup_dir_for_simlink',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'mkdir', '-p','<(PRODUCT_DIR)/resources',
+                ],
+              },
+              #These have empty inputs and outputs and are instead in the action 
+              #so gyp doesn't think that they're dupes
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs':[],
+                'outputs':[],
+                #'message':'create_symlink_resources_configs -> ln -s -f -n <(cozmo_engine_path)/resources/config <(PRODUCT_DIR)/resources/config',
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '<(PRODUCT_DIR)/resources/config',
+                ],
+              },
+
+
+            ], #end actions
+          }, # end unittestTransferLib target
 
 
         ], # end targets
