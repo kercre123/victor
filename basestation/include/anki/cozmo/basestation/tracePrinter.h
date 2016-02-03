@@ -31,6 +31,9 @@ namespace Anki {
       /// Handler for incoming trace messages
       void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message) const;
       
+      /// Handler for robot firmware crash dumps
+      void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) const;
+      
       /// Retrieve the name string from a name ID
       const std::string& GetName(const int nameId) const;
       
@@ -42,6 +45,7 @@ namespace Anki {
       IntFormatMap formatTable;
       static const std::string UnknownTraceName;
       static const std::string UnknownTraceFormat;
+      static const std::string RobotNamePrefix;
       RobotInterface::LogLevel printThreshold;
     };
     

@@ -9,6 +9,7 @@
 #include "client.h"
 #include "driver/uart.h"
 #include "driver/i2spi.h"
+#include "driver/crash.h"
 #include "gpio.h"
 #include "backgroundTask.h"
 #include "foregroundTask.h"
@@ -103,6 +104,7 @@ static void checkAndClearBootloaderConfig(void)
  */
 void user_rf_pre_init(void)
 {
+  crashHandlerInit(); // Set up our own crash handler, so we can record crashes in more detail
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
   //system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
 }
@@ -110,16 +112,12 @@ void user_rf_pre_init(void)
 /// Forward declarations
 int NVCheckIntegrity(const bool recollect, const bool defragment);
 void NVWipeAll(void);
-void crashHandlerInit(void);
 
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
  */
 static void system_init_done(void)
 {
-  // Set up our own crash handler, so we can record crashes in more detail
-  crashHandlerInit();
-
   // Check bootloader config and clear if nessisary
   // Do this before i2spiInit so we don't desynchronize
   checkAndClearBootloaderConfig();
