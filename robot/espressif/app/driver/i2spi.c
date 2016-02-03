@@ -74,6 +74,12 @@ static struct sdio_queue* nextOutgoingDesc;
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops, determined through experimentation
 #define DROP_TX_PHASE_ADJUST ((DROP_SPACING-28)/2)
+/// Buffer for message to send to the RTIP
+static uint8_t messageBuffer[I2SPI_MESSAGE_BUF_SIZE];
+/// Write index into message buffer
+static uint16_t messageBufferWind;
+/// Read index into message Buffer
+static uint16_t messageBufferRind;
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
 /// The last state we've received from the RTIP updating the Body bootloader state
@@ -110,7 +116,16 @@ void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
-  if (unlikely(drop->droplet & bootloaderStatus)) os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, 4);
+  if (unlikely(drop->droplet & bootloaderStatus && drop->payloadLen == sizeof(bodyBootloaderCode)))
+  {
+    //static unsigned int prevValue;
+    os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, drop->payloadLen);
+    /*if (bodyBootloaderCode != prevValue)
+    {
+      os_printf("BS: %08x\r\n", bodyBootloaderCode);
+      prevValue = bodyBootloaderCode;
+    }*/
+  }
   else if (drop->payloadLen > 0)
   {
     AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
@@ -119,23 +134,14 @@ void processDrop(DropToWiFi* drop)
 
 /** Fills a drop into the outgoing DMA buffers
  * Uses the outgoingPhase and nextOutgoingDesc module variables and advances them as nessisary
- * @param payload A pointer to the payload data to fill the drop with or NULL
- * @param length The number of bytes of payload to be put into this drop
+ * Data is gathered by calling PumpAudioData and PumpScreenData and pulling from messageBuffer which is filled by
+ * i2spiQueueMessage.
  */
-bool makeDrop(uint8_t* payload, uint8_t length)
+void makeDrop(void)
 {
-  // If we're going to roll over, zero out the next buffer
   if ((outgoingPhase + (DROP_TO_RTIP_SIZE/2)) > (DMA_BUF_SIZE/2)) // Will roll over making this drop
   {
-    // Check against overflow - we can't avoid it, because either animations and RT could suddenly jam 100 drops in here 
-    if (txFillCount > (DMA_BUF_COUNT-3))
-    {
-      i2spiTxOverflowCount++;
-      os_put_char('!'); os_put_char('D'); os_put_char('O'); // !DO = Drop Overflow
-      //os_printf("i2spi tx overflow: %d, %d\r\n", i2spiTxOverflowCount, i2spiTxUnderflowCount);
-      return false;
-    }
-    else if (outgoingPhase > (DMA_BUF_SIZE/2)) // Rolling over right now
+    if (outgoingPhase > (DMA_BUF_SIZE/2)) // Rolling over right now
     {
       outgoingPhase -= DMA_BUF_SIZE/2;
       nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
@@ -150,26 +156,6 @@ bool makeDrop(uint8_t* payload, uint8_t length)
     txFillCount++;
   }
   
-  // Figure out where we're going to put the next drop
-  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr) + outgoingPhase;
-  uint16_t* txBuf2 = NULL;
-  int16_t halfWordsWritten = DROP_TO_RTIP_SIZE/2;
-
-  if (((DMA_BUF_SIZE/2) - outgoingPhase) >= (DROP_TO_RTIP_SIZE/2)) // Whole drop fits here
-  {
-    outgoingPhase += DROP_SPACING/2;
-  }
-  else // Split across two buffers
-  {
-    halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
-    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-    txBuf2 = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
-  }
-  
-  // DANGER:  makeDrop() is recursive - since PumpAudioData() calls i2spiQueueMessage() calls makeDrop() - looping several times!
-  // So, you have to make sure EVERYTHING is finished/incremented/ready for the next function call BEFORE this point
-  // XXX:  This can easily run out of stack space if an animation is 'evil' - we may need a better approach to i2spiQueueMessage
   DropToRTIP drop;
   os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
   drop.preamble = TO_RTIP_PREAMBLE;
@@ -178,17 +164,45 @@ bool makeDrop(uint8_t* payload, uint8_t length)
   
   drop.droplet |= PumpScreenData(drop.screenData);
   
-  if (payload != NULL)
+  if (messageBufferRind != messageBufferWind)
   {
-    os_memcpy(&(drop.payload), payload, length);
-    drop.payloadLen = length;
+    const uint16_t messageAvailable = I2SPI_MESSAGE_BUF_SIZE - ((messageBufferRind - messageBufferWind) & I2SPI_MESSAGE_BUF_SIZE_MASK);
+    const uint8_t messageSize = messageBuffer[messageBufferRind];
+    if (unlikely(messageSize > messageAvailable))
+    {
+      os_printf("ERROR I2SPI messageBuffer is corrupt! %d > %d, %02x\r\n", messageSize, messageAvailable, messageBuffer[(messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK]);
+    }
+    else
+    {
+      messageBufferRind = (messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance past size
+      for (drop.payloadLen=0; drop.payloadLen<messageSize; ++drop.payloadLen)
+      {
+        drop.payload[drop.payloadLen] = messageBuffer[messageBufferRind];
+        messageBufferRind = (messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK;
+      }
+    }
   }
-  // Copy into the DMA buffer
-  halfWordCopy(txBuf, (uint16_t*)&drop, halfWordsWritten);  // First half
-  if (NULL != txBuf2)   // Second half
-    halfWordCopy(txBuf2, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
+  else
+  {
+    i2spiTxUnderflowCount++; // Keep track of the underflow
+  }
   
-  return true;
+  // Copy into the DMA buffer
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+  if (((DMA_BUF_SIZE/2) - outgoingPhase) >= (DROP_TO_RTIP_SIZE/2)) // Whole drop fits here
+  {
+    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE/2);
+    outgoingPhase += DROP_SPACING/2;
+  }
+  else // Split across two buffers
+  {
+    const int16_t halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
+    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten);
+    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+    txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
+    outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
+  }
 }
 
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
@@ -284,10 +298,9 @@ void i2spiTask(os_event_t *event)
       else // When running
       {
         if (txFillCount > 0) txFillCount--; // We just transmitted one 
-        // Fill in drops to get ahead, but not TOO far ahead, or there won't be space for SendMessages()
-        while ((txFillCount < (DMA_BUF_COUNT-6)) && makeDrop(NULL, 0))
+        while (txFillCount < (DMA_BUF_COUNT-2)) // Need to leave space for buffer owned by DMA right now and one in transition
         {
-          i2spiTxUnderflowCount++; // Keep track of the underflow
+          makeDrop();
         }
       }
       break;
@@ -440,6 +453,8 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   i2spiPhaseErrorCount  = 0;
   i2spiIntegralDrift    = 0;
   txFillCount           = 0;
+  messageBufferWind     = 0;
+  messageBufferRind     = 0;
   rtipBootloaderState   = STATE_UNKNOWN;
   bodyBootloaderCode    = STATE_UNKNOWN;
 
@@ -568,20 +583,47 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   return 0;
 }
 
-bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
+bool ICACHE_FLASH_ATTR i2spiQueueMessage(uint8_t* msgData, int msgLen)
 {
   if (unlikely(outgoingPhase < PHASE_FLAGS))
   {
     return false;
   }
-  else if (msgLen > DROP_TO_RTIP_MAX_VAR_PAYLOAD)
+  else if (unlikely(msgLen > DROP_TO_RTIP_MAX_VAR_PAYLOAD))
   {
+    os_printf("ERROR i2spiQueueMessage(%02x..., %d) bigger than limit %d\r\n", msgData[0], msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
     return false;
   }
   else
   {
-    return makeDrop(msgData, msgLen);
+    const uint16_t available = I2SPI_MESSAGE_BUF_SIZE - ((messageBufferWind - messageBufferRind) & I2SPI_MESSAGE_BUF_SIZE_MASK);
+    if (unlikely((msgLen + 1) >= available)) // Leave space for length field and to prevent index overlap
+    {
+      return false;
+    }
+    else
+    {
+      messageBuffer[messageBufferWind] = msgLen;
+      messageBufferWind = (messageBufferWind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance past size field
+      const int firstCopy = I2SPI_MESSAGE_BUF_SIZE - messageBufferWind;
+      if (likely(firstCopy >= msgLen))
+      {
+        os_memcpy(messageBuffer + messageBufferWind, msgData, msgLen);
+      }
+      else
+      {
+        os_memcpy(messageBuffer + messageBufferWind, msgData, firstCopy);
+        os_memcpy(messageBuffer, msgData + firstCopy, msgLen - firstCopy);
+      }
+      messageBufferWind = (messageBufferWind + msgLen) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance the write index
+      return true;
+    }
   }
+}
+
+bool ICACHE_FLASH_ATTR i2spiMessageQueueIsEmpty(void)
+{
+  return messageBufferRind == messageBufferWind;
 }
 
 void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)

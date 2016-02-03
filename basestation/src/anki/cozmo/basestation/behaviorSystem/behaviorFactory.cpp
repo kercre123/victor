@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
+#include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameZeroBlocks.h"
 #include "../behaviors/behaviorExploreMarkedCube.h" // any reason why we need to expose behavior headers?
 
 
@@ -142,6 +143,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ExploreMarkedCube:
     {
       newBehavior = new BehaviorExploreMarkedCube(robot, config);
+      break;
+    }
+    case BehaviorType::RequestGameZeroBlocks:
+    {
+      newBehavior = new BehaviorRequestGameZeroBlocks(robot, config);
       break;
     }
     case BehaviorType::Count:

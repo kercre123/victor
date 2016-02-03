@@ -46,6 +46,8 @@ void Battery::init()
 }
 
 void Battery::manage(void) {
+  if (!NRF_ADC->EVENTS_END) return ;
+
   static int ground_short = 0;
   uint32_t raw = NRF_ADC->RESULT;
 

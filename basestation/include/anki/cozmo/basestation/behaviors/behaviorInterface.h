@@ -21,6 +21,7 @@
 #include <set>
 
 #include "util/bitFlags/bitFlags.h"
+#include "util/logging/logging.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
@@ -127,6 +128,9 @@ namespace Cozmo {
     
     bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
+    bool IsChoosable() const { return _isChoosable; }
+    void SetIsChoosable(bool newVal) { _isChoosable = newVal; }
+    
     // Some behaviors are short interruptions that can resume directly to previous behavior
     bool IsShortInterruption() const { return IsBehaviorGroup(BehaviorGroup::ShortInterruption); }
     virtual bool WantsToResume() const { return false; }
@@ -227,6 +231,7 @@ namespace Cozmo {
 
     bool _isRunning;
     bool _isOwnedByFactory;
+    bool _isChoosable;
     
     bool _enableRepetitionPenalty;
     
@@ -239,6 +244,7 @@ namespace Cozmo {
   
   inline IBehavior::Status IBehavior::Update(double currentTime_sec)
   {
+    ASSERT_NAMED(IsRunning(), "IBehavior::UpdateNotRunning");
     return UpdateInternal(_robot, currentTime_sec);
   }
 

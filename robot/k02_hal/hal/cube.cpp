@@ -36,7 +36,7 @@ namespace Anki
         g_AccelStatus[id].y = y;
         g_AccelStatus[id].z = z;
         g_AccelStatus[id].shockCount = shocks;
-        
+
         //DisplayStatus(id);
 
         if (count > 0 && count < 16) {
@@ -119,9 +119,9 @@ namespace Anki
         if (blockID >= MAX_CUBES) {
           return RESULT_FAIL;
         }
-
+        
         memcpy(g_LedStatus[blockID], colors, sizeof(g_LedStatus[blockID]));
-
+        
         return RESULT_OK;
       }
     }

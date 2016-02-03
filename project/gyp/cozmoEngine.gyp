@@ -525,7 +525,6 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
-              'cozmoAPI',
               'cozmoEngine',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiCommonRobot',
@@ -602,7 +601,6 @@
               '<(cti-cozmo_engine_path)/simulator/include'
             ],
             'dependencies': [
-              'cozmoAPI',
               'cozmoEngine',
               '<(ce-util_gyp_path):util',
               '<(ce-cti_gyp_path):ctiCommon',
@@ -651,7 +649,6 @@
               '<(cti-cozmo_engine_path)/simulator/include',
             ],
             'dependencies': [
-              'cozmoAPI',
               'cozmoEngine',
               '<(ce-util_gyp_path):util',
               '<(ce-cti_gyp_path):ctiCommon',
@@ -831,6 +828,7 @@
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):jsoncpp',
               '<(ce-util_gyp_path):util',
+              '<(ce-audio_path):DriveAudioEngine',
             ],
             'sources': [ '<!@(cat <(engine_test_source))' ],
             'sources/': [
@@ -849,6 +847,19 @@
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
+            ],
+
+            'conditions': [    
+              [
+                'OS=="ios" or OS=="mac"',
+                {
+                  'libraries': [
+                    '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+                  ],
+                },
+              ],
             ],
             #util unit tests copys this first and the copies command doesn't have a pre-existing check.
             # should probably turn this into a cp action with conditions at some point.
@@ -1284,6 +1295,7 @@
       'sources': [ 
         '<!@(cat <(engine_source))',
         '<!@(cat <(clad_source))',
+        '<!@(cat <(api_source))',
       ],
       'sources/': [
         ['exclude', 'bleRobotManager.mm'],
@@ -1297,6 +1309,9 @@
         '../../generated/clad/engine',
         '<@(opencv_includes)',
         '<@(pocketsphinx_includes)',
+        '../../cozmoAPI/src',
+        '../../cozmoAPI/include',
+        '../../generated/clad/game',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -1305,6 +1320,8 @@
           '../../robot/include',
           '../../generated/clad/engine',
           '../../basestation/src',
+          '../../cozmoAPI/include',
+          '../../generated/clad/game',
         ],
         'defines': [
           'COZMO_BASESTATION'
@@ -1353,35 +1370,6 @@
       ] #'conditions'
 
     }, # end engine target
-
-
-    {
-      'target_name': 'cozmoAPI',
-      'sources': [ 
-        '<!@(cat <(api_source))',
-      ],
-      'include_dirs': [
-        '../../cozmoAPI/src',
-        '../../cozmoAPI/include',
-        '../../generated/clad/game',
-        '<@(opencv_includes)',
-      ],
-      'direct_dependent_settings': {
-        'include_dirs': [
-          '../../cozmoAPI/include',
-          '../../generated/clad/game',
-        ],
-      },
-      'dependencies': [
-        'cozmoEngine',
-        '<(ce-util_gyp_path):util',
-        '<(ce-cti_gyp_path):ctiCommon',
-        '<(ce-cti_gyp_path):ctiMessaging',
-        '<(ce-cti_gyp_path):ctiPlanning',
-        '<(ce-cti_gyp_path):ctiVision',
-      ],
-      'type': '<(api_library_type)',
-    }, # end API target
 
     
     {

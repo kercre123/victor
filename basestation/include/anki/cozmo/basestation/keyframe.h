@@ -206,7 +206,7 @@ namespace Cozmo {
       s32 numSamples;
       f32 volume;
       // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
-      Audio::EventType audioEvent = Audio::EventType::Invalid;
+      Audio::GenericEvent audioEvent = Audio::GenericEvent::Invalid;
     };
     
     const AudioRef& GetAudioRef() const;
