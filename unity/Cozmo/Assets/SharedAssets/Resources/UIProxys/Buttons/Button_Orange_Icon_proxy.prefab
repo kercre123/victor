@@ -10,7 +10,7 @@ GameObject:
   - 224: {fileID: 22443812}
   - 114: {fileID: 11414542}
   m_Layer: 5
-  m_Name: Button_Icon_proxy
+  m_Name: Button_Orange_Icon_proxy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -126,7 +126,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .701960802, g: .894117713, b: 1, a: 1}
+  m_Color: {r: 1, g: .907754064, b: .691176474, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -156,9 +156,9 @@ MonoBehaviour:
   _DASEventName: Minigame Quit Pressed
   _TextLabel: {fileID: 0}
   _TextLabelOffset: -5
-  TextEnabledColor: {r: .701960802, g: .894117653, b: 1, a: 1}
-  TextPressedColor: {r: .407277226, g: .528688312, b: .595588207, a: 1}
-  TextDisabledColor: {r: .701960802, g: .894117713, b: 1, a: .203921571}
+  TextEnabledColor: {r: 1, g: .907754064, b: .691176474, a: 1}
+  TextPressedColor: {r: 1, g: .819607854, b: .396078438, a: 1}
+  TextDisabledColor: {r: 1, g: .907754064, b: .691176474, a: .222000003}
   _AlphaController: {fileID: 0}
   _GlintAnimator: {fileID: 11401798}
   ButtonGraphics:
@@ -171,9 +171,9 @@ MonoBehaviour:
   - targetImage: {fileID: 11421670}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
-    pressedColor: {r: .11180795, g: .276706517, b: .345588207, a: 1}
+    pressedColor: {r: .672413826, g: .432454407, b: .0922920853, a: 1}
     disabledSprite: {fileID: 0}
-    disabledColor: {r: .21960786, g: .529411793, b: .65882355, a: .202999994}
+    disabledColor: {r: 1, g: .643137276, b: .137254909, a: .291000009}
   - targetImage: {fileID: 11430496}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
@@ -183,15 +183,15 @@ MonoBehaviour:
   - targetImage: {fileID: 11408846}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
-    pressedColor: {r: .407843173, g: .529411793, b: .596078455, a: 1}
+    pressedColor: {r: 1, g: .819607854, b: .396078438, a: 1}
     disabledSprite: {fileID: 0}
-    disabledColor: {r: .701960802, g: .894117713, b: 1, a: .203921571}
+    disabledColor: {r: 1, g: .907754064, b: .691176474, a: .252999991}
   - targetImage: {fileID: 11423004}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
-    pressedColor: {r: .407843173, g: .529411793, b: .596078455, a: 1}
+    pressedColor: {r: 1, g: .819607854, b: .396078438, a: 1}
     disabledSprite: {fileID: 0}
-    disabledColor: {r: .701960802, g: .894117713, b: 1, a: .203921571}
+    disabledColor: {r: 1, g: .907754064, b: .691176474, a: .222000003}
 --- !u!114 &11421670
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -204,7 +204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .219607845, g: .529411793, b: .65882355, a: 1}
+  m_Color: {r: 1, g: .643137276, b: .137254909, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -231,7 +231,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: .907754064, b: .691176474, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:

@@ -322,8 +322,8 @@ namespace Cozmo.HomeHub {
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm);
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleEndSessionCancel);
-      alertView.TitleLocKey = LocalizationKeys.kEndSessionViewTitle;
-      alertView.DescriptionLocKey = LocalizationKeys.kEndSessionViewDescription;
+      alertView.TitleLocKey = LocalizationKeys.kEndSessionTitle;
+      alertView.DescriptionLocKey = LocalizationKeys.kEndSessionDescription;
     }
 
     private void HandleEndSessionCancel() {

@@ -2,10 +2,6 @@
 {
 	Properties
 	{
-		_GlintTex ("Glint Texture", 2D) = "white" {}
-    	_UVOffset ("DEV ONLY UV", Vector) = (0, 0, 0, 0)
-    	_AtlasUV ("DEV ONLY UV", Vector) = (0.5, 0.5, 0.5, 0.5)
-    	_GlintWidthToMaskWidthRatio ("DEV ONLY UV", Float) = 1
 	}
 	SubShader
 	{
@@ -32,50 +28,40 @@
 			struct v2f
 			{
 				float2 uv : TEXCOORD0;
-				float2 spriteUV : TEXCOORD1;
+				float4 glintParams : TEXCOORD1;
 				float4 vertex : SV_POSITION;
 			};
-
-      		float4 _AtlasUV;
-      		float _GlintWidthToMaskWidthRatio;
-			float4 _UVOffset;
 
 			v2f vert (appdata v)
 			{
 				v2f o;
 				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
 				o.uv = v.uv;	
+        
 
-				// translate atlas UV to sprite UV
-				float2 spriteUV = (v.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
-				spriteUV.x = spriteUV.x * _GlintWidthToMaskWidthRatio;
+        // modify the angle of the glint
+        float2 glintParams = o.vertex.xy * float2(1, 0.3);
 
-				// offset UV
-				spriteUV = spriteUV + _UVOffset.xy;
-
-				o.spriteUV = spriteUV;
+				o.glintParams = float4(glintParams, (_Time.x * 8 - floor(_Time.x * 8)) * 5, 0);
 
 				return o;
 			}
 			
 			sampler2D _MainTex;
-			sampler2D _GlintTex;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
-				// sample masking image
+        // sample masking image
 				fixed4 col = tex2D(_MainTex, i.uv);
 
-				// sample glint texture
-				fixed4 glintCol = tex2D(_GlintTex, i.spriteUV);
+        fixed4 glintCol = fixed4(1,1,1,1);
 
-				// set alpha to 0 if mask or glint texture says so. 
-				col.a = min(col.a, glintCol.a);
+        glintCol.a = 0.5 - 2 * abs(i.glintParams.x - i.glintParams.z - i.glintParams.y + 1);
 
-				// set color to color of the glint texture
-				col.rgb = glintCol.rgb;
+				// set alpha to 0 if mask or glint color says so. 
+				glintCol.a = min(col.a, glintCol.a);
 
-				return col;
+        return glintCol;
 			}
 			ENDCG
 		}
