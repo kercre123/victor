@@ -129,23 +129,26 @@ namespace Anki {
         return _Interactable;
       }
 
-      protected override void Awake() {
-        base.Awake();
-
-        foreach (AnkiButtonImage graphic in ButtonGraphics) {
-          if (graphic.targetImage != null) {
-            graphic.enabledSprite = graphic.targetImage.sprite;
-            graphic.enabledColor = graphic.targetImage.color;
-          }
-          else {
-            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
-          }
-        }
-      }
+      private bool _IsInitialized = false;
 
       protected override void Start() {
         base.Start();
         UpdateVisuals();
+      }
+
+      private void InitializeDefaultGraphics() {
+        if (!_IsInitialized) {
+          foreach (AnkiButtonImage graphic in ButtonGraphics) {
+            if (graphic.targetImage != null) {
+              graphic.enabledSprite = graphic.targetImage.sprite;
+              graphic.enabledColor = graphic.targetImage.color;
+            }
+            else {
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+            }
+          }
+          _IsInitialized = true;
+        }
       }
 
       protected override void OnEnable() {
@@ -244,10 +247,11 @@ namespace Anki {
           return;
         }
 
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_CLICK_GENERAL);
       }
 
       private void UpdateVisuals() {
+        InitializeDefaultGraphics();
         if (IsInteractable()) {
           ShowEnabledState();
         }
