@@ -91,7 +91,7 @@ structure AnimationCompleted {
 
 // Used by DeviceAudioAction
 structure DeviceAudioCompleted {
-  Audio::EventType eventType,
+  Audio::GenericEvent audioEvent,
 }
 
 // Used by TrackFaceAction

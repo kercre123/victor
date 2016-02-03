@@ -23,7 +23,7 @@ structure AudioCallbackMarker
 
 structure AudioCallbackComplete
 {
-  EventType eventType,
+  GenericEvent eventType,
 }
 
 enum uint_8 CallbackErrorType
