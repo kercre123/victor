@@ -34,7 +34,7 @@ volatile uint16_t Anki::Cozmo::HAL::UART::RecoveryStateUpdated = 0;
 static TRANSFER_MODE uart_mode;
 
 static int txRxIndex;
-static bool enter_recovery;
+static bool enter_recovery = false;
 
 inline void transmit_mode(TRANSFER_MODE mode);
 

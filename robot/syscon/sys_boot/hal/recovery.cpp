@@ -19,6 +19,44 @@ static bool UartWritting;
 
 void setTransmit(bool tx);
 
+// Define charlie wiring here:
+struct charliePlex_s {
+  int anode;
+  int cathodes[3];
+};
+
+static inline void setCathode(int pin, bool set) {
+  if (set) {
+    nrf_gpio_pin_clear(pin);
+    nrf_gpio_cfg_output(pin);
+  } else {
+    nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL);
+  }
+}
+
+void setLight(int channel) {
+  static int clr = 0;
+  clr = (++clr == 8) ? 1 : clr;
+
+  static const charliePlex_s RGBLightPins[] =
+  {
+    // anode, cath_red, cath_gree, cath_blue
+    {PIN_LED1, {PIN_LED2, PIN_LED3, PIN_LED4}},
+    {PIN_LED2, {PIN_LED1, PIN_LED3, PIN_LED4}},
+    {PIN_LED3, {PIN_LED1, PIN_LED2, PIN_LED4}},
+    {PIN_LED4, {PIN_LED1, PIN_LED2, PIN_LED3}}
+  };
+
+  // Setup anode
+  nrf_gpio_pin_set(RGBLightPins[channel].anode);
+  nrf_gpio_cfg_output(RGBLightPins[channel].anode);
+  
+  // Set lights for current charlie channel
+  setCathode(RGBLightPins[channel].cathodes[0], clr & 1);
+  setCathode(RGBLightPins[channel].cathodes[1], clr & 2);
+  setCathode(RGBLightPins[channel].cathodes[2], clr & 4);
+}
+
 void UARTInit(void) {
   bool UartWritting = false;
 
@@ -132,6 +170,8 @@ bool FlashSector(int target, const uint32_t* data)
   for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++) {
     if (original[i] == 0xFFFFFFFF) continue ;
     
+    setLight(3);
+
     // Block requires erasing
     if (original[i] != data[i])
     {
@@ -152,6 +192,8 @@ bool FlashSector(int target, const uint32_t* data)
       continue ;
     }
 
+    setLight(3);
+
     NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
     while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
     original[i] = data[i];
@@ -170,6 +212,7 @@ static inline bool FlashBlock() {
   
   // Load raw packet into memory
   for (int index = 0; index < sizeof(FirmwareBlock); index++) {
+    setLight(2);
     raw[index] = ReadByte();
   }
  
@@ -210,6 +253,7 @@ void EnterRecovery(void) {
 
   for (;;) {
     do {
+      setLight(1);
       Battery::manage();
       toggleTargetPin();
       WriteWord(COMMAND_HEADER);
