@@ -13,6 +13,7 @@
 #define DMA_BUF_COUNT ((I2SPI_RAW_BYTES_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE))
 /// Buffer size for sending messages to the RTIP
 #define I2SPI_MESSAGE_BUF_SIZE (1024)
+ASSERT_IS_POWER_OF_TWO(I2SPI_MESSAGE_BUF_SIZE); // Required for mask below
 /// Size mask for index math on message buffer
 #define I2SPI_MESSAGE_BUF_SIZE_MASK (I2SPI_MESSAGE_BUF_SIZE-1)
 
