@@ -50,18 +50,32 @@ void Anki::Cozmo::HAL::UART::Init() {
   transmit_mode(TRANSMIT_UNINITALIZED);
 }
 
+static void zero_recovery_data(void) {
+  // Zero out all the space that is scary for recovery mode
+  const int message_off = (int)&g_dataToBody.spineMessage - (int)&g_dataToBody;
+  const int zero_length = sizeof(g_dataToBody) - message_off;
+  memset(&g_dataToBody.spineMessage, 0, zero_length);
+}
+
 inline void transmit_mode(TRANSFER_MODE mode) { 
   switch (mode) {
     case TRANSMIT_SEND:
       // Special case mode where we force the head to enter recovery mode
       if (enter_recovery) {
-        memset(&g_dataToBody.spineMessage, 0, sizeof(g_dataToBody.spineMessage));
-        g_dataToBody.recover = recovery_secret_code;
+        // Zero out non-critical space
+        zero_recovery_data();
+
+        // Toggle where the recovery code is being sent
+        static bool shift = false;
+        uint32_t* recover = &g_dataToBody.recover;
+        recover[shift ? 1 : 0] = recovery_secret_code;
+        shift = !shift;
       }
 
       Anki::Cozmo::HAL::Spine::Dequeue(g_dataToBody.spineMessage);
       memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
-      g_dataToBody.recover = 0; // Don't keep sending this
+
+      memset(&g_dataToBody.recover, 0, sizeof(uint32_t)*2);
 
       PORTD_PCR6 = PORT_PCR_MUX(0);
       PORTD_PCR7 = PORT_PCR_MUX(3);
@@ -195,7 +209,10 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
           if ((rx_source & 0xFFFF) == RECOVERY_HEADER) {
             ChangeRecoveryState((RECOVERY_STATE)(__rev(rx_source) & 0xFFFF));
             txRxIndex = 0;
+
+            // Clear out the recovery data area
             enter_recovery = false;
+            zero_recovery_data();
           }
         }
         
