@@ -57,7 +57,7 @@ struct DockingErrorSignal;
       Asynchronous
     };
     
-    VisionComponent(RobotID_t robotID, RunMode mode, CozmoContext* context);
+    VisionComponent(RobotID_t robotID, RunMode mode, const CozmoContext* context);
     
     virtual ~VisionComponent();
     

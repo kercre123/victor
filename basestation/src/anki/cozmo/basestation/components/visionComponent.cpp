@@ -37,7 +37,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, CozmoContext* context)
+  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, const CozmoContext* context)
   : _camera(robotID)
   , _runMode(mode)
   {
