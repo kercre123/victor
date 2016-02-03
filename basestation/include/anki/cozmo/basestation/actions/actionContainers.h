@@ -64,17 +64,24 @@ namespace Anki {
       bool     Cancel(RobotActionType withType = RobotActionType::UNKNOWN);
       bool     Cancel(u32 idTag);
       
-      bool     IsEmpty() const { return _queue.empty(); }
+      bool     IsEmpty() const { return _queue.empty() && nullptr == _currentAction; }
       
       size_t   Length() const { return _queue.size(); }
       
-      IActionRunner* GetCurrentAction();
+      IActionRunner* GetNextActionToRun();
       const IActionRunner* GetCurrentAction() const;
-      void           PopCurrentAction();
+      const IActionRunner* GetCurrentRunningAction() const { return _currentAction; }
       
       void Print() const;
       
     private:
+      // Deletes the current action only if it isn't in the process of being deleted
+      // Safeguards against the action being deleted twice due to handling action
+      // completion signals
+      void DeleteCurrentAction();
+    
+      IActionRunner*            _currentAction           = nullptr;
+      bool                      _currentActionIsDeleting = false;
       std::list<IActionRunner*> _queue;
       std::list<IActionRunner*> _interruptedActions;
       
@@ -145,13 +152,14 @@ namespace Anki {
       std::map<SlotHandle, ActionQueue> _queues;
       
     private:
-      Robot* _robot;
+      Robot* _robot = nullptr;
       
     }; // class ActionList
     
+    // The current running action should be considered part of the queue
     inline size_t ActionList::GetQueueLength(SlotHandle atSlot)
     {
-      return _queues[atSlot].Length();
+      return _queues[atSlot].Length() + (nullptr == _queues[atSlot].GetCurrentRunningAction() ? 0 : 1);
     }
     
   } // namespace Cozmo

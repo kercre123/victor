@@ -331,9 +331,10 @@ TEST(QueueAction, ThreeActionsCancelAll)
 }
 
 
-// Tests queueing two actions where the first one in interruptable so queueing the second action
-// interrupts the first. The second action completes and the interrupted action resumes and completes.
-TEST(QueueAction, InterruptAction)
+// Tests queueing two actions where the first one, which hasn't started running, is interruptable so
+// queueing the second action interrupts the first. The second action completes and the interrupted
+// action resumes and completes.
+TEST(QueueAction, InterruptActionNotRunning)
 {
   numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
@@ -348,7 +349,6 @@ TEST(QueueAction, InterruptAction)
   
   EXPECT_EQ(testAction->GetRobot(), &r);
   EXPECT_EQ(testInterruptAction->GetRobot(), &r);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   
   // Interrupt test2 for test1 which is now current
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
@@ -365,6 +365,53 @@ TEST(QueueAction, InterruptAction)
   testInterruptAction->_complete = true;
   r.GetActionList().Update();
   
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 2);
+}
+
+// Tests queueing two actions where the first one ,which has started running, is interruptable so queueing
+// the second action interrupts it. The second action completes and the interrupted action
+// resumes and completes.
+TEST(QueueAction, InterruptActionRunning)
+{
+  numActionsDestroyed = 0;
+  Robot r(0, cozmoContext);
+  TestAction* testAction = new TestAction("Test1", RobotActionType::WAIT);
+  TestInterruptAction* testInterruptAction = new TestInterruptAction("Test2", RobotActionType::TURN_IN_PLACE);
+  
+  EXPECT_NE(testAction->GetRobot(), &r);
+  EXPECT_NE(testInterruptAction->GetRobot(), &r);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testInterruptAction);
+  
+  EXPECT_EQ(testInterruptAction->GetRobot(), &r);
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  // Move it out of queue to currentAction
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::NOW_AND_RESUME, testAction);
+  
+  EXPECT_EQ(testAction->GetRobot(), &r);
+  EXPECT_EQ(testInterruptAction->GetRobot(), &r);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  
+  testInterruptAction->_complete = true;
+  testAction->_complete = true;
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().Update();
+  
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_EQ(numActionsDestroyed, 2);
@@ -598,13 +645,13 @@ TEST(QueueAction, QueueNow)
   r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction2);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   
   r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction3);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  EXPECT_EQ(numActionsDestroyed, 2);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
+  EXPECT_EQ(numActionsDestroyed, 0);
 }
 
 // Tests queueing actions at the NEXT position

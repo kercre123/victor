@@ -148,15 +148,14 @@ namespace Anki {
     private:
       
       std::list<IActionRunner**>  _subActions;
-      
-      // This is called when the action stops running, as long as it is not
-      // marked as being part of a compound action. This calls the overload-able
-      // GetCompletionUnion() method above.
-      void EmitCompletionSignal(ActionResult result) const;
 
       u8            _numRetriesRemaining = 0;
       
       std::string   _statusMsg;
+      
+      ActionResult         _result;
+      ActionCompletedUnion _completionUnion;
+      RobotActionType      _type;
       
       bool          _suppressTrackLocking   = false;
       bool          _isRunning              = false;
@@ -170,6 +169,10 @@ namespace Anki {
       ActionList::SlotHandle _inSlot = ActionList::UnknownSlot;
       
       static u32    sTagCounter;
+      
+      // Called when the action stops running and sets varibles needed for completion.
+      // This calls the overload-able GetCompletionUnion() method above.
+      void PrepForCompletion();
       
 #   if USE_ACTION_CALLBACKS
     public:

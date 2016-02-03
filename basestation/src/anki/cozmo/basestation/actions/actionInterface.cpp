@@ -43,11 +43,21 @@ namespace Anki {
     
     IActionRunner::~IActionRunner()
     {
-      if(!_suppressTrackLocking && _robot != nullptr)
+      if(_robot != nullptr)
       {
-        // Force all tracks to unlock
-        _robot->GetMoveComponent().UnlockAnimTracks((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
-        _robot->GetMoveComponent().UnignoreTrackMovement((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+        if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
+        {
+          // Notify any listeners about this action's completion.
+          // TODO: Populate the signal with any action-specific info?
+          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, _type, _result, _completionUnion)));
+        }
+      
+        if(!_suppressTrackLocking)
+        {
+          // Force all tracks to unlock
+          _robot->GetMoveComponent().UnlockAnimTracks((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+          _robot->GetMoveComponent().UnignoreTrackMovement((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+        }
       }
     }
     
@@ -98,43 +108,36 @@ namespace Anki {
 
         _isRunning = true;
       }
-      ActionResult result = ActionResult::RUNNING;
+      _result = ActionResult::RUNNING;
       if(_isCancelled) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
                            "Cancelling [%d] %s.", _idTag, GetName().c_str());
         }
-        result = ActionResult::CANCELLED;
+        _result = ActionResult::CANCELLED;
       } else if(_isInterrupted) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.InterruptAction",
                            "Interrupting [%d] %s", _idTag, GetName().c_str());
         }
-        result = ActionResult::INTERRUPTED;
+        _result = ActionResult::INTERRUPTED;
       } else {
-        result = UpdateInternal();
+        _result = UpdateInternal();
       }
       
-      if(result != ActionResult::RUNNING) {
+      if(_result != ActionResult::RUNNING) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
                            "%s [%d] %s.", GetName().c_str(),
                            _idTag,
-                           (result==ActionResult::SUCCESS ? "succeeded" :
-                            result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
+                           (_result==ActionResult::SUCCESS ? "succeeded" :
+                            _result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
         }
 
         // Clean up after any registered sub actions and the action itself
         CancelAndDeleteSubActions();
-
-        if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
-        {
-          // Notify any listeners about this action's completion.
-          // Note that I do this here so that compound actions only emit one signal,
-          // not a signal for each constituent action.
-          // TODO: Populate the signal with any action-specific info?
-          EmitCompletionSignal(result);
-        }
+        
+        PrepForCompletion();
 
         if( DEBUG_ACTION_RUNNING && _displayMessages ) {
           PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
@@ -144,16 +147,13 @@ namespace Anki {
         _isRunning = false;
       }
 
-      return result;
+      return _result;
     }
     
-    void IActionRunner::EmitCompletionSignal(ActionResult result) const
+    void IActionRunner::PrepForCompletion()
     {
-      ActionCompletedUnion completionUnion;
-
-      GetCompletionUnion(completionUnion);
-      
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, GetType(), result, completionUnion)));
+      GetCompletionUnion(_completionUnion);
+      _type = GetType();
     }
     
     bool IActionRunner::RetriesRemain()

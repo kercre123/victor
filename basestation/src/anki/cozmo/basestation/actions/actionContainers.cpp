@@ -246,10 +246,12 @@ namespace Anki {
     
     void ActionQueue::Clear()
     {
+      DeleteCurrentAction();
+      
       while(!_queue.empty()) {
         IActionRunner* action = _queue.front();
         CORETECH_ASSERT(action != nullptr);
-        delete action;
+        Util::SafeDelete(action);
         _queue.pop_front();
       }
     }
@@ -257,6 +259,16 @@ namespace Anki {
     bool ActionQueue::Cancel(RobotActionType withType)
     {
       bool found = false;
+      
+      if(_currentAction != nullptr)
+      {
+        if(withType == RobotActionType::UNKNOWN || _currentAction->GetType() == withType)
+        {
+          DeleteCurrentAction();
+          found = true;
+        }
+      }
+      
       for(auto iter = _queue.begin(); iter != _queue.end();)
       {
         CORETECH_ASSERT(*iter != nullptr);
@@ -275,6 +287,16 @@ namespace Anki {
     bool ActionQueue::Cancel(u32 idTag)
     {
       bool found = false;
+      
+      if(_currentAction != nullptr)
+      {
+        if(_currentAction->GetTag() == idTag)
+        {
+          DeleteCurrentAction();
+          found = true;
+        }
+      }
+      
       for(auto iter = _queue.begin(); iter != _queue.end();)
       {
         CORETECH_ASSERT(*iter != nullptr);
@@ -304,9 +326,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      if(_queue.empty()) {
-        
-        // Nothing in the queue, so this is the same as QueueAtEnd
+      DeleteCurrentAction();
+      
+      if(IsEmpty()) {
         return QueueAtEnd(action, numRetries);
         
       } else {
@@ -317,8 +339,10 @@ namespace Anki {
                           _queue.front()->GetTag(),
                           action->GetName().c_str(),
                           action->GetTag());
-        PopCurrentAction();
-        return QueueNext(action, numRetries);
+
+        action->SetNumRetries(numRetries);
+        _queue.push_front(action);
+        return RESULT_OK;
       }
     }
     
@@ -332,29 +356,35 @@ namespace Anki {
       
       Result result = RESULT_OK;
       
-      if(_queue.empty()) {
+      if(IsEmpty()) {
         // Nothing in the queue, so this is the same as QueueAtEnd
         result = QueueAtEnd(action, numRetries);
       } else {
         // Try to interrupt whatever is running and put this new action in front of it
-        if(_queue.front()->Interrupt()) {
+        if(_currentAction != nullptr && _currentAction->Interrupt()) {
           // Current front action is interruptible. Add it to the list of interrupted
           // actions to get updated once more on the next Update() call (when we'll
           // have a robot reference), and put the new action in front of it in the queue.
           PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
                            "Interrupting %s to put %s in front of it.",
-                           _queue.front()->GetName().c_str(),
+                           _currentAction->GetName().c_str(),
                            action->GetName().c_str());
-          _interruptedActions.push_back(_queue.front());
+          _interruptedActions.push_back(_currentAction);
           action->SetNumRetries(numRetries);
+          _queue.push_front(_currentAction);
           _queue.push_front(action);
+          // Set currentAction to null to force running of next action in queue
+          _currentAction = nullptr;
         } else {
           // Current front action is not interruptible, so just use QueueNow and
           // cancel it
-          PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
-                           "Could not interrupt %s. Will cancel and queue %s now.",
-                           _queue.front()->GetName().c_str(),
-                           action->GetName().c_str());
+          if(_currentAction != nullptr)
+          {
+            PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
+                             "Could not interrupt %s. Will cancel and queue %s now.",
+                             _currentAction->GetName().c_str(),
+                             action->GetName().c_str());
+          }
           result = QueueNow(action, numRetries);
         }
       }
@@ -411,23 +441,22 @@ namespace Anki {
       }
       _interruptedActions.clear();
       
-      if(!_queue.empty())
+      if(!_queue.empty() || _currentAction != nullptr)
       {
-        IActionRunner* currentAction = GetCurrentAction();
-        assert(currentAction != nullptr);
+        if(_currentAction == nullptr)
+        {
+          _currentAction = GetNextActionToRun();
+        }
+        assert(_currentAction != nullptr);
         
         VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN,
-                                           "Action: %s", currentAction->GetName().c_str());
+                                           "Action: %s", _currentAction->GetName().c_str());
         
-        const ActionResult actionResult = currentAction->Update();
+        const ActionResult actionResult = _currentAction->Update();
         
         if(actionResult != ActionResult::RUNNING) {
-          // Verify current action is still current, if it is pop it
-          // Otherwise if the current action was cancelled then we will be popping a new action
-          if(currentAction == GetCurrentAction())
-          {
-            PopCurrentAction();
-          }
+          // Current action is no longer running delete it
+          DeleteCurrentAction();
           
           if(actionResult != ActionResult::SUCCESS && actionResult != ActionResult::CANCELLED) {
             lastResult = RESULT_FAIL;
@@ -440,34 +469,37 @@ namespace Anki {
       return lastResult;
     }
     
-    IActionRunner* ActionQueue::GetCurrentAction()
+    IActionRunner* ActionQueue::GetNextActionToRun()
     {
       if(_queue.empty()) {
         return nullptr;
       }
-      
-      return _queue.front();
+      IActionRunner* action = _queue.front();
+      _queue.pop_front();
+      return action;
     }
 
     const IActionRunner* ActionQueue::GetCurrentAction() const
     {
-      if(_queue.empty()) {
-        return nullptr;
+      // If don't have a current action (aren't running anything) but have things that will be run
+      // then the current action is the first one in the queue
+      if(nullptr == _currentAction && _queue.size() > 0)
+      {
+        return _queue.front();
       }
-      
-      return _queue.front();
+      else
+      {
+        return _currentAction;
+      }
     }
-
-    void ActionQueue::PopCurrentAction()
+    
+    void ActionQueue::DeleteCurrentAction()
     {
-      if(!IsEmpty()) {
-        if(_queue.front() == nullptr) {
-          PRINT_NAMED_ERROR("ActionQueue.PopCurrentAction.NullActionPointer",
-                            "About to delete and pop action pointer from queue, found it to be nullptr!\n");
-        } else {
-          Util::SafeDelete(_queue.front());
-        }
-        _queue.pop_front();
+      if(_currentAction != nullptr && !_currentActionIsDeleting)
+      {
+        _currentActionIsDeleting = true;
+        Util::SafeDelete(_currentAction);
+        _currentActionIsDeleting = false;
       }
     }
     
