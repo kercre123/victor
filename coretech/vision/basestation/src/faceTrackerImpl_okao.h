@@ -175,11 +175,9 @@ namespace Vision {
   private:
     
     Result Init();
-    Result RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime,
-                           const DETECTION_INFO& detectionInfo);
+    Result RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime);
     
-    Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime,
-                              const DETECTION_INFO& detectionInfo);
+    Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime);
     
     bool   DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                            INT32 detectionIndex, Vision::TrackedFace& face);
@@ -533,8 +531,7 @@ namespace Vision {
     return false;
   }
 
-  Result FaceTracker::Impl::RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime,
-                                            const DETECTION_INFO& detectionInfo)
+  Result FaceTracker::Impl::RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime)
   {
     INT32 numUsersInAlbum = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
@@ -587,7 +584,6 @@ namespace Vision {
     }
     
     auto & enrollStatus = _enrollmentData[_lastRegisteredUserID];
-    //enrollStatus.detectionInfo[GetDataIndex(detectionInfo)] = detectionInfo;
     enrollStatus.lastDataTimeStamp = obsTime;
     enrollStatus.enrollmentTime = time(0);
     
@@ -598,8 +594,7 @@ namespace Vision {
   } // RegisterNewUser()
 
   
-  Result FaceTracker::Impl::UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime,
-                                               const DETECTION_INFO& detectionInfo)
+  Result FaceTracker::Impl::UpdateExistingUser(INT32 userID, HFEATURE& hFeature, TimeStamp_t obsTime)
   {
     INT32 numUserData = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, userID, &numUserData);
@@ -812,7 +807,7 @@ namespace Vision {
       // Nobody in album yet, add this person
       PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingFirstUser",
                        "Adding first user to empty album");
-      Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp, detectionInfo);
+      Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp);
       if(RESULT_OK != lastResult) {
         return lastResult;
       }
@@ -860,7 +855,7 @@ namespace Vision {
             ++lastResult;
           }
           
-          Result result = UpdateExistingUser(oldestID, _okaoRecognitionFeatureHandle, timestamp, detectionInfo);
+          Result result = UpdateExistingUser(oldestID, _okaoRecognitionFeatureHandle, timestamp);
           if(RESULT_OK != result) {
             return result;
           }
@@ -891,7 +886,7 @@ namespace Vision {
           // No match found, add new user
           PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingNewUser",
                            "Observed new person. Adding to album.");
-          Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp, detectionInfo);
+          Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, timestamp);
           if(RESULT_OK != lastResult) {
             return lastResult;
           }
