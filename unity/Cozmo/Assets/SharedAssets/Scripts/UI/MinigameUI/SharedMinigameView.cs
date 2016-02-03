@@ -57,6 +57,31 @@ namespace Cozmo {
       [SerializeField]
       private Anki.UI.AnkiTextLabel _InfoTitleTextLabel;
 
+      #region Score Widget variables
+
+      [SerializeField]
+      private ScoreWidget _ScoreWidgetPrefab;
+
+      private ScoreWidget _CozmoScoreWidgetInstance;
+      private ScoreWidget _PlayerScoreWidgetInstance;
+
+      //[SerializeField]
+      //private float _EnterAnimationXOffset = 600f;
+
+      [SerializeField]
+      private RectTransform _CozmoScoreContainer;
+
+      [SerializeField]
+      private RectTransform _PlayerScoreContainer;
+
+      [SerializeField]
+      private Sprite _CozmoPortraitSprite;
+
+      [SerializeField]
+      private Sprite _PlayerPortraitSprite;
+
+      #endregion
+
       private CanvasGroup _CurrentSlide;
       private string _CurrentSlideName;
       private Sequence _SlideInTween;

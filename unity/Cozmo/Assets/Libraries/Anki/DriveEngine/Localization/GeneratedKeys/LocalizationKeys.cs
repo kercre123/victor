@@ -126,8 +126,6 @@ public static class LocalizationKeys {
 
   #region SimpleStrings
 
-  public const string kBadgeNew = "badge.new";
-  public const string kButtonTap = "button.tap";
   public const string kButtonQuit = "button.quit";
   public const string kButtonStartChallenge = "button.startChallenge";
   public const string kButtonYes = "button.yes";
@@ -136,6 +134,7 @@ public static class LocalizationKeys {
   public const string kButtonAgain = "button.again";
   public const string kButtonReady = "button.ready";
   public const string kLabelPercentComplete = "label.percentComplete";
+  public const string kLabelScore = "label.score";
   public const string kButtonClose = "button.close";
   public const string kLabelPlusCount = "label.plusCount";
   public const string kLabelXCount = "label.xCount";

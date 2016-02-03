@@ -10,7 +10,7 @@ GameObject:
   - 224: {fileID: 22408436}
   - 114: {fileID: 11470090}
   m_Layer: 5
-  m_Name: CozmoScoreWidget
+  m_Name: ScoreWidget
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -74,10 +74,8 @@ GameObject:
   m_Component:
   - 224: {fileID: 22442240}
   - 114: {fileID: 11451602}
-  - 222: {fileID: 22257752}
-  - 114: {fileID: 11470038}
   m_Layer: 5
-  m_Name: PortraitIcon
+  m_Name: PortraitIconContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -91,6 +89,8 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22484430}
+  - 114: {fileID: 11436196}
+  - 114: {fileID: 11424894}
   m_Layer: 5
   m_Name: RoundMarkersLayoutElement
   m_TagString: Untagged
@@ -109,6 +109,55 @@ GameObject:
   - 114: {fileID: 11491750}
   m_Layer: 5
   m_Name: ScoreTextContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &140262
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22402464}
+  - 222: {fileID: 22207566}
+  - 114: {fileID: 11429554}
+  m_Layer: 5
+  m_Name: PortraitIcon
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &156566
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22406678}
+  - 114: {fileID: 11403964}
+  m_Layer: 5
+  m_Name: HorizontalLayoutGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &166056
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22461906}
+  - 114: {fileID: 11484794}
+  m_Layer: 5
+  m_Name: WinnerTextProxy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -184,12 +233,32 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 85942ecbb47484ffeb10cc8166e3167f, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11403964
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 156566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -405508275, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 10
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11415252
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -209,6 +278,12 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#minigame.text.score"'
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:_AllUppercase
+    JsonValue: true
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11417820
@@ -229,6 +304,19 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
+--- !u!114 &11424894
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 134706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d37561d0eb89449ab33f38ecb7bd8ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _SegmentPrefab: {fileID: 11499218, guid: 64aa4931b274a42758cbfe256299eba1, type: 2}
+  _SegmentContainer: {fileID: 11403964}
 --- !u!114 &11425836
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -249,57 +337,12 @@ MonoBehaviour:
   m_Spacing: 30
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
---- !u!114 &11449020
+--- !u!114 &11429554
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 174718}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Prefab: {fileID: 111598, guid: 6c199a31aa3af4bab8ff78a73ac57fb1, type: 2}
-  ModifiedValues:
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
-    JsonValue: 1
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
-    JsonValue: 1
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
-    JsonValue: 190
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"0"'
-  ModifiedLocalReferences: []
-  ModifiedGlobalReferences: []
---- !u!114 &11451602
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 122900}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IgnoreLayout: 0
-  m_MinWidth: -1
-  m_MinHeight: 300
-  m_PreferredWidth: -1
-  m_PreferredHeight: -1
-  m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
---- !u!114 &11470038
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 122900}
+  m_GameObject: {fileID: 140262}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
@@ -321,6 +364,72 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11436196
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 134706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: 80
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+--- !u!114 &11449020
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 174718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 111598, guid: 6c199a31aa3af4bab8ff78a73ac57fb1, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 180
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"0"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: Cozmo.MinigameWidgets.ScoreWidget:_ScoreCountLabel
+    ReferencePath: 
+  ModifiedGlobalReferences: []
+--- !u!114 &11451602
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 122900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: 350
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
 --- !u!114 &11470090
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -332,11 +441,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0278e0fea4a2a4596ad76f2cb87dcd35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _AnimationXOffset: 600
-  _ScoreContainer: {fileID: 0}
+  _PortraitImage: {fileID: 11429554}
+  _ScoreContainer: {fileID: 11491750}
   _ScoreCountLabel: {fileID: 0}
-  _RoundContainer: {fileID: 0}
-  _RoundCountBar: {fileID: 0}
+  _RoundContainer: {fileID: 11436196}
+  _RoundCountBar: {fileID: 11424894}
+  _WinnerContainer: {fileID: 22496992}
 --- !u!114 &11472114
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -350,6 +460,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 113448, guid: da9e74a30ea03469b9dea1f37877f332, type: 2}
   ModifiedValues: []
+  ModifiedLocalReferences: []
+  ModifiedGlobalReferences: []
+--- !u!114 &11484794
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 166056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 139558, guid: 5ee90214ebe55454c8c527bec2c8ea88, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#minigame.text.winner"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11491750
@@ -383,18 +511,52 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
   m_VerticalFit: 1
---- !u!222 &22257752
+--- !u!222 &22207566
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 122900}
+  m_GameObject: {fileID: 140262}
 --- !u!222 &22260148
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 106040}
+--- !u!224 &22402464
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 140262}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22442240}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 5}
+  m_SizeDelta: {x: 0, y: -10}
+  m_Pivot: {x: .5, y: .5}
+--- !u!224 &22406678
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 156566}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22484430}
+  m_RootOrder: 0
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22408436
 RectTransform:
   m_ObjectHideFlags: 1
@@ -462,8 +624,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -100}
-  m_SizeDelta: {x: 0, y: -100}
+  m_AnchoredPosition: {x: 0, y: -80}
+  m_SizeDelta: {x: 0, y: -40}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22442240
 RectTransform:
@@ -475,6 +637,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 22402464}
   - {fileID: 22496992}
   m_Father: {fileID: 22463208}
   m_RootOrder: 1
@@ -519,6 +682,23 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
+--- !u!224 &22461906
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 166056}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22496992}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -5, y: -5}
+  m_SizeDelta: {x: -160, y: -10}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22463208
 RectTransform:
   m_ObjectHideFlags: 1
@@ -549,7 +729,8 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 22406678}
   m_Father: {fileID: 22463208}
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
@@ -566,13 +747,14 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 22461906}
   m_Father: {fileID: 22442240}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: -20}
-  m_SizeDelta: {x: 0, y: 100}
+  m_AnchoredPosition: {x: 0, y: -40}
+  m_SizeDelta: {x: 100, y: 120}
   m_Pivot: {x: .5, y: 0}
 --- !u!1001 &100100000
 Prefab:
