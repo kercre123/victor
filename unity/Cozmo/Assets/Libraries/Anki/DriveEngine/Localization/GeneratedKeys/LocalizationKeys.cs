@@ -2,7 +2,11 @@ public static class LocalizationKeys {
 
   #region ChallengeTitleStrings
 
+  public const string kChallengeDetailsLabelRequires = "challengeDetails.label.requires";
   public const string kChallengeDetailsLabelPlayersAndCubesNeeded = "challengeDetails.label.playersAndCubesNeeded";
+  public const string kChallengeDetailsLabelPlayerAndCubesNeeded = "challengeDetails.label.playerAndCubesNeeded";
+  public const string kChallengeDetailsLabelPlayersAndCubeNeeded = "challengeDetails.label.playersAndCubeNeeded";
+  public const string kChallengeDetailsLabelPlayerAndCubeNeeded = "challengeDetails.label.playerAndCubeNeeded";
   public const string kAskCozmo01Title = "askCozmo01.title";
   public const string kAskCozmo01Description = "askCozmo01.description";
   public const string kInvestorDemoInvestorDemoScene1 = "investorDemo.investorDemoScene1";
@@ -134,12 +138,14 @@ public static class LocalizationKeys {
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kButtonClose = "button.close";
   public const string kLabelPlusCount = "label.plusCount";
+  public const string kLabelXCount = "label.xCount";
   public const string kDailySummaryTitle = "dailySummary.title";
-  public const string kEndSessionViewTitle = "endSession.title";
-  public const string kEndSessionViewDescription = "endSession.description";
+  public const string kEndSessionTitle = "endSession.title";
+  public const string kEndSessionDescription = "endSession.description";
   public const string kDailyGoalTitle = "dailyGoal.title";
   public const string kRequestGameTitle = "requestGame.title";
   public const string kRequestGameDescription = "requestGame.description";
+  public const string kDailyGoalFriendBonus = "dailyGoal.FriendBonus";
 
   #endregion
 }

@@ -114,9 +114,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _MaskImage: {fileID: 11430496}
-  _GlintTexture: {fileID: 2800000, guid: c269a89d0de424fa59724714cdb9fd24, type: 3}
-  _LoopSpeed: 5
-  _SecondsBetweenLoops: 2
 --- !u!114 &11408846
 MonoBehaviour:
   m_ObjectHideFlags: 1

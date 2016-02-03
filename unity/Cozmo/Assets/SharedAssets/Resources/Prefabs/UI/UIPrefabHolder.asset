@@ -20,9 +20,6 @@ MonoBehaviour:
     type: 2}
   _ChallengeEndViewPrefab: {fileID: 11474462, guid: 1b4135647dd7e4fb2bd98651dea5bac5,
     type: 2}
-  _DefaultButtonPrefab: {fileID: 11483728, guid: 0de3c51819c924d1fb37bf88d22a2414,
-    type: 2}
-  _DefaultTextPrefab: {fileID: 11497542, guid: c422cb7b178a14a38859d1900954eaa3, type: 2}
   _ShowCozmoCubeSlide:
     slideName: ShowCozmoCubesSlide
     slidePrefab: {fileID: 22534124, guid: 95d62b6d570b642638e6e63c769a1b62, type: 2}
@@ -33,3 +30,4 @@ MonoBehaviour:
   _GrayscaleShader: {fileID: 4800000, guid: 7ec20e72d8cc74e7191ddb125a92534c, type: 3}
   _AnimatedGlintShader: {fileID: 4800000, guid: 8dbae1ed93862487f9ac75c7fef22a07,
     type: 3}
+  _BlurShader: {fileID: 4800000, guid: 7b31baa32d76d417e98f04157d791313, type: 3}

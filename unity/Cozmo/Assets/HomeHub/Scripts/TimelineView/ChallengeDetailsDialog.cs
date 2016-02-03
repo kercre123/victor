@@ -13,6 +13,8 @@ public class ChallengeDetailsDialog : BaseView {
 
   [SerializeField]
   private AnkiTextLabel _TitleTextLabel;
+  [SerializeField]
+  private AnkiTextLabel _TitleTextLabelBack;
 
   [SerializeField]
   private AnkiTextLabel _DescriptionTextLabel;
@@ -36,11 +38,26 @@ public class ChallengeDetailsDialog : BaseView {
 
   public void Initialize(ChallengeData challengeData, Transform challengeButtonTransform) {
     _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
+    _TitleTextLabelBack.text = Localization.Get(challengeData.ChallengeTitleLocKey);
     _DescriptionTextLabel.text = Localization.Get(challengeData.ChallengeDescriptionLocKey);
-    _PlayersAndCubesLabel.text = string.Format(Localization.GetCultureInfo(),
-      Localization.Get(LocalizationKeys.kChallengeDetailsLabelPlayersAndCubesNeeded),
-      challengeData.MinigameConfig.NumPlayersRequired(),
-      challengeData.MinigameConfig.NumCubesRequired());
+
+    var locKey = LocalizationKeys.kChallengeDetailsLabelPlayersAndCubesNeeded;
+    int players = challengeData.MinigameConfig.NumPlayersRequired();
+    int cubes = challengeData.MinigameConfig.NumCubesRequired();
+    if (players == 1 && cubes == 1) {
+      locKey = LocalizationKeys.kChallengeDetailsLabelPlayerAndCubeNeeded;
+    }
+    else if (players == 1 && cubes != 1) {
+      locKey = LocalizationKeys.kChallengeDetailsLabelPlayerAndCubesNeeded;
+    }
+    else if(players != 1 && cubes == 1) {
+      locKey = LocalizationKeys.kChallengeDetailsLabelPlayersAndCubeNeeded;
+    }
+      
+    _PlayersAndCubesLabel.text = string.Format(Localization.GetCultureInfo(),      
+      Localization.Get(locKey),
+      players,
+      cubes);
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
     _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
     _ChallengeId = challengeData.ChallengeID;

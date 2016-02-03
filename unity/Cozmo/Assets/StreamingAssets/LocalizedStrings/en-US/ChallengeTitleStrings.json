@@ -18,9 +18,21 @@
       "/{*}"
     ]
   },
-  "challengeDetails.label.playersAndCubesNeeded": {
-    "translation": "Requires: {0} Player(s), {1} Power Cube(s)"
+  "challengeDetails.label.requires": {
+    "translation": "Requires:"
   },
+  "challengeDetails.label.playersAndCubesNeeded": {
+    "translation": "{0} Players, {1} Power Cubes"
+  },
+  "challengeDetails.label.playerAndCubesNeeded": {
+    "translation": "{0} Player, {1} Power Cubes"
+  },
+  "challengeDetails.label.playersAndCubeNeeded": {
+    "translation": "{0} Players, {1} Power Cube"
+  },
+  "challengeDetails.label.playerAndCubeNeeded": {
+    "translation": "{0} Player, {1} Power Cube"
+  },    
   "askCozmo01.title": {
     "translation": "Ask Cozmo Challenge 1"
   },
