@@ -22,7 +22,7 @@ namespace Simon {
     }
 
     private void HandleContinuePressed() {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.PLAYFUL);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.PLAYFUL);
       if (_NextPlayer == PlayerType.Cozmo) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
       }

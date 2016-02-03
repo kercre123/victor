@@ -4,7 +4,7 @@ using Anki.Cozmo.Audio;
 namespace ScriptedSequences.Actions {
   public class PlayMusic : ScriptedSequenceAction {
 
-    public MusicGroupStates MusicState;
+    public MUSIC MusicState;
 
     public bool WaitToEnd = true;
 

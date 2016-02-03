@@ -28,7 +28,7 @@ namespace Simon {
       _SequenceDisplay.SetSequenceText(0, _TargetSequenceLength);
 
       _CurrentRobot.SetHeadAngle(1.0f);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_01);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_POSITIVE_01);
     }
 
     public override void Update() {
