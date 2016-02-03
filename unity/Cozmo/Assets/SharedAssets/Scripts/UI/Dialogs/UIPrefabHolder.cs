@@ -100,6 +100,13 @@ namespace Cozmo {
       public Shader AnimatedGlintShader {
         get { return _AnimatedGlintShader; }
       }
+
+      [SerializeField]
+      private Shader _BlurShader;
+
+      public Shader BlurShader {
+        get { return _BlurShader; }
+      }
     }
   }
 }

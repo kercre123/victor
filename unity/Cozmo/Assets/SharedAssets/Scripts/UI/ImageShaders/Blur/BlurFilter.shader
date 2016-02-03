@@ -1,4 +1,4 @@
-﻿Shader "Sprites/Default"
+﻿Shader "UI/Cozmo/Blur Filter"
 {
     Properties
     {
@@ -98,9 +98,11 @@
       //        x += getColor(3, uv, uvOffset, 0.006);
 
               //Linear
-              x += getColor(-1, uv, uvOffset, 0.333);
-              x += getColor(0, uv, uvOffset, 0.333);
-              x += getColor(1, uv, uvOffset, 0.333);
+              x += getColor(-2, uv, uvOffset, 0.2);
+              x += getColor(-1, uv, uvOffset, 0.2);
+              x += getColor(0, uv, uvOffset, 0.2);
+              x += getColor(1, uv, uvOffset, 0.2);
+              x += getColor(2, uv, uvOffset, 0.2);
 
               return x;
             }
@@ -192,9 +194,11 @@
       //        x += getColor(3, uv, uvOffset, 0.006);
 
               //Linear
-              x += getColor(-1, uv, uvOffset, 0.333);
-              x += getColor(0, uv, uvOffset, 0.333);
-              x += getColor(1, uv, uvOffset, 0.333);
+              x += getColor(-2, uv, uvOffset, 0.2);
+              x += getColor(-1, uv, uvOffset, 0.2);
+              x += getColor(0, uv, uvOffset, 0.2);
+              x += getColor(1, uv, uvOffset, 0.2);
+              x += getColor(2, uv, uvOffset, 0.2);
 
               return x;
             }
