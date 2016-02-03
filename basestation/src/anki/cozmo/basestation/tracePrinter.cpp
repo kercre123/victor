@@ -12,6 +12,7 @@ namespace Cozmo {
 
 const std::string TracePrinter::UnknownTraceName   = "Unknown trace name";
 const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format with %d parameters";
+const std::string TracePrinter::RobotNamePrefix    = "Robot.";
 
 TracePrinter::TracePrinter(Util::Data::DataPlatform* dp):
   printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG) {
@@ -44,17 +45,46 @@ TracePrinter::TracePrinter(Util::Data::DataPlatform* dp):
 void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message) const {
   const RobotInterface::PrintTrace& trace = message.GetData().Get_trace();
   if (trace.level >= printThreshold) {
-    const std::string name = GetName(trace.name);
+    const std::string name = RobotNamePrefix + GetName(trace.name);
     const std::string mesg = GetFormatted(trace);
-    printf("ROBOT-%s %s: %s\n", RobotInterface::EnumToString(trace.level), name.c_str(), mesg.c_str());
+    switch (trace.level)
+    {
+      case RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG:
+      case RobotInterface::LogLevel::ANKI_LOG_LEVEL_PRINT:
+      {
+        PRINT_NAMED_DEBUG(name.c_str(), "%s", mesg.c_str()); //< Nessisary because format must be a string literal
+        break;
+      }
+      case RobotInterface::LogLevel::ANKI_LOG_LEVEL_INFO:
+      {
+        PRINT_NAMED_INFO(name.c_str(), "%s", mesg.c_str());
+        break;
+      }
+      case RobotInterface::LogLevel::ANKI_LOG_LEVEL_EVENT:
+      {
+        PRINT_NAMED_EVENT(name.c_str(), "%s", mesg.c_str());
+        break;
+      }
+      case RobotInterface::LogLevel::ANKI_LOG_LEVEL_WARN:
+      {
+        PRINT_NAMED_WARNING(name.c_str(), "%s", mesg.c_str());
+        break;
+      }
+      case RobotInterface::LogLevel::ANKI_LOG_LEVEL_ASSERT:
+      case RobotInterface::LogLevel::ANKI_LOG_LEVEL_ERROR:
+      {
+        PRINT_NAMED_ERROR(name.c_str(), "%s", mesg.c_str());
+        break;
+      }
+    }
   }
 }
 
 void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) const {
   const RobotInterface::CrashReport& report = message.GetData().Get_crashReport();
-  printf("ROBOT Firmware crash report received: %d\n", (int)report.which);
+  PRINT_NAMED_ERROR("RobotFirmware.CrashDump", "Firmware crash report received: %d\n", (int)report.which);
   char dumpFileName[512];
-  snprintf(dumpFileName, 512, "robot_fw_crash_%d_%lld.bin", (int)report.which, std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+  snprintf(dumpFileName, sizeof(dumpFileName), "robot_fw_crash_%d_%lld.bin", (int)report.which, std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
   std::ofstream fileOut;
   fileOut.open(dumpFileName, std::ios::out | std::ofstream::binary);
   if( fileOut.is_open() ) {

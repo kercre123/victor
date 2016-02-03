@@ -45,6 +45,7 @@ namespace Anki {
       IntFormatMap formatTable;
       static const std::string UnknownTraceName;
       static const std::string UnknownTraceFormat;
+      static const std::string RobotNamePrefix;
       RobotInterface::LogLevel printThreshold;
     };
     
