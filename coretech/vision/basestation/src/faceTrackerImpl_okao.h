@@ -185,10 +185,8 @@ namespace Vision {
     Result EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                               Vision::TrackedFace& face);
     
-    Result RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                         const DETECTION_INFO& detectionInfo, TimeStamp_t timestamp,
-                         Vision::TrackedFace::ID_t& faceID,
-                         INT32& recognitionScore);
+    Result RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr, TimeStamp_t timestamp,
+                         Vision::TrackedFace::ID_t& faceID, INT32& recognitionScore);
     
     Result MergeFaces(Vision::TrackedFace::ID_t keepID, Vision::TrackedFace::ID_t mergeID);
 
@@ -520,17 +518,6 @@ namespace Vision {
     }
   } // SetFeatureHelper()
   
-  bool IsRecognizable(const DETECTION_INFO& detectionInfo)
-  {
-    if(detectionInfo.nConfidence > 500 &&
-       detectionInfo.nPose == POSE_YAW_FRONT &&
-       (detectionInfo.nAngle < 45 || detectionInfo.nAngle > 315))
-    {
-      return true;
-    }
-    return false;
-  }
-
   Result FaceTracker::Impl::RegisterNewUser(HFEATURE& hFeature, TimeStamp_t obsTime)
   {
     INT32 numUsersInAlbum = 0;
@@ -783,16 +770,12 @@ namespace Vision {
     return RESULT_OK;
   }
   
-  Result FaceTracker::Impl::RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                                          const DETECTION_INFO& detectionInfo, TimeStamp_t timestamp,
-                                          Vision::TrackedFace::ID_t& faceID,
-                                          INT32& recognitionScore)
+  Result FaceTracker::Impl::RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr, TimeStamp_t timestamp,
+                                          Vision::TrackedFace::ID_t& faceID, INT32& recognitionScore)
   {
     INT32 okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
                                                   dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
                                                   _okaoPartDetectionResultHandle);
-    
-    const bool allowAddNewFace = _enrollNewFaces && IsRecognizable(detectionInfo);
     
     INT32 numUsersInAlbum = 0;
     okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
@@ -803,7 +786,7 @@ namespace Vision {
     
     const INT32 MaxScore = 1000;
     
-    if(numUsersInAlbum == 0 && allowAddNewFace) {
+    if(numUsersInAlbum == 0 && _enrollNewFaces) {
       // Nobody in album yet, add this person
       PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingFirstUser",
                        "Adding first user to empty album");
@@ -882,7 +865,7 @@ namespace Vision {
           faceID = oldestID;
           recognitionScore = scores[0];
           
-        } else if(allowAddNewFace) {
+        } else if(_enrollNewFaces) {
           // No match found, add new user
           PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingNewUser",
                            "Observed new person. Adding to album.");
@@ -1077,7 +1060,7 @@ namespace Vision {
         
         Tic("FaceRecognition");
         Result recognitionResult = RecognizeFace(nWidth, nHeight, dataPtr,
-                                                 detectionInfo, frameOrig.GetTimestamp(),
+                                                 frameOrig.GetTimestamp(),
                                                  recognizedID, recognitionScore);
         if(RESULT_OK != recognitionResult) {
           // Full-on failure of recognition, just leave faceID whatever it was
