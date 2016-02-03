@@ -113,7 +113,9 @@ void setTransmit(bool tx) {
 }
 
 static uint8_t ReadByte(void) {
-  while (!NRF_UART0->EVENTS_RXDRDY) ;
+  while (!NRF_UART0->EVENTS_RXDRDY) {
+    Battery::manage();
+  }
   NRF_UART0->EVENTS_RXDRDY = 0;
   return NRF_UART0->RXD;
 }
@@ -137,6 +139,8 @@ static bool WaitWord(commandWord target) {
     // Wait with timeout
     int waitTime = GetCounter() + MAX_TIMEOUT;
     while (!NRF_UART0->EVENTS_RXDRDY) {
+      Battery::manage();
+
       signed int remaining = waitTime - GetCounter();
       if (remaining <= 0) return false;
     }
@@ -251,10 +255,14 @@ void EnterRecovery(void) {
 
   RECOVERY_STATE state = STATE_IDLE;
 
+  for(int i = 0; i < 16; i++) {
+    setLight(0);
+    MicroWait(25000);
+  }
+
   for (;;) {
     do {
       setLight(1);
-      Battery::manage();
       toggleTargetPin();
       WriteWord(COMMAND_HEADER);
       WriteWord(state);
