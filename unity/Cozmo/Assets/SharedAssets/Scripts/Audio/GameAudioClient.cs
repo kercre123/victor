@@ -11,28 +11,28 @@ namespace Anki {
         //    AudioClient client = AudioClient.Instance;
         //    client.OnAudioCallback += YourHandler
 
-        static public ushort PostUIEvent(Anki.Cozmo.Audio.EventType audioEvent,
+        static public ushort PostUIEvent(Anki.Cozmo.Audio.GenericEvent audioEvent,
                                          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                          CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;
           return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.UI, callbackFlag, handler);
         }
 
-        static public ushort PostSFXEvent(Anki.Cozmo.Audio.EventType audioEvent,
+        static public ushort PostSFXEvent(Anki.Cozmo.Audio.GenericEvent audioEvent,
                                           Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                           CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;
           return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.SFX, callbackFlag, handler);
         }
 
-        static public ushort PostAnnouncerVOEvent(Anki.Cozmo.Audio.EventType audioEvent,
+        static public ushort PostAnnouncerVOEvent(Anki.Cozmo.Audio.GenericEvent audioEvent,
                                                   Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                                   CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;
           return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Aria, callbackFlag, handler);
         }
 
-        static public ushort PostCozmoVOEvent(Anki.Cozmo.Audio.EventType audioEvent,
+        static public ushort PostCozmoVOEvent(Anki.Cozmo.Audio.GenericEvent audioEvent,
                                               Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                               CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;
@@ -59,13 +59,13 @@ namespace Anki {
         // Set Music States
         // We can move this, I just need a place to keep static state to start the music
         private static bool _didPlayMusic = false; 
-        static public void SetMusicState(Anki.Cozmo.Audio.MusicGroupStates state) {
+        static public void SetMusicState(Anki.Cozmo.Audio.MUSIC state) {
           AudioClient client = AudioClient.Instance;
           if (!_didPlayMusic) {
-            client.PostEvent(EventType.PLAY_MUSIC, GameObjectType.Default);
+            client.PostEvent((GenericEvent)Music.PlayMusic, GameObjectType.Default);
             _didPlayMusic = true;
           }
-          client.PostGameState(GameStateGroupType.Music, (GameStateType)state);
+          client.PostGameState(StateGroupType.MUSIC, (GenericState)state);
         }
       }
     }

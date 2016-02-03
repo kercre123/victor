@@ -131,7 +131,7 @@ namespace SpeedTap {
       CurrentRobot.SetLiftHeight(0.0f);
       CurrentRobot.SetHeadAngle(-1.0f);
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.SILENCE);
     }
 
     public void OpenGamePanel() {
@@ -148,7 +148,7 @@ namespace SpeedTap {
       }
 
       LightCube.TappedAction -= BlockTapped;
-      GameAudioClient.SetMusicState(MusicGroupStates.SILENCE);
+      GameAudioClient.SetMusicState(MUSIC.SILENCE);
     }
 
     void InitialCubesDone() {
@@ -161,7 +161,7 @@ namespace SpeedTap {
     }
 
     public void RollingBlocks() {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_CLICK_GENERAL);
     }
 
     private void UIButtonTapped() {
