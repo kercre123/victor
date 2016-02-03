@@ -158,6 +158,10 @@ namespace SpeedTap {
 
     public void UpdateUI() {
       _GamePanel.SetScoreText(_CozmoScore, _PlayerScore, _CozmoRoundsWon, _PlayerRoundsWon, _Rounds);
+
+      // Display the current round
+      InfoTitleText = string.Format(Localization.GetCultureInfo(), 
+        Localization.Get(LocalizationKeys.kSpeedTapRoundsText), _CozmoRoundsWon + _PlayerRoundsWon + 1);
     }
 
     public void RollingBlocks() {

@@ -344,10 +344,10 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
-  #region How To Play Slides
+  #region Game State Slides
 
   public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
-    GameObject slideObject = _SharedMinigameViewInstance.ShowGameStateSlide(UIPrefabHolder.Instance.InitialCubesSlide);
+    GameObject slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(UIPrefabHolder.Instance.InitialCubesSlide);
     ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
     cubeSlide.Initialize(numCubesRequired);
     return cubeSlide;
@@ -419,6 +419,17 @@ public abstract class GameBase : MonoBehaviour {
 
   public void EnableContinueButton(bool enable) {
     _SharedMinigameViewInstance.EnableContinueButton(enable);
+  }
+
+  #endregion
+
+  #region Info Title Text
+
+  public string InfoTitleText {
+    get { return _SharedMinigameViewInstance.InfoTitleText; }
+    set { 
+      _SharedMinigameViewInstance.InfoTitleText = value; 
+    }
   }
 
   #endregion

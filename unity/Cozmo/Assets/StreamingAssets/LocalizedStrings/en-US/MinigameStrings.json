@@ -73,7 +73,7 @@
     "translation": "Steps In Pattern: {0}/{1}"
   },
   "speedTap.roundsText": {
-    "translation": "Round: {0:N0}/{1:N0}"
+    "translation": "Round: {0:N0}"
   },
   "speedTap.roundsWon.cozmo": {
     "translation": "cozmo rounds won: {0:N0}"
