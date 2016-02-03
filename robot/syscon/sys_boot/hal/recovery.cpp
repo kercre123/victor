@@ -113,7 +113,7 @@ void setTransmit(bool tx) {
 }
 
 static uint8_t ReadByte(void) {
-  while (!NRF_UART0->EVENTS_RXDRDY) ;
+  while (!NRF_UART0->EVENTS_RXDRDY) Battery::manage();
   NRF_UART0->EVENTS_RXDRDY = 0;
   return NRF_UART0->RXD;
 }
@@ -250,6 +250,11 @@ void EnterRecovery(void) {
   UARTInit();
 
   RECOVERY_STATE state = STATE_IDLE;
+
+  for(int i = 0; i < 16; i++) {
+    setLight(0);
+    MicroWait(25000);
+  }
 
   for (;;) {
     do {
