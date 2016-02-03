@@ -413,17 +413,13 @@ LOCAL bool TaskOtaBody(uint32 param)
           }
           else
           {
-            if (flashStagedFlags[0] == RobotInterface::OTA_stage)
+            if (flashStagedFlags[0] == 0xFFFFffff)
+            {
+              i2spiSwitchMode(I2SPI_REBOOT);
+            }
+            else
             {
               i2spiSwitchMode(I2SPI_RECOVERY);
-            }
-            else if (flashStagedFlags[0] != 0xFFFFffff)
-            {
-              if (spi_flash_erase_sector(BOOT_CONFIG_SECTOR) != SPI_FLASH_RESULT_OK)
-              {
-                os_printf("Error flash staged flags (BOOT_CONFIG_SECTOR)\r\n");
-              }
-              i2spiSwitchMode(I2SPI_REBOOT);
             }
             break;
           }
@@ -615,18 +611,6 @@ LOCAL bool TaskCheckSig(uint32 param)
 #ifdef DEBUG_OTA
         os_printf("Body signature OKAY, switching mode and posting task\r\n");
 #endif
-        uint32_t flag = state->cmd;
-        if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS, &flag, 4) != SPI_FLASH_RESULT_OK)
-        {
-          AnkiError( 29, "UpgradeController", 188, "Couldn't write flash body OTA flag!", 0);
-        #ifdef DEBUG_OTA
-          os_printf("Couldn't write flash body OTA flag!\r\n");
-        }
-        else
-        {
-          os_printf("Successfully staged body upgrade\r\n");
-        #endif
-        }
         os_free(state);
         i2spiSwitchMode(I2SPI_REBOOT);
         return false;
@@ -636,13 +620,13 @@ LOCAL bool TaskCheckSig(uint32 param)
         uint32_t flag = state->cmd;
         if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS, &flag, 4) != SPI_FLASH_RESULT_OK)
         {
-          AnkiError( 29, "UpgradeController", 350, "Couldn't write flash staged flag!", 0);
+          AnkiError( 29, "UpgradeController", 188, "Couldn't write flash staged flag!", 0);
 #ifdef DEBUG_OTA
           os_printf("Couldn't write flash staged flag!\r\n");
         }
         else
         {
-          os_printf("Successfully triggering staged upgrade\r\n");
+          os_printf("Successfully triggering staged upgrade");
 #endif
         }
         i2spiSwitchMode(I2SPI_REBOOT);
@@ -661,41 +645,17 @@ LOCAL bool TaskCheckSig(uint32 param)
   
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
-  switch(flashStagedFlags[0])
+  if (flashStagedFlags[0] != 0xFFFFFFFF)
   {
-    case RobotInterface::OTA_stage:
+    if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
     {
-      if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
-      {
-        // Enter bootloader message from otaMessages.clad
-        if (i2spiQueueMessage((u8*)"\xfe\x01", 2) == false)
-        {
-          return true;
-        }
-        os_printf("Flash staged, starting upgrade sequence\r\n");
-      }
-      else
-      {
-        StartWiFiUpgrade(true);
-      }
-      break;
+      // Enter bootloader message from otaMessages.clad
+      if (i2spiQueueMessage((u8*)"\xfe\x01", 2) == false) return true;
+      os_printf("Flash staged, starting upgrade sequence\r\n");
     }
-    case RobotInterface::OTA_body:
+    else
     {
-      // Tell body to enter bootloader
-      if (i2spiQueueMessage((u8*)"\xfe\x01", 2) == false)
-      {
-        return true;
-      }
-      os_printf("Triggering body OTA\r\n");
-      break;
-    }
-    case 0xFFFFffff:
-      break; // Normal case
-    default:
-    {
-      os_printf("Unexpected flashStagedFlags[0]: %x\r\n", flashStagedFlags[0]);
-      break;
+      StartWiFiUpgrade(true);
     }
   }
   return false;

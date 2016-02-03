@@ -77,9 +77,9 @@ static int16_t outgoingPhase;
 /// Buffer for message to send to the RTIP
 static uint8_t messageBuffer[I2SPI_MESSAGE_BUF_SIZE];
 /// Write index into message buffer
-static int16_t messageBufferWind;
+static uint16_t messageBufferWind;
 /// Read index into message Buffer
-static int16_t messageBufferRind;
+static uint16_t messageBufferRind;
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
 /// The last state we've received from the RTIP updating the Body bootloader state
@@ -164,13 +164,13 @@ void makeDrop(void)
   
   drop.droplet |= PumpScreenData(drop.screenData);
   
-  const int messageAvailable = (messageBufferRind - messageBufferWind) & I2SPI_MESSAGE_BUF_SIZE_MASK;
-  if (messageAvailable)
+  if (messageBufferRind != messageBufferWind)
   {
+    const uint16_t messageAvailable = I2SPI_MESSAGE_BUF_SIZE - ((messageBufferRind - messageBufferWind) & I2SPI_MESSAGE_BUF_SIZE_MASK);
     const uint8_t messageSize = messageBuffer[messageBufferRind];
     if (unlikely(messageSize > messageAvailable))
     {
-      os_printf("ERROR I2SPI messageBuffer is corrupt! %d > %d\r\n", messageSize, messageAvailable);
+      os_printf("ERROR I2SPI messageBuffer is corrupt! %d > %d, %02x\r\n", messageSize, messageAvailable, messageBuffer[(messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK]);
     }
     else
     {
@@ -583,7 +583,7 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   return 0;
 }
 
-bool i2spiQueueMessage(uint8_t* msgData, int msgLen)
+bool ICACHE_FLASH_ATTR i2spiQueueMessage(uint8_t* msgData, int msgLen)
 {
   if (unlikely(outgoingPhase < PHASE_FLAGS))
   {
@@ -591,13 +591,13 @@ bool i2spiQueueMessage(uint8_t* msgData, int msgLen)
   }
   else if (unlikely(msgLen > DROP_TO_RTIP_MAX_VAR_PAYLOAD))
   {
-    os_printf("ERROR i2spiQueueMessage(..., %d) bigger than limit %d\r\n", msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+    os_printf("ERROR i2spiQueueMessage(%02x..., %d) bigger than limit %d\r\n", msgData[0], msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
     return false;
   }
   else
   {
     const uint16_t available = I2SPI_MESSAGE_BUF_SIZE - ((messageBufferWind - messageBufferRind) & I2SPI_MESSAGE_BUF_SIZE_MASK);
-    if (unlikely(msgLen + 1 >= available)) // Leave space for length field and to prevent index overlap
+    if (unlikely((msgLen + 1) >= available)) // Leave space for length field and to prevent index overlap
     {
       return false;
     }

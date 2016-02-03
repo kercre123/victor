@@ -35,7 +35,7 @@
 /// Number of usable bytes on the I2SPI bus for drops from RTIP to WiFi
 #define DROP_TO_WIFI_SIZE (100)
 /// Number of usable bytes on the I2SPI bus for drops from WiFi to the RTIP
-#define DROP_TO_RTIP_SIZE (DROP_PREAMBLE_SIZE + MAX_AUDIO_BYTES_PER_DROP + 1 + MAX_SCREEN_BYTES_PER_DROP + 1 + DROP_TO_RTIP_MAX_VAR_PAYLOAD + 1)
+#define DROP_TO_RTIP_SIZE (DROP_PREAMBLE_SIZE + MAX_AUDIO_BYTES_PER_DROP + 1 + MAX_SCREEN_BYTES_PER_DROP + DROP_TO_RTIP_MAX_VAR_PAYLOAD + 1)
 /// Number of bytes of drop prefix
 #define DROP_PREAMBLE_SIZE sizeof(preambleType)
 /// Preamble for drops from WiFi to RTIP
@@ -50,7 +50,7 @@
 #define MAX_TX_CHAIN_COUNT 2
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (64)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (63)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,
@@ -64,7 +64,6 @@ typedef struct
 {
   preambleType preamble; ///< Synchronization Preamble indicating drop destination
   uint8_t  audioData[MAX_AUDIO_BYTES_PER_DROP];   ///< Isochronous audio data
-  uint8_t  screenInd;                             ///< Where in the screen memory to write the data
   uint8_t  screenData[MAX_SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
   uint8_t  payloadLen;                            ///< Number of data bytes in payload
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data
@@ -72,6 +71,7 @@ typedef struct
 } DropToRTIP;
 
 ct_assert(sizeof(DropToRTIP) == DROP_TO_RTIP_SIZE);
+ASSERT_IS_MULTIPLE_OF_TWO(DROP_TO_RTIP_SIZE);
 
 /// Message receive buffer size on the RTIP
 #define RTIP_MSG_BUF_SIZE (128)
@@ -90,6 +90,7 @@ typedef struct
 } DropToWiFi;
 
 ct_assert(sizeof(DropToWiFi) == DROP_TO_WIFI_SIZE);
+ASSERT_IS_MULTIPLE_OF_TWO(DROP_TO_WIFI_SIZE);
 
 /// Droplet bit masks and flags.
 typedef enum
