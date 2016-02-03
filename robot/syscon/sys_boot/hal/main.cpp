@@ -61,7 +61,6 @@ extern "C" void SVC_Handler(void) {
 
 int main (void) {
   TimerInit();
-  
 
   if (!CheckSig()) {
     SVC_Handler();

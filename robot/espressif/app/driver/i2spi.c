@@ -116,7 +116,16 @@ void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
-  if (unlikely(drop->droplet & bootloaderStatus)) os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, 4);
+  if (unlikely(drop->droplet & bootloaderStatus && drop->payloadLen == sizeof(bodyBootloaderCode)))
+  {
+    //static unsigned int prevValue;
+    os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, drop->payloadLen);
+    /*if (bodyBootloaderCode != prevValue)
+    {
+      os_printf("BS: %08x\r\n", bodyBootloaderCode);
+      prevValue = bodyBootloaderCode;
+    }*/
+  }
   else if (drop->payloadLen > 0)
   {
     AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
@@ -610,6 +619,11 @@ bool ICACHE_FLASH_ATTR i2spiQueueMessage(uint8_t* msgData, int msgLen)
       return true;
     }
   }
+}
+
+bool ICACHE_FLASH_ATTR i2spiMessageQueueIsEmpty(void)
+{
+  return messageBufferRind == messageBufferWind;
 }
 
 void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)

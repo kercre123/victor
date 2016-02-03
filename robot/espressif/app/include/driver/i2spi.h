@@ -43,6 +43,11 @@ int8_t i2spiInit(void);
  */
 bool i2spiQueueMessage(uint8_t* msgData, int msgLen);
 
+/** Check if the I2SPI message queue is empty
+ * @return True if there are no clad messages waiting to be sent
+ */
+bool i2spiMessageQueueIsEmpty(void);
+
 /** Switch the operating mode of the I2SPI interface
  * I2SPI_NORMAL is the default mode
  * @param mode Which mode to transition insertion
