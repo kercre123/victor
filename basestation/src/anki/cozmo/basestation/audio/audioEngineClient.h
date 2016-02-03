@@ -48,17 +48,17 @@ public:
   
   // Perform event
   // Provide a callback lambda to get all event callbacks; Duration, Marker, Complete & Error.
-  CallbackIdType PostEvent( EventType event,
+  CallbackIdType PostEvent( GenericEvent event,
                             GameObjectType gameObject = GameObjectType::Default,
                             CallbackFunc callback = nullptr );
   
   void StopAllEvents( GameObjectType gameObject = GameObjectType::Invalid );
 
-  void PostGameState( GameStateGroupType gameStateGroup,
-                      GameStateType gameState );
+  void PostGameState( StateGroupType gameStateGroup,
+                      GenericState gameState );
   
-  void PostSwitchState( SwitchStateGroupType switchStateGroup,
-                        SwitchStateType switchState,
+  void PostSwitchState( SwitchGroupType switchGroup,
+                        GenericSwitch switchState,
                         GameObjectType gameObject = GameObjectType::Default );
   
   void PostParameter( ParameterType parameter,
