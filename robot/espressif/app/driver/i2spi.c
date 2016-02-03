@@ -621,6 +621,11 @@ bool ICACHE_FLASH_ATTR i2spiQueueMessage(uint8_t* msgData, int msgLen)
   }
 }
 
+bool ICACHE_FLASH_ATTR i2spiMessageQueueIsEmpty(void)
+{
+  return messageBufferRind == messageBufferWind;
+}
+
 void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
 {
   switch(mode)

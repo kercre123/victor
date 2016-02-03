@@ -399,7 +399,7 @@ LOCAL bool TaskOtaBody(uint32 param)
         ct_assert(sizeof(msg) == 8);
         msg.command = RobotInterface::EngineToRobot::Tag_bodyUpgradeData;
         
-        if (state->index >= state->fwSize) // Done loading firmware
+        if (state->index == state->fwSize) // Done loading firmware
         {
           os_printf("Done loading body, commanding reboot\r\n");
           msg.bytes[1] = COMMAND_HEADER >> 8;
@@ -413,6 +413,14 @@ LOCAL bool TaskOtaBody(uint32 param)
           }
           else
           {
+            state->index++;
+            return true;
+          }
+        }
+        else if (state->index > state->fwSize)
+        {
+          if (i2spiMessageQueueIsEmpty()) // Wait for message queue to run out
+          {
             if (flashStagedFlags[0] == 0xFFFFffff)
             {
               i2spiSwitchMode(I2SPI_REBOOT);
@@ -422,6 +430,10 @@ LOCAL bool TaskOtaBody(uint32 param)
               i2spiSwitchMode(I2SPI_RECOVERY);
             }
             break;
+          }
+          else
+          {
+            return true;
           }
         }
         else
