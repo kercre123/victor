@@ -31,7 +31,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameZeroBlocks.h"
-#include "../behaviors/behaviorExploreMarkedCube.h" // any reason why we need to expose behavior headers?
+#include "../behaviors/exploration/behaviorExploreMarkedCube.h" // any reason why we need to expose behavior headers?
 
 
 namespace Anki {

@@ -266,6 +266,12 @@ void NavMeshQuadTreeProcessor::Draw() const
     // add quads from borders
     for ( const auto& comboIt : _bordersPerContentCombination )
     {
+      // if a border combination is dirty it means the quads that formed the borders have been modified
+      // and hence we can't use them
+      if ( comboIt.second.dirty ) {
+        continue;
+      }
+    
       for ( const auto& it : comboIt.second.waypoints )
       {
         // from quad
@@ -420,10 +426,11 @@ void NavMeshQuadTreeProcessor::InvalidateBorders()
   for ( auto& comboIt : _bordersPerContentCombination )
   {
     comboIt.second.dirty = true;
+    
+    // if we don't clear the waypoints, the processor may be tempted to use them (for example to render them),
+    // but the pointers are not valid, so it crashes or renders wrong information. Make sure we don't use dirty data
+    comboIt.second.waypoints.clear();
   }
-  
-  // all gfx are dirty true
-  _borderGfxDirty = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
