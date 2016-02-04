@@ -46,6 +46,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandlePrint, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::trace,
     std::bind(&Robot::HandleTrace, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::crashReport,
+    std::bind(&Robot::HandleCrashReport, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPickedUp,
     std::bind(&Robot::HandleBlockPickedUp, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPlaced,
@@ -173,6 +175,11 @@ void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 void Robot::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   _traceHandler.HandleTrace(message);
+}
+
+void Robot::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  _traceHandler.HandleCrashReport(message);
 }
 
 void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message)

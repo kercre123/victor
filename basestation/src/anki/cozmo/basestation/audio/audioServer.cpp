@@ -121,13 +121,13 @@ void AudioServer::ProcessMessage( const StopAllAudioEvents& message, ConnectionI
 void AudioServer::ProcessMessage( const PostAudioGameState& message, ConnectionIdType connectionId )
 {
   // Decode Game State Message
-  const AudioStateGroupId groupId = static_cast<AudioStateGroupId>( message.gameStateGroup );
-  const AudioStateId stateId = static_cast<AudioStateId>( message.gameState );
+  const AudioStateGroupId groupId = static_cast<AudioStateGroupId>( message.stateGroup );
+  const AudioStateId stateId = static_cast<AudioStateId>( message.stateValue );
   // Perform Game State
   const bool success = _audioController->SetState( groupId, stateId );
   if ( !success ) {
     PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set State %s : %s",
-                       EnumToString( message.gameStateGroup ), EnumToString( message.gameState ) );
+                       EnumToString( message.stateGroup ), EnumToString( message.stateValue ) );
   }
 }
 
@@ -136,13 +136,13 @@ void AudioServer::ProcessMessage( const PostAudioSwitchState& message, Connectio
 {
   // Decode Switch State Message
   const AudioSwitchGroupId groupId = static_cast<AudioStateGroupId>( message.switchStateGroup);
-  const AudioSwitchStateId stateId = static_cast<AudioSwitchStateId>( message.switchState );
+  const AudioSwitchStateId stateId = static_cast<AudioSwitchStateId>( message.switchStateValue );
   const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   // Perform Switch State
   const bool success = _audioController->SetSwitchState( groupId, stateId, objectId );
   if ( !success ) {
     PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set Switch State %s : %s on GameObject %s",
-                       EnumToString( message.switchStateGroup ), EnumToString( message.switchState ),
+                       EnumToString( message.switchStateGroup ), EnumToString( message.switchStateValue ),
                        EnumToString( message.gameObject ) );
   }
 }
@@ -252,7 +252,7 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
       case AudioCallbackType::Complete:
       {
         const AudioCompletionCallbackInfo& info = static_cast<const AudioCompletionCallbackInfo&>( callbackInfo );
-        AudioCallbackComplete callbackType( static_cast<EventType>( info.eventId ) );
+        AudioCallbackComplete callbackType( static_cast<GenericEvent>( info.eventId ) );
         callbackMsg.callbackInfo.Set_callbackComplete( std::move( callbackType ) );
       }
         break;

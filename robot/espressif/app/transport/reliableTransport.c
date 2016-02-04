@@ -45,7 +45,7 @@ void ICACHE_FLASH_ATTR ReliableConnection_printState(ReliableConnection* connect
 }
 
 /// Reset the reliable connection TX queue state
-static void resetTxQueue(ReliableConnection* self)
+static void ICACHE_FLASH_ATTR resetTxQueue(ReliableConnection* self)
 {
   AnkiReliablePacketHeader* header = (AnkiReliablePacketHeader*)self->txBuf;
   header->type     = eRMT_MultipleMixedMessages;
@@ -54,7 +54,7 @@ static void resetTxQueue(ReliableConnection* self)
   self->txQueued = sizeof(AnkiReliablePacketHeader);
 }
 
-bool haveDataToSend(ReliableConnection* self)
+bool ICACHE_FLASH_ATTR haveDataToSend(ReliableConnection* self)
 {
   return self->txQueued > sizeof(AnkiReliablePacketHeader);
 }

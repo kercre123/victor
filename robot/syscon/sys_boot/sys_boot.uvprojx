@@ -431,11 +431,6 @@
               <FileName>recovery.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\recovery.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>battery.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\battery.cpp</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -481,6 +476,11 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\battery.cpp</FilePath>
             </File>
           </Files>
         </Group>

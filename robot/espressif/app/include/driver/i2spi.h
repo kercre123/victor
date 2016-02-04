@@ -13,6 +13,7 @@
 #define DMA_BUF_COUNT ((I2SPI_RAW_BYTES_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE))
 /// Buffer size for sending messages to the RTIP
 #define I2SPI_MESSAGE_BUF_SIZE (1024)
+ASSERT_IS_POWER_OF_TWO(I2SPI_MESSAGE_BUF_SIZE); // Required for mask below
 /// Size mask for index math on message buffer
 #define I2SPI_MESSAGE_BUF_SIZE_MASK (I2SPI_MESSAGE_BUF_SIZE-1)
 
@@ -41,6 +42,11 @@ int8_t i2spiInit(void);
  * @return true if the data was successfully queued or false if it could not be queued.
  */
 bool i2spiQueueMessage(uint8_t* msgData, int msgLen);
+
+/** Check if the I2SPI message queue is empty
+ * @return True if there are no clad messages waiting to be sent
+ */
+bool i2spiMessageQueueIsEmpty(void);
 
 /** Switch the operating mode of the I2SPI interface
  * I2SPI_NORMAL is the default mode

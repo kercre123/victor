@@ -1,0 +1,22 @@
+// Available Soundbanks in project
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+enum uint_32 BankType
+{
+  COZMO_MOVEMENT = 178905257,
+  COZMO_SCREEN = 1232291410,
+  DEV_DEBUG = 1031089514,
+  INIT = 1355168291,
+  Invalid = 0,
+  MUSIC = 3991942870,
+  UI = 1551306167,
+  VO_ARIA = 1284914004,
+  VO_COZMO = 2509714605,
+}
+
+} // Audio
+} // Cozmo
+} // Anki
