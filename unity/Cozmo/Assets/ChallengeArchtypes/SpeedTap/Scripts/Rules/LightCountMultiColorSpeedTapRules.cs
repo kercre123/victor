@@ -2,7 +2,8 @@
 using System.Collections;
 
 namespace SpeedTap {
-  public class LightCountAnyColorSpeedTapRules : ISpeedTapRules {
+  // lights count and colors must match, cubes can have all different colored lights
+  public class LightCountMultiColorSpeedTapRules : ISpeedTapRules {
 
     private Color[] _Colors = { Color.white, Color.green, Color.blue, Color.magenta, Color.yellow };
 

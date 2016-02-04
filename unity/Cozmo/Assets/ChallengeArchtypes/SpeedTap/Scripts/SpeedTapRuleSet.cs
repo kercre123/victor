@@ -7,7 +7,7 @@ namespace SpeedTap {
     NoRed,
     TwoColor,
     LightCountTwoColor,
-    LightCountAnyColor,
+    LightCountMultiColor,
     LightCountNoColor,
     LightCountSameColorNoTap,
   }
