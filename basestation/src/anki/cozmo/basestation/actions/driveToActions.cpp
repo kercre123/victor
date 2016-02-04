@@ -813,9 +813,9 @@ namespace Anki {
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
       _robot->AbortDrivingToPose();
-      VizManager::getInstance()->ErasePath(_robot->GetID());
-      VizManager::getInstance()->EraseAllPlannerObstacles(true);
-      VizManager::getInstance()->EraseAllPlannerObstacles(false);
+      _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
+      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
+      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
     }
     
 #pragma mark ---- IDriveToInteractWithObjectAction ----

@@ -25,9 +25,11 @@ CONSOLE_VAR(bool, kRenderNavMeshQuadTreeProcessor, "NavMeshQuadTree", true);
 CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTree::NavMeshQuadTree()
+NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager)
 : _gfxDirty(true)
+, _processor(vizManager)
 , _root({0,0,1}, 256, 4, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
+, _vizManager(vizManager)
 {
   _processor.SetRoot( &_root );
 }
@@ -46,7 +48,7 @@ void NavMeshQuadTree::Draw() const
     // ask root to add proper quads to be rendered
     VizManager::SimpleQuadVector quadVector;
     _root.AddQuadsToDraw(quadVector);
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree", quadVector);
+    _vizManager->DrawQuadVector("NavMeshQuadTree", quadVector);
     
 //    // compare actual size vs max
 //    size_t actual = quadVector.size();
@@ -70,7 +72,7 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, ENodeContentType nodeType)
     Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
     float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
     quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::YELLOW, center, size));
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddQuad", quadVector);
+    _vizManager->DrawQuadVector("NavMeshQuadTree::AddQuad", quadVector);
   }
 
   // if the root does not contain the quad, expand

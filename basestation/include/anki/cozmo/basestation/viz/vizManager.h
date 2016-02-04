@@ -49,7 +49,6 @@ namespace Anki {
     
     class IExternalInterface;
 
-  // NOTE: this is a singleton class
     class VizManager
     {
     public:
@@ -67,13 +66,11 @@ namespace Anki {
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
       
+      VizManager();
+      
       // NOTE: Connect() will call Disconnect() first if already connected.
       Result Connect(const char *udp_host_address, const unsigned short port);
       Result Disconnect();
-      
-      // Get a pointer to the singleton instance
-      inline static VizManager* getInstance();
-      static void removeInstance();
       
       // Whether or not to display the viz objects
       void ShowObjects(bool show);
@@ -389,13 +386,8 @@ namespace Anki {
 
     protected:
       
-      // Protected default constructor for singleton.
-      VizManager();
-      
       void SendMessage(const VizInterface::MessageViz& message);
 
-      static VizManager* _singletonInstance;
-      
       bool               _isInitialized;
       UdpClient          _vizClient;
       
@@ -417,16 +409,6 @@ namespace Anki {
       std::vector<Signal::SmartHandle> _eventHandlers;
     }; // class VizManager
     
-    
-    inline VizManager* VizManager::getInstance()
-    {
-      // If we haven't already instantiated the singleton, do so now.
-      if(0 == _singletonInstance) {
-        _singletonInstance = new VizManager();
-      }
-      
-      return _singletonInstance;
-    }
     
     template<typename T>
     void VizManager::DrawQuad(const VizQuadType quadType, const u32 quadID, const Quadrilateral<2,T>& quad,

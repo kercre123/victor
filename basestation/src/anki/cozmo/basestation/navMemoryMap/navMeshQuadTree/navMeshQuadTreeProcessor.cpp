@@ -42,11 +42,12 @@ if ( kDebugFindBorders ) {                                                      
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTreeProcessor::NavMeshQuadTreeProcessor()
+NavMeshQuadTreeProcessor::NavMeshQuadTreeProcessor(VizManager* vizManager)
 : _currentBorderCombination(nullptr)
 , _root(nullptr)
 , _contentGfxDirty(false)
 , _borderGfxDirty(false)
+, _vizManager(vizManager)
 {
 
 }
@@ -224,13 +225,13 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
   // debug render of lines returned to systems quering for borders
   if ( kRenderBorder3DLines )
   {
-    VizManager::getInstance()->EraseSegments("NavMeshQuadTreeProcessorBorderSegments");
+    _vizManager->EraseSegments("NavMeshQuadTreeProcessorBorderSegments");
     for ( const auto& b : outBorders )
     {
       const Vec3f centerLine = (b.from + b.to)*0.5f;
-      VizManager::getInstance()->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
+      _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
         b.from, b.to, Anki::NamedColors::YELLOW, false, 50.0f);
-      VizManager::getInstance()->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
+      _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
         centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::BLUE, false, 50.0f);
     }
   }
@@ -251,7 +252,7 @@ void NavMeshQuadTreeProcessor::Draw() const
       AddQuadsToDraw(type, quadVector, GetDebugColor(type), kRenderZOffset);
     }
     
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTreeProcessorContent", quadVector);
+    _vizManager->DrawQuadVector("NavMeshQuadTreeProcessorContent", quadVector);
     
     _contentGfxDirty = false;
   }
@@ -314,7 +315,7 @@ void NavMeshQuadTreeProcessor::Draw() const
       }
     }
   
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTreeProcessorBorders", quadVector);
+    _vizManager->DrawQuadVector("NavMeshQuadTreeProcessorBorders", quadVector);
     _borderGfxDirty = false;
   }
 

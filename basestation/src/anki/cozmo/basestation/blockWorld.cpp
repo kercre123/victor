@@ -132,11 +132,18 @@ namespace Cozmo {
       //////////////////////////////////////////////////////////////////////////
       // 1x1 Light Cubes
       //
-
-      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE1));
-      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE2));
-      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));
-      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE4));
+      
+      VizManager* vizManager = _robot->GetContext()->GetVizManager();
+      auto setVizAndAdd = [this, vizManager] (ObjectFamily family, ObservableObject* newObj)
+      {
+        newObj->SetVizManager(vizManager);
+        _objectLibrary[family].AddObject(newObj);
+      };
+      
+      setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE1));
+      setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE2));
+      setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE3));
+      setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE4));
       
       if (nullptr != _robot)
       {
@@ -187,7 +194,7 @@ namespace Cozmo {
       //////////////////////////////////////////////////////////////////////////
       // Charger
       //
-      _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
+      setVizAndAdd(ObjectFamily::Charger, new Charger());
       
       if(_robot->HasExternalInterface())
       {
@@ -198,7 +205,7 @@ namespace Cozmo {
       // NavMemoryMap
       //
       // Uncomment this line to create and use navMemoryMap. Commented out to not enable yet in master
-      // _navMemoryMap.reset( new NavMemoryMap() );
+      // _navMemoryMap.reset( new NavMemoryMap(vizManager) );
       
     } // BlockWorld() Constructor
   
@@ -210,7 +217,7 @@ namespace Cozmo {
       _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllBlocks,
         [this] (const EventType& event)
         {
-          VizManager::getInstance()->EraseAllVizObjects();
+          _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
           ClearObjectsByFamily(ObjectFamily::Block);
           ClearObjectsByFamily(ObjectFamily::LightCube);
         }));
@@ -219,7 +226,7 @@ namespace Cozmo {
       _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllObjects,
         [this] (const EventType& event)
         {
-          VizManager::getInstance()->EraseAllVizObjects();
+          _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
           ClearAllExistingObjects();
         }));
       
@@ -529,6 +536,9 @@ namespace Cozmo {
         object->Identify();
       }
     }
+    
+    // Set the viz manager on this new object
+    object->SetVizManager(_robot->GetContext()->GetVizManager());
     
     // TODO if an object with same ID exists, it will leak
     existingFamily[object->GetType()][object->GetID()] = object;
@@ -2210,7 +2220,7 @@ namespace Cozmo {
                                        object->GetID().GetValue(), _robot->GetID());
                       
                       // Erase the vizualized block and its projected quad
-                      //VizManager::getInstance()->EraseCuboid(object->GetID());
+                      //V_robot->GetContext()->GetVizManager()->EraseCuboid(object->GetID());
 
                       // Clear object, indicating we don't know where it went
                       ClearObject(object);
@@ -2821,10 +2831,10 @@ namespace Cozmo {
                 printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", (int)IMG_STREAM_RES);
                 break;
             }
-            VizManager::getInstance()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,
-                                                       q[Quad::TopRight].x()*scaleF,    q[Quad::TopRight].y()*scaleF,
-                                                       q[Quad::BottomRight].x()*scaleF, q[Quad::BottomRight].y()*scaleF,
-                                                       q[Quad::BottomLeft].x()*scaleF,  q[Quad::BottomLeft].y()*scaleF);
+            _robot->GetContext()->GetVizManager()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,
+                                                                   q[Quad::TopRight].x()*scaleF,    q[Quad::TopRight].y()*scaleF,
+                                                                   q[Quad::BottomRight].x()*scaleF, q[Quad::BottomRight].y()*scaleF,
+                                                                   q[Quad::BottomLeft].x()*scaleF,  q[Quad::BottomLeft].y()*scaleF);
           }
         }
       }

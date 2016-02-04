@@ -103,7 +103,7 @@ void MoodManager::Update(double currentTime)
   #if SEND_MOOD_TO_VIZ_DEBUG
   robotMood.recentEvents = std::move(_eventNames);
   _eventNames.clear();
-  VizManager::getInstance()->SendRobotMood(std::move(robotMood));
+  _robot->GetContext()->GetVizManager()->SendRobotMood(std::move(robotMood));
   #endif //SEND_MOOD_TO_VIZ_DEBUG
 }
   
