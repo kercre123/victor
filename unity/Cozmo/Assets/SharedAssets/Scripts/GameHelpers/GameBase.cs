@@ -348,6 +348,36 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
+  #region Difficulty Select
+
+  private int _CurrentDifficulty;
+
+  public int CurrentDifficulty {
+    get { return _CurrentDifficulty; }
+    set { 
+      _CurrentDifficulty = value;
+      OnDifficultySet(value);
+    }
+  }
+
+  protected virtual void OnDifficultySet(int difficulty) {
+  }
+
+  public void OpenDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
+    _SharedMinigameViewInstance.CreateDifficultySelectView(options, highestDifficultyAvailable);
+    _SharedMinigameViewInstance.OpenDifficultySelectView();
+  }
+
+  public void CloseDifficultySelectView() {
+    _SharedMinigameViewInstance.CloseDifficultySelectView();
+  }
+
+  public DifficultySelectOptionData GetSelectedDifficulty() {
+    return _SharedMinigameViewInstance.GetSelectedDifficulty();
+  }
+
+  #endregion
+
   #region Game State Slides
 
   public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {

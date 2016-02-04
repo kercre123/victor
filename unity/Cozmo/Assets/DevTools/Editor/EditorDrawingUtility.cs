@@ -76,11 +76,19 @@ public static class EditorDrawingUtility {
     var lastLocKey = localizationKey;
     localizationKey = EditorGUILayout.TextField("Localization Key", localizationKey);
 
-    if (localizationKey != lastLocKey && string.IsNullOrEmpty(localizedString)) {
+    int quickSelect = EditorGUILayout.Popup("   ", 0, LocalizationEditorUtility.LocalizationKeys);
+    if (quickSelect > 0) {
+      localizationKey = LocalizationEditorUtility.LocalizationKeys[quickSelect];
+      localizedString = string.Empty;
+    }
+      
+    if (localizationKey != lastLocKey && (string.IsNullOrEmpty(localizedString) || 
+        localizedString == LocalizationEditorUtility.GetTranslation(localizedStringFile, lastLocKey))) {
       InitializeLocalizationString(localizationKey, out localizedStringFile, out localizedString);
     }
 
-    localizedString = GUILayout.TextArea(localizedString);
+    GUILayout.Label("Text");
+    localizedString = GUILayout.TextArea(localizedString, GUILayout.Height(45));
 
     if (LocalizationEditorUtility.GetTranslation(localizedStringFile, localizationKey) != localizedString) {
       EditorGUILayout.BeginHorizontal();

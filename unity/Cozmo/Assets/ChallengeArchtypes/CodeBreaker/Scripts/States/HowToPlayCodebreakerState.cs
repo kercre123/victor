@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace CodeBreaker {
-  public class HowToPlayState : State {
+  public class HowToPlayCodebreakerState : State {
 
     private LightCube[] _TargetCubes;
 

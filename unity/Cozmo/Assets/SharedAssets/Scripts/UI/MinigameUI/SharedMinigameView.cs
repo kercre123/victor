@@ -45,6 +45,13 @@ namespace Cozmo {
       private HowToPlayButton _HowToPlayButtonPrefab;
       private HowToPlayButton _HowToPlayButtonInstance;
 
+
+
+      [SerializeField]
+      private DifficultySelectView _DifficultySelectViewPrefab;
+      private DifficultySelectView _DifficultySelectViewInstance;
+
+
       [SerializeField]
       private RectTransform _FullScreenSlideContainer;
 
@@ -342,6 +349,45 @@ namespace Cozmo {
         if (_HowToPlayButtonInstance != null) {
           _HowToPlayButtonInstance.CloseHowToPlayView();
         }
+      }
+
+      #endregion
+
+      #region Difficulty Select Widget
+
+      public void CreateDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
+
+        if (_DifficultySelectViewInstance != null) {
+          _DifficultySelectViewInstance.Initialize(options, highestDifficultyAvailable);
+          return;
+        }
+
+        GameObject newView = UIManager.CreateUIElement(_DifficultySelectViewPrefab, this.transform);
+
+        _DifficultySelectViewInstance = newView.GetComponent<DifficultySelectView>();
+
+        _DifficultySelectViewInstance.Initialize(options, highestDifficultyAvailable);
+
+        AddWidget(_DifficultySelectViewInstance);
+      }
+
+      public void OpenDifficultySelectView() {
+        if (_DifficultySelectViewInstance != null) {
+          _DifficultySelectViewInstance.gameObject.SetActive(true);
+        }
+      }
+
+      public void CloseDifficultySelectView() {
+        if (_DifficultySelectViewInstance != null) {
+          _DifficultySelectViewInstance.gameObject.SetActive(false);
+        }
+      }
+
+      public DifficultySelectOptionData GetSelectedDifficulty() {
+        if (_DifficultySelectViewInstance != null) {
+          return _DifficultySelectViewInstance.SelectedDifficulty;
+        }
+        return null;
       }
 
       #endregion

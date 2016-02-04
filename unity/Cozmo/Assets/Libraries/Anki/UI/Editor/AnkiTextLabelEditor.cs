@@ -42,36 +42,12 @@ namespace Anki.Editor.UI {
 
       _Localized = EditorGUILayout.Toggle("Localize", _Localized);
 
-      m_Text.stringValue = _LocalizedString;
       if (_Localized) {
-        int selectedFileIndex = EditorGUILayout.Popup("Localization File", 
-                                  Mathf.Max(0, 
-                                    System.Array.IndexOf(
-                                      LocalizationEditorUtility.LocalizationFiles, 
-                                      _LocalizedStringFile)), 
-                                  LocalizationEditorUtility.LocalizationFiles);
-        _LocalizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
-
-        _LocalizationKey = EditorGUILayout.TextField("Localization Key", _LocalizationKey);
-
-        if (LocalizationEditorUtility.GetTranslation(_LocalizedStringFile, _LocalizationKey) != _LocalizedString) {
-          EditorGUILayout.BeginHorizontal();
-          if (GUILayout.Button("Reset")) {
-            _LocalizedString = LocalizationEditorUtility.GetTranslation(_LocalizedStringFile, _LocalizationKey);
-            m_Text.stringValue = _LocalizedString;
-          }
-          if (GUILayout.Button("Save")) {
-            LocalizationEditorUtility.SetTranslation(_LocalizedStringFile, _LocalizationKey, _LocalizedString);
-          }
-          EditorGUILayout.EndHorizontal();
-        }
-
-        EditorGUILayout.PropertyField(m_Text);
-        _LocalizedString = m_Text.stringValue;
-
+        EditorDrawingUtility.DrawLocalizationString(ref _LocalizationKey, ref _LocalizedStringFile, ref _LocalizedString);
         m_Text.stringValue = "#" + _LocalizationKey;
       }
       else {        
+        m_Text.stringValue = _LocalizedString;
         EditorGUILayout.PropertyField(m_Text);
         _LocalizedString = m_Text.stringValue;
       }
