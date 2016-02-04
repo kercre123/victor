@@ -8,14 +8,14 @@ PROTO CozmoBot [
   field SFString name "Cozmo"
 
   # CVGA Crop:
-  field SFInt32  cameraWidth  400
-  field SFInt32  cameraHeight 296
-  field SFFloat  fieldOfView  1.21
+#  field SFInt32  cameraWidth  400
+#  field SFInt32  cameraHeight 296
+#  field SFFloat  fieldOfView  1.21
 
   # QVGA Crop:
-#  field SFInt32  cameraWidth  320
-#  field SFInt32  cameraHeight 240
-#  field SFFloat  fieldOfView  0.72
+  field SFInt32  cameraWidth  320
+  field SFInt32  cameraHeight 240
+  field SFFloat  fieldOfView  0.9
   
   # VGA Wide:
 #    field SFInt32  cameraWidth  640
