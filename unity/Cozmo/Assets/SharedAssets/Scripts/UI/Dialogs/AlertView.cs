@@ -27,6 +27,17 @@ namespace Cozmo {
       [SerializeField]
       private CanvasGroup _AlphaController;
 
+      [SerializeField]
+      private IconProxy _Icon;
+
+      public void SetIcon(Sprite icon) {
+        if (_Icon != null) {
+          _Icon.gameObject.SetActive(true);
+          _Icon.SetIcon(icon);
+        }
+      }
+
+
       private string _TitleKey;
       private string _DescriptionKey;
 
@@ -54,6 +65,10 @@ namespace Cozmo {
         if (_CloseButton != null) {
           _CloseButton.onClick.AddListener(CloseView);
           _CloseButton.gameObject.SetActive(false);
+        }
+
+        if (_Icon != null) {
+          _Icon.gameObject.SetActive(false);
         }
 
         // Hide all buttons
