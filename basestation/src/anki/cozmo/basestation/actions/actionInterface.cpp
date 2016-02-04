@@ -18,7 +18,6 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/animationKeyFrames.h"
 #include "util/helpers/templateHelpers.h"
 
 #define DEBUG_ANIM_TRACK_LOCKING 0
@@ -54,9 +53,15 @@ namespace Anki {
       
         if(!_suppressTrackLocking)
         {
-          // Force all tracks to unlock
-          _robot->GetMoveComponent().UnlockAnimTracks((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
-          _robot->GetMoveComponent().UnignoreTrackMovement((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+#         if DEBUG_ANIM_TRACK_LOCKING
+          PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                            _animTracks,
+                            AnimTrackFlagToString((AnimTrackFlag)_animTracks),
+                            _name.c_str(),
+                            _idTag);
+#         endif
+          _robot->GetMoveComponent().UnlockAnimTracks(_animTracks);
+          _robot->GetMoveComponent().UnignoreTrackMovement(_movementTracks);
         }
       }
     }
@@ -76,11 +81,19 @@ namespace Anki {
       if(_isInterrupted) {
         Reset();
         
-        if(!_suppressTrackLocking)
+        // Only need to unlock tracks if this is running because Init() locked tracks
+        if(!_suppressTrackLocking && _isRunning)
         {
-          // Force all tracks to unlock
-          _robot->GetMoveComponent().UnlockAnimTracks((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
-          _robot->GetMoveComponent().UnignoreTrackMovement((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+          uint8_t tracks = GetAnimTracksToDisable();
+#         if DEBUG_ANIM_TRACK_LOCKING
+          PRINT_NAMED_INFO("IActionRunner.Interrupt.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                           tracks,
+                           AnimTrackFlagToString((AnimTrackFlag)tracks),
+                           _name.c_str(),
+                           _idTag);
+#         endif
+          _robot->GetMoveComponent().UnlockAnimTracks(tracks);
+          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
         
         CancelAndDeleteSubActions();
@@ -100,7 +113,7 @@ namespace Anki {
 #       if DEBUG_ANIM_TRACK_LOCKING
         PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
                          disableTracks,
-                         AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
+                         AnimTrackFlagToString((AnimTrackFlag)disableTracks),
                          GetName().c_str(),
                          GetTag());
 
@@ -164,6 +177,9 @@ namespace Anki {
     {
       GetCompletionUnion(_completionUnion);
       _type = GetType();
+      _name = GetName();
+      _animTracks = GetAnimTracksToDisable();
+      _movementTracks = GetMovementTracksToIgnore();
     }
     
     bool IActionRunner::RetriesRemain()

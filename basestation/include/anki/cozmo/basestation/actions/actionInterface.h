@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 
 #include "clad/types/actionTypes.h"
+#include "clad/types/animationKeyFrames.h"
 
 #include "util/random/randomGenerator.h"
 
@@ -156,6 +157,9 @@ namespace Anki {
       ActionResult         _result;
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
+      std::string          _name;
+      uint8_t              _animTracks      = (uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS;
+      uint8_t              _movementTracks  = (uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS;
       
       bool          _suppressTrackLocking   = false;
       bool          _isRunning              = false;

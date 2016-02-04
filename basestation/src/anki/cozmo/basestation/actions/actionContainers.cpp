@@ -360,11 +360,10 @@ namespace Anki {
         // Nothing in the queue, so this is the same as QueueAtEnd
         result = QueueAtEnd(action, numRetries);
       } else {
-        // Try to interrupt whatever is running and put this new action in front of it
+        // Try to interrupt whatever is running
         if(_currentAction != nullptr && _currentAction->Interrupt()) {
-          // Current front action is interruptible. Add it to the list of interrupted
-          // actions to get updated once more on the next Update() call (when we'll
-          // have a robot reference), and put the new action in front of it in the queue.
+          // Current action is interruptable so push it back onto the queue and then
+          // push new action in front of it
           PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
                            "Interrupting %s to put %s in front of it.",
                            _currentAction->GetName().c_str(),

@@ -35,6 +35,8 @@ MovementComponent::MovementComponent(Robot& robot)
   {
     InitEventHandlers(*(_robot.GetExternalInterface()));
   }
+  _animTrackLockCount.fill(0);
+  _ignoreTrackMovementCount.fill(0);
 }
   
 void MovementComponent::InitEventHandlers(IExternalInterface& interface)
