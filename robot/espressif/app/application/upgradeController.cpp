@@ -146,7 +146,9 @@ LOCAL bool TaskEraseFlash(uint32 param)
   }
   else
   {
+#ifdef DEBUG_OTA
     os_printf("e");
+#endif
     return true;
   }
 }
