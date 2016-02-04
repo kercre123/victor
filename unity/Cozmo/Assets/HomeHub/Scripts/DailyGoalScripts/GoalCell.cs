@@ -61,6 +61,7 @@ namespace Cozmo {
         Progress = progress;
         if (progress >= 1.0f) {
           GoalLabelText = Localization.Get(LocalizationKeys.kDailyGoalComplete);
+          _GoalLabel.color = new Color(232.0f, 255.0f, 139.0f);
         }
       }
 
