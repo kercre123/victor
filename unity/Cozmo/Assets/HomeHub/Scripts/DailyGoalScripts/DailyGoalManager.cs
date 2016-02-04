@@ -58,7 +58,7 @@ public class DailyGoalManager : MonoBehaviour {
     return _RequestMinigameConfig;
   }
 
-  public ChallengeData GetMinigameToRequest() {
+  public ChallengeData PickMiniGameToRequest() {
     RequestGameConfig config = _RequestMinigameConfig.RequestList[UnityEngine.Random.Range(0, _RequestMinigameConfig.RequestList.Length)];
     for (int i = 0; i < _ChallengeList.ChallengeData.Length; i++) {
       if (_ChallengeList.ChallengeData[i].ChallengeID == config.ChallengeID) {

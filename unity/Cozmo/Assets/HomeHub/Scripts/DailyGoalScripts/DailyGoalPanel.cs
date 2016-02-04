@@ -51,7 +51,7 @@ public class DailyGoalPanel : MonoBehaviour {
 
     float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
     RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
-    DailyGoalManager.Instance.GetMinigameToRequest();
+    DailyGoalManager.Instance.PickMiniGameToRequest();
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager

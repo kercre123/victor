@@ -2,6 +2,7 @@
 using System.Collections;
 using AskCozmo;
 using System;
+using Anki.Cozmo;
 
 public class ChallengeData : ScriptableObject {
   // the mini game prefab to load for this challenge

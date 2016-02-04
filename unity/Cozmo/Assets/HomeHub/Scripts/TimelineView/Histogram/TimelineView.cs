@@ -176,7 +176,7 @@ namespace Cozmo.HomeHub {
         _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
         float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
         currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
-        DailyGoalManager.Instance.GetMinigameToRequest();
+        DailyGoalManager.Instance.PickMiniGameToRequest();
         return;
       }
 
