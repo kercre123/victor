@@ -120,9 +120,12 @@ public static class LocalizationEditorUtility {
   private static readonly Dictionary<string, LocalizationDictionary> _LocalizationDictionaries = new Dictionary<string, LocalizationDictionary>();
   private static string[] _LocalizationFiles = new string[0];
 
+  private static string[] _LocalizationKeys = new string[0];
+
   private const string kLocalizationFolder = "Assets/StreamingAssets/LocalizedStrings/en-US/";
 
   public static string[] LocalizationFiles { get { return _LocalizationFiles; } }
+  public static string[] LocalizationKeys { get { return _LocalizationKeys; } }
 
   public static LocalizationDictionary CreateLocalizationDictionary() {
     return new LocalizationDictionary() {
@@ -168,6 +171,10 @@ public static class LocalizationEditorUtility {
     }
 
     _LocalizationFiles = _LocalizationDictionaries.Keys.ToArray();
+
+    _LocalizationKeys = new[]{ string.Empty }.Concat(_LocalizationDictionaries.Values.SelectMany(x => x.Translations.Keys)).ToArray();
+    // sort them to make it easier to find
+    Array.Sort(_LocalizationKeys);
   }
 
   public static string GetTranslation(string fileName, string key) {

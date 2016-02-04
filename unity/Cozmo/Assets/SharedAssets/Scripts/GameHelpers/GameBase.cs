@@ -344,6 +344,19 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
+  #region Difficulty Select
+
+  public void OpenDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable, System.Action<DifficultySelectOptionData> onSelect) {
+    _SharedMinigameViewInstance.CreateDifficultySelectView(options, highestDifficultyAvailable, onSelect);
+    _SharedMinigameViewInstance.OpenDifficultySelectView();
+  }
+
+  public void CloseDifficultySelectView() {
+    _SharedMinigameViewInstance.CloseDifficultySelectView();
+  }
+
+  #endregion
+
   #region How To Play Slides
 
   public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {

@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 using Anki.Cozmo.Audio;
 using Cozmo.Util;
+using System.Collections.Generic;
 
 namespace SpeedTap {
 
@@ -32,8 +33,15 @@ namespace SpeedTap {
       }
     }
 
+    public List<DifficultySelectOptionData> DifficultyOptions {
+      get {
+        return _DifficultyOptions;
+      }
+    }
+
     public ISpeedTapRules Rules;
 
+    private int _CurrentDifficulty;
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
@@ -43,6 +51,8 @@ namespace SpeedTap {
     // how many rounds were close in score? used to calculate
     // excitement score rewards.
     private int _CloseRoundCount = 0;
+
+    private List<DifficultySelectOptionData> _DifficultyOptions;
 
     public event Action PlayerTappedBlockEvent;
 
@@ -82,6 +92,16 @@ namespace SpeedTap {
 
         if (_PlayerScore > _CozmoScore) {
           _PlayerRoundsWon++;
+
+          if (_CurrentDifficulty > DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
+            DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = _CurrentDifficulty;
+            DataPersistence.DataPersistenceManager.Instance.Save();
+          }          
+
+          if (_DifficultyOptions.LastOrDefault().DifficultyId > _CurrentDifficulty) {
+            SetDifficulty(_CurrentDifficulty + 1);
+          }
+            
           _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorFail, HandleRoundAnimationDone)));
         }
         else {
@@ -112,14 +132,13 @@ namespace SpeedTap {
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
-      Rules = GetRules(speedTapConfig.RuleSet);
+      _DifficultyOptions = speedTapConfig.DifficultyOptions;
       InitializeMinigameObjects(speedTapConfig.NumCubesRequired());
     }
 
     // Use this for initialization
     protected void InitializeMinigameObjects(int cubesRequired) { 
-      InitialCubesState initCubeState = new InitialCubesState(new SpeedTapWaitForCubePlace(), cubesRequired, InitialCubesDone);
-      _StateMachine.SetNextState(initCubeState);
+      _StateMachine.SetNextState(new SpeedTapSelectDifficulty(cubesRequired));
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
@@ -132,6 +151,11 @@ namespace SpeedTap {
       CurrentRobot.SetHeadAngle(-1.0f);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.SILENCE);
+    }
+
+    public void SetDifficulty(int difficulty) {
+      _CurrentDifficulty = difficulty;
+      Rules = GetRules((SpeedTapRuleSet)difficulty);
     }
 
     public void OpenGamePanel() {
@@ -151,7 +175,7 @@ namespace SpeedTap {
       GameAudioClient.SetMusicState(MUSIC.SILENCE);
     }
 
-    void InitialCubesDone() {
+    public void InitialCubesDone() {
       CozmoBlock = GetClosestAvailableBlock();
       PlayerBlock = GetFarthestAvailableBlock();
     }
@@ -214,10 +238,14 @@ namespace SpeedTap {
       switch (ruleSet) {
       case SpeedTapRuleSet.NoRed:
         return new NoRedSpeedTapRules();
-      case SpeedTapRuleSet.LightCountSameColorNoTap:
-        return new LightCountSameColorNoTap();
+      case SpeedTapRuleSet.TwoColor:
+        return new TwoColorSpeedTapRules();
       case SpeedTapRuleSet.LightCountNoColor:
         return new LightCountNoColorSpeedTapRules();
+      case SpeedTapRuleSet.LightCountAnyColor:
+        return new LightCountAnyColorSpeedTapRules();
+      case SpeedTapRuleSet.LightCountSameColorNoTap:
+        return new LightCountSameColorNoTap();
       case SpeedTapRuleSet.LightCountSameColorNoRed:
         return new LightCountSameColorNoRed();
       default:

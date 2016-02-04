@@ -145,6 +145,8 @@ MonoBehaviour:
     type: 2}
   _HowToPlayButtonPrefab: {fileID: 11438504, guid: 7ae16cb335cec4733bcb35a2776c79ca,
     type: 2}
+  _DifficultySelectViewPrefab: {fileID: 11473774, guid: 8468318169eb444e19bb73e530a79d21,
+    type: 2}
   _HowToSlideContainer: {fileID: 22405404}
   _OpenAnimationStarted: 0
 --- !u!222 &22241334
