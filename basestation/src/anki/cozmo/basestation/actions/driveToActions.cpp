@@ -398,14 +398,6 @@ namespace Anki {
       return result;
     }
     
-    void DriveToObjectAction::Cleanup()
-    {
-      if(nullptr != _compoundAction)
-      {
-        _compoundAction->Cleanup();
-      }
-    }
-    
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot,
@@ -541,6 +533,16 @@ namespace Anki {
       _maxReplanPlanningTime = maxReplanPlanningTime;
       
       SetGoals(poses, distThreshold, angleThreshold);
+    }
+    
+    DriveToPoseAction::~DriveToPoseAction()
+    {
+      // If we are not running anymore, for any reason, clear the path and its
+      // visualization
+      _robot->AbortDrivingToPose();
+      _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
+      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
+      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
     }
     
     Result DriveToPoseAction::SetGoal(const Pose3d& pose,
@@ -807,16 +809,6 @@ namespace Anki {
       
       return result;
     } // CheckIfDone()
-    
-    void DriveToPoseAction::Cleanup()
-    {
-      // If we are not running anymore, for any reason, clear the path and its
-      // visualization
-      _robot->AbortDrivingToPose();
-      _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
-      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
-      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
-    }
     
 #pragma mark ---- IDriveToInteractWithObjectAction ----
     
