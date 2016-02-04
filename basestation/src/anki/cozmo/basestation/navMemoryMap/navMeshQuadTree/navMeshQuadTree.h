@@ -31,7 +31,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  NavMeshQuadTree();
+  NavMeshQuadTree(VizManager* vizManager);
   ~NavMeshQuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,6 +73,8 @@ private:
 
   // current root of the tree. It expands as needed
   NavMeshQuadTreeNode _root;
+  
+  VizManager* _vizManager;
   
 }; // class
   

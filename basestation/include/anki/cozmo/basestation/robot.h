@@ -680,6 +680,7 @@ public:
     bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
   
     Util::Data::DataPlatform* GetDataPlatform() { return _context->GetDataPlatform(); }
+    const CozmoContext* GetContext() const { return _context; }
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   

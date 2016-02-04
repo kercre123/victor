@@ -175,7 +175,7 @@ namespace Anki {
     {
 #if SAFE_ZONE_VIZ
       Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
-      VizManager::getInstance()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
+      robot.GetContext()->GetVizManager()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
 #endif
       switch (_currentState)
       {
@@ -266,7 +266,7 @@ namespace Anki {
       }
       
 #if SAFE_ZONE_VIZ
-      VizManager::getInstance()->EraseCircle(robot.GetID());
+      robot.GetContext()->GetVizManager()->EraseCircle(robot.GetID());
 #endif
       
       return Status::Complete;

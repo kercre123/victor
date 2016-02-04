@@ -579,6 +579,11 @@ namespace Anki {
         HAL::FlashBlockIDs();
       }
 
+      void Process_assignCubeSlots(const CubeSlots& msg)
+      {
+        HAL::AssignCubeSlots(msg.factory_id_length, msg.factory_id);
+      }
+      
       void Process_setCubeLights(const CubeLights& msg)
       {
         BlockLightController::SetLights(msg.objectID, msg.lights);

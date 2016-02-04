@@ -30,13 +30,13 @@ using namespace ExternalInterface;
 
 MovementComponent::MovementComponent(Robot& robot)
   : _robot(robot)
-  , _animTrackLockCount((int)AnimConstants::NUM_TRACKS)
-  , _ignoreTrackMovementCount((int)AnimConstants::NUM_TRACKS)
 {
   if (_robot.HasExternalInterface())
   {
     InitEventHandlers(*(_robot.GetExternalInterface()));
   }
+  _animTrackLockCount.fill(0);
+  _ignoreTrackMovementCount.fill(0);
 }
   
 void MovementComponent::InitEventHandlers(IExternalInterface& interface)
@@ -225,13 +225,21 @@ void MovementComponent::UnlockAnimTracks(uint8_t tracks)
     if ((tracks & curTrack) == curTrack)
     {
       --_animTrackLockCount[i];
-      
+
       // If we just went from locked to not locked, inform the robot
       if (_animTrackLockCount[i] == 0)
       {
         _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
       }
-      ASSERT_NAMED(_animTrackLockCount[i] >= 0, "Should have a matching number of anim track lock and unlocks!");
+
+      // It doesn't matter if there are more unlocks than locks
+      if(_animTrackLockCount[i] < 0)
+      {
+#       if DEBUG_ANIMATION_LOCKING
+        PRINT_NAMED_WARNING("MovementComponent.UnlockAnimTracks", "Anim track locks and unlocks do not match");
+#       endif
+        _animTrackLockCount[i] = 0;
+      }
     }
   }
 #if DEBUG_ANIMATION_LOCKING
@@ -276,7 +284,15 @@ void MovementComponent::UnignoreTrackMovement(uint8_t tracks)
     if ((tracks & curTrack) == curTrack)
     {
       --_ignoreTrackMovementCount[i];
-      ASSERT_NAMED(_ignoreTrackMovementCount[i] >= 0, "Should have a matching number of ignore/unignore track movement!");
+
+      // It doesn't matter if there are more unlocks than locks
+      if(_ignoreTrackMovementCount[i] < 0)
+      {
+#       if DEBUG_ANIMATION_LOCKING
+        PRINT_NAMED_WARNING("MovementComponent.UnignoreTrackMovement", "Track movement locks and unlocks do not match");
+#       endif
+        _ignoreTrackMovementCount[i] = 0;
+      }
     }
   }
 }

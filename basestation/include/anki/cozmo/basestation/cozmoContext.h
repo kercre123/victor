@@ -42,6 +42,7 @@ namespace Cozmo {
 class IExternalInterface;
 class RobotManager;
 class CozmoEngine;
+class VizManager;
   
 namespace RobotInterface {
   class MessageHandler;
@@ -76,6 +77,7 @@ public:
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
   RobotInterface::MessageHandler*       GetRobotMsgHandler() const { return _robotMsgHandler.get(); }
   Audio::AudioServer*                   GetAudioServer() const { return _audioServer.get(); }
+  VizManager*                           GetVizManager() const { return _vizManager.get(); }
   
 private:
   // This is passed in and held onto, but not owned by the context (yet.
@@ -89,6 +91,7 @@ private:
   std::shared_ptr<Comms::AdvertisementService>            _robotAdvertisementService;
   std::shared_ptr<RobotManager>                           _robotMgr;
   std::shared_ptr<RobotInterface::MessageHandler>         _robotMsgHandler;
+  std::shared_ptr<VizManager>                             _vizManager;
 };
   
 

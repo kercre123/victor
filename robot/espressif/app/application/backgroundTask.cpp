@@ -13,7 +13,9 @@ extern "C" {
 #include "driver/i2spi.h"
 #include "driver/crash.h"
 }
+#include "rtip.h"
 #include "anki/cozmo/robot/esp.h"
+#include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "anki/cozmo/robot/logging.h"
 #include "face.h"
@@ -144,13 +146,27 @@ void Exec(os_event_t *event)
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
 }
 
+bool readPairedObjectsAndSend(uint32_t tag)
+{
+  NVStorage::NVStorageBlob entry;
+  entry.tag = tag;
+  const NVStorage::NVResult result = NVStorage::Read(entry);
+  AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 48, "ReadAndSendPairedObjects", 272, "Failed to paired objects: %d", 1, result);
+  const CubeSlots* const slots = (CubeSlots*)entry.blob;
+  RobotInterface::EngineToRobot m;
+  m.tag = RobotInterface::EngineToRobot::Tag_assignCubeSlots;
+  memcpy(&m.assignCubeSlots, slots->GetBuffer(), slots->Size());
+  
+  RTIP::SendMessage(m);
+  return false;
+}
 
 bool readCameraCalAndSend(uint32_t tag)
 {
   NVStorage::NVStorageBlob entry;
   entry.tag = tag;
   const NVStorage::NVResult result = NVStorage::Read(entry);
-  AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 48, "ReadAndSendCameraCal", 272, "Failed to read camera calibration: %d", 1, result);
+  AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 96, "ReadAndSendCameraCal", 350, "Failed to read camera calibration: %d", 1, result);
   const RobotInterface::CameraCalibration* const calib = (RobotInterface::CameraCalibration*)entry.blob;
   RobotInterface::SendMessage(*calib);
   return false;
@@ -213,6 +229,7 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
+  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)

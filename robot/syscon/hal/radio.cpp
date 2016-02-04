@@ -67,6 +67,7 @@ static void EnterState(RadioState state);
 
 static const int TOTAL_PERIOD = CYCLES_MS(35.0f);
 static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
+static const int CAPTURE_OFFSET = CYCLES_MS(0.5f);
 
 static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
 
@@ -95,8 +96,7 @@ static const int ADV_CHANNEL = 81;
 static const int MAX_TX_CHANNEL = 80;
 
 static const int RADIO_INTERVAL_DELAY = 0xB6;
-//static const int RADIO_TIMEOUT_MSB = 15;
-static const int RADIO_TIMEOUT_MSB = 35;
+static const int RADIO_TIMEOUT_MSB = 20;
 static const int RADIO_WAKEUP_OFFSET = 18;
 
 static const int MAX_ADDRESS_BIT_RUN = 3;
@@ -331,7 +331,7 @@ extern "C" void uesb_event_handler(void)
       accessories[slot].last_received = 0;
 
       // Schedule a one time capture for this slot
-      RTOS::schedule(send_capture_packet, CYCLES_MS(0.5f), (void*) slot, false);
+      RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
       break ;
       
     case RADIO_TALKING:
