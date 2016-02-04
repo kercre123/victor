@@ -606,7 +606,7 @@ namespace Anki
 
         // Check for valid fractions
         if (acc_start_frac < 0 || acc_end_frac < 0) {
-          AnkiWarn( 96, "PathFollower.DriveArc.NegativeFraction", 349, "start: %f, end: %f", 2, acc_start_frac, acc_end_frac);
+          AnkiWarn( 99, "PathFollower.DriveArc.NegativeFraction", 349, "start: %f, end: %f", 2, acc_start_frac, acc_end_frac);
           return false;
         }
         
