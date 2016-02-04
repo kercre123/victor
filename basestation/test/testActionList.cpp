@@ -769,6 +769,7 @@ TEST(QueueAction, QueueNowAndClearRemaining)
 // Tests queueing actions at the IN_PARALLEL position
 TEST(QueueAction, QueueInParallel)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -809,6 +810,17 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
+  
+  testAction3->_complete = true;
+  
+  r.GetActionList().Update();
+  
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 0);
+  
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing an action that has sub-actions (ie. action within an action)
