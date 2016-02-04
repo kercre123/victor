@@ -128,6 +128,9 @@ public class DailyGoalManager : MonoBehaviour {
     // Calculate how far you are from 50% complete
     // range from 0 -> 1.0
     prog = (Mathf.Abs(prog) * 2.0f) - 1;
+    if (prog > 1.0f) {
+      return 0.0f;
+    }
     return prog;
   }
 
@@ -138,6 +141,9 @@ public class DailyGoalManager : MonoBehaviour {
   public float GetMinigameNeed_Close() {
     float prog = GetDailyProgress();
     prog = (prog - 0.5f) * 2.0f;
+    if (prog > 1.0f) {
+      return 0.0f;
+    }
     return prog;
   }
 
