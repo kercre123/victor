@@ -24,11 +24,14 @@
 
 using namespace Anki::Cozmo;
 
+int numActionsDestroyed = 0;
+
 // Simple action that can be set to complete
 class TestAction : public IAction
 {
   public:
     TestAction(std::string name, RobotActionType type);
+    virtual ~TestAction() { numActionsDestroyed++; }
     virtual const std::string& GetName() const override { return _name; }
     virtual RobotActionType GetType() const override { return _type; }
     Robot* GetRobot() { return _robot; }
@@ -64,6 +67,7 @@ class TestInterruptAction : public IAction
 {
 public:
   TestInterruptAction(std::string name, RobotActionType type);
+  virtual ~TestInterruptAction() { numActionsDestroyed++; }
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
   Robot* GetRobot() { return _robot; }
@@ -95,6 +99,7 @@ class TestCompoundActionSequential : public CompoundActionSequential
 {
 public:
   TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions);
+  virtual ~TestCompoundActionSequential() { numActionsDestroyed++; }
   virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
 };
 
@@ -104,11 +109,13 @@ TestCompoundActionSequential::TestCompoundActionSequential(std::initializer_list
   
 }
 
+
 // Simple parallel action with a function to expose its internal list of actions
 class TestCompoundActionParallel : public CompoundActionParallel
 {
 public:
   TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions);
+  virtual ~TestCompoundActionParallel() { numActionsDestroyed++; }
   virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
 };
 
@@ -123,6 +130,7 @@ class TestActionWithinAction : public IAction
 {
 public:
   TestActionWithinAction(std::string name, RobotActionType type);
+  virtual ~TestActionWithinAction() { numActionsDestroyed++; }
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
   Robot* GetRobot() { return _robot; }
@@ -173,6 +181,7 @@ extern Anki::Cozmo::CozmoContext* cozmoContext;
 // Tests queueing a single and letting it complete normally
 TEST(QueueAction, SingleActionFinishes)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction = new TestAction("Test", RobotActionType::WAIT);
   testAction->_complete = true;
@@ -189,33 +198,36 @@ TEST(QueueAction, SingleActionFinishes)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 1);
 }
 
-// BROKEN because cancelling doesn't work properly
 // Tets queueing a single action and cancelling it works
-//TEST(QueueAction, SingleActionCancel)
-//{
-//  Robot r(0, cozmoContext);
-//  TestAction* testAction = new TestAction("Test", RobotActionType::WAIT);
-//  testAction->_complete = true;
-//  
-//  EXPECT_NE(testAction->GetRobot(), &r);
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction);
-//  
-//  EXPECT_EQ(testAction->GetRobot(), &r);
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-//  
-//  r.GetActionList().Cancel(0, RobotActionType::WAIT);
-//  
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-//  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
-//}
+TEST(QueueAction, SingleActionCancel)
+{
+  numActionsDestroyed = 0;
+  Robot r(0, cozmoContext);
+  TestAction* testAction = new TestAction("Test", RobotActionType::WAIT);
+  testAction->_complete = true;
+  
+  EXPECT_NE(testAction->GetRobot(), &r);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction);
+  
+  EXPECT_EQ(testAction->GetRobot(), &r);
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().Cancel(0, RobotActionType::WAIT);
+  
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
+  EXPECT_EQ(numActionsDestroyed, 1);
+}
 
 // Tests queueing three actions and letting them complete normally
 TEST(QueueAction, ThreeActionsFinish)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   testAction1->_complete = true;
@@ -252,77 +264,79 @@ TEST(QueueAction, ThreeActionsFinish)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
-// BROKEN because cancelling
 // Tests queueing three actions, cancelling the second and letting the rest complete normally
-//TEST(QueueAction, ThreeActionsCancelSecond)
-//{
-//  Robot r(0, cozmoContext);
-//  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
-//  testAction1->_complete = true;
-//  TestAction* testAction2 = new TestAction("Test2", RobotActionType::TURN_IN_PLACE);
-//  TestAction* testAction3 = new TestAction("Test3", RobotActionType::TRACK_OBJECT);
-//  
-//  EXPECT_NE(testAction1->GetRobot(), &r);
-//  EXPECT_NE(testAction2->GetRobot(), &r);
-//  EXPECT_NE(testAction3->GetRobot(), &r);
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
-//  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
-//  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
-//  
-//  r.GetActionList().Cancel(0, RobotActionType::TURN_IN_PLACE);
-//  
-//  EXPECT_EQ(testAction1->GetRobot(), &r);
-//  EXPECT_EQ(testAction2->GetRobot(), &r);
-//  EXPECT_EQ(testAction3->GetRobot(), &r);
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-//  
-//  r.GetActionList().Update();
-//  
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-//  
-//  testAction3->_complete = true;
-//  r.GetActionList().Update();
-//  
-//  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-//}
-
-// BROKEN because cancelling
-// Tests queueing three actions and cancelling all of them
-//TEST(QueueAction, ThreeActionsCancelAll)
-//{
-//  Robot r(0, cozmoContext);
-//  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
-//  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
-//  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
-//  
-//  EXPECT_NE(testAction1->GetRobot(), &r);
-//  EXPECT_NE(testAction2->GetRobot(), &r);
-//  EXPECT_NE(testAction3->GetRobot(), &r);
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
-//  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
-//  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
-//  r.GetActionList().Cancel(0, RobotActionType::WAIT);
-//  
-//  EXPECT_EQ(testAction1->GetRobot(), &r);
-//  EXPECT_EQ(testAction2->GetRobot(), &r);
-//  EXPECT_EQ(testAction3->GetRobot(), &r);
-//  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
-//  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
-//  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-//}
-
-// Tests queueing two actions where the first one in interruptable so queueing the second action
-// interrupts the first. The second action completes and the interrupted action resumes and completes.
-TEST(QueueAction, InterruptAction)
+TEST(QueueAction, ThreeActionsCancelSecond)
 {
+  numActionsDestroyed = 0;
+  Robot r(0, cozmoContext);
+  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
+  testAction1->_complete = true;
+  TestAction* testAction2 = new TestAction("Test2", RobotActionType::TURN_IN_PLACE);
+  TestAction* testAction3 = new TestAction("Test3", RobotActionType::TRACK_OBJECT);
+  
+  EXPECT_NE(testAction1->GetRobot(), &r);
+  EXPECT_NE(testAction2->GetRobot(), &r);
+  EXPECT_NE(testAction3->GetRobot(), &r);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
+  
+  r.GetActionList().Cancel(0, RobotActionType::TURN_IN_PLACE);
+  
+  EXPECT_EQ(testAction1->GetRobot(), &r);
+  EXPECT_EQ(testAction3->GetRobot(), &r);
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  testAction3->_complete = true;
+  r.GetActionList().Update();
+  
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
+}
+
+// Tests queueing three actions and cancelling all of them
+TEST(QueueAction, ThreeActionsCancelAll)
+{
+  numActionsDestroyed = 0;
+  Robot r(0, cozmoContext);
+  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
+  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
+  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
+  
+  EXPECT_NE(testAction1->GetRobot(), &r);
+  EXPECT_NE(testAction2->GetRobot(), &r);
+  EXPECT_NE(testAction3->GetRobot(), &r);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
+  r.GetActionList().Cancel(0, RobotActionType::WAIT);
+  
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
+}
+
+
+// Tests queueing two actions where the first one, which hasn't started running, is interruptable so
+// queueing the second action interrupts the first. The second action completes and the interrupted
+// action resumes and completes.
+TEST(QueueAction, InterruptActionNotRunning)
+{
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction = new TestAction("Test1", RobotActionType::WAIT);
   TestInterruptAction* testInterruptAction = new TestInterruptAction("Test2", RobotActionType::TURN_IN_PLACE);
@@ -335,7 +349,6 @@ TEST(QueueAction, InterruptAction)
   
   EXPECT_EQ(testAction->GetRobot(), &r);
   EXPECT_EQ(testInterruptAction->GetRobot(), &r);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   
   // Interrupt test2 for test1 which is now current
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
@@ -354,18 +367,66 @@ TEST(QueueAction, InterruptAction)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 2);
+}
+
+// Tests queueing two actions where the first one ,which has started running, is interruptable so queueing
+// the second action interrupts it. The second action completes and the interrupted action
+// resumes and completes.
+TEST(QueueAction, InterruptActionRunning)
+{
+  numActionsDestroyed = 0;
+  Robot r(0, cozmoContext);
+  TestAction* testAction = new TestAction("Test1", RobotActionType::WAIT);
+  TestInterruptAction* testInterruptAction = new TestInterruptAction("Test2", RobotActionType::TURN_IN_PLACE);
+  
+  EXPECT_NE(testAction->GetRobot(), &r);
+  EXPECT_NE(testInterruptAction->GetRobot(), &r);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testInterruptAction);
+  
+  EXPECT_EQ(testInterruptAction->GetRobot(), &r);
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  // Move it out of queue to currentAction
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::NOW_AND_RESUME, testAction);
+  
+  EXPECT_EQ(testAction->GetRobot(), &r);
+  EXPECT_EQ(testInterruptAction->GetRobot(), &r);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  
+  testInterruptAction->_complete = true;
+  testAction->_complete = true;
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().Update();
+  
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 2);
 }
 
 // Tests queueing a sequential compound action made of two actions and both actions complete at the same time
 TEST(QueueAction, CompoundActionSequentialSingle)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
-  r.SetLiftAngle(0);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
   testAction2->_complete = true;
-  CompoundActionSequential* compoundAction = new CompoundActionSequential({testAction1, testAction2});
+  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({testAction1, testAction2});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -380,16 +441,18 @@ TEST(QueueAction, CompoundActionSequentialSingle)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing a sequential compound action made of two actions and they complete at different times
 TEST(QueueAction, CompoundActionMultipleUpdates)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
-  CompoundActionSequential* compoundAction = new CompoundActionSequential({testAction1, testAction2});
+  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({testAction1, testAction2});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -410,17 +473,19 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing a sequential compound action that initially has two actions and a third action is added to
 // the compound action after an update
 TEST(QueueAction, CompoundActionAddAfterQueued)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
-  CompoundActionSequential* compoundAction = new CompoundActionSequential({testAction1, testAction2});
+  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({testAction1, testAction2});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -440,8 +505,7 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   r.GetActionList().Update();
   
   EXPECT_EQ(testAction1->GetRobot(), &r);
-  // Not set yet since it hasn't been the current action during the UpdateInternal() of compoundAction
-  EXPECT_NE(testAction2->GetRobot(), &r);
+  EXPECT_EQ(testAction2->GetRobot(), &r);
   EXPECT_EQ(testAction3->GetRobot(), &r); // Has been set since it was added using AddAction()
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
@@ -459,16 +523,18 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 4);
 }
 
 // Tests queueing an empty sequential compound action and adding three additional actions to it at various times
 TEST(QueueAction, CompoundActionAddAfterQueued2)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
-  CompoundActionSequential* compoundAction = new CompoundActionSequential({});
+  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential({});
   
   EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_NE(testAction2->GetRobot(), &r);
@@ -493,11 +559,21 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
   EXPECT_EQ(testAction2->GetRobot(), &r);
   EXPECT_EQ(testAction3->GetRobot(), &r);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
+  
+  testAction1->_complete = true;
+  testAction2->_complete = true;
+  testAction3->_complete = true;
+  
+  r.GetActionList().Update();
+  r.GetActionList().Update();
+  
+  EXPECT_EQ(numActionsDestroyed, 4);
 }
 
 // Tests queueing a parallel compound action with two actions that complete immediately
 TEST(QueueAction, ParallelActionImmediateComplete)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -517,11 +593,13 @@ TEST(QueueAction, ParallelActionImmediateComplete)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
 // Tests queueing a parallel compound action with two actions where one completes before the other
 TEST(QueueAction, ParallelActionOneCompleteBefore)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -547,38 +625,39 @@ TEST(QueueAction, ParallelActionOneCompleteBefore)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }
 
-// Currently broken because cancelling doesn't remove the action from the queue
 // Tests queueing actions at the NOW position
-//TEST(QueueAction, QueueNow)
-//{
-//  Robot r(0, cozmoContext);
-//  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
-//  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
-//  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction1);
-//  
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction2);
-//  
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction3);
-//  
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-//  
-//  r.GetActionList().Print();
-//}
+TEST(QueueAction, QueueNow)
+{
+  numActionsDestroyed = 0;
+  Robot r(0, cozmoContext);
+  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
+  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
+  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction1);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction2);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction3);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
+  EXPECT_EQ(numActionsDestroyed, 0);
+}
 
 // Tests queueing actions at the NEXT position
 TEST(QueueAction, QueueNext)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -612,11 +691,13 @@ TEST(QueueAction, QueueNext)
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(numActionsDestroyed, 2);
 }
 
 // Tests queueing actions at the AT_END position
 TEST(QueueAction, QueueAtEnd)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -650,42 +731,45 @@ TEST(QueueAction, QueueAtEnd)
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(numActionsDestroyed, 2);
 }
 
-// BROKEN because cancelling
 //Tests queueing actions at the NOW_AND_CLEAR_REMAINING position
-//TEST(QueueAction, QueueNowAndClearRemaining)
-//{
-//  Robot r(0, cozmoContext);
-//  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
-//  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
-//  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
-//  testAction3->_complete = true;
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
-//  
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
-//  
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-//  
-//  r.GetActionList().QueueAction(0, QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction3);
-//  
-//  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-//  
-//  r.GetActionList().Update();
-//  
-//  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-//  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-//}
+TEST(QueueAction, QueueNowAndClearRemaining)
+{
+  numActionsDestroyed = 0;
+  Robot r(0, cozmoContext);
+  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
+  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
+  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
+  testAction3->_complete = true;
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  
+  r.GetActionList().QueueAction(0, QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction3);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  r.GetActionList().Update();
+  
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
+}
 
 // Tests queueing an action that has sub-actions (ie. action within an action)
 TEST(QueueAction, QueueActionWithinAction)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestActionWithinAction* testActionWithinAction = new TestActionWithinAction("TestActionWithinAction", RobotActionType::UNKNOWN);
   
@@ -710,10 +794,12 @@ TEST(QueueAction, QueueActionWithinAction)
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("TestActionWithinAction"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 4); //TestActionWithinAction has a compound action with 2 actions for a total of 4 actions
 }
 
 TEST(QueueAction, ActionFailureRetry)
 {
+  numActionsDestroyed = 0;
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
@@ -749,4 +835,5 @@ TEST(QueueAction, ActionFailureRetry)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(numActionsDestroyed, 3);
 }

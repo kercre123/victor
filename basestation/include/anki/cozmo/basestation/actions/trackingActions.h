@@ -83,8 +83,7 @@ public:
 protected:
 
   ITrackAction();
-  
-  virtual void Cleanup() override;
+  virtual ~ITrackAction();
   
   // Note that derived classes should override InitInternal, which is called by Init
   virtual ActionResult Init() override final;
@@ -137,6 +136,7 @@ class TrackObjectAction : public ITrackAction
 {
 public:
   TrackObjectAction(const ObjectID& objectID, bool trackByType = true);
+  virtual ~TrackObjectAction();
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_OBJECT; }
@@ -144,7 +144,6 @@ public:
 protected:
   
   virtual ActionResult InitInternal() override;
-  virtual void Cleanup() override;
   
   // Required by ITrackAction:
   virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
@@ -167,6 +166,7 @@ public:
   using FaceID = Vision::TrackedFace::ID_t;
   
   TrackFaceAction(FaceID faceID);
+  virtual ~TrackFaceAction();
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_FACE; }
@@ -176,7 +176,6 @@ public:
 protected:
   
   virtual ActionResult InitInternal() override;
-  virtual void Cleanup() override;
   
   // Required by ITrackAction:
   virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;

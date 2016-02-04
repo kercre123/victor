@@ -32,6 +32,7 @@ namespace Anki {
     {
     public:
       TurnInPlaceAction(const Radians& angle, const bool isAbsolute);
+      virtual ~TurnInPlaceAction();
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
@@ -52,7 +53,6 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      virtual void Cleanup() override;
       
     private:
       
@@ -181,6 +181,7 @@ namespace Anki {
     public:
       MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance = HEAD_ANGLE_TOL,
                             const Radians& variability = 0);
+      virtual ~MoveHeadToAngleAction();
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
@@ -203,7 +204,6 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      virtual void Cleanup() override;
       
     private:
       

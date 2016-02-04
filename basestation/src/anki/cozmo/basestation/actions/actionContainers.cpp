@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 
 #include "util/logging/logging.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -245,10 +246,12 @@ namespace Anki {
     
     void ActionQueue::Clear()
     {
+      DeleteCurrentAction();
+      
       while(!_queue.empty()) {
         IActionRunner* action = _queue.front();
         CORETECH_ASSERT(action != nullptr);
-        delete action;
+        Util::SafeDelete(action);
         _queue.pop_front();
       }
     }
@@ -256,13 +259,26 @@ namespace Anki {
     bool ActionQueue::Cancel(RobotActionType withType)
     {
       bool found = false;
-      for(auto action : _queue)
+      
+      if(_currentAction != nullptr)
       {
-        CORETECH_ASSERT(action != nullptr);
-        
-        if(withType == RobotActionType::UNKNOWN || action->GetType() == withType) {
-          action->Cancel();
+        if(withType == RobotActionType::UNKNOWN || _currentAction->GetType() == withType)
+        {
+          DeleteCurrentAction();
           found = true;
+        }
+      }
+      
+      for(auto iter = _queue.begin(); iter != _queue.end();)
+      {
+        CORETECH_ASSERT(*iter != nullptr);
+        
+        if(withType == RobotActionType::UNKNOWN || (*iter)->GetType() == withType) {
+          Util::SafeDelete(*iter);
+          iter = _queue.erase(iter);
+          found = true;
+        } else {
+          ++iter;
         }
       }
       return found;
@@ -271,16 +287,31 @@ namespace Anki {
     bool ActionQueue::Cancel(u32 idTag)
     {
       bool found = false;
-      for(auto action : _queue)
+      
+      if(_currentAction != nullptr)
       {
-        if(action->GetTag() == idTag) {
+        if(_currentAction->GetTag() == idTag)
+        {
+          DeleteCurrentAction();
+          found = true;
+        }
+      }
+      
+      for(auto iter = _queue.begin(); iter != _queue.end();)
+      {
+        CORETECH_ASSERT(*iter != nullptr);
+        
+        if((*iter)->GetTag() == idTag) {
           if(found == true) {
             PRINT_NAMED_WARNING("ActionQueue.Cancel.DuplicateIdTags",
                                 "Multiple actions with tag=%d found in queue.\n",
                                 idTag);
           }
-          action->Cancel();
+          Util::SafeDelete(*iter);
+          iter = _queue.erase(iter);
           found = true;
+        } else {
+          ++iter;
         }
       }
       
@@ -295,21 +326,23 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      if(_queue.empty()) {
-        
-        // Nothing in the queue, so this is the same as QueueAtEnd
+      const IActionRunner* currentAction = GetCurrentAction();
+      DeleteCurrentAction();
+      
+      if(IsEmpty()) {
         return QueueAtEnd(action, numRetries);
-        
       } else {
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
         PRINT_NAMED_DEBUG("ActionQueue.QueueNow.CancelingPrevious", "Canceling %s [%d] in favor of action %s [%d]",
-                          _queue.front()->GetName().c_str(),
-                          _queue.front()->GetTag(),
+                          currentAction->GetName().c_str(),
+                          currentAction->GetTag(),
                           action->GetName().c_str(),
                           action->GetTag());
-        _queue.front()->Cancel();
-        return QueueNext(action, numRetries);
+
+        action->SetNumRetries(numRetries);
+        _queue.push_front(action);
+        return RESULT_OK;
       }
     }
     
@@ -323,29 +356,33 @@ namespace Anki {
       
       Result result = RESULT_OK;
       
-      if(_queue.empty()) {
+      if(IsEmpty()) {
         // Nothing in the queue, so this is the same as QueueAtEnd
         result = QueueAtEnd(action, numRetries);
       } else {
-        // Try to interrupt whatever is running and put this new action in front of it
-        if(_queue.front()->Interrupt()) {
-          // Current front action is interruptible. Add it to the list of interrupted
-          // actions to get updated once more on the next Update() call (when we'll
-          // have a robot reference), and put the new action in front of it in the queue.
+        // Try to interrupt whatever is running
+        if(_currentAction != nullptr && _currentAction->Interrupt()) {
+          // Current action is interruptable so push it back onto the queue and then
+          // push new action in front of it
           PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
                            "Interrupting %s to put %s in front of it.",
-                           _queue.front()->GetName().c_str(),
+                           _currentAction->GetName().c_str(),
                            action->GetName().c_str());
-          _interruptedActions.push_back(_queue.front());
           action->SetNumRetries(numRetries);
+          _queue.push_front(_currentAction);
           _queue.push_front(action);
+          // Set currentAction to null to force running of next action in queue
+          _currentAction = nullptr;
         } else {
           // Current front action is not interruptible, so just use QueueNow and
           // cancel it
-          PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
-                           "Could not interrupt %s. Will cancel and queue %s now.",
-                           _queue.front()->GetName().c_str(),
-                           action->GetName().c_str());
+          if(_currentAction != nullptr)
+          {
+            PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
+                             "Could not interrupt %s. Will cancel and queue %s now.",
+                             _currentAction->GetName().c_str(),
+                             action->GetName().c_str());
+          }
           result = QueueNow(action, numRetries);
         }
       }
@@ -391,30 +428,22 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      // Update any interrupted actions (but leave them in the queue)
-      for(auto interruptedAction : _interruptedActions) {
-        ActionResult result = interruptedAction->Update();
-        if(ActionResult::INTERRUPTED != result) {
-          PRINT_NAMED_WARNING("ActionQueue.Update.InterruptFailed",
-                              "Expecting interrupted %s action to return INTERRUPTED result on Update",
-                              interruptedAction->GetName().c_str());
-        }
-      }
-      _interruptedActions.clear();
-      
-      if(!_queue.empty())
+      if(!_queue.empty() || _currentAction != nullptr)
       {
-        IActionRunner* currentAction = GetCurrentAction();
-        assert(currentAction != nullptr);
+        if(_currentAction == nullptr)
+        {
+          _currentAction = GetNextActionToRun();
+        }
+        assert(_currentAction != nullptr);
         
         VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN,
-                                           "Action: %s", currentAction->GetName().c_str());
+                                           "Action: %s", _currentAction->GetName().c_str());
         
-        const ActionResult actionResult = currentAction->Update();
+        const ActionResult actionResult = _currentAction->Update();
         
         if(actionResult != ActionResult::RUNNING) {
-          // Current action just finished, pop it
-          PopCurrentAction();
+          // Current action is no longer running delete it
+          DeleteCurrentAction();
           
           if(actionResult != ActionResult::SUCCESS && actionResult != ActionResult::CANCELLED) {
             lastResult = RESULT_FAIL;
@@ -427,34 +456,37 @@ namespace Anki {
       return lastResult;
     }
     
-    IActionRunner* ActionQueue::GetCurrentAction()
+    IActionRunner* ActionQueue::GetNextActionToRun()
     {
       if(_queue.empty()) {
         return nullptr;
       }
-      
-      return _queue.front();
+      IActionRunner* action = _queue.front();
+      _queue.pop_front();
+      return action;
     }
 
     const IActionRunner* ActionQueue::GetCurrentAction() const
     {
-      if(_queue.empty()) {
-        return nullptr;
+      // If don't have a current action (aren't running anything) but have things that will be run
+      // then the current action is the first one in the queue
+      if(nullptr == _currentAction && _queue.size() > 0)
+      {
+        return _queue.front();
       }
-      
-      return _queue.front();
+      else
+      {
+        return _currentAction;
+      }
     }
-
-    void ActionQueue::PopCurrentAction()
+    
+    void ActionQueue::DeleteCurrentAction()
     {
-      if(!IsEmpty()) {
-        if(_queue.front() == nullptr) {
-          PRINT_NAMED_ERROR("ActionQueue.PopCurrentAction.NullActionPointer",
-                            "About to delete and pop action pointer from queue, found it to be nullptr!\n");
-        } else {
-          delete _queue.front();
-        }
-        _queue.pop_front();
+      if(_currentAction != nullptr && !_currentActionIsDeleting)
+      {
+        _currentActionIsDeleting = true;
+        Util::SafeDelete(_currentAction);
+        _currentActionIsDeleting = false;
       }
     }
     

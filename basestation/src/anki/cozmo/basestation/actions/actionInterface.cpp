@@ -18,7 +18,6 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/animationKeyFrames.h"
 #include "util/helpers/templateHelpers.h"
 
 #define DEBUG_ANIM_TRACK_LOCKING 0
@@ -41,6 +40,32 @@ namespace Anki {
       _idTag = IActionRunner::sTagCounter;
     }
     
+    IActionRunner::~IActionRunner()
+    {
+      if(_robot != nullptr)
+      {
+        if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
+        {
+          // Notify any listeners about this action's completion.
+          // TODO: Populate the signal with any action-specific info?
+          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, _type, _result, _completionUnion)));
+        }
+      
+        if(!_suppressTrackLocking)
+        {
+#         if DEBUG_ANIM_TRACK_LOCKING
+          PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                            _animTracks,
+                            AnimTrackFlagToString((AnimTrackFlag)_animTracks),
+                            _name.c_str(),
+                            _idTag);
+#         endif
+          _robot->GetMoveComponent().UnlockAnimTracks(_animTracks);
+          _robot->GetMoveComponent().UnignoreTrackMovement(_movementTracks);
+        }
+      }
+    }
+    
     void IActionRunner::SetTag(u32 tag)
     {
       if (tag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
@@ -55,6 +80,24 @@ namespace Anki {
       _isInterrupted = InterruptInternal();
       if(_isInterrupted) {
         Reset();
+        
+        // Only need to unlock tracks if this is running because Init() locked tracks
+        if(!_suppressTrackLocking && _isRunning)
+        {
+          uint8_t tracks = GetAnimTracksToDisable();
+#         if DEBUG_ANIM_TRACK_LOCKING
+          PRINT_NAMED_INFO("IActionRunner.Interrupt.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                           tracks,
+                           AnimTrackFlagToString((AnimTrackFlag)tracks),
+                           _name.c_str(),
+                           _idTag);
+#         endif
+          _robot->GetMoveComponent().UnlockAnimTracks(tracks);
+          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+        }
+        
+        CancelAndDeleteSubActions();
+        _isRunning = false;
       }
       return _isInterrupted;
     }
@@ -70,7 +113,7 @@ namespace Anki {
 #       if DEBUG_ANIM_TRACK_LOCKING
         PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
                          disableTracks,
-                         AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
+                         AnimTrackFlagToString((AnimTrackFlag)disableTracks),
                          GetName().c_str(),
                          GetTag());
 
@@ -88,58 +131,36 @@ namespace Anki {
 
         _isRunning = true;
       }
-      ActionResult result = ActionResult::RUNNING;
+      _result = ActionResult::RUNNING;
       if(_isCancelled) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
                            "Cancelling [%d] %s.", _idTag, GetName().c_str());
         }
-        result = ActionResult::CANCELLED;
+        _result = ActionResult::CANCELLED;
       } else if(_isInterrupted) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.InterruptAction",
                            "Interrupting [%d] %s", _idTag, GetName().c_str());
         }
-        result = ActionResult::INTERRUPTED;
+        _result = ActionResult::INTERRUPTED;
       } else {
-        result = UpdateInternal();
+        _result = UpdateInternal();
       }
       
-      if(result != ActionResult::RUNNING) {
+      if(_result != ActionResult::RUNNING) {
         if(_displayMessages) {
           PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
                            "%s [%d] %s.", GetName().c_str(),
                            _idTag,
-                           (result==ActionResult::SUCCESS ? "succeeded" :
-                            result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
+                           (_result==ActionResult::SUCCESS ? "succeeded" :
+                            _result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
         }
 
         // Clean up after any registered sub actions and the action itself
         CancelAndDeleteSubActions();
-        Cleanup();
-
-        if (_emitCompletionSignal && ActionResult::INTERRUPTED != result)
-        {
-          // Notify any listeners about this action's completion.
-          // Note that I do this here so that compound actions only emit one signal,
-          // not a signal for each constituent action.
-          // TODO: Populate the signal with any action-specific info?
-          EmitCompletionSignal(result);
-        }
-
-        if(!_suppressTrackLocking) {
-          uint8_t disableTracks = GetAnimTracksToDisable();
-#         if DEBUG_ANIM_TRACK_LOCKING
-          PRINT_NAMED_INFO("IActionRunner.Update.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                           disableTracks,
-                           AnimTrackHelpers::AnimTrackFlagsToString(disableTracks).c_str(),
-                           GetName().c_str(),
-                           GetTag());
-#         endif
-
-          _robot->GetMoveComponent().UnlockAnimTracks(disableTracks);
-          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
-        }
+        
+        PrepForCompletion();
 
         if( DEBUG_ACTION_RUNNING && _displayMessages ) {
           PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
@@ -149,16 +170,16 @@ namespace Anki {
         _isRunning = false;
       }
 
-      return result;
+      return _result;
     }
     
-    void IActionRunner::EmitCompletionSignal(ActionResult result) const
+    void IActionRunner::PrepForCompletion()
     {
-      ActionCompletedUnion completionUnion;
-
-      GetCompletionUnion(completionUnion);
-      
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, GetType(), result, completionUnion)));
+      GetCompletionUnion(_completionUnion);
+      _type = GetType();
+      _name = GetName();
+      _animTracks = GetAnimTracksToDisable();
+      _movementTracks = GetMovementTracksToIgnore();
     }
     
     bool IActionRunner::RetriesRemain()
@@ -227,9 +248,6 @@ namespace Anki {
                                   (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
                                   GetName().c_str(), GetTag());
               }
-            
-              (*subAction)->Cancel();
-              (*subAction)->Update();
             } // if running
             else if( DEBUG_ACTION_RUNNING && _displayMessages ) {
               PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions.Skip",
