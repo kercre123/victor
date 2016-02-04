@@ -125,7 +125,12 @@ static uesb_address_desc_t TalkAddress = {
   0xFF
 };
 
-static AccessorySlot accessories[MAX_ACCESSORIES];
+static AccessorySlot accessories[MAX_ACCESSORIES] = {
+  {false, true, 0, 0x0072},
+  {false, true, 0, 0x0091},
+  {false, true, 0, 0x003C},
+  {false, true, 0, 0x00E7},
+};
 
 // Variables for locating a quiet channel
 static uint8_t currentNoiseLevel[MAX_TX_CHANNEL+1];
@@ -198,7 +203,7 @@ void Radio::init() {
   TalkAddress.base1 = fixAddress(TalkAddress.base1);
 
   // Clear our our states
-  memset(accessories, 0, sizeof(accessories));
+  //memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
   
   // Start the radio stack
@@ -346,6 +351,7 @@ extern "C" void uesb_event_handler(void)
 
       SpineProtocol msg;
       msg.opcode = GET_PROP_STATE;
+      msg.GetPropState.slot = currentAccessory;
       msg.GetPropState.x = ap->x;
       msg.GetPropState.y = ap->y;
       msg.GetPropState.z = ap->z;
