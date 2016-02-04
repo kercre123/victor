@@ -61,7 +61,7 @@ namespace Vortex {
       LightCube.TappedAction += HandleBlockTapped;
 
       // we need at least one for cozmo and one for at least one player but if we find more cool, stateintro will deal with it.
-      InitialCubesState initCubeState = new InitialCubesState(new StateIntro(), numCubes, null);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(new StateIntro()), numCubes);
       _StateMachine.SetNextState(initCubeState);
 
       _RoundNumber = 0;

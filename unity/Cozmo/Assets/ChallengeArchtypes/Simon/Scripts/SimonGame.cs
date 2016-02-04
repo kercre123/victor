@@ -39,7 +39,7 @@ namespace Simon {
         _FirstPlayer = PlayerType.Cozmo;
       }
       State nextState = new CozmoMoveCloserToCubesState(_FirstPlayer);
-      InitialCubesState initCubeState = new InitialCubesState(nextState, _Config.NumCubesRequired(), null);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(nextState), _Config.NumCubesRequired(), null);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);

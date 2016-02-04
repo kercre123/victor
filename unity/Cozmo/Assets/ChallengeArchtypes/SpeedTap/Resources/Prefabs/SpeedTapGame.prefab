@@ -39,10 +39,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edea70fc2a8a54b7c8c036af62f5683a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameStateSlides: []
-  _HowToPlayDialogContentPrefab: {fileID: 130530, guid: 37e09a2dd4e344e35b8262e0a24367fd,
-    type: 2}
-  _GamePanelPrefab: {fileID: 11487488, guid: a73dd626a2d594b738f14e865f6822a7, type: 2}
+  _GameStateSlides:
+  - slideName: TellPlayerToTap
+    slidePrefab: {fileID: 22528282, guid: a746841c043c145299eb44a48a59bd14, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -50,6 +49,10 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _GameStateSlides.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: gameName_
       value: Speed Tap
@@ -76,6 +79,15 @@ Prefab:
       propertyPath: _HowToPlayDialogContentPrefab
       value: 
       objectReference: {fileID: 130530, guid: 37e09a2dd4e344e35b8262e0a24367fd, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _GameStateSlides.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22528282, guid: a746841c043c145299eb44a48a59bd14,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _GameStateSlides.Array.data[0].slideName
+      value: TellPlayerToTap
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 141604}

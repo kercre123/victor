@@ -6,7 +6,7 @@ public class HowToPlayState : State {
   private State _NextState;
   private InitialCubesState.CubeStateDone _DoneCallback;
 
-  public HowToPlayState(State nextState, InitialCubesState.CubeStateDone doneCallback) {
+  public HowToPlayState(State nextState, InitialCubesState.CubeStateDone doneCallback = null) {
     _NextState = nextState;
     _DoneCallback = doneCallback;
   }
@@ -28,7 +28,13 @@ public class HowToPlayState : State {
     game.CreateDefaultQuitButton();
     game.CloseHowToPlayView();
     game.HideContinueButtonShelf();
-    _StateMachine.SetNextState(_NextState);
+
+    if (_NextState == null) {
+      _StateMachine.PopState();
+    }
+    else {
+      _StateMachine.SetNextState(_NextState);
+    }
 
     if (_DoneCallback != null) {
       _DoneCallback();

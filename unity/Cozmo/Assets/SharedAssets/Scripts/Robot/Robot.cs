@@ -221,6 +221,9 @@ public class Robot : IDisposable {
 
   private PathMotionProfile PathMotionProfileDefault;
 
+  private const uint kLiftSlot = 1;
+  private const uint kHeadSlot = 2;
+
   private uint _LastIdTag;
 
   private ObservedObject _CarryingObject;
@@ -481,13 +484,13 @@ public class Robot : IDisposable {
     }
   }
 
-  private void SendQueueSingleAction<T>(T action, RobotCallback callback, QueueActionPosition queueActionPosition) {
+  private void SendQueueSingleAction<T>(T action, RobotCallback callback, QueueActionPosition queueActionPosition, uint slot = 0) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueSingleAction = 
       Singleton<QueueSingleAction>.Instance.Initialize(
         robotID: ID, 
         idTag: tag, 
-        inSlot: 0, 
+        inSlot: slot, 
         numRetries: 0, 
         position: queueActionPosition, 
         actionState: action);
@@ -960,7 +963,8 @@ public class Robot : IDisposable {
         accelRadSec, 
         0), 
       callback, 
-      queueActionPosition);
+      queueActionPosition,
+      kHeadSlot);
   }
 
   public void SetRobotVolume(float volume) {
@@ -1179,7 +1183,8 @@ public class Robot : IDisposable {
         duration_sec: 0f
       ), 
       callback, 
-      queueActionPosition);
+      queueActionPosition,
+      kLiftSlot);
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {

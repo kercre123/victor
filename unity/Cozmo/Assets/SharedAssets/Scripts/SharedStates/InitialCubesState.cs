@@ -78,11 +78,19 @@ public class InitialCubesState : State {
 
   public override void Exit() {
     base.Exit();
+
+    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
+      lightCube.Value.TurnLEDsOff();
+    }
+
+    if (_CubeStateDone != null) {
+      _CubeStateDone.Invoke();
+    }
     _Game.HideGameStateSlide();
   }
 
   private void HandleContinueButtonClicked() {
     // TODO: Check if the game has been run before; if so skip the HowToPlayState
-    _StateMachine.SetNextState(new HowToPlayState(_NextState, _CubeStateDone));
+    _StateMachine.SetNextState(_NextState);
   }
 }
