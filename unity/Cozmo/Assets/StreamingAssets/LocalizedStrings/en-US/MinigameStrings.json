@@ -149,5 +149,8 @@
   },
   "minigame.label.difficultySelect": {
     "translation": "SELECT DIFFICULTY"
+  },
+  "speedTap.tapBlock": {
+    "translation": "Tap The lit cube when you're ready to play!"
   }
 }

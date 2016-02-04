@@ -78,6 +78,11 @@ public class InitialCubesState : State {
 
   public override void Exit() {
     base.Exit();
+
+    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
+      lightCube.Value.TurnLEDsOff();
+    }
+
     if (_CubeStateDone != null) {
       _CubeStateDone.Invoke();
     }

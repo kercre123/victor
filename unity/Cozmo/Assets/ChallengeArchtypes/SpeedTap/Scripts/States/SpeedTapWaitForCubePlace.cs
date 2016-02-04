@@ -7,6 +7,8 @@ namespace SpeedTap {
 
     private SpeedTapGame _SpeedTapGame = null;
 
+    private bool _GotoObjectComplete = false;
+
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
@@ -16,19 +18,25 @@ namespace SpeedTap {
       _CurrentRobot.SetHeadAngle(-1.0f);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
-      _SpeedTapGame.ResetScore();
 
       _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 60f, HandleGotoObjectComplete);
+
+      _StateMachine.PushSubState(new HowToPlayState(null));
     }
 
     private void HandleGotoObjectComplete(bool success) {
+      _GotoObjectComplete = true;
+    }
 
-      if((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < 80f) {
-        _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
-      }
-      else {
-        // restart this state
-        _StateMachine.SetNextState(new SpeedTapWaitForCubePlace());
+    public override void Update() {
+      if (_GotoObjectComplete) {
+        if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < 80f) {
+          _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
+        }
+        else {
+          // restart this state
+          _StateMachine.SetNextState(new SpeedTapWaitForCubePlace());
+        }
       }
     }
 

@@ -135,7 +135,7 @@ namespace SpeedTap {
 
       InitialCubesState initCubeState = new InitialCubesState(
         new SelectDifficultyState(
-          new HowToPlayState(new SpeedTapWaitForCubePlace()),
+          new SpeedTapWaitForCubePlace(),
           DifficultyOptions,
           Mathf.Max(DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
         ), 
