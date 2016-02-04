@@ -488,6 +488,12 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  public bool CozmoDim {
+    set {
+      _SharedMinigameViewInstance.CozmoDim = value;
+    }
+  }
+
   public int PlayerScore {
     set {
       _SharedMinigameViewInstance.PlayerScore = value;
@@ -503,6 +509,12 @@ public abstract class GameBase : MonoBehaviour {
   public int PlayerRoundsWon {
     set {
       _SharedMinigameViewInstance.PlayerRoundsWon = value;
+    }
+  }
+
+  public bool PlayerDim {
+    set {
+      _SharedMinigameViewInstance.PlayerDim = value;
     }
   }
 

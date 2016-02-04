@@ -68,6 +68,12 @@ namespace Cozmo {
         }
       }
 
+      public bool Dim {
+        set {
+          _PortraitImage.color = value ? Color.gray : Color.white;
+        }
+      }
+
       private void Awake() {
         _ScoreContainer.gameObject.SetActive(false);
         _RoundContainer.gameObject.SetActive(false);

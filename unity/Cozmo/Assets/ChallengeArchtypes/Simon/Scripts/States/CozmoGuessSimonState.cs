@@ -14,6 +14,8 @@ namespace Simon {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.ShowGameStateSlide("WatchCozmoGuess");
+      _GameInstance.CozmoDim = false;
+      _GameInstance.PlayerDim = true;
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
       _ShouldWinGame = null;

@@ -26,6 +26,8 @@ namespace Simon {
       GameObject sequenceDisplay = _GameInstance.ShowGameStateSlide("CreatePattern");
       _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
       _SequenceDisplay.SetSequenceText(0, _TargetSequenceLength);
+      _GameInstance.CozmoDim = true;
+      _GameInstance.PlayerDim = false;
 
       _CurrentRobot.SetHeadAngle(1.0f);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_POSITIVE_01);

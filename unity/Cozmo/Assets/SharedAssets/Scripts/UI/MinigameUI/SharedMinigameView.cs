@@ -530,6 +530,13 @@ namespace Cozmo {
         }
       }
 
+      public bool CozmoDim {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.Dim = value;
+        }
+      }
+
       public void ShowCozmoWinnerBanner() {
         ShowCozmoScoreWidget();
         _CozmoScoreWidgetInstance.IsWinner = true;
@@ -560,6 +567,13 @@ namespace Cozmo {
         set {
           ShowPlayerScoreWidget();
           _PlayerScoreWidgetInstance.RoundsWon = value;
+        }
+      }
+
+      public bool PlayerDim {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.Dim = value;
         }
       }
 

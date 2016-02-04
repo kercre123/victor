@@ -24,6 +24,8 @@ namespace Simon {
       GameObject sequenceDisplay = _GameInstance.ShowGameStateSlide("WatchCozmoPattern");
       _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
       _SequenceDisplay.SetSequenceText(0, _SequenceLength);
+      _GameInstance.CozmoDim = false;
+      _GameInstance.PlayerDim = true;
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);

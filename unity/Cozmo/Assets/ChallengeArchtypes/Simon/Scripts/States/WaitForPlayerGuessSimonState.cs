@@ -19,6 +19,8 @@ namespace Simon {
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.ShowGameStateSlide("RepeatPattern");
+      _GameInstance.CozmoDim = true;
+      _GameInstance.PlayerDim = false;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_POSITIVE_01);

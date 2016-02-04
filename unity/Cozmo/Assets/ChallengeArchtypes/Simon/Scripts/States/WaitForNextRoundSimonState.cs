@@ -19,6 +19,8 @@ namespace Simon {
       nextRoundPanel.EnableContinueButton(true);
       nextRoundPanel.OnContinueButtonPressed += HandleContinuePressed;
       nextRoundPanel.SetNextPlayerText(_NextPlayer);
+      _GameInstance.CozmoDim = (_NextPlayer == PlayerType.Human);
+      _GameInstance.PlayerDim = (_NextPlayer == PlayerType.Cozmo);
     }
 
     private void HandleContinuePressed() {
