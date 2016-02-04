@@ -39,6 +39,8 @@ public abstract class GameBase : MonoBehaviour {
     if (string.IsNullOrEmpty(primaryText)) {
       primaryText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
     }
+    _SharedMinigameViewInstance.ShowCozmoScoreWidget();
+    _SharedMinigameViewInstance.ShowPlayerWinnerBanner();
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
@@ -53,6 +55,8 @@ public abstract class GameBase : MonoBehaviour {
     if (string.IsNullOrEmpty(primaryText)) {
       primaryText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     }
+    _SharedMinigameViewInstance.ShowCozmoWinnerBanner();
+    _SharedMinigameViewInstance.ShowPlayerScoreWidget();
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
@@ -344,10 +348,10 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
-  #region How To Play Slides
+  #region Game State Slides
 
   public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
-    GameObject slideObject = _SharedMinigameViewInstance.ShowGameStateSlide(UIPrefabHolder.Instance.InitialCubesSlide);
+    GameObject slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(UIPrefabHolder.Instance.InitialCubesSlide);
     ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
     cubeSlide.Initialize(numCubesRequired);
     return cubeSlide;
@@ -419,6 +423,57 @@ public abstract class GameBase : MonoBehaviour {
 
   public void EnableContinueButton(bool enable) {
     _SharedMinigameViewInstance.EnableContinueButton(enable);
+  }
+
+  #endregion
+
+  #region Info Title Text
+
+  public string InfoTitleText {
+    get { return _SharedMinigameViewInstance.InfoTitleText; }
+    set { 
+      _SharedMinigameViewInstance.InfoTitleText = value; 
+    }
+  }
+
+  #endregion
+
+  #region Score Widgets
+
+  public int CozmoScore {
+    set {
+      _SharedMinigameViewInstance.CozmoScore = value;
+    }
+  }
+
+  public int CozmoMaxRounds {
+    set {
+      _SharedMinigameViewInstance.CozmoMaxRounds = value;
+    }
+  }
+
+  public int CozmoRoundsWon {
+    set {
+      _SharedMinigameViewInstance.CozmoRoundsWon = value;
+    }
+  }
+
+  public int PlayerScore {
+    set {
+      _SharedMinigameViewInstance.PlayerScore = value;
+    }
+  }
+
+  public int PlayerMaxRounds {
+    set {
+      _SharedMinigameViewInstance.PlayerMaxRounds = value;
+    }
+  }
+
+  public int PlayerRoundsWon {
+    set {
+      _SharedMinigameViewInstance.PlayerRoundsWon = value;
+    }
   }
 
   #endregion

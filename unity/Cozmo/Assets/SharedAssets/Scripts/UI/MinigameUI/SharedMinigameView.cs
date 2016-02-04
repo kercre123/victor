@@ -46,7 +46,41 @@ namespace Cozmo {
       private HowToPlayButton _HowToPlayButtonInstance;
 
       [SerializeField]
-      private RectTransform _HowToSlideContainer;
+      private RectTransform _FullScreenSlideContainer;
+
+      [SerializeField]
+      private RectTransform _GameInfoSlideContainer;
+
+      [SerializeField]
+      private UnityEngine.UI.LayoutElement _InfoTitleLayoutElement;
+
+      [SerializeField]
+      private Anki.UI.AnkiTextLabel _InfoTitleTextLabel;
+
+      #region Score Widget variables
+
+      [SerializeField]
+      private ScoreWidget _ScoreWidgetPrefab;
+
+      private ScoreWidget _CozmoScoreWidgetInstance;
+      private ScoreWidget _PlayerScoreWidgetInstance;
+
+      [SerializeField]
+      private float _ScoreEnterAnimationXOffset = 600f;
+
+      [SerializeField]
+      private RectTransform _CozmoScoreContainer;
+
+      [SerializeField]
+      private RectTransform _PlayerScoreContainer;
+
+      [SerializeField]
+      private Sprite _CozmoPortraitSprite;
+
+      [SerializeField]
+      private Sprite _PlayerPortraitSprite;
+
+      #endregion
 
       private CanvasGroup _CurrentSlide;
       private string _CurrentSlideName;
@@ -105,6 +139,12 @@ namespace Cozmo {
       }
 
       #endregion
+
+      private void Awake() {
+        // Hide the info title by default. This also centers game state slides
+        // by default.
+        _InfoTitleLayoutElement.gameObject.SetActive(false);
+      }
 
       private void AddWidget(IMinigameWidget widgetToAdd) {
         _ActiveWidgets.Add(widgetToAdd);
@@ -306,17 +346,20 @@ namespace Cozmo {
 
       #endregion
 
-      #region How To Play Slides
+      #region Game State Slides
 
-      public GameObject ShowGameStateSlide(GameObject slidePrefab) {
-        return ShowGameStateSlide(slidePrefab.name, slidePrefab);
+      public GameObject ShowFullScreenSlide(GameStateSlide slideData) {
+        return ShowGameStateSlide(slideData.slideName, slideData.slidePrefab.gameObject, 
+          _FullScreenSlideContainer);
       }
 
       public GameObject ShowGameStateSlide(GameStateSlide slideData) {
-        return ShowGameStateSlide(slideData.slideName, slideData.slidePrefab.gameObject);
+        return ShowGameStateSlide(slideData.slideName, slideData.slidePrefab.gameObject, 
+          _GameInfoSlideContainer);
       }
 
-      private GameObject ShowGameStateSlide(string slideName, GameObject slidePrefab) {
+      private GameObject ShowGameStateSlide(string slideName, GameObject slidePrefab,
+                                            RectTransform slideContainer) {
         if (slideName == _CurrentSlideName) {
           return _CurrentSlide.gameObject;
         }
@@ -327,7 +370,7 @@ namespace Cozmo {
         _CurrentSlideName = slideName;
 
         // Create the new slide underneath the container
-        GameObject newSlideObj = UIManager.CreateUIElement(slidePrefab, _HowToSlideContainer);
+        GameObject newSlideObj = UIManager.CreateUIElement(slidePrefab, slideContainer);
         _CurrentSlide = newSlideObj.GetComponent<CanvasGroup>();
         if (_CurrentSlide == null) {
           _CurrentSlide = newSlideObj.AddComponent<CanvasGroup>();
@@ -402,6 +445,100 @@ namespace Cozmo {
 
       public void EnableContinueButton(bool enable) {
         _ContinueButtonShelfInstance.SetButtonInteractivity(enable);
+      }
+
+      #endregion
+
+      #region Info Title Text
+
+      public string InfoTitleText {
+        get { return _InfoTitleTextLabel.text; }
+        set { 
+          _InfoTitleLayoutElement.gameObject.SetActive(true);
+          _InfoTitleTextLabel.text = value; 
+        }
+      }
+
+      #endregion
+
+      #region Score Widgets
+
+      public int CozmoScore {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.Score = value;
+        }
+      }
+
+      public int CozmoMaxRounds {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.MaxRounds = value;
+        }
+      }
+
+      public int CozmoRoundsWon {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.RoundsWon = value;
+        }
+      }
+
+      public void ShowCozmoWinnerBanner() {
+        ShowCozmoScoreWidget();
+        _CozmoScoreWidgetInstance.IsWinner = true;
+      }
+
+      public void ShowCozmoScoreWidget() {
+        if (_CozmoScoreWidgetInstance == null) {
+          _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
+            _CozmoPortraitSprite);            
+        }
+      }
+
+      public int PlayerScore {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.Score = value;
+        }
+      }
+
+      public int PlayerMaxRounds {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.MaxRounds = value;
+        }
+      }
+
+      public int PlayerRoundsWon {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.RoundsWon = value;
+        }
+      }
+
+      public void ShowPlayerWinnerBanner() {
+        ShowPlayerScoreWidget();
+        _PlayerScoreWidgetInstance.IsWinner = true;
+      }
+
+      public void ShowPlayerScoreWidget() {
+        if (_PlayerScoreWidgetInstance == null) {
+          _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
+            _PlayerPortraitSprite);            
+        }
+      }
+
+      private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
+                                            Sprite portrait) {
+
+        GameObject widgetObj = UIManager.CreateUIElement(_ScoreWidgetPrefab.gameObject, widgetParent);
+        ScoreWidget instance = widgetObj.GetComponent<ScoreWidget>();
+        instance.AnimationXOffset = animationOffset;
+        instance.Portrait = portrait;
+
+        AddWidget(instance);
+        return instance;
       }
 
       #endregion

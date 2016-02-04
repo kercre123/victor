@@ -114,6 +114,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: FPO
+  _AllUppercase: 0
 --- !u!114 &11481806
 MonoBehaviour:
   m_ObjectHideFlags: 1
