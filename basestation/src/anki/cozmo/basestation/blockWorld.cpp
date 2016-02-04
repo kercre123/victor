@@ -83,6 +83,14 @@ namespace Cozmo {
       
       // TODO: Create each known block / matpiece from a configuration/definitions file
       
+      VizManager* vizManager = _robot->GetContext()->GetVizManager();
+      // Creating a simple lambda to set the vizManager on new objects being added
+      auto setVizAndAdd = [this, vizManager] (ObjectFamily family, ObservableObject* newObj)
+      {
+        newObj->SetVizManager(vizManager);
+        _objectLibrary[family].AddObject(newObj);
+      };
+      
       //////////////////////////////////////////////////////////////////////////
       // 1x1 Cubes
       //
@@ -132,13 +140,6 @@ namespace Cozmo {
       //////////////////////////////////////////////////////////////////////////
       // 1x1 Light Cubes
       //
-      
-      VizManager* vizManager = _robot->GetContext()->GetVizManager();
-      auto setVizAndAdd = [this, vizManager] (ObjectFamily family, ObservableObject* newObj)
-      {
-        newObj->SetVizManager(vizManager);
-        _objectLibrary[family].AddObject(newObj);
-      };
       
       setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE1));
       setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE2));
