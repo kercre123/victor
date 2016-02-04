@@ -212,12 +212,12 @@ public class DailyGoalManager : MonoBehaviour {
       return;
     }
     // TODO: When the message has the appropriate 
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
+    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon) as AlertView;
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
-    alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
+    alertView.SetIcon(data.ChallengeIcon);
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
     alertView.SetMessageArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
     RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(bGroup, true);
