@@ -45,7 +45,7 @@ void ICACHE_FLASH_ATTR ReliableConnection_printState(ReliableConnection* connect
 }
 
 /// Reset the reliable connection TX queue state
-static void resetTxQueue(ReliableConnection* self)
+static void ICACHE_FLASH_ATTR resetTxQueue(ReliableConnection* self)
 {
   AnkiReliablePacketHeader* header = (AnkiReliablePacketHeader*)self->txBuf;
   header->type     = eRMT_MultipleMixedMessages;
@@ -54,7 +54,7 @@ static void resetTxQueue(ReliableConnection* self)
   self->txQueued = sizeof(AnkiReliablePacketHeader);
 }
 
-bool haveDataToSend(ReliableConnection* self)
+bool ICACHE_FLASH_ATTR haveDataToSend(ReliableConnection* self)
 {
   return self->txQueued > sizeof(AnkiReliablePacketHeader);
 }
@@ -91,12 +91,18 @@ void ICACHE_FLASH_ATTR ReliableConnection_Init(ReliableConnection* self, void* d
 /// Add a reliable message to the pending reliable message queue
 static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const uint8_t tag)
 {
-  if (bufferSize+1 > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE) // + 1 for tag byte. Easier to assume it's there than check
+  if (unlikely(connection->canary1 || connection->canary2 || connection->canary3))
+  {
+    printf("ERROR: ReliableConnection structure is corrupt! %x %x %x\r\n",
+           connection->canary1, connection->canary2, connection->canary3);
+    return false;
+  }
+  if (unlikely(bufferSize+1 > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)) // + 1 for tag byte. Easier to assume it's there than check
   {
     printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\r\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
     return false;
   }
-  else if (connection->numPendingReliableMessages >= ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH)
+  else if (unlikely(connection->numPendingReliableMessages >= ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH))
   {
     printf("WARN: No slots left for pending reliable messages\r\n");
     return false;
@@ -151,7 +157,12 @@ static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t
 uint8_t ICACHE_FLASH_ATTR AppendPendingMessages(ReliableConnection* connection, bool newestFirst)
 {
   int16_t i; // Loop variable
-  if (connection->numPendingReliableMessages == 0) // Nothing to append
+  if (unlikely(connection->canary1 || connection->canary2 || connection->canary3))
+  {
+    printf("ERROR: ReliableConnection structure is corrupt! %x %x %x\r\n", connection->canary1, connection->canary2, connection->canary3);
+    return 0;
+  }
+  else if (connection->numPendingReliableMessages == 0) // Nothing to append
   {
     connection->latestUnackedMessageSentTime = GetMicroCounter();
     return 0;
@@ -216,6 +227,7 @@ bool ICACHE_FLASH_ATTR SendTxBuf(ReliableConnection* connection)
   if (UnreliableTransport_SendPacket(connection->txBuf, connection->txQueued) == false)
   {
     //printf("WARN: ReliableTransport could't send pending messages\r\n");
+    resetTxQueue(connection);
     return false;
   }
   else

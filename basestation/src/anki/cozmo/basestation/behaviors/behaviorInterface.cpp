@@ -41,6 +41,7 @@ namespace Cozmo {
   , _overrideScore(-1.0f)
   , _isRunning(false)
   , _isOwnedByFactory(false)
+  , _isChoosable(true)
   , _enableRepetitionPenalty(true)
   {
     ReadFromJson(config);

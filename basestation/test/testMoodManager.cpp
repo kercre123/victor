@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/moodSystem/staticMoodData.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
@@ -432,8 +433,8 @@ TEST(MoodManager, BehaviorScoring)
 {
   InitStaticMoodData();
   
-  RobotInterface::MessageHandler messageHandler;
-  Robot testRobot(RobotID_t(0), &messageHandler, nullptr, nullptr);
+  CozmoContext context{};
+  Robot testRobot(0, &context);
   
   BehaviorFactory& behaviorFactory = testRobot.GetBehaviorFactory();
 

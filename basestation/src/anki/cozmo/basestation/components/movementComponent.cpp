@@ -30,13 +30,13 @@ using namespace ExternalInterface;
 
 MovementComponent::MovementComponent(Robot& robot)
   : _robot(robot)
-  , _animTrackLockCount((int)AnimConstants::NUM_TRACKS)
-  , _ignoreTrackMovementCount((int)AnimConstants::NUM_TRACKS)
 {
   if (_robot.HasExternalInterface())
   {
     InitEventHandlers(*(_robot.GetExternalInterface()));
   }
+  _animTrackLockCount.fill(0);
+  _ignoreTrackMovementCount.fill(0);
 }
   
 void MovementComponent::InitEventHandlers(IExternalInterface& interface)
@@ -219,26 +219,26 @@ void MovementComponent::LockAnimTracks(uint8_t tracks)
 
 void MovementComponent::UnlockAnimTracks(uint8_t tracks)
 {
-  if(_animTrackLockCount.size() == (int)AnimConstants::NUM_TRACKS)
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
     {
-      uint8_t curTrack = (1 << i);
-      if ((tracks & curTrack) == curTrack)
+      --_animTrackLockCount[i];
+
+      // If we just went from locked to not locked, inform the robot
+      if (_animTrackLockCount[i] == 0)
       {
-        --_animTrackLockCount[i];
+        _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
+      }
 
-        // If we just went from locked to not locked, inform the robot
-        if (_animTrackLockCount[i] == 0)
-        {
-          _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
-        }
-
-        // It doesn't matter if there are more unlocks than locks
-        if(_animTrackLockCount[i] < 0)
-        {
-          _animTrackLockCount[i] = 0;
-        }
+      // It doesn't matter if there are more unlocks than locks
+      if(_animTrackLockCount[i] < 0)
+      {
+#       if DEBUG_ANIMATION_LOCKING
+        PRINT_NAMED_WARNING("MovementComponent.UnlockAnimTracks", "Anim track locks and unlocks do not match");
+#       endif
+        _animTrackLockCount[i] = 0;
       }
     }
   }
@@ -278,20 +278,20 @@ void MovementComponent::IgnoreTrackMovement(uint8_t tracks)
   
 void MovementComponent::UnignoreTrackMovement(uint8_t tracks)
 {
-  if(_ignoreTrackMovementCount.size() == (int)AnimConstants::NUM_TRACKS)
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
     {
-      uint8_t curTrack = (1 << i);
-      if ((tracks & curTrack) == curTrack)
-      {
-        --_ignoreTrackMovementCount[i];
+      --_ignoreTrackMovementCount[i];
 
-        // It doesn't matter if there are more unlocks than locks
-        if(_ignoreTrackMovementCount[i] < 0)
-        {
-          _ignoreTrackMovementCount[i] = 0;
-        }
+      // It doesn't matter if there are more unlocks than locks
+      if(_ignoreTrackMovementCount[i] < 0)
+      {
+#       if DEBUG_ANIMATION_LOCKING
+        PRINT_NAMED_WARNING("MovementComponent.UnignoreTrackMovement", "Track movement locks and unlocks do not match");
+#       endif
+        _ignoreTrackMovementCount[i] = 0;
       }
     }
   }

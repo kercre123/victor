@@ -53,6 +53,7 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -127,8 +128,7 @@ class Robot
 {
 public:
     
-    Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
-          IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
+    Robot(const RobotID_t robotID, const CozmoContext* context);
     ~Robot();
     // Explicitely delete copy and assignment operators (class doesn't support shallow copy)
     Robot(const Robot&) = delete;
@@ -642,12 +642,12 @@ public:
     // =========  Events  ============
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
-    bool HasExternalInterface() const { return _externalInterface != nullptr; }
+    bool HasExternalInterface() const { return _context->GetExternalInterface() != nullptr; }
     IExternalInterface* GetExternalInterface() {
-      ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface;
+      ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr"); return _context->GetExternalInterface();
     }
     RobotInterface::MessageHandler* GetRobotMessageHandler() {
-      ASSERT_NAMED(_msgHandler != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _msgHandler;
+      ASSERT_NAMED(_context->GetRobotMsgHandler() != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _context->GetRobotMsgHandler();
     }
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
@@ -676,7 +676,7 @@ public:
     // if there was no external interface).
     bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
   
-    Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
+    Util::Data::DataPlatform* GetDataPlatform() { return _context->GetDataPlatform(); }
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   
@@ -690,8 +690,8 @@ public:
   }
   
   protected:
-    IExternalInterface* _externalInterface;
-    Util::Data::DataPlatform* _dataPlatform;
+    const CozmoContext* _context;
+  
     RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
     // The robot's identifier
     RobotID_t         _ID;
@@ -702,9 +702,6 @@ public:
   
     // Flag indicating whether a robotStateMessage was ever received
     bool              _newStateMsgAvailable = false;
-    
-    // A reference to the MessageHandler that the robot uses for outgoing comms
-    RobotInterface::MessageHandler* _msgHandler;
     
     // A reference to the BlockWorld the robot lives in
     BlockWorld        _blockWorld;
@@ -897,6 +894,7 @@ public:
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);

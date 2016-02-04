@@ -14,7 +14,6 @@
 #include "anki/cozmo/cozmoAPI.h"
 #include "anki/cozmo/game/cozmoGame.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include <chrono>
 
@@ -30,7 +29,7 @@ bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Valu
   {
     Clear();
   }
-  else if (nullptr != _cozmoRunner)
+  else if (_cozmoRunner)
   {
     PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Non-threaded Cozmo already created!");
     return Result::RESULT_FAIL;
@@ -38,10 +37,10 @@ bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Valu
   
   // Init the InstanceRunner
   bool gameInitResult = false;
-  _cozmoRunner = new CozmoInstanceRunner(dataPlatform, config, gameInitResult);
+  _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
   
   // Start the thread
-  _cozmoRunnerThread = std::thread(&CozmoInstanceRunner::Run, _cozmoRunner);
+  _cozmoRunnerThread = std::thread(&CozmoInstanceRunner::Run, _cozmoRunner.get());
   
   return gameInitResult;
 }
@@ -55,16 +54,10 @@ bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& 
     return Result::RESULT_FAIL;
   }
   
-  // If we already had an instance, kill it and start again
-  if (nullptr != _cozmoRunner)
-  {
-    delete _cozmoRunner;
-    _cozmoRunner = nullptr;
-  }
-  
   // Game init happens in CozmoInstanceRunner construction, so we get the result
+  // If we already had an instance, kill it and start again
   bool gameInitResult = false;
-  _cozmoRunner = new CozmoInstanceRunner(dataPlatform, config, gameInitResult);
+  _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
   
   return gameInitResult;
 }
@@ -78,7 +71,7 @@ bool CozmoAPI::Update(const double currentTime_sec)
     return false;
   }
   
-  if (nullptr == _cozmoRunner)
+  if (!_cozmoRunner)
   {
     PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo has not been started!");
     return false;
@@ -97,7 +90,7 @@ void CozmoAPI::Clear()
   // If there is a thread running, kill it first
   if (_cozmoRunnerThread.joinable())
   {
-    if (nullptr != _cozmoRunner)
+    if (!_cozmoRunner)
     {
       _cozmoRunner->Stop();
     }
@@ -109,7 +102,7 @@ void CozmoAPI::Clear()
     _cozmoRunnerThread = std::thread();
   }
   
-  Util::SafeDelete(_cozmoRunner);
+  _cozmoRunner.reset();
 }
 
 #pragma mark --- CozmoInstanceRunner Methods ---
@@ -127,9 +120,10 @@ CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dat
   initResult = initResultReturn == RESULT_OK;
 }
 
+// Destructor must exist in cpp (even though it's empty) in order for CozmoGame unique_ptr to be defined and deletable
 CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
 {
-  Util::SafeDelete(_cozmoInstance);
+  
 }
 
 void CozmoAPI::CozmoInstanceRunner::Run()

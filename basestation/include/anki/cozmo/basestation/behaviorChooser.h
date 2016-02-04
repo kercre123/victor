@@ -18,6 +18,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/noncopyable.h"
+#include <map>
 #include <string>
 #include <set>
 #include <vector>
@@ -54,12 +55,10 @@ public:
   
   virtual const char* GetName() const = 0;
   
-  void ClearBannedBehaviorGroups() { _bannedBehaviorGroups.ClearFlags(); }
-  void SetBannedBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) { _bannedBehaviorGroups.SetBitFlag(behaviorGroup, newVal); }
+  virtual void EnableAllBehaviors(bool newVal = true) = 0;
+  virtual void EnableBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) = 0;
+  virtual void EnableBehavior(const std::string& behaviorName, bool newVal = true) = 0;
 
-protected:
-  
-  BehaviorGroupFlags  _bannedBehaviorGroups;
 }; // class IBehaviorChooser
   
   
@@ -83,13 +82,17 @@ public:
   
   virtual const char* GetName() const override { return "Simple"; }
   
+  virtual void EnableAllBehaviors(bool newVal = true) override;
+  virtual void EnableBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) override;
+  virtual void EnableBehavior(const std::string& behaviorName, bool newVal = true) override;
+  
   // We need to clean up the behaviors we've been given to hold onto
   virtual ~SimpleBehaviorChooser();
   
 protected:
-  
-  using BehaviorList = std::vector<IBehavior*>;
-  BehaviorList      _behaviorList;
+
+  using NameToBehaviorMap = std::map<std::string, IBehavior*>;
+  NameToBehaviorMap _nameToBehaviorMap;
 };
   
 // Builds upon the SimpleBehaviorChooser to also directly trigger a specific behavior on certain events

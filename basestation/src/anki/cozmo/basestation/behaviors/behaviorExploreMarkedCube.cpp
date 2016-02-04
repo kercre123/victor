@@ -30,7 +30,7 @@ CONSOLE_VAR(uint8_t, kDistanceMaxFactor, "BehaviorExploreMarkedCube", 4.0f); // 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _currentActionTag(Util::numeric_cast<uint32_t>( (std::underlying_type<ActionConstants>::type)ActionConstants::INVALID_TAG))
+, _currentActionTag(ActionConstants::INVALID_TAG)
 {
   SetDefaultName("BehaviorExploreMarkedCube");
 
@@ -114,7 +114,7 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
 BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   // while we are moving towards a vantage point, wait patiently
-  if ( _currentActionTag != static_cast<std::underlying_type<ActionConstants>::type>(ActionConstants::INVALID_TAG) )
+  if ( _currentActionTag != ActionConstants::INVALID_TAG )
   {
     // PRINT_NAMED_INFO("RSAM", "Waiting for the move to action to finish");
     return Status::Running;
@@ -129,7 +129,7 @@ BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robo
 Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   // Note: at the moment anything can interrupt us, revisit rules of interruption
-  _currentActionTag = static_cast<std::underlying_type<ActionConstants>::type>(ActionConstants::INVALID_TAG);
+  _currentActionTag = ActionConstants::INVALID_TAG;
   
   return Result::RESULT_OK;
 }

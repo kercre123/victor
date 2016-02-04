@@ -8,7 +8,7 @@
 namespace Anki {
 namespace Cozmo {
 
-enum uint_32 ActionConstants {
+enum no_cpp_class uint_32 ActionConstants {
   INVALID_TAG = 0
 }
 
@@ -41,6 +41,7 @@ enum int_32 RobotActionType {
     PLAY_ANIMATION,
     DEVICE_AUDIO,              // This calls audio from WWise
     WAIT,
+    HANG,
     MOVE_LIFT_TO_HEIGHT,
     PAN_AND_TILT,
     DRIVE_STRAIGHT,
@@ -90,7 +91,7 @@ structure AnimationCompleted {
 
 // Used by DeviceAudioAction
 structure DeviceAudioCompleted {
-  Audio::EventType eventType,
+  Audio::GenericEvent audioEvent,
 }
 
 // Used by TrackFaceAction

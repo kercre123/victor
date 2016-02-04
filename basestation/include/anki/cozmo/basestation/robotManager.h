@@ -32,12 +32,13 @@ namespace Anki {
   }
   class Robot;
   class IExternalInterface;
+  class CozmoContext;
 
     class RobotManager
     {
     public:
     
-      RobotManager(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
+      RobotManager(const CozmoContext* context);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -52,7 +53,7 @@ namespace Anki {
       bool DoesRobotExist(const RobotID_t withID) const;
       
       // Add / remove robots
-      void AddRobot(const RobotID_t withID, RobotInterface::MessageHandler* msgHandler);
+      void AddRobot(const RobotID_t withID);
       void RemoveRobot(const RobotID_t withID);
       
       // Call each Robot's Update() function
@@ -69,10 +70,9 @@ namespace Anki {
 
     protected:
       RobotDisconnectedSignal _robotDisconnectedSignal;
-      IExternalInterface* _externalInterface;
-      Util::Data::DataPlatform* _dataPlatform;
       std::map<RobotID_t,Robot*> _robots;
       std::vector<RobotID_t>     _IDs;
+      const CozmoContext* _context;
       RobotEventHandler _robotEventHandler;
       
     }; // class RobotManager

@@ -86,12 +86,14 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       nrf_gpio_cfg_output(PIN_TX_HEAD);
       break ;
     case TRANSMIT_RECEIVE:
+      #ifndef DUMP_DISCOVER
       nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
 
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       MicroWait(10);
       NRF_UART0->PSELRXD = PIN_TX_HEAD;
       break ;
+      #endif
     case TRANSMIT_DEBUG:
       if (!UART::DebugQueue()) return ;
 
@@ -174,7 +176,11 @@ void UART0_IRQHandler()
       case TRANSMIT_SEND:
         // We are in regular head transmission mode
         if (txRxIndex >= sizeof(GlobalDataToHead)) {
+          #ifdef DUMP_DISCOVER
+          setTransmitMode(TRANSMIT_DEBUG);
+          #else
           setTransmitMode(TRANSMIT_RECEIVE);
+          #endif
         } else {
           transmitByte();
         }

@@ -5,6 +5,7 @@
 
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
@@ -13,7 +14,7 @@
 
 #define SHOW_IMAGES 0
 
-extern Anki::Util::Data::DataPlatform* dataPlatform;
+extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -22,8 +23,7 @@ TEST(FaceRecognition, TestOwnerID)
 {
   Result lastResult = RESULT_OK;
   
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
   
   if(false == Vision::FaceTracker::IsRecognitionSupported()) {
     PRINT_NAMED_WARNING("FaceRecognition.TestOwnerID.RecognitionNotSupported",
@@ -33,7 +33,7 @@ TEST(FaceRecognition, TestOwnerID)
   
   // Find all directories of face images, one per person
   std::vector<std::string> peopleDirs;
-  const std::string dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "test/faceRecognitionTests/");
+  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "test/faceRecognitionTests/");
   DIR* dir = opendir(dataPath.c_str());
   ASSERT_TRUE(nullptr != dir);
   
@@ -120,7 +120,7 @@ TEST(FaceRecognition, TestOwnerID)
     {
       // Create a new face tracker for each owner train file, to start from
       // scratch
-      Vision::FaceTracker faceTracker(dataPlatform->pathToResource(Util::Data::Scope::Resources,
+      Vision::FaceTracker faceTracker(cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                                    "/config/basestation/vision"),
                                       Vision::FaceTracker::DetectionMode::SingleImage);
 

@@ -355,7 +355,6 @@ namespace AnimationController {
 
   extern "C" bool PumpAudioData(uint8_t* dest)
   {
-    static bool currentlyUpdating = false;
     if(IsReadyToPlay()) {
       #ifdef TARGET_ESPRESSIF
       if (_audioReadInd == 0)
@@ -363,11 +362,6 @@ namespace AnimationController {
       if (HAL::AudioReady())
       #endif
       {
-        // XXX: This code is secretly recursive on the Espressif: PumpAudioData() -> Update() -> RTIP::SendMessage() -> PumpAudioData()
-        // That dependency loop trashes keyFrameBuffer when we run out of audio - so currentlyUpdating inserts crackles instead of crashing
-        if (currentlyUpdating)
-          return false;           // XXX: Crackles are bad - break the dependency
-        
         START_TIME_PROFILE(Anim, AUDIOPLAY);
 
         // Next thing in the buffer should be audio or silence:
@@ -461,9 +455,7 @@ namespace AnimationController {
           AnkiDebug( 2, "AnimationController", 14, "Update()\tari = %d\tnafb = %d", 2, _audioReadInd, _numAudioFramesBuffered);
 #         endif
           _audioReadInd = 0;
-          currentlyUpdating = true;
           Update(); // Done with audio message, grab next thing from buffer
-          currentlyUpdating = false;
 #         if DEBUG_ANIMATION_CONTROLLER
           _currentTime_ms += 33;
 #         endif
