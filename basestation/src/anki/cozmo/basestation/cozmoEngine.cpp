@@ -81,6 +81,7 @@ CozmoEngine::~CozmoEngine()
   
   BaseStationTimer::removeInstance();
   Util::SafeDelete(_keywordRecognizer);
+  _context->GetVizManager()->Disconnect();
 }
 
 Result CozmoEngine::Init(const Json::Value& config) {
@@ -134,25 +135,25 @@ Result CozmoEngine::Init(const Json::Value& config) {
     PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
                         "No VizHostIP member in JSON config file. Not initializing VizManager.");
   } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].asString().empty()){
-    VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), (uint16_t)VizConstants::VIZ_SERVER_PORT);
+    _context->GetVizManager()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), (uint16_t)VizConstants::VIZ_SERVER_PORT);
     
     // Erase anything that's still being visualized in case there were leftovers from
     // a previous run?? (We should really be cleaning up after ourselves when
     // we tear down, but it seems like Webots restarts aren't always allowing
     // the cleanup to happen)
-    VizManager::getInstance()->EraseAllVizObjects();
+    _context->GetVizManager()->EraseAllVizObjects();
     
     // Only send images if the viz host is the same as the robot advertisement service
     // (so we don't waste bandwidth sending (uncompressed) viz data over the network
     //  to be displayed on another machine)
     if(_config[AnkiUtil::kP_VIZ_HOST_IP] == _config[AnkiUtil::kP_ADVERTISING_HOST_IP]) {
-      VizManager::getInstance()->EnableImageSend(true);
+      _context->GetVizManager()->EnableImageSend(true);
     }
     
     if (nullptr != _context->GetExternalInterface())
     {
       // Have VizManager subscribe to the events it should care about
-      VizManager::getInstance()->SubscribeToEngineEvents(*_context->GetExternalInterface());
+      _context->GetVizManager()->SubscribeToEngineEvents(*_context->GetExternalInterface());
     }
   }
   

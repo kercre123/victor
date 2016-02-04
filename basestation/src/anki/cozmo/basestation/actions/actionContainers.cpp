@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -436,7 +437,10 @@ namespace Anki {
         }
         assert(_currentAction != nullptr);
         
-        VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN,
+        VizManager* vizManager = _currentAction->GetRobot()->GetContext()->GetVizManager();
+        ASSERT_NAMED(nullptr != vizManager, "Expecting a non-null VizManager");
+        
+        vizManager->SetText(VizManager::ACTION, NamedColors::GREEN,
                                            "Action: %s", _currentAction->GetName().c_str());
         
         const ActionResult actionResult = _currentAction->Update();
@@ -449,7 +453,7 @@ namespace Anki {
             lastResult = RESULT_FAIL;
           }
           
-          VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN, "");
+          vizManager->SetText(VizManager::ACTION, NamedColors::GREEN, "");
         }
       } // if queue not empty
       

@@ -20,6 +20,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+class VizManager;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Class INavMemoryMap
