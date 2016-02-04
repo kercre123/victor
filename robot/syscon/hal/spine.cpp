@@ -40,7 +40,6 @@ namespace Spine {
   }
 
   void processMessage(SpineProtocol& msg) {
-    return ;
     switch (msg.opcode) {
     case ASSIGN_PROP:
       Radio::assignProp(msg.AssignProp.slot, msg.AssignProp.prop_id);
