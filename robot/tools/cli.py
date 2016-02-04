@@ -74,7 +74,7 @@ class CozmoCLI(IDataReceiver):
             msg = RobotInterface.RobotToEngine.unpack(buffer)
         except:
             if len(buffer):
-                sys.stderr.write("Couldn't unpack message {:x}{:d}{linesep}".format(buffer[0], len(buffer), linesep=os.linesep))
+                sys.stderr.write("Couldn't unpack message 0x{:x}[{:d}]{linesep}".format(buffer[0], len(buffer), linesep=os.linesep))
             else:
                 sys.stderr.write("Can't unpack an empty message")
                 sys.stderr.write(os.linesep)

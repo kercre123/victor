@@ -50,7 +50,24 @@ typedef struct
   RobotInterface::OTACommand cmd; ///< The command we are processing
 } OTAUpgradeTaskState;
 
-LOCAL bool TaskEraseFlash(uint32 param)
+/// A task that just waits for the I2SPI message queue to clear before changing mode
+LOCAL bool TaskI2SPISwitchMode(uint32 mode)
+{
+  if (i2spiMessageQueueIsEmpty())
+  {
+    i2spiSwitchMode((I2SpiMode)mode);
+    return false;
+  }
+  else
+  {
+#ifdef DEBUG_OTA
+    os_printf("w");
+#endif
+    return true;
+  }
+}
+
+LOCAL bool TaskDoEraseFlash(uint32 param)
 {
   RobotInterface::EraseFlash* msg = reinterpret_cast<RobotInterface::EraseFlash*>(param);
   // TODO: Add block based erase
@@ -95,7 +112,7 @@ LOCAL bool TaskEraseFlash(uint32 param)
     {
       if (retries-- > 0)
       {
-        foregroundTaskPost(TaskEraseFlash, param);
+        foregroundTaskPost(TaskDoEraseFlash, param);
         return true;
       }
       else
@@ -117,6 +134,21 @@ LOCAL bool TaskEraseFlash(uint32 param)
   
   os_free(msg);
   return false;
+}
+
+LOCAL bool TaskEraseFlash(uint32 param)
+{
+  if (i2spiMessageQueueIsEmpty())
+  {
+    i2spiSwitchMode(I2SPI_PAUSED);
+    foregroundTaskPost(TaskDoEraseFlash, param);
+    return false;
+  }
+  else
+  {
+    os_printf("e");
+    return true;
+  }
 }
 
 LOCAL bool TaskWriteFlash(uint32 param)
@@ -399,7 +431,7 @@ LOCAL bool TaskOtaBody(uint32 param)
         ct_assert(sizeof(msg) == 8);
         msg.command = RobotInterface::EngineToRobot::Tag_bodyUpgradeData;
         
-        if (state->index == state->fwSize) // Done loading firmware
+        if (state->index >= state->fwSize) // Done loading firmware
         {
           os_printf("Done loading body, commanding reboot\r\n");
           msg.bytes[1] = COMMAND_HEADER >> 8;
@@ -413,27 +445,15 @@ LOCAL bool TaskOtaBody(uint32 param)
           }
           else
           {
-            state->index++;
-            return true;
-          }
-        }
-        else if (state->index > state->fwSize)
-        {
-          if (i2spiMessageQueueIsEmpty()) // Wait for message queue to run out
-          {
             if (flashStagedFlags[0] == 0xFFFFffff)
             {
-              i2spiSwitchMode(I2SPI_REBOOT);
+              foregroundTaskPost(TaskI2SPISwitchMode, I2SPI_REBOOT);
             }
             else
             {
-              i2spiSwitchMode(I2SPI_RECOVERY);
+              foregroundTaskPost(TaskI2SPISwitchMode, I2SPI_RECOVERY);
             }
-            break;
-          }
-          else
-          {
-            return true;
+            return false;
           }
         }
         else
@@ -693,7 +713,6 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
     {
       os_memcpy(taskMsg, &msg, msg.Size());
       retries = MAX_RETRIES;
-      i2spiSwitchMode(I2SPI_PAUSED);
       foregroundTaskPost(TaskEraseFlash, reinterpret_cast<uint32>(taskMsg));
     }
   }

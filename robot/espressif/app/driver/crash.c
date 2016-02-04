@@ -220,13 +220,13 @@ bool ICACHE_FLASH_ATTR crashHandlerHasReport(void)
   system_rtc_mem_read(RTC_MEM_START, &header, 4);
   if(header == CRASH_DUMP_STORAGE_HEADER)
   {
-    static const char crashMessageFormat[] ICACHE_RODATA_ATTR = "CRASH REPORT AVAILABLE\npc = 0x%x";
+    static const char crashMessageFormat[] ICACHE_RODATA_ATTR = "CRASH REPORT\npc = 0x%x\ncause = 0x%x\n";
     const uint32_t fmtSz = ((sizeof(crashMessageFormat)+3)/4)*4;
     char fmtBuf[fmtSz];
-    unsigned int pc;
-    system_rtc_mem_read(RTC_MEM_START + 3, &pc, 4);
+    ex_regs regs;
+    system_rtc_mem_read(RTC_MEM_START + 3, &regs, sizeof(ex_regs));
     os_memcpy(fmtBuf, crashMessageFormat, fmtSz);
-    FacePrintf(fmtBuf, pc);
+    FacePrintf(fmtBuf, regs.epc1, regs.exccause);
     return true;
   }
   else
