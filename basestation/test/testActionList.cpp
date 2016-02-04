@@ -383,7 +383,7 @@ TEST(QueueAction, InterruptActionRunning)
   EXPECT_NE(testAction->GetRobot(), &r);
   EXPECT_NE(testInterruptAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testInterruptAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testInterruptAction);
   
   EXPECT_EQ(testInterruptAction->GetRobot(), &r);
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
@@ -395,7 +395,7 @@ TEST(QueueAction, InterruptActionRunning)
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW_AND_RESUME, testAction);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction);
   
   EXPECT_EQ(testAction->GetRobot(), &r);
   EXPECT_EQ(testInterruptAction->GetRobot(), &r);
@@ -769,7 +769,7 @@ TEST(QueueAction, QueueNowAndClearRemaining)
 // Tests queueing actions at the IN_PARALLEL position
 TEST(QueueAction, QueueInParallel)
 {
-  Robot r(0, &msgHandler, nullptr, dataPlatform);
+  Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);

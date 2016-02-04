@@ -334,12 +334,14 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      const IActionRunner* currentAction = GetCurrentAction();
-      DeleteCurrentAction();
-      
+      // Empty and no current action
       if(IsEmpty()) {
         return QueueAtEnd(action, numRetries);
+      } else if(_queue.empty()) { // Empty but there is a current action
+        DeleteCurrentAction();
+        return QueueAtEnd(action, numRetries);
       } else {
+        const IActionRunner* currentAction = GetCurrentAction();
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
         PRINT_NAMED_DEBUG("ActionQueue.QueueNow.CancelingPrevious", "Canceling %s [%d] in favor of action %s [%d]",
@@ -347,7 +349,7 @@ namespace Anki {
                           currentAction->GetTag(),
                           action->GetName().c_str(),
                           action->GetTag());
-
+        DeleteCurrentAction();
         action->SetNumRetries(numRetries);
         _queue.push_front(action);
         return RESULT_OK;
