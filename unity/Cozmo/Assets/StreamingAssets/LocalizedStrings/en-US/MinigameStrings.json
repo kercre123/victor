@@ -146,5 +146,8 @@
   },
   "speedTap.text.howToPlayLightCountNoColor": {
     "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
+  },
+  "minigames.label.gamesAndActivities": {
+    "translation": "Games & Activities"
   }
 }

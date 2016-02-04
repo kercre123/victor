@@ -95,6 +95,20 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private Shader _GradiantSimpleClippingScreenspaceShader;
+
+      public Shader GradiantSimpleClippingScreenspaceShader {
+        get { return _GradiantSimpleClippingScreenspaceShader; }
+      }
+
+      [SerializeField]
+      private Shader _GradiantComplexClippingScreenspaceShader;
+
+      public Shader GradiantComplexClippingScreenspaceShader {
+        get { return _GradiantComplexClippingScreenspaceShader; }
+      }
+
+      [SerializeField]
       private Shader _GrayscaleShader;
 
       public Shader GrayscaleShader {
