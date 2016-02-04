@@ -79,8 +79,7 @@ namespace SpeedTap {
     }
 
     public void PlayerLosesHand() {
-      _PlayerScore = Mathf.Max(0, _PlayerScore - 1);
-      UpdateUI();
+      CozmoWinsHand();
     }
 
     private void HandleRoundAnimationDone(bool success) {

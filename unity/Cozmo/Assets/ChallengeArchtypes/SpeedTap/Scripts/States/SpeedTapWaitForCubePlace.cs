@@ -16,15 +16,18 @@ namespace SpeedTap {
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
       _SpeedTapGame.ResetScore();
+
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 60f, HandleGotoObjectComplete);
     }
 
-    public override void Update() {
-      base.Update();
-      if (_SpeedTapGame.CozmoBlock.MarkersVisible) {
-        float distance = Vector3.Distance(_CurrentRobot.WorldPosition, _SpeedTapGame.CozmoBlock.WorldPosition);
-        if (distance < 60.0f) {
-          _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
-        }
+    private void HandleGotoObjectComplete(bool success) {
+
+      if((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < 80f) {
+        _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
+      }
+      else {
+        // restart this state
+        _StateMachine.SetNextState(new SpeedTapWaitForCubePlace());
       }
     }
 
