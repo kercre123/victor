@@ -326,17 +326,17 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      const IActionRunner* currentAction = GetCurrentAction();
       DeleteCurrentAction();
       
       if(IsEmpty()) {
         return QueueAtEnd(action, numRetries);
-        
       } else {
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
         PRINT_NAMED_DEBUG("ActionQueue.QueueNow.CancelingPrevious", "Canceling %s [%d] in favor of action %s [%d]",
-                          _queue.front()->GetName().c_str(),
-                          _queue.front()->GetTag(),
+                          currentAction->GetName().c_str(),
+                          currentAction->GetTag(),
                           action->GetName().c_str(),
                           action->GetTag());
 
@@ -369,7 +369,6 @@ namespace Anki {
                            "Interrupting %s to put %s in front of it.",
                            _currentAction->GetName().c_str(),
                            action->GetName().c_str());
-          _interruptedActions.push_back(_currentAction);
           action->SetNumRetries(numRetries);
           _queue.push_front(_currentAction);
           _queue.push_front(action);
@@ -429,17 +428,6 @@ namespace Anki {
     Result ActionQueue::Update()
     {
       Result lastResult = RESULT_OK;
-      
-      // Update any interrupted actions (but leave them in the queue)
-      for(auto interruptedAction : _interruptedActions) {
-        ActionResult result = interruptedAction->Update();
-        if(ActionResult::INTERRUPTED != result) {
-          PRINT_NAMED_WARNING("ActionQueue.Update.InterruptFailed",
-                              "Expecting interrupted %s action to return INTERRUPTED result on Update",
-                              interruptedAction->GetName().c_str());
-        }
-      }
-      _interruptedActions.clear();
       
       if(!_queue.empty() || _currentAction != nullptr)
       {

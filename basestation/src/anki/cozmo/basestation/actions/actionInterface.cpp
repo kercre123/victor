@@ -75,6 +75,16 @@ namespace Anki {
       _isInterrupted = InterruptInternal();
       if(_isInterrupted) {
         Reset();
+        
+        if(!_suppressTrackLocking)
+        {
+          // Force all tracks to unlock
+          _robot->GetMoveComponent().UnlockAnimTracks((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+          _robot->GetMoveComponent().UnignoreTrackMovement((uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS);
+        }
+        
+        CancelAndDeleteSubActions();
+        _isRunning = false;
       }
       return _isInterrupted;
     }

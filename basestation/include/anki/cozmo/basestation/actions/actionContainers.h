@@ -83,7 +83,6 @@ namespace Anki {
       IActionRunner*            _currentAction           = nullptr;
       bool                      _currentActionIsDeleting = false;
       std::list<IActionRunner*> _queue;
-      std::list<IActionRunner*> _interruptedActions;
       
     }; // class ActionQueue
     
