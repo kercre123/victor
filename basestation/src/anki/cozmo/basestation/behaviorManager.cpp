@@ -200,7 +200,7 @@ namespace Cozmo {
       {
         VizInterface::NewBehaviorSelected newBehaviorSelected;
         newBehaviorSelected.newCurrentBehavior = _nextBehavior ? _nextBehavior->GetName() : "null";
-        VizManager::getInstance()->SendNewBehaviorSelected(std::move(newBehaviorSelected));
+        _robot.GetContext()->GetVizManager()->SendNewBehaviorSelected(std::move(newBehaviorSelected));
       }
       #endif // SEND_MOOD_TO_VIZ_DEBUG
       

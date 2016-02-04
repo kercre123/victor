@@ -53,11 +53,8 @@ namespace Cozmo {
   
   CozmoGameImpl::~CozmoGameImpl()
   {
-    VizManager::getInstance()->Disconnect();
-    
     // Remove singletons
     SoundManager::removeInstance();
-    VizManager::removeInstance();
   }
   
   CozmoGameImpl::RunState CozmoGameImpl::GetRunState() const
