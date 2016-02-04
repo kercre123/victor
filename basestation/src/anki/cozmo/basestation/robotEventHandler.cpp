@@ -652,14 +652,7 @@ void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterfac
   
   // Put the action in the given position of the specified queue:
   action->SetTag(msg.idTag);
-  if(msg.inSlot != Robot::DriveAndManipulateSlot)
-  {
-    robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, action, msg.numRetries);
-  }
-  else
-  {
-    robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
-  }
+  robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
 }
   
 void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -693,14 +686,7 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
   
   // Put the action in the given position of the specified queue:
   compoundAction->SetTag(msg.idTag);
-  if(msg.inSlot != Robot::DriveAndManipulateSlot)
-  {
-    robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, compoundAction, msg.numRetries);
-  }
-  else
-  {
-    robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
-  }
+  robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
 }
   
 void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)

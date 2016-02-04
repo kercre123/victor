@@ -118,7 +118,6 @@ namespace Anki {
       // Keep track of which ActionList "slot" an action is in. For example,
       // this will let an action queue a subsequent action in its same slot.
       // The ActionList will set this automatically when queuing an action.
-      void SetSlotHandle(ActionList::SlotHandle inSlot) { _inSlot = inSlot; }
       ActionList::SlotHandle GetSlotHandle() const { return _inSlot; }
       
     protected:
