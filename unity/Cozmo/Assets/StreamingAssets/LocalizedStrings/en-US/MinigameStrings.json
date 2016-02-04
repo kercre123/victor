@@ -30,8 +30,11 @@
   "minigame.quitView.description": {
     "translation": "Any progress in this game will be lost. Are you sure?"
   },
-  "minigame.progressBar.defaultLabel": {
-    "translation": "Challenge Progress"
+  "minigame.text.winner": {
+    "translation": "Winner"
+  },
+  "minigame.text.score": {
+    "translation": "Score"
   },
   "minigame.label.showCubes": {
     "translation": "Put {0} cubes where Cozmo can see them. They'll turn white when they're in the right place. ({1}/{0})"
@@ -73,7 +76,7 @@
     "translation": "Steps In Pattern: {0}/{1}"
   },
   "speedTap.roundsText": {
-    "translation": "Round: {0:N0}/{1:N0}"
+    "translation": "Round: {0:N0}"
   },
   "speedTap.roundsWon.cozmo": {
     "translation": "cozmo rounds won: {0:N0}"

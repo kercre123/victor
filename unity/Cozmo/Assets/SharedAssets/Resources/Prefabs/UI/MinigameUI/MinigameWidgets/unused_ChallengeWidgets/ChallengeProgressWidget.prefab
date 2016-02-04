@@ -181,6 +181,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '#minigame.progressBar.defaultLabel'
+  _AllUppercase: 0
 --- !u!114 &11465698
 MonoBehaviour:
   m_ObjectHideFlags: 1

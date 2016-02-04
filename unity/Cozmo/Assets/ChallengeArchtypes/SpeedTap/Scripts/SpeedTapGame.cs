@@ -56,10 +56,6 @@ namespace SpeedTap {
 
     public event Action PlayerTappedBlockEvent;
 
-    [SerializeField]
-    private SpeedTapPanel _GamePanelPrefab;
-    private SpeedTapPanel _GamePanel;
-
     public void ResetScore() {
       _CozmoScore = 0;
       _PlayerScore = 0;
@@ -157,18 +153,7 @@ namespace SpeedTap {
       Rules = GetRules((SpeedTapRuleSet)difficulty);
     }
 
-    public void OpenGamePanel() {
-      if (_GamePanel == null) {
-        _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
-        _GamePanel.TapButtonPressed += UIButtonTapped;
-        UpdateUI();
-      }
-    }
-
     protected override void CleanUpOnDestroy() {
-      if (_GamePanel != null) {
-        UIManager.CloseViewImmediately(_GamePanel);
-      }
 
       LightCube.TappedAction -= BlockTapped;
       GameAudioClient.SetMusicState(MUSIC.SILENCE);
@@ -180,7 +165,18 @@ namespace SpeedTap {
     }
 
     public void UpdateUI() {
-      _GamePanel.SetScoreText(_CozmoScore, _PlayerScore, _CozmoRoundsWon, _PlayerRoundsWon, _Rounds);
+      int halfTotalRounds = (_Rounds + 1) / 2;
+      CozmoScore = _CozmoScore;
+      CozmoMaxRounds = halfTotalRounds;
+      CozmoRoundsWon = _CozmoRoundsWon;
+
+      PlayerScore = _PlayerScore;
+      PlayerMaxRounds = halfTotalRounds;
+      PlayerRoundsWon = _PlayerRoundsWon;
+
+      // Display the current round
+      InfoTitleText = string.Format(Localization.GetCultureInfo(), 
+        Localization.Get(LocalizationKeys.kSpeedTapRoundsText), _CozmoRoundsWon + _PlayerRoundsWon + 1);
     }
 
     public void RollingBlocks() {
