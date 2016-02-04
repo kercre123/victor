@@ -350,13 +350,30 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Difficulty Select
 
-  public void OpenDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable, System.Action<DifficultySelectOptionData> onSelect) {
-    _SharedMinigameViewInstance.CreateDifficultySelectView(options, highestDifficultyAvailable, onSelect);
+  private int _CurrentDifficulty;
+
+  public int CurrentDifficulty {
+    get { return _CurrentDifficulty; }
+    set { 
+      _CurrentDifficulty = value;
+      OnDifficultySet(value);
+    }
+  }
+
+  protected virtual void OnDifficultySet(int difficulty) {
+  }
+
+  public void OpenDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
+    _SharedMinigameViewInstance.CreateDifficultySelectView(options, highestDifficultyAvailable);
     _SharedMinigameViewInstance.OpenDifficultySelectView();
   }
 
   public void CloseDifficultySelectView() {
     _SharedMinigameViewInstance.CloseDifficultySelectView();
+  }
+
+  public DifficultySelectOptionData GetSelectedDifficulty() {
+    return _SharedMinigameViewInstance.GetSelectedDifficulty();
   }
 
   #endregion

@@ -41,7 +41,6 @@ namespace SpeedTap {
 
     public ISpeedTapRules Rules;
 
-    private int _CurrentDifficulty;
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
@@ -88,13 +87,13 @@ namespace SpeedTap {
         if (_PlayerScore > _CozmoScore) {
           _PlayerRoundsWon++;
 
-          if (_CurrentDifficulty > DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
-            DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = _CurrentDifficulty;
+          if (CurrentDifficulty > DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
+            DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty;
             DataPersistence.DataPersistenceManager.Instance.Save();
           }          
 
-          if (_DifficultyOptions.LastOrDefault().DifficultyId > _CurrentDifficulty) {
-            SetDifficulty(_CurrentDifficulty + 1);
+          if (_DifficultyOptions.LastOrDefault().DifficultyId > CurrentDifficulty) {
+            CurrentDifficulty++;
           }
             
           _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorFail, HandleRoundAnimationDone)));
@@ -133,7 +132,16 @@ namespace SpeedTap {
 
     // Use this for initialization
     protected void InitializeMinigameObjects(int cubesRequired) { 
-      _StateMachine.SetNextState(new SpeedTapSelectDifficulty(cubesRequired));
+
+      InitialCubesState initCubeState = new InitialCubesState(
+        new SelectDifficultyState(
+          new HowToPlayState(new SpeedTapWaitForCubePlace()),
+          DifficultyOptions,
+          Mathf.Max(DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
+        ), 
+        cubesRequired, 
+        InitialCubesDone);
+      _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
@@ -148,8 +156,7 @@ namespace SpeedTap {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.SILENCE);
     }
 
-    public void SetDifficulty(int difficulty) {
-      _CurrentDifficulty = difficulty;
+    protected override void OnDifficultySet(int difficulty) {
       Rules = GetRules((SpeedTapRuleSet)difficulty);
     }
 
@@ -159,7 +166,7 @@ namespace SpeedTap {
       GameAudioClient.SetMusicState(MUSIC.SILENCE);
     }
 
-    public void InitialCubesDone() {
+    private void InitialCubesDone() {
       CozmoBlock = GetClosestAvailableBlock();
       PlayerBlock = GetFarthestAvailableBlock();
     }

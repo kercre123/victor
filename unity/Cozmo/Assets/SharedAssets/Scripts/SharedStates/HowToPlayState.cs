@@ -6,7 +6,7 @@ public class HowToPlayState : State {
   private State _NextState;
   private InitialCubesState.CubeStateDone _DoneCallback;
 
-  public HowToPlayState(State nextState, InitialCubesState.CubeStateDone doneCallback) {
+  public HowToPlayState(State nextState, InitialCubesState.CubeStateDone doneCallback = null) {
     _NextState = nextState;
     _DoneCallback = doneCallback;
   }

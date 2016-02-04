@@ -355,9 +355,10 @@ namespace Cozmo {
 
       #region Difficulty Select Widget
 
-      public void CreateDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable, System.Action<DifficultySelectOptionData> onSelect) {
+      public void CreateDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
 
         if (_DifficultySelectViewInstance != null) {
+          _DifficultySelectViewInstance.Initialize(options, highestDifficultyAvailable);
           return;
         }
 
@@ -366,7 +367,6 @@ namespace Cozmo {
         _DifficultySelectViewInstance = newView.GetComponent<DifficultySelectView>();
 
         _DifficultySelectViewInstance.Initialize(options, highestDifficultyAvailable);
-        _DifficultySelectViewInstance.OnStartClicked += onSelect;
 
         AddWidget(_DifficultySelectViewInstance);
       }
@@ -381,6 +381,13 @@ namespace Cozmo {
         if (_DifficultySelectViewInstance != null) {
           _DifficultySelectViewInstance.gameObject.SetActive(false);
         }
+      }
+
+      public DifficultySelectOptionData GetSelectedDifficulty() {
+        if (_DifficultySelectViewInstance != null) {
+          return _DifficultySelectViewInstance.SelectedDifficulty;
+        }
+        return null;
       }
 
       #endregion

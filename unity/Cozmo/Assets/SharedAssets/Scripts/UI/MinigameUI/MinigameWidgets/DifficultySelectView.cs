@@ -17,18 +17,14 @@ public class DifficultySelectView : MonoBehaviour, IMinigameWidget {
   [SerializeField]
   private AnkiTextLabel _DescriptionLabel;
 
-
-  [SerializeField]
-  private AnkiButton _StartButton;
-
   private DifficultySelectOptionData _SelectedDifficulty;
 
   private readonly List<DifficultySelectOption> _SpawnedOptions = new List<DifficultySelectOption>();
 
-  public event Action<DifficultySelectOptionData> OnStartClicked;
-
-  private void Awake() {
-    _StartButton.onClick.AddListener(HandleStartClicked);
+  public DifficultySelectOptionData SelectedDifficulty {
+    get {
+      return _SelectedDifficulty;
+    }
   }
 
   private void ClearSpawnedOptions() {
@@ -47,11 +43,6 @@ public class DifficultySelectView : MonoBehaviour, IMinigameWidget {
 
   }
 
-  private void HandleStartClicked() {
-    if (OnStartClicked != null) {
-      OnStartClicked(_SelectedDifficulty);
-    }
-  }
 
   public void Initialize(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
     for (int i = 0; i < options.Count; i++) {
