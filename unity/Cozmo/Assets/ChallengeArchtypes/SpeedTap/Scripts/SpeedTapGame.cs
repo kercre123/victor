@@ -78,7 +78,7 @@ namespace SpeedTap {
     }
 
     private void HandleRoundAnimationDone(bool success) {
-      _StateMachine.SetNextState(new SteerState(50.0f, 50.0f, 0.8f, new SpeedTapWaitForCubePlace()));
+      _StateMachine.SetNextState(new SteerState(50.0f, 50.0f, 0.8f, new SpeedTapWaitForCubePlace(false)));
     }
 
     private void CheckRounds() {
@@ -135,7 +135,7 @@ namespace SpeedTap {
 
       InitialCubesState initCubeState = new InitialCubesState(
         new SelectDifficultyState(
-          new SpeedTapWaitForCubePlace(),
+          new SpeedTapWaitForCubePlace(true),
           DifficultyOptions,
           Mathf.Max(DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
         ), 
@@ -248,8 +248,8 @@ namespace SpeedTap {
         return new LightCountAnyColorSpeedTapRules();
       case SpeedTapRuleSet.LightCountSameColorNoTap:
         return new LightCountSameColorNoTap();
-      case SpeedTapRuleSet.LightCountSameColorNoRed:
-        return new LightCountSameColorNoRed();
+      case SpeedTapRuleSet.LightCountTwoColor:
+        return new LightCountTwoColorSpeedTapRules();
       default:
         return new DefaultSpeedTapRules();
       }

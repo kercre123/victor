@@ -2,7 +2,7 @@
 using System.Collections;
 
 namespace SpeedTap {
-  public class LightCountSameColorNoRed : ISpeedTapRules {
+  public class LightCountTwoColorSpeedTapRules : ISpeedTapRules {
 
     private Color[] _Colors = { Color.white, Color.green, Color.blue, Color.magenta };
 
@@ -15,10 +15,11 @@ namespace SpeedTap {
         game.PlayerBlock.SetLEDs(Color.black);
 
         int randColor = UnityEngine.Random.Range(0, _Colors.Length);
+        int randColor2 = UnityEngine.Random.Range(0, _Colors.Length);
 
         for (int i = 0; i < lightCount; ++i) {
-          game.CozmoBlock.Lights[i].OnColor = _Colors[randColor].ToUInt();
-          game.PlayerBlock.Lights[i].OnColor = _Colors[randColor].ToUInt();
+          game.CozmoBlock.Lights[i].OnColor = _Colors[i % 2 == 0 ? randColor : randColor2].ToUInt();
+          game.PlayerBlock.Lights[i].OnColor = _Colors[i % 2 == 0 ? randColor : randColor2].ToUInt();
         }
 
         game.PlayerWinColor = _Colors[randColor];
@@ -39,29 +40,32 @@ namespace SpeedTap {
         // second posibility, match count but not colors
         else if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.4f) {
           int lightCount = UnityEngine.Random.Range(1, 5);
-          int randColorIndex = UnityEngine.Random.Range(0, _Colors.Length);
+          int playerColorIndex = UnityEngine.Random.Range(0, _Colors.Length);
+          int playerColorIndex2 = UnityEngine.Random.Range(0, _Colors.Length);
           // pick the second from the remaining colors
-          int randColorIndex2 = (randColorIndex + UnityEngine.Random.Range(1, _Colors.Length)) % _Colors.Length;
+          int cozmoColorIndex = (playerColorIndex + UnityEngine.Random.Range(1, _Colors.Length)) % _Colors.Length;
+          int cozmoColorIndex2 = (playerColorIndex + UnityEngine.Random.Range(1, _Colors.Length)) % _Colors.Length;
 
           for (int i = 0; i < lightCount; ++i) {
-            game.PlayerBlock.Lights[i].OnColor = _Colors[randColorIndex].ToUInt();
-            game.CozmoBlock.Lights[i].OnColor = _Colors[randColorIndex2].ToUInt();
+            game.PlayerBlock.Lights[i].OnColor = _Colors[i % 2 == 0 ? playerColorIndex : playerColorIndex2].ToUInt();
+            game.CozmoBlock.Lights[i].OnColor = _Colors[i % 2 == 0 ? cozmoColorIndex : cozmoColorIndex2].ToUInt();
           }
         }
         // third posibility, match color but not count.
         else {
 
           int colorIndex = UnityEngine.Random.Range(1, _Colors.Length);
+          int colorIndex2 = UnityEngine.Random.Range(1, _Colors.Length);
 
           int lightCountPlayer = UnityEngine.Random.Range(1, 5);
           int lightCountCozmo = 1 + ((lightCountPlayer + UnityEngine.Random.Range(0, 3)) % 4);
 
           for (int i = 0; i < lightCountPlayer; ++i) {
-            game.PlayerBlock.Lights[i].OnColor = _Colors[colorIndex].ToUInt();
+            game.PlayerBlock.Lights[i].OnColor = _Colors[i % 2 == 0 ? colorIndex : colorIndex2].ToUInt();
           }
 
           for (int i = 0; i < lightCountCozmo; ++i) {
-            game.CozmoBlock.Lights[i].OnColor = _Colors[colorIndex].ToUInt();
+            game.CozmoBlock.Lights[i].OnColor = _Colors[i % 2 == 0 ? colorIndex : colorIndex2].ToUInt();
           }
         }
       }

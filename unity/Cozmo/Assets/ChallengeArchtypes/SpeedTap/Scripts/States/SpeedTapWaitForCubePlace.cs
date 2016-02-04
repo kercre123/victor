@@ -7,6 +7,12 @@ namespace SpeedTap {
 
     private SpeedTapGame _SpeedTapGame = null;
 
+    private bool _ShowHowToPlay = false;
+
+    public SpeedTapWaitForCubePlace(bool showHowToPlay) {
+      _ShowHowToPlay = showHowToPlay;
+    }
+
     private bool _GotoObjectComplete = false;
 
     public override void Enter() {
@@ -21,7 +27,9 @@ namespace SpeedTap {
 
       _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 60f, HandleGotoObjectComplete);
 
-      _StateMachine.PushSubState(new HowToPlayState(null));
+      if (_ShowHowToPlay) {
+        _StateMachine.PushSubState(new HowToPlayState(null));
+      }
     }
 
     private void HandleGotoObjectComplete(bool success) {
@@ -35,7 +43,7 @@ namespace SpeedTap {
         }
         else {
           // restart this state
-          _StateMachine.SetNextState(new SpeedTapWaitForCubePlace());
+          _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
         }
       }
     }
