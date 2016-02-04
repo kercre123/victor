@@ -7,4 +7,14 @@
 extern AcceleratorPacket g_AccelStatus[MAX_CUBES];
 extern uint16_t g_LedStatus[MAX_CUBES][NUM_BLOCK_LEDS];
 
+namespace Anki {
+  namespace Cozmo {
+    namespace HAL {
+      namespace Cube {
+        void SpineIdle(SpineProtocol& msg);
+      }
+    }
+  }
+}
+
 #endif
