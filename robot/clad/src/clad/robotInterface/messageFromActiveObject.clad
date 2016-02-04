@@ -7,7 +7,12 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
+message ObjectDiscovered
+{
+  uint_32     factory_id
+}
+
 message ObjectMoved
 {
   uint_32     timestamp,

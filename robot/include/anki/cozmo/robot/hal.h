@@ -37,6 +37,7 @@
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/robotInterface/messageToActiveObject.h"
 
 // Set to 0 if you want to read printf output in a terminal and you're not
 // using UART as radio. The radio is effectively disabled in this case.
@@ -481,6 +482,7 @@ namespace Anki
       void FlashBlockIDs();
 
       // Set the color and flashing of each LED on a block separately
+      Result AssignCubeSlots(int total_ids, const uint32_t* ids);
       Result SetBlockLight(const u32 blockID, const u16* colors);
 
       void DiscoverProp(uint32_t id);
