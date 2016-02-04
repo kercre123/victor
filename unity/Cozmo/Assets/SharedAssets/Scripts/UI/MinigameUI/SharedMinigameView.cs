@@ -65,8 +65,8 @@ namespace Cozmo {
       private ScoreWidget _CozmoScoreWidgetInstance;
       private ScoreWidget _PlayerScoreWidgetInstance;
 
-      //[SerializeField]
-      //private float _EnterAnimationXOffset = 600f;
+      [SerializeField]
+      private float _ScoreEnterAnimationXOffset = 600f;
 
       [SerializeField]
       private RectTransform _CozmoScoreContainer;
@@ -457,6 +457,88 @@ namespace Cozmo {
           _InfoTitleLayoutElement.gameObject.SetActive(true);
           _InfoTitleTextLabel.text = value; 
         }
+      }
+
+      #endregion
+
+      #region Score Widgets
+
+      public int CozmoScore {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.Score = value;
+        }
+      }
+
+      public int CozmoMaxRounds {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.MaxRounds = value;
+        }
+      }
+
+      public int CozmoRoundsWon {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.RoundsWon = value;
+        }
+      }
+
+      public void ShowCozmoWinnerBanner() {
+        ShowCozmoScoreWidget();
+        _CozmoScoreWidgetInstance.IsWinner = true;
+      }
+
+      public void ShowCozmoScoreWidget() {
+        if (_CozmoScoreWidgetInstance == null) {
+          _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
+            _CozmoPortraitSprite);            
+        }
+      }
+
+      public int PlayerScore {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.Score = value;
+        }
+      }
+
+      public int PlayerMaxRounds {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.MaxRounds = value;
+        }
+      }
+
+      public int PlayerRoundsWon {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.RoundsWon = value;
+        }
+      }
+
+      public void ShowPlayerWinnerBanner() {
+        ShowPlayerScoreWidget();
+        _PlayerScoreWidgetInstance.IsWinner = true;
+      }
+
+      public void ShowPlayerScoreWidget() {
+        if (_PlayerScoreWidgetInstance == null) {
+          _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
+            _PlayerPortraitSprite);            
+        }
+      }
+
+      private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
+                                            Sprite portrait) {
+
+        GameObject widgetObj = UIManager.CreateUIElement(_ScoreWidgetPrefab.gameObject, widgetParent);
+        ScoreWidget instance = widgetObj.GetComponent<ScoreWidget>();
+        instance.AnimationXOffset = animationOffset;
+        instance.Portrait = portrait;
+
+        AddWidget(instance);
+        return instance;
       }
 
       #endregion

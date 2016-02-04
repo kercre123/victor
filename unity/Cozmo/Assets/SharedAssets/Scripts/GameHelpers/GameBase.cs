@@ -39,6 +39,8 @@ public abstract class GameBase : MonoBehaviour {
     if (string.IsNullOrEmpty(primaryText)) {
       primaryText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
     }
+    _SharedMinigameViewInstance.ShowCozmoScoreWidget();
+    _SharedMinigameViewInstance.ShowPlayerWinnerBanner();
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
@@ -53,6 +55,8 @@ public abstract class GameBase : MonoBehaviour {
     if (string.IsNullOrEmpty(primaryText)) {
       primaryText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     }
+    _SharedMinigameViewInstance.ShowCozmoWinnerBanner();
+    _SharedMinigameViewInstance.ShowPlayerScoreWidget();
     OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
   }
 
@@ -429,6 +433,46 @@ public abstract class GameBase : MonoBehaviour {
     get { return _SharedMinigameViewInstance.InfoTitleText; }
     set { 
       _SharedMinigameViewInstance.InfoTitleText = value; 
+    }
+  }
+
+  #endregion
+
+  #region Score Widgets
+
+  public int CozmoScore {
+    set {
+      _SharedMinigameViewInstance.CozmoScore = value;
+    }
+  }
+
+  public int CozmoMaxRounds {
+    set {
+      _SharedMinigameViewInstance.CozmoMaxRounds = value;
+    }
+  }
+
+  public int CozmoRoundsWon {
+    set {
+      _SharedMinigameViewInstance.CozmoRoundsWon = value;
+    }
+  }
+
+  public int PlayerScore {
+    set {
+      _SharedMinigameViewInstance.PlayerScore = value;
+    }
+  }
+
+  public int PlayerMaxRounds {
+    set {
+      _SharedMinigameViewInstance.PlayerMaxRounds = value;
+    }
+  }
+
+  public int PlayerRoundsWon {
+    set {
+      _SharedMinigameViewInstance.PlayerRoundsWon = value;
     }
   }
 

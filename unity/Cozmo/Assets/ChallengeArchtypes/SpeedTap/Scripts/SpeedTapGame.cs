@@ -142,7 +142,14 @@ namespace SpeedTap {
     }
 
     public void UpdateUI() {
-      //_GamePanel.SetScoreText(_CozmoScore, _PlayerScore, _CozmoRoundsWon, _PlayerRoundsWon, _Rounds);
+      int halfTotalRounds = (_Rounds + 1) / 2;
+      CozmoScore = _CozmoScore;
+      CozmoMaxRounds = halfTotalRounds;
+      CozmoRoundsWon = _CozmoRoundsWon;
+
+      PlayerScore = _PlayerScore;
+      PlayerMaxRounds = halfTotalRounds;
+      PlayerRoundsWon = _PlayerRoundsWon;
 
       // Display the current round
       InfoTitleText = string.Format(Localization.GetCultureInfo(), 

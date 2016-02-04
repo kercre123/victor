@@ -28,6 +28,10 @@ public static class Localization {
     return value;
   }
 
+  public static string GetNumber(int number) {
+    return string.Format(GetCultureInfo(), "{0:N0}", number);
+  }
+
   public static bool IsSupportedLocale(string locale) {
     return _SupportedLocales.Contains(locale);
   }
