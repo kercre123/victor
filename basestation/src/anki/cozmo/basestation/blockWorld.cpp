@@ -83,14 +83,6 @@ namespace Cozmo {
       
       // TODO: Create each known block / matpiece from a configuration/definitions file
       
-      VizManager* vizManager = _robot->GetContext()->GetVizManager();
-      // Creating a simple lambda to set the vizManager on new objects being added
-      auto setVizAndAdd = [this, vizManager] (ObjectFamily family, ObservableObject* newObj)
-      {
-        newObj->SetVizManager(vizManager);
-        _objectLibrary[family].AddObject(newObj);
-      };
-      
       //////////////////////////////////////////////////////////////////////////
       // 1x1 Cubes
       //
@@ -141,10 +133,10 @@ namespace Cozmo {
       // 1x1 Light Cubes
       //
       
-      setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE1));
-      setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE2));
-      setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE3));
-      setVizAndAdd(ObjectFamily::LightCube, new ActiveCube(ObjectType::Block_LIGHTCUBE4));
+      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE1));
+      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE2));
+      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));
+      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE4));
       
       if (nullptr != _robot)
       {
@@ -195,7 +187,7 @@ namespace Cozmo {
       //////////////////////////////////////////////////////////////////////////
       // Charger
       //
-      setVizAndAdd(ObjectFamily::Charger, new Charger());
+      _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
       
       if(_robot->HasExternalInterface())
       {
