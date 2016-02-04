@@ -16,18 +16,16 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &143852
+--- !u!1 &144444
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 224: {fileID: 22409258}
-  - 222: {fileID: 22229526}
-  - 114: {fileID: 11452454}
+  - 224: {fileID: 22479074}
   m_Layer: 5
-  m_Name: ChallengeTitleLabel
+  m_Name: TitleProxyContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -49,6 +47,43 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &196442
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22403326}
+  - 114: {fileID: 11416958}
+  m_Layer: 5
+  m_Name: TitleProxy
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &11416958
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 196442}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 184776, guid: dbc1abf629e52496a9050be2eba1995a, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 5
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: Cozmo.MinigameWidgets.ChallengeTitleWidget:_ChallengeTitleLabel
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!114 &11445962
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -67,39 +102,6 @@ MonoBehaviour:
     FieldName: Cozmo.MinigameWidgets.ChallengeTitleWidget:_ChallangeIcon
     ReferencePath: 
   ModifiedGlobalReferences: []
---- !u!114 &11452454
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 143852}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_FontData:
-    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
-    m_FontSize: 64
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 2
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: FPO Challenge Title Here
-  _AllUppercase: 0
 --- !u!114 &11452892
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -112,13 +114,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ChallangeIcon: {fileID: 0}
-  _ChallengeTitleLabel: {fileID: 11452454}
---- !u!222 &22229526
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 143852}
+  _ChallengeTitleLabel: {fileID: 0}
 --- !u!224 &22401510
 RectTransform:
   m_ObjectHideFlags: 1
@@ -129,8 +125,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22409258}
   - {fileID: 22411410}
+  - {fileID: 22479074}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 1, y: 1}
@@ -138,22 +134,22 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 1, y: 1}
---- !u!224 &22409258
+--- !u!224 &22403326
 RectTransform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 143852}
+  m_GameObject: {fileID: 196442}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22401510}
+  m_Father: {fileID: 22479074}
   m_RootOrder: 0
-  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -849, y: -116}
-  m_SizeDelta: {x: 1242, y: 94}
+  m_AnchoredPosition: {x: 0, y: -.24992466}
+  m_SizeDelta: {x: 0, y: .500079989}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22411410
 RectTransform:
@@ -166,11 +162,29 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22401510}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -115, y: -116}
-  m_SizeDelta: {x: 150, y: 150}
+  m_AnchoredPosition: {x: -99, y: -104.999969}
+  m_SizeDelta: {x: 198, y: 210}
+  m_Pivot: {x: .5, y: .5}
+--- !u!224 &22479074
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 144444}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 22403326}
+  m_Father: {fileID: 22401510}
+  m_RootOrder: 1
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: -778, y: -71}
+  m_SizeDelta: {x: 1239, y: 142}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:

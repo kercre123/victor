@@ -44,28 +44,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
-    JsonValue: 0.894117653
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
-    JsonValue: 0.7019608
-  - ObjectPath: ButtonDropShadow/ButtonStroke
-    FieldName: UnityEngine.UI.Image:m_Color:g
-    JsonValue: 0.8941177
-  - ObjectPath: ButtonDropShadow/ButtonStroke
-    FieldName: UnityEngine.UI.Image:m_Color:r
-    JsonValue: 0.7019608
-  - ObjectPath: ButtonDropShadow/ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:b
-    JsonValue: 0.65882355
-  - ObjectPath: ButtonDropShadow/ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:g
-    JsonValue: 0.5294118
-  - ObjectPath: ButtonDropShadow/ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:r
-    JsonValue: 0.219607845
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.MinigameWidgets.QuitMinigameButton:_QuitButtonInstance
@@ -97,8 +76,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 228, y: -81.5000305}
-  m_SizeDelta: {x: 456, y: 163}
+  m_AnchoredPosition: {x: 259, y: -102.5}
+  m_SizeDelta: {x: 518, y: 205}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22469030
 RectTransform:
