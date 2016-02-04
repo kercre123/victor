@@ -68,6 +68,10 @@
 namespace Anki {
   namespace Cozmo {
     
+    // static initializers
+    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0});
+    
+    
     Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     : _context(context)
     , _ID(robotID)
@@ -79,8 +83,7 @@ namespace Anki {
     , _movementComponent(*this)
     , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context->GetDataPlatform())
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
-    , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
-                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
+    , _headCamPose(_kDefaultHeadCamRotation, {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
@@ -575,24 +578,16 @@ namespace Anki {
       return _newStateMsgAvailable;
     }
     
+    void Robot::SetCameraRotation(f32 roll, f32 pitch, f32 yaw)
+    {
+      RotationMatrix3d rot(roll, -pitch, yaw);
+      _headCamPose.SetRotation(rot * _kDefaultHeadCamRotation);
+      PRINT_NAMED_INFO("Robot.SetCameraRotation", "yaw_corr=%f, pitch_corr=%f, roll_corr=%f", yaw, pitch, roll);
+    }
+    
     void Robot::SetPhysicalRobot(bool isPhysical)
     {
-      if (_isPhysical != isPhysical) {
-        if (isPhysical) {
-          // "Recalibrate" camera pose within head for physical robot
-          // TODO: Do this properly!
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_YAW_CORR, Z_AXIS_3D()));
-          _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D()));
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_ROLL_CORR, X_AXIS_3D()));
-          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_NAMED_INFO("Robot.SetPhysicalRobot", "Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, roll_corr=%f, x_trans_corr=%fmm", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_ROLL_CORR, HEAD_CAM_TRANS_X_CORR);
-        } else {
-          _headCamPose.SetRotation({0,0,1,  -1,0,0,  0,-1,0});
-          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_STREAM_INFO("Robot.SetPhysicalRobot", "Slop factor removed from head cam pose for simulated robot");
-        }
-        _isPhysical = isPhysical;
-      }
+      _isPhysical = isPhysical;
       
       // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
       // We do this regardless of previous state to ensure it works when adding 1st simulated robot (as _isPhysical already == false in that case)

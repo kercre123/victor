@@ -163,7 +163,10 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
     payload.center_y,
     payload.skew);
 
-  _visionComponent.SetCameraCalibration(*this, calib);
+  _visionComponent.SetCameraCalibration(*this, calib);  // Set intrisic calibration
+  SetCameraRotation(0, 0, 0);                           // Set extrinsic calibration (rotation only, assuming known position)
+                                                        // TODO: Set these from rotation calibration info to be sent in CameraCalibration message
+                                                        //       and/or when we do on-engine calibration with images of tool code.
   
   SetPhysicalRobot(payload.isPhysicalRobots);  
 }

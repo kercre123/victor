@@ -223,6 +223,9 @@ public:
   
     // Returns the average period of image processing
     u32 GetAverageImageProcPeriodMS() const;
+
+    // Set the calibrated rotation of the camera
+    void SetCameraRotation(f32 roll, f32 pitch, f32 yaw);
   
     // Specify whether this robot is a physical robot or not.
     // Currently, adjusts headCamPose by slop factor if it's physical.
@@ -768,6 +771,7 @@ public:
     
     const Pose3d     _neckPose;     // joint around which head rotates
     Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
+    static const RotationMatrix3d _kDefaultHeadCamRotation;
     const Pose3d     _liftBasePose; // around which the base rotates/lifts
     Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
