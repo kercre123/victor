@@ -71,5 +71,8 @@
   },
   "dailyGoal.FriendBonus": {
     "translation": "Friend Bonus"
+  },
+  "dailyGoal.Complete": {
+    "translation": "Complete"
   }
 }

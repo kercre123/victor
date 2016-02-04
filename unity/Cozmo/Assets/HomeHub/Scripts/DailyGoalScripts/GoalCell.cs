@@ -59,6 +59,9 @@ namespace Cozmo {
       public void SetProgress(float progress) {
         _GoalCurrent = (int)((float)_GoalTarget * progress);
         Progress = progress;
+        if (progress >= 1.0f) {
+          GoalLabelText = Localization.Get(LocalizationKeys.kDailyGoalComplete);
+        }
       }
 
       public void SetProgress(int progress) {
@@ -80,7 +83,7 @@ namespace Cozmo {
       /// <param name="currProg">Curr prog.</param>
       /// <param name="update">If set to <c>true</c> update.</param>
       public void Initialize(Anki.Cozmo.ProgressionStatType type, int goal, int currProg, bool update = true) {
-        GoalLabelText = string.Format("+{0} {1}", goal, type.ToString());
+        GoalLabelText = string.Format("{0}", type.ToString());
         _GoalTarget = goal;
         Type = type;
         if (update) {
