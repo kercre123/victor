@@ -190,7 +190,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>0</AdsALst>
+            <AdsALst>1</AdsALst>
             <AdsACrf>1</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -357,7 +357,7 @@
               <MiscControls>-DROBOT41</MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\lib\Include;.\lib\Include\app_common;.\lib\Include\ble;.\lib\Include\ble\ble_services;.\lib\Include\ble\rpc;.\lib\Include\gcc;..\..\include;..\..\coretech\common\include;..\supervisor\src;..\include;..\syscon;..\syscon\common</IncludePath>
+              <IncludePath>.\lib\Include;.\lib\Include\app_common;.\lib\Include\ble;.\lib\Include\ble\ble_services;.\lib\Include\ble\rpc;.\lib\Include\gcc;..\..\include;..\..\coretech\common\include;..\supervisor\src;..\include;..\syscon</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -444,14 +444,24 @@
               <FilePath>.\hal\debug.cpp</FilePath>
             </File>
             <File>
+              <FileName>rng.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\rng.cpp</FilePath>
+            </File>
+            <File>
               <FileName>micro_esb.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\micro_esb.cpp</FilePath>
             </File>
             <File>
-              <FileName>rng.cpp</FileName>
+              <FileName>rtos.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\hal\rng.cpp</FilePath>
+              <FilePath>.\hal\rtos.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spine.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\spine.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -474,9 +484,6 @@
               <FilePath>.\startup\startup_nrf51.s</FilePath>
             </File>
           </Files>
-        </Group>
-        <Group>
-          <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
     </Target>
