@@ -16,6 +16,8 @@
 #include "transferQueueMgr.h"
 #include "TestTransferUL.h"
 
+#include "../http/httpRequest.h"
+
 namespace Anki {
   
   namespace Util {
@@ -32,6 +34,7 @@ namespace Anki {
         transferQueueMgr->RegisterPushCallback(func);
         
       }*/
+
     }
     TestTransferUL::~TestTransferUL()
     {

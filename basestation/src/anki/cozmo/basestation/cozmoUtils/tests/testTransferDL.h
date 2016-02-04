@@ -15,8 +15,9 @@
 #define ANKI_COZMO_TEST_TRANSFER_DL_H
 
 
-/*
  #include "../ITransferable.h"
+#include "../http/abstractHttpAdapter.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 
 namespace Anki {
   
@@ -26,16 +27,15 @@ namespace Anki {
     class TestTransferDL : public ITransferable
     {
     public:
-      TestTransferDL();
-      virtual void PushData();
-      virtual void PullData();
-      
+      TestTransferDL(TransferQueueMgr* transferQueueMgr, IHttpAdapter* httpAdapter);
+      ~TestTransferDL();
+      virtual bool RequestData(IHttpAdapter* httpAdapter);
     protected:
-      
+      Util::Dispatch::Queue* _dispatchQueue;
     }; // class
     
     
   } // namespace Util
 } // namespace Anki
-*/
+
 #endif 

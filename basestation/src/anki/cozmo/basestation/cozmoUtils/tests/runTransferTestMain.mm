@@ -10,18 +10,22 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-
+/*
 #include "gtest/gtest.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
-
+*/
+//
 
 #include "testTransferQueueMgr.h"
 #include "testTransferUL.h"
 #include "testTransferDL.h"
 
-//Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
+#include "../http/httpAdapter_osx_ios.h"
 
+
+//Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
+/*
 GTEST_TEST(TransferQueueTests, TestTheTestTransfer)
 {
   int i = 0;
@@ -64,6 +68,10 @@ GTEST_TEST(TransferQueueTests, TestDownloadPull)
   // Create testTransferDL
   // Global Context, Transfer Mgr does a push
   // verify the pull go the same data as the push
+  Anki::Util::TestTransferQueueMgr tranfer_mgr;
+  Anki::Util::HttpAdapter native_http;
+  Anki::Util::TestTransferDL download_service(&tranfer_mgr,&native_http);
+  download_service.RequestData(&native_http);
 }
 
 int main(int argc, char * argv[])
@@ -71,4 +79,23 @@ int main(int argc, char * argv[])
   ::testing::InitGoogleTest(&argc, argv);
   printf("Transfer Lib Tests running\n");
   return RUN_ALL_TESTS();
+}
+*/
+
+#import <Foundation/Foundation.h>
+
+int main(int argc, char * argv[])
+{
+  printf("adsflkj\n");
+  Anki::Util::TestTransferQueueMgr tranfer_mgr;
+  Anki::Util::HttpAdapter native_http;
+  Anki::Util::TestTransferDL download_service(&tranfer_mgr,&native_http);
+  download_service.RequestData(&native_http);
+  printf("Pass\n");
+  int i = 0;
+  while(1)
+  {
+    ++i;
+  }
+  return 0;
 }

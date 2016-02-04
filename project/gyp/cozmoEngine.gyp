@@ -971,7 +971,7 @@
 
           #Eventually this should be able to move into it's own library.
           {
-            'target_name': 'transferLibraryUnitTest',
+            'target_name': 'cozmoUtilsUnitTest',
             'type': 'executable',
             'include_dirs': [
               '../../basestation/test',
@@ -980,17 +980,48 @@
             'dependencies': [
               '<(ce-util_gyp_path):util',
             ],
+            #TODO: when moving to util, this will use the normal .lst format from python
             'sources': [ 
-              '<!@(ls ../../basestation/src/anki/cozmo/basestation/transferQueue/*.cpp)',
-              '<!@(ls ../../basestation/src/anki/cozmo/basestation/transferQueue/*.h)',
-              '<!@(ls ../../basestation/src/anki/cozmo/basestation/transferQueue/tests/*.cpp)',
-              '<!@(ls ../../basestation/src/anki/cozmo/basestation/transferQueue/tests/*.h)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/cozmoUtils/*.cpp)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/cozmoUtils/*.h)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/cozmoUtils/tests/*.cpp)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/cozmoUtils/tests/*.h)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/cozmoUtils/tests/*.mm)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/cozmoUtils/http/*.cpp)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/cozmoUtils/http/*.mm)',
+              '<!@(ls ../../basestation/src/anki/cozmo/basestation/cozmoUtils/http/*.h)',
+            ],
+            'conditions': [    
+                ['OS=="mac"',{
+                  'sources/': [ 
+                    ['exclude', '(android|ios|linux|osx)'],
+                    ['include','../../basestation/src/anki/cozmo/basestation/cozmoUtils/http/(.*)osx(.*).(cpp|mm?|h)'],
+                  ]
+                }],
+                ['OS=="ios"',{
+                  'sources/': [ 
+                    ['exclude', '(android|ios|linux|osx)'],
+                    ['include','../../basestation/src/anki/cozmo/basestation/cozmoUtils/http/(.*)ios(.*).(cpp|mm?|h)'],
+                  ]
+                }],
+                ['OS=="android"',{
+                  'sources/': [ 
+                    ['exclude', '(android|ios|linux|osx)'],
+                    ['include','../../basestation/src/anki/cozmo/basestation/cozmoUtils/http/(.*)android(.*).(cpp|mm?|h)'],
+                  ]
+                }],
+                ['OS=="linux"',{
+                  'sources/': [ 
+                    ['exclude', '(android|ios|linux|osx)'],
+                    ['include','../../basestation/src/anki/cozmo/basestation/cozmoUtils/http/(.*)linux(.*).(cpp|mm?|h)'],
+                  ]
+                }],
             ],
             'xcode_settings': {
-              'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
+              #'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
             },
             'libraries': [
-              '<(ce-gtest_path)/gtest.framework',
+              #'<(ce-gtest_path)/gtest.framework',
               '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
@@ -1019,12 +1050,10 @@
                   '<(PRODUCT_DIR)/resources/config',
                 ],
               },
-
-
             ], #end actions
+
+
           }, # end unittestTransferLib target
-
-
         ], # end targets
       },
     ], # end if mac
