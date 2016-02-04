@@ -24,19 +24,19 @@ namespace Cozmo {
       private Sprite _Graphic;
 
       [SerializeField]
-      [Range(-0.01f, 2f)]
+      [Range(-0.05f, 2f)]
       private float _TopClippingStart = 1;
 
       [SerializeField]
-      [Range(-0.01f, 2f)]
+      [Range(-0.05f, 2f)]
       private float _BottomClippingStart = 1;
 
       [SerializeField]
-      [Range(-0.01f, 2f)]
+      [Range(-0.05f, 2f)]
       private float _LeftClippingStart = 1;
 
       [SerializeField]
-      [Range(-0.01f, 2f)]
+      [Range(-0.05f, 2f)]
       private float _RightClippingStart = 1;
 
       [SerializeField]
@@ -46,19 +46,19 @@ namespace Cozmo {
       private bool _ScreenSpace = false;
 
       [SerializeField]
-      [Range(-0.01f, 2)]
+      [Range(-0.05f, 2)]
       private float _TopClippingEnd = 0;
 
       [SerializeField]
-      [Range(-0.01f, 2)]
+      [Range(-0.05f, 2)]
       private float _BottomClippingEnd = 0;
 
       [SerializeField]
-      [Range(-0.01f, 2)]
+      [Range(-0.05f, 2)]
       private float _LeftClippingEnd = 0;
 
       [SerializeField]
-      [Range(-0.01f, 2)]
+      [Range(-0.05f, 2)]
       private float _RightClippingEnd = 0;
 
       private Material _ClippingMaterial;
@@ -130,10 +130,10 @@ namespace Cozmo {
             _TopClippingEnd, _LeftClippingEnd, _BottomClippingEnd));
 
           _ClippingMaterial.SetVector("_ClippingSize", new Vector4(
-            Mathf.Clamp(_RightClippingStart - _RightClippingEnd, 0.01f, 1f),
-            Mathf.Clamp(_TopClippingStart - _TopClippingEnd, 0.01f, 1f),
-            Mathf.Clamp(_LeftClippingStart - _LeftClippingEnd, 0.01f, 1f),
-            Mathf.Clamp(_BottomClippingStart - _BottomClippingEnd, 0.01f, 1f)));
+            Mathf.Clamp(_RightClippingStart - _RightClippingEnd, 0.05f, 1f),
+            Mathf.Clamp(_TopClippingStart - _TopClippingEnd, 0.05f, 1f),
+            Mathf.Clamp(_LeftClippingStart - _LeftClippingEnd, 0.05f, 1f),
+            Mathf.Clamp(_BottomClippingStart - _BottomClippingEnd, 0.05f, 1f)));
         }
         else {
           _ClippingMaterial.SetVector("_Clipping", new Vector4(_RightClippingStart, 

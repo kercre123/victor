@@ -570,16 +570,16 @@ MonoBehaviour:
   _BackgroundImage: {fileID: 11439990}
   _MaskingFrame: {fileID: 11439990}
   _Graphic: {fileID: 21300000, guid: 19e49fa03e1f842ce99782576ce4abcf, type: 3}
-  _TopClippingStart: 1
-  _BottomClippingStart: 1
-  _LeftClippingStart: 1
-  _RightClippingStart: 1
-  _SpecifyEndClipping: 0
+  _TopClippingStart: -.0500000007
+  _BottomClippingStart: -.0500000007
+  _LeftClippingStart: -.0500000007
+  _RightClippingStart: 2
+  _SpecifyEndClipping: 1
   _ScreenSpace: 1
-  _TopClippingEnd: 0
-  _BottomClippingEnd: 0
-  _LeftClippingEnd: 0
-  _RightClippingEnd: 0
+  _TopClippingEnd: -.0500000007
+  _BottomClippingEnd: -.0500000007
+  _LeftClippingEnd: -.0500000007
+  _RightClippingEnd: 1.79999995
 --- !u!114 &11434110
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -612,16 +612,16 @@ MonoBehaviour:
   _BackgroundImage: {fileID: 11491876}
   _MaskingFrame: {fileID: 11491876}
   _Graphic: {fileID: 21300000, guid: 19e49fa03e1f842ce99782576ce4abcf, type: 3}
-  _TopClippingStart: 1
-  _BottomClippingStart: 1
-  _LeftClippingStart: 1
-  _RightClippingStart: 1
-  _SpecifyEndClipping: 0
+  _TopClippingStart: -.0500000007
+  _BottomClippingStart: -.0500000007
+  _LeftClippingStart: 2
+  _RightClippingStart: -.0500000007
+  _SpecifyEndClipping: 1
   _ScreenSpace: 1
-  _TopClippingEnd: 0
-  _BottomClippingEnd: 0
-  _LeftClippingEnd: 0
-  _RightClippingEnd: 0
+  _TopClippingEnd: -.0500000007
+  _BottomClippingEnd: -.0500000007
+  _LeftClippingEnd: 1.79999995
+  _RightClippingEnd: -.0500000007
 --- !u!114 &11436394
 MonoBehaviour:
   m_ObjectHideFlags: 1
