@@ -46,9 +46,14 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   public float GetDailyProgress() {
-    StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
-    StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
-    return _FriendshipFormulaConfig.CalculateDailyGoalProgress(prog, goal);
+    if (DataPersistenceManager.Instance.CurrentSession != null) {
+      StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
+      StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
+      return _FriendshipFormulaConfig.CalculateDailyGoalProgress(prog, goal);
+    }
+    else {
+      return 0.0f;
+    }
   }
 
   [SerializeField]
