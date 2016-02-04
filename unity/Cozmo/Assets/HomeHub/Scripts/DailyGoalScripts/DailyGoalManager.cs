@@ -16,7 +16,7 @@ public class DailyGoalManager : MonoBehaviour {
   private AlertView _RequestDialog = null;
 
   // The Last Challenge ID Cozmo has requested to play
-  private string _lastChallengeID;
+  private ChallengeData _LastChallengeData;
 
   #region FriendshipProgression and DailyGoals
 
@@ -60,13 +60,20 @@ public class DailyGoalManager : MonoBehaviour {
 
   public ChallengeData GetMinigameToRequest() {
     RequestGameConfig config = _RequestMinigameConfig.RequestList[UnityEngine.Random.Range(0, _RequestMinigameConfig.RequestList.Length)];
-    _lastChallengeID = config.ChallengeID;
     for (int i = 0; i < _ChallengeList.ChallengeData.Length; i++) {
       if (_ChallengeList.ChallengeData[i].ChallengeID == config.ChallengeID) {
-        return _ChallengeList.ChallengeData[i];
+        _LastChallengeData = _ChallengeList.ChallengeData[i];
+        BehaviorGroup bGroup = GetRequestBehaviorGroup(_LastChallengeData.ChallengeID);
+        // Do not reate the minigame message if the behavior group is invalid.
+        if (bGroup == BehaviorGroup.MiniGame) {
+          return null;
+        }
+        DisableRequestGameBehaviorGroups();
+        RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(bGroup, true);
+        return _LastChallengeData;
       }
     }
-    Debug.LogError(string.Format("Challenge ID not found in ChallengeList {0}", _lastChallengeID));
+    Debug.LogError(string.Format("Challenge ID not found in ChallengeList {0}", config.ChallengeID));
     return null;
   }
 
@@ -78,6 +85,13 @@ public class DailyGoalManager : MonoBehaviour {
     }
     Debug.LogError(string.Format("Challenge ID not found in RequestMinigameList {0}", challengeID));
     return BehaviorGroup.MiniGame;
+  }
+
+  public void DisableRequestGameBehaviorGroups() {
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.MiniGame, false);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestSpeedTap, false);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestCubePounce, false);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestSimon, false);
   }
 
   /// <summary>
@@ -201,14 +215,10 @@ public class DailyGoalManager : MonoBehaviour {
       // Avoid dupes
       return;
     }
-    ChallengeData data = GetMinigameToRequest();
+
+    ChallengeData data = _LastChallengeData;
     // Do not reate the minigame message if the challenge is invalid.
     if (data == null) {
-      return;
-    }
-    BehaviorGroup bGroup = GetRequestBehaviorGroup(data.ChallengeID);
-    // Do not reate the minigame message if the behavior group is invalid.
-    if (bGroup == BehaviorGroup.MiniGame) {
       return;
     }
     // TODO: When the message has the appropriate 
@@ -220,12 +230,13 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.SetIcon(data.ChallengeIcon);
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
     alertView.SetMessageArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
-    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(bGroup, true);
     _RequestDialog = alertView;
   }
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
+    DisableRequestGameBehaviorGroups();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
@@ -234,11 +245,15 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleMiniGameConfirm() {
     DAS.Info(this, "HandleMiniGameConfirm");
-    MinigameConfirmed.Invoke(_lastChallengeID);
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
+    DisableRequestGameBehaviorGroups();
+    MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
     DAS.Info(this, "HandleExternalRejection"); 
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
+    DisableRequestGameBehaviorGroups();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }

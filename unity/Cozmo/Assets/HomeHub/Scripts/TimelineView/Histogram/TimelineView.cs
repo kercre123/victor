@@ -174,7 +174,9 @@ namespace Cozmo.HomeHub {
       // check if the current session is still valid
       if (currentSession != null) {  
         _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
-        currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, DailyGoalManager.Instance.GetMinigameNeed_Extremes(), "DailyGoalProgress");
+        float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
+        currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
+        DailyGoalManager.Instance.GetMinigameToRequest();
         return;
       }
 

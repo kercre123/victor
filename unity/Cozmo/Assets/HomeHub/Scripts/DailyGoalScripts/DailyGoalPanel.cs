@@ -48,6 +48,10 @@ public class DailyGoalPanel : MonoBehaviour {
     float dailyProg = DailyGoalManager.Instance.GetFriendForumulaConfig().CalculateDailyGoalProgress(progress, goals);
     _TotalProgressBar.SetProgress(dailyProg);
     _BonusBarPanel.SetFriendshipBonus(dailyProg);
+
+    float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
+    DailyGoalManager.Instance.GetMinigameToRequest();
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
