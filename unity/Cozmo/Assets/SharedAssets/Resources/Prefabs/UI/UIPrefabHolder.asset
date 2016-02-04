@@ -16,6 +16,8 @@ MonoBehaviour:
   _AlertViewPrefab: {fileID: 11464034, guid: 1c49983afe76142ff897b4cc22f9ef57, type: 2}
   _AlertViewPrefab_NoText: {fileID: 11464034, guid: d5c0f5442c0704b80a75c78c511e6aa5,
     type: 2}
+  _AlertViewPrefab_Icon: {fileID: 11445856, guid: 6df6cacad361b454391645f3c10a68dd,
+    type: 2}
   _SharedMinigameViewPrefab: {fileID: 11492476, guid: f98f8a15834f84763adff953eafcb498,
     type: 2}
   _ChallengeEndViewPrefab: {fileID: 11474462, guid: 1b4135647dd7e4fb2bd98651dea5bac5,
