@@ -69,8 +69,8 @@ bool BehaviorReactToPoke::IsRunnable(const Robot& robot, double currentTime_sec)
 
 Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
-  robot.GetActionList().Cancel(-1, RobotActionType::TRACK_FACE);
-  robot.GetActionList().Cancel(-1, RobotActionType::TRACK_OBJECT);
+  robot.GetActionList().Cancel(RobotActionType::TRACK_FACE);
+  robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
   return Result::RESULT_OK;
 }
 

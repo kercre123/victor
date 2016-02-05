@@ -114,9 +114,8 @@ namespace Anki {
       {
         if(this->_animTag == event.GetData().Get_AnimationAborted().tag) {
           PRINT_NAMED_INFO("PlayAnimation.AbortAnimationHandler",
-                           "Animation tag %d was aborted from running in slot %d, probably "
-                           "by another animation in another slot.",
-                           this->_animTag, this->GetSlotHandle());
+                           "Animation tag %d was aborted from running",
+                           this->_animTag);
           _wasAborted = true;
         }
       };

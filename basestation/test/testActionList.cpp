@@ -217,7 +217,7 @@ TEST(QueueAction, SingleActionCancel)
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
-  r.GetActionList().Cancel(0, RobotActionType::WAIT);
+  r.GetActionList().Cancel(RobotActionType::WAIT);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
@@ -285,7 +285,7 @@ TEST(QueueAction, ThreeActionsCancelSecond)
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
   
-  r.GetActionList().Cancel(0, RobotActionType::TURN_IN_PLACE);
+  r.GetActionList().Cancel(RobotActionType::TURN_IN_PLACE);
   
   EXPECT_EQ(testAction1->GetRobot(), &r);
   EXPECT_EQ(testAction3->GetRobot(), &r);
@@ -321,7 +321,7 @@ TEST(QueueAction, ThreeActionsCancelAll)
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
-  r.GetActionList().Cancel(0, RobotActionType::WAIT);
+  r.GetActionList().Cancel(RobotActionType::WAIT);
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));

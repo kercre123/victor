@@ -124,16 +124,13 @@ namespace Anki {
       
       size_t     GetNumQueues();
 
-      // Only cancels actions from the specified slot with the specified type, and
-      // does any cleanup specified by the action's Cancel/Cleanup methods.
+      // Only cancels with the specified type. All slots are searched.
       // Returns true if any actions were cancelled.
-      bool       Cancel(SlotHandle fromSlot = -1, // -1 == "all slots"
-                        RobotActionType withType = RobotActionType::UNKNOWN);
+      bool       Cancel(RobotActionType withType = RobotActionType::UNKNOWN);
       
-      // Find and cancel the action with the specified ID Tag. The slot to search in
-      // can optionally be specified, but otherwise, all slots are searched.
+      // Find and cancel the action with the specified ID Tag. All slots are searched.
       // Returns true if the action was found and cancelled.
-      bool       Cancel(u32 idTag, SlotHandle fromSlot = -1);
+      bool       Cancel(u32 idTag);
       
       void       Print() const;
       

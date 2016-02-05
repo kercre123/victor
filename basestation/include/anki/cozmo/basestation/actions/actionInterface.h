@@ -115,11 +115,6 @@ namespace Anki {
       void SetEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
       bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
       
-      // Keep track of which ActionList "slot" an action is in. For example,
-      // this will let an action queue a subsequent action in its same slot.
-      // The ActionList will set this automatically when queuing an action.
-      ActionList::SlotHandle GetSlotHandle() const { return _inSlot; }
-      
     protected:
       
       Robot* _robot = nullptr;
@@ -168,8 +163,6 @@ namespace Anki {
       bool          _emitCompletionSignal   = true;
       
       u32           _idTag;
-      
-      ActionList::SlotHandle _inSlot = ActionList::UnknownSlot;
       
       static u32    sTagCounter;
       

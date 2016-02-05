@@ -300,7 +300,7 @@ namespace Cozmo {
             else 
               PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
                                "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
-            robot.GetActionList().Cancel(0, RobotActionType::TRACK_FACE);
+            robot.GetActionList().Cancel(RobotActionType::TRACK_FACE);
           }
         }
 
@@ -313,7 +313,7 @@ namespace Cozmo {
           if( robot.GetMoveComponent().GetTrackToObject().IsSet() ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackingBlockUnset",
                                    "disabling object tracking because object was deleted / unset");
-            robot.GetActionList().Cancel(0, RobotActionType::TRACK_OBJECT);
+            robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
           }
           _faceID = Face::UnknownFace;
           TurnTowardsAFace(robot);
@@ -378,7 +378,7 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StopTrackingBlock",
                                  "disabling block tracking in order to inspect block");
           SetCurrState(State::InspectingBlock);
-          robot.GetActionList().Cancel(0, RobotActionType::TRACK_OBJECT);
+          robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
           PlayAnimation(robot, "ID_react2block_02", false);
 
           // hold a bit before making a decision about the block

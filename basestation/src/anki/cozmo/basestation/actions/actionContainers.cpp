@@ -106,43 +106,30 @@ namespace Anki {
       return _queues[0].QueueAtFront(action, numRetries);
     }
     
-    bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
+    bool ActionList::Cancel(RobotActionType withType)
     {
       bool found = false;
       
       // Clear specified slot / type
       for(auto & q : _queues) {
-        if(fromSlot == -1 || q.first == fromSlot) {
-          found |= q.second.Cancel(withType);
-        }
+        found |= q.second.Cancel(withType);
       }
       return found;
     }
     
-    bool ActionList::Cancel(u32 idTag, SlotHandle fromSlot)
+    bool ActionList::Cancel(u32 idTag)
     {
       bool found = false;
       
-      if(fromSlot == -1) {
-        for(auto & q : _queues) {
-          if(q.second.Cancel(idTag) == true) {
-            if(found) {
-              PRINT_NAMED_WARNING("ActionList.Cancel.DuplicateTags",
-                                  "Multiple actions from multiple slots cancelled with idTag=%d.\n", idTag);
-            }
-            found = true;
+      for(auto & q : _queues) {
+        if(q.second.Cancel(idTag) == true) {
+          if(found) {
+            PRINT_NAMED_WARNING("ActionList.Cancel.DuplicateTags",
+                                "Multiple actions from multiple slots cancelled with idTag=%d.\n", idTag);
           }
-        }
-        return found;
-      } else {
-        auto q = _queues.find(fromSlot);
-        if(q != _queues.end()) {
-          found = q->second.Cancel(idTag);
-        } else {
-          PRINT_NAMED_WARNING("ActionList.Cancel.NoSlot", "No slot with handle %d.\n", fromSlot);
+          found = true;
         }
       }
-      
       return found;
     }
     
