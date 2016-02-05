@@ -31,7 +31,7 @@
     "translation": "Any progress in this game will be lost. Are you sure?"
   },
   "minigame.text.winner": {
-    "translation": "Winner"
+    "translation": "Winner!"
   },
   "minigame.text.score": {
     "translation": "Score"
@@ -44,6 +44,12 @@
   },
   "minigame.label.readyToPlay": {
     "translation": "Ready to Play?"
+  },
+  "minigames.label.gamesAndActivities": {
+    "translation": "Games & Activities"
+  },
+  "minigame.label.difficultySelect": {
+    "translation": "SELECT DIFFICULTY"
   },
   "askCozmo.title": {
     "translation": "Ask Cozmo"
@@ -84,6 +90,12 @@
   "simonGame.label.stepsLeft": {
     "translation": "Steps In Pattern: {0}/{1}"
   },
+  "simonGame.text.patternLength": {
+    "translation": "Pattern Length: {0}"
+  },
+  "simonGame.text.howToPlay": {
+    "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
+  },
   "speedTap.roundsText": {
     "translation": "Round: {0:N0}"
   },
@@ -98,6 +110,21 @@
   },
   "speedTap.score.player": {
     "translation": "player score: {0:N0}"
+  },
+  "speedTap.text.howToPlay": {
+    "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point!"
+  },
+  "speedTap.text.howToPlayNoRed": {
+    "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
+  },
+  "speedTap.text.howToPlayLightCountSameColorNoRed": {
+    "translation": "Tap the cube faster than Cozmo when the colors AND the light numbers are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
+  },
+  "speedTap.text.howToPlayLightCountNoColor": {
+    "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
+  },
+  "speedTap.tapBlock": {
+    "translation": "Tap The lit cube when you're ready to play!"
   },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
@@ -140,30 +167,6 @@
   },
   "cubeSlap.text.howToPlay": {
     "translation": "Cozmo will try to slap the cube after it turns green! Pull the cube away just as Cozmo trys to slap it. Be careful, if you move it too early you'll lose a life."
-  },
-  "simonGame.text.howToPlay": {
-    "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
-  },
-  "speedTap.text.howToPlay": {
-    "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point!"
-  },
-  "speedTap.text.howToPlayNoRed": {
-    "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
-  },
-  "speedTap.text.howToPlayLightCountSameColorNoRed": {
-    "translation": "Tap the cube faster than Cozmo when the colors AND the light numbers are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
-  },
-  "speedTap.text.howToPlayLightCountNoColor": {
-    "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
-  },
-  "minigames.label.gamesAndActivities": {
-    "translation": "Games & Activities"
-  },
-  "minigame.label.difficultySelect": {
-    "translation": "SELECT DIFFICULTY"
-  },
-  "speedTap.tapBlock": {
-    "translation": "Tap The lit cube when you're ready to play!"
   },
   "cubePounce.info.cozmoWinEarly": {
     "translation": "Cozmo wins! You moved the Cube too early!"

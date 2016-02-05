@@ -111,38 +111,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &161634
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22462886}
-  - 114: {fileID: 11496542}
-  m_Layer: 5
-  m_Name: HeaderLayoutElement
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!1 &187662
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22465102}
-  - 114: {fileID: 11472680}
-  m_Layer: 5
-  m_Name: HeaderLabelProxy
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &198924
 GameObject:
   m_ObjectHideFlags: 1
@@ -229,7 +197,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
+  Prefab: {fileID: 184776, guid: dbc1abf629e52496a9050be2eba1995a, type: 2}
   ModifiedValues:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
@@ -254,27 +222,6 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &11472680
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 187662}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Prefab: {fileID: 184776, guid: dbc1abf629e52496a9050be2eba1995a, type: 2}
-  ModifiedValues:
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 7
-  ModifiedLocalReferences:
-  - ObjectPath: ../../../
-    FieldName: ChallengeEndedDialog:_PrimaryInfoLabel
-    ReferencePath: 
-  ModifiedGlobalReferences: []
 --- !u!114 &11474462
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -286,8 +233,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51bdc3d8bf6e945bdbd122c25c45fc42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _PrimaryInfoLabel: {fileID: 0}
-  _PrimaryLabelLayoutElement: {fileID: 11496542}
   _AdditionalInfoLabel: {fileID: 0}
   _AdditionalInfoLabelLayoutElement: {fileID: 11450026}
   _RewardContainer: {fileID: 11430876}
@@ -313,24 +258,6 @@ MonoBehaviour:
   m_Spacing: 10
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
---- !u!114 &11496542
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 161634}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IgnoreLayout: 0
-  m_MinWidth: -1
-  m_MinHeight: 140
-  m_PreferredWidth: -1
-  m_PreferredHeight: -1
-  m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
 --- !u!224 &22402282
 RectTransform:
   m_ObjectHideFlags: 1
@@ -344,7 +271,7 @@ RectTransform:
   - {fileID: 22453128}
   - {fileID: 22479120}
   m_Father: {fileID: 22413656}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -377,7 +304,6 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22462886}
   - {fileID: 22494806}
   - {fileID: 22402282}
   m_Father: {fileID: 22419218}
@@ -440,41 +366,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -75}
   m_SizeDelta: {x: 0, y: 130}
   m_Pivot: {x: .5, y: .5}
---- !u!224 &22462886
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 161634}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children:
-  - {fileID: 22465102}
-  m_Father: {fileID: 22413656}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: .5, y: .5}
---- !u!224 &22465102
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 187662}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 22462886}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 3.12178599e-05, y: 0}
-  m_SizeDelta: {x: -6.24357199e-05, y: 0}
-  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22479120
 RectTransform:
   m_ObjectHideFlags: 1
@@ -504,7 +395,7 @@ RectTransform:
   m_Children:
   - {fileID: 22431164}
   m_Father: {fileID: 22413656}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}

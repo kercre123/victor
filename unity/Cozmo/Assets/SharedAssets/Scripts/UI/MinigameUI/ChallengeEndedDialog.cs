@@ -7,12 +7,6 @@ using Anki.UI;
 public class ChallengeEndedDialog : MonoBehaviour {
 
   [SerializeField]
-  private AnkiTextLabel _PrimaryInfoLabel;
-
-  [SerializeField]
-  private LayoutElement _PrimaryLabelLayoutElement;
-
-  [SerializeField]
   private AnkiTextLabel _AdditionalInfoLabel;
 
   [SerializeField]
@@ -27,19 +21,12 @@ public class ChallengeEndedDialog : MonoBehaviour {
   [SerializeField]
   private IconTextLabel _RewardIconPrefab;
 
-  public void SetupDialog(string primaryText, string secondaryText) {
+  public void SetupDialog(string subtitleText) {
     _RewardContainerLayoutElement.gameObject.SetActive(false);
-    if (!string.IsNullOrEmpty(primaryText)) {
-      _PrimaryLabelLayoutElement.gameObject.SetActive(true);
-      _PrimaryInfoLabel.text = primaryText;
-    }
-    else {
-      _PrimaryLabelLayoutElement.gameObject.SetActive(false);
-    }
 
-    if (!string.IsNullOrEmpty(secondaryText)) {
+    if (!string.IsNullOrEmpty(subtitleText)) {
       _AdditionalInfoLabelLayoutElement.gameObject.SetActive(true);
-      _AdditionalInfoLabel.text = secondaryText;
+      _AdditionalInfoLabel.text = subtitleText;
     }
     else {
       _AdditionalInfoLabelLayoutElement.gameObject.SetActive(false);

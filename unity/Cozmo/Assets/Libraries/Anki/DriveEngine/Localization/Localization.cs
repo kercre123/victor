@@ -32,6 +32,12 @@ public static class Localization {
     return string.Format(GetCultureInfo(), "{0:N0}", number);
   }
 
+  public static string GetWithArgs(string localizationKey, params object[] args) {
+    string localized = Get(localizationKey);
+    localized = string.Format(GetCultureInfo(), localized, args);
+    return localized;
+  }
+
   public static bool IsSupportedLocale(string locale) {
     return _SupportedLocales.Contains(locale);
   }
