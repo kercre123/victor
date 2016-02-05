@@ -200,6 +200,9 @@ namespace Anki
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Navigation memory
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      
+      // sets whether we are currently on a cliff or over ground
+      void SetIsOnCliff(bool value) { _isOnCliff = value; }
 
       // return pointer to current INavMemoryMap (it may be null if not enabled)
       const INavMemoryMap* GetNavMemoryMap() const { return _navMemoryMap.get(); }
@@ -360,6 +363,9 @@ namespace Anki
       
       // Map the world knows the robot has traveled
       std::unique_ptr<INavMemoryMap> _navMemoryMap;
+      
+      // set to true/false upon cliff sensor notifications
+      bool _isOnCliff;
                   
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;

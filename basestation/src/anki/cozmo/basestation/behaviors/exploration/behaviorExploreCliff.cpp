@@ -1,16 +1,16 @@
 /**
- * File: behaviorExploreMarkedCube
+ * File: behaviorExploreCliff
  *
  * Author: Raul
- * Created: 01/22/16
+ * Created: 02/03/16
  *
- * Description: Behavior that looks for a nearby marked cube that Cozmo has not fully explored (ie: seen in
- * all directions), and tries to see the sides that are yet to be discovered.
+ * Description: Behavior that looks for nearby areas marked as cliffs and tries to follow along their line
+ * in order to identify the borders or the platform the robot is currently on.
  *
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "behaviorExploreMarkedCube.h"
+#include "behaviorExploreCliff.h"
 
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -23,16 +23,16 @@
 namespace Anki {
 namespace Cozmo {
   
-CONSOLE_VAR(uint8_t, kEmcMaxBorderGoals, "BehaviorExploreMarkedCube", 1); // max number of goals to ask the planner
-CONSOLE_VAR(uint8_t, kEmcDistanceMinFactor, "BehaviorExploreMarkedCube", 2.0f); // minimum factor applied to the robot size to find destination from border center
-CONSOLE_VAR(uint8_t, kEmcDistanceMaxFactor, "BehaviorExploreMarkedCube", 4.0f); // maximum factor applied to the robot size to find destination from border center
+CONSOLE_VAR(uint8_t, kEcMaxBorderGoals, "BehaviorExploreCliff", 1); // max number of goals to ask the planner
+CONSOLE_VAR(uint8_t, kEcDistanceMinFactor, "BehaviorExploreCliff", 0.01f); // minimum factor applied to the robot size to find destination from border center
+CONSOLE_VAR(uint8_t, kEcDistanceMaxFactor, "BehaviorExploreCliff", 0.01f); // maximum factor applied to the robot size to find destination from border center
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config)
+BehaviorExploreCliff::BehaviorExploreCliff(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _currentActionTag(ActionConstants::INVALID_TAG)
 {
-  SetDefaultName("BehaviorExploreMarkedCube");
+  SetDefaultName("BehaviorExploreCliff");
 
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction
@@ -41,24 +41,29 @@ BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::V
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorExploreMarkedCube::~BehaviorExploreMarkedCube()
+BehaviorExploreCliff::~BehaviorExploreCliff()
 {  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorExploreCliff::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {
     // should not happen in prod, but at the moment it's null in master
     return false;
   }
-  const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown);
+  
+  std::set<NavMemoryMapTypes::EContentType> validBoderEdges;
+  validBoderEdges.insert( NavMemoryMapTypes::EContentType::Unknown );
+  validBoderEdges.insert( NavMemoryMapTypes::EContentType::ClearOfObstacle );
+  
+  const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::Cliff, validBoderEdges);
   return hasBorders;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
   // select borders we want to visit
   BorderScoreVector borderGoals;
@@ -68,45 +73,45 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
   GenerateVantagePoints(robot, borderGoals, _currentVantagePoints);
 
   // debugging
-//  {
-//    // border goals
-//    robot.GetContext()->GetVizManager()>EraseSegments("BehaviorExploreMarkedCube::InitInternal");
-//    for ( const auto& bG : borderGoals )
-//    {
-//      const NavMemoryMapTypes::Border& b = bG.borderInfo;
-//      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
-//      Vec3f centerLine = (b.from + b.to)*0.5f;
-//      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
-//    }
-//
-//    // vantage points
-//    for ( const auto& p : _currentVantagePoints )
-//    {
-//      Point3f testOrigin{};
-//      Point3f testDir = X_AXIS_3D() * 20.0f;
-//      testOrigin = p * testOrigin;
-//      testDir = p * testDir;
-//      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
-//    }
-//  }
+  {
+    // border goals
+    VizManager::getInstance()->EraseSegments("BehaviorExploreCliff::InitInternal");
+    for ( const auto& bG : borderGoals )
+    {
+      const NavMemoryMapTypes::Border& b = bG.borderInfo;
+      VizManager::getInstance()->DrawSegment("BehaviorExploreCliff::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
+      Vec3f centerLine = (b.from + b.to)*0.5f;
+      VizManager::getInstance()->DrawSegment("BehaviorExploreCliff::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
+    }
+
+    // vantage points
+    for ( const auto& p : _currentVantagePoints )
+    {
+      Point3f testOrigin{};
+      Point3f testDir = X_AXIS_3D() * 20.0f;
+      testOrigin = p * testOrigin;
+      testDir = p * testDir;
+      VizManager::getInstance()->DrawSegment("BehaviorExploreCliff::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
+    }
+  }
 
   // we shouldn't be running if we don't have borders/vantage points
   if ( _currentVantagePoints.empty() ) {
-    PRINT_NAMED_ERROR("BehaviorExploreMarkedCube::InitInternal", "Could not calculate vantage points from borders!");
+    PRINT_NAMED_ERROR("BehaviorExploreCliff::InitInternal", "Could not calculate vantage points from borders!");
     return RESULT_FAIL;
   }
   
   // request the action
   DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _currentVantagePoints );
   _currentActionTag = driveToPoseAction->GetTag();
-  robot.GetActionList().QueueActionNow(driveToPoseAction);
+  robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveToPoseAction);
 
   return Result::RESULT_OK;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robot& robot, double currentTime_sec)
+BehaviorExploreCliff::Status BehaviorExploreCliff::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   // while we are moving towards a vantage point, wait patiently
   if ( _currentActionTag != ActionConstants::INVALID_TAG )
@@ -121,7 +126,7 @@ BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorExploreCliff::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   // Note: at the moment anything can interrupt us, revisit rules of interruption
   _currentActionTag = ActionConstants::INVALID_TAG;
@@ -130,13 +135,14 @@ Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double current
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorExploreCliff::StopInternal(Robot& robot, double currentTime_sec)
 {
-  robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
+  // TODO ENABLE ME after testing
+  //VizManager::getInstance()->EraseSegments("BehaviorExploreCliff::InitInternal");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorExploreCliff::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {
@@ -145,20 +151,20 @@ void BehaviorExploreMarkedCube::AlwaysHandle(const EngineToGameEvent& event, con
       break;
       
     default:
-      PRINT_NAMED_ERROR("BehaviorExploreMarkedCube.AlwaysHandle.InvalidTag",
+      PRINT_NAMED_ERROR("BehaviorExploreCliff.AlwaysHandle.InvalidTag",
                         "Received unexpected event with tag %hhu.", event.GetData().GetTag());
       break;
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg)
+void BehaviorExploreCliff::HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg)
 {
   // we completed our action, clear the tag so that the main loop knows
   if ( _currentActionTag == msg.idTag )
   {
     if ( !IsRunning() ) {
-      PRINT_NAMED_INFO("BehaviorExploreMarkedCube", "Our action completed while not running.");
+      PRINT_NAMED_INFO("BehaviorExploreCliff", "Our action completed while not running.");
     }
   
     _currentActionTag = Util::numeric_cast<uint32_t>((std::underlying_type<ActionConstants>::type)ActionConstants::INVALID_TAG);
@@ -166,21 +172,25 @@ void BehaviorExploreMarkedCube::HandleActionCompleted(const ExternalInterface::R
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::PickGoals(Robot& robot, BorderScoreVector& outGoals) const
+void BehaviorExploreCliff::PickGoals(Robot& robot, BorderScoreVector& outGoals) const
 {
   // check assumptions
-  ASSERT_NAMED(nullptr != robot.GetPose().GetParent(), "BehaviorExploreMarkedCube.PickGoals.RobotPoseHasParent");
-  ASSERT_NAMED(robot.GetPose().GetParent()->IsOrigin(), "BehaviorExploreMarkedCube.PickGoals.RobotPoseParentIsOrigin");
+  ASSERT_NAMED(nullptr != robot.GetPose().GetParent(), "BehaviorExploreCliff.PickGoals.RobotPoseHasParent");
+  ASSERT_NAMED(robot.GetPose().GetParent()->IsOrigin(), "BehaviorExploreCliff.PickGoals.RobotPoseParentIsOrigin");
   
   outGoals.clear();
+
+  std::set<NavMemoryMapTypes::EContentType> validBoderEdges;
+  validBoderEdges.insert( NavMemoryMapTypes::EContentType::Unknown );
+  validBoderEdges.insert( NavMemoryMapTypes::EContentType::ClearOfObstacle );
 
   // grab borders
   INavMemoryMap::BorderVector borders;
   INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown, borders);
+  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::Cliff, validBoderEdges, borders);
   if ( !borders.empty() )
   {
-    outGoals.reserve(kEmcMaxBorderGoals);
+    outGoals.reserve(kEcMaxBorderGoals);
     for ( const auto& border : borders )
     {
       // find where this goal would go with respect to the rest
@@ -196,10 +206,10 @@ void BehaviorExploreMarkedCube::PickGoals(Robot& robot, BorderScoreVector& outGo
       }
       
       // this border should be in the goals, if it's better or if we don't have the max
-      if ( (goalIt != outGoals.end()) || (outGoals.size() < kEmcMaxBorderGoals) )
+      if ( (goalIt != outGoals.end()) || (outGoals.size() < kEcMaxBorderGoals) )
       {
         // if we have the max already, we need to kick out the last one
-        if ( outGoals.size() >= kEmcMaxBorderGoals )
+        if ( outGoals.size() >= kEcMaxBorderGoals )
         {
           // kicking out the last one invalidates iterators pointing at it, check if we were pointing at last
           bool newIsLast = (goalIt == outGoals.end()-1);
@@ -219,11 +229,11 @@ void BehaviorExploreMarkedCube::PickGoals(Robot& robot, BorderScoreVector& outGo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::GenerateVantagePoints(Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const
+void BehaviorExploreCliff::GenerateVantagePoints(Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const
 {
   // check assumptions
-  ASSERT_NAMED(nullptr != robot.GetPose().GetParent(), "BehaviorExploreMarkedCube.PickGoals.RobotPoseHasParent");
-  ASSERT_NAMED(robot.GetPose().GetParent()->IsOrigin(), "BehaviorExploreMarkedCube.PickGoals.RobotPoseParentIsOrigin");
+  ASSERT_NAMED(nullptr != robot.GetPose().GetParent(), "BehaviorExploreCliff.PickGoals.RobotPoseHasParent");
+  ASSERT_NAMED(robot.GetPose().GetParent()->IsOrigin(), "BehaviorExploreCliff.PickGoals.RobotPoseParentIsOrigin");
   const Pose3d* origin = robot.GetPose().GetParent();
 
   Util::RandomGenerator rng; // TODO: rsam replay-ability issue
@@ -234,7 +244,7 @@ void BehaviorExploreMarkedCube::GenerateVantagePoints(Robot& robot, const Border
   outVantagePoints.clear();
   for ( const auto& goal : goals )
   {
-    const float randomFactor = rng.RandDblInRange(kEmcDistanceMinFactor, kEmcDistanceMaxFactor);
+    const float randomFactor = rng.RandDblInRange(kEcDistanceMinFactor, kEcDistanceMaxFactor);
     const float distanceFromGoal = robotFwdLen * randomFactor;
     
     const Point3f vantagePointPos = goal.borderInfo.GetCenter() + (goal.borderInfo.normal * distanceFromGoal);

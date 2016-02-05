@@ -44,11 +44,13 @@ public:
   // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
   // whether a border exists, without requiring calculating all of them
   virtual bool HasBorders(EContentType innerType, EContentType outerType) const override;
+  virtual bool HasBorders(EContentType innerType, std::set<EContentType> outerTypes) const override;
   
   // retrieve the borders currently found in the map between the given types. This query is not const
   // so that the memory map can calculate and cache values upon being requested, rather than when
   // the map is modified. Function is expected to clear the vector before returning the new borders
   virtual void CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders) override;
+  virtual void CalculateBorders(EContentType innerType, std::set<EContentType> outerTypes, BorderVector& outBorders) override;
   
   // Draw the memory map
   virtual void Draw() const override;

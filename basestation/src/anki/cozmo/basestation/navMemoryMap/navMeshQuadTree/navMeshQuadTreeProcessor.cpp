@@ -104,10 +104,10 @@ void NavMeshQuadTreeProcessor::OnNodeDestroyed(const NavMeshQuadTreeNode* node)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeContentType outerType) const
+bool NavMeshQuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const
 {
   // check cached version if available and current
-  const uint32_t borderComboKey = GetBorderTypeKey(innerType, outerType);
+  const BorderKeyType borderComboKey = GetBorderTypeKey(innerType, outerTypes);
   const auto comboMatchIt = _bordersPerContentCombination.find( borderComboKey );
   if ( comboMatchIt != _bordersPerContentCombination.end() )
   {
@@ -118,21 +118,21 @@ bool NavMeshQuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeConte
   }
   
   // no chached version, pick in the cached nodes if any would be seed
-  const bool hasSeed = HasBorderSeed(innerType, outerType);
+  const bool hasSeed = HasBorderSeed(innerType, outerTypes);
   return hasSeed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentType outerType, NavMemoryMapTypes::BorderVector& outBorders)
+void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, NavMemoryMapTypes::BorderVector& outBorders)
 {
   // grab the border combination info
-  const uint32_t borderComboKey = GetBorderTypeKey(innerType, outerType);
+  const BorderKeyType borderComboKey = GetBorderTypeKey(innerType, outerTypes);
   const BorderCombination& borderCombination = _bordersPerContentCombination[borderComboKey];
   
   // if it's dirty, recalculate now
   if ( borderCombination.dirty )
   {
-    FindBorders(innerType, outerType);
+    FindBorders(innerType, outerTypes);
     CORETECH_ASSERT(!borderCombination.dirty);
   }
 
@@ -330,8 +330,9 @@ void NavMeshQuadTreeProcessor::Draw() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeProcessor::IsCached(ENodeContentType contentType)
 {
-  const bool isCached = (contentType == ENodeContentType::ObstacleCube        ) ||
-                        (contentType == ENodeContentType::ObstacleUnrecognized);
+  const bool isCached = (contentType == ENodeContentType::ObstacleCube         ) ||
+                        (contentType == ENodeContentType::ObstacleUnrecognized ) ||
+                        (contentType == ENodeContentType::Cliff );
   return isCached;
 }
 
@@ -342,7 +343,8 @@ ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
   switch (contentType) {
     case ENodeContentType::Invalid:              { CORETECH_ASSERT(!"not supported"); break; };
     case ENodeContentType::Subdivided:           { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
-    case ENodeContentType::Clear:                { ret = ColorRGBA(1.0f, 0.0f, 1.0f, 0.3f); break; };
+    case ENodeContentType::ClearOfObstacle:      { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::ClearOfCliff:         { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
     case ENodeContentType::Unknown:              { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
     case ENodeContentType::ObstacleCube:         { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
     case ENodeContentType::ObstacleUnrecognized: { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
@@ -352,15 +354,18 @@ ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t NavMeshQuadTreeProcessor::GetBorderTypeKey(ENodeContentType innerType, ENodeContentType outerType)
+NavMeshQuadTreeProcessor::BorderKeyType NavMeshQuadTreeProcessor::GetBorderTypeKey(ENodeContentType innerType, ENodeContentTypePackedType outerTypes)
 {
-  static_assert( sizeof(std::underlying_type<ENodeContentType>::type) < 2, "Can't fit keys in 4 bytes" );
+  using UnderlyingContentType = std::underlying_type<ENodeContentType>::type;
+
+  static_assert( (sizeof(ENodeContentTypePackedType)+sizeof(UnderlyingContentType)) <= (sizeof(BorderKeyType)),
+  "BorderKeyType should hold 2 ENodeContentTypePackedType" );
   
-  // key = innerType << X | outerType, where X is sizeof(outerType)
-  uint32_t key = 0;
-  key |= static_cast<std::underlying_type<ENodeContentType>::type>(innerType);
-  key <<= (8*(sizeof(std::underlying_type<ENodeContentType>::type)));
-  key |= static_cast<std::underlying_type<ENodeContentType>::type>(outerType);
+  // key = innerTypes << X | outerType, where X is sizeof(ENodeContentTypePackedType)
+  uint64_t key = 0;
+  key |= static_cast<UnderlyingContentType>(innerType);
+  key <<= (8*(sizeof(ENodeContentTypePackedType)));
+  key |= (outerTypes);
 
   return key;
 }
@@ -417,6 +422,14 @@ NavMemoryMapTypes::Border NavMeshQuadTreeProcessor::MakeBorder(const Point3f& or
 
   NavMemoryMapTypes::Border ret{origin, dest, perpendicular};
   return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeProcessor::IsInENodeContentTypePackedType(ENodeContentType contentType, ENodeContentTypePackedType contentPackedTypes)
+{
+  const ENodeContentTypePackedType packedType = ENodeContentTypeToFlag(contentType);
+  const bool isIn = (packedType & contentPackedTypes) != 0;
+  return isIn;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -569,13 +582,13 @@ bool CheckedInfo::AreAllDirectionsComplete() const
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentType outerType)
+void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes)
 {
   using namespace FindBordersHelpers;
   
   DEBUG_FIND_BORDER("------------------------------------------------------");
   DEBUG_FIND_BORDER("Starting FindBorders...");
-  const uint32_t borderComboKey = GetBorderTypeKey(innerType, outerType);
+  const BorderKeyType borderComboKey = GetBorderTypeKey(innerType, outerTypes);
   _currentBorderCombination = &_bordersPerContentCombination[borderComboKey];
 
   CORETECH_ASSERT(IsCached(innerType));
@@ -642,7 +655,8 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
               candidateCheckedInfo.MarkChecked(candidateDir, candidateOuterIdx);
               
               // if it's an outer, we have found a seed
-              if ( neighbors[candidateOuterIdx]->GetContentType() == outerType ) {
+              const bool isOuter = IsInENodeContentTypePackedType( neighbors[candidateOuterIdx]->GetContentType(), outerTypes);
+              if ( isOuter ) {
                 foundOuter = true;
                 break;
               }
@@ -742,7 +756,7 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
               // - - - - - - - - - - - -
               // OuterType
               // - - - - - - - - - - - -
-              else if ( nextNode->GetContentType() == outerType )
+              else if ( IsInENodeContentTypePackedType( nextNode->GetContentType(), outerTypes) )
               {
                 // if we have already visisted this node, we have looped back to a previous border or the seed
                 if ( checkedNodes[curInnerNode].IsChecked(curDir, nextNeighborIdx) )
@@ -839,7 +853,7 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeContentType outerType) const
+bool NavMeshQuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const
 {
   DEBUG_FIND_BORDER("------------------------------------------------------");
   DEBUG_FIND_BORDER("Starting HasBorderSeed...");
@@ -881,7 +895,8 @@ bool NavMeshQuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeCo
       while ( candidateOuterIdx < neighborCount )
       {
           // if it's an outer, we have found a seed
-          if ( neighbors[candidateOuterIdx]->GetContentType() == outerType ) {
+          const bool isOuter = IsInENodeContentTypePackedType( neighbors[candidateOuterIdx]->GetContentType(), outerTypes);
+          if (  isOuter ) {
             break;
           }
         

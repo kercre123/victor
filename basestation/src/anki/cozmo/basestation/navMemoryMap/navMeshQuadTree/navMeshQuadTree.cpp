@@ -22,7 +22,7 @@ namespace Cozmo {
 
 CONSOLE_VAR(bool, kRenderNavMeshQuadTree         , "NavMeshQuadTree", true);
 CONSOLE_VAR(bool, kRenderNavMeshQuadTreeProcessor, "NavMeshQuadTree", true);
-CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
+CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", true);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager)
@@ -66,12 +66,17 @@ void NavMeshQuadTree::Draw() const
 void NavMeshQuadTree::AddQuad(const Quad2f& quad, ENodeContentType nodeType)
 {
   // render approx last quad added
-  if ( kRenderLastAddedQuad )
+  if ( kRenderLastAddedQuad && nodeType != ENodeContentType::ClearOfObstacle )
   {
-    VizManager::SimpleQuadVector quadVector;
-    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
-    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
-    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::YELLOW, center, size));
+    ColorRGBA color = Anki::NamedColors::WHITE;
+    const float z = 70.0f;
+    Point3f topLeft = {quad[Quad::CornerName::TopLeft].x(), quad[Quad::CornerName::TopLeft].y(), z};
+    Point3f topRight = {quad[Quad::CornerName::TopRight].x(), quad[Quad::CornerName::TopRight].y(), z};
+    Point3f bottomLeft = {quad[Quad::CornerName::BottomLeft].x(), quad[Quad::CornerName::BottomLeft].y(), z};
+    Point3f bottomRight = {quad[Quad::CornerName::BottomRight].x(), quad[Quad::CornerName::BottomRight].y(), z};
+    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", topLeft, topRight, color, true);
+    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", topRight, bottomRight, color, false);
+    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", bottomRight, bottomLeft, color, false);
     _vizManager->DrawQuadVector("NavMeshQuadTree::AddQuad", quadVector);
   }
 

@@ -92,19 +92,34 @@ bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, ENodeContentType detectedC
   const Quad2f& myQuad = MakeQuadXY();
   if ( myQuad.Intersects(quad) )
   {
-    // am I fully contained within the quad and can override my children? that would allow merging
-    if ( quad.Contains(myQuad) && CanOverrideChildrenWithContent(detectedContentType) )
+    EContentOverlap overlap = EContentOverlap::Partial; // default value may change later
+  
+    // am I fully contained within the quad?
+    if ( quad.Contains(myQuad) )
     {
-      // merge if subdivided
+      overlap = EContentOverlap::Total;
+      
+      // if subdivided
       if ( IsSubdivided() )
       {
-        // merge to the new content type, we already made sure we can override the type
-        Merge( detectedContentType, processor );
+        // we are subdivided, see if we can merge children or we should tell them to add the new quad
+        if ( CanOverrideSelfAndChildrenWithContent(detectedContentType, overlap) )
+        {
+          // merge to the new content type, we already made sure we can override the type
+          Merge( detectedContentType, processor );
+        }
+        else
+        {
+          // delegate on children
+          for( auto& child : _children ) {
+            childChanged = child.AddQuad(quad, detectedContentType, processor) || childChanged;
+          }
+        }
       }
       else
       {
-        // we are the new type (if we can override, which we should since we checked for override)
-        TrySetDetectedContentType( detectedContentType, processor );
+        // we can try to set our content, since we fit fully and we don't have children
+        TrySetDetectedContentType( detectedContentType, overlap, processor );
       }
     }
     else
@@ -131,7 +146,7 @@ bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, ENodeContentType detectedC
       }
       else
       {
-        TrySetDetectedContentType(detectedContentType, processor);
+        TrySetDetectedContentType(detectedContentType, overlap, processor);
       }
     }
   }
@@ -143,7 +158,7 @@ bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, ENodeContentType detectedC
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, NavMeshQuadTreeProcessor& processor)
 {
-  CORETECH_ASSERT( !NEAR_ZERO(direction.x()) && !NEAR_ZERO(direction.y()) );
+  CORETECH_ASSERT( !NEAR_ZERO(direction.x()) || !NEAR_ZERO(direction.y()) );
   
   // reached expansion limit
   if ( _level == std::numeric_limits<uint8_t>::max() ) {
@@ -206,10 +221,11 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
       case ENodeContentType::Invalid             : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
       case ENodeContentType::Subdivided          : { color = Anki::NamedColors::BLUE;     color.SetAlpha(1.0f); break; }
       case ENodeContentType::Unknown             : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
-      case ENodeContentType::Cliff               : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
-      case ENodeContentType::Clear               : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.2f); break; }
+      case ENodeContentType::ClearOfObstacle     : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.2f); break; }
+      case ENodeContentType::ClearOfCliff        : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
       case ENodeContentType::ObstacleCube        : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
       case ENodeContentType::ObstacleUnrecognized: { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
+      case ENodeContentType::Cliff               : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
     }
     //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_level*100}, _sideLen));
     quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _sideLen));
@@ -266,22 +282,39 @@ void NavMeshQuadTreeNode::Merge(ENodeContentType newContentType, NavMeshQuadTree
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::CanOverrideChildrenWithContent(ENodeContentType contentType) const
+bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
 {
-  // cliff can override any other
-  if ( contentType == ENodeContentType::Cliff ) {
+  // Cliff can override any other
+  if ( newContentType == ENodeContentType::Cliff ) {
     return true;
   }
 
-  // if the node is a cliff, it can't be overridden
+  // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
   if ( _contentType == ENodeContentType::Cliff ) {
+    const bool isTotalClear = (newContentType == ENodeContentType::ClearOfCliff) && (overlap == EContentOverlap::Total);
+    return isTotalClear;
+  }
+
+  // ClearOfCliff can only be overriden by Cliff
+  if ( _contentType == ENodeContentType::ClearOfCliff && newContentType != ENodeContentType::Cliff ) {
+    return false;
+  }
+  
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::CanOverrideSelfAndChildrenWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
+{
+  // ask us
+  if ( !CanOverrideSelfWithContent(newContentType, overlap) ) {
     return false;
   }
 
   // ask children if they can
   for ( const auto& child : _children )
   {
-    const bool canOverrideChild = child.CanOverrideChildrenWithContent( contentType );
+    const bool canOverrideChild = child.CanOverrideSelfAndChildrenWithContent(newContentType, overlap);
     if ( !canOverrideChild ) {
       return false;
     }
@@ -323,12 +356,11 @@ void NavMeshQuadTreeNode::TryAutoMerge(NavMeshQuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::TrySetDetectedContentType(ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor)
+void NavMeshQuadTreeNode::TrySetDetectedContentType(ENodeContentType detectedContentType, EContentOverlap overlap,
+  NavMeshQuadTreeProcessor& processor)
 {
-  // This is here temporarily to prevent Clear from overriding Cliffs. I need to think how we want to support
-  // cliffs directly under Cozmo
-  if ( _contentType == ENodeContentType::Cliff )
-  {
+  // if we don't want to override with the new content, do not call ForceSet
+  if ( !CanOverrideSelfWithContent(detectedContentType, overlap) ) {
     return;
   }
 
