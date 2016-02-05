@@ -15,15 +15,23 @@ namespace Simon {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InitColorsAndSounds();
-      SimonGameNextRoundPanel nextRoundPanel = _GameInstance.ShowGameStateSlide("NextRound").GetComponent<SimonGameNextRoundPanel>();
-      nextRoundPanel.EnableContinueButton(true);
-      nextRoundPanel.OnContinueButtonPressed += HandleContinuePressed;
-      nextRoundPanel.SetNextPlayerText(_NextPlayer);
+
+      _GameInstance.ShowContinueButtonShelf(true);
+      _GameInstance.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
+      _GameInstance.SetContinueButtonListener(HandleContinuePressed);
+      _GameInstance.EnableContinueButton(true);
+
+      string headerTextKey = (_NextPlayer == PlayerType.Human) ? 
+        LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;
+      _GameInstance.InfoTitleText = Localization.Get(headerTextKey);
+      _GameInstance.HideGameStateSlide();
+        
       _GameInstance.CozmoDim = (_NextPlayer == PlayerType.Human);
       _GameInstance.PlayerDim = (_NextPlayer == PlayerType.Cozmo);
     }
 
     private void HandleContinuePressed() {
+      _GameInstance.HideContinueButtonShelf();
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.PLAYFUL);
       if (_NextPlayer == PlayerType.Cozmo) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));

@@ -39,6 +39,11 @@ namespace Cozmo {
 
       [SerializeField]
       private ContinueGameShelfWidget _ContinueButtonShelfPrefab;
+
+      [SerializeField]
+      private ContinueGameShelfWidget _ContinueButtonCenterPrefab;
+
+      private bool _IsContinueButtonShelfCentered;
       private ContinueGameShelfWidget _ContinueButtonShelfInstance;
 
       [SerializeField]
@@ -478,12 +483,19 @@ namespace Cozmo {
 
       #region ContinueGameShelfWidget
 
-      public void ShowContinueButtonShelf() {
+      public void ShowContinueButtonShelf(bool centerShelf) {
         if (_ContinueButtonShelfInstance != null) {
-          return;
+          if (_IsContinueButtonShelfCentered == centerShelf) {
+            return;
+          }
+          else {
+            HideContinueButtonShelf();
+          }
         }
 
-        GameObject widgetObj = UIManager.CreateUIElement(_ContinueButtonShelfPrefab.gameObject, this.transform);
+        ContinueGameShelfWidget prefabToUse = centerShelf ? _ContinueButtonCenterPrefab : _ContinueButtonShelfPrefab;
+        _IsContinueButtonShelfCentered = centerShelf;
+        GameObject widgetObj = UIManager.CreateUIElement(prefabToUse.gameObject, this.transform);
         _ContinueButtonShelfInstance = widgetObj.GetComponent<ContinueGameShelfWidget>();
 
         AddWidget(_ContinueButtonShelfInstance);

@@ -381,13 +381,6 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Game State Slides
 
-  public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
-    GameObject slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(UIPrefabHolder.Instance.InitialCubesSlide);
-    ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-    cubeSlide.Initialize(numCubesRequired);
-    return cubeSlide;
-  }
-
   // TODO: Delete after removing usage by CodeBreaker, Minesweeper
   public GameObject ShowFullScreenSlide(string slideName) {
     // If found, show that slide.
@@ -401,44 +394,6 @@ public abstract class GameBase : MonoBehaviour {
       " list of slides! gameObject.name=" + gameObject.name);
     }
     return slideObject;
-  }
-
-  public GameObject ShowFullScreenSlide(GameObject slidePrefab) {
-    return _SharedMinigameViewInstance.ShowFullScreenSlide(slidePrefab, slidePrefab.name);
-  }
-
-  /// <summary>
-  /// Returns an instance of the slide created. Null if the creation failed.
-  /// </summary>]
-  /// TODO Delete after changes for Simon are in
-  public GameObject ShowGameStateSlide(string slideName) {
-    // If found, show that slide.
-    GameObject slideObject = null;
-    GameStateSlide foundSlideData = GetSlideByName(slideName);
-    if (foundSlideData != null) {
-      slideObject = _SharedMinigameViewInstance.ShowCustomGameStateSlide(foundSlideData);
-    }
-    else {
-      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
-      " list of slides! gameObject.name=" + gameObject.name);
-    }
-    return slideObject;
-  }
-
-  public void ShowInfoTextSlide(string textToDisplay) {
-    _SharedMinigameViewInstance.ShowInfoTextSlide(textToDisplay);
-  }
-
-  public void ShowInfoTextSlideWithKey(string localizationKey) {
-    _SharedMinigameViewInstance.ShowInfoTextSlide(Localization.Get(localizationKey));
-  }
-
-  private void ShowRewardsSlide() {
-    // TODO
-  }
-
-  public void HideGameStateSlide() {
-    _SharedMinigameViewInstance.HideGameStateSlide();
   }
 
   // TODO: Delete after removing usage by CodeBreaker, Minesweeper
@@ -464,12 +419,39 @@ public abstract class GameBase : MonoBehaviour {
     return foundSlideData;
   }
 
+  public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
+    GameObject slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(UIPrefabHolder.Instance.InitialCubesSlide);
+    ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
+    cubeSlide.Initialize(numCubesRequired);
+    return cubeSlide;
+  }
+
+  public GameObject ShowFullScreenSlide(GameObject slidePrefab) {
+    return _SharedMinigameViewInstance.ShowFullScreenSlide(slidePrefab, slidePrefab.name);
+  }
+
+  public void ShowInfoTextSlide(string textToDisplay) {
+    _SharedMinigameViewInstance.ShowInfoTextSlide(textToDisplay);
+  }
+
+  public void ShowInfoTextSlideWithKey(string localizationKey) {
+    _SharedMinigameViewInstance.ShowInfoTextSlide(Localization.Get(localizationKey));
+  }
+
+  private void ShowRewardsSlide() {
+    // TODO
+  }
+
+  public void HideGameStateSlide() {
+    _SharedMinigameViewInstance.HideGameStateSlide();
+  }
+
   #endregion
 
   #region ContinueGameShelfWidget
 
-  public void ShowContinueButtonShelf() {
-    _SharedMinigameViewInstance.ShowContinueButtonShelf();
+  public void ShowContinueButtonShelf(bool centerShelf = false) {
+    _SharedMinigameViewInstance.ShowContinueButtonShelf(centerShelf);
   }
 
   public void HideContinueButtonShelf() {

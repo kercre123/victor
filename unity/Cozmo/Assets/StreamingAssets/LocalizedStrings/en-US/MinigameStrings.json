@@ -51,9 +51,6 @@
   "askCozmo.button": {
     "translation": "GIVE ME ANSWER"
   },
-  "simonGame.button": {
-    "translation": "Continue"
-  },
   "simonGame.label.watchCozmoPattern": {
     "translation": "Watch Cozmo make a pattern."
   },
@@ -71,6 +68,18 @@
   },
   "simonGame.label.cozmoTurn": {
     "translation": "Cozmo's Turn!"
+  },
+  "simonGame.header.watchCozmoPattern": {
+    "translation": "Watch Cozmo Make a Pattern"
+  },
+  "simonGame.header.watchCozmoGuess": {
+    "translation": "Watch Cozmo Guess"
+  },
+  "simonGame.header.createYourPattern": {
+    "translation": "Make a Pattern"
+  },
+  "simonGame.header.makeYourGuess": {
+    "translation": "Copy Cozmo's Pattern"
   },
   "simonGame.label.stepsLeft": {
     "translation": "Steps In Pattern: {0}/{1}"
