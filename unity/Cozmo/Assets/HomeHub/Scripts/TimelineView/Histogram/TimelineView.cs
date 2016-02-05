@@ -70,9 +70,6 @@ namespace Cozmo.HomeHub {
     private LayoutElement _MiddlePane;
 
     [SerializeField]
-    private GraphSpline _GraphSpline;
-
-    [SerializeField]
     private AnkiButton _EndSessionButton;
 
     public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
@@ -141,7 +138,6 @@ namespace Cozmo.HomeHub {
         timelineEntries.RemoveAt(0);
       }
 
-      List<float> graphPoints = new List<float>();
       for (int i = 0; i < kGeneratedTimelineHistoryLength; i++) {
         var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
 
@@ -158,14 +154,11 @@ namespace Cozmo.HomeHub {
         }
 
         entry.Inititialize(date, active, progress);
-        graphPoints.Add(Mathf.Min(progress, 1.0f));
 
         entry.OnSelect += HandleTimelineEntrySelected;
 
         _TimelineEntries.Add(entry);
       }
-
-      _GraphSpline.Initialize(graphPoints);
     }
 
     private void UpdateDailySession() {
