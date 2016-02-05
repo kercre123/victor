@@ -135,9 +135,6 @@ namespace Cozmo {
     bool IsShortInterruption() const { return IsBehaviorGroup(BehaviorGroup::ShortInterruption); }
     virtual bool WantsToResume() const { return false; }
     
-    // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
-    static const ActionList::SlotHandle sActionSlot;
-    
     virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
     
     bool IsBehaviorGroup(BehaviorGroup behaviorGroup) const { return _behaviorGroups.IsBitFlagSet(behaviorGroup); }

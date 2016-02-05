@@ -15,6 +15,7 @@ namespace BlockMessages
     FlashObjectIDs      flashID,
     CubeLights          setCubeLights,
     ObjectBeingCarried  setObjectBeingCarried,
+    ObjectDiscovered	  discovered,
     ObjectMoved         moved,
     ObjectStoppedMoving stopped,
     ObjectTapped        tapped,

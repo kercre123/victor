@@ -212,7 +212,7 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
   }
 
   _waitForActionTag = actionToRun->GetTag();
-  robot.GetActionList().QueueActionNow(0, actionToRun);
+  robot.GetActionList().QueueActionNow(actionToRun);
 
   return Result::RESULT_OK;
 }
@@ -251,7 +251,7 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
   }
   
   _waitForActionTag = newAction->GetTag();
-  robot.GetActionList().QueueActionNow(0, newAction);
+  robot.GetActionList().QueueActionNow(newAction);
   _state = State::PlayingFinalReaction;
   
   robot.GetMoveComponent().EnableLiftPower(true);

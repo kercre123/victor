@@ -39,7 +39,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  NavMeshQuadTreeProcessor();
+  NavMeshQuadTreeProcessor(VizManager* vizManager);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Notifications from nodes
@@ -171,6 +171,8 @@ private:
   // true if there have been changes since last drawn
   mutable bool _contentGfxDirty;
   mutable bool _borderGfxDirty;
+  
+  VizManager* _vizManager;
   
 }; // class
   

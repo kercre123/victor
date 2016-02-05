@@ -113,7 +113,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
         
         DriveStraightAction* backupAction = new DriveStraightAction(-distToBackUp, -_backupSpeed);
         _backingUpAction = backupAction->GetTag();
-        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, backupAction);
+        robot.GetActionList().QueueActionNow(backupAction);
 
         _totalDriveForwardDist = 0.0f;
       }
@@ -127,7 +127,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
         _actionRunning = action->GetTag();
         
         // Note that queuing action "now" will cancel the tracking action
-        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+        robot.GetActionList().QueueActionNow(action);
         
         _state = State::BringingHeadUp;
         SetStateName("BringingHeadUp");
@@ -152,7 +152,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
       if( !robot.GetMoveComponent().IsLiftMoving() && robot.GetLiftHeight() > LIFT_HEIGHT_LOWDOCK + 6.0f ) {
         MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
         // use animation slot, since we know no one is using the lift
-        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
+        robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, liftAction);
       }
       
       break;
@@ -201,7 +201,7 @@ void BehaviorFollowMotion::StartTracking(Robot& robot)
   action->SetMoveEyes(true);
   _actionRunning = action->GetTag();
   
-  robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+  robot.GetActionList().QueueActionNow(action);
   
   _state = State::Tracking;
   SetStateName("Tracking");
@@ -269,7 +269,7 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
       	  // Wait for the animation to complete
       	  _actionRunning = compoundAction->GetTag();
       
-      	  robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, compoundAction);
+          robot.GetActionList().QueueActionNext(compoundAction);
         }
       } // if(_actionRunning==0 && motionObserved.img_area > 0)
       break;
@@ -300,11 +300,11 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
           _actionRunning = lookDownAction->GetTag();
           
           // Note that queuing action "now" will cancel the tracking action
-          robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, lookDownAction);
+          robot.GetActionList().QueueActionNow(lookDownAction);
           
           // After head gets down and before pouncing, play animation to glance up and down, looping
           PlayAnimationAction* glanceUpAndDownAction = new PlayAnimationAction(kLookUpAndDownAnimName, 0);
-          robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, glanceUpAndDownAction);
+          robot.GetActionList().QueueActionNext(glanceUpAndDownAction);
           
           PRINT_NAMED_INFO("BehaviorFollowMotion.HoldingHeadLow",
                            "got %f of image with dist %f, holding head at min angle for %f sec",
@@ -332,7 +332,7 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
         SetStateName("DriveForward");
         
         // Queue action now will stop the tracking that's currently running
-        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveAction);
+        robot.GetActionList().QueueActionNow(driveAction);
         
         // PRINT_NAMED_DEBUG("BehaviorFollowMotion.DriveForward",
         //                   "relHeadAngle = %fdeg, relBodyAngle = %fdeg, ground area %f",

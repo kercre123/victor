@@ -99,6 +99,8 @@ union RobotToEngine {
   ChargerMountComplete       chargerMountCompleted  = 0x16,
   MovingLiftPostDock         movingLiftPostDock     = 0x17,
   ProxObstacle               proxObstacle           = 0x18,
+  ObjectDiscovered           activeObjectDiscovered = 0x19,
+  IMURawDataChunk            imuRawDataChunk        = 0x20,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,

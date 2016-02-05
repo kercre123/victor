@@ -246,6 +246,7 @@ union EngineToRobot
   EnableLiftPower               enableLiftPower             = 0x21,
   RawPWM                        setRawPWM                   = 0x22,
   SetMotionModelParams          setMotionModelParams        = 0x23,
+  CubeSlots                     assignCubeSlots             = 0x24,
   
   // To WiFi 0x80 to 0xFE
   EraseFlash                    eraseFlash                  = 0x80,

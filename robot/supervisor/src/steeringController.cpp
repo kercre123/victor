@@ -70,14 +70,13 @@ namespace Anki {
       Radians prevAngle_;
       f32 angularDistExpected_;
       f32 angularDistTraversed_;
-      const f32 ANGULAR_TRAVERSAL_DISTANCE_MARGIN = 0.1;
-
+      
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
 
       VelocityProfileGenerator vpg_;
 
-      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.4f;
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = DEG_TO_RAD(20.f);
 
     } // Private namespace
 
@@ -447,10 +446,10 @@ namespace Anki {
 
     void ExecutePointTurn(f32 angularVel, f32 angularAccel)
     {
-      if (std::fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
+      if (fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
         AnkiWarn( 53, "SteeringController.ExecutePointTurn", 298, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(angularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-        angularVel = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, angularVel);
+        angularVel = copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, angularVel);
       }
       
       isPointTurnWithTarget_ = false;
@@ -476,10 +475,10 @@ namespace Anki {
 
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
     {
-      if (std::fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
+      if (fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
         AnkiWarn( 53, "SteeringController.ExecutePointTurn", 298, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(maxAngularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-        maxAngularVel = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxAngularVel);
+        maxAngularVel = copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxAngularVel);
       }
       
       isPointTurnWithTarget_ = true;
@@ -504,7 +503,7 @@ namespace Anki {
 
       if (useShortestDir) {
         // Update destAngle and maxAngularVel_ so that the shortest turn is executed to reach the goal
-        maxAngularVel_ = ABS(maxAngularVel) * (angularDistExpected_ > 0 ? 1 : -1);
+        maxAngularVel_ = ABS(maxAngularVel_) * (angularDistExpected_ > 0 ? 1 : -1);
         destAngle = currAngle + angularDistExpected_;
       } else {
         // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
@@ -567,7 +566,7 @@ namespace Anki {
         // Check if the angular dist to target is growing
         angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
         prevAngle_ = currAngle;
-        if (ABS(angularDistTraversed_) - ANGULAR_TRAVERSAL_DISTANCE_MARGIN > ABS(angularDistExpected_) ) {
+        if (ABS(angularDistTraversed_) > ABS(angularDistExpected_) ) {
           ExitPointTurn();
   #if(DEBUG_STEERING_CONTROLLER)
           AnkiDebug( 12, "POINT TURN", 111, "Stopping because turned more than expected", 0);

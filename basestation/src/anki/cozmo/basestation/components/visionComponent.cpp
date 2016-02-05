@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/visionSystem.h"
 
@@ -36,20 +37,21 @@
 namespace Anki {
 namespace Cozmo {
   
-  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, Util::Data::DataPlatform* dataPlatform)
-  : _camera(robotID)
+  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, const CozmoContext* context)
+  : _vizManager(context->GetVizManager())
+  , _camera(robotID)
   , _runMode(mode)
   {
     std::string dataPath("");
-    if(dataPlatform != nullptr) {
-      dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources,
+    if(context->GetDataPlatform() != nullptr) {
+      dataPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                               "/config/basestation/vision");
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Constructor.NullDataPlatform",
                           "Insantiating VisionSystem with a empty DataPath.");
     }
     
-    _visionSystem = new VisionSystem(dataPath);
+    _visionSystem = new VisionSystem(dataPath, _vizManager);
     
   } // VisionSystem()
 
@@ -332,7 +334,7 @@ namespace Cozmo {
             _visionSystem->Update(_nextPoseData, image);
             _lastImg = image;
             
-            VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+            _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                                                "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
           }
           break;
@@ -481,7 +483,7 @@ namespace Cozmo {
         //assert(_currentImg != nullptr);
         _visionSystem->Update(_currentPoseData, _currentImg);
         
-        VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+        _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                                            "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
         
         Lock();
@@ -536,7 +538,7 @@ namespace Cozmo {
         }
         
         const Quad2f& corners = visionMarker.GetImageCorners();
-        VizManager::getInstance()->SendVisionMarker(corners[Quad::TopLeft].x(),  corners[Quad::TopLeft].y(),
+        _vizManager->SendVisionMarker(corners[Quad::TopLeft].x(),  corners[Quad::TopLeft].y(),
                                                     corners[Quad::TopRight].x(),  corners[Quad::TopRight].y(),
                                                     corners[Quad::BottomRight].x(),  corners[Quad::BottomRight].y(),
                                                     corners[Quad::BottomLeft].x(),  corners[Quad::BottomLeft].y(),
@@ -581,7 +583,7 @@ namespace Cozmo {
       VizInterface::TrackerQuad trackerQuad;
       if(true == _visionSystem->CheckMailbox(trackerQuad)) {
         // Send tracker quad info to viz
-        VizManager::getInstance()->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
+        _vizManager->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
                                                    trackerQuad.topRight_x, trackerQuad.topRight_y,
                                                    trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
                                                    trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
@@ -623,7 +625,7 @@ namespace Cozmo {
         dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
         
         // Visualize docking error signal
-        VizManager::getInstance()->SetDockingError(dockErrMsg.x_distErr,
+        _vizManager->SetDockingError(dockErrMsg.x_distErr,
                                                    dockErrMsg.y_horErr,
                                                    dockErrMsg.angleErr);
         
