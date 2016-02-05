@@ -683,7 +683,7 @@ namespace Anki {
       
       if(ActionResult::SUCCESS == result && !_startSound.empty()) {
         // Play starting sound if there is one (only if nothing else is playing)
-        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_startSound, 1, false));
+        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_startSound, 1, false));
       }
       
       return result;
@@ -800,11 +800,11 @@ namespace Anki {
       {
         PlayAnimationAction* driveSoundAction = new PlayAnimationAction(_drivingSound, 1, false);
         _driveSoundActionTag = driveSoundAction->GetTag();
-        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, driveSoundAction);
+        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, driveSoundAction);
       }
       else if(ActionResult::SUCCESS == result && !_stopSound.empty())
       {
-        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_stopSound, 1, false));
+        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_stopSound, 1, false));
       }
       
       return result;

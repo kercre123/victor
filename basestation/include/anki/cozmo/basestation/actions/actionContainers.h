@@ -108,31 +108,29 @@ namespace Anki {
       // this action, the returned SlotHandle can be ignored.
       SlotHandle AddConcurrentAction(IActionRunner* action, u8 numRetries = 0);
       
-      // Queue an action into a specific slot. If that slot does not exist
-      // (perhaps because it completed before this call) it will be created.
+      // Queue an action
       // These wrap correspondong QueueFoo() methods in ActionQueue.
-      Result     QueueActionNext(SlotHandle  atSlot, IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionNext(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionAtEnd(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionNow(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionAtFront(IActionRunner* action, u8 numRetries = 0);
       
-      Result     QueueAction(SlotHandle atSlot, QueueActionPosition inPosition,
+      Result     QueueAction(QueueActionPosition inPosition,
                              IActionRunner* action, u8 numRetries = 0);
       
       bool       IsEmpty() const;
       
       size_t     GetQueueLength(SlotHandle atSlot);
-
-      // Only cancels actions from the specified slot with the specified type, and
-      // does any cleanup specified by the action's Cancel/Cleanup methods.
-      // Returns true if any actions were cancelled.
-      bool       Cancel(SlotHandle fromSlot = -1, // -1 == "all slots"
-                        RobotActionType withType = RobotActionType::UNKNOWN);
       
-      // Find and cancel the action with the specified ID Tag. The slot to search in
-      // can optionally be specified, but otherwise, all slots are searched.
+      size_t     GetNumQueues();
+
+      // Only cancels with the specified type. All slots are searched.
+      // Returns true if any actions were cancelled.
+      bool       Cancel(RobotActionType withType = RobotActionType::UNKNOWN);
+      
+      // Find and cancel the action with the specified ID Tag. All slots are searched.
       // Returns true if the action was found and cancelled.
-      bool       Cancel(u32 idTag, SlotHandle fromSlot = -1);
+      bool       Cancel(u32 idTag);
       
       void       Print() const;
       
@@ -141,7 +139,7 @@ namespace Anki {
       bool       IsCurrAction(const std::string& actionName) const;
 
       // Returns true if the passed in action tag matches the action currently playing in the given slot
-      bool       IsCurrAction(u32 idTag, SlotHandle fromSlot) const;
+      bool       IsCurrAction(u32 idTag, SlotHandle fromSlot = 0) const;
 
       
     protected:
@@ -159,6 +157,11 @@ namespace Anki {
     inline size_t ActionList::GetQueueLength(SlotHandle atSlot)
     {
       return _queues[atSlot].Length() + (nullptr == _queues[atSlot].GetCurrentRunningAction() ? 0 : 1);
+    }
+    
+    inline size_t ActionList::GetNumQueues()
+    {
+      return _queues.size();
     }
     
   } // namespace Cozmo

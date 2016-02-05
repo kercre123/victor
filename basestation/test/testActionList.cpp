@@ -188,7 +188,7 @@ TEST(QueueAction, SingleActionFinishes)
   
   EXPECT_NE(testAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction);
   
   EXPECT_EQ(testAction->GetRobot(), &r);
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test"));
@@ -211,13 +211,13 @@ TEST(QueueAction, SingleActionCancel)
   
   EXPECT_NE(testAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction);
   
   EXPECT_EQ(testAction->GetRobot(), &r);
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
-  r.GetActionList().Cancel(0, RobotActionType::WAIT);
+  r.GetActionList().Cancel(RobotActionType::WAIT);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
@@ -238,9 +238,9 @@ TEST(QueueAction, ThreeActionsFinish)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(testAction3->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
   
   EXPECT_EQ(testAction1->GetRobot(), &r);
   EXPECT_EQ(testAction2->GetRobot(), &r);
@@ -281,11 +281,11 @@ TEST(QueueAction, ThreeActionsCancelSecond)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(testAction3->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
   
-  r.GetActionList().Cancel(0, RobotActionType::TURN_IN_PLACE);
+  r.GetActionList().Cancel(RobotActionType::TURN_IN_PLACE);
   
   EXPECT_EQ(testAction1->GetRobot(), &r);
   EXPECT_EQ(testAction3->GetRobot(), &r);
@@ -318,10 +318,10 @@ TEST(QueueAction, ThreeActionsCancelAll)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(testAction3->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
-  r.GetActionList().Cancel(0, RobotActionType::WAIT);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
+  r.GetActionList().Cancel(RobotActionType::WAIT);
   
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
@@ -344,8 +344,8 @@ TEST(QueueAction, InterruptActionNotRunning)
   EXPECT_NE(testAction->GetRobot(), &r);
   EXPECT_NE(testInterruptAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testInterruptAction);
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW_AND_RESUME, testAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testInterruptAction);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction);
   
   EXPECT_EQ(testAction->GetRobot(), &r);
   EXPECT_EQ(testInterruptAction->GetRobot(), &r);
@@ -383,7 +383,7 @@ TEST(QueueAction, InterruptActionRunning)
   EXPECT_NE(testAction->GetRobot(), &r);
   EXPECT_NE(testInterruptAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testInterruptAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testInterruptAction);
   
   EXPECT_EQ(testInterruptAction->GetRobot(), &r);
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
@@ -395,7 +395,7 @@ TEST(QueueAction, InterruptActionRunning)
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW_AND_RESUME, testAction);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction);
   
   EXPECT_EQ(testAction->GetRobot(), &r);
   EXPECT_EQ(testInterruptAction->GetRobot(), &r);
@@ -432,7 +432,7 @@ TEST(QueueAction, CompoundActionSequentialSingle)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(compoundAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, compoundAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
@@ -458,7 +458,7 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(compoundAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, compoundAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
@@ -491,7 +491,7 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(compoundAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, compoundAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
@@ -541,7 +541,7 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
   EXPECT_NE(testAction3->GetRobot(), &r);
   EXPECT_NE(compoundAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, compoundAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
@@ -585,7 +585,7 @@ TEST(QueueAction, ParallelActionImmediateComplete)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(compoundAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, compoundAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
@@ -610,7 +610,7 @@ TEST(QueueAction, ParallelActionOneCompleteBefore)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(compoundAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, compoundAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
@@ -637,17 +637,17 @@ TEST(QueueAction, QueueNow)
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction1);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction2);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction2);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW, testAction3);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction3);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
@@ -663,17 +663,17 @@ TEST(QueueAction, QueueNext)
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
 
-  r.GetActionList().QueueAction(0, QueueActionPosition::NEXT, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::NEXT, testAction1);
 
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
 
-  r.GetActionList().QueueAction(0, QueueActionPosition::NEXT, testAction2);
+  r.GetActionList().QueueAction(QueueActionPosition::NEXT, testAction2);
 
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
 
-  r.GetActionList().QueueAction(0, QueueActionPosition::NEXT, testAction3);
+  r.GetActionList().QueueAction(QueueActionPosition::NEXT, testAction3);
 
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
@@ -703,17 +703,17 @@ TEST(QueueAction, QueueAtEnd)
   TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction3);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
@@ -744,17 +744,17 @@ TEST(QueueAction, QueueNowAndClearRemaining)
   TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
   testAction3->_complete = true;
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testAction2);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction3);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction3);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
@@ -766,6 +766,69 @@ TEST(QueueAction, QueueNowAndClearRemaining)
   EXPECT_EQ(numActionsDestroyed, 3);
 }
 
+// Tests queueing actions at the IN_PARALLEL position
+TEST(QueueAction, QueueInParallel)
+{
+  numActionsDestroyed = 0;
+  Robot r(0, cozmoContext);
+  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
+  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
+  TestAction* testAction3 = new TestAction("Test3", RobotActionType::WAIT);
+  
+  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction1);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
+  
+  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction2);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 2);
+  
+  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction3);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
+  
+  testAction1->_complete = true;
+  
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
+  
+  testAction2->_complete = true;
+  
+  r.GetActionList().Update();
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
+  
+  testAction3->_complete = true;
+  
+  r.GetActionList().Update();
+  
+  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 0);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
+  
+  EXPECT_EQ(numActionsDestroyed, 3);
+}
+
 // Tests queueing an action that has sub-actions (ie. action within an action)
 TEST(QueueAction, QueueActionWithinAction)
 {
@@ -773,7 +836,7 @@ TEST(QueueAction, QueueActionWithinAction)
   Robot r(0, cozmoContext);
   TestActionWithinAction* testActionWithinAction = new TestActionWithinAction("TestActionWithinAction", RobotActionType::UNKNOWN);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, testActionWithinAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testActionWithinAction);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("TestActionWithinAction"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
@@ -797,6 +860,7 @@ TEST(QueueAction, QueueActionWithinAction)
   EXPECT_EQ(numActionsDestroyed, 4); //TestActionWithinAction has a compound action with 2 actions for a total of 4 actions
 }
 
+// Tests queueing a compound action where on of its actions has a FAILURE_RETRY
 TEST(QueueAction, ActionFailureRetry)
 {
   numActionsDestroyed = 0;
@@ -813,7 +877,7 @@ TEST(QueueAction, ActionFailureRetry)
   EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_NE(compoundAction->GetRobot(), &r);
   
-  r.GetActionList().QueueAction(0, QueueActionPosition::AT_END, compoundAction);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(compoundAction->GetRobot(), &r);

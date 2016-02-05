@@ -661,7 +661,7 @@ void Robot::HandleMessage(const ExternalInterface::SetBehaviorSystemEnabled& msg
 template<>
 void Robot::HandleMessage(const ExternalInterface::CancelAction& msg)
 {
-  GetActionList().Cancel(-1, (RobotActionType)msg.actionType);
+  GetActionList().Cancel((RobotActionType)msg.actionType);
 }
 
 template<>

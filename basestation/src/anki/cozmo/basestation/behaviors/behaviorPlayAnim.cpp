@@ -143,7 +143,7 @@ void BehaviorPlayAnim::PlayAnimation(Robot& robot, const std::string& animName)
   SetStateName("Play" + std::to_string(_loopsLeft));
   
   PlayAnimationAction* animAction = new PlayAnimationAction(animName);
-  robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
+  robot.GetActionList().QueueActionNow(animAction);
   _lastActionTag = animAction->GetTag();
   _isActing = true;
 }

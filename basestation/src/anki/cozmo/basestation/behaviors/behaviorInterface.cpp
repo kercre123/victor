@@ -26,8 +26,6 @@ namespace Anki {
 namespace Cozmo {
 
   // Static initializations
-  const ActionList::SlotHandle IBehavior::sActionSlot = Robot::DriveAndManipulateSlot;
-  
   const char* IBehavior::kBaseDefaultName = "no_name";
   
   static const char* kNameKey              = "name";

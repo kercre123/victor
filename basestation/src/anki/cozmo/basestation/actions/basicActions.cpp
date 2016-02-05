@@ -898,15 +898,7 @@ namespace Anki {
       }
       
       if(_headTrackWhenDone) {
-        ActionList::SlotHandle inSlot = GetSlotHandle();
-        if(ActionList::UnknownSlot == inSlot) {
-          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.UnknownSlot",
-                              "Queuing TrackObjectAction because headTrackWhenDone==true, but "
-                              "slot unknown. Using DriveAndManipulateSlot");
-          inSlot = Robot::DriveAndManipulateSlot;
-        }
-
-        _robot->GetActionList().QueueActionNext(inSlot, new TrackObjectAction(_objectID));
+        _robot->GetActionList().QueueActionNext(new TrackObjectAction(_objectID));
       }
 
       return ActionResult::SUCCESS;

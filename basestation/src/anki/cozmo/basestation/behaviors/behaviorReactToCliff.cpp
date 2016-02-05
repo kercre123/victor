@@ -96,7 +96,7 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
       {
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
-        robot.GetActionList().QueueActionNow(0, newAction);
+        robot.GetActionList().QueueActionNow(newAction);
         animIndex = ++animIndex % _animReactions.size();
       }
       _waitingForAnimComplete = true;
