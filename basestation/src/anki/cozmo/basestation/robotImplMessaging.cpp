@@ -31,6 +31,10 @@
 // Whether or not to handle prox obstacle events
 #define HANDLE_PROX_OBSTACLES 0
 
+// Prints the IDs of the active blocks that are on but not currently
+// talking to a robot. Prints roughly once/sec.
+#define PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS 0
+
 
 namespace Anki {
 namespace Cozmo {
@@ -52,6 +56,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleBlockPickedUp, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPlaced,
     std::bind(&Robot::HandleBlockPlaced, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectDiscovered,
+    std::bind(&Robot::HandleActiveObjectDiscovered, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectMoved,
     std::bind(&Robot::HandleActiveObjectMoved, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectStopped,
@@ -226,6 +232,17 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
   _visionComponent.EnableMode(VisionMode::Tracking, false);
 
 }
+  
+void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+#if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
+  const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
+  if (payload.factory_id < s32_MAX) {  // Ignore chargers which have MSB set
+    PRINT_NAMED_INFO("ActiveObjectDiscovered", "%8x", payload.factory_id);
+  }
+#endif
+}
+  
 
 void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
