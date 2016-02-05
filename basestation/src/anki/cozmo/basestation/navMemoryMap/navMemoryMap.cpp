@@ -76,7 +76,7 @@ bool NavMemoryMap::HasBorders(EContentType innerType, EContentType outerType) co
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMemoryMap::HasBorders(EContentType innerType, std::set<EContentType> outerTypes) const
+bool NavMemoryMap::HasBorders(EContentType innerType, const std::set<EContentType>& outerTypes) const
 {
   using namespace NavMeshQuadTreeTypes;
   const ENodeContentType innerNodeType = ConvertContentType(innerType);
@@ -104,7 +104,7 @@ void NavMemoryMap::CalculateBorders(EContentType innerType, EContentType outerTy
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMap::CalculateBorders(EContentType innerType, std::set<EContentType> outerTypes, BorderVector& outBorders)
+void NavMemoryMap::CalculateBorders(EContentType innerType, const std::set<EContentType>& outerTypes, BorderVector& outBorders)
 {
   ASSERT_NAMED(!outerTypes.empty(), "No outerTypes provided");
   
