@@ -199,7 +199,7 @@ namespace Cozmo {
       // NavMemoryMap
       //
       // Uncomment this line to create and use navMemoryMap. Commented out to not enable yet in master
-      // _navMemoryMap.reset( new NavMemoryMap(vizManager) );
+      // _navMemoryMap.reset( new NavMemoryMap(_robot->GetContext()->GetVizManager()) );
       
     } // BlockWorld() Constructor
   
