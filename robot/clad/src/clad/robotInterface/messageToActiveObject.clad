@@ -16,8 +16,8 @@ namespace Cozmo {
 
   message CubeSlots
   {
-    uint_32     factory_id_length,
-    uint_32     factory_id[4],
+    uint_8      padding[3],
+    uint_32     factory_id[uint_8]
   }
 
   message FlashObjectIDs
