@@ -77,6 +77,7 @@ namespace Cozmo {
     , _canDeleteObjects(true)
     , _canAddObjects(true)
     , _navMemoryMap( nullptr )
+    , _isOnCliff(false)
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -198,7 +199,7 @@ namespace Cozmo {
       // NavMemoryMap
       //
       // Uncomment this line to create and use navMemoryMap. Commented out to not enable yet in master
-      // _navMemoryMap.reset( new NavMemoryMap(vizManager) );
+      // _navMemoryMap.reset( new NavMemoryMap(_robot->GetContext()->GetVizManager()) );
       
     } // BlockWorld() Constructor
   
@@ -510,8 +511,29 @@ namespace Cozmo {
   
   void BlockWorld::UpdateNavMemoryMap()
   {
-    if ( nullptr != _navMemoryMap ) {
-      _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::Clear );
+    if ( nullptr != _navMemoryMap )
+    {
+      // cliff quad: clear or cliff
+      {
+        using EContentType = INavMemoryMap::EContentType;
+        EContentType cliffMode = _isOnCliff ? EContentType::Cliff : EContentType::ClearOfCliff;
+      
+        // TODO configure this size somethere else
+        Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
+        
+        // cliff quad
+        Quad3f cliffquad
+        {
+          {+cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // up L
+          {-cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // lo L
+          {+cliffSize.x(), -cliffSize.y(), cliffSize.z()}, // up R
+          {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
+        };
+        _robot->GetPose().ApplyTo(cliffquad, cliffquad);
+        _navMemoryMap->AddQuad(cliffquad, cliffMode);
+      }
+      
+      _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
     }
   }
   
@@ -1771,7 +1793,7 @@ namespace Cozmo {
               // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
               // the navmesh that it should be clear, since we saw the marker
               Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
-              _navMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::Clear);
+              _navMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
             }
           }
           
@@ -1888,21 +1910,6 @@ namespace Cozmo {
 
     Result BlockWorld::AddCliff(const Pose3d& p)
     {
-      if ( _navMemoryMap )
-      {
-        // TODO this is not an actual detected size, so I just create an object only to ask a size
-        Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
-        Quad3f cliffquad
-        {
-          {+cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // up L
-          {-cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // lo L
-          {+cliffSize.x(), -cliffSize.y(), cliffSize.z()}, // up R
-          {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
-        };
-        p.ApplyTo(cliffquad, cliffquad);
-        _navMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::Cliff);
-      }
-    
       // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
       // so that's nice
       return AddProxObstacle(p);
