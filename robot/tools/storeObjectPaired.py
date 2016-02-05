@@ -28,7 +28,7 @@ class PairedObjectsStorer:
         
     def __init__(self, params):
         "Store the specified parameters into the robot"
-        self.pairedObjs = Anki.Cozmo.CubeSlots(params)
+        self.pairedObjs = Anki.Cozmo.CubeSlots([0]*3,params)
         robotInterface.Init()
         robotInterface.SubscribeToConnect(self.onConnect)
         robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.nvResult, self.onOpResult)
