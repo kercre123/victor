@@ -34,7 +34,6 @@ namespace Cozmo {
 
       public int MaxRounds {
         set {
-          Debug.LogError("Max rounds " + value);
           _RoundContainer.gameObject.SetActive(true);
           _RoundCountBar.SetMaximumSegments(value);
           _RoundCountBar.SetCurrentNumSegments(0);
@@ -49,7 +48,6 @@ namespace Cozmo {
 
       public int Score {
         set {
-          Debug.LogError("Score " + value);
           _ScoreContainer.gameObject.SetActive(true);
           _ScoreCountLabel.text = Localization.GetNumber(value);
         }
@@ -57,7 +55,6 @@ namespace Cozmo {
 
       public int RoundsWon {
         set {
-          Debug.LogError("Rounds won " + value);
           _RoundCountBar.SetCurrentNumSegments(value);
         }
       }

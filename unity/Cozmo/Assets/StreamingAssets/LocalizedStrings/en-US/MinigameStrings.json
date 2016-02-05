@@ -152,5 +152,35 @@
   },
   "speedTap.tapBlock": {
     "translation": "Tap The lit cube when you're ready to play!"
+  },
+  "cubePounce.info.cozmoWinEarly": {
+    "translation": "Cozmo wins! You moved the Cube too early!"
+  },
+  "cubePounce.info.playerWinPoint": {
+    "translation": "You Win! You were too fast for Cozmo!"
+  },
+  "cubePounce.info.waitForPounce": {
+    "translation": "Wait for Cozmo to pounce, then yank the cube away before they slap it!"
+  },
+  "cubePounce.info.cozmoWinPoint": {
+    "translation": "Cozmo wins! They slapped the Cube!"
+  },
+  "cubePounce.info.setupText": {
+    "translation": "Place a cube in front of Cozmo, hold it still when it turns green."
+  },
+  "cubePounce.header.cozmoWinEarly": {
+    "translation": "Don't Move the Cube!"
+  },
+  "cubePounce.header.playerWinPoint": {
+    "translation": "You Win a Point!"
+  },
+  "cubePounce.header.waitForPounce": {
+    "translation": "Wait for Pounce..."
+  },
+  "cubePounce.header.cozmoWinPoint": {
+    "translation": "Cozmo Wins a Point!"
+  },
+  "cubePounce.header.setupText": {
+    "translation": "Game Setup"
   }
 }

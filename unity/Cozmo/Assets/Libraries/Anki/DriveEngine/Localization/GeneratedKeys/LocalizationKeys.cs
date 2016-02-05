@@ -74,7 +74,8 @@ public static class LocalizationKeys {
   public const string kMinigameTextCozmoWins = "minigame.text.cozmoWins";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
-  public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
+  public const string kMinigameTextWinner = "minigame.text.winner";
+  public const string kMinigameTextScore = "minigame.text.score";
   public const string kMinigameLabelShowCubes = "minigame.label.showCubes";
   public const string kMinigameLabelCubesReady = "minigame.label.cubesReady";
   public const string kMinigameLabelReadyToPlay = "minigame.label.readyToPlay";
@@ -112,6 +113,16 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextHowToPlayNoRed = "speedTap.text.howToPlayNoRed";
   public const string kSpeedTapTextHowToPlayLightCountSameColorNoRed = "speedTap.text.howToPlayLightCountSameColorNoRed";
   public const string kSpeedTapTextHowToPlayLightCountNoColor = "speedTap.text.howToPlayLightCountNoColor";
+  public const string kCubePounceInfoCozmoWinEarly = "cubePounce.info.cozmoWinEarly";
+  public const string kCubePounceInfoPlayerWinPoint = "cubePounce.info.playerWinPoint";
+  public const string kCubePounceInfoWaitForPounce = "cubePounce.info.waitForPounce";
+  public const string kCubePounceInfoCozmoWinPoint = "cubePounce.info.cozmoWinPoint";
+  public const string kCubePounceInfoSetupText = "cubePounce.info.setupText";
+  public const string kCubePounceHeaderCozmoWinEarly = "cubePounce.header.cozmoWinEarly";
+  public const string kCubePounceHeaderPlayerWinPoint = "cubePounce.header.playerWinPoint";
+  public const string kCubePounceHeaderWaitForPounce = "cubePounce.header.waitForPounce";
+  public const string kCubePounceHeaderCozmoWinPoint = "cubePounce.header.cozmoWinPoint";
+  public const string kCubePounceHeaderSetupText = "cubePounce.header.setupText";
 
   #endregion
 
@@ -133,17 +144,16 @@ public static class LocalizationKeys {
   public const string kButtonContinue = "button.continue";
   public const string kButtonAgain = "button.again";
   public const string kButtonReady = "button.ready";
-  public const string kLabelPercentComplete = "label.percentComplete";
-  public const string kLabelScore = "label.score";
   public const string kButtonClose = "button.close";
+  public const string kLabelPercentComplete = "label.percentComplete";
   public const string kLabelPlusCount = "label.plusCount";
   public const string kLabelXCount = "label.xCount";
   public const string kDailySummaryTitle = "dailySummary.title";
   public const string kEndSessionTitle = "endSession.title";
   public const string kEndSessionDescription = "endSession.description";
-  public const string kDailyGoalTitle = "dailyGoal.title";
   public const string kRequestGameTitle = "requestGame.title";
   public const string kRequestGameDescription = "requestGame.description";
+  public const string kDailyGoalTitle = "dailyGoal.title";
   public const string kDailyGoalFriendBonus = "dailyGoal.FriendBonus";
 
   #endregion

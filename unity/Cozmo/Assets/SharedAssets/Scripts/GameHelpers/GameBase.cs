@@ -72,6 +72,7 @@ public abstract class GameBase : MonoBehaviour {
 
   protected StateMachine _StateMachine = new StateMachine();
 
+  // TODO: Delete after removing usage by Minesweeper, Codebreaker
   [SerializeField]
   protected GameStateSlide[] _GameStateSlides;
 
@@ -387,16 +388,72 @@ public abstract class GameBase : MonoBehaviour {
     return cubeSlide;
   }
 
+  // TODO: Delete after removing usage by CodeBreaker, Minesweeper
+  public GameObject ShowFullScreenSlide(string slideName) {
+    // If found, show that slide.
+    GameObject slideObject = null;
+    GameStateSlide foundSlideData = GetSlideByName(slideName);
+    if (foundSlideData != null) {
+      slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(foundSlideData);
+    }
+    else {
+      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
+      " list of slides! gameObject.name=" + gameObject.name);
+    }
+    return slideObject;
+  }
+
+  public GameObject ShowFullScreenSlide(GameObject slidePrefab) {
+    return _SharedMinigameViewInstance.ShowFullScreenSlide(slidePrefab, slidePrefab.name);
+  }
+
   /// <summary>
   /// Returns an instance of the slide created. Null if the creation failed.
   /// </summary>]
+  /// TODO Delete after changes for Simon are in
   public GameObject ShowGameStateSlide(string slideName) {
-    // Search through the array for a slide of the same name
+    // If found, show that slide.
     GameObject slideObject = null;
+    GameStateSlide foundSlideData = GetSlideByName(slideName);
+    if (foundSlideData != null) {
+      slideObject = _SharedMinigameViewInstance.ShowCustomGameStateSlide(foundSlideData);
+    }
+    else {
+      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
+      " list of slides! gameObject.name=" + gameObject.name);
+    }
+    return slideObject;
+  }
+
+  public void ShowInfoTextSlide(string textToDisplay) {
+    _SharedMinigameViewInstance.ShowInfoTextSlide(textToDisplay);
+  }
+
+  public void ShowInfoTextSlideWithKey(string localizationKey) {
+    _SharedMinigameViewInstance.ShowInfoTextSlide(Localization.Get(localizationKey));
+  }
+
+  private void ShowRewardsSlide() {
+    // TODO
+  }
+
+  public void HideGameStateSlide() {
+    _SharedMinigameViewInstance.HideGameStateSlide();
+  }
+
+  // TODO: Delete after removing usage by CodeBreaker, Minesweeper
+  private GameStateSlide GetSlideByName(string slideName) {
+    // Search through the array for a slide of the same name
     GameStateSlide foundSlideData = null;
     foreach (var slide in _GameStateSlides) {
       if (slide != null && slide.slideName == slideName) {
-        foundSlideData = slide;
+        if (slide.slidePrefab != null) {
+          foundSlideData = slide;
+        }
+        else {
+          DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
+          " list of slides! gameObject.name=" + gameObject.name);
+        }
         break;
       }
       else if (slide == null) {
@@ -404,27 +461,7 @@ public abstract class GameBase : MonoBehaviour {
         " list of slides! gameObject.name=" + gameObject.name);
       }
     }
-
-    // If found, show that slide.
-    if (foundSlideData != null) {
-      if (foundSlideData.slidePrefab != null) {
-        slideObject = _SharedMinigameViewInstance.ShowGameStateSlide(foundSlideData);
-      }
-      else {
-        DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
-        " list of slides! gameObject.name=" + gameObject.name);
-      }
-    }
-    else {
-      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
-      " list of slides! gameObject.name=" + gameObject.name);
-    }
-
-    return slideObject;
-  }
-
-  public void HideGameStateSlide() {
-    _SharedMinigameViewInstance.HideGameStateSlide();
+    return foundSlideData;
   }
 
   #endregion
