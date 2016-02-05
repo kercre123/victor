@@ -4,9 +4,11 @@ import sys
 import subprocess
 import argparse
 import json
+import os
 from os import path
 
-__projectRoot = path.join('..', '..')
+__scripDir = os.path.dirname(os.path.realpath(__file__))
+__projectRoot = path.join(__scripDir , '..', '..')
 __buildScripDir = path.join(__projectRoot, 'project', 'build-scripts')
 sys.path.append(__buildScripDir)
 import dependencies
@@ -14,7 +16,8 @@ import dependencies
 
 # Project specific files and directors to perform scripts
 __wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'anki', 'cozmo-engine', 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WWiseToAppMetadata.py')
-__wwiseIdsFilePath = path.join(__projectRoot, 'EXTERNALS', 'cozmosoundbanks', 'GeneratedSoundBanks', 'Wwise_IDs.h')
+__wwiseIdFileName = 'Wwise_IDs.h'
+__wwiseIdsFilePath = path.join(__projectRoot, 'EXTERNALS', 'cozmosoundbanks', 'GeneratedSoundBanks', __wwiseIdFileName)
 __audioMetadataFilePath = "audioEventMetadata.csv"
 __audioCladDir = path.join(__projectRoot, 'lib', 'anki', 'cozmo-engine', 'clad', 'src', 'clad', 'audio')
 __depsFilePath = path.join(__projectRoot, 'DEPS')
@@ -25,22 +28,34 @@ __errorMsg = "%s DOES NOT EXIST. Find your closest project Nerd!!"
 # Available Command
 __update_command = "update"
 __generate_command = "generate"
+__update_alt_workspace = "update-alt-workspace"
+__generate_maya_cozmo_data = "generate-maya-cozmo-data"
 
 # Parse input
 def __parse_input_args():
     argv = sys.argv
 
-    parser = argparse.ArgumentParser(description="Update Audio event metadata.csv file & generate project CLAD files")
+    parser = argparse.ArgumentParser(description='Update Audio event metadata.csv file & generate project CLAD files')
 
     subparsers = parser.add_subparsers(dest='commands', help='commands')
 
     # Update sound banks and metadata
     update_parser = subparsers.add_parser(__update_command, help='Update project sound banks and metadata.csv')
-    update_parser.add_argument('version', action="store", help="Update Soundbank Version")
-    update_parser.add_argument('--metadataMerge', action='store', help='Merge generate metadata.csv with other_metadata.csv file')
+    update_parser.add_argument('version', action='store', help='Update Soundbank Version')
+    update_parser.add_argument('--metadata-merge', action='store', help='Merge generate metadata.csv with other_metadata.csv file')
 
     # Generate project clad
-    subparsers.add_parser(__generate_command, help='Generate audio metadata.csv')
+    subparsers.add_parser(__generate_command, help='Generate Cozmo project audio clad files')
+
+    # Update meta data in alternate location
+    update_alt_workspace_parser = subparsers.add_parser(__update_alt_workspace, help='Update project meta data in an alternative workspace')
+    update_alt_workspace_parser.add_argument('soundBankDir', action='store', help='Location of the Sound banks root directory')
+    update_alt_workspace_parser.add_argument('--metadata-merge', action='store', help='Merge generate metadata.csv with other_metadata.csv file')
+
+    generate_maya_data_parser = subparsers.add_parser(__generate_maya_cozmo_data, help='Generate json file for maya plug-in')
+    generate_maya_data_parser.add_argument('soundBankDir', action='store', help='Location of the Sound banks root directory')
+    generate_maya_data_parser.add_argument('outputFilePath', action='store', help='Location the CozmoMayaPlugIn.json will be stored')
+    generate_maya_data_parser.add_argument('groups', nargs='+', help='List of Event Group names to insert into json file')
 
     options = parser.parse_args(sys.argv[1:])
 
@@ -68,10 +83,16 @@ def main():
 
     # Perform command
     if __update_command == options.commands:
-        __updateSoundbanks(options.version, options.metadataMerge)
+        __updateSoundbanks(options.version, options.metadata_merge)
 
     elif __generate_command == options.commands:
         __generateProjectFiles()
+
+    elif __update_alt_workspace == options.commands:
+        __updateAltWorkspace(options.soundBankDir, options.metadata_merge)
+
+    elif __generate_maya_cozmo_data == options.commands:
+        __generateMayaCozmoData(options.soundBankDir, options.outputFilePath, options.groups)
 
 
 
@@ -123,14 +144,52 @@ def __updateSoundbanks(version, mergeMetadataPath):
 
     # Update Audio Metadata.csv
     subprocess.call([__wwiseToAppMetadataScript, 'metadata', __wwiseIdsFilePath, __audioMetadataFilePath, '-m', previousMetadataFilePath])
-    print "Metadata CSV has been updated and is ready for manual updates, file is located at:\n%s" % path.realpath(__audioMetadataFilePath)
+    print 'Metadata CSV has been updated and is ready for manual updates, file is located at:\n%s' % path.realpath(__audioMetadataFilePath)
 
 
 
 def __generateProjectFiles():
     # Update Project Clad files
     subprocess.call([__wwiseToAppMetadataScript, 'clad', __wwiseIdsFilePath, __audioMetadataFilePath, __audioCladDir])
-    print "Project has been updated"
+    print 'Project has been updated'
+
+
+def __updateAltWorkspace(soundBankDir, mergeMetaFilePath):
+
+    previousMetaPath = None
+
+    # Check if sound bank dir exist
+    if path.exists(soundBankDir) == False:
+        print ('Sound Bank directory "' + soundBankDir + '" DOES NOT exist!')
+        return
+
+    if mergeMetaFilePath == None:
+        # 1st check if there is one in the Sound Bank Dir
+        aPath = path.join(soundBankDir, __audioMetadataFilePath)
+        if path.exists(aPath):
+            previousMetaPath = aPath
+        else:
+            # 2nd check if there is one in the Cozmo project
+            if path.exists(__audioMetadataFilePath):
+                previousMetaPath = __audioMetadataFilePath
+            else:
+                # 3rd create a new metadate file
+                previousMetaPath = None
+
+    # Generate Metadata.csv
+    altWwiseHeaderIdPath = path.join(soundBankDir, __wwiseIdFileName)
+    altMetadataPath = path.join(soundBankDir, __audioMetadataFilePath)
+    subprocess.call([__wwiseToAppMetadataScript, 'metadata', altWwiseHeaderIdPath, altMetadataPath, '-m', previousMetaPath])
+    print 'Metadata CSV has been updated and is ready for manual updates, file is located at:\n%s' % path.realpath(altMetadataPath)
+
+
+
+def __generateMayaCozmoData(soundBankDir, outputFilePath, groups):
+
+    scriptArgs = [__wwiseToAppMetadataScript, 'metadata-to-json', soundBankDir, outputFilePath]
+    scriptArgs += groups
+
+    subprocess.call(scriptArgs)
 
 
 
