@@ -1199,7 +1199,7 @@ namespace Cozmo {
     
     ASSERT_NAMED(_faceTracker != nullptr, "FaceTracker should not be null.");
     
-    _faceTracker->AssignNametoID(faceID, name);
+    _faceTracker->AssignNameToID(faceID, name);
   }
   
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,

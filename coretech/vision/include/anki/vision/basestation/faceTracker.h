@@ -49,7 +49,7 @@ namespace Vision {
     
     static bool IsRecognitionSupported();
     
-    void AssignNametoID(TrackedFace::ID_t faceID, const std::string& name);
+    void AssignNameToID(TrackedFace::ID_t faceID, const std::string& name);
     
     Result SaveAlbum(const std::string& albumName);
     Result LoadAlbum(const std::string& albumName);

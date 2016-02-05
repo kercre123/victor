@@ -329,7 +329,7 @@ TEST(FaceRecognition, SinglePersonVideoRecognitionAndTracking)
             stats.facesRecognized++;
             allIDs.insert(observedID);
             if(!isNameSet) {
-              faceTracker->AssignNametoID(observedID, testDir);
+              faceTracker->AssignNameToID(observedID, testDir);
               isNameSet = true;
             }
           }

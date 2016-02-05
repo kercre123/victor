@@ -79,9 +79,9 @@ namespace Vision {
     return _pImpl->IsNewFaceEnrollmentEnabled();
   }
   
-  void FaceTracker::AssignNametoID(TrackedFace::ID_t faceID, const std::string &name)
+  void FaceTracker::AssignNameToID(TrackedFace::ID_t faceID, const std::string &name)
   {
-    _pImpl->AssignNametoID(faceID, name);
+    _pImpl->AssignNameToID(faceID, name);
   }
   
   Result FaceTracker::SaveAlbum(const std::string& albumName)
