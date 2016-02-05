@@ -331,7 +331,12 @@ public abstract class GameBase : MonoBehaviour {
   #region How To Play Button
 
   public void OpenHowToPlayView() {
-    _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentPrefab);
+    if (_ChallengeData.HowToPlayDialogContentPrefab != null) {
+      _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentPrefab);
+    }
+    else {
+      _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentLocKey);
+    }
     _SharedMinigameViewInstance.OpenHowToPlayView();
   }
 

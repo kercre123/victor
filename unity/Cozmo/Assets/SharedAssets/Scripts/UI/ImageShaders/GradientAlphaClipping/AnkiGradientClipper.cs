@@ -81,7 +81,7 @@ namespace Cozmo {
       private void Update() {
         if (_ScreenSpace) {
           if ((_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantComplexClippingScreenspaceShader)
-            || (!_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantSimpleClippingScreenspaceShader)) {
+              || (!_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantSimpleClippingScreenspaceShader)) {
             if (_SpecifyEndClipping) {
               _ClippingMaterial.shader = UIPrefabHolder.Instance.GradiantComplexClippingScreenspaceShader;
             }
@@ -92,7 +92,7 @@ namespace Cozmo {
         }
         else {
           if ((_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantComplexClippingShader)
-            || (!_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantSimpleClippingShader)) {
+              || (!_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantSimpleClippingShader)) {
             if (_SpecifyEndClipping) {
               _ClippingMaterial.shader = UIPrefabHolder.Instance.GradiantComplexClippingShader;
             }
@@ -139,6 +139,7 @@ namespace Cozmo {
           _ClippingMaterial.SetVector("_Clipping", new Vector4(_RightClippingStart, 
             _TopClippingStart, _LeftClippingStart, _BottomClippingStart));
         }
+        _ClippingMaterial.color = _MaskingFrame.color;
       }
 
       private void OnDestroy() {
