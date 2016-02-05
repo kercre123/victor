@@ -22,7 +22,7 @@ namespace Cozmo {
 
 CONSOLE_VAR(bool, kRenderNavMeshQuadTree         , "NavMeshQuadTree", true);
 CONSOLE_VAR(bool, kRenderNavMeshQuadTreeProcessor, "NavMeshQuadTree", true);
-CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", true);
+CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager)
@@ -66,7 +66,7 @@ void NavMeshQuadTree::Draw() const
 void NavMeshQuadTree::AddQuad(const Quad2f& quad, ENodeContentType nodeType)
 {
   // render approx last quad added
-  if ( kRenderLastAddedQuad && nodeType != ENodeContentType::ClearOfObstacle )
+  if ( kRenderLastAddedQuad )
   {
     ColorRGBA color = Anki::NamedColors::WHITE;
     const float z = 70.0f;
