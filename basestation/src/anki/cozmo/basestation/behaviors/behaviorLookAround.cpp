@@ -10,16 +10,17 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
+#include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/shared/radians.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
@@ -494,11 +495,11 @@ void BehaviorLookAround::ResetSafeRegion(Robot& robot)
 
 void BehaviorLookAround::ClearQueuedActions(Robot& robot)
 {
-  for (auto tag : _actionsInProgress)
-  {
-    robot.GetActionList().Cancel(tag);
+  BOUNDED_WHILE( 50, ! _actionsInProgress.empty() ) {
+    // The cancel function will trigger the HandleActionCompleted callback, which will erase the action from
+    // _actionsInProgress
+    robot.GetActionList().Cancel( * _actionsInProgress.begin() );
   }
-  _actionsInProgress.clear();
 }
 } // namespace Cozmo
 } // namespace Anki
