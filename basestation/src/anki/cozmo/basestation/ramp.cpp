@@ -160,7 +160,7 @@ namespace Anki {
     void Ramp::Visualize(const ColorRGBA& color) const
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
-      _vizHandle = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
+      _vizHandle = _vizManager->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
                                                           Ramp::SlopeLength, Ramp::Width,
                                                           Ramp::Height, vizPose, color);
     } // Visualize()
@@ -170,7 +170,7 @@ namespace Anki {
     {
       // Erase the ramp
       if(_vizHandle != VizManager::INVALID_HANDLE) {
-        VizManager::getInstance()->EraseVizObject(_vizHandle);
+        _vizManager->EraseVizObject(_vizHandle);
         _vizHandle = VizManager::INVALID_HANDLE;
       }
       
