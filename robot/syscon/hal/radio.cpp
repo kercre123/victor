@@ -86,6 +86,8 @@ static const uint32_t ADVERTISE_BASE = 0xC2C2C2C2;
 #define ADVERTISE_PREFIX    {0xE6, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX, 1, 2, 3, 4, 5}
 #define COMMUNICATE_PREFIX  {CUBE_TO_ROBOT_PREFIX, 0x95, 0x97, 0x99, 0xA3, 0xA5, 0xA7, 0xA9}
 
+static const int BASE_CHANNEL = 26;
+
 static const int ROBOT_PAIR_PIPE = 1;
 static const int CUBE_ADVERT_PIPE = 2;
 static const int CUBE_TALK_PIPE = 0;
@@ -245,7 +247,7 @@ static void EnterState(RadioState state) {
   switch (state) {
     case RADIO_FIND_CHANNEL:
       locateTimeout = LOCATE_TIMEOUT;  
-      TalkAddress.rf_channel = 0x20;
+      TalkAddress.rf_channel = BASE_CHANNEL;
       memset(currentNoiseLevel, 0, sizeof(currentNoiseLevel));
       uesb_set_rx_address(&TalkAddress);
       break ;
@@ -346,6 +348,7 @@ extern "C" void uesb_event_handler(void)
 
       SpineProtocol msg;
       msg.opcode = GET_PROP_STATE;
+      msg.GetPropState.slot = currentAccessory;
       msg.GetPropState.x = ap->x;
       msg.GetPropState.y = ap->y;
       msg.GetPropState.z = ap->z;
@@ -432,11 +435,11 @@ void Radio::manage(void* userdata) {
       } else {
         if ((TalkAddress.rf_channel += 13) > MAX_TX_CHANNEL) {
           // This trys to space the robots apart (the 7 is carefully picked)
-          TalkAddress.rf_channel -= MAX_TX_CHANNEL;
+          TalkAddress.rf_channel -= MAX_TX_CHANNEL + 1;
         }
 
         // a zero means a wrap around
-        if (!TalkAddress.rf_channel) {
+        if (TalkAddress.rf_channel == BASE_CHANNEL) {
           // We've reached the end of the usable frequency range, simply
           // pick quietest spot
           uint8_t noiseLevel = ~0;
