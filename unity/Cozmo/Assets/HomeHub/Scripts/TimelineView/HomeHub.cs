@@ -58,7 +58,8 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _TimelineViewInstance.Initialize(_ChallengeStatesById);
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("ID_idle_brickout");
-      RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem (true);
+      // TMP TMP TMP!!!!
+      //RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem (true);
       DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
     }
 
