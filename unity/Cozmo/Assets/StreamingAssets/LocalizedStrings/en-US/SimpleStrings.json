@@ -74,5 +74,8 @@
   },
   "dailyGoal.Complete": {
     "translation": "Complete"
+  },
+  "timeline.weekLabel": {
+    "translation": "{0}W\nAGO"
   }
 }

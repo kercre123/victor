@@ -131,6 +131,21 @@ namespace Cozmo.HomeHub {
 
       var startDate = today.AddDays(-kGeneratedTimelineHistoryLength);
 
+      var firstSession = DataPersistenceManager.Instance.Data.Sessions.FirstOrDefault();
+
+      bool showFirst = false;
+
+      if (firstSession != null) {
+        if (startDate < firstSession.Date) {
+          startDate = firstSession.Date.AddDays(-1);
+          showFirst = true;
+        }
+      }
+      else {
+        startDate = today.AddDays(-1);
+        showFirst = true;
+      }
+
       while (timelineEntries.Count > 0 && timelineEntries[0].Date < startDate) {
         timelineEntries.RemoveAt(0);
       }
@@ -149,7 +164,10 @@ namespace Cozmo.HomeHub {
           timelineIndex++;
         }
 
-        entry.Inititialize(date, timelineEntry, progress);
+        int daysAgo = (today - date).Days;
+
+        entry.Inititialize(date, timelineEntry, progress, i == 0 && showFirst, daysAgo % 7 == 0, daysAgo / 7);
+        showFirst = false;
 
         entry.OnSelect += HandleTimelineEntrySelected;
 
