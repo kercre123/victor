@@ -13,26 +13,27 @@
 
 #include "ITransferable.h"
 #include "transferQueueMgr.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 
 namespace Anki {
   
   namespace Util {
     
-    ITransferable::ITransferable(TransferQueueMgr* transferQueueMgr)
+    ITransferable::ITransferable(TransferQueueMgr* transferQueueMgr) :
+      m_DispatchQueue(Util::Dispatch::Create()),
+      m_QueueMgr(transferQueueMgr)
     {
-      //m_QueueMgr = transferQueueMgr;
-      
-        //std::function<bool (std::string&, std::string&)> func = std::bind(&ITransferable::PushData, this, std::placeholders::_1,std::placeholders::_2);
-        //transferQueueMgr->RegisterPushCallback(func);
-        
-        //m_QueueMgr->RegisterTransferable(shared_from_this());
-      
-      auto func = std::bind(&ITransferable::SendData, this, std::placeholders::_1);
-      m_Handle = transferQueueMgr->RegisterPushCallback(func);
     }
+    
+    void ITransferable::Init()
+    {
+      auto func = std::bind(&ITransferable::OnTransferReady, this, std::placeholders::_1);
+      m_Handle = m_QueueMgr->RegisterHttpTransferReadyCallback(func);
+    }
+    
     ITransferable::~ITransferable()
     {
-        //m_QueueMgr->UnRegisterTransferable(shared_from_this());
+      Util::Dispatch::Release(m_DispatchQueue);
     }
   } // namespace Cozmo
 } // namespace Anki

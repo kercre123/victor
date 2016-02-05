@@ -14,6 +14,7 @@
  **/
 
 #include "transferQueueMgr.h"
+#include "http/abstractHttpAdapter.h"
 #include "ITransferable.h"
 
 #include <string>
@@ -24,40 +25,75 @@ namespace Anki {
   
   namespace Util {
     
-    TransferQueueMgr::TransferQueueMgr()
+    TransferQueueMgr::TransferQueueMgr(IHttpAdapter* httpAdapter) :
+      m_HttpAdapter(httpAdapter),
+      m_CanConnect(false),
+      m_NumRequests(0)
     {
     }
+    
     TransferQueueMgr::~TransferQueueMgr()
     {
     }
     
-    // TODO: this also needs to be a platform function ( with a shared header )
-    bool TransferQueueMgr::OnNativeSendGo(std::string& page_data, std::string& url)
+    // Prevents any new requests from going out.
+    void TransferQueueMgr::SetCanConnect(bool can_connect)
     {
-      printf("OnNativeSendGo %s\n",page_data.c_str());
-      return true;
+      m_CanConnect = can_connect;
+      if( m_CanConnect )
+      {
+        StartDataTransfer();
+      }
+    }
+    bool TransferQueueMgr::GetCanConnect()
+    {
+      return m_CanConnect;
     }
     
-    Signal::SmartHandle TransferQueueMgr::RegisterPushCallback( OnSendReadyFunc func )
+    int  TransferQueueMgr::GetNumActiveRequests()
+    {
+      return m_NumRequests;
+    }
+    
+    Signal::SmartHandle TransferQueueMgr::RegisterHttpTransferReadyCallback( OnTransferReadyFunc func )
     {
       Signal::SmartHandle handle = m_Signal.ScopedSubscribe(func);
+      // We're already open, let the caller transfer now but don't call everyone
+      if( m_CanConnect )
+      {
+        StartRequestFunc mgr_callback_func = std::bind(&TransferQueueMgr::StartRequest, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
+        func(mgr_callback_func);
+      }
       return handle;
     }
     
     // Called from OS background threads when we have internet again....
-    void TransferQueueMgr::StartDataPull()
+    void TransferQueueMgr::StartDataTransfer()
     {
       // TODO: tell DAS it can upload now
       //DASForceFlushNow();
       
-      // Pass back any information we need in some kind of packaging...
-      // In some "Page of data"
+      StartRequestFunc mgr_callback_func = std::bind(&TransferQueueMgr::StartRequest, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
+      m_Signal.emit(mgr_callback_func);
+    }
+    
+    void TransferQueueMgr::StartRequest(const HttpRequest& request, Util::Dispatch::Queue* queue, HttpRequestCallback user_callback)
+    {
+      m_NumRequests++;
       
-      std::function<bool (std::string&, std::string&)> func = std::bind(&TransferQueueMgr::OnNativeSendGo, this, std::placeholders::_1,std::placeholders::_2);
+      HttpRequestCallback callback_wrapper =
+      [this, user_callback] (const HttpRequest& request,
+              const int responseCode,
+              const std::map<std::string, std::string>& responseHeaders,
+              const std::vector<uint8_t>& responseBody)
+      {
+        this->m_NumRequests--;
+        // Tell the user about it.
+        user_callback(request,responseCode,responseHeaders,responseBody);
+      };
       
-      m_Signal.emit(func);
+      m_HttpAdapter->StartRequest(request, queue, callback_wrapper);
       
-      // TODO: call a callback native or mock test to send the strings per call...
     }
     
   } // namespace Util

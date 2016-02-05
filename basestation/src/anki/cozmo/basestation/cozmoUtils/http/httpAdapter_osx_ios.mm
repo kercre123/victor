@@ -7,7 +7,7 @@
 //
 
 #import "httpAdapter_osx_ios.h"
-//#import "driveEngine/util/codeTimer/codeTimer.h"
+#import "../codeTimer.h"
 //#import "driveEngine/util/stringUtils/stringUtils.h"
 #import "util/logging/logging.h"
 #import "util/dispatchQueue/dispatchQueue.h"
@@ -17,8 +17,6 @@ using namespace std;
 namespace Anki {
 namespace Util {
 
-  // TODO: how do I init this from C++?
-  //Anki::Util::IHttpAdapter::TEMP_TEST_THING = new Anki::Util::HttpAdapter();
   
   HttpAdapter::HttpAdapter()
   {
@@ -99,21 +97,21 @@ namespace Util {
                          request.uri.c_str());
 
     Util::Dispatch::Async(queue, [localRequestRef, responseBody, responseCode, responseHeaders, callback] {
-      // TODO: bring over more drive code...
       callback(localRequestRef, responseCode, responseHeaders, responseBody);
-      /*auto start = CodeTimer::Start();
+      auto start = Util::CodeTimer::Start();
       
-      int elapsedMillis = CodeTimer::MillisecondsElapsed(start);
+      int elapsedMillis = Util::CodeTimer::MillisecondsElapsed(start);
       if (elapsedMillis >= kHttpRequestCallbackTookTooLongMilliseconds)
       {
+        // TODO: DAS delay
         // http_adapter.callback_took_too_long - data: duration in ms, sval: uri
         // Remove PII
-        std::string piiRemovedString = AnkiUtil::RemovePII(localRequestRef.uri);
+        /*std::string piiRemovedString = AnkiUtil::RemovePII(localRequestRef.uri);
         
         Util::sEvent("http_adapter.callback_took_too_long",
                      {{DDATA, std::to_string(elapsedMillis).c_str()}},
-                     piiRemovedString.c_str());
-      }*/
+                     piiRemovedString.c_str());*/
+      }
     });
   }
 

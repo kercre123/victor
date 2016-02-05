@@ -17,7 +17,7 @@
 */
 //
 
-#include "testTransferQueueMgr.h"
+#include "../transferQueueMgr.h"
 #include "testTransferUL.h"
 #include "testTransferDL.h"
 
@@ -86,16 +86,33 @@ int main(int argc, char * argv[])
 
 int main(int argc, char * argv[])
 {
-  printf("adsflkj\n");
-  Anki::Util::TestTransferQueueMgr tranfer_mgr;
+  printf("main start\n");
+  
+  // usually a static.
   Anki::Util::HttpAdapter native_http;
-  Anki::Util::TestTransferDL download_service(&tranfer_mgr,&native_http);
-  download_service.RequestData(&native_http);
-  printf("Pass\n");
+  
+  Anki::Util::TransferQueueMgr tranfer_mgr(&native_http);
+  
+  Anki::Util::TestTransferDL download_service(&tranfer_mgr);
+  download_service.Init();
+  
+  Anki::Util::TestTransferUL upload_service(&tranfer_mgr);
+  upload_service.Init();
+  
+  tranfer_mgr.SetCanConnect(true);
+  
+  printf("Now we wait... \n");
+  
+  // Wait for requests to finish... But didn't import basestation timer into this target.
+  bool debug_toggle = true;
   int i = 0;
-  while(1)
+  while(debug_toggle)
   {
     ++i;
   }
+  
+  // Might want to run more tests on not connecting
+  tranfer_mgr.SetCanConnect(false);
+  
   return 0;
 }

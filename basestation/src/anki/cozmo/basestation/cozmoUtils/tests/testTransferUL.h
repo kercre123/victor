@@ -29,7 +29,10 @@ namespace Anki {
     public:
       TestTransferUL(TransferQueueMgr* transferQueueMgr);
       virtual ~TestTransferUL();
-      virtual bool SendData( TransferQueueMgr::NativeSendFunc func_native_send );
+      
+      virtual void OnTransferReady( TransferQueueMgr::StartRequestFunc funcStartRequest );
+      virtual void OnTransferComplete(const HttpRequest& request,const int responseCode, const std::map<std::string,
+                                      std::string>& responseHeaders, const std::vector<uint8_t>& responseBody);
       
       void SetData(std::string str);
       std::string GetData() { return m_Data; }

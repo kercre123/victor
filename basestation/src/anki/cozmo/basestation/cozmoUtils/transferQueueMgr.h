@@ -17,57 +17,47 @@
 #ifndef ANKI_COZMO_TRANSFER_QUEUE_H
 #define ANKI_COZMO_TRANSFER_QUEUE_H
 
-#include "util/signals/simpleSignal_fwd.h"
 #include "util/signals/simpleSignal.hpp"
-#include <vector>
+
+#include "http/abstractHttpAdapter.h"
 
 
 namespace Anki {
   
   namespace Util {
     
-    class ITransferable;
-    
     class TransferQueueMgr
     {
     public:
-      
-      
-
-      // Reciever
-      using OnPushFunction = std::function<bool (std::string&, std::string&)>;
-      using OnPullFunction = std::function<void(void)>;
-      
-      using NativeSendFunc = std::function<bool (std::string&, std::string&)>;
-      using OnSendReadyFunc = std::function<bool (NativeSendFunc)>;
+      using StartRequestFunc = std::function<void(const HttpRequest&,Util::Dispatch::Queue*,HttpRequestCallback )>;
+      using OnTransferReadyFunc = std::function<void (StartRequestFunc)>;
       
       // ----------
-      
-      TransferQueueMgr();
+      TransferQueueMgr(IHttpAdapter* httpAdapter);
       ~TransferQueueMgr();
       
-      // Instead we register Push/Pull
-      Signal::SmartHandle RegisterPushCallback( OnSendReadyFunc func );
+      // Interface for native background service
+      void SetCanConnect(bool can_connect);
+      bool GetCanConnect();
+      int  GetNumActiveRequests();
       
-      // PushData, PullData
-      
-      // A platform specific thread tells this mgr to tell it's registered classes that they're ready?
-      void StartDataPush();
-      
-      // Return some IDs and pointers...
-      // A platform specific thread tells this mgr to tell it's registered classes that they're can upload
-      virtual void StartDataPull();
-      
-      // Prob. need a list of IDs to confirm clear?
-      void OnPullComplete();
-      
-      bool OnNativeSendGo(std::string& page_data, std::string& url);
+      // Interface for services.
+      Signal::SmartHandle RegisterHttpTransferReadyCallback( OnTransferReadyFunc func );
       
     protected:
+      IHttpAdapter* m_HttpAdapter;
+      // State that says if we should be sending out requests or not.
+      bool          m_CanConnect;
+      int           m_NumRequests;
       
-      // Sender for us
-      using TestSignal = Signal::Signal< bool (NativeSendFunc) >;
-      TestSignal m_Signal;
+      // Sender for us, OnTransferReadyFunc
+      using TransferQueueSignal = Signal::Signal< void (StartRequestFunc) >;
+      TransferQueueSignal m_Signal;
+      
+      virtual void StartDataTransfer();
+      
+      // Binded callback of StartRequestFunc
+      virtual void StartRequest(const HttpRequest& request, Util::Dispatch::Queue* queue, HttpRequestCallback callback);
       
     }; // class
     

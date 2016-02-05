@@ -16,8 +16,6 @@
 
 
  #include "../ITransferable.h"
-#include "../http/abstractHttpAdapter.h"
-#include "util/dispatchQueue/dispatchQueue.h"
 
 namespace Anki {
   
@@ -27,11 +25,15 @@ namespace Anki {
     class TestTransferDL : public ITransferable
     {
     public:
-      TestTransferDL(TransferQueueMgr* transferQueueMgr, IHttpAdapter* httpAdapter);
+      TestTransferDL(TransferQueueMgr* transferQueueMgr);
       ~TestTransferDL();
-      virtual bool RequestData(IHttpAdapter* httpAdapter);
+      
+      virtual void OnTransferReady( TransferQueueMgr::StartRequestFunc funcStartRequest );
+      
+      virtual void OnTransferComplete(const HttpRequest& request,const int responseCode, const std::map<std::string,
+                                      std::string>& responseHeaders, const std::vector<uint8_t>& responseBody);
     protected:
-      Util::Dispatch::Queue* _dispatchQueue;
+      
     }; // class
     
     
