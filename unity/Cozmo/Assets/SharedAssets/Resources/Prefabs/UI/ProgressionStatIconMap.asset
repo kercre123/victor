@@ -11,7 +11,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd390885ec18b4c739768db5a07917ac, type: 3}
   m_Name: ProgressionStatIconMap
   m_EditorClassIdentifier: 
-  _DefaultStatIcon: {fileID: 21300000, guid: 614adf55be3304434a6098a24cea8c9e, type: 3}
+  _DefaultStatIcon: {fileID: 21300000, guid: b9aff666f4e44424795e2b6746840501, type: 3}
   _StatToIconList:
   - StatType: 0
     StatIcon: {fileID: 21300000, guid: d3688937f4bf843db82ddd9dd1a96c12, type: 3}
