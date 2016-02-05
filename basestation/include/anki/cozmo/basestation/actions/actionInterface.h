@@ -59,8 +59,8 @@ namespace Anki {
       // at construction, or it can be overridden with SetTag(). The Tag is
       // returned in the ActionCompletion signal as well.
       bool SetTag(u32 tag);
-      u32  GetTag() const { return _idTag; }
-      u32  GetUnityTag() const;
+      // Returns the custom set tag, if it exists, otherwise returns auto-generated tag
+      u32  GetTag() const;
       
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.
@@ -163,10 +163,12 @@ namespace Anki {
       bool          _displayMessages        = true;
       bool          _emitCompletionSignal   = true;
       
+      // Auto-generated tag
       u32           _idTag;
       
       static u32                sTagCounter;
-      static std::map<u32, u32> sUnityToEngineTagMap;
+      // Maps custom specified tags to auto-generated tags
+      static std::map<u32, u32> sCustomToGenTagMap;
 
       // Called when the action stops running and sets varibles needed for completion.
       // This calls the overload-able GetCompletionUnion() method above.

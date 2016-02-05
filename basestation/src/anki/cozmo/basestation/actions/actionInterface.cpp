@@ -29,7 +29,7 @@ namespace Anki {
   namespace Cozmo {
     
     u32 IActionRunner::sTagCounter = 0;
-    std::map<u32, u32> IActionRunner::sUnityToEngineTagMap;
+    std::map<u32, u32> IActionRunner::sCustomToGenTagMap;
     
     IActionRunner::IActionRunner()
     {
@@ -39,7 +39,8 @@ namespace Anki {
       }
       
       // If this tag already exists find one that doesn't
-      while(!IActionRunner::sUnityToEngineTagMap.emplace(IActionRunner::sTagCounter, IActionRunner::sTagCounter).second)
+      while(!IActionRunner::sCustomToGenTagMap.emplace(IActionRunner::sTagCounter,
+                                                       IActionRunner::sTagCounter).second)
       {
         ++IActionRunner::sTagCounter;
       }
@@ -55,7 +56,7 @@ namespace Anki {
         {
           // Notify any listeners about this action's completion.
           // TODO: Populate the signal with any action-specific info?
-          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, _type, _result, _completionUnion)));
+          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), GetTag(), _type, _result, _completionUnion)));
         }
       
         if(!_suppressTrackLocking)
@@ -79,7 +80,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("IActionRunner.SetTag.InvalidTag", "INVALID_TAG==%d", ActionConstants::INVALID_TAG);
         return false;
       } else {
-        auto pair = IActionRunner::sUnityToEngineTagMap.emplace(tag, _idTag);
+        auto pair = IActionRunner::sCustomToGenTagMap.emplace(tag, _idTag);
         if(!pair.second) {
           PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] already exists", tag);
           // PrepForCompletion as, currently, the only call to setTag will delete the action on failure
@@ -91,9 +92,9 @@ namespace Anki {
       return true;
     }
     
-    u32 IActionRunner::GetUnityTag() const
+    u32 IActionRunner::GetTag() const
     {
-      for(auto pair : IActionRunner::sUnityToEngineTagMap)
+      for(auto pair : IActionRunner::sCustomToGenTagMap)
       {
         // Since the mapping _idTag -> _idTag exists skip it by comparing pair.first to _idTag
         if(pair.second == _idTag && pair.first != _idTag)
@@ -101,6 +102,7 @@ namespace Anki {
           return pair.first;
         }
       }
+      // No custom tag found so just return auto-generated tag
       return _idTag;
     }
     
