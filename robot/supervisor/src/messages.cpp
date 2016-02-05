@@ -801,7 +801,7 @@ namespace Anki {
       {
         initReceived_ = false;
 #ifndef TARGET_K02
-        HAL::SetImageSendMode(Stream, CVGA);
+        HAL::SetImageSendMode(Stream, QVGA);
 #endif
       }
 
