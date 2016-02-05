@@ -15,7 +15,6 @@ namespace Cozmo {
       [SerializeField]
       private AnkiTextLabel _ShelfTextLabel;
 
-      private bool _ShouldButtonBeInteractive = false;
       private ContinueButtonClickHandler _OnClickCallback;
 
       private void Start() {
@@ -23,7 +22,9 @@ namespace Cozmo {
       }
 
       public void SetShelfText(string text) {
-        _ShelfTextLabel.text = text;
+        if (_ShelfTextLabel != null) {
+          _ShelfTextLabel.text = text;
+        }
       }
 
       public void SetButtonText(string text) {
@@ -42,8 +43,7 @@ namespace Cozmo {
       }
 
       public void SetButtonInteractivity(bool enableButton) {
-        _ShouldButtonBeInteractive = enableButton;
-        _ContinueButton.Interactable = _ShouldButtonBeInteractive;
+        _ContinueButton.Interactable = enableButton;
       }
 
       #region IMinigameWidget

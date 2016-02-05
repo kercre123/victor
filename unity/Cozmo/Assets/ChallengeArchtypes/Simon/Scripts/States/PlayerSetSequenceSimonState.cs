@@ -12,7 +12,6 @@ namespace Simon {
     private float _LastTappedTime;
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
-    private SimonGameSequencePanel _SequenceDisplay;
     private float _StartLightBlinkTime = -1;
 
     public override void Enter() {
@@ -23,9 +22,12 @@ namespace Simon {
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _TargetSequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Human);
 
-      GameObject sequenceDisplay = _GameInstance.ShowGameStateSlide("CreatePattern");
-      _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
-      _SequenceDisplay.SetSequenceText(0, _TargetSequenceLength);
+      _GameInstance.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderCreateYourPattern);
+      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelCreateYourPattern,
+        0, _TargetSequenceLength);
+
+      _GameInstance.CozmoDim = true;
+      _GameInstance.PlayerDim = false;
 
       _CurrentRobot.SetHeadAngle(1.0f);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_POSITIVE_01);
@@ -42,7 +44,9 @@ namespace Simon {
           _CurrentRobot.DriveWheels(0f, 0f);
           _CreatedSequence.Add(_TargetCube);
           _TargetCube = -1;
-          _SequenceDisplay.SetSequenceText(_CreatedSequence.Count, _TargetSequenceLength);
+          _GameInstance.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderCreateYourPattern);
+          _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelCreateYourPattern,
+            _CreatedSequence.Count, _TargetSequenceLength);
         }
       }
       else if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {

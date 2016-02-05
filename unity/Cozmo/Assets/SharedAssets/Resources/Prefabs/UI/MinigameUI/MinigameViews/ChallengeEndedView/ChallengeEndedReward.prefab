@@ -8,8 +8,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22480972}
-  - 222: {fileID: 22225728}
-  - 114: {fileID: 11478406}
+  - 114: {fileID: 11405372}
   m_Layer: 5
   m_Name: ChallengeRewardLabel
   m_TagString: Untagged
@@ -51,6 +50,33 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &11405372
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 120088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 7
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.UI.IconTextLabel:_TextLabel
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!114 &11436436
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -63,7 +89,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _Icon: {fileID: 11481806}
-  _TextLabel: {fileID: 11478406}
+  _TextLabel: {fileID: 0}
 --- !u!114 &11450904
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -82,39 +108,6 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &11478406
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 120088}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_FontData:
-    m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
-    m_FontSize: 64
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 4
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: FPO
-  _AllUppercase: 0
 --- !u!114 &11481806
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -142,12 +135,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!222 &22225728
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 120088}
 --- !u!222 &22247124
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -187,8 +174,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 6.10351562e-05, y: -97}
-  m_SizeDelta: {x: 200, y: 94}
+  m_AnchoredPosition: {x: 75.000061, y: -1.52587891e-05}
+  m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22498506
 RectTransform:
@@ -204,7 +191,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 3.05180001e-05, y: 41}
+  m_AnchoredPosition: {x: -74.9999695, y: 0}
   m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000

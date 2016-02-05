@@ -14,8 +14,8 @@ MonoBehaviour:
   _DefaultStatIcon: {fileID: 21300000, guid: 614adf55be3304434a6098a24cea8c9e, type: 3}
   _StatToIconList:
   - StatType: 0
-    StatIcon: {fileID: 21300000, guid: a1af74d777a87465da09ae9021f77103, type: 3}
+    StatIcon: {fileID: 21300000, guid: d3688937f4bf843db82ddd9dd1a96c12, type: 3}
   - StatType: 1
-    StatIcon: {fileID: 21300000, guid: 614adf55be3304434a6098a24cea8c9e, type: 3}
+    StatIcon: {fileID: 21300000, guid: 206fb17284661416bac38db8d1ed5faf, type: 3}
   - StatType: 2
-    StatIcon: {fileID: 21300000, guid: 65bac5c0c043648909bb40fad0197d03, type: 3}
+    StatIcon: {fileID: 21300000, guid: d0bbe0c6b9d2a41ec8cba7bd2fb3f667, type: 3}

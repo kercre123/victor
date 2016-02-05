@@ -44,7 +44,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: ButtonDropShadow/ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#button.quit"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.MinigameWidgets.QuitMinigameButton:_QuitButtonInstance

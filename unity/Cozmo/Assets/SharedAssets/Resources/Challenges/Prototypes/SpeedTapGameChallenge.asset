@@ -17,7 +17,7 @@ MonoBehaviour:
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: speedTap.title
   _ChallengeDescriptionLocKey: speedTap.description
-  _ChallengeIcon: {fileID: 21300000, guid: f3dafe06f045c49348a16f4fed09b402, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 99869049e36d148d2b8f194100de1639, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []

@@ -19,7 +19,7 @@ namespace SpeedTap {
       _SpeedTapGame.PlayerBlock.Lights[3].OnColor = Color.yellow.ToUInt();
 
       LightCube.TappedAction += HandleTap;
-      _SpeedTapGame.ShowGameStateSlide(kSlideName);
+      _SpeedTapGame.ShowFullScreenSlide(kSlideName);
 
     }
 

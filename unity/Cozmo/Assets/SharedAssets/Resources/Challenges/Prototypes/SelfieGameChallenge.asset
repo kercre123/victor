@@ -16,11 +16,10 @@ MonoBehaviour:
   _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: selfieGame01.title
-  _ChallengeSubtitleLocKey: selfieGame01.subtitle
   _ChallengeDescriptionLocKey: selfieGame01.description
-  _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
-  _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: b9aff666f4e44424795e2b6746840501, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
+  _HowToPlayDialogContentPrefab: {fileID: 0}
   MinigameConfig: {fileID: 11400000, guid: e178656b5f907407ba3a5deca3c43d9d, type: 2}
