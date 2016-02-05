@@ -61,15 +61,18 @@
     "translation": "Need a break? Tap END SESSION and send Cozmo back to his charger."
   },
   "requestGame.title": {
-    "translation": "Let's Play"
+    "translation": "{0}!"
   },
   "requestGame.description": {
-    "translation": "Cozmo wants to play {0}! Do You?"
+    "translation": "Cozmo wants to play"
   },
   "dailyGoal.title": {
     "translation": "Daily Goals"
   },
   "dailyGoal.FriendBonus": {
     "translation": "Friend Bonus"
+  },
+  "dailyGoal.Complete": {
+    "translation": "Complete"
   }
 }

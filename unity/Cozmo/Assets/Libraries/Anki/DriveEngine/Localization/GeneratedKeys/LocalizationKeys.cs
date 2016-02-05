@@ -158,6 +158,7 @@ public static class LocalizationKeys {
   public const string kRequestGameDescription = "requestGame.description";
   public const string kDailyGoalTitle = "dailyGoal.title";
   public const string kDailyGoalFriendBonus = "dailyGoal.FriendBonus";
+  public const string kDailyGoalComplete = "dailyGoal.Complete";
 
   #endregion
 }

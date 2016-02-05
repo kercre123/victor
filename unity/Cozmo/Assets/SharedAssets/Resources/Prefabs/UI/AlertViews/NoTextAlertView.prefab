@@ -147,6 +147,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &197250
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22405030}
+  - 222: {fileID: 22246678}
+  - 114: {fileID: 11490772}
+  m_Layer: 5
+  m_Name: Background
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!114 &11408772
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -159,14 +176,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .514705896, g: .514705896, b: .514705896, a: 1}
+  m_Color: {r: .666666687, g: .894117653, b: .992156863, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 21300000, guid: ac5482fda54a14092b0e47f62dbe3911, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -186,28 +203,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
-    JsonValue: 0.894117653
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
-    JsonValue: 0.7019608
-  - ObjectPath: ButtonDropShadow/ButtonStroke
-    FieldName: UnityEngine.UI.Image:m_Color:g
-    JsonValue: 0.8941177
-  - ObjectPath: ButtonDropShadow/ButtonStroke
-    FieldName: UnityEngine.UI.Image:m_Color:r
-    JsonValue: 0.7019608
-  - ObjectPath: ButtonDropShadow/ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:b
-    JsonValue: 0.65882355
-  - ObjectPath: ButtonDropShadow/ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:g
-    JsonValue: 0.5294118
-  - ObjectPath: ButtonDropShadow/ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:r
-    JsonValue: 0.219607845
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: Cozmo.UI.AlertView:_SecondaryButton
@@ -251,6 +247,7 @@ MonoBehaviour:
   _SecondaryButton: {fileID: 0}
   _CloseButton: {fileID: 0}
   _AlphaController: {fileID: 22541362}
+  _Icon: {fileID: 0}
 --- !u!114 &11467514
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -263,7 +260,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: .0352941193, g: .141176477, b: .203921571, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -271,19 +268,19 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
-    m_FontSize: 40
+    m_Font: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
+    m_FontSize: 64
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 4
+    m_Alignment: 7
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: FPO TEST WOO
-  _AllUppercase: 0
+  _AllUppercase: 1
 --- !u!114 &11474972
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -340,6 +337,33 @@ MonoBehaviour:
     FieldName: Cozmo.UI.AlertView:_PrimaryButton
     ReferencePath: 
   ModifiedGlobalReferences: []
+--- !u!114 &11490772
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 197250}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: .266666681, g: .772549033, b: .980392158, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 21300000, guid: ca044b66fe6b64c598c4ff70ac9ccd4a, type: 3}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
 --- !u!114 &11496882
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -352,13 +376,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonDropShadow/ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:g
-    JsonValue: 0.8941177
-  - ObjectPath: ButtonDropShadow/ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:r
-    JsonValue: 0.7019608
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Cozmo.UI.AlertView:_CloseButton
@@ -370,12 +388,35 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 168996}
+--- !u!222 &22246678
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 197250}
 --- !u!222 &22264796
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 160036}
+--- !u!224 &22405030
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 197250}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22445128}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 2.66537609e-05, y: 0}
+  m_SizeDelta: {x: -5.33075363e-05, y: 0}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22439106
 RectTransform:
   m_ObjectHideFlags: 1
@@ -389,11 +430,11 @@ RectTransform:
   - {fileID: 22470496}
   - {fileID: 22451542}
   m_Father: {fileID: 22445128}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_AnchorMin: {x: .0500000007, y: 0}
-  m_AnchorMax: {x: .949999988, y: .650000036}
-  m_AnchoredPosition: {x: 0, y: -10}
-  m_SizeDelta: {x: -10, y: -20}
+  m_AnchorMax: {x: .947272778, y: .43750003}
+  m_AnchoredPosition: {x: 1.5, y: 0}
+  m_SizeDelta: {x: -7, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22445128
 RectTransform:
@@ -405,6 +446,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 22405030}
   - {fileID: 22465070}
   - {fileID: 22492296}
   - {fileID: 22439106}
@@ -413,7 +455,7 @@ RectTransform:
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1100, y: 300}
+  m_SizeDelta: {x: 1100, y: 400}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22449406
 RectTransform:
@@ -496,9 +538,9 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22445128}
-  m_RootOrder: 0
-  m_AnchorMin: {x: .100000001, y: .699999988}
-  m_AnchorMax: {x: .899999976, y: 1}
+  m_RootOrder: 1
+  m_AnchorMin: {x: .100000001, y: .600000024}
+  m_AnchorMax: {x: .900000036, y: .850000024}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: 1}
@@ -531,11 +573,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22445128}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 74, y: -65}
-  m_SizeDelta: {x: 148, y: 130}
+  m_AnchoredPosition: {x: 92, y: -75}
+  m_SizeDelta: {x: 185, y: 150}
   m_Pivot: {x: .5, y: .5}
 --- !u!225 &22541362
 CanvasGroup:
