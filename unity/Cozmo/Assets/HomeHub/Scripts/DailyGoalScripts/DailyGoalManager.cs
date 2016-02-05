@@ -239,8 +239,9 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
     alertView.SetIcon(data.ChallengeIcon);
+    alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
-    alertView.SetMessageArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
+    alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
     _RequestDialog = alertView;
   }
 
