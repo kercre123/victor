@@ -17,5 +17,7 @@ namespace DataPersistence {
     public int FriendshipLevel;
 
     public StatContainer CurrentStats;
+
+    public MinigameSaveData MinigameSaveData = new MinigameSaveData();
   }
 }

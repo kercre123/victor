@@ -1,4 +1,6 @@
-﻿public class SpeedTapGameConfig : MinigameConfigBase {
+﻿using System.Collections.Generic;
+
+public class SpeedTapGameConfig : MinigameConfigBase {
   public override int NumCubesRequired() {
     return 2;
   }
@@ -9,5 +11,6 @@
 
   public int Rounds;
   public int MaxScorePerRound;
-  public SpeedTap.SpeedTapRuleSet RuleSet;
+
+  public List<DifficultySelectOptionData> DifficultyOptions = new List<DifficultySelectOptionData>();
 }

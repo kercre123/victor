@@ -228,11 +228,14 @@ MonoBehaviour:
     type: 2}
   _HowToPlayButtonPrefab: {fileID: 11438504, guid: 7ae16cb335cec4733bcb35a2776c79ca,
     type: 2}
+  _DifficultySelectViewPrefab: {fileID: 11473774, guid: 8468318169eb444e19bb73e530a79d21,
+    type: 2}
   _FullScreenSlideContainer: {fileID: 22458074}
   _GameInfoSlideContainer: {fileID: 22413928}
   _InfoTitleLayoutElement: {fileID: 11459216}
   _InfoTitleTextLabel: {fileID: 0}
   _ScoreWidgetPrefab: {fileID: 11470090, guid: b9e65c08e72f64c788a56c09874e1484, type: 2}
+  _ScoreEnterAnimationXOffset: 600
   _CozmoScoreContainer: {fileID: 22442982}
   _PlayerScoreContainer: {fileID: 22403472}
   _CozmoPortraitSprite: {fileID: 21300000, guid: 3471a4580e02f49a08deac82bcd38cf6,
@@ -428,6 +431,11 @@ Prefab:
       propertyPath: _QuickQuitGameButtonPrefab
       value: 
       objectReference: {fileID: 11411752, guid: 62b1176b20cd5466bb8ffd57337a9a8b,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DifficultySelectViewPrefab
+      value: 
+      objectReference: {fileID: 11473774, guid: 8468318169eb444e19bb73e530a79d21,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

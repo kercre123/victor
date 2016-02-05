@@ -11,7 +11,7 @@ using Cozmo.UI;
 namespace Cozmo.HomeHub {
   public class TimelineView : BaseView {
 
-    public static int kGeneratedTimelineHistoryLength = 14;
+    public static int kGeneratedTimelineHistoryLength = 21;
 
     [SerializeField]
     private float _TimelineStartOffset = 150f;
@@ -257,36 +257,40 @@ namespace Cozmo.HomeHub {
     private void SetScrollRectStartPosition() {
       _ScrollRect.horizontalNormalizedPosition = 
         CalculateHorizontalNormalizedPosition(_TimelinePane.rect.width - _TimelineStartOffset);
-      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MaxDailyGoalWidth, -_RightDailyGoalOffset);
-      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth, _LeftDailyGoalOffset);
+      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MinDailyGoalWidth + _LeftDailyGoalOffset * 2, -_RightDailyGoalOffset - _LeftDailyGoalOffset);
+      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth + _LeftDailyGoalOffset * 2, 0);
     }
 
     private void HandleTimelineViewScroll(Vector2 scrollPosition) {
       float currentScrollPosition = _ScrollRect.horizontalNormalizedPosition;
       if (currentScrollPosition <= GetDailyGoalOnRightHorizontalNormalizedPosition()) {
         if (_LockedPaneScrollContainer.parent != _LockedPaneRightNoScrollContainer) {
-          _LockedPaneScrollContainer.SetParent(_LockedPaneRightNoScrollContainer, true);
-          _LockedPaneScrollContainer.localPosition = Vector3.zero;
+          _LockedPaneScrollContainer.SetParent(_LockedPaneRightNoScrollContainer, false);
+          _LockedPaneScrollContainer.localPosition = Vector3.zero; 
           _DailyGoalInstance.Collapse(false);
+          _LockedPaneRightNoScrollContainer.gameObject.SetActive(true);
         }
       }
       else if (currentScrollPosition >= GetDailyGoalOnLeftHorizontalNormalizedPosition()) {
         if (_LockedPaneScrollContainer.parent != _LockedPaneLeftNoScrollContainer) {
-          _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, true);
-          _LockedPaneScrollContainer.localPosition = Vector3.zero;
+          _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, false);
+          _LockedPaneScrollContainer.localPosition = Vector3.zero; 
           _DailyGoalInstance.Collapse(false);
+          _LockedPaneLeftNoScrollContainer.gameObject.SetActive(true);
         }
         float pixelsOnLeft = GetScrollRectNormalizedWidth() * _ScrollRect.horizontalNormalizedPosition;
         float dailyGoalPaneOverhang = pixelsOnLeft - _TimelinePane.rect.width;
         float dailyGoalDisplayWidth = _MiddlePane.minWidth - dailyGoalPaneOverhang;
         dailyGoalDisplayWidth = Mathf.Clamp(dailyGoalDisplayWidth, _MinDailyGoalWidth, _MaxDailyGoalWidth);
-        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth, _LeftDailyGoalOffset);
+        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth + _LeftDailyGoalOffset * 2, 0);
       }
       else {
         if (_LockedPaneScrollContainer.parent != _MiddlePane) {
-          _LockedPaneScrollContainer.SetParent(_MiddlePane.transform, true);
+          _LockedPaneScrollContainer.SetParent(_MiddlePane.transform, false);
           _LockedPaneScrollContainer.localPosition = Vector3.zero; 
           _DailyGoalInstance.Collapse(true);
+          _LockedPaneRightNoScrollContainer.gameObject.SetActive(false);
+          _LockedPaneLeftNoScrollContainer.gameObject.SetActive(false);
         }
       }
     }
@@ -296,7 +300,7 @@ namespace Cozmo.HomeHub {
     }
 
     private float GetDailyGoalOnRightHorizontalNormalizedPosition() {
-      return (_TimelinePane.rect.width + _CozmoWidgetContainer.rect.width - _ViewportPane.rect.width)
+      return (_TimelinePane.rect.width + _RightDailyGoalOffset - _ViewportPane.rect.width)
       / GetScrollRectNormalizedWidth();
     }
 
