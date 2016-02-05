@@ -8,6 +8,7 @@ public static class Localization {
   private static Anki.AppResources.StringTable _st = new Anki.AppResources.StringTable();
 
   public static bool showDebugLocText = false;
+  public const string kNewLine = "\n";
 
   public static string Get(string key) {
     string value;

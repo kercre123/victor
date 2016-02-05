@@ -138,15 +138,10 @@ namespace Simon {
       return Mathf.Max(0, _CurrentSequenceLength - 4);
     }
 
-    public string GetSequenceText(int currentIndex, int sequenceCount) {
-      string localized = Localization.Get(LocalizationKeys.kSimonGameLabelStepsLeft);
-      return string.Format(Localization.GetCultureInfo(), localized, currentIndex, sequenceCount);
-    }
-
-    public void UpdateSequenceText(string locKey, int currentSequence, int sequenceLength) {
+    public void UpdateSequenceText(string locKey, int currentIndex, int sequenceCount) {
       string infoText = Localization.Get(locKey);
-      infoText += "\n";
-      infoText += GetSequenceText(currentSequence, sequenceLength);
+      infoText += Localization.kNewLine;
+      infoText += Localization.GetWithArgs(LocalizationKeys.kSimonGameLabelStepsLeft, currentIndex, sequenceCount);
       ShowInfoTextSlideWithKey(infoText);
     }
   }

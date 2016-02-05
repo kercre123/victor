@@ -35,10 +35,9 @@ public class ChallengeEndedDialog : MonoBehaviour {
 
   public void AddReward(Anki.Cozmo.ProgressionStatType progressionStat, int numberPoints) {
     _RewardContainerLayoutElement.gameObject.SetActive(true);
-    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, _RewardContainer.transform).GetComponent<IconTextLabel>();
-    iconTextLabel.SetText(string.Format(Localization.GetCultureInfo(), 
-      Localization.Get(LocalizationKeys.kLabelPlusCount),
-      numberPoints));
+    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, 
+                                    _RewardContainer.transform).GetComponent<IconTextLabel>();
+    iconTextLabel.SetText(Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount, numberPoints));
 
     iconTextLabel.SetIcon(ProgressionStatIconMap.Instance.GetIconForStat(progressionStat));
   }

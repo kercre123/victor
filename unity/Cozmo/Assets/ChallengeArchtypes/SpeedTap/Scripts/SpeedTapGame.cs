@@ -182,8 +182,7 @@ namespace SpeedTap {
       PlayerRoundsWon = _PlayerRoundsWon;
 
       // Display the current round
-      InfoTitleText = string.Format(Localization.GetCultureInfo(), 
-        Localization.Get(LocalizationKeys.kSpeedTapRoundsText), _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
     }
 
     public void RollingBlocks() {
