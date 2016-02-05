@@ -42,7 +42,7 @@ namespace Anki {
     public:
       IDockAction(ObjectID objectID, const bool useManualSpeed = false);
       
-      virtual ~IDockAction() { }
+      virtual ~IDockAction();
       
       // Set whether or not to check if robot is near predock pose before docking.
       void SetDoNearPredockPoseCheck(bool doCheck) { _doNearPredockPoseCheck = doCheck; }
@@ -87,7 +87,6 @@ namespace Anki {
       // derived classes
       virtual ActionResult Init() override final;
       virtual ActionResult CheckIfDone() override final;
-      virtual void Cleanup() override final;
       
       // Most docking actions don't use a second dock marker, but in case they
       // do, they can override this method to choose one from the available

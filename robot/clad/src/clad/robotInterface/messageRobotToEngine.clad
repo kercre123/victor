@@ -54,6 +54,20 @@ message FlashWriteAcknowledge
   bool    writeNotErase ///< True if acknowledging a write, false if acknowledging an erase
 }
 
+enum int_8 CrashSource
+{
+  WiFiCrash,
+  RTIPCrash,
+  BodyCrash,
+  PropCrash,
+}
+
+message CrashReport
+{
+  uint_32 dump[128],
+  CrashSource which,
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -85,6 +99,8 @@ union RobotToEngine {
   ChargerMountComplete       chargerMountCompleted  = 0x16,
   MovingLiftPostDock         movingLiftPostDock     = 0x17,
   ProxObstacle               proxObstacle           = 0x18,
+  ObjectDiscovered           activeObjectDiscovered = 0x19,
+  IMURawDataChunk            imuRawDataChunk        = 0x20,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,
@@ -97,6 +113,7 @@ union RobotToEngine {
   AnimationEnded             animEnded              = 0x87,
   NVStorage::NVStorageBlob   nvData                 = 0x88,
   NVStorage::NVOpResult      nvResult               = 0x98,
+  CrashReport                crashReport            = 0x99,
 }
 
 

@@ -14,6 +14,12 @@ namespace Cozmo {
     uint_32    objectID,
   }
 
+  message CubeSlots
+  {
+    uint_32     factory_id_length,
+    uint_32     factory_id[4],
+  }
+
   message FlashObjectIDs
   {
     uint_32 objectID, // Place holder

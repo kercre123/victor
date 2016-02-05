@@ -36,7 +36,19 @@ ITrackAction::ITrackAction()
 {
   
 }
-  
+
+ITrackAction::~ITrackAction()
+{
+  if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
+    // Make sure any eye shift gets removed
+    _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+    _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+  }
+
+  // Make sure to restore original eye dart distance
+  _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+}
+
 void ITrackAction::SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec) {
   if(minSpeed_radPerSec >= maxSpeed_radPerSec) {
     PRINT_NAMED_WARNING("ITrackAction.SetTiltSpeeds.InvalidSpeeds",
@@ -218,7 +230,7 @@ ActionResult ITrackAction::CheckIfDone()
     if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
-      _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_turningSoundAnimation, 1, false));
+      _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_turningSoundAnimation, 1, false));
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
@@ -271,18 +283,6 @@ ActionResult ITrackAction::CheckIfDone()
   return ActionResult::RUNNING;
 }
   
-void ITrackAction::Cleanup()
-{
-  if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
-    // Make sure any eye shift gets removed
-    _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-    _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
-  }
-  
-  // Make sure to restore original eye dart distance
-  _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
-}
-  
 #pragma mark -
 #pragma mark TrackObjectAction
 
@@ -291,6 +291,11 @@ TrackObjectAction::TrackObjectAction(const ObjectID& objectID, bool trackByType)
 , _trackByType(trackByType)
 {
 
+}
+  
+TrackObjectAction::~TrackObjectAction()
+{
+  _robot->GetMoveComponent().UnSetTrackToObject();
 }
 
 ActionResult TrackObjectAction::InitInternal()
@@ -320,12 +325,6 @@ ActionResult TrackObjectAction::InitInternal()
   
   return ActionResult::SUCCESS;
 } // InitInternal()
-
-void TrackObjectAction::Cleanup()
-{
-  ITrackAction::Cleanup();
-  _robot->GetMoveComponent().UnSetTrackToObject();
-}
   
 bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
 {
@@ -435,6 +434,11 @@ TrackFaceAction::TrackFaceAction(FaceID faceID)
   
 }
 
+TrackFaceAction::~TrackFaceAction()
+{
+  _robot->GetMoveComponent().UnSetTrackToFace();
+}
+
 
 ActionResult TrackFaceAction::InitInternal()
 {
@@ -443,13 +447,6 @@ ActionResult TrackFaceAction::InitInternal()
   _lastFaceUpdate = 0;
   return ActionResult::SUCCESS;
 } // InitInternal()
-  
-  
-void TrackFaceAction::Cleanup()
-{
-  ITrackAction::Cleanup();
-  _robot->GetMoveComponent().UnSetTrackToFace();
-}
 
 void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
 {

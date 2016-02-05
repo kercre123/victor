@@ -108,7 +108,7 @@ namespace Anki {
       // Piecewise linear
       f32 out_ol = 0;
       if (x > 30) {
-        out_ol = (float)(0.00305136086 * (double)x + 0.12128379883);
+        out_ol = (float)(0.00313 * (double)x + 0.057);  // EP2
       } else {
         // power = speed  * 0.2 power /  30 mm/s
         out_ol = 0.00666667f * x;

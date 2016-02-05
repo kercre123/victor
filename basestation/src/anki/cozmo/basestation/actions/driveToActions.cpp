@@ -398,14 +398,6 @@ namespace Anki {
       return result;
     }
     
-    void DriveToObjectAction::Cleanup()
-    {
-      if(nullptr != _compoundAction)
-      {
-        _compoundAction->Cleanup();
-      }
-    }
-    
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot,
@@ -541,6 +533,16 @@ namespace Anki {
       _maxReplanPlanningTime = maxReplanPlanningTime;
       
       SetGoals(poses, distThreshold, angleThreshold);
+    }
+    
+    DriveToPoseAction::~DriveToPoseAction()
+    {
+      // If we are not running anymore, for any reason, clear the path and its
+      // visualization
+      _robot->AbortDrivingToPose();
+      _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
+      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
+      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
     }
     
     Result DriveToPoseAction::SetGoal(const Pose3d& pose,
@@ -681,7 +683,7 @@ namespace Anki {
       
       if(ActionResult::SUCCESS == result && !_startSound.empty()) {
         // Play starting sound if there is one (only if nothing else is playing)
-        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_startSound, 1, false));
+        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_startSound, 1, false));
       }
       
       return result;
@@ -798,25 +800,15 @@ namespace Anki {
       {
         PlayAnimationAction* driveSoundAction = new PlayAnimationAction(_drivingSound, 1, false);
         _driveSoundActionTag = driveSoundAction->GetTag();
-        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, driveSoundAction);
+        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, driveSoundAction);
       }
       else if(ActionResult::SUCCESS == result && !_stopSound.empty())
       {
-        _robot->GetActionList().QueueActionNext(Robot::SoundSlot, new PlayAnimationAction(_stopSound, 1, false));
+        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_stopSound, 1, false));
       }
       
       return result;
     } // CheckIfDone()
-    
-    void DriveToPoseAction::Cleanup()
-    {
-      // If we are not running anymore, for any reason, clear the path and its
-      // visualization
-      _robot->AbortDrivingToPose();
-      VizManager::getInstance()->ErasePath(_robot->GetID());
-      VizManager::getInstance()->EraseAllPlannerObstacles(true);
-      VizManager::getInstance()->EraseAllPlannerObstacles(false);
-    }
     
 #pragma mark ---- IDriveToInteractWithObjectAction ----
     

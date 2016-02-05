@@ -566,7 +566,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
     _context.env.ClearObstacles();
     
     if(vizColor != nullptr) {
-      VizManager::getInstance()->EraseAllPlannerObstacles(isReplanning);
+      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(isReplanning);
     }
 
     unsigned int numAdded = 0;
@@ -603,12 +603,12 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
 
           // TODO: manage the quadID better so we don't conflict
           // TODO:(bn) handle isReplanning with color??
-          // VizManager::getInstance()->DrawPlannerObstacle(isReplanning, vizID++ , expandedPoly, *vizColor);
+          // _robot->GetContext()->GetVizManager()->DrawPlannerObstacle(isReplanning, vizID++ , expandedPoly, *vizColor);
 
           // TODO:(bn) figure out a good way to visualize the
           // multi-angle stuff. For now just draw the quads with
           // padding
-          VizManager::getInstance()->DrawQuad (
+          _robot->GetContext()->GetVizManager()->DrawQuad (
             isReplanning ? VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE,
             vizID++, boundingQuad.first, 0.1f, *vizColor );
         }
@@ -663,7 +663,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
                             startPose.GetTranslation().y(),
                             startPose.GetRotationAngle<'Z'>().ToFloat());
 
-  //VizManager::getInstance()->EraseAllQuads();
+  //_robot->GetContext()->GetVizManager()->EraseAllQuads();
   if( ! _context.forceReplanFromScratch ) {
     ImportBlockworldObstacles(true, &NamedColors::REPLAN_BLOCK_BOUNDING_QUAD);
 

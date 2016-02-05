@@ -28,7 +28,7 @@ namespace Anki {
 namespace Cozmo {
 namespace UpgradeController {
 
-//#define DEBUG_OTA
+#define DEBUG_OTA
 
 #define FLASH_STAGED_FLAG_ADDRESS ((BOOT_CONFIG_SECTOR * SECTOR_SIZE) + 0x100)
 
@@ -50,7 +50,24 @@ typedef struct
   RobotInterface::OTACommand cmd; ///< The command we are processing
 } OTAUpgradeTaskState;
 
-LOCAL bool TaskEraseFlash(uint32 param)
+/// A task that just waits for the I2SPI message queue to clear before changing mode
+LOCAL bool TaskI2SPISwitchMode(uint32 mode)
+{
+  if (i2spiMessageQueueIsEmpty())
+  {
+    i2spiSwitchMode((I2SpiMode)mode);
+    return false;
+  }
+  else
+  {
+#ifdef DEBUG_OTA
+    os_printf("w");
+#endif
+    return true;
+  }
+}
+
+LOCAL bool TaskDoEraseFlash(uint32 param)
 {
   RobotInterface::EraseFlash* msg = reinterpret_cast<RobotInterface::EraseFlash*>(param);
   // TODO: Add block based erase
@@ -95,7 +112,7 @@ LOCAL bool TaskEraseFlash(uint32 param)
     {
       if (retries-- > 0)
       {
-        foregroundTaskPost(TaskEraseFlash, param);
+        foregroundTaskPost(TaskDoEraseFlash, param);
         return true;
       }
       else
@@ -117,6 +134,23 @@ LOCAL bool TaskEraseFlash(uint32 param)
   
   os_free(msg);
   return false;
+}
+
+LOCAL bool TaskEraseFlash(uint32 param)
+{
+  if (i2spiMessageQueueIsEmpty())
+  {
+    i2spiSwitchMode(I2SPI_PAUSED);
+    foregroundTaskPost(TaskDoEraseFlash, param);
+    return false;
+  }
+  else
+  {
+#ifdef DEBUG_OTA
+    os_printf("e");
+#endif
+    return true;
+  }
 }
 
 LOCAL bool TaskWriteFlash(uint32 param)
@@ -415,13 +449,13 @@ LOCAL bool TaskOtaBody(uint32 param)
           {
             if (flashStagedFlags[0] == 0xFFFFffff)
             {
-              i2spiSwitchMode(I2SPI_REBOOT);
+              foregroundTaskPost(TaskI2SPISwitchMode, I2SPI_REBOOT);
             }
             else
             {
-              i2spiSwitchMode(I2SPI_RECOVERY);
+              foregroundTaskPost(TaskI2SPISwitchMode, I2SPI_RECOVERY);
             }
-            break;
+            return false;
           }
         }
         else
@@ -650,10 +684,7 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
     if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
     {
       // Enter bootloader message from otaMessages.clad
-      uint8 msg[2];
-      msg[0] = 0xfe;
-      msg[1] = 1;
-      if (i2spiQueueMessage(msg, 2) == false) return true;
+      if (i2spiQueueMessage((u8*)"\xfe\x01", 2) == false) return true;
       os_printf("Flash staged, starting upgrade sequence\r\n");
     }
     else
@@ -684,7 +715,6 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
     {
       os_memcpy(taskMsg, &msg, msg.Size());
       retries = MAX_RETRIES;
-      i2spiSwitchMode(I2SPI_PAUSED);
       foregroundTaskPost(TaskEraseFlash, reinterpret_cast<uint32>(taskMsg));
     }
   }

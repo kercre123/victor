@@ -45,7 +45,7 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
-      ImageResolution captureResolution_ = CVGA;
+      ImageResolution captureResolution_ = QVGA;
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;

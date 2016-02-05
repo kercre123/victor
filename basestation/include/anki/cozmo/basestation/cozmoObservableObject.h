@@ -24,6 +24,8 @@
 namespace Anki {
 namespace Cozmo {
   
+  class VizManager;
+  
   class ObservableObject : public Vision::ObservableObject
   {
   public:
@@ -60,12 +62,16 @@ namespace Cozmo {
     
     bool IsExistenceConfirmed() const;
     
+    void SetVizManager(VizManager* vizManager) { _vizManager = vizManager; }
+    
   protected:
     
     ObjectFamily  _family = ObjectFamily::Unknown;
     ObjectType    _type   = ObjectType::Unknown;
     
     ActiveIdentityState _identityState = ActiveIdentityState::Unidentified;
+    
+    VizManager* _vizManager = nullptr;
     
   }; // class ObservableObject
   

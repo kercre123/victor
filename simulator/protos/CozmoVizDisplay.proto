@@ -4,7 +4,7 @@ PROTO CozmoVizDisplay
 [ 
   # Resolution of incoming camera images.
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
-  field SFString streamResolution "CVGA"
+  field SFString streamResolution "QVGA"
   
   # Following (but with PixelSize=2) works well on Macbook screen (size=1 for monitor)
   field SFFloat moodPixelSize 0.0

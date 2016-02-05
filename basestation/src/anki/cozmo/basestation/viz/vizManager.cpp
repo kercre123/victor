@@ -4,7 +4,7 @@
  * Author: Kevin Yoon
  * Date:   2/5/2014
  *
- * Description: Implements the singleton VizManager object. See
+ * Description: Implements the VizManager object. See
  *              corresponding header for more detail.
  *
  * Copyright: Anki, Inc. 2014
@@ -34,18 +34,7 @@
 namespace Anki {
   namespace Cozmo {
     
-    VizManager* VizManager::_singletonInstance = nullptr;
-    
     const VizManager::Handle_t VizManager::INVALID_HANDLE = u32_MAX;
-    
-    void VizManager::removeInstance()
-    {
-      // check if the instance has been created yet
-      if(nullptr != _singletonInstance) {
-        delete _singletonInstance;
-        _singletonInstance = nullptr;
-      }
-    }
     
     Result VizManager::Connect(const char *udp_host_address, const unsigned short port)
     {

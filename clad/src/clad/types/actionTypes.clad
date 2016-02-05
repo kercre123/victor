@@ -91,7 +91,7 @@ structure AnimationCompleted {
 
 // Used by DeviceAudioAction
 structure DeviceAudioCompleted {
-  Audio::EventType eventType,
+  Audio::GenericEvent audioEvent,
 }
 
 // Used by TrackFaceAction
@@ -113,7 +113,8 @@ enum uint_8 QueueActionPosition {
     NOW_AND_CLEAR_REMAINING, // Queue now and clear rest of queue
     NOW_AND_RESUME,          // Queue now, reset current and return to it once new action completes
     NEXT,
-    AT_END
+    AT_END,
+    IN_PARALLEL
 }
 
 } // namespace Cozmo

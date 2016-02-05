@@ -33,6 +33,16 @@ namespace Anki {
     {
       
     }
+    
+    PlayAnimationAction::~PlayAnimationAction()
+    {
+      // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
+      // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
+      // to clean up
+      if(!_stoppedPlaying && !_wasAborted) {
+        _robot->GetAnimationStreamer().SetStreamingAnimation(*_robot, nullptr);
+      }
+    }
 
     ActionResult PlayAnimationAction::Init()
     {
@@ -104,9 +114,8 @@ namespace Anki {
       {
         if(this->_animTag == event.GetData().Get_AnimationAborted().tag) {
           PRINT_NAMED_INFO("PlayAnimation.AbortAnimationHandler",
-                           "Animation tag %d was aborted from running in slot %d, probably "
-                           "by another animation in another slot.",
-                           this->_animTag, this->GetSlotHandle());
+                           "Animation tag %d was aborted from running",
+                           this->_animTag);
           _wasAborted = true;
         }
       };
@@ -183,16 +192,6 @@ namespace Anki {
       }
     }
 
-    void PlayAnimationAction::Cleanup()
-    {
-      // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
-      // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
-      // to clean up
-      if(!_stoppedPlaying && !_wasAborted) {
-        _robot->GetAnimationStreamer().SetStreamingAnimation(*_robot, nullptr);
-      }
-    }
-
     void PlayAnimationAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       AnimationCompleted info;
@@ -218,7 +217,7 @@ namespace Anki {
 
     #pragma mark ---- DeviceAudioAction ----
 
-    DeviceAudioAction::DeviceAudioAction(const Audio::EventType event,
+    DeviceAudioAction::DeviceAudioAction(const Audio::GenericEvent event,
                                          const Audio::GameObjectType gameObj,
                                          const bool waitUntilDone)
     : _actionType( AudioActionType::Event )
@@ -236,17 +235,17 @@ namespace Anki {
     { }
 
     // Change Music state
-    DeviceAudioAction::DeviceAudioAction(const Audio::MusicGroupStates state)
+    DeviceAudioAction::DeviceAudioAction(const Audio::MUSIC state)
     : _actionType( AudioActionType::SetState )
     , _name( "PlayAudioMusicState_" + std::string(EnumToString(state)) )
-    , _stateGroup( Audio::GameStateGroupType::Music )
-    , _state( static_cast<Audio::GameStateType>(state) )
+    , _stateGroup( Audio::StateGroupType::MUSIC )
+    , _state( static_cast<Audio::GenericState>(state) )
     { }
 
     void DeviceAudioAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       DeviceAudioCompleted info;
-      info.eventType = _event;
+      info.audioEvent = _event;
       completionUnion.Set_deviceAudioCompleted(std::move( info ));
     }
 
@@ -286,10 +285,10 @@ namespace Anki {
         case AudioActionType::SetState:
         {
           // FIXME: This is temp until we add boot process which will start music at launch
-          if (Audio::GameStateGroupType::Music == _stateGroup) {
+          if (Audio::StateGroupType::MUSIC == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
-              _robot->GetRobotAudioClient()->PostEvent( EventType::PLAY_MUSIC, GameObjectType::Default );
+              _robot->GetRobotAudioClient()->PostEvent( static_cast<GenericEvent>(Music::PlayMusic), GameObjectType::Default );
               didStartMusic = true;
             }
           }

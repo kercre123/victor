@@ -40,7 +40,7 @@ namespace Anki
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
-      u32 GetID() { return 0; } ///< Stub for K02 for now, need to get this from Espressif Flash storage
+      u32 GetID() { return *(uint32_t*) 0xFFC; }
 
       void HALInit(void) {
         DAC::Sync();
@@ -59,8 +59,6 @@ namespace Anki
     }
   }
 }
-
-extern "C" const int __ESPRESSIF_SERIAL_NUMBER;
 
 int main (void)
 {

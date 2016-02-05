@@ -3,7 +3,7 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, socket, threading, time, select, math, muencode
+import sys, os, socket, threading, time, select, math, muencode, pickle
 
 if sys.version_info.major < 3:
     sys.stdout.write("Python2.x is depricated{}".format(os.linesep))
@@ -74,7 +74,7 @@ class CozmoCLI(IDataReceiver):
             msg = RobotInterface.RobotToEngine.unpack(buffer)
         except:
             if len(buffer):
-                sys.stderr.write("Couldn't unpack message {:x}{:d}{linesep}".format(buffer[0], len(buffer), linesep=os.linesep))
+                sys.stderr.write("Couldn't unpack message 0x{:x}[{:d}]{linesep}".format(buffer[0], len(buffer), linesep=os.linesep))
             else:
                 sys.stderr.write("Can't unpack an empty message")
                 sys.stderr.write(os.linesep)
@@ -114,6 +114,12 @@ class CozmoCLI(IDataReceiver):
                         'formatted': (self.formatTable[msg.trace.stringId][0] % tuple(msg.trace.value))
                 }
                 sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
+        elif msg.tag == msg.Tag.crashReport:
+            sys.stdout.write("Received crash report {:d}{linesep}".format(msg.crashReport.which, linesep=os.linesep))
+            sys.stdout.flush()
+            fh = open("robot WiFi crash report {}.p".format(time.ctime()), "wb")
+            pickle.dump(msg.crashReport.dump, fh, 2)
+            fh.close()
         elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:
             sys.stdout.write(repr(msg.state))
             sys.stdout.write(os.linesep)

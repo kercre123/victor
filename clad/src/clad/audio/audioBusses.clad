@@ -1,0 +1,25 @@
+// Available audio busses in project
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+enum uint_32 BusType
+{
+  ARIA = 3484807970,
+  COZMO = 2386142475,
+  Invalid = 0,
+  MASTER_AUDIO_BUS = 3803692087,
+  MASTER_SECONDARY_BUS = 805203703,
+  MOVEMENT = 2129636626,
+  MUSIC = 3991942870,
+  SCREEN = 804877345,
+  SFX = 393239870,
+  UI = 1551306167,
+  VO = 1534528548,
+  VOICE = 3170124113,
+}
+
+} // Audio
+} // Cozmo
+} // Anki

@@ -11,6 +11,7 @@
 #include "navMemoryMap.h"
 
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"
@@ -49,7 +50,8 @@ NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::ECo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // NavMemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMemoryMap::NavMemoryMap()
+NavMemoryMap::NavMemoryMap(VizManager* vizManager)
+: _navMesh(vizManager)
 {
 }
 
