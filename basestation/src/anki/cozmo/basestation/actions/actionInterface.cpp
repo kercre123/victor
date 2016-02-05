@@ -118,6 +118,13 @@ namespace Anki {
                          GetTag());
 
 #       endif
+
+        if(_robot->GetMoveComponent().IsAnimTrackLocked((AnimTrackFlag)disableTracks) ||
+           _robot->GetMoveComponent().IsMovementTrackIgnored((AnimTrackFlag)GetMovementTracksToIgnore()))
+        {
+          return ActionResult::FAILURE_TRACKS_LOCKED;
+        }
+
         _robot->GetMoveComponent().LockAnimTracks(disableTracks);
         _robot->GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
       }
