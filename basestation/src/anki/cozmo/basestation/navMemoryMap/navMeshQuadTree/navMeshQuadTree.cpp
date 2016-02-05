@@ -77,7 +77,7 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, ENodeContentType nodeType)
     _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", topLeft, topRight, color, true);
     _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", topRight, bottomRight, color, false);
     _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", bottomRight, bottomLeft, color, false);
-    _vizManager->DrawQuadVector("NavMeshQuadTree::AddQuad", quadVector);
+    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", bottomLeft, topLeft, color, false);
   }
 
   // if the root does not contain the quad, expand
