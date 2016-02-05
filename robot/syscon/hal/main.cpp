@@ -15,6 +15,8 @@
 #include "radio.h"
 #include "rng.h"
 
+#include "bootloader.h"
+
 #include "anki/cozmo/robot/spineData.h"
 
 #define SET_GREEN(v, b)  (b ? (v |= 0x00FF00) : (v &= ~0x00FF00))
@@ -67,6 +69,12 @@ int main(void)
   RTOS::init();
 
   // Initialize the hardware peripherals
+  
+  // WARNING: DO NOT CALL THIS UNLESS YOU GET APPROVAL FROM SOMEONE ON THE
+  // FIRMWARE TEAM.  YOU CAN BRICK YOUR COZMO AND MAKE EVERYONE VERY SAD.
+
+  Bootloader::init();
+  
   Battery::init();
   Timer::Init();
   Motors::init();
