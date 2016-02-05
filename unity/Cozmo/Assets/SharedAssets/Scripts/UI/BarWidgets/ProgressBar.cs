@@ -10,6 +10,12 @@ namespace Cozmo {
       [SerializeField]
       private Image _FilledForegroundImage;
 
+      public Image FillImage {
+        set {
+          _FilledForegroundImage = value;
+        }
+      }
+
       [SerializeField]
       private Color _NormalColor;
 
