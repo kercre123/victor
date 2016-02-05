@@ -23,6 +23,15 @@ public class FriendshipProgressionConfig : ScriptableObject {
     public int MaxTarget;
   }
 
+  [System.Serializable]
+  public struct BonusMultData {
+    public Sprite Background;
+    public Sprite Fill;
+    public Sprite Complete;
+  }
+
   [SerializeField]
   public FriendshipLevelData[] FriendshipLevels;
+  [SerializeField]
+  public BonusMultData[] BonusMults;
 }
