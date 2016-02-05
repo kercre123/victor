@@ -366,6 +366,7 @@ MonoBehaviour:
   _InactiveBonusContainer: {fileID: 122174}
   _BonusMultText: {fileID: 11406136}
   _BonusProgressBar: {fileID: 11445530}
+  _BonusProgressBg: {fileID: 11406154}
 --- !u!114 &11484336
 MonoBehaviour:
   m_ObjectHideFlags: 1
