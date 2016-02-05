@@ -1331,7 +1331,6 @@ namespace Anki {
     void UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
       ExternalInterface::QueueSingleAction msg;
       msg.robotID = 1;
-      msg.inSlot = 1;
       msg.position = pos;
       msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(msg.robotID, numLoops, animName));
 

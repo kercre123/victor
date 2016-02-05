@@ -385,9 +385,9 @@ void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& messa
     Vec3f(payload.pose.x, payload.pose.y, payload.pose.z));
   //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle), msg.followingMarkerNormal);
   if (payload.followingMarkerNormal) {
-    VizManager::getInstance()->DrawPreDockPose(100, p, ::Anki::NamedColors::RED);
+    GetContext()->GetVizManager()->DrawPreDockPose(100, p, ::Anki::NamedColors::RED);
   } else {
-    VizManager::getInstance()->DrawPreDockPose(100, p, ::Anki::NamedColors::GREEN);
+    GetContext()->GetVizManager()->DrawPreDockPose(100, p, ::Anki::NamedColors::GREEN);
   }
 }
 
@@ -489,7 +489,7 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
       SetImageSendMode(ImageSendMode::Off);
     }
   }
-  VizManager::getInstance()->SendImageChunk(GetID(), payload);
+  GetContext()->GetVizManager()->SendImageChunk(GetID(), payload);
 
   if(isImageReady)
   {
@@ -661,7 +661,7 @@ void Robot::HandleMessage(const ExternalInterface::SetBehaviorSystemEnabled& msg
 template<>
 void Robot::HandleMessage(const ExternalInterface::CancelAction& msg)
 {
-  GetActionList().Cancel(-1, (RobotActionType)msg.actionType);
+  GetActionList().Cancel((RobotActionType)msg.actionType);
 }
 
 template<>
@@ -670,7 +670,7 @@ void Robot::HandleMessage(const ExternalInterface::DrawPoseMarker& msg)
   if(IsCarryingObject()) {
     Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
     Quad2f objectFootprint = GetBlockWorld().GetObjectByID(GetCarryingObject())->GetBoundingQuadXY(targetPose);
-    VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
+    GetContext()->GetVizManager()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
   }
 }
 

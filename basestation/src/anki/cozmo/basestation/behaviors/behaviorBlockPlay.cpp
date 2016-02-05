@@ -291,7 +291,7 @@ namespace Cozmo {
             if( _faceID != Face::UnknownFace ) {
               TrackFaceAction* action = new TrackFaceAction(_faceID);
               // NOTE: don't use StartActing for this, because it is a continuous action
-              robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+              robot.GetActionList().QueueActionNow(action);
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
                                      "EnableTrackToFace %lld (was tracking %lld)",
                                      _faceID,
@@ -300,7 +300,7 @@ namespace Cozmo {
             else 
               PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
                                "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
-            robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
+            robot.GetActionList().Cancel(RobotActionType::TRACK_FACE);
           }
         }
 
@@ -313,7 +313,7 @@ namespace Cozmo {
           if( robot.GetMoveComponent().GetTrackToObject().IsSet() ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackingBlockUnset",
                                    "disabling object tracking because object was deleted / unset");
-            robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
+            robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
           }
           _faceID = Face::UnknownFace;
           TurnTowardsAFace(robot);
@@ -364,7 +364,7 @@ namespace Cozmo {
 
               // resume tracking afterwards
               TrackObjectAction* trackingAction = new TrackObjectAction(_trackedObject);
-              robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, trackingAction);
+              robot.GetActionList().QueueActionAtEnd(trackingAction);
               break;
             }
           }
@@ -378,7 +378,7 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StopTrackingBlock",
                                  "disabling block tracking in order to inspect block");
           SetCurrState(State::InspectingBlock);
-          robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
+          robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
           PlayAnimation(robot, "ID_react2block_02", false);
 
           // hold a bit before making a decision about the block
@@ -1631,14 +1631,14 @@ namespace Cozmo {
               stopMusicAction});
 
         _animActionTags[combinedAction->GetTag()] = "animPlusMusic";
-        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, combinedAction);
+        robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, combinedAction);
 #else
         PlayAnimation(robot, "ID_react2block_01", false);
 #endif
         
         SetCurrState(State::TrackingBlock);
         TrackObjectAction* action = new TrackObjectAction(_trackedObject);
-        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action); // will cancel face tracking 
+        robot.GetActionList().QueueActionNow(action); // will cancel face tracking
       }
     }
 
@@ -1771,7 +1771,7 @@ namespace Cozmo {
         
         // queue this action in the animation slot to avoid stomping on tracking
         MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(targetHeight);
-        robot.GetActionList().QueueActionAtEnd(Robot::FaceAnimationSlot, liftAction);
+        robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, liftAction);
       }
 
       
@@ -1787,12 +1787,12 @@ namespace Cozmo {
         DriveStraightAction* driveAction = new DriveStraightAction(_distToDriveForwardWhileTracking,
                                                                    _speedToDriveForwardWhileTracking);
         // drive actions go in the main slot
-        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveAction);
+        robot.GetActionList().QueueActionNow(driveAction);
         _driveForwardActionTag = driveAction->GetTag();
 
         // resume tracking after driving forward
         TrackObjectAction* trackingAction = new TrackObjectAction(_trackedObject);
-        robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, trackingAction);
+        robot.GetActionList().QueueActionAtEnd(trackingAction);
               
         _isDrivingForward = true;
       }
@@ -1897,7 +1897,7 @@ namespace Cozmo {
   {
     _lastActionTag = action->GetTag();
     _actionResultCallback = callback;
-    robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+    robot.GetActionList().QueueActionNow(action);
     _isActing = true;
   }
 
@@ -1926,10 +1926,10 @@ namespace Cozmo {
 
     if( sequential ) {
       _animActionTags[animAction->GetTag()] = animName;
-      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, animAction);
+      robot.GetActionList().QueueActionNow(animAction);
     }
     else {
-      robot.GetActionList().QueueActionAtEnd(Robot::FaceAnimationSlot, animAction);
+      robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }
   }
   

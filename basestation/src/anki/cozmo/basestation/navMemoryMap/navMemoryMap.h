@@ -17,6 +17,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+class VizManager;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class NavMemoryMap : public INavMemoryMap
@@ -28,7 +30,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  NavMemoryMap();
+  NavMemoryMap(VizManager* vizManager);
   virtual ~NavMemoryMap() {}  
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

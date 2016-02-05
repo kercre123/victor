@@ -33,6 +33,16 @@ namespace Anki {
     {
       
     }
+    
+    PlayAnimationAction::~PlayAnimationAction()
+    {
+      // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
+      // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
+      // to clean up
+      if(!_stoppedPlaying && !_wasAborted) {
+        _robot->GetAnimationStreamer().SetStreamingAnimation(*_robot, nullptr);
+      }
+    }
 
     ActionResult PlayAnimationAction::Init()
     {
@@ -104,9 +114,8 @@ namespace Anki {
       {
         if(this->_animTag == event.GetData().Get_AnimationAborted().tag) {
           PRINT_NAMED_INFO("PlayAnimation.AbortAnimationHandler",
-                           "Animation tag %d was aborted from running in slot %d, probably "
-                           "by another animation in another slot.",
-                           this->_animTag, this->GetSlotHandle());
+                           "Animation tag %d was aborted from running",
+                           this->_animTag);
           _wasAborted = true;
         }
       };
@@ -180,16 +189,6 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       } else {
         return ActionResult::RUNNING;
-      }
-    }
-
-    void PlayAnimationAction::Cleanup()
-    {
-      // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
-      // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
-      // to clean up
-      if(!_stoppedPlaying && !_wasAborted) {
-        _robot->GetAnimationStreamer().SetStreamingAnimation(*_robot, nullptr);
       }
     }
 

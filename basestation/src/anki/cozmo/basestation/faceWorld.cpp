@@ -54,7 +54,7 @@ namespace Cozmo {
   {
     using namespace ExternalInterface;
     _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(knownFaceIter->first, _robot.GetID())));
-    VizManager::getInstance()->EraseVizObject(knownFaceIter->second.vizHandle);
+    _robot.GetContext()->GetVizManager()->EraseVizObject(knownFaceIter->second.vizHandle);
     knownFaceIter = _knownFaces.erase(knownFaceIter);
   }
   
@@ -247,7 +247,7 @@ namespace Cozmo {
         _lastObservedFaceTimeStamp = knownFace->face.GetTimeStamp();
 
       // Draw 3D face
-      knownFace->vizHandle = VizManager::getInstance()->DrawHumanHead(0,
+      knownFace->vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(0,
                                                                       humanHeadSize,
                                                                       knownFace->face.GetHeadPose(),
                                                                       ::Anki::NamedColors::DARKGRAY);
@@ -264,13 +264,13 @@ namespace Cozmo {
         drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)knownFace->face.GetID());
       }
       
-      knownFace->vizHandle = VizManager::getInstance()->DrawHumanHead(1+static_cast<u32>(knownFace->face.GetID()),
+      knownFace->vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(1+static_cast<u32>(knownFace->face.GetID()),
                                                                       humanHeadSize,
                                                                       knownFace->face.GetHeadPose(),
                                                                       drawFaceColor);
 
       // Draw box around recognized face (with ID) now that we have the real ID set
-      VizManager::getInstance()->DrawCameraFace(knownFace->face, drawFaceColor);
+      _robot.GetContext()->GetVizManager()->DrawCameraFace(knownFace->face, drawFaceColor);
 
       
       // Send out an event about this face being observed

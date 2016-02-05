@@ -21,6 +21,7 @@ simulator/controllers/webotsCtrlGameEngine/temp
 simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest
 simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
+simulator/worlds/__generated__.wbt
 
 # Mac OS
 *.DS_Store

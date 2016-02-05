@@ -1161,7 +1161,12 @@ namespace Anki {
 
       return SendBlockMessage(blockID, m);
     }
-
+    
+    Result HAL::AssignCubeSlots(int total_ids, const uint32_t *ids)
+    {
+      return RESULT_OK;
+    }
+ 
     void HAL::FacePrintf(const char *format, ...)
     {
       // Stub

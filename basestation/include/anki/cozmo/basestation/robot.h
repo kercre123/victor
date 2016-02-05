@@ -423,10 +423,6 @@ public:
     // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
     ActionList& GetActionList() { return _actionList; }
   
-    static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
-    static const ActionList::SlotHandle FaceAnimationSlot = 1;
-    static const ActionList::SlotHandle SoundSlot = 2;
-  
     // Send a message to the robot to place whatever it is carrying on the
     // ground right where it is. Returns RESULT_FAIL if robot is not carrying
     // anything.
@@ -677,6 +673,7 @@ public:
     bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
   
     Util::Data::DataPlatform* GetDataPlatform() { return _context->GetDataPlatform(); }
+    const CozmoContext* GetContext() const { return _context; }
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   

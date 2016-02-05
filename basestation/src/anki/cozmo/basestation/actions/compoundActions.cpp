@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "util/helpers/templateHelpers.h"
 
 
 namespace Anki {
@@ -34,11 +35,7 @@ namespace Anki {
     
     ICompoundAction::~ICompoundAction()
     {
-      for(auto & actionPair : _actions) {
-        assert(actionPair.second != nullptr);
-        // TODO: issue a warning when a group is deleted without all its actions completed?
-        delete actionPair.second;
-      }
+      DeleteActions();
     }
     
     void ICompoundAction::Reset()
@@ -76,25 +73,30 @@ namespace Anki {
     
     void ICompoundAction::ClearActions()
     {
-      Cleanup();
+      DeleteActions();
       _actions.clear();
       Reset();
     }
     
-    void ICompoundAction::Cleanup()
+    void ICompoundAction::SetRobot(Robot& robot)
     {
-      for(auto action : _actions) {
-        // Call any actions' Cleanup() methods if they aren't done
-        const bool isDone = action.first;
-        if(!isDone) {
-          // Some of the actions in the compound action may not have had their robot set at this
-          // point so make sure it is set so things like EmitCompletionSignal() can succeed.
-          action.second->SetRobot(*GetRobot());
-          
-          action.second->Cancel();
-          action.second->Update();
-          action.first = true;
-        }
+      _robot = &robot;
+      for(auto actionPair : _actions)
+      {
+        actionPair.second->SetRobot(robot);
+      }
+    }
+    
+    void ICompoundAction::DeleteActions()
+    {
+      for(auto iter = _actions.begin(); iter != _actions.end();)
+      {
+          assert((*iter).second != nullptr);
+          // TODO: issue a warning when a group is deleted without all its actions completed?
+          // Ensure all actions have valid robot pointers since it may be possible they haven't been set
+          (*iter).second->SetRobot(*GetRobot());
+          Util::SafeDelete((*iter).second);
+          iter = _actions.erase(iter);
       }
     }
     

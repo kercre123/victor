@@ -190,7 +190,7 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   
   IActionRunner* moveAction = new PanAndTiltAction(proposedNewAngle, tiltRads, true, true);
   _currentDriveActionID = moveAction->GetTag();
-  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveAction);
+  robot.GetActionList().QueueActionAtEnd(moveAction);
   
   _currentState = State::WaitToFinishMoving;
 }

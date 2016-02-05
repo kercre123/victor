@@ -29,6 +29,22 @@ namespace Anki {
       
     }
     
+    TurnInPlaceAction::~TurnInPlaceAction()
+    {
+      if(_moveEyes)
+      {
+        // Make sure eye shift gets removed no matter what
+        if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
+          _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+        }
+        // Restore previous keep face alive setting
+        if(_wasKeepFaceAliveEnabled) {
+          _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
+        }
+      }
+    }
+    
     const std::string& TurnInPlaceAction::GetName() const
     {
       static const std::string name("TurnInPlaceAction");
@@ -178,22 +194,6 @@ namespace Anki {
       return result;
     }
     
-    void TurnInPlaceAction::Cleanup()
-    {
-      if(_moveEyes)
-      {
-        // Make sure eye shift gets removed no matter what
-        if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
-          _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
-        }
-        // Restore previous keep face alive setting
-        if(_wasKeepFaceAliveEnabled) {
-          _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
-        }
-      }
-    }
-    
 #pragma mark ---- DriveStraightAction ----
     
     DriveStraightAction::DriveStraightAction(f32 dist_mm, f32 speed_mmps)
@@ -282,6 +282,26 @@ namespace Anki {
       if(_variability > 0) {
         _headAngle += GetRNG().RandDblInRange(-_variability.ToDouble(), _variability.ToDouble());
         _headAngle = CLIP(_headAngle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
+      }
+    }
+    
+    MoveHeadToAngleAction::~MoveHeadToAngleAction()
+    {
+      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
+      {
+        // Make sure eye shift gets removed, by this action, or by the MoveComponent if "hold" is enabled
+        if(_holdEyes) {
+          _robot->GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
+        } else {
+          _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+        }
+        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+      }
+      if(_moveEyes) {
+        // Restore previous keep face alive setting
+        if(_wasKeepFaceAliveEnabled) {
+          _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
+        }
       }
     }
     
@@ -384,26 +404,6 @@ namespace Anki {
       }
       
       return result;
-    }
-    
-    void MoveHeadToAngleAction::Cleanup()
-    {
-      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
-      {
-        // Make sure eye shift gets removed, by this action, or by the MoveComponent if "hold" is enabled
-        if(_holdEyes) {
-          _robot->GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
-        } else {
-          _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
-        }
-        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
-      }
-      if(_moveEyes) {
-        // Restore previous keep face alive setting
-        if(_wasKeepFaceAliveEnabled) {
-          _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
-        }
-      }
     }
     
 #pragma mark ---- MoveLiftToHeightAction ----
@@ -729,6 +729,10 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::CheckIfDone()
     {
+      if(nullptr == _compoundAction)
+      {
+        return ActionResult::SUCCESS;
+      }
       return _compoundAction->Update();
     }
     
@@ -894,15 +898,7 @@ namespace Anki {
       }
       
       if(_headTrackWhenDone) {
-        ActionList::SlotHandle inSlot = GetSlotHandle();
-        if(ActionList::UnknownSlot == inSlot) {
-          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.UnknownSlot",
-                              "Queuing TrackObjectAction because headTrackWhenDone==true, but "
-                              "slot unknown. Using DriveAndManipulateSlot");
-          inSlot = Robot::DriveAndManipulateSlot;
-        }
-
-        _robot->GetActionList().QueueActionNext(inSlot, new TrackObjectAction(_objectID));
+        _robot->GetActionList().QueueActionNext(new TrackObjectAction(_objectID));
       }
 
       return ActionResult::SUCCESS;
@@ -1140,6 +1136,11 @@ namespace Anki {
       if(ActionResult::SUCCESS == moveLiftInitResult ||
          ActionResult::RUNNING == moveLiftInitResult)
       {
+        // moveToLiftHeight completed so mark it as done
+        if(moveLiftInitResult == ActionResult::SUCCESS)
+        {
+          _moveLiftToHeightActionDone = true;
+        }
         // Continue to CheckIfDone as long as the first Update didn't _fail_
         return ActionResult::SUCCESS;
       } else {

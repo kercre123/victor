@@ -191,7 +191,11 @@ namespace Anki {
           return -1;
         }
       }
-
+      
+      void Process_discovered(const ObjectDiscovered& msg)
+      {
+        //stub
+      }
       
       Result Init()
       {
