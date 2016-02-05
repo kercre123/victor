@@ -26,9 +26,6 @@ namespace Cozmo.HomeHub {
     private float _RightDailyGoalOffset = 150f;
 
     [SerializeField]
-    private float _LeftDailyGoalOffset = 5f;
-
-    [SerializeField]
     private GameObject _TimelineEntryPrefab;
 
     private readonly List<TimelineEntry> _TimelineEntries = new List<TimelineEntry>();
@@ -144,16 +141,15 @@ namespace Cozmo.HomeHub {
         var date = startDate.AddDays(i);
         var entry = spawnedObject.GetComponent<TimelineEntry>();
 
-        bool active = false;
+        TimelineEntryData timelineEntry = null;
         float progress = 0f;
         if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
-          var state = timelineEntries[timelineIndex];
-          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(state.Progress, state.Goals);
-          active = true;
+          timelineEntry = timelineEntries[timelineIndex];
+          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals);
           timelineIndex++;
         }
 
-        entry.Inititialize(date, active, progress);
+        entry.Inititialize(date, timelineEntry, progress);
 
         entry.OnSelect += HandleTimelineEntrySelected;
 
@@ -250,8 +246,8 @@ namespace Cozmo.HomeHub {
     private void SetScrollRectStartPosition() {
       _ScrollRect.horizontalNormalizedPosition = 
         CalculateHorizontalNormalizedPosition(_TimelinePane.rect.width - _TimelineStartOffset);
-      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MinDailyGoalWidth + _LeftDailyGoalOffset * 2, -_RightDailyGoalOffset - _LeftDailyGoalOffset);
-      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth + _LeftDailyGoalOffset * 2, 0);
+      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MinDailyGoalWidth, -_RightDailyGoalOffset);
+      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth, 0);
     }
 
     private void HandleTimelineViewScroll(Vector2 scrollPosition) {
@@ -275,7 +271,7 @@ namespace Cozmo.HomeHub {
         float dailyGoalPaneOverhang = pixelsOnLeft - _TimelinePane.rect.width;
         float dailyGoalDisplayWidth = _MiddlePane.minWidth - dailyGoalPaneOverhang;
         dailyGoalDisplayWidth = Mathf.Clamp(dailyGoalDisplayWidth, _MinDailyGoalWidth, _MaxDailyGoalWidth);
-        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth + _LeftDailyGoalOffset * 2, 0);
+        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth, 0);
       }
       else {
         if (_LockedPaneScrollContainer.parent != _MiddlePane) {
