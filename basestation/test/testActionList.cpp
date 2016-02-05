@@ -204,7 +204,6 @@ void CheckActionDestroyed(std::vector<std::string> actualNames)
   ASSERT_TRUE(actionsDestroyed.size() == actualNames.size());
   for(int i = 0; i < actionsDestroyed.size(); i++)
   {
-    PRINT_NAMED_INFO("", "%s %s", actionsDestroyed[i].c_str(), actualNames[i].c_str());
     EXPECT_TRUE(actionsDestroyed[i] == actualNames[i]);
   }
   actionsDestroyed.clear();
