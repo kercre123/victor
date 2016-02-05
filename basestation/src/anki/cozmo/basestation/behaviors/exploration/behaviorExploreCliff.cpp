@@ -75,13 +75,13 @@ Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec, 
   // debugging
   {
     // border goals
-    VizManager::getInstance()->EraseSegments("BehaviorExploreCliff::InitInternal");
+    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreCliff::InitInternal");
     for ( const auto& bG : borderGoals )
     {
       const NavMemoryMapTypes::Border& b = bG.borderInfo;
-      VizManager::getInstance()->DrawSegment("BehaviorExploreCliff::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
       Vec3f centerLine = (b.from + b.to)*0.5f;
-      VizManager::getInstance()->DrawSegment("BehaviorExploreCliff::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
     }
 
     // vantage points
@@ -91,7 +91,7 @@ Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec, 
       Point3f testDir = X_AXIS_3D() * 20.0f;
       testOrigin = p * testOrigin;
       testDir = p * testDir;
-      VizManager::getInstance()->DrawSegment("BehaviorExploreCliff::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
     }
   }
 
@@ -104,7 +104,7 @@ Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec, 
   // request the action
   DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _currentVantagePoints );
   _currentActionTag = driveToPoseAction->GetTag();
-  robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveToPoseAction);
+  robot.GetActionList().QueueActionNow(driveToPoseAction);
 
   return Result::RESULT_OK;
 }
