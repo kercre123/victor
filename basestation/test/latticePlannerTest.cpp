@@ -18,17 +18,17 @@
 #define private public
 #define protected public
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/latticePlanner.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
 using namespace Anki;
 using namespace Cozmo;
 
-extern Anki::Util::Data::DataPlatform* dataPlatform;
+extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 // Motion profile for test
 const f32 defaultPathSpeed_mmps = 60;
@@ -52,9 +52,7 @@ PathMotionProfile defaultMotionProfile(defaultPathSpeed_mmps,
 
 TEST(LatticePlanner, Create)
 {
-
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -119,8 +117,7 @@ void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner, int minPlanTimeM
 
 TEST(LatticePlanner, PlanOnceEmpty)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -145,8 +142,7 @@ TEST(LatticePlanner, PlanOnceEmpty)
 
 TEST(LatticePlanner, PlanTwiceEmpty)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -196,8 +192,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
 // This test is disabled because it relies on timing, which won't always work on e.g. the build server
 TEST(LatticePlanner, DISABLED_PlanWhilePlanning)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -232,9 +227,8 @@ TEST(LatticePlanner, StopPlanning)
   // NOTE: this test could start failing if the planner gets too fast, and finished before the Stop can go
   // through. If this happens, just make it plan a further distance, or add some complex obstacles to the
   // environment to slow it down
-
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);

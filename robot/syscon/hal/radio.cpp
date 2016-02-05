@@ -19,6 +19,11 @@
 #include "rng.h"
 #include "spine.h"
 
+#ifdef DUMP_DISCOVER
+#include "head.h"
+#endif
+
+
 #define ABS(x)   ((x < 0) ? -x : x)
 
 enum AccessoryType {
@@ -62,6 +67,7 @@ static void EnterState(RadioState state);
 
 static const int TOTAL_PERIOD = CYCLES_MS(35.0f);
 static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
+static const int CAPTURE_OFFSET = CYCLES_MS(0.5f);
 
 static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
 
@@ -80,8 +86,11 @@ static const uint32_t ADVERTISE_BASE = 0xC2C2C2C2;
 #define ADVERTISE_PREFIX    {0xE6, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX, 1, 2, 3, 4, 5}
 #define COMMUNICATE_PREFIX  {CUBE_TO_ROBOT_PREFIX, 0x95, 0x97, 0x99, 0xA3, 0xA5, 0xA7, 0xA9}
 
+static const int BASE_CHANNEL = 26;
+
 static const int ROBOT_PAIR_PIPE = 1;
 static const int CUBE_ADVERT_PIPE = 2;
+static const int CUBE_TALK_PIPE = 0;
 
 static const int ADV_CHANNEL = 81;
 
@@ -89,8 +98,7 @@ static const int ADV_CHANNEL = 81;
 static const int MAX_TX_CHANNEL = 80;
 
 static const int RADIO_INTERVAL_DELAY = 0xB6;
-//static const int RADIO_TIMEOUT_MSB = 15;
-static const int RADIO_TIMEOUT_MSB = 35;
+static const int RADIO_TIMEOUT_MSB = 20;
 static const int RADIO_WAKEUP_OFFSET = 18;
 
 static const int MAX_ADDRESS_BIT_RUN = 3;
@@ -107,14 +115,16 @@ static const uesb_address_desc_t AdvertiseAddress = {
   ADV_CHANNEL,
   UNUSED_BASE, 
   ADVERTISE_BASE,
-  ADVERTISE_PREFIX
+  ADVERTISE_PREFIX,
+  0xFF
 };
 
 static uesb_address_desc_t TalkAddress = {
   0,
   ADVERTISE_BASE,
   UNUSED_BASE,
-  COMMUNICATE_PREFIX 
+  COMMUNICATE_PREFIX,
+  0xFF
 };
 
 static AccessorySlot accessories[MAX_ACCESSORIES];
@@ -182,7 +192,6 @@ void Radio::init() {
     UESB_TX_POWER_0DBM,
     PACKET_SIZE,
     5,    // Address length
-    0xFF,
     2     // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
@@ -238,7 +247,7 @@ static void EnterState(RadioState state) {
   switch (state) {
     case RADIO_FIND_CHANNEL:
       locateTimeout = LOCATE_TIMEOUT;  
-      TalkAddress.rf_channel = 0;
+      TalkAddress.rf_channel = BASE_CHANNEL;
       memset(currentNoiseLevel, 0, sizeof(currentNoiseLevel));
       uesb_set_rx_address(&TalkAddress);
       break ;
@@ -251,11 +260,10 @@ static void EnterState(RadioState state) {
   }
 }
 
-static bool turn_around = false;
 static void send_dummy_byte(void) {
-  // This just send garbage
-  uesb_write_tx_payload(&TalkAddress, 1, NULL, 0);
-  turn_around  = true;
+  // This just send garbage and return to pairing mode when finished
+  EnterState(RADIO_PAIRING);
+  uesb_write_tx_payload(&TalkAddress, 0, NULL, 0);
 }
 
 static void send_capture_packet(void* userdata) {
@@ -303,7 +311,12 @@ extern "C" void uesb_event_handler(void)
         SpineProtocol msg;
         msg.opcode = PROP_DISCOVERED;
         msg.PropDiscovered.prop_id = packet.id;
+                
         Spine::enqueue(msg);
+        
+        #ifdef DUMP_DISCOVER
+        if (packet.id < 0x8000) UART::print("%x\r\n", (uint16_t) packet.id);
+        #endif
         
         // Attempt to allocate a slot for it
         slot = FreeAccessory();
@@ -320,20 +333,25 @@ extern "C" void uesb_event_handler(void)
       accessories[slot].last_received = 0;
 
       // Schedule a one time capture for this slot
-      RTOS::schedule(send_capture_packet, CYCLES_MS(0.5f), (void*) slot, false);
+      RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
       break ;
       
     case RADIO_TALKING:
-      AccessorySlot* acc = &accessories[currentAccessory];   
+      if (rx_payload.pipe != CUBE_TALK_PIPE) {
+        break ;
+      }
+      
+      AccessorySlot* acc = &accessories[currentAccessory];
       acc->last_received = 0;
 
       AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
 
       SpineProtocol msg;
       msg.opcode = GET_PROP_STATE;
+      msg.GetPropState.slot = currentAccessory;
       msg.GetPropState.x = ap->x;
-      msg.GetPropState.x = ap->y;
-      msg.GetPropState.x = ap->z;
+      msg.GetPropState.y = ap->y;
+      msg.GetPropState.z = ap->z;
       msg.GetPropState.shockCount = ap->shockCount;
       Spine::enqueue(msg);
 
@@ -341,13 +359,26 @@ extern "C" void uesb_event_handler(void)
       break ;
     }
   }
-  
-  if(rf_interrupts & UESB_INT_TX_SUCCESS_MSK) {
-    if (turn_around) {
-      turn_around  = false;
-      EnterState(RADIO_PAIRING);
-    }
-  }
+}
+
+// Calculate the weight of a 16-bit color word
+static inline int colorWeight(uint16_t w) {
+  static const int squared[] = {
+    0, 64, 256, 576, 
+    1089, 1681, 2401, 3249, 
+    4356, 5476, 6724, 8100, 
+    9801, 11449, 13225, 15129, 
+    17424, 19600, 21904, 24336, 
+    27225, 29929, 32761, 35721, 
+    39204, 42436, 45796, 49284, 
+    53361, 57121, 61009, 65025
+  };
+
+  return 
+    squared[(w >> 10) & 0x1F] +
+    squared[(w >>  5) & 0x1F] +
+    squared[(w >>  0) & 0x1F] +
+    squared[(w & 0x8000) ? 0x1F : 0];
 }
 
 void Radio::setPropState(unsigned int slot, const uint16_t *state) {
@@ -355,7 +386,13 @@ void Radio::setPropState(unsigned int slot, const uint16_t *state) {
     return ;
   }
 
-  AccessorySlot* acc = &accessories[slot];
+  int sum = 0;
+  for (int i = 0; i < 4; i++) {
+    sum += colorWeight(state[i]);
+  }
+
+  int sq_sum = isqrt(sum);
+
   LEDPacket packet = {
     {
       UNPACK_COLORS(state[0]),
@@ -366,19 +403,11 @@ void Radio::setPropState(unsigned int slot, const uint16_t *state) {
       UNPACK_IR(state[1]),
       UNPACK_IR(state[2]),
       UNPACK_IR(state[3])
-    }
+    },
+    (sq_sum >= 0xFF) ? 1 : (0x255 - sq_sum)
   };
-  
-  int sum = 0;
-  for (int i = 0; i < sizeof(packet.ledStatus); i++) {
-    int byte = packet.ledStatus[i];
-    sum += byte * byte;
-  }
 
-  int sq_sum = isqrt(sum);
-
-  packet.ledDark = (sq_sum & ~0xFF) ? 0 : (0x255 - sq_sum);
-  
+  AccessorySlot* acc = &accessories[slot];
   memcpy(&acc->tx_state, &packet, sizeof(LEDPacket));
 }
 
@@ -406,11 +435,11 @@ void Radio::manage(void* userdata) {
       } else {
         if ((TalkAddress.rf_channel += 13) > MAX_TX_CHANNEL) {
           // This trys to space the robots apart (the 7 is carefully picked)
-          TalkAddress.rf_channel -= MAX_TX_CHANNEL;
+          TalkAddress.rf_channel -= MAX_TX_CHANNEL + 1;
         }
 
         // a zero means a wrap around
-        if (!TalkAddress.rf_channel) {
+        if (TalkAddress.rf_channel == BASE_CHANNEL) {
           // We've reached the end of the usable frequency range, simply
           // pick quietest spot
           uint8_t noiseLevel = ~0;
@@ -438,10 +467,10 @@ void Radio::manage(void* userdata) {
     if (currentAccessory >= MAX_ACCESSORIES) break ;
 
     AccessorySlot* acc = &accessories[currentAccessory];
-    EnterState(RADIO_TALKING);
 
     if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
       // Broadcast to the appropriate device
+      EnterState(RADIO_TALKING);
       uesb_write_tx_payload(&TalkAddress, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
     } else {
       // Timeslice is empty, send a dummy command on the channel so people know to stay away

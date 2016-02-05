@@ -209,6 +209,8 @@ static void configure_addresses(const uesb_address_desc_t *address) {
 
   // Set radio transmission buffer
   NRF_RADIO->FREQUENCY = address->rf_channel;
+
+  NRF_RADIO->RXADDRESSES = address->rx_pipes_enabled;
 }
 
 uint32_t uesb_start() {
@@ -254,7 +256,6 @@ uint32_t uesb_start() {
     update_rf_payload_format(m_config_local.payload_length);
     configure_addresses(&m_config_local.rx_address);
     
-    NRF_RADIO->RXADDRESSES = m_config_local.rx_pipes_enabled;
     NRF_RADIO->PACKETPTR = (uint32_t)&m_rx_buffer;
   
     NRF_RADIO->TASKS_RXEN  = 1;

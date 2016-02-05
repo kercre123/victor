@@ -83,7 +83,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     0,
     PIN_ENCODER_LEFT,
     ENCODER_NONE,
-    NRF_GPIO_PIN_PULLDOWN,
+    NRF_GPIO_PIN_NOPULL,
     1, // units per tick = 1 tick
     0, 0, 0, 0, 0, 0
   },
@@ -95,7 +95,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     0,
     PIN_ENCODER_RIGHT,
     ENCODER_NONE,
-    NRF_GPIO_PIN_PULLDOWN,
+    NRF_GPIO_PIN_NOPULL,
     1, // units per tick = 1 tick
     0, 0, 0, 0, 0, 0
   },

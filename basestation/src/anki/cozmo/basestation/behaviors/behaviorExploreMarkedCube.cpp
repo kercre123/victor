@@ -30,7 +30,7 @@ CONSOLE_VAR(uint8_t, kDistanceMaxFactor, "BehaviorExploreMarkedCube", 4.0f); // 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _currentActionTag(Util::numeric_cast<uint32_t>( (std::underlying_type<ActionConstants>::type)ActionConstants::INVALID_TAG))
+, _currentActionTag(ActionConstants::INVALID_TAG)
 {
   SetDefaultName("BehaviorExploreMarkedCube");
 
@@ -75,13 +75,13 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
   // debugging
   {
     // border goals
-    VizManager::getInstance()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
+    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
     for ( const auto& bG : borderGoals )
     {
       const NavMemoryMapTypes::Border& b = bG.borderInfo;
-      VizManager::getInstance()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
       Vec3f centerLine = (b.from + b.to)*0.5f;
-      VizManager::getInstance()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
     }
 
     // vantage points
@@ -91,7 +91,7 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
       Point3f testDir = X_AXIS_3D() * 20.0f;
       testOrigin = p * testOrigin;
       testDir = p * testDir;
-      VizManager::getInstance()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
     }
   }
 
@@ -104,7 +104,7 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
   // request the action
   DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _currentVantagePoints );
   _currentActionTag = driveToPoseAction->GetTag();
-  robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveToPoseAction);
+  robot.GetActionList().QueueActionNow(driveToPoseAction);
 
   return Result::RESULT_OK;
 }
@@ -114,7 +114,7 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
 BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   // while we are moving towards a vantage point, wait patiently
-  if ( _currentActionTag != static_cast<std::underlying_type<ActionConstants>::type>(ActionConstants::INVALID_TAG) )
+  if ( _currentActionTag != ActionConstants::INVALID_TAG )
   {
     // PRINT_NAMED_INFO("RSAM", "Waiting for the move to action to finish");
     return Status::Running;
@@ -129,7 +129,7 @@ BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robo
 Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   // Note: at the moment anything can interrupt us, revisit rules of interruption
-  _currentActionTag = static_cast<std::underlying_type<ActionConstants>::type>(ActionConstants::INVALID_TAG);
+  _currentActionTag = ActionConstants::INVALID_TAG;
   
   return Result::RESULT_OK;
 }
@@ -137,7 +137,7 @@ Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double current
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreMarkedCube::StopInternal(Robot& robot, double currentTime_sec)
 {
-  VizManager::getInstance()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
+  robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

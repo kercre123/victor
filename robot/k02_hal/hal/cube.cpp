@@ -7,12 +7,14 @@
 #include "messages.h"
 #include "cube.h"
 #include "clad/types/activeObjectTypes.h"
+#include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "uart.h"
 
 AcceleratorPacket g_AccelStatus[MAX_CUBES];
 uint16_t g_LedStatus[MAX_CUBES][NUM_BLOCK_LEDS];
+uint32_t g_SlotId[MAX_CUBES];
 
 namespace Anki
 {
@@ -20,8 +22,43 @@ namespace Anki
   {
     namespace HAL
     {
+      Result AssignCubeSlots(int total_ids, const uint32_t* ids) {
+        int slots = MIN(total_ids, MAX_CUBES);
+
+        for (int i = 0; i < slots; i++) {
+          g_SlotId[i] = ids[i];
+        }
+        
+        return RESULT_OK;
+      }
+      
+      void Cube::SpineIdle(SpineProtocol& msg) {
+        static int index = 0;
+        static int prop = 0;
+
+        if (prop < MAX_CUBES) {
+          msg.opcode = SET_PROP_STATE;
+          msg.SetPropState.slot = prop;
+          memcpy((void*)&msg.SetPropState.colors, &g_LedStatus[prop], sizeof(msg.SetPropState.colors));
+        } else {
+          msg.opcode = ASSIGN_PROP;
+          msg.AssignProp.slot = index;
+          msg.AssignProp.prop_id = g_SlotId[index];
+          
+          if (++index >= MAX_CUBES) {
+            index = 0;
+          }
+        }
+        
+        if (++prop > MAX_CUBES) {
+          prop = 0;
+        }
+      }
+      
       void DiscoverProp(uint32_t id) {
-        // This currently does nothing
+        ObjectDiscovered m;
+        m.factory_id = id;
+        RobotInterface::SendMessage(m);
       }
       
       void GetPropState(int id, int x, int y, int z, int shocks) {
@@ -36,7 +73,7 @@ namespace Anki
         g_AccelStatus[id].y = y;
         g_AccelStatus[id].z = z;
         g_AccelStatus[id].shockCount = shocks;
-        
+
         //DisplayStatus(id);
 
         if (count > 0 && count < 16) {
@@ -119,9 +156,9 @@ namespace Anki
         if (blockID >= MAX_CUBES) {
           return RESULT_FAIL;
         }
-
+        
         memcpy(g_LedStatus[blockID], colors, sizeof(g_LedStatus[blockID]));
-
+        
         return RESULT_OK;
       }
     }

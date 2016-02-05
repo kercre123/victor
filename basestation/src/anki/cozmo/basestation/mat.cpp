@@ -74,14 +74,14 @@ namespace Anki {
       // vizPose to account for the fact that MatPieces' origins are on the top surface.
       Pose3d vizPose = Pose3d(RotationMatrix3d(), {0.f, 0.f, -.5f*_size.z()}, &GetPose());
       vizPose = vizPose.GetWithRespectToOrigin();
-      _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
+      _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
     void MatPiece::EraseVisualization() const
     {
       // Erase the main object
       if(_vizHandle != VizManager::INVALID_HANDLE) {
-        VizManager::getInstance()->EraseVizObject(_vizHandle);
+        _vizManager->EraseVizObject(_vizHandle);
         _vizHandle = VizManager::INVALID_HANDLE;
       }
     }

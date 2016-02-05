@@ -32,6 +32,7 @@ namespace Anki {
       PlayAnimationAction(const std::string& animName,
                           u32 numLoops = 1,
                           bool interruptRunning = true);
+      virtual ~PlayAnimationAction();
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
@@ -44,7 +45,6 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      virtual void Cleanup() override;
       
       std::string               _animName;
       std::string               _name;
@@ -89,15 +89,15 @@ namespace Anki {
     public:
       // Play Audio Event
       // TODO: Add bool to set if caller want's to block "wait" until audio is completed
-      DeviceAudioAction(const Audio::EventType event,
+      DeviceAudioAction(const Audio::GenericEvent event,
                         const Audio::GameObjectType gameObj,
                         const bool waitUntilDone = false);
       
       // Stop All Events on Game Object, pass in Invalid to stop all audio
-      DeviceAudioAction(const Audio::GameObjectType gameObj);
+      DeviceAudioAction(const Audio::GameObjectType gameObj = Audio::GameObjectType::Invalid);
       
       // Change Music state
-      DeviceAudioAction(const Audio::MusicGroupStates state);
+      DeviceAudioAction(const Audio::MUSIC state);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::DEVICE_AUDIO; }
@@ -119,10 +119,10 @@ namespace Anki {
       std::string               _name;
       bool                      _isCompleted    = false;
       bool                      _waitUntilDone  = false;
-      Audio::EventType          _event          = Audio::EventType::Invalid;
+      Audio::GenericEvent       _event          = Audio::GenericEvent::Invalid;
       Audio::GameObjectType     _gameObj        = Audio::GameObjectType::Invalid;
-      Audio::GameStateGroupType _stateGroup     = Audio::GameStateGroupType::Invalid;
-      Audio::GameStateType      _state          = Audio::GameStateType::Invalid;
+      Audio::StateGroupType     _stateGroup     = Audio::StateGroupType::Invalid;
+      Audio::GenericState       _state          = Audio::GenericState::Invalid;
       
     }; // class PlayAudioAction
   }

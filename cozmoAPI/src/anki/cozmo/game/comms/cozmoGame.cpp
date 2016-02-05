@@ -34,7 +34,6 @@ namespace Cozmo {
   : _isHost(true)
   , _isEngineStarted(false)
   , _runState(CozmoGame::STOPPED)
-  , _cozmoEngine(nullptr)
   , _desiredNumUiDevices(1)
   , _desiredNumRobots(1)
   , _uiAdvertisementService("UIAdvertisementService")
@@ -54,16 +53,8 @@ namespace Cozmo {
   
   CozmoGameImpl::~CozmoGameImpl()
   {
-    if(_cozmoEngine != nullptr) {
-      delete _cozmoEngine;
-      _cozmoEngine = nullptr;
-    }
-  
-    VizManager::getInstance()->Disconnect();
-    
     // Remove singletons
     SoundManager::removeInstance();
-    VizManager::removeInstance();
   }
   
   CozmoGameImpl::RunState CozmoGameImpl::GetRunState() const
@@ -82,8 +73,6 @@ namespace Cozmo {
                        "Re-initializing, so destroying existing cozmo engine and "
                        "waiting for another StartEngine command.");
       
-      delete _cozmoEngine;
-      _cozmoEngine = nullptr;
       _isEngineStarted = false;
     }
     else {
@@ -160,33 +149,22 @@ namespace Cozmo {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = _config[AnkiUtil::kP_UI_ADVERTISING_PORT];
     
     _isHost = config["asHost"].asBool();
+      
+    PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.");
     
-    //if(_runState == CozmoGame::WAITING_FOR_UI_DEVICES) {
-      
-      if(_isEngineStarted) {
-        delete _cozmoEngine;
-      }
-      
-      PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.");
-      CozmoEngine* engineHost = new CozmoEngine(&_uiMsgHandler, _dataPlatform);
-      engineHost->ListenForRobotConnections(true);
-      _cozmoEngine = engineHost;
+    // Destroy(if it exists) and create CozmoEngine
+    _cozmoEngine.reset(new CozmoEngine(&_uiMsgHandler, _dataPlatform));
+    _cozmoEngine->ListenForRobotConnections(true);
+  
+    // Init the engine with the given configuration info:
+    lastResult = _cozmoEngine->Init(config);
     
-      // Init the engine with the given configuration info:
-      lastResult = _cozmoEngine->Init(config);
-      
-      if(lastResult == RESULT_OK) {
-        _isEngineStarted = true;
-      } else {
-        PRINT_NAMED_ERROR("CozmoGameImpl.StartEngine",
-                          "Failed to initialize the engine.");
-      }
-    /*
+    if(lastResult == RESULT_OK) {
+      _isEngineStarted = true;
     } else {
       PRINT_NAMED_ERROR("CozmoGameImpl.StartEngine",
-                        "Engine already running, must start from stopped state.");
+                        "Failed to initialize the engine.");
     }
-     */
     
     _runState = CozmoGame::WAITING_FOR_UI_DEVICES;
     
@@ -316,9 +294,6 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    CozmoEngine* cozmoEngineHost = reinterpret_cast<CozmoEngine*>(_cozmoEngine);
-    assert(cozmoEngineHost != nullptr);
-    
     switch(_runState)
     {
       case CozmoGame::STOPPED:
@@ -359,7 +334,7 @@ namespace Cozmo {
         
       case CozmoGame::WAITING_FOR_ROBOTS:
       {
-        lastResult = cozmoEngineHost->Update(currentTime_sec);
+        lastResult = _cozmoEngine->Update(currentTime_sec);
         if (lastResult != RESULT_OK) {
           PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
                               "Bad engine update: status = %d", lastResult);
@@ -367,7 +342,7 @@ namespace Cozmo {
         
         // Tell the engine to keep listening for robots until it reports that
         // it has connections to enough
-        if(cozmoEngineHost->GetNumRobots() >= _desiredNumRobots) {
+        if(_cozmoEngine->GetNumRobots() >= _desiredNumRobots) {
           PRINT_NAMED_INFO("CozmoGameImpl.UpdateAsHost",
                            "Enough robots connected (%d), will run engine.",
                            _desiredNumRobots);
@@ -380,16 +355,16 @@ namespace Cozmo {
         
       case CozmoGame::ENGINE_RUNNING:
       {
-        lastResult = cozmoEngineHost->Update(currentTime_sec);
+        lastResult = _cozmoEngine->Update(currentTime_sec);
         
         if (lastResult != RESULT_OK) {
           PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
                               "Bad engine update: status = %d", lastResult);
         } else {
           // Send out robot state information for each robot:
-          auto robotIDs = cozmoEngineHost->GetRobotIDList();
+          auto robotIDs = _cozmoEngine->GetRobotIDList();
           for(auto & robotID : robotIDs) {
-            Robot* robot = cozmoEngineHost->GetRobotByID(robotID);
+            Robot* robot = _cozmoEngine->GetRobotByID(robotID);
             if(robot == nullptr) {
               PRINT_NAMED_ERROR("CozmoGameImpl.UpdateAsHost", "Null robot returned for ID=%d!", robotID);
               lastResult = RESULT_FAIL;

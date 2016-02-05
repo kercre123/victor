@@ -39,7 +39,7 @@ public:
   void SetAudioBuffer( RobotAudioBuffer* audioBuffer ) { _audioBuffer = audioBuffer; }
   
   // Post Cozmo specific Audio events
-  CallbackIdType PostCozmoEvent( EventType event );
+  CallbackIdType PostCozmoEvent( GenericEvent event );
   
   // Load animation and begin to buffer audio
   bool LoadAnimationAudio( Animation* anAnimation );
@@ -91,9 +91,9 @@ private:
   
   // Struct to sync audio buffer streams with animation
   struct AnimationEvent {
-    EventType AudioEvent;
+    GenericEvent AudioEvent;
     uint32_t TimeInMS;
-    AnimationEvent( EventType audioEvent, uint32_t timeInMS ) :
+    AnimationEvent( GenericEvent audioEvent, uint32_t timeInMS ) :
     AudioEvent( audioEvent ),
     TimeInMS( timeInMS ) {}
   };

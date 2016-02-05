@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -47,25 +48,64 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
   
   assert(newBehavior->IsOwnedByFactory()); // we assume all behaviors are created and owned by factory now
   
-  // If a behavior already exists in the list with this name, replace it
-  for (auto& behavior : _behaviorList)
+  auto newEntry = _nameToBehaviorMap.insert( NameToBehaviorMap::value_type(newBehavior->GetName(), newBehavior) );
+  const bool addedNewEntry = newEntry.second;
+  if (!addedNewEntry)
   {
-    if (behavior->GetName() == newBehavior->GetName())
-    {
-      PRINT_NAMED_WARNING("SimpleBehaviorChooser.AddBehavior.ReplaceExisting",
-                               "Replacing existing '%s' behavior.", behavior->GetName().c_str());
+    // a behavior already exists in the list with this name, replace it
+    
+    IBehavior* oldBehavior = newEntry.first->second;
+    
+    PRINT_NAMED_WARNING("SimpleBehaviorChooser.AddBehavior.ReplaceExisting",
+                             "Replacing existing '%s' behavior.", oldBehavior->GetName().c_str());
 
-      assert(behavior->IsOwnedByFactory()); // otherwise we'd be leaking the old behavior
-      behavior = newBehavior;
+    assert(oldBehavior->IsOwnedByFactory()); // otherwise we'd be leaking the old behavior
+    newEntry.first->second = newBehavior;
 
-      return Result::RESULT_OK;
-    }
+    return Result::RESULT_OK;
   }
   
-  // Otherwise just push the new behavior onto the list
-  _behaviorList.push_back(newBehavior);
   return Result::RESULT_OK;
 }
+
+  
+void SimpleBehaviorChooser::EnableAllBehaviors(bool newVal)
+{
+  for (const auto& kv : _nameToBehaviorMap)
+  {
+    IBehavior* behavior = kv.second;
+    behavior->SetIsChoosable(newVal);
+  }
+}
+  
+  
+void SimpleBehaviorChooser::EnableBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal)
+{
+  for (const auto& kv : _nameToBehaviorMap)
+  {
+    IBehavior* behavior = kv.second;
+    if (behavior->IsBehaviorGroup(behaviorGroup))
+    {
+      behavior->SetIsChoosable(newVal);
+    }
+  }
+}
+  
+  
+void SimpleBehaviorChooser::EnableBehavior(const std::string& behaviorName, bool newVal)
+{
+  const auto& it = _nameToBehaviorMap.find(behaviorName);
+  if (it != _nameToBehaviorMap.end())
+  {
+    IBehavior* behavior = it->second;
+    behavior->SetIsChoosable(newVal);
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("EnableBehavior.NotFound", "No Behavior named '%s' (newVal = %d)", behaviorName.c_str(), (int)newVal);
+  }
+}
+  
 
 IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
@@ -77,9 +117,11 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
   
   IBehavior* bestBehavior = nullptr;
   float bestScore = 0.0f;
-  for (IBehavior* behavior : _behaviorList)
+  for (const auto& kv : _nameToBehaviorMap)
   {
-    if (behavior->MatchesAnyBehaviorGroups(_bannedBehaviorGroups))
+    IBehavior* behavior = kv.second;
+    
+    if (!behavior->IsChoosable())
     {
       continue;
     }
@@ -104,20 +146,20 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
     VIZ_BEHAVIOR_SELECTION_ONLY( robotBehaviorSelectData.scoreData.push_back(scoreData) );
   }
   
-  VIZ_BEHAVIOR_SELECTION_ONLY( VizManager::getInstance()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
+  VIZ_BEHAVIOR_SELECTION_ONLY( robot.GetContext()->GetVizManager()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
   
   return bestBehavior;
 }
   
 IBehavior* SimpleBehaviorChooser::GetBehaviorByName(const std::string& name) const
 {
-  for (auto behavior : _behaviorList)
+  const auto& it = _nameToBehaviorMap.find(name);
+  if (it != _nameToBehaviorMap.end())
   {
-    if (behavior->GetName() == name)
-    {
-      return behavior;
-    }
+    IBehavior* behavior = it->second;
+    return behavior;
   }
+  
   return nullptr;
 }
   
@@ -125,8 +167,9 @@ IBehavior* SimpleBehaviorChooser::GetBehaviorByName(const std::string& name) con
 SimpleBehaviorChooser::~SimpleBehaviorChooser()
 {
   #if ANKI_DEVELOPER_CODE
-  for (auto& behavior : _behaviorList)
+  for (const auto& kv : _nameToBehaviorMap)
   {
+    const IBehavior* behavior = kv.second;
     ASSERT_NAMED(behavior->IsOwnedByFactory(), "Behavior not owned by factory - shouldn't be possible!");
   }
   #endif //ANKI_DEVELOPER_CODE

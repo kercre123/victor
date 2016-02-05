@@ -68,30 +68,30 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
-                 IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
-    : _externalInterface(externalInterface)
-    , _dataPlatform(dataPlatform)
+    // static initializers
+    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0});
+    
+    
+    Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
+    : _context(context)
     , _ID(robotID)
     , _timeSynced(false)
-    , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
     , _actionList(*this)
     , _movementComponent(*this)
-    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, dataPlatform)
+    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
-    , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
-                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
+    , _headCamPose(_kDefaultHeadCamRotation, {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
-    , _animationStreamer(_externalInterface, _cannedAnimations, _audioClient)
+    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
     , _imageDeChunker(new ImageDeChunker())
-    , _traceHandler(dataPlatform)
+    , _traceHandler(_context->GetDataPlatform())
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -107,13 +107,13 @@ namespace Anki {
       _isLocalized = true;
       SetLocalizedTo(nullptr);
       
-      InitRobotMessageComponent(_msgHandler,robotID);
+      InitRobotMessageComponent(_context->GetRobotMsgHandler(),robotID);
       
       if (HasExternalInterface())
       {
-        SetupGainsHandlers(*_externalInterface);
-        SetupVisionHandlers(*_externalInterface);
-        SetupMiscHandlers(*_externalInterface);
+        SetupGainsHandlers(*_context->GetExternalInterface());
+        SetupVisionHandlers(*_context->GetExternalInterface());
+        SetupMiscHandlers(*_context->GetExternalInterface());
       }
       
       // The call to Delocalize() will increment frameID, but we want it to be
@@ -141,11 +141,11 @@ namespace Anki {
       }
       
       // Read in Mood Manager Json
-      if (nullptr != _dataPlatform)
+      if (nullptr != _context->GetDataPlatform())
       {
         Json::Value moodConfig;
         std::string jsonFilename = "config/basestation/config/mood_config.json";
-        bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, moodConfig);
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, jsonFilename, moodConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.MoodConfigJsonNotFound",
@@ -160,10 +160,10 @@ namespace Anki {
       
       // Read in behavior manager Json
       Json::Value behaviorConfig;
-      if (nullptr != _dataPlatform)
+      if (nullptr != _context->GetDataPlatform())
       {
         std::string jsonFilename = "config/basestation/config/behavior_config.json";
-        bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
@@ -174,10 +174,10 @@ namespace Anki {
       _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
-      _pdo = new PathDolerOuter(msgHandler, robotID);
+      _pdo = new PathDolerOuter(_context->GetRobotMsgHandler(), robotID);
 
-      if (nullptr != _dataPlatform) {
-        _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
+      if (nullptr != _context->GetDataPlatform()) {
+        _longPathPlanner  = new LatticePlanner(this, _context->GetDataPlatform());
       }
       else {
         // For unit tests, or cases where we don't have data, use the short planner in it's place
@@ -268,9 +268,9 @@ namespace Anki {
       //++_frameId;
      
       // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
-      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
@@ -279,7 +279,7 @@ namespace Anki {
     Result Robot::SetLocalizedTo(const ObservableObject* object)
     {
       if(object == nullptr) {
-        VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+        GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                            "LocalizedTo: Odometry");
         _localizedToID.UnSet();
         _isLocalized = true;
@@ -316,10 +316,10 @@ namespace Anki {
       _isLocalized = true;
       
       // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
-      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
@@ -342,7 +342,7 @@ namespace Anki {
       if(_stateSaveMode != SAVE_OFF)
       {
         // Make sure image capture folder exists
-        std::string robotStateCaptureDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
+        std::string robotStateCaptureDir = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
         if (!Util::FileUtils::CreateDirectory(robotStateCaptureDir, false, true)) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.CreateDirFailed","%s", robotStateCaptureDir.c_str());
         }
@@ -371,7 +371,7 @@ namespace Anki {
         
         Json::Value json = msg.CreateJson();
         PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Writing RobotState JSON to file %s", msgFilename.c_str());
-        _dataPlatform->writeAsJson(Util::Data::Scope::Cache, msgFilename, json);
+        _context->GetDataPlatform()->writeAsJson(Util::Data::Scope::Cache, msgFilename, json);
         */
 #if(0)
         // Compose line for IMU output file.
@@ -561,7 +561,7 @@ namespace Anki {
       RobotState stateMsg(msg);
       
       // Send state to visualizer for displaying
-      VizManager::getInstance()->SendRobotState(stateMsg,
+      GetContext()->GetVizManager()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
@@ -578,24 +578,16 @@ namespace Anki {
       return _newStateMsgAvailable;
     }
     
+    void Robot::SetCameraRotation(f32 roll, f32 pitch, f32 yaw)
+    {
+      RotationMatrix3d rot(roll, -pitch, yaw);
+      _headCamPose.SetRotation(rot * _kDefaultHeadCamRotation);
+      PRINT_NAMED_INFO("Robot.SetCameraRotation", "yaw_corr=%f, pitch_corr=%f, roll_corr=%f", yaw, pitch, roll);
+    }
+    
     void Robot::SetPhysicalRobot(bool isPhysical)
     {
-      if (_isPhysical != isPhysical) {
-        if (isPhysical) {
-          // "Recalibrate" camera pose within head for physical robot
-          // TODO: Do this properly!
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_YAW_CORR, Z_AXIS_3D()));
-          _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D()));
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_ROLL_CORR, X_AXIS_3D()));
-          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_NAMED_INFO("Robot.SetPhysicalRobot", "Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, roll_corr=%f, x_trans_corr=%fmm", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_ROLL_CORR, HEAD_CAM_TRANS_X_CORR);
-        } else {
-          _headCamPose.SetRotation({0,0,1,  -1,0,0,  0,-1,0});
-          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_STREAM_INFO("Robot.SetPhysicalRobot", "Slop factor removed from head cam pose for simulated robot");
-        }
-        _isPhysical = isPhysical;
-      }
+      _isPhysical = isPhysical;
       
       // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
       // We do this regardless of previous state to ensure it works when adding 1st simulated robot (as _isPhysical already == false in that case)
@@ -799,7 +791,7 @@ namespace Anki {
                                   "Could not estimate pose of block marker. Not visualizing.\n");
             } else {
               if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-                VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+                GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
               } else {
                 PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                     "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
@@ -824,7 +816,7 @@ namespace Anki {
                                   "Could not estimate pose of mat marker. Not visualizing.\n");
             } else {
               if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-                VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
+                GetContext()->GetVizManager()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
               } else {
                 PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                     "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
@@ -879,7 +871,7 @@ namespace Anki {
       return RESULT_OK;
 #endif
       
-      VizManager::getInstance()->SendStartRobotUpdate();
+      GetContext()->GetVizManager()->SendStartRobotUpdate();
       
       /* DEBUG
        const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -957,7 +949,7 @@ namespace Anki {
         }
       }
       
-      VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
+      GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
                                          "Behavior:%s:%s", behaviorChooserName, behaviorName.c_str());
 
       
@@ -1088,10 +1080,10 @@ namespace Anki {
       Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToOrigin();
       
       // Triangle pose marker
-      VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin);
+      GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin);
       
       // Full Webots CozmoBot model
-      VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
+      GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
       
       // Robot bounding box
       static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
@@ -1104,7 +1096,7 @@ namespace Anki {
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
                             Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
     
-      VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
+      GetContext()->GetVizManager()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
       
       /*
       // Draw 3d bounding box
@@ -1112,11 +1104,11 @@ namespace Anki {
       vizTranslation.z() += 0.5f*ROBOT_BOUNDING_Z;
       Pose3d vizPose(GetPose().GetRotation(), vizTranslation);
       
-      VizManager::getInstance()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
+      GetContext()->GetVizManager()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
                                             vizPose, ROBOT_BOUNDING_QUAD_COLOR);
       */
       
-      VizManager::getInstance()->SendEndRobotUpdate();
+      GetContext()->GetVizManager()->SendEndRobotUpdate();
       
       
       // Sending debug string to game and viz
@@ -1479,7 +1471,7 @@ namespace Anki {
     void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
     {
       Json::Value animDefs;
-      const bool success = _dataPlatform->readAsJson(filename, animDefs);
+      const bool success = _context->GetDataPlatform()->readAsJson(filename, animDefs);
       if (success && !animDefs.empty()) {
         //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
@@ -1497,7 +1489,7 @@ namespace Anki {
     void Robot::ReadAnimationGroupFile(const char* filename)
     {
       Json::Value animGroupDef;
-      const bool success = _dataPlatform->readAsJson(filename, animGroupDef);
+      const bool success = _context->GetDataPlatform()->readAsJson(filename, animGroupDef);
       if (success && !animGroupDef.empty()) {
         
         std::string fullName(filename);
@@ -1517,12 +1509,12 @@ namespace Anki {
     
     void Robot::LoadBehaviors()
     {
-      if (_dataPlatform == nullptr)
+      if (_context->GetDataPlatform() == nullptr)
       {
         return;
       }
       
-      const std::string behaviorFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/behaviors/");
+      const std::string behaviorFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/behaviors/");
       
       DIR* dir = opendir(behaviorFolder.c_str());
       if ( dir != nullptr)
@@ -1535,7 +1527,7 @@ namespace Anki {
             std::string fullFileName = behaviorFolder + ent->d_name;
             
             Json::Value behaviorJson;
-            const bool success = _dataPlatform->readAsJson(fullFileName, behaviorJson);
+            const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, behaviorJson);
             if (success && !behaviorJson.empty())
             {
               //PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
@@ -1563,13 +1555,13 @@ namespace Anki {
     
     void Robot::ReadAnimationDirImpl(const std::string& animationDir)
     {
-      if (_dataPlatform == nullptr) { return; }
+      if (_context->GetDataPlatform() == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
-      SoundManager::getInstance()->LoadSounds(_dataPlatform);
-      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
+      SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
+      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
       
       const std::string animationFolder =
-        _dataPlatform->pathToResource(Util::Data::Scope::Resources, animationDir);
+        _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, animationDir);
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -1613,7 +1605,7 @@ namespace Anki {
       if (HasExternalInterface()) {
         std::vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
         for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
+          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
       
@@ -1623,11 +1615,11 @@ namespace Anki {
     // Read the animationGroups in a dir
     void Robot::ReadAnimationGroupDir()
     {
-      if (_dataPlatform == nullptr) { return; }
+      if (_context->GetDataPlatform() == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       
       const std::string animationGroupFolder =
-      _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
+      _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationGroupFolder.c_str());
       if ( dir != nullptr) {
@@ -1672,7 +1664,7 @@ namespace Anki {
       if (HasExternalInterface()) {
         std::vector<std::string> animNames(_cannedAnimationGroups.GetAnimationGroupNames());
         for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
+          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
         }
       }
        */
@@ -2130,7 +2122,7 @@ namespace Anki {
     // Clears the path that the robot is executing which also stops the robot
     Result Robot::ClearPath()
     {
-      VizManager::getInstance()->ErasePath(_ID);
+      GetContext()->GetVizManager()->ErasePath(_ID);
       _pdo->ClearPath();
       return SendMessage(RobotInterface::EngineToRobot(RobotInterface::ClearPath(0)));
     }
@@ -2155,7 +2147,7 @@ namespace Anki {
         }
         
         // Visualize path if robot has just started traversing it.
-        VizManager::getInstance()->DrawPath(_ID, path, NamedColors::EXECUTED_PATH);
+        GetContext()->GetVizManager()->DrawPath(_ID, path, NamedColors::EXECUTED_PATH);
         
       }
       
@@ -2640,7 +2632,7 @@ namespace Anki {
     
     Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
     {
-      Result sendResult = _msgHandler->SendMessage(_ID, msg, reliable, hot);
+      Result sendResult = _context->GetRobotMsgHandler()->SendMessage(_ID, msg, reliable, hot);
       if(sendResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.", _ID);
       }
@@ -2656,7 +2648,7 @@ namespace Anki {
       
       if(result == RESULT_OK) {
         result = SendMessage(RobotInterface::EngineToRobot(
-          RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::CVGA)));
+          RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::QVGA)));
         
         // Reset pose on connect
         PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
@@ -2738,7 +2730,7 @@ namespace Anki {
       if (_imageSaveMode != SAVE_OFF) {
         
         // Make sure image capture folder exists
-        std::string imageCaptureDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
+        std::string imageCaptureDir = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
         if (!Util::FileUtils::CreateDirectory(imageCaptureDir, false, true)) {
           PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","%s",imageCaptureDir.c_str());
         }
@@ -3278,7 +3270,7 @@ namespace Anki {
       m.onPeriod_ms = onPeriod_ms;
       m.offPeriod_ms = offPeriod_ms;
 
-      return _msgHandler->SendMessage(GetID(), m);
+      return _context->GetRobotMsgHandler()->SendMessage(GetID(), m);
     }
        */
       
@@ -3356,7 +3348,7 @@ namespace Anki {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DebugString(str)));
       
       // Send message to viz
-      VizManager::getInstance()->SetText(VizManager::DEBUG_STRING,
+      GetContext()->GetVizManager()->SetText(VizManager::DEBUG_STRING,
                                          NamedColors::ORANGE,
                                          "%s", text);
       

@@ -5,6 +5,7 @@
 
 //#define DEBUG_MESSAGES
 //#define RADIO_TIMING_TEST
+//#define DUMP_DISCOVER
 
 // Updated for EP1
 #define ROBOT_EP1_BODY

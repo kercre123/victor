@@ -182,10 +182,6 @@ namespace Anki {
       {
         // Update frameID
         frameId_ = frameID;
-#ifdef TARGET_K02
-        SetCurrentMatPose(x, y, angle);
-        return RESULT_OK;
-#else
         u16 i;
         if (t == 0) {
           // If t==0, this is considered to be a command to just update the current pose
@@ -235,7 +231,6 @@ namespace Anki {
         lastKeyframeUpdate_ = HAL::GetTimeStamp();
 
         return RESULT_OK;
-#endif
       }
 
       void AddPoseToHist()

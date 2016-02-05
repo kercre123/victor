@@ -406,6 +406,10 @@ message ExecuteBehavior {
   BehaviorType behaviorType
 }
 
+message ExecuteBehaviorByName {
+  string behaviorName
+}
+
 // Any message intended for a specific robot's behaviorManager
 message BehaviorManagerMessage {
   uint_8  robotID,
@@ -659,7 +663,6 @@ union RobotActionUnion {
 message QueueSingleAction {
   uint_8  robotID,
   uint_32 idTag,  // caller-specified identifier that will be returned with the completion message
-  uint_32 inSlot,
   uint_8  numRetries,
   QueueActionPosition    position,
   RobotActionUnion       action
@@ -669,7 +672,6 @@ message QueueSingleAction {
 message QueueCompoundAction {
   uint_8  robotID,
   uint_32 idTag,   // caller-specified identifier that will be returned with the completion message
-  uint_32 inSlot,
   uint_8  numRetries,
   bool  parallel,  // false means sequential
   QueueActionPosition    position,

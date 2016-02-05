@@ -128,12 +128,12 @@ namespace Cozmo {
     
     bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
+    bool IsChoosable() const { return _isChoosable; }
+    void SetIsChoosable(bool newVal) { _isChoosable = newVal; }
+    
     // Some behaviors are short interruptions that can resume directly to previous behavior
     bool IsShortInterruption() const { return IsBehaviorGroup(BehaviorGroup::ShortInterruption); }
     virtual bool WantsToResume() const { return false; }
-    
-    // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
-    static const ActionList::SlotHandle sActionSlot;
     
     virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
     
@@ -228,6 +228,7 @@ namespace Cozmo {
 
     bool _isRunning;
     bool _isOwnedByFactory;
+    bool _isChoosable;
     
     bool _enableRepetitionPenalty;
     
