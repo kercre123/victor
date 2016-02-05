@@ -126,14 +126,16 @@ namespace CubeSlap {
       // If the animation completes and the cube is beneath Cozmo,
       // Cozmo has won.
       if (_CliffFlagTrown) {
-        ShowGameStateSlide(kCozmoWinPounce);
+        InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
+        ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
         OnFailure();
         return;
       }
       else {
         // If the animation completes Cozmo is not on top of the Cube,
-        // The player has won this round
-        ShowGameStateSlide(kPlayerWin);
+        // The player has won this round 
+        InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
+        ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
         OnSuccess();
       }
     }

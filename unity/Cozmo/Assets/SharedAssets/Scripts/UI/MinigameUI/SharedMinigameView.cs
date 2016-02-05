@@ -39,6 +39,11 @@ namespace Cozmo {
 
       [SerializeField]
       private ContinueGameShelfWidget _ContinueButtonShelfPrefab;
+
+      [SerializeField]
+      private ContinueGameShelfWidget _ContinueButtonCenterPrefab;
+
+      private bool _IsContinueButtonShelfCentered;
       private ContinueGameShelfWidget _ContinueButtonShelfInstance;
 
       [SerializeField]
@@ -56,13 +61,19 @@ namespace Cozmo {
       private RectTransform _FullScreenSlideContainer;
 
       [SerializeField]
-      private RectTransform _GameInfoSlideContainer;
+      private RectTransform _GameCustomInfoSlideContainer;
 
       [SerializeField]
       private UnityEngine.UI.LayoutElement _InfoTitleLayoutElement;
 
       [SerializeField]
       private Anki.UI.AnkiTextLabel _InfoTitleTextLabel;
+
+      [SerializeField]
+      private RectTransform _InfoTextSlideContainer;
+
+      [SerializeField]
+      private Anki.UI.AnkiTextLabel _InfoTextSlidePrefab;
 
       #region Score Widget variables
 
@@ -204,10 +215,8 @@ namespace Cozmo {
       }
 
       public void HideQuickQuitButton() {
-        if (_QuickQuitButtonInstance != null) {
-          HideWidget(_QuickQuitButtonInstance);
-          _QuickQuitButtonInstance = null;
-        }
+        HideWidget(_QuickQuitButtonInstance);
+        _QuickQuitButtonInstance = null;
       }
 
       private void HandleQuitConfirmed() {
@@ -395,13 +404,30 @@ namespace Cozmo {
       #region Game State Slides
 
       public GameObject ShowFullScreenSlide(GameStateSlide slideData) {
-        return ShowGameStateSlide(slideData.slideName, slideData.slidePrefab.gameObject, 
-          _FullScreenSlideContainer);
+        return ShowFullScreenSlide(slideData.slidePrefab.gameObject, slideData.slideName);
       }
 
-      public GameObject ShowGameStateSlide(GameStateSlide slideData) {
-        return ShowGameStateSlide(slideData.slideName, slideData.slidePrefab.gameObject, 
-          _GameInfoSlideContainer);
+      public GameObject ShowFullScreenSlide(GameObject prefab, string slideKey) {
+        HideScoreWidgets();
+        HideInfoTitleText();
+        return ShowGameStateSlide(slideKey, prefab, _FullScreenSlideContainer);
+      }
+
+      public GameObject ShowCustomGameStateSlide(GameStateSlide slideData) {
+        return ShowCustomGameStateSlide(slideData.slidePrefab.gameObject, slideData.slideName);
+      }
+
+      public GameObject ShowCustomGameStateSlide(GameObject prefab, string slideKey) {
+        InfoTitleText = null;
+        HideGameStateSlide();
+        return ShowGameStateSlide(slideKey, prefab, _GameCustomInfoSlideContainer);
+      }
+
+      public void ShowInfoTextSlide(string textToDisplay) {
+        GameObject slide = ShowGameStateSlide("Info Slide: " + textToDisplay, _InfoTextSlidePrefab.gameObject, 
+                             _InfoTextSlideContainer);
+        Anki.UI.AnkiTextLabel textLabel = slide.GetComponent<Anki.UI.AnkiTextLabel>();
+        textLabel.text = textToDisplay;
       }
 
       private GameObject ShowGameStateSlide(string slideName, GameObject slidePrefab,
@@ -428,7 +454,7 @@ namespace Cozmo {
         // Play a transition in tween on it
         _SlideInTween = DOTween.Sequence();
         _SlideInTween.Append(_CurrentSlide.transform.DOLocalMoveX(
-          100, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
+          -100, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
         _SlideInTween.Join(_CurrentSlide.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
         _SlideInTween.Play();
 
@@ -444,7 +470,7 @@ namespace Cozmo {
 
           _SlideOutTween = DOTween.Sequence();
           _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
-            -100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
+            100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
           _SlideOutTween.Join(_TransitionOutSlide.DOFade(0, 0.25f));
 
           // At the end of the tween destroy the out slide
@@ -459,22 +485,27 @@ namespace Cozmo {
 
       #region ContinueGameShelfWidget
 
-      public void ShowContinueButtonShelf() {
+      public void ShowContinueButtonShelf(bool centerShelf) {
         if (_ContinueButtonShelfInstance != null) {
-          return;
+          if (_IsContinueButtonShelfCentered == centerShelf) {
+            return;
+          }
+          else {
+            HideContinueButtonShelf();
+          }
         }
 
-        GameObject widgetObj = UIManager.CreateUIElement(_ContinueButtonShelfPrefab.gameObject, this.transform);
+        ContinueGameShelfWidget prefabToUse = centerShelf ? _ContinueButtonCenterPrefab : _ContinueButtonShelfPrefab;
+        _IsContinueButtonShelfCentered = centerShelf;
+        GameObject widgetObj = UIManager.CreateUIElement(prefabToUse.gameObject, this.transform);
         _ContinueButtonShelfInstance = widgetObj.GetComponent<ContinueGameShelfWidget>();
 
         AddWidget(_ContinueButtonShelfInstance);
       }
 
       public void HideContinueButtonShelf() {
-        if (_ContinueButtonShelfInstance != null) {
-          HideWidget(_ContinueButtonShelfInstance);
-          _ContinueButtonShelfInstance = null;
-        }
+        HideWidget(_ContinueButtonShelfInstance);
+        _ContinueButtonShelfInstance = null;
       }
 
       public void SetContinueButtonShelfText(string text) {
@@ -500,9 +531,13 @@ namespace Cozmo {
       public string InfoTitleText {
         get { return _InfoTitleTextLabel.text; }
         set { 
-          _InfoTitleLayoutElement.gameObject.SetActive(true);
+          _InfoTitleLayoutElement.gameObject.SetActive(!string.IsNullOrEmpty(value));
           _InfoTitleTextLabel.text = value; 
         }
+      }
+
+      private void HideInfoTitleText() {
+        _InfoTitleLayoutElement.gameObject.SetActive(false);
       }
 
       #endregion
@@ -527,6 +562,13 @@ namespace Cozmo {
         set {
           ShowCozmoScoreWidget();
           _CozmoScoreWidgetInstance.RoundsWon = value;
+        }
+      }
+
+      public bool CozmoDim {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.Dim = value;
         }
       }
 
@@ -563,6 +605,13 @@ namespace Cozmo {
         }
       }
 
+      public bool PlayerDim {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.Dim = value;
+        }
+      }
+
       public void ShowPlayerWinnerBanner() {
         ShowPlayerScoreWidget();
         _PlayerScoreWidgetInstance.IsWinner = true;
@@ -585,6 +634,13 @@ namespace Cozmo {
 
         AddWidget(instance);
         return instance;
+      }
+
+      public void HideScoreWidgets() {
+        HideWidget(_CozmoScoreWidgetInstance);
+        _CozmoScoreWidgetInstance = null;
+        HideWidget(_PlayerScoreWidgetInstance);
+        _PlayerScoreWidgetInstance = null;
       }
 
       #endregion

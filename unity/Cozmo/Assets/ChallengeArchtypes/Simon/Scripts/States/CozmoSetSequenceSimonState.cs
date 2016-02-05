@@ -10,7 +10,6 @@ namespace Simon {
     private int _CurrentSequenceIndex = -1;
     private IList<int> _CurrentSequence;
     private int _SequenceLength;
-    private SimonGameSequencePanel _SequenceDisplay;
     private const float kSequenceWaitDelay = 0.3f;
     private float _LastSequenceTime = -1;
 
@@ -21,9 +20,12 @@ namespace Simon {
       _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
 
-      GameObject sequenceDisplay = _GameInstance.ShowGameStateSlide("WatchCozmoPattern");
-      _SequenceDisplay = sequenceDisplay.GetComponent<SimonGameSequencePanel>();
-      _SequenceDisplay.SetSequenceText(0, _SequenceLength);
+      _GameInstance.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderWatchCozmoPattern);
+      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
+        0, _SequenceLength);
+
+      _GameInstance.CozmoDim = false;
+      _GameInstance.PlayerDim = true;
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
@@ -51,7 +53,8 @@ namespace Simon {
 
     private void LightUpNextCube() {
       _CurrentSequenceIndex++;
-      _SequenceDisplay.SetSequenceText(_CurrentSequenceIndex + 1, _SequenceLength);
+      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
+        _CurrentSequenceIndex + 1, _SequenceLength);
       _LastSequenceTime = Time.time;
       _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
     }
@@ -67,7 +70,6 @@ namespace Simon {
         kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, uint.MaxValue, 0, 0, 0);
       }
     }
-
   }
 
 }

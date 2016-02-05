@@ -72,6 +72,7 @@ public abstract class GameBase : MonoBehaviour {
 
   protected StateMachine _StateMachine = new StateMachine();
 
+  // TODO: Delete after removing usage by Minesweeper, Codebreaker
   [SerializeField]
   protected GameStateSlide[] _GameStateSlides;
 
@@ -145,11 +146,6 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
     }
-    if (_ChallengeEndViewInstance != null) {
-      _ChallengeEndViewInstance.ViewCloseAnimationFinished -= HandleChallengeResultViewClosed;
-      _ChallengeEndViewInstance.CloseViewImmediately();
-      _ChallengeEndViewInstance = null;
-    }
   }
 
   protected virtual void Update() {
@@ -187,11 +183,16 @@ public abstract class GameBase : MonoBehaviour {
 
   private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
     // Open confirmation dialog instead
-    _ChallengeEndViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
-    _ChallengeEndViewInstance.SetupDialog(Localization.Get(_ChallengeData.ChallengeTitleLocKey),
-      _ChallengeData.ChallengeIcon, primaryText, secondaryText);
+    GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowCustomGameStateSlide(
+                                     UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
+                                     "ChallengeEndSlide");
+    _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
+    _ChallengeEndViewInstance.SetupDialog(primaryText, secondaryText);
+
     // Listen for dialog close
-    _ChallengeEndViewInstance.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
+    ShowContinueButtonShelf(centerShelf: true);
+    SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
+    SetContinueButtonListener(HandleChallengeResultViewClosed);
 
     _RewardedXp = new StatContainer();
 
@@ -380,23 +381,34 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Game State Slides
 
-  public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
-    GameObject slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(UIPrefabHolder.Instance.InitialCubesSlide);
-    ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-    cubeSlide.Initialize(numCubesRequired);
-    return cubeSlide;
+  // TODO: Delete after removing usage by CodeBreaker, Minesweeper
+  public GameObject ShowFullScreenSlide(string slideName) {
+    // If found, show that slide.
+    GameObject slideObject = null;
+    GameStateSlide foundSlideData = GetSlideByName(slideName);
+    if (foundSlideData != null) {
+      slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(foundSlideData);
+    }
+    else {
+      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
+      " list of slides! gameObject.name=" + gameObject.name);
+    }
+    return slideObject;
   }
 
-  /// <summary>
-  /// Returns an instance of the slide created. Null if the creation failed.
-  /// </summary>]
-  public GameObject ShowGameStateSlide(string slideName) {
+  // TODO: Delete after removing usage by CodeBreaker, Minesweeper
+  private GameStateSlide GetSlideByName(string slideName) {
     // Search through the array for a slide of the same name
-    GameObject slideObject = null;
     GameStateSlide foundSlideData = null;
     foreach (var slide in _GameStateSlides) {
       if (slide != null && slide.slideName == slideName) {
-        foundSlideData = slide;
+        if (slide.slidePrefab != null) {
+          foundSlideData = slide;
+        }
+        else {
+          DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
+          " list of slides! gameObject.name=" + gameObject.name);
+        }
         break;
       }
       else if (slide == null) {
@@ -404,23 +416,30 @@ public abstract class GameBase : MonoBehaviour {
         " list of slides! gameObject.name=" + gameObject.name);
       }
     }
+    return foundSlideData;
+  }
 
-    // If found, show that slide.
-    if (foundSlideData != null) {
-      if (foundSlideData.slidePrefab != null) {
-        slideObject = _SharedMinigameViewInstance.ShowGameStateSlide(foundSlideData);
-      }
-      else {
-        DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
-        " list of slides! gameObject.name=" + gameObject.name);
-      }
-    }
-    else {
-      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
-      " list of slides! gameObject.name=" + gameObject.name);
-    }
+  public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
+    GameObject slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(UIPrefabHolder.Instance.InitialCubesSlide);
+    ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
+    cubeSlide.Initialize(numCubesRequired);
+    return cubeSlide;
+  }
 
-    return slideObject;
+  public GameObject ShowFullScreenSlide(GameObject slidePrefab) {
+    return _SharedMinigameViewInstance.ShowFullScreenSlide(slidePrefab, slidePrefab.name);
+  }
+
+  public void ShowInfoTextSlide(string textToDisplay) {
+    _SharedMinigameViewInstance.ShowInfoTextSlide(textToDisplay);
+  }
+
+  public void ShowInfoTextSlideWithKey(string localizationKey) {
+    _SharedMinigameViewInstance.ShowInfoTextSlide(Localization.Get(localizationKey));
+  }
+
+  private void ShowRewardsSlide() {
+    // TODO
   }
 
   public void HideGameStateSlide() {
@@ -431,8 +450,8 @@ public abstract class GameBase : MonoBehaviour {
 
   #region ContinueGameShelfWidget
 
-  public void ShowContinueButtonShelf() {
-    _SharedMinigameViewInstance.ShowContinueButtonShelf();
+  public void ShowContinueButtonShelf(bool centerShelf = false) {
+    _SharedMinigameViewInstance.ShowContinueButtonShelf(centerShelf);
   }
 
   public void HideContinueButtonShelf() {
@@ -488,6 +507,12 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  public bool CozmoDim {
+    set {
+      _SharedMinigameViewInstance.CozmoDim = value;
+    }
+  }
+
   public int PlayerScore {
     set {
       _SharedMinigameViewInstance.PlayerScore = value;
@@ -503,6 +528,12 @@ public abstract class GameBase : MonoBehaviour {
   public int PlayerRoundsWon {
     set {
       _SharedMinigameViewInstance.PlayerRoundsWon = value;
+    }
+  }
+
+  public bool PlayerDim {
+    set {
+      _SharedMinigameViewInstance.PlayerDim = value;
     }
   }
 

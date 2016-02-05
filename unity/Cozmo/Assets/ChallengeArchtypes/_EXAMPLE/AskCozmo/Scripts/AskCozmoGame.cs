@@ -53,7 +53,7 @@ namespace AskCozmo {
 
       // Play a slide
       _CurrentSlideName = GetNextSlide();
-      ShowGameStateSlide(_CurrentSlideName);
+      ShowFullScreenSlide(_CurrentSlideName);
     }
 
     protected override void CleanUpOnDestroy() {
@@ -88,7 +88,7 @@ namespace AskCozmo {
       }
 
       _CurrentSlideName = GetNextSlide();
-      ShowGameStateSlide(_CurrentSlideName);
+      ShowFullScreenSlide(_CurrentSlideName);
     }
 
     void HandleAnimationDone(bool success) {

@@ -19,7 +19,8 @@ namespace CubeSlap {
       _FirstTimestamp = Time.time;
       _SlapTriggered = false;
       _CubeSlapGame.GetCurrentTarget();
-      _CubeSlapGame.ShowGameStateSlide(CubeSlapGame.kWaitForPounce); 
+      _CubeSlapGame.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
+      _CubeSlapGame.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
       LightCube.OnMovedAction += HandleCubeMoved;
     }
 
@@ -47,7 +48,8 @@ namespace CubeSlap {
               _LastSeenTimeStamp = Time.time;
             }
             if (Time.time - _LastSeenTimeStamp > CubeSlapGame.kCubeLostDelay) {
-              _CubeSlapGame.ShowGameStateSlide(CubeSlapGame.kCozmoWinEarly);
+              _CubeSlapGame.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);
+              _CubeSlapGame.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
               _CubeSlapGame.OnFailure();
             }
           }
@@ -63,7 +65,8 @@ namespace CubeSlap {
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
       if (!_SlapTriggered && id == _CubeSlapGame.GetCurrentTarget().ID) {
-        _CubeSlapGame.ShowGameStateSlide(CubeSlapGame.kCozmoWinEarly);
+        _CubeSlapGame.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);
+        _CubeSlapGame.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
         _CubeSlapGame.OnFailure();
       }
     }

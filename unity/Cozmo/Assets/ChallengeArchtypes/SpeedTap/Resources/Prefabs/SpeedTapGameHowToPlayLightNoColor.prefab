@@ -49,6 +49,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '#speedTap.text.howToPlayLightCountNoColor'
+  _AllUppercase: 0
 --- !u!222 &22224734
 CanvasRenderer:
   m_ObjectHideFlags: 1

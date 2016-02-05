@@ -4,50 +4,50 @@ using System.Collections;
 using Cozmo.UI;
 using Anki.UI;
 
-public class ChallengeEndedDialog : BaseView {
-
-  [SerializeField]
-  private AnkiTextLabel _ChallengeTitleLabel;
-
-  [SerializeField]
-  private IconProxy _ChallengeIcon;
+public class ChallengeEndedDialog : MonoBehaviour {
 
   [SerializeField]
   private AnkiTextLabel _PrimaryInfoLabel;
 
   [SerializeField]
+  private LayoutElement _PrimaryLabelLayoutElement;
+
+  [SerializeField]
   private AnkiTextLabel _AdditionalInfoLabel;
+
+  [SerializeField]
+  private LayoutElement _AdditionalInfoLabelLayoutElement;
 
   [SerializeField]
   private HorizontalOrVerticalLayoutGroup _RewardContainer;
 
   [SerializeField]
+  private LayoutElement _RewardContainerLayoutElement;
+
+  [SerializeField]
   private IconTextLabel _RewardIconPrefab;
 
-  protected override void CleanUp() {
-    
-  }
-
-  public void SetupDialog(string titleText, Sprite titleIcon, string primaryText, string secondaryText) {
-    _ChallengeTitleLabel.text = titleText;
-    _ChallengeIcon.SetIcon(titleIcon);
-
+  public void SetupDialog(string primaryText, string secondaryText) {
+    _RewardContainerLayoutElement.gameObject.SetActive(false);
     if (!string.IsNullOrEmpty(primaryText)) {
+      _PrimaryLabelLayoutElement.gameObject.SetActive(true);
       _PrimaryInfoLabel.text = primaryText;
     }
     else {
-      _PrimaryInfoLabel.enabled = false;
+      _PrimaryLabelLayoutElement.gameObject.SetActive(false);
     }
 
     if (!string.IsNullOrEmpty(secondaryText)) {
+      _AdditionalInfoLabelLayoutElement.gameObject.SetActive(true);
       _AdditionalInfoLabel.text = secondaryText;
     }
     else {
-      _AdditionalInfoLabel.enabled = false;
+      _AdditionalInfoLabelLayoutElement.gameObject.SetActive(false);
     }
   }
 
   public void AddReward(Anki.Cozmo.ProgressionStatType progressionStat, int numberPoints) {
+    _RewardContainerLayoutElement.gameObject.SetActive(true);
     IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, _RewardContainer.transform).GetComponent<IconTextLabel>();
     iconTextLabel.SetText(string.Format(Localization.GetCultureInfo(), 
       Localization.Get(LocalizationKeys.kLabelPlusCount),
