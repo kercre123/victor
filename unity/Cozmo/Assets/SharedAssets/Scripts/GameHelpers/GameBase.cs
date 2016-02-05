@@ -146,11 +146,6 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
     }
-    if (_ChallengeEndViewInstance != null) {
-      _ChallengeEndViewInstance.ViewCloseAnimationFinished -= HandleChallengeResultViewClosed;
-      _ChallengeEndViewInstance.CloseViewImmediately();
-      _ChallengeEndViewInstance = null;
-    }
   }
 
   protected virtual void Update() {
@@ -188,11 +183,16 @@ public abstract class GameBase : MonoBehaviour {
 
   private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
     // Open confirmation dialog instead
-    _ChallengeEndViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as ChallengeEndedDialog;
-    _ChallengeEndViewInstance.SetupDialog(Localization.Get(_ChallengeData.ChallengeTitleLocKey),
-      _ChallengeData.ChallengeIcon, primaryText, secondaryText);
+    GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowCustomGameStateSlide(
+                                     UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
+                                     "ChallengeEndSlide");
+    _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
+    _ChallengeEndViewInstance.SetupDialog(primaryText, secondaryText);
+
     // Listen for dialog close
-    _ChallengeEndViewInstance.ViewCloseAnimationFinished += HandleChallengeResultViewClosed;
+    ShowContinueButtonShelf(centerShelf: true);
+    SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
+    SetContinueButtonListener(HandleChallengeResultViewClosed);
 
     _RewardedXp = new StatContainer();
 

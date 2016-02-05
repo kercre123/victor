@@ -23,8 +23,8 @@ namespace Simon {
 
       string headerTextKey = (_NextPlayer == PlayerType.Human) ? 
         LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;
-      _GameInstance.InfoTitleText = Localization.Get(headerTextKey);
-      _GameInstance.HideGameStateSlide();
+      _GameInstance.InfoTitleText = null;
+      _GameInstance.ShowInfoTextSlideWithKey(headerTextKey);
         
       _GameInstance.CozmoDim = (_NextPlayer == PlayerType.Human);
       _GameInstance.PlayerDim = (_NextPlayer == PlayerType.Cozmo);

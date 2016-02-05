@@ -418,6 +418,8 @@ namespace Cozmo {
       }
 
       public GameObject ShowCustomGameStateSlide(GameObject prefab, string slideKey) {
+        InfoTitleText = null;
+        HideGameStateSlide();
         return ShowGameStateSlide(slideKey, prefab, _GameCustomInfoSlideContainer);
       }
 
