@@ -17,7 +17,7 @@ MonoBehaviour:
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: cubeSlap.title
   _ChallengeDescriptionLocKey: cubeSlap.description
-  _ChallengeIcon: {fileID: 21300000, guid: a851a9b6a744d405a89f9076be1d7dff, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 737c11135ebe84f5b8e6ff9e07906057, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
