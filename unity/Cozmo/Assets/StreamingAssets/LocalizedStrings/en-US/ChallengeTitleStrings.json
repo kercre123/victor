@@ -52,7 +52,7 @@
     "translation": "Investor Scene 4"
   },
   "simonGame01.title": {
-    "translation": "Simon Says Challenge"
+    "translation": "Simon Says"
   },
   "simonGame01.description": {
     "translation": "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
@@ -88,7 +88,7 @@
     "translation": "Motion"
   },
   "codeBreaker01.title": {
-    "translation": "Cozmo Code Breaker"
+    "translation": "Code Breaker"
   },
   "codeBreaker01.description": {
     "translation": "Cozmo will think of a code and you have a certain number of tries to get it right."

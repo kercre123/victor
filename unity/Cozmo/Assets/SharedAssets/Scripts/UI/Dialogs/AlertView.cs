@@ -110,6 +110,10 @@ namespace Cozmo {
         SetupButton(_SecondaryButton, Localization.Get(titleKey), action);
       }
 
+      public void SetTitleArgs(object[] args) {
+        _AlertTitleText.FormattingArgs = args;
+      }
+
       public void SetMessageArgs(object[] args) {
         _AlertMessageText.FormattingArgs = args;
       }
