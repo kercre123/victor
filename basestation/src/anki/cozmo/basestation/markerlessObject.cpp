@@ -58,6 +58,7 @@ namespace Anki {
     MarkerlessObject::MarkerlessObject(Type type)
     : ObservableObject(ObjectFamily::MarkerlessObject, ObjectType::ProxObstacle)
     , _size(GetSizeByType(_type))
+    , _vizHandle(VizManager::INVALID_HANDLE)
     {
       _canonicalCorners = {{
         Point3f(-0.5f*_size.x(), -0.5f*_size.y(),  0.5f*_size.z()),
@@ -83,6 +84,7 @@ namespace Anki {
     
     void MarkerlessObject::Visualize(const ColorRGBA& color) const
     {
+      ASSERT_NAMED(nullptr != _vizManager, "VizManager was not set for object we want to visualize");
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }

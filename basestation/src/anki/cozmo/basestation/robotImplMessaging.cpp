@@ -432,6 +432,8 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
+
+  _blockWorld.SetIsOnCliff(cliffEvent.detected);
   
   // Forward on with EngineToGame event
   CliffEvent payload = message.GetData().Get_cliffEvent();
