@@ -102,11 +102,16 @@ namespace Anki {
       return _isInterrupted;
     }
     
-    // NOTE: THere should be no way for Update() to fail independently of its
+    // NOTE: There should be no way for Update() to fail independently of its
     // call to UpdateInternal(). Otherwise, there's a possibility for an
     // IAction's Cleanup() method not be called on failure.
     ActionResult IActionRunner::Update()
     {
+      // If this action has already completed successfully but update() has been called again do nothing
+      if(_isFinished) {
+        return ActionResult::SUCCESS;
+      }
+      
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
         uint8_t disableTracks = GetAnimTracksToDisable();
@@ -168,6 +173,7 @@ namespace Anki {
                             GetName().c_str());
         }
         _isRunning = false;
+        _isFinished = true;
       }
 
       return _result;

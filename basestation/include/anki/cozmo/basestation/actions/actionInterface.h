@@ -165,6 +165,7 @@ namespace Anki {
       bool          _isRunning              = false;
       bool          _isCancelled            = false;
       bool          _isInterrupted          = false;
+      bool          _isFinished             = false;
       bool          _displayMessages        = true;
       bool          _emitCompletionSignal   = true;
       
