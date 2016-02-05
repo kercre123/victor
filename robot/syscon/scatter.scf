@@ -1,6 +1,7 @@
 #! armcc -E
 
-#define m_rom_size                     0x00040000
+; We are severely underestimating the available rom space
+#define m_rom_size                     0x00006000
 
 #define m_header_start                 0x00001000
 #define m_header_size                  232
