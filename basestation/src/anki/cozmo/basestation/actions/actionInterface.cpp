@@ -73,16 +73,22 @@ namespace Anki {
       }
     }
     
-    void IActionRunner::SetTag(u32 tag)
+    bool IActionRunner::SetTag(u32 tag)
     {
       if (tag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
         PRINT_NAMED_ERROR("IActionRunner.SetTag.InvalidTag", "INVALID_TAG==%d", ActionConstants::INVALID_TAG);
+        return false;
       } else {
         auto pair = IActionRunner::sUnityToEngineTagMap.emplace(tag, _idTag);
         if(!pair.second) {
           PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] already exists", tag);
+          // PrepForCompletion as, currently, the only call to setTag will delete the action on failure
+          _result = ActionResult::FAILURE_TO_START;
+          PrepForCompletion();
+          return false;
         }
       }
+      return true;
     }
     
     u32 IActionRunner::GetUnityTag() const

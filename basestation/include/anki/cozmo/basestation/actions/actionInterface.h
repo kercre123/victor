@@ -58,7 +58,7 @@ namespace Anki {
       // Tags can be used to identify specific actions. A unique tag is assigned
       // at construction, or it can be overridden with SetTag(). The Tag is
       // returned in the ActionCompletion signal as well.
-      void SetTag(u32 tag);
+      bool SetTag(u32 tag);
       u32  GetTag() const { return _idTag; }
       u32  GetUnityTag() const;
       
