@@ -73,7 +73,7 @@ int main(void)
   // WARNING: DO NOT CALL THIS UNLESS YOU GET APPROVAL FROM SOMEONE ON THE
   // FIRMWARE TEAM.  YOU CAN BRICK YOUR COZMO AND MAKE EVERYONE VERY SAD.
 
-  //Bootloader::init();
+  Bootloader::init();
   
   Battery::init();
   Timer::Init();
