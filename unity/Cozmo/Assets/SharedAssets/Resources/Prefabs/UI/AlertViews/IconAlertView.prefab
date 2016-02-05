@@ -286,7 +286,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: Cozmo.UI.AlertView:_CloseButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11436766
 MonoBehaviour:
@@ -301,7 +304,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 116638, guid: 44454b3ff11754c71b8b19311c580825, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: Cozmo.UI.AlertView:_Icon
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11445856
 MonoBehaviour:
@@ -426,7 +432,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../../
+    FieldName: Cozmo.UI.AlertView:_SecondaryButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11489316
 MonoBehaviour:
@@ -441,7 +450,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../../
+    FieldName: Cozmo.UI.AlertView:_PrimaryButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11493002
 MonoBehaviour:
