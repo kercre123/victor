@@ -26,6 +26,7 @@ namespace Cozmo {
 CONSOLE_VAR(uint8_t, kEmcMaxBorderGoals, "BehaviorExploreMarkedCube", 1); // max number of goals to ask the planner
 CONSOLE_VAR(uint8_t, kEmcDistanceMinFactor, "BehaviorExploreMarkedCube", 2.0f); // minimum factor applied to the robot size to find destination from border center
 CONSOLE_VAR(uint8_t, kEmcDistanceMaxFactor, "BehaviorExploreMarkedCube", 4.0f); // maximum factor applied to the robot size to find destination from border center
+CONSOLE_VAR(uint8_t, kEmcDrawDebugInfo, "BehaviorExploreMarkedCube", false); // if set to true the behavior renders debug privimitives
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config)
@@ -68,27 +69,28 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
   GenerateVantagePoints(robot, borderGoals, _currentVantagePoints);
 
   // debugging
-//  {
-//    // border goals
-//    robot.GetContext()->GetVizManager()>EraseSegments("BehaviorExploreMarkedCube::InitInternal");
-//    for ( const auto& bG : borderGoals )
-//    {
-//      const NavMemoryMapTypes::Border& b = bG.borderInfo;
-//      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
-//      Vec3f centerLine = (b.from + b.to)*0.5f;
-//      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
-//    }
-//
-//    // vantage points
-//    for ( const auto& p : _currentVantagePoints )
-//    {
-//      Point3f testOrigin{};
-//      Point3f testDir = X_AXIS_3D() * 20.0f;
-//      testOrigin = p * testOrigin;
-//      testDir = p * testDir;
-//      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
-//    }
-//  }
+  if ( kEmcDrawDebugInfo )
+  {
+    // border goals
+    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
+    for ( const auto& bG : borderGoals )
+    {
+      const NavMemoryMapTypes::Border& b = bG.borderInfo;
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
+      Vec3f centerLine = (b.from + b.to)*0.5f;
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
+    }
+
+    // vantage points
+    for ( const auto& p : _currentVantagePoints )
+    {
+      Point3f testOrigin{};
+      Point3f testDir = X_AXIS_3D() * 20.0f;
+      testOrigin = p * testOrigin;
+      testDir = p * testDir;
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
+    }
+  }
 
   // we shouldn't be running if we don't have borders/vantage points
   if ( _currentVantagePoints.empty() ) {

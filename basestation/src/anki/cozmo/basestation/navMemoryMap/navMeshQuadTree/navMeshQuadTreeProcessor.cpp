@@ -362,7 +362,7 @@ NavMeshQuadTreeProcessor::BorderKeyType NavMeshQuadTreeProcessor::GetBorderTypeK
   "BorderKeyType should hold 2 ENodeContentTypePackedType" );
   
   // key = innerTypes << X | outerType, where X is sizeof(ENodeContentTypePackedType)
-  uint64_t key = 0;
+  BorderKeyType key = 0;
   key |= static_cast<UnderlyingContentType>(innerType);
   key <<= (8*(sizeof(ENodeContentTypePackedType)));
   key |= (outerTypes);

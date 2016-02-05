@@ -296,7 +296,7 @@ bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContent
   }
 
   // ClearOfCliff can only be overriden by Cliff
-  if ( _contentType == ENodeContentType::ClearOfCliff && newContentType != ENodeContentType::Cliff ) {
+  if ( _contentType == ENodeContentType::ClearOfCliff && newContentType == ENodeContentType::ClearOfObstacle ) {
     return false;
   }
   

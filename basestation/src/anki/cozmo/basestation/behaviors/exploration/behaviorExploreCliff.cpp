@@ -26,6 +26,7 @@ namespace Cozmo {
 CONSOLE_VAR(uint8_t, kEcMaxBorderGoals, "BehaviorExploreCliff", 1); // max number of goals to ask the planner
 CONSOLE_VAR(uint8_t, kEcDistanceMinFactor, "BehaviorExploreCliff", 0.01f); // minimum factor applied to the robot size to find destination from border center
 CONSOLE_VAR(uint8_t, kEcDistanceMaxFactor, "BehaviorExploreCliff", 0.01f); // maximum factor applied to the robot size to find destination from border center
+CONSOLE_VAR(uint8_t, kEcDrawDebugInfo, "BehaviorExploreCliff", false); // if set to true the behavior renders debug privimitives
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreCliff::BehaviorExploreCliff(Robot& robot, const Json::Value& config)
@@ -73,6 +74,7 @@ Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec, 
   GenerateVantagePoints(robot, borderGoals, _currentVantagePoints);
 
   // debugging
+  if ( kEcDrawDebugInfo )
   {
     // border goals
     robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreCliff::InitInternal");
@@ -137,8 +139,7 @@ Result BehaviorExploreCliff::InterruptInternal(Robot& robot, double currentTime_
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreCliff::StopInternal(Robot& robot, double currentTime_sec)
 {
-  // TODO ENABLE ME after testing
-  //VizManager::getInstance()->EraseSegments("BehaviorExploreCliff::InitInternal");
+  robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreCliff::InitInternal");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
