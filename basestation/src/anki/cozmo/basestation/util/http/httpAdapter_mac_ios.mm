@@ -6,9 +6,8 @@
 //  Copyright (c) 2015 Anki, Inc. All rights reserved.
 //
 
-#import "httpAdapter_osx_ios.h"
+#import "httpAdapter_mac_ios.h"
 #import "../codeTimer.h"
-//#import "driveEngine/util/stringUtils/stringUtils.h"
 #import "util/logging/logging.h"
 #import "util/dispatchQueue/dispatchQueue.h"
 

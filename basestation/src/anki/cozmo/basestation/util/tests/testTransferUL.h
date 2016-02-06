@@ -27,7 +27,7 @@ namespace Anki {
     class TestTransferUL : public ITransferable
     {
     public:
-      TestTransferUL(TransferQueueMgr* transferQueueMgr);
+      TestTransferUL();
       virtual ~TestTransferUL();
       
       virtual void OnTransferReady( TransferQueueMgr::StartRequestFunc funcStartRequest );

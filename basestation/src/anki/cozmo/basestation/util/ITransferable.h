@@ -36,13 +36,13 @@ namespace Anki {
     class ITransferable
     {
     public:
-      ITransferable(TransferQueueMgr* transferQueueMgr);
+      ITransferable();
       ~ITransferable();
       
       // Because Listening requires some vitual functions, object must be fully constructed before messages get sent.
-      virtual void Init();
+      virtual void Init(TransferQueueMgr* transferQueueMgr);
       
-      // This can occur multiple times.
+      // For this to be called, Init had to have been called
       virtual void OnTransferReady( TransferQueueMgr::StartRequestFunc funcStartRequest ) = 0;
       
       virtual void OnTransferComplete(const HttpRequest& request,const int responseCode, const std::map<std::string,
@@ -51,7 +51,6 @@ namespace Anki {
       Util::Dispatch::Queue* m_DispatchQueue;
       
     private:
-      TransferQueueMgr* m_QueueMgr;
       Signal::SmartHandle m_Handle;
     }; 
     

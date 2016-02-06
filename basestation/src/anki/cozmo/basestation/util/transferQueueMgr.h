@@ -33,7 +33,7 @@ namespace Anki {
       using OnTransferReadyFunc = std::function<void (StartRequestFunc)>;
       
       // ----------
-      TransferQueueMgr(IHttpAdapter* httpAdapter);
+      TransferQueueMgr();
       ~TransferQueueMgr();
       
       // Interface for native background service

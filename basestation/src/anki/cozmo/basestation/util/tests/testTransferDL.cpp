@@ -16,13 +16,6 @@
 namespace Anki {
   
   namespace Util {
-
-    TestTransferDL::TestTransferDL(TransferQueueMgr* transferQueueMgr) : ITransferable( transferQueueMgr )
-    {
-    }
-    TestTransferDL::~TestTransferDL()
-    {
-    }
     
     void TestTransferDL::OnTransferReady( TransferQueueMgr::StartRequestFunc funcStartRequest )
     {

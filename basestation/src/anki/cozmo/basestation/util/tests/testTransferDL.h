@@ -25,9 +25,6 @@ namespace Anki {
     class TestTransferDL : public ITransferable
     {
     public:
-      TestTransferDL(TransferQueueMgr* transferQueueMgr);
-      ~TestTransferDL();
-      
       virtual void OnTransferReady( TransferQueueMgr::StartRequestFunc funcStartRequest );
       
       virtual void OnTransferComplete(const HttpRequest& request,const int responseCode, const std::map<std::string,

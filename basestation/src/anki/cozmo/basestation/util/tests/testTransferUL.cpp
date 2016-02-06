@@ -18,7 +18,7 @@ namespace Anki {
   
   namespace Util {
     
-    TestTransferUL::TestTransferUL(TransferQueueMgr* transferQueueMgr) : ITransferable( transferQueueMgr )
+    TestTransferUL::TestTransferUL() : ITransferable( )
     {
       m_Data = "SomeTestSpamString";
     }

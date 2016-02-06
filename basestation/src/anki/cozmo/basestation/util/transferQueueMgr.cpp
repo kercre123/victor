@@ -16,6 +16,13 @@
 #include "transferQueueMgr.h"
 #include "http/abstractHttpAdapter.h"
 #include "ITransferable.h"
+#include "util/helpers/templateHelpers.h"
+
+#ifdef ANDROID
+#elif LINUX
+#else
+#include "http/CreateHttpAdapter_ios.h"
+#endif
 
 #include <string>
 // TODO: DAS is in it's own world and just gets uploaded in it's own library.
@@ -25,15 +32,21 @@ namespace Anki {
   
   namespace Util {
     
-    TransferQueueMgr::TransferQueueMgr(IHttpAdapter* httpAdapter) :
-      m_HttpAdapter(httpAdapter),
-      m_CanConnect(false),
-      m_NumRequests(0)
+    TransferQueueMgr::TransferQueueMgr():
+    m_CanConnect(false),
+    m_NumRequests(0)
     {
+      m_HttpAdapter = nullptr;
+#ifdef ANDROID
+#elif LINUX
+#else
+      m_HttpAdapter = CreateHttpAdapter();
+#endif
     }
     
     TransferQueueMgr::~TransferQueueMgr()
     {
+      SafeDelete(m_HttpAdapter);
     }
     
     // Prevents any new requests from going out.
@@ -79,21 +92,23 @@ namespace Anki {
     
     void TransferQueueMgr::StartRequest(const HttpRequest& request, Util::Dispatch::Queue* queue, HttpRequestCallback user_callback)
     {
-      m_NumRequests++;
-      
-      HttpRequestCallback callback_wrapper =
-      [this, user_callback] (const HttpRequest& request,
-              const int responseCode,
-              const std::map<std::string, std::string>& responseHeaders,
-              const std::vector<uint8_t>& responseBody)
+      if( m_HttpAdapter )
       {
-        this->m_NumRequests--;
-        // Tell the user about it.
-        user_callback(request,responseCode,responseHeaders,responseBody);
-      };
-      
-      m_HttpAdapter->StartRequest(request, queue, callback_wrapper);
-      
+        m_NumRequests++;
+        
+        HttpRequestCallback callback_wrapper =
+        [this, user_callback] (const HttpRequest& request,
+                const int responseCode,
+                const std::map<std::string, std::string>& responseHeaders,
+                const std::vector<uint8_t>& responseBody)
+        {
+          this->m_NumRequests--;
+          // Tell the user about it.
+          user_callback(request,responseCode,responseHeaders,responseBody);
+        };
+        
+        m_HttpAdapter->StartRequest(request, queue, callback_wrapper);
+      }
     }
     
   } // namespace Util

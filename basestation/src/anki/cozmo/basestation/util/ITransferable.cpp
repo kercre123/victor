@@ -19,16 +19,14 @@ namespace Anki {
   
   namespace Util {
     
-    ITransferable::ITransferable(TransferQueueMgr* transferQueueMgr) :
-      m_DispatchQueue(Util::Dispatch::Create()),
-      m_QueueMgr(transferQueueMgr)
+    ITransferable::ITransferable() : m_DispatchQueue(Util::Dispatch::Create())
     {
     }
     
-    void ITransferable::Init()
+    void ITransferable::Init(TransferQueueMgr* transferQueueMgr)
     {
       auto func = std::bind(&ITransferable::OnTransferReady, this, std::placeholders::_1);
-      m_Handle = m_QueueMgr->RegisterHttpTransferReadyCallback(func);
+      m_Handle = transferQueueMgr->RegisterHttpTransferReadyCallback(func);
     }
     
     ITransferable::~ITransferable()

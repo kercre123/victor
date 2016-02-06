@@ -17,7 +17,7 @@ namespace Util {
   public:
 
     explicit HttpAdapter();
-    ~HttpAdapter();
+    virtual ~HttpAdapter();
 
     void StartRequest(const HttpRequest& request, Util::Dispatch::Queue* queue, HttpRequestCallback callback);
 
@@ -50,6 +50,6 @@ namespace Util {
                     NSURLResponse* response,
                     NSError* error);
   };
-
-} // namespace DriveEngine
+  
+} // namespace Util
 } // namespace Anki

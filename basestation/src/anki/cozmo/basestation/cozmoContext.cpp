@@ -3,6 +3,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
+#include "anki/cozmo/basestation/util/transferQueueMgr.h"
 //#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/messaging/basestation/advertisementService.h"
@@ -18,12 +19,15 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _robotAdvertisementService(new Comms::AdvertisementService("RobotAdvertisementService"))
   , _robotMgr(new RobotManager(this))
   , _robotMsgHandler(new RobotInterface::MessageHandler())
+  , _transferQueueMgr(new Anki::Util::TransferQueueMgr())
 {
   // Only set up the audio server if we have a real dataPlatform
   if (nullptr != dataPlatform)
   {
     _audioServer.reset(new Audio::AudioServer(new Audio::AudioController(dataPlatform)));
   }
+  
+  //_httpAdapter
 }
   
 CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
