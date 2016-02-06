@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Util {
   class RandomGenerator;
-  class IHttpAdapter;
+  
   class TransferQueueMgr;
   namespace Data {
     class DataPlatform;

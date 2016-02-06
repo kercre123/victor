@@ -43,12 +43,12 @@ namespace Anki {
       TransferQueueMgr();
       ~TransferQueueMgr();
       
-      // Interface for native background service
+      // Interface for native background thread
       void SetCanConnect(bool can_connect);
       bool GetCanConnect();
       int  GetNumActiveRequests();
       
-      // Interface for services.
+      // Interface for services base class, ITransferable
       Signal::SmartHandle RegisterHttpTransferReadyCallback( OnTransferReadyFunc func );
       
     protected:

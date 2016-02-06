@@ -15,14 +15,9 @@
 
 #include "transferQueueMgr.h"
 #include "http/abstractHttpAdapter.h"
+#include "http/CreateHttpAdapter.h"
 #include "ITransferable.h"
 #include "util/helpers/templateHelpers.h"
-
-#ifdef ANDROID
-#elif LINUX
-#else
-#include "http/CreateHttpAdapter.h"
-#endif
 
 #include <string>
 // TODO: DAS is in it's own world and just gets uploaded in it's own library.

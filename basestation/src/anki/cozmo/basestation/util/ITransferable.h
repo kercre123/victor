@@ -1,5 +1,5 @@
 /**
- * File: ITransferable.cpp
+ * File: ITransferable.h
  *
  * Author: Molly Jameson
  * Date:   1/29/2016
