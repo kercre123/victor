@@ -325,8 +325,9 @@
             'target_name': 'CSharpBinding',
             'type': 'static_library',
             'include_dirs': [
-              '../../unit/CSharpBinding/src',
+              '../../unity/CSharpBinding/src',
               '<@(opencv_includes)',
+              '../../lib/anki/das-client/include'
             ],
             'dependencies': [
               '<(cg-ce_gyp_path):cozmoEngine',
@@ -360,6 +361,7 @@
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
               '<(cg-audio_path):DriveAudioEngine',
+              '<(cg-das_path):DAS',
             ]
           },
         ],
@@ -507,6 +509,7 @@
               '<(cg-util_gyp_path):kazmath',
               '<(cg-util_gyp_path):UtilUnitTest',
               '<(cg-audio_path):DriveAudioEngine',
+              '<(cg-das_path):DAS',
               #'<(cg-audio_path):CozmoFxPlugIn',
             ],
             'actions': []
