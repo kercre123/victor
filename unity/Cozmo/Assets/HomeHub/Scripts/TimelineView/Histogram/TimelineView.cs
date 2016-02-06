@@ -95,6 +95,8 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
+    private bool _ScrollLocked;
+
     protected override void CleanUp() {
       _ScrollRect.onValueChanged.RemoveAllListeners();
     }
@@ -173,6 +175,25 @@ namespace Cozmo.HomeHub {
 
         _TimelineEntries.Add(entry);
       }
+    }
+
+    public void LockScroll(bool locked) {
+      _ScrollLocked = locked;
+
+      if (locked) {
+        if (_LockedPaneScrollContainer.parent != _LockedPaneLeftNoScrollContainer) {
+          _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, false);
+          _LockedPaneScrollContainer.localPosition = Vector3.zero; 
+          _DailyGoalInstance.Collapse(false);
+          _LockedPaneLeftNoScrollContainer.gameObject.SetActive(true);
+        }
+        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MinDailyGoalWidth, 0);
+      }
+      else {
+        // the parameter is ignored, this will move us back to the expected position
+        HandleTimelineViewScroll(Vector2.zero);
+      }
+      _ContentPane.gameObject.SetActive(!locked);
     }
 
     private void UpdateDailySession() {
@@ -269,6 +290,10 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleTimelineViewScroll(Vector2 scrollPosition) {
+      if (_ScrollLocked) {
+        return;
+      }
+
       float currentScrollPosition = _ScrollRect.horizontalNormalizedPosition;
       if (currentScrollPosition <= GetDailyGoalOnRightHorizontalNormalizedPosition()) {
         if (_LockedPaneScrollContainer.parent != _LockedPaneRightNoScrollContainer) {

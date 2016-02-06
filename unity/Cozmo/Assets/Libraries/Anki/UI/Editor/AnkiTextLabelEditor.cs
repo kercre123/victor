@@ -17,12 +17,14 @@ namespace Anki.Editor.UI {
     string _LocalizationKey;
     bool _Localized;
     SerializedProperty _AllUppercase;
+    SerializedProperty _GlowText;
 
     protected override void OnEnable() {
       base.OnEnable();
       m_Text = serializedObject.FindProperty("m_Text");
       m_FontData = serializedObject.FindProperty("m_FontData");
       _AllUppercase = serializedObject.FindProperty("_AllUppercase");
+      _GlowText = serializedObject.FindProperty("GlowText");
 
       var currentValue = m_Text.stringValue;
       if (currentValue.StartsWith("#")) {
@@ -53,6 +55,7 @@ namespace Anki.Editor.UI {
       }
 
       EditorGUILayout.PropertyField(_AllUppercase, new GUIContent("All Caps"));
+      EditorGUILayout.PropertyField(_GlowText, new GUIContent("Glowing Text"));
       EditorGUILayout.PropertyField(m_FontData);
       AppearanceControlsGUI();
       serializedObject.ApplyModifiedProperties();
