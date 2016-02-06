@@ -1,8 +1,9 @@
 //
-//  httpAdapter_osx.mm
+//  httpAdapter_mac_ios.mm
 //  OverDrive
 //
 //  Created by Aubrey Goodman on 3/5/15.
+//  Updated by Molly Jameson on 2/4/16
 //  Copyright (c) 2015 Anki, Inc. All rights reserved.
 //
 

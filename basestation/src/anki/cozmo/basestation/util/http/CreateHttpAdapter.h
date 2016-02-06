@@ -1,10 +1,15 @@
-//
-//  httpAdapterCreator.h
-//  cozmoGame
-//
-//  Created by damjan stulic on 8/8/15.
-//
-//
+/**
+ * File: httpAdapterCreator.h
+ *
+ * Author: Molly Jameson
+ * Date:   1/29/2016
+ *
+ * Description: Create native interface for http connections.
+ *
+ *
+ * Copyright: Anki, Inc. 2016
+ **/
+
 
 #ifndef __Ios_httpAdapterCreator_H__
 #define __Ios_httpAdapterCreator_H__

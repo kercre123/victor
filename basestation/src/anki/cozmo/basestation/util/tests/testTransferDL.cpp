@@ -4,8 +4,7 @@
  * Author: Molly Jameson
  * Date:   1/29/2016
  *
- * Description: Testcase for push data from the server.
- *              An example might be config downloads or just text banner upsells on the main screen.
+ * Description: Testcase service to pull data from the server using TransferQueueMgr.
  *
  *
  * Copyright: Anki, Inc. 2016

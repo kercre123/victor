@@ -10,7 +10,14 @@
  *              Services that want to register should get an instance of this mgr from context class.
  *
  *
+ * Example setup:
+ *  Anki::Util::TestTransferUL upload_service;
+ *  // Base class registers itself with mangager
+ *  upload_service.Init(_context->GetTransferQueue());
+ *  // Will let the TransferQueue send whatever it has
+ *  _context->GetTransferQueue()->SetCanConnect(true);
  *
+
  * Copyright: Anki, Inc. 2016
  **/
 

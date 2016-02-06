@@ -1,17 +1,12 @@
 /**
- * File: ITransferable.h
+ * File: ITransferable.cpp
  *
  * Author: Molly Jameson
  * Date:   1/29/2016
  *
- * Description: Manager for queueing data meant to be uploaded or downloaded at a later time
- *              Primary use cases for DAS and RAMS needing External delayed transfers since
- *              unlike overdrive Cozmo can't assume internet connection.
- *
- *              Because it's valid for a service to delete itself, we don't just want to bind member function
- *              so let this constructor/destructor interface.
- *
- *
+ * Description: Base class for services that need to upload or download data when app has connection.
+ *              An example might be config downloads or just text banner upsells on the main screen.
+ *              Or uploading save/achievement data.
  *
  * Copyright: Anki, Inc. 2016
  **/

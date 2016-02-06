@@ -21,7 +21,7 @@
 #ifdef ANDROID
 #elif LINUX
 #else
-#include "http/CreateHttpAdapter_ios.h"
+#include "http/CreateHttpAdapter.h"
 #endif
 
 #include <string>

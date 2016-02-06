@@ -4,8 +4,9 @@
  * Author: Molly Jameson
  * Date:   1/29/2016
  *
- * Description: Testcase for push data from the server.
+ * Description: Base class for services that need to upload or download data when app has connection.
  *              An example might be config downloads or just text banner upsells on the main screen.
+ *              Or uploading save/achievement data.
  *
  *
  * Copyright: Anki, Inc. 2016

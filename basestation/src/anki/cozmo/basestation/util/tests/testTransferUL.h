@@ -4,9 +4,7 @@
  * Author: Molly Jameson
  * Date:   1/29/2016
  *
- * Description: Testcase for push data from the server.
- *              An example might be wanting to upload a save file to some service for a public facing
- *              achievements leaderboard website to look at.
+ * Description: Testcase service to push data to the server using TransferQueueMgr.
  *
  *
  * Copyright: Anki, Inc. 2016

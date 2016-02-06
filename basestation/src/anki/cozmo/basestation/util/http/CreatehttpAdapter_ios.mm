@@ -1,12 +1,16 @@
-//
-//  dataPlatformCreator.m
-//  cozmoGame
-//
-//  Created by damjan stulic on 8/8/15.
-//
-//
+/**
+ * File: httpAdapterCreator.cpp
+ *
+ * Author: Molly Jameson
+ * Date:   1/29/2016
+ *
+ * Description: Create native interface for http connections, the iOS/mac version
+ *
+ *
+ * Copyright: Anki, Inc. 2016
+ **/
 
-#import "CreateHttpAdapter_ios.h"
+#import "CreateHttpAdapter.h"
 #include "httpAdapter_mac_ios.h"
 
 Anki::Util::IHttpAdapter* CreateHttpAdapter()
