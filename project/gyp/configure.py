@@ -325,7 +325,7 @@ def main(scriptArgs):
                                     options.cozmoAssetPath,
                                     ceAudioProjectGypPath,
                                     cgAudioProjectGypPath,
-                                    externalsPath
+                                    externalsPath,
                                     cgDasProjectPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
@@ -388,7 +388,7 @@ def main(scriptArgs):
                                   cgCozmoEngineProjectPath,
                                   ceAudioProjectGypPath,
                                   cgAudioProjectGypPath,
-                                  externalsPath
+                                  externalsPath,
                                   cgDasProjectPath
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
@@ -482,7 +482,7 @@ def main(scriptArgs):
                                   ndk_root,
                                   ceAudioProjectGypPath,
                                   cgAudioProjectGypPath,
-                                  externalsPath
+                                  externalsPath,
                                   cgDasProjectPath
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
