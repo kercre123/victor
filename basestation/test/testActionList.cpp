@@ -466,7 +466,7 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
   
   r.GetActionList().Update();
   
-  EXPECT_EQ(testAction1->GetRobot(), &r);
+  EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_EQ(testAction2->GetRobot(), &r);
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
@@ -516,8 +516,9 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   
   r.GetActionList().Update();
   
-  EXPECT_EQ(testAction1->GetRobot(), &r);
-  EXPECT_EQ(testAction2->GetRobot(), &r);
+  // First two actions can complete and are destroyed inside of update
+  EXPECT_NE(testAction1->GetRobot(), &r);
+  EXPECT_NE(testAction2->GetRobot(), &r);
   EXPECT_EQ(testAction3->GetRobot(), &r);
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
@@ -618,7 +619,7 @@ TEST(QueueAction, ParallelActionOneCompleteBefore)
   
   r.GetActionList().Update();
   
-  EXPECT_EQ(testAction1->GetRobot(), &r);
+  EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_EQ(testAction2->GetRobot(), &r);
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
@@ -889,15 +890,14 @@ TEST(QueueAction, ActionFailureRetry)
   r.GetActionList().Update();
   
   // Both actions are set to complete but testAction2 is going to retry once
-  // so check both actions are still in the compound action
+  // so it is still left
   auto actions = compoundAction->GetActions();
-  EXPECT_EQ(actions.size(), 2);
-  EXPECT_EQ(actions.front().second->GetName(), "Test1");
-  EXPECT_EQ(actions.back().second->GetName(), "Test2");
+  EXPECT_EQ(actions.size(), 1);
+  EXPECT_EQ(actions.front().second->GetName(), "Test2");
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(compoundAction->GetRobot(), &r);
-  EXPECT_EQ(testAction1->GetRobot(), &r);
+  EXPECT_NE(testAction1->GetRobot(), &r);
   EXPECT_EQ(testAction2->GetRobot(), &r);
   
   r.GetActionList().Update();

@@ -96,7 +96,8 @@ namespace Anki {
       
       // This compound action will disable the union of all tracks its constituent
       // actions want locked *for the entire duration of the compound action*.
-      virtual u8 GetAnimTracksToDisable() const override;
+//      virtual u8 GetAnimTracksToDisable() const override;
+      virtual u8 GetMovementTracksToIgnore() const override { return 0; }
       
     protected:
       

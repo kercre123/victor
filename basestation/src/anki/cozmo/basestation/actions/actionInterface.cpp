@@ -122,7 +122,9 @@ namespace Anki {
         if(_robot->GetMoveComponent().IsAnimTrackLocked((AnimTrackFlag)disableTracks) ||
            _robot->GetMoveComponent().IsMovementTrackIgnored((AnimTrackFlag)GetMovementTracksToIgnore()))
         {
-          return ActionResult::FAILURE_TRACKS_LOCKED;
+          PRINT_NAMED_INFO("IActionRunner.Update", "Action %s [%d] not running because required tracks are locked",
+                           GetName().c_str(), GetTag());
+          return ActionResult::RUNNING;
         }
 
         _robot->GetMoveComponent().LockAnimTracks(disableTracks);
