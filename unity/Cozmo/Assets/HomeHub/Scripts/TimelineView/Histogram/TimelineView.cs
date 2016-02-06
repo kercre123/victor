@@ -26,9 +26,6 @@ namespace Cozmo.HomeHub {
     private float _RightDailyGoalOffset = 150f;
 
     [SerializeField]
-    private float _LeftDailyGoalOffset = 5f;
-
-    [SerializeField]
     private GameObject _TimelineEntryPrefab;
 
     private readonly List<TimelineEntry> _TimelineEntries = new List<TimelineEntry>();
@@ -68,9 +65,6 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     private LayoutElement _MiddlePane;
-
-    [SerializeField]
-    private GraphSpline _GraphSpline;
 
     [SerializeField]
     private AnkiButton _EndSessionButton;
@@ -137,35 +131,48 @@ namespace Cozmo.HomeHub {
 
       var startDate = today.AddDays(-kGeneratedTimelineHistoryLength);
 
+      var firstSession = DataPersistenceManager.Instance.Data.Sessions.FirstOrDefault();
+
+      bool showFirst = false;
+
+      if (firstSession != null) {
+        if (startDate < firstSession.Date) {
+          startDate = firstSession.Date.AddDays(-1);
+          showFirst = true;
+        }
+      }
+      else {
+        startDate = today.AddDays(-1);
+        showFirst = true;
+      }
+
       while (timelineEntries.Count > 0 && timelineEntries[0].Date < startDate) {
         timelineEntries.RemoveAt(0);
       }
 
-      List<float> graphPoints = new List<float>();
       for (int i = 0; i < kGeneratedTimelineHistoryLength; i++) {
         var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
 
         var date = startDate.AddDays(i);
         var entry = spawnedObject.GetComponent<TimelineEntry>();
 
-        bool active = false;
+        TimelineEntryData timelineEntry = null;
         float progress = 0f;
         if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
-          var state = timelineEntries[timelineIndex];
-          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(state.Progress, state.Goals);
-          active = true;
+          timelineEntry = timelineEntries[timelineIndex];
+          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals);
           timelineIndex++;
         }
 
-        entry.Inititialize(date, active, progress);
-        graphPoints.Add(Mathf.Min(progress, 1.0f));
+        int daysAgo = (today - date).Days;
+
+        entry.Inititialize(date, timelineEntry, progress, i == 0 && showFirst, daysAgo % 7 == 0, daysAgo / 7);
+        showFirst = false;
 
         entry.OnSelect += HandleTimelineEntrySelected;
 
         _TimelineEntries.Add(entry);
       }
-
-      _GraphSpline.Initialize(graphPoints);
     }
 
     private void UpdateDailySession() {
@@ -257,8 +264,8 @@ namespace Cozmo.HomeHub {
     private void SetScrollRectStartPosition() {
       _ScrollRect.horizontalNormalizedPosition = 
         CalculateHorizontalNormalizedPosition(_TimelinePane.rect.width - _TimelineStartOffset);
-      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MinDailyGoalWidth + _LeftDailyGoalOffset * 2, -_RightDailyGoalOffset - _LeftDailyGoalOffset);
-      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth + _LeftDailyGoalOffset * 2, 0);
+      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MinDailyGoalWidth, -_RightDailyGoalOffset);
+      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth, 0);
     }
 
     private void HandleTimelineViewScroll(Vector2 scrollPosition) {
@@ -282,7 +289,7 @@ namespace Cozmo.HomeHub {
         float dailyGoalPaneOverhang = pixelsOnLeft - _TimelinePane.rect.width;
         float dailyGoalDisplayWidth = _MiddlePane.minWidth - dailyGoalPaneOverhang;
         dailyGoalDisplayWidth = Mathf.Clamp(dailyGoalDisplayWidth, _MinDailyGoalWidth, _MaxDailyGoalWidth);
-        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth + _LeftDailyGoalOffset * 2, 0);
+        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth, 0);
       }
       else {
         if (_LockedPaneScrollContainer.parent != _MiddlePane) {

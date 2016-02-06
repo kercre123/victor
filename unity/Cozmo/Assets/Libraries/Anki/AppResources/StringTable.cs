@@ -78,6 +78,8 @@ namespace Anki.AppResources {
         }
         JSONObject entry = stringMapJSON.GetField(k);
         string s = entry.GetField("translation").str;
+        // handle new lines
+        s = s.Replace("\\n", "\n");
         stringMap[k] = s;
       }
 
