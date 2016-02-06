@@ -36,6 +36,11 @@
 
 #define DEBUG_IMU_FILTER 0
 
+// Define type of data to send when IMURequest received
+#define RECORD_AND_SEND_RAW_DATA  0
+#define RECORD_AND_SEND_FILT_DATA 1
+#define RECORD_AND_SEND_MODE RECORD_AND_SEND_RAW_DATA
+
 
 namespace Anki {
   namespace Cozmo {
@@ -52,14 +57,16 @@ namespace Anki {
         // Angle of accelerometer wrt gravity horizontal
         f32 pitch_ = 0;
 
-        f32 gyro_filt[3];
-        f32 gyro_robot_frame_filt[3];
-        const f32 RATE_FILT_COEFF = 0.9f;
+        f32 gyro_filt[3]                = {0};    // Filtered gyro measurements
+        f32 gyro_robot_frame_filt[3]    = {0};    // Filtered gyro measurements in robot frame
+        const f32 RATE_FILT_COEFF       = 1.f;    // IIR filter coefficient (1 == disable filter)
+        
+        f32 gyro_drift_filt[3]          = {0};    // Filtered gyro drift offset. (Accumulate only when all axes are below GYRO_MOTION_THRESH)
+        const f32 RATE_DRIFT_FILT_COEFF = 0.01f;   // IIR filter coefficient (1 == disable filter)
 
-        f32 accel_filt[3];
-        f32 accel_robot_frame_filt[3];
-        f32 prev_accel_robot_frame_filt[3] = {0,0,0};
-        const f32 ACCEL_FILT_COEFF = 0.1f;
+        f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
+        f32 accel_robot_frame_filt[3]   = {0};    // Filtered accelerometer measurements in robot frame
+        const f32 ACCEL_FILT_COEFF      = 0.1f;   // IIR filter coefficient (1 == disable filter)
 
         // ==== Pickup detection ===
         bool pickupDetectEnabled_ = true;
@@ -85,17 +92,20 @@ namespace Anki {
 
         u32 lastMotionDetectedTime_us = 0;
         const u32 MOTION_DETECT_TIMEOUT_US = 250000;
-#       ifdef TARGET_K02
-        const f32 GYRO_MOTION_THRESHOLD = 0.04f;
-#       else
-        const f32 GYRO_MOTION_THRESHOLD = 0.24f;
-#       endif
+        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD(3);  // Maximum expected drift from gyro
 
 
         // Recorded buffer
         bool isRecording_ = false;
+        
+#if(RECORD_AND_SEND_MODE == RECORD_AND_SEND_FILT_DATA)
         u8 recordDataIdx_ = 0;
         RobotInterface::IMUDataChunk imuChunkMsg_;
+#else
+        RobotInterface::IMURawDataChunk imuRawDataMsg_;
+        u16 totalIMUDataMsgsToSend_ = 0;
+        u16 sentIMUDataMsgs_ = 0;
+#endif
 
 
         // ====== Event detection vars ======
@@ -640,17 +650,42 @@ namespace Anki {
         if (WheelController::AreWheelsPowered() || !HeadController::IsInPosition()) {
           lastMotionDetectedTime_us = currTime;
         }
-        // Was motion detected by accel or gyro?
-        for(u8 i=0; i<3; ++i) {
-          // TODO: Gyro seems to be sensitive enough that it's sufficient for detecting motion, but if
-          //       that's not the case, check for changes in gravity vector.
-          // ...
-          
-          // Check gyro
-          if (ABS(gyro_robot_frame_filt[i]) > GYRO_MOTION_THRESHOLD) {
-            lastMotionDetectedTime_us = currTime;
+        
+        // Check gyro for motion
+        if (ABS(imu_data_.rate_x) > GYRO_MOTION_THRESHOLD ||
+            ABS(imu_data_.rate_y) > GYRO_MOTION_THRESHOLD ||
+            ABS(imu_data_.rate_z) > GYRO_MOTION_THRESHOLD) {
+          lastMotionDetectedTime_us = currTime;
+        }
+        
+        // TODO: Gyro seems to be sensitive enough that it's sufficient for detecting motion, but if
+        //       that's not the case, check for changes in gravity vector.
+        // ...
+        
+        
+/*
+        // Measure peak readings every 2 seconds
+        static f32 max_gyro[3] = {0,0,0};
+        for (int i=0; i<3; ++i) {
+          if(ABS(gyro_robot_frame_filt[i]) > max_gyro[i]) {
+            max_gyro[i] = ABS(gyro_robot_frame_filt[i]);
           }
         }
+        
+        static u32 measurement_cycles = 0;
+        if (measurement_cycles++ == 400) {
+          AnkiDebug( 25, "IMUFilter", 166, "Max gyro: %f %f %f", 3,
+                    max_gyro[0],
+                    max_gyro[1],
+                    max_gyro[2]);
+          
+          measurement_cycles = 0;
+          for (int i=0; i<3; ++i) {
+            max_gyro[i] = 0;
+          }
+        }
+*/
+        
       }
 
       void UpdatePitch()
@@ -687,9 +722,9 @@ namespace Anki {
 
         // Filter rotation speeds
         // TODO: Do this in hardware?
-        gyro_filt[0] = imu_data_.rate_x * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[1] = imu_data_.rate_y * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[2] = imu_data_.rate_z * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[0] = (imu_data_.rate_x - gyro_drift_filt[0]) * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[1] = (imu_data_.rate_y - gyro_drift_filt[1]) * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[2] = (imu_data_.rate_z - gyro_drift_filt[2]) * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
 
 
         // Compute head angle wrt to world horizontal plane
@@ -733,10 +768,6 @@ namespace Anki {
         const f32 accel_angle_imu_frame = atan2_fast(accel_filt[2], accel_filt[0]);
         const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
 
-        prev_accel_robot_frame_filt[0] = accel_robot_frame_filt[0];
-        prev_accel_robot_frame_filt[1] = accel_robot_frame_filt[1];
-        prev_accel_robot_frame_filt[2] = accel_robot_frame_filt[2];
-
         accel_robot_frame_filt[0] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
         accel_robot_frame_filt[1] = accel_filt[1];
         accel_robot_frame_filt[2] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
@@ -749,58 +780,27 @@ namespace Anki {
                        accel_robot_frame_filt[2]);
 #endif
 
-
-#if(0)
-        // Measure peak readings every 2 seconds
-        static f32 max_gyro[3] = {0,0,0};
-        static f32 max_accel[3] = {0,0,0};
-        for (int i=0; i<3; ++i) {
-          if(ABS(gyro_robot_frame_filt[i]) > max_gyro[i]) {
-            max_gyro[i] = ABS(gyro_robot_frame_filt[i]);
-          }
-
-          if (prev_accel_robot_frame_filt[i] != 0) {
-            f32 dAccel = ABS(accel_robot_frame_filt[i] - prev_accel_robot_frame_filt[i]);
-            if(dAccel > max_accel[i]) {
-              max_accel[i] = dAccel;
-            }
-          }
-        }
-
-        static u32 measurement_cycles = 0;
-        if (measurement_cycles++ == 400) {
-          AnkiDebug( 25, "IMUFilter", 166, "Max gyro: %f %f %f", 3,
-                         max_gyro[0],
-                         max_gyro[1],
-                         max_gyro[2]);
-          AnkiDebug( 25, "IMUFilter", 167, "Max accel_delta: %f %f %f", 3,
-                         max_accel[0],
-                         max_accel[1],
-                         max_accel[2]);
-
-            measurement_cycles = 0;
-          for (int i=0; i<3; ++i) {
-            max_accel[i] = 0;
-            max_gyro[i] = 0;
-          }
-        }
-#endif
-
         DetectMotion();
         UpdatePitch();
 
         // XY-plane rotation rate is robot frame z-axis rotation rate
         rotSpeed_ = gyro_robot_frame_filt[2];
 
-        // Update orientation if motion detected or expected
-        if (MotionDetected()) {
-          f32 dAngle = rotSpeed_ * CONTROL_DT;
-          rot_ += dAngle;
+        // Update orientation
+        f32 dAngle = rotSpeed_ * CONTROL_DT;
+        rot_ += dAngle;
+        
+        MadgwickAHRSupdateIMU(imu_data_.rate_x, imu_data_.rate_y, imu_data_.rate_z,
+                              imu_data_.acc_x, imu_data_.acc_y, imu_data_.acc_z);
+        //MadgwickAHRSupdateIMU(gyro_filt[0], gyro_filt[1], gyro_filt[2],
+        //                      accel_filt[0], accel_filt[1], accel_filt[2]);
 
-          MadgwickAHRSupdateIMU(imu_data_.rate_x, imu_data_.rate_y, imu_data_.rate_z,
-                                imu_data_.acc_x, imu_data_.acc_y, imu_data_.acc_z);
-          //MadgwickAHRSupdateIMU(gyro_filt[0], gyro_filt[1], gyro_filt[2],
-          //                      accel_filt[0], accel_filt[1], accel_filt[2]);
+        
+        if (!MotionDetected()) {
+          // Update gyro drift offset while not moving
+          gyro_drift_filt[0] = imu_data_.rate_x * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[0] * (1.f - RATE_DRIFT_FILT_COEFF);
+          gyro_drift_filt[1] = imu_data_.rate_y * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[1] * (1.f - RATE_DRIFT_FILT_COEFF);
+          gyro_drift_filt[2] = imu_data_.rate_z * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[2] * (1.f - RATE_DRIFT_FILT_COEFF);
         }
 
         // XXX: DEBUG!
@@ -823,22 +823,7 @@ namespace Anki {
         // Recording IMU data for sending to basestation
         if (isRecording_) {
 
-          /*
-          // Scale accel range of -20000 to +20000mm/s2 (roughly -2g to +2g) to be between -127 and +127
-          const f32 accScaleFactor = 127.f/20000.f;
-
-          imuChunkMsg_.aX[recordDataIdx_] = (accel_robot_frame_filt[0] * accScaleFactor);
-          imuChunkMsg_.aY[recordDataIdx_] = (accel_robot_frame_filt[1] * accScaleFactor);
-          imuChunkMsg_.aZ[recordDataIdx_] = (accel_robot_frame_filt[2] * accScaleFactor);
-
-          // Scale gyro range of -2pi to +2pi rad/s to be between -127 and +127
-          const f32 gyroScaleFactor = 127.f/(2.f*PI_F);
-          imuChunkMsg_.gX[recordDataIdx_] = (gyro_robot_frame_filt[0] * gyroScaleFactor);
-          imuChunkMsg_.gY[recordDataIdx_] = (gyro_robot_frame_filt[1] * gyroScaleFactor);
-          imuChunkMsg_.gZ[recordDataIdx_] = (gyro_robot_frame_filt[2] * gyroScaleFactor);
-           */
-
-          /*
+#if(RECORD_AND_SEND_MODE == RECORD_AND_SEND_FILT_DATA)
           imuChunkMsg_.aX[recordDataIdx_] = accel_robot_frame_filt[0];
           imuChunkMsg_.aY[recordDataIdx_] = accel_robot_frame_filt[1];
           imuChunkMsg_.aZ[recordDataIdx_] = accel_robot_frame_filt[2];
@@ -846,27 +831,6 @@ namespace Anki {
           imuChunkMsg_.gX[recordDataIdx_] = gyro_robot_frame_filt[0];
           imuChunkMsg_.gY[recordDataIdx_] = gyro_robot_frame_filt[1];
           imuChunkMsg_.gZ[recordDataIdx_] = gyro_robot_frame_filt[2];
-          */
-
-
-
-
-          // Compute raw accel values in robot frame
-          const f32 xzAccelMagnitude = sqrtf(imu_data_.acc_x*imu_data_.acc_x + imu_data_.acc_z*imu_data_.acc_z);
-          const f32 accel_angle_imu_frame = atan2_fast(imu_data_.acc_z, imu_data_.acc_x);
-          const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
-
-          imuChunkMsg_.aX[recordDataIdx_] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
-          imuChunkMsg_.aY[recordDataIdx_] = imu_data_.acc_y;
-          imuChunkMsg_.aZ[recordDataIdx_] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
-
-          // Compute raw gyro values in robot frame
-          imuChunkMsg_.gX[recordDataIdx_] = imu_data_.rate_x + imu_data_.rate_z * tanf(headAngle);
-          imuChunkMsg_.gY[recordDataIdx_] = imu_data_.rate_y;
-          imuChunkMsg_.gZ[recordDataIdx_] = imu_data_.rate_z  / cosf(headAngle);;
-
-
-
 
 
           // Send message when it's full
@@ -880,6 +844,20 @@ namespace Anki {
               isRecording_ = false;
             }
           }
+#else
+      
+          // Raw IMU chunks
+          HAL::IMUReadRawData(imuRawDataMsg_.a, imuRawDataMsg_.g, &imuRawDataMsg_.timestamp);
+          ++sentIMUDataMsgs_;
+          if (sentIMUDataMsgs_ == totalIMUDataMsgsToSend_) {
+            AnkiDebug( 98, "IMU RAW RECORDING COMPLETE", 168, "(time %dms)", 1, HAL::GetTimeStamp());
+            isRecording_ = false;
+            imuRawDataMsg_.order = 2;  // 2 == last msg of sequence
+          }
+          RobotInterface::SendMessage(imuRawDataMsg_);
+          imuRawDataMsg_.order = 1;    // 1 == intermediate msg of sequence
+#endif
+
         }
 
 
@@ -918,10 +896,16 @@ namespace Anki {
       {
         AnkiDebug( 27, "STARTING IMU RECORDING", 169, "(time = %dms)", 1, HAL::GetTimeStamp());
         isRecording_ = true;
+#if(RECORD_AND_SEND_MODE == RECORD_AND_SEND_FILT_DATA)
         recordDataIdx_ = 0;
         imuChunkMsg_.seqId++;
         imuChunkMsg_.chunkId=0;
         imuChunkMsg_.totalNumChunks = length_ms / (TIME_STEP * IMU_CHUNK_SIZE);
+#else
+        imuRawDataMsg_.order = 0; // 0 == first message of sequence
+        sentIMUDataMsgs_ = 0;
+        totalIMUDataMsgsToSend_ = length_ms / TIME_STEP;
+#endif
       }
 
     } // namespace IMUFilter

@@ -27,6 +27,14 @@ structure IMUDataChunk
 
 }
 
+structure IMURawDataChunk {
+  int_16  g[3],
+  int_16  a[3],
+  uint_8  order,   // 0=first of sequence, 1=middle of seq, 2=end of sequence
+  uint_8  timestamp
+}
+
+
 structure ImuRequest
 {
   uint_32 length_ms

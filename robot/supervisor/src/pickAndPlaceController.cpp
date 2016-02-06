@@ -35,10 +35,6 @@ namespace Anki {
 
         // Constants
 
-        // TODO: Need to be able to specify wheel motion by distance
-        //const u32 BACKOUT_TIME = 1500000;
-        //
-
         // The distance from the last-observed position of the target that we'd
         // like to be after backing out
         const f32 BACKOUT_DISTANCE_MM = 50.f;
@@ -289,6 +285,8 @@ namespace Anki {
                     break;
                   case DA_PICKUP_LOW:
                   case DA_PLACE_HIGH:
+                  case DA_ROLL_LOW:
+                  case DA_POP_A_WHEELIE:
                   case DA_ALIGN:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
                     break;
@@ -377,7 +375,6 @@ namespace Anki {
                 #if(DEBUG_PAP_CONTROLLER)
                 AnkiWarn( 14, "PAP", 128, "Could not track block's marker", 0);
                 #endif
-                // TODO: Send BTLE message notifying failure
 
                 AnkiDebug( 14, "PAP", 129, "Docking failed while picking/placing high or low. Backing out.", 0);
 

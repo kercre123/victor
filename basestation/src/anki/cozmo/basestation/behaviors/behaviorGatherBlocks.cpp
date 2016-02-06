@@ -12,17 +12,18 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
+#include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/shared/radians.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
@@ -175,7 +176,7 @@ namespace Anki {
     {
 #if SAFE_ZONE_VIZ
       Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
-      VizManager::getInstance()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
+      robot.GetContext()->GetVizManager()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
 #endif
       switch (_currentState)
       {
@@ -193,11 +194,11 @@ namespace Anki {
         {
           IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
           _actionsInProgress.insert(moveHeadAction->GetTag());
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          robot.GetActionList().QueueActionAtEnd(moveHeadAction);
           
           IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
           _actionsInProgress.insert(moveLiftAction->GetTag());
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
+          robot.GetActionList().QueueActionAtEnd(moveLiftAction);
           
           if (StartMoving(robot) == RESULT_OK) {
             _currentState = State::DrivingAround;
@@ -211,7 +212,7 @@ namespace Anki {
           turnAction->SetMaxSpeed(DEG_TO_RAD(kDegreesRotatePerSec));
           _currentLookActionID = turnAction->GetTag();
           _actionsInProgress.insert(_currentLookActionID);
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, turnAction);
+          robot.GetActionList().QueueActionAtEnd(turnAction);
           
           _currentState = State::LookingForObject;
         }
@@ -233,7 +234,7 @@ namespace Anki {
           DriveToPickupObjectAction* pickupObjectAction = new DriveToPickupObjectAction(_selectedObjectID);
           _currentPickupObjectActionID = pickupObjectAction->GetTag();
           _actionsInProgress.insert(_currentPickupObjectActionID);
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupObjectAction);
+          robot.GetActionList().QueueActionAtEnd(pickupObjectAction);
           
           _currentState = State::PickingUpObject;
           
@@ -248,7 +249,7 @@ namespace Anki {
           PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, _moveAreaCenter);
           _currentPlaceObjectActionID = placeObjectAction->GetTag();
           _actionsInProgress.insert(_currentPlaceObjectActionID);
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, placeObjectAction);
+          robot.GetActionList().QueueActionAtEnd(placeObjectAction);
           
           _currentState = State::ReturningObjectToCenter;
           
@@ -266,7 +267,7 @@ namespace Anki {
       }
       
 #if SAFE_ZONE_VIZ
-      VizManager::getInstance()->EraseCircle(robot.GetID());
+      robot.GetContext()->GetVizManager()->EraseCircle(robot.GetID());
 #endif
       
       return Status::Complete;
@@ -315,7 +316,7 @@ namespace Anki {
                                                             false);
       _currentDriveActionID = goToPoseAction->GetTag();
       _actionsInProgress.insert(_currentDriveActionID);
-      robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
+      robot.GetActionList().QueueActionAtEnd(goToPoseAction, 3);
       return RESULT_OK;
     }
     
@@ -556,11 +557,11 @@ namespace Anki {
     
     void BehaviorGatherBlocks::ClearQueuedActions(Robot& robot)
     {
-      for (auto tag : _actionsInProgress)
-      {
-        robot.GetActionList().Cancel(tag);
+      BOUNDED_WHILE( 50, ! _actionsInProgress.empty() ) {
+        // The cancel function will trigger the HandleActionCompleted callback, which will erase the action from
+        // _actionsInProgress
+        robot.GetActionList().Cancel( * _actionsInProgress.begin() );
       }
-      _actionsInProgress.clear();
     }
   } // namespace Cozmo
 } // namespace Anki

@@ -10,16 +10,17 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
+#include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/shared/radians.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
@@ -130,7 +131,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
 {
 #if SAFE_ZONE_VIZ
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
-  VizManager::getInstance()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
+  robot.GetContext()->GetVizManager()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
 #endif
   switch (_currentState)
   {
@@ -148,11 +149,11 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
       _actionsInProgress.insert(moveHeadAction->GetTag());
-      robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+      robot.GetActionList().QueueActionAtEnd(moveHeadAction);
       
       IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
       _actionsInProgress.insert(moveLiftAction->GetTag());
-      robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
+      robot.GetActionList().QueueActionAtEnd(moveLiftAction);
       
       if (StartMoving(robot) == RESULT_OK) {
         _currentState = State::LookingForObject;
@@ -180,11 +181,11 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
         FaceObjectAction* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, true);
         faceObjectAction->SetPanTolerance(DEG_TO_RAD(2));
         _actionsInProgress.insert(faceObjectAction->GetTag());
-        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
+        robot.GetActionList().QueueActionAtEnd(faceObjectAction);
         
         IActionRunner* moveLiftHeightAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
         _actionsInProgress.insert(moveLiftHeightAction->GetTag());
-        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftHeightAction);
+        robot.GetActionList().QueueActionAtEnd(moveLiftHeightAction);
         
         queuedFaceObjectAction = true;
         
@@ -198,7 +199,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
       {
         IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
         _actionsInProgress.insert(moveHeadAction->GetTag());
-        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+        robot.GetActionList().QueueActionAtEnd(moveHeadAction);
       }
       _currentState = State::WaitToFinishExamining;
       
@@ -220,7 +221,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
   }
   
 #if SAFE_ZONE_VIZ
-  VizManager::getInstance()->EraseCircle(robot.GetID());
+  robot.GetContext()->GetVizManager()->EraseCircle(robot.GetID());
 #endif
   
   return Status::Complete;
@@ -269,7 +270,7 @@ Result BehaviorLookAround::StartMoving(Robot& robot)
                                                         false);
   _currentDriveActionID = goToPoseAction->GetTag();
   _actionsInProgress.insert(_currentDriveActionID);
-  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
+  robot.GetActionList().QueueActionAtEnd(goToPoseAction, 3);
   return RESULT_OK;
 }
   
@@ -494,11 +495,11 @@ void BehaviorLookAround::ResetSafeRegion(Robot& robot)
 
 void BehaviorLookAround::ClearQueuedActions(Robot& robot)
 {
-  for (auto tag : _actionsInProgress)
-  {
-    robot.GetActionList().Cancel(tag);
+  BOUNDED_WHILE( 50, ! _actionsInProgress.empty() ) {
+    // The cancel function will trigger the HandleActionCompleted callback, which will erase the action from
+    // _actionsInProgress
+    robot.GetActionList().Cancel( * _actionsInProgress.begin() );
   }
-  _actionsInProgress.clear();
 }
 } // namespace Cozmo
 } // namespace Anki

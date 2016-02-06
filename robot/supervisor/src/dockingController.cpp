@@ -69,6 +69,17 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
 
+#ifdef  TARGET_K02
+        // Compensating for motor backlash by lifting a little higher when
+        // approaching an object for high pickup.
+        // Lift heights are reached reasonably accurately when moving down
+        // since that's how the lift is calibrated, but it tends to come
+        // up a little short when approaching a target height from below.
+        const f32 LIFT_HEIGHT_HIGHDOCK_PICKUP = LIFT_HEIGHT_HIGHDOCK + 3;
+#else
+        const f32 LIFT_HEIGHT_HIGHDOCK_PICKUP = LIFT_HEIGHT_HIGHDOCK;
+#endif
+        
         // Speeds and accels
         f32 dockSpeed_mmps_ = 0;
         f32 dockAccel_mmps2_ = 0;
@@ -135,7 +146,7 @@ namespace Anki {
         const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
 
         // First commanded lift height when START_LIFT_TRACKING_DIST_MM is reached
-        const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 15.f;
+        const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK_PICKUP - 15.f;
 
         // Whether or not to raise lift in prep for high docking
         bool doHighDockLiftTracking_ = false;
@@ -262,14 +273,14 @@ namespace Anki {
         if (doHighDockLiftTracking_) {
 
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
-          if (lastCommandedHeight == LIFT_HEIGHT_HIGHDOCK) {
+          if (lastCommandedHeight == LIFT_HEIGHT_HIGHDOCK_PICKUP) {
             // We're already at the high lift position.
             // No need to repeatedly command it.
             return;
           }
 
           // Compute desired slope of lift height during approach.
-          const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
+          const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK_PICKUP - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
 
           // Compute current estimated distance to marker
           f32 robotX, robotY;
@@ -287,7 +298,7 @@ namespace Anki {
             f32 liftHeight = START_LIFT_HEIGHT_MM + liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - estDistToMarker);
 
             // Keep between current desired height and high dock height
-            liftHeight = CLIP(liftHeight, lastCommandedHeight, LIFT_HEIGHT_HIGHDOCK);
+            liftHeight = CLIP(liftHeight, lastCommandedHeight, LIFT_HEIGHT_HIGHDOCK_PICKUP);
 
             // Apply height
             LiftController::SetDesiredHeight(liftHeight);
@@ -468,9 +479,7 @@ namespace Anki {
                 && !markerOutOfFOV_
               && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
               ResetDocker();
-#if(DEBUG_DOCK_CONTROLLER)
               AnkiDebug( 5, "DockingController", 36, "Too long without block pose (currTime %d, lastErrSignal %d). Giving up.", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
-#endif
             }
             break;
           case APPROACH_FOR_DOCK:
@@ -485,9 +494,7 @@ namespace Anki {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
-#if(DEBUG_DOCK_CONTROLLER)
               AnkiDebug( 5, "DockingController", 37, "Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
-#endif
               break;
             }
 

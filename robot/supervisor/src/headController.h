@@ -59,15 +59,6 @@ namespace Anki {
       bool IsInPosition();
       bool IsMoving();
       
-      // Nod head between the two given angles at the given speed, until
-      // SetDesiredAngle() or StopNodding() are called or the number of loops (up/down cycles)
-      // is completed. If StopNodding() is called, head will be returned to the original
-      // angle it started at. Use numLoops <= 0 to nod "forever".
-      void StartNodding(const f32 lowAngle, const f32 highAngle, const u16 period_ms, const s32 numLoops,
-                        const f32 easeInFraction, const f32 easeOutFraction);
-      void StopNodding();
-      bool IsNodding();
-      
       // Get current head angle
       f32 GetAngleRad();
       

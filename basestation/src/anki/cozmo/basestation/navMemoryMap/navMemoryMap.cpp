@@ -11,6 +11,7 @@
 #include "navMemoryMap.h"
 
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"
@@ -34,7 +35,8 @@ NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::ECo
   NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ENodeContentType::Invalid;
   switch (contentType) {
     case EContentType::Unknown: { nodeContentType = ENodeContentType::Unknown; break; }
-    case EContentType::Clear: { nodeContentType = ENodeContentType::Clear; break; }
+    case EContentType::ClearOfObstacle: { nodeContentType = ENodeContentType::ClearOfObstacle; break; }
+    case EContentType::ClearOfCliff: { nodeContentType = ENodeContentType::ClearOfCliff; break; }
     case EContentType::ObstacleCube: { nodeContentType = ENodeContentType::ObstacleCube; break; }
     case EContentType::ObstacleUnrecognized: { nodeContentType = ENodeContentType::ObstacleUnrecognized; break; }
     case EContentType::Cliff: { nodeContentType = ENodeContentType::Cliff; break; }
@@ -49,7 +51,8 @@ NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::ECo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // NavMemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMemoryMap::NavMemoryMap()
+NavMemoryMap::NavMemoryMap(VizManager* vizManager)
+: _navMesh(vizManager)
 {
 }
 
@@ -63,20 +66,59 @@ void NavMemoryMap::AddQuad(const Quad2f& quad, EContentType type)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMemoryMap::HasBorders(EContentType innerType, EContentType outerType) const
 {
-  const NavMeshQuadTreeTypes::ENodeContentType innerNodeType = ConvertContentType(innerType);
-  const NavMeshQuadTreeTypes::ENodeContentType outerNodeType = ConvertContentType(outerType);
+  using namespace NavMeshQuadTreeTypes;
+  const ENodeContentType innerNodeType = ConvertContentType(innerType);
+  const ENodeContentType outerNodeType = ConvertContentType(outerType);
+  const ENodeContentTypePackedType outerNodeTypes = ENodeContentTypeToFlag( outerNodeType );
   
-  const bool hasBorders = _navMesh.GetProcessor().HasBorders(innerNodeType, outerNodeType);
+  const bool hasBorders = _navMesh.GetProcessor().HasBorders(innerNodeType, outerNodeTypes);
+  return hasBorders;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMemoryMap::HasBorders(EContentType innerType, const std::set<EContentType>& outerTypes) const
+{
+  using namespace NavMeshQuadTreeTypes;
+  const ENodeContentType innerNodeType = ConvertContentType(innerType);
+  ENodeContentTypePackedType outerNodeTypes = 0;
+  
+  for( const auto& outerTypeIt : outerTypes ) {
+    const ENodeContentType outerNodeType = ConvertContentType(outerTypeIt);
+    const ENodeContentTypePackedType outerNodeTypeFlag = ENodeContentTypeToFlag( outerNodeType );
+    outerNodeTypes |= outerNodeTypeFlag;
+  }
+  
+  const bool hasBorders = _navMesh.GetProcessor().HasBorders(innerNodeType, outerNodeTypes);
   return hasBorders;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMemoryMap::CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders)
 {
-  const NavMeshQuadTreeTypes::ENodeContentType innerNodeType = ConvertContentType(innerType);
-  const NavMeshQuadTreeTypes::ENodeContentType outerNodeType = ConvertContentType(outerType);
+  using namespace NavMeshQuadTreeTypes;
+  const ENodeContentType innerNodeType = ConvertContentType(innerType);
+  const ENodeContentType outerNodeType = ConvertContentType(outerType);
+  const ENodeContentTypePackedType outerNodeTypes = ENodeContentTypeToFlag( outerNodeType );
   
-  _navMesh.GetProcessor().GetBorders(innerNodeType, outerNodeType, outBorders);
+  _navMesh.GetProcessor().GetBorders(innerNodeType, outerNodeTypes, outBorders);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMap::CalculateBorders(EContentType innerType, const std::set<EContentType>& outerTypes, BorderVector& outBorders)
+{
+  ASSERT_NAMED(!outerTypes.empty(), "No outerTypes provided");
+  
+  using namespace NavMeshQuadTreeTypes;
+  const ENodeContentType innerNodeType = ConvertContentType(innerType);
+  ENodeContentTypePackedType outerNodeTypes = 0;
+  
+  for( const auto& outerTypeIt : outerTypes ) {
+    const ENodeContentType outerNodeType = ConvertContentType(outerTypeIt);
+    const ENodeContentTypePackedType outerNodeTypeFlag = ENodeContentTypeToFlag( outerNodeType );
+    outerNodeTypes |= outerNodeTypeFlag;
+  }
+  
+  _navMesh.GetProcessor().GetBorders(innerNodeType, outerNodeTypes, outBorders);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

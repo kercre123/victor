@@ -114,8 +114,8 @@ private:
 
   void PrintAnimationLockState() const;
   
-  std::vector<int> _animTrackLockCount;
-  std::vector<int> _ignoreTrackMovementCount;
+  std::array<int, (size_t)AnimConstants::NUM_TRACKS> _animTrackLockCount;
+  std::array<int, (size_t)AnimConstants::NUM_TRACKS> _ignoreTrackMovementCount;
   
   struct FaceLayerToRemove {
     TimeStamp_t duration_ms;

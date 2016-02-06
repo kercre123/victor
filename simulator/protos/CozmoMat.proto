@@ -329,10 +329,11 @@ DEF WALL_4 Solid {
 
   contactMaterial "cmat_floor"
   boundingObject Transform {
-    rotation 1 0 0 1.5708
-    translation 0.5 0.5 0.0025
+    rotation 1 0 0 1.5708    
+    translation 0 0 0.0025
     children [
       Plane {
+        size %{=fields.xSize.value}% %{=fields.ySize.value}%
       }
     ]
   }

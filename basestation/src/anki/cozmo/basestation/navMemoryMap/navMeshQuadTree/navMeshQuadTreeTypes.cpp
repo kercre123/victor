@@ -11,10 +11,20 @@
 #include "navMeshQuadTreeTypes.h"
 
 #include "anki/common/basestation/exceptions.h"
+#include "util/math/numericCast.h"
 
 namespace Anki {
 namespace Cozmo {
 namespace NavMeshQuadTreeTypes {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentType)
+{
+  int contentTypeValue = Util::numeric_cast<int>( nodeContentType );
+  CORETECH_ASSERT( contentTypeValue < sizeof(ENodeContentTypePackedType)*8 );
+  const ENodeContentTypePackedType flag = 1 << contentTypeValue;
+  return flag;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* EDirectionToString(EDirection dir)

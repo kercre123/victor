@@ -314,7 +314,7 @@ void BehaviorRequestGameZeroBlocks::HandleWhileRunning(const GameToEngineEvent& 
 void BehaviorRequestGameZeroBlocks::StartActing(Robot& robot, IActionRunner* action)
 {
   _lastActionTag = action->GetTag();
-  robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+  robot.GetActionList().QueueActionNow(action);
   _isActing = true;
 }
 

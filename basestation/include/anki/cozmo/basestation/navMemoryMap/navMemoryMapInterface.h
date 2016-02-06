@@ -18,8 +18,12 @@
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad.h"
 
+#include <set>
+
 namespace Anki {
 namespace Cozmo {
+  
+class VizManager;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Class INavMemoryMap
@@ -56,11 +60,13 @@ public:
   // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
   // whether a border exists, without requiring calculating all of them
   virtual bool HasBorders(EContentType innerType, EContentType outerType) const = 0;
+  virtual bool HasBorders(EContentType innerType, const std::set<EContentType>& outerTypes) const = 0;
   
   // retrieve the borders currently found in the map between the given types. This query is not const
   // so that the memory map can calculate and cache values upon being requested, rather than when
   // the map is modified. Function is expected to clear the vector before returning the new borders
   virtual void CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders) = 0;
+  virtual void CalculateBorders(EContentType innerType, const std::set<EContentType>& outerTypes, BorderVector& outBorders) = 0;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug
