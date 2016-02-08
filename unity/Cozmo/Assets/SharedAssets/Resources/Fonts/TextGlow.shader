@@ -85,6 +85,10 @@
               x += getColor(uv, float2(-delta.x, delta.y), minMaxUV, 0.2);
               x += getColor(uv, float2(delta.x, -delta.y), minMaxUV, 0.2);
               x += getColor(uv, float2(-delta.x, -delta.y), minMaxUV, 0.2);
+              x += getColor(uv, 1.4 * float2(delta.x, 0), minMaxUV, 0.2);
+              x += getColor(uv, 1.4 * float2(-delta.x, 0), minMaxUV, 0.2);
+              x += getColor(uv, 1.4 * float2(0, delta.y), minMaxUV, 0.2);
+              x += getColor(uv, 1.4 * float2(0, -delta.y), minMaxUV, 0.2);
 
               return x;
             }
