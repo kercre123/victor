@@ -34,6 +34,11 @@ CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 {
   
 }
+
+CozmoContext::~CozmoContext()
+{
+
+}
   
 } // namespace Cozmo
 } // namespace Anki
