@@ -96,6 +96,7 @@ namespace Cozmo.HomeHub {
     FriendshipFormulaConfiguration _FriendshipFormulaConfig;
 
     private bool _ScrollLocked;
+    private float _ScrollLockedOffset;
 
     protected override void CleanUp() {
       _ScrollRect.onValueChanged.RemoveAllListeners();
@@ -178,22 +179,47 @@ namespace Cozmo.HomeHub {
     }
 
     public void LockScroll(bool locked) {
+      StartCoroutine(LockScrollCoroutine(locked));
+    }
+      
+    private IEnumerator LockScrollCoroutine(bool locked) {
+      //Scroll all the way to the left, then move the scroll container.
+      _ScrollLocked = false;
+
+      // add a .2 second delay on closing
+      float progress = (locked ? 0 : 1.4f);
+
+      float startingHorizontalOffset = locked ? _ScrollRect.horizontalNormalizedPosition : _ScrollLockedOffset;
+      _ScrollLockedOffset = startingHorizontalOffset;
+
+      float contentWidth = _ContentPane.rect.width - _ViewportPane.rect.width;
+
+      float screenWidth = _ViewportPane.rect.width;
+
+      float offset = startingHorizontalOffset * contentWidth;
+
+      float pixelsToMove = contentWidth - offset + screenWidth;
+
+      while ((progress < 1f && locked) || (progress > 0f && !locked)) {
+        progress = progress + (locked ? 2 : -2) * Time.deltaTime;
+
+        float position = offset + Mathf.Lerp(0, pixelsToMove, Mathf.Clamp01(progress));
+
+        if (position <= contentWidth) {
+          _ScrollRect.horizontalNormalizedPosition = position / contentWidth;
+          _ScrollRect.transform.localPosition = Vector3.zero;
+        }
+        else {
+          _ScrollRect.transform.localPosition = Vector2.left * (position - contentWidth);
+        }
+         
+        HandleTimelineViewScroll(Vector2.zero);
+
+        yield return null;
+      }
+
       _ScrollLocked = locked;
 
-      if (locked) {
-        if (_LockedPaneScrollContainer.parent != _LockedPaneLeftNoScrollContainer) {
-          _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, false);
-          _LockedPaneScrollContainer.localPosition = Vector3.zero; 
-          _DailyGoalInstance.Collapse(false);
-          _LockedPaneLeftNoScrollContainer.gameObject.SetActive(true);
-        }
-        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MinDailyGoalWidth, 0);
-      }
-      else {
-        // the parameter is ignored, this will move us back to the expected position
-        HandleTimelineViewScroll(Vector2.zero);
-      }
-      _ContentPane.gameObject.SetActive(!locked);
     }
 
     private void UpdateDailySession() {

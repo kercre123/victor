@@ -19,8 +19,13 @@ namespace Anki.Editor.UI {
     SerializedProperty _AllUppercase;
     SerializedProperty _GlowText;
 
+    Material _TextGlowMat;
+
     protected override void OnEnable() {
       base.OnEnable();
+
+      _TextGlowMat = Resources.Load<Material>("Fonts/TextGlow");
+
       m_Text = serializedObject.FindProperty("m_Text");
       m_FontData = serializedObject.FindProperty("m_FontData");
       _AllUppercase = serializedObject.FindProperty("_AllUppercase");
@@ -56,6 +61,17 @@ namespace Anki.Editor.UI {
 
       EditorGUILayout.PropertyField(_AllUppercase, new GUIContent("All Caps"));
       EditorGUILayout.PropertyField(_GlowText, new GUIContent("Glowing Text"));
+      if (_GlowText.boolValue) {
+        m_Material.objectReferenceValue = _TextGlowMat;
+      }
+      else {
+        var oldRef = m_Material.objectReferenceValue;
+
+        if (oldRef == _TextGlowMat) {
+          m_Material.objectReferenceValue = null;
+        }
+      }
+
       EditorGUILayout.PropertyField(m_FontData);
       AppearanceControlsGUI();
       serializedObject.ApplyModifiedProperties();

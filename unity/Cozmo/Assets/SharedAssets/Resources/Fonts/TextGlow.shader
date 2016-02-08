@@ -79,7 +79,8 @@
               float x = 0;
 
               //Linear
-              x += getColor(uv, float2(0,0), minMaxUV, 0.2);
+              // skip our actual uv, since we can assume we display the actual text on top of it.
+              //x += getColor(uv, float2(0,0), minMaxUV, 0.2);
               x += getColor(uv, float2(delta.x, delta.y), minMaxUV, 0.2);
               x += getColor(uv, float2(-delta.x, delta.y), minMaxUV, 0.2);
               x += getColor(uv, float2(delta.x, -delta.y), minMaxUV, 0.2);

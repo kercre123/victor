@@ -300,6 +300,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: '#button.startChallenge'
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11428092
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -311,7 +312,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: a94f089e8642b420b85f7eaa8e68f936, type: 2}
   m_Color: {r: 1, g: .958269656, b: .860294104, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
@@ -333,6 +334,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: START
   _AllUppercase: 1
+  GlowText: 1
 --- !u!114 &11430330
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -402,6 +404,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: 2 Players, 2 Power Cubes
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11452342
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -453,6 +456,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: START
   _AllUppercase: 1
+  GlowText: 0
 --- !u!114 &11454248
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -560,6 +564,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: '#challengeDetails.label.requires'
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11471404
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -884,8 +889,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: .850000024}
-  m_AnchoredPosition: {x: 200, y: 100}
-  m_SizeDelta: {x: -400, y: -200}
+  m_AnchoredPosition: {x: 175, y: 100}
+  m_SizeDelta: {x: -350, y: -200}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22471858
 RectTransform:
@@ -978,6 +983,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _CenteredIconViewportPos.y
       value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_MinWidth
+      value: 1200
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
