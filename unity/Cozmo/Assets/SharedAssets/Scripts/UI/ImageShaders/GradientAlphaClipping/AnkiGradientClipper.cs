@@ -108,18 +108,18 @@ namespace Cozmo {
       private void CreateMaterial() {
         if (_ScreenSpace) {
           if (_SpecifyEndClipping) {
-            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantComplexClippingScreenspaceShader);
+            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantComplexClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
           else {
-            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantSimpleClippingScreenspaceShader);
+            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantSimpleClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
         }
         else {
           if (_SpecifyEndClipping) {
-            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantComplexClippingShader);
+            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantComplexClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
           else {
-            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantSimpleClippingShader);
+            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantSimpleClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
         }
       }
