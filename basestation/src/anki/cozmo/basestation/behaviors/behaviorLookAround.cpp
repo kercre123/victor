@@ -94,6 +94,13 @@ bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) 
   return false;
 }
 
+void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  if( event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction ) {
+    HandleCompletedAction(event);
+  }
+}
+
 void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch(event.GetData().GetTag())
@@ -103,7 +110,7 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
       break;
       
     case EngineToGameTag::RobotCompletedAction:
-      HandleCompletedAction(event);
+      // handled in AlwaysHandle
       break;
       
     case EngineToGameTag::RobotPutDown:
@@ -270,6 +277,7 @@ Result BehaviorLookAround::StartMoving(Robot& robot)
                                                         false);
   _currentDriveActionID = goToPoseAction->GetTag();
   _actionsInProgress.insert(_currentDriveActionID);
+
   robot.GetActionList().QueueActionAtEnd(goToPoseAction, 3);
   return RESULT_OK;
 }
@@ -405,8 +413,6 @@ void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
   
 void BehaviorLookAround::HandleCompletedAction(const EngineToGameEvent& event)
 {
-  assert(IsRunning());
-  
   const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
   if (RobotActionType::FACE_OBJECT == msg.actionType)
   {
@@ -446,6 +452,7 @@ void BehaviorLookAround::HandleCompletedAction(const EngineToGameEvent& event)
   }
   
   _actionsInProgress.erase(msg.idTag);
+
 }
   
 BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current)
@@ -498,7 +505,12 @@ void BehaviorLookAround::ClearQueuedActions(Robot& robot)
   BOUNDED_WHILE( 50, ! _actionsInProgress.empty() ) {
     // The cancel function will trigger the HandleActionCompleted callback, which will erase the action from
     // _actionsInProgress
-    robot.GetActionList().Cancel( * _actionsInProgress.begin() );
+    if( ! robot.GetActionList().Cancel( * _actionsInProgress.begin() ) ) {
+      PRINT_NAMED_ERROR("BehaviorLookAround.CancelActionFail",
+                        "tried to cancel action with tag %d, but it wasn't found!",
+                        * _actionsInProgress.begin());
+      _actionsInProgress.erase( _actionsInProgress.begin() );
+    }
   }
 }
 } // namespace Cozmo

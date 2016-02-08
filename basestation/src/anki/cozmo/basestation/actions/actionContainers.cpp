@@ -531,6 +531,7 @@ namespace Anki {
       if(_currentAction != nullptr && !_currentActionIsDeleting)
       {
         _currentActionIsDeleting = true;
+        _currentAction->PrepForCompletion();
         Util::SafeDelete(_currentAction);
         _currentActionIsDeleting = false;
       }
