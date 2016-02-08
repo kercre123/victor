@@ -183,9 +183,9 @@ namespace Cozmo {
   }
 
   namespace {
-  void AddToCompoundAction( CompoundActionParallel*& compound, IActionRunner* newAction ) {
+  void AddToCompoundAction( Robot& robot, CompoundActionParallel*& compound, IActionRunner* newAction ) {
     if(compound == nullptr) {
-      compound = new CompoundActionParallel;
+      compound = new CompoundActionParallel(robot);
     }
     compound->AddAction(newAction);
   }
@@ -289,7 +289,7 @@ namespace Cozmo {
         if( ! robot.IsCarryingObject() )  {
           if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
             if( _faceID != Face::UnknownFace ) {
-              TrackFaceAction* action = new TrackFaceAction(_faceID);
+              TrackFaceAction* action = new TrackFaceAction(robot, _faceID);
               // NOTE: don't use StartActing for this, because it is a continuous action
               robot.GetActionList().QueueActionNow(action);
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
@@ -355,15 +355,15 @@ namespace Cozmo {
               _oldHeadAngle_rads = robot.GetHeadAngle();
               
               // look down to see if we see the cube there
-              MoveHeadToAngleAction* lookDownAction = new MoveHeadToAngleAction(targetAngle);
+              MoveHeadToAngleAction* lookDownAction = new MoveHeadToAngleAction(robot, targetAngle);
               lookDownAction->SetMoveEyes(true, true); // hold eyes down until next head movement
               MoveLiftToHeightAction* moveLiftAction =
-                new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+                new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
               
-              StartActing(robot, new CompoundActionSequential({lookDownAction, moveLiftAction}));
+              StartActing(robot, new CompoundActionSequential(robot, {lookDownAction, moveLiftAction}));
 
               // resume tracking afterwards
-              TrackObjectAction* trackingAction = new TrackObjectAction(_trackedObject);
+              TrackObjectAction* trackingAction = new TrackObjectAction(robot, _trackedObject);
               robot.GetActionList().QueueActionAtEnd(trackingAction);
               break;
             }
@@ -456,7 +456,7 @@ namespace Cozmo {
         DriveToRollObjectAction* rollAction = nullptr;
         if (preActionPoses.size() > 1) {
           // Block must be upside down so choose any roll action
-          rollAction = new DriveToRollObjectAction(_trackedObject, _motionProfile);
+          rollAction = new DriveToRollObjectAction(robot, _trackedObject, _motionProfile);
         } else {
           // Block is sideways so pick the approach angle from the 'docking' preActionPose
           // (The bottom of the cube is the only dockable side when the cube is sideways and also
@@ -465,7 +465,8 @@ namespace Cozmo {
           
           f32 approachAngle_rad = atan2f(approachVec.y(), approachVec.x());
           PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.ApproachForRoll", "%f rad", approachAngle_rad);
-          rollAction = new DriveToRollObjectAction(_trackedObject,
+          rollAction = new DriveToRollObjectAction(robot,
+                                                   _trackedObject,
                                                    _motionProfile,
                                                    true,
                                                    approachAngle_rad);
@@ -507,7 +508,7 @@ namespace Cozmo {
           
           if (robotAndBlockOrientationMatch && blockIsInFrontOfRobot) {
             // Alignment is good. Go straight to pickup!
-            PickupObjectAction* pickupAction = new PickupObjectAction(_objectToPickUp);
+            PickupObjectAction* pickupAction = new PickupObjectAction(robot, _objectToPickUp);
             pickupAction->SetDoNearPredockPoseCheck(false);
             StartActing(robot, pickupAction);
             PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.Pickup.Direct",
@@ -518,7 +519,9 @@ namespace Cozmo {
                              _angleToObjectThreshForDirectPickup);
                              
           } else {
-            DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(_objectToPickUp, _motionProfile);
+            DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot,
+                                                                                    _objectToPickUp,
+                                                                                    _motionProfile);
             SetDriveToObjectSounds(pickupAction);
             StartActing(robot, pickupAction);
 
@@ -545,7 +548,9 @@ namespace Cozmo {
         PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.PlacingBlock.Place",
                          "Executing place object action");
         
-        DriveToPlaceOnObjectAction* placeAction = new DriveToPlaceOnObjectAction(_objectToPlaceOn, _motionProfile);
+        DriveToPlaceOnObjectAction* placeAction = new DriveToPlaceOnObjectAction(robot,
+                                                                                 _objectToPlaceOn,
+                                                                                 _motionProfile);
         SetDriveToObjectSounds(placeAction);
         StartActing(robot, placeAction);
         break;
@@ -567,14 +572,14 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.UpdateInternal.WaitingForBlock.Lift",
                                  "raising lift to look down for block");
 
-          actionToRun = new MoveLiftToHeightAction( LIFT_HEIGHT_CARRY );
+          actionToRun = new MoveLiftToHeightAction( robot, LIFT_HEIGHT_CARRY );
         }
         if( ! NEAR( robot.GetHeadAngle(), _waitForBlockHeadAngle_rads, DEG_TO_RAD(4.0f) ) ) {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.UpdateInternal.WaitingForBlock.Head",
                                  "lowering head to see block");
-          MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction( _waitForBlockHeadAngle_rads );
+          MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction( robot, _waitForBlockHeadAngle_rads );
           if( actionToRun != nullptr ) {
-            actionToRun = new CompoundActionParallel({actionToRun, headAction});
+            actionToRun = new CompoundActionParallel(robot, {actionToRun, headAction});
           }
           else {
             actionToRun = headAction;
@@ -621,7 +626,7 @@ namespace Cozmo {
           const float lookAmountRads = DEG_TO_RAD(20);
           const float waitTime = 0.6f;
         
-          CompoundActionSequential* searchAction = new CompoundActionSequential();
+          CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
           searchAction->SetDelayBetweenActions(waitTime);
 
           if( _trackedObject.IsSet() ) {
@@ -629,21 +634,21 @@ namespace Cozmo {
             if( obj != nullptr &&
                 obj->IsExistenceConfirmed() ) {
 
-              FacePoseAction* faceAction = new FacePoseAction(obj->GetPose(), 0.5 * PI_F);
+              FacePoseAction* faceAction = new FacePoseAction(robot, obj->GetPose(), 0.5 * PI_F);
               faceAction->SetPanTolerance(DEG_TO_RAD(5));
               searchAction->AddAction( faceAction );
             }
           }
 
-          TurnInPlaceAction* turnAction = new TurnInPlaceAction( -lookAmountRads, false );
+          TurnInPlaceAction* turnAction = new TurnInPlaceAction( robot, -lookAmountRads, false );
           turnAction->SetTolerance(DEG_TO_RAD(2));
           searchAction->AddAction( turnAction );
 
-          turnAction = new TurnInPlaceAction( 2 * lookAmountRads, false );
+          turnAction = new TurnInPlaceAction( robot, 2 * lookAmountRads, false );
           turnAction->SetTolerance(DEG_TO_RAD(2));
           searchAction->AddAction( turnAction );
 
-          searchAction->AddAction( new WaitAction(0.2f) );
+          searchAction->AddAction( new WaitAction(robot, 0.2f) );
 
           StartActing(robot, searchAction);
 
@@ -693,7 +698,7 @@ namespace Cozmo {
     if( ! robot.IsCarryingObject() ) {
       Pose3d lastFacePose;
       if( robot.GetFaceWorld().GetLastObservedFace(lastFacePose) > 0 ) {
-        FacePoseAction* lookAtFaceAction = new FacePoseAction(lastFacePose, PI_F);
+        FacePoseAction* lookAtFaceAction = new FacePoseAction(robot, lastFacePose, PI_F);
         lookAtFaceAction->SetPanTolerance( DEG_TO_RAD(5) );
         StartActing(robot, lookAtFaceAction);
         BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TurnTowardsAFace.FindingOldFace",
@@ -703,7 +708,7 @@ namespace Cozmo {
       else if( robot.GetHeadAngle() < DEG_TO_RAD(15.0f) && ! robot.GetMoveComponent().IsHeadMoving()) {
         PRINT_NAMED_INFO("BehaviorBlockPlay.TurnTowardsAFace.NeverSawFace",
                          "never saw any faces, so just moving head up instead");
-        StartActing(robot, new MoveHeadToAngleAction( DEG_TO_RAD(20.0f) ));
+        StartActing(robot, new MoveHeadToAngleAction( robot, DEG_TO_RAD(20.0f) ));
       }
     }
     else {
@@ -719,10 +724,10 @@ namespace Cozmo {
                                robot.GetLiftHeight(),
                                lowCarry);
 
-        MoveLiftToHeightAction* moveLiftAction = new MoveLiftToHeightAction(lowCarry);
+        MoveLiftToHeightAction* moveLiftAction = new MoveLiftToHeightAction(robot, lowCarry);
         // move slowly
         moveLiftAction->SetDuration(1.0f);
-        AddToCompoundAction(actionToRun, moveLiftAction);
+        AddToCompoundAction(robot, actionToRun, moveLiftAction);
       }
 
       // figure out which body angle we should face to look at a person. For the demo, we assume a table
@@ -775,7 +780,7 @@ namespace Cozmo {
       if( haveTargetAngle ) {
         if( !robot.GetMoveComponent().IsMoving() &&
             (robot.GetPose().GetRotationAngle<'Z'>() - targetBodyAngle).getAbsoluteVal().ToFloat() > turnInPlaceTol_rads ) {
-          AddToCompoundAction(actionToRun, new TurnInPlaceAction(targetBodyAngle, false) );
+          AddToCompoundAction(robot, actionToRun, new TurnInPlaceAction(robot, targetBodyAngle, false) );
         }
       }
       else {
@@ -785,7 +790,7 @@ namespace Cozmo {
 
       if( !robot.GetMoveComponent().IsHeadMoving() &&
           (Radians(fixedHeadAngle_rads) - Radians(robot.GetHeadAngle())).getAbsoluteVal().ToFloat() > turnInPlaceTol_rads ) {
-        AddToCompoundAction(actionToRun, new MoveHeadToAngleAction(fixedHeadAngle_rads) );
+        AddToCompoundAction(robot, actionToRun, new MoveHeadToAngleAction(robot, fixedHeadAngle_rads) );
       }
 
       if( actionToRun != nullptr ) {
@@ -1260,10 +1265,11 @@ namespace Cozmo {
 
             default: {
               // Simultaneously lower lift and play failure animation
-              MoveLiftToHeightAction* lowerLift = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+              MoveLiftToHeightAction* lowerLift = new MoveLiftToHeightAction(robot, 
+              MoveLiftToHeightAction::Preset::LOW_DOCK);
               lowerLift->SetDuration(0.25); // Lower it fast: frustrated
-              StartActing(robot, new CompoundActionParallel({
-                new PlayAnimationAction("ID_rollBlock_fail_01"),
+              StartActing(robot, new CompoundActionParallel(robot, {
+                new PlayAnimationAction(robot, "ID_rollBlock_fail_01"),
                 lowerLift
               }));
             }
@@ -1317,7 +1323,7 @@ namespace Cozmo {
                             
               // wait for happy to finish before we mark the blocks, so the animation doesn't trigger their motion
               StartActing(robot,
-                          new PlayAnimationAction("ID_reactTo2ndBlock_success"),
+                          new PlayAnimationAction(robot, "ID_reactTo2ndBlock_success"),
                           [this,&robot](ActionResult ret){
                             IgnoreObject(robot, _objectToPlaceOn);
                             _objectToPlaceOn.UnSet();
@@ -1399,10 +1405,10 @@ namespace Cozmo {
               
               // back up and drop the block, then re-init to start over
               StartActing(robot,
-                          new CompoundActionSequential({
-                              new PlayAnimationAction("ID_rollBlock_fail_01"),
-                              new DriveStraightAction(-failureBackupDist, -failureBackupSpeed),
-                              new PlaceObjectOnGroundAction()}),
+                          new CompoundActionSequential(robot, {
+                              new PlayAnimationAction(robot, "ID_rollBlock_fail_01"),
+                              new DriveStraightAction(robot, -failureBackupDist, -failureBackupSpeed),
+                              new PlaceObjectOnGroundAction(robot)}),
                               [this,&robot](ActionResult ret){
                                 _isActing = false;
                                 InitState(robot);
@@ -1607,7 +1613,7 @@ namespace Cozmo {
      
       if( robot.IsCarryingObject() ) {
         // look at the block, then react to it
-        FacePoseAction* faceObjectAction = new FacePoseAction(oObject->GetPose(), PI_F);
+        FacePoseAction* faceObjectAction = new FacePoseAction(robot, oObject->GetPose(), PI_F);
         faceObjectAction->SetPanTolerance(DEG_TO_RAD(5));
         StartActing(robot,
                     faceObjectAction,
@@ -1637,7 +1643,7 @@ namespace Cozmo {
 #endif
         
         SetCurrState(State::TrackingBlock);
-        TrackObjectAction* action = new TrackObjectAction(_trackedObject);
+        TrackObjectAction* action = new TrackObjectAction(robot, _trackedObject);
         robot.GetActionList().QueueActionNow(action); // will cancel face tracking
       }
     }
@@ -1770,7 +1776,7 @@ namespace Cozmo {
                                targetHeight);
         
         // queue this action in the animation slot to avoid stomping on tracking
-        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(targetHeight);
+        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(robot, targetHeight);
         robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, liftAction);
       }
 
@@ -1784,14 +1790,15 @@ namespace Cozmo {
                                liftToObjectPose.GetTranslation().x(),
                                RAD_TO_DEG(sideAngle));
 
-        DriveStraightAction* driveAction = new DriveStraightAction(_distToDriveForwardWhileTracking,
+        DriveStraightAction* driveAction = new DriveStraightAction(robot,
+                                                                   _distToDriveForwardWhileTracking,
                                                                    _speedToDriveForwardWhileTracking);
         // drive actions go in the main slot
         robot.GetActionList().QueueActionNow(driveAction);
         _driveForwardActionTag = driveAction->GetTag();
 
         // resume tracking after driving forward
-        TrackObjectAction* trackingAction = new TrackObjectAction(_trackedObject);
+        TrackObjectAction* trackingAction = new TrackObjectAction(robot, _trackedObject);
         robot.GetActionList().QueueActionAtEnd(trackingAction);
               
         _isDrivingForward = true;
@@ -1915,7 +1922,7 @@ namespace Cozmo {
       }
     }
     
-    PlayAnimationAction* animAction = new PlayAnimationAction(animName.c_str());
+    PlayAnimationAction* animAction = new PlayAnimationAction(robot, animName.c_str());
 
     BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                            "BehaviorBlockPlay.PlayAnimation",

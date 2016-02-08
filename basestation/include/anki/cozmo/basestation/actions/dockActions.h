@@ -40,7 +40,7 @@ namespace Anki {
     class IDockAction : public IAction
     {
     public:
-      IDockAction(ObjectID objectID, const bool useManualSpeed = false);
+      IDockAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
       
       virtual ~IDockAction();
       
@@ -146,7 +146,7 @@ namespace Anki {
     class PopAWheelieAction : public IDockAction
     {
     public:
-      PopAWheelieAction(ObjectID objectID, const bool useManualSpeed = false);
+      PopAWheelieAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
       
       virtual const std::string& GetName() const override;
       
@@ -172,7 +172,8 @@ namespace Anki {
     class AlignWithObjectAction : public IDockAction
     {
     public:
-      AlignWithObjectAction(ObjectID objectID,
+      AlignWithObjectAction(Robot& robot,
+                            ObjectID objectID,
                             const f32 distanceFromMarker_mm,
                             const bool useManualSpeed = false);
       virtual ~AlignWithObjectAction();
@@ -198,7 +199,8 @@ namespace Anki {
     class PickupObjectAction : public IDockAction
     {
     public:
-      PickupObjectAction(ObjectID objectID,
+      PickupObjectAction(Robot& robot,
+                         ObjectID objectID,
                          const bool useManualSpeed = false);
       
       virtual const std::string& GetName() const override;
@@ -227,7 +229,7 @@ namespace Anki {
     {
     public:
       
-      PlaceObjectOnGroundAction();
+      PlaceObjectOnGroundAction(Robot& robot);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
@@ -261,7 +263,7 @@ namespace Anki {
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(const Robot& robot,
+      PlaceObjectOnGroundAtPoseAction(Robot& robot,
                                       const Pose3d& placementPose,
                                       const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                       const bool useExactRotation = false,
@@ -275,7 +277,8 @@ namespace Anki {
     class PlaceRelObjectAction : public IDockAction
     {
     public:
-      PlaceRelObjectAction(ObjectID objectID,
+      PlaceRelObjectAction(Robot& robot,
+                           ObjectID objectID,
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const bool useManualSpeed = false);
@@ -315,7 +318,7 @@ namespace Anki {
     class RollObjectAction : public IDockAction
     {
     public:
-      RollObjectAction(ObjectID objectID, const bool useManualSpeed = false);
+      RollObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
       
       virtual const std::string& GetName() const override;
       
@@ -347,7 +350,7 @@ namespace Anki {
     class CrossBridgeAction : public IDockAction
     {
     public:
-      CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
+      CrossBridgeAction(Robot& robot, ObjectID bridgeID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::CROSS_BRIDGE; }
@@ -371,7 +374,7 @@ namespace Anki {
     class AscendOrDescendRampAction : public IDockAction
     {
     public:
-      AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
+      AscendOrDescendRampAction(Robot& robot, ObjectID rampID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::ASCEND_OR_DESCEND_RAMP; }
@@ -394,7 +397,7 @@ namespace Anki {
     class MountChargerAction : public IDockAction
     {
     public:
-      MountChargerAction(ObjectID chargerID, const bool useManualSpeed);
+      MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::MOUNT_CHARGER; }

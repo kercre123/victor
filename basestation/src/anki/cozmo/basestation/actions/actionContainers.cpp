@@ -97,7 +97,6 @@ namespace Anki {
       {
         return RESULT_FAIL;
       }
-      action->SetRobot(*_robot);
       return _queues[0].QueueNext(action, numRetries);
     }
     
@@ -107,7 +106,6 @@ namespace Anki {
       {
         return RESULT_FAIL;
       }
-      action->SetRobot(*_robot);
       return _queues[0].QueueAtEnd(action, numRetries);
     }
     
@@ -117,7 +115,6 @@ namespace Anki {
       {
         return RESULT_FAIL;
       }
-      action->SetRobot(*_robot);
       return _queues[0].QueueNow(action, numRetries);
     }
     
@@ -127,7 +124,6 @@ namespace Anki {
       {
         return RESULT_FAIL;
       }
-      action->SetRobot(*_robot);
       return _queues[0].QueueAtFront(action, numRetries);
     }
     
@@ -212,8 +208,6 @@ namespace Anki {
       {
         return -1;
       }
-      
-      action->SetRobot(*_robot);
 
       // Find an empty slot
       SlotHandle currentSlot = 0;

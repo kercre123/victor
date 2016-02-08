@@ -127,7 +127,7 @@ Result BehaviorRequestGameZeroBlocks::InitInternal(Robot& robot, double currentT
 
     PRINT_NAMED_DEBUG("BehaviorRequestGameZeroBlocks.TurningTowardsFace", "");
     
-    FacePoseAction* action = new FacePoseAction(lastFacePose, PI_F);
+    FacePoseAction* action = new FacePoseAction(robot, lastFacePose, PI_F);
     StartActing(robot, action);
 
     _state = State::LookingAtFace;
@@ -224,7 +224,7 @@ void BehaviorRequestGameZeroBlocks::HandleActionCompleted(Robot& robot,
         case State::LookingAtFace: {
           if( msg.result == ActionResult::SUCCESS ) {
 
-            IActionRunner* animationAction = new PlayAnimationAction(_requestAnimationName);
+            IActionRunner* animationAction = new PlayAnimationAction(robot, _requestAnimationName);
             
             StartActing( robot, animationAction );
             _state = State::PlayingRequstAnim;
@@ -255,10 +255,10 @@ void BehaviorRequestGameZeroBlocks::HandleActionCompleted(Robot& robot,
             PRINT_NAMED_WARNING("BehaviorRequestGameZeroBlocks.NoValidFace",
                                 "Can't do face tracking because there is no valid face!");
             // use an action that just hangs to simulate the track face logic
-            StartActing( robot, new HangAction() );
+            StartActing( robot, new HangAction(robot) );
           }
           else {
-            StartActing( robot, new TrackFaceAction(_faceID) );
+            StartActing( robot, new TrackFaceAction(robot, _faceID) );
           }
           break;
         }
@@ -305,7 +305,7 @@ void BehaviorRequestGameZeroBlocks::HandleWhileRunning(const GameToEngineEvent& 
       _isActing = false;
     }
 
-    StartActing( robot, new PlayAnimationAction( _denyAnimationName ) );
+    StartActing( robot, new PlayAnimationAction( robot, _denyAnimationName ) );
     _state = State::PlayingDenyAnim;
   }
 }

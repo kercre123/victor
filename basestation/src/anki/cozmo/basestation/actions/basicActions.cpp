@@ -22,8 +22,9 @@ namespace Anki {
   
   namespace Cozmo {
     
-    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute)
-    :  _targetAngle(angle)
+    TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const Radians& angle, const bool isAbsolute)
+    : IAction(robot)
+    , _targetAngle(angle)
     , _isAbsoluteAngle(isAbsolute)
     {
       
@@ -196,8 +197,9 @@ namespace Anki {
     
 #pragma mark ---- DriveStraightAction ----
     
-    DriveStraightAction::DriveStraightAction(f32 dist_mm, f32 speed_mmps)
-    : _dist_mm(dist_mm)
+    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps)
+    : IAction(robot)
+    , _dist_mm(dist_mm)
     , _speed_mmps(speed_mmps)
     {
       
@@ -252,8 +254,9 @@ namespace Anki {
     
 #pragma mark ---- MoveHeadToAngleAction ----
     
-    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance, const Radians& variability)
-    : _headAngle(headAngle)
+    MoveHeadToAngleAction::MoveHeadToAngleAction(Robot& robot, const Radians& headAngle, const Radians& tolerance, const Radians& variability)
+    : IAction(robot)
+    , _headAngle(headAngle)
     , _angleTolerance(tolerance)
     , _variability(variability)
     , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
@@ -408,8 +411,9 @@ namespace Anki {
     
 #pragma mark ---- MoveLiftToHeightAction ----
     
-    MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
-    : _height_mm(height_mm)
+    MoveLiftToHeightAction::MoveLiftToHeightAction(Robot& robot, const f32 height_mm, const f32 tolerance_mm, const f32 variability)
+    : IAction(robot)
+    , _height_mm(height_mm)
     , _heightTolerance(tolerance_mm)
     , _variability(variability)
     , _name("MoveLiftTo" + std::to_string(_height_mm) + "mmAction")
@@ -418,8 +422,8 @@ namespace Anki {
       
     }
     
-    MoveLiftToHeightAction::MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm)
-    : MoveLiftToHeightAction(GetPresetHeight(preset), tolerance_mm, 0.f)
+    MoveLiftToHeightAction::MoveLiftToHeightAction(Robot& robot, const Preset preset, const f32 tolerance_mm)
+    : MoveLiftToHeightAction(robot, GetPresetHeight(preset), tolerance_mm, 0.f)
     {
       _name = "MoveLiftTo";
       _name += GetPresetName(preset);
@@ -587,9 +591,10 @@ namespace Anki {
     
 #pragma mark ---- PanAndTiltAction ----
     
-    PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
+    PanAndTiltAction::PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
                                        bool isPanAbsolute, bool isTiltAbsolute)
-    : _bodyPanAngle(bodyPan)
+    : IAction(robot)
+    , _bodyPanAngle(bodyPan)
     , _headTiltAngle(headTilt)
     , _isPanAbsolute(isPanAbsolute)
     , _isTiltAbsolute(isTiltAbsolute)
@@ -680,23 +685,19 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init()
     {
-      CompoundActionParallel* newCompoundParallel = new CompoundActionParallel();
+      CompoundActionParallel* newCompoundParallel = new CompoundActionParallel(*_robot);
       _compoundAction = newCompoundParallel;
-      if(!RegisterSubAction(_compoundAction))
-      {
-        return ActionResult::FAILURE_ABORT;
-      }
       
       newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
       
-      TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
+      TurnInPlaceAction* action = new TurnInPlaceAction(*_robot, _bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
       newCompoundParallel->AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot->GetHeadAngle() + _headTiltAngle;
-      MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);
+      MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(*_robot, newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
       newCompoundParallel->AddAction(headAction);
@@ -738,22 +739,24 @@ namespace Anki {
     
 #pragma mark ---- FaceObjectAction ----
     
-    FaceObjectAction::FaceObjectAction(ObjectID objectID,
+    FaceObjectAction::FaceObjectAction(Robot& robot,
+                                       ObjectID objectID,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FaceObjectAction(objectID, Vision::Marker::ANY_CODE,
+    : FaceObjectAction(robot, objectID, Vision::Marker::ANY_CODE,
                        maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
     {
       
     }
     
-    FaceObjectAction::FaceObjectAction(ObjectID objectID,
+    FaceObjectAction::FaceObjectAction(Robot& robot,
+                                       ObjectID objectID,
                                        Vision::Marker::Code whichCode,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FacePoseAction(maxTurnAngle)
+    : FacePoseAction(robot, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
     , _visuallyVerifyAction()
     , _objectID(objectID)
@@ -779,12 +782,7 @@ namespace Anki {
     
     ActionResult FaceObjectAction::Init()
     {
-      _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
-      
-      if(!RegisterSubAction(_visuallyVerifyAction))
-      {
-        return ActionResult::FAILURE_ABORT;
-      }
+      _visuallyVerifyAction = new VisuallyVerifyObjectAction(*_robot, _objectID, _whichCode);
       
       ObservableObject* object = _robot->GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
@@ -898,7 +896,7 @@ namespace Anki {
       }
       
       if(_headTrackWhenDone) {
-        _robot->GetActionList().QueueActionNext(new TrackObjectAction(_objectID));
+        _robot->GetActionList().QueueActionNext(new TrackObjectAction(*_robot, _objectID));
       }
 
       return ActionResult::SUCCESS;
@@ -921,8 +919,9 @@ namespace Anki {
     
 #pragma mark ---- TraverseObjectAction ----
     
-    TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
-    : _objectID(objectID)
+    TraverseObjectAction::TraverseObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
+    : IActionRunner(robot)
+    , _objectID(objectID)
     , _useManualSpeed(useManualSpeed)
     {
   
@@ -954,22 +953,14 @@ namespace Anki {
         if(object->GetType() == ObjectType::Bridge_LONG ||
            object->GetType() == ObjectType::Bridge_SHORT)
         {
-          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
+          CrossBridgeAction* bridgeAction = new CrossBridgeAction(*_robot, _objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = bridgeAction;
-          if(!RegisterSubAction(_chosenAction))
-          {
-            return ActionResult::FAILURE_ABORT;
-          }
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
-          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
+          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(*_robot, _objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
           _chosenAction = rampAction;
-          if(!RegisterSubAction(_chosenAction))
-          {
-            return ActionResult::FAILURE_ABORT;
-          }
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
@@ -989,16 +980,16 @@ namespace Anki {
     
 #pragma mark ---- FacePoseAction ----
     
-    FacePoseAction::FacePoseAction(const Pose3d& pose, Radians maxTurnAngle)
-    : PanAndTiltAction(0,0,false,true)
+    FacePoseAction::FacePoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
+    : PanAndTiltAction(robot, 0, 0, false, true)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
     }
     
-    FacePoseAction::FacePoseAction(Radians maxTurnAngle)
-    : PanAndTiltAction(0,0,false,true)
+    FacePoseAction::FacePoseAction(Robot& robot, Radians maxTurnAngle)
+    : PanAndTiltAction(robot, 0, 0, false, true)
     , _isPoseSet(false)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
@@ -1077,9 +1068,11 @@ namespace Anki {
     
 #pragma mark ---- VisuallyVerifyObjectAction ----
     
-    VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(ObjectID objectID,
+    VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(Robot& robot,
+                                                           ObjectID objectID,
                                                            Vision::Marker::Code whichCode)
-    : _objectID(objectID)
+    : IAction(robot)
+    , _objectID(objectID)
     , _whichCode(whichCode)
     , _waitToVerifyTime(-1)
     , _moveLiftToHeightAction()
@@ -1121,11 +1114,7 @@ namespace Anki {
       }
       
       // Get lift out of the way
-      _moveLiftToHeightAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV);
-      if(!RegisterSubAction(_moveLiftToHeightAction))
-      {
-        return ActionResult::FAILURE_ABORT;
-      }
+      _moveLiftToHeightAction = new MoveLiftToHeightAction(*_robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV);
       _moveLiftToHeightAction->SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
@@ -1240,8 +1229,9 @@ namespace Anki {
     
 #pragma mark ---- WaitAction ----
     
-    WaitAction::WaitAction(f32 waitTimeInSeconds)
-    :  _waitTimeInSeconds(waitTimeInSeconds)
+    WaitAction::WaitAction(Robot& robot, f32 waitTimeInSeconds)
+    : IAction(robot)
+    , _waitTimeInSeconds(waitTimeInSeconds)
     , _doneTimeInSeconds(-1.f)
     {
       // Put the wait time with two decimals of precision in the action's name

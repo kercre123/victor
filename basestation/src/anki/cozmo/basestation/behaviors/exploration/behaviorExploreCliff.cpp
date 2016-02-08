@@ -104,7 +104,7 @@ Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec, 
   }
   
   // request the action
-  DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( _currentVantagePoints );
+  DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( robot, _currentVantagePoints );
   _currentActionTag = driveToPoseAction->GetTag();
   robot.GetActionList().QueueActionNow(driveToPoseAction);
 

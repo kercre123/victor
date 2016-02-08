@@ -57,8 +57,9 @@ namespace Anki {
 
     #pragma mark ---- IDockAction ----
 
-    IDockAction::IDockAction(ObjectID objectID, const bool useManualSpeed)
-    :  _dockObjectID(objectID)
+    IDockAction::IDockAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
+    : IAction(robot)
+    , _dockObjectID(objectID)
     , _useManualSpeed(useManualSpeed)
     {
       
@@ -247,7 +248,7 @@ namespace Anki {
             PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
                              "Playing animation %s ",
                              _liftMovingAnimation.c_str());
-            _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_liftMovingAnimation, 1, false));
+            _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(*_robot, _liftMovingAnimation, 1, false));
           } else {
             PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
                                 "Could not find animation %s",
@@ -274,14 +275,10 @@ namespace Anki {
       // Set up a visual verification action to make sure we can still see the correct
       // marker of the selected object before proceeding
       // NOTE: This also disables tracking head to object if there was any
-      _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
+      _faceAndVerifyAction = new FaceObjectAction(*_robot,
+                                                  _dockObjectID,
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
-      
-      if(!RegisterSubAction(_faceAndVerifyAction))
-      {
-        return ActionResult::FAILURE_ABORT;
-      }
 
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->SetEmitCompletionSignal(false);
@@ -402,9 +399,10 @@ namespace Anki {
     
 #pragma mark ---- PopAWheelieAction ----
     
-    PopAWheelieAction::PopAWheelieAction(ObjectID objectID,
+    PopAWheelieAction::PopAWheelieAction(Robot& robot,
+                                         ObjectID objectID,
                                          const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    : IDockAction(robot, objectID, useManualSpeed)
     {
       
     }
@@ -532,10 +530,11 @@ namespace Anki {
     
 #pragma mark ---- AlignWithObjectAction ----
     
-    AlignWithObjectAction::AlignWithObjectAction(ObjectID objectID,
+    AlignWithObjectAction::AlignWithObjectAction(Robot& robot,
+                                                 ObjectID objectID,
                                                  const f32 distanceFromMarker_mm,
                                                  const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    : IDockAction(robot, objectID, useManualSpeed)
     {
       SetPlacementOffset(distanceFromMarker_mm, 0, 0);
     }
@@ -602,8 +601,8 @@ namespace Anki {
     
 #pragma mark ---- PickupObjectAction ----
     
-    PickupObjectAction::PickupObjectAction(ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    PickupObjectAction::PickupObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
+    : IDockAction(robot, objectID, useManualSpeed)
     {
       SetPostDockLiftMovingAnimation("LiftEffortPickup");
     }
@@ -800,7 +799,8 @@ namespace Anki {
     
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
-    PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
+    PlaceObjectOnGroundAction::PlaceObjectOnGroundAction(Robot& robot)
+    : IAction(robot)
     {
       
     }
@@ -836,12 +836,9 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, true, false);
+        _faceAndVerifyAction = new FaceObjectAction(*_robot, _carryingObjectID,
+                                                    _carryObjectMarker->GetCode(), 0, true, false);
         
-        if(!RegisterSubAction(_faceAndVerifyAction))
-        {
-          return ActionResult::FAILURE_ABORT;
-        }
         _faceAndVerifyAction->SetEmitCompletionSignal(false);
         
       } // if/else IsCarryingObject()
@@ -900,30 +897,31 @@ namespace Anki {
     
 #pragma mark ---- PlaceObjectOnGroundAtPoseAction ----
     
-    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Robot& robot,
+    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(Robot& robot,
                                                                      const Pose3d& placementPose,
                                                                      const PathMotionProfile motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
-    : CompoundActionSequential({
+    : CompoundActionSequential(robot, {
       new DriveToPlaceCarriedObjectAction(robot,
                                           placementPose,
                                           true,
                                           motionProfile,
                                           useExactRotation,
                                           useManualSpeed),
-      new PlaceObjectOnGroundAction()})
+      new PlaceObjectOnGroundAction(robot)})
     {
       
     }
     
 #pragma mark ---- PlaceRelObjectAction ----
     
-    PlaceRelObjectAction::PlaceRelObjectAction(ObjectID objectID,
+    PlaceRelObjectAction::PlaceRelObjectAction(Robot& robot,
+                                               ObjectID objectID,
                                                const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    : IDockAction(robot, objectID, useManualSpeed)
     {
       SetPlacementOffset(placementOffsetX_mm, 0, 0);
       SetPlaceOnGround(placeOnGround);
@@ -1033,11 +1031,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, move the lift out of the
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
-              _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), true, false);
-              if(!RegisterSubAction(_placementVerifyAction))
-              {
-                return ActionResult::FAILURE_ABORT;
-              }
+              _placementVerifyAction = new FaceObjectAction(*_robot, _carryObjectID, Radians(0), true, false);
               _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
@@ -1085,12 +1079,8 @@ namespace Anki {
                 if(result == ActionResult::SUCCESS) {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
-                  _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
-                  
-                  if(!RegisterSubAction(_placementVerifyAction))
-                  {
-                    return ActionResult::FAILURE_ABORT;
-                  }
+                  _placementVerifyAction = new MoveLiftToHeightAction(*_robot,
+                                                                      MoveLiftToHeightAction::Preset::LOW_DOCK);
                   
                   // Disable completion signals since this is inside another action
                   _placementVerifyAction->SetEmitCompletionSignal(false);
@@ -1130,8 +1120,8 @@ namespace Anki {
     
 #pragma mark ---- RollObjectAction ----
     
-    RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    RollObjectAction::RollObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
+    : IDockAction(robot, objectID, useManualSpeed)
     {
       _dockAction = DockAction::DA_ROLL_LOW;
       SetPostDockLiftMovingAnimation("LiftEffortRoll");
@@ -1246,12 +1236,7 @@ namespace Anki {
             
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
-              _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
-              
-              if(!RegisterSubAction(_rollVerifyAction))
-              {
-                return ActionResult::FAILURE_ABORT;
-              }
+              _rollVerifyAction = new VisuallyVerifyObjectAction(*_robot, _dockObjectID, _expectedMarkerPostRoll->GetCode());
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetEmitCompletionSignal(false);
@@ -1306,8 +1291,8 @@ namespace Anki {
     
 #pragma mark ---- AscendOrDescendRampAction ----
     
-    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed)
-    : IDockAction(rampID, useManualSpeed)
+    AscendOrDescendRampAction::AscendOrDescendRampAction(Robot& robot, ObjectID rampID, const bool useManualSpeed)
+    : IDockAction(robot, rampID, useManualSpeed)
     {
       
     }
@@ -1366,8 +1351,8 @@ namespace Anki {
     
 #pragma mark ---- MountChargerAction ----
     
-    MountChargerAction::MountChargerAction(ObjectID chargerID, const bool useManualSpeed)
-    : IDockAction(chargerID, useManualSpeed)
+    MountChargerAction::MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed)
+    : IDockAction(robot, chargerID, useManualSpeed)
     {
       
     }
@@ -1413,8 +1398,8 @@ namespace Anki {
 
 #pragma mark ---- CrossBridgeAction ----
     
-    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed)
-    : IDockAction(bridgeID, useManualSpeed)
+    CrossBridgeAction::CrossBridgeAction(Robot& robot, ObjectID bridgeID, const bool useManualSpeed)
+    : IDockAction(robot, bridgeID, useManualSpeed)
     {
       
     }

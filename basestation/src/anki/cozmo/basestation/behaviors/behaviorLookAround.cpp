@@ -146,11 +146,11 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
     }
     case State::StartLooking:
     {
-      IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
+      IActionRunner* moveHeadAction = new MoveHeadToAngleAction(robot, _lookAroundHeadAngle_rads);
       _actionsInProgress.insert(moveHeadAction->GetTag());
       robot.GetActionList().QueueActionAtEnd(moveHeadAction);
       
-      IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+      IActionRunner* moveLiftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
       _actionsInProgress.insert(moveLiftAction->GetTag());
       robot.GetActionList().QueueActionAtEnd(moveLiftAction);
       
@@ -177,12 +177,12 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
         
-        FaceObjectAction* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, true);
+        FaceObjectAction* faceObjectAction = new FaceObjectAction(robot, objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, true);
         faceObjectAction->SetPanTolerance(DEG_TO_RAD(2));
         _actionsInProgress.insert(faceObjectAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(faceObjectAction);
         
-        IActionRunner* moveLiftHeightAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+        IActionRunner* moveLiftHeightAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
         _actionsInProgress.insert(moveLiftHeightAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(moveLiftHeightAction);
         
@@ -196,7 +196,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
       // If we queued up some face object actions, add a move head action at the end to go back to normal
       if (queuedFaceObjectAction)
       {
-        IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
+        IActionRunner* moveHeadAction = new MoveHeadToAngleAction(robot, _lookAroundHeadAngle_rads);
         _actionsInProgress.insert(moveHeadAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(moveHeadAction);
       }
@@ -263,10 +263,11 @@ Result BehaviorLookAround::StartMoving(Robot& robot)
     }
   }
   
-    IActionRunner* goToPoseAction = new DriveToPoseAction(destPose,
-                                                        DEFAULT_PATH_MOTION_PROFILE,
-                                                        false,
-                                                        false);
+    IActionRunner* goToPoseAction = new DriveToPoseAction(robot,
+                                                          destPose,
+                                                          DEFAULT_PATH_MOTION_PROFILE,
+                                                          false,
+                                                          false);
   _currentDriveActionID = goToPoseAction->GetTag();
   _actionsInProgress.insert(_currentDriveActionID);
   robot.GetActionList().QueueActionAtEnd(goToPoseAction, 3);

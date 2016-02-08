@@ -47,13 +47,12 @@ namespace Anki {
     {
     public:
       
-      IActionRunner();
+      IActionRunner(Robot& robot);
       virtual ~IActionRunner();
       
-      virtual void SetRobot(Robot& robot);
-      Robot* GetRobot() { return _robot; }
-      
       ActionResult Update();
+      
+      Robot* GetRobot() { return _robot; }
       
       // Tags can be used to identify specific actions. A unique tag is assigned
       // at construction, or it can be overridden with SetTag(). The Tag is
@@ -129,20 +128,7 @@ namespace Anki {
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
       
-      // "Register" an action created/used by a derived class so that its
-      // Cleanup gets called as needed, and it gets deleted as needed.
-      // If this action's cleanup gets called, all registered sub actions'
-      // cleanup methods get called. Also, just before Init(), in case the
-      // action is reset and run again.
-      // Call after new-ing subAction inside of Init()
-      bool RegisterSubAction(IActionRunner* &subAction);
-
-      // Call Cancel and Update on any registered sub actions and then delete them
-      void CancelAndDeleteSubActions();
-      
     private:
-      
-      std::list<IActionRunner**>  _subActions;
 
       u8            _numRetriesRemaining = 0;
       
@@ -194,7 +180,7 @@ namespace Anki {
     {
     public:
       
-      IAction();
+      IAction(Robot& robot);
       virtual ~IAction() { }
       
       

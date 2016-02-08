@@ -24,9 +24,10 @@ namespace Anki {
 
     #pragma mark ---- PlayAnimationAction ----
 
-    PlayAnimationAction::PlayAnimationAction(const std::string& animName,
+    PlayAnimationAction::PlayAnimationAction(Robot& robot, const std::string& animName,
                                              u32 numLoops, bool interruptRunning)
-    : _animName(animName)
+    : IAction(robot)
+    , _animName(animName)
     , _name("PlayAnimation" + animName + "Action")
     , _numLoops(numLoops)
     , _interruptRunning(interruptRunning)
@@ -201,9 +202,10 @@ namespace Anki {
 
     #pragma mark ---- PlayAnimationGroupAction ----
 
-    PlayAnimationGroupAction::PlayAnimationGroupAction(const std::string& animGroupName,
+    PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
+                                                       const std::string& animGroupName,
                                                        u32 numLoops, bool interruptRunning)
-    : PlayAnimationAction("", numLoops, interruptRunning),
+    : PlayAnimationAction(robot, "", numLoops, interruptRunning),
     _animGroupName(animGroupName)
     {
       
@@ -217,10 +219,12 @@ namespace Anki {
 
     #pragma mark ---- DeviceAudioAction ----
 
-    DeviceAudioAction::DeviceAudioAction(const Audio::GenericEvent event,
+    DeviceAudioAction::DeviceAudioAction(Robot& robot,
+                                         const Audio::GenericEvent event,
                                          const Audio::GameObjectType gameObj,
                                          const bool waitUntilDone)
-    : _actionType( AudioActionType::Event )
+    : IAction(robot)
+    , _actionType( AudioActionType::Event )
     , _name( "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)) )
     , _waitUntilDone( waitUntilDone )
     , _event( event )
@@ -228,15 +232,18 @@ namespace Anki {
     { }
 
     // Stop All Events on Game Object, pass in Invalid to stop all audio
-    DeviceAudioAction::DeviceAudioAction(const Audio::GameObjectType gameObj)
-    : _actionType( AudioActionType::StopEvents )
+    DeviceAudioAction::DeviceAudioAction(Robot& robot,
+                                         const Audio::GameObjectType gameObj)
+    : IAction(robot)
+    , _actionType( AudioActionType::StopEvents )
     , _name( "StopAudioEvents_GameObj_" + std::string(EnumToString(gameObj)) )
     , _gameObj( gameObj )
     { }
 
     // Change Music state
-    DeviceAudioAction::DeviceAudioAction(const Audio::MUSIC state)
-    : _actionType( AudioActionType::SetState )
+    DeviceAudioAction::DeviceAudioAction(Robot& robot, const Audio::MUSIC state)
+    : IAction(robot)
+    , _actionType( AudioActionType::SetState )
     , _name( "PlayAudioMusicState_" + std::string(EnumToString(state)) )
     , _stateGroup( Audio::StateGroupType::MUSIC )
     , _state( static_cast<Audio::GenericState>(state) )
