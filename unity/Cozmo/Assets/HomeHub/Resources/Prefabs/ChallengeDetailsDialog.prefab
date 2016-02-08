@@ -117,24 +117,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &150310
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22438192}
-  - 222: {fileID: 22239272}
-  - 114: {fileID: 11495132}
-  - 114: {fileID: 11406066}
-  m_Layer: 5
-  m_Name: BackgroundFilter
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &162186
 GameObject:
   m_ObjectHideFlags: 1
@@ -285,17 +267,6 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &11406066
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 150310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f104e4d6ac664253afab1991414929e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &11421726
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -329,6 +300,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: '#button.startChallenge'
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11428092
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -340,7 +312,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: a94f089e8642b420b85f7eaa8e68f936, type: 2}
   m_Color: {r: 1, g: .958269656, b: .860294104, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
@@ -350,9 +322,9 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
-    m_FontSize: 72
+    m_FontSize: 80
     m_FontStyle: 0
-    m_BestFit: 1
+    m_BestFit: 0
     m_MinSize: 64
     m_MaxSize: 80
     m_Alignment: 2
@@ -362,6 +334,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: START
   _AllUppercase: 1
+  GlowText: 1
 --- !u!114 &11430330
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -431,6 +404,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: 2 Players, 2 Power Cubes
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11452342
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -470,9 +444,9 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
-    m_FontSize: 72
+    m_FontSize: 80
     m_FontStyle: 0
-    m_BestFit: 1
+    m_BestFit: 0
     m_MinSize: 64
     m_MaxSize: 80
     m_Alignment: 2
@@ -482,6 +456,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: START
   _AllUppercase: 1
+  GlowText: 0
 --- !u!114 &11454248
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -589,6 +564,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: '#challengeDetails.label.requires'
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11471404
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -668,45 +644,12 @@ MonoBehaviour:
     FieldName: ChallengeDetailsDialog:_StartChallengeButton
     ReferencePath: 
   ModifiedGlobalReferences: []
---- !u!114 &11495132
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 150310}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: ca044b66fe6b64c598c4ff70ac9ccd4a, type: 3}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
 --- !u!222 &22230866
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 181838}
---- !u!222 &22239272
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 150310}
 --- !u!222 &22248400
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -762,7 +705,7 @@ RectTransform:
   - {fileID: 22453538}
   - {fileID: 22419840}
   m_Father: {fileID: 22469838}
-  m_RootOrder: 9
+  m_RootOrder: 8
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 506.25, y: 96.7200012}
@@ -779,7 +722,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22469838}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 105, y: -87.5}
@@ -813,11 +756,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22469838}
-  m_RootOrder: 6
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 720, y: -377.529999}
-  m_SizeDelta: {x: 1380, y: 294.049988}
+  m_RootOrder: 5
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 6.69995117, y: 25.75}
+  m_SizeDelta: {x: -46.6000977, y: -512.51001}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22435504
 RectTransform:
@@ -834,23 +777,6 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 250, y: 0}
-  m_SizeDelta: {x: 500, y: 0}
-  m_Pivot: {x: .5, y: .5}
---- !u!224 &22438192
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 150310}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 22469838}
-  m_RootOrder: 2
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 250.000031, y: -1.52587891e-05}
   m_SizeDelta: {x: 500, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22439330
@@ -934,7 +860,7 @@ RectTransform:
   m_Children:
   - {fileID: 22451318}
   m_Father: {fileID: 22469838}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -128, y: -119.25}
@@ -952,7 +878,6 @@ RectTransform:
   m_Children:
   - {fileID: 22435504}
   - {fileID: 22442764}
-  - {fileID: 22438192}
   - {fileID: 22473298}
   - {fileID: 22483800}
   - {fileID: 22463988}
@@ -962,10 +887,10 @@ RectTransform:
   - {fileID: 22416042}
   m_Father: {fileID: 22439330}
   m_RootOrder: 0
-  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: .850000024}
-  m_AnchoredPosition: {x: -720, y: 100}
-  m_SizeDelta: {x: 1440, y: -200}
+  m_AnchoredPosition: {x: 175, y: 100}
+  m_SizeDelta: {x: -350, y: -200}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22471858
 RectTransform:
@@ -979,11 +904,11 @@ RectTransform:
   m_Children:
   - {fileID: 22481794}
   m_Father: {fileID: 22469838}
-  m_RootOrder: 7
-  m_AnchorMin: {x: .5, y: 0}
+  m_RootOrder: 6
+  m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: .200000003}
-  m_AnchoredPosition: {x: 124, y: 0}
-  m_SizeDelta: {x: -249, y: 50}
+  m_AnchoredPosition: {x: -273, y: 0}
+  m_SizeDelta: {x: 544, y: 50}
   m_Pivot: {x: .5, y: 0}
 --- !u!224 &22473298
 RectTransform:
@@ -996,7 +921,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22469838}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 250.000031, y: 3.05175781e-05}
@@ -1030,7 +955,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22469838}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -239.5, y: -119.25}
@@ -1058,6 +983,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _CenteredIconViewportPos.y
       value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_MinWidth
+      value: 1200
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

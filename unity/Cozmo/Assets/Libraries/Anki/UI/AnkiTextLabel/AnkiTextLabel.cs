@@ -15,6 +15,8 @@ namespace Anki.UI {
     [SerializeField]
     private bool _AllUppercase = false;
 
+    public bool GlowText = false;
+
     private string _LocalizedTextKey = String.Empty;
     private string _DisplayText = String.Empty;
 
@@ -120,7 +122,7 @@ namespace Anki.UI {
         m_Text = _DisplayText;
       }
 
-      base.OnPopulateMesh(vh);
+      OnPopulateMeshInternal(vh);
 
       if (null != saveText) {
         m_Text = saveText;
@@ -145,6 +147,71 @@ namespace Anki.UI {
       Material newMaterial = base.GetModifiedMaterial(baseMaterial);
       // newMaterial = baseMaterial;
       return newMaterial;
+    }
+
+    protected void OnPopulateMeshInternal(UnityEngine.UI.VertexHelper vertexHelper) {
+      base.OnPopulateMesh(vertexHelper);
+
+      if (GlowText) {
+        List<UIVertex> stream = new List<UIVertex>();
+        vertexHelper.GetUIVertexStream(stream);
+        vertexHelper.Clear();
+
+        UIVertex[] quad = new UIVertex[4];
+
+        for (int i = 0; i < stream.Count; i += 6) {
+          // the array is in triangles, but we want quads
+          var topLeft = stream[i];
+          var topRight = stream[i + 1];
+          var bottomRight = stream[i + 2];
+          // can ignore 3 and 5 since they are duplicates
+          var bottomLeft = stream[i + 4];
+
+          // Add 5 units to all sides;
+
+          float outlineWidth = 5;
+
+          var uvMaxX = Mathf.Max(Mathf.Max(topLeft.uv0.x, topRight.uv0.x), Mathf.Max(bottomLeft.uv0.x, bottomRight.uv0.x));
+          var uvMinX = Mathf.Min(Mathf.Min(topLeft.uv0.x, topRight.uv0.x), Mathf.Min(bottomLeft.uv0.x, bottomRight.uv0.x));
+          var uvMaxY = Mathf.Max(Mathf.Max(topLeft.uv0.y, topRight.uv0.y), Mathf.Max(bottomLeft.uv0.y, bottomRight.uv0.y));
+          var uvMinY = Mathf.Min(Mathf.Min(topLeft.uv0.y, topRight.uv0.y), Mathf.Min(bottomLeft.uv0.y, bottomRight.uv0.y));
+
+          var uvDiag = new Vector2(uvMaxX - uvMinX, uvMaxY - uvMinY);
+          var sizeDiag = topRight.position - bottomLeft.position;
+
+          var uvDelta = new Vector2(outlineWidth * uvDiag.x / sizeDiag.x, outlineWidth * uvDiag.y / sizeDiag.y);
+
+          topLeft.position += new Vector3(-outlineWidth, outlineWidth, 0);
+          topRight.position += new Vector3(outlineWidth, outlineWidth, 0);
+          bottomLeft.position += new Vector3(-outlineWidth, -outlineWidth, 0);
+          bottomRight.position += new Vector3(outlineWidth, -outlineWidth, 0);
+
+          topLeft.uv0 += new Vector2(topLeft.uv0.x == uvMinX ? -uvDelta.x : uvDelta.x, topLeft.uv0.y == uvMinY ? -uvDelta.y : uvDelta.y);
+          topRight.uv0 += new Vector2(topRight.uv0.x == uvMinX ? -uvDelta.x : uvDelta.x, topRight.uv0.y == uvMinY ? -uvDelta.y : uvDelta.y);
+          bottomLeft.uv0 += new Vector2(bottomLeft.uv0.x == uvMinX ? -uvDelta.x : uvDelta.x, bottomLeft.uv0.y == uvMinY ? -uvDelta.y : uvDelta.y);
+          bottomRight.uv0 += new Vector2(bottomRight.uv0.x == uvMinX ? -uvDelta.x : uvDelta.x, bottomRight.uv0.y == uvMinY ? -uvDelta.y : uvDelta.y);
+
+          var uv1 = new Vector2(2 * (uvMaxX - uvMinX) / (sizeDiag.x + 2 * outlineWidth), 2 * (uvMaxY - uvMinY) / (sizeDiag.y + 2 * outlineWidth));
+          var tangent = new Vector4(uvMinX - uv1.x, uvMinY - uv1.y, uvMaxX + uv1.x, uvMaxY + uv1.y);
+
+          topLeft.tangent = tangent;
+          topRight.tangent = tangent;
+          bottomLeft.tangent = tangent;
+          bottomRight.tangent = tangent;
+
+          topLeft.uv1 = uv1;
+          topRight.uv1 = uv1;
+          bottomLeft.uv1 = uv1;
+          bottomRight.uv1 = uv1;
+
+          quad[0] = topLeft;
+          quad[1] = topRight;
+          quad[2] = bottomRight;
+          quad[3] = bottomLeft;
+
+          vertexHelper.AddUIVertexQuad(quad);
+        }
+      }
     }
   }
 }

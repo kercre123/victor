@@ -24,7 +24,7 @@ namespace Cozmo.UI {
         if (value != _IsGrayscale) {
           _IsGrayscale = value;
           if (_IsGrayscale) {
-            _GrayscaleMaterialInstance = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GrayscaleShader);
+            _GrayscaleMaterialInstance = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GrayscaleShader, _ImageToGrayscale.defaultMaterial.renderQueue);
             _ImageToGrayscale.material = _GrayscaleMaterialInstance;
           }
           else {

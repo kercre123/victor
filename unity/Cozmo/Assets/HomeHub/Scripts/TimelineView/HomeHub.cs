@@ -113,8 +113,19 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance.Initialize(_ChallengeStatesById[challenge].data, buttonTransform);
       _ChallengeDetailsDialogInstance.OpenView();
 
+
+      var timelineViewInstance = _TimelineViewInstance;
+      timelineViewInstance.LockScroll(true);
+      _ChallengeDetailsDialogInstance.ViewClosed += () => 
+      {
+        if(timelineViewInstance != null) {
+          timelineViewInstance.LockScroll(false);
+        }
+      };
+
       // React to when we should start the challenge.
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
+
     }
 
     private void HandleMiniGameLose(StatContainer rewards) {
