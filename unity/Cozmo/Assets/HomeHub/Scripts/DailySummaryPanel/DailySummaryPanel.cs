@@ -7,30 +7,22 @@ using Cozmo.UI;
 using Anki.Cozmo;
 
 public class DailySummaryPanel : BaseView {
-
-  // Animation Names
-  private const string kIdleAnimationName = "Idle";
-  private const string kLevelReachedAnimationName = "LevelReached";
-  private const string kMaxLevelAnimationName = "MaxLevel";
-
-  // B versions put the current level label on the bottom
-  private const string kIdleAnimationNameB = "IdleB";
-  private const string kLevelReachedAnimationNameB = "LevelReachedB";
-  private const string kMaxLevelAnimationNameB = "MaxLevelB";
-
+  
   public Cozmo.HomeHub.TimelineView.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
 
   // yay magic numbers
-  const float kInitialFillPoint = 0.43f;
+  const float kInitialFillPoint = 0.275f;
   const float kFinalFillPoint = 0.835f;
-  const float kNextFillPoint = 1.00f;
-  const float kFillDuration = 1.5f;
+  const float kFillDuration = 1.2f;
+
+  [SerializeField]
+  private Color _UnlockedLevelColor;
+
+  [SerializeField]
+  private Color _LockedLevelColor;
 
   [SerializeField]
   private AnkiTextLabel _Title;
-
-  [SerializeField]
-  private Animator _FriendBarAnimator;
 
   [SerializeField]
   private Image _FriendBar;
@@ -115,10 +107,9 @@ public class DailySummaryPanel : BaseView {
     return newBadge;
   }
 
-  private IEnumerator FriendshipBarFill(float start, float end, float timeLimit, bool isNext = false) {
-    float fillEnd = isNext ? kNextFillPoint : kFinalFillPoint;
-    start = Mathf.Lerp(kInitialFillPoint, fillEnd, start);
-    end = Mathf.Lerp(kInitialFillPoint, fillEnd, end);
+  private IEnumerator FriendshipBarFill(float start, float end, float timeLimit) {
+    start = Mathf.Lerp(kInitialFillPoint, kFinalFillPoint, start);
+    end = Mathf.Lerp(kInitialFillPoint, kFinalFillPoint, end);
 
     var startTime = Time.time;
 
@@ -146,36 +137,26 @@ public class DailySummaryPanel : BaseView {
     // first go through all levels that we reached
     for (int level = data.StartingFriendshipLevel; 
           level < data.EndingFriendshipLevel; level++) {
-      // play the idle which displays the labels we want
-      _FriendBarAnimator.Play(level % 2 == 0 ? kIdleAnimationName : kIdleAnimationNameB);
 
       // set up the labels
       SetFriendshipTexts(
         levelConfig.FriendshipLevels[level].FriendshipLevelName,
-        levelConfig.FriendshipLevels[level + 1].FriendshipLevelName,
-        level % 2 == 0,
-        level + 2 < levelConfig.FriendshipLevels.Length ?
-          levelConfig.FriendshipLevels[level + 2].FriendshipLevelName :
-          string.Empty);
+        levelConfig.FriendshipLevels[level + 1].FriendshipLevelName);
 
       pointsRequired = levelConfig.FriendshipLevels[level + 1].PointsRequired;
 
       startingPercent = startingPoints / pointsRequired;
 
       // fill the progress bar to the top
-      bool nextLvl = data.EndingFriendshipLevel - level >= 1.0f;
-      yield return StartCoroutine(FriendshipBarFill(startingPercent, 1f, kFillDuration / (data.EndingFriendshipLevel - level), nextLvl));
+      yield return StartCoroutine(FriendshipBarFill(startingPercent, 1f, kFillDuration / (data.EndingFriendshipLevel - level)));
 
       // if there is another level after the next, play the animation
       // where the next dot slides to where the current dot is
       if (level + 2 < levelConfig.FriendshipLevels.Length) {
-        _FriendBarAnimator.Play(level % 2 == 0 ? kLevelReachedAnimationName : kLevelReachedAnimationNameB);
-
         yield return StartCoroutine(FriendshipBarFill(1, 0, 0.0f));
       }
       else {
         // otherwise, we are at max level. fill the next circle and keep it there
-        _FriendBarAnimator.Play(level % 2 == 0 ? kMaxLevelAnimationName : kMaxLevelAnimationNameB);
         yield break;
       }
 
@@ -189,12 +170,9 @@ public class DailySummaryPanel : BaseView {
     // if this isn't the max level, show our progress toward our next level
     if (data.EndingFriendshipLevel + 1 < levelConfig.FriendshipLevels.Length) {
 
-      _FriendBarAnimator.Play(data.EndingFriendshipLevel % 2 == 0 ? kIdleAnimationName : kIdleAnimationNameB);
-
       SetFriendshipTexts(
         levelConfig.FriendshipLevels[data.EndingFriendshipLevel].FriendshipLevelName,
-        levelConfig.FriendshipLevels[data.EndingFriendshipLevel + 1].FriendshipLevelName,
-        data.EndingFriendshipLevel % 2 == 0);
+        levelConfig.FriendshipLevels[data.EndingFriendshipLevel + 1].FriendshipLevelName, true);
 
       pointsRequired = levelConfig.FriendshipLevels[data.EndingFriendshipLevel + 1].PointsRequired;
 
@@ -206,12 +184,9 @@ public class DailySummaryPanel : BaseView {
       // if we are at max level, just play the max level animation (leaves the end dot full)
       startingPercent = endingPercent = 1f;
 
-      _FriendBarAnimator.Play(data.EndingFriendshipLevel % 2 == 1 ? kMaxLevelAnimationName : kMaxLevelAnimationNameB);
-
       SetFriendshipTexts(
         levelConfig.FriendshipLevels[data.EndingFriendshipLevel - 1].FriendshipLevelName,
-        levelConfig.FriendshipLevels[data.EndingFriendshipLevel].FriendshipLevelName,
-        data.EndingFriendshipLevel % 2 == 1);
+        levelConfig.FriendshipLevels[data.EndingFriendshipLevel].FriendshipLevelName);
     }
 
     yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent, kFillDuration));
@@ -221,15 +196,14 @@ public class DailySummaryPanel : BaseView {
   }
 
   // sets the labels on the friendship timeline
-  private void SetFriendshipTexts(string current, string next, bool even, string nextNext = null) {
-
-    // not sure what setting text to null does
-    nextNext = nextNext ?? string.Empty;
-
-    // for even levels, we show the top label for the current and the bottom for the next
-    // we set the unshown labels to the next value, so when the animation ends and
-    // switches them, they will already be correct regardless of synchronization with code
+  private void SetFriendshipTexts(string current, string next, bool nextLocked = false) {
     _CurrentFriendshipLevel.text = current;
     _NextFriendshipLevel.text = next;
+    if (nextLocked) {
+      _NextFriendshipLevel.color = _LockedLevelColor;
+    }
+    else {
+      _NextFriendshipLevel.color = _UnlockedLevelColor;
+    }
   }
 }

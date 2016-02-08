@@ -8,7 +8,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22498698}
-  - 95: {fileID: 9524222}
   - 114: {fileID: 11473066}
   m_Layer: 5
   m_Name: FriendshipBar
@@ -606,23 +605,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!95 &9524222
-Animator:
-  serializedVersion: 3
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 101714}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 3a20434a5f8cd40f6be503d0d006a89e, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
 --- !u!114 &11404458
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -905,8 +887,9 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 11478410}
   DimBackground: 1
+  _UnlockedLevelColor: {r: .701960802, g: .894117653, b: 1, a: 1}
+  _LockedLevelColor: {r: .0352941193, g: .141176477, b: .203921571, a: 1}
   _Title: {fileID: 11435872}
-  _FriendBarAnimator: {fileID: 9524222}
   _FriendBar: {fileID: 11440056}
   _DailyProgressBar: {fileID: 11404458}
   _ObjectivesContainer: {fileID: 22462446}
@@ -991,6 +974,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: '#dailySummary.title'
   _AllUppercase: 1
+  GlowText: 0
 --- !u!114 &11435882
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1216,6 +1200,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: Next
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11468626
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1421,7 +1406,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: .701960802, g: .894117653, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1442,6 +1427,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: Current
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11486132
 MonoBehaviour:
   m_ObjectHideFlags: 1
