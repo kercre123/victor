@@ -1286,8 +1286,20 @@ namespace Cozmo {
       GetObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes, filter);
       
     } // GetObstacles()
-    
-    
+
+    void BlockWorld::FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result) const
+    {
+      // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
+      // the filter to the result vector
+      FindFcn findLambda = [&result](ObservableObject* candidateObject, ObservableObject* best) {
+        result.push_back(candidateObject);
+        return false;
+      };
+
+      // ignore return value, since the findLambda stored everything in result
+      FindObjectHelper(findLambda, filter, false);
+    }
+
     void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight,
                                               const f32 maxHeight,
                                               const f32 padding,
