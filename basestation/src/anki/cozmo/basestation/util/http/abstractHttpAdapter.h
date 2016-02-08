@@ -8,14 +8,14 @@
 //
 //
 
-#ifndef driveEngine_abstractHttpAdapter_h
-#define driveEngine_abstractHttpAdapter_h
+#ifndef __Cozmo_Basestation_Util_Http_IHttpAdapter_H__
+#define __Cozmo_Basestation_Util_Http_IHttpAdapter_H__
 
 #include <functional>
 #include <string>
 #include <map>
 #include <vector>
-#include "httpRequest.h"
+#include "anki/cozmo/basestation/util/http/httpRequest.h"
 
 namespace Anki {
   

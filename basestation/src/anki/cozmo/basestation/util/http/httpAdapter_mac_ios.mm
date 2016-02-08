@@ -1,14 +1,18 @@
-//
-//  httpAdapter_mac_ios.mm
-//  OverDrive
-//
-//  Created by Aubrey Goodman on 3/5/15.
-//  Updated by Molly Jameson on 2/4/16
-//  Copyright (c) 2015 Anki, Inc. All rights reserved.
-//
+/**
+ * File: httpAdapter_mac_ios.mm
+ *
+ * Created by Aubrey Goodman on 3/5/15.
+ * Updated: Molly Jameson
+ * Date:   2/4/16
+ *
+ * Description: Create native interface for http connections.
+ *
+ *
+ * Copyright: Anki, Inc. 2016
+ **/
 
-#import "httpAdapter_mac_ios.h"
-#import "../codeTimer.h"
+#import "anki/cozmo/basestation/util/http/httpAdapter_mac_ios.h"
+#import "anki/cozmo/basestation/util/codeTimer.h"
 #import "util/logging/logging.h"
 #import "util/dispatchQueue/dispatchQueue.h"
 

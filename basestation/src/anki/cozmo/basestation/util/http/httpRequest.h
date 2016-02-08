@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef driveEngine_abstractHttpRequest_h
-#define driveEngine_abstractHttpRequest_h
+#ifndef __Cozmo_Basestation_Util_Http_HttpRequest_H__
+#define __Cozmo_Basestation_Util_Http_HttpRequest_H__
 
 #include <map>
 #include <string>

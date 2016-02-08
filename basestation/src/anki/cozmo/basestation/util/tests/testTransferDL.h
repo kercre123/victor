@@ -9,11 +9,11 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef ANKI_COZMO_TEST_TRANSFER_DL_H
-#define ANKI_COZMO_TEST_TRANSFER_DL_H
+#ifndef __Cozmo_Basestation_Util_Tests_TestTransferDL_H__
+#define __Cozmo_Basestation_Util_Tests_TestTransferDL_H__
 
 
- #include "../ITransferable.h"
+ #include "anki/cozmo/basestation/util/transferQueue/iTransferable.h"
 
 namespace Anki {
   

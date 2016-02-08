@@ -1,5 +1,5 @@
 /**
- * File: httpAdapterCreator.h
+ * File: createHttpAdapter.h
  *
  * Author: Molly Jameson
  * Date:   1/29/2016
@@ -11,8 +11,8 @@
  **/
 
 
-#ifndef __Ios_httpAdapterCreator_H__
-#define __Ios_httpAdapterCreator_H__
+#ifndef __Cozmo_Basestation_Util_Http_CreateHttpAdapter_H__
+#define __Cozmo_Basestation_Util_Http_CreateHttpAdapter_H__
 
 // Forward declaration:
 namespace Anki {
@@ -23,4 +23,4 @@ namespace Util {
 
 Anki::Util::IHttpAdapter* CreateHttpAdapter();
 
-#endif // end __Ios_httpAdapterCreator_H__
+#endif // end __Cozmo_Basestation_Util_Http_CreateHttpAdapter_H__

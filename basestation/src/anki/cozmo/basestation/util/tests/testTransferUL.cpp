@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "TestTransferUL.h"
+#include "anki/cozmo/basestation/util/tests/TestTransferUL.h"
 
 namespace Anki {
   
@@ -17,7 +17,7 @@ namespace Anki {
     
     TestTransferUL::TestTransferUL() : ITransferable( )
     {
-      m_Data = "SomeTestSpamString";
+      _data = "SomeTestSpamString";
     }
     TestTransferUL::~TestTransferUL()
     {
@@ -25,12 +25,12 @@ namespace Anki {
     
     void TestTransferUL::SetData(std::string str)
     {
-      m_Data = str;
+      _data = str;
     }
     
     void TestTransferUL::OnTransferReady( TransferQueueMgr::StartRequestFunc funcStartRequest )
     {
-      if( m_Data != "")
+      if( _data != "")
       {
         HttpRequestCallback callback =
           std::bind(&ITransferable::OnTransferComplete, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3,std::placeholders::_4);
@@ -38,10 +38,10 @@ namespace Anki {
         request.uri = "http://localhost:8000";
         request.method = Anki::Util::HttpMethodPost;
         std::map<std::string, std::string> params;
-        params["MessageBody"] = m_Data;
+        params["MessageBody"] = _data;
         request.params = params;
         
-        funcStartRequest(request, m_DispatchQueue, callback);
+        funcStartRequest(request, _dispatchQueue, callback);
       }
     }
     
@@ -53,7 +53,7 @@ namespace Anki {
         printf("TestTransferUL::OnTransferComplete Error\n");
         return;
       }
-      m_Data = "";
+      _data = "";
       printf("TestTransferUL::OnTransferComplete success\n");
     }
     

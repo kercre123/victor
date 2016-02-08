@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "testTransferDL.h"
+#include "anki/cozmo/basestation/util/tests/testTransferDL.h"
 
 namespace Anki {
   
@@ -27,8 +27,7 @@ namespace Anki {
       HttpRequest request;
       request.uri = "http://www.google.com";
       request.method = Anki::Util::HttpMethodGet;
-      
-      funcStartRequest(request, m_DispatchQueue, callback);
+      funcStartRequest(request, _dispatchQueue, callback);
     }
     
     void TestTransferDL::OnTransferComplete(const HttpRequest& request,const int responseCode, const std::map<std::string,std::string>& responseHeaders, const std::vector<uint8_t>& responseBody)

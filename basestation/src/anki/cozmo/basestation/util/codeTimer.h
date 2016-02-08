@@ -10,8 +10,8 @@
  *  Copyright (c) 2015 Anki. All rights reserved.
  **/
 
-#ifndef __driveEngine_util_codeTimer_codeTimer_H__
-#define __driveEngine_util_codeTimer_codeTimer_H__
+#ifndef __Cozmo_Basestation_Util_CodeTimer_H__
+#define __Cozmo_Basestation_Util_CodeTimer_H__
 
 #include <chrono>
 
@@ -43,7 +43,7 @@ public:
   }
 };
 
-} // namespace DriveEngine
+} // namespace Util
 } // namespace Anki
 
-#endif // __driveEngine_util_codeTimer_codeTimer_H__
+#endif // __Cozmo_Basestation_Util_CodeTimer_H__

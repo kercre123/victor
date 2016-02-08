@@ -10,10 +10,10 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef ANKI_COZMO_TEST_TRANSFER_UL_H
-#define ANKI_COZMO_TEST_TRANSFER_UL_H
+#ifndef __Cozmo_Basestation_Util_Tests_TestTransferUL_H__
+#define __Cozmo_Basestation_Util_Tests_TestTransferUL_H__
 
-#include "../ITransferable.h"
+#include "anki/cozmo/basestation/util/transferQueue/iTransferable.h"
 #include <string>
 
 namespace Anki {
@@ -33,10 +33,10 @@ namespace Anki {
                                       std::string>& responseHeaders, const std::vector<uint8_t>& responseBody);
       
       void SetData(std::string str);
-      std::string GetData() { return m_Data; }
+      std::string GetData() { return _data; }
       
     protected:
-      std::string m_Data;
+      std::string _data;
       
     }; // class
     

@@ -21,19 +21,19 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef ANKI_COZMO_TRANSFER_QUEUE_H
-#define ANKI_COZMO_TRANSFER_QUEUE_H
+#ifndef __Cozmo_Basestation_Util_TransferQueue_TransferQueueMgr_H__
+#define __Cozmo_Basestation_Util_TransferQueue_TransferQueueMgr_H__
 
 #include "util/signals/simpleSignal.hpp"
-
-#include "http/abstractHttpAdapter.h"
+#include "util/helpers/noncopyable.h"
+#include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
 
 
 namespace Anki {
   
   namespace Util {
     
-    class TransferQueueMgr
+    class TransferQueueMgr : public Util::noncopyable
     {
     public:
       using StartRequestFunc = std::function<void(const HttpRequest&,Util::Dispatch::Queue*,HttpRequestCallback )>;
@@ -41,7 +41,7 @@ namespace Anki {
       
       // ----------
       TransferQueueMgr();
-      ~TransferQueueMgr();
+      virtual ~TransferQueueMgr();
       
       // Interface for native background thread
       void SetCanConnect(bool can_connect);
@@ -52,14 +52,14 @@ namespace Anki {
       Signal::SmartHandle RegisterHttpTransferReadyCallback( OnTransferReadyFunc func );
       
     protected:
-      IHttpAdapter* m_HttpAdapter;
+      IHttpAdapter* _httpAdapter;
       // State that says if we should be sending out requests or not.
-      bool          m_CanConnect;
-      int           m_NumRequests;
+      bool          _canConnect;
+      int           _numRequests;
       
       // Sender for us, OnTransferReadyFunc
       using TransferQueueSignal = Signal::Signal< void (StartRequestFunc) >;
-      TransferQueueSignal m_Signal;
+      TransferQueueSignal _signal;
       
       virtual void StartDataTransfer();
       
@@ -72,4 +72,4 @@ namespace Anki {
   } // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_COZMO_TRANSFER_QUEUE_H
+#endif // __Cozmo_Basestation_Util_TransferQueue_TransferQueueMgr_H__

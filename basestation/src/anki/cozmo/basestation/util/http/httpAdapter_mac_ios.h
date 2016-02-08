@@ -1,13 +1,20 @@
-//
-//  httpAdapter_osx.h
-//  OverDrive
-//
-//  Created by Aubrey Goodman on 3/5/15.
-//  Updated by Molly Jameson on 2/4/16
-//  Copyright (c) 2015 Anki, Inc. All rights reserved.
-//
+/**
+ * File: httpAdapter_osx.h
+ *
+ * Created by Aubrey Goodman on 3/5/15.
+ * Updated: Molly Jameson
+ * Date:   2/4/16
+ *
+ * Description: Create native interface for http connections.
+ *
+ *
+ * Copyright: Anki, Inc. 2016
+ **/
 
-#include "abstractHttpAdapter.h"
+#ifndef __Cozmo_Basestation_Util_Http_HttpAdapterMacIos_H_
+#define __Cozmo_Basestation_Util_Http_HttpAdapterMacIos_H_
+
+#include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
 #import <Foundation/Foundation.h>
 
 namespace Anki {
@@ -54,3 +61,5 @@ namespace Util {
   
 } // namespace Util
 } // namespace Anki
+
+#endif

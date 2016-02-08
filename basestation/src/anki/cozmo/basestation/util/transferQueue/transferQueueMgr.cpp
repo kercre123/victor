@@ -13,61 +13,59 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "transferQueueMgr.h"
-#include "http/abstractHttpAdapter.h"
-#include "http/CreateHttpAdapter.h"
-#include "ITransferable.h"
+#include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
+#include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
+#include "anki/cozmo/basestation/util/http/CreateHttpAdapter.h"
+#include "anki/cozmo/basestation/util/transferQueue/iTransferable.h"
 #include "util/helpers/templateHelpers.h"
 
 #include <string>
-// TODO: DAS is in it's own world and just gets uploaded in it's own library.
-//#include "DAS.h"
 
 namespace Anki {
   
   namespace Util {
     
     TransferQueueMgr::TransferQueueMgr():
-    m_CanConnect(false),
-    m_NumRequests(0)
+    _canConnect(false),
+    _numRequests(0)
     {
-      m_HttpAdapter = nullptr;
+      _httpAdapter = nullptr;
 #ifdef ANDROID
 #elif LINUX
 #else
-      m_HttpAdapter = CreateHttpAdapter();
+      _httpAdapter = CreateHttpAdapter();
 #endif
     }
     
     TransferQueueMgr::~TransferQueueMgr()
     {
-      SafeDelete(m_HttpAdapter);
+      SafeDelete(_httpAdapter);
     }
     
     // Prevents any new requests from going out.
     void TransferQueueMgr::SetCanConnect(bool can_connect)
     {
-      m_CanConnect = can_connect;
-      if( m_CanConnect )
+      _canConnect = can_connect;
+      if( _canConnect )
       {
         StartDataTransfer();
       }
     }
     bool TransferQueueMgr::GetCanConnect()
     {
-      return m_CanConnect;
+      return _canConnect;
     }
     
     int  TransferQueueMgr::GetNumActiveRequests()
     {
-      return m_NumRequests;
+      return _numRequests;
     }
     
     Signal::SmartHandle TransferQueueMgr::RegisterHttpTransferReadyCallback( OnTransferReadyFunc func )
     {
-      Signal::SmartHandle handle = m_Signal.ScopedSubscribe(func);
+      Signal::SmartHandle handle = _signal.ScopedSubscribe(func);
       // We're already open, let the caller transfer now but don't call everyone
-      if( m_CanConnect )
+      if( _canConnect )
       {
         StartRequestFunc mgr_callback_func = std::bind(&TransferQueueMgr::StartRequest, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
         func(mgr_callback_func);
@@ -78,18 +76,15 @@ namespace Anki {
     // Called from OS background threads when we have internet again....
     void TransferQueueMgr::StartDataTransfer()
     {
-      // TODO: tell DAS it can upload now
-      //DASForceFlushNow();
-      
       StartRequestFunc mgr_callback_func = std::bind(&TransferQueueMgr::StartRequest, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
-      m_Signal.emit(mgr_callback_func);
+      _signal.emit(mgr_callback_func);
     }
     
     void TransferQueueMgr::StartRequest(const HttpRequest& request, Util::Dispatch::Queue* queue, HttpRequestCallback user_callback)
     {
-      if( m_HttpAdapter )
+      if( _httpAdapter )
       {
-        m_NumRequests++;
+        _numRequests++;
         
         HttpRequestCallback callback_wrapper =
         [this, user_callback] (const HttpRequest& request,
@@ -97,12 +92,12 @@ namespace Anki {
                 const std::map<std::string, std::string>& responseHeaders,
                 const std::vector<uint8_t>& responseBody)
         {
-          this->m_NumRequests--;
+          this->_numRequests--;
           // Tell the user about it.
           user_callback(request,responseCode,responseHeaders,responseBody);
         };
         
-        m_HttpAdapter->StartRequest(request, queue, callback_wrapper);
+        _httpAdapter->StartRequest(request, queue, callback_wrapper);
       }
     }
     

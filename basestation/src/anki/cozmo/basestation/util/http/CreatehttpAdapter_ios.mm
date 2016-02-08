@@ -1,5 +1,5 @@
 /**
- * File: httpAdapterCreator.cpp
+ * File: createHttpAdapter_ios.mm
  *
  * Author: Molly Jameson
  * Date:   1/29/2016
@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#import "CreateHttpAdapter.h"
-#include "httpAdapter_mac_ios.h"
+#include "anki/cozmo/basestation/util/http/createHttpAdapter.h"
+#include "anki/cozmo/basestation/util/http/httpAdapter_mac_ios.h"
 
 Anki::Util::IHttpAdapter* CreateHttpAdapter()
 {

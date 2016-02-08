@@ -4,7 +4,7 @@
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "anki/cozmo/basestation/util/transferQueueMgr.h"
+#include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 //#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/messaging/basestation/advertisementService.h"

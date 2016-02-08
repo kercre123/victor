@@ -1,5 +1,5 @@
 /**
- * File: ITransferable.h
+ * File: iTransferable.h
  *
  * Author: Molly Jameson
  * Date:   1/29/2016
@@ -11,12 +11,12 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef ANKI_COZMO_ITRANSFERABLE_H
-#define ANKI_COZMO_ITRANSFERABLE_H
+#ifndef __Cozmo_Basestation_Util_TransferQueue_ITransferable_H__
+#define __Cozmo_Basestation_Util_TransferQueue_ITransferable_H__
 
 #include <string>
 #include "util/signals/simpleSignal_fwd.h"
-#include "transferQueueMgr.h"
+#include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 
 namespace Util {
   namespace Dispatch {
@@ -32,7 +32,7 @@ namespace Anki {
     {
     public:
       ITransferable();
-      ~ITransferable();
+      virtual ~ITransferable();
       
       // Because Listening requires some vitual functions, object must be fully constructed before messages get sent.
       virtual void Init(TransferQueueMgr* transferQueueMgr);
@@ -43,14 +43,14 @@ namespace Anki {
       virtual void OnTransferComplete(const HttpRequest& request,const int responseCode, const std::map<std::string,
                                       std::string>& responseHeaders, const std::vector<uint8_t>& responseBody) {};
     protected:
-      Util::Dispatch::Queue* m_DispatchQueue;
+      Util::Dispatch::Queue* _dispatchQueue;
       
     private:
-      Signal::SmartHandle m_Handle;
+      Signal::SmartHandle _handle;
     }; 
     
     
   } // namespace Util
 } // namespace Anki
 
-#endif // ANKI_COZMO_ITRANSFERABLE_H
+#endif // __Cozmo_Basestation_Util_TransferQueue_ITransferable_H__
