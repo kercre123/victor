@@ -389,6 +389,8 @@ MonoBehaviour:
     panePrefab: {fileID: 113112, guid: 58ea6632f74e84ddb86cbf44b0ed57fd, type: 2}
   - name: Debug Console
     panePrefab: {fileID: 113112, guid: 3bd508acfffff402bb84d7e68c9e2964, type: 2}
+  - name: Data Persistence
+    panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
   - name: The Rest
     panePrefab: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
@@ -575,7 +577,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.size
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: tabButtonPrefab_
@@ -622,10 +624,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[7].panePrefab
       value: 
-      objectReference: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
+      objectReference: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[7].name
-      value: The Rest
+      value: Data Persistence
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[2].name
