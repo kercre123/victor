@@ -21,6 +21,6 @@ MonoBehaviour:
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
-  _HowToPlayDialogContentPrefab: {fileID: 131798, guid: 9981867c3655b4dbca3b75d21c3d9dd3,
-    type: 2}
+  _HowToPlayDialogContentLocKey: cubeSlap.text.howToPlay
+  _HowToPlayDialogContentPrefab: {fileID: 0}
   MinigameConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}

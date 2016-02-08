@@ -14,7 +14,13 @@ namespace Cozmo {
       [SerializeField]
       private HowToPlayView _HowToPlayViewPrefab;
       private HowToPlayView _HowToPlayViewInstance;
-      private GameObject _HowToPlayViewContentPrefab;
+
+      private string _HowToPlayLocKey = null;
+      private GameObject _HowToPlayViewContentPrefab = null;
+
+      public void Initialize(string howToPlayTextLocKey) {
+        _HowToPlayLocKey = howToPlayTextLocKey;
+      }
 
       public void Initialize(GameObject howToPlayViewContents) {
         _HowToPlayViewContentPrefab = howToPlayViewContents;
@@ -59,7 +65,12 @@ namespace Cozmo {
           overrideBackgroundDim: overrideBackgroundDim,
           overrideCloseOnTouchOutside: overrideCloseOnTouchOutside
         ) as HowToPlayView;
-        _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
+        if (_HowToPlayViewContentPrefab != null) {
+          _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
+        }
+        else {
+          _HowToPlayViewInstance.Initialize(_HowToPlayLocKey);
+        }
       }
 
       public void CloseHowToPlayView() {

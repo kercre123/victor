@@ -63,7 +63,8 @@ namespace Simon {
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
       BlackoutLights();
-      _GameInstance.RaiseMiniGameLose("WINNER: COZMO", "Guess Length: " + _SequenceList.Count);
+      _GameInstance.RaiseMiniGameLose(Localization.GetWithArgs(
+        LocalizationKeys.kSimonGameTextPatternLength, _SequenceList.Count));
     }
 
     private void BlackoutLights() {
