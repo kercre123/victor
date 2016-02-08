@@ -68,6 +68,7 @@ class CozmoContext : private Util::noncopyable
 public:
   CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
   CozmoContext();
+  virtual ~CozmoContext();
   
   IExternalInterface*                   GetExternalInterface() const { return _externalInterface; }
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
@@ -86,12 +87,12 @@ private:
   Util::Data::DataPlatform*                               _dataPlatform = nullptr;
   
   // Context holds onto these things for everybody:
-  std::shared_ptr<Audio::AudioServer>                     _audioServer;
-  std::shared_ptr<Util::RandomGenerator>                  _random;
-  std::shared_ptr<Comms::AdvertisementService>            _robotAdvertisementService;
-  std::shared_ptr<RobotManager>                           _robotMgr;
-  std::shared_ptr<RobotInterface::MessageHandler>         _robotMsgHandler;
-  std::shared_ptr<VizManager>                             _vizManager;
+  std::unique_ptr<Audio::AudioServer>             _audioServer;
+  std::unique_ptr<Util::RandomGenerator>          _random;
+  std::unique_ptr<Comms::AdvertisementService>    _robotAdvertisementService;
+  std::unique_ptr<RobotManager>                   _robotMgr;
+  std::unique_ptr<RobotInterface::MessageHandler> _robotMsgHandler;
+  std::unique_ptr<VizManager>                     _vizManager;
 };
   
 
