@@ -20,6 +20,12 @@ public class DailySummaryPanel : BaseView {
 
   public Cozmo.HomeHub.TimelineView.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
 
+  // yay magic numbers
+  const float kInitialFillPoint = 0.43f;
+  const float kFinalFillPoint = 0.835f;
+  const float kNextFillPoint = 1.00f;
+  const float kFillDuration = 1.5f;
+
   [SerializeField]
   private AnkiTextLabel _Title;
 
@@ -45,14 +51,10 @@ public class DailySummaryPanel : BaseView {
   private GameObject _ChallengePrefab;
 
   [SerializeField]
-  private AnkiTextLabel _CurrentFriendshipLevelTop;
-  [SerializeField]
-  private AnkiTextLabel _CurrentFriendshipLevelBottom;
+  private AnkiTextLabel _CurrentFriendshipLevel;
 
   [SerializeField]
-  private AnkiTextLabel _NextFriendshipLevelTop;
-  [SerializeField]
-  private AnkiTextLabel _NextFriendshipLevelBottom;
+  private AnkiTextLabel _NextFriendshipLevel;
 
   [SerializeField]
   private Transform _BonusBarContainer;
@@ -87,21 +89,9 @@ public class DailySummaryPanel : BaseView {
       }
     }
 
-    RectTransform subContainer = null;
+    //RectTransform subContainer = null;
     for (int i = 0; i < data.CompletedChallenges.Count; i++) {
-      // we want challenges to appear in groups of 3
-      if (i % 3 == 0) {
-        var subContainerObject = new GameObject();
-
-        var layoutGroup = subContainerObject.AddComponent<HorizontalLayoutGroup>();
-        layoutGroup.childForceExpandWidth = true;
-        layoutGroup.childForceExpandHeight = false;
-
-        // not sure if subContainer will automatically have a rect transform
-        subContainer = subContainerObject.GetComponent<RectTransform>() ?? subContainerObject.AddComponent<RectTransform>();
-        subContainer.SetParent(_ChallengesContainer, false);
-      }
-      CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, subContainer);
+      CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, _ChallengesContainer);
     }
 
     AnimateFriendshipBar(data);
@@ -125,14 +115,10 @@ public class DailySummaryPanel : BaseView {
     return newBadge;
   }
 
-  private IEnumerator FriendshipBarFill(float start, float end) {
-    // yay magic numbers
-    const float initialPoint = 0.14f;
-    const float finalPoint = 0.86f;
-    const float timeLimit = 1.42f;
-
-    start = Mathf.Lerp(initialPoint, finalPoint, start);
-    end = Mathf.Lerp(initialPoint, finalPoint, end);
+  private IEnumerator FriendshipBarFill(float start, float end, float timeLimit, bool isNext = false) {
+    float fillEnd = isNext ? kNextFillPoint : kFinalFillPoint;
+    start = Mathf.Lerp(kInitialFillPoint, fillEnd, start);
+    end = Mathf.Lerp(kInitialFillPoint, fillEnd, end);
 
     var startTime = Time.time;
 
@@ -177,14 +163,15 @@ public class DailySummaryPanel : BaseView {
       startingPercent = startingPoints / pointsRequired;
 
       // fill the progress bar to the top
-      yield return StartCoroutine(FriendshipBarFill(startingPercent, 1f));
+      bool nextLvl = data.EndingFriendshipLevel - level >= 1.0f;
+      yield return StartCoroutine(FriendshipBarFill(startingPercent, 1f, kFillDuration / (data.EndingFriendshipLevel - level), nextLvl));
 
       // if there is another level after the next, play the animation
       // where the next dot slides to where the current dot is
       if (level + 2 < levelConfig.FriendshipLevels.Length) {
         _FriendBarAnimator.Play(level % 2 == 0 ? kLevelReachedAnimationName : kLevelReachedAnimationNameB);
 
-        yield return StartCoroutine(FriendshipBarFill(1, 0));
+        yield return StartCoroutine(FriendshipBarFill(1, 0, 0.0f));
       }
       else {
         // otherwise, we are at max level. fill the next circle and keep it there
@@ -227,7 +214,7 @@ public class DailySummaryPanel : BaseView {
         data.EndingFriendshipLevel % 2 == 1);
     }
 
-    yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent));
+    yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent, kFillDuration));
     if (FriendshipBarAnimateComplete != null) {
       FriendshipBarAnimateComplete(data, this);
     }
@@ -238,14 +225,11 @@ public class DailySummaryPanel : BaseView {
 
     // not sure what setting text to null does
     nextNext = nextNext ?? string.Empty;
-    // TODO: Localize
 
     // for even levels, we show the top label for the current and the bottom for the next
     // we set the unshown labels to the next value, so when the animation ends and
     // switches them, they will already be correct regardless of synchronization with code
-    _CurrentFriendshipLevelTop.text = even ? current : next;
-    _CurrentFriendshipLevelBottom.text = even ? next : current;
-    _NextFriendshipLevelTop.text = even ? nextNext : next;
-    _NextFriendshipLevelBottom.text = even ? next : nextNext;
+    _CurrentFriendshipLevel.text = current;
+    _NextFriendshipLevel.text = next;
   }
 }
