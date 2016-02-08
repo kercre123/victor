@@ -172,8 +172,8 @@ void IBehaviorRequestGame::StartActing(Robot& robot, IActionRunner* action)
 void IBehaviorRequestGame::CancelAction(Robot& robot)
 {
   if( _isActing ) {
-          robot.GetActionList().Cancel( _lastActionTag );
-      _isActing = false;
+    robot.GetActionList().Cancel( _lastActionTag );
+    _isActing = false;
   }
 }
 

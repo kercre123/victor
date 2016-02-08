@@ -77,7 +77,7 @@ IBehavior::Status BehaviorRequestGameSimple::UpdateInternal(Robot& robot, double
     return Status::Running;
   }
 
-  PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.Compelte", "no current actions, so finishing");
+  PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.Complete", "no current actions, so finishing");
 
   return Status::Complete;
 }
