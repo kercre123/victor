@@ -33,6 +33,8 @@ public class DailyGoalPanel : MonoBehaviour {
 
   [SerializeField]
   private RectTransform _Title;
+  [SerializeField]
+  private RectTransform _TitleGlow;
 
   [SerializeField]
   private AnimationCurve _TitleScaleCurve;
@@ -83,6 +85,6 @@ public class DailyGoalPanel : MonoBehaviour {
   private void Update() {
     var rect = _RectTransform.rect;
 
-    _Title.localScale = Vector3.one * _TitleScaleCurve.Evaluate(rect.width);
+    _TitleGlow.localScale = _Title.localScale = Vector3.one * _TitleScaleCurve.Evaluate(rect.width);
   }
 }

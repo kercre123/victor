@@ -86,6 +86,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
+--- !u!1 &133360
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22432608}
+  - 222: {fileID: 22206186}
+  - 114: {fileID: 11419908}
+  m_Layer: 5
+  m_Name: WeekLabelGlow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &143074
 GameObject:
   m_ObjectHideFlags: 1
@@ -224,6 +241,40 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
+--- !u!114 &11419908
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 133360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 2100000, guid: a94f089e8642b420b85f7eaa8e68f936, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
+    m_FontSize: 32
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: '#timeline.weekLabel'
+  _AllUppercase: 1
+  GlowText: 1
 --- !u!114 &11421294
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -274,6 +325,7 @@ MonoBehaviour:
   _FriendshipLabel: {fileID: 11454364}
   _WeekLine: {fileID: 110044}
   _WeekLabel: {fileID: 11470370}
+  _WeekLabelGlow: {fileID: 11419908}
 --- !u!114 &11436876
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -483,6 +535,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: Buddy
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11457862
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -543,6 +596,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: '#timeline.weekLabel'
   _AllUppercase: 1
+  GlowText: 0
 --- !u!114 &11476604
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -638,6 +692,12 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!222 &22206186
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 133360}
 --- !u!222 &22217630
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -792,10 +852,10 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22453684}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 0, y: 530}
+  m_AnchoredPosition: {x: 2.86102295e-06, y: 530.000061}
   m_SizeDelta: {x: 200, y: 100}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22424548
@@ -814,6 +874,23 @@ RectTransform:
   m_AnchorMax: {x: .5, y: .5}
   m_AnchoredPosition: {x: 0, y: 277}
   m_SizeDelta: {x: 160, y: 163}
+  m_Pivot: {x: .5, y: .5}
+--- !u!224 &22432608
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 133360}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22453684}
+  m_RootOrder: 0
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 530}
+  m_SizeDelta: {x: 200, y: 100}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22435022
 RectTransform:
@@ -860,6 +937,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 22432608}
   - {fileID: 22421862}
   m_Father: {fileID: 22401856}
   m_RootOrder: 0
