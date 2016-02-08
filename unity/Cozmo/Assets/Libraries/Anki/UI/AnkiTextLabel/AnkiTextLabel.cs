@@ -83,7 +83,7 @@ namespace Anki.UI {
       }
 
       if (_FormattingArgs != null) {
-        displayText = string.Format(displayText, _FormattingArgs);
+        displayText = string.Format(Localization.GetCultureInfo(), displayText, _FormattingArgs);
       }
 
       if (_AllUppercase) {

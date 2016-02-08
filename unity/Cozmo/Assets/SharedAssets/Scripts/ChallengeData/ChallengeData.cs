@@ -71,6 +71,12 @@ public class ChallengeData : ScriptableObject {
     get { return _ChallengeReqs; }
   }
 
+  [SerializeField]
+  protected string _HowToPlayDialogContentLocKey = null;
+
+  public string HowToPlayDialogContentLocKey {
+    get { return _HowToPlayDialogContentLocKey; }
+  }
 
   [SerializeField]
   protected GameObject _HowToPlayDialogContentPrefab;

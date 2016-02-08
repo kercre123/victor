@@ -112,10 +112,10 @@ namespace SpeedTap {
         int roundsLeft = _Rounds - losingScore - winningScore;
         if (winningScore > losingScore + roundsLeft) {
           if (_PlayerRoundsWon > _CozmoRoundsWon) {
-            RaiseMiniGameWin("WINNER: COZMO", "Cozmo " + _CozmoRoundsWon + ", " + "Player " + _PlayerRoundsWon);
+            RaiseMiniGameWin();
           }
           else {
-            RaiseMiniGameLose("WINNER: PLAYER", "Cozmo " + _CozmoRoundsWon + ", " + "Player " + _PlayerRoundsWon);
+            RaiseMiniGameLose();
           }
         }
         ResetScore();
@@ -134,13 +134,13 @@ namespace SpeedTap {
     protected void InitializeMinigameObjects(int cubesRequired) { 
 
       InitialCubesState initCubeState = new InitialCubesState(
-        new SelectDifficultyState(
-          new SpeedTapWaitForCubePlace(true),
-          DifficultyOptions,
-          Mathf.Max(DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
-        ), 
-        cubesRequired, 
-        InitialCubesDone);
+                                          new SelectDifficultyState(
+                                            new SpeedTapWaitForCubePlace(true),
+                                            DifficultyOptions,
+                                            Mathf.Max(DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
+                                          ), 
+                                          cubesRequired, 
+                                          InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
@@ -182,8 +182,7 @@ namespace SpeedTap {
       PlayerRoundsWon = _PlayerRoundsWon;
 
       // Display the current round
-      InfoTitleText = string.Format(Localization.GetCultureInfo(), 
-        Localization.Get(LocalizationKeys.kSpeedTapRoundsText), _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
     }
 
     public void RollingBlocks() {

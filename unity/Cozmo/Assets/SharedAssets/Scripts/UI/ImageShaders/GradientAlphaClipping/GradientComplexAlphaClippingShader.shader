@@ -40,6 +40,7 @@
       		float4 _AtlasUV;
       		float4 _ClippingEnd;
       		float4 _ClippingSize;
+      		float4 _Color;
 
 			v2f vert (appdata v)
 			{
@@ -74,6 +75,7 @@
 
 				float2 minAlpha2 = min(i.topRightAlpha,i.bottomLeftAlpha);
 				col.a = min(col.a, 1 - min(minAlpha2.x, minAlpha2.y));
+				col.rgb = col.rgb * _Color.rgb;
 
 				return col;
 			}

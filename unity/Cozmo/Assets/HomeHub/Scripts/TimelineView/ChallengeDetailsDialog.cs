@@ -50,14 +50,11 @@ public class ChallengeDetailsDialog : BaseView {
     else if (players == 1 && cubes != 1) {
       locKey = LocalizationKeys.kChallengeDetailsLabelPlayerAndCubesNeeded;
     }
-    else if(players != 1 && cubes == 1) {
+    else if (players != 1 && cubes == 1) {
       locKey = LocalizationKeys.kChallengeDetailsLabelPlayersAndCubeNeeded;
     }
       
-    _PlayersAndCubesLabel.text = string.Format(Localization.GetCultureInfo(),      
-      Localization.Get(locKey),
-      players,
-      cubes);
+    _PlayersAndCubesLabel.text = Localization.GetWithArgs(locKey, players, cubes);
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
     _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
     _ChallengeId = challengeData.ChallengeID;

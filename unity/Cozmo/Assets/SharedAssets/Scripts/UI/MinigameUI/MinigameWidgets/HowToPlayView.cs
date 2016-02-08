@@ -5,6 +5,10 @@ using DG.Tweening;
 
 namespace Cozmo {
   namespace MinigameWidgets {
+    /// <summary>
+    /// How to play view. Shows either a text field or a 
+    /// custom prefab within a scroll rect.
+    /// </summary>
     public class HowToPlayView : BaseView {
 
       [SerializeField]
@@ -13,9 +17,28 @@ namespace Cozmo {
       [SerializeField]
       private Transform _ContentsContainer;
 
+      [SerializeField]
+      private Anki.UI.AnkiTextLabel _ContentsTextLabel;
+
+      public void Initialize(string contentsLocKey) {
+        if (!string.IsNullOrEmpty(contentsLocKey)) {
+          _ContentsTextLabel.gameObject.SetActive(true);
+          _ContentsTextLabel.text = Localization.Get(contentsLocKey);
+          _ContentsContainer.gameObject.SetActive(false);
+        }
+        else {
+          _ContentsTextLabel.gameObject.SetActive(false);
+        }
+      }
+
       public void Initialize(GameObject contentsPrefab) {
         if (contentsPrefab != null) {
+          _ContentsContainer.gameObject.SetActive(true);
           UIManager.CreateUIElement(contentsPrefab, _ContentsContainer);
+          _ContentsTextLabel.gameObject.SetActive(false);
+        }
+        else {
+          _ContentsContainer.gameObject.SetActive(false);
         }
       }
 

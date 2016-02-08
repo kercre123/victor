@@ -27,6 +27,9 @@ namespace Cozmo {
       [SerializeField]
       private RectTransform _WinnerContainer;
 
+      [SerializeField]
+      private Canvas _WinnerCanvas;
+
       public float AnimationXOffset {
         set;
         private get;
@@ -75,6 +78,14 @@ namespace Cozmo {
         _ScoreContainer.gameObject.SetActive(false);
         _RoundContainer.gameObject.SetActive(false);
         _WinnerContainer.gameObject.SetActive(false);
+      }
+
+      private void Update() {
+        if (_WinnerContainer.gameObject.activeInHierarchy && _WinnerCanvas != null) {
+          // Force the canvas to reposition itself
+          _WinnerCanvas.gameObject.SetActive(false);
+          _WinnerCanvas.gameObject.SetActive(true);
+        }
       }
 
       #region IMinigameWidget
