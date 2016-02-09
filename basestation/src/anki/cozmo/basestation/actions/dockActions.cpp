@@ -82,6 +82,8 @@ namespace Anki {
       
       // Stop squinting
       _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
+      
+      Util::SafeDelete(_faceAndVerifyAction);
     }
 
     void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2)

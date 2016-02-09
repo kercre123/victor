@@ -23,9 +23,9 @@ namespace Anki {
     
 #pragma mark ---- ActionList ----
     
-    ActionList::ActionList(Robot& robot)
+    ActionList::ActionList()
     {
-      _robot = &robot;
+    
     }
     
     ActionList::~ActionList()

@@ -594,6 +594,7 @@ namespace Anki {
     PanAndTiltAction::PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
                                        bool isPanAbsolute, bool isTiltAbsolute)
     : IAction(robot)
+    , _compoundAction(robot)
     , _bodyPanAngle(bodyPan)
     , _headTiltAngle(headTilt)
     , _isPanAbsolute(isPanAbsolute)
@@ -685,22 +686,21 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init()
     {
-      CompoundActionParallel* newCompoundParallel = new CompoundActionParallel(*_robot);
-      _compoundAction = newCompoundParallel;
-      
-      newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
+      // Incase we are re-running this action
+      _compoundAction.ClearActions();
+      _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
       
       TurnInPlaceAction* action = new TurnInPlaceAction(*_robot, _bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
-      newCompoundParallel->AddAction(action);
+      _compoundAction.AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot->GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(*_robot, newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
-      newCompoundParallel->AddAction(headAction);
+      _compoundAction.AddAction(headAction);
       
       // Put the angles in the name for debugging
       _name = ("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
@@ -708,15 +708,15 @@ namespace Anki {
                "Action");
       
       // Prevent the compound action from signaling completion
-      newCompoundParallel->SetEmitCompletionSignal(false);
+      _compoundAction.SetEmitCompletionSignal(false);
       
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
-      newCompoundParallel->SetSuppressTrackLocking(true);
+      _compoundAction.SetSuppressTrackLocking(true);
       
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
-      ActionResult compoundResult = newCompoundParallel->Update();
+      ActionResult compoundResult = _compoundAction.Update();
       if(ActionResult::SUCCESS == compoundResult ||
          ActionResult::RUNNING == compoundResult)
       {
@@ -730,11 +730,7 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::CheckIfDone()
     {
-      if(nullptr == _compoundAction)
-      {
-        return ActionResult::SUCCESS;
-      }
-      return _compoundAction->Update();
+      return _compoundAction.Update();
     }
     
 #pragma mark ---- FaceObjectAction ----
@@ -758,7 +754,7 @@ namespace Anki {
                                        bool headTrackWhenDone)
     : FacePoseAction(robot, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
-    , _visuallyVerifyAction()
+    , _visuallyVerifyAction(robot, objectID, whichCode)
     , _objectID(objectID)
     , _whichCode(whichCode)
     , _visuallyVerifyWhenDone(visuallyVerifyWhenDone)
@@ -782,8 +778,6 @@ namespace Anki {
     
     ActionResult FaceObjectAction::Init()
     {
-      _visuallyVerifyAction = new VisuallyVerifyObjectAction(*_robot, _objectID, _whichCode);
-      
       ObservableObject* object = _robot->GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
@@ -858,7 +852,7 @@ namespace Anki {
       _facePoseCompoundActionDone = false;
       
       // Disable completion signals since this is inside another action
-      _visuallyVerifyAction->SetEmitCompletionSignal(false);
+      _visuallyVerifyAction.SetEmitCompletionSignal(false);
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
@@ -877,7 +871,7 @@ namespace Anki {
           
           // Go ahead and do a first tick of visual verification's Update, to
           // get it initialized
-          ActionResult verificationResult = _visuallyVerifyAction->Update();
+          ActionResult verificationResult = _visuallyVerifyAction.Update();
           if(ActionResult::SUCCESS != verificationResult) {
             return verificationResult;
           }
@@ -887,7 +881,7 @@ namespace Anki {
       // If we get here, _compoundAction completed returned SUCCESS. So we can
       // can continue with our additional checks:
       if (_visuallyVerifyWhenDone) {
-        ActionResult verificationResult = _visuallyVerifyAction->Update();
+        ActionResult verificationResult = _visuallyVerifyAction.Update();
         if (verificationResult != ActionResult::SUCCESS) {
           return verificationResult;
         } else {
@@ -1075,7 +1069,7 @@ namespace Anki {
     , _objectID(objectID)
     , _whichCode(whichCode)
     , _waitToVerifyTime(-1)
-    , _moveLiftToHeightAction()
+    , _moveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV)
     , _moveLiftToHeightActionDone(false)
     {
       
@@ -1114,14 +1108,13 @@ namespace Anki {
       }
       
       // Get lift out of the way
-      _moveLiftToHeightAction = new MoveLiftToHeightAction(*_robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV);
-      _moveLiftToHeightAction->SetEmitCompletionSignal(false);
+      _moveLiftToHeightAction.SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
       
       // Go ahead and do the first update on moving the lift, so we don't "waste"
       // the first tick of CheckIfDone initializing the sub-action.
-      ActionResult moveLiftInitResult = _moveLiftToHeightAction->Update();
+      ActionResult moveLiftInitResult = _moveLiftToHeightAction.Update();
       if(ActionResult::SUCCESS == moveLiftInitResult ||
          ActionResult::RUNNING == moveLiftInitResult)
       {
@@ -1191,7 +1184,7 @@ namespace Anki {
       } else {
         // Still waiting to see the object: keep moving head/lift
         if (!_moveLiftToHeightActionDone) {
-          ActionResult liftActionRes = _moveLiftToHeightAction->Update();
+          ActionResult liftActionRes = _moveLiftToHeightAction.Update();
           if (liftActionRes != ActionResult::SUCCESS) {
             if (liftActionRes != ActionResult::RUNNING) {
               PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.CompoundActionFailed",

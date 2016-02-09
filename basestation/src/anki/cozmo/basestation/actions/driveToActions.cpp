@@ -83,6 +83,7 @@ namespace Anki {
     , _distance_mm(-1.f)
     , _predockOffsetDistX_mm(predockOffsetDistX_mm)
     , _useManualSpeed(useManualSpeed)
+    , _compoundAction(robot)
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
     , _pathMotionProfile(motionProfile)
@@ -101,6 +102,7 @@ namespace Anki {
     , _distance_mm(distance)
     , _predockOffsetDistX_mm(0)
     , _useManualSpeed(useManualSpeed)
+    , _compoundAction(robot)
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
     , _pathMotionProfile(motionProfile)
@@ -277,12 +279,9 @@ namespace Anki {
         result = GetPossiblePoses(object, possiblePoses, alreadyInPosition);
       }
       
-      CompoundActionSequential* newCompoundSequential = new CompoundActionSequential(*_robot);
-      _compoundAction = newCompoundSequential;
-      
       // In case we are re-running this action, make sure compound actions are cleared.
       // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)
-      newCompoundSequential->ClearActions();
+      _compoundAction.ClearActions();
 
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
@@ -294,7 +293,7 @@ namespace Anki {
           driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
           driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
 
-          newCompoundSequential->AddAction(driveToPoseAction);
+          _compoundAction.AddAction(driveToPoseAction);
         }
         
         // Make sure we can see the object, unless we are carrying it (i.e. if we
@@ -307,14 +306,14 @@ namespace Anki {
                             faceObjectAction->GetTag(),
                             faceObjectAction->GetName().c_str());
 
-          newCompoundSequential->AddAction(faceObjectAction);
+          _compoundAction.AddAction(faceObjectAction);
         }
         
-        newCompoundSequential->SetEmitCompletionSignal(false);
+        _compoundAction.SetEmitCompletionSignal(false);
         
         // Go ahead and do the first Update on the compound action, so we don't
         // "waste" the first CheckIfDone call just initializing it
-        result = _compoundAction->Update();
+        result = _compoundAction.Update();
         if(ActionResult::RUNNING == result || ActionResult::SUCCESS == result) {
           result = ActionResult::SUCCESS;
         }
@@ -350,7 +349,7 @@ namespace Anki {
     
     ActionResult DriveToObjectAction::CheckIfDone()
     {
-      ActionResult result = _compoundAction->Update();
+      ActionResult result = _compoundAction.Update();
       
       if(result == ActionResult::SUCCESS) {
         // We completed driving to the pose and visually verifying the object
@@ -477,7 +476,7 @@ namespace Anki {
     
     ActionResult DriveToPlaceCarriedObjectAction::CheckIfDone()
     {
-      ActionResult result = _compoundAction->Update();
+      ActionResult result = _compoundAction.Update();
       
       // We completed driving to the pose. Unlike driving to an object for
       // pickup, we can't re-verify the accuracy of our final position, so

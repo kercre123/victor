@@ -148,7 +148,6 @@ protected:
   std::string _name;
   RobotActionType _type;
 private:
-  //TestCompoundActionSequential* _compoundAction;
   TestCompoundActionSequential _compoundAction;
 };
 

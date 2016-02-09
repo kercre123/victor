@@ -18,6 +18,8 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "util/helpers/templateHelpers.h"
+
 
 namespace Anki {
   
@@ -230,6 +232,7 @@ namespace Anki {
     public:
       
       PlaceObjectOnGroundAction(Robot& robot);
+      virtual ~PlaceObjectOnGroundAction() { Util::SafeDelete(_faceAndVerifyAction); }
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
@@ -282,6 +285,7 @@ namespace Anki {
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const bool useManualSpeed = false);
+      virtual ~PlaceRelObjectAction() { Util::SafeDelete(_placementVerifyAction); }
       
       virtual const std::string& GetName() const override;
       
@@ -319,6 +323,7 @@ namespace Anki {
     {
     public:
       RollObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
+      virtual ~RollObjectAction() { Util::SafeDelete(_rollVerifyAction); }
       
       virtual const std::string& GetName() const override;
       

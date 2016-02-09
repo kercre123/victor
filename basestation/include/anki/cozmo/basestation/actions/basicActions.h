@@ -21,6 +21,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "clad/types/animationKeyFrames.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
   
@@ -150,7 +151,7 @@ namespace Anki {
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
       
     private:
-      IActionRunner* _compoundAction = nullptr;
+      CompoundActionParallel _compoundAction;
       
       Radians _bodyPanAngle;
       Radians _headTiltAngle;
@@ -297,6 +298,7 @@ namespace Anki {
     {
     public:
       TraverseObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed);
+      virtual ~TraverseObjectAction() { Util::SafeDelete(_chosenAction); }
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TRAVERSE_OBJECT; }
@@ -345,6 +347,42 @@ namespace Anki {
     }; // class FacePoseAction
     
     
+    // Verify that an object exists by facing tilting the head to face its
+    // last-known pose and verify that we can still see it. Optionally, you can
+    // also require that a specific marker be seen as well.
+    class VisuallyVerifyObjectAction : public IAction
+    {
+    public:
+      VisuallyVerifyObjectAction(Robot& robot,
+                                 ObjectID objectID,
+                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
+      
+    protected:
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+      
+      // Max amount of time to wait before verifying after moving head that we are
+      // indeed seeing the object/marker we expect.
+      // TODO: Can this default be reduced?
+      virtual f32 GetWaitToVerifyTime() const { return 0.5f; }
+      
+      ObjectID                _objectID;
+      Vision::Marker::Code    _whichCode;
+      f32                     _waitToVerifyTime;
+      bool                    _objectSeen;
+      bool                    _markerSeen;
+      MoveLiftToHeightAction  _moveLiftToHeightAction;
+      bool                    _moveLiftToHeightActionDone;
+      Signal::SmartHandle     _observedObjectHandle;
+      
+    }; // class VisuallyVerifyObjectAction
+    
+    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
     class FaceObjectAction : public FacePoseAction
@@ -378,55 +416,19 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
+
+      virtual Radians      GetHeadAngle(f32 heightDiff) override;
       
-      virtual Radians GetHeadAngle(f32 heightDiff) override;
+      bool                       _facePoseCompoundActionDone;
       
-      bool                 _facePoseCompoundActionDone;
+      VisuallyVerifyObjectAction _visuallyVerifyAction;
       
-      IActionRunner*       _visuallyVerifyAction;
-      
-      ObjectID             _objectID;
-      Vision::Marker::Code _whichCode;
-      bool                 _visuallyVerifyWhenDone;
-      bool                 _headTrackWhenDone;
+      ObjectID                   _objectID;
+      Vision::Marker::Code       _whichCode;
+      bool                       _visuallyVerifyWhenDone;
+      bool                       _headTrackWhenDone;
       
     }; // FaceObjectAction
-    
-    
-    // Verify that an object exists by facing tilting the head to face its
-    // last-known pose and verify that we can still see it. Optionally, you can
-    // also require that a specific marker be seen as well.
-    class VisuallyVerifyObjectAction : public IAction
-    {
-    public:
-      VisuallyVerifyObjectAction(Robot& robot,
-                                 ObjectID objectID,
-                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
-      
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
-      
-    protected:
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-      
-      // Max amount of time to wait before verifying after moving head that we are
-      // indeed seeing the object/marker we expect.
-      // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.5f; }
-      
-      ObjectID                _objectID;
-      Vision::Marker::Code    _whichCode;
-      f32                     _waitToVerifyTime;
-      bool                    _objectSeen;
-      bool                    _markerSeen;
-      IActionRunner*          _moveLiftToHeightAction;
-      bool                    _moveLiftToHeightActionDone;
-      Signal::SmartHandle     _observedObjectHandle;
-      
-    }; // class VisuallyVerifyObjectAction
     
     
     // Waits for a specified amount of time in seconds, from the time the action
