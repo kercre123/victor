@@ -35,8 +35,7 @@ MovementComponent::MovementComponent(Robot& robot)
   {
     InitEventHandlers(*(_robot.GetExternalInterface()));
   }
-  _animTrackLockCount.fill(0);
-  _ignoreTrackMovementCount.fill(0);
+  _trackLockCount.fill(0);
 }
   
 void MovementComponent::InitEventHandlers(IExternalInterface& interface)
@@ -89,7 +88,7 @@ void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag face
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
-  if(IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK)) {
+  if(IsTrackLocked(AnimTrackFlag::BODY_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
                      "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
   } else {
@@ -115,7 +114,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 {
-  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
+  if(IsTrackLocked(AnimTrackFlag::HEAD_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
                      "Ignoring ExternalInterface::MoveHead while head is locked.");
   } else {
@@ -126,7 +125,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 {
-  if(IsMovementTrackIgnored(AnimTrackFlag::LIFT_TRACK)) {
+  if(IsTrackLocked(AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
@@ -188,118 +187,79 @@ int MovementComponent::GetFlagIndex(uint8_t flag) const
   return i;
 }
   
-bool MovementComponent::IsAnimTrackLocked(AnimTrackFlag track) const
+bool MovementComponent::IsTrackLocked(AnimTrackFlag track) const
 {
-  return _animTrackLockCount[GetFlagIndex((uint8_t)track)] > 0;
+  return _trackLockCount[GetFlagIndex((uint8_t)track)] > 0;
 }
 
-void MovementComponent::LockAnimTracks(uint8_t tracks)
+void MovementComponent::LockTracks(uint8_t tracks)
 {
   for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
     uint8_t curTrack = (1 << i);
     if ((tracks & curTrack) == curTrack)
     {
-      ++_animTrackLockCount[i];
+      ++_trackLockCount[i];
       
       // If we just went from not locked to locked, inform the robot
-      if (_animTrackLockCount[i] == 1)
+      if (_trackLockCount[i] == 1)
       {
         _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(curTrack)));
       }
     }
   }
 #if DEBUG_ANIMATION_LOCKING
-  PRINT_NAMED_INFO("MovementComponent.LockAnimTracks", "locked: (0x%x) %s, result:",
+  PRINT_NAMED_INFO("MovementComponent.LockTracks", "locked: (0x%x) %s, result:",
                    tracks,
                    AnimTrackFlagHelpers::AnimTrackFlagsToString(tracks).c_str());
-  PrintAnimationLockState();
+  PrintLockState();
 #endif
 }
 
-void MovementComponent::UnlockAnimTracks(uint8_t tracks)
+void MovementComponent::UnlockTracks(uint8_t tracks)
 {
   for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
     uint8_t curTrack = (1 << i);
     if ((tracks & curTrack) == curTrack)
     {
-      --_animTrackLockCount[i];
+      --_trackLockCount[i];
 
       // If we just went from locked to not locked, inform the robot
-      if (_animTrackLockCount[i] == 0)
+      if (_trackLockCount[i] == 0)
       {
         _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
       }
 
       // It doesn't matter if there are more unlocks than locks
-      if(_animTrackLockCount[i] < 0)
+      if(_trackLockCount[i] < 0)
       {
 #       if DEBUG_ANIMATION_LOCKING
-        PRINT_NAMED_WARNING("MovementComponent.UnlockAnimTracks", "Anim track locks and unlocks do not match");
+        PRINT_NAMED_WARNING("MovementComponent.UnlockTracks", "Track locks and unlocks do not match");
 #       endif
-        _animTrackLockCount[i] = 0;
+        _trackLockCount[i] = 0;
       }
     }
   }
 #if DEBUG_ANIMATION_LOCKING
-  PRINT_NAMED_INFO("MovementComponent.LockAnimTracks", "unlocked: (0x%x) %s, result:",
+  PRINT_NAMED_INFO("MovementComponent.LockTracks", "unlocked: (0x%x) %s, result:",
                    tracks,
                    AnimTrackFlagHelpers::AnimTrackFlagsToString(tracks).c_str());
-  PrintAnimationLockState();
+  PrintLockState();
 #endif
 }
 
-void MovementComponent::PrintAnimationLockState() const
+void MovementComponent::PrintLockState() const
 {
   std::stringstream ss;
   for( int trackNum = 0; trackNum < (int)AnimConstants::NUM_TRACKS; ++trackNum ) {
-    if( _animTrackLockCount[trackNum] > 0 ) {
+    if( _trackLockCount[trackNum] > 0 ) {
       uint8_t trackEnumVal = 1 << trackNum;
-      ss << AnimTrackHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _animTrackLockCount[trackNum] << ' ';
+      ss << AnimTrackHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _trackLockCount[trackNum] << ' ';
     }
   }
 
-  PRINT_NAMED_DEBUG("MovementComponent.AnimationLocks", "%s", ss.str().c_str());
-}
-
-  
-void MovementComponent::IgnoreTrackMovement(uint8_t tracks)
-{
-  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
-  {
-    uint8_t curTrack = (1 << i);
-    if ((tracks & curTrack) == curTrack)
-    {
-      ++_ignoreTrackMovementCount[i];
-    }
-  }
-}
-  
-void MovementComponent::UnignoreTrackMovement(uint8_t tracks)
-{
-  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
-  {
-    uint8_t curTrack = (1 << i);
-    if ((tracks & curTrack) == curTrack)
-    {
-      --_ignoreTrackMovementCount[i];
-
-      // It doesn't matter if there are more unlocks than locks
-      if(_ignoreTrackMovementCount[i] < 0)
-      {
-#       if DEBUG_ANIMATION_LOCKING
-        PRINT_NAMED_WARNING("MovementComponent.UnignoreTrackMovement", "Track movement locks and unlocks do not match");
-#       endif
-        _ignoreTrackMovementCount[i] = 0;
-      }
-    }
-  }
-}
-  
-bool MovementComponent::IsMovementTrackIgnored(AnimTrackFlag track) const
-{
-  return _ignoreTrackMovementCount[GetFlagIndex((uint8_t)track)] > 0;
+  PRINT_NAMED_DEBUG("MovementComponent.Locks", "%s", ss.str().c_str());
 }
 
 } // namespace Cozmo

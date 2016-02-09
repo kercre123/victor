@@ -64,8 +64,7 @@ public:
   void SetMinTiltAngleForSound(const Radians& angle) { _minTiltAngleForSound = angle.getAbsoluteVal(); }
   
   // Tracking will lock animation and movement for head and/or body, depending on Mode.
-  virtual u8 GetAnimTracksToDisable() const override;
-  virtual u8 GetMovementTracksToIgnore() const override;
+  virtual u8 GetTracksToLock() const override;
   
   // Tracking is meant to be ongoing, so "never" timeout
   virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }

@@ -274,6 +274,7 @@ namespace Anki {
       }
       
       CompoundActionSequential* newCompoundSequential = new CompoundActionSequential();
+      newCompoundSequential->SetSuppressTrackLocking(true);
       _compoundAction = newCompoundSequential;
       if(!RegisterSubAction(_compoundAction))
       {
@@ -293,7 +294,7 @@ namespace Anki {
           driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
           driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
           driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
-
+          driveToPoseAction->SetSuppressTrackLocking(true);
           newCompoundSequential->AddAction(driveToPoseAction);
         }
         
@@ -306,7 +307,7 @@ namespace Anki {
                             GetName().c_str(),
                             faceObjectAction->GetTag(),
                             faceObjectAction->GetName().c_str());
-
+          faceObjectAction->SetSuppressTrackLocking(true);
           newCompoundSequential->AddAction(faceObjectAction);
         }
         

@@ -54,16 +54,17 @@ namespace Anki {
         if(!_suppressTrackLocking)
         {
 #         if DEBUG_ANIM_TRACK_LOCKING
-          PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                            _animTracks,
-                            AnimTrackFlagToString((AnimTrackFlag)_animTracks),
-                            _name.c_str(),
-                            _idTag);
+          PRINT_NAMED_INFO("IActionRunner.Destroy.Unlock",
+                           "%s [%d] unlocked: tracks (0x%x) %s",
+                           _name.c_str(),
+                           _idTag,
+                           _tracks,
+                           AnimTrackFlagToString((AnimTrackFlag)_tracks));
 #         endif
-          _robot->GetMoveComponent().UnlockAnimTracks(_animTracks);
-          _robot->GetMoveComponent().UnignoreTrackMovement(_movementTracks);
+          _robot->GetMoveComponent().UnlockTracks(_tracks);
         }
       }
+      _robot = nullptr;
     }
     
     void IActionRunner::SetTag(u32 tag)
@@ -84,7 +85,7 @@ namespace Anki {
         // Only need to unlock tracks if this is running because Init() locked tracks
         if(!_suppressTrackLocking && _isRunning)
         {
-          uint8_t tracks = GetAnimTracksToDisable();
+          uint8_t tracks = GetTracksToLock();
 #         if DEBUG_ANIM_TRACK_LOCKING
           PRINT_NAMED_INFO("IActionRunner.Interrupt.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
                            tracks,
@@ -92,8 +93,7 @@ namespace Anki {
                            _name.c_str(),
                            _idTag);
 #         endif
-          _robot->GetMoveComponent().UnlockAnimTracks(tracks);
-          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+          _robot->GetMoveComponent().UnlockTracks(tracks);
         }
         
         CancelAndDeleteSubActions();
@@ -109,26 +109,30 @@ namespace Anki {
     {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
-        uint8_t disableTracks = GetAnimTracksToDisable();
+        uint8_t tracksToLock = GetTracksToLock();
+        
+        if(_robot->GetMoveComponent().IsTrackLocked((AnimTrackFlag)tracksToLock))
+        {
+          PRINT_NAMED_INFO("IActionRunner.Update",
+                           "Action %s [%d] not running because required tracks (0x%x) %s are locked",
+                           GetName().c_str(),
+                           GetTag(),
+                           tracksToLock,
+                           AnimTrackFlagToString((AnimTrackFlag)tracksToLock));
+
+          return ActionResult::FAILURE_TRACKS_LOCKED;
+        }
+        
 #       if DEBUG_ANIM_TRACK_LOCKING
         PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
-                         disableTracks,
-                         AnimTrackFlagToString((AnimTrackFlag)disableTracks),
+                         tracksToLock,
+                         AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
                          GetName().c_str(),
                          GetTag());
 
 #       endif
 
-        if(_robot->GetMoveComponent().IsAnimTrackLocked((AnimTrackFlag)disableTracks) ||
-           _robot->GetMoveComponent().IsMovementTrackIgnored((AnimTrackFlag)GetMovementTracksToIgnore()))
-        {
-          PRINT_NAMED_INFO("IActionRunner.Update", "Action %s [%d] not running because required tracks are locked",
-                           GetName().c_str(), GetTag());
-          return ActionResult::RUNNING;
-        }
-
-        _robot->GetMoveComponent().LockAnimTracks(disableTracks);
-        _robot->GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
+        _robot->GetMoveComponent().LockTracks(tracksToLock);
       }
 
       if( ! _isRunning ) {
@@ -168,8 +172,6 @@ namespace Anki {
 
         // Clean up after any registered sub actions and the action itself
         CancelAndDeleteSubActions();
-        
-        PrepForCompletion();
 
         if( DEBUG_ACTION_RUNNING && _displayMessages ) {
           PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
@@ -187,8 +189,7 @@ namespace Anki {
       GetCompletionUnion(_completionUnion);
       _type = GetType();
       _name = GetName();
-      _animTracks = GetAnimTracksToDisable();
-      _movementTracks = GetMovementTracksToIgnore();
+      _tracks = GetTracksToLock();
     }
     
     bool IActionRunner::RetriesRemain()
@@ -220,7 +221,7 @@ namespace Anki {
     }
 #   endif // USE_ACTION_CALLBACKS
     
-    u8 IActionRunner::GetMovementTracksToIgnore() const
+    u8 IActionRunner::GetTracksToLock() const
     {
       return  (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
@@ -268,6 +269,21 @@ namespace Anki {
             Util::SafeDelete(*subAction);
           } // if not null
         }
+      }
+    }
+    
+    void IActionRunner::UnlockTracks()
+    {
+      if(!_suppressTrackLocking)
+      {
+#         if DEBUG_ANIM_TRACK_LOCKING
+        PRINT_NAMED_INFO("IActionRunner.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                         _tracks,
+                         AnimTrackFlagToString((AnimTrackFlag)_tracks),
+                         _name.c_str(),
+                         _idTag);
+#         endif
+        _robot->GetMoveComponent().UnlockTracks(_tracks);
       }
     }
     

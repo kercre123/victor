@@ -688,17 +688,20 @@ namespace Anki {
       }
       
       newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
+      newCompoundParallel->SetSuppressTrackLocking(true);
       
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
+      action->SetSuppressTrackLocking(true);
       newCompoundParallel->AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot->GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
+      headAction->SetSuppressTrackLocking(true);
       newCompoundParallel->AddAction(headAction);
       
       // Put the angles in the name for debugging
@@ -780,6 +783,7 @@ namespace Anki {
     ActionResult FaceObjectAction::Init()
     {
       _visuallyVerifyAction = new VisuallyVerifyObjectAction(_objectID, _whichCode);
+      _visuallyVerifyAction->SetSuppressTrackLocking(true);
       
       if(!RegisterSubAction(_visuallyVerifyAction))
       {
@@ -956,6 +960,7 @@ namespace Anki {
         {
           CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
+          bridgeAction->SetSuppressTrackLocking(true);
           _chosenAction = bridgeAction;
           if(!RegisterSubAction(_chosenAction))
           {
@@ -965,6 +970,7 @@ namespace Anki {
         else if(object->GetType() == ObjectType::Ramp_Basic) {
           AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
+          rampAction->SetSuppressTrackLocking(true);
           _chosenAction = rampAction;
           if(!RegisterSubAction(_chosenAction))
           {
@@ -1127,6 +1133,7 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       _moveLiftToHeightAction->SetEmitCompletionSignal(false);
+      _moveLiftToHeightAction->SetSuppressTrackLocking(true);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
       

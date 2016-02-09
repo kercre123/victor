@@ -431,7 +431,7 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
 void BehaviorFollowMotion::LiftShouldBeLocked(Robot& robot)
 {
   if( ! _lockedLift ) {
-    robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    robot.GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
     _lockedLift = true;
   }
 }
@@ -439,7 +439,7 @@ void BehaviorFollowMotion::LiftShouldBeLocked(Robot& robot)
 void BehaviorFollowMotion::LiftShouldBeUnlocked(Robot& robot)
 {
   if( _lockedLift ) {
-    robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    robot.GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
     _lockedLift = false;
   }
 }

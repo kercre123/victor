@@ -1682,7 +1682,7 @@ namespace Cozmo {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockLift",
                              "LOCKED");
 
-      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+      robot.GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
       _lockedLift = true;
     }
   }
@@ -1693,7 +1693,7 @@ namespace Cozmo {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockLift",
                              "UNLOCKED");
 
-      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+      robot.GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
       _lockedLift = false;
     }
   }
@@ -1704,7 +1704,7 @@ namespace Cozmo {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockHead",
                              "LOCKED");
 
-      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
+      robot.GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
       _lockedHead = true;
     }
   }
@@ -1715,7 +1715,7 @@ namespace Cozmo {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockHead",
                              "UNLOCKED");
 
-      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
+      robot.GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
       _lockedHead = false;
     }
   }
@@ -1726,7 +1726,7 @@ namespace Cozmo {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
                              "LOCKED");
 
-      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      robot.GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
       _lockedBody = true;
     }
   }
@@ -1737,7 +1737,7 @@ namespace Cozmo {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
                              "UNLOCKED");
 
-      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
+      robot.GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
       _lockedBody = false;
     }
   }

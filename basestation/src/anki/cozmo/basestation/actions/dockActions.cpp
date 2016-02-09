@@ -285,6 +285,7 @@ namespace Anki {
 
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->SetEmitCompletionSignal(false);
+      _faceAndVerifyAction->SetSuppressTrackLocking(true);
       
       // Go ahead and Update the FaceObjectAction once now, so we don't
       // waste a tick doing so in CheckIfDone (since this is the first thing
@@ -843,6 +844,7 @@ namespace Anki {
           return ActionResult::FAILURE_ABORT;
         }
         _faceAndVerifyAction->SetEmitCompletionSignal(false);
+        _faceAndVerifyAction->SetSuppressTrackLocking(true);
         
       } // if/else IsCarryingObject()
       
@@ -1034,6 +1036,7 @@ namespace Anki {
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), true, false);
+              _placementVerifyAction->SetSuppressTrackLocking(true);
               if(!RegisterSubAction(_placementVerifyAction))
               {
                 return ActionResult::FAILURE_ABORT;
@@ -1086,7 +1089,7 @@ namespace Anki {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
-                  
+                  _placementVerifyAction->SetSuppressTrackLocking(true);
                   if(!RegisterSubAction(_placementVerifyAction))
                   {
                     return ActionResult::FAILURE_ABORT;
@@ -1247,7 +1250,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
-              
+              _rollVerifyAction->SetSuppressTrackLocking(true);
               if(!RegisterSubAction(_rollVerifyAction))
               {
                 return ActionResult::FAILURE_ABORT;

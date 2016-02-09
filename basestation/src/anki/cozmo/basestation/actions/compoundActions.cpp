@@ -160,8 +160,8 @@ namespace Anki {
                 _waitUntilTime = currentTime + _delayBetweenActionsInSeconds;
               }
               
-              Util::SafeDelete(_currentActionPair->second);
-              _currentActionPair = _actions.erase(_currentActionPair);
+              _currentActionPair->second->UnlockTracks();
+              ++_currentActionPair;
               
               // if that was the last action, we're done
               if(_currentActionPair == _actions.end()) {
@@ -182,8 +182,10 @@ namespace Anki {
                 // In the special case that the sub-action sucessfully completed
                 // immediately, don't return SUCCESS if there are more actions left!
                 if(ActionResult::SUCCESS == subResult) {
-                  Util::SafeDelete(_currentActionPair->second);
-                  _currentActionPair = _actions.erase(_currentActionPair);
+                
+                  _currentActionPair->second->UnlockTracks();
+                  ++_currentActionPair;
+                  
                   if(_currentActionPair == _actions.end()) {
                     // no more actions, safe to return success for the compound action
 #                   if USE_ACTION_CALLBACKS
@@ -264,11 +266,11 @@ namespace Anki {
       
       SetStatus(GetName());
       
-      for(auto currentActionPair = _actions.begin(); currentActionPair != _actions.end();)
+      for(auto & currentActionPair : _actions)
       {
-        bool& isDone = currentActionPair->first;
+        bool& isDone = currentActionPair.first;
         if(!isDone) {
-          IActionRunner* currentAction = currentActionPair->second;
+          IActionRunner* currentAction = currentActionPair.second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
 
           currentAction->SetRobot(*GetRobot());
@@ -277,16 +279,14 @@ namespace Anki {
           switch(subResult)
           {
             case ActionResult::SUCCESS:
-              // Just finished this action, mark it as done and delete it
+              // Just finished this action, mark it as done and unlock its tracks
               isDone = true;
-              Util::SafeDelete(currentActionPair->second);
-              currentActionPair = _actions.erase(currentActionPair);
+              currentAction->UnlockTracks();
               break;
               
             case ActionResult::RUNNING:
               // If any action is still running the group is still running
               result = ActionResult::RUNNING;
-              ++currentActionPair;
               break;
               
             case ActionResult::FAILURE_RETRY:
@@ -327,21 +327,6 @@ namespace Anki {
       
       return result;
     } // CompoundActionParallel::Update()
-    
-//    u8 CompoundActionParallel::GetAnimTracksToDisable() const
-//    {
-//      u8 whichTracks = 0;
-//      for(auto & action : _actions) {
-//        whichTracks |= action.second->GetAnimTracksToDisable();
-//      }
-//      return whichTracks;
-//    }
-    
-    void CompoundActionParallel::AddAction(IActionRunner* action)
-    {
-      action->SetSuppressTrackLocking(true);
-      ICompoundAction::AddAction(action);
-    }
     
   } // namespace Cozmo
 } // namespace Anki

@@ -72,7 +72,7 @@ void ITrackAction::SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec)
 }
 
   
-u8 ITrackAction::GetAnimTracksToDisable() const
+u8 ITrackAction::GetTracksToLock() const
 {
   switch(_mode)
   {
@@ -85,11 +85,6 @@ u8 ITrackAction::GetAnimTracksToDisable() const
     case Mode::BodyOnly:
       return (u8)AnimTrackFlag::BODY_TRACK;
   }
-}
-  
-u8 ITrackAction::GetMovementTracksToIgnore() const
-{
-  return GetAnimTracksToDisable();
 }
   
 void ITrackAction::SetPanTolerance(const Radians& panThreshold)

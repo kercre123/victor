@@ -41,6 +41,8 @@ namespace Anki {
       
       virtual f32 GetTimeoutInSeconds() const override { return 60.f; }
       
+      virtual u8 GetTracksToLock() const override { return 0; }
+      
     protected:
       
       virtual ActionResult Init() override;
@@ -103,6 +105,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::DEVICE_AUDIO; }
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      
+      virtual u8 GetTracksToLock() const override { return 0; }
       
     protected:
       

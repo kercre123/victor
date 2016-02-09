@@ -1122,9 +1122,9 @@ namespace Anki {
                GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
                GetMoveComponent().IsMoving() ? 'B' : ' ',
                IsCarryingObject() ? 'C' : ' ',
-               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
-               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+               _movementComponent.IsTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+               _movementComponent.IsTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+               _movementComponent.IsTrackLocked(AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
                (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                behaviorChooserName,
                behaviorName.c_str());
