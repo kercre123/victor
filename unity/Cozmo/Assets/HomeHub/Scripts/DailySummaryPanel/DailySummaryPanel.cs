@@ -56,7 +56,6 @@ public class DailySummaryPanel : BaseView {
 
   // Config file for friendship progression
   [SerializeField]
-  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
   private FriendshipProgressionConfig _Config;
 
   protected override void CleanUp() {
@@ -70,14 +69,15 @@ public class DailySummaryPanel : BaseView {
     _Title.FormattingArgs = new object[] { month, day };
     _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
 
-    float dailyProg = _FriendshipFormulaConfig.CalculateDailyGoalProgress(data.Progress, data.Goals);
+    float dailyProg = DailyGoalManager.Instance.CalculateDailyGoalProgress(data.Progress, data.Goals);
+    float bonusMult = DailyGoalManager.Instance.CalculateBonusMult(data.Progress, data.Goals);
     _DailyProgressBar.SetProgress(dailyProg);
-    _BonusBarPanel.SetFriendshipBonus(dailyProg);
+    _BonusBarPanel.SetFriendshipBonus(bonusMult);
 
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var stat = (ProgressionStatType)i;
       if (data.Goals[stat] > 0) {
-        CreateGoalCell(stat, data.Goals[stat], data.Progress[stat]);
+        CreateGoalCell(stat, data.Progress[stat], data.Goals[stat]);
       }
     }
 
@@ -94,9 +94,9 @@ public class DailySummaryPanel : BaseView {
   }
 
   // Creates a goal badge
-  private GoalCell CreateGoalCell(ProgressionStatType type, int goal, int progress) {
+  private GoalCell CreateGoalCell(ProgressionStatType type, int progress, int goal) {
     GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
-    newBadge.Initialize(type, goal, progress, false);
+    newBadge.Initialize(type, progress, goal, false);
     newBadge.ShowText(true);
     return newBadge;
   }

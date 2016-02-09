@@ -92,9 +92,6 @@ namespace Cozmo.HomeHub {
     CozmoWidget _CozmoWidgetPrefab;
     CozmoWidget _CozmoWidgetInstance;
 
-    [SerializeField]
-    FriendshipFormulaConfiguration _FriendshipFormulaConfig;
-
     private bool _ScrollLocked;
     private float _ScrollLockedOffset;
 
@@ -163,7 +160,7 @@ namespace Cozmo.HomeHub {
         float progress = 0f;
         if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
           timelineEntry = timelineEntries[timelineIndex];
-          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals);
+          progress = DailyGoalManager.Instance.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals);
           timelineIndex++;
         }
 
@@ -260,7 +257,7 @@ namespace Cozmo.HomeHub {
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
 
-      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals, false));
+      int friendshipPoints = DailyGoalManager.Instance.CalculateFriendshipPoints(timelineEntry.Progress, timelineEntry.Goals);
 
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
       UpdateFriendshipPoints(timelineEntry, friendshipPoints);

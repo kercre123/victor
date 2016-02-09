@@ -73,6 +73,7 @@ public class TimelineEntry : MonoBehaviour {
         var levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
         _FriendshipLabel.text = levelConfig.FriendshipLevels[timelineEntry.EndingFriendshipLevel].FriendshipLevelName;
       }
+      SetFriendshipBonus(DailyGoalManager.Instance.CalculateBonusMult(timelineEntry.Progress, timelineEntry.Goals));
     }
 
     _FillbarButton.gameObject.SetActive(active);
@@ -81,26 +82,24 @@ public class TimelineEntry : MonoBehaviour {
     _TimelineNodeInactive.SetActive(!active && !first);
     _TimelineNodeFirst.SetActive(first);
 
-    SetFriendshipBonus(progress);
-
     _WeekLine.SetActive(showWeek);
     if (showWeek) {
       _WeekLabelGlow.FormattingArgs = _WeekLabel.FormattingArgs = new object[]{ week };
     }
   }
 
+  // Show "completed" gems only in Timeline Entry
   private void SetFriendshipBonus(float prog) {
-    int mult = Mathf.FloorToInt(prog);
+    int mult = Mathf.CeilToInt(prog);
     int multIndex = mult - 2;
+    _TimelineNodeBonus.gameObject.SetActive(false);
     if (multIndex < 0) {
-      _TimelineNodeBonus.gameObject.SetActive(false);
       return;
     }
 
     var friendshipConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
 
     if (friendshipConfig.BonusMults.Length == 0) {
-      _TimelineNodeBonus.gameObject.SetActive(false);
       return;
     }
 

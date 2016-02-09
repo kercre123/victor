@@ -69,7 +69,7 @@ namespace Cozmo {
         if (progress > _GoalTarget) {
           _GoalCurrent = _GoalTarget;
         }
-        else {
+        else if (_GoalCurrent != progress) {
           _GoalCurrent = progress;
         }
         SetProgress((float)_GoalCurrent / (float)_GoalTarget);
@@ -83,8 +83,9 @@ namespace Cozmo {
       /// <param name="goal">Goal.</param>
       /// <param name="currProg">Curr prog.</param>
       /// <param name="update">If set to <c>true</c> update.</param>
-      public void Initialize(Anki.Cozmo.ProgressionStatType type, int goal, int currProg, bool update = true) {
+      public void Initialize(Anki.Cozmo.ProgressionStatType type, int currProg, int goal, bool update = true) {
         GoalLabelText = string.Format("{0}", type.ToString());
+        _GoalLabel.color = Color.white;
         _GoalTarget = goal;
         Type = type;
         if (update) {
@@ -108,7 +109,9 @@ namespace Cozmo {
 
       void OnProgressionStatUpdate(Anki.Cozmo.ProgressionStatType type, int count) {
         if (Type == type) {
-          SetProgress(count);
+          if (count != _GoalCurrent) {
+            SetProgress(count);
+          }
         }
       }
 
