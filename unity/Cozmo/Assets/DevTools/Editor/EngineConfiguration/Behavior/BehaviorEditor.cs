@@ -112,6 +112,7 @@ public class BehaviorEditor : EditorWindow {
 
     while(header != null) {
       lines = File.ReadAllLines(header);
+      header = null;
 
       foreach (var line in lines) {        
         match = includeRegex.Match(line);
