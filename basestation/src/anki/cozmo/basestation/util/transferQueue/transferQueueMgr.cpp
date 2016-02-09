@@ -15,7 +15,7 @@
 
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
-#include "anki/cozmo/basestation/util/http/CreateHttpAdapter.h"
+#include "anki/cozmo/basestation/util/http/createHttpAdapter.h"
 #include "anki/cozmo/basestation/util/transferQueue/iTransferable.h"
 #include "util/helpers/templateHelpers.h"
 
