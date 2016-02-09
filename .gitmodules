@@ -6,3 +6,6 @@
 	path = lib/anki/products-cozmo-assets
 	url = git@github.com:anki/products-cozmo-assets.git
 	branch = master
+[submodule "lib/anki/das-client"]
+	path = lib/anki/das-client
+	url = git@github.com:anki/DAS-Client.git

@@ -41,6 +41,8 @@ def main(scriptArgs):
                       help='Use build tools located at BUILD_TOOLS_PATH')
   parser.add_argument('--ankiUtil', metavar='ANKI_UTIL_PATH', dest='ankiUtilPath', action='store', default=None,
                       help='Use anki-util repo checked out at ANKI_UTIL_PATH')
+  parser.add_argument('--das', metavar='DAS_PATH', dest='dasPath', action='store', default=None,
+                      help='Use das-client repo checked out at DAS_PATH')
   parser.add_argument('--webots', metavar='WEBOTS_PATH', dest='webotsPath', action='store', default=None,
                       help='Use webots aplication at WEBOTS_PATH')
   parser.add_argument('--coretechExternal', metavar='CORETECH_EXTERNAL_DIR', dest='coretechExternalPath', action='store', default=None,
@@ -115,6 +117,13 @@ def main(scriptArgs):
   if not os.path.exists(options.buildToolsPath):
     UtilLog.error('build tools not found [%s]' % (options.buildToolsPath) )
     return False
+
+  if not options.dasPath:
+    options.dasPath = os.path.join(options.projectRoot, 'lib/anki/das-client')
+  if not os.path.exists(options.dasPath):
+    UtilLog.error('das-client not found [%s]' % (options.dasPath) )
+    return False
+  dasProjectPath = os.path.join(options.dasPath, 'gyp/das-client.gyp')
 
   if not options.audioPath:
     options.audioPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/lib/audio')
@@ -243,6 +252,7 @@ def main(scriptArgs):
   audioProjectPath = os.path.relpath(audioProjectPath, configurePath)
   ceAudioProjectGypPath = os.path.relpath(audioProjectGypPath, cozmoEngineConfigurePath)
   cgAudioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
+  cgDasProjectPath = os.path.relpath(dasProjectPath, configurePath)
         
   buildMex = 'no'
   if options.mex:
@@ -272,6 +282,7 @@ def main(scriptArgs):
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
+                                  das_library_type=static_library
                                   arch_group={0}
                                   output_location={1}
                                   coretech_external_path={2}
@@ -292,7 +303,8 @@ def main(scriptArgs):
                                   cozmo_asset_path={16}
                                   ce-audio_path={17}
                                   cg-audio_path={18}
-				  externals_path={19}
+                                  externals_path={19}
+                                  cg-das_path={20}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -313,7 +325,8 @@ def main(scriptArgs):
                                     options.cozmoAssetPath,
                                     ceAudioProjectGypPath,
                                     cgAudioProjectGypPath,
-                                    externalsPath
+                                    externalsPath,
+                                    cgDasProjectPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -332,6 +345,7 @@ def main(scriptArgs):
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
+                                das_library_type=static_library
                                 basestation_target_name=Basestation
                                 driveengine_target_name=DriveEngine
                                 OS=ios
@@ -356,6 +370,7 @@ def main(scriptArgs):
                                 ce-audio_path={14}
                                 cg-audio_path={15}
                                 externals_path={16}
+                                cg-das_path={17}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -373,7 +388,8 @@ def main(scriptArgs):
                                   cgCozmoEngineProjectPath,
                                   ceAudioProjectGypPath,
                                   cgAudioProjectGypPath,
-				  externalsPath
+                                  externalsPath,
+                                  cgDasProjectPath
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -417,6 +433,7 @@ def main(scriptArgs):
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
+                                das_library_type=static_library
                                 os_posix=1
                                 OS=android
                                 GYP_CROSSCOMPILE=1
@@ -446,6 +463,7 @@ def main(scriptArgs):
                                 ce-audio_path={15}
                                 cg-audio_path={16}
                                 externals_path={17}
+                                cg-das_path={18}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -464,7 +482,8 @@ def main(scriptArgs):
                                   ndk_root,
                                   ceAudioProjectGypPath,
                                   cgAudioProjectGypPath,
-				  externalsPath
+                                  externalsPath,
+                                  cgDasProjectPath
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
