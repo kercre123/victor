@@ -11,7 +11,7 @@ namespace Anki {
 namespace Cozmo {
 
 const std::string TracePrinter::UnknownTraceName   = "Unknown trace name";
-const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format with %d parameters";
+const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
 const std::string TracePrinter::RobotNamePrefix    = "Robot.";
 
 TracePrinter::TracePrinter(Util::Data::DataPlatform* dp):
@@ -109,7 +109,7 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
   char fbuf[64];
   const IntFormatMap::const_iterator it = formatTable.find(trace.stringId);
   if (it == formatTable.end()) {
-    snprintf(pbuf, sizeof(pbuf), UnknownTraceFormat.c_str(), trace.value.size());
+    snprintf(pbuf, sizeof(pbuf), UnknownTraceFormat.c_str(), trace.stringId, trace.value.size());
     return pbuf;
   }
   else {
@@ -129,7 +129,7 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
       int argInd = 0;
       const char* fmtPtr = fi.first.c_str();
       int subFmtInd = -1;
-      while (*fmtPtr != 0)
+      while ((*fmtPtr != 0) && (index < (sizeof(pbuf)-1)) && (subFmtInd < (sizeof(fbuf)-1)))
       {
         if (subFmtInd >= 0)
         {
