@@ -6,7 +6,6 @@
  *
  * Description: Create native interface for http connections.
  *
- *
  * Copyright: Anki, Inc. 2016
  **/
 

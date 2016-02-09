@@ -6,7 +6,6 @@
  *
  * Description: Create native interface for http connections, the iOS/mac version
  *
- *
  * Copyright: Anki, Inc. 2016
  **/
 
