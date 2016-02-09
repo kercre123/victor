@@ -207,18 +207,19 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
-    m_FontSize: 96
+    m_FontSize: 72
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
     m_Alignment: 4
     m_RichText: 1
-    m_HorizontalOverflow: 0
+    m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: '#label.xCount'
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11406154
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -279,6 +280,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: '#dailyGoal.FriendBonus'
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11445530
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -400,6 +402,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: '#dailyGoal.FriendBonus'
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11492114
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -593,8 +596,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: .298835456, y: .106822565}
   m_AnchorMax: {x: .563506305, y: .815126717}
-  m_AnchoredPosition: {x: 0, y: -24.9999466}
-  m_SizeDelta: {x: 0, y: -50.0001068}
+  m_AnchoredPosition: {x: 0, y: 5.34057617e-05}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22439346
 RectTransform:

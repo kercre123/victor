@@ -181,7 +181,7 @@ namespace Cozmo.HomeHub {
     public void LockScroll(bool locked) {
       StartCoroutine(LockScrollCoroutine(locked));
     }
-      
+
     private IEnumerator LockScrollCoroutine(bool locked) {
       //Scroll all the way to the left, then move the scroll container.
       _ScrollLocked = false;
@@ -260,7 +260,7 @@ namespace Cozmo.HomeHub {
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
 
-      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress, timelineEntry.Goals));
+      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals, false));
 
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
       UpdateFriendshipPoints(timelineEntry, friendshipPoints);

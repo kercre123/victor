@@ -18,31 +18,42 @@ public class FriendshipFormulaConfiguration : ScriptableObject {
     } 
   }
 
-  // Returns the friendship score value earned, including the multiplier from exceeding the goal
-  public float CalculateFriendshipScore(StatContainer stats, StatContainer goal) {
-    float statPointsEarned = 0f;
-    float statPointsNeeded = 0f;
-    for (int i = 0; i < _Multipliers.Length; i++) {
-      var stat = (Anki.Cozmo.ProgressionStatType)i;
-      statPointsEarned += _Multipliers[i] * stats[stat];
-      statPointsNeeded += goal[stat] * _Multipliers[i];
-    }
-    float mult = Mathf.Ceil(statPointsEarned / statPointsNeeded);
-    statPointsEarned *= mult;
-    return statPointsEarned;
-  }
-
   // Returns the % progression towards your daily goals
-  public float CalculateDailyGoalProgress(StatContainer progress, StatContainer goal) {
+  // If isPercentProg is false, returns the flat amount of points earned
+  public float CalculateDailyGoalProgress(StatContainer progress, StatContainer goal, bool isPercentProg = true) {
     float totalProgress = 0f, totalGoal = 0f;
+    StatContainer overflow = new StatContainer();
+    bool dailyGoalComplete = true;
     for (int i = 0; i < _Multipliers.Length; i++) {
       var stat = (Anki.Cozmo.ProgressionStatType)i;
-
-      totalProgress += progress[stat] * _Multipliers[i];
+      if (dailyGoalComplete) {
+        dailyGoalComplete = (progress[stat] >= goal[stat]);
+      }
+      float cappedProg = (float)Mathf.Min(progress[stat], goal[stat]);
+      totalProgress += cappedProg * _Multipliers[i];
+      overflow[stat] = (int)(progress[stat] - cappedProg);
       totalGoal += goal[stat] * _Multipliers[i];
     }
+    // If the conditions for all daily goals have been met, factor in overflow stats for Bonus Mult.
+    // This currently means that if you make tons of extra progress for a stat, it will
+    // cap any point gains from that stat at the goal until you have completed all daily goals.
+    // Then it will factor in overflow points.
+    float mult = 1.0f;
+    if (dailyGoalComplete) {
+      for (int i = 0; i < _Multipliers.Length; i++) {
+        var stat = (Anki.Cozmo.ProgressionStatType)i;
+        totalProgress += overflow[stat] * _Multipliers[i];
+      }
+      mult = Mathf.Ceil(totalProgress / totalGoal);
+    }
     if (totalGoal > 0f) {
-      return totalProgress / totalGoal;
+      if (isPercentProg) {
+        return totalProgress / totalGoal;
+      }
+      else {
+        totalProgress *= mult;
+        return totalProgress;
+      }
     }
     else {
       return 0f;
