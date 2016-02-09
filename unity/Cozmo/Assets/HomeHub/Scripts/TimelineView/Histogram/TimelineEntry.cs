@@ -42,6 +42,8 @@ public class TimelineEntry : MonoBehaviour {
 
   [SerializeField]
   private AnkiTextLabel _WeekLabel;
+  [SerializeField]
+  private AnkiTextLabel _WeekLabelGlow;
 
   private Date _Date;
 
@@ -83,7 +85,7 @@ public class TimelineEntry : MonoBehaviour {
 
     _WeekLine.SetActive(showWeek);
     if (showWeek) {
-      _WeekLabel.FormattingArgs = new object[]{ week };
+      _WeekLabelGlow.FormattingArgs = _WeekLabel.FormattingArgs = new object[]{ week };
     }
   }
 

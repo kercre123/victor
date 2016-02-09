@@ -169,7 +169,7 @@ namespace Anki.UI {
 
           // Add 5 units to all sides;
 
-          float outlineWidth = 5;
+          float outlineWidth = fontSize / 10f;
 
           var uvMaxX = Mathf.Max(Mathf.Max(topLeft.uv0.x, topRight.uv0.x), Mathf.Max(bottomLeft.uv0.x, bottomRight.uv0.x));
           var uvMinX = Mathf.Min(Mathf.Min(topLeft.uv0.x, topRight.uv0.x), Mathf.Min(bottomLeft.uv0.x, bottomRight.uv0.x));
@@ -191,8 +191,9 @@ namespace Anki.UI {
           bottomLeft.uv0 += new Vector2(bottomLeft.uv0.x == uvMinX ? -uvDelta.x : uvDelta.x, bottomLeft.uv0.y == uvMinY ? -uvDelta.y : uvDelta.y);
           bottomRight.uv0 += new Vector2(bottomRight.uv0.x == uvMinX ? -uvDelta.x : uvDelta.x, bottomRight.uv0.y == uvMinY ? -uvDelta.y : uvDelta.y);
 
-          var uv1 = new Vector2(2 * (uvMaxX - uvMinX) / (sizeDiag.x + 2 * outlineWidth), 2 * (uvMaxY - uvMinY) / (sizeDiag.y + 2 * outlineWidth));
-          var tangent = new Vector4(uvMinX - uv1.x, uvMinY - uv1.y, uvMaxX + uv1.x, uvMaxY + uv1.y);
+          var uv1 = new Vector2(2 * (uvMaxX - uvMinX) / sizeDiag.x, 2 * (uvMaxY - uvMinY) / sizeDiag.y);
+
+          var tangent = new Vector4(uvMinX, uvMinY, uvMaxX, uvMaxY);
 
           topLeft.tangent = tangent;
           topRight.tangent = tangent;
