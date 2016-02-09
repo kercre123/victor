@@ -37,7 +37,10 @@
     "translation": "Score"
   },
   "minigame.label.showCubes": {
-    "translation": "Put {0} cubes where Cozmo can see them. They'll turn white when they're in the right place. ({1}/{0})"
+    "translation": "Put {0} cubes where Cozmo can see them. They'll turn white when they're in the right place."
+  },
+  "minigame.label.cubesFound": {
+    "translation": "{0} cubes found"
   },
   "minigame.label.cubesReady": {
     "translation": "{0} cubes ready!"

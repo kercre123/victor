@@ -455,8 +455,8 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.HideContinueButtonShelf();
   }
 
-  public void SetContinueButtonShelfText(string text) {
-    _SharedMinigameViewInstance.SetContinueButtonShelfText(text);
+  public void SetContinueButtonShelfText(string text, bool isComplete) {
+    _SharedMinigameViewInstance.SetContinueButtonShelfText(text, isComplete);
   }
 
   public void SetContinueButtonText(string text) {

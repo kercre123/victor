@@ -220,6 +220,7 @@ namespace Cozmo {
       }
 
       private void HandleQuitConfirmed() {
+        CloseHowToPlayView();
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
         }
@@ -521,8 +522,8 @@ namespace Cozmo {
         _ContinueButtonShelfInstance = null;
       }
 
-      public void SetContinueButtonShelfText(string text) {
-        _ContinueButtonShelfInstance.SetShelfText(text);
+      public void SetContinueButtonShelfText(string text, bool isComplete) {
+        _ContinueButtonShelfInstance.SetShelfText(text, isComplete);
       }
 
       public void SetContinueButtonText(string text) {
