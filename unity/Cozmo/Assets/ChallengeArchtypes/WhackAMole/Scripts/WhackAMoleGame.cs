@@ -57,6 +57,7 @@ namespace WhackAMole {
     public KeyValuePair<int,int> CurrentTargetKvP;
 
     private int _NumCubesRequired;
+    public bool GameSetupDone = false;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       WhackAMoleGameConfig config = minigameConfig as WhackAMoleGameConfig;
@@ -82,7 +83,7 @@ namespace WhackAMole {
     }
 
     public void SetUpCubes() {
-      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(new WhackAMoleIdle(), InitialCubesDone), _NumCubesRequired);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(new WhackAMoleIdle()), _NumCubesRequired);
       _StateMachine.SetNextState(initCubeState);
     }
 
@@ -106,7 +107,7 @@ namespace WhackAMole {
       }
     }
 
-    private void InitialCubesDone() {
+    public void InitialCubesDone() {
       _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
 
       bool aDone = false;
@@ -126,6 +127,7 @@ namespace WhackAMole {
       }
 
       if (aDone && bDone) {
+        GameSetupDone = true;
         InitializeButtons();
       }
       else {

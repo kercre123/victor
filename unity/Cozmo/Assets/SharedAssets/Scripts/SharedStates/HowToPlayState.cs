@@ -4,11 +4,9 @@ using System.Collections;
 public class HowToPlayState : State {
 
   private State _NextState;
-  private InitialCubesState.CubeStateDone _DoneCallback;
 
-  public HowToPlayState(State nextState, InitialCubesState.CubeStateDone doneCallback = null) {
+  public HowToPlayState(State nextState) {
     _NextState = nextState;
-    _DoneCallback = doneCallback;
   }
 
   public override void Enter() {
@@ -34,10 +32,6 @@ public class HowToPlayState : State {
     }
     else {
       _StateMachine.SetNextState(_NextState);
-    }
-
-    if (_DoneCallback != null) {
-      _DoneCallback();
     }
   }
 }
