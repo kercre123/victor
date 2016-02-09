@@ -172,11 +172,9 @@ public class BehaviorEditor : EditorWindow {
 
     entry.BehaviorType = (BehaviorType)EditorGUILayout.EnumPopup("Behavior Type", entry.BehaviorType);
 
-    if (entry.BehaviorType == BehaviorType.PlayAnim) {
-      entry.AnimName = AnimationGroupEditor.AnimationNameOptions[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(AnimationGroupEditor.AnimationNameOptions, entry.AnimName)), AnimationGroupEditor.AnimationNameOptions)];
-    }
-
     entry.Name = EditorGUILayout.TextField("Name", entry.Name ?? string.Empty);
+
+    EditorDrawingUtility.DrawDictionary("Behavior Specific Parameters", entry.CustomParams, EditorDrawingUtility.DrawSelectionObjectEditor, () => string.Empty);
 
     EditorDrawingUtility.DrawList("Emotion Scorers", entry.EmotionScorers, EditorDrawingUtility.DrawEmotionScorer, () => new EmotionScorer());
 
@@ -187,9 +185,6 @@ public class BehaviorEditor : EditorWindow {
     EditorGUILayout.EndVertical();
     return entry;
   }
-
-
-
 
 
   [MenuItem("Cozmo/Behavior Editor %y")]
