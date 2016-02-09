@@ -7,6 +7,7 @@ using System.Linq;
 using System.IO;
 using Newtonsoft.Json;
 using Anki.Cozmo;
+using System.Text.RegularExpressions;
 
 public class BehaviorEditor : EditorWindow {
 
@@ -57,6 +58,12 @@ public class BehaviorEditor : EditorWindow {
         _CurrentBehaviorName = null;
 
         string json = File.ReadAllText(path);
+
+        var regex = new Regex("//.*");
+
+        // remove // comments
+        json = regex.Replace(json,string.Empty);
+
         _CurrentBehavior = JsonConvert.DeserializeObject<Behavior>(json, GlobalSerializerSettings.JsonSettings);
         _CurrentBehaviorFile = path;
         _CurrentBehaviorName = Path.GetFileNameWithoutExtension(path);
