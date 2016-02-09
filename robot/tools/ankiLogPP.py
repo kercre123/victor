@@ -21,7 +21,7 @@ __version__ = "0.1"
 import sys, os, re, argparse, json, mmap
 
 if sys.version_info.major < 3:
-    sys.stderr.write("Python less than 3.0 is depricated" + os.linesep)
+    sys.stderr.write("Python below than 3.5 is depricated" + os.linesep)
 
 verbosity = 0
 DEFAULT_SOURCE_FILE_TYPES = ['.h', '.c', '.hpp', '.cpp']
