@@ -20,7 +20,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/helpers/templateHelpers.h"
 
-#define DEBUG_ANIM_TRACK_LOCKING 1
+#define DEBUG_ANIM_TRACK_LOCKING 0
 
 #define DEBUG_ACTION_RUNNING 0
 

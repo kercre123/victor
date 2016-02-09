@@ -33,7 +33,7 @@ class TestAction : public IAction
 {
   public:
     TestAction(Robot& robot, std::string name, RobotActionType type);
-    virtual ~TestAction() { PRINT_NAMED_INFO("Name is", "%s", _name.c_str()); numActionsDestroyed++; }
+    virtual ~TestAction() { numActionsDestroyed++; }
     virtual const std::string& GetName() const override { return _name; }
     virtual RobotActionType GetType() const override { return _type; }
     Robot* GetRobot() { return _robot; }
@@ -103,7 +103,7 @@ class TestCompoundActionSequential : public CompoundActionSequential
 {
 public:
   TestCompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions);
-  virtual ~TestCompoundActionSequential() { PRINT_NAMED_INFO("CAS", "%s", _name.c_str()); numActionsDestroyed++; }
+  virtual ~TestCompoundActionSequential() { numActionsDestroyed++; }
   virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
 };
 
@@ -135,7 +135,7 @@ class TestActionWithinAction : public IAction
 {
 public:
   TestActionWithinAction(Robot& robot, std::string name, RobotActionType type);
-  virtual ~TestActionWithinAction() { PRINT_NAMED_INFO("AWA", "%s", _name.c_str()); numActionsDestroyed++; }
+  virtual ~TestActionWithinAction() { numActionsDestroyed++; }
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
   Robot* GetRobot() { return _robot; }
