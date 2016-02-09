@@ -12,7 +12,7 @@ namespace Cozmo {
 
 const std::string TracePrinter::UnknownTraceName   = "Unknown trace name";
 const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
-const std::string TracePrinter::RobotNamePrefix    = "Robot.";
+const std::string TracePrinter::RobotNamePrefix    = "RobotFirmware.";
 
 TracePrinter::TracePrinter(Util::Data::DataPlatform* dp):
   printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG) {
