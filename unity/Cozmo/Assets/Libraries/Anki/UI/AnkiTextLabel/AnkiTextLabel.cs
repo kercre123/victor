@@ -193,9 +193,7 @@ namespace Anki.UI {
 
           var uv1 = new Vector2(2 * (uvMaxX - uvMinX) / sizeDiag.x, 2 * (uvMaxY - uvMinY) / sizeDiag.y);
 
-          // magic numbers to try to put our borders on the strip of empty pixels between two letters.
-          var padding = new Vector2(uv1.x * 0.65f, uv1.y * 0.575f);
-          var tangent = new Vector4(uvMinX - padding.x, uvMinY - padding.y, uvMaxX + padding.x, uvMaxY + padding.y);
+          var tangent = new Vector4(uvMinX, uvMinY, uvMaxX, uvMaxY);
 
           topLeft.tangent = tangent;
           topRight.tangent = tangent;

@@ -71,7 +71,9 @@
 
             float getColor(float2 uv, float2 uvDelta, float4 minMaxUV, float factor)
             {
-              return tex2D(_MainTex, min(max(uv + uvDelta, minMaxUV.xy), minMaxUV.zw)).a * factor;
+              float2 uv2 = uv + uvDelta;
+              float2 border = max((uv2 - minMaxUV.zw), (minMaxUV.xy - uv2));
+              return saturate(tex2D(_MainTex, uv2).a * factor - (border.x >= 0) - (border.y >= 0));
             }
 
             float Glow(float2 uv, float2 delta, float4 minMaxUV) 
