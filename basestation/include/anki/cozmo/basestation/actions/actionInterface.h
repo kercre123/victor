@@ -115,7 +115,11 @@ namespace Anki {
       
       void SetEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
       bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
-      
+
+      // Called when the action stops running and sets varibles needed for completion.
+      // This calls the overload-able GetCompletionUnion() method above.
+      void PrepForCompletion();
+
     protected:
       
       Robot* _robot = nullptr;

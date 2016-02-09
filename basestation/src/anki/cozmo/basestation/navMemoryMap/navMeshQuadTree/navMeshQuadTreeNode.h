@@ -102,14 +102,14 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // invalid node id, used as default value
-  enum { kInvalidNodeId = 0 };
-  
   // info about moving towards a neighbor
   struct MoveInfo {
     EQuadrant neighborQuadrant;  // destination quadrant
-    bool sharesParent;                                // whether destination quadrant is in the same parent
+    bool sharesParent;           // whether destination quadrant is in the same parent
   };
+  
+  // type of overlap for quads
+  enum class EContentOverlap { Partial, Total };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -125,7 +125,8 @@ private:
   // type are not allowed to preserve information). This is a necessity now to prevent Cliffs from being
   // removed by Clear. Note that eventually we have to support that since it's possible that the player
   // actually covers the cliff with something transitable
-  bool CanOverrideChildrenWithContent(ENodeContentType contentType) const;
+  bool CanOverrideSelfWithContent(ENodeContentType newContentType, EContentOverlap overlap ) const;
+  bool CanOverrideSelfAndChildrenWithContent(ENodeContentType newContentType, EContentOverlap overlap) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
@@ -140,7 +141,7 @@ private:
   
   // sets the content type to the detected one.
   // try checks por priority first, then calls force
-  void TrySetDetectedContentType(ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
+  void TrySetDetectedContentType(ENodeContentType detectedContentType, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
   // force sets the type and updates shared container
   void ForceSetDetectedContentType(ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
   

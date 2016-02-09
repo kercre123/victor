@@ -58,12 +58,12 @@ public:
   // Processing
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // returns true if we have borders detected of the given type, or we think we do without having to actually calcualte
+  // returns true if we have borders detected of the given type, or we think we do without having to actually calculate
   // them at this moment (which is slightly more costly and requires non-const access)
-  bool HasBorders(ENodeContentType innerType, ENodeContentType outerType) const;
+  bool HasBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const;
 
   // retrieve the borders for the given combination of content types
-  void GetBorders(ENodeContentType innerType, ENodeContentType outerType, NavMemoryMapTypes::BorderVector& outBorders);
+  void GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, NavMemoryMapTypes::BorderVector& outBorders);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug
@@ -97,6 +97,8 @@ private:
     BorderWaypointVector waypoints;
   };
   
+  using BorderKeyType = uint64_t;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -107,14 +109,17 @@ private:
   // returns a color used to represent the given contentType for debugging purposes
   static ColorRGBA GetDebugColor(ENodeContentType contentType);
   
-  // returns a number that represents the given combination inner-outer
-  static uint32_t GetBorderTypeKey(ENodeContentType innerType, ENodeContentType outerType);
+  // returns a number that represents the given combination inner-outers
+  static BorderKeyType GetBorderTypeKey(ENodeContentType innerType, ENodeContentTypePackedType outerTypes);
 
   // given a border waypoint, calculate its center in 3D
   static Vec3f CalculateBorderWaypointCenter(const BorderWaypoint& waypoint);
 
   // given 3d points and their neighbor directions, calculate a 3D border definition (line + normal)
   static NavMemoryMapTypes::Border MakeBorder(const Point3f& origin, const Point3f& dest, EDirection firstEDirection, EDirection lastEDirection);
+  
+  // returns true if the given contentType is contained within the set of types defined in the packedTypes
+  static bool IsInENodeContentTypePackedType(ENodeContentType contentType, ENodeContentTypePackedType contentPackedTypes);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
@@ -135,10 +140,10 @@ private:
   
   // iterate over current nodes and finding borders between the specified types
   // note this deletes previous borders for other types (in the future we may prefer to find them all at the same time)
-  void FindBorders(ENodeContentType innerType, ENodeContentType outerType);
+  void FindBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes);
   
   // checks if currently we have a node of innerType that would become a seed if we computed borders
-  bool HasBorderSeed(ENodeContentType innerType, ENodeContentType outerType) const;
+  bool HasBorderSeed(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -154,7 +159,7 @@ private:
   
   using NodeSet = std::unordered_set<const NavMeshQuadTreeNode*>;
   using NodeSetPerType = std::unordered_map<ENodeContentType, NodeSet, Anki::Util::EnumHasher>;
-  using BorderMap = std::map<uint32_t, BorderCombination>;
+  using BorderMap = std::map<BorderKeyType, BorderCombination>;
 
   // cache of nodes/quads classified per type for faster processing
   NodeSetPerType _nodeSets;

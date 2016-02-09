@@ -24,7 +24,8 @@ namespace NavMemoryMapTypes {
 // content detected in the map
 enum class EContentType : uint8_t {
   Unknown,              // not discovered
-  Clear,                // an area without obstacles
+  ClearOfObstacle,      // an area without obstacles
+  ClearOfCliff,         // an area without obstacles or cliffs
   ObstacleCube,         // an area with obstacles we recognize as cubes
   ObstacleUnrecognized, // an area with obstacles we do not recognize
   Cliff,                // an area with cliffs or holes
