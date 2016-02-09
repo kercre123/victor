@@ -36,12 +36,7 @@
 template<typename T>
 int trace_cast(const T arg)
 {
-  union {
-    T asT;
-    float asI;
-  };
-  asT = arg;
-  return asI;
+  return *((int*)&arg);
 }
 
 // Macro ball based loosely on http://stackoverflow.com/questions/6707148/foreach-macro-on-macros-arguments#6707531

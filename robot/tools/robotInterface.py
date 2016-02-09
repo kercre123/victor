@@ -56,10 +56,11 @@ CameraResolutions = (
 reinterpret_cast = {
     "d": lambda x: x,
     "i": lambda x: x,
+    "x": lambda x: x,
     "f": lambda x: struct.unpack("f", struct.pack("i", x))[0],
 }
 
-FORMATTER_KEY = re.compile(r'(?<!%)%([{}])'.format("".join(reinterpret_cast.keys()))) # Find singal % marks
+FORMATTER_KEY = re.compile(r'(?<!%)%[0-9.-]*([{}])'.format("".join(reinterpret_cast.keys()))) # Find singal % marks
 
 def formatTrace(fmt, args):
     "Returns the formatted string from a trace, doing the nesisary type reinterpretation"

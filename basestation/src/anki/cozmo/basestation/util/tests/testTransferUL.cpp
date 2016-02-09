@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "anki/cozmo/basestation/util/tests/TestTransferUL.h"
+#include "anki/cozmo/basestation/util/tests/testTransferUL.h"
 
 namespace Anki {
   
