@@ -139,8 +139,7 @@ namespace SpeedTap {
                                             DifficultyOptions,
                                             Mathf.Max(DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
                                           ), 
-                                          cubesRequired, 
-                                          InitialCubesDone);
+                                          cubesRequired);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
@@ -166,7 +165,7 @@ namespace SpeedTap {
       GameAudioClient.SetMusicState(MUSIC.SILENCE);
     }
 
-    private void InitialCubesDone() {
+    public void InitialCubesDone() {
       CozmoBlock = GetClosestAvailableBlock();
       PlayerBlock = GetFarthestAvailableBlock();
     }

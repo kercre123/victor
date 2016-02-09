@@ -11,6 +11,9 @@ namespace WhackAMole {
     public override void Enter() {
       base.Enter();
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
+      if (_WhackAMoleGame.GameSetupDone == false) {
+        _WhackAMoleGame.InitialCubesDone();
+      }
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
       _WhackAMoleGame.FixCozmoAngles();
     }

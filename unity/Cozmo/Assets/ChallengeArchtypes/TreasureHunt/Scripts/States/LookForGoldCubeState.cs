@@ -9,6 +9,7 @@ namespace TreasureHunt {
 
     public override void Enter() {
       base.Enter();
+      (_StateMachine.GetGame() as TreasureHuntGame).PickNewGoldPosition();
     }
 
     public override void Update() {

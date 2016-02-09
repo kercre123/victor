@@ -60,12 +60,11 @@ namespace CubeSlap {
 
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
 
-      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(new SeekState(), InitialCubesDone), numCubes);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(new SeekState()), numCubes);
       _StateMachine.SetNextState(initCubeState);
     }
 
     private void InitialCubesDone() {
-      _CurrentTarget = GetClosestAvailableBlock();
     }
 
     protected override void CleanUpOnDestroy() {

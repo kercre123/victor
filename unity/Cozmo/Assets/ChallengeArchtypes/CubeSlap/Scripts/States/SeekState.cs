@@ -12,6 +12,7 @@ namespace CubeSlap {
     public override void Enter() {
       base.Enter();
       _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
+      _CubeSlapGame.GetCurrentTarget();
       _CubeSlapGame.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderSetupText);
       _CubeSlapGame.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
       _CurrentRobot.SetHeadAngle(-1.0f);

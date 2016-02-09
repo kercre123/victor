@@ -10,14 +10,9 @@ public class InitialCubesState : State {
   private int _NumValidCubes;
   private GameBase _Game;
 
-  public delegate void CubeStateDone();
-
-  CubeStateDone _CubeStateDone = null;
-
-  public InitialCubesState(State nextState, int cubesRequired, CubeStateDone cubeStateDone = null) {
+  public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
-    _CubeStateDone = cubeStateDone;
   }
 
   public override void Enter() {
@@ -79,9 +74,6 @@ public class InitialCubesState : State {
       lightCube.Value.TurnLEDsOff();
     }
 
-    if (_CubeStateDone != null) {
-      _CubeStateDone.Invoke();
-    }
     _Game.HideGameStateSlide();
   }
 

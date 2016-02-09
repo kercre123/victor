@@ -18,8 +18,10 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      if (_ShowHowToPlay) {
+        _SpeedTapGame.InitialCubesDone();
+      }
       // TODO: Set up UI
-
       _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
