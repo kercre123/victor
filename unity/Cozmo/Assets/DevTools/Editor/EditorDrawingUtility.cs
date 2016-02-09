@@ -201,14 +201,23 @@ public static class EditorDrawingUtility {
     });
   }
 
+  private static void AddConvertTypeOption<T,U>() {
+    _TypeNameDictionary[typeof(T)] = _TypeNameDictionary[typeof(U)];
+    _TypeDrawers[typeof(T)] = x => Convert.ChangeType(_TypeDrawers[typeof(U)](Convert.ChangeType(x, typeof(U))), typeof(T));
+  }
+
   static EditorDrawingUtility() {
 
-    AddTypeOption<int>("int", EditorGUILayout.IntField);
-    AddTypeOption<float>("float", EditorGUILayout.FloatField);
+    _TypeDictionary.Add("null", null);
+
+    AddTypeOption<int>("int", i => EditorGUILayout.IntField(i));
+    AddTypeOption<float>("float", f =>EditorGUILayout.FloatField(f));
     AddTypeOption<string>("string", s => EditorGUILayout.TextArea(s ?? string.Empty));
-    AddTypeOption<bool>("bool", EditorGUILayout.Toggle);
+    AddTypeOption<bool>("bool", b => EditorGUILayout.Toggle(b));
+    AddConvertTypeOption<long,int>();
+    AddConvertTypeOption<double,float>();
     AddTypeOption<EmotionScorer>("EmotionScorer", DrawEmotionScorer);
-    AddTypeOption<AnimationCurve>("AnimationCurve", EditorGUILayout.CurveField);
+    AddTypeOption<AnimationCurve>("AnimationCurve", c => EditorGUILayout.CurveField(c));
     AddListTypeOption<int>("int");
     AddListTypeOption<float>("float");
     AddListTypeOption<string>("string");
@@ -217,22 +226,18 @@ public static class EditorDrawingUtility {
   }
     
   public static object DrawSelectionObjectEditor(object x) {
-    if (x == null) {
-      x = string.Empty;
-    }
 
     EditorGUILayout.BeginHorizontal();
-
 
     string typeName;
     int index;
 
-    if (_TypeNameDictionary.TryGetValue(x.GetType(), out typeName)) {
+    if (x != null && _TypeNameDictionary.TryGetValue(x.GetType(), out typeName)) {
       index = Array.IndexOf(_TypeOptions, typeName);
     }
-    else {
+    else {      
       index = 0;
-      x = 0;
+      x = null;
     }
 
     int newIndex = EditorGUILayout.Popup(index, _TypeOptions);
@@ -249,6 +254,17 @@ public static class EditorDrawingUtility {
   }
 
   private static object ConvertOrNew(object x, Type newType) {
+    if (newType == null) {
+      return null;
+    }
+
+    if (x == null) {
+      if (newType == typeof(string)) {
+        return string.Empty;
+      }
+      return Activator.CreateInstance(newType);
+    }
+
     if (newType == typeof(string)) {
       return x.ToString();
     }
@@ -289,10 +305,20 @@ public static class EditorDrawingUtility {
       }
     }
 
+    if (x.GetType() == typeof(int) && newType == typeof(float)) {
+      return (float)(int)x;
+    }
+    if (x.GetType() == typeof(float) && newType == typeof(int)) {
+      return (int)(float)x;
+    }
+
     return Activator.CreateInstance(newType);
   }
 
   public static object DrawObjectEditor(object x) {
+    if (x == null) {
+      return null;
+    }
     Func<object, object> drawer;
     if (_TypeDrawers.TryGetValue(x.GetType(), out drawer)) {
       return drawer(x);
