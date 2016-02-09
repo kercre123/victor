@@ -104,6 +104,10 @@ namespace Anki
       // Same as above, but only searches a given family of objects
       ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily);
       const ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
+
+      // returns (in arguments) all objects matching a filter
+      // NOTE: does not clear result (thus can be used multiple times with the same vector)
+      void FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension, relative to world origin!) and

@@ -50,7 +50,8 @@
 #define MAX_TX_CHAIN_COUNT 2
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (63)
+// This is as much as we have time for without interfering with I2C timing on the RTIP
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (57)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,

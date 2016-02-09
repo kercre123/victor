@@ -114,7 +114,11 @@ namespace Anki {
       
       void SetEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
       bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
-      
+
+      // Called when the action stops running and sets varibles needed for completion.
+      // This calls the overload-able GetCompletionUnion() method above.
+      void PrepForCompletion();
+
     protected:
       
       Robot* _robot = nullptr;
@@ -165,10 +169,6 @@ namespace Anki {
       u32           _idTag;
       
       static u32    sTagCounter;
-      
-      // Called when the action stops running and sets varibles needed for completion.
-      // This calls the overload-able GetCompletionUnion() method above.
-      void PrepForCompletion();
       
 #   if USE_ACTION_CALLBACKS
     public:

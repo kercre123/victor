@@ -139,6 +139,9 @@ namespace Cozmo {
 
     // disable mini game request until we get one from unity
     chooser->EnableBehaviorGroup(BehaviorGroup::MiniGame, false);
+
+    // // HACK: enable speed tab requests
+    // chooser->EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap, true);
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be

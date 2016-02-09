@@ -51,6 +51,7 @@ protected:
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
 
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
   enum class State {
