@@ -77,8 +77,11 @@ public static class LocalizationKeys {
   public const string kMinigameTextWinner = "minigame.text.winner";
   public const string kMinigameTextScore = "minigame.text.score";
   public const string kMinigameLabelShowCubes = "minigame.label.showCubes";
+  public const string kMinigameLabelCubesFound = "minigame.label.cubesFound";
   public const string kMinigameLabelCubesReady = "minigame.label.cubesReady";
   public const string kMinigameLabelReadyToPlay = "minigame.label.readyToPlay";
+  public const string kMinigamesLabelGamesAndActivities = "minigames.label.gamesAndActivities";
+  public const string kMinigameLabelDifficultySelect = "minigame.label.difficultySelect";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
   public const string kSimonGameLabelWatchCozmoPattern = "simonGame.label.watchCozmoPattern";
@@ -92,11 +95,18 @@ public static class LocalizationKeys {
   public const string kSimonGameHeaderCreateYourPattern = "simonGame.header.createYourPattern";
   public const string kSimonGameHeaderMakeYourGuess = "simonGame.header.makeYourGuess";
   public const string kSimonGameLabelStepsLeft = "simonGame.label.stepsLeft";
+  public const string kSimonGameTextPatternLength = "simonGame.text.patternLength";
+  public const string kSimonGameTextHowToPlay = "simonGame.text.howToPlay";
   public const string kSpeedTapRoundsText = "speedTap.roundsText";
   public const string kSpeedTapRoundsWonCozmo = "speedTap.roundsWon.cozmo";
   public const string kSpeedTapRoundsWonPlayer = "speedTap.roundsWon.player";
   public const string kSpeedTapScoreCozmo = "speedTap.score.cozmo";
   public const string kSpeedTapScorePlayer = "speedTap.score.player";
+  public const string kSpeedTapTextHowToPlay = "speedTap.text.howToPlay";
+  public const string kSpeedTapTextHowToPlayNoRed = "speedTap.text.howToPlayNoRed";
+  public const string kSpeedTapTextHowToPlayLightCountSameColorNoRed = "speedTap.text.howToPlayLightCountSameColorNoRed";
+  public const string kSpeedTapTextHowToPlayLightCountNoColor = "speedTap.text.howToPlayLightCountNoColor";
+  public const string kSpeedTapTapBlock = "speedTap.tapBlock";
   public const string kTreasureHuntTitle = "treasureHunt.title";
   public const string kVortexTitle = "vortex.title";
   public const string kVortexSubtitle = "vortex.subtitle";
@@ -111,11 +121,6 @@ public static class LocalizationKeys {
   public const string kCodeBreakerTextHowToPlayShort = "codeBreaker.text.howToPlayShort";
   public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
   public const string kCubeSlapTextHowToPlay = "cubeSlap.text.howToPlay";
-  public const string kSimonGameTextHowToPlay = "simonGame.text.howToPlay";
-  public const string kSpeedTapTextHowToPlay = "speedTap.text.howToPlay";
-  public const string kSpeedTapTextHowToPlayNoRed = "speedTap.text.howToPlayNoRed";
-  public const string kSpeedTapTextHowToPlayLightCountSameColorNoRed = "speedTap.text.howToPlayLightCountSameColorNoRed";
-  public const string kSpeedTapTextHowToPlayLightCountNoColor = "speedTap.text.howToPlayLightCountNoColor";
   public const string kCubePounceInfoCozmoWinEarly = "cubePounce.info.cozmoWinEarly";
   public const string kCubePounceInfoPlayerWinPoint = "cubePounce.info.playerWinPoint";
   public const string kCubePounceInfoWaitForPounce = "cubePounce.info.waitForPounce";
@@ -126,6 +131,7 @@ public static class LocalizationKeys {
   public const string kCubePounceHeaderWaitForPounce = "cubePounce.header.waitForPounce";
   public const string kCubePounceHeaderCozmoWinPoint = "cubePounce.header.cozmoWinPoint";
   public const string kCubePounceHeaderSetupText = "cubePounce.header.setupText";
+  public const string kMinigameTextHowToPlay = "minigame.text.howToPlay";
 
   #endregion
 
@@ -159,6 +165,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalTitle = "dailyGoal.title";
   public const string kDailyGoalFriendBonus = "dailyGoal.FriendBonus";
   public const string kDailyGoalComplete = "dailyGoal.Complete";
+  public const string kTimelineWeekLabel = "timeline.weekLabel";
 
   #endregion
 }

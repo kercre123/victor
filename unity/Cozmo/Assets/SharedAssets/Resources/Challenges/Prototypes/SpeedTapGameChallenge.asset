@@ -21,6 +21,6 @@ MonoBehaviour:
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
-  _HowToPlayDialogContentPrefab: {fileID: 130530, guid: a2e53def1b8024870a878b8cb2e42ba4,
-    type: 2}
+  _HowToPlayDialogContentLocKey: speedTap.text.howToPlay
+  _HowToPlayDialogContentPrefab: {fileID: 0}
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}

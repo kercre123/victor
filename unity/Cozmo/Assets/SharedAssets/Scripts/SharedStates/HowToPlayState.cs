@@ -4,17 +4,15 @@ using System.Collections;
 public class HowToPlayState : State {
 
   private State _NextState;
-  private InitialCubesState.CubeStateDone _DoneCallback;
 
-  public HowToPlayState(State nextState, InitialCubesState.CubeStateDone doneCallback = null) {
+  public HowToPlayState(State nextState) {
     _NextState = nextState;
-    _DoneCallback = doneCallback;
   }
 
   public override void Enter() {
     GameBase game = _StateMachine.GetGame();
     game.ShowContinueButtonShelf();
-    game.SetContinueButtonShelfText(Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay));
+    game.SetContinueButtonShelfText(Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), false);
     game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonStartChallenge));
     game.SetContinueButtonListener(HandleContinueButtonClicked);
     game.EnableContinueButton(true);
@@ -34,10 +32,6 @@ public class HowToPlayState : State {
     }
     else {
       _StateMachine.SetNextState(_NextState);
-    }
-
-    if (_DoneCallback != null) {
-      _DoneCallback();
     }
   }
 }

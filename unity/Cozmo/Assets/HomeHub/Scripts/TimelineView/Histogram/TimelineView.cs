@@ -26,9 +26,6 @@ namespace Cozmo.HomeHub {
     private float _RightDailyGoalOffset = 150f;
 
     [SerializeField]
-    private float _LeftDailyGoalOffset = 5f;
-
-    [SerializeField]
     private GameObject _TimelineEntryPrefab;
 
     private readonly List<TimelineEntry> _TimelineEntries = new List<TimelineEntry>();
@@ -70,9 +67,6 @@ namespace Cozmo.HomeHub {
     private LayoutElement _MiddlePane;
 
     [SerializeField]
-    private GraphSpline _GraphSpline;
-
-    [SerializeField]
     private AnkiButton _EndSessionButton;
 
     public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
@@ -100,6 +94,9 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     FriendshipFormulaConfiguration _FriendshipFormulaConfig;
+
+    private bool _ScrollLocked;
+    private float _ScrollLockedOffset;
 
     protected override void CleanUp() {
       _ScrollRect.onValueChanged.RemoveAllListeners();
@@ -137,35 +134,92 @@ namespace Cozmo.HomeHub {
 
       var startDate = today.AddDays(-kGeneratedTimelineHistoryLength);
 
+      var firstSession = DataPersistenceManager.Instance.Data.Sessions.FirstOrDefault();
+
+      bool showFirst = false;
+
+      if (firstSession != null) {
+        if (startDate < firstSession.Date) {
+          startDate = firstSession.Date.AddDays(-1);
+          showFirst = true;
+        }
+      }
+      else {
+        startDate = today.AddDays(-1);
+        showFirst = true;
+      }
+
       while (timelineEntries.Count > 0 && timelineEntries[0].Date < startDate) {
         timelineEntries.RemoveAt(0);
       }
 
-      List<float> graphPoints = new List<float>();
       for (int i = 0; i < kGeneratedTimelineHistoryLength; i++) {
         var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
 
         var date = startDate.AddDays(i);
         var entry = spawnedObject.GetComponent<TimelineEntry>();
 
-        bool active = false;
+        TimelineEntryData timelineEntry = null;
         float progress = 0f;
         if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
-          var state = timelineEntries[timelineIndex];
-          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(state.Progress, state.Goals);
-          active = true;
+          timelineEntry = timelineEntries[timelineIndex];
+          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals);
           timelineIndex++;
         }
 
-        entry.Inititialize(date, active, progress);
-        graphPoints.Add(Mathf.Min(progress, 1.0f));
+        int daysAgo = (today - date).Days;
+
+        entry.Inititialize(date, timelineEntry, progress, i == 0 && showFirst, daysAgo % 7 == 0, daysAgo / 7);
+        showFirst = false;
 
         entry.OnSelect += HandleTimelineEntrySelected;
 
         _TimelineEntries.Add(entry);
       }
+    }
 
-      _GraphSpline.Initialize(graphPoints);
+    public void LockScroll(bool locked) {
+      StartCoroutine(LockScrollCoroutine(locked));
+    }
+      
+    private IEnumerator LockScrollCoroutine(bool locked) {
+      //Scroll all the way to the left, then move the scroll container.
+      _ScrollLocked = false;
+
+      // add a .2 second delay on closing
+      float progress = (locked ? 0 : 1.4f);
+
+      float startingHorizontalOffset = locked ? _ScrollRect.horizontalNormalizedPosition : _ScrollLockedOffset;
+      _ScrollLockedOffset = startingHorizontalOffset;
+
+      float contentWidth = _ContentPane.rect.width - _ViewportPane.rect.width;
+
+      float screenWidth = _ViewportPane.rect.width;
+
+      float offset = startingHorizontalOffset * contentWidth;
+
+      float pixelsToMove = contentWidth - offset + screenWidth;
+
+      while ((progress < 1f && locked) || (progress > 0f && !locked)) {
+        progress = progress + (locked ? 2 : -2) * Time.deltaTime;
+
+        float position = offset + Mathf.Lerp(0, pixelsToMove, Mathf.Clamp01(progress));
+
+        if (position <= contentWidth) {
+          _ScrollRect.horizontalNormalizedPosition = position / contentWidth;
+          _ScrollRect.transform.localPosition = Vector3.zero;
+        }
+        else {
+          _ScrollRect.transform.localPosition = Vector2.left * (position - contentWidth);
+        }
+         
+        HandleTimelineViewScroll(Vector2.zero);
+
+        yield return null;
+      }
+
+      _ScrollLocked = locked;
+
     }
 
     private void UpdateDailySession() {
@@ -257,11 +311,15 @@ namespace Cozmo.HomeHub {
     private void SetScrollRectStartPosition() {
       _ScrollRect.horizontalNormalizedPosition = 
         CalculateHorizontalNormalizedPosition(_TimelinePane.rect.width - _TimelineStartOffset);
-      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MinDailyGoalWidth + _LeftDailyGoalOffset * 2, -_RightDailyGoalOffset - _LeftDailyGoalOffset);
-      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth + _LeftDailyGoalOffset * 2, 0);
+      SetNoScrollContainerWidth(_LockedPaneRightNoScrollContainer, _MinDailyGoalWidth, -_RightDailyGoalOffset);
+      SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, _MaxDailyGoalWidth, 0);
     }
 
     private void HandleTimelineViewScroll(Vector2 scrollPosition) {
+      if (_ScrollLocked) {
+        return;
+      }
+
       float currentScrollPosition = _ScrollRect.horizontalNormalizedPosition;
       if (currentScrollPosition <= GetDailyGoalOnRightHorizontalNormalizedPosition()) {
         if (_LockedPaneScrollContainer.parent != _LockedPaneRightNoScrollContainer) {
@@ -282,7 +340,7 @@ namespace Cozmo.HomeHub {
         float dailyGoalPaneOverhang = pixelsOnLeft - _TimelinePane.rect.width;
         float dailyGoalDisplayWidth = _MiddlePane.minWidth - dailyGoalPaneOverhang;
         dailyGoalDisplayWidth = Mathf.Clamp(dailyGoalDisplayWidth, _MinDailyGoalWidth, _MaxDailyGoalWidth);
-        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth + _LeftDailyGoalOffset * 2, 0);
+        SetNoScrollContainerWidth(_LockedPaneLeftNoScrollContainer, dailyGoalDisplayWidth, 0);
       }
       else {
         if (_LockedPaneScrollContainer.parent != _MiddlePane) {

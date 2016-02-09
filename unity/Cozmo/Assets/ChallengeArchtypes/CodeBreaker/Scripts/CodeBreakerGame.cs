@@ -37,7 +37,7 @@ namespace CodeBreaker {
 
       // INGO Potentially we'll need to clamp the #cubes?
       // TODO: Potentially show a slide for showing Cozmo a # of cubes; need a consistent solution across games
-      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayCodebreakerState(), _Config.NumCubesInCode, InitialCubesDone);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayCodebreakerState(), _Config.NumCubesInCode);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -45,10 +45,6 @@ namespace CodeBreaker {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetLiftHeight(0.0f);
       CurrentRobot.SetHeadAngle(-1.0f);
-    }
-
-    private void InitialCubesDone() {
-
     }
 
     protected override void CleanUpOnDestroy() {

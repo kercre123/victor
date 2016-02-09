@@ -31,33 +31,25 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public void RaiseMiniGameWin(string primaryTextOverride = "", string secondaryTextOverride = "") {
+  public void RaiseMiniGameWin(string subtitleText = null) {
     _StateMachine.Stop();
 
     _WonChallenge = true;
-    string primaryText = primaryTextOverride;
-    if (string.IsNullOrEmpty(primaryText)) {
-      primaryText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
-    }
     _SharedMinigameViewInstance.ShowCozmoScoreWidget();
     _SharedMinigameViewInstance.ShowPlayerWinnerBanner();
-    OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
+    OpenChallengeEndedDialog(subtitleText);
   }
 
   public delegate void MiniGameLoseHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
-  public void RaiseMiniGameLose(string primaryTextOverride = "", string secondaryTextOverride = "") {
+  public void RaiseMiniGameLose(string subtitleText = null) {
     _StateMachine.Stop();
     _WonChallenge = false;
-    string primaryText = primaryTextOverride;
-    if (string.IsNullOrEmpty(primaryText)) {
-      primaryText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
-    }
     _SharedMinigameViewInstance.ShowCozmoWinnerBanner();
     _SharedMinigameViewInstance.ShowPlayerScoreWidget();
-    OpenChallengeEndedDialog(primaryText, secondaryTextOverride);
+    OpenChallengeEndedDialog(subtitleText);
   }
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
@@ -181,13 +173,13 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  private void OpenChallengeEndedDialog(string primaryText, string secondaryText) {
+  private void OpenChallengeEndedDialog(string subtitleText = null) {
     // Open confirmation dialog instead
     GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowCustomGameStateSlide(
                                      UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
                                      "ChallengeEndSlide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
-    _ChallengeEndViewInstance.SetupDialog(primaryText, secondaryText);
+    _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
     // Listen for dialog close
     ShowContinueButtonShelf(centerShelf: true);
@@ -339,7 +331,12 @@ public abstract class GameBase : MonoBehaviour {
   #region How To Play Button
 
   public void OpenHowToPlayView() {
-    _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentPrefab);
+    if (_ChallengeData.HowToPlayDialogContentPrefab != null) {
+      _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentPrefab);
+    }
+    else {
+      _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentLocKey);
+    }
     _SharedMinigameViewInstance.OpenHowToPlayView();
   }
 
@@ -458,8 +455,8 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.HideContinueButtonShelf();
   }
 
-  public void SetContinueButtonShelfText(string text) {
-    _SharedMinigameViewInstance.SetContinueButtonShelfText(text);
+  public void SetContinueButtonShelfText(string text, bool isComplete) {
+    _SharedMinigameViewInstance.SetContinueButtonShelfText(text, isComplete);
   }
 
   public void SetContinueButtonText(string text) {

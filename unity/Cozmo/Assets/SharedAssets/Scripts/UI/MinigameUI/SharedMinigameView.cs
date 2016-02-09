@@ -220,6 +220,7 @@ namespace Cozmo {
       }
 
       private void HandleQuitConfirmed() {
+        CloseHowToPlayView();
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
         }
@@ -333,8 +334,21 @@ namespace Cozmo {
 
       #region How To Play Widget
 
-      public void CreateHowToPlayButton(GameObject howToPlayContentsPrefab) {
+      public void CreateHowToPlayButton(string howToPlayTextLocKey) {
+        if (_HowToPlayButtonInstance != null) {
+          return;
+        }
 
+        GameObject newButton = UIManager.CreateUIElement(_HowToPlayButtonPrefab, this.transform);
+
+        _HowToPlayButtonInstance = newButton.GetComponent<HowToPlayButton>();
+
+        _HowToPlayButtonInstance.Initialize(howToPlayTextLocKey);
+
+        AddWidget(_HowToPlayButtonInstance);
+      }
+
+      public void CreateHowToPlayButton(GameObject howToPlayContentsPrefab) {
         if (_HowToPlayButtonInstance != null) {
           return;
         }
@@ -508,8 +522,8 @@ namespace Cozmo {
         _ContinueButtonShelfInstance = null;
       }
 
-      public void SetContinueButtonShelfText(string text) {
-        _ContinueButtonShelfInstance.SetShelfText(text);
+      public void SetContinueButtonShelfText(string text, bool isComplete) {
+        _ContinueButtonShelfInstance.SetShelfText(text, isComplete);
       }
 
       public void SetContinueButtonText(string text) {

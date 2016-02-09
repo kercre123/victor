@@ -30,7 +30,20 @@ public class DailyGoalPanel : MonoBehaviour {
   [SerializeField]
   private Transform _GoalContainer;
 
+
+  [SerializeField]
+  private RectTransform _Title;
+  [SerializeField]
+  private RectTransform _TitleGlow;
+
+  [SerializeField]
+  private AnimationCurve _TitleScaleCurve;
+
+
+  private RectTransform _RectTransform;
+
   void Awake() {
+    _RectTransform = GetComponent<RectTransform>();
     _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
   }
 
@@ -67,5 +80,11 @@ public class DailyGoalPanel : MonoBehaviour {
   // Disable any UI elements that should not be shown when collapsed
   public void Collapse(bool collapse) {
     _BonusBarPanel.gameObject.SetActive(collapse);
+  }
+
+  private void Update() {
+    var rect = _RectTransform.rect;
+
+    _TitleGlow.localScale = _Title.localScale = Vector3.one * _TitleScaleCurve.Evaluate(rect.width);
   }
 }

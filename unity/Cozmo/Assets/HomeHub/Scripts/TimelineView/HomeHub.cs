@@ -50,7 +50,7 @@ namespace Cozmo.HomeHub {
 
     private void ShowTimelineDialog() {
       // Create dialog with the game prefabs
-      _TimelineViewInstance = UIManager.OpenView(_TimelineViewPrefab) as TimelineView;
+      _TimelineViewInstance = UIManager.OpenView(_TimelineViewPrefab, verticalCanvas: true) as TimelineView;
       _TimelineViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _TimelineViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _TimelineViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
@@ -109,12 +109,23 @@ namespace Cozmo.HomeHub {
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
       // We need to initialize the dialog first before opening the view, so don't animate right away
-      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, false) as ChallengeDetailsDialog;
+      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, false, verticalCanvas: true) as ChallengeDetailsDialog;
       _ChallengeDetailsDialogInstance.Initialize(_ChallengeStatesById[challenge].data, buttonTransform);
       _ChallengeDetailsDialogInstance.OpenView();
 
+
+      var timelineViewInstance = _TimelineViewInstance;
+      timelineViewInstance.LockScroll(true);
+      _ChallengeDetailsDialogInstance.ViewClosed += () => 
+      {
+        if(timelineViewInstance != null) {
+          timelineViewInstance.LockScroll(false);
+        }
+      };
+
       // React to when we should start the challenge.
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
+
     }
 
     private void HandleMiniGameLose(StatContainer rewards) {

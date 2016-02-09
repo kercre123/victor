@@ -50,14 +50,11 @@ public class ChallengeDetailsDialog : BaseView {
     else if (players == 1 && cubes != 1) {
       locKey = LocalizationKeys.kChallengeDetailsLabelPlayerAndCubesNeeded;
     }
-    else if(players != 1 && cubes == 1) {
+    else if (players != 1 && cubes == 1) {
       locKey = LocalizationKeys.kChallengeDetailsLabelPlayersAndCubeNeeded;
     }
       
-    _PlayersAndCubesLabel.text = string.Format(Localization.GetCultureInfo(),      
-      Localization.Get(locKey),
-      players,
-      cubes);
+    _PlayersAndCubesLabel.text = Localization.GetWithArgs(locKey, players, cubes);
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
     _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
     _ChallengeId = challengeData.ChallengeID;
@@ -75,13 +72,13 @@ public class ChallengeDetailsDialog : BaseView {
 
   protected override void ConstructOpenAnimation(DG.Tweening.Sequence openAnimation) {
     // Slide the dialog out and back
-    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).From().SetEase(Ease.OutBack).SetDelay(0.2f);
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).From().SetEase(Ease.Linear).SetDelay(0.2f);
     openAnimation.Join(dialogTween);
   }
 
   protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
     // Slide the dialog out
-    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).SetEase(Ease.InBack).SetDelay(0.2f);
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).SetEase(Ease.Linear);
     closeAnimation.Join(dialogTween);
   }
 }

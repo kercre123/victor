@@ -30,6 +30,9 @@ public class UIManager : MonoBehaviour {
 
   [SerializeField]
   private Canvas _OverlayCanvas;
+
+  [SerializeField]
+  private Canvas _VerticalCanvas;
   
   [SerializeField]
   private EventSystem _EventSystemScript;
@@ -93,8 +96,13 @@ public class UIManager : MonoBehaviour {
   /// Creates a dialog using a script/prefab that extends from BaseView.
   /// Plays open animations on that dialog by default. 
   /// </summary>
-  public static BaseView OpenView(BaseView viewPrefab, bool animateImmediately = true, 
-                                  bool? overrideBackgroundDim = null, bool? overrideCloseOnTouchOutside = null) {
+  public static BaseView OpenView(
+    BaseView viewPrefab, 
+    bool animateImmediately = true, 
+    bool? overrideBackgroundDim = null, 
+    bool? overrideCloseOnTouchOutside = null, 
+    bool verticalCanvas = false) {
+
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
 
     BaseView baseViewScript = newView.GetComponent<BaseView>();
@@ -107,13 +115,13 @@ public class UIManager : MonoBehaviour {
         // First dialog to dim the background, we need to create a dimmer
         // on top of existing ui
         Instance._DimBackgroundInstance = GameObject.Instantiate(Instance._DimBackgroundPrefab);
-        Instance._DimBackgroundInstance.transform.SetParent(Instance._OverlayCanvas.transform, false);
+        Instance._DimBackgroundInstance.transform.SetParent(verticalCanvas ? Instance._VerticalCanvas.transform : Instance._OverlayCanvas.transform, false);
       }
     }
 
     // Set the parent of the dialog after dimmer is created so that it displays
     // on top of the dimmer
-    newView.transform.SetParent(Instance._OverlayCanvas.transform, false);
+    newView.transform.SetParent(verticalCanvas ? Instance._VerticalCanvas.transform : Instance._OverlayCanvas.transform, false);
 
     if (animateImmediately) {
       baseViewScript.OpenView(overrideCloseOnTouchOutside);

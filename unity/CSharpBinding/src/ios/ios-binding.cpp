@@ -58,7 +58,6 @@ void configure_game(Json::Value config)
 int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data)
 {
   Anki::Util::DasLoggerProvider* loggerProvider = new Anki::Util::DasLoggerProvider();
-  //loggerProvider->SetMinLogLevel(0);
   Anki::Util::gLoggerProvider = loggerProvider;
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 

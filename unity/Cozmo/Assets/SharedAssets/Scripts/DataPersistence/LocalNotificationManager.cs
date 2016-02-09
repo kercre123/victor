@@ -38,7 +38,7 @@ public class LocalNotificationManager : MonoBehaviour {
 #endif
   }
 
-  private static void ScheduleNotification(DateTime time, string message) {
+  public static void ScheduleNotification(DateTime time, string message) {
 #if UNITY_IOS
     LocalNotification notification = new LocalNotification() {
       fireDate = time,

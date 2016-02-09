@@ -8,6 +8,7 @@ public static class Localization {
   private static Anki.AppResources.StringTable _st = new Anki.AppResources.StringTable();
 
   public static bool showDebugLocText = false;
+  public const string kNewLine = "\n";
 
   public static string Get(string key) {
     string value;
@@ -30,6 +31,12 @@ public static class Localization {
 
   public static string GetNumber(int number) {
     return string.Format(GetCultureInfo(), "{0:N0}", number);
+  }
+
+  public static string GetWithArgs(string localizationKey, params object[] args) {
+    string localized = Get(localizationKey);
+    localized = string.Format(GetCultureInfo(), localized, args);
+    return localized;
   }
 
   public static bool IsSupportedLocale(string locale) {

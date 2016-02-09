@@ -10,14 +10,9 @@ public class InitialCubesState : State {
   private int _NumValidCubes;
   private GameBase _Game;
 
-  public delegate void CubeStateDone();
-
-  CubeStateDone _CubeStateDone = null;
-
-  public InitialCubesState(State nextState, int cubesRequired, CubeStateDone cubeStateDone = null) {
+  public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
-    _CubeStateDone = cubeStateDone;
   }
 
   public override void Enter() {
@@ -28,10 +23,8 @@ public class InitialCubesState : State {
     _Game = _StateMachine.GetGame();
     _ShowCozmoCubesSlide = _Game.ShowShowCozmoCubesSlide(_CubesRequired);
     _Game.ShowContinueButtonShelf();
-    _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
-      Localization.Get(LocalizationKeys.kMinigameLabelShowCubes),
-      _CubesRequired,
-      0));
+    _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
+      0), false);
     _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
     _Game.SetContinueButtonListener(HandleContinueButtonClicked);
     _Game.EnableContinueButton(false);
@@ -59,17 +52,15 @@ public class InitialCubesState : State {
       _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
 
       if (_NumValidCubes >= _CubesRequired) {
-        _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
-          Localization.Get(LocalizationKeys.kMinigameLabelCubesReady),
-          _NumValidCubes));
+        _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
+          _NumValidCubes), true);
 
         _Game.EnableContinueButton(true);
       }
       else {
-        _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
-          Localization.Get(LocalizationKeys.kMinigameLabelShowCubes),
+        _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
           _CubesRequired,
-          _NumValidCubes));
+          _NumValidCubes), false);
 
         _Game.EnableContinueButton(false);
       }
@@ -83,9 +74,6 @@ public class InitialCubesState : State {
       lightCube.Value.TurnLEDsOff();
     }
 
-    if (_CubeStateDone != null) {
-      _CubeStateDone.Invoke();
-    }
     _Game.HideGameStateSlide();
   }
 

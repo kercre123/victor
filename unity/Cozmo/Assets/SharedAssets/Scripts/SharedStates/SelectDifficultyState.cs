@@ -21,7 +21,7 @@ public class SelectDifficultyState : State {
     _Game.OpenDifficultySelectView(_DifficultyOptions, 
       _HighestLevelCompleted);
     _Game.ShowContinueButtonShelf();
-    _Game.SetContinueButtonShelfText(string.Empty);
+    _Game.SetContinueButtonShelfText(string.Empty, false);
     _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
     _Game.SetContinueButtonListener(HandleContinueButtonClicked);
     _Game.EnableContinueButton(true);
