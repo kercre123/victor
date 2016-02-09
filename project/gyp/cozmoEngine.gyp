@@ -968,9 +968,6 @@
 
             ], #end actions
           }, # end unittest target
-
-
-
         ], # end targets
       },
     ], # end if mac
@@ -1312,6 +1309,21 @@
               ],
             },
           ],
+        }],
+        ['OS=="ios" or OS=="mac"',{
+          'sources/': [ 
+            ['exclude', '(android|linux)']
+          ]
+        }],
+        ['OS=="android"',{
+          'sources/': [ 
+            ['exclude', '(ios|linux|mac)']
+          ]
+        }],
+        ['OS=="linux"',{
+          'sources/': [ 
+            ['exclude', '(android|ios|mac)']
+          ]
         }],
       ] #'conditions'
 
