@@ -13,6 +13,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
@@ -24,6 +25,7 @@ namespace Anki {
 namespace Cozmo {
 
 static const char* kInitialAnimationKey = "initial_animName";
+static const char* kPreDriveAnimationKey = "preDrive_animName";
 static const float kDistToMoveTowardsFace_mm = 120.0f;
 static const float kBackupDistance_mm = 80.0f;
 static const float kFaceVerificationTime_s = 0.5f;
@@ -49,6 +51,19 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
                             kInitialAnimationKey);
       }
     }
+
+    {
+      const Json::Value& val = config[kPreDriveAnimationKey];
+      if( val.isString() ) {
+        _preDriveAnimationName = val.asCString();
+      }
+      else {
+        PRINT_NAMED_WARNING("BehaviorRequestGame.Config.MissingKey",
+                            "Missing key '%s'",
+                            kPreDriveAnimationKey);
+      }
+    }
+      
   }
 }
 
@@ -130,6 +145,20 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
     case State::PlayingInitialAnimation: {
       name = "PlayingInitialAnimation";
       IActionRunner* animationAction = new PlayAnimationAction(_initialAnimationName);            
+      StartActing( robot, animationAction );
+      break;
+    }
+
+    case State::FacingBlock: {
+      name = "FacingBlock";
+      ObjectID targetBlockID = GetRobotsBlockID(robot);
+      StartActing(robot, new FaceObjectAction( targetBlockID, PI_F ) );
+      break;
+    }
+
+    case State::PlayingPreDriveAnimation: {
+      name = "PlayingPreDriveAnimation";
+      IActionRunner* animationAction = new PlayAnimationAction(_preDriveAnimationName);
       StartActing( robot, animationAction );
       break;
     }
@@ -227,6 +256,16 @@ void BehaviorRequestGameSimple::RequestGame_HandleActionCompleted(Robot& robot, 
 {
   switch( _state ) {
     case State::PlayingInitialAnimation: {
+      TransitionTo(robot, State::FacingBlock);
+      break;
+    }
+
+    case State::FacingBlock: {
+      TransitionTo(robot, State::PlayingPreDriveAnimation);
+      break;
+    }
+
+    case State::PlayingPreDriveAnimation: {
       TransitionTo(robot, State::PickingUpBlock);
       break;
     }

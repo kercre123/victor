@@ -47,6 +47,8 @@ private:
 
   enum class State {
     PlayingInitialAnimation,
+    FacingBlock,
+    PlayingPreDriveAnimation,
     PickingUpBlock,
     DrivingToFace,
     PlacingBlock,
@@ -60,6 +62,7 @@ private:
   State _state = State::PlayingInitialAnimation;
 
   std::string _initialAnimationName;
+  std::string _preDriveAnimationName;
   float       _verifyStartTime_s = 0.0f;
 
   void TransitionTo(Robot& robot, State state);
