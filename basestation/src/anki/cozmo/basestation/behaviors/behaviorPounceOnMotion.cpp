@@ -179,7 +179,7 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
 }
 
   
-Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec)
 {
   if( _numValidPouncePoses == 0 ) {
     PRINT_NAMED_WARNING("BehaviorPounceOnMotion.Init.NoPouncePose", "");
@@ -285,7 +285,7 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot, double cu
   return Status::Running;
 }
 
-Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if( _state == State::Inactive ) {
