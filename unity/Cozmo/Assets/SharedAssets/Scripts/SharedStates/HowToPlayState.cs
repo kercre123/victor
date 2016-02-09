@@ -12,7 +12,7 @@ public class HowToPlayState : State {
   public override void Enter() {
     GameBase game = _StateMachine.GetGame();
     game.ShowContinueButtonShelf();
-    game.SetContinueButtonShelfText(Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay));
+    game.SetContinueButtonShelfText(Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), false);
     game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonStartChallenge));
     game.SetContinueButtonListener(HandleContinueButtonClicked);
     game.EnableContinueButton(true);

@@ -77,6 +77,7 @@ public static class LocalizationKeys {
   public const string kMinigameTextWinner = "minigame.text.winner";
   public const string kMinigameTextScore = "minigame.text.score";
   public const string kMinigameLabelShowCubes = "minigame.label.showCubes";
+  public const string kMinigameLabelCubesFound = "minigame.label.cubesFound";
   public const string kMinigameLabelCubesReady = "minigame.label.cubesReady";
   public const string kMinigameLabelReadyToPlay = "minigame.label.readyToPlay";
   public const string kMinigamesLabelGamesAndActivities = "minigames.label.gamesAndActivities";
@@ -130,6 +131,7 @@ public static class LocalizationKeys {
   public const string kCubePounceHeaderWaitForPounce = "cubePounce.header.waitForPounce";
   public const string kCubePounceHeaderCozmoWinPoint = "cubePounce.header.cozmoWinPoint";
   public const string kCubePounceHeaderSetupText = "cubePounce.header.setupText";
+  public const string kMinigameTextHowToPlay = "minigame.text.howToPlay";
 
   #endregion
 
@@ -163,6 +165,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalTitle = "dailyGoal.title";
   public const string kDailyGoalFriendBonus = "dailyGoal.FriendBonus";
   public const string kDailyGoalComplete = "dailyGoal.Complete";
+  public const string kTimelineWeekLabel = "timeline.weekLabel";
 
   #endregion
 }

@@ -23,8 +23,8 @@ public class InitialCubesState : State {
     _Game = _StateMachine.GetGame();
     _ShowCozmoCubesSlide = _Game.ShowShowCozmoCubesSlide(_CubesRequired);
     _Game.ShowContinueButtonShelf();
-    _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelShowCubes,
-      _CubesRequired, 0));
+    _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
+      0), false);
     _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
     _Game.SetContinueButtonListener(HandleContinueButtonClicked);
     _Game.EnableContinueButton(false);
@@ -53,14 +53,14 @@ public class InitialCubesState : State {
 
       if (_NumValidCubes >= _CubesRequired) {
         _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
-          _NumValidCubes));
+          _NumValidCubes), true);
 
         _Game.EnableContinueButton(true);
       }
       else {
-        _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelShowCubes,
+        _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
           _CubesRequired,
-          _NumValidCubes));
+          _NumValidCubes), false);
 
         _Game.EnableContinueButton(false);
       }
