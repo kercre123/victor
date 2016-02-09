@@ -240,7 +240,7 @@ namespace Cozmo {
     }
     
     struct AudioRef {
-      Audio::EventType audioEvent;
+      Audio::GenericEvent audioEvent;
       // TODO: We can add other audio controlls to animation data - JMR
     };
     
@@ -251,7 +251,7 @@ namespace Cozmo {
     
   private:
     
-    Result AddAudioRef(const Audio::EventType event);
+    Result AddAudioRef(const Audio::GenericEvent event);
 
     std::vector<AudioRef> _audioReferences;
     
