@@ -130,11 +130,11 @@ bool IBehaviorRequestGame::IsRunnable(const Robot& robot, double currentTime_sec
   return ret;
 }
 
-Result IBehaviorRequestGame::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result IBehaviorRequestGame::InitInternal(Robot& robot, double currentTime_sec)
 {
   _requestTime_s = -1.0f;
   
-  return RequestGame_InitInternal(robot, currentTime_sec, isResuming);
+  return RequestGame_InitInternal(robot, currentTime_sec);
 }
 
 f32 IBehaviorRequestGame::GetRequestMinDelayComplete_s() const

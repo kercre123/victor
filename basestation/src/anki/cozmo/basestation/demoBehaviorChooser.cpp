@@ -83,6 +83,9 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
   
 IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
+#if USE_MOOD_MANAGER_FOR_DEMO_CHOOSER
+  return SimpleBehaviorChooser::ChooseNextBehavior(robot, currentTime_sec);
+#else
   auto runnable = [&robot,currentTime_sec](const IBehavior* behavior)
   {
     return (nullptr != behavior && behavior->IsRunnable(robot, currentTime_sec));
@@ -125,51 +128,25 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, double cu
       PRINT_NAMED_ERROR("DemoBehaviorChooser.ChooseNextBehavior", "Chooser in unhandled state!");
     }
   }
+
+  if (forcedChoice)
+  {
+    return forcedChoice;
+  }
+  else if(runnable(_behaviorLookAround))
+  {
+    return _behaviorLookAround;
+  }
+  else if (runnable(_behaviorFidget))
+  {
+    return _behaviorFidget;
+  }
+  else if (runnable(_behaviorNone))
+  {
+    return _behaviorNone;
+  }
   
-  #if USE_MOOD_MANAGER_FOR_DEMO_CHOOSER
-  {
-    IBehavior* simpleChoice = SimpleBehaviorChooser::ChooseNextBehavior(robot, currentTime_sec);
-    
-    if (forcedChoice)
-    {
-      if (simpleChoice && (forcedChoice != simpleChoice) && simpleChoice->IsShortInterruption())
-      {
-        // maybe still force simpleChoice if sufficiently better scoring?
-        // or if it's a short behavior?
-        const float forcedChoiceScore = forcedChoice->EvaluateScore(robot, currentTime_sec);
-        const float simpleChoiceScore = simpleChoice->EvaluateScore(robot, currentTime_sec);
-        if (simpleChoiceScore > (forcedChoiceScore + 0.05f))
-        {
-          return simpleChoice;
-        }
-      }
-      
-      return forcedChoice;
-    }
-    
-    return simpleChoice;
-  }
-  #else
-  {
-    if (forcedChoice)
-    {
-      return forcedChoice;
-    }
-    else if(runnable(_behaviorLookAround))
-    {
-      return _behaviorLookAround;
-    }
-    else if (runnable(_behaviorFidget))
-    {
-      return _behaviorFidget;
-    }
-    else if (runnable(_behaviorNone))
-    {
-      return _behaviorNone;
-    }
-    
-    return nullptr;
-  }
+  return nullptr;
   #endif // USE_MOOD_MANAGER_FOR_DEMO_CHOOSER
 }
   
