@@ -220,6 +220,7 @@ namespace Cozmo {
       }
 
       private void HandleQuitConfirmed() {
+        CloseHowToPlayView();
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
         }
