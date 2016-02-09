@@ -5,6 +5,9 @@
  * Date:   12/09/2015
  *
  * Description: Nodes in the nav mesh, represented as quad tree nodes.
+ * Note nodes can work with a processor to speed up algorithms and searches, however this implementation supports
+ * working with one processor only for any given node. Do not use more than one processor instance for nodes, or
+ * otherwise leaks and bad pointer references will happen.
  *
  * Copyright: Anki, Inc. 2015
  **/
@@ -18,6 +21,9 @@
 
 #include "anki/common/basestation/math/point.h"
 
+#include "util/helpers/noncopyable.h"
+
+#include <memory>
 #include <vector>
 
 namespace Anki {
@@ -27,7 +33,7 @@ class NavMeshQuadTreeProcessor;
 using namespace NavMeshQuadTreeTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class NavMeshQuadTreeNode
+class NavMeshQuadTreeNode : private Util::noncopyable
 {
 public:
 
@@ -44,6 +50,13 @@ public:
   // Crete node
   // it will allow subdivision as long as level is greater than 0
   NavMeshQuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, NavMeshQuadTreeNode* parent);
+  
+  // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
+  // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
+  // assumption that the processor(s) will be destroyed at the same time than nodes are, except in the case of
+  // nodes that are merged into their parents, in which case we do notify the processor.
+  // Alternatively processors would store weak_ptr, but no need for the moment given the above assumption
+  // ~NavMeshQuadTreeNode();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -119,7 +132,7 @@ private:
   bool CanSubdivide() const { return _level > 0; }
   
   // return true if this quad is already subdivided
-  bool IsSubdivided() const { return !_children.empty(); }
+  bool IsSubdivided() const { return !_childrenPtr.empty(); }
   
   // returns true if this node can override children with the given content type (some changes in content
   // type are not allowed to preserve information). This is a necessity now to prevent Cliffs from being
@@ -169,7 +182,7 @@ private:
   // NOTE: try to minimize padding in these attributes
 
   // children when subdivided. Can be empty or have 4 nodes
-  std::vector<NavMeshQuadTreeNode> _children;
+  std::vector< std::unique_ptr<NavMeshQuadTreeNode> > _childrenPtr;
 
   // coordinates of this quad
   Point3f _center;
