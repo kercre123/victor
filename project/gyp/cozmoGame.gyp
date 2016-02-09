@@ -327,7 +327,8 @@
             'include_dirs': [
               '../../unity/CSharpBinding/src',
               '<@(opencv_includes)',
-              '../../lib/anki/das-client/include'
+              '../../lib/anki/das-client/include',
+              '../../lib/anki/das-client/ios'
             ],
             'dependencies': [
               '<(cg-ce_gyp_path):cozmoEngine',
