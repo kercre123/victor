@@ -97,7 +97,6 @@ public class DailySummaryPanel : BaseView {
   private GoalCell CreateGoalCell(ProgressionStatType type, int progress, int goal) {
     GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
     newBadge.Initialize(type, progress, goal, false);
-    newBadge.ShowText(true);
     return newBadge;
   }
 

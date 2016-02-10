@@ -110,6 +110,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22459862}
   - 114: {fileID: 11477656}
+  - 225: {fileID: 22536446}
   m_Layer: 0
   m_Name: BonusBarPanel
   m_TagString: Untagged
@@ -276,7 +277,7 @@ MonoBehaviour:
     m_Alignment: 4
     m_RichText: 1
     m_HorizontalOverflow: 0
-    m_VerticalOverflow: 1
+    m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '#dailyGoal.FriendBonus'
   _AllUppercase: 0
@@ -369,6 +370,7 @@ MonoBehaviour:
   _BonusMultText: {fileID: 11406136}
   _BonusProgressBar: {fileID: 11445530}
   _BonusProgressBg: {fileID: 11406154}
+  BonusBarCanvas: {fileID: 22536446}
 --- !u!114 &11484336
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -398,7 +400,7 @@ MonoBehaviour:
     m_Alignment: 4
     m_RichText: 1
     m_HorizontalOverflow: 0
-    m_VerticalOverflow: 1
+    m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '#dailyGoal.FriendBonus'
   _AllUppercase: 0
@@ -741,6 +743,17 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
+--- !u!225 &22536446
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 148114}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

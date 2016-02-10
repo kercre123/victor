@@ -10,6 +10,7 @@ using Anki.UI;
 public class DailyGoalPanel : MonoBehaviour {
   
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
+  private const float _kFadeTweenDuration = 0.25f;
 
 
   // Prefab for GoalCells
@@ -83,9 +84,26 @@ public class DailyGoalPanel : MonoBehaviour {
     _BonusBarPanel.SetFriendshipBonus(bonusMult);
   }
 
-  // Disable any UI elements that should not be shown when collapsed
-  public void Collapse(bool collapse) {
-    _BonusBarPanel.gameObject.SetActive(collapse);
+  // Fade out UI elements when collapsed
+  // Or Fade them back in if expanding.
+  public void Expand(bool expand) {
+    Sequence fadeTween = DOTween.Sequence();
+    for (int i = 0; i < _GoalCells.Count; i++) {
+      GoalCell cell = _GoalCells[i];
+      if (expand) { 
+        fadeTween.Join(cell.GoalLabel.DOFade(1.0f, _kFadeTweenDuration));
+      }
+      else {
+        fadeTween.Join(cell.GoalLabel.DOFade(0.0f, _kFadeTweenDuration));
+      }
+    }
+    if (expand) { 
+      fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(1.0f, _kFadeTweenDuration));
+    }
+    else {
+      fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(0.0f, _kFadeTweenDuration));
+    }
+    fadeTween.Play();
   }
 
   private void Update() {
