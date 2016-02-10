@@ -465,6 +465,10 @@ namespace Cozmo {
         }
         _CurrentSlide.alpha = 0;
 
+        if (_SlideInTween != null) {
+          _SlideInTween.Kill();
+        }
+
         // Play a transition in tween on it
         _SlideInTween = DOTween.Sequence();
         _SlideInTween.Append(_CurrentSlide.transform.DOLocalMoveX(
@@ -482,6 +486,9 @@ namespace Cozmo {
           _CurrentSlide = null;
           _CurrentSlideName = null;
 
+          if (_SlideOutTween != null) {
+            _SlideOutTween.Kill();
+          }
           _SlideOutTween = DOTween.Sequence();
           _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
             100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
@@ -489,7 +496,9 @@ namespace Cozmo {
 
           // At the end of the tween destroy the out slide
           _SlideOutTween.OnComplete(() => {
-            Destroy(_TransitionOutSlide.gameObject);
+            if (_TransitionOutSlide.gameObject != null) {
+              Destroy(_TransitionOutSlide.gameObject);
+            }
           });
           _SlideOutTween.Play();
         }
