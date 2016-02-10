@@ -67,6 +67,7 @@ namespace Face {
   bool m_rectLock;
 
   bool _textMode;
+  bool _textModeInverted;
   
   static void ResetScan() {
     if (m_remainingRects > 0) {
@@ -303,6 +304,7 @@ namespace Face {
       for (int i = 0; i < CHAR_WIDTH; i++)
       {
         *gptr = *fptr++;
+        if (_textModeInverted) *gptr = ~(*gptr);
         gptr += ROWS / CHAR_HEIGHT;
       }
       x++;
@@ -318,6 +320,12 @@ namespace Face {
     m_rectLock = true;
     ResetScreen();
     m_rectLock = false;
+  }
+  
+  // Sets future calls to FacePrintf to invert the display
+  extern "C" void FaceInvertPrintf(bool invert)
+  {
+    _textModeInverted = invert;
   }
   
 } // Face

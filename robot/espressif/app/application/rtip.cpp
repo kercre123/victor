@@ -22,6 +22,20 @@ namespace RTIP {
 #define TICK_TIME (5000)
 #define BYTES_PER_TICK (256)
 
+u32 Version;
+u32 Date;
+char VersionDescription[VERSION_DESCRIPTION_SIZE]; 
+
+#define MIN(a,b) (a < b) ? a : b
+
+bool Init()
+{
+  Version = 0;
+  Date = 0;
+  VersionDescription[0] = 0;
+  return true;
+}
+
 bool SendMessage(RobotInterface::EngineToRobot& msg)
 {
   static uint32_t lastCallTime = 0;
@@ -36,6 +50,23 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
   return true;
 }
 
+void UpdateVersionInfo(RobotInterface::RTIPVersionInfo& info)
+{
+  int i = 0;
+  info.description_length = MIN(info.description_length, VERSION_DESCRIPTION_SIZE-1);
+  while (i < info.description_length)
+  {
+    VersionDescription[i] = info.description[i];
+    i++;
+  }
+  while (i < VERSION_DESCRIPTION_SIZE)
+  {
+    VersionDescription[i] = 0;
+    i++;
+  }
+  Version = info.version;
+  Date    = info.date;
+}
 
 #define RELAY_BUFFER_SIZE (384)
 ct_assert(RELAY_BUFFER_SIZE > RTIP_MAX_CLAD_MSG_SIZE + DROP_TO_WIFI_MAX_PAYLOAD);
@@ -65,8 +96,18 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
         {
           const bool reliable = relayBuffer[1] & RTIP_CLAD_MSG_RELIABLE_FLAG;
           const bool hot      = relayBuffer[1] & RTIP_CLAD_MSG_HOT_FLAG;
-          //GLOBAL_INVALID_TAG = 0, fighting include nightmare
-          AnkiConditionalError(clientSendMessage(relayBuffer + 2, size, 0, reliable, hot), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, relayBuffer[2], size);
+          if (relayBuffer[2] == RobotInterface::RobotToEngine::Tag_rtipVersion)
+          {
+            RobotInterface::RTIPVersionInfo info;
+            os_memcpy(info.GetBuffer(), relayBuffer + 3, size - 1);
+            UpdateVersionInfo(info);
+          }
+          else
+          {
+            AnkiConditionalError(
+              clientSendMessage(relayBuffer + 2, size, 0 /* GLOBAL_INVALID_TAG, fighting include nightmare here */, reliable, hot),
+              50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, relayBuffer[2], size);
+          }
           relayQueued -= size + 2;
           os_memcpy(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
         }

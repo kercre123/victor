@@ -54,7 +54,7 @@ void CheckForUpgrades(void)
 
 void WiFiFace(void)
 {
-  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n";
+  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi Ver:  %x\nWiFi Date: %s\nRTIP Ver:  %x\nRTIP Date: %s\n";
   const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
   if (!clientConnected())
   {
@@ -67,14 +67,11 @@ void WiFiFace(void)
       }
       {
         char fmtBuf[wifiFaceFmtSz];
-        char scrollLines[11];
-        unsigned int i;
         memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
-        for (i=0; i<((system_get_time()/2000000) % 10); i++) scrollLines[i] = '\n';
-        scrollLines[i] = 0;
-        Face::FacePrintf(fmtBuf, scrollLines,
+        Face::FacePrintf(fmtBuf,
                          ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                         COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
+                         COZMO_VERSION_COMMIT, BUILD_DATE,
+                         RTIP::Version, RTIP::VersionDescription);
       }
     }
   }
@@ -200,20 +197,25 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't register background OS task\r\n");
     return -1;
   }
+  else if (Anki::Cozmo::RTIP::Init() != true)
+  {
+    os_printf("\tCouldn't initalize RTIP interface module\r\n");
+    return -2;
+  }
   else if (Anki::Cozmo::AnimationController::Init() != Anki::RESULT_OK)
   {
     os_printf("\tCouldn't initalize animation controller\r\n");
-    return -2;
+    return -3;
   }
   else if (system_os_post(backgroundTask_PRIO, 0, 0) == false)
   {
     os_printf("\tCouldn't post background task initalization\r\n");
-    return -3;
+    return -4;
   }
   else if (Anki::Cozmo::Face::Init() != Anki::RESULT_OK)
   {
     os_printf("\tCouldn't initalize face controller\r\n");
-    return -4;
+    return -5;
   }
   else
   {
