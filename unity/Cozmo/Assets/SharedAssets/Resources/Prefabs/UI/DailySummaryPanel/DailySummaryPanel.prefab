@@ -1713,7 +1713,7 @@ RectTransform:
   - {fileID: 22476152}
   - {fileID: 22479196}
   m_Father: {fileID: 22418112}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -1765,7 +1765,7 @@ RectTransform:
   m_Children:
   - {fileID: 22423886}
   m_Father: {fileID: 22470118}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 65}
@@ -1833,7 +1833,6 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22499860}
   - {fileID: 22494240}
   - {fileID: 22401366}
   m_Father: {fileID: 22423886}
@@ -1960,7 +1959,7 @@ RectTransform:
   m_Children:
   - {fileID: 22495054}
   m_Father: {fileID: 22470118}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 75, y: -70}
@@ -2014,10 +2013,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22498698}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: .5}
-  m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: 180, y: 0}
-  m_SizeDelta: {x: 120, y: 120}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -767.5, y: 0}
+  m_SizeDelta: {x: -1775, y: -98}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22448410
 RectTransform:
@@ -2134,6 +2133,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 22499860}
   - {fileID: 22408916}
   - {fileID: 22498698}
   - {fileID: 22428178}
@@ -2267,7 +2267,7 @@ RectTransform:
   m_Children:
   - {fileID: 22421946}
   m_Father: {fileID: 22418112}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -2324,7 +2324,7 @@ RectTransform:
   - {fileID: 22491094}
   - {fileID: 22444666}
   m_Father: {fileID: 22470118}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 12.5, y: 86}
@@ -2340,12 +2340,12 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22418112}
+  m_Father: {fileID: 22470118}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: .5}
-  m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: 81, y: 0}
-  m_SizeDelta: {x: 6, y: 1200}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -754, y: 75}
+  m_SizeDelta: {x: -1914, y: -150}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:
