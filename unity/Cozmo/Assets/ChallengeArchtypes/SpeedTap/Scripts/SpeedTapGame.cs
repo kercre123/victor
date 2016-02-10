@@ -172,16 +172,16 @@ namespace SpeedTap {
 
     public void UpdateUI() {
       int halfTotalRounds = (_Rounds + 1) / 2;
-      CozmoScore = _CozmoScore;
-      CozmoMaxRounds = halfTotalRounds;
-      CozmoRoundsWon = _CozmoRoundsWon;
+      SharedMinigameView.CozmoScore = _CozmoScore;
+      SharedMinigameView.CozmoMaxRounds = halfTotalRounds;
+      SharedMinigameView.CozmoRoundsWon = _CozmoRoundsWon;
 
-      PlayerScore = _PlayerScore;
-      PlayerMaxRounds = halfTotalRounds;
-      PlayerRoundsWon = _PlayerRoundsWon;
+      SharedMinigameView.PlayerScore = _PlayerScore;
+      SharedMinigameView.PlayerMaxRounds = halfTotalRounds;
+      SharedMinigameView.PlayerRoundsWon = _PlayerRoundsWon;
 
       // Display the current round
-      InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
     }
 
     public void RollingBlocks() {

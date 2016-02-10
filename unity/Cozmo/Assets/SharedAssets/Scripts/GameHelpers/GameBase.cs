@@ -54,17 +54,19 @@ public abstract class GameBase : MonoBehaviour {
   public void InitializeMinigame(ChallengeData challengeData) {
     _GameStartTime = Time.time;
     _StateMachine.SetGameRef(this);
+
+    _ChallengeData = challengeData;
+    _WonChallenge = false;
+
     _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       false) as SharedMinigameView;
     _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
       _ChallengeData.HowToPlayDialogContentLocKey, _GameStateSlides);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-
-    _ChallengeData = challengeData;
-    _WonChallenge = false;
  
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.PLAYFUL);
+
     Initialize(challengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
@@ -195,6 +197,8 @@ public abstract class GameBase : MonoBehaviour {
     _WonChallenge = true;
     _SharedMinigameViewInstance.ShowCozmoScoreWidget();
     _SharedMinigameViewInstance.ShowPlayerWinnerBanner();
+    _SharedMinigameViewInstance.CozmoDim = false;
+    _SharedMinigameViewInstance.PlayerDim = false;
     OpenChallengeEndedDialog(subtitleText);
   }
 
@@ -203,6 +207,8 @@ public abstract class GameBase : MonoBehaviour {
     _WonChallenge = false;
     _SharedMinigameViewInstance.ShowCozmoWinnerBanner();
     _SharedMinigameViewInstance.ShowPlayerScoreWidget();
+    _SharedMinigameViewInstance.CozmoDim = false;
+    _SharedMinigameViewInstance.PlayerDim = false;
     OpenChallengeEndedDialog(subtitleText);
   }
 
@@ -276,69 +282,6 @@ public abstract class GameBase : MonoBehaviour {
   #endregion
 
   // end Difficulty Select
-
-  #region Info Title Text
-
-  public string InfoTitleText {
-    get { return _SharedMinigameViewInstance.InfoTitleText; }
-    set { 
-      _SharedMinigameViewInstance.InfoTitleText = value; 
-    }
-  }
-
-  #endregion
-
-  #region Score Widgets
-
-  public int CozmoScore {
-    set {
-      _SharedMinigameViewInstance.CozmoScore = value;
-    }
-  }
-
-  public int CozmoMaxRounds {
-    set {
-      _SharedMinigameViewInstance.CozmoMaxRounds = value;
-    }
-  }
-
-  public int CozmoRoundsWon {
-    set {
-      _SharedMinigameViewInstance.CozmoRoundsWon = value;
-    }
-  }
-
-  public bool CozmoDim {
-    set {
-      _SharedMinigameViewInstance.CozmoDim = value;
-    }
-  }
-
-  public int PlayerScore {
-    set {
-      _SharedMinigameViewInstance.PlayerScore = value;
-    }
-  }
-
-  public int PlayerMaxRounds {
-    set {
-      _SharedMinigameViewInstance.PlayerMaxRounds = value;
-    }
-  }
-
-  public int PlayerRoundsWon {
-    set {
-      _SharedMinigameViewInstance.PlayerRoundsWon = value;
-    }
-  }
-
-  public bool PlayerDim {
-    set {
-      _SharedMinigameViewInstance.PlayerDim = value;
-    }
-  }
-
-  #endregion
 }
 
 [System.Serializable]

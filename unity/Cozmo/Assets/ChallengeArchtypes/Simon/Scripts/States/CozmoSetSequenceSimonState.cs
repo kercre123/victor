@@ -20,12 +20,12 @@ namespace Simon {
       _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
 
-      _GameInstance.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderWatchCozmoPattern);
+      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderWatchCozmoPattern);
       _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
         0, _SequenceLength);
 
-      _GameInstance.CozmoDim = false;
-      _GameInstance.PlayerDim = true;
+      _GameInstance.SharedMinigameView.CozmoDim = false;
+      _GameInstance.SharedMinigameView.PlayerDim = true;
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
