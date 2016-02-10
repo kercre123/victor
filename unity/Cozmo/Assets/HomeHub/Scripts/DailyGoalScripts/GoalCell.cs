@@ -46,7 +46,7 @@ namespace Cozmo {
               _GoalLabel.color = UIColorPalette.CompleteTextColor();
             }
             else {
-              _GoalLabel.text = string.Format("{0}", Type.ToString());
+              _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(Type);
               _GoalLabel.color = UIColorPalette.NeutralTextColor();
             }
           }
@@ -74,13 +74,13 @@ namespace Cozmo {
       /// <param name="currProg">Curr prog.</param>
       /// <param name="update">If set to <c>true</c> update.</param>
       public void Initialize(Anki.Cozmo.ProgressionStatType type, int currProg, int goal, bool update = true) {
-        _GoalLabel.text = string.Format("{0}", type.ToString());
         _GoalTarget = goal;
         Type = type;
         if (update) {
           RobotEngineManager.Instance.OnProgressionStatRecieved += OnProgressionStatUpdate;
         }
-        _GoalIcon.sprite = ProgressionStatIconMap.Instance.GetIconForStat(type);
+        _GoalIcon.sprite = ProgressionStatConfig.Instance.GetIconForStat(type);
+        _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(type);
         SetProgress(currProg);
       }
 
