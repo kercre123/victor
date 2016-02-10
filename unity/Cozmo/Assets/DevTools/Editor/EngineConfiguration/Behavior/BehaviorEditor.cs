@@ -15,6 +15,8 @@ public class BehaviorEditor : EditorWindow {
 
   private static string[] _BehaviorNameOptions;
 
+  private static string _CopyBuffer;
+
   private static Behavior _CurrentBehavior;
   private static string _CurrentBehaviorFile;
   private static string _CurrentBehaviorName;
@@ -308,7 +310,17 @@ public class BehaviorEditor : EditorWindow {
         }
 
       }
+      if (GUILayout.Button("Copy", EditorDrawingUtility.ToolbarButtonStyle)) {
+        _CopyBuffer = JsonConvert.SerializeObject(_CurrentBehavior, Formatting.None, GlobalSerializerSettings.JsonSettings);
+      }
     }
+
+    if (_CopyBuffer != null) {
+      if (GUILayout.Button("Paste", EditorDrawingUtility.ToolbarButtonStyle)) {
+        _CurrentBehavior = JsonConvert.DeserializeObject<Behavior>(_CopyBuffer, GlobalSerializerSettings.JsonSettings);
+      }
+    }
+
 
     GUILayout.FlexibleSpace();
 
