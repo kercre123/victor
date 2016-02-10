@@ -10,16 +10,17 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
+#include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/shared/radians.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
@@ -93,6 +94,13 @@ bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) 
   return false;
 }
 
+void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  if( event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction ) {
+    HandleCompletedAction(event);
+  }
+}
+
 void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch(event.GetData().GetTag())
@@ -102,7 +110,7 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
       break;
       
     case EngineToGameTag::RobotCompletedAction:
-      HandleCompletedAction(event);
+      // handled in AlwaysHandle
       break;
       
     case EngineToGameTag::RobotPutDown:
@@ -117,7 +125,7 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
   }
 }
   
-Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec)
 {
   // Update explorable area center to current robot pose
   ResetSafeRegion(robot);
@@ -177,7 +185,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
         
-        FaceObjectAction* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, true);
+        FaceObjectAction* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, false);
         faceObjectAction->SetPanTolerance(DEG_TO_RAD(2));
         _actionsInProgress.insert(faceObjectAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(faceObjectAction);
@@ -269,6 +277,7 @@ Result BehaviorLookAround::StartMoving(Robot& robot)
                                                         false);
   _currentDriveActionID = goToPoseAction->GetTag();
   _actionsInProgress.insert(_currentDriveActionID);
+
   robot.GetActionList().QueueActionAtEnd(goToPoseAction, 3);
   return RESULT_OK;
 }
@@ -334,7 +343,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   return destPose;
 }
 
-Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   ResetBehavior(robot, currentTime_sec);
   return Result::RESULT_OK;
@@ -404,8 +413,6 @@ void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
   
 void BehaviorLookAround::HandleCompletedAction(const EngineToGameEvent& event)
 {
-  assert(IsRunning());
-  
   const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
   if (RobotActionType::FACE_OBJECT == msg.actionType)
   {
@@ -445,6 +452,7 @@ void BehaviorLookAround::HandleCompletedAction(const EngineToGameEvent& event)
   }
   
   _actionsInProgress.erase(msg.idTag);
+
 }
   
 BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current)
@@ -494,11 +502,16 @@ void BehaviorLookAround::ResetSafeRegion(Robot& robot)
 
 void BehaviorLookAround::ClearQueuedActions(Robot& robot)
 {
-  for (auto tag : _actionsInProgress)
-  {
-    robot.GetActionList().Cancel(tag);
+  BOUNDED_WHILE( 50, ! _actionsInProgress.empty() ) {
+    // The cancel function will trigger the HandleActionCompleted callback, which will erase the action from
+    // _actionsInProgress
+    if( ! robot.GetActionList().Cancel( * _actionsInProgress.begin() ) ) {
+      PRINT_NAMED_ERROR("BehaviorLookAround.CancelActionFail",
+                        "tried to cancel action with tag %d, but it wasn't found!",
+                        * _actionsInProgress.begin());
+      _actionsInProgress.erase( _actionsInProgress.begin() );
+    }
   }
-  _actionsInProgress.clear();
 }
 } // namespace Cozmo
 } // namespace Anki

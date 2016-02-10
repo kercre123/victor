@@ -31,6 +31,10 @@
 // Whether or not to handle prox obstacle events
 #define HANDLE_PROX_OBSTACLES 0
 
+// Prints the IDs of the active blocks that are on but not currently
+// talking to a robot. Prints roughly once/sec.
+#define PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS 0
+
 
 namespace Anki {
 namespace Cozmo {
@@ -52,6 +56,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleBlockPickedUp, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPlaced,
     std::bind(&Robot::HandleBlockPlaced, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectDiscovered,
+    std::bind(&Robot::HandleActiveObjectDiscovered, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectMoved,
     std::bind(&Robot::HandleActiveObjectMoved, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectStopped,
@@ -70,6 +76,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
     std::bind(&Robot::HandleImuData, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuRawDataChunk,
+    std::bind(&Robot::HandleImuRawData, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::syncTimeAck,
     std::bind(&Robot::HandleSyncTimeAck, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::robotPoked,
@@ -161,7 +169,10 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
     payload.center_y,
     payload.skew);
 
-  _visionComponent.SetCameraCalibration(*this, calib);
+  _visionComponent.SetCameraCalibration(*this, calib);  // Set intrisic calibration
+  SetCameraRotation(0, 0, 0);                           // Set extrinsic calibration (rotation only, assuming known position)
+                                                        // TODO: Set these from rotation calibration info to be sent in CameraCalibration message
+                                                        //       and/or when we do on-engine calibration with images of tool code.
   
   SetPhysicalRobot(payload.isPhysicalRobots);  
 }
@@ -221,6 +232,17 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
   _visionComponent.EnableMode(VisionMode::Tracking, false);
 
 }
+  
+void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+#if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
+  const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
+  if (payload.factory_id < s32_MAX) {  // Ignore chargers which have MSB set
+    PRINT_NAMED_INFO("ActiveObjectDiscovered", "%8x", payload.factory_id);
+  }
+#endif
+}
+  
 
 void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
@@ -410,6 +432,8 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
+
+  _blockWorld.SetIsOnCliff(cliffEvent.detected);
   
   // Forward on with EngineToGame event
   CliffEvent payload = message.GetData().Get_cliffEvent();
@@ -567,6 +591,46 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
     _imuLogFileStream.close();
   }
 }
+
+
+void Robot::HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const RobotInterface::IMURawDataChunk& payload = message.GetData().Get_imuRawDataChunk();
+  
+  if (payload.order == 0) {
+    ++_imuSeqID;
+    
+    // Make sure imu capture folder exists
+    std::string imuLogsDir = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
+    if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
+      PRINT_NAMED_ERROR("Robot.HandleImuRawData.CreateDirFailed","%s", imuLogsDir.c_str());
+    }
+    
+    // Open imu log file
+    std::string imuLogFileName = std::string(imuLogsDir.c_str()) + "/imuRawLog_" + std::to_string(_imuSeqID) + ".dat";
+    PRINT_NAMED_INFO("Robot.HandleImuRawData.OpeningLogFile",
+                     "%s", imuLogFileName.c_str());
+    
+    _imuLogFileStream.open(imuLogFileName.c_str());
+    _imuLogFileStream << "timestamp aX aY aZ gX gY gZ\n";
+  }
+  
+  _imuLogFileStream
+    << payload.a.data()[0] << " "
+    << payload.a.data()[1] << " "
+    << payload.a.data()[2] << " "
+    << payload.g.data()[0] << " "
+    << payload.g.data()[1] << " "
+    << payload.g.data()[2] << " "
+    << static_cast<int>(payload.timestamp) << "\n";
+  
+  // Close file when last chunk received
+  if (payload.order == 2) {
+    PRINT_NAMED_INFO("Robot.HandleImuRawData.ClosingLogFile", "");
+    _imuLogFileStream.close();
+  }
+}
+
   
 void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {

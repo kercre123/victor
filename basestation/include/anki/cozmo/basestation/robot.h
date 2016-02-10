@@ -223,6 +223,9 @@ public:
   
     // Returns the average period of image processing
     u32 GetAverageImageProcPeriodMS() const;
+
+    // Set the calibrated rotation of the camera
+    void SetCameraRotation(f32 roll, f32 pitch, f32 yaw);
   
     // Specify whether this robot is a physical robot or not.
     // Currently, adjusts headCamPose by slop factor if it's physical.
@@ -765,6 +768,7 @@ public:
     
     const Pose3d     _neckPose;     // joint around which head rotates
     Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
+    static const RotationMatrix3d _kDefaultHeadCamRotation;
     const Pose3d     _liftBasePose; // around which the base rotates/lifts
     Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
@@ -894,6 +898,7 @@ public:
     void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -909,6 +914,7 @@ public:
     // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   

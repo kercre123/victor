@@ -30,11 +30,15 @@ enum class ENodeContentType : uint8_t {
   Invalid,              // invalid type (not set)
   Subdivided,           // we are subdivided, children hold more detailed info
   Unknown,              // no idea
-  Clear,                // what we know about the node is clear (could be partial info)
+  ClearOfObstacle,      // what we know about the node is clear (could be partial info)
+  ClearOfCliff,         // what we know about the node is clear (could be partial info)
   ObstacleCube,         // we have seen an obstacle in part of the node and we know the obstacle was a cube
   ObstacleUnrecognized, // we have seen an obstacle in part of the node but we don't know what it is
   Cliff,                // we have seen a cliff in part of the node
 };
+
+// variable type in which we can pack ENodeContentType as flags. Check ENodeContentTypeToFlag
+using ENodeContentTypePackedType = uint32_t;
 
 // position with respect to the parent
 enum class EQuadrant : uint8_t {
@@ -55,6 +59,11 @@ enum EClockDirection { CW, CCW };
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// converts ENodeContentType values into flag bits. This is handy because I want to store ENodeContentType in
+// the smallest type possible since we have a lot of quad nodes, but I want to pass groups as bit flags in one
+// packed variable
+ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentType);
 
 // return the opposite direction to the one given (eg: North vs South, West vs East)
 inline NavMeshQuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);

@@ -264,6 +264,9 @@ namespace Anki
       // NB: DO NOT CALL THIS MORE THAN ONCE PER MAINEXECUTION TIC!!!
       void IMUReadData(IMU_DataStructure &IMUData);
 
+      // Read raw unscaled IMU values
+      void IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp);
+
 // #pragma mark --- UART/Wifi ---
       /////////////////////////////////////////////////////////////////////
       // UART Debug Channel (aka Wifi)

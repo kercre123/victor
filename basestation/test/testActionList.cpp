@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
+#include "anki/common/types.h"
 #include <limits.h>
 
 
@@ -784,6 +785,7 @@ TEST(QueueAction, QueueInParallel)
   r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction2);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 2);
@@ -791,6 +793,8 @@ TEST(QueueAction, QueueInParallel)
   r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction3);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
   EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
@@ -900,4 +904,30 @@ TEST(QueueAction, ActionFailureRetry)
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_EQ(numActionsDestroyed, 3);
+}
+
+// Tests queueing duplicate actions
+TEST(QueueAction, QueueDuplicate)
+{
+  Robot r(0, cozmoContext);
+  TestAction* testAction1 = new TestAction("Test1", RobotActionType::WAIT);
+  TestAction* testAction2 = new TestAction("Test2", RobotActionType::WAIT);
+  
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  
+  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::NEXT, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction1),
+            Anki::RESULT_FAIL);
+  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction1), Anki::RESULT_FAIL);
+  
+  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
+  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
 }

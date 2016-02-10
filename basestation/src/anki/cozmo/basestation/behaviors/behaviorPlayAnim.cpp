@@ -73,7 +73,7 @@ bool BehaviorPlayAnim::IsRunnable(const Robot& robot, double currentTime_sec) co
 }
   
 
-Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec)
 {
   _isInterrupted = false;
   _isActing = false;
@@ -96,7 +96,7 @@ BehaviorPlayAnim::Status BehaviorPlayAnim::UpdateInternal(Robot& robot, double c
 }
 
 
-Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   if (_isInterruptable)
   {
