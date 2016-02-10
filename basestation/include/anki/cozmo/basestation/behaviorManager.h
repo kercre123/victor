@@ -106,7 +106,7 @@ namespace Cozmo {
     void   SetupOctDemoBehaviorChooser(const Json::Value &config);
     void   AddReactionaryBehavior(IReactionaryBehavior* behavior);
     
-    void   SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec, bool isResuming);
+    void   SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec);
     
     // Factory creates and tracks data-driven behaviors etc
     BehaviorFactory* _behaviorFactory;
@@ -117,7 +117,6 @@ namespace Cozmo {
     IBehavior* _currentBehavior = nullptr;
     IBehavior* _nextBehavior = nullptr;
     IBehavior* _forceSwitchBehavior = nullptr;
-    IBehavior* _resumeBehavior = nullptr;
     
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;

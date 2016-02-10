@@ -296,6 +296,9 @@ LOCAL bool TaskOtaRTIP(uint32 param)
       if (retries-- == 0)
       {
         AnkiError( 29, "UpgradeController", 177, "RTIP OTA transfer failure! Aborting.", 0);
+        #ifdef DEBUG_OTA
+        os_printf("RTIP OTA too many NACKs, aborting.\r\n");
+        #endif
         os_free(state);
         return false;
       }
@@ -312,13 +315,23 @@ LOCAL bool TaskOtaRTIP(uint32 param)
           case SPI_FLASH_RESULT_OK:
           {
             retries = MAX_RETRIES;
-            i2spiBootloaderPushChunk(&chunk);
-            state->phase = 1;
+            if (i2spiBootloaderPushChunk(&chunk))
+            {
+              state->phase = 1;
+              state->count = system_get_time();
+            }
+            else
+            {
+              os_printf("-");
+            }
             return true;
           }
           case SPI_FLASH_RESULT_ERR:
           {
             AnkiError( 29, "UpgradeController", 178, "RTIP OTA flash readback failure, aborting", 0);
+            #ifdef DEBUG_OTA
+            os_printf("RTIP OTA flash readback failure aborting.\r\n");
+            #endif
             os_free(state);
             return false;
           }
@@ -331,11 +344,23 @@ LOCAL bool TaskOtaRTIP(uint32 param)
             else
             {
               AnkiError( 29, "UpgradeController", 179, "RTIP OTA flash readback timeout, aborting", 0);
+              #ifdef DEBUG_OTA
+              os_printf("RTIP OTA flash readback timeout, aborting.\r\n");
+              #endif
               os_free(state);
               return false;
             }
           }
         }
+      }
+      else if (state->phase == 1) /// XXX This is a bandaid on the first chunk being missed about 1 in 3 times.
+      {
+        if ((system_get_time() - state->count) > 1000000)
+        {
+          os_printf("RTIP OTA chunk timed out, retrying\r\n");
+          state->phase = 0;
+        }
+        return true;
       }
       else if (state->phase == 2)
       {
@@ -358,9 +383,13 @@ LOCAL bool TaskOtaRTIP(uint32 param)
             }
           }
           i2spiSwitchMode(I2SPI_NORMAL);
-          os_free(state);
-          return false;
+          state->phase = 3;
+          return true;
         }
+      }
+      else if (state->phase == 3) // Waiting for reboot
+      {
+        return true;
       }
       else
       {

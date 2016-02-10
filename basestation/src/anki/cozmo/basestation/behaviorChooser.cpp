@@ -38,6 +38,14 @@ namespace Anki {
 namespace Cozmo {
 
 #pragma mark --- SimpleBehaviorChooser IBehaviorChooser Members ---
+SimpleBehaviorChooser::SimpleBehaviorChooser()
+{
+  // MarkW:TODO move this to Json once the chooser creation flow is simplified
+  _minMarginToSwapRunningBehavior.AddNode( 2.0f, 2.0f); // up until this point, running behavior will almost definitely be kept running
+  _minMarginToSwapRunningBehavior.AddNode(10.0f, 0.1f); // after this point, a fairly small difference will allow it to swap behaviors
+  _minMarginToSwapRunningBehavior.AddNode(60.0f, 0.0f); // after this time a running behavior will only stay running if scored high
+}
+
 Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
 {
   if (nullptr == newBehavior)
@@ -81,10 +89,13 @@ void SimpleBehaviorChooser::EnableAllBehaviors(bool newVal)
   
 void SimpleBehaviorChooser::EnableBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal)
 {
+  BehaviorGroupFlags behaviorGroupFlags;
+  behaviorGroupFlags.SetBitFlag(behaviorGroup, true);
+  
   for (const auto& kv : _nameToBehaviorMap)
   {
     IBehavior* behavior = kv.second;
-    if (behavior->IsBehaviorGroup(behaviorGroup))
+    if (behavior->MatchesAnyBehaviorGroups(behaviorGroupFlags))
     {
       behavior->SetIsChoosable(newVal);
     }
@@ -104,6 +115,13 @@ void SimpleBehaviorChooser::EnableBehavior(const std::string& behaviorName, bool
   {
     PRINT_NAMED_WARNING("EnableBehavior.NotFound", "No Behavior named '%s' (newVal = %d)", behaviorName.c_str(), (int)newVal);
   }
+}
+  
+
+float SimpleBehaviorChooser::MinMarginToSwapRunningBehavior(float runningDuration) const
+{
+  const float minMargin = _minMarginToSwapRunningBehavior.EvaluateY(runningDuration);
+  return minMargin;
 }
   
 
@@ -134,7 +152,21 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
     
     if (scoreData.totalScore > 0.0f)
     {
-      scoreData.totalScore += rng.RandDbl(kRandomFactor);
+      if (behavior->IsRunning())
+      {
+        const float runningDuration = Util::numeric_cast<float>(behavior->GetRunningDuration(currentTime_sec));
+        const float minMarginToSwitch = MinMarginToSwapRunningBehavior(runningDuration);
+        
+        scoreData.totalScore += minMarginToSwitch;
+
+        // running behavior gets max possible random score
+        scoreData.totalScore += kRandomFactor;
+      }
+      else
+      {
+        // randomization only for non-running behaviors
+        scoreData.totalScore += rng.RandDbl(kRandomFactor);
+      }
       
       if (scoreData.totalScore > bestScore)
       {

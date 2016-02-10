@@ -33,7 +33,7 @@ public:
   IBehaviorRequestGame(Robot& robot, const Json::Value& config);
 
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const final override;
-  virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) final override;
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) final override;
 
 protected:
 
@@ -42,7 +42,7 @@ protected:
   // --------------------------------------------------------------------------------
   // Functions to be overridden by sub classes
   
-  virtual Result RequestGame_InitInternal(Robot& robot, double currentTime_sec, bool isResuming) = 0;
+  virtual Result RequestGame_InitInternal(Robot& robot, double currentTime_sec) = 0;
   virtual void HandleGameDeniedRequest(Robot& robot) = 0;
 
   // called only with results of actions from StartActing

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/helpers/noncopyable.h"
 #include <map>
 #include <string>
@@ -67,6 +68,9 @@ public:
 class SimpleBehaviorChooser : public IBehaviorChooser
 {
 public:
+  
+  SimpleBehaviorChooser();
+  
   // For IBehaviorChooser
   virtual Result AddBehavior(IBehavior *newBehavior) override;
   virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const override;
@@ -90,9 +94,13 @@ public:
   virtual ~SimpleBehaviorChooser();
   
 protected:
+  
+  float MinMarginToSwapRunningBehavior(float runningDuration) const;
 
   using NameToBehaviorMap = std::map<std::string, IBehavior*>;
   NameToBehaviorMap _nameToBehaviorMap;
+  
+  Util::GraphEvaluator2d  _minMarginToSwapRunningBehavior;
 };
   
 // Builds upon the SimpleBehaviorChooser to also directly trigger a specific behavior on certain events

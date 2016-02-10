@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Util {
   class RandomGenerator;
-  
+  class TransferQueueMgr;
   namespace Data {
     class DataPlatform;
   }
@@ -79,6 +79,7 @@ public:
   RobotInterface::MessageHandler*       GetRobotMsgHandler() const { return _robotMsgHandler.get(); }
   Audio::AudioServer*                   GetAudioServer() const { return _audioServer.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
+  Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   
 private:
   // This is passed in and held onto, but not owned by the context (yet.
@@ -93,6 +94,7 @@ private:
   std::unique_ptr<RobotManager>                   _robotMgr;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMsgHandler;
   std::unique_ptr<VizManager>                     _vizManager;
+  std:: unique_ptr<Util::TransferQueueMgr>        _transferQueueMgr;
 };
   
 

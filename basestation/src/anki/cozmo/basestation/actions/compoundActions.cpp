@@ -21,7 +21,8 @@ namespace Anki {
     
 #pragma mark ---- ICompoundAction ----
     
-    ICompoundAction::ICompoundAction(std::initializer_list<IActionRunner*> actions)
+    ICompoundAction::ICompoundAction(Robot& robot, std::initializer_list<IActionRunner*> actions)
+    : IActionRunner(robot)
     {
       for(IActionRunner* action : actions) {
         if(action == nullptr) {
@@ -62,10 +63,6 @@ namespace Anki {
       // As part of a compound action this should not emit completion
       action->SetEmitCompletionSignal(false);
       
-      // An action can be added to a compound action after it has been queued in which case
-      // this is where its robot pointer gets set
-      action->SetRobot(*GetRobot());
-      
       _actions.emplace_back(false, action);
       _name += action->GetName();
       _name += "]";
@@ -78,23 +75,12 @@ namespace Anki {
       Reset();
     }
     
-    void ICompoundAction::SetRobot(Robot& robot)
-    {
-      _robot = &robot;
-      for(auto actionPair : _actions)
-      {
-        actionPair.second->SetRobot(robot);
-      }
-    }
-    
     void ICompoundAction::DeleteActions()
     {
       for(auto iter = _actions.begin(); iter != _actions.end();)
       {
           assert((*iter).second != nullptr);
           // TODO: issue a warning when a group is deleted without all its actions completed?
-          // Ensure all actions have valid robot pointers since it may be possible they haven't been set
-          (*iter).second->SetRobot(*GetRobot());
           Util::SafeDelete((*iter).second);
           iter = _actions.erase(iter);
       }
@@ -102,14 +88,14 @@ namespace Anki {
     
 #pragma mark ---- CompoundActionSequential ----
     
-    CompoundActionSequential::CompoundActionSequential()
-    : CompoundActionSequential({})
+    CompoundActionSequential::CompoundActionSequential(Robot& robot)
+    : CompoundActionSequential(robot, {})
     {
       
     }
     
-    CompoundActionSequential::CompoundActionSequential(std::initializer_list<IActionRunner*> actions)
-    : ICompoundAction(actions)
+    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions)
+    : ICompoundAction(robot, actions)
     , _delayBetweenActionsInSeconds(0)
     {
       Reset();
@@ -140,7 +126,6 @@ namespace Anki {
         
         IActionRunner* currentAction = _currentActionPair->second;
         assert(currentAction != nullptr); // should not have been allowed in by constructor
-        currentAction->SetRobot(*GetRobot());
         
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
@@ -175,7 +160,6 @@ namespace Anki {
                 // Otherwise, we are still running. Go ahead and immediately do an
                 // update on the next action now to get its initialization and
                 // precondition checking going, to reduce lag between actions.
-                _currentActionPair->second->SetRobot(*GetRobot());
                 subResult = _currentActionPair->second->Update();
                 
                 // In the special case that the sub-action sucessfully completed
@@ -241,14 +225,14 @@ namespace Anki {
     
 #pragma mark ---- CompoundActionParallel ----
     
-    CompoundActionParallel::CompoundActionParallel()
-    : CompoundActionParallel({})
+    CompoundActionParallel::CompoundActionParallel(Robot& robot)
+    : CompoundActionParallel(robot, {})
     {
       
     }
     
-    CompoundActionParallel::CompoundActionParallel(std::initializer_list<IActionRunner*> actions)
-    : ICompoundAction(actions)
+    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions)
+    : ICompoundAction(robot, actions)
     {
       
     }
@@ -269,7 +253,6 @@ namespace Anki {
           IActionRunner* currentAction = currentActionPair.second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
 
-          currentAction->SetRobot(*GetRobot());
           const ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());
           switch(subResult)

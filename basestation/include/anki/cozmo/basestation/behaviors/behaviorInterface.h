@@ -76,10 +76,12 @@ namespace Cozmo {
     bool IsRunning() const { return _isRunning; }
     void SetIsRunning(bool tf) { _isRunning = tf; }
     
+    double GetRunningDuration(double currentTime_sec) const;
+    
     // Will be called upon first switching to a behavior before calling update.
     // Calls protected virtual InitInternal() method, which each derived class
     // should implement.
-    Result Init(double currentTime_sec, bool isResuming);
+    Result Init(double currentTime_sec);
 
     // Step through the behavior and deliver rewards to the robot along the way
     // This calls the protected virtual UpdateInternal() method, which each
@@ -100,7 +102,7 @@ namespace Cozmo {
     // Tell this behavior to finish up ASAP so we can switch to a new one.
     // This should trigger any cleanup and get Update() to return COMPLETE
     // as quickly as possible.
-    Result Interrupt(double currentTime_sec, bool isShortInterrupt);
+    Result Interrupt(double currentTime_sec);
     
     const std::string& GetName() const { return _name; }
     const std::string& GetStateName() const { return _stateName; }
@@ -109,6 +111,7 @@ namespace Cozmo {
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
     
     // EvaluateScoreInternal is used to score each behavior for behavior selection - by default it just uses EvaluateEmotionScore
+    virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const;
     virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const;
     
     float EvaluateScore(const Robot& robot, double currentTime_sec) const;
@@ -131,14 +134,10 @@ namespace Cozmo {
     bool IsChoosable() const { return _isChoosable; }
     void SetIsChoosable(bool newVal) { _isChoosable = newVal; }
     
-    // Some behaviors are short interruptions that can resume directly to previous behavior
-    bool IsShortInterruption() const { return IsBehaviorGroup(BehaviorGroup::ShortInterruption); }
-    virtual bool WantsToResume() const { return false; }
-    
     virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
     
     bool IsBehaviorGroup(BehaviorGroup behaviorGroup) const { return _behaviorGroups.IsBitFlagSet(behaviorGroup); }
-    bool MatchesAnyBehaviorGroups(BehaviorGroupFlags::StorageType flags) const { return _behaviorGroups.AreAnyBitsInMaskSet(flags); }
+    bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags::StorageType& flags) const { return _behaviorGroups.AreAnyBitsInMaskSet(flags); }
     bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags& groupFlags) const { return MatchesAnyBehaviorGroups(groupFlags.GetFlags()); }
     
   protected:
@@ -152,9 +151,9 @@ namespace Cozmo {
     inline void SetDefaultName(const char* inName);
     inline void SetStateName(const std::string& inName) { _stateName = inName; }
     
-    virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) = 0;
+    virtual Result InitInternal(Robot& robot, double currentTime_sec) = 0;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) = 0;
-    virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) = 0;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) = 0;
     virtual void   StopInternal(Robot& robot, double currentTime_sec) = 0;
     
     bool ReadFromJson(const Json::Value& config);
@@ -220,7 +219,8 @@ namespace Cozmo {
     
     std::vector<::Signal::SmartHandle> _eventHandles;
     
-    double _lastRunTime;
+    double _startedRunningTime_s;
+    double _lastRunTime_s;
 
     float _overrideScore; // any value >= 0 implies it should be used
     
@@ -234,9 +234,10 @@ namespace Cozmo {
     
   }; // class IBehavior
   
-  inline Result IBehavior::Init(double currentTime_sec, bool isResuming)
+  inline Result IBehavior::Init(double currentTime_sec)
   {
-    return InitInternal(_robot, currentTime_sec, isResuming);
+    _startedRunningTime_s = currentTime_sec;
+    return InitInternal(_robot, currentTime_sec);
   }
   
   inline IBehavior::Status IBehavior::Update(double currentTime_sec)
@@ -248,12 +249,12 @@ namespace Cozmo {
   inline void IBehavior::Stop(double currentTime_sec)
   {
     StopInternal(_robot, currentTime_sec);
-    _lastRunTime = currentTime_sec;
+    _lastRunTime_s = currentTime_sec;
   }
   
-  inline Result IBehavior::Interrupt(double currentTime_sec, bool isShortInterrupt)
+  inline Result IBehavior::Interrupt(double currentTime_sec)
   {
-    return InterruptInternal(_robot, currentTime_sec, isShortInterrupt);
+    return InterruptInternal(_robot, currentTime_sec);
   }
   
   inline Util::RandomGenerator& IBehavior::GetRNG() const {

@@ -72,8 +72,12 @@ static struct sdio_queue rxQueue[DMA_BUF_COUNT];
 static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
-/// Phase relationship between incoming drops and outgoing drops, determined through experimentation
-#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-28)/2)
+/** Phase relationship between incoming drops and outgoing drops
+ * This comes from the phase relationship between I2SPI transmission and reception required for DMA timing on the K02,
+ * the phase offset introduced by the I2S FIFO on the Espressif, aiming for the middle of the SPI receive buffer on the
+ * K02 and experimentally determined fudge factor.
+ */
+#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
 /// Buffer for message to send to the RTIP
 static uint8_t messageBuffer[I2SPI_MESSAGE_BUF_SIZE];
 /// Write index into message buffer
@@ -229,32 +233,38 @@ void i2spiTask(os_event_t *event)
       uint16_t* buf = (uint16_t*)(desc->buf_ptr);
       while(true)
       {
-        while((dropPhase < DMA_BUF_SIZE/2) && (dropWrInd == 0)) // Search for preamble
+        if (dropWrInd == 0) // If we're looking for the next drop, not in the middle of an existing one
         {
-          if (buf[dropPhase] == TO_WIFI_PREAMBLE)
+          while(dropPhase < DMA_BUF_SIZE/2) // Search for preamble
           {
-            if (unlikely(drift > DRIFT_MARGIN)) 
+            if (buf[dropPhase] == TO_WIFI_PREAMBLE)
             {
-              i2spiRxOverflowCount++;
-              os_put_char('!'); os_put_char('T'); os_put_char('M'); os_put_char('D'); os_put_hex(drift, 4);
+              if (unlikely(drift > DRIFT_MARGIN)) 
+              {
+                i2spiRxOverflowCount++;
+                os_put_char('!'); os_put_char('T'); os_put_char('M'); os_put_char('D'); os_put_hex(drift, 4);
+              }
+              if (unlikely(outgoingPhase < PHASE_FLAGS)) // Haven't established outgoing phase yet
+              {
+                if (outgoingPhase == UNINITALIZED_PHASE)
+                {
+                  // Going past the end is OKAY as that will be used to increment the buffer
+                  os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
+                  outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+                  foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
+                }
+              }
+              else // Have a phase, just adjust for drift
+              {
+                outgoingPhase += drift;
+              }
+              i2spiIntegralDrift += drift;
+              drift = -DRIFT_MARGIN;
+              break;
             }
-            if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Haven't established outgoing phase yet
-            {
-              // Going past the end is OKAY as that will be used to increment the buffer
-              os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
-              outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
-              foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
-            }
-            else // Have a phase, just adjust for drift
-            {
-              outgoingPhase += drift;
-            }
-            i2spiIntegralDrift += drift;
-            drift = -DRIFT_MARGIN;
-            break;
+            dropPhase++;
+            drift++;
           }
-          dropPhase++;
-          drift++;
         }
         if (likely(dropPhase < DMA_BUF_SIZE/2)) // If we found a header
         {
@@ -689,22 +699,33 @@ uint32_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderCode(void)
   else return bodyBootloaderCode;
 }
 
-void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
+bool ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
 {
-  int wInd = 0;
-  int rInd = 0;
-  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-  uint16_t* data  = (uint16_t*)(chunk);
-  txBuf[wInd++] = COMMAND_HEADER;
-  txBuf[wInd++] = COMMAND_FLASH;
-  while (rInd < (sizeof(FirmwareBlock)/2))
+  const int availableBuffers = DMA_BUF_COUNT - 3 - txFillCount; // Leave space for 2 in pipeline plus one more for end of firmware message
+  const int availableSpace   = availableBuffers * DMA_BUF_SIZE;
+  if (availableSpace > sizeof(FirmwareBlock))
   {
-    while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
+    int wInd = 0;
+    int rInd = 0;
+    uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    uint16_t* data  = (uint16_t*)(chunk);
+    txBuf[wInd++] = COMMAND_HEADER;
+    txBuf[wInd++] = COMMAND_FLASH;
+    while (rInd < (sizeof(FirmwareBlock)/2))
     {
-      txBuf[wInd++] = data[rInd++];
+      while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
+      {
+        txBuf[wInd++] = data[rInd++];
+      }
+      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      txFillCount++;
+      txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+      wInd = 0;
     }
-    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-    txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    wInd = 0;
+    return true;
   }
+  else
+  {
+    return false;
   }
+}

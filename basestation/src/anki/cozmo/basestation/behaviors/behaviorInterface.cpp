@@ -37,7 +37,8 @@ namespace Cozmo {
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _moodScorer()
   , _robot(robot)
-  , _lastRunTime(0.0)
+  , _startedRunningTime_s(0.0)
+  , _lastRunTime_s(0.0)
   , _overrideScore(-1.0f)
   , _isRunning(false)
   , _isOwnedByFactory(false)
@@ -140,6 +141,16 @@ namespace Cozmo {
     }
   }
   
+  double IBehavior::GetRunningDuration(double currentTime_sec) const
+  {
+    if (_isRunning)
+    {
+      const double timeSinceStarted = currentTime_sec - _startedRunningTime_s;
+      return timeSinceStarted;
+    }
+    return 0.0;
+  }
+  
   float IBehavior::EvaluateEmotionScore(const MoodManager& moodManager) const
   {
     return _moodScorer.EvaluateEmotionScore(moodManager);
@@ -151,11 +162,17 @@ namespace Cozmo {
     return EvaluateEmotionScore(robot.GetMoodManager());
   }
 
+  // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
+  float IBehavior::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+  {
+    return EvaluateEmotionScore(robot.GetMoodManager());
+  }
+  
   float IBehavior::EvaluateRepetitionPenalty(double currentTime_sec) const
   {
-    if (_lastRunTime > 0.0)
+    if (_lastRunTime_s > 0.0)
     {
-      const float timeSinceRun = Util::numeric_cast<float>(currentTime_sec - _lastRunTime);
+      const float timeSinceRun = Util::numeric_cast<float>(currentTime_sec - _lastRunTime_s);
       const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceRun);
       return repetitionPenalty;
     }
@@ -168,9 +185,25 @@ namespace Cozmo {
     if (IsRunnable(robot, currentTime_sec))
     {
       const bool doOverrideScore = (_overrideScore >= 0.0f);
-      float score = doOverrideScore ? _overrideScore : EvaluateScoreInternal(robot, currentTime_sec);
+      const bool isRunning = IsRunning();
+                
+      float score = 0.0f;
       
-      if (_enableRepetitionPenalty)
+      if (doOverrideScore)
+      {
+        score = _overrideScore;
+      }
+      else if (isRunning)
+      {
+        score = EvaluateRunningScoreInternal(robot, currentTime_sec);
+      }
+      else
+      {
+        score = EvaluateScoreInternal(robot, currentTime_sec);
+      }
+      
+      // no repetition penalty when running
+      if (_enableRepetitionPenalty && !isRunning)
       {
         const float repetitionPenalty = EvaluateRepetitionPenalty(currentTime_sec);
         score *= repetitionPenalty;

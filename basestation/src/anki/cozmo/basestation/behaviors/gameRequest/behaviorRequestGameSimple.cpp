@@ -68,8 +68,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
 }
 
 Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
-                                                             double currentTime_sec,
-                                                             bool isResuming)
+                                                             double currentTime_sec)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
     
@@ -97,7 +96,7 @@ IBehavior::Status BehaviorRequestGameSimple::UpdateInternal(Robot& robot, double
   return Status::Complete;
 }
 
-Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // if we are playing an animation, we don't want to be interrupted
   if( IsActing() ) {
@@ -144,7 +143,7 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
   switch(state) {
     case State::PlayingInitialAnimation: {
       name = "PlayingInitialAnimation";
-      IActionRunner* animationAction = new PlayAnimationAction(_initialAnimationName);            
+      IActionRunner* animationAction = new PlayAnimationAction(robot, _initialAnimationName);
       StartActing( robot, animationAction );
       break;
     }
@@ -152,13 +151,13 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
     case State::FacingBlock: {
       name = "FacingBlock";
       ObjectID targetBlockID = GetRobotsBlockID(robot);
-      StartActing(robot, new FaceObjectAction( targetBlockID, PI_F ) );
+      StartActing(robot, new FaceObjectAction( robot, targetBlockID, PI_F ) );
       break;
     }
 
     case State::PlayingPreDriveAnimation: {
       name = "PlayingPreDriveAnimation";
-      IActionRunner* animationAction = new PlayAnimationAction(_preDriveAnimationName);
+      IActionRunner* animationAction = new PlayAnimationAction(robot, _preDriveAnimationName);
       StartActing( robot, animationAction );
       break;
     }
@@ -166,7 +165,7 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
     case State::PickingUpBlock: {
       name = "PickingUpBlock";
       ObjectID targetBlockID = GetRobotsBlockID(robot);
-      StartActing(robot, new DriveToPickupObjectAction(targetBlockID));
+      StartActing(robot, new DriveToPickupObjectAction(robot, targetBlockID));
       break;
     }
 
@@ -174,7 +173,7 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
       name = "DrivingToFace";
       Pose3d faceInteractionPose;
       if( GetFaceInteractionPose(robot, faceInteractionPose) ) {
-        StartActing(robot, new DriveToPoseAction( faceInteractionPose ) );
+        StartActing(robot, new DriveToPoseAction( robot, faceInteractionPose ) );
       }
       else {
         transitioned = false;
@@ -184,10 +183,10 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
 
     case State::PlacingBlock: {
       name = "PlacingBlock";
-      StartActing(robot, new CompoundActionSequential({
-                           new PlaceObjectOnGroundAction(),
+      StartActing(robot, new CompoundActionSequential(robot, {
+                           new PlaceObjectOnGroundAction(robot),
                            // TODO:(bn) use same motion profile here
-                           new DriveStraightAction(-kBackupDistance_mm, -80.0f)
+                           new DriveStraightAction(robot, -kBackupDistance_mm, -80.0f)
                          }));
       break;
     }
@@ -196,7 +195,7 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
       name = "LookingAtFace";
       Pose3d lastFacePose;
       if( GetFacePose( robot, lastFacePose ) ) {
-        StartActing(robot, new FacePoseAction(lastFacePose, PI_F));
+        StartActing(robot, new FacePoseAction(robot, lastFacePose, PI_F));
       }
       else {
         transitioned = false;
@@ -207,13 +206,13 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
     case State::VerifyingFace: {
       name = "VerifyingFace";
       _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      StartActing(robot, new WaitAction( kFaceVerificationTime_s ) );
+      StartActing(robot, new WaitAction( robot, kFaceVerificationTime_s ) );
       break;
     }
 
     case State::PlayingRequstAnim: {
       name = "PlayingRequstAnim";
-      StartActing(robot, new PlayAnimationAction(_requestAnimationName));
+      StartActing(robot, new PlayAnimationAction(robot, _requestAnimationName));
       break;
     }
 
@@ -223,17 +222,17 @@ void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
         PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
                             "Can't do face tracking because there is no valid face!");
         // use an action that just hangs to simulate the track face logic
-        StartActing( robot, new HangAction() );
+        StartActing( robot, new HangAction(robot) );
       }
       else {
-        StartActing( robot, new TrackFaceAction(GetFaceID()) );
+        StartActing( robot, new TrackFaceAction(robot, GetFaceID()) );
       }
       break;
     }
 
     case State::PlayingDenyAnim: {
       name = "PlayingDenyAnim";
-      StartActing( robot, new PlayAnimationAction( _denyAnimationName ) );
+      StartActing( robot, new PlayAnimationAction( robot, _denyAnimationName ) );
       break;
     }
 
