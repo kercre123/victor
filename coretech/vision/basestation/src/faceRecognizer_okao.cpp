@@ -380,6 +380,11 @@ namespace Vision {
   Result FaceRecognizer::RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                                        Vision::TrackedFace::ID_t& faceID, INT32& recognitionScore)
   {
+    // NOTE: This is the "slow" call: extracting the features for recognition, given the
+    //  facial part locations. This is the majority of the reason we are using a
+    //  separate thread in the first place. We aren't touching any of the enrollment/tracking
+    //  data structures, so we do not lock the mutex, meaning those data structures
+    //  can be modified while this runs.
     INT32 okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
                                                   dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
                                                   _okaoPartDetectionResultHandle);

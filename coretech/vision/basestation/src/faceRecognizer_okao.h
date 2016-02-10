@@ -44,7 +44,8 @@ namespace Vision {
     // from its album of known faces to the specified trackerID, using the
     // given facial part data. Returns true if the request is accepted (i.e.,
     // the recognizer isn't already busy with another request) and false
-    // otherwise.
+    // otherwise. If true, the caller must not modify the part detection handle
+    // while processing is running (i.e. until false is returned).
     bool SetNextFaceToRecognize(const Vision::Image& img,
                                 INT32 trackerID,
                                 HPTRESULT okaoPartDetectionResultHandle);
@@ -67,6 +68,7 @@ namespace Vision {
     bool IsNewFaceEnrollmentEnabled() const   { return _enrollNewFaces; }
 
   private:
+    
     Result RegisterNewUser(HFEATURE& hFeature);
     
     Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
@@ -93,28 +95,32 @@ namespace Vision {
     
     bool _isInitialized = false;
     
+    // Okao handles allocated by this class
     HFEATURE    _okaoRecognitionFeatureHandle  = NULL;
     HFEATURE    _okaoRecogMergeFeatureHandle   = NULL;
     HALBUM      _okaoFaceAlbum                 = NULL;
     
+    // Threading
     std::mutex  _mutex;
     std::thread _recognitionThread;
-    bool _recognitionRunning = false;
+    bool        _recognitionRunning = false;
     void Run();
     
+    // Passed-in state for processing
     INT32         _currentTrackerID = -1;
     Vision::Image _img;
     HPTRESULT     _okaoPartDetectionResultHandle = NULL;
     
+    // Internal bookkeeping and parameters
     std::map<INT32, Vision::TrackedFace::ID_t> _trackingToFaceID;
     
     std::list<INT32> _trackerIDsToRemove;
     
     INT32 _lastRegisteredUserID = 0;
-    bool _enrollNewFaces = true;
+    bool  _enrollNewFaces = true;
     
-    // Track the index of the oldest data for each registered user, so we can
-    // replace the oldest one each time
+    // Store additinal bookkeeping information we need, on top of the album data
+    // stored by Okao.
     struct EnrollmentData {
       INT32        oldestData = 0;
       time_t       enrollmentTime;
