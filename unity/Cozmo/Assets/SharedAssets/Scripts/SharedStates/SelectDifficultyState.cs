@@ -18,7 +18,7 @@ public class SelectDifficultyState : State {
   public override void Enter() {
     base.Enter();
     _Game = _StateMachine.GetGame();
-    _Game.OpenDifficultySelectView(_DifficultyOptions, 
+    _Game.SharedMinigameView.OpenDifficultySelectView(_DifficultyOptions, 
       _HighestLevelCompleted);
     _Game.ShowContinueButtonShelf();
     _Game.SetContinueButtonShelfText(string.Empty, false);
@@ -29,12 +29,12 @@ public class SelectDifficultyState : State {
   }
 
   public override void Exit() {
-    _Game.CloseDifficultySelectView();
+    _Game.SharedMinigameView.CloseDifficultySelectView();
     _Game.HideContinueButtonShelf();
   }
 
   private void HandleContinueButtonClicked() {
-    var option = _Game.GetSelectedDifficulty();
+    var option = _Game.SharedMinigameView.GetSelectedDifficulty();
     _Game.CurrentDifficulty = option != null ? option.DifficultyId : 0;
     _StateMachine.SetNextState(_NextState);
   }

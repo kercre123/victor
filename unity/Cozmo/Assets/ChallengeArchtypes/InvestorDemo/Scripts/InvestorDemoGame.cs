@@ -29,7 +29,7 @@ namespace InvestorDemo {
     }
 
     protected override void InitializeView(ChallengeData data) {
-      CreateDefaultQuitButton();
+      SharedMinigameView.CreateQuitButton();
     }
 
     protected void InitializeMinigameObjects() {

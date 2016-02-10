@@ -112,6 +112,15 @@ namespace Cozmo {
 
       public bool _OpenAnimationStarted = false;
 
+      private GameObject _HowToPlayContentPrefab;
+
+      private string _HowToPlayContentLocKey;
+
+      public void Initialize(GameObject howToPlayContentPrefab, string howToPlayContentLocKey) {
+        _HowToPlayContentPrefab = howToPlayContentPrefab;
+        _HowToPlayContentLocKey = howToPlayContentLocKey;
+      }
+
       #region Base View
 
       protected override void CleanUp() {
@@ -334,7 +343,7 @@ namespace Cozmo {
 
       #region How To Play Widget
 
-      public void CreateHowToPlayButton(string howToPlayTextLocKey) {
+      public void CreateHowToPlayButton() {
         if (_HowToPlayButtonInstance != null) {
           return;
         }
@@ -343,21 +352,13 @@ namespace Cozmo {
 
         _HowToPlayButtonInstance = newButton.GetComponent<HowToPlayButton>();
 
-        _HowToPlayButtonInstance.Initialize(howToPlayTextLocKey);
-
-        AddWidget(_HowToPlayButtonInstance);
-      }
-
-      public void CreateHowToPlayButton(GameObject howToPlayContentsPrefab) {
-        if (_HowToPlayButtonInstance != null) {
-          return;
+        if (_HowToPlayContentPrefab != null) {
+          _HowToPlayButtonInstance.Initialize(_HowToPlayContentPrefab);
         }
-
-        GameObject newButton = UIManager.CreateUIElement(_HowToPlayButtonPrefab, this.transform);
-
-        _HowToPlayButtonInstance = newButton.GetComponent<HowToPlayButton>();
-
-        _HowToPlayButtonInstance.Initialize(howToPlayContentsPrefab);
+        else {
+          _HowToPlayButtonInstance.Initialize(_HowToPlayContentLocKey);
+        }
+        _HowToPlayButtonInstance.Initialize(_HowToPlayContentPrefab);
 
         AddWidget(_HowToPlayButtonInstance);
       }
@@ -378,8 +379,7 @@ namespace Cozmo {
 
       #region Difficulty Select Widget
 
-      public void CreateDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
-
+      public void OpenDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
         if (_DifficultySelectViewInstance != null) {
           _DifficultySelectViewInstance.Initialize(options, highestDifficultyAvailable);
           return;
@@ -394,16 +394,9 @@ namespace Cozmo {
         AddWidget(_DifficultySelectViewInstance);
       }
 
-      public void OpenDifficultySelectView() {
-        if (_DifficultySelectViewInstance != null) {
-          _DifficultySelectViewInstance.gameObject.SetActive(true);
-        }
-      }
-
       public void CloseDifficultySelectView() {
-        if (_DifficultySelectViewInstance != null) {
-          _DifficultySelectViewInstance.gameObject.SetActive(false);
-        }
+        HideWidget(_DifficultySelectViewInstance);
+        _DifficultySelectViewInstance = null;
       }
 
       public DifficultySelectOptionData GetSelectedDifficulty() {

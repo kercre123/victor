@@ -9,23 +9,25 @@ public class HowToPlayState : State {
     _NextState = nextState;
   }
 
+  private GameBase _Game;
+
   public override void Enter() {
-    GameBase game = _StateMachine.GetGame();
-    game.ShowContinueButtonShelf();
-    game.SetContinueButtonShelfText(Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), false);
-    game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonStartChallenge));
-    game.SetContinueButtonListener(HandleContinueButtonClicked);
-    game.EnableContinueButton(true);
-    game.OpenHowToPlayView();
+    _Game = _StateMachine.GetGame();
+    _Game.ShowContinueButtonShelf();
+    _Game.SetContinueButtonShelfText(Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), false);
+    _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonStartChallenge));
+    _Game.SetContinueButtonListener(HandleContinueButtonClicked);
+    _Game.EnableContinueButton(true);
+    _Game.SharedMinigameView.CreateHowToPlayButton();
+    _Game.SharedMinigameView.OpenHowToPlayView();
   }
 
   private void HandleContinueButtonClicked() {
     // TODO: Check if the game has been run before; if so skip the HowToPlayState
-    GameBase game = _StateMachine.GetGame();
-    game.HideDefaultBackButton();
-    game.CreateDefaultQuitButton();
-    game.CloseHowToPlayView();
-    game.HideContinueButtonShelf();
+    _Game.SharedMinigameView.HideQuickQuitButton();
+    _Game.SharedMinigameView.CreateQuitButton();
+    _Game.SharedMinigameView.CloseHowToPlayView();
+    _Game.HideContinueButtonShelf();
 
     if (_NextState == null) {
       _StateMachine.PopState();
