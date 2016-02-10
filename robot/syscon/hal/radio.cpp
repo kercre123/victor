@@ -220,6 +220,10 @@ void Radio::init() {
     };
     setPropState(slot, reset_state);
   }
+  
+  SpineProtocol msg;
+  msg.opcode = REQUEST_PROPS;
+  Spine::enqueue(msg);
 }
 
 static int LocateAccessory(uint32_t id) {

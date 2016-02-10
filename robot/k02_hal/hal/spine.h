@@ -9,6 +9,7 @@ namespace Anki {
       namespace Spine {
         void Manage(SpineProtocol& msg);
         void Dequeue(SpineProtocol& msg);
+        void Enqueue(SpineProtocol& msg);
       }
     }
   }
