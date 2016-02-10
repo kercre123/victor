@@ -28,12 +28,6 @@ public class DailyGoalManager : MonoBehaviour {
     return _FriendshipProgConfig;
   }
 
-  [SerializeField]
-  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
-
-  public FriendshipFormulaConfiguration GetFriendForumulaConfig() {
-    return _FriendshipFormulaConfig;
-  }
 
   public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
     int val = 0;
@@ -45,11 +39,11 @@ public class DailyGoalManager : MonoBehaviour {
     return false;
   }
 
-  public float GetDailyProgress() {
+  public float GetTodayProgress() {
     if (DataPersistenceManager.Instance.CurrentSession != null) {
       StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
       StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
-      return _FriendshipFormulaConfig.CalculateDailyGoalProgress(prog, goal);
+      return CalculateDailyGoalProgress(prog, goal);
     }
     else {
       return 0.0f;
@@ -124,7 +118,7 @@ public class DailyGoalManager : MonoBehaviour {
   /// </summary>
   /// <returns>The minigame need.</returns>
   public float GetMinigameNeed_Extremes() {
-    float prog = (GetDailyProgress() * 2.0f) - 1;
+    float prog = (GetTodayProgress() * 2.0f) - 1;
     // Calculate how far you are from 50% complete
     // range from 0 -> 1.0
     prog = (Mathf.Abs(prog) * 2.0f) - 1;
@@ -139,7 +133,7 @@ public class DailyGoalManager : MonoBehaviour {
   /// </summary>
   /// <returns>The minigame need.</returns>
   public float GetMinigameNeed_Close() {
-    float prog = GetDailyProgress();
+    float prog = GetTodayProgress();
     prog = (prog - 0.5f) * 2.0f;
     if (prog > 1.0f) {
       return 0.0f;
@@ -152,7 +146,7 @@ public class DailyGoalManager : MonoBehaviour {
   /// </summary>
   /// <returns>The minigame need.</returns>
   public float GetMinigameNeed_Far() {
-    float prog = GetDailyProgress();
+    float prog = GetTodayProgress();
     prog = (0.5f - prog) * 2.0f;
     return prog;
   }
@@ -270,5 +264,67 @@ public class DailyGoalManager : MonoBehaviour {
       _RequestDialog.CloseView();
     }
   }
+
+  #region Calculate Friendship Points and DailyGoal Progress
+
+  // Returns the % progression towards your daily goals
+  // Range from 0-1. Does not take overflow into account.
+  public float CalculateDailyGoalProgress(StatContainer progress, StatContainer goal) {
+    int totalProgress = 0, totalGoal = 0;
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+      var stat = (Anki.Cozmo.ProgressionStatType)i;
+      totalProgress += Mathf.Min(progress[stat], goal[stat]);
+      totalGoal += goal[stat];
+    }
+    return ((float)totalProgress / (float)totalGoal);
+  }
+
+  // Calculates friendship points earned for the day based on stats earned and Bonus Mult
+  public int CalculateFriendshipPoints(StatContainer progress, StatContainer goal) {
+    int totalProgress = 0;
+    float mult = CalculateBonusMult(progress, goal);
+    if (mult < 1.0f) {
+      mult = 1.0f;
+    }
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+      var stat = (Anki.Cozmo.ProgressionStatType)i;
+      totalProgress += progress[stat];
+    }
+    return (totalProgress * Mathf.CeilToInt(mult));
+  }
+
+  // Calculates the current Bonus Multiplier for calculating friendship points
+  public float CalculateBonusMult(StatContainer progress, StatContainer goal) {
+    int totalProgress = 0, totalGoal = 0;
+    float bonusMult = 0.0f;
+    if (IsDailyGoalComplete(progress, goal) == true) {
+      for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+        var stat = (Anki.Cozmo.ProgressionStatType)i;
+        totalProgress += progress[stat];
+        totalGoal += goal[stat];
+      }
+      bonusMult = ((float)totalProgress / (float)totalGoal);
+      // Register x2 mult including at exactly 100%
+      if (bonusMult == 1.0f) {
+        bonusMult += 0.001f;
+      }
+    }
+
+    return bonusMult;
+  }
+
+  public bool IsDailyGoalComplete(StatContainer progress, StatContainer goal) {
+    bool isDone = true;
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+      var stat = (Anki.Cozmo.ProgressionStatType)i;
+      if (progress[stat] < goal[stat]) {
+        isDone = false;
+        break;
+      }
+    }
+    return isDone;
+  }
+
+  #endregion
 
 }

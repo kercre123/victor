@@ -44,7 +44,7 @@ MonoBehaviour:
     PointsRequired: 500
     StatsIntroduced:
       _Mask: 0
-    MaxGoals: 4
+    MaxGoals: 3
     MinTarget: 4
     MaxTarget: 10
   BonusMults:

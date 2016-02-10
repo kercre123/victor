@@ -92,9 +92,6 @@ namespace Cozmo.HomeHub {
     CozmoWidget _CozmoWidgetPrefab;
     CozmoWidget _CozmoWidgetInstance;
 
-    [SerializeField]
-    FriendshipFormulaConfiguration _FriendshipFormulaConfig;
-
     private bool _ScrollLocked;
     private float _ScrollLockedOffset;
 
@@ -163,7 +160,7 @@ namespace Cozmo.HomeHub {
         float progress = 0f;
         if (timelineIndex < timelineEntries.Count && timelineEntries[timelineIndex].Date.Equals(date)) {
           timelineEntry = timelineEntries[timelineIndex];
-          progress = _FriendshipFormulaConfig.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals);
+          progress = DailyGoalManager.Instance.CalculateDailyGoalProgress(timelineEntry.Progress, timelineEntry.Goals);
           timelineIndex++;
         }
 
@@ -181,7 +178,7 @@ namespace Cozmo.HomeHub {
     public void LockScroll(bool locked) {
       StartCoroutine(LockScrollCoroutine(locked));
     }
-      
+
     private IEnumerator LockScrollCoroutine(bool locked) {
       //Scroll all the way to the left, then move the scroll container.
       _ScrollLocked = false;
@@ -260,7 +257,7 @@ namespace Cozmo.HomeHub {
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
 
-      int friendshipPoints = Mathf.RoundToInt(_FriendshipFormulaConfig.CalculateFriendshipScore(timelineEntry.Progress, timelineEntry.Goals));
+      int friendshipPoints = DailyGoalManager.Instance.CalculateFriendshipPoints(timelineEntry.Progress, timelineEntry.Goals);
 
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
       UpdateFriendshipPoints(timelineEntry, friendshipPoints);
@@ -325,7 +322,7 @@ namespace Cozmo.HomeHub {
         if (_LockedPaneScrollContainer.parent != _LockedPaneRightNoScrollContainer) {
           _LockedPaneScrollContainer.SetParent(_LockedPaneRightNoScrollContainer, false);
           _LockedPaneScrollContainer.localPosition = Vector3.zero; 
-          _DailyGoalInstance.Collapse(false);
+          _DailyGoalInstance.Collapse();
           _LockedPaneRightNoScrollContainer.gameObject.SetActive(true);
         }
       }
@@ -333,7 +330,7 @@ namespace Cozmo.HomeHub {
         if (_LockedPaneScrollContainer.parent != _LockedPaneLeftNoScrollContainer) {
           _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, false);
           _LockedPaneScrollContainer.localPosition = Vector3.zero; 
-          _DailyGoalInstance.Collapse(false);
+          _DailyGoalInstance.Collapse();
           _LockedPaneLeftNoScrollContainer.gameObject.SetActive(true);
         }
         float pixelsOnLeft = GetScrollRectNormalizedWidth() * _ScrollRect.horizontalNormalizedPosition;
@@ -346,7 +343,7 @@ namespace Cozmo.HomeHub {
         if (_LockedPaneScrollContainer.parent != _MiddlePane) {
           _LockedPaneScrollContainer.SetParent(_MiddlePane.transform, false);
           _LockedPaneScrollContainer.localPosition = Vector3.zero; 
-          _DailyGoalInstance.Collapse(true);
+          _DailyGoalInstance.Expand();
           _LockedPaneRightNoScrollContainer.gameObject.SetActive(false);
           _LockedPaneLeftNoScrollContainer.gameObject.SetActive(false);
         }
