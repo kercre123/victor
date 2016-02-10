@@ -62,6 +62,7 @@ namespace Spine {
       break;
 
     // NO OPS AND HEAD ONLY OPERATIONS
+    case REQUEST_PROPS:      
     case NO_OPERATION:
     case GET_PROP_STATE:
     case PROP_DISCOVERED:
