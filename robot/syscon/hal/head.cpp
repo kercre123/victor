@@ -158,12 +158,7 @@ void UART0_IRQHandler()
       Spine::processMessage(g_dataToBody.spineMessage);
       Head::spokenTo = true;
       
-      // Secret recovery flag, set dark byte to zero, and set secret to a magic number
-      if (g_dataToBody.recover == recovery_secret_code) {
-        EnterRecovery();
-      } else {
-        setTransmitMode(TRANSMIT_DEBUG);
-      }
+      setTransmitMode(TRANSMIT_DEBUG);
     }
   }
 

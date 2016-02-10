@@ -20,7 +20,6 @@ typedef s64 Fixed64;
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
 static const int spine_baud_rate = 350000;
-static const uint32_t recovery_secret_code = 0x444d7852;
 
 enum HeadToBodyFlags {
   BODY_FLASHLIGHT = 0x01
@@ -39,9 +38,13 @@ struct AcceleratorPacket {
 };
 
 #define UNPACK_COLORS(w) \
-  (((w >> 10) & 0x1F) * 0x21) >> 2, \
-  (((w >>  5) & 0x1F) * 0x21) >> 2, \
-  (((w >>  0) & 0x1F) * 0x21) >> 2
+  UNPACK_RED(w), \
+  UNPACK_GREEN(w), \
+  UNPACK_BLUE(w)
+
+#define UNPACK_RED(w)     ((((w >> 10) & 0x1F) * 0x21) >> 2)
+#define UNPACK_GREEN(w)   ((((w >>  5) & 0x1F) * 0x21) >> 2)
+#define UNPACK_BLUE(w)    ((((w >>  0) & 0x1F) * 0x21) >> 2)
 
 #define UNPACK_IR(w) (w & 0x8000 ? 0xFF : 0)
 
@@ -49,82 +52,72 @@ struct AcceleratorPacket {
   (i ? 0x8000 : 0) |            \
   (((b >> 3) & 0x1F) <<  0) |   \
   (((g >> 3) & 0x1F) <<  5) |   \
-  (((r >> 3) & 0x1F) << 10) |   \
+  (((r >> 3) & 0x1F) << 10)     \
 )
 
 enum SpineProtocolOp {
   NO_OPERATION,
+  REQUEST_PROPS,
   ASSIGN_PROP,
   SET_PROP_STATE,
   GET_PROP_STATE,
-  PROP_DISCOVERED
+  PROP_DISCOVERED,
+  SET_BACKPACK_STATE,
+  ENTER_RECOVERY
 };
 
-__packed struct SpineProtocol {
-  uint8_t opcode;
+struct SpineProtocol {
+  SpineProtocolOp opcode;
 
-  __packed union {
-    __packed struct {
+  union {
+    struct {
       uint8_t slot;
       uint16_t colors[4];
     } SetPropState;
 
-    __packed struct {
+    struct {
       uint8_t slot;
       int8_t  x, y, z;
       uint8_t shockCount;
     } GetPropState;
 
-    __packed struct {
+    struct {
       uint8_t slot;
       uint32_t prop_id;
     } AssignProp;
 
-    __packed struct {
+    struct {
       uint32_t prop_id;
     } PropDiscovered;
 
-    uint8_t raw[13];
+    struct {
+      uint16_t colors[4];
+    } SetBackpackState;
   };
-} ;
-
-static_assert(sizeof(SpineProtocol) == 14,
-  "Spine protocol is incorrect size");
-
-union GlobalDataToHead
-{
-  struct {
-    uint32_t source;
-    Fixed speeds[4];
-    Fixed positions[4];
-    uint32_t cliffLevel;
-    Fixed VBat;
-    Fixed VExt;
-    u8    chargeStat;
-    SpineProtocol  spineMessage;
-  };
-
-  // Force alignment
-  uint8_t _RESERVED[64];
 };
 
-union GlobalDataToBody
+struct GlobalDataToHead
 {
-  struct {
-    uint32_t source;
-    int16_t motorPWM[4];
-    u32 backpackColors[4];
-    
-    SpineProtocol  spineMessage;
-    uint32_t       recover;
-    u8             flags;
-  };
-
-  // Force alignment
-  uint8_t _RESERVED[64];  // Pad out to 64 bytes
+  uint32_t source;
+  Fixed speeds[4];
+  Fixed positions[4];
+  uint32_t cliffLevel;
+  Fixed VBat;
+  Fixed VExt;
+  u8    chargeStat;
+  SpineProtocol  spineMessage;
 };
 
-static_assert(sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody) <= 128,
-  "Spine transmissions too long");
+struct GlobalDataToBody
+{
+  uint32_t source;
+  int16_t motorPWM[4];
+  
+  SpineProtocol  spineMessage;
+
+  u8             flags;
+};
+
+static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 128, "Spine transport payload too large");
 
 #endif

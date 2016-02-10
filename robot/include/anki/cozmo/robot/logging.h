@@ -34,10 +34,24 @@
 #endif
 
 template<typename T>
-int trace_cast(const T arg)
+inline int trace_cast(const T arg)
+{
+  return (int)arg;
+}
+
+// No floats on the espressif
+#ifndef TARGET_ESPRESSIF
+template<> inline int trace_cast(const float arg)
 {
   return *((int*)&arg);
 }
+
+template<> inline int trace_cast(const double arg)
+{
+  const float fltArg = (float)arg;
+  return *((int*)&fltArg);
+}
+#endif
 
 // Macro ball based loosely on http://stackoverflow.com/questions/6707148/foreach-macro-on-macros-arguments#6707531
 // Paste macro is two layers to force extra eval
@@ -90,8 +104,17 @@ namespace Anki {
 #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_MINIMAL
       #define AnkiDebug(nameId, nameString, fmtId, fmtString, nargs, ...) \
       { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); }
+      
+      #define AnkiDebugPeriodic(num_calls_between_prints, nameId, nameString, fmtId, fmtString, nargs, ...) \
+      {   static u16 cnt = num_calls_between_prints; \
+          if (cnt++ >= num_calls_between_prints) { \
+            Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+            cnt = 0; \
+          } \
+      }
 #else
       #define AnkiDebug(...)
+      #define AnkiDebugPeriodic(...)
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS

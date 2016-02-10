@@ -159,11 +159,11 @@ namespace Anki {
 #endif        
 
         /////// Cliff detect reaction ///////
-        bool movingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
+        bool isDriving = ABS(WheelController::GetAverageFilteredWheelSpeed()) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
         if (_enableCliffDetect) {
           if (HAL::IsCliffDetected() &&
               !IMUFilter::IsPickedUp() &&
-              movingForward &&
+              isDriving &&
               !_wasCliffDetected) {
 
             // TODO (maybe): Check for cases where cliff detect should not stop motors
@@ -182,6 +182,7 @@ namespace Anki {
             Localization::GetCurrentMatPose(msg.x_mm, msg.y_mm, angle);
             msg.detected = true;
             msg.angle_rad = angle.ToFloat();
+            msg.drivingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
             RobotInterface::SendMessage(msg);
 
             _wasCliffDetected = true;

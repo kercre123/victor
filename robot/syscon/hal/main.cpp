@@ -26,7 +26,7 @@ static const u32 MAX_FAILED_TRANSFER_COUNT = 18000; // 1.5m for auto shutdown (i
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
-extern void EnterRecovery(void) {
+void EnterRecovery(void) {
   for (int i = 0; i < 32; i++) {
     if (i == PIN_PWR_EN) continue ;
     nrf_gpio_cfg_default(i);

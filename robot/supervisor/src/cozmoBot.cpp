@@ -281,8 +281,7 @@ namespace Anki {
           SteeringController::ExecuteDirectDrive(0,0);
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
-          BackpackLightController::TurnOffAll();
-          BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_ENC_RED, LED_ENC_OFF, 34, 33, 0, 0);
+          BackpackLightController::Init();
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
 #ifndef TARGET_K02
