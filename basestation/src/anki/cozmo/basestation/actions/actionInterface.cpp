@@ -30,7 +30,8 @@ namespace Anki {
     
     u32 IActionRunner::sTagCounter = 100000;
     
-    IActionRunner::IActionRunner()
+    IActionRunner::IActionRunner(Robot& robot)
+    : _robot(robot)
     {
       // Assign every action a unique tag
       if (++IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
@@ -42,28 +43,26 @@ namespace Anki {
     
     IActionRunner::~IActionRunner()
     {
-      if(_robot != nullptr)
+      if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
       {
-        if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
-        {
-          // Notify any listeners about this action's completion.
-          // TODO: Populate the signal with any action-specific info?
-          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, _type, _result, _completionUnion)));
-        }
-      
-        if(!_suppressTrackLocking)
-        {
-#         if DEBUG_ANIM_TRACK_LOCKING
-          PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                            _animTracks,
-                            AnimTrackFlagToString((AnimTrackFlag)_animTracks),
-                            _name.c_str(),
-                            _idTag);
-#         endif
-          _robot->GetMoveComponent().UnlockAnimTracks(_animTracks);
-          _robot->GetMoveComponent().UnignoreTrackMovement(_movementTracks);
-        }
+        // Notify any listeners about this action's completion.
+        // TODO: Populate the signal with any action-specific info?
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), _idTag, _type, _result, _completionUnion)));
       }
+    
+      if(!_suppressTrackLocking)
+      {
+#         if DEBUG_ANIM_TRACK_LOCKING
+        PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                          _animTracks,
+                          AnimTrackFlagToString((AnimTrackFlag)_animTracks),
+                          _name.c_str(),
+                          _idTag);
+#         endif
+        _robot.GetMoveComponent().UnlockAnimTracks(_animTracks);
+        _robot.GetMoveComponent().UnignoreTrackMovement(_movementTracks);
+      }
+      
     }
     
     void IActionRunner::SetTag(u32 tag)
@@ -92,11 +91,10 @@ namespace Anki {
                            _name.c_str(),
                            _idTag);
 #         endif
-          _robot->GetMoveComponent().UnlockAnimTracks(tracks);
-          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+          _robot.GetMoveComponent().UnlockAnimTracks(tracks);
+          _robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
         
-        CancelAndDeleteSubActions();
         _isRunning = false;
       }
       return _isInterrupted;
@@ -123,8 +121,8 @@ namespace Anki {
                          GetTag());
 
 #       endif
-        _robot->GetMoveComponent().LockAnimTracks(disableTracks);
-        _robot->GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
+        _robot.GetMoveComponent().LockAnimTracks(disableTracks);
+        _robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
       }
 
       if( ! _isRunning ) {
@@ -161,9 +159,6 @@ namespace Anki {
                            (_result==ActionResult::SUCCESS ? "succeeded" :
                             _result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
         }
-
-        // Clean up after any registered sub actions and the action itself
-        CancelAndDeleteSubActions();
         
         PrepForCompletion();
 
@@ -222,61 +217,10 @@ namespace Anki {
       return  (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
     
-    bool IActionRunner::RegisterSubAction(IActionRunner* &subAction)
-    {
-      PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
-                        GetTag(),
-                        GetName().c_str(),
-                        subAction->GetTag(),
-                        subAction->GetName().c_str());
-      
-      _subActions.push_back(&subAction);
-      if(nullptr == GetRobot())
-      {
-        PRINT_NAMED_INFO("IActionRunner.RegisterSubAction",
-                         "Parent action's robot pointer is null, returning Failure_Abort");
-        return false;
-      }
-      subAction->SetRobot(*GetRobot());
-      return true;
-    }
-    
-    void IActionRunner::CancelAndDeleteSubActions()
-    {
-      if(!_subActions.empty())
-      {
-        for(auto subAction : _subActions) {
-          if( nullptr != (*subAction) ) {
-            if( (*subAction)->_isRunning ) {
-              if( DEBUG_ACTION_RUNNING && _displayMessages ) {
-                PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions",
-                                  "Removing subAction %s [%d] (parent action is %s [%d])",
-                                  (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
-                                  GetName().c_str(), GetTag());
-              }
-            } // if running
-            else if( DEBUG_ACTION_RUNNING && _displayMessages ) {
-              PRINT_NAMED_DEBUG("IActionRunner.CancelAndDeleteSubActions.Skip",
-                                "skipping sub action  %s [%d] because it isn't running (parent action is %s [%d])",
-                                (*subAction)->GetName().c_str(), (*subAction)->GetTag(),
-                                GetName().c_str(), GetTag());
-            }
-            
-            Util::SafeDelete(*subAction);
-          } // if not null
-        }
-      }
-    }
-    
-    void IActionRunner::SetRobot(Robot& robot)
-    {
-      _robot = &robot;
-    }
-    
-    
 #pragma mark ---- IAction ----
     
-    IAction::IAction()
+    IAction::IAction(Robot& robot)
+    : IActionRunner(robot)
     {
       Reset();
     }
@@ -318,11 +262,6 @@ namespace Anki {
         if(!_preconditionsMet) {
           //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.", GetName().c_str());
           SetStatus(GetName() + ": check preconditions");
-          
-          // Before calling Init(), clean up any subactions, in case this is not
-          // the first call to Init() -- i.e., if this is a retry or resume after
-          // being interrupted.
-          CancelAndDeleteSubActions();
 
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively
@@ -365,7 +304,7 @@ namespace Anki {
         if(IsMessageDisplayEnabled()) {
           PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
                            "Robot %d failed running action %s. Retrying.",
-                           _robot->GetID(), GetName().c_str());
+                           _robot.GetID(), GetName().c_str());
         }
         
         Reset();

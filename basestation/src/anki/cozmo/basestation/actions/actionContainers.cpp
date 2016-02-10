@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -22,9 +23,9 @@ namespace Anki {
     
 #pragma mark ---- ActionList ----
     
-    ActionList::ActionList(Robot& robot)
+    ActionList::ActionList()
     {
-      _robot = &robot;
+    
     }
     
     ActionList::~ActionList()
@@ -32,36 +33,50 @@ namespace Anki {
       Clear();
     }
     
-    Result ActionList::QueueAction(SlotHandle inSlot, QueueActionPosition inPosition,
+    Result ActionList::QueueAction(QueueActionPosition inPosition,
                                    IActionRunner* action, u8 numRetries)
     {
+      Result result = RESULT_OK;
       switch(inPosition)
       {
         case QueueActionPosition::NOW:
         {
-          QueueActionNow(inSlot, action, numRetries);
+          result = QueueActionNow(action, numRetries);
           break;
         }
         case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
         {
+          // Check before cancelling everything
+          if(IsDuplicate(action))
+          {
+            return RESULT_FAIL;
+          }
           // Cancel all queued actions and make this action the next thing in it
           Cancel();
-          QueueActionNext(inSlot, action, numRetries);
+          result = QueueActionNext(action, numRetries);
           break;
         }
         case QueueActionPosition::NEXT:
         {
-          QueueActionNext(inSlot, action, numRetries);
+          result = QueueActionNext(action, numRetries);
           break;
         }
         case QueueActionPosition::AT_END:
         {
-          QueueActionAtEnd(inSlot, action, numRetries);
+          result = QueueActionAtEnd(action, numRetries);
           break;
         }
         case QueueActionPosition::NOW_AND_RESUME:
         {
-          QueueActionAtFront(inSlot, action, numRetries);
+          result = QueueActionAtFront(action, numRetries);
+          break;
+        }
+        case QueueActionPosition::IN_PARALLEL:
+        {
+          if(AddConcurrentAction(action, numRetries) == -1);
+          {
+            result = RESULT_FAIL;
+          }
           break;
         }
         default:
@@ -73,70 +88,69 @@ namespace Anki {
         }
       }
       
-      return RESULT_OK;
+      return result;
     } // QueueAction()
     
-    Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionNext(IActionRunner* action, u8 numRetries)
     {
-      action->SetRobot(*_robot);
-      return _queues[atSlot].QueueNext(action, numRetries);
+      if(IsDuplicate(action))
+      {
+        return RESULT_FAIL;
+      }
+      return _queues[0].QueueNext(action, numRetries);
     }
     
-    Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionAtEnd(IActionRunner* action, u8 numRetries)
     {
-      action->SetRobot(*_robot);
-      return _queues[atSlot].QueueAtEnd(action, numRetries);
+      if(IsDuplicate(action))
+      {
+        return RESULT_FAIL;
+      }
+      return _queues[0].QueueAtEnd(action, numRetries);
     }
     
-    Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionNow(IActionRunner* action, u8 numRetries)
     {
-      action->SetRobot(*_robot);
-      return _queues[atSlot].QueueNow(action, numRetries);
+      if(IsDuplicate(action))
+      {
+        return RESULT_FAIL;
+      }
+      return _queues[0].QueueNow(action, numRetries);
     }
     
-    Result ActionList::QueueActionAtFront(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    Result ActionList::QueueActionAtFront(IActionRunner* action, u8 numRetries)
     {
-      action->SetRobot(*_robot);
-      return _queues[atSlot].QueueAtFront(action, numRetries);
+      if(IsDuplicate(action))
+      {
+        return RESULT_FAIL;
+      }
+      return _queues[0].QueueAtFront(action, numRetries);
     }
     
-    bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
+    bool ActionList::Cancel(RobotActionType withType)
     {
       bool found = false;
       
       // Clear specified slot / type
       for(auto & q : _queues) {
-        if(fromSlot == -1 || q.first == fromSlot) {
-          found |= q.second.Cancel(withType);
-        }
+        found |= q.second.Cancel(withType);
       }
       return found;
     }
     
-    bool ActionList::Cancel(u32 idTag, SlotHandle fromSlot)
+    bool ActionList::Cancel(u32 idTag)
     {
       bool found = false;
       
-      if(fromSlot == -1) {
-        for(auto & q : _queues) {
-          if(q.second.Cancel(idTag) == true) {
-            if(found) {
-              PRINT_NAMED_WARNING("ActionList.Cancel.DuplicateTags",
-                                  "Multiple actions from multiple slots cancelled with idTag=%d.\n", idTag);
-            }
-            found = true;
+      for(auto & q : _queues) {
+        if(q.second.Cancel(idTag) == true) {
+          if(found) {
+            PRINT_NAMED_WARNING("ActionList.Cancel.DuplicateTags",
+                                "Multiple actions from multiple slots cancelled with idTag=%d.\n", idTag);
           }
-        }
-        return found;
-      } else {
-        auto q = _queues.find(fromSlot);
-        if(q != _queues.end()) {
-          found = q->second.Cancel(idTag);
-        } else {
-          PRINT_NAMED_WARNING("ActionList.Cancel.NoSlot", "No slot with handle %d.\n", fromSlot);
+          found = true;
         }
       }
-      
       return found;
     }
     
@@ -190,6 +204,11 @@ namespace Anki {
         return -1;
       }
       
+      if(IsDuplicate(action))
+      {
+        return -1;
+      }
+
       // Find an empty slot
       SlotHandle currentSlot = 0;
       while(_queues.find(currentSlot) != _queues.end()) {
@@ -198,6 +217,7 @@ namespace Anki {
       
       if(_queues[currentSlot].QueueAtEnd(action, numRetries) != RESULT_OK) {
         PRINT_NAMED_ERROR("ActionList.AddAction.FailedToAdd", "Failed to add action to new queue.\n");
+        return -1;
       }
       
       return currentSlot;
@@ -230,6 +250,21 @@ namespace Anki {
       }
 
       return qIter->second.GetCurrentAction()->GetTag() == idTag;
+    }
+    
+    bool ActionList::IsDuplicate(IActionRunner* action)
+    {
+      for(auto &queue : _queues)
+      {
+        if(queue.second.IsDuplicate(action))
+        {
+          PRINT_NAMED_WARNING("ActionList.QueueAction.IsDuplicate",
+                              "Attempting to queue duplicate action %s [%d]",
+                              action->GetName().c_str(), action->GetTag());
+          return true;
+        }
+      }
+      return false;
     }
 
 #pragma mark ---- ActionQueue ----
@@ -326,20 +361,22 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      const IActionRunner* currentAction = GetCurrentAction();
-      DeleteCurrentAction();
-      
-      if(IsEmpty()) {
+      if(_queue.empty()) {
+        DeleteCurrentAction();
         return QueueAtEnd(action, numRetries);
       } else {
+        const IActionRunner* currentAction = GetCurrentRunningAction();
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
-        PRINT_NAMED_DEBUG("ActionQueue.QueueNow.CancelingPrevious", "Canceling %s [%d] in favor of action %s [%d]",
-                          currentAction->GetName().c_str(),
-                          currentAction->GetTag(),
-                          action->GetName().c_str(),
-                          action->GetTag());
-
+        if(currentAction != nullptr)
+        {
+          PRINT_NAMED_DEBUG("ActionQueue.QueueNow.CancelingPrevious", "Canceling %s [%d] in favor of action %s [%d]",
+                            currentAction->GetName().c_str(),
+                            currentAction->GetTag(),
+                            action->GetName().c_str(),
+                            action->GetTag());
+        }
+        DeleteCurrentAction();
         action->SetNumRetries(numRetries);
         _queue.push_front(action);
         return RESULT_OK;
@@ -436,7 +473,10 @@ namespace Anki {
         }
         assert(_currentAction != nullptr);
         
-        VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN,
+        VizManager* vizManager = _currentAction->GetRobot().GetContext()->GetVizManager();
+        ASSERT_NAMED(nullptr != vizManager, "Expecting a non-null VizManager");
+        
+        vizManager->SetText(VizManager::ACTION, NamedColors::GREEN,
                                            "Action: %s", _currentAction->GetName().c_str());
         
         const ActionResult actionResult = _currentAction->Update();
@@ -449,7 +489,7 @@ namespace Anki {
             lastResult = RESULT_FAIL;
           }
           
-          VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN, "");
+          vizManager->SetText(VizManager::ACTION, NamedColors::GREEN, "");
         }
       } // if queue not empty
       
@@ -485,9 +525,22 @@ namespace Anki {
       if(_currentAction != nullptr && !_currentActionIsDeleting)
       {
         _currentActionIsDeleting = true;
+        _currentAction->PrepForCompletion();
         Util::SafeDelete(_currentAction);
         _currentActionIsDeleting = false;
       }
+    }
+    
+    bool ActionQueue::IsDuplicate(IActionRunner* action)
+    {
+      for(auto &action1 : _queue)
+      {
+        if(action1 == action)
+        {
+          return true;
+        }
+      }
+      return false;
     }
     
     void ActionQueue::Print() const

@@ -1,18 +1,18 @@
 /**
- * File: behaviorExploreMarkedCube
+ * File: behaviorExploreCliff
  *
  * Author: Raul
- * Created: 01/22/16
+ * Created: 02/03/16
  *
- * Description: Behavior that looks for a nearby marked cube that Cozmo has not fully explored (ie: seen in
- * all directions), and tries to see the sides that are yet to be discovered.
+ * Description: Behavior that looks for nearby areas marked as cliffs and tries to follow along their line
+ * in order to identify the borders or the platform the robot is currently on.
  *
  * Copyright: Anki, Inc. 2016
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorExploreMarkedCube_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorExploreMarkedCube_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorExploreCliff_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorExploreCliff_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
@@ -24,13 +24,13 @@
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorExploreMarkedCube : public IBehavior
+class BehaviorExploreCliff : public IBehavior
 {
 private:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config);
+  BehaviorExploreCliff(Robot& robot, const Json::Value& config);
   
 public:
 
@@ -39,7 +39,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // destructor
-  virtual ~BehaviorExploreMarkedCube();
+  virtual ~BehaviorExploreCliff();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IBehavior API
@@ -54,14 +54,12 @@ protected:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
-//  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-//  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
@@ -106,8 +104,7 @@ private:
   VantagePointVector _currentVantagePoints;
 
   // tag for the current move action we have ordered
-  uint32_t _currentActionTag;
-  
+  uint32_t _currentActionTag;  
 };
   
 

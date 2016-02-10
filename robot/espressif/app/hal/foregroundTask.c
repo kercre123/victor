@@ -25,7 +25,10 @@ void foregroundTaskTask(os_event_t *event)
     const bool repost = subTask(event->par);
     if (repost)
     {
-      system_os_post(foregroundTask_PRIO, (uint32)subTask, event->par);
+      if (system_os_post(foregroundTask_PRIO, (uint32)subTask, event->par) == false)
+      {
+        os_printf("Couldn't repost foregroundTask 0x%x\r\n", event->sig);
+      }
     }
   }
 }

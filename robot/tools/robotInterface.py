@@ -3,7 +3,7 @@ Utility classes for interfacing with the Cozmo robot through reliable transport 
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
-import sys, os, time
+import sys, os, time, re, struct
 
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
@@ -53,6 +53,20 @@ CameraResolutions = (
   (3200, 2400), # QUXGA
 )
 
+reinterpret_cast = {
+    "d": lambda x: x,
+    "i": lambda x: x,
+    "x": lambda x: x,
+    "f": lambda x: struct.unpack("f", struct.pack("i", x))[0],
+}
+
+FORMATTER_KEY = re.compile(r'(?<!%)%[0-9.-]*([{}])'.format("".join(reinterpret_cast.keys()))) # Find singal % marks
+
+def formatTrace(fmt, args):
+    "Returns the formatted string from a trace, doing the nesisary type reinterpretation"
+    convertedArgs = tuple([reinterpret_cast[t](a) for t, a in zip(FORMATTER_KEY.findall(fmt), args)])
+    return fmt % convertedArgs
+
 class ConnectionState:
     "An enum for connection states"
     notConnected     = 0
@@ -86,7 +100,7 @@ class _Dispatcher(IDataReceiver):
         if dest is None:
             dest = self.dest
         elif dest != self.dest:
-            raise ValueError("Cannot disconnect from {} because not connected to it\r\n".format(repr(dest)))
+            raise ValueError("Cannot disconnect from {} because not connected to it{linesep}".format(repr(dest), linesep=os.linesep))
         self.state = ConnectionState.notConnected
         return self.transport.Disconnect(dest)
 
@@ -97,25 +111,26 @@ class _Dispatcher(IDataReceiver):
 
     def OnConnectionRequest(self, sourceAddress):
         if not self.OnConnectionRequestSubscribers:
-            sys.stderr.write("Received connection request but no connection request subscribers to handle it!\r\n")
+            sys.stderr.write("Received connection request but no connection request subscribers to handle it!")
+            sys.stderr.write(os.linesep)
         else:
             for sub in self.OnConnectionRequestSubscribers:
                 sub(sourceAddress)
 
     def OnConnected(self, sourceAddress):
-        sys.stdout.write("Completed connection to %s\r\n" % repr(sourceAddress))
+        sys.stdout.write("Completed connection to {}{linesep}".format(repr(sourceAddress), linesep=os.linesep))
         self.state = ConnectionState.connected
         for sub in self.OnConnectedSubscribers:
             sub(sourceAddress)
 
     def OnDisconnected(self, sourceAddress):
-        sys.stdout.write("Lost connection to %s\r\n" % repr(sourceAddress))
+        sys.stdout.write("Lost connection to {}{linesep}".format(repr(sourceAddress), linesep=os.linesep))
         if self.state is ConnectionState.connected:
             self.state = ConnectionState.disconnected
         elif self.state is ConnectionState.waitingToConnect:
             self.state = ConnectionState.failedToConnect
         else:
-            raise Exception("Recieved disconnect in unexpected state self: {}\r\n".format(self.state))
+            raise Exception("Recieved disconnect in unexpected state self: {}{linesep}".format(self.state, linesep=os.linesep))
         for sub in self.OnDisconnectedSubscribers:
             sub(sourceAddress)
 
@@ -127,9 +142,11 @@ class _Dispatcher(IDataReceiver):
             if self.warnMsgErrors:
                 if len(buffer):
                     tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
-                    sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]\r\n\t{2:s}\r\n".format(tag, len(buffer), str(e)))
+                    sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]{linesep}\t{2:s}{linesep}".format(tag, len(buffer), str(e), linesep=os.linesep))
                 else:
-                    sys.stderr.write("Got 0 length message!\r\n")
+                    sys.stderr.write("Got 0 length message!")
+                    sys.stderr.write(os.linesep)
+                sys.stderr.flush()
         else:
             if msg.tag == msg.Tag.printText:
                 sys.stdout.write("ROBOT: " + msg.printText.text)
@@ -164,7 +181,7 @@ class _Dispatcher(IDataReceiver):
                             'base':      base,
                             'level':     msg.trace.level,
                             'name':      self.nameTable[msg.trace.name],
-                            'formatted': (self.formatTable[msg.trace.stringId][0] % tuple(msg.trace.value))
+                            'formatted': formatTrace(self.formatTable[msg.trace.stringId][0], msg.trace.value)
                     }
                     sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
             for tag, subs in self.ReceiveDataSubscribers.items():

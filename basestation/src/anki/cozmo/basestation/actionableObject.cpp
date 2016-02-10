@@ -118,19 +118,19 @@ namespace Anki {
           // (excluding this ActionableObject as an obstacle)
           
           // DEBUG VIZ
-          //          VizManager::getInstance()->DrawGenericQuad(i+1000+(0xffff & (long)preActionPose.GetMarker()),
+          //          _vizManager->DrawGenericQuad(i+1000+(0xffff & (long)preActionPose.GetMarker()),
           //                                                     Quad2f(currentPoint+Point2f(-1.f,-1.f),
           //                                                            currentPoint+Point2f(-1.f, 1.f),
           //                                                            currentPoint+Point2f( 1.f,-1.f),
           //                                                            currentPoint+Point2f( 1.f, 1.f)),
           //                                                     1.f, NamedColors::BLUE);
-          //          VizManager::getInstance()->DrawGenericQuad(i+2000+(0xffff & (long)preActionPose.GetMarker()),
+          //          _vizManager->DrawGenericQuad(i+2000+(0xffff & (long)preActionPose.GetMarker()),
           //                                                     Quad2f(currentPointL+Point2f(-1.f,-1.f),
           //                                                            currentPointL+Point2f(-1.f, 1.f),
           //                                                            currentPointL+Point2f( 1.f,-1.f),
           //                                                            currentPointL+Point2f( 1.f, 1.f)),
           //                                                     1.f, NamedColors::RED);
-          //          VizManager::getInstance()->DrawGenericQuad(i+3000+(0xffff & (long)preActionPose.GetMarker()),
+          //          _vizManager->DrawGenericQuad(i+3000+(0xffff & (long)preActionPose.GetMarker()),
           //                                                     Quad2f(currentPointR+Point2f(-1.f,-1.f),
           //                                                            currentPointR+Point2f(-1.f, 1.f),
           //                                                            currentPointR+Point2f( 1.f,-1.f),
@@ -144,7 +144,7 @@ namespace Anki {
           for(auto & obstacle : obstacles) {
             
             // DEBUG VIZ
-            //            VizManager::getInstance()->DrawGenericQuad(obstacle.second.GetValue(), obstacle.first, 1.f, NamedColors::ORANGE);
+            //            _vizManager->DrawGenericQuad(obstacle.second.GetValue(), obstacle.first, 1.f, NamedColors::ORANGE);
             
             // Make sure this obstacle is not from this object (the one we are trying to interact with).
             if(obstacle.second != this->GetID()) {
@@ -213,7 +213,10 @@ namespace Anki {
       if(IsSelected()) {
         static const ColorRGBA SELECTED_COLOR(0.f,1.f,0.f,1.f);
         Visualize(SELECTED_COLOR);
-        //VisualizePreActionPoses();
+        if (nullptr != _vizManager)
+        {
+          //VisualizePreActionPoses();
+        }
       } else {
         Visualize(GetColor());
       }
@@ -237,9 +240,9 @@ namespace Anki {
           // TODO: In computing poseID to pass to DrawPreDockPose, multiply object ID by the max number of
           //       preaction poses we expect to visualize per object. Currently, hardcoded to 48 (4 dock and
           //       4 roll per side). We probably won't have more than this.
-          _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID + GetID().GetValue()*48,
-                                                                                           pose.GetPose().GetWithRespectToOrigin(),
-                                                                                           PreActionPose::GetVisualizeColor(actionType)));
+          _vizPreActionPoseHandles.emplace_back(_vizManager->DrawPreDockPose(poseID + GetID().GetValue()*48,
+                                                                             pose.GetPose().GetWithRespectToOrigin(),
+                                                                             PreActionPose::GetVisualizeColor(actionType)));
           ++poseID;
         }
         
@@ -253,7 +256,7 @@ namespace Anki {
     {
       for(auto & preActionPoseHandle : _vizPreActionPoseHandles) {
         if(preActionPoseHandle != VizManager::INVALID_HANDLE) {
-          VizManager::getInstance()->EraseVizObject(preActionPoseHandle);
+          _vizManager->EraseVizObject(preActionPoseHandle);
         }
       }
       _vizPreActionPoseHandles.clear();

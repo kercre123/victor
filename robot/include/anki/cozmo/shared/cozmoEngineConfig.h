@@ -9,15 +9,6 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Camera pose correction (APPLIES TO PHYSICAL ROBOT ONLY)
-    // TODO: The headCamPose is eventually to be calibrated
-    //       if it can't be manufactured to sufficient tolerance.
-    const f32 HEAD_CAM_YAW_CORR = 0.f;
-    const f32 HEAD_CAM_PITCH_CORR = 0.f;
-    const f32 HEAD_CAM_ROLL_CORR = 0.f;
-    const f32 HEAD_CAM_TRANS_X_CORR = 0.f;
-
-    
     // Resolution of images that are streamed to basestation (dev purposes)
     const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     

@@ -73,7 +73,7 @@ bool BehaviorPlayAnim::IsRunnable(const Robot& robot, double currentTime_sec) co
 }
   
 
-Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec)
 {
   _isInterrupted = false;
   _isActing = false;
@@ -96,7 +96,7 @@ BehaviorPlayAnim::Status BehaviorPlayAnim::UpdateInternal(Robot& robot, double c
 }
 
 
-Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   if (_isInterruptable)
   {
@@ -142,8 +142,8 @@ void BehaviorPlayAnim::PlayAnimation(Robot& robot, const std::string& animName)
   --_loopsLeft;  
   SetStateName("Play" + std::to_string(_loopsLeft));
   
-  PlayAnimationAction* animAction = new PlayAnimationAction(animName);
-  robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
+  PlayAnimationAction* animAction = new PlayAnimationAction(robot, animName);
+  robot.GetActionList().QueueActionNow(animAction);
   _lastActionTag = animAction->GetTag();
   _isActing = true;
 }

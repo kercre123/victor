@@ -92,7 +92,7 @@ void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot
   }
 }
   
-Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec)
 {
   _currentDriveActionID = (uint32_t)ActionConstants::INVALID_TAG;
   _currentState = State::WaitToFinishMoving;
@@ -188,14 +188,14 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   float randomTilt = (float) GetRNG().RandDbl();
   Radians tiltRads(DEG_TO_RAD(((kTiltMax - kTiltMin) * randomTilt) + kTiltMin));
   
-  IActionRunner* moveAction = new PanAndTiltAction(proposedNewAngle, tiltRads, true, true);
+  IActionRunner* moveAction = new PanAndTiltAction(robot, proposedNewAngle, tiltRads, true, true);
   _currentDriveActionID = moveAction->GetTag();
-  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveAction);
+  robot.GetActionList().QueueActionAtEnd(moveAction);
   
   _currentState = State::WaitToFinishMoving;
 }
 
-Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   _currentState = State::Inactive;
   return Result::RESULT_OK;

@@ -25,9 +25,11 @@ CONSOLE_VAR(bool, kRenderNavMeshQuadTreeProcessor, "NavMeshQuadTree", true);
 CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTree::NavMeshQuadTree()
+NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager)
 : _gfxDirty(true)
+, _processor(vizManager)
 , _root({0,0,1}, 256, 4, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
+, _vizManager(vizManager)
 {
   _processor.SetRoot( &_root );
 }
@@ -46,7 +48,7 @@ void NavMeshQuadTree::Draw() const
     // ask root to add proper quads to be rendered
     VizManager::SimpleQuadVector quadVector;
     _root.AddQuadsToDraw(quadVector);
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree", quadVector);
+    _vizManager->DrawQuadVector("NavMeshQuadTree", quadVector);
     
 //    // compare actual size vs max
 //    size_t actual = quadVector.size();
@@ -66,11 +68,16 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, ENodeContentType nodeType)
   // render approx last quad added
   if ( kRenderLastAddedQuad )
   {
-    VizManager::SimpleQuadVector quadVector;
-    Point3f center(quad.ComputeCentroid().x(), quad.ComputeCentroid().y(), 20);
-    float size = Anki::Util::Max((quad.GetMaxX()-quad.GetMinX()), (quad.GetMaxY() - quad.GetMinY()));
-    quadVector.push_back(VizManager::MakeSimpleQuad(Anki::NamedColors::YELLOW, center, size));
-    VizManager::getInstance()->DrawQuadVector("NavMeshQuadTree::AddQuad", quadVector);
+    ColorRGBA color = Anki::NamedColors::WHITE;
+    const float z = 70.0f;
+    Point3f topLeft = {quad[Quad::CornerName::TopLeft].x(), quad[Quad::CornerName::TopLeft].y(), z};
+    Point3f topRight = {quad[Quad::CornerName::TopRight].x(), quad[Quad::CornerName::TopRight].y(), z};
+    Point3f bottomLeft = {quad[Quad::CornerName::BottomLeft].x(), quad[Quad::CornerName::BottomLeft].y(), z};
+    Point3f bottomRight = {quad[Quad::CornerName::BottomRight].x(), quad[Quad::CornerName::BottomRight].y(), z};
+    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", topLeft, topRight, color, true);
+    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", topRight, bottomRight, color, false);
+    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", bottomRight, bottomLeft, color, false);
+    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", bottomLeft, topLeft, color, false);
   }
 
   // if the root does not contain the quad, expand

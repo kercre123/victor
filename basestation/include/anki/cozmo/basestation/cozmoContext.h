@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Util {
   class RandomGenerator;
-  
+  class TransferQueueMgr;
   namespace Data {
     class DataPlatform;
   }
@@ -42,6 +42,7 @@ namespace Cozmo {
 class IExternalInterface;
 class RobotManager;
 class CozmoEngine;
+class VizManager;
   
 namespace RobotInterface {
   class MessageHandler;
@@ -67,6 +68,7 @@ class CozmoContext : private Util::noncopyable
 public:
   CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
   CozmoContext();
+  virtual ~CozmoContext();
   
   IExternalInterface*                   GetExternalInterface() const { return _externalInterface; }
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
@@ -76,6 +78,8 @@ public:
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
   RobotInterface::MessageHandler*       GetRobotMsgHandler() const { return _robotMsgHandler.get(); }
   Audio::AudioServer*                   GetAudioServer() const { return _audioServer.get(); }
+  VizManager*                           GetVizManager() const { return _vizManager.get(); }
+  Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   
 private:
   // This is passed in and held onto, but not owned by the context (yet.
@@ -84,11 +88,13 @@ private:
   Util::Data::DataPlatform*                               _dataPlatform = nullptr;
   
   // Context holds onto these things for everybody:
-  std::shared_ptr<Audio::AudioServer>                     _audioServer;
-  std::shared_ptr<Util::RandomGenerator>                  _random;
-  std::shared_ptr<Comms::AdvertisementService>            _robotAdvertisementService;
-  std::shared_ptr<RobotManager>                           _robotMgr;
-  std::shared_ptr<RobotInterface::MessageHandler>         _robotMsgHandler;
+  std::unique_ptr<Audio::AudioServer>             _audioServer;
+  std::unique_ptr<Util::RandomGenerator>          _random;
+  std::unique_ptr<Comms::AdvertisementService>    _robotAdvertisementService;
+  std::unique_ptr<RobotManager>                   _robotMgr;
+  std::unique_ptr<RobotInterface::MessageHandler> _robotMsgHandler;
+  std::unique_ptr<VizManager>                     _vizManager;
+  std:: unique_ptr<Util::TransferQueueMgr>        _transferQueueMgr;
 };
   
 

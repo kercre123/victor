@@ -8,6 +8,9 @@
 
 #define DEBUG_HEAD_CONTROLLER 0
 
+// If defined, angle is calibrated while power is still being applied, verus a short period of time after motor is "relaxed"
+#define CALIB_WHILE_APPLYING_POWER
+
 namespace Anki {
 namespace Cozmo {
 namespace HeadController {
@@ -61,17 +64,6 @@ namespace HeadController {
       VelocityProfileGenerator vpg_;
 
 
-      // Nodding
-      bool isNodding_ = false;
-      //f32 preNodAngle_  = 0.f;
-      f32 nodLowAngle_  = 0.f;
-      f32 nodHighAngle_ = 0.f;
-      s32 numNodsDesired_ = 0;
-      s32 numNodsComplete_ = 0;
-      f32 nodHalfPeriod_sec_ = 0.5f;
-      f32 nodEaseOutFraction_ = 0.5f;
-      f32 nodEaseInFraction_  = 0.5f;
-
       // Calibration parameters
       typedef enum {
         HCS_IDLE,
@@ -81,6 +73,8 @@ namespace HeadController {
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
+      const f32 HEAD_CALIB_POWER = 0.5;
+      const f32 HEAD_CAL_OFFSET = DEG_TO_RAD(0);  // Dependent on HEAD_CALIB_POWER. Ideally 0.
       bool isCalibrated_ = false;
       u32 lastHeadMovedTime_ms = 0;
 
@@ -139,22 +133,7 @@ namespace HeadController {
 
     void ResetLowAnglePosition()
     {
-      // TODO: Ideally, this value is 0,
-      //       but it may need to be calibrated
-      Radians HEAD_CAL_OFFSET = 0;
-      switch (HAL::GetID()) {
-        case 0x3AA0:
-        case 0x3A94:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(-3);
-          break;
-        case 0x40:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(2);
-          break;
-        default:
-          HEAD_CAL_OFFSET = DEG_TO_RAD(2);
-      }
-
-      currentAngle_ = MIN_HEAD_ANGLE + HEAD_CAL_OFFSET;
+      currentAngle_ = MAX_HEAD_ANGLE + HEAD_CAL_OFFSET;
       HAL::MotorResetPosition(HAL::MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
       isCalibrated_ = true;
@@ -167,7 +146,6 @@ namespace HeadController {
 
     void Stop()
     {
-      isNodding_ = false;
       SetAngularVelocity(0);
     }
 
@@ -181,7 +159,7 @@ namespace HeadController {
             break;
 
           case HCS_LOWER_HEAD:
-            power_ = -0.7;
+            power_ = HEAD_CALIB_POWER;
             HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             calState_ = HCS_WAIT_FOR_STOP;
@@ -205,7 +183,12 @@ namespace HeadController {
             } else {
               lastHeadMovedTime_ms = HAL::GetTimeStamp();
             }
+#ifdef    CALIB_WHILE_APPLYING_POWER
+            // Fall through to HCS_SET_CURR_ANGLE and immediately set angle
+            lastHeadMovedTime_ms = 0;
+#else
             break;
+#endif
 
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
@@ -394,11 +377,6 @@ namespace HeadController {
 
     void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
     {
-      // Stop nodding if we were
-      if(IsNodding()) {
-        isNodding_ = false;
-      }
-
       SetDesiredAngle_internal(angle, acc_start_frac, acc_end_frac, duration_seconds);
     }
 
@@ -501,18 +479,6 @@ namespace HeadController {
 
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
       } // if not in position
-      else if(isNodding_)
-      { // inPosition and Nodding
-        if (GetLastCommandedAngle() == nodHighAngle_) {
-          SetDesiredAngle_internal(nodLowAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-        } else if (GetLastCommandedAngle() == nodLowAngle_) {
-          SetDesiredAngle_internal(nodHighAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-          ++numNodsComplete_;
-          if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
-            StopNodding();
-          }
-        }
-      } // else if(isNodding)
 
       return RESULT_OK;
     }
@@ -525,43 +491,6 @@ namespace HeadController {
       MAX_ERROR_SUM = maxIntegralError;
       AnkiInfo( 7, "HeadController", 99, "New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
             Kp_, Ki_, Kd_, MAX_ERROR_SUM);
-    }
-
-    void StartNodding(const f32 lowAngle, const f32 highAngle,
-                      const u16 period_ms, const s32 numLoops,
-                      const f32 easeInFraction, const f32 easeOutFraction)
-    {
-      //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, 8, "HeadNodStart.WrongKeyFrameType", 100, "\n", 0);
-
-      AnkiConditionalWarnAndReturn(enable_, 9, "HeadController.StartNodding.Disabled", 101, "StartNodding() command ignored: HeadController is disabled.\n", 0);
-
-      //preNodAngle_ = GetAngleRad();
-      nodLowAngle_  = lowAngle;
-      nodHighAngle_ = highAngle;
-
-      numNodsDesired_  = numLoops;
-      numNodsComplete_ = 0;
-      isNodding_ = true;
-      nodEaseOutFraction_ = easeOutFraction;
-      nodEaseInFraction_  = easeInFraction;
-
-      nodHalfPeriod_sec_ = static_cast<f32>(period_ms) * .5f * 0.001f;
-      SetDesiredAngle_internal(nodLowAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
-
-    } // StartNodding()
-
-
-    void StopNodding()
-    {
-      AnkiConditionalWarnAndReturn(enable_, 10, "HeadController.StopNodding.Disabled", 102, "StopNodding() command ignored: HeadController is disabled.\n", 0);
-
-      //SetDesiredAngle_internal(preNodAngle_);
-      isNodding_ = false;
-    }
-
-    bool IsNodding()
-    {
-      return isNodding_;
     }
 
   } // namespace HeadController

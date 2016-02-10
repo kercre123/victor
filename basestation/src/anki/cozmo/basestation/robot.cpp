@@ -68,6 +68,10 @@
 namespace Anki {
   namespace Cozmo {
     
+    // static initializers
+    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0});
+    
+    
     Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     : _context(context)
     , _ID(robotID)
@@ -75,12 +79,10 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
-    , _actionList(*this)
     , _movementComponent(*this)
-    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context->GetDataPlatform())
+    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
-    , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
-                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
+    , _headCamPose(_kDefaultHeadCamRotation, {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
@@ -265,9 +267,9 @@ namespace Anki {
       //++_frameId;
      
       // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
-      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
@@ -276,7 +278,7 @@ namespace Anki {
     Result Robot::SetLocalizedTo(const ObservableObject* object)
     {
       if(object == nullptr) {
-        VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+        GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                            "LocalizedTo: Odometry");
         _localizedToID.UnSet();
         _isLocalized = true;
@@ -313,10 +315,10 @@ namespace Anki {
       _isLocalized = true;
       
       // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
-      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
@@ -558,7 +560,7 @@ namespace Anki {
       RobotState stateMsg(msg);
       
       // Send state to visualizer for displaying
-      VizManager::getInstance()->SendRobotState(stateMsg,
+      GetContext()->GetVizManager()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
@@ -575,24 +577,16 @@ namespace Anki {
       return _newStateMsgAvailable;
     }
     
+    void Robot::SetCameraRotation(f32 roll, f32 pitch, f32 yaw)
+    {
+      RotationMatrix3d rot(roll, -pitch, yaw);
+      _headCamPose.SetRotation(rot * _kDefaultHeadCamRotation);
+      PRINT_NAMED_INFO("Robot.SetCameraRotation", "yaw_corr=%f, pitch_corr=%f, roll_corr=%f", yaw, pitch, roll);
+    }
+    
     void Robot::SetPhysicalRobot(bool isPhysical)
     {
-      if (_isPhysical != isPhysical) {
-        if (isPhysical) {
-          // "Recalibrate" camera pose within head for physical robot
-          // TODO: Do this properly!
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_YAW_CORR, Z_AXIS_3D()));
-          _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D()));
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_ROLL_CORR, X_AXIS_3D()));
-          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_NAMED_INFO("Robot.SetPhysicalRobot", "Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, roll_corr=%f, x_trans_corr=%fmm", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_ROLL_CORR, HEAD_CAM_TRANS_X_CORR);
-        } else {
-          _headCamPose.SetRotation({0,0,1,  -1,0,0,  0,-1,0});
-          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_STREAM_INFO("Robot.SetPhysicalRobot", "Slop factor removed from head cam pose for simulated robot");
-        }
-        _isPhysical = isPhysical;
-      }
+      _isPhysical = isPhysical;
       
       // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
       // We do this regardless of previous state to ensure it works when adding 1st simulated robot (as _isPhysical already == false in that case)
@@ -796,7 +790,7 @@ namespace Anki {
                                   "Could not estimate pose of block marker. Not visualizing.\n");
             } else {
               if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-                VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+                GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
               } else {
                 PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                     "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
@@ -821,7 +815,7 @@ namespace Anki {
                                   "Could not estimate pose of mat marker. Not visualizing.\n");
             } else {
               if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-                VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
+                GetContext()->GetVizManager()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
               } else {
                 PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                     "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
@@ -876,7 +870,7 @@ namespace Anki {
       return RESULT_OK;
 #endif
       
-      VizManager::getInstance()->SendStartRobotUpdate();
+      GetContext()->GetVizManager()->SendStartRobotUpdate();
       
       /* DEBUG
        const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -954,7 +948,7 @@ namespace Anki {
         }
       }
       
-      VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
+      GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
                                          "Behavior:%s:%s", behaviorChooserName, behaviorName.c_str());
 
       
@@ -1085,10 +1079,10 @@ namespace Anki {
       Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToOrigin();
       
       // Triangle pose marker
-      VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin);
+      GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin);
       
       // Full Webots CozmoBot model
-      VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
+      GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
       
       // Robot bounding box
       static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
@@ -1101,7 +1095,7 @@ namespace Anki {
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
                             Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
     
-      VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
+      GetContext()->GetVizManager()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
       
       /*
       // Draw 3d bounding box
@@ -1109,11 +1103,11 @@ namespace Anki {
       vizTranslation.z() += 0.5f*ROBOT_BOUNDING_Z;
       Pose3d vizPose(GetPose().GetRotation(), vizTranslation);
       
-      VizManager::getInstance()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
+      GetContext()->GetVizManager()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
                                             vizPose, ROBOT_BOUNDING_QUAD_COLOR);
       */
       
-      VizManager::getInstance()->SendEndRobotUpdate();
+      GetContext()->GetVizManager()->SendEndRobotUpdate();
       
       
       // Sending debug string to game and viz
@@ -2127,7 +2121,7 @@ namespace Anki {
     // Clears the path that the robot is executing which also stops the robot
     Result Robot::ClearPath()
     {
-      VizManager::getInstance()->ErasePath(_ID);
+      GetContext()->GetVizManager()->ErasePath(_ID);
       _pdo->ClearPath();
       return SendMessage(RobotInterface::EngineToRobot(RobotInterface::ClearPath(0)));
     }
@@ -2152,7 +2146,7 @@ namespace Anki {
         }
         
         // Visualize path if robot has just started traversing it.
-        VizManager::getInstance()->DrawPath(_ID, path, NamedColors::EXECUTED_PATH);
+        GetContext()->GetVizManager()->DrawPath(_ID, path, NamedColors::EXECUTED_PATH);
         
       }
       
@@ -2653,7 +2647,7 @@ namespace Anki {
       
       if(result == RESULT_OK) {
         result = SendMessage(RobotInterface::EngineToRobot(
-          RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::CVGA)));
+          RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::QVGA)));
         
         // Reset pose on connect
         PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
@@ -3353,7 +3347,7 @@ namespace Anki {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DebugString(str)));
       
       // Send message to viz
-      VizManager::getInstance()->SetText(VizManager::DEBUG_STRING,
+      GetContext()->GetVizManager()->SetText(VizManager::DEBUG_STRING,
                                          NamedColors::ORANGE,
                                          "%s", text);
       

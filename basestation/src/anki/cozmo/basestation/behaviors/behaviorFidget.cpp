@@ -37,7 +37,7 @@ namespace Cozmo {
     _minWait_sec = 2.f;
     _maxWait_sec = 5.f;
 
-    AddFidget("Brickout", [this](){return new PlayAnimationAction("ID_idle_brickout_02");}, 1, 60, true);
+    AddFidget("Brickout", [this, &robot](){return new PlayAnimationAction(robot, "ID_idle_brickout_02");}, 1, 60, true);
     
     // TODO: Make probabilities non-zero once we have these animations available
     /*
@@ -75,7 +75,7 @@ namespace Cozmo {
 
   }
   
-  Result BehaviorFidget::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+  Result BehaviorFidget::InitInternal(Robot& robot, double currentTime_sec)
   {
     _interrupted = false;
     
@@ -150,7 +150,7 @@ namespace Cozmo {
         _queuedActionTag = fidgetAction->GetTag();
         _currentActionMustComplete = fidgetIter->second->_mustComplete;
         
-        robot.GetActionList().QueueActionNext(IBehavior::sActionSlot, fidgetAction);
+        robot.GetActionList().QueueActionNext(fidgetAction);
         
         fidgetIter->second->_lastTimeUsed_sec = currentTime_sec;
       }
@@ -170,7 +170,7 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  Result BehaviorFidget::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+  Result BehaviorFidget::InterruptInternal(Robot& robot, double currentTime_sec)
   {
     // Mark the behavior as interrupted so it will handle on next update
     _interrupted = true;

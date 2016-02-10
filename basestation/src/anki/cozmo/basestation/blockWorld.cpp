@@ -77,6 +77,7 @@ namespace Cozmo {
     , _canDeleteObjects(true)
     , _canAddObjects(true)
     , _navMemoryMap( nullptr )
+    , _isOnCliff(false)
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -132,7 +133,7 @@ namespace Cozmo {
       //////////////////////////////////////////////////////////////////////////
       // 1x1 Light Cubes
       //
-
+      
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE1));
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE2));
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));
@@ -198,7 +199,7 @@ namespace Cozmo {
       // NavMemoryMap
       //
       // Uncomment this line to create and use navMemoryMap. Commented out to not enable yet in master
-      // _navMemoryMap.reset( new NavMemoryMap() );
+      // _navMemoryMap.reset( new NavMemoryMap(_robot->GetContext()->GetVizManager()) );
       
     } // BlockWorld() Constructor
   
@@ -210,7 +211,7 @@ namespace Cozmo {
       _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllBlocks,
         [this] (const EventType& event)
         {
-          VizManager::getInstance()->EraseAllVizObjects();
+          _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
           ClearObjectsByFamily(ObjectFamily::Block);
           ClearObjectsByFamily(ObjectFamily::LightCube);
         }));
@@ -219,7 +220,7 @@ namespace Cozmo {
       _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllObjects,
         [this] (const EventType& event)
         {
-          VizManager::getInstance()->EraseAllVizObjects();
+          _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
           ClearAllExistingObjects();
         }));
       
@@ -510,8 +511,29 @@ namespace Cozmo {
   
   void BlockWorld::UpdateNavMemoryMap()
   {
-    if ( nullptr != _navMemoryMap ) {
-      _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::Clear );
+    if ( nullptr != _navMemoryMap )
+    {
+      // cliff quad: clear or cliff
+      {
+        using EContentType = INavMemoryMap::EContentType;
+        EContentType cliffMode = _isOnCliff ? EContentType::Cliff : EContentType::ClearOfCliff;
+      
+        // TODO configure this size somethere else
+        Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
+        
+        // cliff quad
+        Quad3f cliffquad
+        {
+          {+cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // up L
+          {-cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // lo L
+          {+cliffSize.x(), -cliffSize.y(), cliffSize.z()}, // up R
+          {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
+        };
+        _robot->GetPose().ApplyTo(cliffquad, cliffquad);
+        _navMemoryMap->AddQuad(cliffquad, cliffMode);
+      }
+      
+      _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
     }
   }
   
@@ -529,6 +551,9 @@ namespace Cozmo {
         object->Identify();
       }
     }
+    
+    // Set the viz manager on this new object
+    object->SetVizManager(_robot->GetContext()->GetVizManager());
     
     // TODO if an object with same ID exists, it will leak
     existingFamily[object->GetType()][object->GetID()] = object;
@@ -1261,8 +1286,20 @@ namespace Cozmo {
       GetObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes, filter);
       
     } // GetObstacles()
-    
-    
+
+    void BlockWorld::FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result) const
+    {
+      // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
+      // the filter to the result vector
+      FindFcn findLambda = [&result](ObservableObject* candidateObject, ObservableObject* best) {
+        result.push_back(candidateObject);
+        return false;
+      };
+
+      // ignore return value, since the findLambda stored everything in result
+      FindObjectHelper(findLambda, filter, false);
+    }
+
     void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight,
                                               const f32 maxHeight,
                                               const f32 padding,
@@ -1768,7 +1805,7 @@ namespace Cozmo {
               // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
               // the navmesh that it should be clear, since we saw the marker
               Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
-              _navMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::Clear);
+              _navMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
             }
           }
           
@@ -1885,21 +1922,6 @@ namespace Cozmo {
 
     Result BlockWorld::AddCliff(const Pose3d& p)
     {
-      if ( _navMemoryMap )
-      {
-        // TODO this is not an actual detected size, so I just create an object only to ask a size
-        Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
-        Quad3f cliffquad
-        {
-          {+cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // up L
-          {-cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // lo L
-          {+cliffSize.x(), -cliffSize.y(), cliffSize.z()}, // up R
-          {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
-        };
-        p.ApplyTo(cliffquad, cliffquad);
-        _navMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::Cliff);
-      }
-    
       // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
       // so that's nice
       return AddProxObstacle(p);
@@ -2210,7 +2232,7 @@ namespace Cozmo {
                                        object->GetID().GetValue(), _robot->GetID());
                       
                       // Erase the vizualized block and its projected quad
-                      //VizManager::getInstance()->EraseCuboid(object->GetID());
+                      //V_robot->GetContext()->GetVizManager()->EraseCuboid(object->GetID());
 
                       // Clear object, indicating we don't know where it went
                       ClearObject(object);
@@ -2821,10 +2843,10 @@ namespace Cozmo {
                 printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", (int)IMG_STREAM_RES);
                 break;
             }
-            VizManager::getInstance()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,
-                                                       q[Quad::TopRight].x()*scaleF,    q[Quad::TopRight].y()*scaleF,
-                                                       q[Quad::BottomRight].x()*scaleF, q[Quad::BottomRight].y()*scaleF,
-                                                       q[Quad::BottomLeft].x()*scaleF,  q[Quad::BottomLeft].y()*scaleF);
+            _robot->GetContext()->GetVizManager()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,
+                                                                   q[Quad::TopRight].x()*scaleF,    q[Quad::TopRight].y()*scaleF,
+                                                                   q[Quad::BottomRight].x()*scaleF, q[Quad::BottomRight].y()*scaleF,
+                                                                   q[Quad::BottomLeft].x()*scaleF,  q[Quad::BottomLeft].y()*scaleF);
           }
         }
       }

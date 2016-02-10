@@ -67,10 +67,10 @@ bool BehaviorReactToPoke::IsRunnable(const Robot& robot, double currentTime_sec)
   return true;
 }
 
-Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec)
 {
-  robot.GetActionList().Cancel(-1, RobotActionType::TRACK_FACE);
-  robot.GetActionList().Cancel(-1, RobotActionType::TRACK_OBJECT);
+  robot.GetActionList().Cancel(RobotActionType::TRACK_FACE);
+  robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
   return Result::RESULT_OK;
 }
 
@@ -98,7 +98,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       
       // Do startled animation
       s32 animIndex = robot.GetLastMsgTimestamp() % _animStartled.size(); // Randomly select anim to play
-      StartActing(robot, new PlayAnimationAction(_animStartled[animIndex]));
+      StartActing(robot, new PlayAnimationAction(robot, _animStartled[animIndex]));
       _currentState = State::TurnToFace;
       break;
     }
@@ -111,7 +111,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
           (robot.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeSinceLastObservedFace_ms)) {
         PRINT_NAMED_INFO("BehaviorReactToPoke.TurnToFace.TurningToLastObservedFace","time = %d", lastObservedFaceTime);
 
-        FacePoseAction* action = new FacePoseAction(facePose, DEG_TO_RAD(180));
+        FacePoseAction* action = new FacePoseAction(robot, facePose, DEG_TO_RAD(180));
         action->SetPanTolerance(DEG_TO_RAD(3));
         action->SetMaxPanSpeed(DEG_TO_RAD(1080));
         action->SetMaxTiltSpeed(DEG_TO_RAD(1080));
@@ -137,7 +137,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       PRINT_NAMED_INFO("BehaviorReactToPoke.Update.HappyVal", "happy: %f, animIndex: %d", happyVal, animIndex);
       
       
-      StartActing(robot, new PlayAnimationAction(_animReactions[animIndex]));
+      StartActing(robot, new PlayAnimationAction(robot, _animReactions[animIndex]));
       _currentState = State::Inactive;
       _doReaction = false;
       
@@ -153,7 +153,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
   return Status::Running;
 } 
   
-Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)
@@ -200,7 +200,7 @@ void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
   {
     
     _lastActionTag = action->GetTag();
-    robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, action);
+    robot.GetActionList().QueueActionAtEnd(action);
     _isActing = true;
   }
 

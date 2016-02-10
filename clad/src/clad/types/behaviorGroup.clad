@@ -10,7 +10,6 @@ namespace Cozmo {
 enum uint_8 BehaviorGroup {
 
     Reactionary = 0,
-    ShortInterruption,
     AffectsBlocks,
     ChangesPosition,
     ChangesOrientation,
@@ -19,7 +18,6 @@ enum uint_8 BehaviorGroup {
     RequestSpeedTap,
     RequestSimon,
     RequestCubePounce,
-    EmotionalReaction,
     
     Count
 }

@@ -3,7 +3,7 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, socket, threading, time, select, math, muencode, pickle
+import sys, os, socket, threading, time, select, math, muencode, pickle, re, struct
 
 if sys.version_info.major < 3:
     sys.stdout.write("Python2.x is depricated{}".format(os.linesep))
@@ -29,6 +29,20 @@ from clad.robotInterface.messageRobotToEngine import Anki as _Anki
 Anki.update(_Anki.deep_clone())
 RobotInterface = Anki.Cozmo.RobotInterface
 AnimKeyFrame = Anki.Cozmo.AnimKeyFrame
+
+reinterpret_cast = {
+    "d": lambda x: x,
+    "i": lambda x: x,
+    "x": lambda x: x,
+    "f": lambda x: struct.unpack("f", struct.pack("i", x))[0],
+}
+
+FORMATTER_KEY = re.compile(r'(?<!%)%[0-9.-]*([{}])'.format("".join(reinterpret_cast.keys()))) # Find singal % marks
+
+def formatTrace(fmt, args):
+    "Returns the formatted string from a trace, doing the nesisary type reinterpretation"
+    convertedArgs = tuple([reinterpret_cast[t](a) for t, a in zip(FORMATTER_KEY.findall(fmt), args)])
+    return fmt % convertedArgs
 
 class CozmoCLI(IDataReceiver):
     "A class for managing the CLI REPL"
@@ -74,7 +88,7 @@ class CozmoCLI(IDataReceiver):
             msg = RobotInterface.RobotToEngine.unpack(buffer)
         except:
             if len(buffer):
-                sys.stderr.write("Couldn't unpack message {:x}{:d}{linesep}".format(buffer[0], len(buffer), linesep=os.linesep))
+                sys.stderr.write("Couldn't unpack message 0x{:x}[{:d}]{linesep}".format(buffer[0], len(buffer), linesep=os.linesep))
             else:
                 sys.stderr.write("Can't unpack an empty message")
                 sys.stderr.write(os.linesep)
@@ -111,7 +125,7 @@ class CozmoCLI(IDataReceiver):
                         'base':      base,
                         'level':     msg.trace.level,
                         'name':      self.nameTable[msg.trace.name],
-                        'formatted': (self.formatTable[msg.trace.stringId][0] % tuple(msg.trace.value))
+                        'formatted': formatTrace(self.formatTable[msg.trace.stringId][0], msg.trace.value)
                 }
                 sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
         elif msg.tag == msg.Tag.crashReport:

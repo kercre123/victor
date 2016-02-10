@@ -64,7 +64,7 @@ bool BehaviorReactToPickup::IsRunnable(const Robot& robot, double currentTime_se
   return false;
 }
 
-Result BehaviorReactToPickup::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorReactToPickup::InitInternal(Robot& robot, double currentTime_sec)
 {
   return Result::RESULT_OK;
 }
@@ -88,9 +88,9 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double cur
       // For now we simply rotate through the animations we want to play when picked up
       if (!_animReactions.empty())
       {
-        IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
+        IActionRunner* newAction = new PlayAnimationAction(robot, _animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
-        robot.GetActionList().QueueActionNow(0, newAction);
+        robot.GetActionList().QueueActionNow(newAction);
         animIndex = ++animIndex % _animReactions.size();
       }
       _waitingForAnimComplete = true;
@@ -122,7 +122,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double cur
   return Status::Complete;
 }
 
-Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

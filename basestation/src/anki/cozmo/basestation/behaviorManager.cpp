@@ -134,11 +134,11 @@ namespace Cozmo {
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
 
-    // for now, these aren't working nicely, and wanted to test this system
-    chooser->EnableBehaviorGroup(BehaviorGroup::EmotionalReaction, false);
-
     // disable mini game request until we get one from unity
     chooser->EnableBehaviorGroup(BehaviorGroup::MiniGame, false);
+
+    // // HACK: enable speed tab requests
+    // chooser->EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap, true);
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -200,19 +200,11 @@ namespace Cozmo {
       {
         VizInterface::NewBehaviorSelected newBehaviorSelected;
         newBehaviorSelected.newCurrentBehavior = _nextBehavior ? _nextBehavior->GetName() : "null";
-        VizManager::getInstance()->SendNewBehaviorSelected(std::move(newBehaviorSelected));
+        _robot.GetContext()->GetVizManager()->SendNewBehaviorSelected(std::move(newBehaviorSelected));
       }
       #endif // SEND_MOOD_TO_VIZ_DEBUG
       
-      const bool isResuming = (_nextBehavior == _resumeBehavior);
-      const bool isSameBehavior = (_nextBehavior == _currentBehavior);
-      _resumeBehavior = nullptr;
-      if (!isSameBehavior && _currentBehavior && _nextBehavior->IsShortInterruption() && _currentBehavior->WantsToResume())
-      {
-        _resumeBehavior = _currentBehavior;
-      }
-
-      SetCurrentBehavior(_nextBehavior, currentTime_sec, isResuming);
+      SetCurrentBehavior(_nextBehavior, currentTime_sec);
       _nextBehavior = nullptr;
     }
   }
@@ -336,8 +328,7 @@ namespace Cozmo {
         // Interrupt the current behavior that's running if there is one. It will continue
         // to run on calls to Update() until it completes and then we will switch
         // to the selected next behavior
-        const bool isShortInterrupt = _nextBehavior && _nextBehavior->IsShortInterruption();
-        initResult = _currentBehavior->Interrupt(currentTime_sec, isShortInterrupt);
+        initResult = _currentBehavior->Interrupt(currentTime_sec);
         
         if (nullptr != _nextBehavior)
         {
@@ -351,6 +342,12 @@ namespace Cozmo {
   
   Result BehaviorManager::SelectNextBehavior(double currentTime_sec)
   {
+    if (_forceSwitchBehavior && (_nextBehavior == _forceSwitchBehavior))
+    {
+      // Keep it in forced behavior
+      return RESULT_OK;
+    }
+    
     _nextBehavior = _behaviorChooser->ChooseNextBehavior(_robot, currentTime_sec);
 
     if(nullptr == _nextBehavior) {
@@ -385,10 +382,9 @@ namespace Cozmo {
     // These behavior pointers might be invalidated, so clear them
     // SetCurrentBehavior ensures that any existing current behavior is stopped first
     
-    SetCurrentBehavior(nullptr, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), false);
+    SetCurrentBehavior(nullptr, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
     _nextBehavior = nullptr;
     _forceSwitchBehavior = nullptr;
-    _resumeBehavior = nullptr;
 
     if( _behaviorChooser != nullptr ) {
       PRINT_NAMED_INFO("BehaviorManager.SetBehaviorChooser.DeleteOld",
@@ -404,7 +400,7 @@ namespace Cozmo {
     SelectNextBehavior(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
   }
   
-  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec, bool isResuming)
+  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
   {
     // stop current
     if (_currentBehavior) {
@@ -418,7 +414,7 @@ namespace Cozmo {
     // initialize new
     if (_currentBehavior) {
     
-      const Result initRet = _nextBehavior->Init(currentTime_sec, isResuming);
+      const Result initRet = _nextBehavior->Init(currentTime_sec);
       if ( initRet != RESULT_OK ) {
         PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
                         "Failed to initialize %s behavior.",

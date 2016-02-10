@@ -65,12 +65,13 @@ namespace Cozmo {
     
   // Forward declaration:
   class Robot;
+  class VizManager;
 
   class VisionSystem
   {
   public:
 
-    VisionSystem(const std::string& dataPath);
+    VisionSystem(const std::string& dataPath, VizManager* vizMan);
     ~VisionSystem();
     
     //
@@ -338,7 +339,10 @@ namespace Cozmo {
     ImageResolution               _nextSendImageResolution = ImageResolution::ImageResolutionNone;
     
     // FaceTracking
-    Vision::FaceTracker*            _faceTracker;
+    Vision::FaceTracker*          _faceTracker;
+    
+    // We hold a reference to the VizManager since we often want to draw to it
+    VizManager*                   _vizManager = nullptr;
 
     struct VisionMemory {
       /* 10X the memory for debugging on a PC

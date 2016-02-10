@@ -179,7 +179,7 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
 }
 
   
-Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec)
 {
   if( _numValidPouncePoses == 0 ) {
     PRINT_NAMED_WARNING("BehaviorPounceOnMotion.Init.NoPouncePose", "");
@@ -195,7 +195,7 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
   robot.SetIdleAnimation("NONE");
   
   _state = State::Pouncing;
-  IActionRunner* animAction = new PlayAnimationAction(_pounceAnimation );
+  IActionRunner* animAction = new PlayAnimationAction(robot, _pounceAnimation);
 
   IActionRunner* actionToRun = animAction;
 
@@ -207,12 +207,12 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
                      "driving forward %fmm before playing pounce animation",
                      distToDrive);
     
-    IActionRunner* driveAction = new DriveStraightAction(distToDrive, 150.0f);
-    actionToRun = new CompoundActionSequential({driveAction, animAction});
+    IActionRunner* driveAction = new DriveStraightAction(robot, distToDrive, 150.0f);
+    actionToRun = new CompoundActionSequential(robot, {driveAction, animAction});
   }
 
   _waitForActionTag = actionToRun->GetTag();
-  robot.GetActionList().QueueActionNow(0, actionToRun);
+  robot.GetActionList().QueueActionNow(actionToRun);
 
   return Result::RESULT_OK;
 }
@@ -242,16 +242,16 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    newAction = new PlayAnimationAction("ID_catch_success" );
+    newAction = new PlayAnimationAction(robot, "ID_catch_success" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new PlayAnimationAction("ID_catch_fail" );
+    newAction = new PlayAnimationAction(robot, "ID_catch_fail" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
   _waitForActionTag = newAction->GetTag();
-  robot.GetActionList().QueueActionNow(0, newAction);
+  robot.GetActionList().QueueActionNow(newAction);
   _state = State::PlayingFinalReaction;
   
   robot.GetMoveComponent().EnableLiftPower(true);
@@ -285,7 +285,7 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot, double cu
   return Status::Running;
 }
 
-Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if( _state == State::Inactive ) {

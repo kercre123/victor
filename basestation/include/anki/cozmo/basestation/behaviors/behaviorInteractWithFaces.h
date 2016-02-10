@@ -36,13 +36,11 @@ namespace Cozmo {
     
     virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
     
-    virtual bool WantsToResume() const override { return (_resumeState != State::Interrupted); }
-    
   protected:
     
-    virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
+    virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-    virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
     virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
 
   private:
@@ -83,7 +81,6 @@ namespace Cozmo {
     };
     
     State _currentState = State::Interrupted;
-    State _resumeState  = State::Interrupted;
     
     f32 _baselineEyeHeight;
     f32 _baselineIntraEyeDistance;
@@ -96,7 +93,6 @@ namespace Cozmo {
     double _lastGlanceTime = 0;
     double _lastTooCloseScaredTime = 0;
     double _newFaceAnimCooldownTime = 0.0;
-    double _timeWhenInterrupted = 0.0;
     
     f32    _faceTiltSpacing = 0.f;
     f32    _lastFaceTiltTime = 0.f;

@@ -15,7 +15,7 @@
 #include "wifi.h"
 
 typedef uint16_t transmissionWord;
-const int RX_OVERFLOW = 5;  // Adjust this to fix screen - possibly at expense of camera
+const int RX_OVERFLOW = 8;  // Adjust this to fix screen - possibly at expense of camera
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
