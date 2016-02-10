@@ -54,7 +54,7 @@ void CheckForUpgrades(void)
 
 void WiFiFace(void)
 {
-  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi Ver:  %x\nWiFi Date: %s\nRTIP Ver:  %x\nRTIP Date: %s\n";
+  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi Ver:  %x\nWiFi Date: %s\nRTIP Ver:  %x\nRTIP Date: %d\n";
   const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
   if (!clientConnected())
   {
@@ -68,10 +68,11 @@ void WiFiFace(void)
       {
         char fmtBuf[wifiFaceFmtSz];
         memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
+        Face::FaceInvertPrintf((system_get_time()/20000000) % 2);
         Face::FacePrintf(fmtBuf,
                          ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
                          COZMO_VERSION_COMMIT, BUILD_DATE,
-                         RTIP::Version, RTIP::VersionDescription);
+                         RTIP::Version, RTIP::Date);
       }
     }
   }

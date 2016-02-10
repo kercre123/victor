@@ -98,9 +98,9 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
           const bool hot      = relayBuffer[1] & RTIP_CLAD_MSG_HOT_FLAG;
           if (relayBuffer[2] == RobotInterface::RobotToEngine::Tag_rtipVersion)
           {
-            RobotInterface::RTIPVersionInfo info;
-            os_memcpy(info.GetBuffer(), relayBuffer + 3, size - 1);
-            UpdateVersionInfo(info);
+            //RobotInterface::RTIPVersionInfo info;
+            //os_memcpy(info.GetBuffer(), relayBuffer + 3, size - 1);
+            //UpdateVersionInfo(info);
           }
           else
           {
