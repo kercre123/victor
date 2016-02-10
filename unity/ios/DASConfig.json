@@ -5,6 +5,7 @@
     },
     "remoteMinLogLevel": "info",
     "gameMinLogLevel": "info",
-    "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasPrototype-Cozmo"
+    "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasPrototype-Cozmo",
+    "flushInterval": 15
   }
 }
