@@ -12,7 +12,7 @@ namespace Cozmo {
       public static ProgressionStatConfig Instance {
         get {
           if (_Instance == null) {
-            _Instance = Resources.Load<ProgressionStatConfig>("Prefabs/UI/ProgressionStatIconMap");
+            _Instance = Resources.Load<ProgressionStatConfig>("Prefabs/UI/ProgressionStatConfig");
             _Instance.TranslateStatsToDict();
           }
           return _Instance;
