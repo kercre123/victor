@@ -36,8 +36,8 @@ namespace Cozmo {
     Vision::TrackedFace::ID_t GetOwnerID() const                            { return _ownerID; }
     void                      SetOwnerID(Vision::TrackedFace::ID_t ownerID) { _ownerID = ownerID; }
     
-    // Returns number of known faces observed since seenSinceTime_ms
-    std::map<TimeStamp_t, Vision::TrackedFace::ID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
+    // Returns known face IDs observed since seenSinceTime_ms (inclusive)
+    std::list<Vision::TrackedFace::ID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
 
     // Returns time of the last observed face.
     // 0 if no face was ever observed.

@@ -203,17 +203,6 @@ namespace Cozmo {
     
     if(knownFace->numTimesObserved >= MinTimesToSeeFace)
     {
-      // TEST
-      const s32 NumObservationsToSetOwner = 10;
-      if(Vision::TrackedFace::UnknownFace == _ownerID &&
-         knownFace->numTimesObserved > NumObservationsToSetOwner)
-      {
-        SetOwnerID(knownFace->face.GetID());
-        PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace.OwnerSet",
-                         "Setting owner to ID=%llu after %d observations",
-                         _ownerID, NumObservationsToSetOwner);
-      }
-      
 #     if 0 // !USE_POSE_FOR_ID
       // Remove any known faces whose poses overlap with this observed face
       for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); /* in loop */)
@@ -337,12 +326,12 @@ namespace Cozmo {
     return faceIDs;
   }
   
-  std::map<TimeStamp_t, Vision::TrackedFace::ID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
+  std::list<Vision::TrackedFace::ID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
   {
-    std::map<TimeStamp_t, Vision::TrackedFace::ID_t> faceIDs;
+    std::list<Vision::TrackedFace::ID_t> faceIDs;
     for (auto pair : _knownFaces) {
       if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
-        faceIDs.insert(std::pair<TimeStamp_t, Vision::TrackedFace::ID_t>(pair.second.face.GetTimeStamp(), pair.second.face.GetID()));
+        faceIDs.push_back(pair.second.face.GetID());
       }
     }
     return faceIDs;
