@@ -354,6 +354,7 @@ class ParseData:
         re.compile(b"AnkiEvent\\s*\\("): ParseParams(),
         re.compile(b"AnkiInfo\\s*\\("):  ParseParams(),
         re.compile(b"AnkiDebug\\s*\\("): ParseParams(),
+        re.compile(b"AnkiDebugPeriodic\\s*\\("): ParseParams(1),
         re.compile(b"AnkiWarn\\s*\\("):  ParseParams(),
         re.compile(b"AnkiError\\s*\\("): ParseParams(),
         re.compile(b"AnkiConditionalError\\s*\\("): ParseParams(1),

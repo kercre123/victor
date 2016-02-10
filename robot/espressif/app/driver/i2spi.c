@@ -244,12 +244,15 @@ void i2spiTask(os_event_t *event)
                 i2spiRxOverflowCount++;
                 os_put_char('!'); os_put_char('T'); os_put_char('M'); os_put_char('D'); os_put_hex(drift, 4);
               }
-              if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Haven't established outgoing phase yet
+              if (unlikely(outgoingPhase < PHASE_FLAGS)) // Haven't established outgoing phase yet
               {
-                // Going past the end is OKAY as that will be used to increment the buffer
-                os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
-                outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
-                foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
+                if (outgoingPhase == UNINITALIZED_PHASE)
+                {
+                  // Going past the end is OKAY as that will be used to increment the buffer
+                  os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
+                  outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+                  foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
+                }
               }
               else // Have a phase, just adjust for drift
               {
@@ -696,22 +699,33 @@ uint32_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderCode(void)
   else return bodyBootloaderCode;
 }
 
-void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
+bool ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
 {
-  int wInd = 0;
-  int rInd = 0;
-  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-  uint16_t* data  = (uint16_t*)(chunk);
-  txBuf[wInd++] = COMMAND_HEADER;
-  txBuf[wInd++] = COMMAND_FLASH;
-  while (rInd < (sizeof(FirmwareBlock)/2))
+  const int availableBuffers = DMA_BUF_COUNT - 3 - txFillCount; // Leave space for 2 in pipeline plus one more for end of firmware message
+  const int availableSpace   = availableBuffers * DMA_BUF_SIZE;
+  if (availableSpace > sizeof(FirmwareBlock))
   {
-    while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
+    int wInd = 0;
+    int rInd = 0;
+    uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    uint16_t* data  = (uint16_t*)(chunk);
+    txBuf[wInd++] = COMMAND_HEADER;
+    txBuf[wInd++] = COMMAND_FLASH;
+    while (rInd < (sizeof(FirmwareBlock)/2))
     {
-      txBuf[wInd++] = data[rInd++];
+      while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
+      {
+        txBuf[wInd++] = data[rInd++];
+      }
+      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      txFillCount++;
+      txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+      wInd = 0;
     }
-    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-    txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    wInd = 0;
+    return true;
   }
+  else
+  {
+    return false;
   }
+}

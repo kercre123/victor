@@ -124,7 +124,7 @@ class _Dispatcher(IDataReceiver):
             sub(sourceAddress)
 
     def OnDisconnected(self, sourceAddress):
-        sys.stdout.write("Lost connection to {}{}".format(repr(sourceAddress), linesep=os.linesep))
+        sys.stdout.write("Lost connection to {}{linesep}".format(repr(sourceAddress), linesep=os.linesep))
         if self.state is ConnectionState.connected:
             self.state = ConnectionState.disconnected
         elif self.state is ConnectionState.waitingToConnect:
