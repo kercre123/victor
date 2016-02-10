@@ -34,21 +34,22 @@
 #endif
 
 template<typename T>
-int trace_cast(const T arg)
+inline int trace_cast(const T arg)
 {
-  return arg;
+  return (int)arg;
 }
 
 // No floats on the espressif
 #ifndef TARGET_ESPRESSIF
-template<> int trace_cast<float>(const float arg)
+template<> inline int trace_cast(const float arg)
 {
   return *((int*)&arg);
 }
 
-template<> int trace_cast<double>(const float arg)
+template<> inline int trace_cast(const double arg)
 {
-  return *((int*)&arg);
+  const float fltArg = (float)arg;
+  return *((int*)&fltArg);
 }
 #endif
 
