@@ -252,7 +252,7 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
       case AudioCallbackType::Complete:
       {
         const AudioCompletionCallbackInfo& info = static_cast<const AudioCompletionCallbackInfo&>( callbackInfo );
-        AudioCallbackComplete callbackType( static_cast<GenericEvent>( info.eventId ) );
+        AudioCallbackComplete callbackType( static_cast<GameEvent::GenericEvent>( info.eventId ) );
         callbackMsg.callbackInfo.Set_callbackComplete( std::move( callbackType ) );
       }
         break;
