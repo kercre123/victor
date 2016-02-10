@@ -44,6 +44,11 @@
 				v2f o;
 				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
 				o.uv = ((o.vertex + float2(1,1)) * 0.5) * _AtlasUV.zw + _AtlasUV.xy;
+        
+        //modify uv x to match screen ratio since we are using PreserveAspect.
+        o.uv.x -= 0.5;
+        o.uv.x *= (_AtlasUV.z / _AtlasUV.w) * (_ScreenParams.y / _ScreenParams.x);
+        o.uv.x += 0.5;
 
 				// translate atlas UV to sprite UV
 				float2 spriteUV = (v.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
