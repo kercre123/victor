@@ -37,7 +37,7 @@ namespace CodeBreaker {
     }
 
     public void HandleAhaAnimationDone(bool success) {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_POSITIVE_01);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.GenericEvent.Sfx_Ui_Click_General_Play);
       // Move on to the next state
       _StateMachine.SetNextState(new WaitForGuessState(_Code, _TargetCubes));
     }
