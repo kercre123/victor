@@ -28,6 +28,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -663,9 +664,17 @@ void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterfac
   
   IActionRunner* action = CreateNewActionByType(*robot, msg.action);
   
-  // Put the action in the given position of the specified queue:
-  action->SetTag(msg.idTag);
-  robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
+  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
+  if(!action->SetTag(msg.idTag))
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueSingleAction", "Failure to set action tag deleting action");
+    Util::SafeDelete(action);
+  }
+  else
+  {
+    // Put the action in the given position of the specified queue
+    robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
+  }
 }
   
 void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -697,9 +706,17 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
     
   } // for each action/actionType
   
-  // Put the action in the given position of the specified queue:
-  compoundAction->SetTag(msg.idTag);
-  robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
+  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
+  if(!compoundAction->SetTag(msg.idTag))
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction", "Failure to set action tag deleting action");
+    Util::SafeDelete(compoundAction);
+  }
+  else
+  {
+    // Put the action in the given position of the specified queue
+    robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
+  }
 }
   
 void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)

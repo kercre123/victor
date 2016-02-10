@@ -28,26 +28,33 @@ namespace Anki {
   
   namespace Cozmo {
     
-    u32 IActionRunner::sTagCounter = 100000;
+    u32 IActionRunner::sTagCounter = 10000;
+    std::set<u32> IActionRunner::sInUseTagSet;
     
     IActionRunner::IActionRunner(Robot& robot)
     : _robot(robot)
     {
-      // Assign every action a unique tag
-      if (++IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
+      // Assign every action a unique tag that is not currently in use
+      while (IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG) ||
+             !IActionRunner::sInUseTagSet.insert(IActionRunner::sTagCounter).second) {
         ++IActionRunner::sTagCounter;
       }
       
-      _idTag = IActionRunner::sTagCounter;
+      _idTag = IActionRunner::sTagCounter++;
+      _customTag = _idTag;
     }
     
     IActionRunner::~IActionRunner()
     {
+      // Erase the tags as they are no longer in use
+      IActionRunner::sInUseTagSet.erase(_customTag);
+      IActionRunner::sInUseTagSet.erase(_idTag);
+      
       if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
       {
         // Notify any listeners about this action's completion.
         // TODO: Populate the signal with any action-specific info?
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), _idTag, _type, _result, _completionUnion)));
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), GetTag(), _type, _result, _completionUnion)));
       }
     
       if(!_suppressTrackLocking)
@@ -64,13 +71,35 @@ namespace Anki {
     }
 
     
-    void IActionRunner::SetTag(u32 tag)
+    bool IActionRunner::SetTag(u32 tag)
     {
-      if (tag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
-        PRINT_NAMED_ERROR("IActionRunner.SetTag.InvalidTag", "INVALID_TAG==%d", ActionConstants::INVALID_TAG);
-      } else {
-        _idTag = tag;
+      // Probably a bad idea to be able to change the tag while the action is running
+      if(_isRunning)
+      {
+        PRINT_NAMED_WARNING("IActionRunner.SetTag", "Action %s [%d] is running unable to set tag to %d",
+                            GetName().c_str(),
+                            GetTag(),
+                            tag);
+        _result = ActionResult::FAILURE_BAD_TAG;
+        return false;
       }
+      
+      // If the tag has already been set and the action is not running then erase the current tag in order to
+      // set the new one
+      if(_customTag != _idTag)
+      {
+        IActionRunner::sInUseTagSet.erase(_customTag);
+      }
+      // If this is an invalid tag or is currently in use
+      if(tag == static_cast<u32>(ActionConstants::INVALID_TAG) ||
+         !IActionRunner::sInUseTagSet.insert(tag).second)
+      {
+        PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] is invalid", tag);
+        _result = ActionResult::FAILURE_BAD_TAG;
+        return false;
+      }
+      _customTag = tag;
+      return true;
     }
     
     bool IActionRunner::Interrupt()
@@ -99,11 +128,15 @@ namespace Anki {
       return _isInterrupted;
     }
     
-    // NOTE: THere should be no way for Update() to fail independently of its
-    // call to UpdateInternal(). Otherwise, there's a possibility for an
-    // IAction's Cleanup() method not be called on failure.
     ActionResult IActionRunner::Update()
     {
+      // If for some reason someone tried to set the tag to an invalid tag and didn't check the return
+      // value, fail here
+      if(_result == ActionResult::FAILURE_BAD_TAG)
+      {
+        return _result;
+      }
+      
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
         uint8_t tracksToLock = GetTracksToLock();
