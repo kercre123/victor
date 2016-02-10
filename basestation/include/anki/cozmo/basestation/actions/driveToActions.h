@@ -26,7 +26,8 @@ namespace Anki {
     class DriveToPoseAction : public IAction
     {
     public:
-      DriveToPoseAction(const Pose3d& pose,
+      DriveToPoseAction(Robot& robot,
+                        const Pose3d& pose,
                         const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
@@ -35,11 +36,13 @@ namespace Anki {
                         const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
                         const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
-      DriveToPoseAction(const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
+      DriveToPoseAction(Robot& robot,
+                        const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal(s) must be called befure Update()!
       
-      DriveToPoseAction(const std::vector<Pose3d>& poses,
+      DriveToPoseAction(Robot& robot,
+                        const std::vector<Pose3d>& poses,
                         const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
@@ -163,7 +166,8 @@ namespace Anki {
     class DriveToObjectAction : public IAction
     {
     public:
-      DriveToObjectAction(const ObjectID& objectID,
+      DriveToObjectAction(Robot& robot,
+                          const ObjectID& objectID,
                           const PreActionPose::ActionType& actionType,
                           const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                           const f32 predockOffsetDistX_mm = 0,
@@ -171,7 +175,8 @@ namespace Anki {
                           const f32 approachAngle_rad = 0,
                           const bool useManualSpeed = false);
       
-      DriveToObjectAction(const ObjectID& objectID,
+      DriveToObjectAction(Robot& robot,
+                          const ObjectID& objectID,
                           const f32 distance_mm,
                           const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                           const bool useManualSpeed = false);
@@ -211,7 +216,7 @@ namespace Anki {
       f32                        _distance_mm;
       f32                        _predockOffsetDistX_mm;
       bool                       _useManualSpeed;
-      IActionRunner*             _compoundAction;
+      CompoundActionSequential   _compoundAction;
       
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
@@ -247,7 +252,7 @@ namespace Anki {
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
-      DriveToPlaceCarriedObjectAction(const Robot& robot,
+      DriveToPlaceCarriedObjectAction(Robot& robot,
                                       const Pose3d& placementPose,
                                       const bool placeOnGround,
                                       const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
@@ -284,7 +289,8 @@ namespace Anki {
       
     protected:
       // Not directly instantiable
-      IDriveToInteractWithObject(const ObjectID& objectID,
+      IDriveToInteractWithObject(Robot& robot,
+                                 const ObjectID& objectID,
                                  const PreActionPose::ActionType& actionType,
                                  const PathMotionProfile motionProfile,
                                  const f32 distanceFromMarker_mm,
@@ -322,7 +328,8 @@ namespace Anki {
     class DriveToAlignWithObjectAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToAlignWithObjectAction(const ObjectID& objectID,
+      DriveToAlignWithObjectAction(Robot& robot,
+                                   const ObjectID& objectID,
                                    const f32 distanceFromMarker_mm,
                                    const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                    const bool useApproachAngle = false,
@@ -348,7 +355,8 @@ namespace Anki {
     class DriveToPickupObjectAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToPickupObjectAction(const ObjectID& objectID,
+      DriveToPickupObjectAction(Robot& robot,
+                                const ObjectID& objectID,
                                 const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                 const bool useApproachAngle = false,
                                 const f32 approachAngle_rad = 0,
@@ -374,7 +382,8 @@ namespace Anki {
     public:
       
       // Places carried object on top of objectID
-      DriveToPlaceOnObjectAction(const ObjectID& objectID,
+      DriveToPlaceOnObjectAction(Robot& robot,
+                                 const ObjectID& objectID,
                                  const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                                  const bool useApproachAngle = false,
                                  const f32 approachAngle_rad = 0,
@@ -405,7 +414,8 @@ namespace Anki {
     public:
       // Place carried object on ground at specified placementOffset from objectID,
       // chooses preAction pose closest to approachAngle_rad if useApproachAngle == true.
-      DriveToPlaceRelObjectAction(const ObjectID& objectID,
+      DriveToPlaceRelObjectAction(Robot& robot,
+                                  const ObjectID& objectID,
                                   const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                   const f32 placementOffsetX_mm = 0,
                                   const bool useApproachAngle = false,
@@ -433,7 +443,8 @@ namespace Anki {
     class DriveToRollObjectAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToRollObjectAction(const ObjectID& objectID,
+      DriveToRollObjectAction(Robot& robot,
+                              const ObjectID& objectID,
                               const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
@@ -458,7 +469,8 @@ namespace Anki {
     class DriveToPopAWheelieAction : public IDriveToInteractWithObject
     {
     public:
-      DriveToPopAWheelieAction(const ObjectID& objectID,
+      DriveToPopAWheelieAction(Robot& robot,
+                               const ObjectID& objectID,
                                const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                const bool useApproachAngle = false,
                                const f32 approachAngle_rad = 0,
@@ -479,7 +491,8 @@ namespace Anki {
     class DriveToAndTraverseObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToAndTraverseObjectAction(const ObjectID& objectID,
+      DriveToAndTraverseObjectAction(Robot& robot,
+                                     const ObjectID& objectID,
                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                      const bool useManualSpeed = false);
       
@@ -491,7 +504,8 @@ namespace Anki {
     class DriveToAndMountChargerAction : public CompoundActionSequential
     {
     public:
-      DriveToAndMountChargerAction(const ObjectID& objectID,
+      DriveToAndMountChargerAction(Robot& robot,
+                                   const ObjectID& objectID,
                                    const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                    const bool useManualSpeed = false);
       

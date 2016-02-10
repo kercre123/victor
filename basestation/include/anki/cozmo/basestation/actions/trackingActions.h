@@ -81,7 +81,7 @@ public:
   
 protected:
 
-  ITrackAction();
+  ITrackAction(Robot& robot);
   virtual ~ITrackAction();
   
   // Note that derived classes should override InitInternal, which is called by Init
@@ -134,7 +134,7 @@ inline void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec
 class TrackObjectAction : public ITrackAction
 {
 public:
-  TrackObjectAction(const ObjectID& objectID, bool trackByType = true);
+  TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType = true);
   virtual ~TrackObjectAction();
   
   virtual const std::string& GetName() const override { return _name; }
@@ -164,7 +164,7 @@ public:
   
   using FaceID = Vision::TrackedFace::ID_t;
   
-  TrackFaceAction(FaceID faceID);
+  TrackFaceAction(Robot& robot, FaceID faceID);
   virtual ~TrackFaceAction();
   
   virtual const std::string& GetName() const override { return _name; }
@@ -193,7 +193,7 @@ class TrackMotionAction : public ITrackAction
 {
 public:
   
-  TrackMotionAction() { }
+  TrackMotionAction(Robot& robot) : ITrackAction(robot) { }
   
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return RobotActionType::TRACK_MOTION; }

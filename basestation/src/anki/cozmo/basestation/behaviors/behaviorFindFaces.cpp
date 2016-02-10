@@ -188,7 +188,7 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   float randomTilt = (float) GetRNG().RandDbl();
   Radians tiltRads(DEG_TO_RAD(((kTiltMax - kTiltMin) * randomTilt) + kTiltMin));
   
-  IActionRunner* moveAction = new PanAndTiltAction(proposedNewAngle, tiltRads, true, true);
+  IActionRunner* moveAction = new PanAndTiltAction(robot, proposedNewAngle, tiltRads, true, true);
   _currentDriveActionID = moveAction->GetTag();
   robot.GetActionList().QueueActionAtEnd(moveAction);
   
