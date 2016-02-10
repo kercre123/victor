@@ -5,6 +5,16 @@ namespace Anki {
   namespace Cozmo {
     namespace Audio {
 
+      namespace VolumeParameters {
+        public enum VolumeType : uint {
+          UI = GameParameter.ParameterType.Ui_Volume,
+          SFX = GameParameter.ParameterType.Sfx_Volume,
+          VO = GameParameter.ParameterType.Vo_Volume,
+          Music = GameParameter.ParameterType.Music_Volume,
+          Robot = GameParameter.ParameterType.Robot_Volume
+        }
+      }
+
       public class GameAudioClient {
 
         // If you want to listen to all audio callback events register with Audio Client
@@ -48,10 +58,11 @@ namespace Anki {
           client.UnregisterCallbackHandler(playId);
         }
 
-        static public void SetVolumeValue(GameParameter.ParameterType parameter, float volume ) {
-          // TODO Fix GameObject Id
+        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, CurveType curve = CurveType.Linear ) {
+          // TODO Fix GameObject Id -- JMR Do I still need this?
           AudioClient client = AudioClient.Instance;
-          client.PostParameter(parameter, volume, GameObjectType.Invalid); // TODO Need to cast for Invalid GameObj to set global RTPCs
+          // TODO Need to cast for Invalid GameObj to set global RTPCs -- JMR Do I still need this?
+          client.PostParameter((GameParameter.ParameterType)parameter, volume, GameObjectType.Invalid, timeInMS, curve);
         }
 
         static public void SetMusicVolume(float volume, int timeInMS = 0, CurveType curve = CurveType.Linear ) {
