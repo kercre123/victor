@@ -134,11 +134,11 @@ namespace Anki {
       
       std::vector<PreActionPose> possiblePreActionPoses;
       std::vector<std::pair<Quad2f,ObjectID> > obstacles;
-      _robot->GetBlockWorld().GetObstacles(obstacles);
+      _robot.GetBlockWorld().GetObstacles(obstacles);
       object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType},
                                        std::set<Vision::Marker::Code>(),
                                        obstacles,
-                                       &_robot->GetPose(),
+                                       &_robot.GetPose(),
                                        _predockOffsetDistX_mm);
       
       // Filter out all but the preActionPose that is closest to the specified approachAngle
@@ -147,7 +147,7 @@ namespace Anki {
         for(auto & preActionPose : possiblePreActionPoses)
         {
           Pose3d preActionPoseWrtWorld;
-          preActionPose.GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), preActionPoseWrtWorld);
+          preActionPose.GetPose().GetWithRespectTo(*_robot.GetWorldOrigin(), preActionPoseWrtWorld);
           
           Radians headingDiff = preActionPoseWrtWorld.GetRotationAngle<'Z'>() - _approachAngle_rad;
           if (std::abs(headingDiff.ToFloat()) < 0.5f * PIDIV2_F) {
@@ -185,14 +185,14 @@ namespace Anki {
         f32 closestPoseDist = std::numeric_limits<f32>::max();
         Radians closestPoseAngle = M_PI;
         
-        Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(_robot->GetPose(), object,
+        Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(_robot.GetPose(), object,
                                                                             DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
         
         preActionPoseDistThresh.z() = REACHABLE_PREDOCK_POSE_Z_THRESH_MM;
         for(auto & preActionPose : possiblePreActionPoses)
         {
           Pose3d possiblePose;
-          if(preActionPose.GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), possiblePose) == false) {
+          if(preActionPose.GetPose().GetWithRespectTo(*_robot.GetWorldOrigin(), possiblePose) == false) {
             PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.PreActionPoseOriginProblem",
                                 "Could not get pre-action pose w.r.t. robot origin.");
             
@@ -204,7 +204,7 @@ namespace Anki {
               // enough to it to not bother planning a path at all.
               Vec3f Tdiff;
               Radians angleDiff;
-              if(possiblePose.IsSameAs(_robot->GetPose(), preActionPoseDistThresh,
+              if(possiblePose.IsSameAs(_robot.GetPose(), preActionPoseDistThresh,
                                        DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE, Tdiff, angleDiff))
               {
                 const f32 currentDist = Tdiff.Length();
@@ -254,12 +254,12 @@ namespace Anki {
         } else {
           
           Pose3d objectWrtRobotParent;
-          if(false == object->GetPose().GetWithRespectTo(*_robot->GetPose().GetParent(), objectWrtRobotParent)) {
+          if(false == object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectWrtRobotParent)) {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
             result = ActionResult::FAILURE_ABORT;
           } else {
-            Point2f vec(_robot->GetPose().GetTranslation());
+            Point2f vec(_robot.GetPose().GetTranslation());
             vec -= Point2f(objectWrtRobotParent.GetTranslation());
             const f32 currentDistance = vec.MakeUnitLength();
             if(currentDistance < _distance_mm) {
@@ -268,7 +268,7 @@ namespace Anki {
               vec *= _distance_mm;
               const Point3f T(vec.x() + objectWrtRobotParent.GetTranslation().x(),
                               vec.y() + objectWrtRobotParent.GetTranslation().y(),
-                              _robot->GetPose().GetTranslation().z());
+                              _robot.GetPose().GetTranslation().z());
               possiblePoses.push_back(Pose3d(std::atan2f(-vec.y(), -vec.x()), Z_AXIS_3D(), T, objectWrtRobotParent.GetParent()));
             }
             result = ActionResult::SUCCESS;
@@ -288,7 +288,7 @@ namespace Anki {
 
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
-          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(*_robot, _pathMotionProfile, true, _useManualSpeed);
+          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_robot, _pathMotionProfile, true, _useManualSpeed);
           driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
           driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
           driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
@@ -299,7 +299,7 @@ namespace Anki {
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
-          FaceObjectAction* faceObjectAction = new FaceObjectAction(*_robot, _objectID, Radians(0), true, false);
+          FaceObjectAction* faceObjectAction = new FaceObjectAction(_robot, _objectID, Radians(0), true, false);
           PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                             GetTag(),
                             GetName().c_str(),
@@ -327,17 +327,17 @@ namespace Anki {
     {
       ActionResult result = ActionResult::SUCCESS;
       
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetObjectByID(_objectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
                           "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                          _robot->GetID(), _objectID.GetValue());
+                          _robot.GetID(), _objectID.GetValue());
         
         result = ActionResult::FAILURE_ABORT;
       } else if(ObservableObject::PoseState::Unknown == object->GetPoseState()) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
                           "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",
-                          _robot->GetID(), _objectID.GetValue());
+                          _robot.GetID(), _objectID.GetValue());
         result = ActionResult::FAILURE_ABORT;
       } else {
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
@@ -359,23 +359,23 @@ namespace Anki {
         // we completed the planned path successfully. If that's the case, we
         // want to retry.
         
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("DriveToObjectAction.CheckIfDone.NoObjectWithID",
                             "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                            _robot->GetID(), _objectID.GetValue());
+                            _robot.GetID(), _objectID.GetValue());
           
           result = ActionResult::FAILURE_ABORT;
         } else if( _actionType == PreActionPose::ActionType::NONE) {
           
           // Check to see if we got close enough
           Pose3d objectPoseWrtRobotParent;
-          if(false == object->GetPose().GetWithRespectTo(*_robot->GetPose().GetParent(), objectPoseWrtRobotParent)) {
+          if(false == object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectPoseWrtRobotParent)) {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
             result = ActionResult::FAILURE_ABORT;
           } else {
-            const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(_robot->GetPose().GetTranslation())).LengthSq();
+            const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(_robot.GetPose().GetTranslation())).LengthSq();
             if(distanceSq > _distance_mm*_distance_mm) {
               PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone", "Robot not close enough, will return FAILURE_RETRY.");
               result = ActionResult::FAILURE_RETRY;
@@ -428,20 +428,20 @@ namespace Anki {
     {
       ActionResult result = ActionResult::SUCCESS;
       
-      if(_robot->IsCarryingObject() == false) {
+      if(_robot.IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d cannot place an object because it is not carrying anything.",
-                          _robot->GetID());
+                          _robot.GetID());
         result = ActionResult::FAILURE_ABORT;
       } else {
         
-        _objectID = _robot->GetCarryingObject();
+        _objectID = _robot.GetCarryingObject();
         
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NoObjectWithID",
                             "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                            _robot->GetID(), _objectID.GetValue());
+                            _robot.GetID(), _objectID.GetValue());
           
           result = ActionResult::FAILURE_ABORT;
         } else {
@@ -449,7 +449,7 @@ namespace Anki {
           // Compute the approach angle given the desired placement pose of the carried block
           if (_useExactRotation) {
             f32 approachAngle_rad;
-            if (ComputePlacementApproachAngle(*_robot, _placementPose, approachAngle_rad) != RESULT_OK) {
+            if (ComputePlacementApproachAngle(_robot, _placementPose, approachAngle_rad) != RESULT_OK) {
               PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.Init.FailedToComputeApproachAngle", "");
               return ActionResult::FAILURE_ABORT;
             }
@@ -543,10 +543,10 @@ namespace Anki {
     {
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
-      _robot->AbortDrivingToPose();
-      _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
-      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
-      _robot->GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
+      _robot.AbortDrivingToPose();
+      _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
+      _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
+      _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
     }
     
     Result DriveToPoseAction::SetGoal(const Pose3d& pose,
@@ -610,7 +610,7 @@ namespace Anki {
         
         // Make the poses w.r.t. robot:
         for(auto & pose : _goalPoses) {
-          if(pose.GetWithRespectTo(*(_robot->GetWorldOrigin()), pose) == false) {
+          if(pose.GetWithRespectTo(*(_robot.GetWorldOrigin()), pose) == false) {
             PRINT_NAMED_ERROR("DriveToPoseAction.Init",
                               "Could not get goal pose w.r.t. to robot origin.");
             return ActionResult::FAILURE_ABORT;
@@ -622,9 +622,9 @@ namespace Anki {
         _selectedGoalIndex = 0;
         
         if(_goalPoses.size() == 1) {
-          planningResult = _robot->StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
+          planningResult = _robot.StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
         } else {
-          planningResult = _robot->StartDrivingToPose(_goalPoses, _pathMotionProfile, &_selectedGoalIndex, _useManualSpeed);
+          planningResult = _robot.StartDrivingToPose(_goalPoses, _pathMotionProfile, &_selectedGoalIndex, _useManualSpeed);
         }
         
         if(planningResult != RESULT_OK) {
@@ -638,7 +638,7 @@ namespace Anki {
           if(_driveWithHeadDown) {
             // Now put the head at the right angle for following paths
             // TODO: Make it possible to set the speed/accel somewhere?
-            if(_robot->GetMoveComponent().MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
+            if(_robot.GetMoveComponent().MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
               PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.");
               result = ActionResult::FAILURE_ABORT;
             }
@@ -650,7 +650,7 @@ namespace Anki {
           //  a copy of the robot inside the lambda. I believe using the pointer
           //  is safe because this lambda can't outlive this action which can't
           //  outlive the robot whose queue it exists in.
-          Robot* robotPtr = _robot;
+          Robot* robotPtr = &_robot;
           auto cbRobotOriginChanged = [this,robotPtr](RobotID_t robotID) {
             if(robotID == robotPtr->GetID()) {
               PRINT_NAMED_INFO("DriveToPoseAction",
@@ -660,7 +660,7 @@ namespace Anki {
               robotPtr->AbortDrivingToPose();
             }
           };
-          _originChangedHandle = _robot->OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
+          _originChangedHandle = _robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
         }
         
       } // if/else isGoalSet
@@ -682,12 +682,12 @@ namespace Anki {
           }
         };
         
-        _soundCompletedHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, soundCompleteLambda);
+        _soundCompletedHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, soundCompleteLambda);
       }
       
       if(ActionResult::SUCCESS == result && !_startSound.empty()) {
         // Play starting sound if there is one (only if nothing else is playing)
-        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(*_robot, _startSound, 1, false));
+        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_robot, _startSound, 1, false));
       }
       
       return result;
@@ -697,7 +697,7 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      switch( _robot->CheckDriveToPoseStatus() ) {
+      switch( _robot.CheckDriveToPoseStatus() ) {
         case ERobotDriveToPoseStatus::Error:
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
           _timeToAbortPlanning = -1.0f;
@@ -715,7 +715,7 @@ namespace Anki {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.ComputingPathTimeout",
                              "Robot has been planning for more than %f seconds, aborting",
                              _maxPlanningTime);
-            _robot->AbortDrivingToPose();
+            _robot.AbortDrivingToPose();
             result = ActionResult::FAILURE_ABORT;
             _timeToAbortPlanning = -1.0f;
           }
@@ -733,7 +733,7 @@ namespace Anki {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Replanning.Timeout",
                              "Robot has been planning for more than %f seconds, aborting",
                              _maxReplanPlanningTime);
-            _robot->AbortDrivingToPose();
+            _robot.AbortDrivingToPose();
             // re-try in this case, since we might be able to succeed once we stop and take more time to plan
             result = ActionResult::FAILURE_RETRY;
             _timeToAbortPlanning = -1.0f;
@@ -750,7 +750,7 @@ namespace Anki {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
                              "Waiting for robot to complete its path traversal (%d), "
                              "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.", ctr,
-                             _robot->GetCurrentPathSegment(), _robot->GetLastSentPathID(), _robot->GetLastRecvdPathID());
+                             _robot.GetCurrentPathSegment(), _robot.GetLastSentPathID(), _robot.GetLastRecvdPathID());
           }
           break;
         }
@@ -765,22 +765,22 @@ namespace Anki {
           // HACK: Loosen z threshold bigtime:
           const Point3f distanceThreshold(_goalDistanceThreshold.x(),
                                           _goalDistanceThreshold.y(),
-                                          _robot->GetHeight());
+                                          _robot.GetHeight());
           
-          if(_robot->GetPose().IsSameAs(_goalPoses[_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
+          if(_robot.GetPose().IsSameAs(_goalPoses[_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
                              "Robot %d successfully finished following path (Tdiff=%.1fmm).",
-                             _robot->GetID(), Tdiff.Length());
+                             _robot.GetID(), Tdiff.Length());
             
             result = ActionResult::SUCCESS;
           }
           // The last path sent was definitely received by the robot
           // and it is no longer executing it, but we appear to not be in position
-          else if (_robot->GetLastSentPathID() == _robot->GetLastRecvdPathID()) {
+          else if (_robot.GetLastSentPathID() == _robot.GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
                              "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d",
-                             Tdiff.Length(), _robot->GetLastRecvdPathID());
+                             Tdiff.Length(), _robot.GetLastRecvdPathID());
             result = ActionResult::FAILURE_RETRY;
           }
           else {
@@ -802,13 +802,13 @@ namespace Anki {
          (u32)ActionConstants::INVALID_TAG == _driveSoundActionTag &&    // we aren't waiting on last drive sound to stop
          currentTime > _nextDrivingSoundTime)                            // it's time to play
       {
-        PlayAnimationAction* driveSoundAction = new PlayAnimationAction(*_robot, _drivingSound, 1, false);
+        PlayAnimationAction* driveSoundAction = new PlayAnimationAction(_robot, _drivingSound, 1, false);
         _driveSoundActionTag = driveSoundAction->GetTag();
-        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, driveSoundAction);
+        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, driveSoundAction);
       }
       else if(ActionResult::SUCCESS == result && !_stopSound.empty())
       {
-        _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(*_robot, _stopSound, 1, false));
+        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_robot, _stopSound, 1, false));
       }
       
       return result;

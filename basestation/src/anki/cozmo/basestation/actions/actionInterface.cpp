@@ -31,8 +31,8 @@ namespace Anki {
     u32 IActionRunner::sTagCounter = 100000;
     
     IActionRunner::IActionRunner(Robot& robot)
+    : _robot(robot)
     {
-      _robot = &robot;
       // Assign every action a unique tag
       if (++IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
         ++IActionRunner::sTagCounter;
@@ -43,28 +43,26 @@ namespace Anki {
     
     IActionRunner::~IActionRunner()
     {
-      if(_robot != nullptr)
+      if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
       {
-        if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
-        {
-          // Notify any listeners about this action's completion.
-          // TODO: Populate the signal with any action-specific info?
-          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot->GetID(), _idTag, _type, _result, _completionUnion)));
-        }
-      
-        if(!_suppressTrackLocking)
-        {
-#         if DEBUG_ANIM_TRACK_LOCKING
-          PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                            _animTracks,
-                            AnimTrackFlagToString((AnimTrackFlag)_animTracks),
-                            _name.c_str(),
-                            _idTag);
-#         endif
-          _robot->GetMoveComponent().UnlockAnimTracks(_animTracks);
-          _robot->GetMoveComponent().UnignoreTrackMovement(_movementTracks);
-        }
+        // Notify any listeners about this action's completion.
+        // TODO: Populate the signal with any action-specific info?
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), _idTag, _type, _result, _completionUnion)));
       }
+    
+      if(!_suppressTrackLocking)
+      {
+#         if DEBUG_ANIM_TRACK_LOCKING
+        PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                          _animTracks,
+                          AnimTrackFlagToString((AnimTrackFlag)_animTracks),
+                          _name.c_str(),
+                          _idTag);
+#         endif
+        _robot.GetMoveComponent().UnlockAnimTracks(_animTracks);
+        _robot.GetMoveComponent().UnignoreTrackMovement(_movementTracks);
+      }
+      
     }
     
     void IActionRunner::SetTag(u32 tag)
@@ -93,8 +91,8 @@ namespace Anki {
                            _name.c_str(),
                            _idTag);
 #         endif
-          _robot->GetMoveComponent().UnlockAnimTracks(tracks);
-          _robot->GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+          _robot.GetMoveComponent().UnlockAnimTracks(tracks);
+          _robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
         
         _isRunning = false;
@@ -118,8 +116,8 @@ namespace Anki {
                          GetTag());
 
 #       endif
-        _robot->GetMoveComponent().LockAnimTracks(disableTracks);
-        _robot->GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
+        _robot.GetMoveComponent().LockAnimTracks(disableTracks);
+        _robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
       }
 
       if( ! _isRunning ) {
@@ -300,7 +298,7 @@ namespace Anki {
         if(IsMessageDisplayEnabled()) {
           PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
                            "Robot %d failed running action %s. Retrying.",
-                           _robot->GetID(), GetName().c_str());
+                           _robot.GetID(), GetName().c_str());
         }
         
         Reset();

@@ -41,7 +41,7 @@ namespace Anki {
       // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
       // to clean up
       if(!_stoppedPlaying && !_wasAborted) {
-        _robot->GetAnimationStreamer().SetStreamingAnimation(*_robot, nullptr);
+        _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, nullptr);
       }
     }
 
@@ -53,8 +53,8 @@ namespace Anki {
       
       if (NeedsAlteredAnimation())
       {
-        const Animation* streamingAnimation = _robot->GetAnimationStreamer().GetStreamingAnimation();
-        const Animation* ourAnimation = _robot->GetCannedAnimation(_animName);
+        const Animation* streamingAnimation = _robot.GetAnimationStreamer().GetStreamingAnimation();
+        const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
         
         _alteredAnimation = std::unique_ptr<Animation>(new Animation(*ourAnimation));
         assert(_alteredAnimation);
@@ -80,11 +80,11 @@ namespace Anki {
       // If we've set our altered animation, use that
       if (_alteredAnimation)
       {
-        _animTag = _robot->GetAnimationStreamer().SetStreamingAnimation(*_robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
+        _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
       }
       else // do the normal thing
       {
-        _animTag = _robot->PlayAnimation(_animName, _numLoops, _interruptRunning);
+        _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
       }
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
@@ -121,11 +121,11 @@ namespace Anki {
         }
       };
       
-      _startSignalHandle = _robot->GetRobotMessageHandler()->Subscribe(_robot->GetID(), RobotToEngineTag::animStarted, startLambda);
+      _startSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::animStarted, startLambda);
       
-      _endSignalHandle   = _robot->GetRobotMessageHandler()->Subscribe(_robot->GetID(), RobotToEngineTag::animEnded,   endLambda);
+      _endSignalHandle   = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::animEnded,   endLambda);
       
-      _abortSignalHandle = _robot->GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted, cancelLambda);
+      _abortSignalHandle = _robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted, cancelLambda);
       
       if(_animTag != 0) {
         return ActionResult::SUCCESS;
@@ -142,7 +142,7 @@ namespace Anki {
         return false;
       }
       
-      const Animation* streamingAnimation = _robot->GetAnimationStreamer().GetStreamingAnimation();
+      const Animation* streamingAnimation = _robot.GetAnimationStreamer().GetStreamingAnimation();
       // Nothing is currently streaming so no need for alteration
       if (nullptr == streamingAnimation)
       {
@@ -157,7 +157,7 @@ namespace Anki {
       }
       
       // Now actually check our animation to see if we have an initial face frame
-      const Animation* ourAnimation = _robot->GetCannedAnimation(_animName);
+      const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
       assert(ourAnimation);
       
       bool animHasInitialFaceFrame = false;
@@ -213,7 +213,7 @@ namespace Anki {
 
     ActionResult PlayAnimationGroupAction::Init()
     {
-      _animName = _robot->GetAnimationNameFromGroup(_animGroupName);
+      _animName = _robot.GetAnimationNameFromGroup(_animGroupName);
       return PlayAnimationAction::Init();
     }
 
@@ -273,10 +273,10 @@ namespace Anki {
               }
             };
             
-            _robot->GetRobotAudioClient()->PostEvent(_event, _gameObj, callback);
+            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj, callback);
           }
           else {
-            _robot->GetRobotAudioClient()->PostEvent(_event, _gameObj);
+            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);
             _isCompleted = true;
           }
         }
@@ -284,7 +284,7 @@ namespace Anki {
           
         case AudioActionType::StopEvents:
         {
-          _robot->GetRobotAudioClient()->StopAllEvents(_gameObj);
+          _robot.GetRobotAudioClient()->StopAllEvents(_gameObj);
           _isCompleted = true;
         }
           break;
@@ -295,12 +295,12 @@ namespace Anki {
           if (Audio::StateGroupType::MUSIC == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
-              _robot->GetRobotAudioClient()->PostEvent( static_cast<GenericEvent>(Music::PlayMusic), GameObjectType::Default );
+              _robot.GetRobotAudioClient()->PostEvent( static_cast<GenericEvent>(Music::PlayMusic), GameObjectType::Default );
               didStartMusic = true;
             }
           }
           
-          _robot->GetRobotAudioClient()->PostGameState(_stateGroup, _state);
+          _robot.GetRobotAudioClient()->PostGameState(_stateGroup, _state);
           _isCompleted = true;
         }
           break;

@@ -52,7 +52,7 @@ namespace Anki {
       
       ActionResult Update();
       
-      Robot* GetRobot() { return _robot; }
+      Robot& GetRobot() { return _robot; }
       
       // Tags can be used to identify specific actions. A unique tag is assigned
       // at construction, or it can be overridden with SetTag(). The Tag is
@@ -120,7 +120,7 @@ namespace Anki {
 
     protected:
       
-      Robot* _robot = nullptr;
+      Robot& _robot;
       
       virtual ActionResult UpdateInternal() = 0;
       
