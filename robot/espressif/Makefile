@@ -193,8 +193,7 @@ CCFLAGS += 			\
 	-ffunction-sections \
 	-fdata-sections \
 	-Wall \
-  -Werror \
-	-Wno-strict-aliasing
+	-Werror
 
 CXXFLAGS = -fno-threadsafe-statics 
 
