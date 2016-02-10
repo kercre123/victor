@@ -58,6 +58,7 @@ enum uint_8 ActionResult {
     FAILURE_PROCEED,
     FAILURE_RETRY,
     FAILURE_ABORT,
+    FAILURE_BAD_TAG,
     CANCELLED,
     INTERRUPTED
 }
