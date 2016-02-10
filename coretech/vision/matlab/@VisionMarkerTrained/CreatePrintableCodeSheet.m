@@ -42,6 +42,10 @@ function CreatePrintableCodeSheet(varargin)
 %    Add a light gray, dotted border of this size around each code. If
 %    zero, the border will not be printed.
 %
+%  'whiteOnBloack'  [false]
+%    Set to true to make negated/inverted markers (white on black)
+%
+%
 % Example Usage:
 %
 % Windows: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials'}, 'outsideBorderWidth', [], 'codeSpacing', 5, 'numPerCode', 2, 'nameFilter', '*.*');
@@ -62,6 +66,7 @@ markerImageDir = [];
 markerSize = 25; % in mm
 numPerCode = 1;
 outsideBorderWidth = []; % in mm, empty to not use
+whiteOnBlack = false;
 
 parseVarargin(varargin{:});
 
@@ -155,14 +160,23 @@ for iFile = 1:numImages
     img(alpha < .5) = 1;
     
     iPos = mod(iFile-1, numRows*numCols) + 1;
-    imagesc(xgrid(iPos)+markerSize/10*[-.5 .5], ...
-        ygrid(iPos)+markerSize/10*[-.5 .5], img, 'Parent', h_axes);
     
     if outsideBorderWidth > 0
-        rectangle('Position', [xgrid(iPos)-outsideBorderWidth/20 ....
-            ygrid(iPos)-outsideBorderWidth/20 outsideBorderWidth/10*[1 1]], ...
-            'Parent', h_axes, 'EdgeColor', [0.8 0.8 0.8], ...
-            'LineWidth', .5, 'LineStyle', ':');
+      h_rect = rectangle('Position', [xgrid(iPos)-outsideBorderWidth/20 ....
+        ygrid(iPos)-outsideBorderWidth/20 outsideBorderWidth/10*[1 1]], ...
+        'Parent', h_axes, 'EdgeColor', [0.8 0.8 0.8], ...
+        'LineWidth', .5, 'LineStyle', ':');
+      if whiteOnBlack
+        set(h_rect,  'EdgeColor', [0 0 0], 'LineStyle', 'none', 'FaceColor', [0 0 0]);
+      end
+    end
+    
+    h_img = imagesc(xgrid(iPos)+markerSize/10*[-.5 .5], ...
+      ygrid(iPos)+markerSize/10*[-.5 .5], img, 'Parent', h_axes);
+    
+    if whiteOnBlack
+      temp = get(h_img, 'CData');
+      set(h_img, 'CData', 1 - get(h_img, 'CData'));
     end
     
 end % FOR each File
