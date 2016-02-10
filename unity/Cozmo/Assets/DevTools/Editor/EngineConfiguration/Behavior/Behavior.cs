@@ -4,14 +4,15 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace Anki.Cozmo {
+  [JsonConverter(typeof(BehaviorConverter))]
   public class Behavior {
 
     [JsonProperty("behaviorType")]
     public BehaviorType BehaviorType;
 
-    // Only valid for PlayAnim behaviors
-    [JsonProperty("animName")]
-    public string AnimName;
+    // Any extra parameters that are valid for specific behaviors
+    [JsonIgnore]
+    public Dictionary<string, object> CustomParams = new Dictionary<string, object>();
 
     [JsonProperty("name")]
     public string Name;

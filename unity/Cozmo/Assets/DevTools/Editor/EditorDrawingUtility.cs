@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using System.Linq;
 
 public static class EditorDrawingUtility {
 
@@ -59,6 +60,42 @@ public static class EditorDrawingUtility {
     }
   }
 
+  public static void DrawDictionary<T>(string label, Dictionary<string, T> dict, Func<T,T> drawControls, Func<T> createFunc) {
+
+    var list = new List<KeyValuePair<string,T>>(dict);
+
+    DrawList(label, list, x => {
+      string key = x.Key;
+      T value = x.Value;
+
+      EditorGUILayout.BeginHorizontal();
+
+      key = EditorGUILayout.TextField(key);
+
+      value = drawControls(value);
+
+      EditorGUILayout.EndHorizontal();
+
+      return new KeyValuePair<string, T>(key, value);
+    },
+      () => {
+        string key = string.Empty;
+
+        while (dict.ContainsKey(key)) {
+          key = "New" + key;
+        }
+
+        T value = createFunc();
+
+        return new KeyValuePair<string, T>(key, value);
+      });
+
+    dict.Clear();
+
+    foreach (var kvp in list) {
+      dict[kvp.Key] = kvp.Value;
+    }
+  }
 
   public static void InitializeLocalizationString(string localizationKey, out string localizedStringFile, out string localizedString) {
     localizedString = LocalizationEditorUtility.GetTranslation(localizationKey, out localizedStringFile);
@@ -143,5 +180,155 @@ public static class EditorDrawingUtility {
       return _ToolbarStyle;
     }
   }
+
+  private static readonly string[] _TypeOptions;
+
+  private static readonly Dictionary<string, Type> _TypeDictionary = new Dictionary<string, Type>();
+  private static readonly Dictionary<Type, string> _TypeNameDictionary = new Dictionary<Type, string>();
+
+  private static readonly Dictionary<Type, Func<object, object>> _TypeDrawers = new Dictionary<Type, Func<object, object>>();
+
+  private static void AddTypeOption<T>(string name, Func<T, T> drawer) {
+    _TypeDictionary[name] = typeof(T);
+    _TypeNameDictionary[typeof(T)] = name;
+    _TypeDrawers[typeof(T)] = x => drawer((T)(object)x);
+  }
+
+  private static void AddListTypeOption<T>(string name) {
+    AddTypeOption<List<T>>("List<"+name+">", x => {
+      DrawList("", x, y => (T)_TypeDrawers[typeof(T)](y), () => default(T));
+      return x;
+    });
+  }
+
+  private static void AddConvertTypeOption<T,U>() {
+    _TypeNameDictionary[typeof(T)] = _TypeNameDictionary[typeof(U)];
+    _TypeDrawers[typeof(T)] = x => Convert.ChangeType(_TypeDrawers[typeof(U)](Convert.ChangeType(x, typeof(U))), typeof(T));
+  }
+
+  static EditorDrawingUtility() {
+
+    _TypeDictionary.Add("null", null);
+
+    AddTypeOption<int>("int", i => EditorGUILayout.IntField(i));
+    AddTypeOption<float>("float", f =>EditorGUILayout.FloatField(f));
+    AddTypeOption<string>("string", s => EditorGUILayout.TextArea(s ?? string.Empty));
+    AddTypeOption<bool>("bool", b => EditorGUILayout.Toggle(b));
+    AddConvertTypeOption<long,int>();
+    AddConvertTypeOption<double,float>();
+    AddTypeOption<EmotionScorer>("EmotionScorer", DrawEmotionScorer);
+    AddTypeOption<AnimationCurve>("AnimationCurve", c => EditorGUILayout.CurveField(c));
+    AddListTypeOption<int>("int");
+    AddListTypeOption<float>("float");
+    AddListTypeOption<string>("string");
+
+    _TypeOptions = _TypeDictionary.Keys.ToArray();
+  }
+    
+  public static object DrawSelectionObjectEditor(object x) {
+
+    EditorGUILayout.BeginHorizontal();
+
+    string typeName;
+    int index;
+
+    if (x != null && _TypeNameDictionary.TryGetValue(x.GetType(), out typeName)) {
+      index = Array.IndexOf(_TypeOptions, typeName);
+    }
+    else {      
+      index = 0;
+      x = null;
+    }
+
+    int newIndex = EditorGUILayout.Popup(index, _TypeOptions);
+
+    if (newIndex != index) {
+      var newType = _TypeDictionary[_TypeOptions[newIndex]];
+      x = ConvertOrNew(x, newType);
+    }
+
+    var result = DrawObjectEditor(x);
+
+    EditorGUILayout.EndHorizontal();
+    return result;
+  }
+
+  private static object ConvertOrNew(object x, Type newType) {
+    if (newType == null) {
+      return null;
+    }
+
+    if (x == null) {
+      if (newType == typeof(string)) {
+        return string.Empty;
+      }
+      return Activator.CreateInstance(newType);
+    }
+
+    if (newType == typeof(string)) {
+      return x.ToString();
+    }
+
+    if (x.GetType() == typeof(string)) {
+      if(newType == typeof(int)) {
+        int intVal;
+        if (int.TryParse((string)x, out intVal)) {
+          return intVal;
+        }
+      }
+      if(newType == typeof(float)){
+        float floatVal;
+        if (float.TryParse((string)x, out floatVal)) {
+          return floatVal;
+        }
+      }
+      if (newType == typeof(bool)) {
+        return "true".Equals((string)x, comparisonType: StringComparison.InvariantCultureIgnoreCase);
+      }
+    }
+
+    if (x.GetType() == typeof(bool)) {
+      if(newType == typeof(int)) {
+        return (bool)x == true ? 1 : 0;
+      }
+      if(newType == typeof(float)){
+        return (bool)x == true ? 1f : 0f;
+      }
+    }
+
+    if(newType == typeof(bool)) {
+      if (x.GetType() == typeof(int)) {
+        return (int)x != 0;
+      }
+      if (x.GetType() == typeof(float)) {
+        return (float)x != 0;
+      }
+    }
+
+    if (x.GetType() == typeof(int) && newType == typeof(float)) {
+      return (float)(int)x;
+    }
+    if (x.GetType() == typeof(float) && newType == typeof(int)) {
+      return (int)(float)x;
+    }
+
+    return Activator.CreateInstance(newType);
+  }
+
+  public static object DrawObjectEditor(object x) {
+    if (x == null) {
+      return null;
+    }
+    Func<object, object> drawer;
+    if (_TypeDrawers.TryGetValue(x.GetType(), out drawer)) {
+      return drawer(x);
+    }
+    else {
+      Debug.LogError("Don't know how to draw editor for type " + x.GetType());
+      return null;
+    }
+  }
+
+
 }
 
