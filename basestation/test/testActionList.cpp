@@ -934,11 +934,11 @@ TEST(ActionTag, ConflictingNormalTags)
   u32 origTag2 = testAction2->GetTag();
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   
-  EXPECT_FALSE(testAction1->SetTag(2));
+  EXPECT_FALSE(testAction1->SetTag(origTag2));
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction1->GetTag(), origTag1); // Tag will not change because of conflict
   
-  EXPECT_FALSE(testAction2->SetTag(1));
+  EXPECT_FALSE(testAction2->SetTag(origTag1));
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction2->GetTag(), origTag2); // Tag will not change because of conflict
 }

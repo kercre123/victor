@@ -202,7 +202,7 @@ namespace Anki {
             case ActionResult::FAILURE_ABORT:
             case ActionResult::FAILURE_TIMEOUT:
             case ActionResult::FAILURE_PROCEED:
-            case ActionResult::FAILURE_TO_START:
+            case ActionResult::FAILURE_BAD_TAG:
             case ActionResult::CANCELLED:
             case ActionResult::INTERRUPTED:
 #             if USE_ACTION_CALLBACKS

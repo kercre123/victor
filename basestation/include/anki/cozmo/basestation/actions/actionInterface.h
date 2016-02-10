@@ -57,9 +57,11 @@ namespace Anki {
       // Tags can be used to identify specific actions. A unique tag is assigned
       // at construction, or it can be overridden with SetTag(). The Tag is
       // returned in the ActionCompletion signal as well.
+      // Returns true if the tag has been set, false if it is invalid or already exists
       bool SetTag(u32 tag);
-      // Returns the custom set tag, if it exists, otherwise returns auto-generated tag
-      u32  GetTag() const;
+      // If a custom tag has been set return will be that otherwise it is the same as the
+      // auto-generated tag
+      u32  GetTag() const { return _customTag; }
       
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.
@@ -155,10 +157,11 @@ namespace Anki {
       
       // Auto-generated tag
       u32           _idTag;
+      u32           _customTag;
       
       static u32                sTagCounter;
-      // Maps custom specified tags to auto-generated tags
-      static std::map<u32, u32> sCustomToGenTagMap;
+      // Set of tags that are in use
+      static std::set<u32> sInUseTagSet;
       
 #   if USE_ACTION_CALLBACKS
     public:

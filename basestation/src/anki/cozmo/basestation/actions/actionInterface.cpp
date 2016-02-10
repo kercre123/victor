@@ -28,29 +28,28 @@ namespace Anki {
   
   namespace Cozmo {
     
-    u32 IActionRunner::sTagCounter = 0;
-    std::map<u32, u32> IActionRunner::sCustomToGenTagMap;
+    u32 IActionRunner::sTagCounter = 10000;
+    std::set<u32> IActionRunner::sInUseTagSet;
     
     IActionRunner::IActionRunner(Robot& robot)
     : _robot(robot)
     {
-      // Assign every action a unique tag
-      if (++IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
+      // Assign every action a unique tag that is not currently in use
+      while (!IActionRunner::sInUseTagSet.insert(IActionRunner::sTagCounter).second ||
+             IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
         ++IActionRunner::sTagCounter;
       }
       
-      // If this tag already exists find one that doesn't
-      while(!IActionRunner::sCustomToGenTagMap.emplace(IActionRunner::sTagCounter,
-                                                       IActionRunner::sTagCounter).second)
-      {
-        ++IActionRunner::sTagCounter;
-      }
-      
-      _idTag = IActionRunner::sTagCounter;
+      _idTag = IActionRunner::sTagCounter++;
+      _customTag = _idTag;
     }
     
     IActionRunner::~IActionRunner()
     {
+      // Erase the tags as they are no longer in use
+      IActionRunner::sInUseTagSet.erase(_customTag);
+      IActionRunner::sInUseTagSet.erase(_idTag);
+      
       if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
       {
         // Notify any listeners about this action's completion.
@@ -70,39 +69,20 @@ namespace Anki {
         _robot.GetMoveComponent().UnlockAnimTracks(_animTracks);
         _robot.GetMoveComponent().UnignoreTrackMovement(_movementTracks);
       }
-      
     }
     
     bool IActionRunner::SetTag(u32 tag)
     {
-      if (tag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
-        PRINT_NAMED_ERROR("IActionRunner.SetTag.InvalidTag", "INVALID_TAG==%d", ActionConstants::INVALID_TAG);
-        return false;
-      } else {
-        auto pair = IActionRunner::sCustomToGenTagMap.emplace(tag, _idTag);
-        if(!pair.second) {
-          PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] already exists", tag);
-          // PrepForCompletion as, currently, the only call to setTag will delete the action on failure
-          _result = ActionResult::FAILURE_TO_START;
-          PrepForCompletion();
-          return false;
-        }
-      }
-      return true;
-    }
-    
-    u32 IActionRunner::GetTag() const
-    {
-      for(auto pair : IActionRunner::sCustomToGenTagMap)
+      // If this is an invalid tag or is currently in use
+      if(tag == static_cast<u32>(ActionConstants::INVALID_TAG) ||
+         !IActionRunner::sInUseTagSet.insert(tag).second)
       {
-        // Since the mapping _idTag -> _idTag exists skip it by comparing pair.first to _idTag
-        if(pair.second == _idTag && pair.first != _idTag)
-        {
-          return pair.first;
-        }
+        PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] is invalid", tag);
+        _result = ActionResult::FAILURE_BAD_TAG;
+        return false;
       }
-      // No custom tag found so just return auto-generated tag
-      return _idTag;
+      _customTag = tag;
+      return true;
     }
     
     bool IActionRunner::Interrupt()
@@ -131,11 +111,18 @@ namespace Anki {
       return _isInterrupted;
     }
     
-    // NOTE: THere should be no way for Update() to fail independently of its
+    // NOTE: There should be no way for Update() to fail independently of its
     // call to UpdateInternal(). Otherwise, there's a possibility for an
     // IAction's Cleanup() method not be called on failure.
     ActionResult IActionRunner::Update()
     {
+      // If for some reason someone tried to set the tag to an invalid tag and didn't check the return
+      // value, fail here
+      if(_result == ActionResult::FAILURE_BAD_TAG)
+      {
+        return _result;
+      }
+      
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
         uint8_t disableTracks = GetAnimTracksToDisable();
