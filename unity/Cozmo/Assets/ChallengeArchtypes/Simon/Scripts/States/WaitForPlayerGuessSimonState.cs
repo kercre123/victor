@@ -24,7 +24,7 @@ namespace Simon {
       _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = false;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
     }
 
     public override void Update() {

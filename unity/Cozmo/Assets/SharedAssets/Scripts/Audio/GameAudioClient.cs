@@ -11,14 +11,14 @@ namespace Anki {
         //    AudioClient client = AudioClient.Instance;
         //    client.OnAudioCallback += YourHandler
 
-        static public ushort PostUIEvent(Anki.Cozmo.Audio.GameEvent.SFX_UI audioEvent,
+        static public ushort PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI audioEvent,
                                          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                          CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;
           return client.PostEvent((GameEvent.GenericEvent)audioEvent, Anki.Cozmo.Audio.GameObjectType.UI, callbackFlag, handler);
         }
 
-        static public ushort PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX_UI audioEvent,
+        static public ushort PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX audioEvent,
                                           Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                           CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;

@@ -247,7 +247,7 @@ namespace Anki {
           return;
         }
 
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral);
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickGeneral);
       }
 
       private void UpdateVisuals() {
