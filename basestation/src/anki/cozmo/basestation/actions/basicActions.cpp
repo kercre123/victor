@@ -688,7 +688,6 @@ namespace Anki {
       }
       
       newCompoundParallel->EnableMessageDisplay(IsMessageDisplayEnabled());
-      newCompoundParallel->SetSuppressTrackLocking(true);
       
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
