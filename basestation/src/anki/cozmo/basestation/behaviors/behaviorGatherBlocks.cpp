@@ -147,7 +147,7 @@ namespace Anki {
       }
     }
     
-    Result BehaviorGatherBlocks::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+    Result BehaviorGatherBlocks::InitInternal(Robot& robot, double currentTime_sec)
     {
       // Update explorable area center to current robot pose
       ResetSafeRegion(robot);
@@ -192,11 +192,11 @@ namespace Anki {
         }
         case State::StartDriving:
         {
-          IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_lookAroundHeadAngle_rads);
+          IActionRunner* moveHeadAction = new MoveHeadToAngleAction(robot, _lookAroundHeadAngle_rads);
           _actionsInProgress.insert(moveHeadAction->GetTag());
           robot.GetActionList().QueueActionAtEnd(moveHeadAction);
           
-          IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+          IActionRunner* moveLiftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
           _actionsInProgress.insert(moveLiftAction->GetTag());
           robot.GetActionList().QueueActionAtEnd(moveLiftAction);
           
@@ -208,7 +208,7 @@ namespace Anki {
         case State::StartLooking:
         {
           // Turn in place
-          TurnInPlaceAction* turnAction = new TurnInPlaceAction(DEG_TO_RAD(kDegreesToRotate), false);
+          TurnInPlaceAction* turnAction = new TurnInPlaceAction(robot, DEG_TO_RAD(kDegreesToRotate), false);
           turnAction->SetMaxSpeed(DEG_TO_RAD(kDegreesRotatePerSec));
           _currentLookActionID = turnAction->GetTag();
           _actionsInProgress.insert(_currentLookActionID);
@@ -231,7 +231,7 @@ namespace Anki {
         {
           ClearQueuedActions(robot);
 
-          DriveToPickupObjectAction* pickupObjectAction = new DriveToPickupObjectAction(_selectedObjectID);
+          DriveToPickupObjectAction* pickupObjectAction = new DriveToPickupObjectAction(robot, _selectedObjectID);
           _currentPickupObjectActionID = pickupObjectAction->GetTag();
           _actionsInProgress.insert(_currentPickupObjectActionID);
           robot.GetActionList().QueueActionAtEnd(pickupObjectAction);
@@ -310,7 +310,8 @@ namespace Anki {
         }
       }
       
-      IActionRunner* goToPoseAction = new DriveToPoseAction(destPose,
+      IActionRunner* goToPoseAction = new DriveToPoseAction(robot,
+                                                            destPose,
                                                             DEFAULT_PATH_MOTION_PROFILE,
                                                             false,
                                                             false);
@@ -381,7 +382,7 @@ namespace Anki {
       return destPose;
     }
     
-    Result BehaviorGatherBlocks::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+    Result BehaviorGatherBlocks::InterruptInternal(Robot& robot, double currentTime_sec)
     {
       ResetBehavior(robot, currentTime_sec);
       return Result::RESULT_OK;
