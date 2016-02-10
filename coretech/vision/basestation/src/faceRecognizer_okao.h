@@ -13,6 +13,7 @@
 
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/profiler.h"
 
 // Omron OKAO Vision
 #include <OkaoAPI.h>
@@ -29,7 +30,7 @@
 namespace Anki {
 namespace Vision {
 
-  class FaceRecognizer
+  class FaceRecognizer : public Profiler
   {
   public:
     FaceRecognizer() { }

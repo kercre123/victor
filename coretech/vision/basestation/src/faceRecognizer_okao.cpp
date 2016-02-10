@@ -385,9 +385,11 @@ namespace Vision {
     //  separate thread in the first place. We aren't touching any of the enrollment/tracking
     //  data structures, so we do not lock the mutex, meaning those data structures
     //  can be modified while this runs.
+    Tic("OkaoFeatureExtraction");
     INT32 okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
                                                   dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
                                                   _okaoPartDetectionResultHandle);
+    Toc("OkaoFeatureExtraction");
     
     INT32 numUsersInAlbum = 0;
     okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
@@ -412,7 +414,9 @@ namespace Vision {
       INT32 resultNum = 0;
       const s32 MaxResults = 2;
       INT32 userIDs[MaxResults], scores[MaxResults];
+      Tic("OkaoIdentify");
       okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, MaxResults, userIDs, scores, &resultNum);
+      Toc("OkaoIdentify");
       
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_WARNING("FaceTrackerImpl.RecognizeFace.OkaoFaceRecognitionIdentifyFailed",
