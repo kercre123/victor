@@ -66,8 +66,17 @@ namespace Anki {
 #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_MINIMAL
       #define AnkiDebug(nameId, nameString, fmtId, fmtString, nargs, ...) \
       { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, ##__VA_ARGS__); }
+      
+      #define AnkiDebugPeriodic(num_calls_between_prints, nameId, nameString, fmtId, fmtString, nargs, ...) \
+      {   static u32 cnt = num_calls_between_prints; \
+          if (cnt++ >= num_calls_between_prints) { \
+            Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, ##__VA_ARGS__); \
+            cnt = 0; \
+          } \
+      }
 #else
       #define AnkiDebug(...)
+      #define AnkiDebugPeriodic(...)
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
