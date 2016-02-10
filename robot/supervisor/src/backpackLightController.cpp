@@ -17,7 +17,6 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/ledController.h"
-#include <stdio.h>
 #include <string.h>
 
 #define MS_TO_LED_FRAMES(ms) ((ms+29)/30)
@@ -51,7 +50,7 @@ namespace BackpackLightController {
     };
 
     // Light when charged
-    LightState  _chargedParams[NUM_BACKPACK_LEDS] = {
+    const LightState  _chargedParams[NUM_BACKPACK_LEDS] = {
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_FRONT
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_MIDDLE
