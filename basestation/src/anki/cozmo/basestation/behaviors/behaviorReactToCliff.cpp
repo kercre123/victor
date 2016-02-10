@@ -94,7 +94,7 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
       // For now we simply rotate through the animations we want to play when cliff detected
       if (!_animReactions.empty())
       {
-        IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
+        IActionRunner* newAction = new PlayAnimationAction(robot, _animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
         robot.GetActionList().QueueActionNow(newAction);
         animIndex = ++animIndex % _animReactions.size();

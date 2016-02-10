@@ -29,7 +29,8 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
-      PlayAnimationAction(const std::string& animName,
+      PlayAnimationAction(Robot& robot,
+                          const std::string& animName,
                           u32 numLoops = 1,
                           bool interruptRunning = true);
       virtual ~PlayAnimationAction();
@@ -72,7 +73,8 @@ namespace Anki {
     class PlayAnimationGroupAction : public PlayAnimationAction
     {
     public:
-      explicit PlayAnimationGroupAction(const std::string& animGroupName,
+      explicit PlayAnimationGroupAction(Robot& robot,
+                                        const std::string& animGroupName,
                                         u32 numLoops = 1,
                                         bool interruptRunning = true);
       
@@ -89,15 +91,16 @@ namespace Anki {
     public:
       // Play Audio Event
       // TODO: Add bool to set if caller want's to block "wait" until audio is completed
-      DeviceAudioAction(const Audio::GenericEvent event,
+      DeviceAudioAction(Robot& robot,
+                        const Audio::GenericEvent event,
                         const Audio::GameObjectType gameObj,
                         const bool waitUntilDone = false);
       
       // Stop All Events on Game Object, pass in Invalid to stop all audio
-      DeviceAudioAction(const Audio::GameObjectType gameObj = Audio::GameObjectType::Invalid);
+      DeviceAudioAction(Robot& robot, const Audio::GameObjectType gameObj = Audio::GameObjectType::Invalid);
       
       // Change Music state
-      DeviceAudioAction(const Audio::MUSIC state);
+      DeviceAudioAction(Robot& robot, const Audio::MUSIC state);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::DEVICE_AUDIO; }

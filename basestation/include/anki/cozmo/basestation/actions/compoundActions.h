@@ -23,7 +23,7 @@ namespace Anki {
     class ICompoundAction : public IActionRunner
     {
     public:
-      ICompoundAction(std::initializer_list<IActionRunner*> actions);
+      ICompoundAction(Robot& robot, std::initializer_list<IActionRunner*> actions);
       
       virtual void AddAction(IActionRunner* action);
       
@@ -37,9 +37,6 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
-      
-      // Sets the compound action's robot as well as the actions within the compound action
-      virtual void SetRobot(Robot& robot) override;
 
     protected:
       
@@ -58,8 +55,8 @@ namespace Anki {
     class CompoundActionSequential : public ICompoundAction
     {
     public:
-      CompoundActionSequential();
-      CompoundActionSequential(std::initializer_list<IActionRunner*> actions);
+      CompoundActionSequential(Robot& robot);
+      CompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions);
       
       // Add a delay, in seconds, between running each action in the group.
       // Default is 0 (no delay).
@@ -89,8 +86,8 @@ namespace Anki {
     class CompoundActionParallel : public ICompoundAction
     {
     public:
-      CompoundActionParallel();
-      CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
+      CompoundActionParallel(Robot& robot);
+      CompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions);
       
       virtual void AddAction(IActionRunner* action) override;
       
