@@ -46,7 +46,7 @@ namespace BackpackLightController {
       {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_FRONT
       {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_MIDDLE
       {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_BACK
-      {0, 0, 0, 0, 0, 0} // LED_BACKPACK_BACK
+      {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
     };
 
     // Light when charged
@@ -55,7 +55,7 @@ namespace BackpackLightController {
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_FRONT
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_MIDDLE
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_BACK
-      {0, 0, 0, 0, 0, 0} // LED_BACKPACK_BACK
+      {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
     };
 
     // Voltage at which it is considered charged
