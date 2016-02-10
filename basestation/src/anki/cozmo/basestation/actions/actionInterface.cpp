@@ -35,8 +35,8 @@ namespace Anki {
     : _robot(robot)
     {
       // Assign every action a unique tag that is not currently in use
-      while (!IActionRunner::sInUseTagSet.insert(IActionRunner::sTagCounter).second ||
-             IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
+      while (IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG) ||
+             !IActionRunner::sInUseTagSet.insert(IActionRunner::sTagCounter).second) {
         ++IActionRunner::sTagCounter;
       }
       
@@ -73,6 +73,23 @@ namespace Anki {
     
     bool IActionRunner::SetTag(u32 tag)
     {
+      // Probably a bad idea to be able to change the tag while the action is running
+      if(_isRunning)
+      {
+        PRINT_NAMED_WARNING("IActionRunner.SetTag", "Action %s [%d] is running unable to set tag to %d",
+                            GetName().c_str(),
+                            GetTag(),
+                            tag);
+        _result = ActionResult::FAILURE_BAD_TAG;
+        return false;
+      }
+      
+      // If the tag has already been set and the action is not running then erase the current tag in order to
+      // set the new one
+      if(_customTag != _idTag)
+      {
+        IActionRunner::sInUseTagSet.erase(_customTag);
+      }
       // If this is an invalid tag or is currently in use
       if(tag == static_cast<u32>(ActionConstants::INVALID_TAG) ||
          !IActionRunner::sInUseTagSet.insert(tag).second)
@@ -111,9 +128,6 @@ namespace Anki {
       return _isInterrupted;
     }
     
-    // NOTE: There should be no way for Update() to fail independently of its
-    // call to UpdateInternal(). Otherwise, there's a possibility for an
-    // IAction's Cleanup() method not be called on failure.
     ActionResult IActionRunner::Update()
     {
       // If for some reason someone tried to set the tag to an invalid tag and didn't check the return
