@@ -17,6 +17,8 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/ledController.h"
+#include <stdio.h>
+#include <string.h>
 
 #define MS_TO_LED_FRAMES(ms) ((ms+29)/30)
 
@@ -29,6 +31,15 @@ namespace BackpackLightController {
     // User-defined light params
     LightState  _ledParams[NUM_BACKPACK_LEDS];
     TimeStamp_t _ledPhases[NUM_BACKPACK_LEDS];
+    
+    // Light params when off charger
+    const LightState  _defaultOffChargerParams[NUM_BACKPACK_LEDS] = {
+      {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
+      {0x03e0, 0x0200, 10, 10, 50, 50}, // LED_BACKPACK_FRONT
+      {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_MIDDLE
+      {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_BACK
+      {0, 0, 0, 0, 0, 0}  // LED_BACKPACK_BACK
+    };
 
     // Light params when charging
     const LightState  _chargingParams[NUM_BACKPACK_LEDS] = {
@@ -74,10 +85,8 @@ namespace BackpackLightController {
 
   Result Init()
   {
-    for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
-      _ledParams[i].onColor  = LED_ENC_OFF;
-      _ledParams[i].offColor = LED_ENC_OFF;
-    }
+    memcpy(_ledParams, _defaultOffChargerParams, sizeof(_ledParams));
+    memset(_ledPhases, 0, sizeof(_ledPhases));
     _enable = true;
 
     return RESULT_OK;
@@ -110,17 +119,20 @@ namespace BackpackLightController {
       {
         // Reset current lights and switch to charging lights
         _currParams = _chargingParams;
+        memset(_ledPhases, 0, sizeof(_ledPhases));
       }
       else if ((_currParams != _chargedParams) && _isChargedCount > 0)
       {
         // Reset current lights and switch to charged lights
         _currParams = _chargedParams;
+        memset(_ledPhases, 0, sizeof(_ledPhases));
       }
     }
     else if (!HAL::BatteryIsOnCharger() && _currParams != _ledParams)
     {
       // Reset current lights and switch to user-defined lights
       _currParams = _ledParams;
+      memset(_ledPhases, 0, sizeof(_ledPhases));
     }
   }
 
