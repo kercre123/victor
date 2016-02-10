@@ -113,13 +113,13 @@ namespace Anki {
         
         if(_robot->GetMoveComponent().IsTrackLocked((AnimTrackFlag)tracksToLock))
         {
-          PRINT_NAMED_INFO("IActionRunner.Update",
+          PRINT_NAMED_WARNING("IActionRunner.Update",
                            "Action %s [%d] not running because required tracks (0x%x) %s are locked",
                            GetName().c_str(),
                            GetTag(),
                            tracksToLock,
                            AnimTrackFlagToString((AnimTrackFlag)tracksToLock));
-
+          _result = ActionResult::FAILURE_TRACKS_LOCKED;
           return ActionResult::FAILURE_TRACKS_LOCKED;
         }
         
