@@ -19,7 +19,7 @@ namespace Simon {
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderMakeYourGuess);
-      _GameInstance.ShowInfoTextSlideWithKey(LocalizationKeys.kSimonGameLabelMakeYourGuess);
+      _GameInstance.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kSimonGameLabelMakeYourGuess);
       _GameInstance.CozmoDim = true;
       _GameInstance.PlayerDim = false;
       _SequenceList = _GameInstance.GetCurrentSequence();

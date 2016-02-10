@@ -19,7 +19,7 @@ namespace SpeedTap {
       _SpeedTapGame.PlayerBlock.Lights[3].OnColor = Color.yellow.ToUInt();
 
       LightCube.TappedAction += HandleTap;
-      _SpeedTapGame.ShowFullScreenSlide(kSlideName);
+      _SpeedTapGame.SharedMinigameView.ShowFullScreenSlideByName(kSlideName);
 
     }
 
@@ -32,7 +32,7 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      _SpeedTapGame.HideGameStateSlide();
+      _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
       LightCube.TappedAction -= HandleTap;
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);

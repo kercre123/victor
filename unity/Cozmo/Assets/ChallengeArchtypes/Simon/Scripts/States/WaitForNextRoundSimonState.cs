@@ -16,22 +16,22 @@ namespace Simon {
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InitColorsAndSounds();
 
-      _GameInstance.ShowContinueButtonShelf(true);
-      _GameInstance.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-      _GameInstance.SetContinueButtonListener(HandleContinuePressed);
-      _GameInstance.EnableContinueButton(true);
+      _GameInstance.SharedMinigameView.ShowContinueButtonShelf(true);
+      _GameInstance.SharedMinigameView.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
+      _GameInstance.SharedMinigameView.SetContinueButtonListener(HandleContinuePressed);
+      _GameInstance.SharedMinigameView.EnableContinueButton(true);
 
       string headerTextKey = (_NextPlayer == PlayerType.Human) ? 
         LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;
       _GameInstance.InfoTitleText = null;
-      _GameInstance.ShowInfoTextSlideWithKey(headerTextKey);
+      _GameInstance.SharedMinigameView.ShowInfoTextSlideWithKey(headerTextKey);
         
       _GameInstance.CozmoDim = (_NextPlayer == PlayerType.Human);
       _GameInstance.PlayerDim = (_NextPlayer == PlayerType.Cozmo);
     }
 
     private void HandleContinuePressed() {
-      _GameInstance.HideContinueButtonShelf();
+      _GameInstance.SharedMinigameView.HideContinueButtonShelf();
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.PLAYFUL);
       if (_NextPlayer == PlayerType.Cozmo) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));

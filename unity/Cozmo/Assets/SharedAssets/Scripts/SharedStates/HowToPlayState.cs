@@ -13,11 +13,11 @@ public class HowToPlayState : State {
 
   public override void Enter() {
     _Game = _StateMachine.GetGame();
-    _Game.ShowContinueButtonShelf();
-    _Game.SetContinueButtonShelfText(Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), false);
-    _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonStartChallenge));
-    _Game.SetContinueButtonListener(HandleContinueButtonClicked);
-    _Game.EnableContinueButton(true);
+    _Game.SharedMinigameView.ShowContinueButtonShelf(false);
+    _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), false);
+    _Game.SharedMinigameView.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonStartChallenge));
+    _Game.SharedMinigameView.SetContinueButtonListener(HandleContinueButtonClicked);
+    _Game.SharedMinigameView.EnableContinueButton(true);
     _Game.SharedMinigameView.CreateHowToPlayButton();
     _Game.SharedMinigameView.OpenHowToPlayView();
   }
@@ -27,7 +27,7 @@ public class HowToPlayState : State {
     _Game.SharedMinigameView.HideQuickQuitButton();
     _Game.SharedMinigameView.CreateQuitButton();
     _Game.SharedMinigameView.CloseHowToPlayView();
-    _Game.HideContinueButtonShelf();
+    _Game.SharedMinigameView.HideContinueButtonShelf();
 
     if (_NextState == null) {
       _StateMachine.PopState();

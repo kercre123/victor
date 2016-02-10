@@ -59,7 +59,7 @@ namespace AskCozmo {
 
       // Play a slide
       _CurrentSlideName = GetNextSlide();
-      ShowFullScreenSlide(_CurrentSlideName);
+      SharedMinigameView.ShowFullScreenSlideByName(_CurrentSlideName);
     }
 
     protected override void CleanUpOnDestroy() {
@@ -95,7 +95,7 @@ namespace AskCozmo {
       }
 
       _CurrentSlideName = GetNextSlide();
-      ShowFullScreenSlide(_CurrentSlideName);
+      SharedMinigameView.ShowFullScreenSlideByName(_CurrentSlideName);
     }
 
     void HandleAnimationDone(bool success) {

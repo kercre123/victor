@@ -58,7 +58,7 @@ public abstract class GameBase : MonoBehaviour {
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       false) as SharedMinigameView;
     _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
-      _ChallengeData.HowToPlayDialogContentLocKey);
+      _ChallengeData.HowToPlayDialogContentLocKey, _GameStateSlides);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
     _ChallengeData = challengeData;
@@ -215,9 +215,9 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
     // Listen for dialog close
-    ShowContinueButtonShelf(centerShelf: true);
-    SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-    SetContinueButtonListener(HandleChallengeResultViewClosed);
+    SharedMinigameView.ShowContinueButtonShelf(centerShelf: true);
+    SharedMinigameView.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
+    SharedMinigameView.SetContinueButtonListener(HandleChallengeResultViewClosed);
 
     _RewardedXp = new StatContainer();
 
@@ -276,99 +276,6 @@ public abstract class GameBase : MonoBehaviour {
   #endregion
 
   // end Difficulty Select
-
-  #region Game State Slides
-
-  // TODO: Delete after removing usage by CodeBreaker, Minesweeper
-  public GameObject ShowFullScreenSlide(string slideName) {
-    // If found, show that slide.
-    GameObject slideObject = null;
-    GameStateSlide foundSlideData = GetSlideByName(slideName);
-    if (foundSlideData != null) {
-      slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(foundSlideData);
-    }
-    else {
-      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
-      " list of slides! gameObject.name=" + gameObject.name);
-    }
-    return slideObject;
-  }
-
-  // TODO: Delete after removing usage by CodeBreaker, Minesweeper
-  private GameStateSlide GetSlideByName(string slideName) {
-    // Search through the array for a slide of the same name
-    GameStateSlide foundSlideData = null;
-    foreach (var slide in _GameStateSlides) {
-      if (slide != null && slide.slideName == slideName) {
-        if (slide.slidePrefab != null) {
-          foundSlideData = slide;
-        }
-        else {
-          DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
-          " list of slides! gameObject.name=" + gameObject.name);
-        }
-        break;
-      }
-      else if (slide == null) {
-        DAS.Warn(this, "Null slide found in slide prefabs! Check this object's" +
-        " list of slides! gameObject.name=" + gameObject.name);
-      }
-    }
-    return foundSlideData;
-  }
-
-  public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
-    GameObject slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(UIPrefabHolder.Instance.InitialCubesSlide);
-    ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-    cubeSlide.Initialize(numCubesRequired);
-    return cubeSlide;
-  }
-
-  public GameObject ShowFullScreenSlide(GameObject slidePrefab) {
-    return _SharedMinigameViewInstance.ShowFullScreenSlide(slidePrefab, slidePrefab.name);
-  }
-
-  public void ShowInfoTextSlide(string textToDisplay) {
-    _SharedMinigameViewInstance.ShowInfoTextSlide(textToDisplay);
-  }
-
-  public void ShowInfoTextSlideWithKey(string localizationKey) {
-    _SharedMinigameViewInstance.ShowInfoTextSlide(Localization.Get(localizationKey));
-  }
-
-  public void HideGameStateSlide() {
-    _SharedMinigameViewInstance.HideGameStateSlide();
-  }
-
-  #endregion
-
-  #region ContinueGameShelfWidget
-
-  public void ShowContinueButtonShelf(bool centerShelf = false) {
-    _SharedMinigameViewInstance.ShowContinueButtonShelf(centerShelf);
-  }
-
-  public void HideContinueButtonShelf() {
-    _SharedMinigameViewInstance.HideContinueButtonShelf();
-  }
-
-  public void SetContinueButtonShelfText(string text, bool isComplete) {
-    _SharedMinigameViewInstance.SetContinueButtonShelfText(text, isComplete);
-  }
-
-  public void SetContinueButtonText(string text) {
-    _SharedMinigameViewInstance.SetContinueButtonText(text);
-  }
-
-  public void SetContinueButtonListener(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler) {
-    _SharedMinigameViewInstance.SetContinueButtonListener(buttonClickHandler);
-  }
-
-  public void EnableContinueButton(bool enable) {
-    _SharedMinigameViewInstance.EnableContinueButton(enable);
-  }
-
-  #endregion
 
   #region Info Title Text
 

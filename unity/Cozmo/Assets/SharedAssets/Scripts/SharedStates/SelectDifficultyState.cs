@@ -20,17 +20,17 @@ public class SelectDifficultyState : State {
     _Game = _StateMachine.GetGame();
     _Game.SharedMinigameView.OpenDifficultySelectView(_DifficultyOptions, 
       _HighestLevelCompleted);
-    _Game.ShowContinueButtonShelf();
-    _Game.SetContinueButtonShelfText(string.Empty, false);
-    _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-    _Game.SetContinueButtonListener(HandleContinueButtonClicked);
-    _Game.EnableContinueButton(true);
+    _Game.SharedMinigameView.ShowContinueButtonShelf(false);
+    _Game.SharedMinigameView.SetContinueButtonShelfText(string.Empty, false);
+    _Game.SharedMinigameView.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
+    _Game.SharedMinigameView.SetContinueButtonListener(HandleContinueButtonClicked);
+    _Game.SharedMinigameView.EnableContinueButton(true);
 
   }
 
   public override void Exit() {
     _Game.SharedMinigameView.CloseDifficultySelectView();
-    _Game.HideContinueButtonShelf();
+    _Game.SharedMinigameView.HideContinueButtonShelf();
   }
 
   private void HandleContinueButtonClicked() {

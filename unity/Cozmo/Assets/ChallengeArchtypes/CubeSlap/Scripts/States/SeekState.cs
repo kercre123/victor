@@ -14,7 +14,7 @@ namespace CubeSlap {
       _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
       _CubeSlapGame.GetCurrentTarget();
       _CubeSlapGame.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderSetupText);
-      _CubeSlapGame.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
+      _CubeSlapGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.7f);
       _CubeSlapGame.ResetSlapChance();

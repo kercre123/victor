@@ -54,7 +54,7 @@ namespace CodeBreaker {
     #region UI
 
     public void ShowReadySlide(string readySlideTextLocKey, string buttonTextLocKey, ReadyButtonClickedHandler readyButtonCallback) {
-      GameObject howToPlaySlide = ShowFullScreenSlide(kHowToPlaySlideName);
+      GameObject howToPlaySlide = SharedMinigameView.ShowFullScreenSlideByName(kHowToPlaySlideName);
       _ReadySlide = howToPlaySlide.GetComponent<CodeBreakerReadySlide>();
       if (_ReadySlide != null) {
         _ReadySlide.SetSlideText(Localization.Get(readySlideTextLocKey));
@@ -71,7 +71,7 @@ namespace CodeBreaker {
     }
 
     public void ShowGamePanel(SubmitButtonClickedHandler submitButtonCallback) {
-      GameObject gamePanelObject = ShowFullScreenSlide(kGamePanelSlideName);
+      GameObject gamePanelObject = SharedMinigameView.ShowFullScreenSlideByName(kGamePanelSlideName);
       _GamePanelSlide = gamePanelObject.GetComponent<CodeBreakerPanel>();
       if (_GamePanelSlide != null) {
         _GamePanelSlide.EnableButton = true;

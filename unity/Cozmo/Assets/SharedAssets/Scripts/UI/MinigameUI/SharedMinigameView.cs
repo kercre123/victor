@@ -116,9 +116,13 @@ namespace Cozmo {
 
       private string _HowToPlayContentLocKey;
 
-      public void Initialize(GameObject howToPlayContentPrefab, string howToPlayContentLocKey) {
+      private GameStateSlide[] _GameStateSlides;
+
+      public void Initialize(GameObject howToPlayContentPrefab, string howToPlayContentLocKey,
+                             GameStateSlide[] gameStateSlides) {
         _HowToPlayContentPrefab = howToPlayContentPrefab;
         _HowToPlayContentLocKey = howToPlayContentLocKey;
+        _GameStateSlides = gameStateSlides;
       }
 
       #region Base View
@@ -410,8 +414,27 @@ namespace Cozmo {
 
       #region Game State Slides
 
-      public GameObject ShowFullScreenSlide(GameStateSlide slideData) {
-        return ShowFullScreenSlide(slideData.slidePrefab.gameObject, slideData.slideName);
+      public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired) {
+        GameStateSlide cubesSlide = UIPrefabHolder.Instance.InitialCubesSlide;
+        GameObject slideObject = ShowFullScreenSlide(cubesSlide.slidePrefab.gameObject, cubesSlide.slideName);
+        ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
+        cubeSlide.Initialize(numCubesRequired);
+        return cubeSlide;
+      }
+
+      // TODO: Delete after removing usage by CodeBreaker, Minesweeper
+      public GameObject ShowFullScreenSlideByName(string slideName) {
+        // If found, show that slide.
+        GameObject slideObject = null;
+        GameStateSlide foundSlideData = GetSlideByName(slideName);
+        if (foundSlideData != null) {
+          slideObject = ShowFullScreenSlide(foundSlideData.slidePrefab.gameObject, foundSlideData.slideName);
+        }
+        else {
+          DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
+          " list of slides! gameObject.name=" + gameObject.name);
+        }
+        return slideObject;
       }
 
       public GameObject ShowFullScreenSlide(GameObject prefab, string slideKey) {
@@ -420,14 +443,14 @@ namespace Cozmo {
         return ShowGameStateSlide(slideKey, prefab, _FullScreenSlideContainer);
       }
 
-      public GameObject ShowCustomGameStateSlide(GameStateSlide slideData) {
-        return ShowCustomGameStateSlide(slideData.slidePrefab.gameObject, slideData.slideName);
-      }
-
       public GameObject ShowCustomGameStateSlide(GameObject prefab, string slideKey) {
         InfoTitleText = null;
         HideGameStateSlide();
         return ShowGameStateSlide(slideKey, prefab, _GameCustomInfoSlideContainer);
+      }
+
+      public void ShowInfoTextSlideWithKey(string localizationKey) {
+        ShowInfoTextSlide(Localization.Get(localizationKey));
       }
 
       public void ShowInfoTextSlide(string textToDisplay) {
@@ -435,6 +458,54 @@ namespace Cozmo {
                              _InfoTextSlideContainer);
         Anki.UI.AnkiTextLabel textLabel = slide.GetComponent<Anki.UI.AnkiTextLabel>();
         textLabel.text = textToDisplay;
+      }
+
+      public void HideGameStateSlide() {
+        if (_CurrentSlide != null) {
+          // Set the instance to transition out slot
+          _TransitionOutSlide = _CurrentSlide;
+          _CurrentSlide = null;
+          _CurrentSlideName = null;
+
+          if (_SlideOutTween != null) {
+            _SlideOutTween.Kill();
+          }
+          _SlideOutTween = DOTween.Sequence();
+          _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
+            100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
+          _SlideOutTween.Join(_TransitionOutSlide.DOFade(0, 0.25f));
+
+          // At the end of the tween destroy the out slide
+          _SlideOutTween.OnComplete(() => {
+            if (_TransitionOutSlide.gameObject != null) {
+              Destroy(_TransitionOutSlide.gameObject);
+            }
+          });
+          _SlideOutTween.Play();
+        }
+      }
+
+      // TODO: Delete after removing usage by CodeBreaker, Minesweeper
+      private GameStateSlide GetSlideByName(string slideName) {
+        // Search through the array for a slide of the same name
+        GameStateSlide foundSlideData = null;
+        foreach (var slide in _GameStateSlides) {
+          if (slide != null && slide.slideName == slideName) {
+            if (slide.slidePrefab != null) {
+              foundSlideData = slide;
+            }
+            else {
+              DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
+              " list of slides! gameObject.name=" + gameObject.name);
+            }
+            break;
+          }
+          else if (slide == null) {
+            DAS.Warn(this, "Null slide found in slide prefabs! Check this object's" +
+            " list of slides! gameObject.name=" + gameObject.name);
+          }
+        }
+        return foundSlideData;
       }
 
       private GameObject ShowGameStateSlide(string slideName, GameObject slidePrefab,
@@ -470,31 +541,6 @@ namespace Cozmo {
         _SlideInTween.Play();
 
         return newSlideObj;
-      }
-
-      public void HideGameStateSlide() {
-        if (_CurrentSlide != null) {
-          // Set the instance to transition out slot
-          _TransitionOutSlide = _CurrentSlide;
-          _CurrentSlide = null;
-          _CurrentSlideName = null;
-
-          if (_SlideOutTween != null) {
-            _SlideOutTween.Kill();
-          }
-          _SlideOutTween = DOTween.Sequence();
-          _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
-            100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
-          _SlideOutTween.Join(_TransitionOutSlide.DOFade(0, 0.25f));
-
-          // At the end of the tween destroy the out slide
-          _SlideOutTween.OnComplete(() => {
-            if (_TransitionOutSlide.gameObject != null) {
-              Destroy(_TransitionOutSlide.gameObject);
-            }
-          });
-          _SlideOutTween.Play();
-        }
       }
 
       #endregion

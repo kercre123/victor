@@ -21,13 +21,13 @@ public class InitialCubesState : State {
     _CurrentRobot.SetLiftHeight(0f);
 
     _Game = _StateMachine.GetGame();
-    _ShowCozmoCubesSlide = _Game.ShowShowCozmoCubesSlide(_CubesRequired);
-    _Game.ShowContinueButtonShelf();
-    _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
+    _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+    _Game.SharedMinigameView.ShowContinueButtonShelf(false);
+    _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
       0), false);
-    _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-    _Game.SetContinueButtonListener(HandleContinueButtonClicked);
-    _Game.EnableContinueButton(false);
+    _Game.SharedMinigameView.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
+    _Game.SharedMinigameView.SetContinueButtonListener(HandleContinueButtonClicked);
+    _Game.SharedMinigameView.EnableContinueButton(false);
   }
 
   public override void Update() {
@@ -52,17 +52,17 @@ public class InitialCubesState : State {
       _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
 
       if (_NumValidCubes >= _CubesRequired) {
-        _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
+        _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
           _NumValidCubes), true);
 
-        _Game.EnableContinueButton(true);
+        _Game.SharedMinigameView.EnableContinueButton(true);
       }
       else {
-        _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
+        _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
           _CubesRequired,
           _NumValidCubes), false);
 
-        _Game.EnableContinueButton(false);
+        _Game.SharedMinigameView.EnableContinueButton(false);
       }
     }
   }
@@ -74,7 +74,7 @@ public class InitialCubesState : State {
       lightCube.Value.TurnLEDsOff();
     }
 
-    _Game.HideGameStateSlide();
+    _Game.SharedMinigameView.HideGameStateSlide();
   }
 
   private void HandleContinueButtonClicked() {
