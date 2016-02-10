@@ -239,12 +239,12 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
-      
     protected:
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
+      
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       // Need longer than default for check if done:
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
@@ -273,6 +273,9 @@ namespace Anki {
                                       const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
+      
+    protected:
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
     };
     
     
@@ -331,10 +334,10 @@ namespace Anki {
       // on what we were doing.
       virtual RobotActionType GetType() const override;
       
+    protected:
+      
       // Override completion signal to fill in information about rolled objects
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
-      
-    protected:
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       

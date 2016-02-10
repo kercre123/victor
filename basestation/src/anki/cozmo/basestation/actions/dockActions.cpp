@@ -916,6 +916,12 @@ namespace Anki {
       
     }
     
+    void PlaceObjectOnGroundAtPoseAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    {
+      // Use the completion union of the constituent PlaceObjectOnGround action
+      _actions.back().second->GetCompletionUnion(completionUnion);
+    }
+    
 #pragma mark ---- PlaceRelObjectAction ----
     
     PlaceRelObjectAction::PlaceRelObjectAction(Robot& robot,
