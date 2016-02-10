@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/sosLoggerProvider.h"
-#include "util/logging/multiLoggerProvider.h"
+#include "util/logging/multiFormattedLoggerProvider.h"
 
 #include "util/time/stopWatch.h"
 
@@ -81,7 +81,7 @@ using namespace Anki::Cozmo;
 int main(int argc, char **argv)
 {
 
-  Anki::Util::MultiLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider()});
+  Anki::Util::MultiFormattedLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider()});
   loggerProvider.SetMinLogLevel(0);
   Anki::Util::gLoggerProvider = &loggerProvider;
   

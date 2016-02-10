@@ -31,7 +31,7 @@
 #ifndef ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 #define ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 
-#include "util/logging/multiLoggerProvider.h"
+#include "util/logging/multiFormattedLoggerProvider.h"
 #include "anki/vision/basestation/image.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -134,7 +134,7 @@ public:
 
 protected:
 
-  Anki::Util::MultiLoggerProvider _loggerProvider;
+  Anki::Util::MultiFormattedLoggerProvider _loggerProvider;
   
   std::vector<::Signal::SmartHandle> _signalHandles;
   
