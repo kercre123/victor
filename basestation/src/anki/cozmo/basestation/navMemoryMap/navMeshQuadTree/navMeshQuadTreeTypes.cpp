@@ -10,12 +10,33 @@
  **/
 #include "navMeshQuadTreeTypes.h"
 
+#include "anki/cozmo/basestation/navMemoryMap/quadData/iNavMemoryMapQuadData.h"
+
 #include "anki/common/basestation/exceptions.h"
+
 #include "util/math/numericCast.h"
 
 namespace Anki {
 namespace Cozmo {
 namespace NavMeshQuadTreeTypes {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NodeContent::operator==(const NodeContent& other) const
+{
+  const bool equals = (type == other.type) &&
+    ( (data == other.data) ||
+      ((data != nullptr) && (other.data != nullptr) && (data->Equals(other.data.get())))
+    );
+  
+  return equals;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NodeContent::operator!=(const NodeContent& other) const
+{
+  const bool ret = !(this->operator==(other));
+  return ret;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentType)

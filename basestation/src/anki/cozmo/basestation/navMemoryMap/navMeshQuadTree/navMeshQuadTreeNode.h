@@ -37,6 +37,9 @@ class NavMeshQuadTreeNode : private Util::noncopyable
 {
 public:
 
+void TESTDONOTCOMIT();
+void TESTDONOTCOMITRec();
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -58,6 +61,11 @@ public:
   // Alternatively processors would store weak_ptr, but no need for the moment given the above assumption
   // ~NavMeshQuadTreeNode();
   
+  // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
+  // which is annoying
+  NavMeshQuadTreeNode(const NavMeshQuadTreeNode&&) = delete;
+  NavMeshQuadTreeNode& operator=(const NavMeshQuadTreeNode&&) = delete;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -65,7 +73,8 @@ public:
   uint8_t GetLevel() const { return _level; }
   float GetSideLen() const { return _sideLen; }
   const Point3f& GetCenter() const { return _center; }
-  ENodeContentType GetContentType() const { return _contentType; }
+  ENodeContentType GetContentType() const { return _content.type; }
+  const NodeContent& GetContent() const { return _content; }
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
   bool Contains(const Quad2f& quad) const;
@@ -79,7 +88,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // helper for the specific add functions. It properly processes the quad down the tree for the given content
-  bool AddQuad(const Quad2f& quad, ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
+  bool AddQuad(const Quad2f& quad, NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
@@ -123,7 +132,7 @@ private:
   
   // type of overlap for quads
   enum class EContentOverlap { Partial, Total };
-
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -147,16 +156,16 @@ private:
 
   // subdivide/merge children
   void Subdivide(NavMeshQuadTreeProcessor& processor);
-  void Merge(ENodeContentType newContentType, NavMeshQuadTreeProcessor& processor);
+  void Merge(NodeContent& newContent, NavMeshQuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge(NavMeshQuadTreeProcessor& processor);
   
   // sets the content type to the detected one.
   // try checks por priority first, then calls force
-  void TrySetDetectedContentType(ENodeContentType detectedContentType, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
+  void TrySetDetectedContentType(NodeContent& detectedContent, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
   // force sets the type and updates shared container
-  void ForceSetDetectedContentType(ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
+  void ForceSetDetectedContentType(NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
   
   // sets a new parent to this node. Used on expansions
   void ChangeParent(const NavMeshQuadTreeNode* newParent) { _parent = newParent; }
@@ -198,7 +207,7 @@ private:
   EQuadrant _quadrant;
   
   // information about what's in this quad
-  ENodeContentType _contentType;
+  NodeContent _content;
     
 }; // class
   
