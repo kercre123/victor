@@ -282,6 +282,7 @@ namespace Anki {
       // In case we are re-running this action, make sure compound actions are cleared.
       // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)
       _compoundAction.ClearActions();
+      _compoundAction.SetSuppressTrackLocking(true);
 
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {

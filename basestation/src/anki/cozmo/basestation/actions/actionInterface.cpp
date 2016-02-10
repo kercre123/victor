@@ -130,7 +130,6 @@ namespace Anki {
 #       endif
 
         _robot.GetMoveComponent().LockTracks(tracksToLock);
-
       }
 
       if( ! _isRunning ) {
@@ -225,14 +224,15 @@ namespace Anki {
     {
       if(!_suppressTrackLocking)
       {
+        u8 tracks = GetTracksToLock();
 #         if DEBUG_ANIM_TRACK_LOCKING
         PRINT_NAMED_INFO("IActionRunner.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                         _tracks,
-                         AnimTrackFlagToString((AnimTrackFlag)_tracks),
+                         tracks,
+                         AnimTrackFlagToString((AnimTrackFlag)tracks),
                          _name.c_str(),
                          _idTag);
 #         endif
-        _robot.GetMoveComponent().UnlockTracks(_tracks);
+        _robot.GetMoveComponent().UnlockTracks(tracks);
       }
     }
     

@@ -81,6 +81,7 @@ namespace Anki {
       {
           assert((*iter).second != nullptr);
           // TODO: issue a warning when a group is deleted without all its actions completed?
+          (*iter).second->PrepForCompletion();
           Util::SafeDelete((*iter).second);
           iter = _actions.erase(iter);
       }
@@ -262,9 +263,8 @@ namespace Anki {
           switch(subResult)
           {
             case ActionResult::SUCCESS:
-              // Just finished this action, mark it as done and unlock its tracks
+              // Just finished this action, mark it as done
               isDone = true;
-              currentAction->UnlockTracks();
               break;
               
             case ActionResult::RUNNING:

@@ -687,6 +687,7 @@ namespace Anki {
     ActionResult PanAndTiltAction::Init()
     {
       // Incase we are re-running this action
+      _compoundAction.SetSuppressTrackLocking(true);
       _compoundAction.ClearActions();
       _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
       
@@ -855,6 +856,7 @@ namespace Anki {
       
       // Disable completion signals since this is inside another action
       _visuallyVerifyAction.SetEmitCompletionSignal(false);
+      _visuallyVerifyAction.SetSuppressTrackLocking(true);
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
