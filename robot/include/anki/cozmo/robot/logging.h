@@ -36,8 +36,21 @@
 template<typename T>
 int trace_cast(const T arg)
 {
+  return arg;
+}
+
+// No floats on the espressif
+#ifndef TARGET_ESPRESSIF
+template<> int trace_cast<float>(const float arg)
+{
   return *((int*)&arg);
 }
+
+template<> int trace_cast<double>(const float arg)
+{
+  return *((int*)&arg);
+}
+#endif
 
 // Macro ball based loosely on http://stackoverflow.com/questions/6707148/foreach-macro-on-macros-arguments#6707531
 // Paste macro is two layers to force extra eval
