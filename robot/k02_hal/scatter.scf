@@ -30,7 +30,7 @@ LR_m_text m_text_start m_text_size {   ; load region size_region
 }
 
 LR_m_header m_header_start m_header_size {
-  HEADER_ROM m_header_start m_header_size {
+  ER_IROM1 m_header_start m_header_size {
     * (HEADER,+FIRST)
   }
 }
