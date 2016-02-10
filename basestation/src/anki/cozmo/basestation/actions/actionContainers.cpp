@@ -473,7 +473,7 @@ namespace Anki {
         }
         assert(_currentAction != nullptr);
         
-        VizManager* vizManager = _currentAction->GetRobot()->GetContext()->GetVizManager();
+        VizManager* vizManager = _currentAction->GetRobot().GetContext()->GetVizManager();
         ASSERT_NAMED(nullptr != vizManager, "Expecting a non-null VizManager");
         
         vizManager->SetText(VizManager::ACTION, NamedColors::GREEN,

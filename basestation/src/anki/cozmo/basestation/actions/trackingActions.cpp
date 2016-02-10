@@ -42,12 +42,12 @@ ITrackAction::~ITrackAction()
 {
   if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
     // Make sure any eye shift gets removed
-    _robot->GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+    _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
     _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
   }
 
   // Make sure to restore original eye dart distance
-  _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+  _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
 }
 
 void ITrackAction::SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec) {
@@ -125,10 +125,10 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
 ActionResult ITrackAction::Init()
 {
   // Store eye dart setting so we can restore after tracking
-  _originalEyeDartDist = _robot->GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
+  _originalEyeDartDist = _robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
   
   // Reduce eye darts so we better appear to be tracking and not look around
-  _robot->GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
+  _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
   
   return InitInternal();
 }
@@ -168,7 +168,7 @@ ActionResult ITrackAction::CheckIfDone()
     f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
     
     // Tilt Head:
-    const f32 relTiltAngle = (absTiltAngle - _robot->GetHeadAngle()).ToFloat();
+    const f32 relTiltAngle = (absTiltAngle - _robot.GetHeadAngle()).ToFloat();
     if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
        std::abs(relTiltAngle) > _tiltTolerance.ToFloat())
     {
@@ -177,7 +177,7 @@ ActionResult ITrackAction::CheckIfDone()
       const f32 speed = (_maxTiltSpeed_radPerSec - _minTiltSpeed_radPerSec)*angleFrac + _minTiltSpeed_radPerSec;
       const f32 accel = 20.f; // (MaxAccel - MinAccel)*angleFrac + MinAccel;
       
-      if(RESULT_OK != _robot->GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
+      if(RESULT_OK != _robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
       {
         return ActionResult::FAILURE_ABORT;
       }
@@ -193,14 +193,14 @@ ActionResult ITrackAction::CheckIfDone()
     }
     
     // Pan Body:
-    const f32 relPanAngle = (absPanAngle - _robot->GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
+    const f32 relPanAngle = (absPanAngle - _robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
     if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && std::abs(relPanAngle) > _panTolerance.ToFloat())
     {
       // Get rotation angle around drive center
       Pose3d rotatedPose;
-      Pose3d dcPose = _robot->GetDriveCenterPose();
+      Pose3d dcPose = _robot.GetDriveCenterPose();
       dcPose.SetRotation(absPanAngle, Z_AXIS_3D());
-      _robot->ComputeOriginPose(dcPose, rotatedPose);
+      _robot.ComputeOriginPose(dcPose, rotatedPose);
       
       // Set speed/accel based on angle difference
       const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/(f32)M_PI);
@@ -211,7 +211,7 @@ ActionResult ITrackAction::CheckIfDone()
       setBodyAngle.angle_rad             = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
       setBodyAngle.max_speed_rad_per_sec = speed;
       setBodyAngle.accel_rad_per_sec2    = accel; 
-      if(RESULT_OK != _robot->SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+      if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
         return ActionResult::FAILURE_ABORT;
       }
       
@@ -231,7 +231,7 @@ ActionResult ITrackAction::CheckIfDone()
     if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
-      _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(*_robot, _turningSoundAnimation, 1, false));
+      _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_robot, _turningSoundAnimation, 1, false));
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }
@@ -264,10 +264,10 @@ ActionResult ITrackAction::CheckIfDone()
         // Start a new eye shift layer
         AnimationStreamer::FaceTrack faceTrack;
         faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
-        _eyeShiftTag = _robot->GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
+        _eyeShiftTag = _robot.GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
       } else {
         // Augment existing eye shift layer
-        _robot->GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
+        _robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
       }
     } // if(_moveEyes)
     
@@ -297,7 +297,7 @@ TrackObjectAction::TrackObjectAction(Robot& robot, const ObjectID& objectID, boo
   
 TrackObjectAction::~TrackObjectAction()
 {
-  _robot->GetMoveComponent().UnSetTrackToObject();
+  _robot.GetMoveComponent().UnSetTrackToObject();
 }
 
 ActionResult TrackObjectAction::InitInternal()
@@ -307,7 +307,7 @@ ActionResult TrackObjectAction::InitInternal()
     return ActionResult::FAILURE_ABORT;
   }
   
-  const ObservableObject* object = _robot->GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
   if(nullptr == object) {
     PRINT_NAMED_ERROR("TrackObjectAction.Init.InvalidObject",
                       "Object %d does not exist in BlockWorld", _objectID.GetValue());
@@ -323,7 +323,7 @@ ActionResult TrackObjectAction::InitInternal()
     _name = "TrackObject" + std::to_string(_objectID) + "Action";
   }
   
-  _robot->GetMoveComponent().SetTrackToObject(_objectID);
+  _robot.GetMoveComponent().SetTrackToObject(_objectID);
   
   return ActionResult::SUCCESS;
 } // InitInternal()
@@ -336,7 +336,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(true);
     
-    matchingObject = _robot->GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
+    matchingObject = _robot.GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
     
     if(nullptr == matchingObject) {
       // Did not see an object of the right type during latest blockworld update
@@ -348,10 +348,10 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
       return false;
     } else if(ActiveIdentityState::Identified == matchingObject->GetIdentityState()) {
       // We've possibly switched IDs that we're tracking. Keep MovementComponent's ID in sync.
-      _robot->GetMoveComponent().SetTrackToObject(matchingObject->GetID());
+      _robot.GetMoveComponent().SetTrackToObject(matchingObject->GetID());
     }
   } else {
-    matchingObject = _robot->GetBlockWorld().GetObjectByID(_objectID);
+    matchingObject = _robot.GetBlockWorld().GetObjectByID(_objectID);
     if(nullptr == matchingObject) {
       PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.ObjectNoLongerExists",
                           "Object %d no longer exists in BlockWorld",
@@ -387,7 +387,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
   for(auto marker : observedMarkers) {
     Pose3d markerPoseWrtRobot;
-    if(false == marker->GetPose().GetWithRespectTo(_robot->GetPose(), markerPoseWrtRobot)) {
+    if(false == marker->GetPose().GetWithRespectTo(_robot.GetPose(), markerPoseWrtRobot)) {
       PRINT_NAMED_ERROR("TrackObjectAction.GetAngles.PoseOriginError",
                         "Could not get pose of observed marker w.r.t. robot");
       return false;
@@ -420,7 +420,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   ASSERT_NAMED(minDistSq > 0.f, "Distance to closest marker should be > 0.");
   
   absTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
-  absPanAngle  = std::atan2(yDist, xDist) + _robot->GetPose().GetRotation().GetAngleAroundZaxis();
+  absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
   
   return true;
   
@@ -439,14 +439,14 @@ TrackFaceAction::TrackFaceAction(Robot& robot, FaceID faceID)
 
 TrackFaceAction::~TrackFaceAction()
 {
-  _robot->GetMoveComponent().UnSetTrackToFace();
+  _robot.GetMoveComponent().UnSetTrackToFace();
 }
 
 
 ActionResult TrackFaceAction::InitInternal()
 {
   _name = "TrackFace" + std::to_string(_faceID) + "Action";
-  _robot->GetMoveComponent().SetTrackToFace(_faceID);
+  _robot.GetMoveComponent().SetTrackToFace(_faceID);
   _lastFaceUpdate = 0;
   return ActionResult::SUCCESS;
 } // InitInternal()
@@ -460,7 +460,7 @@ void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) 
   
 bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
 {
-  const Vision::TrackedFace* face = _robot->GetFaceWorld().GetFace(_faceID);
+  const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_faceID);
   
   if(nullptr == face) {
     // No such face
@@ -474,7 +474,7 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   _lastFaceUpdate = face->GetTimeStamp();
   
   Pose3d headPoseWrtRobot;
-  if(false == face->GetHeadPose().GetWithRespectTo(_robot->GetPose(), headPoseWrtRobot)) {
+  if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headPoseWrtRobot)) {
     PRINT_NAMED_ERROR("TrackFaceAction.GetAngles.PoseOriginError",
                       "Could not get pose of face w.r.t. robot.");
     return false;
@@ -499,7 +499,7 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   ASSERT_NAMED(xyDistSq > 0.f, "Distance to tracked face should be > 0.");
   
   absTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
-  absPanAngle  = std::atan2(yDist, xDist) + _robot->GetPose().GetRotation().GetAngleAroundZaxis();
+  absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
 
   return true;
 } // GetAngles()
@@ -510,7 +510,7 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
 ActionResult TrackMotionAction::InitInternal()
 {
-  if(false == _robot->HasExternalInterface()) {
+  if(false == _robot.HasExternalInterface()) {
     PRINT_NAMED_ERROR("TrackMotionAction.Init.NoExternalInterface",
                       "Robot must have an external interface so action can "
                       "subscribe to motion observation events.");
@@ -526,7 +526,7 @@ ActionResult TrackMotionAction::InitInternal()
     this->_motionObservation = event.GetData().Get_RobotObservedMotion();
   };
   
-  _signalHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
+  _signalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
   
   return ActionResult::SUCCESS;
 } // InitInternal()
@@ -541,16 +541,16 @@ bool TrackMotionAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     const Point2f motionCentroid(_motionObservation.img_x, _motionObservation.img_y);
     
     // Note: we start with relative angles here, but make them absolute below.
-    _robot->GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
+    _robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
     
     // Find pose of robot at time motion was observed
     RobotPoseStamp* poseStamp = nullptr;
     TimeStamp_t junkTime;
-    if(RESULT_OK != _robot->GetPoseHistory()->ComputeAndInsertPoseAt(_motionObservation.timestamp, junkTime, &poseStamp)) {
+    if(RESULT_OK != _robot.GetPoseHistory()->ComputeAndInsertPoseAt(_motionObservation.timestamp, junkTime, &poseStamp)) {
       PRINT_NAMED_ERROR("TrackMotionAction.GetAngles.PoseHistoryError",
                         "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
                         _motionObservation.timestamp,
-                        _robot->GetLastMsgTimestamp());
+                        _robot.GetLastMsgTimestamp());
       return false;
     }
     
