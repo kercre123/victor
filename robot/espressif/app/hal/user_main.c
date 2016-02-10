@@ -170,21 +170,13 @@ void user_init(void)
 
   os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
+  uint8 macaddr[6];
+  wifi_get_macaddr(SOFTAP_IF, macaddr);
+  
   if (*serialNumber == 0xFFFFffff)
   {
     os_printf("No serial number present, will use MAC instead\r\n");
-    // Get the mac address
-    uint8 macaddr[6];
-    err = wifi_get_macaddr(SOFTAP_IF, macaddr);
-    if (err == false)
-    {
-      os_printf("Error getting mac address info\r\n");
-      return;
-    }
-    else
-    {
-      os_sprintf(ssid, "FAIL%02x%02x", macaddr[4], macaddr[5]);
-    }
+    os_sprintf(ssid, "FAIL%02x%02x", macaddr[4], macaddr[5]);
   }
   else
   {
@@ -203,7 +195,7 @@ void user_init(void)
   os_sprintf((char*)ap_config.ssid, ssid);
   os_sprintf((char*)ap_config.password, AP_KEY);
   ap_config.ssid_len = 0;
-  ap_config.channel = 9;
+  ap_config.channel = (macaddr[5]/24) + 1;
   ap_config.authmode = AUTH_WPA2_PSK;
   ap_config.max_connection = AP_MAX_CONNECTIONS;
   ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
