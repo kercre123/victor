@@ -77,10 +77,10 @@ namespace Simon {
       _BlockIdToSound.Clear();
       int counter = 0;
       string cozmoAnimationName = "Simon_Cube";
-      Anki.Cozmo.Audio.GameEvent.GenericEvent[] playerAudio = { 
-        Anki.Cozmo.Audio.GameEvent.GenericEvent.Sfx_Ui_Click_General_Play, 
-        Anki.Cozmo.Audio.GameEvent.GenericEvent.Sfx_Ui_Click_General_Play,
-        Anki.Cozmo.Audio.GameEvent.GenericEvent.Sfx_Ui_Click_General_Play
+      Anki.Cozmo.Audio.GameEvent.SFX_UI[] playerAudio = { 
+        Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral,
+        Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral,
+        Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral
       };
       int smallestArrayLength = playerAudio.Length;
       SimonSound sound;
@@ -125,8 +125,8 @@ namespace Simon {
       return animationName;
     }
 
-    public Anki.Cozmo.Audio.GameEvent.GenericEvent GetPlayerAudioForBlock(int blockId) {
-      Anki.Cozmo.Audio.GameEvent.GenericEvent audioEvent = Anki.Cozmo.Audio.GameEvent.GenericEvent.Sfx_Ui_Click_General_Play;
+    public Anki.Cozmo.Audio.GameEvent.SFX_UI GetPlayerAudioForBlock(int blockId) {
+      Anki.Cozmo.Audio.GameEvent.SFX_UI audioEvent = Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral;
       SimonSound sound;
       if (_BlockIdToSound.TryGetValue(blockId, out sound)) {
         audioEvent = sound.playerSoundName;
@@ -148,7 +148,7 @@ namespace Simon {
 
   public class SimonSound {
     public string cozmoAnimationName;
-    public Anki.Cozmo.Audio.GameEvent.GenericEvent playerSoundName;
+    public Anki.Cozmo.Audio.GameEvent.SFX_UI playerSoundName;
   }
 
   public enum PlayerType {

@@ -188,7 +188,7 @@ namespace SpeedTap {
     }
 
     public void RollingBlocks() {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.GenericEvent.Sfx_Ui_Click_General_Play);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral);
     }
 
     private void UIButtonTapped() {

@@ -78,7 +78,7 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.GenericEvent.Sfx_Ui_Click_General_Play);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral);
       RobotEngineManager.Instance.RobotCompletedAnimation -= RobotCompletedTapAnimation;
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
     }

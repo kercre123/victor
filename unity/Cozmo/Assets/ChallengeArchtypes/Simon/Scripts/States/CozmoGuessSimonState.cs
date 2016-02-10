@@ -24,7 +24,7 @@ namespace Simon {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.GenericEvent.Sfx_Ui_Click_General_Play);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX_UI.ClickGeneral);
     }
 
     public override void Update() {
