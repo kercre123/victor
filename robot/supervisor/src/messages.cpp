@@ -1,6 +1,6 @@
 #include "messages.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/logging.h"
 #include <math.h>
 
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -12,10 +12,6 @@
 #include "../sim_hal/transport/reliableTransport.h"
 #include "anki/vision/CameraSettings.h"
 #include <string.h>
-#endif
-
-#ifdef SIMULATOR
-#include "anki/common/robot/array2d.h"
 #endif
 
 #include "liftController.h"
@@ -62,8 +58,6 @@ namespace Anki {
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
-
-        const int IMAGE_SEND_JPEG_COMPRESSION_QUALITY = 50; // 0 to 100
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -79,7 +73,7 @@ namespace Anki {
 
       void ProcessBadTag_EngineToRobot(RobotInterface::EngineToRobot::Tag badTag)
       {
-        PRINT("Received message with bad tag %02x\n", badTag);
+        AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %02x", 1, badTag);
       }
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
@@ -108,7 +102,7 @@ namespace Anki {
           return false;
         }
         else if(HAL::GetMicroCounter() - lookingStartTime_ > LOOK_FOR_MESSAGE_TIMEOUT) {
-            PRINT("Timed out waiting for message ID %d.\n", lookForID_);
+            AnkiWarn( 107, "Messages.StillLookingForID.Timeout", 356, "Timed out waiting for message ID %d.", 1, lookForID_);
             lookForID_ = RobotInterface::EngineToRobot::INVALID;
           return false;
         }
@@ -174,10 +168,11 @@ namespace Anki {
 
       void Process_syncTime(const RobotInterface::SyncTime& msg)
       {
+        AnkiInfo( 100, "Messages.Process_syncTime.Recvd", 305, "", 0);
 
         RobotInterface::SyncTimeAck syncTimeAckMsg;
         if (!RobotInterface::SendMessage(syncTimeAckMsg)) {
-          PRINT("Error: Failed to send syncTimeAckMsg");
+          AnkiWarn( 102, "Messages.Process_syncTime.AckFailed", 352, "Failed to send syncTimeAckMsg", 0);
         }
 
         initReceived_ = true;
@@ -218,9 +213,8 @@ namespace Anki {
         //Localization::SetPoseFrameId(msg.pose_frame_id);
 
         /*
-        PRINT("Robot %s localization update from "
-              "basestation  at currTime=%d for frame at time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
-              res == RESULT_OK ? "PROCESSED" : "IGNORED",
+        AnkiInfo( 115, "Messages.Process_absLocalizationUpdate.Recvd", 363, "Result %d, currTime=%d, updated frame time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n", 7,
+              res,
               HAL::GetTimeStamp(),
               msg.timestamp,
               currentMatX, currentMatY,
@@ -299,13 +293,13 @@ namespace Anki {
       }
 
       void Process_executePath(const RobotInterface::ExecutePath& msg) {
-        PRINT("Starting path %d\n", msg.pathID);
+        AnkiInfo( 103, "Messages.Process_executePath.StartingPath", 347, "%d", 1, msg.pathID);
         PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
       }
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        PRINT("RECVD DockToBlock (action %d, speed %f, acccel %f, manualSpeed %d)\n",
+        AnkiInfo( 104, "Messages.Process_dockWithObject.Recvd", 353, "action %d, speed %f, acccel %f, manualSpeed %d", 4,
               msg.action, msg.speed_mmps, msg.accel_mmps2, msg.useManualSpeed);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle
@@ -318,7 +312,7 @@ namespace Anki {
 
       void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
       {
-        //PRINT("Received PlaceOnGround message.\n");
+        //AnkiInfo( 108, "Messages.Process_placeObjectOnGround.Recvd", 305, "", 0);
         PickAndPlaceController::PlaceOnGround(msg.speed_mmps,
                                               msg.accel_mmps2,
                                               msg.rel_x_mm,
@@ -336,13 +330,12 @@ namespace Anki {
             f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
             PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
           } else {
-            PRINT("Ignoring DriveWheels message because robot is currently following a path.\n");
+            AnkiInfo( 105, "Messages.Process_drive.Ignoring", 354, "Ignoring command because robot is currently following a path.", 0);
           }
           return;
         }
 
-        //PRINT("Executing DriveWheels message: left=%f, right=%f\n",
-        //      msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+        //AnkiInfo( 116, "Messages.Process_drive.Executing", 364, "left=%f mm/s, right=%f mm/s", 2, msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
 
         //PathFollower::ClearPath();
         SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
@@ -367,13 +360,13 @@ namespace Anki {
       }
 
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
-        //PRINT("Moving lift to %f (maxSpeed %f, duration %f)\n", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
+        //AnkiInfo( 109, "Messages.Process_liftHeight.Recvd", 357, "height %f, maxSpeed %f, duration %f", 3, msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
       }
 
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
-        //PRINT("Moving head to %f (maxSpeed %f, duration %f)\n", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
+        //AnkiInfo( 117, "Messages.Process_headAngle.Recvd", 365, "angle %f, maxSpeed %f, duration %f", 3, msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
       }
@@ -400,7 +393,7 @@ namespace Anki {
       }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
-        //PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
+        //AnkiInfo( 118, "Messages.Process_turnInPlaceAtSpeed.Recvd", 366, "speed %f rad/s, accel %f rad/s2", 2, msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
         SteeringController::ExecutePointTurn(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
 
@@ -417,7 +410,7 @@ namespace Anki {
 
       void Process_imageRequest(const RobotInterface::ImageRequest& msg)
       {
-        PRINT("Image requested (mode: %d, resolution: %d)\n", msg.sendMode, msg.resolution);
+        AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
 #ifndef TARGET_K02
         HAL::SetImageSendMode(msg.sendMode, msg.resolution);
 
@@ -427,7 +420,7 @@ namespace Anki {
         // TODO: Just store CameraResolution in calibration data instead of height/width?
 
         if(headCamInfo == NULL) {
-          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
+          AnkiWarn( 111, "Messages.Process_imageRequest.CalibNotFound", 359, "NULL HeadCamInfo retrieved from HAL.", 0);
         }
         else {
           HAL::CameraInfo headCamInfoScaled(*headCamInfo);
@@ -438,8 +431,8 @@ namespace Anki {
 
           if(xScale != 1.f || yScale != 1.f)
           {
-            PRINT("Scaling [%dx%d] camera calibration by [%.1f %.1f] to match requested resolution.\n",
-                  headCamInfo->ncols, headCamInfo->nrows, xScale, yScale);
+            AnkiInfo( 112, "Messages.Process_imageRequest.ScalingCalib", 360, "Scaling [%dx%d] camera calibration by [%.1f %.1f] to match requested resolution.", 4,
+                     headCamInfo->ncols, headCamInfo->nrows, xScale, yScale);
 
             // Stored calibration info does not requested resolution, so scale it
             // accordingly and adjust the pointer so we send this scaled info below.
@@ -469,7 +462,7 @@ namespace Anki {
           };
 
           if(!RobotInterface::SendMessage(headCalibMsg)) {
-            PRINT("Failed to send camera calibration message.\n");
+            AnkiWarn( 113, "Messages.Process_imageRequest.SendCalibFailed", 361, "Failed to send camera calibration message.", 0);
           }
         }
 #endif
@@ -500,7 +493,7 @@ namespace Anki {
           }
           default:
           {
-            PRINT("SetControllerGains invalid controller: %d\n", msg.controller);
+            AnkiWarn( 114, "Messages.Process_setControllerGains.InvalidController", 362, "controller: %d", 1, msg.controller);
           }
         }
       }
@@ -805,88 +798,6 @@ namespace Anki {
 #endif
       }
 
-
-#     ifdef SIMULATOR
-      Result CompressAndSendImage(const u8* img, const s32 captureHeight, const s32 captureWidth, const TimeStamp_t captureTime)
-      {
-        ImageChunk m;
-
-        switch(captureHeight) {
-          case 240:
-            AnkiConditionalErrorAndReturnValue(captureWidth==320*3, RESULT_FAIL, "CompressAndSendImage",
-                                               "Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
-            m.resolution = QVGA;
-            break;
-
-          case 296:
-            AnkiConditionalErrorAndReturnValue(captureWidth==400*3, RESULT_FAIL, "CompressAndSendImage",
-                                               "Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
-            m.resolution = CVGA;
-            break;
-
-          case 480:
-            AnkiConditionalErrorAndReturnValue(captureWidth==640*3, RESULT_FAIL, "CompressAndSendImage",
-                                               "Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
-            m.resolution = VGA;
-            break;
-
-          default:
-            AnkiError("CompressAndSendImage", "Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
-            return RESULT_FAIL;
-        }
-
-        static u32 imgID = 0;
-        const cv::vector<int> compressionParams = {
-          CV_IMWRITE_JPEG_QUALITY, IMAGE_SEND_JPEG_COMPRESSION_QUALITY
-        };
-
-        cv::Mat cvImg;
-        cvImg = cv::Mat(captureHeight, captureWidth/3, CV_8UC3, (void*)img);
-        cvtColor(cvImg, cvImg, CV_BGR2RGB);
-
-        cv::vector<u8> compressedBuffer;
-        cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
-
-        const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
-
-        //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
-
-        m.frameTimeStamp = captureTime;
-        m.imageId = ++imgID;
-        m.chunkId = 0;
-        m.data_length = IMAGE_CHUNK_SIZE;
-        m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
-        m.imageEncoding = JPEGColor;
-
-        u32 totalByteCnt = 0;
-        u32 chunkByteCnt = 0;
-
-        for(s32 i=0; i<numTotalBytes; ++i)
-        {
-          m.data[chunkByteCnt] = compressedBuffer[i];
-
-          ++chunkByteCnt;
-          ++totalByteCnt;
-
-          if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
-            //PRINT("Sending image chunk %d\n", m.chunkId);
-            RobotInterface::SendMessage(m, false, true);
-            ++m.chunkId;
-            chunkByteCnt = 0;
-          } else if (totalByteCnt == numTotalBytes) {
-            // This should be the last message!
-            //PRINT("Sending LAST image chunk %d\n", m.chunkId);
-            m.data_length = chunkByteCnt;
-            RobotInterface::SendMessage(m, false, true);
-          }
-        } // for each byte in the compressed buffer
-
-        return RESULT_OK;
-      } // CompressAndSendImage()
-
-#     endif // SIMULATOR
-
-
     } // namespace Messages
 
 
@@ -987,11 +898,11 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
   memcpy(msgBuf.GetBuffer(), buffer, bufferSize);
   if (!msgBuf.IsValid())
   {
-    PRINT("Receiver got %02x[%d] invald\n", buffer[0], bufferSize);
+    AnkiWarn( 119, "Receiver.ReceiveData.Invalid", 367, "Receiver got %02x[%d] invalid", 2, buffer[0], bufferSize);
   }
   else if (msgBuf.Size() != bufferSize)
   {
-    PRINT("Parsed message size error %d != %d\n", bufferSize, msgBuf.Size());
+    AnkiWarn( 120, "Receiver.ReceiveData.SizeError", 368, "Parsed message size error %d != %d", 2, bufferSize, msgBuf.Size());
   }
   else
   {
@@ -1001,21 +912,21 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
 
 void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
-  PRINT("ReliableTransport new connection\n");
+  AnkiInfo( 121, "Receiver_OnConnectionRequest", 369, "ReliableTransport new connection", 0);
   ReliableTransport_FinishConnection(connection); // Accept the connection
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
 void Receiver_OnConnected(ReliableConnection* connection)
 {
-  PRINT("ReliableTransport connection completed\n");
+  AnkiInfo( 122, "Receiver_OnConnected", 370, "ReliableTransport connection completed", 0);
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
 void Receiver_OnDisconnect(ReliableConnection* connection)
 {
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);   // Must mark connection disconnected BEFORE trying to print
-  PRINT("ReliableTransport disconnected\n");
+  AnkiInfo( 123, "Receiver_OnDisconnect", 371, "ReliableTransport disconnected", 0);
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);
 }
