@@ -21,6 +21,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "clad/types/animationKeyFrames.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
   
@@ -31,7 +32,7 @@ namespace Anki {
     class TurnInPlaceAction : public IAction
     {
     public:
-      TurnInPlaceAction(const Radians& angle, const bool isAbsolute);
+      TurnInPlaceAction(Robot& robot, const Radians& angle, const bool isAbsolute);
       virtual ~TurnInPlaceAction();
       
       virtual const std::string& GetName() const override;
@@ -82,7 +83,7 @@ namespace Anki {
     public:
       // Positive distance for forward, negative for backward.
       // Speed should be positive.
-      DriveStraightAction(f32 dist_mm, f32 speed_mmps);
+      DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_STRAIGHT; }
@@ -121,7 +122,7 @@ namespace Anki {
       // if isAbsolute==false.
       // If an angle is less than AngleTol, then no movement occurs but the
       // eyes will dart to look at the angle.
-      PanAndTiltAction(Radians bodyPan, Radians headTilt,
+      PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
                        bool isPanAbsolute, bool isTiltAbsolute);
       
       virtual const std::string& GetName() const override { return _name; }
@@ -150,7 +151,7 @@ namespace Anki {
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
       
     private:
-      IActionRunner* _compoundAction = nullptr;
+      CompoundActionParallel _compoundAction;
       
       Radians _bodyPanAngle;
       Radians _headTiltAngle;
@@ -179,7 +180,9 @@ namespace Anki {
     class MoveHeadToAngleAction : public IAction
     {
     public:
-      MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance = HEAD_ANGLE_TOL,
+      MoveHeadToAngleAction(Robot& robot,
+                            const Radians& headAngle,
+                            const Radians& tolerance = HEAD_ANGLE_TOL,
                             const Radians& variability = 0);
       virtual ~MoveHeadToAngleAction();
       
@@ -245,8 +248,9 @@ namespace Anki {
         OUT_OF_FOV // Moves to low or carry, depending on which is closer to current height
       };
       
-      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 5.f, const f32 variability = 0);
-      MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 5.f);
+      MoveLiftToHeightAction(Robot& robot, const f32 height_mm,
+                             const f32 tolerance_mm = 5.f, const f32 variability = 0);
+      MoveLiftToHeightAction(Robot& robot, const Preset preset, const f32 tolerance_mm = 5.f);
       
       virtual const std::string& GetName() const override { return _name; };
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
@@ -293,7 +297,8 @@ namespace Anki {
     class TraverseObjectAction : public IActionRunner
     {
     public:
-      TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
+      TraverseObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed);
+      virtual ~TraverseObjectAction() { Util::SafeDelete(_chosenAction); }
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TRAVERSE_OBJECT; }
@@ -321,7 +326,7 @@ namespace Anki {
     {
     public:
       // Note that the rotation information in pose will be ignored
-      FacePoseAction(const Pose3d& pose, Radians maxTurnAngle);
+      FacePoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
@@ -329,7 +334,7 @@ namespace Anki {
     protected:
       virtual ActionResult Init() override;
       
-      FacePoseAction(Radians maxTurnAngle);
+      FacePoseAction(Robot& robot, Radians maxTurnAngle);
       
       void SetPose(const Pose3d& pose);
       virtual Radians GetHeadAngle(f32 heightDiff);
@@ -342,59 +347,14 @@ namespace Anki {
     }; // class FacePoseAction
     
     
-    // Tilt head and rotate body to face the specified (marker on an) object.
-    // Use angles specified at construction to control the body rotation.
-    class FaceObjectAction : public FacePoseAction
-    {
-    public:
-      // If facing the object requires less than turnAngleTol turn, then no
-      // turn is performed. If a turn greater than maxTurnAngle is required,
-      // the action fails. For angles in between, the robot will first turn
-      // to face the object, then tilt its head. To disallow turning, set
-      // maxTurnAngle to zero.
-      
-      FaceObjectAction(ObjectID objectID,
-                       Radians maxTurnAngle,
-                       bool visuallyVerifyWhenDone = false,
-                       bool headTrackWhenDone = false);
-      
-      FaceObjectAction(ObjectID objectID,
-                       Vision::Marker::Code whichCode,
-                       Radians maxTurnAngle,
-                       bool visuallyVerifyWhenDone = false,
-                       bool headTrackWhenDone = false);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
-      
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
-      
-    protected:
-      
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-      
-      virtual Radians GetHeadAngle(f32 heightDiff) override;
-      
-      bool                 _facePoseCompoundActionDone;
-      
-      IActionRunner*       _visuallyVerifyAction;
-      
-      ObjectID             _objectID;
-      Vision::Marker::Code _whichCode;
-      bool                 _visuallyVerifyWhenDone;
-      bool                 _headTrackWhenDone;
-      
-    }; // FaceObjectAction
-    
-    
     // Verify that an object exists by facing tilting the head to face its
     // last-known pose and verify that we can still see it. Optionally, you can
     // also require that a specific marker be seen as well.
     class VisuallyVerifyObjectAction : public IAction
     {
     public:
-      VisuallyVerifyObjectAction(ObjectID objectID,
+      VisuallyVerifyObjectAction(Robot& robot,
+                                 ObjectID objectID,
                                  Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
       
       virtual const std::string& GetName() const override;
@@ -416,11 +376,59 @@ namespace Anki {
       f32                     _waitToVerifyTime;
       bool                    _objectSeen;
       bool                    _markerSeen;
-      IActionRunner*          _moveLiftToHeightAction;
+      MoveLiftToHeightAction  _moveLiftToHeightAction;
       bool                    _moveLiftToHeightActionDone;
       Signal::SmartHandle     _observedObjectHandle;
       
     }; // class VisuallyVerifyObjectAction
+    
+    
+    // Tilt head and rotate body to face the specified (marker on an) object.
+    // Use angles specified at construction to control the body rotation.
+    class FaceObjectAction : public FacePoseAction
+    {
+    public:
+      // If facing the object requires less than turnAngleTol turn, then no
+      // turn is performed. If a turn greater than maxTurnAngle is required,
+      // the action fails. For angles in between, the robot will first turn
+      // to face the object, then tilt its head. To disallow turning, set
+      // maxTurnAngle to zero.
+      
+      FaceObjectAction(Robot& robot,
+                       ObjectID objectID,
+                       Radians maxTurnAngle,
+                       bool visuallyVerifyWhenDone = false,
+                       bool headTrackWhenDone = false);
+      
+      FaceObjectAction(Robot& robot,
+                       ObjectID objectID,
+                       Vision::Marker::Code whichCode,
+                       Radians maxTurnAngle,
+                       bool visuallyVerifyWhenDone = false,
+                       bool headTrackWhenDone = false);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
+      
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      
+    protected:
+      
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+
+      virtual Radians      GetHeadAngle(f32 heightDiff) override;
+      
+      bool                       _facePoseCompoundActionDone;
+      
+      VisuallyVerifyObjectAction _visuallyVerifyAction;
+      
+      ObjectID                   _objectID;
+      Vision::Marker::Code       _whichCode;
+      bool                       _visuallyVerifyWhenDone;
+      bool                       _headTrackWhenDone;
+      
+    }; // FaceObjectAction
     
     
     // Waits for a specified amount of time in seconds, from the time the action
@@ -429,7 +437,7 @@ namespace Anki {
     class WaitAction : public IAction
     {
     public:
-      WaitAction(f32 waitTimeInSeconds);
+      WaitAction(Robot& robot, f32 waitTimeInSeconds);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::WAIT; }
@@ -450,7 +458,7 @@ namespace Anki {
     class HangAction : public IAction
     {
     public:
-      HangAction() {}
+      HangAction(Robot& robot) : IAction(robot) {}
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::HANG; }

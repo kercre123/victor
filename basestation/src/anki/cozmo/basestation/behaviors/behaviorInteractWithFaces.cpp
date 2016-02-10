@@ -71,29 +71,9 @@ namespace Cozmo {
     }
   }
   
-  Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+  Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec)
   {
-    if (isResuming && (_resumeState != State::Interrupted))
-    {
-      if (currentTime_sec > _timeWhenInterrupted)
-      {
-        const double timeWaitingToResume = currentTime_sec - _timeWhenInterrupted;
-        if (_newFaceAnimCooldownTime > 0.0)
-        {
-          _newFaceAnimCooldownTime += timeWaitingToResume;
-        }
-      }
-      _currentState = _resumeState;
-      _resumeState = State::Interrupted;
-      
-      // [MarkW:TODO] Might want to cache and resume anything that was stopped/cancelled in StopInternal()
-    }
-    else
-    {
-      _currentState = State::Inactive;
-    }
-    
-    _timeWhenInterrupted = 0.0;
+    _currentState = State::Inactive;
     
     // Make sure we've done this at least once in case StopTracking gets called somehow
     // before StartTracking (which is where we normally store off the original params).
@@ -204,7 +184,7 @@ namespace Cozmo {
     }
     
     // Always turn to look at the face before any reaction
-    FacePoseAction* facePoseAction = new FacePoseAction(face->GetHeadPose(), DEG_TO_RAD(179));
+    FacePoseAction* facePoseAction = new FacePoseAction(robot, face->GetHeadPose(), DEG_TO_RAD(179));
     facePoseAction->SetPanTolerance( DEG_TO_RAD(0.5) );
     robot.GetActionList().QueueAction(QueueActionPosition::NOW, facePoseAction);
                                       
@@ -230,7 +210,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("BehaviorInteractWithFaces.StartTracking",
                      "Will start tracking face %llu", faceID);
     _trackedFaceID = faceID;
-    TrackFaceAction* trackAction = new TrackFaceAction(_trackedFaceID);
+    TrackFaceAction* trackAction = new TrackFaceAction(robot, _trackedFaceID);
     trackAction->SetMoveEyes(true);
     _trackActionTag = trackAction->GetTag();
     trackAction->SetUpdateTimeout(kTrackingTimeout_sec);
@@ -404,9 +384,9 @@ namespace Cozmo {
           if(headAngle > 0.f) // don't bother if we're already at or below zero degrees
           {
             // Move head down to check for a block, then look back up.
-            CompoundActionSequential* moveHeadAction = new CompoundActionSequential({
-              new MoveHeadToAngleAction(0.),
-              new MoveHeadToAngleAction(headAngle),
+            CompoundActionSequential* moveHeadAction = new CompoundActionSequential(robot, {
+              new MoveHeadToAngleAction(robot, 0.),
+              new MoveHeadToAngleAction(robot, headAngle),
             });
             _lastActionTag = moveHeadAction->GetTag();
             robot.GetActionList().QueueActionNow(moveHeadAction);
@@ -562,16 +542,14 @@ namespace Cozmo {
   void BehaviorInteractWithFaces::PlayAnimation(Robot& robot, const std::string& animName,
                                                 QueueActionPosition position)
   {
-    PlayAnimationAction* animAction = new PlayAnimationAction(animName);
+    PlayAnimationAction* animAction = new PlayAnimationAction(robot, animName);
     robot.GetActionList().QueueAction(position, animAction);
     _lastActionTag = animAction->GetTag();
     _isActing = true;
   }
   
-  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec)
   {
-    _resumeState = isShortInterrupt ? _currentState : State::Interrupted;
-    _timeWhenInterrupted = currentTime_sec;
     _currentState = State::Interrupted;
     
     return RESULT_OK;

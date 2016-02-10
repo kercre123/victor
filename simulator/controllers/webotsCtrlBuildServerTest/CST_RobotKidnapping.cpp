@@ -18,6 +18,7 @@ namespace Anki {
 namespace Cozmo {
   
   enum class TestState {
+    MoveHead,            // Move head so it can see block
     InitialLocalization, // Localize to Object A
     Kidnap,              // Delocalize robot and move to new position
     LocalizeToObjectB,   // See and localize to new Object B
@@ -40,7 +41,7 @@ namespace Cozmo {
     
     virtual s32 UpdateInternal() override;
     
-    TestState _testState = TestState::InitialLocalization;
+    TestState _testState = TestState::MoveHead;
     
     ExternalInterface::RobotState _robotState;
     
@@ -67,6 +68,12 @@ namespace Cozmo {
   s32 CST_RobotKidnapping::UpdateInternal()
   {
     switch (_testState) {
+      case TestState::MoveHead:
+      {
+        SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
+        _testState = TestState::InitialLocalization;
+        break;
+      }
         
       case TestState::InitialLocalization:
       {
