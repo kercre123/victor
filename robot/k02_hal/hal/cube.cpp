@@ -6,6 +6,7 @@
 #include "hal/portable.h"
 #include "messages.h"
 #include "cube.h"
+#include "spine.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
@@ -22,36 +23,50 @@ namespace Anki
   {
     namespace HAL
     {
+      extern void GetBackpack(uint16_t* colors);
+
       Result AssignCubeSlots(int total_ids, const uint32_t* ids) {
         int slots = MIN(total_ids, MAX_CUBES);
 
         for (int i = 0; i < slots; i++) {
           g_SlotId[i] = ids[i];
         }
-        
+
+        Cube::SendPropIds();
+
         return RESULT_OK;
       }
       
+      // ONE DAY THIS WILL DO BETTER STUFF
       void Cube::SpineIdle(SpineProtocol& msg) {
         static int index = 0;
         static int prop = 0;
 
-        if (prop < MAX_CUBES) {
+        if (prop < MAX_CUBES && g_SlotId[prop]) {
           msg.opcode = SET_PROP_STATE;
           msg.SetPropState.slot = prop;
           memcpy((void*)&msg.SetPropState.colors, &g_LedStatus[prop], sizeof(msg.SetPropState.colors));
         } else {
-          msg.opcode = ASSIGN_PROP;
-          msg.AssignProp.slot = index;
-          msg.AssignProp.prop_id = g_SlotId[index];
-          
-          if (++index >= MAX_CUBES) {
-            index = 0;
-          }
+          msg.opcode = SET_BACKPACK_STATE;
+          GetBackpack(msg.SetBackpackState.colors);
         }
-        
-        if (++prop > MAX_CUBES) {
+
+        if (prop++ > MAX_CUBES) {
           prop = 0;
+        }
+      }
+      
+      void Cube::SendPropIds(void) {
+        for (int i = 0; i < MAX_CUBES; i++) {
+          if (g_SlotId[i]) {
+            SpineProtocol msg;
+
+            msg.opcode = ASSIGN_PROP;
+            msg.AssignProp.slot = i;
+            msg.AssignProp.prop_id = g_SlotId[i];
+            
+            Spine::Enqueue(msg);
+          }
         }
       }
       

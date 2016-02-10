@@ -58,8 +58,6 @@ void setLight(int channel) {
 }
 
 void UARTInit(void) {
-  bool UartWritting = false;
-
   // Power on the peripheral
   NRF_UART0->POWER = 1;
 

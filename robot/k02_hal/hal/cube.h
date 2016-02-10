@@ -12,6 +12,7 @@ namespace Anki {
     namespace HAL {
       namespace Cube {
         void SpineIdle(SpineProtocol& msg);
+        void SendPropIds(void);
       }
     }
   }

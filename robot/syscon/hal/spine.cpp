@@ -6,6 +6,9 @@
 
 #include "radio.h"
 #include "spine.h"
+#include "lights.h"
+
+extern void EnterRecovery(void);
 
 static const int FIFO_LIMIT = 4;
 static SpineProtocol queue[FIFO_LIMIT];
@@ -48,6 +51,20 @@ namespace Spine {
       uint16_t colors[4];
       memcpy(&colors, (void*)&msg.SetPropState.colors, sizeof(colors));
       Radio::setPropState(msg.SetPropState.slot, colors);
+      break ;
+    case ENTER_RECOVERY:
+      EnterRecovery();
+      break ;
+    case SET_BACKPACK_STATE:
+      {  
+        Lights::setLights(msg.SetBackpackState.colors);
+      }
+      break;
+
+    // NO OPS AND HEAD ONLY OPERATIONS
+    case NO_OPERATION:
+    case GET_PROP_STATE:
+    case PROP_DISCOVERED:
       break ;
     }
   }
