@@ -796,7 +796,7 @@ public:
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
-    u8               _enabledTracks      = (u8)AnimTrackFlag::ALL_TRACKS;
+    u8               _enabledAnimTracks      = (u8)AnimTrackFlag::ALL_TRACKS;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,

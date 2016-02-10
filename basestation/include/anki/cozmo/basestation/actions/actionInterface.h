@@ -115,7 +115,7 @@ namespace Anki {
       void PrepForCompletion();
       
       void UnlockTracks();
-      
+
     protected:
       
       Robot* _robot = nullptr;

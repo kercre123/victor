@@ -11,8 +11,8 @@ namespace Anki {
 namespace Cozmo {
 
 const std::string TracePrinter::UnknownTraceName   = "Unknown trace name";
-const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format with %d parameters";
-const std::string TracePrinter::RobotNamePrefix    = "Robot.";
+const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
+const std::string TracePrinter::RobotNamePrefix    = "RobotFirmware.";
 
 TracePrinter::TracePrinter(Util::Data::DataPlatform* dp):
   printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG) {
@@ -106,9 +106,10 @@ const std::string& TracePrinter::GetName(const int nameId) const {
 
 std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) const {
   char pbuf[512];
+  char fbuf[64];
   const IntFormatMap::const_iterator it = formatTable.find(trace.stringId);
   if (it == formatTable.end()) {
-    snprintf(pbuf, sizeof(pbuf), UnknownTraceFormat.c_str(), trace.value.size());
+    snprintf(pbuf, sizeof(pbuf), UnknownTraceFormat.c_str(), trace.stringId, trace.value.size());
     return pbuf;
   }
   else {
@@ -119,52 +120,86 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
                nargs, (int)trace.value.size(), trace.stringId, fi.first.c_str());
       return pbuf;
     }
+    else if (nargs == 0)
+    {
+      return fi.first;
+    }
     else {
-      // Switch on nargs because no safe way to convert vector back to va_list for sprintf, the max is 12 so it's not too bad
-      switch (nargs) {
-        case 0:
-          return fi.first;
-        case 1:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0]);
-          return pbuf;
-        case 2:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1]);
-          return pbuf;
-        case 3:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2]);
-          return pbuf;
-        case 4:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3]);
-          return pbuf;
-        case 5:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4]);
-          return pbuf;
-        case 6:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5]);
-          return pbuf;
-        case 7:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6]);
-          return pbuf;
-        case 8:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7]);
-          return pbuf;
-        case 9:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[8]);
-          return pbuf;
-        case 10:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[8], trace.value[9]);
-          return pbuf;
-        case 11:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[8], trace.value[9], trace.value[10]);
-          return pbuf;
-        case 12:
-          snprintf(pbuf, sizeof(pbuf), fi.first.c_str(), trace.value[0], trace.value[1], trace.value[2], trace.value[3], trace.value[4], trace.value[5], trace.value[6], trace.value[7], trace.value[8], trace.value[9], trace.value[10], trace.value[11]);
-          return pbuf;
-        default:
-          PRINT_NAMED_ERROR("Robot.TracePrinterBadArgs", "Invalid number of trace arguments %d", nargs);
-          snprintf(pbuf, sizeof(pbuf), "Invalid number of trace arguments: %d", nargs);
-          return pbuf;
+      int index = 0;
+      int argInd = 0;
+      const char* fmtPtr = fi.first.c_str();
+      int subFmtInd = -1;
+      while ((*fmtPtr != 0) && (index < (sizeof(pbuf)-1)) && (subFmtInd < (sizeof(fbuf)-1)))
+      {
+        if (subFmtInd >= 0)
+        {
+          switch(fmtPtr[subFmtInd])
+          {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            case '.':
+            {
+              fbuf[subFmtInd] = fmtPtr[subFmtInd];
+              subFmtInd++;
+              continue;
+            }
+            case '%':
+            {
+              pbuf[index++] = '%';
+              fmtPtr += subFmtInd + 1;
+              subFmtInd = -1;
+              continue;
+            }
+            case 'd':
+            case 'i':
+            case 'x':
+            case 'f':
+            {
+              fbuf[subFmtInd] = fmtPtr[subFmtInd];
+              fbuf[subFmtInd+1] = NULL;
+              if (fmtPtr[subFmtInd] == 'f')
+              {
+                const float fltArg = *(reinterpret_cast<const float*>(&trace.value[argInd]));
+                index += snprintf(pbuf + index, sizeof(pbuf)-index, fbuf, fltArg);
+              }
+              else
+              {
+                index += snprintf(pbuf + index, sizeof(pbuf)-index, fbuf, trace.value[argInd]);
+              }
+              fmtPtr += subFmtInd + 1;
+              subFmtInd = -1;
+              argInd++;
+              continue;
+            }
+            default: // So copy it over and return to normal operation
+            {
+              pbuf[index++] = *(fmtPtr++);
+              subFmtInd = -1;
+              continue;
+            }
+          }
+        }
+        else if (*fmtPtr == '%')
+        {
+          fbuf[0] = '%';
+          subFmtInd = 1;
+          continue;
+        }
+        else
+        {
+          pbuf[index++] = *(fmtPtr++);
+        }
       }
+      pbuf[index] = NULL;
+      return pbuf;
     }
   }
 }
