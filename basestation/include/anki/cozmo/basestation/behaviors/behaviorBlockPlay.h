@@ -75,11 +75,11 @@ namespace Cozmo {
       SearchingForMissingBlock, // this is only entered if a block "disappears" on us
     };
     
-    virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
    
     // Finish placing current object if there is one, otherwise good to go
-    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
     
     virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
     
@@ -206,6 +206,18 @@ namespace Cozmo {
     const f32 _angleToObjectThreshForDirectPickup = DEG_TO_RAD(3);
     u32 _driveForwardActionTag = 0;
     bool _isDrivingForward = false;
+
+    bool _lockedLift = false;
+    void LiftShouldBeLocked(Robot& robot);
+    void LiftShouldBeUnlocked(Robot& robot);
+
+    bool _lockedHead = false;
+    void HeadShouldBeLocked(Robot& robot);
+    void HeadShouldBeUnlocked(Robot& robot);
+
+    bool _lockedBody = false;
+    void BodyShouldBeLocked(Robot& robot);
+    void BodyShouldBeUnlocked(Robot& robot);
 
     void IgnoreObject(Robot& robot, ObjectID objectID);
 
