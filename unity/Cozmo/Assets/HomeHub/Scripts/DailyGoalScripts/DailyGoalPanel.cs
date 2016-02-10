@@ -84,25 +84,25 @@ public class DailyGoalPanel : MonoBehaviour {
     _BonusBarPanel.SetFriendshipBonus(bonusMult);
   }
 
-  // Fade out UI elements when collapsed
-  // Or Fade them back in if expanding.
-  public void Expand(bool expand) {
+  // Show Hidden UI Elements when Expanding back to full
+  public void Expand() {
     Sequence fadeTween = DOTween.Sequence();
     for (int i = 0; i < _GoalCells.Count; i++) {
       GoalCell cell = _GoalCells[i];
-      if (expand) { 
-        fadeTween.Join(cell.GoalLabel.DOFade(1.0f, _kFadeTweenDuration));
-      }
-      else {
-        fadeTween.Join(cell.GoalLabel.DOFade(0.0f, _kFadeTweenDuration));
-      }
+      fadeTween.Join(cell.GoalLabel.DOFade(1.0f, _kFadeTweenDuration));
     }
-    if (expand) { 
-      fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(1.0f, _kFadeTweenDuration));
+    fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(1.0f, _kFadeTweenDuration));
+    fadeTween.Play();
+  }
+
+  // Fade out Hidden UI elements when collapsed
+  public void Collapse() {
+    Sequence fadeTween = DOTween.Sequence();
+    for (int i = 0; i < _GoalCells.Count; i++) {
+      GoalCell cell = _GoalCells[i];
+      fadeTween.Join(cell.GoalLabel.DOFade(0.0f, _kFadeTweenDuration));
     }
-    else {
-      fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(0.0f, _kFadeTweenDuration));
-    }
+    fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(0.0f, _kFadeTweenDuration));
     fadeTween.Play();
   }
 

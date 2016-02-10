@@ -322,7 +322,7 @@ namespace Cozmo.HomeHub {
         if (_LockedPaneScrollContainer.parent != _LockedPaneRightNoScrollContainer) {
           _LockedPaneScrollContainer.SetParent(_LockedPaneRightNoScrollContainer, false);
           _LockedPaneScrollContainer.localPosition = Vector3.zero; 
-          _DailyGoalInstance.Expand(false);
+          _DailyGoalInstance.Collapse();
           _LockedPaneRightNoScrollContainer.gameObject.SetActive(true);
         }
       }
@@ -330,7 +330,7 @@ namespace Cozmo.HomeHub {
         if (_LockedPaneScrollContainer.parent != _LockedPaneLeftNoScrollContainer) {
           _LockedPaneScrollContainer.SetParent(_LockedPaneLeftNoScrollContainer, false);
           _LockedPaneScrollContainer.localPosition = Vector3.zero; 
-          _DailyGoalInstance.Expand(false);
+          _DailyGoalInstance.Collapse();
           _LockedPaneLeftNoScrollContainer.gameObject.SetActive(true);
         }
         float pixelsOnLeft = GetScrollRectNormalizedWidth() * _ScrollRect.horizontalNormalizedPosition;
@@ -343,7 +343,7 @@ namespace Cozmo.HomeHub {
         if (_LockedPaneScrollContainer.parent != _MiddlePane) {
           _LockedPaneScrollContainer.SetParent(_MiddlePane.transform, false);
           _LockedPaneScrollContainer.localPosition = Vector3.zero; 
-          _DailyGoalInstance.Expand(true);
+          _DailyGoalInstance.Expand();
           _LockedPaneRightNoScrollContainer.gameObject.SetActive(false);
           _LockedPaneLeftNoScrollContainer.gameObject.SetActive(false);
         }
