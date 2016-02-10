@@ -65,7 +65,7 @@ uint32_t i2spiGetBodyBootloaderCode(void);
 /** Push a chunk of firmware to the RTIP
  * @param chunk a Pointer to data to be sent
  */
-void i2spiBootloaderPushChunk(FirmwareBlock* chunk);
+bool i2spiBootloaderPushChunk(FirmwareBlock* chunk);
 
 /// Count how many tx underruns we've had
 extern uint32_t i2spiTxUnderflowCount;

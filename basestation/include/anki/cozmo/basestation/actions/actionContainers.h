@@ -99,7 +99,7 @@ namespace Anki {
       
       static const SlotHandle UnknownSlot = -1;
       
-      ActionList(Robot& robot);
+      ActionList();
       ~ActionList();
       
       // Updates the current action of each queue in each slot
@@ -151,9 +151,6 @@ namespace Anki {
       void       Clear();
       
       std::map<SlotHandle, ActionQueue> _queues;
-      
-    private:
-      Robot* _robot = nullptr;
       
     }; // class ActionList
     
