@@ -900,8 +900,7 @@ MonoBehaviour:
   _NextFriendshipLevel: {fileID: 11464100}
   _BonusBarContainer: {fileID: 22426048}
   _BonusBarPrefab: {fileID: 11477656, guid: ea0dc2f73b17c4751a4c3c726e2fdb53, type: 2}
-  _FriendshipFormulaConfig: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
-    type: 2}
+  _Config: {fileID: 0}
 --- !u!114 &11433650
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1839,10 +1838,10 @@ RectTransform:
   - {fileID: 22401366}
   m_Father: {fileID: 22423886}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: .5}
-  m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: 100, y: -54.5000153}
-  m_SizeDelta: {x: 750, y: 723}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 100, y: -47.9999962}
+  m_SizeDelta: {x: -1120, y: -180}
   m_Pivot: {x: 0, y: .49999997}
 --- !u!224 &22418748
 RectTransform:
