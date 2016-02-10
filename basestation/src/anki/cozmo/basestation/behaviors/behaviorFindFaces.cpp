@@ -92,7 +92,7 @@ void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot
   }
 }
   
-Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec)
 {
   _currentDriveActionID = (uint32_t)ActionConstants::INVALID_TAG;
   _currentState = State::WaitToFinishMoving;
@@ -195,7 +195,7 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   _currentState = State::WaitToFinishMoving;
 }
 
-Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   _currentState = State::Inactive;
   return Result::RESULT_OK;

@@ -57,7 +57,7 @@ float BehaviorFollowMotion::EvaluateScoreInternal(const Robot& robot, double cur
   return 0.3f; // for the investor demo, just use a fixed score
 }
 
-Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec)
 {
 
 # if DO_BACK_UP_AFTER_POUNCE
@@ -171,7 +171,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
   return status;
 }
 
-Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   _state = State::Interrupted;
   SetStateName("Interrupted");

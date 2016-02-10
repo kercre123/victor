@@ -59,7 +59,7 @@ bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot, double currentTim
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_sec)
 {
   // select borders we want to visit
   BorderScoreVector borderGoals;
@@ -123,7 +123,7 @@ BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // Note: at the moment anything can interrupt us, revisit rules of interruption
   _currentActionTag = ActionConstants::INVALID_TAG;

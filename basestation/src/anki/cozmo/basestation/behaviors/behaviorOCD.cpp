@@ -72,7 +72,7 @@ namespace Cozmo {
                                    (!_animActionTags.empty()));
   }
   
-  Result BehaviorOCD::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+  Result BehaviorOCD::InitInternal(Robot& robot, double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     
@@ -184,7 +184,7 @@ namespace Cozmo {
     return Status::Running;
   }
 
-  Result BehaviorOCD::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+  Result BehaviorOCD::InterruptInternal(Robot& robot, double currentTime_sec)
   {
     _interrupted = true;
     return RESULT_OK;

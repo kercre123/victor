@@ -67,7 +67,7 @@ bool BehaviorReactToPoke::IsRunnable(const Robot& robot, double currentTime_sec)
   return true;
 }
 
-Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec)
 {
   robot.GetActionList().Cancel(RobotActionType::TRACK_FACE);
   robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
@@ -153,7 +153,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
   return Status::Running;
 } 
   
-Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

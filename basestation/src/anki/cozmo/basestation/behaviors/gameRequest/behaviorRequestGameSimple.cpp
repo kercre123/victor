@@ -68,8 +68,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
 }
 
 Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
-                                                             double currentTime_sec,
-                                                             bool isResuming)
+                                                             double currentTime_sec)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
     
@@ -97,7 +96,7 @@ IBehavior::Status BehaviorRequestGameSimple::UpdateInternal(Robot& robot, double
   return Status::Complete;
 }
 
-Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // if we are playing an animation, we don't want to be interrupted
   if( IsActing() ) {

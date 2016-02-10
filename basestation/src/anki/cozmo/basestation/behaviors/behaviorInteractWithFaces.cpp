@@ -71,29 +71,9 @@ namespace Cozmo {
     }
   }
   
-  Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+  Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec)
   {
-    if (isResuming && (_resumeState != State::Interrupted))
-    {
-      if (currentTime_sec > _timeWhenInterrupted)
-      {
-        const double timeWaitingToResume = currentTime_sec - _timeWhenInterrupted;
-        if (_newFaceAnimCooldownTime > 0.0)
-        {
-          _newFaceAnimCooldownTime += timeWaitingToResume;
-        }
-      }
-      _currentState = _resumeState;
-      _resumeState = State::Interrupted;
-      
-      // [MarkW:TODO] Might want to cache and resume anything that was stopped/cancelled in StopInternal()
-    }
-    else
-    {
-      _currentState = State::Inactive;
-    }
-    
-    _timeWhenInterrupted = 0.0;
+    _currentState = State::Inactive;
     
     // Make sure we've done this at least once in case StopTracking gets called somehow
     // before StartTracking (which is where we normally store off the original params).
@@ -568,10 +548,8 @@ namespace Cozmo {
     _isActing = true;
   }
   
-  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec)
   {
-    _resumeState = isShortInterrupt ? _currentState : State::Interrupted;
-    _timeWhenInterrupted = currentTime_sec;
     _currentState = State::Interrupted;
     
     return RESULT_OK;

@@ -125,7 +125,7 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
   }
 }
   
-Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec)
 {
   // Update explorable area center to current robot pose
   ResetSafeRegion(robot);
@@ -185,7 +185,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
         
-        FaceObjectAction* faceObjectAction = new FaceObjectAction(robot, objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, true);
+        FaceObjectAction* faceObjectAction = new FaceObjectAction(robot, objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, false);
         faceObjectAction->SetPanTolerance(DEG_TO_RAD(2));
         _actionsInProgress.insert(faceObjectAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(faceObjectAction);
@@ -344,7 +344,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   return destPose;
 }
 
-Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   ResetBehavior(robot, currentTime_sec);
   return Result::RESULT_OK;

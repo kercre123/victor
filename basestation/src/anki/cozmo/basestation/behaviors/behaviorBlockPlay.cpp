@@ -141,7 +141,7 @@ namespace Cozmo {
     return ret;
   }
   
-  Result BehaviorBlockPlay::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+  Result BehaviorBlockPlay::InitInternal(Robot& robot, double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     
@@ -799,7 +799,7 @@ namespace Cozmo {
     }
   }
 
-  Result BehaviorBlockPlay::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+  Result BehaviorBlockPlay::InterruptInternal(Robot& robot, double currentTime_sec)
   {
     _interrupted = true;
     

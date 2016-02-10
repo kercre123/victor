@@ -147,7 +147,7 @@ namespace Anki {
       }
     }
     
-    Result BehaviorGatherBlocks::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+    Result BehaviorGatherBlocks::InitInternal(Robot& robot, double currentTime_sec)
     {
       // Update explorable area center to current robot pose
       ResetSafeRegion(robot);
@@ -382,7 +382,7 @@ namespace Anki {
       return destPose;
     }
     
-    Result BehaviorGatherBlocks::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+    Result BehaviorGatherBlocks::InterruptInternal(Robot& robot, double currentTime_sec)
     {
       ResetBehavior(robot, currentTime_sec);
       return Result::RESULT_OK;
