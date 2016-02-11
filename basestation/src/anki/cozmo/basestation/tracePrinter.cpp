@@ -129,7 +129,7 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
       int argInd = 0;
       const char* fmtPtr = fi.first.c_str();
       int subFmtInd = -1;
-      while ((*fmtPtr != 0) && (index < (sizeof(pbuf)-1)) && (subFmtInd < (sizeof(fbuf)-1)))
+      while ((*fmtPtr != 0) && (index < ((int)sizeof(pbuf)-1)) && (subFmtInd < ((int)sizeof(fbuf)-1)))
       {
         if (subFmtInd >= 0)
         {
