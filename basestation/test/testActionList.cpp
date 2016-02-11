@@ -505,8 +505,6 @@ TEST(QueueAction, CompoundActionSequentialSingle)
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  EXPECT_EQ(&(compoundAction->GetRobot()), &r);
-  // Can't check testAction1 and testAction2's GetRobot() as they are set internally during update()
   
   r.GetActionList().Update();
   CheckTracksLocked(r, track1);
@@ -562,9 +560,9 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
 TEST(QueueAction, CompoundActionAddAfterQueued)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT);
-  TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT);
+  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
+  TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
   TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
   
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
@@ -577,15 +575,18 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
   r.GetActionList().Update();
+  CheckTracksLocked(r, track1);
   
   compoundAction->AddAction(testAction3);
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  CheckTracksUnlocked(r, track3);
   
   testAction1->_complete = true;
   testAction2->_complete = true;
   testAction3->_complete = true;
   
   r.GetActionList().Update();
+  CheckTracksUnlocked(r, track1 | track2 | track3);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
@@ -599,9 +600,9 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
 TEST(QueueAction, CompoundActionAddAfterQueued2)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT);
-  TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT);
+  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
+  TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
   TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential(r, {}, "Comp1");
   
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
@@ -616,17 +617,22 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
   compoundAction->AddAction(testAction1);
   
   r.GetActionList().Update();
+  CheckTracksLocked(r, track1);
   
   compoundAction->AddAction(testAction2);
   compoundAction->AddAction(testAction3);
   
   r.GetActionList().Update();
+  CheckTracksUnlocked(r, track2);
+  CheckTracksUnlocked(r, track3);
   
   testAction1->_complete = true;
   testAction2->_complete = true;
   testAction3->_complete = true;
   
   r.GetActionList().Update();
+  CheckTracksUnlocked(r, track1 | track2 | track3);
+  
   r.GetActionList().Update();
   CheckActionDestroyed({"Comp1", "Test1", "Test2", "Test3"});
 }

@@ -287,6 +287,7 @@ namespace Anki {
             case ActionResult::FAILURE_PROCEED:
             case ActionResult::FAILURE_TIMEOUT:
             case ActionResult::FAILURE_TRACKS_LOCKED:
+            case ActionResult::FAILURE_BAD_TAG:
               // Return failure, aborting updating remaining actions the group
 #             if USE_ACTION_CALLBACKS
               RunCallbacks(subResult);
