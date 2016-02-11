@@ -154,7 +154,7 @@ public:
   virtual ~TestActionWithinAction() { actionsDestroyed.push_back(_name); }
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
-  virtual u8 GetTracksToLock() const override { return 0; }
+  virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
   TestCompoundActionSequential* GetAction() { return &_compoundAction; }
   bool _complete;
 protected:

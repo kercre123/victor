@@ -42,7 +42,7 @@ namespace Anki {
       
       virtual f32 GetTimeoutInSeconds() const override { return 60.f; }
       
-      virtual u8 GetTracksToLock() const override { return 0; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
     protected:
       
@@ -109,7 +109,7 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      virtual u8 GetTracksToLock() const override { return 0; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
     protected:
       

@@ -111,7 +111,7 @@ namespace Anki {
         // Only need to unlock tracks if this is running because Init() locked tracks
         if(!_suppressTrackLocking && _isRunning)
         {
-          uint8_t tracks = GetTracksToLock();
+          u8 tracks = GetTracksToLock();
 #         if DEBUG_ANIM_TRACK_LOCKING
           PRINT_NAMED_INFO("IActionRunner.Interrupt.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
                            tracks,
@@ -139,7 +139,7 @@ namespace Anki {
       
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
-        uint8_t tracksToLock = GetTracksToLock();
+        u8 tracksToLock = GetTracksToLock();
         
         if(_robot.GetMoveComponent().IsTrackLocked((AnimTrackFlag)tracksToLock))
         {
@@ -250,7 +250,7 @@ namespace Anki {
 
     u8 IActionRunner::GetTracksToLock() const
     {
-      return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
+      return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::BODY_TRACK;
     }
     
     void IActionRunner::UnlockTracks()

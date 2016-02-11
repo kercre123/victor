@@ -89,9 +89,11 @@ namespace Anki {
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
-      // Override these to have the action allow the robot to move certain
-      // subsystems while the action executes. I.e., by default actions
-      // will lockout all control of the robot, and extra movement commands are ignored.
+      // Override to have the action allow the robot to move certain
+      // subsystems while the action executes, also disables any tracks used by animations
+      // that may have already been streamed and are in the robot's buffer, so they don't interfere
+      // with the action. I.e., by default actions will lockout all control of the robot,
+      // and extra movement commands are ignored.
       // Note: uses the bits defined by AnimTrackFlag.
       virtual u8 GetTracksToLock() const;
       
@@ -142,7 +144,7 @@ namespace Anki {
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
       std::string          _name;
-      uint8_t              _tracks          = (uint8_t)AnimTrackFlag::ALL_TRACKS;
+      u8                   _tracks          = (u8)AnimTrackFlag::ALL_TRACKS;
       
       bool          _suppressTrackLocking   = false;
       bool          _isRunning              = false;

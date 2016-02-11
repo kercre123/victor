@@ -38,7 +38,7 @@ namespace Anki {
       
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
       
-      virtual u8 GetTracksToLock() const override { return 0; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
 
     protected:
       
@@ -66,7 +66,7 @@ namespace Anki {
       
       // We want to override and not ignore any movement tracks ourselves; our constituent actions will
       // ignore what they want to when running
-      virtual u8 GetTracksToLock() const override { return 0; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
     private:
       virtual void Reset() override;
