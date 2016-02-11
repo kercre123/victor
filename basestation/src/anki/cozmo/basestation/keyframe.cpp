@@ -479,7 +479,7 @@ return RESULT_FAIL; \
     
 #   else // (if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO==0)
     
-    Result RobotAudioKeyFrame::AddAudioRef(const Audio::EventType event)
+    Result RobotAudioKeyFrame::AddAudioRef(const Audio::GameEvent::GenericEvent event)
     {
       // TODO: Need a way to verify the event is valid while loading animation metadata - JMR
       _audioReferences.push_back({.audioEvent = event});
@@ -492,7 +492,7 @@ return RESULT_FAIL; \
       if(_audioReferences.empty()) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
                           "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        static const AudioRef InvalidRef{.audioEvent = Audio::EventType::Invalid};
+        static const AudioRef InvalidRef{.audioEvent = Audio::GameEvent::GenericEvent::Invalid};
         return InvalidRef;
       }
       
@@ -524,14 +524,14 @@ return RESULT_FAIL; \
       if(jsonAudioNames.isArray()) {
         for(s32 i=0; i<jsonAudioNames.size(); ++i) {
           // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-          Result addResult = AddAudioRef( static_cast<Audio::EventType>( jsonAudioNames[i].asUInt64() ));
+          Result addResult = AddAudioRef( static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() ));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       } else {
         // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-        Result addResult = AddAudioRef( static_cast<Audio::EventType>( jsonAudioNames.asUInt64() ));
+        Result addResult = AddAudioRef( static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() ));
         if(addResult != RESULT_OK) {
           return addResult;
         }

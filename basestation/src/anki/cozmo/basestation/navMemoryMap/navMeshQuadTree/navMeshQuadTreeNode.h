@@ -5,6 +5,9 @@
  * Date:   12/09/2015
  *
  * Description: Nodes in the nav mesh, represented as quad tree nodes.
+ * Note nodes can work with a processor to speed up algorithms and searches, however this implementation supports
+ * working with one processor only for any given node. Do not use more than one processor instance for nodes, or
+ * otherwise leaks and bad pointer references will happen.
  *
  * Copyright: Anki, Inc. 2015
  **/
@@ -18,6 +21,9 @@
 
 #include "anki/common/basestation/math/point.h"
 
+#include "util/helpers/noncopyable.h"
+
+#include <memory>
 #include <vector>
 
 namespace Anki {
@@ -27,9 +33,12 @@ class NavMeshQuadTreeProcessor;
 using namespace NavMeshQuadTreeTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class NavMeshQuadTreeNode
+class NavMeshQuadTreeNode : private Util::noncopyable
 {
 public:
+
+void TESTDONOTCOMIT();
+void TESTDONOTCOMITRec();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
@@ -45,6 +54,18 @@ public:
   // it will allow subdivision as long as level is greater than 0
   NavMeshQuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, NavMeshQuadTreeNode* parent);
   
+  // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
+  // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
+  // assumption that the processor(s) will be destroyed at the same time than nodes are, except in the case of
+  // nodes that are merged into their parents, in which case we do notify the processor.
+  // Alternatively processors would store weak_ptr, but no need for the moment given the above assumption
+  // ~NavMeshQuadTreeNode();
+  
+  // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
+  // which is annoying
+  NavMeshQuadTreeNode(const NavMeshQuadTreeNode&&) = delete;
+  NavMeshQuadTreeNode& operator=(const NavMeshQuadTreeNode&&) = delete;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -52,7 +73,8 @@ public:
   uint8_t GetLevel() const { return _level; }
   float GetSideLen() const { return _sideLen; }
   const Point3f& GetCenter() const { return _center; }
-  ENodeContentType GetContentType() const { return _contentType; }
+  ENodeContentType GetContentType() const { return _content.type; }
+  const NodeContent& GetContent() const { return _content; }
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
   bool Contains(const Quad2f& quad) const;
@@ -66,7 +88,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // helper for the specific add functions. It properly processes the quad down the tree for the given content
-  bool AddQuad(const Quad2f& quad, ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
+  bool AddQuad(const Quad2f& quad, NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
@@ -110,7 +132,7 @@ private:
   
   // type of overlap for quads
   enum class EContentOverlap { Partial, Total };
-
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -119,7 +141,7 @@ private:
   bool CanSubdivide() const { return _level > 0; }
   
   // return true if this quad is already subdivided
-  bool IsSubdivided() const { return !_children.empty(); }
+  bool IsSubdivided() const { return !_childrenPtr.empty(); }
   
   // returns true if this node can override children with the given content type (some changes in content
   // type are not allowed to preserve information). This is a necessity now to prevent Cliffs from being
@@ -134,16 +156,16 @@ private:
 
   // subdivide/merge children
   void Subdivide(NavMeshQuadTreeProcessor& processor);
-  void Merge(ENodeContentType newContentType, NavMeshQuadTreeProcessor& processor);
+  void Merge(NodeContent& newContent, NavMeshQuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge(NavMeshQuadTreeProcessor& processor);
   
   // sets the content type to the detected one.
   // try checks por priority first, then calls force
-  void TrySetDetectedContentType(ENodeContentType detectedContentType, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
+  void TrySetDetectedContentType(NodeContent& detectedContent, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
   // force sets the type and updates shared container
-  void ForceSetDetectedContentType(ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor);
+  void ForceSetDetectedContentType(NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
   
   // sets a new parent to this node. Used on expansions
   void ChangeParent(const NavMeshQuadTreeNode* newParent) { _parent = newParent; }
@@ -169,7 +191,7 @@ private:
   // NOTE: try to minimize padding in these attributes
 
   // children when subdivided. Can be empty or have 4 nodes
-  std::vector<NavMeshQuadTreeNode> _children;
+  std::vector< std::unique_ptr<NavMeshQuadTreeNode> > _childrenPtr;
 
   // coordinates of this quad
   Point3f _center;
@@ -185,7 +207,7 @@ private:
   EQuadrant _quadrant;
   
   // information about what's in this quad
-  ENodeContentType _contentType;
+  NodeContent _content;
     
 }; // class
   

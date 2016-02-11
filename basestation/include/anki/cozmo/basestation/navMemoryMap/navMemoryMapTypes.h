@@ -31,6 +31,9 @@ enum class EContentType : uint8_t {
   Cliff,                // an area with cliffs or holes
 };
 
+// this function returns true if the given content type expects additional data (iNavMemoryMapQuadData), false otherwise
+bool ExpectsAdditionalData(EContentType type);
+
 // struct that defines a border
 struct Border {
   Border() : from{}, to{}, normal{} {}

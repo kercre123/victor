@@ -35,6 +35,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
+#include "anki/cozmo/basestation/navMemoryMap/quadData/navMemoryMapQuadData_Cliff.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -515,9 +516,6 @@ namespace Cozmo {
     {
       // cliff quad: clear or cliff
       {
-        using EContentType = INavMemoryMap::EContentType;
-        EContentType cliffMode = _isOnCliff ? EContentType::Cliff : EContentType::ClearOfCliff;
-      
         // TODO configure this size somethere else
         Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
         
@@ -530,7 +528,17 @@ namespace Cozmo {
           {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
         };
         _robot->GetPose().ApplyTo(cliffquad, cliffquad);
-        _navMemoryMap->AddQuad(cliffquad, cliffMode);
+      
+        if ( _isOnCliff )
+        {
+          NavMemoryMapQuadData_Cliff cliffData;
+          _navMemoryMap->AddQuad(cliffquad, cliffData);
+        }
+        else
+        {
+          _navMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
+        }
+      
       }
       
       _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
