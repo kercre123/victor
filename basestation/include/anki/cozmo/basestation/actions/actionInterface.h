@@ -141,7 +141,7 @@ namespace Anki {
       
       std::string   _statusMsg;
       
-      ActionResult         _result;
+      ActionResult         _state           = ActionResult::FAILURE_NOT_STARTED;
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
       std::string          _name;
@@ -149,10 +149,6 @@ namespace Anki {
       uint8_t              _movementTracks  = (uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS;
       
       bool          _suppressTrackLocking   = false;
-      bool          _isRunning              = false;
-      bool          _isCancelled            = false;
-      bool          _isInterrupted          = false;
-      bool          _isFinished             = false;
       bool          _displayMessages        = true;
       bool          _emitCompletionSignal   = true;
       

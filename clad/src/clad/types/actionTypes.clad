@@ -54,6 +54,7 @@ enum int_32 RobotActionType {
 enum uint_8 ActionResult {
     SUCCESS = 0,
     RUNNING,
+    FAILURE_NOT_STARTED,
     FAILURE_TIMEOUT,
     FAILURE_PROCEED,
     FAILURE_RETRY,

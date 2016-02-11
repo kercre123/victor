@@ -50,11 +50,11 @@ namespace Anki {
       IActionRunner::sInUseTagSet.erase(_customTag);
       IActionRunner::sInUseTagSet.erase(_idTag);
       
-      if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
+      if (_emitCompletionSignal && ActionResult::INTERRUPTED != _state)
       {
         // Notify any listeners about this action's completion.
         // TODO: Populate the signal with any action-specific info?
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), GetTag(), _type, _result, _completionUnion)));
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), GetTag(), _type, _state, _completionUnion)));
       }
     
       if(!_suppressTrackLocking)
@@ -74,13 +74,13 @@ namespace Anki {
     bool IActionRunner::SetTag(u32 tag)
     {
       // Probably a bad idea to be able to change the tag while the action is running
-      if(_isRunning)
+      if(_state == ActionResult::RUNNING)
       {
         PRINT_NAMED_WARNING("IActionRunner.SetTag", "Action %s [%d] is running unable to set tag to %d",
                             GetName().c_str(),
                             GetTag(),
                             tag);
-        _result = ActionResult::FAILURE_BAD_TAG;
+        _state = ActionResult::FAILURE_BAD_TAG;
         return false;
       }
       
@@ -95,7 +95,7 @@ namespace Anki {
          !IActionRunner::sInUseTagSet.insert(tag).second)
       {
         PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] is invalid", tag);
-        _result = ActionResult::FAILURE_BAD_TAG;
+        _state = ActionResult::FAILURE_BAD_TAG;
         return false;
       }
       _customTag = tag;
@@ -104,12 +104,12 @@ namespace Anki {
     
     bool IActionRunner::Interrupt()
     {
-      _isInterrupted = InterruptInternal();
-      if(_isInterrupted) {
+      if(InterruptInternal())
+      {
         Reset();
         
-        // Only need to unlock tracks if this is running because Init() locked tracks
-        if(!_suppressTrackLocking && _isRunning)
+        // Only need to unlock tracks if this is running because Update() locked tracks
+        if(!_suppressTrackLocking && _state == ActionResult::RUNNING)
         {
           uint8_t tracks = GetAnimTracksToDisable();
 #         if DEBUG_ANIM_TRACK_LOCKING
@@ -122,89 +122,74 @@ namespace Anki {
           _robot.GetMoveComponent().UnlockAnimTracks(tracks);
           _robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
-        
-        _isRunning = false;
+        _state = ActionResult::INTERRUPTED;
+        return true;
       }
-      return _isInterrupted;
+      return false;
     }
     
     ActionResult IActionRunner::Update()
     {
-      // If this action has already completed successfully but update() has been called again do nothing
-      if(_isFinished)
+      switch(_state)
       {
-        return ActionResult::SUCCESS;
-      }
-      
-      // If for some reason someone tried to set the tag to an invalid tag and didn't check the return
-      // value, fail here
-      if(_result == ActionResult::FAILURE_BAD_TAG)
-      {
-        return _result;
-      }
-      
-      if(!_isRunning && !_suppressTrackLocking) {
-        // When the ActionRunner first starts, lock any specified subsystems
-        uint8_t disableTracks = GetAnimTracksToDisable();
-#       if DEBUG_ANIM_TRACK_LOCKING
-        PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
-                         disableTracks,
-                         AnimTrackFlagToString((AnimTrackFlag)disableTracks),
-                         GetName().c_str(),
-                         GetTag());
-
-#       endif
-        _robot.GetMoveComponent().LockAnimTracks(disableTracks);
-        _robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
-      }
-
-      if( ! _isRunning ) {
-        if( DEBUG_ACTION_RUNNING && _displayMessages ) {
-          PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s running",
-                            GetTag(),
-                            GetName().c_str());
+        case ActionResult::FAILURE_NOT_STARTED:
+        case ActionResult::INTERRUPTED:
+        {
+          _state = ActionResult::RUNNING;
+          if(!_suppressTrackLocking)
+          {
+            // When the ActionRunner first starts, lock any specified subsystems
+            uint8_t disableTracks = GetAnimTracksToDisable();
+        #             if DEBUG_ANIM_TRACK_LOCKING
+            PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
+                             disableTracks,
+                             AnimTrackFlagToString((AnimTrackFlag)disableTracks),
+                             GetName().c_str(),
+                             GetTag());
+        #             endif
+            _robot.GetMoveComponent().LockAnimTracks(disableTracks);
+            _robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
+          }
+          if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+            PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s running",
+                              GetTag(),
+                              GetName().c_str());
+          }
         }
-
-        _isRunning = true;
+        case ActionResult::RUNNING:
+        {
+          _state = UpdateInternal();
+          
+          if(_state == ActionResult::RUNNING)
+          {
+            // Still running dont fall through
+            break;
+          }
+          // UpdateInternal() returned something other than running so fall through to handle action
+          // completion
+        }
+        // Every other case is a completion case (ie the action is no longer running due to success, failure, or
+        // cancel)
+        default:
+        {
+          if(_displayMessages) {
+            PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
+                             "%s [%d] %s.", GetName().c_str(),
+                             GetTag(),
+                             (_state==ActionResult::SUCCESS ? "succeeded" :
+                              _state==ActionResult::CANCELLED ? "was cancelled" : "failed"));
+          }
+          
+          PrepForCompletion();
+          
+          if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+            PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
+                              GetTag(),
+                              GetName().c_str());
+          }
+        }
       }
-      _result = ActionResult::RUNNING;
-      if(_isCancelled) {
-        if(_displayMessages) {
-          PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
-                           "Cancelling [%d] %s.", _idTag, GetName().c_str());
-        }
-        _result = ActionResult::CANCELLED;
-      } else if(_isInterrupted) {
-        if(_displayMessages) {
-          PRINT_NAMED_INFO("IActionRunner.Update.InterruptAction",
-                           "Interrupting [%d] %s", _idTag, GetName().c_str());
-        }
-        _result = ActionResult::INTERRUPTED;
-      } else {
-        _result = UpdateInternal();
-      }
-      
-      if(_result != ActionResult::RUNNING) {
-        if(_displayMessages) {
-          PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
-                           "%s [%d] %s.", GetName().c_str(),
-                           _idTag,
-                           (_result==ActionResult::SUCCESS ? "succeeded" :
-                            _result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
-        }
-        
-        PrepForCompletion();
-
-        if( DEBUG_ACTION_RUNNING && _displayMessages ) {
-          PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
-                            GetTag(),
-                            GetName().c_str());
-        }
-        _isRunning = false;
-        _isFinished = true;
-      }
-
-      return _result;
+      return _state;
     }
     
     void IActionRunner::PrepForCompletion()
