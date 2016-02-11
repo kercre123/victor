@@ -29,7 +29,7 @@ public class UIManager : MonoBehaviour {
   }
 
   [SerializeField]
-  private Canvas _OverlayCanvas;
+  private Canvas _HorizontalCanvas;
 
   [SerializeField]
   private Canvas _VerticalCanvas;
@@ -63,7 +63,7 @@ public class UIManager : MonoBehaviour {
   /// For BaseViews, use OpenView instead.
   /// </summary>
   public static GameObject CreateUIElement(MonoBehaviour uiPrefab) {
-    return CreateUIElement(uiPrefab.gameObject, Instance._OverlayCanvas.transform);
+    return CreateUIElement(uiPrefab.gameObject, Instance._HorizontalCanvas.transform);
   }
 
   /// <summary>
@@ -79,7 +79,7 @@ public class UIManager : MonoBehaviour {
   /// For BaseViews, use OpenView instead.
   /// </summary>
   public static GameObject CreateUIElement(GameObject uiPrefab) {
-    return CreateUIElement(uiPrefab, Instance._OverlayCanvas.transform);
+    return CreateUIElement(uiPrefab, Instance._HorizontalCanvas.transform);
   }
 
   /// <summary>
@@ -115,13 +115,13 @@ public class UIManager : MonoBehaviour {
         // First dialog to dim the background, we need to create a dimmer
         // on top of existing ui
         Instance._DimBackgroundInstance = GameObject.Instantiate(Instance._DimBackgroundPrefab);
-        Instance._DimBackgroundInstance.transform.SetParent(verticalCanvas ? Instance._VerticalCanvas.transform : Instance._OverlayCanvas.transform, false);
+        Instance._DimBackgroundInstance.transform.SetParent(verticalCanvas ? Instance._VerticalCanvas.transform : Instance._HorizontalCanvas.transform, false);
       }
     }
 
     // Set the parent of the dialog after dimmer is created so that it displays
     // on top of the dimmer
-    newView.transform.SetParent(verticalCanvas ? Instance._VerticalCanvas.transform : Instance._OverlayCanvas.transform, false);
+    newView.transform.SetParent(verticalCanvas ? Instance._VerticalCanvas.transform : Instance._HorizontalCanvas.transform, false);
 
     if (animateImmediately) {
       baseViewScript.OpenView(overrideCloseOnTouchOutside);
@@ -155,11 +155,11 @@ public class UIManager : MonoBehaviour {
   }
 
   public static Camera GetUICamera() {
-    return _Instance._OverlayCanvas.worldCamera;
+    return _Instance._HorizontalCanvas.worldCamera;
   }
 
   public static Canvas GetUICanvas() {
-    return _Instance._OverlayCanvas;
+    return _Instance._HorizontalCanvas;
   }
 
   public static void DisableTouchEvents() {
@@ -188,7 +188,7 @@ public class UIManager : MonoBehaviour {
   public void ShowTouchCatcher(System.Action onTouch = null) {
     if (_TouchCatcherInstance == null) {
       _TouchCatcherInstance = GameObject.Instantiate<GameObject>(_TouchCatcherPrefab).GetComponent<TouchCatcher>();
-      _TouchCatcherInstance.transform.SetParent(_Instance._OverlayCanvas.transform, false);
+      _TouchCatcherInstance.transform.SetParent(_Instance._HorizontalCanvas.transform, false);
     }
     _TouchCatcherInstance.Enable();
     if (onTouch != null) {

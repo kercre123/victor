@@ -142,8 +142,8 @@ Transform:
   m_Children:
   - {fileID: 429308}
   - {fileID: 22432476}
-  - {fileID: 497984}
   - {fileID: 22420936}
+  - {fileID: 497984}
   m_Father: {fileID: 0}
   m_RootOrder: 0
 --- !u!4 &497984
@@ -157,7 +157,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 488436}
-  m_RootOrder: 2
+  m_RootOrder: 3
 --- !u!20 &2070858
 Camera:
   m_ObjectHideFlags: 1
@@ -348,7 +348,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 909c585ba1f764677a93af23393d9cd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _OverlayCanvas: {fileID: 22319488}
+  _HorizontalCanvas: {fileID: 22319488}
   _VerticalCanvas: {fileID: 22391958}
   _EventSystemScript: {fileID: 11485194}
   _TouchCatcherPrefab: {fileID: 151494, guid: f9f945bbe0c2a4469a9e59ccfe209d55, type: 2}
@@ -404,7 +404,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 488436}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
