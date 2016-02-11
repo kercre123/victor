@@ -26,7 +26,7 @@ namespace Selfie {
           _SelfieGame.PrepareForPhoto();
         }
         if (_PickupTime > _SelfieGame.CountdownTimer) {
-          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_CLICK_GENERAL);
+          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
           _SelfieGame.TakePhoto();
           _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
         }

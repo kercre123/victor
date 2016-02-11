@@ -18,7 +18,8 @@ import dependencies
 __wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'anki', 'cozmo-engine', 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WWiseToAppMetadata.py')
 __wwiseIdFileName = 'Wwise_IDs.h'
 __wwiseIdsFilePath = path.join(__projectRoot, 'EXTERNALS', 'cozmosoundbanks', 'GeneratedSoundBanks', __wwiseIdFileName)
-__audioMetadataFilePath = "audioEventMetadata.csv"
+__audioMetadataFileName= "audioEventMetadata.csv"
+__audioMetadataFilePath = path.join(__scripDir, __audioMetadataFileName)
 __audioCladDir = path.join(__projectRoot, 'lib', 'anki', 'cozmo-engine', 'clad', 'src', 'clad', 'audio')
 __depsFilePath = path.join(__projectRoot, 'DEPS')
 __externalsDir = path.join(__projectRoot, 'EXTERNALS')
@@ -41,7 +42,7 @@ def __parse_input_args():
 
     # Update sound banks and metadata
     update_parser = subparsers.add_parser(__update_command, help='Update project sound banks and metadata.csv')
-    update_parser.add_argument('version', action='store', help='Update Soundbank Version')
+    update_parser.add_argument('version', action='store', help='Update Soundbank Version. Pass \'-\' to not update version')
     update_parser.add_argument('--metadata-merge', action='store', help='Merge generate metadata.csv with other_metadata.csv file')
 
     # Generate project clad
@@ -99,38 +100,39 @@ def main():
 def __updateSoundbanks(version, mergeMetadataPath):
     # Update sound bank version in DEPS
     deps_json = None
-    with open(__depsFilePath) as deps_file:
-        deps_json = json.load(deps_file)
+    if version != '-':
+        with open(__depsFilePath) as deps_file:
+            deps_json = json.load(deps_file)
 
-        print "Update Soundbanks Version"
-        svn_key = "svn"
-        repo_names_key = "repo_names"
-        cozmosoundbanks_key = "cozmosoundbanks"
-        version_key = "version"
+            print "Update Soundbanks Version"
+            svn_key = "svn"
+            repo_names_key = "repo_names"
+            cozmosoundbanks_key = "cozmosoundbanks"
+            version_key = "version"
 
-        abortMsg = "Can not update Soundbank Version!!!!!! Can't Find "
+            abortMsg = "Can not update Soundbank Version!!!!!! Can't Find "
 
-        if svn_key not in deps_json:
-            __abort(abortMsg + " Can't Find " + svn_key)
+            if svn_key not in deps_json:
+                __abort(abortMsg + " Can't Find " + svn_key)
 
-        if repo_names_key not in deps_json[svn_key]:
-            __abort(abortMsg + repo_names_key)
+            if repo_names_key not in deps_json[svn_key]:
+                __abort(abortMsg + repo_names_key)
 
-        if cozmosoundbanks_key not in deps_json[svn_key][repo_names_key]:
-            __abort(abortMsg + cozmosoundbanks_key)
+            if cozmosoundbanks_key not in deps_json[svn_key][repo_names_key]:
+                __abort(abortMsg + cozmosoundbanks_key)
 
-        if version_key not in deps_json[svn_key][repo_names_key][cozmosoundbanks_key]:
-            __abort(abortMsg + version_key)
+            if version_key not in deps_json[svn_key][repo_names_key][cozmosoundbanks_key]:
+                __abort(abortMsg + version_key)
 
-    # Set soundbank version value
-    deps_json[svn_key][repo_names_key][cozmosoundbanks_key][version_key] = version
-     # Write file
-    with open(__depsFilePath, "w") as deps_file:
-        json.dump(deps_json, deps_file, indent = 4, sort_keys = True)
-        print "DEPS file has been updated"
+        # Set soundbank version value
+        deps_json[svn_key][repo_names_key][cozmosoundbanks_key][version_key] = version
+         # Write file
+        with open(__depsFilePath, "w") as deps_file:
+            json.dump(deps_json, deps_file, indent = 4, sort_keys = True)
+            print "DEPS file has been updated"
 
-    # Download Soundbanks
-    dependencies.extract_dependencies(__depsFilePath, __externalsDir)
+        # Download Soundbanks
+        dependencies.extract_dependencies(__depsFilePath, __externalsDir)
 
     # Generate metadata
     previousMetadataFilePath = __audioMetadataFilePath
