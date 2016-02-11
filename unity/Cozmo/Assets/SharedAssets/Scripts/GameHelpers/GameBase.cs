@@ -17,11 +17,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -235,6 +235,7 @@ public abstract class GameBase : MonoBehaviour {
           _RewardedXp[statType] = grantedXp;
           _ChallengeEndViewInstance.AddReward(statType, grantedXp);
 
+          // TODO: Move granting to after animation?
           // Grant right away even if there are animations in the daily goal ui
           CurrentRobot.AddToProgressionStat(statType, grantedXp);
         }
@@ -243,16 +244,22 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void HandleChallengeResultViewClosed() {
+    // Get unparented reward icons
+    Transform[] rewardIconObjects = _ChallengeEndViewInstance.GetRewardIconsByStat();
+
+    // Pass icons and xp to HomeHub
     if (_WonChallenge) {
       if (OnMiniGameWin != null) {
-        OnMiniGameWin(_RewardedXp);
+        OnMiniGameWin(_RewardedXp, rewardIconObjects);
       }
     }
     else {
       if (OnMiniGameLose != null) {
-        OnMiniGameLose(_RewardedXp);
+        OnMiniGameLose(_RewardedXp, rewardIconObjects);
       }
     }
+
+    // Close minigame UI
     CloseMinigameImmediately();
   }
 

@@ -67,7 +67,7 @@ namespace Cozmo.HomeHub {
       ShowTimelineDialog();
     }
 
-    private void ShowTimelineDialog() {
+    private void ShowTimelineDialog(Transform[] rewardIcons = null) {
       // Create dialog with the game prefabs
       _TimelineViewInstance = UIManager.OpenView(_TimelineViewPrefab, verticalCanvas: true) as TimelineView;
       _TimelineViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
@@ -76,10 +76,12 @@ namespace Cozmo.HomeHub {
       _TimelineViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
 
       // Show the current state of challenges being locked/unlocked
-      _TimelineViewInstance.Initialize(_ChallengeStatesById);
+      _TimelineViewInstance.Initialize(_ChallengeStatesById, rewardIcons);
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("ID_idle_brickout");
+
       // For now Demo is freeplay. 
       RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+
       RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
       DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
     }
@@ -145,34 +147,31 @@ namespace Cozmo.HomeHub {
 
       var timelineViewInstance = _TimelineViewInstance;
       timelineViewInstance.LockScroll(true);
-      _ChallengeDetailsDialogInstance.ViewClosed += () => 
-      {
-        if(timelineViewInstance != null) {
+      _ChallengeDetailsDialogInstance.ViewClosed += () => {
+        if (timelineViewInstance != null) {
           timelineViewInstance.LockScroll(false);
         }
       };
 
       // React to when we should start the challenge.
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
-
     }
 
-    private void HandleMiniGameLose(StatContainer rewards) {
-      // Reset the current challenge
-      if (_CurrentChallengePlaying != null) {
-        CompleteChallenge(_CurrentChallengePlaying, false, rewards);
-        _CurrentChallengePlaying = null;
-      }
-      ShowTimelineDialog();
+    private void HandleMiniGameLose(StatContainer rewards, Transform[] rewardIcons) {
+      HandleMiniGameCompleted(rewards, rewardIcons, didWin: false);
     }
 
-    private void HandleMiniGameWin(StatContainer rewards) {
+    private void HandleMiniGameWin(StatContainer rewards, Transform[] rewardIcons) {
+      HandleMiniGameCompleted(rewards, rewardIcons, didWin: true);
+    }
+
+    private void HandleMiniGameCompleted(StatContainer rewards, Transform[] rewardIcons, bool didWin) {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
-        CompleteChallenge(_CurrentChallengePlaying, true, rewards);
+        CompleteChallenge(_CurrentChallengePlaying, didWin, rewards);
         _CurrentChallengePlaying = null;
       }
-      ShowTimelineDialog();
+      ShowTimelineDialog(rewardIcons);
     }
 
     private void HandleMiniGameQuit() {
