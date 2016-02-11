@@ -33,6 +33,7 @@ BORDERWHITE = [255,255,255,0]
 #     > the one mandatory input is the source path. The rest of the inputs (destinatino path, size, padding, radius, border, innerpadding) are set to default values unless they are overwritten
 # the default settings are :
 #          dst = ''         (where to put the output images. Defaults to <src>/withFiducials if empty or unspecified)
+#          size = 512
 #          padding = 0.0    (the space between the fiducial and the end of the image
 #          radius = 0.0     (the radius of the corner (.5 is the highest this should go and will create a circle)) 
 #          border = 0.1     (the thickness of the fiducial that will be added)
@@ -44,6 +45,8 @@ def main(src = 'gallery',dst = '',size=512, padding = 0.0,radius= 0.0, border = 
     print 'size ' + str(size)
     print 'padding ' + str(padding)
     print 'radius ' + str(radius)
+    print 'border ' + str(border)
+    print 'innerpad ' + str(innerpad)
     name_list = typefilter(name_list,'.png')
     image_list = makeImglist(src,name_list,size)
     if len(dst)==0:
@@ -354,8 +357,9 @@ class myImage():
     
 
 
-
-if len(sys.argv) > 6:
+if len(sys.argv) > 7:
+    main(str(sys.argv[1]), str(sys.argv[2]), np.uint32(sys.argv[3]), np.float32(sys.argv[4]), np.float32(sys.argv[5]),np.float32(sys.argv[6]),np.float32(sys.argv[7]))
+elif len(sys.argv) > 6:
     main(str(sys.argv[1]), str(sys.argv[2]), np.uint32(sys.argv[3]), np.float32(sys.argv[4]), np.float32(sys.argv[5]),np.float32(sys.argv[6]))
 elif len(sys.argv) > 5:
     main(str(sys.argv[1]), str(sys.argv[2]), np.uint32(sys.argv[3]), np.float32(sys.argv[4]), np.float32(sys.argv[5]))
