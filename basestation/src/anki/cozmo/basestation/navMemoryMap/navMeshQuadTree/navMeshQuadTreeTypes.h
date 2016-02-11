@@ -80,6 +80,9 @@ enum EClockDirection { CW, CCW };
 // packed variable
 ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentType);
 
+// String representing ENodeContentType for debugging purposes
+const char* ENodeContentTypeToString(ENodeContentType nodeContentType);
+
 // return the opposite direction to the one given (eg: North vs South, West vs East)
 inline NavMeshQuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);
 

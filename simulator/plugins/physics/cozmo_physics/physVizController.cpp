@@ -305,13 +305,13 @@ void PhysVizController::Draw(int pass, const char *view)
             quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
          );
         
-        glColor4ub(255,255,255,255);
-        DrawQuad(
-            quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
-            quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L
-            quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
-            quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
-         );
+//        glColor4ub(255,255,255,255);
+//        DrawQuad(
+//            quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
+//            quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L
+//            quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
+//            quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
+//         );
       } // for each quadInVector
     } // for each vector in map
     
@@ -426,7 +426,7 @@ void PhysVizController::ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInt
   //      std::make_move_iterator(payload.quads.end())
   //    );
   const size_t newSize = dest.size() + payload.quads.size();
-  CORETECH_ASSERT( newSize <= 1024 ); // Debug set to a limit, no rationale on actual number.
+  CORETECH_ASSERT( newSize <= 4096 ); // Debug set to a limit, no rationale on actual number.
   dest.reserve( newSize );
   dest.insert( dest.end(), payload.quads.begin(), payload.quads.end());
 }

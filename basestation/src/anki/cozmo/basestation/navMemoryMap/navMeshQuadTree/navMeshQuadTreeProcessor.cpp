@@ -70,7 +70,7 @@ void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNod
 
   if ( IsCached(newContent) )
   {
-    // remove the node from that cache
+    // add node to that cache
     CORETECH_ASSERT(_nodeSets[newContent].find(node) == _nodeSets[newContent].end());
     _nodeSets[newContent].insert(node);
     
