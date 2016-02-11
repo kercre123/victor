@@ -17,44 +17,21 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  protected void RaiseMiniGameQuit() {
-    _StateMachine.Stop();
-
-    if (OnMiniGameQuit != null) {
-      OnMiniGameQuit();
-    }
-
-    CloseMinigameImmediately();
-  }
-
   public delegate void MiniGameWinHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameWin;
-
-  public void RaiseMiniGameWin(string subtitleText = null) {
-    _StateMachine.Stop();
-
-    _WonChallenge = true;
-    _SharedMinigameViewInstance.ShowCozmoScoreWidget();
-    _SharedMinigameViewInstance.ShowPlayerWinnerBanner();
-    OpenChallengeEndedDialog(subtitleText);
-  }
 
   public delegate void MiniGameLoseHandler(StatContainer rewardedXp);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
-  public void RaiseMiniGameLose(string subtitleText = null) {
-    _StateMachine.Stop();
-    _WonChallenge = false;
-    _SharedMinigameViewInstance.ShowCozmoWinnerBanner();
-    _SharedMinigameViewInstance.ShowPlayerScoreWidget();
-    OpenChallengeEndedDialog(subtitleText);
-  }
-
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private SharedMinigameView _SharedMinigameViewInstance;
+
+  public SharedMinigameView SharedMinigameView {
+    get { return _SharedMinigameViewInstance; }
+  }
 
   protected Transform SharedMinigameViewInstanceParent { get { return _SharedMinigameViewInstance.transform; } }
 
@@ -64,25 +41,28 @@ public abstract class GameBase : MonoBehaviour {
 
   protected StateMachine _StateMachine = new StateMachine();
 
-  // TODO: Delete after removing usage by Minesweeper, Codebreaker
-  [SerializeField]
-  protected GameStateSlide[] _GameStateSlides;
-
   private StatContainer _RewardedXp;
 
   private float _GameStartTime;
 
+  #region Initialization
+
   public void InitializeMinigame(ChallengeData challengeData) {
     _GameStartTime = Time.time;
     _StateMachine.SetGameRef(this);
-    _SharedMinigameViewInstance = UIManager.OpenView(
-      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
-      false) as SharedMinigameView;
 
     _ChallengeData = challengeData;
     _WonChallenge = false;
+
+    _SharedMinigameViewInstance = UIManager.OpenView(
+      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
+      false) as SharedMinigameView;
+    _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
+      _ChallengeData.HowToPlayDialogContentLocKey);
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
  
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.PLAYFUL);
+
     Initialize(challengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
@@ -94,9 +74,60 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    ShowTitleWidget(Localization.Get(data.ChallengeTitleLocKey), data.ChallengeIcon);
-    CreateDefaultBackButton();
+    SharedMinigameView.TitleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
+    SharedMinigameView.TitleWidget.Icon = data.ChallengeIcon;
+    SharedMinigameView.ShowBackButton();
   }
+
+  #endregion
+
+  // end Initialization
+
+  #region Update
+
+  protected virtual void Update() {
+    UpdateStateMachine();
+  }
+
+  protected virtual void UpdateStateMachine() {
+    _StateMachine.UpdateStateMachine();
+  }
+
+  #endregion
+
+  // end Update
+
+  #region Clean Up
+
+  /// <summary>
+  /// Clean up listeners and extra game objects. Called before the game is 
+  /// destroyed when the player quits or the robot loses connection.
+  /// </summary>
+  protected abstract void CleanUpOnDestroy();
+
+  public void OnDestroy() {
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(() => {
+        RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(AnimationName.kIdleBrickout);
+      });
+    }
+    if (_SharedMinigameViewInstance != null) {
+      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance = null;
+    }
+  }
+
+  public void CloseMinigameImmediately() {
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.SILENCE);
+    CleanUpOnDestroy();
+    Destroy(gameObject);
+  }
+
+  #endregion
+
+  // end Clean Up
+
+  #region Calculate Stats
 
   protected virtual int CalculateTimeStatRewards() {
     return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f);
@@ -128,38 +159,6 @@ public abstract class GameBase : MonoBehaviour {
     return 0;
   }
 
-  public void OnDestroy() {
-    if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(() => {
-        RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(AnimationName.kIdleBrickout);
-      });
-    }
-    if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.CloseViewImmediately();
-      _SharedMinigameViewInstance = null;
-    }
-  }
-
-  protected virtual void Update() {
-    UpdateStateMachine();
-  }
-
-  protected virtual void UpdateStateMachine() {
-    _StateMachine.UpdateStateMachine();
-  }
-
-  /// <summary>
-  /// Clean up listeners and extra game objects. Called before the game is 
-  /// destroyed when the player quits or the robot loses connection.
-  /// </summary>
-  protected abstract void CleanUpOnDestroy();
-
-  public void CloseMinigameImmediately() {
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.SILENCE);
-    CleanUpOnDestroy();
-    Destroy(gameObject);
-  }
-
   private int ComputeXpForStat(Anki.Cozmo.ProgressionStatType statType) {
     switch (statType) {
     case Anki.Cozmo.ProgressionStatType.Time:
@@ -173,18 +172,52 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  #endregion
+
+  // end Calculate Stats
+
+  #region Minigame Exit
+
+  protected void RaiseMiniGameQuit() {
+    _StateMachine.Stop();
+
+    if (OnMiniGameQuit != null) {
+      OnMiniGameQuit();
+    }
+
+    CloseMinigameImmediately();
+  }
+
+  public void RaiseMiniGameWin(string subtitleText = null) {
+    _StateMachine.Stop();
+
+    _WonChallenge = true;
+    _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
+    _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
+    _SharedMinigameViewInstance.PlayerScoreboard.IsWinner = true;
+    OpenChallengeEndedDialog(subtitleText);
+  }
+
+  public void RaiseMiniGameLose(string subtitleText = null) {
+    _StateMachine.Stop();
+    _WonChallenge = false;
+    _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
+    _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
+    _SharedMinigameViewInstance.CozmoScoreboard.IsWinner = true;
+    OpenChallengeEndedDialog(subtitleText);
+  }
+
   private void OpenChallengeEndedDialog(string subtitleText = null) {
     // Open confirmation dialog instead
-    GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowCustomGameStateSlide(
+    GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
                                      UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
                                      "ChallengeEndSlide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
     // Listen for dialog close
-    ShowContinueButtonShelf(centerShelf: true);
-    SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-    SetContinueButtonListener(HandleChallengeResultViewClosed);
+    SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
+      Localization.Get(LocalizationKeys.kButtonContinue));
 
     _RewardedXp = new StatContainer();
 
@@ -217,134 +250,13 @@ public abstract class GameBase : MonoBehaviour {
     CloseMinigameImmediately();
   }
 
-  #region Default Quit button
-
-  protected void CreateDefaultBackButton() {
-    _SharedMinigameViewInstance.CreateQuickQuitButton();
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed -= HandleQuitConfirmed;
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-  }
-
-  public void HideDefaultBackButton() {
-    _SharedMinigameViewInstance.HideQuickQuitButton();
-  }
-
-  public void CreateDefaultQuitButton() {
-    _SharedMinigameViewInstance.CreateQuitButton();
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed -= HandleQuitConfirmed;
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-  }
-
   private void HandleQuitConfirmed() {
     RaiseMiniGameQuit();
   }
 
   #endregion
 
-  #region Attempts Bar
-
-  private int _MaxAttempts = -1;
-
-  public int MaxAttempts {
-    get { return _MaxAttempts; }
-    set {
-      if (value > 0) {
-        _MaxAttempts = value;
-        _SharedMinigameViewInstance.SetMaxCozmoAttempts(_MaxAttempts);
-        AttemptsLeft = _MaxAttempts;
-      }
-      else {
-        DAS.Error(this, "Tried to set MaxAttempts to a negative int! Aborting!");
-      }
-    }
-  }
-
-  private int _AttemptsLeft = -1;
-
-  public int AttemptsLeft {
-    get { return _AttemptsLeft; }
-    set {
-      _AttemptsLeft = Mathf.Clamp(value, 0, MaxAttempts);
-      _AttemptsLeft = value;
-      _SharedMinigameViewInstance.SetCozmoAttemptsLeft(_AttemptsLeft);
-    }
-  }
-
-  public bool TryDecrementAttempts() {
-    AttemptsLeft--;
-
-    return (AttemptsLeft > 0);
-  }
-
-  #endregion
-
-  #region Task Progress Bar
-
-  // From 0 to 1
-  private float _Progress = 0f;
-
-  public float Progress {
-    get { return _Progress; }
-    set {
-      if (value < 0 || value > 1) {
-        DAS.Warn(this, "Tried to set progress to value=" + value + " which is not in the range of 0 to 1! Clamping.");
-        _Progress = Mathf.Clamp(value, 0f, 1f);
-      }
-      _Progress = value;
-      _SharedMinigameViewInstance.SetProgress(_Progress);
-    }
-  }
-
-  // By default says "Challenge Progress"
-  protected string ProgressBarLabelText {
-    get { 
-      return _SharedMinigameViewInstance.ProgressBarLabelText; 
-    }
-    set {
-      _SharedMinigameViewInstance.ProgressBarLabelText = value;
-    }
-  }
-
-  // Add some decorative lines to the bar to demark the number
-  // "segments" there are in the bar. Progress is still from 0 to 1 overall,
-  // so if you want to fill the first segment of a 4 segment bar, set
-  // Progress to 0.25.
-  public int NumSegments {
-    get {
-      return _SharedMinigameViewInstance.NumSegments;
-    }
-    set {
-      _SharedMinigameViewInstance.NumSegments = value;
-    }
-  }
-
-  #endregion
-
-  #region Title Widget
-
-  protected void ShowTitleWidget(string titleText, Sprite titleIcon) {
-    _SharedMinigameViewInstance.CreateTitleWidget(titleText, titleIcon);
-  }
-
-  #endregion
-
-  #region How To Play Button
-
-  public void OpenHowToPlayView() {
-    if (_ChallengeData.HowToPlayDialogContentPrefab != null) {
-      _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentPrefab);
-    }
-    else {
-      _SharedMinigameViewInstance.CreateHowToPlayButton(_ChallengeData.HowToPlayDialogContentLocKey);
-    }
-    _SharedMinigameViewInstance.OpenHowToPlayView();
-  }
-
-  public void CloseHowToPlayView() {
-    _SharedMinigameViewInstance.CloseHowToPlayView();
-  }
-
-  #endregion
+  // end Minigame Exit handling
 
   #region Difficulty Select
 
@@ -361,184 +273,7 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void OnDifficultySet(int difficulty) {
   }
 
-  public void OpenDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
-    _SharedMinigameViewInstance.CreateDifficultySelectView(options, highestDifficultyAvailable);
-    _SharedMinigameViewInstance.OpenDifficultySelectView();
-  }
-
-  public void CloseDifficultySelectView() {
-    _SharedMinigameViewInstance.CloseDifficultySelectView();
-  }
-
-  public DifficultySelectOptionData GetSelectedDifficulty() {
-    return _SharedMinigameViewInstance.GetSelectedDifficulty();
-  }
-
   #endregion
 
-  #region Game State Slides
-
-  // TODO: Delete after removing usage by CodeBreaker, Minesweeper
-  public GameObject ShowFullScreenSlide(string slideName) {
-    // If found, show that slide.
-    GameObject slideObject = null;
-    GameStateSlide foundSlideData = GetSlideByName(slideName);
-    if (foundSlideData != null) {
-      slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(foundSlideData);
-    }
-    else {
-      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
-      " list of slides! gameObject.name=" + gameObject.name);
-    }
-    return slideObject;
-  }
-
-  // TODO: Delete after removing usage by CodeBreaker, Minesweeper
-  private GameStateSlide GetSlideByName(string slideName) {
-    // Search through the array for a slide of the same name
-    GameStateSlide foundSlideData = null;
-    foreach (var slide in _GameStateSlides) {
-      if (slide != null && slide.slideName == slideName) {
-        if (slide.slidePrefab != null) {
-          foundSlideData = slide;
-        }
-        else {
-          DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
-          " list of slides! gameObject.name=" + gameObject.name);
-        }
-        break;
-      }
-      else if (slide == null) {
-        DAS.Warn(this, "Null slide found in slide prefabs! Check this object's" +
-        " list of slides! gameObject.name=" + gameObject.name);
-      }
-    }
-    return foundSlideData;
-  }
-
-  public ShowCozmoCubeSlide ShowShowCozmoCubesSlide(int numCubesRequired) {
-    GameObject slideObject = _SharedMinigameViewInstance.ShowFullScreenSlide(UIPrefabHolder.Instance.InitialCubesSlide);
-    ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-    cubeSlide.Initialize(numCubesRequired);
-    return cubeSlide;
-  }
-
-  public GameObject ShowFullScreenSlide(GameObject slidePrefab) {
-    return _SharedMinigameViewInstance.ShowFullScreenSlide(slidePrefab, slidePrefab.name);
-  }
-
-  public void ShowInfoTextSlide(string textToDisplay) {
-    _SharedMinigameViewInstance.ShowInfoTextSlide(textToDisplay);
-  }
-
-  public void ShowInfoTextSlideWithKey(string localizationKey) {
-    _SharedMinigameViewInstance.ShowInfoTextSlide(Localization.Get(localizationKey));
-  }
-
-  private void ShowRewardsSlide() {
-    // TODO
-  }
-
-  public void HideGameStateSlide() {
-    _SharedMinigameViewInstance.HideGameStateSlide();
-  }
-
-  #endregion
-
-  #region ContinueGameShelfWidget
-
-  public void ShowContinueButtonShelf(bool centerShelf = false) {
-    _SharedMinigameViewInstance.ShowContinueButtonShelf(centerShelf);
-  }
-
-  public void HideContinueButtonShelf() {
-    _SharedMinigameViewInstance.HideContinueButtonShelf();
-  }
-
-  public void SetContinueButtonShelfText(string text, bool isComplete) {
-    _SharedMinigameViewInstance.SetContinueButtonShelfText(text, isComplete);
-  }
-
-  public void SetContinueButtonText(string text) {
-    _SharedMinigameViewInstance.SetContinueButtonText(text);
-  }
-
-  public void SetContinueButtonListener(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler) {
-    _SharedMinigameViewInstance.SetContinueButtonListener(buttonClickHandler);
-  }
-
-  public void EnableContinueButton(bool enable) {
-    _SharedMinigameViewInstance.EnableContinueButton(enable);
-  }
-
-  #endregion
-
-  #region Info Title Text
-
-  public string InfoTitleText {
-    get { return _SharedMinigameViewInstance.InfoTitleText; }
-    set { 
-      _SharedMinigameViewInstance.InfoTitleText = value; 
-    }
-  }
-
-  #endregion
-
-  #region Score Widgets
-
-  public int CozmoScore {
-    set {
-      _SharedMinigameViewInstance.CozmoScore = value;
-    }
-  }
-
-  public int CozmoMaxRounds {
-    set {
-      _SharedMinigameViewInstance.CozmoMaxRounds = value;
-    }
-  }
-
-  public int CozmoRoundsWon {
-    set {
-      _SharedMinigameViewInstance.CozmoRoundsWon = value;
-    }
-  }
-
-  public bool CozmoDim {
-    set {
-      _SharedMinigameViewInstance.CozmoDim = value;
-    }
-  }
-
-  public int PlayerScore {
-    set {
-      _SharedMinigameViewInstance.PlayerScore = value;
-    }
-  }
-
-  public int PlayerMaxRounds {
-    set {
-      _SharedMinigameViewInstance.PlayerMaxRounds = value;
-    }
-  }
-
-  public int PlayerRoundsWon {
-    set {
-      _SharedMinigameViewInstance.PlayerRoundsWon = value;
-    }
-  }
-
-  public bool PlayerDim {
-    set {
-      _SharedMinigameViewInstance.PlayerDim = value;
-    }
-  }
-
-  #endregion
-}
-
-[System.Serializable]
-public class GameStateSlide {
-  public string slideName;
-  public CanvasGroup slidePrefab;
+  // end Difficulty Select
 }

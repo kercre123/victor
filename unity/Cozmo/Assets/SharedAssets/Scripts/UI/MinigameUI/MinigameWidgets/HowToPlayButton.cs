@@ -6,7 +6,7 @@ using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class HowToPlayButton : MonoBehaviour, IMinigameWidget {
+    public class HowToPlayButton : MinigameWidget {
 
       [SerializeField]
       private AnkiButton _HowToPlayButtonInstance;
@@ -18,11 +18,8 @@ namespace Cozmo {
       private string _HowToPlayLocKey = null;
       private GameObject _HowToPlayViewContentPrefab = null;
 
-      public void Initialize(string howToPlayTextLocKey) {
+      public void Initialize(string howToPlayTextLocKey, GameObject howToPlayViewContents) {
         _HowToPlayLocKey = howToPlayTextLocKey;
-      }
-
-      public void Initialize(GameObject howToPlayViewContents) {
         _HowToPlayViewContentPrefab = howToPlayViewContents;
       }
 
@@ -30,13 +27,13 @@ namespace Cozmo {
         _HowToPlayButtonInstance.onClick.AddListener(HandleHowToPlayButtonTap);
       }
 
-      public void DestroyWidgetImmediately() {
+      public override void DestroyWidgetImmediately() {
         _HowToPlayButtonInstance.onClick.RemoveAllListeners();
         Destroy(gameObject);
       }
 
       // TODO: Don't hardcode this
-      public Sequence OpenAnimationSequence() {
+      public override Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
           this.transform.localPosition.y - 200, this.transform.localPosition.z),
@@ -45,7 +42,7 @@ namespace Cozmo {
       }
 
       // TODO: Don't hardcode this
-      public Sequence CloseAnimationSequence() {
+      public override Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
           this.transform.localPosition.y - 200, this.transform.localPosition.z),

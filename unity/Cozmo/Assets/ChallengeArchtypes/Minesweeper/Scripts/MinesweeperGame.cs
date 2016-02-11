@@ -42,6 +42,7 @@ public class MinesweeperGame : GameBase {
   public event Action<int, int, int, CellStatus> OnGridCellUpdated;
 
   private MinesweeperPanel _Panel;
+  public GameObject SetupHelpPrefab;
 
   protected override void Initialize(MinigameConfigBase minigameConfigData) {
     _FirstGuess = true;

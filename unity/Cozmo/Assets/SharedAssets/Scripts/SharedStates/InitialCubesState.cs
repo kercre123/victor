@@ -17,17 +17,16 @@ public class InitialCubesState : State {
 
   public override void Enter() {
     base.Enter();
-    _CurrentRobot.SetHeadAngle(0f);
     _CurrentRobot.SetLiftHeight(0f);
+    _CurrentRobot.SetHeadAngle(0f);
 
     _Game = _StateMachine.GetGame();
-    _ShowCozmoCubesSlide = _Game.ShowShowCozmoCubesSlide(_CubesRequired);
-    _Game.ShowContinueButtonShelf();
-    _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
-      0), false);
-    _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-    _Game.SetContinueButtonListener(HandleContinueButtonClicked);
-    _Game.EnableContinueButton(false);
+    _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+    _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked,
+      Localization.Get(LocalizationKeys.kButtonContinue), 
+      Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound, 0),
+      Cozmo.UI.UIColorPalette.NeutralTextColor());
+    _Game.SharedMinigameView.EnableContinueButton(false);
   }
 
   public override void Update() {
@@ -52,17 +51,17 @@ public class InitialCubesState : State {
       _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
 
       if (_NumValidCubes >= _CubesRequired) {
-        _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
-          _NumValidCubes), true);
+        _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
+          _NumValidCubes), Cozmo.UI.UIColorPalette.CompleteTextColor());
 
-        _Game.EnableContinueButton(true);
+        _Game.SharedMinigameView.EnableContinueButton(true);
       }
       else {
-        _Game.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
+        _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
           _CubesRequired,
-          _NumValidCubes), false);
+          _NumValidCubes), Cozmo.UI.UIColorPalette.NeutralTextColor());
 
-        _Game.EnableContinueButton(false);
+        _Game.SharedMinigameView.EnableContinueButton(false);
       }
     }
   }
@@ -74,7 +73,7 @@ public class InitialCubesState : State {
       lightCube.Value.TurnLEDsOff();
     }
 
-    _Game.HideGameStateSlide();
+    _Game.SharedMinigameView.HideGameStateSlide();
   }
 
   private void HandleContinueButtonClicked() {
