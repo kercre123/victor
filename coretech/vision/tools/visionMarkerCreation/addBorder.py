@@ -30,26 +30,28 @@ BORDERWHITE = [255,255,255,0]
 #    >From a terminal windo call:
 #           Python addBorder.py sourcePath destinationPath [size [padding [radius [border [innerpad]]]]]
 #     > The fucntion should be called on a directory of png images with a black marker and a transparent or white filling. they can be RGBA or RGB images or a mixture of both.  
-#     > the two mandatory inputs are the source path and the destination path, the rest of the inputs ( size, padding, radius, border, innerpadding) are set to default values unless they are overwritten
+#     > the one mandatory input is the source path. The rest of the inputs (destinatino path, size, padding, radius, border, innerpadding) are set to default values unless they are overwritten
 # the default settings are :
-
+#          dst = ''         (where to put the output images. Defaults to <src>/withFiducials if empty or unspecified)
 #          padding = 0.0    (the space between the fiducial and the end of the image
 #          radius = 0.0     (the radius of the corner (.5 is the highest this should go and will create a circle)) 
 #          border = 0.1     (the thickness of the fiducial that will be added)
 #          innerpad = 0.1   (the thickness of the space betweent he edge of the marker and the fiducial)
 #    all of these are inputs that represent what their size should be based on a fraction of the fiducial length. for example if the fiducial is 256 pixels long a .1 border will be 25-26 pixels thick.  
 #############################
-def main(src = 'gallery/',dst = 'gallery/withFiducials/',size=512, padding = 0.0,radius= 0.0, border = .1, innerpad = .1):
+def main(src = 'gallery',dst = '',size=512, padding = 0.0,radius= 0.0, border = .1, innerpad = .1):
     name_list = os.listdir(src)
     print 'size ' + str(size)
     print 'padding ' + str(padding)
     print 'radius ' + str(radius)
     name_list = typefilter(name_list,'.png')
     image_list = makeImglist(src,name_list,size)
+    if len(dst)==0:
+        dst = os.path.join(src,'withFiducials')
     if not os.path.exists(dst):
+        print 'Making directory: ' + dst
         os.mkdir(dst)
     for i in image_list:
- 
         if i.chan >3:  #image has RGBA channels
             if i.image.mean() < 60:  #image has a translucent fill
                 out = makeBorder(i,size,padding,border,innerpad,radius)
@@ -318,7 +320,7 @@ def drawCircle(radius,thickness,fillColor,circleColor):
 def makeImglist(path,namelist,image_size):
     img_list = []
     for im in namelist:
-        img_list.append(myImage(cv2.resize(cv2.imread(path+im,-1),(image_size,image_size)), im))
+        img_list.append(myImage(cv2.resize(cv2.imread(os.path.join(path,im),-1),(image_size,image_size)), im))
     return img_list
 
 def typefilter(name_list,Ftype = '.png'):
@@ -360,10 +362,11 @@ elif len(sys.argv) > 5:
 elif len(sys.argv) > 4:
     main(str(sys.argv[1]), str(sys.argv[2]), np.uint32(sys.argv[3]), np.float32(sys.argv[4]))
 elif len(sys.argv) > 3:
-    main(str(sys.argv[1]),str(sys.argv[2]),np.uint32(sys.argv[3]))
+    main(str(sys.argv[1]), str(sys.argv[2]),np.uint32(sys.argv[3]))
 elif len(sys.argv) > 2:
-    main(str(sys.argv[1]),str(sys.argv[2]))
-
+    main(str(sys.argv[1]), str(sys.argv[2]))
+elif len(sys.argv) > 1:
+    main(str(sys.argv[1]))
 else:
     print 'please enter a source path and a destination path'
 

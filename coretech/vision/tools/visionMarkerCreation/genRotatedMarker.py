@@ -15,6 +15,8 @@ import numpy as np
 ## input: 
 ##     -a source directory with base marker images
 ##     -a destination directory where those images will be stored  
+##       [Optional: will default to <source>/rotated if empty or not specified]
+##
 ## output:
 ##     - the destination directory will have all unique rotations of a 
 ##Purpose: 
@@ -54,7 +56,7 @@ import numpy as np
 
 
 
-def main(src = 'markers/', dst = 'gallery/',size = 256,threshold= .30):
+def main(src = 'markers', dst = '',size = 256,threshold= .30):
     namearray = os.listdir(src)
     namearray = typefilter(namearray,'.png')
     imagearray = makesmallImglist(src,namearray,size)
@@ -66,6 +68,8 @@ def main(src = 'markers/', dst = 'gallery/',size = 256,threshold= .30):
         myImlist = makeMyimagelist(imagearray[i],namearray[i])
         myImlist = compare(myImlist,threshold,size)
         myimagearray.append(myImlist)
+    if len(dst)==0:
+        dst = os.path.join(src, 'rotated')
     if not os.path.exists(dst):
         os.mkdir(dst)
     addtoGallery(dst,myimagearray)
@@ -94,7 +98,7 @@ def createimnames(name):
 def makesmallImglist(path,namelist,image_size):
     img_list = []
     for im in namelist:
-        img_list.append([ cv2.resize(cv2.imread(path+im,-1),(image_size,image_size))])
+        img_list.append([ cv2.resize(cv2.imread(os.path.join(path,im),-1),(image_size,image_size))])
 
     return img_list
         
@@ -232,5 +236,7 @@ elif len(sys.argv) > 3:
     main(str(sys.argv[1]),str( sys.argv[2]),int( sys.argv[3]))
 elif len(sys.argv) > 2:
     main(str(sys.argv[1]),str( sys.argv[2]))
+elif len(sys.argv) > 1:
+    main(str(sys.argv[1]))
 else:
     print ('please provide a source path and a destination path')
