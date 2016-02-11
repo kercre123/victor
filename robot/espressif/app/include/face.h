@@ -48,6 +48,9 @@ namespace Anki {
         
         // Return display to normal function
         void FaceUnPrintf(void);
+        
+        // Invert the display for future FacePrintf calls
+        void FaceInvertPrintf(bool blackOnBlue);
       }
     } // Face
   } // Cozmo
