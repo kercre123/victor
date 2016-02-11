@@ -77,6 +77,9 @@ namespace Cozmo.HomeHub {
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
     public event ButtonClickedHandler OnCompletedChallengeClicked;
 
+
+    public event Action OnEndSessionClicked;
+
     [SerializeField]
     HomeHubChallengeListView _ChallengeListViewPrefab;
     HomeHubChallengeListView _ChallengeListViewInstance;
@@ -393,6 +396,10 @@ namespace Cozmo.HomeHub {
 
     private void HandleEndSessionConfirm() {
       DAS.Info(this, "HandleEndSessionConfirm");
+
+      if (OnEndSessionClicked != null) {
+        OnEndSessionClicked();
+      }
     }
 
     #endregion
