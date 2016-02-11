@@ -54,9 +54,9 @@ else
   [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers(img, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers);
   
   detections = struct('corners', quads, ...
-    'markerType', markerTypes,  ...
+    'markerType', num2cell(markerTypes),  ...
     'markerName', markerNames, ...
-    'validity', markerValidity);
+    'validity', num2cell(markerValidity));
   
 end
 
@@ -92,7 +92,29 @@ if numDetections > 0
         plot(detections(i).corners([1 3],1)+1, detections(i).corners([1 3],2)+1,'g', ...
           'Tag', 'BlockMarker2D', 'Parent', h_axes, 'LineWidth', 3);
         mid = mean(detections(i).corners,1);
-        text(mid(1), mid(2), strrep(detections(i).markerName, 'MARKER_', ''), ...
+        
+        switch(detections(i).validity)
+          case 0
+            textLabel = strrep(detections(i).markerName, 'MARKER_', '');
+          case 1
+            textLabel = 'VALID_NOT_DECODED';
+          case 2
+            textLabel = 'LOW_CONTRAST';
+          case 3
+            textLabel = 'UNVERIFIED';
+          case 4
+            textLabel = 'UNKNOWN';
+          case 5
+            textLabel = 'WEIRD_SHAPE';
+          case 6
+            textLabel = 'NUMERIC_FAIL';
+          case 7
+            textLabel = 'REFINE_FAIL';
+          otherwise
+            textLabel = 'BAD_VALIDITY_CODE';
+        end
+            
+        text(mid(1), mid(2), textLabel, ...
           'FontSize', 18, 'Color', 'r', 'FontWeight', 'b', 'Hor', 'c', ...
           'Interpreter', 'none', 'Tag', 'BlockMarker2D', 'Parent', h_axes);
       else
