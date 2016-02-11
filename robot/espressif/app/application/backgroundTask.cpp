@@ -73,8 +73,6 @@ void WiFiFace(void)
                        ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
                        COZMO_VERSION_COMMIT, BUILD_DATE + 5,
                        RTIP::Version, RTIP::VersionDescription, wifiFaceSpinner[system_get_time() >> 16 & 0x7]);
-       // Send a radio not connected message to the K02 so it will give us version info.
-       i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
     }
   }
 }
