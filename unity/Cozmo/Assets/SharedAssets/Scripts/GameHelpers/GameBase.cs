@@ -61,7 +61,7 @@ public abstract class GameBase : MonoBehaviour {
       _ChallengeData.HowToPlayDialogContentLocKey);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
  
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.PLAYFUL);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Playful);
 
     Initialize(challengeData.MinigameConfig);
 
@@ -118,7 +118,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void CloseMinigameImmediately() {
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.SILENCE);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
     CleanUpOnDestroy();
     Destroy(gameObject);
   }
