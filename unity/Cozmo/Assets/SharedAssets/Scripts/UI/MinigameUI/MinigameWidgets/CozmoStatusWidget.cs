@@ -4,7 +4,7 @@ using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class CozmoStatusWidget : MonoBehaviour, IMinigameWidget {
+    public class CozmoStatusWidget : MinigameWidget {
 
       [SerializeField]
       private SegmentedBar _AttemptsDisplay;
@@ -21,12 +21,12 @@ namespace Cozmo {
 
       #region IMinigameWidget
 
-      public void DestroyWidgetImmediately() {
+      public override void DestroyWidgetImmediately() {
         Destroy(gameObject);
       }
 
       // TODO: Don't hardcode this
-      public Sequence OpenAnimationSequence() {
+      public override Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + 600, 
           this.transform.localPosition.y - 300, this.transform.localPosition.z),
@@ -35,7 +35,7 @@ namespace Cozmo {
       }
 
       // TODO: Don't hardcode this
-      public Sequence CloseAnimationSequence() {
+      public override Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + 600, 
           this.transform.localPosition.y - 300, this.transform.localPosition.z),

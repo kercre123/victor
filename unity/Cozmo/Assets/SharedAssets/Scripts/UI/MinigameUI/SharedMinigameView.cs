@@ -111,7 +111,7 @@ namespace Cozmo {
       private CanvasGroup _TransitionOutSlide;
       private Sequence _SlideOutTween;
 
-      private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
+      private List<MinigameWidget> _ActiveWidgets = new List<MinigameWidget>();
 
       public CanvasGroup CurrentSlide { get { return _CurrentSlide; } }
 
@@ -129,7 +129,7 @@ namespace Cozmo {
       #region Base View
 
       protected override void CleanUp() {
-        foreach (IMinigameWidget widget in _ActiveWidgets) {
+        foreach (MinigameWidget widget in _ActiveWidgets) {
           widget.DestroyWidgetImmediately();
         }
         _ActiveWidgets.Clear();
@@ -151,7 +151,7 @@ namespace Cozmo {
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
         Sequence open;
-        foreach (IMinigameWidget widget in _ActiveWidgets) {
+        foreach (MinigameWidget widget in _ActiveWidgets) {
           open = widget.OpenAnimationSequence();
           if (open != null) {
             openAnimation.Join(open);
@@ -162,7 +162,7 @@ namespace Cozmo {
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
         Sequence close;
-        foreach (IMinigameWidget widget in _ActiveWidgets) {
+        foreach (MinigameWidget widget in _ActiveWidgets) {
           close = widget.CloseAnimationSequence();
           if (close != null) {
             closeAnimation.Join(close);
@@ -178,7 +178,7 @@ namespace Cozmo {
         _InfoTitleLayoutElement.gameObject.SetActive(false);
       }
 
-      private void CreateWidgetIfNull<T>(ref T widgetInstance, MonoBehaviour widgetPrefab) where T : IMinigameWidget {
+      private void CreateWidgetIfNull<T>(ref T widgetInstance, MonoBehaviour widgetPrefab) where T : MinigameWidget {
         if (widgetInstance != null) {
           return;
         }
@@ -188,7 +188,7 @@ namespace Cozmo {
         AddWidget(widgetInstance);
       }
 
-      private void AddWidget(IMinigameWidget widgetToAdd) {
+      private void AddWidget(MinigameWidget widgetToAdd) {
         _ActiveWidgets.Add(widgetToAdd);
         if (_OpenAnimationStarted) {
           Sequence openAnimation = widgetToAdd.OpenAnimationSequence();
@@ -196,7 +196,7 @@ namespace Cozmo {
         }
       }
 
-      private void HideWidget(IMinigameWidget widgetToHide) {
+      private void HideWidget(MinigameWidget widgetToHide) {
         if (widgetToHide == null) {
           return;
         }

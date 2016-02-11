@@ -6,7 +6,7 @@ using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class QuickQuitMinigameButton : MonoBehaviour, IMinigameWidget {
+    public class QuickQuitMinigameButton : MinigameWidget {
 
       public delegate void QuickQuitButtonHandler();
 
@@ -19,13 +19,13 @@ namespace Cozmo {
         _QuickQuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
       }
 
-      public void DestroyWidgetImmediately() {
+      public override void DestroyWidgetImmediately() {
         _QuickQuitButtonInstance.onClick.RemoveAllListeners();
         Destroy(gameObject);
       }
 
       // TODO: Don't hardcode this
-      public Sequence OpenAnimationSequence() {
+      public override Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
           this.transform.localPosition.y + 200, this.transform.localPosition.z),
@@ -34,7 +34,7 @@ namespace Cozmo {
       }
 
       // TODO: Don't hardcode this
-      public Sequence CloseAnimationSequence() {
+      public override Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
           this.transform.localPosition.y + 200, this.transform.localPosition.z),
