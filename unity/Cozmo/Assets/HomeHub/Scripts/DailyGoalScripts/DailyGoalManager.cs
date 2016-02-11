@@ -4,6 +4,7 @@ using DataPersistence;
 using System.Collections;
 using System.Collections.Generic;
 using Cozmo.UI;
+using Anki.Cozmo;
 
 public class DailyGoalManager : MonoBehaviour {
 
@@ -15,7 +16,7 @@ public class DailyGoalManager : MonoBehaviour {
   private AlertView _RequestDialog = null;
 
   // The Last Challenge ID Cozmo has requested to play
-  private string _lastChallengeID;
+  private ChallengeData _LastChallengeData;
 
   #region FriendshipProgression and DailyGoals
 
@@ -27,12 +28,6 @@ public class DailyGoalManager : MonoBehaviour {
     return _FriendshipProgConfig;
   }
 
-  [SerializeField]
-  private FriendshipFormulaConfiguration _FriendshipFormulaConfig;
-
-  public FriendshipFormulaConfiguration GetFriendForumulaConfig() {
-    return _FriendshipFormulaConfig;
-  }
 
   public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
     int val = 0;
@@ -44,16 +39,58 @@ public class DailyGoalManager : MonoBehaviour {
     return false;
   }
 
-  public float GetDailyProgress() {
-    StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
-    StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
-    return _FriendshipFormulaConfig.CalculateDailyGoalProgress(prog, goal);
+  public float GetTodayProgress() {
+    if (DataPersistenceManager.Instance.CurrentSession != null) {
+      StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
+      StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
+      return CalculateDailyGoalProgress(prog, goal);
+    }
+    else {
+      return 0.0f;
+    }
   }
 
-  public string GetDesiredMinigameID() {
-    ChallengeData randC = _ChallengeList.ChallengeData[UnityEngine.Random.Range(0, _ChallengeList.ChallengeData.Length)];
-    _lastChallengeID = randC.ChallengeID;
-    return _lastChallengeID;
+  [SerializeField]
+  private RequestGameListConfig _RequestMinigameConfig;
+
+  public RequestGameListConfig GetRequestMinigameConfig() {
+    return _RequestMinigameConfig;
+  }
+
+  public ChallengeData PickMiniGameToRequest() {
+    RequestGameConfig config = _RequestMinigameConfig.RequestList[UnityEngine.Random.Range(0, _RequestMinigameConfig.RequestList.Length)];
+    for (int i = 0; i < _ChallengeList.ChallengeData.Length; i++) {
+      if (_ChallengeList.ChallengeData[i].ChallengeID == config.ChallengeID) {
+        _LastChallengeData = _ChallengeList.ChallengeData[i];
+        BehaviorGroup bGroup = GetRequestBehaviorGroup(_LastChallengeData.ChallengeID);
+        // Do not reate the minigame message if the behavior group is invalid.
+        if (bGroup == BehaviorGroup.MiniGame) {
+          return null;
+        }
+        DisableRequestGameBehaviorGroups();
+        RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(bGroup, true);
+        return _LastChallengeData;
+      }
+    }
+    Debug.LogError(string.Format("Challenge ID not found in ChallengeList {0}", config.ChallengeID));
+    return null;
+  }
+
+  public BehaviorGroup GetRequestBehaviorGroup(string challengeID) {
+    for (int i = 0; i < _RequestMinigameConfig.RequestList.Length; i++) {
+      if (challengeID == _RequestMinigameConfig.RequestList[i].ChallengeID) {
+        return _RequestMinigameConfig.RequestList[i].RequestBehaviorGroup;
+      }
+    }
+    Debug.LogError(string.Format("Challenge ID not found in RequestMinigameList {0}", challengeID));
+    return BehaviorGroup.MiniGame;
+  }
+
+  public void DisableRequestGameBehaviorGroups() {
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.MiniGame, false);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestSpeedTap, false);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestCubePounce, false);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestSimon, false);
   }
 
   /// <summary>
@@ -81,10 +118,13 @@ public class DailyGoalManager : MonoBehaviour {
   /// </summary>
   /// <returns>The minigame need.</returns>
   public float GetMinigameNeed_Extremes() {
-    float prog = (GetDailyProgress() * 2.0f) - 1;
+    float prog = (GetTodayProgress() * 2.0f) - 1;
     // Calculate how far you are from 50% complete
     // range from 0 -> 1.0
     prog = (Mathf.Abs(prog) * 2.0f) - 1;
+    if (prog > 1.0f) {
+      return 0.0f;
+    }
     return prog;
   }
 
@@ -93,8 +133,11 @@ public class DailyGoalManager : MonoBehaviour {
   /// </summary>
   /// <returns>The minigame need.</returns>
   public float GetMinigameNeed_Close() {
-    float prog = GetDailyProgress();
+    float prog = GetTodayProgress();
     prog = (prog - 0.5f) * 2.0f;
+    if (prog > 1.0f) {
+      return 0.0f;
+    }
     return prog;
   }
 
@@ -103,7 +146,7 @@ public class DailyGoalManager : MonoBehaviour {
   /// </summary>
   /// <returns>The minigame need.</returns>
   public float GetMinigameNeed_Far() {
-    float prog = GetDailyProgress();
+    float prog = GetTodayProgress();
     prog = (0.5f - prog) * 2.0f;
     return prog;
   }
@@ -177,21 +220,29 @@ public class DailyGoalManager : MonoBehaviour {
       // Avoid dupes
       return;
     }
-    GetDesiredMinigameID();
+
+    ChallengeData data = _LastChallengeData;
+    // Do not reate the minigame message if the challenge is invalid.
+    if (data == null) {
+      return;
+    }
     // TODO: When the message has the appropriate 
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
+    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon) as AlertView;
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
+    alertView.SetIcon(data.ChallengeIcon);
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
-    alertView.SetMessageArgs(new object[] { _lastChallengeID });
+    alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
     _RequestDialog = alertView;
   }
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
+    DisableRequestGameBehaviorGroups();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
@@ -200,14 +251,80 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleMiniGameConfirm() {
     DAS.Info(this, "HandleMiniGameConfirm");
-    MinigameConfirmed.Invoke(_lastChallengeID);
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
+    DisableRequestGameBehaviorGroups();
+    MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
     DAS.Info(this, "HandleExternalRejection"); 
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
+    DisableRequestGameBehaviorGroups();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
   }
+
+  #region Calculate Friendship Points and DailyGoal Progress
+
+  // Returns the % progression towards your daily goals
+  // Range from 0-1. Does not take overflow into account.
+  public float CalculateDailyGoalProgress(StatContainer progress, StatContainer goal) {
+    int totalProgress = 0, totalGoal = 0;
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+      var stat = (Anki.Cozmo.ProgressionStatType)i;
+      totalProgress += Mathf.Min(progress[stat], goal[stat]);
+      totalGoal += goal[stat];
+    }
+    return ((float)totalProgress / (float)totalGoal);
+  }
+
+  // Calculates friendship points earned for the day based on stats earned and Bonus Mult
+  public int CalculateFriendshipPoints(StatContainer progress, StatContainer goal) {
+    int totalProgress = 0;
+    float mult = CalculateBonusMult(progress, goal);
+    if (mult < 1.0f) {
+      mult = 1.0f;
+    }
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+      var stat = (Anki.Cozmo.ProgressionStatType)i;
+      totalProgress += progress[stat];
+    }
+    return (totalProgress * Mathf.CeilToInt(mult));
+  }
+
+  // Calculates the current Bonus Multiplier for calculating friendship points
+  public float CalculateBonusMult(StatContainer progress, StatContainer goal) {
+    int totalProgress = 0, totalGoal = 0;
+    float bonusMult = 0.0f;
+    if (IsDailyGoalComplete(progress, goal) == true) {
+      for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+        var stat = (Anki.Cozmo.ProgressionStatType)i;
+        totalProgress += progress[stat];
+        totalGoal += goal[stat];
+      }
+      bonusMult = ((float)totalProgress / (float)totalGoal);
+      // Register x2 mult including at exactly 100%
+      if (bonusMult == 1.0f) {
+        bonusMult += 0.001f;
+      }
+    }
+
+    return bonusMult;
+  }
+
+  public bool IsDailyGoalComplete(StatContainer progress, StatContainer goal) {
+    bool isDone = true;
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+      var stat = (Anki.Cozmo.ProgressionStatType)i;
+      if (progress[stat] < goal[stat]) {
+        isDone = false;
+        break;
+      }
+    }
+    return isDone;
+  }
+
+  #endregion
 
 }

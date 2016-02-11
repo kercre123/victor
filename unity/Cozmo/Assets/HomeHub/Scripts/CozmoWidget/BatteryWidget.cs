@@ -15,7 +15,7 @@ public class BatteryWidget : MonoBehaviour {
     if (index != Anki.Cozmo.EmotionType.Charged) {
       return;
     }
-    _BatteryBar.SetProgress(value);
+    _BatteryBar.SetProgress((value + 1.0f) / 2.0f);
   }
 
   public void OnDestroy() {

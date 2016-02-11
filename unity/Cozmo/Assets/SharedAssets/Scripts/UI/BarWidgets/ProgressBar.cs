@@ -10,6 +10,12 @@ namespace Cozmo {
       [SerializeField]
       private Image _FilledForegroundImage;
 
+      public Sprite FillImage {
+        set {
+          _FilledForegroundImage.overrideSprite = value;
+        }
+      }
+
       [SerializeField]
       private Color _NormalColor;
 

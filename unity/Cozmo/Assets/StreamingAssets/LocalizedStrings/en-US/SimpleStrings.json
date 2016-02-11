@@ -18,38 +18,32 @@
       "/{*}"
     ]
   },
-  "badge.new": {
-    "translation": "NEW!"
-  },
-  "button.tap": {
-    "translation": "Tap"
-  },
   "button.quit": {
-    "translation": "QUIT"
+    "translation": "Quit"
   },
   "button.startChallenge": {
-    "translation": "START"
+    "translation": "Start"
   },
   "button.yes": {
-    "translation": "YES"
+    "translation": "Yes"
   },
   "button.no": {
-    "translation": "NO"
+    "translation": "No"
   },
   "button.continue": {
-    "translation": "CONTINUE"
+    "translation": "Continue"
   },
   "button.again": {
-    "translation": "PLAY AGAIN"
+    "translation": "Play Again"
   },
   "button.ready": {
-    "translation": "READY"
+    "translation": "Ready"
+  },
+  "button.close": {
+    "translation": "Close"
   },
   "label.percentComplete": {
     "translation": "{0:P2} Complete"
-  },
-  "button.close": {
-    "translation": "CLOSE"
   },
   "label.plusCount": {
     "translation": "+{0}"
@@ -58,24 +52,33 @@
     "translation": "x{0}"
   },
   "dailySummary.title": {
-    "translation": "DAILY SUMMARY FOR {0}/{1}"
+    "translation": "Daily Summary for {0}/{1}"
   },
   "endSession.title": {
-    "translation": "END SESSION?"
+    "translation": "End Session?"
   },
   "endSession.description": {
     "translation": "Need a break? Tap END SESSION and send Cozmo back to his charger."
   },
-  "dailyGoal.title": {
-    "translation": "DAILY GOALS"
-  },
   "requestGame.title": {
-    "translation": "LET'S PLAY"
+    "translation": "{0}!"
   },
   "requestGame.description": {
-    "translation": "Cozmo wants to play {0}! Do You?"
+    "translation": "Cozmo wants to play"
+  },
+  "dailyGoal.title": {
+    "translation": "Daily Goals"
   },
   "dailyGoal.FriendBonus": {
     "translation": "Friend Bonus"
+  },
+  "dailyGoal.Complete": {
+    "translation": "Complete"
+  },
+  "timeline.weekLabel": {
+    "translation": "{0}W\nAGO"
+  },
+  "label.connect": {
+    "translation": "Connect"
   }
 }

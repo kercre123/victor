@@ -29,13 +29,13 @@ namespace InvestorDemo {
     }
 
     protected override void InitializeView(ChallengeData data) {
-      CreateDefaultQuitButton();
+      SharedMinigameView.ShowQuitButton();
     }
 
     protected void InitializeMinigameObjects() {
       CurrentRobot.SetRobotVolume(1.0f);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicVolume(1.0f);
-      Anki.Cozmo.Audio.AudioClient.Instance.PostParameter(Anki.Cozmo.Audio.ParameterType.UI_VOLUME, 100.0f, Anki.Cozmo.Audio.GameObjectType.Invalid);
+      Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.SFX, 1.0f);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
 

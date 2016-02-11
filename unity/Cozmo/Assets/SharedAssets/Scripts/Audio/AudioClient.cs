@@ -53,9 +53,9 @@ namespace Anki {
 
         // Basic Audio Client Operations
         // Return PlayId - Note: PlayId is not guaranteed to be unique it will eventually roll over.
-        public ushort PostEvent(Anki.Cozmo.Audio.EventType audioEvent,
-                                Anki.Cozmo.Audio.GameObjectType gameObject,
-                                Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
+        public ushort PostEvent(GameEvent.GenericEvent audioEvent,
+                                GameObjectType gameObject,
+                                AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                 CallbackHandler handler = null) {
           DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  GameObj: " +
                     gameObject.ToString() + " CallbackFlag: " + callbackFlag);
@@ -85,15 +85,15 @@ namespace Anki {
           _RobotEngineManager.SendMessage();
         }
 
-        public void PostGameState(Anki.Cozmo.Audio.GameStateGroupType gameStateGroup,
-                                  Anki.Cozmo.Audio.GameStateType gameState) {
+        public void PostGameState(GameState.StateGroupType gameStateGroup,
+                                  GameState.GenericState gameState) {
           DAS.Debug("AudioController.PostAudioGameState", "GameState: " + gameState.ToString());
           PostAudioGameState msg = new PostAudioGameState(gameStateGroup, gameState);
           _RobotEngineManager.Message.PostAudioGameState = msg;
           _RobotEngineManager.SendMessage();
         }
 
-        public void PostSwitchState(Anki.Cozmo.Audio.SwitchStateGroupType switchStateGroup, Anki.Cozmo.Audio.SwitchStateType switchState, GameObjectType gameObject) {
+        public void PostSwitchState(SwitchState.SwitchGroupType switchStateGroup, SwitchState.GenericSwitch switchState, GameObjectType gameObject) {
           DAS.Debug("AudioController.PostAudioSwitchState", "SwitchState: " + switchState.ToString() +
                     " gameObj: " + gameObject.ToString());
           PostAudioSwitchState msg = new PostAudioSwitchState(switchStateGroup, switchState, gameObject);
@@ -101,7 +101,7 @@ namespace Anki {
           _RobotEngineManager.SendMessage();
         }
 
-        public void PostParameter(Anki.Cozmo.Audio.ParameterType parameter,
+        public void PostParameter(GameParameter.ParameterType parameter,
                                   float parameterValue,
                                   GameObjectType gameObject,
                                   int timeInMilliSeconds = 0,
@@ -189,13 +189,13 @@ namespace Anki {
         }
 
         // Data Helpers
-        private List<Anki.Cozmo.Audio.GameObjectType> _GameObjects;
-        private List<Anki.Cozmo.Audio.EventType> _Events;
-        private List<Anki.Cozmo.Audio.GameStateGroupType> _GameStateGroups;
-        private Dictionary<Anki.Cozmo.Audio.GameStateGroupType, List<Anki.Cozmo.Audio.GameStateType>> _GameStateTypes;
-        private List<Anki.Cozmo.Audio.SwitchStateGroupType> _SwitchStateGroups;
-        private Dictionary<Anki.Cozmo.Audio.SwitchStateGroupType, List<Anki.Cozmo.Audio.SwitchStateType>> _SwitchStateTypes;
-        private List<Anki.Cozmo.Audio.ParameterType> _RTPCParameters;
+        private List<GameObjectType> _GameObjects;
+        private List<GameEvent.GenericEvent> _Events;
+        private List<GameState.StateGroupType> _GameStateGroups;
+        private Dictionary<GameState.StateGroupType, List<GameState.GenericState>> _GameStateTypes;
+        private List<SwitchState.SwitchGroupType> _SwitchStateGroups;
+        private Dictionary<SwitchState.SwitchGroupType, List<SwitchState.GenericSwitch>> _SwitchStateTypes;
+        private List<GameParameter.ParameterType> _RTPCParameters;
 
 
         public List<Anki.Cozmo.Audio.GameObjectType> GetGameObjects() {
@@ -205,12 +205,12 @@ namespace Anki {
           return _GameObjects;
         }
 
-        public List<Anki.Cozmo.Audio.EventType> GetEvents() {
+        public List<Anki.Cozmo.Audio.GameEvent.GenericEvent> GetEvents() {
           if (null == _Events) {
-            _Events = Enum.GetValues(typeof(Anki.Cozmo.Audio.EventType)).Cast<Anki.Cozmo.Audio.EventType>().ToList();
-            _Events.Sort(delegate (EventType a, EventType b) {
-              if (EventType.Invalid == a) return -1;
-              else if (EventType.Invalid == b) return 1;
+            _Events = Enum.GetValues(typeof(Anki.Cozmo.Audio.GameEvent.GenericEvent)).Cast<Anki.Cozmo.Audio.GameEvent.GenericEvent>().ToList();
+            _Events.Sort(delegate (GameEvent.GenericEvent a, GameEvent.GenericEvent b) {
+              if (GameEvent.GenericEvent.Invalid == a) return -1;
+              else if (GameEvent.GenericEvent.Invalid == b) return 1;
               else return a.ToString().CompareTo(b.ToString());
             });
           }
@@ -218,12 +218,12 @@ namespace Anki {
           return _Events;
         }
 
-        public List<Anki.Cozmo.Audio.GameStateGroupType> GetGameStateGroups() {
+        public List<GameState.StateGroupType> GetGameStateGroups() {
           if (null == _GameStateGroups) {
-            _GameStateGroups = Enum.GetValues(typeof(Anki.Cozmo.Audio.GameStateGroupType)).Cast<Anki.Cozmo.Audio.GameStateGroupType>().ToList();
-            _GameStateGroups.Sort(delegate (GameStateGroupType a, GameStateGroupType b) {
-              if (GameStateGroupType.Invalid == a) return -1;
-              else if (GameStateGroupType.Invalid == b) return 1;
+            _GameStateGroups = Enum.GetValues(typeof(GameState.StateGroupType)).Cast<GameState.StateGroupType>().ToList();
+            _GameStateGroups.Sort(delegate (GameState.StateGroupType a, GameState.StateGroupType b) {
+              if (GameState.StateGroupType.Invalid == a) return -1;
+              else if (GameState.StateGroupType.Invalid == b) return 1;
               else return a.ToString().CompareTo(b.ToString());
             });
           }
@@ -231,15 +231,15 @@ namespace Anki {
           return _GameStateGroups;
         }
 
-        public List<Anki.Cozmo.Audio.GameStateType> GetGameStates(Anki.Cozmo.Audio.GameStateGroupType stateGroup) {
+        public List<GameState.GenericState> GetGameStates(GameState.StateGroupType stateGroup) {
           if (null == _GameStateTypes) {
-            _GameStateTypes = new Dictionary<GameStateGroupType, List<GameStateType>>();
+            _GameStateTypes = new Dictionary<GameState.StateGroupType, List<GameState.GenericState>>();
             // FIXME This a temp solution to add group types
-            List<Anki.Cozmo.Audio.GameStateType> musicStates = Enum.GetValues(typeof(Anki.Cozmo.Audio.MusicGroupStates)).Cast<Anki.Cozmo.Audio.GameStateType>().ToList();
-            _GameStateTypes.Add(GameStateGroupType.Music, musicStates);
+            List<Anki.Cozmo.Audio.GameState.GenericState> musicStates = Enum.GetValues(typeof(Anki.Cozmo.Audio.GameState.Music)).Cast<Anki.Cozmo.Audio.GameState.GenericState>().ToList();
+            _GameStateTypes.Add(GameState.StateGroupType.Music, musicStates);
           }
 
-          List<Anki.Cozmo.Audio.GameStateType> groupStates;
+          List<Anki.Cozmo.Audio.GameState.GenericState> groupStates;
           if (_GameStateTypes.TryGetValue(stateGroup, out groupStates)) {
             return groupStates;
           }
@@ -247,12 +247,12 @@ namespace Anki {
           return null;
         }
 
-        public List<Anki.Cozmo.Audio.SwitchStateGroupType> GetSwitchStateGroups() {
+        public List<SwitchState.SwitchGroupType> GetSwitchStateGroups() {
           if (null == _SwitchStateGroups) {
-            _SwitchStateGroups = Enum.GetValues(typeof(Anki.Cozmo.Audio.SwitchStateGroupType)).Cast<Anki.Cozmo.Audio.SwitchStateGroupType>().ToList();
-            _SwitchStateGroups.Sort(delegate (SwitchStateGroupType a, SwitchStateGroupType b) {
-              if (SwitchStateGroupType.Invalid == a) return -1;
-              else if (SwitchStateGroupType.Invalid == b) return 1;
+            _SwitchStateGroups = Enum.GetValues(typeof(SwitchState.SwitchGroupType)).Cast<SwitchState.SwitchGroupType>().ToList();
+            _SwitchStateGroups.Sort(delegate (SwitchState.SwitchGroupType a, SwitchState.SwitchGroupType b) {
+              if (SwitchState.SwitchGroupType.Invalid == a) return -1;
+              else if (SwitchState.SwitchGroupType.Invalid == b) return 1;
               else return a.ToString().CompareTo(b.ToString());
             });
           }
@@ -260,12 +260,12 @@ namespace Anki {
           return _SwitchStateGroups;
         }
 
-        public List<Anki.Cozmo.Audio.SwitchStateType> GetSwitchStates(Anki.Cozmo.Audio.SwitchStateGroupType stateGroup) {
+        public List<SwitchState.GenericSwitch> GetSwitchStates(SwitchState.SwitchGroupType stateGroup) {
           if (null == _SwitchStateTypes) {
-            _SwitchStateTypes = new Dictionary<SwitchStateGroupType, List<SwitchStateType>>();
+            _SwitchStateTypes = new Dictionary<SwitchState.SwitchGroupType, List<SwitchState.GenericSwitch>>();
           }
 
-          List<Anki.Cozmo.Audio.SwitchStateType> groupStates;
+          List<SwitchState.GenericSwitch> groupStates;
           if (_SwitchStateTypes.TryGetValue(stateGroup, out groupStates)) {
             return groupStates;
           }
@@ -273,12 +273,12 @@ namespace Anki {
           return null;
         }
 
-        public List<Anki.Cozmo.Audio.ParameterType> GetParameters() {
+        public List<GameParameter.ParameterType> GetParameters() {
           if (null == _RTPCParameters) {
-            _RTPCParameters = Enum.GetValues(typeof(Anki.Cozmo.Audio.ParameterType)).Cast<Anki.Cozmo.Audio.ParameterType>().ToList();
-            _RTPCParameters.Sort(delegate (ParameterType a, ParameterType b) {
-              if (ParameterType.Invalid == a) return -1;
-              else if (ParameterType.Invalid == b) return 1;
+            _RTPCParameters = Enum.GetValues(typeof(GameParameter.ParameterType)).Cast<GameParameter.ParameterType>().ToList();
+            _RTPCParameters.Sort(delegate (GameParameter.ParameterType a, GameParameter.ParameterType b) {
+              if (GameParameter.ParameterType.Invalid == a) return -1;
+              else if (GameParameter.ParameterType.Invalid == b) return 1;
               else return a.ToString().CompareTo(b.ToString());
             });
           }

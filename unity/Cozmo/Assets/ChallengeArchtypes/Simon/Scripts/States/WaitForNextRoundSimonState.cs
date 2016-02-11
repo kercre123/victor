@@ -15,14 +15,23 @@ namespace Simon {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InitColorsAndSounds();
-      SimonGameNextRoundPanel nextRoundPanel = _GameInstance.ShowGameStateSlide("NextRound").GetComponent<SimonGameNextRoundPanel>();
-      nextRoundPanel.EnableContinueButton(true);
-      nextRoundPanel.OnContinueButtonPressed += HandleContinuePressed;
-      nextRoundPanel.SetNextPlayerText(_NextPlayer);
+
+      _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
+        Localization.Get(LocalizationKeys.kButtonContinue));
+      _GameInstance.SharedMinigameView.EnableContinueButton(true);
+
+      string headerTextKey = (_NextPlayer == PlayerType.Human) ? 
+        LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;
+      _GameInstance.SharedMinigameView.InfoTitleText = null;
+      _GameInstance.SharedMinigameView.ShowInfoTextSlideWithKey(headerTextKey);
+
+      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = (_NextPlayer != PlayerType.Cozmo);
+      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = (_NextPlayer != PlayerType.Human);
     }
 
     private void HandleContinuePressed() {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.PLAYFUL);
+      _GameInstance.SharedMinigameView.HideContinueButtonShelf();
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Playful);
       if (_NextPlayer == PlayerType.Cozmo) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
       }

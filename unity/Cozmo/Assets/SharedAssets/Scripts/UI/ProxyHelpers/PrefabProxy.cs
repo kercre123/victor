@@ -343,6 +343,7 @@ public class PrefabProxy : MonoBehaviour {
         instanceRectTransform.pivot = rectTransform.pivot;
         instanceRectTransform.localScale = rectTransform.localScale;
         instanceRectTransform.localRotation = rectTransform.localRotation;
+        instanceRectTransform.localPosition = rectTransform.localPosition;
       }
       else {
         _Instance.transform.localPosition = transform.localPosition;
@@ -390,6 +391,7 @@ public class PrefabProxy : MonoBehaviour {
         instanceRectTransform.pivot = rectTransform.pivot;
         instanceRectTransform.localScale = Vector3.one;
         instanceRectTransform.localRotation = Quaternion.identity;
+        instanceRectTransform.localPosition = Vector3.zero;
       }
       else {
         _Instance.transform.localPosition = Vector3.zero;

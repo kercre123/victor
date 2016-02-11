@@ -5,7 +5,7 @@ using System.ComponentModel;
 namespace ScriptedSequences.Actions {
   public class PlayAudio : ScriptedSequenceAction {
 
-    public EventType EventType;
+    public Anki.Cozmo.Audio.GameEvent.GenericEvent EventType;
 
     public GameObjectType GameObjectType;
 

@@ -39,6 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22bc7b443fad445419c51a921230e275, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _StartViewPrefab: {fileID: 11473448, guid: aa1c93b68e19246e29f87de1a90da9d1, type: 2}
   _TimelineViewPrefab: {fileID: 11480722, guid: d3419a371468943d0b4c9ec43d79d786,
     type: 2}
   _ChallengeDetailsPrefab: {fileID: 11471404, guid: dd6c56330042c4b55904fa785cddaedc,
@@ -55,6 +56,11 @@ Prefab:
       propertyPath: _ChallengeDetailsPrefab
       value: 
       objectReference: {fileID: 11471404, guid: dd6c56330042c4b55904fa785cddaedc,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _StartViewPrefab
+      value: 
+      objectReference: {fileID: 11473448, guid: aa1c93b68e19246e29f87de1a90da9d1,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

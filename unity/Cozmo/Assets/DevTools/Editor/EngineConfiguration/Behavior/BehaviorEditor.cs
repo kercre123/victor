@@ -7,12 +7,15 @@ using System.Linq;
 using System.IO;
 using Newtonsoft.Json;
 using Anki.Cozmo;
+using System.Text.RegularExpressions;
 
 public class BehaviorEditor : EditorWindow {
 
   private static string[] _BehaviorFiles;
 
   private static string[] _BehaviorNameOptions;
+
+  private static string _CopyBuffer;
 
   private static Behavior _CurrentBehavior;
   private static string _CurrentBehaviorFile;
@@ -23,12 +26,150 @@ public class BehaviorEditor : EditorWindow {
 
   public static string sBehaviorDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/behaviors/"; } }
 
+  public static string sBehaviorCppDirectory { get { return Application.dataPath + "/../../../lib/anki/cozmo-engine/basestation/src/anki/cozmo/basestation/behaviors/"; } }
+  public static string sBehaviorHDirectory { get { return Application.dataPath + "/../../../lib/anki/cozmo-engine/basestation/include/anki/cozmo/basestation/behaviors/"; } }
+
 
   public static string[] BehaviorNameOptions { get { return _BehaviorNameOptions; } }
 
   static BehaviorEditor() {
     LoadBehaviors();
   }
+    
+  private static string FindFile(string fileName, string rootPath) {
+    var path = Path.Combine(rootPath, fileName);
+    if (File.Exists(path)) {
+      return path;
+    }
+
+    foreach (var dir in Directory.GetDirectories(rootPath)) {
+      path = FindFile(fileName, dir);
+      if (path != null) {
+        return path;
+      }
+    }
+    return null;
+  }
+
+  private static string FindCppFile(BehaviorType behaviorType) {
+    string fileName = "behavior" + behaviorType.ToString() + ".cpp";
+
+    return FindFile(fileName, sBehaviorCppDirectory);
+  }
+
+  private static string FindHFile(BehaviorType behaviorType) {
+    string fileName = "behavior" + behaviorType.ToString() + ".h";
+
+    return FindFile(fileName, sBehaviorHDirectory);
+  }
+
+  // a heuristic to predict the type of a field based on its name.
+  private static object GuessTypeByName(string name) {
+    if (name.EndsWith("name", StringComparison.InvariantCultureIgnoreCase)) {
+      return string.Empty;
+    }
+    if (name.EndsWith("_s") || name.EndsWith("_mm") || name.EndsWith("_m") ||
+      name.EndsWith("_mmps") || name.EndsWith("_sec") || name.EndsWith("_rad")
+      || name.EndsWith("_deg")) {
+      return 0f;
+    }
+
+    if (name.EndsWith("_ms") || name.IndexOf("index", StringComparison.InvariantCultureIgnoreCase) != -1
+      || name.IndexOf("length", StringComparison.InvariantCultureIgnoreCase) != -1
+      || name.IndexOf("num", StringComparison.InvariantCultureIgnoreCase) != -1) {
+      return 0;
+    }
+
+    if (name.StartsWith("is", StringComparison.InvariantCultureIgnoreCase) ||
+       name.StartsWith("can", StringComparison.InvariantCultureIgnoreCase) ||
+      name.EndsWith("allowed", StringComparison.InvariantCultureIgnoreCase)) {
+      return false;
+    }
+
+    return string.Empty;
+  }
+
+  private static void TryFindCustomParameters(Dictionary<string, object> customParams, BehaviorType behaviorType) {
+
+    string cppFile = FindCppFile(behaviorType);
+
+    Dictionary<string, object> newParams = new Dictionary<string, object>();
+
+    if (cppFile == null) {
+      return;
+    }
+
+    Regex constCharStarRegex = new Regex("static const char\\* k(\\S+) = \"(\\S+)\";");
+    Regex includeRegex = new Regex("#include \"(\\S+)\"");
+
+    List<string> cppFiles = new List<string>();
+
+    cppFiles.Add(cppFile);
+
+
+    var header = FindHFile(behaviorType);
+
+    string[] lines;
+    Match match;   
+
+    while(header != null) {
+      lines = File.ReadAllLines(header);
+      header = null;
+
+      foreach (var line in lines) {        
+        match = includeRegex.Match(line);
+
+        if (match.Success) {
+        
+          string path = match.Groups[1].Value;
+
+          Debug.Log("Found include path: " + path);
+
+          string fileName = Path.GetFileName(path);
+
+          // hit the base class.
+          if (fileName == "behaviorInterface.h") {
+            continue;
+          }
+
+          string cppFileName = fileName.Replace(".h", ".cpp");
+
+          header = FindFile(fileName, sBehaviorHDirectory);
+
+          cppFile = FindFile(cppFileName, sBehaviorCppDirectory);
+
+          if (cppFile != null) {
+            cppFiles.Add(cppFile);
+          }
+        }
+      }
+    }
+      
+    foreach(var file in cppFiles) {
+      lines = File.ReadAllLines(file);
+
+      foreach (var line in lines) {
+        match = constCharStarRegex.Match(line);
+
+        if (match.Success) {
+          
+          string name = match.Groups[2].Value;
+
+          if (!customParams.ContainsKey(name)) {
+            newParams[name] = GuessTypeByName(name);
+          }
+          else {
+            newParams[name] = customParams[name];
+          }
+        }
+      }
+    }
+    customParams.Clear();
+    foreach (var kvp in newParams) {
+      customParams[kvp.Key] = kvp.Value;
+    }
+  }
+
 
   private static void LoadBehaviors() {
     if (Directory.Exists(sBehaviorDirectory)) {
@@ -57,6 +198,12 @@ public class BehaviorEditor : EditorWindow {
         _CurrentBehaviorName = null;
 
         string json = File.ReadAllText(path);
+
+        var regex = new Regex("//.*");
+
+        // remove // comments
+        json = regex.Replace(json,string.Empty);
+
         _CurrentBehavior = JsonConvert.DeserializeObject<Behavior>(json, GlobalSerializerSettings.JsonSettings);
         _CurrentBehaviorFile = path;
         _CurrentBehaviorName = Path.GetFileNameWithoutExtension(path);
@@ -119,8 +266,11 @@ public class BehaviorEditor : EditorWindow {
     if (GUILayout.Button("New Behavior", EditorDrawingUtility.ToolbarButtonStyle)) {
       if (CheckDiscardUnsavedBehavior()) {
         _CurrentBehavior = new Behavior();
+        TryFindCustomParameters(_CurrentBehavior.CustomParams, _CurrentBehavior.BehaviorType);
+
         GUI.FocusControl("EditNameField");
         _CurrentBehaviorFile = null;
+        _CurrentBehaviorName = null;
       }
     }
 
@@ -160,7 +310,17 @@ public class BehaviorEditor : EditorWindow {
         }
 
       }
+      if (GUILayout.Button("Copy", EditorDrawingUtility.ToolbarButtonStyle)) {
+        _CopyBuffer = JsonConvert.SerializeObject(_CurrentBehavior, Formatting.None, GlobalSerializerSettings.JsonSettings);
+      }
     }
+
+    if (_CopyBuffer != null) {
+      if (GUILayout.Button("Paste", EditorDrawingUtility.ToolbarButtonStyle)) {
+        _CurrentBehavior = JsonConvert.DeserializeObject<Behavior>(_CopyBuffer, GlobalSerializerSettings.JsonSettings);
+      }
+    }
+
 
     GUILayout.FlexibleSpace();
 
@@ -170,13 +330,16 @@ public class BehaviorEditor : EditorWindow {
   public Behavior DrawBehavior(Behavior entry) {
     EditorGUILayout.BeginVertical();
 
+    var lastBehaviorType = entry.BehaviorType;
     entry.BehaviorType = (BehaviorType)EditorGUILayout.EnumPopup("Behavior Type", entry.BehaviorType);
 
-    if (entry.BehaviorType == BehaviorType.PlayAnim) {
-      entry.AnimName = AnimationGroupEditor.AnimationNameOptions[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(AnimationGroupEditor.AnimationNameOptions, entry.AnimName)), AnimationGroupEditor.AnimationNameOptions)];
+    if (entry.BehaviorType != lastBehaviorType) {
+      TryFindCustomParameters(entry.CustomParams, entry.BehaviorType);
     }
 
     entry.Name = EditorGUILayout.TextField("Name", entry.Name ?? string.Empty);
+
+    EditorDrawingUtility.DrawDictionary("Behavior Specific Parameters", entry.CustomParams, EditorDrawingUtility.DrawSelectionObjectEditor, () => string.Empty);
 
     EditorDrawingUtility.DrawList("Emotion Scorers", entry.EmotionScorers, EditorDrawingUtility.DrawEmotionScorer, () => new EmotionScorer());
 
@@ -187,9 +350,6 @@ public class BehaviorEditor : EditorWindow {
     EditorGUILayout.EndVertical();
     return entry;
   }
-
-
-
 
 
   [MenuItem("Cozmo/Behavior Editor %y")]

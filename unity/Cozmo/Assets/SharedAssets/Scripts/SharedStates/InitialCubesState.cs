@@ -10,31 +10,23 @@ public class InitialCubesState : State {
   private int _NumValidCubes;
   private GameBase _Game;
 
-  public delegate void CubeStateDone();
-
-  CubeStateDone _CubeStateDone = null;
-
-  public InitialCubesState(State nextState, int cubesRequired, CubeStateDone cubeStateDone = null) {
+  public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
-    _CubeStateDone = cubeStateDone;
   }
 
   public override void Enter() {
     base.Enter();
-    _CurrentRobot.SetHeadAngle(0f);
     _CurrentRobot.SetLiftHeight(0f);
+    _CurrentRobot.SetHeadAngle(0f);
 
     _Game = _StateMachine.GetGame();
-    _ShowCozmoCubesSlide = _Game.ShowShowCozmoCubesSlide(_CubesRequired);
-    _Game.ShowContinueButtonShelf();
-    _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
-      Localization.Get(LocalizationKeys.kMinigameLabelShowCubes),
-      _CubesRequired,
-      0));
-    _Game.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-    _Game.SetContinueButtonListener(HandleContinueButtonClicked);
-    _Game.EnableContinueButton(false);
+    _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+    _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked,
+      Localization.Get(LocalizationKeys.kButtonContinue), 
+      Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound, 0),
+      Cozmo.UI.UIColorPalette.NeutralTextColor());
+    _Game.SharedMinigameView.EnableContinueButton(false);
   }
 
   public override void Update() {
@@ -59,30 +51,33 @@ public class InitialCubesState : State {
       _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
 
       if (_NumValidCubes >= _CubesRequired) {
-        _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
-          Localization.Get(LocalizationKeys.kMinigameLabelCubesReady),
-          _NumValidCubes));
+        _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
+          _NumValidCubes), Cozmo.UI.UIColorPalette.CompleteTextColor());
 
-        _Game.EnableContinueButton(true);
+        _Game.SharedMinigameView.EnableContinueButton(true);
       }
       else {
-        _Game.SetContinueButtonShelfText(string.Format(Localization.GetCultureInfo(),
-          Localization.Get(LocalizationKeys.kMinigameLabelShowCubes),
+        _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
           _CubesRequired,
-          _NumValidCubes));
+          _NumValidCubes), Cozmo.UI.UIColorPalette.NeutralTextColor());
 
-        _Game.EnableContinueButton(false);
+        _Game.SharedMinigameView.EnableContinueButton(false);
       }
     }
   }
 
   public override void Exit() {
     base.Exit();
-    _Game.HideGameStateSlide();
+
+    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
+      lightCube.Value.TurnLEDsOff();
+    }
+
+    _Game.SharedMinigameView.HideGameStateSlide();
   }
 
   private void HandleContinueButtonClicked() {
     // TODO: Check if the game has been run before; if so skip the HowToPlayState
-    _StateMachine.SetNextState(new HowToPlayState(_NextState, _CubeStateDone));
+    _StateMachine.SetNextState(_NextState);
   }
 }

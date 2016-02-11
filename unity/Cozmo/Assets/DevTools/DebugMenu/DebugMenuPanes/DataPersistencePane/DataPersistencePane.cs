@@ -31,6 +31,23 @@ namespace DataPersistence {
     private ChallengeDataList _ChallengeDataList;
 
 
+    [SerializeField]
+    private InputField _NotificationTextInput;
+
+    [SerializeField]
+    private Button _SubmitNotificationButton;
+
+    [SerializeField]
+    private InputField _NotificationDay;
+    [SerializeField]
+    private InputField _NotificationMonth;
+    [SerializeField]
+    private InputField _NotificationYear;
+    [SerializeField]
+    private InputField _NotificationHour;
+    [SerializeField]
+    private InputField _NotificationMinute;
+
     private HomeHub GetHomeHub() {
       var go = GameObject.Find("HomeHub(Clone)");
       if (go != null) {
@@ -52,6 +69,14 @@ namespace DataPersistence {
       _StartNewSessionButton.onClick.AddListener(StartNewSessionButtonClicked);
       _WinGameButton.onClick.AddListener(WinGameButtonClicked);
       _LoseGameButton.onClick.AddListener(LoseGameButtonClicked);
+      _SubmitNotificationButton.onClick.AddListener(SubmitNotificationButtonClicked);
+       
+      var now = DateTime.Now;
+      _NotificationYear.text = now.Year.ToString();
+      _NotificationMonth.text = now.Month.ToString();
+      _NotificationDay.text = now.Day.ToString();
+      _NotificationHour.text = now.Hour.ToString();
+      _NotificationMinute.text = now.Minute.ToString();
     }
 
     private void HandleResetSaveDataButtonClicked() {
@@ -137,6 +162,21 @@ namespace DataPersistence {
           minigame.RaiseMiniGameLose();
         }
       }
+    }
+
+    private void SubmitNotificationButtonClicked() {
+      var year = int.Parse(_NotificationYear.text);
+
+      var month = int.Parse(_NotificationMonth.text);
+
+      var day = int.Parse(_NotificationDay.text);
+
+      var hour = int.Parse(_NotificationHour.text);
+      var minute = int.Parse(_NotificationMinute.text);
+
+      var dateTime = new DateTime(year, month, day, hour, minute, 0);
+
+      LocalNotificationManager.ScheduleNotification(dateTime, _NotificationTextInput.text);
     }
   }
 }

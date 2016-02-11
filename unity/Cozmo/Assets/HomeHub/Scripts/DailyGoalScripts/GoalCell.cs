@@ -15,10 +15,16 @@ namespace Cozmo {
       public Action OnProgChanged;
 
       private int _GoalTarget;
-      private int _GoalCurrent;
+      private int _CurrStatVal;
 
       [SerializeField]
       private AnkiTextLabel _GoalLabel;
+
+      public AnkiTextLabel GoalLabel {
+        get {
+          return _GoalLabel;
+        }
+      }
 
       public Anki.Cozmo.ProgressionStatType Type;
 
@@ -35,19 +41,15 @@ namespace Cozmo {
           if (_GoalProg != value) {
             _GoalProg = value;
             _GoalProgressBar.SetProgress(value);
-            if (OnProgChanged != null) {
-              OnProgChanged.Invoke();
+            if (_GoalProg >= 1.0f) {
+              _GoalLabel.text = Localization.Get(LocalizationKeys.kDailyGoalComplete);
+              _GoalLabel.color = UIColorPalette.CompleteTextColor();
+            }
+            else {
+              _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(Type);
+              _GoalLabel.color = UIColorPalette.NeutralTextColor();
             }
           }
-        }
-      }
-
-      public string GoalLabelText {
-        get {
-          return _GoalLabel.text;
-        }
-        set {
-          _GoalLabel.text = value;
         }
       }
 
@@ -57,18 +59,10 @@ namespace Cozmo {
       }
 
       public void SetProgress(float progress) {
-        _GoalCurrent = (int)((float)_GoalTarget * progress);
+        if (progress > 1.0f) {
+          progress = 1.0f;
+        }
         Progress = progress;
-      }
-
-      public void SetProgress(int progress) {
-        if (progress > _GoalTarget) {
-          _GoalCurrent = _GoalTarget;
-        }
-        else {
-          _GoalCurrent = progress;
-        }
-        SetProgress((float)_GoalCurrent / (float)_GoalTarget);
       }
 
       /// <summary>
@@ -79,32 +73,26 @@ namespace Cozmo {
       /// <param name="goal">Goal.</param>
       /// <param name="currProg">Curr prog.</param>
       /// <param name="update">If set to <c>true</c> update.</param>
-      public void Initialize(Anki.Cozmo.ProgressionStatType type, int goal, int currProg, bool update = true) {
-        GoalLabelText = string.Format("+{0} {1}", goal, type.ToString());
+      public void Initialize(Anki.Cozmo.ProgressionStatType type, int currProg, int goal, bool update = true) {
         _GoalTarget = goal;
         Type = type;
         if (update) {
           RobotEngineManager.Instance.OnProgressionStatRecieved += OnProgressionStatUpdate;
         }
-        _GoalIcon.sprite = ProgressionStatIconMap.Instance.GetIconForStat(type);
+        _GoalIcon.sprite = ProgressionStatConfig.Instance.GetIconForStat(type);
+        _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(type);
         SetProgress(currProg);
-      }
-
-      // Hide text while collapsing, show text when expanded
-      public void ShowText(bool show) {
-        Sequence fadeTween = DOTween.Sequence();
-        if (show) { 
-          fadeTween.Append(_GoalLabel.DOFade(1.0f, 0.25f));
-        }
-        else {
-          fadeTween.Append(_GoalLabel.DOFade(0.0f, 0.25f));
-        }
-        fadeTween.Play();
       }
 
       void OnProgressionStatUpdate(Anki.Cozmo.ProgressionStatType type, int count) {
         if (Type == type) {
-          SetProgress(count);
+          if (count != _CurrStatVal) {
+            _CurrStatVal = count;
+            SetProgress((float)count / (float)_GoalTarget);
+            if (OnProgChanged != null) {
+              OnProgChanged.Invoke();
+            }
+          }
         }
       }
 

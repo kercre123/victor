@@ -18,8 +18,20 @@
       "/{*}"
     ]
   },
+  "challengeDetails.label.requires": {
+    "translation": "Requires:"
+  },
   "challengeDetails.label.playersAndCubesNeeded": {
-    "translation": "Requires: {0} Player(s), {1} Power Cube(s)"
+    "translation": "{0} Players, {1} Power Cubes"
+  },
+  "challengeDetails.label.playerAndCubesNeeded": {
+    "translation": "{0} Player, {1} Power Cubes"
+  },
+  "challengeDetails.label.playersAndCubeNeeded": {
+    "translation": "{0} Players, {1} Power Cube"
+  },
+  "challengeDetails.label.playerAndCubeNeeded": {
+    "translation": "{0} Player, {1} Power Cube"
   },
   "askCozmo01.title": {
     "translation": "Ask Cozmo Challenge 1"
@@ -40,7 +52,7 @@
     "translation": "Investor Scene 4"
   },
   "simonGame01.title": {
-    "translation": "Simon Says Challenge"
+    "translation": "Simon Says"
   },
   "simonGame01.description": {
     "translation": "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
@@ -76,7 +88,7 @@
     "translation": "Motion"
   },
   "codeBreaker01.title": {
-    "translation": "Cozmo Code Breaker"
+    "translation": "Code Breaker"
   },
   "codeBreaker01.description": {
     "translation": "Cozmo will think of a code and you have a certain number of tries to get it right."

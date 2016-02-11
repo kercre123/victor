@@ -76,19 +76,15 @@ public class Robot : IDisposable {
   private struct RobotCallbackWrapper {
     public readonly uint IdTag;
 
-    private RobotCallback _Callback;
-
-    public event RobotCallback Callback { add {
-        _Callback += value;
-      }
-      remove {
-        _Callback -= value;
-      }
-    }
+    private readonly RobotCallback _Callback;
 
     public RobotCallbackWrapper(uint idTag, RobotCallback callback) {
       IdTag = idTag;
       _Callback = callback;
+    }
+
+    public bool IsCallback(RobotCallback callback) {
+      return _Callback == callback;
     }
 
     public void Invoke(bool success) {
@@ -487,7 +483,6 @@ public class Robot : IDisposable {
       Singleton<QueueSingleAction>.Instance.Initialize(
         robotID: ID, 
         idTag: tag, 
-        inSlot: 0, 
         numRetries: 0, 
         position: queueActionPosition, 
         actionState: action);
@@ -868,7 +863,9 @@ public class Robot : IDisposable {
 
   public void CancelCallback(RobotCallback callback) {
     for (int i = _RobotCallbacks.Count - 1; i >= 0; i--) {
-      _RobotCallbacks[i].Callback -= callback;
+      if (_RobotCallbacks[i].IsCallback(callback)) {
+        _RobotCallbacks.RemoveAt(i);
+      }
     }
   }
 

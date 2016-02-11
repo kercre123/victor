@@ -53,6 +53,13 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private AlertView _AlertViewPrefab_Icon;
+
+      public AlertView AlertViewPrefab_Icon {
+        get { return _AlertViewPrefab_Icon; }
+      }
+
+      [SerializeField]
       private Cozmo.MinigameWidgets.SharedMinigameView _SharedMinigameViewPrefab;
 
       public Cozmo.MinigameWidgets.SharedMinigameView SharedMinigameViewPrefab {
@@ -67,9 +74,9 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private GameStateSlide _ShowCozmoCubeSlide;
+      private GameObject _ShowCozmoCubeSlide;
 
-      public GameStateSlide InitialCubesSlide {
+      public GameObject InitialCubesSlide {
         get { return _ShowCozmoCubeSlide; }
       }
 
@@ -88,6 +95,20 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private Shader _GradiantSimpleClippingScreenspaceShader;
+
+      public Shader GradiantSimpleClippingScreenspaceShader {
+        get { return _GradiantSimpleClippingScreenspaceShader; }
+      }
+
+      [SerializeField]
+      private Shader _GradiantComplexClippingScreenspaceShader;
+
+      public Shader GradiantComplexClippingScreenspaceShader {
+        get { return _GradiantComplexClippingScreenspaceShader; }
+      }
+
+      [SerializeField]
       private Shader _GrayscaleShader;
 
       public Shader GrayscaleShader {
@@ -99,6 +120,13 @@ namespace Cozmo {
 
       public Shader AnimatedGlintShader {
         get { return _AnimatedGlintShader; }
+      }
+
+      [SerializeField]
+      private Shader _BlurShader;
+
+      public Shader BlurShader {
+        get { return _BlurShader; }
       }
     }
   }

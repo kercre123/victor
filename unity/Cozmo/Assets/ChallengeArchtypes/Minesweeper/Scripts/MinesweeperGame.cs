@@ -42,6 +42,7 @@ public class MinesweeperGame : GameBase {
   public event Action<int, int, int, CellStatus> OnGridCellUpdated;
 
   private MinesweeperPanel _Panel;
+  public GameObject SetupHelpPrefab;
 
   protected override void Initialize(MinigameConfigBase minigameConfigData) {
     _FirstGuess = true;
@@ -50,7 +51,7 @@ public class MinesweeperGame : GameBase {
     _GridStatus = new CellStatus[_Config.Rows, _Config.Columns];
 
     ResetGrid();
-    var initialCubeState = new InitialCubesState(new SetupGridState(), _Config.NumCubesRequired());
+    var initialCubeState = new InitialCubesState(new HowToPlayState(new SetupGridState()), _Config.NumCubesRequired());
     _StateMachine.SetNextState(initialCubeState);
   }
 

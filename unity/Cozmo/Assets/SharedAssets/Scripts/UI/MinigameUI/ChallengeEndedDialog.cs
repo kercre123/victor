@@ -4,55 +4,41 @@ using System.Collections;
 using Cozmo.UI;
 using Anki.UI;
 
-public class ChallengeEndedDialog : BaseView {
-
-  [SerializeField]
-  private AnkiTextLabel _ChallengeTitleLabel;
-
-  [SerializeField]
-  private IconProxy _ChallengeIcon;
-
-  [SerializeField]
-  private AnkiTextLabel _PrimaryInfoLabel;
+public class ChallengeEndedDialog : MonoBehaviour {
 
   [SerializeField]
   private AnkiTextLabel _AdditionalInfoLabel;
 
   [SerializeField]
+  private LayoutElement _AdditionalInfoLabelLayoutElement;
+
+  [SerializeField]
   private HorizontalOrVerticalLayoutGroup _RewardContainer;
+
+  [SerializeField]
+  private LayoutElement _RewardContainerLayoutElement;
 
   [SerializeField]
   private IconTextLabel _RewardIconPrefab;
 
-  protected override void CleanUp() {
-    
-  }
+  public void SetupDialog(string subtitleText) {
+    _RewardContainerLayoutElement.gameObject.SetActive(false);
 
-  public void SetupDialog(string titleText, Sprite titleIcon, string primaryText, string secondaryText) {
-    _ChallengeTitleLabel.text = titleText;
-    _ChallengeIcon.SetIcon(titleIcon);
-
-    if (!string.IsNullOrEmpty(primaryText)) {
-      _PrimaryInfoLabel.text = primaryText;
+    if (!string.IsNullOrEmpty(subtitleText)) {
+      _AdditionalInfoLabelLayoutElement.gameObject.SetActive(true);
+      _AdditionalInfoLabel.text = subtitleText;
     }
     else {
-      _PrimaryInfoLabel.enabled = false;
-    }
-
-    if (!string.IsNullOrEmpty(secondaryText)) {
-      _AdditionalInfoLabel.text = secondaryText;
-    }
-    else {
-      _AdditionalInfoLabel.enabled = false;
+      _AdditionalInfoLabelLayoutElement.gameObject.SetActive(false);
     }
   }
 
   public void AddReward(Anki.Cozmo.ProgressionStatType progressionStat, int numberPoints) {
-    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, _RewardContainer.transform).GetComponent<IconTextLabel>();
-    iconTextLabel.SetText(string.Format(Localization.GetCultureInfo(), 
-      Localization.Get(LocalizationKeys.kLabelPlusCount),
-      numberPoints));
+    _RewardContainerLayoutElement.gameObject.SetActive(true);
+    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, 
+                                    _RewardContainer.transform).GetComponent<IconTextLabel>();
+    iconTextLabel.SetText(Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount, numberPoints));
 
-    iconTextLabel.SetIcon(ProgressionStatIconMap.Instance.GetIconForStat(progressionStat));
+    iconTextLabel.SetIcon(ProgressionStatConfig.Instance.GetIconForStat(progressionStat));
   }
 }

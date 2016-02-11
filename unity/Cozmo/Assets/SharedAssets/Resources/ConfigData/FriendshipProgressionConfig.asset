@@ -44,6 +44,22 @@ MonoBehaviour:
     PointsRequired: 500
     StatsIntroduced:
       _Mask: 0
-    MaxGoals: 4
+    MaxGoals: 3
     MinTarget: 4
     MaxTarget: 10
+  BonusMults:
+  - Background: {fileID: 21300000, guid: 580ac135710de4da19cdf6c4fbf94205, type: 3}
+    Fill: {fileID: 21300000, guid: fdaa03390e5bc4d0fb1743215400e50f, type: 3}
+    Complete: {fileID: 21300000, guid: 50dca9650831f46a798c2c10ef4b1df1, type: 3}
+  - Background: {fileID: 21300000, guid: 7bb0594a13fbc4bbbafefa1026f81e48, type: 3}
+    Fill: {fileID: 21300000, guid: 339695ee8342b4f95aea8bcdfbb95eee, type: 3}
+    Complete: {fileID: 21300000, guid: 0b0245ba6c99649c4878c93527a7d2ba, type: 3}
+  - Background: {fileID: 21300000, guid: 22e1bf00f1aa94d43900ee06ce8deb7d, type: 3}
+    Fill: {fileID: 21300000, guid: 3a039af2236f24c26be20052f1e7c123, type: 3}
+    Complete: {fileID: 21300000, guid: 8dd2d54f50a4843f68d51f0fea57de1a, type: 3}
+  - Background: {fileID: 21300000, guid: 5bcd0bdaa65f347e6b6d33f498628a36, type: 3}
+    Fill: {fileID: 21300000, guid: 71a93ed0293e44dad9b912483187082f, type: 3}
+    Complete: {fileID: 21300000, guid: 130f51d9e80ab43b6af57594185e190c, type: 3}
+  - Background: {fileID: 21300000, guid: 094f9b5b645154f60a40f833cb5d4f0a, type: 3}
+    Fill: {fileID: 21300000, guid: ebc7b9bbf30ce4afb86aa31d87754c0a, type: 3}
+    Complete: {fileID: 21300000, guid: 30e3d43e12130466ba9b330e3114a7e9, type: 3}

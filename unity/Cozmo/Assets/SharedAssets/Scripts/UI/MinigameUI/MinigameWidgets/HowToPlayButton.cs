@@ -6,7 +6,7 @@ using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class HowToPlayButton : MonoBehaviour, IMinigameWidget {
+    public class HowToPlayButton : MinigameWidget {
 
       [SerializeField]
       private AnkiButton _HowToPlayButtonInstance;
@@ -14,9 +14,12 @@ namespace Cozmo {
       [SerializeField]
       private HowToPlayView _HowToPlayViewPrefab;
       private HowToPlayView _HowToPlayViewInstance;
-      private GameObject _HowToPlayViewContentPrefab;
 
-      public void Initialize(GameObject howToPlayViewContents) {
+      private string _HowToPlayLocKey = null;
+      private GameObject _HowToPlayViewContentPrefab = null;
+
+      public void Initialize(string howToPlayTextLocKey, GameObject howToPlayViewContents) {
+        _HowToPlayLocKey = howToPlayTextLocKey;
         _HowToPlayViewContentPrefab = howToPlayViewContents;
       }
 
@@ -24,13 +27,13 @@ namespace Cozmo {
         _HowToPlayButtonInstance.onClick.AddListener(HandleHowToPlayButtonTap);
       }
 
-      public void DestroyWidgetImmediately() {
+      public override void DestroyWidgetImmediately() {
         _HowToPlayButtonInstance.onClick.RemoveAllListeners();
         Destroy(gameObject);
       }
 
       // TODO: Don't hardcode this
-      public Sequence OpenAnimationSequence() {
+      public override Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
           this.transform.localPosition.y - 200, this.transform.localPosition.z),
@@ -39,7 +42,7 @@ namespace Cozmo {
       }
 
       // TODO: Don't hardcode this
-      public Sequence CloseAnimationSequence() {
+      public override Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
           this.transform.localPosition.y - 200, this.transform.localPosition.z),
@@ -59,7 +62,12 @@ namespace Cozmo {
           overrideBackgroundDim: overrideBackgroundDim,
           overrideCloseOnTouchOutside: overrideCloseOnTouchOutside
         ) as HowToPlayView;
-        _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
+        if (_HowToPlayViewContentPrefab != null) {
+          _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
+        }
+        else {
+          _HowToPlayViewInstance.Initialize(_HowToPlayLocKey);
+        }
       }
 
       public void CloseHowToPlayView() {

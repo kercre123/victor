@@ -39,14 +39,14 @@ namespace Simon {
         _FirstPlayer = PlayerType.Cozmo;
       }
       State nextState = new CozmoMoveCloserToCubesState(_FirstPlayer);
-      InitialCubesState initCubeState = new InitialCubesState(nextState, _Config.NumCubesRequired(), null);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(nextState), _Config.NumCubesRequired());
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MusicGroupStates.SILENCE);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
@@ -77,10 +77,10 @@ namespace Simon {
       _BlockIdToSound.Clear();
       int counter = 0;
       string cozmoAnimationName = "Simon_Cube";
-      Anki.Cozmo.Audio.EventType[] playerAudio = { 
-        Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_02, 
-        Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_03,
-        Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_04
+      Anki.Cozmo.Audio.GameEvent.SFX[] playerAudio = { 
+        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect,
+        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect,
+        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect
       };
       int smallestArrayLength = playerAudio.Length;
       SimonSound sound;
@@ -125,8 +125,8 @@ namespace Simon {
       return animationName;
     }
 
-    public Anki.Cozmo.Audio.EventType GetPlayerAudioForBlock(int blockId) {
-      Anki.Cozmo.Audio.EventType audioEvent = Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL;
+    public Anki.Cozmo.Audio.GameEvent.SFX GetPlayerAudioForBlock(int blockId) {
+      Anki.Cozmo.Audio.GameEvent.SFX audioEvent = Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect;
       SimonSound sound;
       if (_BlockIdToSound.TryGetValue(blockId, out sound)) {
         audioEvent = sound.playerSoundName;
@@ -137,11 +137,18 @@ namespace Simon {
     protected override int CalculateExcitementStatRewards() {
       return Mathf.Max(0, _CurrentSequenceLength - 4);
     }
+
+    public void UpdateSequenceText(string locKey, int currentIndex, int sequenceCount) {
+      string infoText = Localization.Get(locKey);
+      infoText += Localization.kNewLine;
+      infoText += Localization.GetWithArgs(LocalizationKeys.kSimonGameLabelStepsLeft, currentIndex, sequenceCount);
+      SharedMinigameView.ShowInfoTextSlideWithKey(infoText);
+    }
   }
 
   public class SimonSound {
     public string cozmoAnimationName;
-    public Anki.Cozmo.Audio.EventType playerSoundName;
+    public Anki.Cozmo.Audio.GameEvent.SFX playerSoundName;
   }
 
   public enum PlayerType {

@@ -111,7 +111,7 @@ namespace CodeBreaker {
 
     private void OnBlockTapped(int id, int times) {
       // If the id matches change the index and color, depending on the number of times tapped
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
       foreach (var cubeState in _TargetCubeStates) {
         if (cubeState.cube.ID == id) {
           cubeState.currentColorIndex += times;

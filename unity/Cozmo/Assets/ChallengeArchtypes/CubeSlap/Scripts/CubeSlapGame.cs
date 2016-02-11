@@ -60,12 +60,11 @@ namespace CubeSlap {
 
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
 
-      InitialCubesState initCubeState = new InitialCubesState(new SeekState(), numCubes, InitialCubesDone);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(new SeekState()), numCubes);
       _StateMachine.SetNextState(initCubeState);
     }
 
     private void InitialCubesDone() {
-      _CurrentTarget = GetClosestAvailableBlock();
     }
 
     protected override void CleanUpOnDestroy() {
@@ -126,14 +125,16 @@ namespace CubeSlap {
       // If the animation completes and the cube is beneath Cozmo,
       // Cozmo has won.
       if (_CliffFlagTrown) {
-        ShowGameStateSlide(kCozmoWinPounce);
+        SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
+        SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
         OnFailure();
         return;
       }
       else {
         // If the animation completes Cozmo is not on top of the Cube,
-        // The player has won this round
-        ShowGameStateSlide(kPlayerWin);
+        // The player has won this round 
+        SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
+        SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
         OnSuccess();
       }
     }

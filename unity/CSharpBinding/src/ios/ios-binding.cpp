@@ -17,6 +17,8 @@
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "dasLoggerProvider.h"
+#include "dasConfiguration.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -55,12 +57,12 @@ void configure_game(Json::Value config)
 
 int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data)
 {
-  Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
-  loggerProvider->SetMinLogLevel(0);
+  Anki::Util::DasLoggerProvider* loggerProvider = new Anki::Util::DasLoggerProvider();
   Anki::Util::gLoggerProvider = loggerProvider;
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 
   dataPlatform = CreateDataPlatform();
+  ConfigureDASForPlatform(dataPlatform);
   
     using namespace Cozmo;
   

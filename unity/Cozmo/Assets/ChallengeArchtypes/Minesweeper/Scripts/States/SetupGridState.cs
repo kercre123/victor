@@ -24,7 +24,7 @@ namespace Minesweeper {
 
       var game = (MinesweeperGame)_StateMachine.GetGame();
 
-      game.ShowGameStateSlide("SetupHelp");
+      game.SharedMinigameView.ShowWideGameStateSlide(game.SetupHelpPrefab, "SetupHelp");
 
       // add the extra one so our cube goes on the corner
       var topRightCorner = new Vector3((game.Columns + 1) / 2f, (game.Rows + 1) / 2f, 0) * MinesweeperGame.kCellWidth;
@@ -80,7 +80,7 @@ namespace Minesweeper {
 
       var rotation = Quaternion.Euler(0, 0, angle);
 
-      _CurrentRobot.GotoPose(_Center + delta - deltaNorm * 100f, rotation, callback:HandleGoToPoseComplete);
+      _CurrentRobot.GotoPose(_Center + delta - deltaNorm * 100f, rotation, callback: HandleGoToPoseComplete);
     }
 
     protected void HandleGoToPoseComplete(bool success) {

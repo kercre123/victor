@@ -44,6 +44,8 @@ MonoBehaviour:
     type: 2}
   _FriendshipFormulaConfig: {fileID: 11400000, guid: 58142927227514c239823bd16cc60217,
     type: 2}
+  _RequestMinigameConfig: {fileID: 11400000, guid: 2414404dd6db14cbb85e259d5192b9d2,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

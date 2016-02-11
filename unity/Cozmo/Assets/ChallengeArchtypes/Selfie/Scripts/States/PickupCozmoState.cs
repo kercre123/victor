@@ -12,7 +12,7 @@ namespace Selfie {
     public override void Enter() {
       base.Enter();
       _SelfieGame = (SelfieGame)_StateMachine.GetGame();
-      _SelfieGame.NumSegments = _SelfieGame.CountdownTimer;
+      _SelfieGame.SharedMinigameView.ProgressBar.NumSegments = _SelfieGame.CountdownTimer;
     }
 
     public override void Update() {
@@ -26,7 +26,7 @@ namespace Selfie {
           _SelfieGame.PrepareForPhoto();
         }
         if (_PickupTime > _SelfieGame.CountdownTimer) {
-          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
+          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
           _SelfieGame.TakePhoto();
           _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, HandleAnimationDone));
         }
@@ -34,7 +34,7 @@ namespace Selfie {
       else {
         _PickupTime = 0f;
       }
-      _SelfieGame.Progress = Mathf.Clamp01(_PickupTime / _SelfieGame.CountdownTimer);
+      _SelfieGame.SharedMinigameView.ProgressBar.Progress = (Mathf.Clamp01(_PickupTime / _SelfieGame.CountdownTimer));
 
 
     }

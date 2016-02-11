@@ -32,7 +32,6 @@
 		46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2F81B4FA6AC00FC7553 /* libctiCommonRobot.a */; };
 		46D2C2FE1B4FAA0800FC7553 /* libctiVisionRobot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2FD1B4FAA0800FC7553 /* libctiVisionRobot.a */; };
 		491A6D981B5F1D64003E91FB /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 491A6D971B5F1D64003E91FB /* Security.framework */; };
-		4E3C5ED11C055A8B008399F7 /* libCozmoFxPlugIn.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E3C5ED01C055A8B008399F7 /* libCozmoFxPlugIn.a */; };
 		5682F4B20F3B34FF007A219C /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5682F4B10F3B34FF007A219C /* MediaPlayer.framework */; };
 		5692F3DD0FA9D8E500EBA2F1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5692F3DC0FA9D8E500EBA2F1 /* CoreLocation.framework */; };
 		56B7959B1442E0F20026B3DD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56B7959A1442E0F20026B3DD /* CoreGraphics.framework */; };
@@ -49,6 +48,8 @@
 		83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574B0E63022200468741 /* OpenAL.framework */; };
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
 		85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */; };
+		852C0B6D1C6965730003DCFD /* DASConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 852C0B6C1C6965730003DCFD /* DASConfig.json */; settings = {ASSET_TAGS = (); }; };
+		85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DEB8FE1C652A3C00202214 /* libDAS.a */; };
 		ADED221A1B9A2E7900B5D289 /* libpocketSphinx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */; };
 		ADED221B1B9A2E7900B5D289 /* libsphinxad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22181B9A2E7900B5D289 /* libsphinxad.a */; };
 		ADED221C1B9A2E7900B5D289 /* libsphinxBase.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22191B9A2E7900B5D289 /* libsphinxBase.a */; };
@@ -219,6 +220,7 @@
 		93A4C14B1647E6526C7EB60B /* RegisterMonoModules.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02F7B3D102B6D56E3AED8FBD /* RegisterMonoModules.cpp */; };
 		419E61EAEFCA83431ADB33E0 /* RegisterMonoModules.h in Sources */ = {isa = PBXBuildFile; fileRef = B46CDF30ADF143FC3166CA62 /* RegisterMonoModules.h */; };
 		405EF7C18A955864E7629C7F /* libiPhone-lib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA379A57EB615B22B0880E66 /* libiPhone-lib.a */; };
+		428C6E6E29A8EDDD60E07CEE /* cozmoAppController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6037C81DF5603D213C8B2533 /* cozmoAppController.mm */; };
 		02B586D964836D51B9590340 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3C08AD7227A21E355150ADE6 /* Images.xcassets */; };
 		17E2C07577A687C86B439BF7 /* LaunchScreen-iPhoneLandscape.png in Resources */ = {isa = PBXBuildFile; fileRef = C60568B36213E0CCF4C27A55 /* LaunchScreen-iPhoneLandscape.png */; };
 		8D061DB0D685A1DA6CA66039 /* LaunchScreen-iPhonePortrait.png in Resources */ = {isa = PBXBuildFile; fileRef = D553E3C3AE3E9F95BAEFE9A7 /* LaunchScreen-iPhonePortrait.png */; };
@@ -285,6 +287,8 @@
 		83B2574B0E63022200468741 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		83B2574E0E63025400468741 /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = usr/lib/libiconv.2.dylib; sourceTree = SDKROOT; };
 		85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDriveAudioEngine.a; path = "../../lib/anki/cozmo-engine/lib/audio/gyp/build/Debug-iphoneos/libDriveAudioEngine.a"; sourceTree = "<group>"; };
+		852C0B6C1C6965730003DCFD /* DASConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = DASConfig.json; sourceTree = "<group>"; };
+		85DEB8FE1C652A3C00202214 /* libDAS.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDAS.a; path = "../../lib/anki/cozmo-engine/tools/das-client/gyp/build/Debug-iphoneos/libDAS.a"; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpocketSphinx.a; path = sphinx/libpocketSphinx.a; sourceTree = "<group>"; };
 		ADED22181B9A2E7900B5D289 /* libsphinxad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsphinxad.a; path = sphinx/libsphinxad.a; sourceTree = "<group>"; };
@@ -456,6 +460,7 @@
 		02F7B3D102B6D56E3AED8FBD /* RegisterMonoModules.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterMonoModules.cpp; path = UnityBuild/Libraries/RegisterMonoModules.cpp; sourceTree = "<group>"; };
 		B46CDF30ADF143FC3166CA62 /* RegisterMonoModules.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterMonoModules.h; path = UnityBuild/Libraries/RegisterMonoModules.h; sourceTree = "<group>"; };
 		DA379A57EB615B22B0880E66 /* libiPhone-lib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libiPhone-lib.a"; path = "UnityBuild/Libraries/libiPhone-lib.a"; sourceTree = "<group>"; };
+		6037C81DF5603D213C8B2533 /* cozmoAppController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = cozmoAppController.mm; path = UnityBuild/Libraries/Plugins/iOS/cozmoAppController.mm; sourceTree = "<group>"; };
 		3C08AD7227A21E355150ADE6 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "UnityBuild/Unity-iPhone/Images.xcassets"; sourceTree = "<group>"; };
 		C60568B36213E0CCF4C27A55 /* LaunchScreen-iPhoneLandscape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LaunchScreen-iPhoneLandscape.png"; path = "UnityBuild/LaunchScreen-iPhoneLandscape.png"; sourceTree = "<group>"; };
 		D553E3C3AE3E9F95BAEFE9A7 /* LaunchScreen-iPhonePortrait.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LaunchScreen-iPhonePortrait.png"; path = "UnityBuild/LaunchScreen-iPhonePortrait.png"; sourceTree = "<group>"; };
@@ -467,7 +472,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4E3C5ED11C055A8B008399F7 /* libCozmoFxPlugIn.a in Frameworks */,
+				85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */,
 				85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */,
 				83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */,
 				491A6D981B5F1D64003E91FB /* Security.framework in Frameworks */,
@@ -542,6 +547,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				85DEB8FE1C652A3C00202214 /* libDAS.a */,
 				4E3C5ED01C055A8B008399F7 /* libCozmoFxPlugIn.a */,
 				85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */,
 				ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */,
@@ -597,6 +603,7 @@
 		465B5F2C1A9817AB00AB809E /* Config */ = {
 			isa = PBXGroup;
 			children = (
+				852C0B6C1C6965730003DCFD /* DASConfig.json */,
 				F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 			);
@@ -903,8 +910,25 @@
 				02F7B3D102B6D56E3AED8FBD /* RegisterMonoModules.cpp */,
 				B46CDF30ADF143FC3166CA62 /* RegisterMonoModules.h */,
 				DA379A57EB615B22B0880E66 /* libiPhone-lib.a */,
+				D0D55134A8A7099A842B5351 /* Plugins */,
 			);
 			name = Libraries;
+			sourceTree = "<group>";
+		};
+		D0D55134A8A7099A842B5351 /* Plugins */ = {
+			isa = PBXGroup;
+			children = (
+				D0CC6ACCDA9A74256AAE8C7E /* iOS */,
+			);
+			name = Plugins;
+			sourceTree = "<group>";
+		};
+		D0CC6ACCDA9A74256AAE8C7E /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				6037C81DF5603D213C8B2533 /* cozmoAppController.mm */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 		CC7B54E35A13230808419ABA /* Unity-iPhone */ = {
@@ -949,6 +973,11 @@
 				TargetAttributes = {
 					1D6058900D05DD3D006BFB54 = {
 						DevelopmentTeam = BEJF9NAYCL;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -978,6 +1007,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */,
+				852C0B6D1C6965730003DCFD /* DASConfig.json in Resources */,
 				1CD2597B9FF357EE897EDE7E /* global-metadata.dat in Resources */,
 				BC272330529E0D90254EECE6 /* mscorlib.dll-resources.dat in Resources */,
 				680BE13E2BBD95FCDC3BC0ED /* browscap.ini in Resources */,
@@ -1179,6 +1209,7 @@
 				2C94CF28DA5EBFAF3551D645 /* Il2CppOptions.cpp in Sources */,
 				34857C4BC95EA4D614531ACF /* RegisterFeatures.cpp in Sources */,
 				93A4C14B1647E6526C7EB60B /* RegisterMonoModules.cpp in Sources */,
+				428C6E6E29A8EDDD60E07CEE /* cozmoAppController.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1216,6 +1247,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
+					"$(SRCROOT)/../../lib/anki/das-client/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -1269,6 +1301,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
+					"$(SRCROOT)/../../lib/anki/das-client/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;

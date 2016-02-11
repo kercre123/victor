@@ -31,9 +31,7 @@ namespace CodeBreaker {
     }
 
     public void SetGuessesLeft(int guessesLeft) {
-      string localized = Localization.Get(LocalizationKeys.kCodeBreakerTextGuessesLeft);
-      localized = string.Format(Localization.GetCultureInfo(), localized, guessesLeft);
-      _GuessesLeftLabel.text = localized;
+      _GuessesLeftLabel.text = Localization.GetWithArgs(LocalizationKeys.kCodeBreakerTextGuessesLeft, guessesLeft);
     }
   }
 }

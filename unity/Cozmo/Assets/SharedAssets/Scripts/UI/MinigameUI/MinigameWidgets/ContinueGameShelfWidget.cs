@@ -5,7 +5,7 @@ using Anki.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class ContinueGameShelfWidget : MonoBehaviour, IMinigameWidget {
+    public class ContinueGameShelfWidget : MinigameWidget {
 
       public delegate void ContinueButtonClickHandler();
 
@@ -15,15 +15,17 @@ namespace Cozmo {
       [SerializeField]
       private AnkiTextLabel _ShelfTextLabel;
 
-      private bool _ShouldButtonBeInteractive = false;
       private ContinueButtonClickHandler _OnClickCallback;
 
       private void Start() {
         _ContinueButton.onClick.AddListener(HandleContinueButtonClicked);
       }
 
-      public void SetShelfText(string text) {
-        _ShelfTextLabel.text = text;
+      public void SetShelfText(string text, Color textColor) {
+        if (_ShelfTextLabel != null) {
+          _ShelfTextLabel.text = text;
+          _ShelfTextLabel.color = textColor;
+        }
       }
 
       public void SetButtonText(string text) {
@@ -42,18 +44,17 @@ namespace Cozmo {
       }
 
       public void SetButtonInteractivity(bool enableButton) {
-        _ShouldButtonBeInteractive = enableButton;
-        _ContinueButton.Interactable = _ShouldButtonBeInteractive;
+        _ContinueButton.Interactable = enableButton;
       }
 
       #region IMinigameWidget
 
-      public void DestroyWidgetImmediately() {
+      public override void DestroyWidgetImmediately() {
         Destroy(gameObject);
       }
 
       // TODO: Don't hardcode this
-      public Sequence OpenAnimationSequence() {
+      public override Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x, 
           this.transform.localPosition.y - 300, this.transform.localPosition.z),
@@ -62,7 +63,7 @@ namespace Cozmo {
       }
 
       // TODO: Don't hardcode this
-      public Sequence CloseAnimationSequence() {
+      public override Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x, 
           this.transform.localPosition.y - 300, this.transform.localPosition.z),

@@ -6,7 +6,7 @@ using DG.Tweening;
 namespace ScriptedSequences.Actions {
   public class FadeAudio : ScriptedSequenceAction {
 
-    public Anki.Cozmo.Audio.ParameterType VolumeChannel;
+    public Anki.Cozmo.Audio.VolumeParameters.VolumeType VolumeChannel;
 
     // Value between 0.0 & 1.0
     public float TargetVolume;
@@ -22,13 +22,13 @@ namespace ScriptedSequences.Actions {
       _Token = new SimpleAsyncToken();
 
       // FIXME: This will change when we start using wwise to generate sound for Cozmo
-      if (VolumeChannel == ParameterType.ROBOT_VOLUME) {
+      if (VolumeChannel == Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot) {
         Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
         DOTween.To(() => currentRobot.GetRobotVolume(), x => currentRobot.SetRobotVolume(x), TargetVolume, Duration).OnComplete(() => DoneTween());
       }
       else {
         int timeInMS = (int)(Duration * 1000);
-        AudioClient.Instance.PostParameter(VolumeChannel, TargetVolume, GameObjectType.Invalid, timeInMS, Curve);
+        GameAudioClient.SetVolumeValue(VolumeChannel, TargetVolume, timeInMS, Curve);
         _Token.Succeed();
       }
 

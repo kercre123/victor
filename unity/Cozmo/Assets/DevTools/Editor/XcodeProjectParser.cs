@@ -407,6 +407,9 @@ namespace Xcode {
       else if (words[index] == "(") {
         return DeserializeList(typeof(List<object>), words, ref index);
       }
+      else if (words[index] == "{") {
+        return DeserializeDictionary(typeof(Dictionary<XcodeString,object>), words, ref index);
+      }
       else {
         return DeserializeXcodeString(typeof(XcodeString), words, ref index);
       }
@@ -900,8 +903,8 @@ namespace Xcode {
   }
 
   public class PBXProjectAttributes : IXcodeObject {
-    public Dictionary<XcodeString, Dictionary<XcodeString, XcodeString>> TargetAttributes
-            = new Dictionary<XcodeString, Dictionary<XcodeString, XcodeString>>();
+    public Dictionary<XcodeString, object> TargetAttributes
+            = new Dictionary<XcodeString, object>();
   }
 
   public class PBXResourcesBuildPhase : PBXBuildPhase {}

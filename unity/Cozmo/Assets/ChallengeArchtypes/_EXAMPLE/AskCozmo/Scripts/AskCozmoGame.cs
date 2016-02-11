@@ -17,6 +17,11 @@ namespace AskCozmo {
 
     private string _CurrentSlideName = null;
 
+    private int _AttemptsLeft;
+
+    // From 0 to 1
+    private float _Progress = 0f;
+
     protected void InitializeMinigameObjects() {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
@@ -42,18 +47,18 @@ namespace AskCozmo {
       }
       InitializeMinigameObjects();
 
-      MaxAttempts = 3;
-      AttemptsLeft = 3;
+      _AttemptsLeft = 3;
+      SharedMinigameView.AttemptBar.MaxAttempts = _AttemptsLeft;
+      SharedMinigameView.AttemptBar.AttemptsLeft = _AttemptsLeft;
 
-      Progress = 0.5f;
-      NumSegments = 4;
+      _Progress = 0.5f;
+      SharedMinigameView.ProgressBar.NumSegments = 4;
 
       // By default says "Challenge Progress"
       // ProgressBarLabelText = Localization.Get(keyNameHere);
 
       // Play a slide
       _CurrentSlideName = GetNextSlide();
-      ShowGameStateSlide(_CurrentSlideName);
     }
 
     protected override void CleanUpOnDestroy() {
@@ -72,23 +77,23 @@ namespace AskCozmo {
       _AnimationPlaying = true;
       if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
         CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleAnimationDone);
-        Progress += 0.25f;
-        if (Progress >= 1) {
+        _Progress += 0.25f;
+        if (_Progress >= 1) {
           RaiseMiniGameWin("Everybody is a winner");
         }
       }
       else {
         CurrentRobot.SendAnimation(AnimationName.kShocked, HandleAnimationDone);
-        Progress -= 0.25f;
+        _Progress -= 0.25f;
       }
 
-      AttemptsLeft--;
-      if (AttemptsLeft <= 0) {
+      _AttemptsLeft--;
+      SharedMinigameView.AttemptBar.AttemptsLeft = _AttemptsLeft;
+      if (_AttemptsLeft <= 0) {
         RaiseMiniGameLose("Everybody is a loser");
       }
 
       _CurrentSlideName = GetNextSlide();
-      ShowGameStateSlide(_CurrentSlideName);
     }
 
     void HandleAnimationDone(bool success) {

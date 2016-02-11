@@ -14,13 +14,9 @@ namespace TreasureHunt {
     }
 
     protected void InitializeMinigameObjects(int numCubes) {
-      InitialCubesState initCubeState = new InitialCubesState(new LookForGoldCubeState(), numCubes, InitialCubesDone);
+      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(new LookForGoldCubeState()), numCubes);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-    }
-
-    void InitialCubesDone() {
-      PickNewGoldPosition();
     }
 
     // Robot was picked up and placed down so the World Origin likely changed

@@ -13,6 +13,8 @@ public class ChallengeDetailsDialog : BaseView {
 
   [SerializeField]
   private AnkiTextLabel _TitleTextLabel;
+  [SerializeField]
+  private AnkiTextLabel _TitleTextLabelBack;
 
   [SerializeField]
   private AnkiTextLabel _DescriptionTextLabel;
@@ -36,11 +38,23 @@ public class ChallengeDetailsDialog : BaseView {
 
   public void Initialize(ChallengeData challengeData, Transform challengeButtonTransform) {
     _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
+    _TitleTextLabelBack.text = Localization.Get(challengeData.ChallengeTitleLocKey);
     _DescriptionTextLabel.text = Localization.Get(challengeData.ChallengeDescriptionLocKey);
-    _PlayersAndCubesLabel.text = string.Format(Localization.GetCultureInfo(),
-      Localization.Get(LocalizationKeys.kChallengeDetailsLabelPlayersAndCubesNeeded),
-      challengeData.MinigameConfig.NumPlayersRequired(),
-      challengeData.MinigameConfig.NumCubesRequired());
+
+    var locKey = LocalizationKeys.kChallengeDetailsLabelPlayersAndCubesNeeded;
+    int players = challengeData.MinigameConfig.NumPlayersRequired();
+    int cubes = challengeData.MinigameConfig.NumCubesRequired();
+    if (players == 1 && cubes == 1) {
+      locKey = LocalizationKeys.kChallengeDetailsLabelPlayerAndCubeNeeded;
+    }
+    else if (players == 1 && cubes != 1) {
+      locKey = LocalizationKeys.kChallengeDetailsLabelPlayerAndCubesNeeded;
+    }
+    else if (players != 1 && cubes == 1) {
+      locKey = LocalizationKeys.kChallengeDetailsLabelPlayersAndCubeNeeded;
+    }
+      
+    _PlayersAndCubesLabel.text = Localization.GetWithArgs(locKey, players, cubes);
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
     _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
     _ChallengeId = challengeData.ChallengeID;
@@ -58,13 +72,13 @@ public class ChallengeDetailsDialog : BaseView {
 
   protected override void ConstructOpenAnimation(DG.Tweening.Sequence openAnimation) {
     // Slide the dialog out and back
-    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).From().SetEase(Ease.OutBack).SetDelay(0.2f);
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).From().SetEase(Ease.Linear).SetDelay(0.2f);
     openAnimation.Join(dialogTween);
   }
 
   protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
     // Slide the dialog out
-    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).SetEase(Ease.InBack).SetDelay(0.2f);
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).SetEase(Ease.Linear);
     closeAnimation.Join(dialogTween);
   }
 }
