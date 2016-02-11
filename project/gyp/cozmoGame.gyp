@@ -513,6 +513,12 @@
               '<(cg-das_path):DAS',
               #'<(cg-audio_path):CozmoFxPlugIn',
             ],
+            'conditions': [
+              ["buildMex=='yes'",
+              {
+                'dependencies': ['allMexTargets'],
+              }],
+            ],
             'actions': []
           },
 
