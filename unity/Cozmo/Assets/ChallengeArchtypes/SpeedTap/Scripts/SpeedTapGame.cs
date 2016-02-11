@@ -209,7 +209,7 @@ namespace SpeedTap {
       ObservedObject closest = null;
 
       for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
-        if (CurrentRobot.SeenObjects[i] is LightCube) {
+        if (CurrentRobot.SeenObjects[i] is LightCube && CurrentRobot.SeenObjects[i] != PlayerBlock) {
           float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
           if (d < minDist) {
             minDist = d;
@@ -225,7 +225,7 @@ namespace SpeedTap {
       ObservedObject farthest = null;
 
       for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
-        if (CurrentRobot.SeenObjects[i] is LightCube) {
+        if (CurrentRobot.SeenObjects[i] is LightCube && CurrentRobot.SeenObjects[i] != CozmoBlock) {
           float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
           if (d >= maxDist) {
             maxDist = d;
