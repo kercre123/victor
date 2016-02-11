@@ -39,6 +39,6 @@ public class ChallengeEndedDialog : MonoBehaviour {
                                     _RewardContainer.transform).GetComponent<IconTextLabel>();
     iconTextLabel.SetText(Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount, numberPoints));
 
-    iconTextLabel.SetIcon(ProgressionStatIconMap.Instance.GetIconForStat(progressionStat));
+    iconTextLabel.SetIcon(ProgressionStatConfig.Instance.GetIconForStat(progressionStat));
   }
 }
