@@ -296,17 +296,13 @@ namespace Anki {
             case ActionResult::FAILURE_TIMEOUT:
             case ActionResult::FAILURE_TRACKS_LOCKED:
             case ActionResult::FAILURE_BAD_TAG:
+            case ActionResult::CANCELLED:
+            case ActionResult::INTERRUPTED:
               // Return failure, aborting updating remaining actions the group
 #             if USE_ACTION_CALLBACKS
               RunCallbacks(subResult);
 #             endif
               return subResult;
-              
-            default:
-              PRINT_NAMED_ERROR("CompoundActionParallel.Update.UnknownResultCase", "\n");
-              assert(false);
-              return ActionResult::FAILURE_ABORT;
-              
           } // switch(subResult)
           
         } // if(!isDone)
