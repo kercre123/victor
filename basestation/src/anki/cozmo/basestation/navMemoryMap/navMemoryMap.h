@@ -38,7 +38,8 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // add a quad that with the specified content type
-  virtual void AddQuad(const Quad2f& quad, EContentType type) override;
+  virtual void AddQuadInternal(const Quad2f& quad, EContentType type) override;
+  virtual void AddQuadInternal(const Quad2f& quad, const INavMemoryMapQuadData& content) override;
   
   // check whether the given content types would have any borders at the moment. This method is expected to
   // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries

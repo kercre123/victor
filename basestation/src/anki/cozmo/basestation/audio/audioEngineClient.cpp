@@ -36,7 +36,7 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( GenericEvent event,
+  AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( GameEvent::GenericEvent event,
                                                                   GameObjectType gameObject,
                                                                   CallbackFunc callback )
 {
@@ -73,7 +73,7 @@ void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void AudioEngineClient::PostGameState( StateGroupType gameStateGroup, GenericState gameState )
+  void AudioEngineClient::PostGameState( GameState::StateGroupType gameStateGroup, GameState::GenericState gameState )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( (PostAudioGameState( gameStateGroup, gameState )) );
@@ -85,7 +85,9 @@ void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void AudioEngineClient::PostSwitchState( SwitchGroupType switchGroup, GenericSwitch switchState, GameObjectType gameObject )
+  void AudioEngineClient::PostSwitchState( SwitchState::SwitchGroupType switchGroup,
+                                           SwitchState::GenericSwitch switchState,
+                                           GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( PostAudioSwitchState( switchGroup, switchState, gameObject ) );
@@ -97,7 +99,7 @@ void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostParameter( ParameterType parameter,
+void AudioEngineClient::PostParameter( GameParameter::ParameterType parameter,
                                        float parameterValue,
                                        GameObjectType gameObject,
                                        int32_t timeInMilliSeconds,

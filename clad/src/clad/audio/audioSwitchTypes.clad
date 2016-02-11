@@ -3,65 +3,37 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+namespace SwitchState {
 
 enum uint_32 GenericSwitch
 {
   Invalid = 0,
 }
 
-enum uint_32 MVT_ARM_START
+enum uint_32 Mood
 {
-  ARM_DOWN = 1247980756,
-  ARM_UP = 4149210543,
   Invalid = 0,
+  Mood_Angry = 1069533850,
+  Mood_Happy = 457607035,
+  Mood_Neutral = 3970296952,
 }
 
-enum uint_32 MVT_ARM_STOP
-{
-  ARM_DOWN = 1247980756,
-  ARM_UP = 4149210543,
-  Invalid = 0,
-}
-
-enum uint_32 MVT_HEAD_START
-{
-  HEAD_DOWN = 3428533938,
-  HEAD_UP = 1597553841,
-  Invalid = 0,
-}
-
-enum uint_32 MVT_HEAD_STOP
-{
-  HEAD_DOWN = 3428533938,
-  HEAD_UP = 1597553841,
-  Invalid = 0,
-}
-
-enum uint_32 MVT_TREAD_START
+enum uint_32 Relationship
 {
   Invalid = 0,
-  TREAD_BACKWARD = 1916152989,
-  TREAD_FORWARD = 2716581021,
-}
-
-enum uint_32 MVT_TREAD_STOP
-{
-  Invalid = 0,
-  TREAD_BACKWARD = 1916152989,
-  TREAD_FORWARD = 2716581021,
+  Realtionship_Bff = 743952678,
+  Realtionship_Friend = 1061927592,
+  Relationship_Stranger = 3087192196,
 }
 
 enum uint_32 SwitchGroupType
 {
   Invalid = 0,
-  MVT_ARM_START = 2198296558,
-  MVT_ARM_STOP = 2458844110,
-  MVT_HEAD_START = 2563265612,
-  MVT_HEAD_STOP = 2479474656,
-  MVT_TREAD_START = 2158255040,
-  MVT_TREAD_STOP = 2878295148,
+  Mood = 3128647864,
+  Relationship = 3723222599,
 }
 
+} // SwitchState
 } // Audio
 } // Cozmo
 } // Anki

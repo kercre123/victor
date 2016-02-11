@@ -206,7 +206,7 @@ namespace Cozmo {
       s32 numSamples;
       f32 volume;
       // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
-      Audio::GenericEvent audioEvent = Audio::GenericEvent::Invalid;
+      Audio::GameEvent::GenericEvent audioEvent = Audio::GameEvent::GenericEvent::Invalid;
     };
     
     const AudioRef& GetAudioRef() const;
@@ -240,7 +240,7 @@ namespace Cozmo {
     }
     
     struct AudioRef {
-      Audio::EventType audioEvent;
+      Audio::GameEvent::GenericEvent audioEvent;
       // TODO: We can add other audio controlls to animation data - JMR
     };
     
@@ -251,7 +251,7 @@ namespace Cozmo {
     
   private:
     
-    Result AddAudioRef(const Audio::EventType event);
+    Result AddAudioRef(const Audio::GameEvent::GenericEvent event);
 
     std::vector<AudioRef> _audioReferences;
     

@@ -46,7 +46,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // notify the navmesh that the given quad has the specified content
-  void AddQuad(const Quad2f& quad, ENodeContentType nodeType);
+  void AddQuad(const Quad2f& quad, NodeContent& nodeContent);
   
   // return the Processor associated to this QuadTree for queries
   NavMeshQuadTreeProcessor& GetProcessor() { return _processor; }
