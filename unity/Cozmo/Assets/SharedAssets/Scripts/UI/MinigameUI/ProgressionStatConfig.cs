@@ -51,8 +51,9 @@ namespace Cozmo {
       }
 
       public string GetLocNameForStat(ProgressionStatType statType) {
-        string statKey = _DefaultLocKey;
+        string statKey;
         if (!_StatToLocKeyMap.TryGetValue(statType, out statKey)) {
+          statKey = _DefaultLocKey;
           DAS.Error(this, string.Format("No locKey exists for stat: {0}! Check the ProgressionStatConfig.asset!", statType));
         }
         statKey = Localization.Get(statKey);
@@ -60,8 +61,9 @@ namespace Cozmo {
       }
 
       public Sprite GetIconForStat(ProgressionStatType statType) {
-        Sprite statIcon = _DefaultStatIcon;
+        Sprite statIcon;
         if (!_StatToIconMap.TryGetValue(statType, out statIcon)) {
+          statIcon = _DefaultStatIcon;
           DAS.Error(this, string.Format("No sprite exists for stat: {0}! Check the ProgressionStatConfig.asset!", statType));
         }
         return statIcon;
