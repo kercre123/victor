@@ -10,6 +10,7 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "proxSensors.h"
+#include "version.h"
 #include "backpackLightController.h"
 #include "blockLightController.h"
 #include "speedController.h"
@@ -20,7 +21,6 @@
 #include "dockingController.h"
 #include "pathFollower.h"
 #include "testModeController.h"
-#include "version.h"
 #include "anki/cozmo/robot/logging.h"
 #ifndef TARGET_K02
 #include "animationController.h"
@@ -206,7 +206,7 @@ namespace Anki {
 
         robotStateMessageCounter_ = 0;
 
-        SendVersionInfo();
+				SendVersionInfo();
 
         return RESULT_OK;
 

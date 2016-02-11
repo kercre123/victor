@@ -68,7 +68,7 @@
             <nStopU2X>0</nStopU2X>
           </BeforeCompile>
           <BeforeMake>
-            <RunUserProg1>0</RunUserProg1>
+            <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
             <UserProg1Name>bash -c "make k02"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
@@ -706,6 +706,11 @@
               <FileName>testModeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>version.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\version.cpp</FilePath>
             </File>
           </Files>
         </Group>
