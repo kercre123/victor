@@ -54,7 +54,8 @@ void CheckForUpgrades(void)
 
 void WiFiFace(void)
 {
-  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "%sSSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nVer:  %x\nBy %s\nOn %s\n";
+  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi-V: %x\nWiFi-D: %s\nRTIP-V: %x\nRTIP-D: %s\n          %c";
+  static const u32 wifiFaceSpinner[] ICACHE_RODATA_ATTR STORE_ATTR = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
   const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
   if (!clientConnected())
   {
@@ -65,17 +66,13 @@ void WiFiFace(void)
       {
         os_printf("WiFiFace couldn't read back config\r\n");
       }
-      {
-        char fmtBuf[wifiFaceFmtSz];
-        char scrollLines[11];
-        unsigned int i;
-        memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
-        for (i=0; i<((system_get_time()/2000000) % 10); i++) scrollLines[i] = '\n';
-        scrollLines[i] = 0;
-        Face::FacePrintf(fmtBuf, scrollLines,
-                         ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                         COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
-      }
+      char fmtBuf[wifiFaceFmtSz];
+      memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
+      Face::FaceInvertPrintf((system_get_time() >> 24) & 0x1); // Invert the face every few seconds
+      Face::FacePrintf(fmtBuf,
+                       ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
+                       COZMO_VERSION_COMMIT, BUILD_DATE + 5,
+                       RTIP::Version, RTIP::VersionDescription, wifiFaceSpinner[system_get_time() >> 16 & 0x7]);
     }
   }
 }
@@ -200,20 +197,25 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't register background OS task\r\n");
     return -1;
   }
+  else if (Anki::Cozmo::RTIP::Init() != true)
+  {
+    os_printf("\tCouldn't initalize RTIP interface module\r\n");
+    return -2;
+  }
   else if (Anki::Cozmo::AnimationController::Init() != Anki::RESULT_OK)
   {
     os_printf("\tCouldn't initalize animation controller\r\n");
-    return -2;
+    return -3;
   }
   else if (system_os_post(backgroundTask_PRIO, 0, 0) == false)
   {
     os_printf("\tCouldn't post background task initalization\r\n");
-    return -3;
+    return -4;
   }
   else if (Anki::Cozmo::Face::Init() != Anki::RESULT_OK)
   {
     os_printf("\tCouldn't initalize face controller\r\n");
-    return -4;
+    return -5;
   }
   else
   {

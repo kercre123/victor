@@ -141,7 +141,7 @@ namespace Anki {
       
       std::string   _statusMsg;
       
-      ActionResult         _result;
+      ActionResult         _result = ActionResult::RUNNING;
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
       std::string          _name;
