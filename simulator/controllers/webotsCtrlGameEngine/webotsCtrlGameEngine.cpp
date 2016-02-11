@@ -15,6 +15,8 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/logging/printfLoggerProvider.h"
+#include "util/logging/sosLoggerProvider.h"
+#include "util/logging/multiFormattedLoggerProvider.h"
 
 #include "util/time/stopWatch.h"
 
@@ -78,10 +80,10 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
-  Anki::Util::PrintfLoggerProvider loggerProvider;
+
+  Anki::Util::MultiFormattedLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider()});
   loggerProvider.SetMinLogLevel(0);
   Anki::Util::gLoggerProvider = &loggerProvider;
-
   // Get the last position of '/'
   std::string aux(argv[0]);
 #if defined(_WIN32) || defined(WIN32)

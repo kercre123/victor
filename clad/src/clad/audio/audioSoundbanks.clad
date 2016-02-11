@@ -3,20 +3,21 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+namespace SoundBank {
 
 enum uint_32 BankType
 {
-  COZMO_MOVEMENT = 178905257,
-  COZMO_SCREEN = 1232291410,
-  DEV_DEBUG = 1031089514,
-  INIT = 1355168291,
+  Cozmo_Screen = 1232291410,
+  Cozmo_Servo = 3937468933,
+  Dev_Debug = 1453038702,
+  Init = 1355168291,
   Invalid = 0,
-  MUSIC = 3991942870,
-  UI = 1551306167,
-  VO_ARIA = 1284914004,
-  VO_COZMO = 2509714605,
+  Music = 3991942870,
+  Ui = 1551306167,
+  Vo_Cozmo = 2509714605,
 }
 
+} // SoundBank
 } // Audio
 } // Cozmo
 } // Anki
