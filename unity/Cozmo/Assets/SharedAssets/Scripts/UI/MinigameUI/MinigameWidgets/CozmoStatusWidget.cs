@@ -9,14 +9,16 @@ namespace Cozmo {
       [SerializeField]
       private SegmentedBar _AttemptsDisplay;
 
-      // TODO: Add handling of cozmo's face view here
-
-      public void SetMaxAttempts(int maximumAttempts) {
-        _AttemptsDisplay.SetMaximumSegments(maximumAttempts);
+      public int MaxAttempts {
+        set {
+          _AttemptsDisplay.SetMaximumSegments(value);
+        }
       }
 
-      public void SetAttemptsLeft(int attemptsLeft) {
-        _AttemptsDisplay.SetCurrentNumSegments(attemptsLeft);
+      public int AttemptsLeft {
+        set {
+          _AttemptsDisplay.SetCurrentNumSegments(value);
+        }
       }
 
       #region IMinigameWidget

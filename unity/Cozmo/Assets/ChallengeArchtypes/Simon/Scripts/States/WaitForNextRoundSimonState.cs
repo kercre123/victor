@@ -24,9 +24,9 @@ namespace Simon {
         LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;
       _GameInstance.SharedMinigameView.InfoTitleText = null;
       _GameInstance.SharedMinigameView.ShowInfoTextSlideWithKey(headerTextKey);
-        
-      _GameInstance.SharedMinigameView.CozmoDim = (_NextPlayer == PlayerType.Human);
-      _GameInstance.SharedMinigameView.PlayerDim = (_NextPlayer == PlayerType.Cozmo);
+
+      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = (_NextPlayer != PlayerType.Cozmo);
+      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = (_NextPlayer != PlayerType.Human);
     }
 
     private void HandleContinuePressed() {

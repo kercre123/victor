@@ -24,8 +24,8 @@ namespace Simon {
       _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
         0, _SequenceLength);
 
-      _GameInstance.SharedMinigameView.CozmoDim = false;
-      _GameInstance.SharedMinigameView.PlayerDim = true;
+      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = false;
+      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = true;
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);

@@ -210,115 +210,63 @@ namespace Cozmo {
         close.Play();
       }
 
-      #region StaminaBar
+      #region Challenge Title Widget
 
-      public void SetAttemptsMax(int maxAttempts) {
-        CreateWidgetIfNull<CozmoStatusWidget>(ref _CozmoStatusInstance, _CozmoStatusPrefab);
-        _CozmoStatusInstance.SetMaxAttempts(maxAttempts);
+      public ChallengeTitleWidget TitleWidget {
+        get {
+          CreateWidgetIfNull<ChallengeTitleWidget>(ref _TitleWidgetInstance, _TitleWidgetPrefab);
+          return _TitleWidgetInstance;
+        }
       }
 
-      public void SetAttemptsLeft(int attemptsLeft) {
-        CreateWidgetIfNull<CozmoStatusWidget>(ref _CozmoStatusInstance, _CozmoStatusPrefab);
-        _CozmoStatusInstance.SetAttemptsLeft(attemptsLeft);
+      #endregion
+
+      #region StaminaBar
+
+      public CozmoStatusWidget AttemptBar {
+        get {
+          CreateWidgetIfNull<CozmoStatusWidget>(ref _CozmoStatusInstance, _CozmoStatusPrefab);
+          return _CozmoStatusInstance;
+        }
       }
 
       #endregion
 
       #region Challenge Progress Widget
 
-      public void SetProgressBarText(string textToDisplay) {
-        CreateWidgetIfNull<ChallengeProgressWidget>(ref _ChallengeProgressWidgetInstance, _ChallengeProgressWidgetPrefab);
-        _ChallengeProgressWidgetInstance.ProgressBarLabelText = textToDisplay;
-      }
-
-      public void SetProgressBarNumSegments(int numSegments) {
-        CreateWidgetIfNull<ChallengeProgressWidget>(ref _ChallengeProgressWidgetInstance, _ChallengeProgressWidgetPrefab);
-        _ChallengeProgressWidgetInstance.NumSegments = numSegments;
-      }
-
-      public void SetProgress(float newProgress) {
-        CreateWidgetIfNull<ChallengeProgressWidget>(ref _ChallengeProgressWidgetInstance, _ChallengeProgressWidgetPrefab);
-        _ChallengeProgressWidgetInstance.SetProgress(newProgress);
+      public ChallengeProgressWidget ProgressBar {
+        get {
+          CreateWidgetIfNull<ChallengeProgressWidget>(ref _ChallengeProgressWidgetInstance, _ChallengeProgressWidgetPrefab);
+          return _ChallengeProgressWidgetInstance;
+        }
       }
 
       #endregion
 
       #region Score Widgets
 
-      public int CozmoScore {
-        set {
+      public ScoreWidget CozmoScoreboard {
+        get {
           ShowCozmoScoreWidget();
-          _CozmoScoreWidgetInstance.Score = value;
+          return _CozmoScoreWidgetInstance;
         }
       }
 
-      public int CozmoMaxRounds {
-        set {
-          ShowCozmoScoreWidget();
-          _CozmoScoreWidgetInstance.MaxRounds = value;
-        }
-      }
-
-      public int CozmoRoundsWon {
-        set {
-          ShowCozmoScoreWidget();
-          _CozmoScoreWidgetInstance.RoundsWon = value;
-        }
-      }
-
-      public bool CozmoDim {
-        set {
-          ShowCozmoScoreWidget();
-          _CozmoScoreWidgetInstance.Dim = value;
-        }
-      }
-
-      public void ShowCozmoWinnerBanner() {
-        ShowCozmoScoreWidget();
-        _CozmoScoreWidgetInstance.IsWinner = true;
-      }
-
-      public void ShowCozmoScoreWidget() {
+      private void ShowCozmoScoreWidget() {
         if (_CozmoScoreWidgetInstance == null) {
           _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
             _CozmoPortraitSprite);            
         }
       }
 
-      public int PlayerScore {
-        set {
+      public ScoreWidget PlayerScoreboard {
+        get {
           ShowPlayerScoreWidget();
-          _PlayerScoreWidgetInstance.Score = value;
+          return _PlayerScoreWidgetInstance;
         }
       }
 
-      public int PlayerMaxRounds {
-        set {
-          ShowPlayerScoreWidget();
-          _PlayerScoreWidgetInstance.MaxRounds = value;
-        }
-      }
-
-      public int PlayerRoundsWon {
-        set {
-          ShowPlayerScoreWidget();
-          _PlayerScoreWidgetInstance.RoundsWon = value;
-        }
-      }
-
-      public bool PlayerDim {
-        set {
-          ShowPlayerScoreWidget();
-          _PlayerScoreWidgetInstance.Dim = value;
-        }
-      }
-
-      public void ShowPlayerWinnerBanner() {
-        ShowPlayerScoreWidget();
-        _PlayerScoreWidgetInstance.IsWinner = true;
-      }
-
-      public void ShowPlayerScoreWidget() {
+      private void ShowPlayerScoreWidget() {
         if (_PlayerScoreWidgetInstance == null) {
           _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
             _PlayerPortraitSprite);            
@@ -331,25 +279,11 @@ namespace Cozmo {
         ScoreWidget instance = widgetObj.GetComponent<ScoreWidget>();
         instance.AnimationXOffset = animationOffset;
         instance.Portrait = portrait;
+        instance.IsWinner = false;
+        instance.Dim = false;
 
         AddWidget(instance);
         return instance;
-      }
-
-      public void HideScoreWidgets() {
-        HideWidget(_CozmoScoreWidgetInstance);
-        _CozmoScoreWidgetInstance = null;
-        HideWidget(_PlayerScoreWidgetInstance);
-        _PlayerScoreWidgetInstance = null;
-      }
-
-      #endregion
-
-      #region Challenge Title Widget
-
-      public void ShowTitleWidget(string titleText, Sprite titleSprite) {
-        CreateWidgetIfNull<ChallengeTitleWidget>(ref _TitleWidgetInstance, _TitleWidgetPrefab);
-        _TitleWidgetInstance.Initialize(titleText, titleSprite);
       }
 
       #endregion

@@ -63,8 +63,10 @@ namespace Cozmo {
         _ChallengeProgressBar.ResetProgress();
       }
 
-      public void SetProgress(float progress) {
-        _ChallengeProgressBar.SetProgress(progress);
+      public float Progress {
+        set {
+          _ChallengeProgressBar.SetProgress(value);
+        }
       }
 
       public int NumSegments {

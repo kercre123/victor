@@ -15,8 +15,8 @@ namespace Simon {
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderWatchCozmoGuess);
       _GameInstance.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kSimonGameLabelWatchCozmoGuess);
-      _GameInstance.SharedMinigameView.CozmoDim = false;
-      _GameInstance.SharedMinigameView.PlayerDim = true;
+      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = false;
+      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = true;
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
       _ShouldWinGame = null;

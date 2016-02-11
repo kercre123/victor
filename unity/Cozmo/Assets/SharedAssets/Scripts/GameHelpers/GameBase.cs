@@ -74,7 +74,8 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    SharedMinigameView.ShowTitleWidget(Localization.Get(data.ChallengeTitleLocKey), data.ChallengeIcon);
+    SharedMinigameView.TitleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
+    SharedMinigameView.TitleWidget.Icon = data.ChallengeIcon;
     SharedMinigameView.ShowBackButton();
   }
 
@@ -191,20 +192,18 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.Stop();
 
     _WonChallenge = true;
-    _SharedMinigameViewInstance.ShowCozmoScoreWidget();
-    _SharedMinigameViewInstance.ShowPlayerWinnerBanner();
-    _SharedMinigameViewInstance.CozmoDim = false;
-    _SharedMinigameViewInstance.PlayerDim = false;
+    _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
+    _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
+    _SharedMinigameViewInstance.PlayerScoreboard.IsWinner = true;
     OpenChallengeEndedDialog(subtitleText);
   }
 
   public void RaiseMiniGameLose(string subtitleText = null) {
     _StateMachine.Stop();
     _WonChallenge = false;
-    _SharedMinigameViewInstance.ShowCozmoWinnerBanner();
-    _SharedMinigameViewInstance.ShowPlayerScoreWidget();
-    _SharedMinigameViewInstance.CozmoDim = false;
-    _SharedMinigameViewInstance.PlayerDim = false;
+    _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
+    _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
+    _SharedMinigameViewInstance.CozmoScoreboard.IsWinner = true;
     OpenChallengeEndedDialog(subtitleText);
   }
 

@@ -20,8 +20,8 @@ namespace Simon {
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderMakeYourGuess);
       _GameInstance.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kSimonGameLabelMakeYourGuess);
-      _GameInstance.SharedMinigameView.CozmoDim = true;
-      _GameInstance.SharedMinigameView.PlayerDim = false;
+      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = true;
+      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = false;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_POSITIVE_01);

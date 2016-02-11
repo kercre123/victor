@@ -12,9 +12,16 @@ namespace Cozmo {
       [SerializeField]
       private Anki.UI.AnkiTextLabel _ChallengeTitleLabel;
 
-      public void Initialize(string titleText, Sprite titleIcon) {
-        _ChallengeTitleLabel.text = titleText;
-        _ChallangeIcon.SetIcon(titleIcon);
+      public string Text {
+        set {
+          _ChallengeTitleLabel.text = value;
+        }
+      }
+
+      public Sprite Icon {
+        set {
+          _ChallangeIcon.SetIcon(value);
+        }
       }
 
       #region IMinigameWidget

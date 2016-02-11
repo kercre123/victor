@@ -26,8 +26,8 @@ namespace Simon {
       _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelCreateYourPattern,
         0, _TargetSequenceLength);
 
-      _GameInstance.SharedMinigameView.CozmoDim = true;
-      _GameInstance.SharedMinigameView.PlayerDim = false;
+      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = true;
+      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = false;
 
       _CurrentRobot.SetHeadAngle(1.0f);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GenericEvent.PLAY_SFX_UI_POSITIVE_01);
