@@ -16,9 +16,8 @@ namespace Simon {
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InitColorsAndSounds();
 
-      _GameInstance.SharedMinigameView.ShowContinueButtonShelf(true);
-      _GameInstance.SharedMinigameView.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-      _GameInstance.SharedMinigameView.SetContinueButtonListener(HandleContinuePressed);
+      _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
+        Localization.Get(LocalizationKeys.kButtonContinue));
       _GameInstance.SharedMinigameView.EnableContinueButton(true);
 
       string headerTextKey = (_NextPlayer == PlayerType.Human) ? 

@@ -18,11 +18,8 @@ namespace Cozmo {
       private string _HowToPlayLocKey = null;
       private GameObject _HowToPlayViewContentPrefab = null;
 
-      public void Initialize(string howToPlayTextLocKey) {
+      public void Initialize(string howToPlayTextLocKey, GameObject howToPlayViewContents) {
         _HowToPlayLocKey = howToPlayTextLocKey;
-      }
-
-      public void Initialize(GameObject howToPlayViewContents) {
         _HowToPlayViewContentPrefab = howToPlayViewContents;
       }
 

@@ -21,12 +21,10 @@ namespace Cozmo {
         _ContinueButton.onClick.AddListener(HandleContinueButtonClicked);
       }
 
-      public void SetShelfText(string text, bool isComplete) {
+      public void SetShelfText(string text, Color textColor) {
         if (_ShelfTextLabel != null) {
           _ShelfTextLabel.text = text;
-          _ShelfTextLabel.color = isComplete ? 
-            Cozmo.UI.UIColorPalette.CompleteTextColor() :
-            Cozmo.UI.UIColorPalette.NeutralTextColor();
+          _ShelfTextLabel.color = textColor;
         }
       }
 

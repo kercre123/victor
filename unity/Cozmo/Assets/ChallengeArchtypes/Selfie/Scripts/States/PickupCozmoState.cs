@@ -12,7 +12,7 @@ namespace Selfie {
     public override void Enter() {
       base.Enter();
       _SelfieGame = (SelfieGame)_StateMachine.GetGame();
-      _SelfieGame.SharedMinigameView.NumSegments = _SelfieGame.CountdownTimer;
+      _SelfieGame.SharedMinigameView.SetProgressBarNumSegments(_SelfieGame.CountdownTimer);
     }
 
     public override void Update() {

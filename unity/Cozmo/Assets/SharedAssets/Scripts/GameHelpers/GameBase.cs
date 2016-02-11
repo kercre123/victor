@@ -79,7 +79,7 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
     SharedMinigameView.CreateTitleWidget(Localization.Get(data.ChallengeTitleLocKey), data.ChallengeIcon);
-    SharedMinigameView.CreateQuickQuitButton();
+    SharedMinigameView.CreateBackButton();
   }
 
   #endregion
@@ -221,9 +221,8 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
     // Listen for dialog close
-    SharedMinigameView.ShowContinueButtonShelf(centerShelf: true);
-    SharedMinigameView.SetContinueButtonText(Localization.Get(LocalizationKeys.kButtonContinue));
-    SharedMinigameView.SetContinueButtonListener(HandleChallengeResultViewClosed);
+    SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
+      Localization.Get(LocalizationKeys.kButtonContinue));
 
     _RewardedXp = new StatContainer();
 

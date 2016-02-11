@@ -48,11 +48,11 @@ namespace AskCozmo {
       InitializeMinigameObjects();
 
       _AttemptsLeft = 3;
-      SharedMinigameView.SetMaxCozmoAttempts(_AttemptsLeft);
-      SharedMinigameView.SetCozmoAttemptsLeft(_AttemptsLeft);
+      SharedMinigameView.SetAttemptsMax(_AttemptsLeft);
+      SharedMinigameView.SetAttemptsLeft(_AttemptsLeft);
 
       _Progress = 0.5f;
-      SharedMinigameView.NumSegments = 4;
+      SharedMinigameView.SetProgressBarNumSegments(4);
 
       // By default says "Challenge Progress"
       // ProgressBarLabelText = Localization.Get(keyNameHere);
@@ -89,7 +89,7 @@ namespace AskCozmo {
       }
 
       _AttemptsLeft--;
-      SharedMinigameView.SetCozmoAttemptsLeft(_AttemptsLeft);
+      SharedMinigameView.SetAttemptsLeft(_AttemptsLeft);
       if (_AttemptsLeft <= 0) {
         RaiseMiniGameLose("Everybody is a loser");
       }

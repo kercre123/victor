@@ -250,7 +250,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
-  _QuitGameButtonPrefab: {fileID: 174042, guid: 5cfc3c18e14be4897ab6b17b0035f685,
+  _QuitGameButtonPrefab: {fileID: 11462868, guid: 5cfc3c18e14be4897ab6b17b0035f685,
     type: 2}
   _QuickQuitGameButtonPrefab: {fileID: 11411752, guid: 62b1176b20cd5466bb8ffd57337a9a8b,
     type: 2}
@@ -468,7 +468,8 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _QuitGameButtonPrefab
       value: 
-      objectReference: {fileID: 174042, guid: 5cfc3c18e14be4897ab6b17b0035f685, type: 2}
+      objectReference: {fileID: 11462868, guid: 5cfc3c18e14be4897ab6b17b0035f685,
+        type: 2}
     - target: {fileID: 0}
       propertyPath: _CozmoStatusPrefab
       value: 
