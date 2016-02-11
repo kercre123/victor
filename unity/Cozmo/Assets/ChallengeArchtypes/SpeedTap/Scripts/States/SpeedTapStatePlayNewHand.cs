@@ -45,7 +45,7 @@ namespace SpeedTap {
         if (_GotMatch) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(AnimationName.kTapCube, RobotCompletedTapAnimation);
+              _CurrentRobot.SendAnimation(RandomTap(), RobotCompletedTapAnimation);
               _CozmoTapping = true;
             }
           }
@@ -74,6 +74,23 @@ namespace SpeedTap {
       }
     }
 
+    private string RandomTap() {
+      string tapName = "";
+      int roll = UnityEngine.Random.Range(0, 3);
+      switch (roll) {
+      case 0:
+        tapName = AnimationName.kSpeedTap_Tap_01;
+        break;
+      case 1:
+        tapName = AnimationName.kSpeedTap_Tap_02;
+        break;
+      default:
+        tapName = AnimationName.kSpeedTap_Tap_03;
+        break;
+      }
+      return tapName;
+    }
+
     public override void Exit() {
       base.Exit();
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
@@ -86,6 +103,7 @@ namespace SpeedTap {
       // check for player tapped first here.
       CozmoDidTap();
     }
+
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);
