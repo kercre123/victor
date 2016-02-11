@@ -19,6 +19,7 @@ namespace SpeedTap {
     private bool _CozmoTapping = false;
     private bool _TriedFake = false;
     private bool _TryFake = false;
+    private bool _TryPeek = false;
     private float _CozmoTapDelayTimeMs = 0f;
 
     public override void Enter() {
@@ -58,6 +59,10 @@ namespace SpeedTap {
             }
           }
         }
+        else if (_TryPeek) {
+          _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_Peek);
+          _TryPeek = false;
+        }
         if ((currTimeMs - _StartTimeMs) >= _OnDelayTimeMs) {
           _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
           _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
@@ -76,7 +81,7 @@ namespace SpeedTap {
 
     private string RandomTap() {
       string tapName = "";
-      int roll = UnityEngine.Random.Range(0, 3);
+      int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
         tapName = AnimationName.kSpeedTap_Tap_01;
@@ -136,6 +141,7 @@ namespace SpeedTap {
       _CozmoTapDelayTimeMs = UnityEngine.Random.Range(_MinCozmoTapDelayTimeMs, _MaxCozmoTapDelayTimeMs);
 
       _TryFake = UnityEngine.Random.Range(0.0f, 1.0f) < 0.25f;
+      _TryPeek = UnityEngine.Random.Range(0.0f, 1.0f) < 0.25f;
 
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
