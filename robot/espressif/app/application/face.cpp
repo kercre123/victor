@@ -97,6 +97,7 @@ namespace Face {
     ResetScreen();
 
     _textMode = false;
+    _textModeInverted = false;
     return RESULT_OK;
   }
 
@@ -304,10 +305,14 @@ namespace Face {
       for (int i = 0; i < CHAR_WIDTH; i++)
       {
         *gptr = *fptr++;
-        if (_textModeInverted) *gptr = ~(*gptr);
         gptr += ROWS / CHAR_HEIGHT;
       }
       x++;
+    }
+    
+    if (_textModeInverted)
+    {
+      for (y=0; y<COLS; ++y) frame[y] = ~frame[y];
     }
 
     Face::CreateRects((u64*) frame);

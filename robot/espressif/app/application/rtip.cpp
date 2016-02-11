@@ -75,51 +75,45 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
 {
   static uint8 relayBuffer[RELAY_BUFFER_SIZE];
   static uint8 relayQueued = 0;
-  if (clientConnected())
+  if (length > (RELAY_BUFFER_SIZE - relayQueued))
   {
-    if (length > (RELAY_BUFFER_SIZE - relayQueued))
+    AnkiError( 50, "RTIP.AcceptRTIPMessage", 288, "overflow! %d > %d - %d", 3, length, RELAY_BUFFER_SIZE, relayQueued);
+    AnkiConditionalError(relayQueued < 2, 50, "RTIP.AcceptRTIPMessage", 290, "Waiting for message of size %d", 1, (relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8)));
+    relayQueued = 0;
+    return false;
+  }
+  else
+  {
+    os_memcpy(relayBuffer + relayQueued, payload, length);
+    relayQueued += length;
+    while (relayQueued > 2) // Have a header +
     {
-      AnkiError( 50, "RTIP.AcceptRTIPMessage", 288, "overflow! %d > %d - %d", 3, length, RELAY_BUFFER_SIZE, relayQueued);
-      AnkiConditionalError(relayQueued < 2, 50, "RTIP.AcceptRTIPMessage", 290, "Waiting for message of size %d", 1, (relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8)));
-      relayQueued = 0;
-      return false;
-    }
-    else
-    {
-      os_memcpy(relayBuffer + relayQueued, payload, length);
-      relayQueued += length;
-      while (relayQueued > 2) // Have a header +
+      const uint16 size = relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8);
+      const uint16 sizeWHeader = size + 2;
+      if (relayQueued >= sizeWHeader)
       {
-        const uint16 size = relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8);
-        const uint16 sizeWHeader = size + 2;
-        if (relayQueued >= sizeWHeader)
+        if (relayBuffer[2] == RobotInterface::RobotToEngine::Tag_rtipVersion)
+        {
+          RobotInterface::RTIPVersionInfo info;
+          os_memcpy(info.GetBuffer(), relayBuffer + 3, size - 1);
+          UpdateVersionInfo(info);
+        }
+        if (clientConnected())
         {
           const bool reliable = relayBuffer[1] & RTIP_CLAD_MSG_RELIABLE_FLAG;
           const bool hot      = relayBuffer[1] & RTIP_CLAD_MSG_HOT_FLAG;
-          if (relayBuffer[2] == RobotInterface::RobotToEngine::Tag_rtipVersion)
-          {
-            //RobotInterface::RTIPVersionInfo info;
-            //os_memcpy(info.GetBuffer(), relayBuffer + 3, size - 1);
-            //UpdateVersionInfo(info);
-          }
-          else
-          {
-            AnkiConditionalError(
-              clientSendMessage(relayBuffer + 2, size, 0 /* GLOBAL_INVALID_TAG, fighting include nightmare here */, reliable, hot),
-              50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, relayBuffer[2], size);
-          }
-          relayQueued -= size + 2;
-          os_memcpy(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
+          AnkiConditionalError(clientSendMessage(relayBuffer + 2, size, 0 /* GLOBAL_INVALID_TAG, fighting include nightmare here */, reliable, hot), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, relayBuffer[2], size);
         }
-        else
-        {
-          break;
-        }
+        relayQueued -= size + 2;
+        os_memcpy(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
       }
-      return true;
+      else
+      {
+        break;
+      }
     }
+    return true;
   }
-  else return true;
 }
 
 

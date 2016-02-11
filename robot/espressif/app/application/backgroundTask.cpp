@@ -54,7 +54,8 @@ void CheckForUpgrades(void)
 
 void WiFiFace(void)
 {
-  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi Ver:  %x\nWiFi Date: %s\nRTIP Ver:  %x\nRTIP Date: %d\n";
+  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi-V: %x\nWiFi-D: %s\nRTIP-V: %x\nRTIP-D: %s\n          %c";
+  static const u32 wifiFaceSpinner[] ICACHE_RODATA_ATTR STORE_ATTR = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
   const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
   if (!clientConnected())
   {
@@ -65,15 +66,15 @@ void WiFiFace(void)
       {
         os_printf("WiFiFace couldn't read back config\r\n");
       }
-      {
-        char fmtBuf[wifiFaceFmtSz];
-        memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
-        Face::FaceInvertPrintf((system_get_time()/20000000) % 2);
-        Face::FacePrintf(fmtBuf,
-                         ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                         COZMO_VERSION_COMMIT, BUILD_DATE,
-                         RTIP::Version, RTIP::Date);
-      }
+      char fmtBuf[wifiFaceFmtSz];
+      memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
+      Face::FaceInvertPrintf((system_get_time() >> 24) & 0x1); // Invert the face every few seconds
+      Face::FacePrintf(fmtBuf,
+                       ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
+                       COZMO_VERSION_COMMIT, BUILD_DATE + 5,
+                       RTIP::Version, RTIP::VersionDescription, wifiFaceSpinner[system_get_time() >> 16 & 0x7]);
+       // Send a radio not connected message to the K02 so it will give us version info.
+       i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
     }
   }
 }
