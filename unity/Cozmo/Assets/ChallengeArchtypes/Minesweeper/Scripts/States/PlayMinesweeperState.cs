@@ -12,7 +12,7 @@ namespace Minesweeper {
     public override void Enter() {
       base.Enter();
       _Game = (MinesweeperGame)_StateMachine.GetGame();
-      _Game.HideGameStateSlide();
+      _Game.SharedMinigameView.HideGameStateSlide();
       _Game.SetupPanel();
     }
 
@@ -107,7 +107,7 @@ namespace Minesweeper {
       // round to the nearest 90 degrees
       var rotation = Quaternion.Euler(0, 0, Mathf.Round(angle / 90f) * 90f);
 
-      _CurrentRobot.GotoPose(_CurrentRobot.WorldPosition + delta, rotation, callback:HandleGoToPoseComplete);
+      _CurrentRobot.GotoPose(_CurrentRobot.WorldPosition + delta, rotation, callback: HandleGoToPoseComplete);
     }
 
     private void HandleGoToPoseComplete(bool success) {

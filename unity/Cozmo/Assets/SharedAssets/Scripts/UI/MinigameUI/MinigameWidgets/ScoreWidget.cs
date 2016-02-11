@@ -7,7 +7,7 @@ using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class ScoreWidget : MonoBehaviour, IMinigameWidget {
+    public class ScoreWidget : MinigameWidget {
 
       [SerializeField]
       private Image _PortraitImage;
@@ -90,12 +90,12 @@ namespace Cozmo {
 
       #region IMinigameWidget
 
-      public void DestroyWidgetImmediately() {
+      public override void DestroyWidgetImmediately() {
         Destroy(gameObject);
       }
 
       // TODO: Don't hardcode this
-      public Sequence OpenAnimationSequence() {
+      public override Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + AnimationXOffset, 
           this.transform.localPosition.y, this.transform.localPosition.z),
@@ -104,7 +104,7 @@ namespace Cozmo {
       }
 
       // TODO: Don't hardcode this
-      public Sequence CloseAnimationSequence() {
+      public override Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + AnimationXOffset, 
           this.transform.localPosition.y, this.transform.localPosition.z),

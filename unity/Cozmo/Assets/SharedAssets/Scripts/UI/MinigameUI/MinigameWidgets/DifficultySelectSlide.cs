@@ -6,7 +6,7 @@ using System;
 using Cozmo.MinigameWidgets;
 using DG.Tweening;
 
-public class DifficultySelectView : MonoBehaviour, IMinigameWidget {
+public class DifficultySelectSlide : MonoBehaviour {
 
   [SerializeField]
   private DifficultySelectOption _OptionPrefab;
@@ -56,30 +56,4 @@ public class DifficultySelectView : MonoBehaviour, IMinigameWidget {
 
     _SpawnedOptions[0].IsSelected = true;
   }
-
-
-
-  #region IMinigameWidget implementation
-  public void DestroyWidgetImmediately() {
-    Destroy(gameObject);
-  }
-
-  // TODO: Don't hardcode this
-  public Sequence OpenAnimationSequence() {
-    Sequence open = DOTween.Sequence();
-    open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
-      this.transform.localPosition.y + 200, this.transform.localPosition.z),
-      0.25f).From().SetEase(Ease.OutQuad));
-    return open;
-  }
-
-  // TODO: Don't hardcode this
-  public Sequence CloseAnimationSequence() {
-    Sequence close = DOTween.Sequence();
-    close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
-      this.transform.localPosition.y + 200, this.transform.localPosition.z),
-      0.25f).SetEase(Ease.OutQuad));
-    return close;
-  }
-  #endregion
 }

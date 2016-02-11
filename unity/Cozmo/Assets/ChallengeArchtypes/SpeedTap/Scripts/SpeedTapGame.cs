@@ -55,6 +55,9 @@ namespace SpeedTap {
 
     public event Action PlayerTappedBlockEvent;
 
+    [SerializeField]
+    private GameObject _PlayerTapSlidePrefab;
+
     public void ResetScore() {
       _CozmoScore = 0;
       _PlayerScore = 0;
@@ -172,16 +175,16 @@ namespace SpeedTap {
 
     public void UpdateUI() {
       int halfTotalRounds = (_Rounds + 1) / 2;
-      CozmoScore = _CozmoScore;
-      CozmoMaxRounds = halfTotalRounds;
-      CozmoRoundsWon = _CozmoRoundsWon;
+      SharedMinigameView.CozmoScoreboard.Score = _CozmoScore;
+      SharedMinigameView.CozmoScoreboard.MaxRounds = halfTotalRounds;
+      SharedMinigameView.CozmoScoreboard.RoundsWon = _CozmoRoundsWon;
 
-      PlayerScore = _PlayerScore;
-      PlayerMaxRounds = halfTotalRounds;
-      PlayerRoundsWon = _PlayerRoundsWon;
+      SharedMinigameView.PlayerScoreboard.Score = _PlayerScore;
+      SharedMinigameView.PlayerScoreboard.MaxRounds = halfTotalRounds;
+      SharedMinigameView.PlayerScoreboard.RoundsWon = _PlayerRoundsWon;
 
       // Display the current round
-      InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
     }
 
     public void RollingBlocks() {
@@ -255,6 +258,10 @@ namespace SpeedTap {
 
     protected override int CalculateExcitementStatRewards() {
       return 1 + _CloseRoundCount * 2;
+    }
+
+    public void ShowPlayerTapSlide() {
+      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
   }
 }
