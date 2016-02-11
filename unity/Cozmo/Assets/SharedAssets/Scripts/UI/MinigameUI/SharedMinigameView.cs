@@ -214,32 +214,6 @@ namespace Cozmo {
         close.Play();
       }
 
-      #region Quit Button
-
-      public void CreateQuitButton() {
-        CreateWidgetIfNull<QuitMinigameButton>(ref _QuitButtonInstance, _QuitGameButtonPrefab);
-        _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
-      }
-
-      public void CreateBackButton() {
-        CreateWidgetIfNull<QuickQuitMinigameButton>(ref _QuickQuitButtonInstance, _QuickQuitGameButtonPrefab);
-        _QuickQuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
-      }
-
-      public void HideBackButton() {
-        HideWidget(_QuickQuitButtonInstance);
-        _QuickQuitButtonInstance = null;
-      }
-
-      private void HandleQuitConfirmed() {
-        CloseHowToPlayView();
-        if (QuitMiniGameConfirmed != null) {
-          QuitMiniGameConfirmed();
-        }
-      }
-
-      #endregion
-
       #region StaminaBar
 
       public void SetAttemptsMax(int maxAttempts) {
@@ -273,11 +247,139 @@ namespace Cozmo {
 
       #endregion
 
+      #region Score Widgets
+
+      public int CozmoScore {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.Score = value;
+        }
+      }
+
+      public int CozmoMaxRounds {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.MaxRounds = value;
+        }
+      }
+
+      public int CozmoRoundsWon {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.RoundsWon = value;
+        }
+      }
+
+      public bool CozmoDim {
+        set {
+          ShowCozmoScoreWidget();
+          _CozmoScoreWidgetInstance.Dim = value;
+        }
+      }
+
+      public void ShowCozmoWinnerBanner() {
+        ShowCozmoScoreWidget();
+        _CozmoScoreWidgetInstance.IsWinner = true;
+      }
+
+      public void ShowCozmoScoreWidget() {
+        if (_CozmoScoreWidgetInstance == null) {
+          _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
+            _CozmoPortraitSprite);            
+        }
+      }
+
+      public int PlayerScore {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.Score = value;
+        }
+      }
+
+      public int PlayerMaxRounds {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.MaxRounds = value;
+        }
+      }
+
+      public int PlayerRoundsWon {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.RoundsWon = value;
+        }
+      }
+
+      public bool PlayerDim {
+        set {
+          ShowPlayerScoreWidget();
+          _PlayerScoreWidgetInstance.Dim = value;
+        }
+      }
+
+      public void ShowPlayerWinnerBanner() {
+        ShowPlayerScoreWidget();
+        _PlayerScoreWidgetInstance.IsWinner = true;
+      }
+
+      public void ShowPlayerScoreWidget() {
+        if (_PlayerScoreWidgetInstance == null) {
+          _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
+            _PlayerPortraitSprite);            
+        }
+      }
+
+      private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
+                                            Sprite portrait) {
+        GameObject widgetObj = UIManager.CreateUIElement(_ScoreWidgetPrefab.gameObject, widgetParent);
+        ScoreWidget instance = widgetObj.GetComponent<ScoreWidget>();
+        instance.AnimationXOffset = animationOffset;
+        instance.Portrait = portrait;
+
+        AddWidget(instance);
+        return instance;
+      }
+
+      public void HideScoreWidgets() {
+        HideWidget(_CozmoScoreWidgetInstance);
+        _CozmoScoreWidgetInstance = null;
+        HideWidget(_PlayerScoreWidgetInstance);
+        _PlayerScoreWidgetInstance = null;
+      }
+
+      #endregion
+
       #region Challenge Title Widget
 
       public void CreateTitleWidget(string titleText, Sprite titleSprite) {
         CreateWidgetIfNull<ChallengeTitleWidget>(ref _TitleWidgetInstance, _TitleWidgetPrefab);
         _TitleWidgetInstance.Initialize(titleText, titleSprite);
+      }
+
+      #endregion
+
+      #region Quit Button
+
+      public void CreateQuitButton() {
+        CreateWidgetIfNull<QuitMinigameButton>(ref _QuitButtonInstance, _QuitGameButtonPrefab);
+        _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
+      }
+
+      public void CreateBackButton() {
+        CreateWidgetIfNull<QuickQuitMinigameButton>(ref _QuickQuitButtonInstance, _QuickQuitGameButtonPrefab);
+        _QuickQuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
+      }
+
+      public void HideBackButton() {
+        HideWidget(_QuickQuitButtonInstance);
+        _QuickQuitButtonInstance = null;
+      }
+
+      private void HandleQuitConfirmed() {
+        CloseHowToPlayView();
+        if (QuitMiniGameConfirmed != null) {
+          QuitMiniGameConfirmed();
+        }
       }
 
       #endregion
@@ -303,23 +405,64 @@ namespace Cozmo {
 
       #endregion
 
-      #region Difficulty Select Widget
+      #region ContinueButtonShelfWidget
 
-      public void OpenDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
-        CreateWidgetIfNull<DifficultySelectView>(ref _DifficultySelectViewInstance, _DifficultySelectViewPrefab);
-        _DifficultySelectViewInstance.Initialize(options, highestDifficultyAvailable);
-      }
-
-      public void CloseDifficultySelectView() {
-        HideWidget(_DifficultySelectViewInstance);
-        _DifficultySelectViewInstance = null;
-      }
-
-      public DifficultySelectOptionData GetSelectedDifficulty() {
-        if (_DifficultySelectViewInstance != null) {
-          return _DifficultySelectViewInstance.SelectedDifficulty;
+      public void ShowContinueButtonOnShelf(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
+                                            string buttonText, string shelfText, Color shelfColor) {
+        if (_IsContinueButtonShelfCentered) {
+          HideExistingContinueButtonShelf();
         }
-        return null;
+        CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonShelfPrefab);
+        _IsContinueButtonShelfCentered = false;
+        _ContinueButtonShelfInstance.SetButtonListener(buttonClickHandler);
+        _ContinueButtonShelfInstance.SetButtonText(buttonText);
+        _ContinueButtonShelfInstance.SetShelfText(shelfText, shelfColor);
+      }
+
+      public void ShowContinueButtonCentered(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
+                                             string buttonText) {
+        if (!_IsContinueButtonShelfCentered) {
+          HideExistingContinueButtonShelf();
+        }
+        CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonCenterPrefab);
+        _IsContinueButtonShelfCentered = true;
+        _ContinueButtonShelfInstance.SetButtonListener(buttonClickHandler);
+        _ContinueButtonShelfInstance.SetButtonText(buttonText);
+      }
+
+      private void HideExistingContinueButtonShelf() {
+        if (_ContinueButtonShelfInstance != null) {
+          HideContinueButtonShelf();
+        }
+      }
+
+      public void HideContinueButtonShelf() {
+        HideWidget(_ContinueButtonShelfInstance);
+        _ContinueButtonShelfInstance = null;
+      }
+
+      public void EnableContinueButton(bool enable) {
+        if (_ContinueButtonShelfInstance != null) {
+          _ContinueButtonShelfInstance.SetButtonInteractivity(enable);
+        }
+      }
+
+      public void SetContinueButtonShelfText(string text, Color color) {
+        if (_ContinueButtonShelfInstance != null) {
+          _ContinueButtonShelfInstance.SetShelfText(text, color);
+        }
+      }
+
+      #endregion
+
+      #region Info Title Text
+
+      public string InfoTitleText {
+        get { return _InfoTitleTextLabel.text; }
+        set { 
+          _InfoTitleLayoutElement.gameObject.SetActive(!string.IsNullOrEmpty(value));
+          _InfoTitleTextLabel.text = value; 
+        }
       }
 
       #endregion
@@ -457,167 +600,23 @@ namespace Cozmo {
 
       #endregion
 
-      #region ContinueButtonShelfWidget
+      #region Difficulty Select Widget
 
-      public void ShowContinueButtonOnShelf(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
-                                            string buttonText, string shelfText, Color shelfColor) {
-        if (_IsContinueButtonShelfCentered) {
-          HideExistingContinueButtonShelf();
+      public void OpenDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
+        CreateWidgetIfNull<DifficultySelectView>(ref _DifficultySelectViewInstance, _DifficultySelectViewPrefab);
+        _DifficultySelectViewInstance.Initialize(options, highestDifficultyAvailable);
+      }
+
+      public void CloseDifficultySelectView() {
+        HideWidget(_DifficultySelectViewInstance);
+        _DifficultySelectViewInstance = null;
+      }
+
+      public DifficultySelectOptionData GetSelectedDifficulty() {
+        if (_DifficultySelectViewInstance != null) {
+          return _DifficultySelectViewInstance.SelectedDifficulty;
         }
-        CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonShelfPrefab);
-        _IsContinueButtonShelfCentered = false;
-        _ContinueButtonShelfInstance.SetButtonListener(buttonClickHandler);
-        _ContinueButtonShelfInstance.SetButtonText(buttonText);
-        _ContinueButtonShelfInstance.SetShelfText(shelfText, shelfColor);
-      }
-
-      public void ShowContinueButtonCentered(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
-                                             string buttonText) {
-        if (!_IsContinueButtonShelfCentered) {
-          HideExistingContinueButtonShelf();
-        }
-        CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonCenterPrefab);
-        _IsContinueButtonShelfCentered = true;
-        _ContinueButtonShelfInstance.SetButtonListener(buttonClickHandler);
-        _ContinueButtonShelfInstance.SetButtonText(buttonText);
-      }
-
-      private void HideExistingContinueButtonShelf() {
-        if (_ContinueButtonShelfInstance != null) {
-          HideContinueButtonShelf();
-        }
-      }
-
-      public void HideContinueButtonShelf() {
-        HideWidget(_ContinueButtonShelfInstance);
-        _ContinueButtonShelfInstance = null;
-      }
-
-      public void EnableContinueButton(bool enable) {
-        if (_ContinueButtonShelfInstance != null) {
-          _ContinueButtonShelfInstance.SetButtonInteractivity(enable);
-        }
-      }
-
-      public void SetContinueButtonShelfText(string text, Color color) {
-        if (_ContinueButtonShelfInstance != null) {
-          _ContinueButtonShelfInstance.SetShelfText(text, color);
-        }
-      }
-
-      #endregion
-
-
-      #region Info Title Text
-
-      public string InfoTitleText {
-        get { return _InfoTitleTextLabel.text; }
-        set { 
-          _InfoTitleLayoutElement.gameObject.SetActive(!string.IsNullOrEmpty(value));
-          _InfoTitleTextLabel.text = value; 
-        }
-      }
-
-      #endregion
-
-      #region Score Widgets
-
-      public int CozmoScore {
-        set {
-          ShowCozmoScoreWidget();
-          _CozmoScoreWidgetInstance.Score = value;
-        }
-      }
-
-      public int CozmoMaxRounds {
-        set {
-          ShowCozmoScoreWidget();
-          _CozmoScoreWidgetInstance.MaxRounds = value;
-        }
-      }
-
-      public int CozmoRoundsWon {
-        set {
-          ShowCozmoScoreWidget();
-          _CozmoScoreWidgetInstance.RoundsWon = value;
-        }
-      }
-
-      public bool CozmoDim {
-        set {
-          ShowCozmoScoreWidget();
-          _CozmoScoreWidgetInstance.Dim = value;
-        }
-      }
-
-      public void ShowCozmoWinnerBanner() {
-        ShowCozmoScoreWidget();
-        _CozmoScoreWidgetInstance.IsWinner = true;
-      }
-
-      public void ShowCozmoScoreWidget() {
-        if (_CozmoScoreWidgetInstance == null) {
-          _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
-            _CozmoPortraitSprite);            
-        }
-      }
-
-      public int PlayerScore {
-        set {
-          ShowPlayerScoreWidget();
-          _PlayerScoreWidgetInstance.Score = value;
-        }
-      }
-
-      public int PlayerMaxRounds {
-        set {
-          ShowPlayerScoreWidget();
-          _PlayerScoreWidgetInstance.MaxRounds = value;
-        }
-      }
-
-      public int PlayerRoundsWon {
-        set {
-          ShowPlayerScoreWidget();
-          _PlayerScoreWidgetInstance.RoundsWon = value;
-        }
-      }
-
-      public bool PlayerDim {
-        set {
-          ShowPlayerScoreWidget();
-          _PlayerScoreWidgetInstance.Dim = value;
-        }
-      }
-
-      public void ShowPlayerWinnerBanner() {
-        ShowPlayerScoreWidget();
-        _PlayerScoreWidgetInstance.IsWinner = true;
-      }
-
-      public void ShowPlayerScoreWidget() {
-        if (_PlayerScoreWidgetInstance == null) {
-          _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
-            _PlayerPortraitSprite);            
-        }
-      }
-
-      private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
-                                            Sprite portrait) {
-        GameObject widgetObj = UIManager.CreateUIElement(_ScoreWidgetPrefab.gameObject, widgetParent);
-        ScoreWidget instance = widgetObj.GetComponent<ScoreWidget>();
-        instance.AnimationXOffset = animationOffset;
-        instance.Portrait = portrait;
-
-        AddWidget(instance);
-        return instance;
-      }
-
-      public void HideScoreWidgets() {
-        HideWidget(_CozmoScoreWidgetInstance);
-        _CozmoScoreWidgetInstance = null;
-        HideWidget(_PlayerScoreWidgetInstance);
-        _PlayerScoreWidgetInstance = null;
+        return null;
       }
 
       #endregion
