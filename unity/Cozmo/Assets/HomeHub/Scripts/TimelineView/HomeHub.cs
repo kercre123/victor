@@ -63,10 +63,8 @@ namespace Cozmo.HomeHub {
 
     private void HandleConnectClicked() {
       _StartViewInstance.CloseView();
-      RobotEngineManager.Instance.CurrentRobot.SendAnimation(AnimationName.kWakeUp);
       ShowTimelineDialog();
     }
-
 
     private void ShowTimelineDialog() {
       // Create dialog with the game prefabs
