@@ -237,6 +237,11 @@ void user_init(void)
   {
     os_printf("Couldn't set DHCPS lease information\r\n");
   }
+  err = wifi_softap_set_dhcps_lease_time(1); // Set shortest possible lease time XXX This is probably development only.
+  if (err == false)
+  {
+    os_printf("Couldn't set DHCP server lease time\r\n");
+  }
 
   // Start DHCP server
   err = wifi_softap_dhcps_start();
