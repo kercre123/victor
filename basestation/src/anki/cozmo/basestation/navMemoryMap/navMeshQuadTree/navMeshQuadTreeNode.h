@@ -157,6 +157,7 @@ private:
   // subdivide/merge children
   void Subdivide(NavMeshQuadTreeProcessor& processor);
   void Merge(NodeContent& newContent, NavMeshQuadTreeProcessor& processor);
+  void ClearDescendants(NavMeshQuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge(NavMeshQuadTreeProcessor& processor);

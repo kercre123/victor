@@ -48,6 +48,22 @@ ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentTy
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* ENodeContentTypeToString(ENodeContentType nodeContentType)
+{
+  switch (nodeContentType) {
+    case ENodeContentType::Invalid: return "Invalid";
+    case ENodeContentType::Subdivided: return "Subdivided";
+    case ENodeContentType::Unknown: return "Unknown";
+    case ENodeContentType::ClearOfObstacle: return "ClearOfObstacle";
+    case ENodeContentType::ClearOfCliff: return "ClearOfCliff";
+    case ENodeContentType::ObstacleCube: return "ObstacleCube";
+    case ENodeContentType::ObstacleUnrecognized: return "ObstacleUnrecognized";
+    case ENodeContentType::Cliff: return "Cliff";
+  }
+  return "ERROR";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* EDirectionToString(EDirection dir)
 {
   switch (dir) {
