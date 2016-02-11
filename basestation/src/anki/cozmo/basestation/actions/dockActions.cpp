@@ -283,8 +283,8 @@ namespace Anki {
                                                   0, true, false);
 
       // Disable the visual verification from issuing a completion signal
-      _faceAndVerifyAction->SetEmitCompletionSignal(false);
-      _faceAndVerifyAction->SetSuppressTrackLocking(true);
+      _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
+      _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
       
       // Go ahead and Update the FaceObjectAction once now, so we don't
       // waste a tick doing so in CheckIfDone (since this is the first thing
@@ -842,8 +842,8 @@ namespace Anki {
         _faceAndVerifyAction = new FaceObjectAction(_robot, _carryingObjectID,
                                                     _carryObjectMarker->GetCode(), 0, true, false);
         
-        _faceAndVerifyAction->SetEmitCompletionSignal(false);
-        _faceAndVerifyAction->SetSuppressTrackLocking(true);
+        _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
+        _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
         
       } // if/else IsCarryingObject()
       
@@ -1042,11 +1042,11 @@ namespace Anki {
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new FaceObjectAction(_robot, _carryObjectID, Radians(0), true, false);
-              _placementVerifyAction->SetSuppressTrackLocking(true);
+              _placementVerifyAction->ShouldSuppressTrackLocking(true);
               _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
-              _placementVerifyAction->SetEmitCompletionSignal(false);
+              _placementVerifyAction->ShouldEmitCompletionSignal(false);
               
               // Go ahead do the first update of the FaceObjectAction to get the
               // init "out of the way" rather than wasting a tick here
@@ -1092,10 +1092,10 @@ namespace Anki {
                   // leave it up, since we are assuming we are still carrying the object)
                   _placementVerifyAction = new MoveLiftToHeightAction(_robot,
                                                                       MoveLiftToHeightAction::Preset::LOW_DOCK);
-                  _placementVerifyAction->SetSuppressTrackLocking(true);
+                  _placementVerifyAction->ShouldSuppressTrackLocking(true);
                   
                   // Disable completion signals since this is inside another action
-                  _placementVerifyAction->SetEmitCompletionSignal(false);
+                  _placementVerifyAction->ShouldEmitCompletionSignal(false);
                   
                   result = ActionResult::RUNNING;
                 }
@@ -1249,10 +1249,10 @@ namespace Anki {
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_robot, _dockObjectID, _expectedMarkerPostRoll->GetCode());
-              _rollVerifyAction->SetSuppressTrackLocking(true);
+              _rollVerifyAction->ShouldSuppressTrackLocking(true);
               
               // Disable completion signals since this is inside another action
-              _rollVerifyAction->SetEmitCompletionSignal(false);
+              _rollVerifyAction->ShouldEmitCompletionSignal(false);
               
               // Do one update step immediately after creating the action to get Init done
               result = _rollVerifyAction->Update();

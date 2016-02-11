@@ -731,7 +731,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     return;
   }
   
-  if(robot->GetMoveComponent().IsTrackLocked(AnimTrackFlag::LIFT_TRACK)) {
+  if(robot->GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
                      "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
   } else {
@@ -768,7 +768,7 @@ void RobotEventHandler::HandleEnableLiftPower(const AnkiEvent<ExternalInterface:
     return;
   }
   
-  if(robot->GetMoveComponent().IsTrackLocked(AnimTrackFlag::LIFT_TRACK)) {
+  if(robot->GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleEnableLiftPower.LiftLocked",
                      "Ignoring ExternalInterface::EnableLiftPower while lift is locked.");
   } else {

@@ -120,7 +120,6 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
       break;
 
     case State::HoldingHeadDown:
-      LiftShouldBeLocked(robot);
       if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= _holdHeadDownUntil) {
         
         PlayAnimationAction* action = new PlayAnimationAction(robot, kLookUpAnimName);
@@ -146,8 +145,6 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
       
     case State::Tracking:
     {
-      LiftShouldBeLocked(robot);
-
       // keep the lift out of the FOV
       if( !robot.GetMoveComponent().IsLiftMoving() && robot.GetLiftHeight() > LIFT_HEIGHT_LOWDOCK + 6.0f ) {
         MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(robot,
@@ -160,7 +157,6 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
     }
     
     case State::DrivingForward:
-      LiftShouldBeLocked(robot);
       break;
 
     case State::WaitingForFirstMotion:
@@ -186,13 +182,8 @@ void BehaviorFollowMotion::StopInternal(Robot& robot, double currentTime_sec)
   _actionRunning = (u32)ActionConstants::INVALID_TAG;
   _lastInterruptTime_sec = currentTime_sec;
   _holdHeadDownUntil = -1.0f;
-
-  LiftShouldBeUnlocked(robot);
-  
   _state = State::Interrupted;
   SetStateName("Interrupted");
-  
-  LiftShouldBeUnlocked(robot);
 }
   
 void BehaviorFollowMotion::StartTracking(Robot& robot)
@@ -266,8 +257,6 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
           PlayAnimationAction* reactAnimAction = new PlayAnimationAction(robot, "ID_MotionFollow_ReactToMotion");
 
           CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {panTiltAction, liftAction, reactAnimAction});
-          
-          LiftShouldBeLocked(robot);
       
       	  // Wait for the animation to complete
       	  _actionRunning = compoundAction->GetTag();
@@ -431,24 +420,5 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
   }
   
 } // HandleCompletedAction()
-
-void BehaviorFollowMotion::LiftShouldBeLocked(Robot& robot)
-{
-  if( ! _lockedLift ) {
-    robot.GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
-    _lockedLift = true;
-  }
-}
-
-void BehaviorFollowMotion::LiftShouldBeUnlocked(Robot& robot)
-{
-  if( _lockedLift ) {
-    robot.GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
-    _lockedLift = false;
-  }
-}
-
-  
-
 } // namespace Cozmo
 } // namespace Anki

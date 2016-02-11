@@ -46,10 +46,13 @@ public:
   bool   IsHeadMoving() const {return _isHeadMoving;}
   bool   IsLiftMoving() const {return _isLiftMoving;}
   
-  bool IsTrackLocked(AnimTrackFlag track) const;
+  // Returns true if any of the tracks are locked
+  bool AreAnyTracksLocked(u8 tracks) const;
+  // Returns true if all of the specified tracks are locked
+  bool AreAllTracksLocked(u8 tracks) const;
   
-  void LockTracks(uint8_t tracks);
-  void UnlockTracks(uint8_t tracks);
+  void LockTracks(u8 tracks);
+  void UnlockTracks(u8 tracks);
   
   // Enables lift power on the robot.
   // If disabled, lift goes limp.

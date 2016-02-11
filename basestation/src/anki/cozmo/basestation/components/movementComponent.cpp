@@ -88,7 +88,7 @@ void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag face
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
-  if(IsTrackLocked(AnimTrackFlag::BODY_TRACK)) {
+  if(AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
                      "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
   } else {
@@ -114,7 +114,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 {
-  if(IsTrackLocked(AnimTrackFlag::HEAD_TRACK)) {
+  if(AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
                      "Ignoring ExternalInterface::MoveHead while head is locked.");
   } else {
@@ -125,7 +125,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 {
-  if(IsTrackLocked(AnimTrackFlag::LIFT_TRACK)) {
+  if(AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
@@ -187,9 +187,35 @@ int MovementComponent::GetFlagIndex(uint8_t flag) const
   return i;
 }
   
-bool MovementComponent::IsTrackLocked(AnimTrackFlag track) const
+bool MovementComponent::AreAnyTracksLocked(u8 tracks) const
 {
-  return _trackLockCount[GetFlagIndex((uint8_t)track)] > 0;
+  for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    if((tracks & 1) && (_trackLockCount[i] > 0))
+    {
+      return true;
+    }
+    tracks = tracks >> 1;
+  }
+  return false;
+}
+
+bool MovementComponent::AreAllTracksLocked(u8 tracks) const
+{
+  if(tracks == 0)
+  {
+    PRINT_NAMED_WARNING("MovementComponent.AreAllTracksLocked", "All of the NO_TRACKS are not locked");
+    return false;
+  }
+  for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    if((tracks & 1) && (_trackLockCount[i] == 0))
+    {
+      return false;
+    }
+    tracks = tracks >> 1;
+  }
+  return true;
 }
 
 void MovementComponent::LockTracks(uint8_t tracks)

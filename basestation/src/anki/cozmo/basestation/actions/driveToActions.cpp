@@ -282,7 +282,7 @@ namespace Anki {
       // In case we are re-running this action, make sure compound actions are cleared.
       // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)
       _compoundAction.ClearActions();
-      _compoundAction.SetSuppressTrackLocking(true);
+      _compoundAction.ShouldSuppressTrackLocking(true);
 
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
@@ -293,7 +293,6 @@ namespace Anki {
           driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
           driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
           driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
-          driveToPoseAction->SetSuppressTrackLocking(true);
           _compoundAction.AddAction(driveToPoseAction);
         }
         
@@ -306,11 +305,10 @@ namespace Anki {
                             GetName().c_str(),
                             faceObjectAction->GetTag(),
                             faceObjectAction->GetName().c_str());
-          faceObjectAction->SetSuppressTrackLocking(true);
           _compoundAction.AddAction(faceObjectAction);
         }
         
-        _compoundAction.SetEmitCompletionSignal(false);
+        _compoundAction.ShouldEmitCompletionSignal(false);
         
         // Go ahead and do the first Update on the compound action, so we don't
         // "waste" the first CheckIfDone call just initializing it

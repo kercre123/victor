@@ -1369,7 +1369,7 @@ namespace Cozmo {
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
       const bool wheelsAvailable = (!robot.GetMoveComponent().IsMoving() &&
-                                    !robot.GetMoveComponent().IsTrackLocked(AnimTrackFlag::BODY_TRACK));
+                                    !robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK));
       const bool timeToMoveBody = (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0;
       if(wheelsAvailable && timeToMoveBody)
       {
@@ -1418,7 +1418,7 @@ namespace Cozmo {
       
       // If lift is available, add a little random movement to keep Cozmo looking alive
       const bool liftIsAvailable = (!robot.GetMoveComponent().IsLiftMoving() &&
-                                    !robot.GetMoveComponent().IsTrackLocked(AnimTrackFlag::LIFT_TRACK));
+                                    !robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK));
       const bool timeToMoveLIft = (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0;
       if(liftIsAvailable && timeToMoveLIft && !robot.IsCarryingObject())
       {
@@ -1446,7 +1446,7 @@ namespace Cozmo {
       
       // If head is available, add a little random movement to keep Cozmo looking alive
       const bool headIsAvailable = (!robot.GetMoveComponent().IsHeadMoving() &&
-                                    !robot.GetMoveComponent().IsTrackLocked(AnimTrackFlag::HEAD_TRACK));
+                                    !robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK));
       const bool timeToMoveHead = (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0;
       if(headIsAvailable && timeToMoveHead)
       {

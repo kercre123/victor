@@ -687,7 +687,6 @@ namespace Anki {
     ActionResult PanAndTiltAction::Init()
     {
       // Incase we are re-running this action
-      _compoundAction.SetSuppressTrackLocking(true);
       _compoundAction.ClearActions();
       _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
       
@@ -695,14 +694,12 @@ namespace Anki {
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
-      action->SetSuppressTrackLocking(true);
       _compoundAction.AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot.GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(_robot, newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
-      headAction->SetSuppressTrackLocking(true);
       _compoundAction.AddAction(headAction);
       
       // Put the angles in the name for debugging
@@ -711,10 +708,10 @@ namespace Anki {
                "Action");
       
       // Prevent the compound action from signaling completion
-      _compoundAction.SetEmitCompletionSignal(false);
+      _compoundAction.ShouldEmitCompletionSignal(false);
       
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
-      _compoundAction.SetSuppressTrackLocking(true);
+      _compoundAction.ShouldSuppressTrackLocking(true);
       
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
@@ -855,8 +852,8 @@ namespace Anki {
       _facePoseCompoundActionDone = false;
       
       // Disable completion signals since this is inside another action
-      _visuallyVerifyAction.SetEmitCompletionSignal(false);
-      _visuallyVerifyAction.SetSuppressTrackLocking(true);
+      _visuallyVerifyAction.ShouldEmitCompletionSignal(false);
+      _visuallyVerifyAction.ShouldSuppressTrackLocking(true);
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
@@ -953,13 +950,13 @@ namespace Anki {
         {
           CrossBridgeAction* bridgeAction = new CrossBridgeAction(_robot, _objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
-          bridgeAction->SetSuppressTrackLocking(true);
+          bridgeAction->ShouldSuppressTrackLocking(true);
           _chosenAction = bridgeAction;
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
           AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_robot, _objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
-          rampAction->SetSuppressTrackLocking(true);
+          rampAction->ShouldSuppressTrackLocking(true);
           _chosenAction = rampAction;
         }
         else {
@@ -1115,8 +1112,8 @@ namespace Anki {
       
       // Get lift out of the way
 
-      _moveLiftToHeightAction.SetEmitCompletionSignal(false);
-      _moveLiftToHeightAction.SetSuppressTrackLocking(true);
+      _moveLiftToHeightAction.ShouldEmitCompletionSignal(false);
+      _moveLiftToHeightAction.ShouldSuppressTrackLocking(true);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
       

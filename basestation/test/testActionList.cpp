@@ -207,15 +207,15 @@ void CheckActionDestroyed(std::vector<std::string> actualNames)
   actionsDestroyed.clear();
 }
 
-void CheckTracksLocked(Robot& r, uint8_t track)
+void CheckTracksLocked(Robot& r, u8 track)
 {
-  EXPECT_TRUE(r.GetMoveComponent().IsTrackLocked((AnimTrackFlag)track));
-  EXPECT_FALSE(r.GetMoveComponent().IsTrackLocked((AnimTrackFlag)~track));
+  EXPECT_TRUE(r.GetMoveComponent().AreAllTracksLocked(track));
+  EXPECT_FALSE(r.GetMoveComponent().AreAllTracksLocked(~track));
 }
 
-void CheckTracksUnlocked(Robot& r, uint8_t track)
+void CheckTracksUnlocked(Robot& r, u8 track)
 {
-  EXPECT_FALSE(r.GetMoveComponent().IsTrackLocked((AnimTrackFlag)track));
+  EXPECT_FALSE(r.GetMoveComponent().AreAllTracksLocked(track));
 }
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
@@ -246,7 +246,7 @@ TEST(QueueAction, SingleActionFinishes)
   CheckTracksUnlocked(r, track1);
 }
 
-// Tets queueing a single action and cancelling it works
+// Tests queueing a single action and cancelling it works
 TEST(QueueAction, SingleActionCancel)
 {
   Robot r(0, cozmoContext);
@@ -921,10 +921,7 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
   
   r.GetActionList().Update();
-  // Can't use CheckTracksLocked() since it checks that the inverse of the locked tracks are unlocked
-  // but in this case all tracks are locked (_ALL_TRACKS 0xff) so the inverse would be
-  // (NO_TRACKS 0x0) which is also considered locked
-  EXPECT_TRUE(r.GetMoveComponent().IsTrackLocked((AnimTrackFlag)(track1 | track2 | track3)));
+  CheckTracksLocked(r, track1 | track2 | track3);
   
   testAction1->_complete = true;
   r.GetActionList().Update();
@@ -1024,7 +1021,8 @@ TEST(QueueAction, ActionFailureRetry)
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
   
   r.GetActionList().Update();
-  CheckTracksLocked(r, track1 | track2);
+  // testAction1 completed and unlocked its tracks so only track2 is locked
+  CheckTracksLocked(r, track2);
   
   // Both actions are set to complete but testAction2 is going to retry once
   // so it is still left

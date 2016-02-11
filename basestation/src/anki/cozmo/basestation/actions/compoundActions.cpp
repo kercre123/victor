@@ -61,7 +61,7 @@ namespace Anki {
       action->EnableMessageDisplay(IsMessageDisplayEnabled());
       
       // As part of a compound action this should not emit completion
-      action->SetEmitCompletionSignal(false);
+      action->ShouldEmitCompletionSignal(false);
       
       _actions.emplace_back(false, action);
       _name += action->GetName();
@@ -128,6 +128,9 @@ namespace Anki {
         IActionRunner* currentAction = _currentActionPair->second;
         assert(currentAction != nullptr); // should not have been allowed in by constructor
         
+        // If the compound action is suppressing track locking then the constituent actions should too
+        currentAction->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
         {
@@ -146,6 +149,8 @@ namespace Anki {
                 _waitUntilTime = currentTime + _delayBetweenActionsInSeconds;
               }
               
+              // Unlock tracks here as the action will not be deleted (unlock its tracks normally) until
+              // the compound action completes
               _currentActionPair->second->UnlockTracks();
               ++_currentActionPair;
               
@@ -258,6 +263,9 @@ namespace Anki {
         if(!isDone) {
           IActionRunner* currentAction = currentActionPair.second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
+          
+          // If the compound action is suppressing track locking then the constituent actions should too
+          currentAction->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
 
           const ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());

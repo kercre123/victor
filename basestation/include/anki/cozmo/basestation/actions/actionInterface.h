@@ -99,7 +99,8 @@ namespace Anki {
       
       // Used (e.g. in initialization of CompoundActions) to specify that a
       // consituent action should not try to lock or unlock tracks it uses
-      void SetSuppressTrackLocking(bool tf) { _suppressTrackLocking = tf; }
+      void ShouldSuppressTrackLocking(bool tf) { _suppressTrackLocking = tf; }
+      bool IsSuppressingTrackLocking() const { return _suppressTrackLocking; }
 
       // Override this to fill in the ActionCompletedStruct emitted as part of the
       // completion signal with an action finishes. Note that this public because
@@ -111,7 +112,7 @@ namespace Anki {
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
       bool IsMessageDisplayEnabled() const { return _displayMessages; }
       
-      void SetEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
+      void ShouldEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
       bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
       
       // Called when the action stops running and sets varibles needed for completion.
@@ -140,7 +141,7 @@ namespace Anki {
       
       std::string   _statusMsg;
       
-      ActionResult         _result;
+      ActionResult         _result = ActionResult::RUNNING;
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
       std::string          _name;

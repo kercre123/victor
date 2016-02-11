@@ -141,7 +141,7 @@ namespace Anki {
         // When the ActionRunner first starts, lock any specified subsystems
         u8 tracksToLock = GetTracksToLock();
         
-        if(_robot.GetMoveComponent().IsTrackLocked((AnimTrackFlag)tracksToLock))
+        if(_robot.GetMoveComponent().AreAnyTracksLocked(tracksToLock))
         {
           PRINT_NAMED_WARNING("IActionRunner.Update",
                            "Action %s [%d] not running because required tracks (0x%x) %s are locked",
