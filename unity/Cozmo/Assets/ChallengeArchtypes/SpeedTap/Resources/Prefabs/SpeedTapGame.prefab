@@ -39,9 +39,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edea70fc2a8a54b7c8c036af62f5683a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameStateSlides:
-  - slideName: TellPlayerToTap
-    slidePrefab: {fileID: 22528282, guid: a746841c043c145299eb44a48a59bd14, type: 2}
+  _PlayerTapSlidePrefab: {fileID: 119438, guid: a746841c043c145299eb44a48a59bd14,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -88,6 +87,10 @@ Prefab:
       propertyPath: _GameStateSlides.Array.data[0].slideName
       value: TellPlayerToTap
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _PlayerTapSlidePrefab
+      value: 
+      objectReference: {fileID: 119438, guid: a746841c043c145299eb44a48a59bd14, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 141604}

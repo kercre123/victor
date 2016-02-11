@@ -7,8 +7,6 @@ namespace SpeedTap {
 
     private SpeedTapGame _SpeedTapGame = null;
 
-    private string kSlideName = "TellPlayerToTap";
-
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
@@ -19,7 +17,7 @@ namespace SpeedTap {
       _SpeedTapGame.PlayerBlock.Lights[3].OnColor = Color.yellow.ToUInt();
 
       LightCube.TappedAction += HandleTap;
-      _SpeedTapGame.SharedMinigameView.ShowFullScreenSlideByName(kSlideName);
+      _SpeedTapGame.ShowPlayerTapSlide();
 
     }
 

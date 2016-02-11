@@ -8,7 +8,12 @@ namespace CodeBreaker {
     private const string kHowToPlaySlideName = "HowToPlay";
     private const string kGamePanelSlideName = "ScoreCard";
 
+    [SerializeField]
+    private CodeBreakerReadySlide _ReadySlidePrefab;
     private CodeBreakerReadySlide _ReadySlide;
+
+    [SerializeField]
+    private CodeBreakerPanel _GamePanelSlidePrefab;
     private CodeBreakerPanel _GamePanelSlide;
 
     [SerializeField]
@@ -54,37 +59,25 @@ namespace CodeBreaker {
     #region UI
 
     public void ShowReadySlide(string readySlideTextLocKey, string buttonTextLocKey, ReadyButtonClickedHandler readyButtonCallback) {
-      GameObject howToPlaySlide = SharedMinigameView.ShowFullScreenSlideByName(kHowToPlaySlideName);
+      GameObject howToPlaySlide = SharedMinigameView.ShowWideGameStateSlide(_ReadySlidePrefab.gameObject, kHowToPlaySlideName);
       _ReadySlide = howToPlaySlide.GetComponent<CodeBreakerReadySlide>();
-      if (_ReadySlide != null) {
-        _ReadySlide.SetSlideText(Localization.Get(readySlideTextLocKey));
-        _ReadySlide.SetButtonText(Localization.Get(buttonTextLocKey));
-        _ReadySlide.EnableButton(true);
-        if (readyButtonCallback != null) {
-          _ReadySlide.OnReadyButtonClicked += readyButtonCallback;
-        }
-      }
-      else {
-        DAS.Error(this, "The " + kHowToPlaySlideName + " slide in " + typeof(CodeBreakerGame).ToString()
-        + " needs a " + typeof(CodeBreakerReadySlide).ToString() + " component attached to it!");
+      _ReadySlide.SetSlideText(Localization.Get(readySlideTextLocKey));
+      _ReadySlide.SetButtonText(Localization.Get(buttonTextLocKey));
+      _ReadySlide.EnableButton(true);
+      if (readyButtonCallback != null) {
+        _ReadySlide.OnReadyButtonClicked += readyButtonCallback;
       }
     }
 
     public void ShowGamePanel(SubmitButtonClickedHandler submitButtonCallback) {
-      GameObject gamePanelObject = SharedMinigameView.ShowFullScreenSlideByName(kGamePanelSlideName);
+      GameObject gamePanelObject = SharedMinigameView.ShowWideGameStateSlide(_GamePanelSlidePrefab.gameObject, kGamePanelSlideName);
       _GamePanelSlide = gamePanelObject.GetComponent<CodeBreakerPanel>();
-      if (_GamePanelSlide != null) {
-        _GamePanelSlide.EnableButton = true;
-        if (submitButtonCallback != null) {
-          _GamePanelSlide.OnSubmitButtonClicked += submitButtonCallback;
-        }
-        else {
-          DAS.Warn(this, "Tried to attach a null callback to the 'HowToPlay' slide!");
-        }
+      _GamePanelSlide.EnableButton = true;
+      if (submitButtonCallback != null) {
+        _GamePanelSlide.OnSubmitButtonClicked += submitButtonCallback;
       }
       else {
-        DAS.Error(this, "The " + kGamePanelSlideName + " slide in " + typeof(CodeBreakerGame).ToString()
-        + " needs a " + typeof(CodeBreakerPanel).ToString() + " component attached to it!");
+        DAS.Warn(this, "Tried to attach a null callback to the 'HowToPlay' slide!");
       }
     }
 

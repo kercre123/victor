@@ -6,7 +6,7 @@ using System;
 using Cozmo.MinigameWidgets;
 using DG.Tweening;
 
-public class DifficultySelectView : MonoBehaviour, IMinigameWidget {
+public class DifficultySelectSlide : MonoBehaviour, IMinigameWidget {
 
   [SerializeField]
   private DifficultySelectOption _OptionPrefab;
@@ -60,6 +60,7 @@ public class DifficultySelectView : MonoBehaviour, IMinigameWidget {
 
 
   #region IMinigameWidget implementation
+
   public void DestroyWidgetImmediately() {
     Destroy(gameObject);
   }
@@ -81,5 +82,6 @@ public class DifficultySelectView : MonoBehaviour, IMinigameWidget {
       0.25f).SetEase(Ease.OutQuad));
     return close;
   }
+
   #endregion
 }

@@ -41,10 +41,6 @@ public abstract class GameBase : MonoBehaviour {
 
   protected StateMachine _StateMachine = new StateMachine();
 
-  // TODO: Delete after removing usage by Minesweeper, Codebreaker
-  [SerializeField]
-  protected GameStateSlide[] _GameStateSlides;
-
   private StatContainer _RewardedXp;
 
   private float _GameStartTime;
@@ -62,7 +58,7 @@ public abstract class GameBase : MonoBehaviour {
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       false) as SharedMinigameView;
     _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
-      _ChallengeData.HowToPlayDialogContentLocKey, _GameStateSlides);
+      _ChallengeData.HowToPlayDialogContentLocKey);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
  
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.MUSIC.PLAYFUL);
@@ -78,8 +74,8 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    SharedMinigameView.CreateTitleWidget(Localization.Get(data.ChallengeTitleLocKey), data.ChallengeIcon);
-    SharedMinigameView.CreateBackButton();
+    SharedMinigameView.ShowTitleWidget(Localization.Get(data.ChallengeTitleLocKey), data.ChallengeIcon);
+    SharedMinigameView.ShowBackButton();
   }
 
   #endregion
@@ -214,7 +210,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private void OpenChallengeEndedDialog(string subtitleText = null) {
     // Open confirmation dialog instead
-    GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowCustomGameStateSlide(
+    GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
                                      UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
                                      "ChallengeEndSlide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
@@ -281,10 +277,4 @@ public abstract class GameBase : MonoBehaviour {
   #endregion
 
   // end Difficulty Select
-}
-
-[System.Serializable]
-public class GameStateSlide {
-  public string slideName;
-  public CanvasGroup slidePrefab;
 }

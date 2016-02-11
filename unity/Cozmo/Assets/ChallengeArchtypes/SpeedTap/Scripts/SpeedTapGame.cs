@@ -55,6 +55,9 @@ namespace SpeedTap {
 
     public event Action PlayerTappedBlockEvent;
 
+    [SerializeField]
+    private GameObject _PlayerTapSlidePrefab;
+
     public void ResetScore() {
       _CozmoScore = 0;
       _PlayerScore = 0;
@@ -255,6 +258,10 @@ namespace SpeedTap {
 
     protected override int CalculateExcitementStatRewards() {
       return 1 + _CloseRoundCount * 2;
+    }
+
+    public void ShowPlayerTapSlide() {
+      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
   }
 }

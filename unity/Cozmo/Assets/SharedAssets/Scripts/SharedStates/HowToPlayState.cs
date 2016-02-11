@@ -17,14 +17,14 @@ public class HowToPlayState : State {
       Localization.Get(LocalizationKeys.kButtonStartChallenge), Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), 
       Cozmo.UI.UIColorPalette.NeutralTextColor());
     _Game.SharedMinigameView.EnableContinueButton(true);
-    _Game.SharedMinigameView.CreateHowToPlayButton();
+    _Game.SharedMinigameView.ShowHowToPlayButton();
     _Game.SharedMinigameView.OpenHowToPlayView();
   }
 
   private void HandleContinueButtonClicked() {
     // TODO: Check if the game has been run before; if so skip the HowToPlayState
     _Game.SharedMinigameView.HideBackButton();
-    _Game.SharedMinigameView.CreateQuitButton();
+    _Game.SharedMinigameView.ShowQuitButton();
     _Game.SharedMinigameView.CloseHowToPlayView();
     _Game.SharedMinigameView.HideContinueButtonShelf();
 

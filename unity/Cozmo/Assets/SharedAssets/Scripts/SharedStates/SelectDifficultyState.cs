@@ -18,7 +18,7 @@ public class SelectDifficultyState : State {
   public override void Enter() {
     base.Enter();
     _Game = _StateMachine.GetGame();
-    _Game.SharedMinigameView.OpenDifficultySelectView(_DifficultyOptions, 
+    _Game.SharedMinigameView.ShowDifficultySelectView(_DifficultyOptions, 
       _HighestLevelCompleted);
     _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked,
       Localization.Get(LocalizationKeys.kButtonContinue), string.Empty, UnityEngine.Color.clear);
@@ -26,7 +26,7 @@ public class SelectDifficultyState : State {
   }
 
   public override void Exit() {
-    _Game.SharedMinigameView.CloseDifficultySelectView();
+    _Game.SharedMinigameView.HideDifficultySelectView();
     _Game.SharedMinigameView.HideContinueButtonShelf();
   }
 
