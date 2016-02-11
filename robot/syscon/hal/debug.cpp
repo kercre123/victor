@@ -20,7 +20,7 @@ int UART::DebugQueue() {
 }
 
 uint8_t UART::DebugChar() {
-  if (debug_print_count <= 0) return -1;
+  if (debug_print_count <= 0) return 0xFF;
   
   uint8_t o = debug_print_out[debug_print_first];
   debug_print_first = (debug_print_first+1) % MAX_DEBUG_PRINT;

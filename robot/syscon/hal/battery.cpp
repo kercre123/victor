@@ -13,7 +13,6 @@ const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
 const u32 V_PRESCALE    = 3;
 const u32 V_SCALE       = 0x3ff; // 10 bit ADC
 
-const Fixed CLIFF_SCALE = TO_FIXED(1.0); // Cozmo 4.1 voltage divider
 const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
 const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
@@ -176,24 +175,25 @@ void Battery::manage(void* userdata)
       break ;
 
     case ANALOG_V_EXT_SENSE:
-      static int ground_short = 0;
-      uint32_t raw = NRF_ADC->RESULT;
+      {
+        static int ground_short = 0;
+        uint32_t raw = NRF_ADC->RESULT;
 
-      if (raw < 0x30) {
-        if (ground_short++ >= 40) {
-          powerOff();
-          for (;;) ;
+        if (raw < 0x30) {
+          if (ground_short++ >= 40) {
+            powerOff();
+            for (;;) ;
+          }
+        } else {
+          ground_short = 0;
         }
-      } else {
-        ground_short = 0;
-      }
-    
-      g_dataToHead.VExt = calcResult(VEXT_SCALE);
-      onContacts = g_dataToHead.VExt > VEXT_DETECT_THRESHOLD;
+      
+        g_dataToHead.VExt = calcResult(VEXT_SCALE);
+        onContacts = g_dataToHead.VExt > VEXT_DETECT_THRESHOLD;
 
-      startADCsample(ANALOG_CLIFF_SENSE);
+        startADCsample(ANALOG_CLIFF_SENSE);
+      }
       break ;
-    
     case ANALOG_CLIFF_SENSE:
       sampleCliffSensor();
       break ;

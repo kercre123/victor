@@ -14,9 +14,11 @@
 #define ANKI_COZMO_NAV_MEMORY_MAP_INTERFACE_H
 
 #include "navMemoryMapTypes.h"
+#include "iNavMemoryMapQuadData.h"
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad.h"
+#include "util/logging/logging.h"
 
 #include <set>
 
@@ -49,8 +51,16 @@ public:
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // add a quad that with the specified content type
-  virtual void AddQuad(const Quad2f& quad, EContentType type) = 0;
+  // add a quad with the specified content type and empty additional content
+  void AddQuad(const Quad2f& quad, EContentType type) {
+    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddQuad.ExpectedAdditionalData");
+    AddQuadInternal(quad, type);
+  }
+  // add a quad with the specified additional content. Such content specifies the associated EContentType
+  void AddQuad(const Quad2f& quad, const INavMemoryMapQuadData& content) {
+    ASSERT_NAMED(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddQuad.NotEpectedAdditionalData");
+    AddQuadInternal(quad, content);
+  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -74,6 +84,13 @@ public:
   
   // Render memory map
   virtual void Draw() const = 0;
+  
+protected:
+
+  // add a quad with the specified content type and empty additional content
+  virtual void AddQuadInternal(const Quad2f& quad, EContentType type) = 0;
+  // add a quad with the specified additional content. Such content specifies the associated EContentType
+  virtual void AddQuadInternal(const Quad2f& quad, const INavMemoryMapQuadData& content) = 0;
   
 }; // class
   

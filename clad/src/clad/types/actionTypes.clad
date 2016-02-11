@@ -58,6 +58,7 @@ enum uint_8 ActionResult {
     FAILURE_PROCEED,
     FAILURE_RETRY,
     FAILURE_ABORT,
+    FAILURE_BAD_TAG,
     CANCELLED,
     INTERRUPTED
 }
@@ -91,7 +92,7 @@ structure AnimationCompleted {
 
 // Used by DeviceAudioAction
 structure DeviceAudioCompleted {
-  Audio::GenericEvent audioEvent,
+  Audio::GameEvent::GenericEvent audioEvent,
 }
 
 // Used by TrackFaceAction

@@ -3,26 +3,29 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+namespace GameState {
 
 enum uint_32 GenericState
 {
   Invalid = 0,
 }
 
-enum uint_32 MUSIC
+enum uint_32 Music
 {
-  CUBE_INTERACTIONFIRST = 379889963,
+  Cube_Interactionfirst = 379889963,
   Invalid = 0,
-  PLAYFUL = 1971384320,
-  SILENCE = 3041563226,
+  Playful = 1971384320,
+  Silence = 3041563226,
+  Speed_Tap = 1337686304,
 }
 
 enum uint_32 StateGroupType
 {
   Invalid = 0,
-  MUSIC = 3991942870,
+  Music = 3991942870,
 }
 
+} // GameState
 } // Audio
 } // Cozmo
 } // Anki

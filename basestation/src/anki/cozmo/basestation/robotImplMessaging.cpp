@@ -419,8 +419,8 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 {
   CliffEvent cliffEvent = message.GetData().Get_cliffEvent();
   if (cliffEvent.detected) {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f",
-                     cliffEvent.x_mm, cliffEvent.y_mm);
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f while driving %s",
+                     cliffEvent.x_mm, cliffEvent.y_mm, cliffEvent.drivingForward ? "forwards" : "backwards");
     
     // Stop whatever we were doing
     GetActionList().Cancel();
