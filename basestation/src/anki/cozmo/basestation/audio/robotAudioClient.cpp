@@ -39,7 +39,7 @@ RobotAudioClient::~RobotAudioClient()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GenericEvent event )
+AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event )
 {
   const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation );
   
@@ -75,8 +75,8 @@ bool RobotAudioClient::LoadAnimationAudio(Animation* anAnimation)
     RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
     audioTrack.MoveToNextKeyFrame();
     
-    const GenericEvent event = aFrame.GetAudioRef().audioEvent;
-    if ( GenericEvent::Invalid != event ) {
+    const GameEvent::GenericEvent event = aFrame.GetAudioRef().audioEvent;
+    if ( GameEvent::GenericEvent::Invalid != event ) {
       _animationEventList.emplace_back( aFrame.GetAudioRef().audioEvent, aFrame.GetTriggerTime() );
     }
   }
@@ -91,7 +91,7 @@ bool RobotAudioClient::LoadAnimationAudio(Animation* anAnimation)
         _firstAudioEventOffset = anEvent.TimeInMS;
       }
       
-      const GenericEvent event = anEvent.AudioEvent;
+      const GameEvent::GenericEvent event = anEvent.AudioEvent;
       Util::Dispatch::After( _postEventTimerQueue, std::chrono::milliseconds( anEvent.TimeInMS - _firstAudioEventOffset ), [this, event] ()
       {
         // Trigger events

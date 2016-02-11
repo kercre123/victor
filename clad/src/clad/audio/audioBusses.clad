@@ -3,23 +3,27 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+namespace Bus {
 
 enum uint_32 BusType
 {
-  ARIA = 3484807970,
-  COZMO = 2386142475,
+  Aria = 3484807970,
+  Cozmo = 2386142475,
   Invalid = 0,
-  MASTER_AUDIO_BUS = 3803692087,
-  MASTER_SECONDARY_BUS = 805203703,
-  MOVEMENT = 2129636626,
-  MUSIC = 3991942870,
-  SCREEN = 804877345,
-  SFX = 393239870,
-  UI = 1551306167,
-  VO = 1534528548,
-  VOICE = 3170124113,
+  Master_Audio_Bus = 3803692087,
+  Master_Secondary_Bus = 805203703,
+  Movement = 2129636626,
+  Music = 3991942870,
+  Screen = 804877345,
+  Servo = 4015084496,
+  Sfx = 393239870,
+  Sing = 805220764,
+  Ui = 1551306167,
+  Vo = 1534528548,
+  Voice = 3170124113,
 }
 
+} // Bus
 } // Audio
 } // Cozmo
 } // Anki

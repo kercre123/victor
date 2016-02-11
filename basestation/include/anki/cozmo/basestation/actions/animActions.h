@@ -92,7 +92,7 @@ namespace Anki {
       // Play Audio Event
       // TODO: Add bool to set if caller want's to block "wait" until audio is completed
       DeviceAudioAction(Robot& robot,
-                        const Audio::GenericEvent event,
+                        const Audio::GameEvent::GenericEvent event,
                         const Audio::GameObjectType gameObj,
                         const bool waitUntilDone = false);
       
@@ -100,7 +100,7 @@ namespace Anki {
       DeviceAudioAction(Robot& robot, const Audio::GameObjectType gameObj = Audio::GameObjectType::Invalid);
       
       // Change Music state
-      DeviceAudioAction(Robot& robot, const Audio::MUSIC state);
+      DeviceAudioAction(Robot& robot, const Audio::GameState::Music state);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::DEVICE_AUDIO; }
@@ -118,14 +118,14 @@ namespace Anki {
         SetState,
       };
       
-      AudioActionType           _actionType;
-      std::string               _name;
-      bool                      _isCompleted    = false;
-      bool                      _waitUntilDone  = false;
-      Audio::GenericEvent       _event          = Audio::GenericEvent::Invalid;
-      Audio::GameObjectType     _gameObj        = Audio::GameObjectType::Invalid;
-      Audio::StateGroupType     _stateGroup     = Audio::StateGroupType::Invalid;
-      Audio::GenericState       _state          = Audio::GenericState::Invalid;
+      AudioActionType                   _actionType;
+      std::string                       _name;
+      bool                              _isCompleted    = false;
+      bool                              _waitUntilDone  = false;
+      Audio::GameEvent::GenericEvent    _event          = Audio::GameEvent::GenericEvent::Invalid;
+      Audio::GameObjectType             _gameObj        = Audio::GameObjectType::Invalid;
+      Audio::GameState::StateGroupType  _stateGroup     = Audio::GameState::StateGroupType::Invalid;
+      Audio::GameState::GenericState    _state          = Audio::GameState::GenericState::Invalid;
       
     }; // class PlayAudioAction
   }
