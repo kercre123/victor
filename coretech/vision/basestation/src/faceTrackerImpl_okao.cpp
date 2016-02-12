@@ -513,7 +513,9 @@ namespace Vision {
       // Face Recognition:
       if(facePartsFound)
       {
-        bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig, trackerID, _okaoPartDetectionResultHandle);
+        bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig, trackerID,
+                                                              detectionInfo,
+                                                              _okaoPartDetectionResultHandle);
         if(recognizing) {
           // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
           // Switch to using the other handle so we don't step on its toes.

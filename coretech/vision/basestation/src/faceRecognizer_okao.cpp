@@ -298,8 +298,22 @@ namespace Vision {
     return RESULT_OK;
   } // RegisterNewUser()
   
-  bool FaceRecognizer::SetNextFaceToRecognize(const Vision::Image& img,
+  bool FaceRecognizer::IsEnrollable()
+  {
+    // TODO: Add checks for eyes open and smiling?
+    if(_enrollNewFaces &&
+       _detectionInfo.nPose == POSE_YAW_FRONT &&
+       _detectionInfo.nWidth*_detectionInfo.nHeight > 1000)
+    {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  bool FaceRecognizer::SetNextFaceToRecognize(const Image& img,
                                               INT32 trackerID,
+                                              const DETECTION_INFO& detectionInfo,
                                               HPTRESULT okaoPartDetectionResultHandle)
   {
     if(_currentTrackerID == -1)
@@ -310,6 +324,7 @@ namespace Vision {
       img.CopyTo(_img);
       _okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
       _currentTrackerID = trackerID;
+      _detectionInfo = detectionInfo;
       
       _mutex.unlock();
       return true;
@@ -400,7 +415,7 @@ namespace Vision {
     
     const INT32 MaxScore = 1000;
     
-    if(numUsersInAlbum == 0 && _enrollNewFaces) {
+    if(numUsersInAlbum == 0 && IsEnrollable()) {
       // Nobody in album yet, add this person
       PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingFirstUser",
                        "Adding first user to empty album");
@@ -481,7 +496,7 @@ namespace Vision {
           faceID = oldestID;
           recognitionScore = scores[0];
           
-        } else if(_enrollNewFaces) {
+        } else if(IsEnrollable()) {
           // No match found, add new user
           PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingNewUser",
                            "Observed new person. Adding to album.");
@@ -648,9 +663,6 @@ namespace Vision {
                           "OKAO Result=%d", okaoResult);
         return RESULT_FAIL;
       }
-      //if(isRegistered) {
-      //  _enrollmentStatus[iUser].loadedFromFile = true;
-      //}
     }
     
     return RESULT_OK;

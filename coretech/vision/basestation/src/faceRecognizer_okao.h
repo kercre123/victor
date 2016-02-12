@@ -49,6 +49,7 @@ namespace Vision {
     // while processing is running (i.e. until false is returned).
     bool SetNextFaceToRecognize(const Image& img,
                                 INT32 trackerID,
+                                const DETECTION_INFO& detectionInfo,
                                 HPTRESULT okaoPartDetectionResultHandle);
     
     void RemoveTrackingID(INT32 trackerID);
@@ -71,6 +72,8 @@ namespace Vision {
   private:
     
     Result RegisterNewUser(HFEATURE& hFeature);
+    
+    bool   IsEnrollable();
     
     Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
     
@@ -108,9 +111,10 @@ namespace Vision {
     void Run();
     
     // Passed-in state for processing
-    INT32         _currentTrackerID = -1;
-    Vision::Image _img;
-    HPTRESULT     _okaoPartDetectionResultHandle = NULL;
+    INT32          _currentTrackerID = -1;
+    Image          _img;
+    HPTRESULT      _okaoPartDetectionResultHandle = NULL;
+    DETECTION_INFO _detectionInfo;
     
     // Internal bookkeeping and parameters
     std::map<INT32, TrackedFace::ID_t> _trackingToFaceID;

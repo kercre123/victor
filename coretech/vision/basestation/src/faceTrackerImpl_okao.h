@@ -67,6 +67,8 @@ namespace Vision {
     Result EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                               Vision::TrackedFace& face);
   
+    bool IsEnrollable(const DETECTION_INFO& detectionInfo);
+    
     bool _isInitialized = false;
     FaceTracker::DetectionMode _detectionMode;
     bool _detectEmotion = true;
