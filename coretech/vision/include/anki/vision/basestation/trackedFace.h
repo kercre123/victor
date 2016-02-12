@@ -19,7 +19,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
 
-#include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/image.h"
 
 namespace Anki {
 namespace Vision {
@@ -99,6 +99,9 @@ namespace Vision {
     
     void SetRect(Rectangle<f32>&& rect);
     
+    void SetThumbnail(const Image& image) { _thumbnailImage = image; }
+    const Image& GetThumbnail() { return _thumbnailImage; }
+    
     // These are w.r.t. the original observer (i.e. the camera at observation time)
     Radians GetHeadYaw()   const;
     Radians GetHeadPitch() const;
@@ -143,6 +146,8 @@ namespace Vision {
     Radians _roll, _pitch, _yaw;
     
     Pose3d _headPose;
+    
+    Image _thumbnailImage;
     
   }; // class TrackedFace
   
