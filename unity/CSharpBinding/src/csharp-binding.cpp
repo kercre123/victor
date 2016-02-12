@@ -80,14 +80,3 @@ int cozmo_shutdown()
     return result;
 }
 
-int cozmo_update(float current_time)
-{
-    int result = (int)RESULT_OK;
-    
-#ifdef USE_IOS
-    result = cozmo_game_update(current_time);
-#endif
-
-    return result;
-}
-

@@ -35,9 +35,6 @@ public static class CozmoBinding {
   [DllImport("__Internal")]
   private static extern int cozmo_shutdown();
 
-  [DllImport("__Internal")]
-  private static extern int cozmo_update(float current_time);
-
   public static void Startup(string configurationData) {
     if (initialized) {
       sDAS.Warn("Reinitializing because Startup was called twice...");
@@ -72,20 +69,6 @@ public static class CozmoBinding {
 
       if (result != AnkiResult.RESULT_OK) {
         sDAS.Error("CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
-      }
-    }
-  }
-
-  public static void Update(float frameTime) {
-    if (initialized) {
-      AnkiResult result = AnkiResult.RESULT_OK;
-      #if !UNITY_EDITOR && !UNITY_STANDALONE
-      Profiler.BeginSample("CozmoBinding.cozmo_update");
-      result = (AnkiResult)CozmoBinding.cozmo_update (frameTime);
-      Profiler.EndSample();
-      #endif
-      if (result != AnkiResult.RESULT_OK) {
-        sDAS.Error("CozmoBinding.Update [cozmo_update]: error code " + result.ToString());
       }
     }
   }

@@ -60,6 +60,11 @@ public class DailyGoalPanel : MonoBehaviour {
     _TotalProgressBar.SetProgress(dailyProg);
     _BonusBarPanel.SetFriendshipBonus(bonusMult);
 
+    if (dailyProg > 0) {
+      // This might not be the best place to do this, but it should be ok for now.
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.RelationshipGain);
+    }
+
     float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
     RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
     DailyGoalManager.Instance.PickMiniGameToRequest();

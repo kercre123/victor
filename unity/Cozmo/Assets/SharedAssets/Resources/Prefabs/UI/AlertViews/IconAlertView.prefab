@@ -273,6 +273,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: FPO TEST WOO
   _AllUppercase: 1
+  GlowText: 0
 --- !u!114 &11418194
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -285,7 +286,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_Event
+    JsonValue: 945548936
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Cozmo.UI.AlertView:_CloseButton
@@ -401,6 +405,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: FPO TEST WOO
   _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11469058
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -431,7 +436,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_Event
+    JsonValue: 945548936
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: Cozmo.UI.AlertView:_SecondaryButton
@@ -449,7 +457,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_Event
+    JsonValue: 945548936
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: Cozmo.UI.AlertView:_PrimaryButton

@@ -162,49 +162,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77974af3fab774304a313844ada243f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Navigation:
-    m_Mode: 3
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 2
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: .960784316, g: .960784316, b: .960784316, a: 1}
-    m_PressedColor: {r: .784313738, g: .784313738, b: .784313738, a: 1}
-    m_DisabledColor: {r: .784313738, g: .784313738, b: .784313738, a: .501960814}
-    m_ColorMultiplier: 1
-    m_FadeDuration: .100000001
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 11463238}
-  _OnClick:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: Anki.UI.AnkiButton+ButtonClickedEvent, Assembly-CSharp, Version=0.0.0.0,
-      Culture=neutral, PublicKeyToken=null
-  _OnPress:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: Anki.UI.AnkiButton+ButtonDownEvent, Assembly-CSharp, Version=0.0.0.0,
-      Culture=neutral, PublicKeyToken=null
-  _OnRelease:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: Anki.UI.AnkiButton+ButtonUpEvent, Assembly-CSharp, Version=0.0.0.0,
-      Culture=neutral, PublicKeyToken=null
+  _Interactable: 1
   _DASEventName: 
   _TextLabel: {fileID: 0}
+  _TextLabelOffset: -5
+  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: .5, g: .5, b: .5, a: 1}
+  TextDisabledColor: {r: .5, g: .5, b: .5, a: 1}
   _AlphaController: {fileID: 0}
+  _GlintAnimator: {fileID: 0}
+  ButtonGraphics: []
+  _UISoundEvent:
+    _Event: -1705717452
+    _EventType: 5
+    _GameObjectType: 2
 --- !u!114 &11463238
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -389,7 +360,19 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _UISoundEvent._EventType
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _UISoundEvent._Event
+      value: -1705717452
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _UISoundEvent._GameObjectType
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 174196}

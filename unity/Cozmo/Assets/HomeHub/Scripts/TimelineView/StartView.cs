@@ -43,9 +43,10 @@ public class StartView : BaseView {
   private void HandleConnectClicked() {
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
-      Debug.Log("Cancelling HandleSleepAnimationComplete");
+      DAS.Info(this, "Cancelling HandleSleepAnimationComplete");
       robot.CancelCallback(HandleSleepAnimationComplete);
-      robot.SendAnimation(AnimationName.kWakeUp, HandleWakeAnimationComplete);
+      // kOpenEyes is much longer than kOpenEyesTwo, so play it 1/5 of the time.
+      robot.SendAnimation(UnityEngine.Random.value > 0.8f ? AnimationName.kOpenEyes : AnimationName.kOpenEyesTwo, HandleWakeAnimationComplete);
       _ConnectButton.Interactable = false;
     }
   }
@@ -53,18 +54,18 @@ public class StartView : BaseView {
   private void LoopRobotSleep() {
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
-      Debug.Log("Sending Sleeping Animation");
+      DAS.Info(this, "Sending Sleeping Animation");
       robot.SendAnimation(AnimationName.kSleeping, HandleSleepAnimationComplete);
     }
   }
 
   private void HandleSleepAnimationComplete(bool success) {
-    Debug.Log("HandleSleepAnimationComplete: success: "+success);
+    DAS.Info(this, "HandleSleepAnimationComplete: success: "+success);
     LoopRobotSleep();
   }
 
   private void HandleWakeAnimationComplete(bool success) {
-    Debug.Log("HandleWakeAnimationComplete: success: "+success);
+    DAS.Info(this, "HandleWakeAnimationComplete: success: "+success);
 
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
