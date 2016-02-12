@@ -12,6 +12,7 @@ extern "C" {
 #include "client.h"
 #include "driver/i2spi.h"
 #include "driver/crash.h"
+#include "rboot.h"
 }
 #include "rtip.h"
 #include "anki/cozmo/robot/esp.h"
@@ -230,12 +231,14 @@ extern "C" void backgroundTaskOnRTIPSync(void)
 
 extern "C" void backgroundTaskOnConnect(void)
 {
+  const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   i2spiQueueMessage((u8*)"\xfc\x01", 2); // FC is the tag for a radio connection state message to the robot
   Anki::Cozmo::Face::FaceUnPrintf();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
+  AnkiEvent( 124, "UniqueID", 372, "SerialNumber = 0x%x", 1, *serialNumber);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)
