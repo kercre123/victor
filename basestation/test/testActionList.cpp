@@ -1021,8 +1021,8 @@ TEST(QueueAction, ActionFailureRetry)
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
   
   r.GetActionList().Update();
-  // testAction1 completed and unlocked its tracks so only track2 is locked
-  CheckTracksLocked(r, track2);
+  // testAction1 completed and unlocked its tracks and testAction2 had to retry so it also unlocked its tracks
+  CheckTracksUnlocked(r, track1 | track2);
   
   // Both actions are set to complete but testAction2 is going to retry once
   // so it is still left
