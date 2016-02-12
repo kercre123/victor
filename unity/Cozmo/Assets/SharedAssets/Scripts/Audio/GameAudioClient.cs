@@ -54,7 +54,7 @@ namespace Anki {
         [SerializeField]
         private int _GameObjectType;
 
-        public AudioEventParameter(GameEvent.GenericEvent evt, GameEvent.EventGroupType evtType, GameObjectType gameObjectType) {
+        private AudioEventParameter(GameEvent.GenericEvent evt, GameEvent.EventGroupType evtType, GameObjectType gameObjectType) {
           _Event = (int)(uint)evt;
           _EventType = (int)(uint)evtType;
           _GameObjectType = (int)(uint)gameObjectType;

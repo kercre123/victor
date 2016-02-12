@@ -265,6 +265,9 @@ namespace Cozmo.HomeHub {
 
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
       UpdateFriendshipPoints(timelineEntry, friendshipPoints);
+
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
+
       ShowDailySessionPanel(timelineEntry, HandleOnFriendshipBarAnimateComplete);
     }
 

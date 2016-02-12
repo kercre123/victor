@@ -55,6 +55,7 @@ public class TimelineEntry : MonoBehaviour {
   }
 
   private void HandleClick() {
+    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickGeneral);
     if (OnSelect != null) {
       OnSelect(_Date);
     }
