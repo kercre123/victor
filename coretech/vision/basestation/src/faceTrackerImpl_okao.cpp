@@ -526,6 +526,10 @@ namespace Vision {
       // Get whatever is the latest recognition information for the current tracker ID
       auto recognitionData = _recognizer.GetRecognitionData(trackerID);
       
+      if(recognitionData.isNew) {
+        face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
+      }
+      
       /*
       TrackingData& trackingData = _trackingData[trackerID];
       Vision::TrackedFace::ID_t faceID = trackingData.assignedID;

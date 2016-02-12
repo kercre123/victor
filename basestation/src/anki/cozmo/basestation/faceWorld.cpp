@@ -278,6 +278,20 @@ namespace Cozmo {
                                                              q.z(),
                                                              knownFace->face.GetName())));
       
+      const Vision::Image& faceThumbnail = knownFace->face.GetThumbnail();
+      if(!faceThumbnail.IsEmpty()) {
+        // TODO: Expose quality parameter
+        const std::vector<int> compressionParams = {
+          CV_IMWRITE_JPEG_QUALITY, 75
+        };
+        
+        ExternalInterface::FaceEnrollmentImage msg;
+        msg.faceID = knownFace->face.GetID();
+        cv::imencode(".jpg",  faceThumbnail.get_CvMat_(), msg.jpgImage, compressionParams);
+
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      }
+      
     }
     
     return RESULT_OK;

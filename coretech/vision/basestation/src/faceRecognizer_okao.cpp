@@ -18,6 +18,10 @@
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 
+#include "json/json.h"
+
+#include <OkaoCoAPI.h>
+
 #include <fstream>
 
 namespace Anki {
@@ -89,15 +93,35 @@ namespace Vision {
     _mutex.lock();
     auto iter = _trackingToFaceID.find(forTrackingID);
     if(iter != _trackingToFaceID.end()) {
-      auto const& enrollData = _enrollmentData.at(faceID);
       const TrackedFace::ID_t faceID = iter->second;
+      auto & enrollData = _enrollmentData.at(faceID);
       entry.faceID = faceID;
       entry.name   = enrollData.name;
       entry.score  = enrollData.lastScore;
+      if(enrollData.isNew) {
+        entry.isNew = true;
+        enrollData.isNew = false;
+      } else {
+        entry.isNew = false;
+      }
     }
     _mutex.unlock();
     
     return entry;
+  }
+  
+  Image FaceRecognizer::GetEnrollmentImage(TrackedFace::ID_t forFaceID)
+  {
+    Image image;
+    
+    _mutex.lock();
+    auto iter = _enrollmentData.find(forFaceID);
+    if(iter != _enrollmentData.end()) {
+      iter->second.image.CopyTo(image);
+    }
+    _mutex.unlock();
+    
+    return image;
   }
   
   void FaceRecognizer::RemoveTrackingID(INT32 trackerID)
@@ -282,11 +306,30 @@ namespace Vision {
                         "Failed trying to register user %d", _lastRegisteredUserID);
       return RESULT_FAIL;
     }
+
     
     EnrollmentData enrollData;
     enrollData.enrollmentTime = time(0);
     enrollData.lastScore = 1000;
     enrollData.oldestData = 0;
+    enrollData.isNew = true;
+    
+
+    POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
+    okaoResult = OKAO_CO_ConvertCenterToSquare(_detectionInfo.ptCenter,
+                                               _detectionInfo.nHeight,
+                                               0, &ptLeftTop, &ptRightTop,
+                                               &ptLeftBottom, &ptRightBottom);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.OkaoCenterToSquareFail", "");
+      return RESULT_FAIL;
+    }
+    
+    Rectangle<s32> roi(ptLeftTop.x, ptLeftTop.y,
+                       ptRightBottom.x-ptLeftTop.x,
+                       ptRightBottom.y-ptLeftTop.y);
+
+    enrollData.image = _img.GetROI(roi);
     
     _mutex.lock();
     _enrollmentData.emplace(_lastRegisteredUserID, std::move(enrollData));
@@ -671,8 +714,7 @@ namespace Vision {
   
   void FaceRecognizer::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
   {
-    // TODO: Queue the faceID / name pair for setting when next available, so we don't hang waiting to get mutex lock if we're in the middle of recognition
-    
+    // TODO: Handle duplicate name? Merge records with existing enrollment with same name?
     _mutex.lock();
     auto iter = _enrollmentData.find(faceID);
     if(iter != _enrollmentData.end()) {
@@ -727,6 +769,8 @@ namespace Vision {
               entry["enrollmentTime"]    = (Json::LargestInt)enrollData.second.enrollmentTime;
               
               json[std::to_string(enrollData.first)] = entry;
+              
+              // TODO: Save enrollment image?? Privacy issues??
             }
             
             const std::string enrollDataFilename(albumName + "/enrollData.json");
@@ -813,6 +857,8 @@ namespace Vision {
                 enrollData.name              = entry["name"].asString();
                 
                 _enrollmentData[faceID] = enrollData;
+                
+                // TODO: Load enrollment image??
                 
                 PRINT_NAMED_INFO("FaceTracker.LoadAlbum.LoadedEnrollmentData", "ID=%llu, Name: '%s'",
                                  faceID, enrollData.name.c_str());

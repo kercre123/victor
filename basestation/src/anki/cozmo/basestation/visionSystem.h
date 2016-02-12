@@ -48,6 +48,7 @@
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/faceTracker.h"
+#include "anki/vision/basestation/visionMarker.h"
 
 #include "visionParameters.h"
 #include "clad/vizInterface/messageViz.h"

@@ -59,9 +59,14 @@ namespace Vision {
       TrackedFace::ID_t         faceID = TrackedFace::UnknownFace;
       std::string               name;
       INT32                     score  = 0;
+      bool                      isNew  = false;
     };
     
     Entry GetRecognitionData(INT32 forTrackingID);
+    
+    // Get a byte buffer containing the enrollment image for the given face ID,
+    // as a JPG image. Byte buffer will be empty if faceID is not valid.
+    Image GetEnrollmentImage(TrackedFace::ID_t forFaceID);
     
     Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName);
     Result SaveAlbum(const std::string& albumName);
@@ -127,10 +132,12 @@ namespace Vision {
     // Store additinal bookkeeping information we need, on top of the album data
     // stored by Okao.
     struct EnrollmentData {
-      INT32        oldestData = 0;
-      time_t       enrollmentTime;
-      std::string  name;
-      INT32        lastScore = 0;
+      INT32           oldestData = 0;
+      time_t          enrollmentTime;
+      std::string     name;
+      INT32           lastScore = 0;
+      Image           image;
+      bool            isNew = false;
     };
     std::map<TrackedFace::ID_t,EnrollmentData> _enrollmentData;
     
