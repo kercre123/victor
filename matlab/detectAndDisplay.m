@@ -50,8 +50,9 @@ else
   numRefinementSamples = 100;
   quadRefinementMaxCornerChange = 5;
   quadRefinementMinCornerChange = .005;
-  returnInvalidMarkers = 0;
-  [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers(img, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers);
+  returnInvalidMarkers = 1;
+  cornerMethod = 0; % 0 = laplacian peaks (sharp corners), 1 = line fits (round corners)
+  [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers(img, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers, cornerMethod);
   
   detections = struct('corners', quads, ...
     'markerType', num2cell(markerTypes),  ...

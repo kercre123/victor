@@ -42,6 +42,8 @@ function CreatePrintableCodeSheet(varargin)
 %    Add a light gray, dotted border of this size around each code. If
 %    zero, the border will not be printed.
 %
+%  'backgroundColor' [1 1 1]
+%
 %  'whiteOnBloack'  [false]
 %    Set to true to make negated/inverted markers (white on black)
 %
@@ -66,6 +68,7 @@ markerImageDir = [];
 markerSize = 25; % in mm
 numPerCode = 1;
 outsideBorderWidth = []; % in mm, empty to not use
+backgroundColor = [1 1 1];
 whiteOnBlack = false;
 
 parseVarargin(varargin{:});
@@ -75,6 +78,10 @@ assert(isempty(outsideBorderWidth) || outsideBorderWidth > markerSize, ...
 
 if isempty(outsideBorderWidth)
     outsideBorderWidth = markerSize + 4;
+end
+
+if isscalar(backgroundColor)
+  backgroundColor = backgroundColor * [1 1 1];
 end
 
 % For now, assume all the training images were in a "rotated" subdir and
@@ -167,12 +174,19 @@ for iFile = 1:numImages
         'Parent', h_axes, 'EdgeColor', [0.8 0.8 0.8], ...
         'LineWidth', .5, 'LineStyle', ':');
       if whiteOnBlack
-        set(h_rect,  'EdgeColor', [0 0 0], 'LineStyle', 'none', 'FaceColor', [0 0 0]);
+        set(h_rect,  'EdgeColor', 1-backgroundColor, 'LineStyle', 'none', 'FaceColor', 1-backgroundColor);
+      else 
+        set(h_rect, 'FaceColor', backgroundColor);
+        if any(backgroundColor ~= 1) 
+          set(h_rect, 'LineStyle', 'none');
+        end
       end
     end
     
     h_img = imagesc(xgrid(iPos)+markerSize/10*[-.5 .5], ...
-      ygrid(iPos)+markerSize/10*[-.5 .5], img, 'Parent', h_axes);
+      ygrid(iPos)+markerSize/10*[-.5 .5], img, ...
+      'AlphaData', alpha, ...
+      'Parent', h_axes);
     
     if whiteOnBlack
       temp = get(h_img, 'CData');

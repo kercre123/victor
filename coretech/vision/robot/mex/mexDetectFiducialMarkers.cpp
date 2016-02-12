@@ -51,8 +51,28 @@ using namespace Anki::Embedded;
 // returnInvalidMarkers = 0;
 // cornerMethod = 0;
 // [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers, cornerMethod);
+
+# if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+static bool isLibraryLoaded = false;
+void AtExit()
+{
+  mexPrintf("Marking NN library as not loaded\n");
+  isLibraryLoaded = false;
+}
+#endif
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+# if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+  mexAtExit(AtExit);
+  
+  if(!isLibraryLoaded) {
+    mexPrintf("Loading NN library with markers generated on %s\n", Anki::Vision::MarkerDefinitionVersionString);
+    VisionMarker::GetNearestNeighborLibrary();
+    isLibraryLoaded = true;
+  }
+# endif
+  
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
   Anki::Embedded::FiducialDetectionParameters params;

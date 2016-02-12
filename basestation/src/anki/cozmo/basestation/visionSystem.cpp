@@ -75,6 +75,8 @@ namespace Cozmo {
    
 #   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     // Force the NN library to load _now_, not on first use
+    PRINT_NAMED_INFO("VisionSystem.Constructor.LoadNearestNeighborLibrary",
+                     "Markers generated on %s", Vision::MarkerDefinitionVersionString);
     VisionMarker::GetNearestNeighborLibrary();
 #   endif
     
