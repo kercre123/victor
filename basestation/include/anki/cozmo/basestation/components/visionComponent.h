@@ -122,6 +122,9 @@ struct DockingErrorSignal;
     
     TimeStamp_t GetProcessingPeriod();
     
+    template<class PixelType>
+    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, const Robot& robot, s32 quality);
+    
   protected:
     
     VisionSystem* _visionSystem = nullptr;
