@@ -207,18 +207,6 @@ namespace Cozmo {
     u32 _driveForwardActionTag = 0;
     bool _isDrivingForward = false;
 
-    bool _lockedLift = false;
-    void LiftShouldBeLocked(Robot& robot);
-    void LiftShouldBeUnlocked(Robot& robot);
-
-    bool _lockedHead = false;
-    void HeadShouldBeLocked(Robot& robot);
-    void HeadShouldBeUnlocked(Robot& robot);
-
-    bool _lockedBody = false;
-    void BodyShouldBeLocked(Robot& robot);
-    void BodyShouldBeUnlocked(Robot& robot);
-
     void IgnoreObject(Robot& robot, ObjectID objectID);
 
 

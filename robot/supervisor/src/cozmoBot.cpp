@@ -289,7 +289,7 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CARRY_NONE);
 #ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
-          AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
+          AnimationController::EnableTracks(ALL_TRACKS);
           HAL::FaceClear();
 #endif
           wasConnected_ = false;
