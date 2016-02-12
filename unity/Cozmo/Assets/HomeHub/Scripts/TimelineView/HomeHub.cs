@@ -57,6 +57,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowStartView() {
+      RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(false);
       _StartViewInstance = UIManager.OpenView(_StartViewPrefab) as StartView;
       _StartViewInstance.OnConnectClicked += HandleConnectClicked;
     }
@@ -77,13 +78,17 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _TimelineViewInstance.Initialize(_ChallengeStatesById);
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("ID_idle_brickout");
-      RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem (true);
+      // For now Demo is freeplay. 
+      RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+      RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
       DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
     }
 
     private void HandleSessionEndClicked() {
-      CloseTimelineDialog();
-      ShowStartView();
+      RobotEngineManager.Instance.CurrentRobot.ResetRobotState(() => {
+        CloseTimelineDialog();
+        ShowStartView();
+      });
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
