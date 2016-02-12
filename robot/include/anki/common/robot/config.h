@@ -150,7 +150,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Allow anonymous unions in Keil
 #pragma anon_unions
 
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS
 
 //#define ARM_MATH_CM4
 //#define ARM_MATH_ROUNDING
