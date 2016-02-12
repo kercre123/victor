@@ -89,8 +89,8 @@ namespace Vision {
     _mutex.lock();
     auto iter = _trackingToFaceID.find(forTrackingID);
     if(iter != _trackingToFaceID.end()) {
-      const Vision::TrackedFace::ID_t faceID = iter->second;
       auto const& enrollData = _enrollmentData.at(faceID);
+      const TrackedFace::ID_t faceID = iter->second;
       entry.faceID = faceID;
       entry.name   = enrollData.name;
       entry.score  = enrollData.lastScore;
@@ -120,14 +120,14 @@ namespace Vision {
         
         // Get the faceID currently assigned to this tracker ID
         _mutex.lock();
-        Vision::TrackedFace::ID_t faceID = Vision::TrackedFace::UnknownFace;
+        TrackedFace::ID_t faceID = TrackedFace::UnknownFace;
         auto iter = _trackingToFaceID.find(_currentTrackerID);
         if(iter != _trackingToFaceID.end()) {
           faceID = iter->second;
         }
         _mutex.unlock();
         
-        Vision::TrackedFace::ID_t recognizedID = Vision::TrackedFace::UnknownFace;
+        TrackedFace::ID_t recognizedID = TrackedFace::UnknownFace;
         Result result = RecognizeFace(nWidth, nHeight, dataPtr, recognizedID, score);
         
         // For simulating slow processing (e.g. on a device)
@@ -137,13 +137,13 @@ namespace Vision {
         {
           // TODO: Tic("FaceRecognition");
           
-          if(Vision::TrackedFace::UnknownFace == recognizedID) {
+          if(TrackedFace::UnknownFace == recognizedID) {
             // We did not recognize the tracked face in its current position, just leave
             // the faceID alone
             
             // (Nothing to do)
             
-          } else if(Vision::TrackedFace::UnknownFace == faceID) {
+          } else if(TrackedFace::UnknownFace == faceID) {
             // We have not yet assigned a recognition ID to this tracker ID. Use the
             // one we just found via recognition.
             faceID = recognizedID;
@@ -161,7 +161,7 @@ namespace Vision {
               ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
                            "RecognizedID should have enrollment data by now");
               
-              Vision::TrackedFace::ID_t mergeTo, mergeFrom;
+              TrackedFace::ID_t mergeTo, mergeFrom;
               
               if(faceIDenrollData->second.enrollmentTime <= recIDenrollData->second.enrollmentTime)
               {
@@ -192,7 +192,7 @@ namespace Vision {
           // Update the stored faceID assigned to this trackerID
           // (This creates an entry for the current trackerID if there wasn't one already,
           //  and an entry for this faceID if there wasn't one already)
-          if(Vision::TrackedFace::UnknownFace != faceID) {
+          if(TrackedFace::UnknownFace != faceID) {
             _mutex.lock();
             _trackingToFaceID[_currentTrackerID] = faceID;
             _enrollmentData[faceID].lastScore = score;
@@ -236,12 +236,12 @@ namespace Vision {
     INT32 numUsersInAlbum = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.RegisterNewUser.OkaoGetNumUsersInAlbumFailed", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.OkaoGetNumUsersInAlbumFailed", "");
       return RESULT_FAIL;
     }
     
     if(numUsersInAlbum >= MaxAlbumFaces) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.RegisterNewUser.TooManyUsers",
+      PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.TooManyUsers",
                         "Already have %d users, could not add another", MaxAlbumFaces);
       return RESULT_FAIL;
     }
@@ -253,7 +253,7 @@ namespace Vision {
       okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _lastRegisteredUserID, 0, &isRegistered);
       
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.RegisterNewUser.IsRegisteredCheckFailed",
+        PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.IsRegisteredCheckFailed",
                           "Failed to determine if user ID %d is already registered",
                           numUsersInAlbum);
         return RESULT_FAIL;
@@ -271,14 +271,14 @@ namespace Vision {
     } while(isRegistered && tries++ < 2*MaxAlbumFaces);
     
     if(tries >= 2*MaxAlbumFaces) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.RegisturNewUser.NoIDsAvailable",
+      PRINT_NAMED_ERROR("FaceRecognizer.RegisturNewUser.NoIDsAvailable",
                         "Could not find a free ID to use for new face");
       return RESULT_FAIL;
     }
     
     okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, _lastRegisteredUserID, 0);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.RegisterNewUser.RegisterFailed",
+      PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.RegisterFailed",
                         "Failed trying to register user %d", _lastRegisteredUserID);
       return RESULT_FAIL;
     }
@@ -378,7 +378,7 @@ namespace Vision {
   }
   
   Result FaceRecognizer::RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                                       Vision::TrackedFace::ID_t& faceID, INT32& recognitionScore)
+                                       TrackedFace::ID_t& faceID, INT32& recognitionScore)
   {
     // NOTE: This is the "slow" call: extracting the features for recognition, given the
     //  facial part locations. This is the majority of the reason we are using a
@@ -498,8 +498,8 @@ namespace Vision {
     return RESULT_OK;
   } // RecognizeFace()
   
-  Result FaceRecognizer::MergeFaces(Vision::TrackedFace::ID_t keepID,
-                                    Vision::TrackedFace::ID_t mergeID)
+  Result FaceRecognizer::MergeFaces(TrackedFace::ID_t keepID,
+                                    TrackedFace::ID_t mergeID)
   {
     INT32 okaoResult = OKAO_NORMAL;
     
@@ -786,7 +786,7 @@ namespace Vision {
           } else {
             _enrollmentData.clear();
             for(auto & idStr : json.getMemberNames()) {
-              Vision::TrackedFace::ID_t faceID = std::stol(idStr);
+              TrackedFace::ID_t faceID = std::stol(idStr);
               if(!json.isMember(idStr)) {
                 PRINT_NAMED_ERROR("FaceTrackerImpl.LoadAlbum.BadFaceIdString",
                                   "Could not find member for string %s with value %llu",

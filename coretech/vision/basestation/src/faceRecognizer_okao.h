@@ -47,7 +47,7 @@ namespace Vision {
     // the recognizer isn't already busy with another request) and false
     // otherwise. If true, the caller must not modify the part detection handle
     // while processing is running (i.e. until false is returned).
-    bool SetNextFaceToRecognize(const Vision::Image& img,
+    bool SetNextFaceToRecognize(const Image& img,
                                 INT32 trackerID,
                                 HPTRESULT okaoPartDetectionResultHandle);
     
@@ -55,7 +55,7 @@ namespace Vision {
     
     struct Entry
     {
-      Vision::TrackedFace::ID_t faceID = Vision::TrackedFace::UnknownFace;
+      TrackedFace::ID_t         faceID = TrackedFace::UnknownFace;
       std::string               name;
       INT32                     score  = 0;
     };
@@ -75,9 +75,9 @@ namespace Vision {
     Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
     
     Result RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                         Vision::TrackedFace::ID_t& faceID, INT32& recognitionScore);
+                         TrackedFace::ID_t& faceID, INT32& recognitionScore);
     
-    Result MergeFaces(Vision::TrackedFace::ID_t keepID, Vision::TrackedFace::ID_t mergeID);
+    Result MergeFaces(TrackedFace::ID_t keepID, TrackedFace::ID_t mergeID);
     
     Result RemoveUser(INT32 userID);
 
@@ -113,7 +113,7 @@ namespace Vision {
     HPTRESULT     _okaoPartDetectionResultHandle = NULL;
     
     // Internal bookkeeping and parameters
-    std::map<INT32, Vision::TrackedFace::ID_t> _trackingToFaceID;
+    std::map<INT32, TrackedFace::ID_t> _trackingToFaceID;
     
     std::list<INT32> _trackerIDsToRemove;
     
@@ -128,7 +128,7 @@ namespace Vision {
       std::string  name;
       INT32        lastScore = 0;
     };
-    std::map<Vision::TrackedFace::ID_t,EnrollmentData> _enrollmentData;
+    std::map<TrackedFace::ID_t,EnrollmentData> _enrollmentData;
     
     
   }; // class FaceRecognizer
