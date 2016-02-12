@@ -639,6 +639,15 @@ MonoBehaviour:
   - ObjectPath: ButtonDropShadow/ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.startChallenge"'
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_GameObjectType
+    JsonValue: 3
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_EventType
+    JsonValue: 4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_Event
+    JsonValue: -1676603318
   ModifiedLocalReferences:
   - ObjectPath: ../../../
     FieldName: ChallengeDetailsDialog:_StartChallengeButton

@@ -208,6 +208,15 @@ MonoBehaviour:
   - ObjectPath: ButtonDropShadow/ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.connect"'
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_GameObjectType
+    JsonValue: 3
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_EventType
+    JsonValue: 4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_Event
+    JsonValue: -303697590
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: StartView:_ConnectButton

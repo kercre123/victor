@@ -192,6 +192,10 @@ MonoBehaviour:
     pressedColor: {r: 1, g: .819607854, b: .396078438, a: 1}
     disabledSprite: {fileID: 0}
     disabledColor: {r: .980392218, g: .866666734, b: .56078434, a: .259000003}
+  _UISoundEvent:
+    _Event: 352968677
+    _EventType: 5
+    _GameObjectType: 2
 --- !u!114 &11421670
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -443,7 +447,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _UISoundEvent._Event
+      value: 352968677
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 103458}
