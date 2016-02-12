@@ -554,7 +554,7 @@ int main(int argc, char ** argv)
 {
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
-  loggerProvider->SetMinLogLevel(0);
+  loggerProvider->SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = loggerProvider;
 
 

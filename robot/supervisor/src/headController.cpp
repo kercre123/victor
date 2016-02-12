@@ -8,7 +8,7 @@
 
 #define DEBUG_HEAD_CONTROLLER 0
 
-// If defined, angle is calibrated while power is still being applied, verus a short period of time after motor is "relaxed"
+// If defined, angle is calibrated while power is still being applied, versus a short period of time after motor is "relaxed"
 #define CALIB_WHILE_APPLYING_POWER
 
 namespace Anki {
@@ -73,7 +73,7 @@ namespace HeadController {
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
-      const f32 HEAD_CALIB_POWER = 0.5;
+      const f32 HEAD_CALIB_POWER = BURNOUT_POWER_THRESH - 0.01;
       const f32 HEAD_CAL_OFFSET = DEG_TO_RAD(0);  // Dependent on HEAD_CALIB_POWER. Ideally 0.
       bool isCalibrated_ = false;
       u32 lastHeadMovedTime_ms = 0;
@@ -174,6 +174,12 @@ namespace HeadController {
                 power_ = 0.0;
                 HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
 
+#ifdef          CALIB_WHILE_APPLYING_POWER
+                AnkiEvent( 7, "HeadController", 91, "Calibrated", 0);
+                ResetLowAnglePosition();
+                calState_ = HCS_IDLE;
+                break;
+#endif
                 // Set timestamp to be used in next state to wait for motor to "relax"
                 lastHeadMovedTime_ms = HAL::GetTimeStamp();
 
@@ -183,13 +189,7 @@ namespace HeadController {
             } else {
               lastHeadMovedTime_ms = HAL::GetTimeStamp();
             }
-#ifdef    CALIB_WHILE_APPLYING_POWER
-            // Fall through to HCS_SET_CURR_ANGLE and immediately set angle
-            lastHeadMovedTime_ms = 0;
-#else
             break;
-#endif
-
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
             if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
@@ -402,8 +402,9 @@ namespace HeadController {
       if (potentialBurnoutStartTime_ms == 0) {
         potentialBurnoutStartTime_ms = HAL::GetTimeStamp();
       } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms > BURNOUT_TIME_THRESH_MS) {
-        AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating.", 0);
+        AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating (power = %f)", 1, power_);
         StartCalibrationRoutine();
+        potentialBurnoutStartTime_ms = 0;
         return true;
       }
       return false;

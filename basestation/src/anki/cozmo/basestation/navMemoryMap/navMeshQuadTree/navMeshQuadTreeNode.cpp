@@ -279,17 +279,25 @@ void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
 void NavMeshQuadTreeNode::Merge(NodeContent& newContent, NavMeshQuadTreeProcessor& processor)
 {
   ASSERT_NAMED(IsSubdivided(), "NavMeshQuadTreeNode.Merge.InvalidState");
+
+  // since we are going to destroy the children, notify the processor of all the descendants about to be destroyed
+  ClearDescendants(processor);
   
-  // since we are going to destroy the children, notify the processor
+  // set our content to the one we will have after the merge
+  ForceSetDetectedContentType(newContent, processor);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeNode::ClearDescendants(NavMeshQuadTreeProcessor& processor)
+{
+  // iterate all children recursively destroying their children
   for ( auto& childPtr : _childrenPtr ) {
+    childPtr->ClearDescendants(processor);
     processor.OnNodeDestroyed(childPtr.get());
   }
   
   // now remove children
   _childrenPtr.clear();
-  
-  // set our content to the one we will have after the merge
-  ForceSetDetectedContentType(newContent, processor);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

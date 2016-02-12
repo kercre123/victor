@@ -1,0 +1,585 @@
+/**
+ * File: testBehaviorInterface.cpp
+ *
+ * Author: Brad Neuman
+ * Created: 2016-02-10
+ *
+ * Description: Test of the behavior interface and the functionality it provides
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/game/comms/uiMessageHandler.h"
+#include "gtest/gtest.h"
+
+using namespace Anki;
+using namespace Anki::Cozmo;
+
+class TestBehavior : public IBehavior
+{
+public:
+
+  TestBehavior(Robot& robot, const Json::Value& config)
+    :IBehavior(robot, config)
+    {
+      if(robot.HasExternalInterface()) {
+        SubscribeToTags({EngineToGameTag::Ping});
+      }
+    }
+
+  bool _inited = false;
+  int _numUpdates = 0;
+  bool _interrupted = false;
+  bool _stopped = false;
+
+  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const {
+    return true;
+  }
+
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) {
+    _inited = true;
+    return RESULT_OK;
+  }
+  
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) {
+    _numUpdates++;
+    return Status::Running;
+  }
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) {
+    _interrupted = true;
+    return RESULT_OK;
+  }
+  virtual void   StopInternal(Robot& robot, double currentTime_sec) {
+    _stopped = true;
+  }
+
+  int _alwaysHandleCalls = 0;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) {
+    _alwaysHandleCalls++;
+  }
+
+  int _handleWhileRunningCalls = 0;
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) {
+    _handleWhileRunningCalls++;
+  }
+
+  int _handleWhileNotRunningCalls = 0;
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) {
+    _handleWhileNotRunningCalls++;
+  }
+
+  int _calledVoidFunc = 0;
+  void Foo() {
+    _calledVoidFunc++;
+  }
+
+  int _calledRobotFunc = 0;
+  void Bar(Robot& robot) {
+    _calledRobotFunc++;
+  }
+
+  bool CallStartActing(Robot& robot, bool& actionCompleteRef);
+
+  bool CallStartActingExternalCallback1(Robot& robot,
+                                        bool& actionCompleteRef,
+                                        IBehavior::RobotCompletedActionCallback callback);
+
+  bool CallStartActingExternalCallback2(Robot& robot,
+                                        bool& actionCompleteRef,
+                                        IBehavior::ActionResultCallback callback);
+
+  bool CallStartActingInternalCallbackVoid(Robot& robot,
+                                           bool& actionCompleteRef);
+  bool CallStartActingInternalCallbackRobot(Robot& robot,
+                                            bool& actionCompleteRef);
+
+  bool CallStopActing() { return StopActing(); }
+};
+
+
+TEST(BehaviorInterface, Create)
+{
+  CozmoContext context{};
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+
+  EXPECT_FALSE( b.IsRunning() );
+  EXPECT_TRUE( b.IsRunnable(robot, 0.0) );
+  EXPECT_FALSE( b._inited );
+  EXPECT_EQ( b._numUpdates, 0 );
+  EXPECT_FALSE( b._interrupted );
+  EXPECT_FALSE( b._stopped );
+}
+
+TEST(BehaviorInterface, Init)
+{
+  CozmoContext context{};
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+
+  EXPECT_FALSE( b._inited );
+  b.Init(0.0f);
+  EXPECT_TRUE( b._inited );
+  EXPECT_EQ( b._numUpdates, 0 );
+  EXPECT_FALSE( b._interrupted );
+  EXPECT_FALSE( b._stopped );
+}
+
+TEST(BehaviorInterface, InitWithInterface)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+
+  EXPECT_FALSE( b._inited );
+  b.Init(0.0f);
+  EXPECT_TRUE( b._inited );
+  EXPECT_EQ( b._numUpdates, 0 );
+  EXPECT_FALSE( b._interrupted );
+  EXPECT_FALSE( b._stopped );
+}
+
+
+TEST(BehaviorInterface, Run)
+{
+  CozmoContext context{};
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+  for(int i=0; i<5; i++) {
+    b.Update(0.01 * i);
+  }
+  b.SetIsRunning(false);
+  b.Stop(2.0);
+  
+  EXPECT_TRUE( b._inited );
+  EXPECT_EQ( b._numUpdates, 5 );
+  EXPECT_FALSE( b._interrupted );
+  EXPECT_TRUE( b._stopped );
+}
+
+TEST(BehaviorInterface, HandleMessages)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+
+  EXPECT_EQ(b._alwaysHandleCalls, 0);
+  EXPECT_EQ(b._handleWhileRunningCalls, 0);
+  EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
+
+  using namespace ExternalInterface;
+
+  robot.Broadcast( MessageEngineToGame( Ping() ) );
+  
+  EXPECT_EQ(b._alwaysHandleCalls, 1);
+  EXPECT_EQ(b._handleWhileRunningCalls, 1);
+  EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
+
+  b.SetIsRunning(false);
+  b.Stop(2.0);
+
+  robot.Broadcast( MessageEngineToGame( Ping() ) );
+  
+  EXPECT_EQ(b._alwaysHandleCalls, 2);
+  EXPECT_EQ(b._handleWhileRunningCalls, 1);
+  EXPECT_EQ(b._handleWhileNotRunningCalls,  1);
+};
+
+void DoTicks(Robot& robot, IBehavior& behavior, int num=1)
+{
+  for(int i=0; i<num; i++) {
+    robot.GetActionList().Update();
+    behavior.Update(0.0f);
+  }
+}
+
+TEST(BehaviorInterface, OutsideAction)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+  
+  b.Update(0.0f);
+  b.Update(0.0f);
+
+  bool done = false;
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty());
+  
+  WaitForLambdaAction* action = new WaitForLambdaAction(robot, [&done](Robot& r){ return done; });
+  robot.GetActionList().QueueActionNow(action);
+
+  DoTicks(robot, b);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+
+  DoTicks(robot, b, 3);
+
+  done = true;
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty());
+
+  EXPECT_EQ(b._alwaysHandleCalls, 0);
+  EXPECT_EQ(b._handleWhileRunningCalls, 0);
+  EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
+}
+
+bool TestBehavior::CallStartActing(Robot& robot, bool& actionCompleteRef)
+{
+  WaitForLambdaAction* action =
+    new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+
+  return StartActing(action);
+}
+
+bool TestBehavior::CallStartActingExternalCallback1(Robot& robot,
+                                                    bool& actionCompleteRef,
+                                                    IBehavior::RobotCompletedActionCallback callback)
+{
+  WaitForLambdaAction* action =
+    new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+
+  return StartActing(action, callback);
+}
+
+bool TestBehavior::CallStartActingExternalCallback2(Robot& robot,
+                                                    bool& actionCompleteRef,
+                                                    IBehavior::ActionResultCallback callback)
+{
+  WaitForLambdaAction* action =
+    new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+
+  return StartActing(action, callback);
+}
+
+bool TestBehavior::CallStartActingInternalCallbackVoid(Robot& robot,
+                                                       bool& actionCompleteRef)
+{
+  WaitForLambdaAction* action =
+    new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+
+  return StartActing(action, &TestBehavior::Foo);
+}
+
+bool TestBehavior::CallStartActingInternalCallbackRobot(Robot& robot,
+                                                        bool& actionCompleteRef)
+{
+  WaitForLambdaAction* action =
+    new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
+
+  return StartActing(action, &TestBehavior::Bar);
+}
+
+TEST(BehaviorInterface, StartActingSimple)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty());
+
+  bool done = false;
+  EXPECT_TRUE( b.CallStartActing(robot, done) );
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+
+  done = true;
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty());
+
+  EXPECT_EQ(b._alwaysHandleCalls, 0);
+  EXPECT_EQ(b._handleWhileRunningCalls, 0);
+  EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
+}
+
+TEST(BehaviorInterface, StartActingFailures)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty());
+
+  EXPECT_FALSE( b.CallStopActing() );
+  
+  bool done = false;
+  EXPECT_TRUE( b.CallStartActing(robot, done) );
+  EXPECT_FALSE( b.CallStartActing(robot, done) );
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_FALSE( b.CallStartActing(robot, done) );
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+
+  done = true;
+
+  // action hasn't updated yet, so it's done. Should still fail to start a new action
+  EXPECT_FALSE( b.CallStartActing(robot, done) );
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty());
+
+  done = false;
+  EXPECT_TRUE( b.CallStartActing(robot, done) );
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+  EXPECT_TRUE( b.CallStopActing() );
+  // same tick, should be able to start a new one
+  bool done2 = false;
+  EXPECT_TRUE( b.CallStartActing(robot, done2) );
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+
+  done2 = true;
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty());
+  
+  EXPECT_EQ(b._alwaysHandleCalls, 0);
+  EXPECT_EQ(b._handleWhileRunningCalls, 0);
+  EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
+}
+
+TEST(BehaviorInterface, StartActingCallbacks)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+
+  bool done = false;
+  bool callbackCalled = false;
+  bool ret = b.CallStartActingExternalCallback1(robot, done,
+                                                [&callbackCalled](const ExternalInterface::RobotCompletedAction& res) {
+                                                  callbackCalled = true;
+                                                });
+  EXPECT_TRUE(ret);
+
+  DoTicks(robot, b, 3);
+  EXPECT_FALSE(callbackCalled);
+  done = true;
+  DoTicks(robot, b, 3);
+  EXPECT_TRUE(callbackCalled);
+
+  done = false;
+  callbackCalled = false;
+  ret = b.CallStartActingExternalCallback2(robot, done,
+                                           [&callbackCalled](ActionResult res) {
+                                             callbackCalled = true;
+                                           });
+  EXPECT_TRUE(ret);
+
+  DoTicks(robot, b, 3);
+  EXPECT_FALSE(callbackCalled);
+  done = true;
+  DoTicks(robot, b, 3);
+  EXPECT_TRUE(callbackCalled);
+
+  done = false;
+  ret = b.CallStartActingInternalCallbackVoid(robot, done);
+  EXPECT_TRUE(ret);
+
+  DoTicks(robot, b, 3);
+  EXPECT_EQ(b._calledVoidFunc, 0);
+  EXPECT_EQ(b._calledRobotFunc, 0);
+  done = true;
+  DoTicks(robot, b, 3);
+  EXPECT_EQ(b._calledVoidFunc, 1);
+  EXPECT_EQ(b._calledRobotFunc, 0);
+
+  done = false;
+  ret = b.CallStartActingInternalCallbackRobot(robot, done);
+  EXPECT_TRUE(ret);
+
+  DoTicks(robot, b, 3);
+  EXPECT_EQ(b._calledVoidFunc, 1);
+  EXPECT_EQ(b._calledRobotFunc, 0);
+  done = true;
+  DoTicks(robot, b, 3);
+  EXPECT_EQ(b._calledVoidFunc, 1);
+  EXPECT_EQ(b._calledRobotFunc, 1);
+}
+
+TEST(BehaviorInterface, StartActingWhenNotRunning)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+
+  DoTicks(robot, b, 3);
+
+  b.SetIsRunning(false);
+  b.Stop(2.0);
+
+  bool done1 = false;
+  bool callbackCalled1 = false;
+  bool ret = b.CallStartActingExternalCallback2(robot, done1,
+                                                [&callbackCalled1](ActionResult res) {
+                                                  callbackCalled1 = true;
+                                                });
+
+  EXPECT_FALSE(ret) << "should fail to start acting since the behavior isn't running";
+
+
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+
+  DoTicks(robot, b, 3);
+
+  bool done2 = false;
+  bool callbackCalled2 = false;
+  ret = b.CallStartActingExternalCallback2(robot, done2,
+                                           [&callbackCalled2](ActionResult res) {
+                                             callbackCalled2 = true;
+                                           });
+
+  EXPECT_TRUE(ret);
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_FALSE(callbackCalled1);
+  EXPECT_FALSE(callbackCalled2);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+  
+  b.SetIsRunning(false);
+  b.Stop(2.0);
+  
+  robot.GetActionList().Update();
+  robot.GetActionList().Update();
+  robot.GetActionList().Update();
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should have been can celled by stop";
+
+  EXPECT_FALSE(callbackCalled1);
+  EXPECT_FALSE(callbackCalled2) << "callback shouldn't happen if behavior isn't running";
+}
+
+class TestInitBehavior : public IBehavior
+{
+public:
+
+  TestInitBehavior(Robot& robot, const Json::Value& config)
+    :IBehavior(robot, config)
+    {
+    }
+
+  bool _inited = false;
+  int _numUpdates = 0;
+  bool _interrupted = false;
+  bool _stopped = false;
+
+  bool _stopAction = false;
+  
+  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const {
+    return true;
+  }
+
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) {
+    _inited = true;
+    WaitForLambdaAction* action = new WaitForLambdaAction(robot, [this](Robot& r){ return _stopAction; });
+    StartActing(action);
+
+    return RESULT_OK;
+  }
+  
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) {
+    _numUpdates++;
+    return Status::Running;
+  }
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) {
+    _interrupted = true;
+    return RESULT_OK;
+  }
+  virtual void   StopInternal(Robot& robot, double currentTime_sec) {
+    _stopped = true;
+  }
+
+};
+
+TEST(BehaviorInterface, StartActingInsideInit)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestInitBehavior b(robot, empty);
+
+  b.SetIsRunning(true);
+  b.Init(0.0f);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty()) << "action should be started by Init";
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+
+  b._stopAction = true;
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_TRUE(robot.GetActionList().IsEmpty());
+}

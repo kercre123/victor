@@ -24,6 +24,8 @@
 namespace Anki {
 namespace Cozmo {
 
+#define SET_STATE(s) SetState_internal(s, #s)
+
 static const char* kInitialAnimationKey = "initial_animName";
 static const char* kPreDriveAnimationKey = "preDrive_animName";
 static const float kDistToMoveTowardsFace_mm = 120.0f;
@@ -75,10 +77,10 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
   if( ! IsActing() ) {
     if( GetNumBlocksRequired() == 0 ) {
       // skip the block stuff and go right to the face
-      TransitionTo(robot, State::LookingAtFace);
+      TransitionToLookingAtFace(robot);
     }
     else {
-      TransitionTo(robot, State::PlayingInitialAnimation);
+      TransitionToPlayingInitialAnimation(robot);
     }
   }
 
@@ -127,250 +129,186 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.DenyRequest",
                      "behavior is denying it's own request");
 
-    SendDeny(robot);    
-    CancelAction(robot);
+    SendDeny(robot);
+    // action is can canceled automatically by IBehavior
   }
 
   // don't use transition to because we don't want to do anything
   _state = State::PlayingInitialAnimation;
 }
 
-void BehaviorRequestGameSimple::TransitionTo(Robot& robot, State state)
+void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot)
 {
-  std::string name = "UNKNOWN";
-  bool transitioned = true;
+  IActionRunner* animationAction = new PlayAnimationAction(robot, _initialAnimationName);
+  StartActing( animationAction, &BehaviorRequestGameSimple::TransitionToFacingBlock );
+  SET_STATE(State::PlayingInitialAnimation);
+}
   
-  switch(state) {
-    case State::PlayingInitialAnimation: {
-      name = "PlayingInitialAnimation";
-      IActionRunner* animationAction = new PlayAnimationAction(robot, _initialAnimationName);
-      StartActing( robot, animationAction );
-      break;
-    }
-
-    case State::FacingBlock: {
-      name = "FacingBlock";
-      ObjectID targetBlockID = GetRobotsBlockID(robot);
-      StartActing(robot, new FaceObjectAction( robot, targetBlockID, PI_F ) );
-      break;
-    }
-
-    case State::PlayingPreDriveAnimation: {
-      name = "PlayingPreDriveAnimation";
-      IActionRunner* animationAction = new PlayAnimationAction(robot, _preDriveAnimationName);
-      StartActing( robot, animationAction );
-      break;
-    }
-
-    case State::PickingUpBlock: {
-      name = "PickingUpBlock";
-      ObjectID targetBlockID = GetRobotsBlockID(robot);
-      StartActing(robot, new DriveToPickupObjectAction(robot, targetBlockID));
-      break;
-    }
-
-    case State::DrivingToFace: {
-      name = "DrivingToFace";
-      Pose3d faceInteractionPose;
-      if( GetFaceInteractionPose(robot, faceInteractionPose) ) {
-        StartActing(robot, new DriveToPoseAction( robot, faceInteractionPose ) );
-      }
-      else {
-        transitioned = false;
-      }
-      break;
-    }
-
-    case State::PlacingBlock: {
-      name = "PlacingBlock";
-      StartActing(robot, new CompoundActionSequential(robot, {
-                           new PlaceObjectOnGroundAction(robot),
-                           // TODO:(bn) use same motion profile here
-                           new DriveStraightAction(robot, -kBackupDistance_mm, -80.0f)
-                         }));
-      break;
-    }
-
-    case State::LookingAtFace: {
-      name = "LookingAtFace";
-      Pose3d lastFacePose;
-      if( GetFacePose( robot, lastFacePose ) ) {
-        StartActing(robot, new FacePoseAction(robot, lastFacePose, PI_F));
-      }
-      else {
-        transitioned = false;
-      }
-      break;
-    }
-
-    case State::VerifyingFace: {
-      name = "VerifyingFace";
-      _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      StartActing(robot, new WaitAction( robot, kFaceVerificationTime_s ) );
-      break;
-    }
-
-    case State::PlayingRequstAnim: {
-      name = "PlayingRequstAnim";
-      StartActing(robot, new PlayAnimationAction(robot, _requestAnimationName));
-      break;
-    }
-
-    case State::TrackingFace: {
-      name = "TrackingFace";
-      if( GetFaceID() == Face::UnknownFace ) {
-        PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
-                            "Can't do face tracking because there is no valid face!");
-        // use an action that just hangs to simulate the track face logic
-        StartActing( robot, new HangAction(robot) );
-      }
-      else {
-        StartActing( robot, new TrackFaceAction(robot, GetFaceID()) );
-      }
-      break;
-    }
-
-    case State::PlayingDenyAnim: {
-      name = "PlayingDenyAnim";
-      StartActing( robot, new PlayAnimationAction( robot, _denyAnimationName ) );
-      break;
-    }
-
-    // no default so the compiler yells at us if we forget a state
-  }
-
-
-  if( transitioned ) {
-    _state = state;
-    PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.TransitionTo", "%s", name.c_str());
-  }
-  else {
-    PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransitionTo.FailedTransition",
-                     "failed to transition to '%s'", name.c_str());
-  }  
-}  
-
-
-void BehaviorRequestGameSimple::RequestGame_HandleActionCompleted(Robot& robot, ActionResult result)
+void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
-  switch( _state ) {
-    case State::PlayingInitialAnimation: {
-      TransitionTo(robot, State::FacingBlock);
-      break;
-    }
+  ObjectID targetBlockID = GetRobotsBlockID(robot);
+  StartActing(new FaceObjectAction( robot, targetBlockID, PI_F ),
+              &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
+  SET_STATE(State::FacingBlock);
+}
 
-    case State::FacingBlock: {
-      TransitionTo(robot, State::PlayingPreDriveAnimation);
-      break;
-    }
+void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robot)
+{
+  IActionRunner* animationAction = new PlayAnimationAction(robot, _preDriveAnimationName);
+  StartActing(animationAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
+  SET_STATE(State::PlayingPreDriveAnimation);
+}
 
-    case State::PlayingPreDriveAnimation: {
-      TransitionTo(robot, State::PickingUpBlock);
-      break;
-    }
-      
-    case State::PickingUpBlock: {
-      
-      if ( result == ActionResult::SUCCESS ) {
-        TransitionTo(robot, State::DrivingToFace);
-      }
-      else if ( result == ActionResult::FAILURE_RETRY ) {
-        TransitionTo(robot, State::PickingUpBlock);
-      }
-      else {
-        // if its an abort failure, do nothing, which will cause the behavior to stop
-        PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
-                         "failed to pick up block with no retry, so ending the behavior");
-      }
+void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
+{
+  ObjectID targetBlockID = GetRobotsBlockID(robot);
+  StartActing(new DriveToPickupObjectAction(robot, targetBlockID),
+              [this, &robot](ActionResult result) {
+                if ( result == ActionResult::SUCCESS ) {
+                  TransitionToDrivingToFace(robot);
+                }
+                else if ( result == ActionResult::FAILURE_RETRY ) {
+                  TransitionToPickingUpBlock(robot);
+                }
+                else {
+                  // if its an abort failure, do nothing, which will cause the behavior to stop
+                  PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
+                                   "failed to pick up block with no retry, so ending the behavior");
+                }
+              } );
+  SET_STATE(State::PickingUpBlock);
+}
 
-      break;
-    }
-      
-    case State::DrivingToFace: {
-
-      if ( result == ActionResult::SUCCESS ) {
-        TransitionTo(robot, State::PlacingBlock);
-      }
-      else if (result == ActionResult::FAILURE_RETRY) {
-        TransitionTo(robot, State::DrivingToFace);
-      }
-      else {
-        // if its an abort failure, do nothing, which will cause the behavior to stop
-        PRINT_NAMED_INFO("BehaviorRequestGameSimple.DriveToFace.Failed",
-                         "failed to drive to a spot to interact with the face, so ending the behavior");
-      }
-      
-      break;
-    }
-      
-    case State::PlacingBlock: {
-      if ( result == ActionResult::SUCCESS ) {
-        TransitionTo(robot, State::LookingAtFace);
-      }
-      else if (result == ActionResult::FAILURE_RETRY) {
-        TransitionTo(robot, State::PlacingBlock);
-      }
-      else {
-
-        // the place action can fail if visual verify fails (it doesn't see the cube after it drops it). For
-        // now, if it fails, just keep going anyway
-        
-        // if its an abort failure, do nothing, which will cause the behavior to stop
-        PRINT_NAMED_INFO("BehaviorRequestGameSimple.PlacingBlock.Failed",
-                         "failed to place the block on the ground, but pretending it didn't");
-
-        TransitionTo(robot, State::LookingAtFace);
-      }
-      break;
-    }
-
-    case State::LookingAtFace: {
-      if( result == ActionResult::SUCCESS ) {
-        TransitionTo(robot, State::VerifyingFace);
-      }
-      else if (result == ActionResult::FAILURE_RETRY) {
-        TransitionTo(robot, State::LookingAtFace);
-      }
-      else {
-        PRINT_NAMED_INFO("BehaviorRequestGameSimple.LookingAtFace.Failed",
-                         "failed to look at face after dropping block, so ending the behavior");
-      }
-      break;
-    }
-
-    case State::VerifyingFace: {
-      if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
-        TransitionTo(robot, State::PlayingRequstAnim);
-      }
-      else {
-        // the face must not have been where we expected, so drop out of the behavior for now
-        // TODO:(bn) try to bring the block to a different face if we have more than one?
-        PRINT_NAMED_INFO("BehaviorRequestGameSimple.VerifyingFace.Failed",
-                         "failed to verify the face, so considering this a rejection");
-        TransitionTo(robot, State::PlayingDenyAnim);
-      }
-      break;
-    }
-      
-      
-    case State::PlayingRequstAnim: {
-      SendRequest(robot);
-      TransitionTo(robot, State::TrackingFace);
-      break;
-    }
-      
-    case State::TrackingFace: {
-      PRINT_NAMED_INFO("BehaviorRequestGameSimple.HandleActionComplete.TrackingActionEnded",
-                       "Someone ended the tracking action, behavior will terminate");
-      break;
-    }
-      
-    case State::PlayingDenyAnim: {
-      break;
-    }
+void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
+{
+  Pose3d faceInteractionPose;
+  if( GetFaceInteractionPose(robot, faceInteractionPose) ) {
+    StartActing(new DriveToPoseAction( robot, faceInteractionPose ),
+                [this, &robot](ActionResult result) {
+                  if ( result == ActionResult::SUCCESS ) {
+                    TransitionToPlacingBlock(robot);
+                  }
+                  else if (result == ActionResult::FAILURE_RETRY) {
+                    TransitionToDrivingToFace(robot);
+                  }
+                  else {
+                    // if its an abort failure, do nothing, which will cause the behavior to stop
+                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.DriveToFace.Failed",
+                                     "failed to drive to a spot to interact with the face, so ending the behavior");
+                  }
+                } );
+    SET_STATE(State::DrivingToFace);
   }
 }
 
+void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
+{
+  StartActing(new CompoundActionSequential(robot,
+                {
+                  new PlaceObjectOnGroundAction(robot),
+                  // TODO:(bn) use same motion profile here
+                  new DriveStraightAction(robot, -kBackupDistance_mm, -80.0f)
+                }),
+              [this, &robot](ActionResult result) {
+                if ( result == ActionResult::SUCCESS ) {
+                  TransitionToLookingAtFace(robot);
+                }
+                else if (result == ActionResult::FAILURE_RETRY) {
+                  TransitionToPlacingBlock(robot);
+                }
+                else {
+                  // the place action can fail if visual verify fails (it doesn't see the cube after it
+                  // drops it). For now, if it fails, just keep going anyway
+        
+                  // if its an abort failure, do nothing, which will cause the behavior to stop
+                  PRINT_NAMED_INFO("BehaviorRequestGameSimple.PlacingBlock.Failed",
+                                   "failed to place the block on the ground, but pretending it didn't");
+
+                  TransitionToLookingAtFace(robot);
+                }
+              } );
+
+  SET_STATE(State::PlacingBlock);
+}
+
+void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
+{
+  Pose3d lastFacePose;
+  if( GetFacePose( robot, lastFacePose ) ) {
+    StartActing(new FacePoseAction(robot, lastFacePose, PI_F),
+                [this, &robot](ActionResult result) {
+                  if( result == ActionResult::SUCCESS ) {
+                    TransitionToVerifyingFace(robot);
+                  }
+                  else if (result == ActionResult::FAILURE_RETRY) {
+                    TransitionToLookingAtFace(robot);
+                  }
+                  else {
+                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.LookingAtFace.Failed",
+                                     "failed to look at face after dropping block, so ending the behavior");
+                  }
+                } );
+    SET_STATE(State::LookingAtFace);
+  }
+}
+
+void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
+{
+  _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  StartActing(new WaitAction( robot, kFaceVerificationTime_s ),
+              [this, &robot](ActionResult result) {
+                if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
+                  TransitionToPlayingRequstAnim(robot);
+                }
+                else {
+                  // the face must not have been where we expected, so drop out of the behavior for now
+                  // TODO:(bn) try to bring the block to a different face if we have more than one?
+                  PRINT_NAMED_INFO("BehaviorRequestGameSimple.VerifyingFace.Failed",
+                                   "failed to verify the face, so considering this a rejection");
+                  TransitionToPlayingDenyAnim(robot);
+                }
+              } );
+  SET_STATE(State::VerifyingFace);
+}
+
+void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot)
+{
+  StartActing(new PlayAnimationAction(robot, _requestAnimationName),
+              &BehaviorRequestGameSimple::TransitionToTrackingFace);
+  SET_STATE(State::PlayingRequstAnim);
+}
+
+void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
+{
+  SendRequest(robot);
+
+  if( GetFaceID() == Face::UnknownFace ) {
+    PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
+                        "Can't do face tracking because there is no valid face!");
+    // use an action that just hangs to simulate the track face logic      
+    StartActing( new HangAction(robot) );
+  }
+  else {
+    // no callback here, behavior is over once this is done
+    StartActing( new TrackFaceAction(robot, GetFaceID()) );
+  }
+
+  SET_STATE(State::TrackingFace);
+}
+
+void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
+{
+  // no callback here, behavior is over once this is Done
+  StartActing( new PlayAnimationAction( robot, _denyAnimationName ) );
+
+  SET_STATE(State::PlayingDenyAnim);
+}
+
+void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
+{
+  _state = state;
+  PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.TransitionTo", "%s", stateName.c_str());
+}
 
 bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPose)
 {
@@ -402,9 +340,9 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 
 void BehaviorRequestGameSimple::HandleGameDeniedRequest(Robot& robot)
 {
-  CancelAction(robot);
+  StopActing();
 
-  TransitionTo(robot, State::PlayingDenyAnim);
+  TransitionToPlayingDenyAnim(robot);
 }
 
 }
