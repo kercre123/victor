@@ -18,7 +18,7 @@ struct BootLoaderSignature {
   uint32_t  rom_length;
   uint8_t   checksum[SHA1_BLOCK_SIZE];
 };
-  
+
 static const int          BOOT_LOADER_LENGTH = 0x1000;
 static const uint32_t     HEADER_SIGNATURE = 0x304D5A43;
 

@@ -223,6 +223,11 @@ extern "C" int8_t backgroundTaskInit(void)
   }
 }
 
+extern "C" void backgroundTaskOnRTIPSync(void)
+{
+  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
+}
+
 extern "C" void backgroundTaskOnConnect(void)
 {
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
@@ -231,7 +236,6 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
-  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)
