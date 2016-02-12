@@ -164,6 +164,9 @@ namespace Anki {
                 PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
                                  "Moving to action %s", _currentActionPair->second->GetName().c_str());
                 
+                // If the compound action is suppressing track locking then the constituent actions should too
+                _currentActionPair->second->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+                
                 // Otherwise, we are still running. Go ahead and immediately do an
                 // update on the next action now to get its initialization and
                 // precondition checking going, to reduce lag between actions.
