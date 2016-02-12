@@ -1123,11 +1123,6 @@ namespace Anki {
       if(ActionResult::SUCCESS == moveLiftInitResult ||
          ActionResult::RUNNING == moveLiftInitResult)
       {
-        // moveToLiftHeight completed so mark it as done
-        if(moveLiftInitResult == ActionResult::SUCCESS)
-        {
-          _moveLiftToHeightActionDone = true;
-        }
         // Continue to CheckIfDone as long as the first Update didn't _fail_
         return ActionResult::SUCCESS;
       } else {

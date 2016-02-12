@@ -135,22 +135,21 @@ namespace Anki {
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
       
+      void ResetState() { _state = ActionResult::FAILURE_NOT_STARTED; }
+      
     private:
 
       u8            _numRetriesRemaining = 0;
       
       std::string   _statusMsg;
       
-      ActionResult         _result = ActionResult::RUNNING;
+      ActionResult         _state           = ActionResult::FAILURE_NOT_STARTED;
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
       std::string          _name;
       u8                   _tracks          = (u8)AnimTrackFlag::ALL_TRACKS;
       
       bool          _suppressTrackLocking   = false;
-      bool          _isRunning              = false;
-      bool          _isCancelled            = false;
-      bool          _isInterrupted          = false;
       bool          _displayMessages        = true;
       bool          _emitCompletionSignal   = true;
       

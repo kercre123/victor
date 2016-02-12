@@ -41,6 +41,7 @@ namespace Anki {
     
     void ICompoundAction::Reset()
     {
+      ResetState();
       for(auto & actionPair : _actions) {
         actionPair.first = false;
         actionPair.second->Reset();
@@ -217,6 +218,7 @@ namespace Anki {
             case ActionResult::FAILURE_PROCEED:
             case ActionResult::FAILURE_TRACKS_LOCKED:
             case ActionResult::FAILURE_BAD_TAG:
+            case ActionResult::FAILURE_NOT_STARTED:
             case ActionResult::CANCELLED:
             case ActionResult::INTERRUPTED:
 #             if USE_ACTION_CALLBACKS
@@ -299,6 +301,7 @@ namespace Anki {
             case ActionResult::FAILURE_TIMEOUT:
             case ActionResult::FAILURE_TRACKS_LOCKED:
             case ActionResult::FAILURE_BAD_TAG:
+            case ActionResult::FAILURE_NOT_STARTED:
             case ActionResult::CANCELLED:
             case ActionResult::INTERRUPTED:
               // Return failure, aborting updating remaining actions the group
