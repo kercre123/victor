@@ -19,9 +19,26 @@ public class RobotEngineManager : MonoBehaviour {
 
   public Dictionary<int, IRobot> Robots { get; private set; }
 
+  // Cache the last current robot
+  private int _LastCurrentRobotID;
+  private IRobot _LastCurrentRobot;
+
   public int CurrentRobotID { get; private set; }
 
-  public IRobot CurrentRobot { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
+  public IRobot CurrentRobot { 
+    get { 
+      if (_LastCurrentRobot != null && _LastCurrentRobotID == CurrentRobotID) {
+        return _LastCurrentRobot;
+      }
+      IRobot current;
+      if (Robots.TryGetValue(CurrentRobotID, out current)) {
+        _LastCurrentRobot = current;
+        _LastCurrentRobotID = CurrentRobotID;
+        return current;
+      }
+      return null; 
+    } 
+  }
 
   public bool IsConnected { get { return (_Channel != null && _Channel.IsConnected); } }
 
@@ -160,11 +177,12 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void AddRobot(byte robotID) {
-    if (Robots.ContainsKey(robotID)) {
-      IRobot oldRobot = Robots[robotID];
+    IRobot oldRobot;
+    if (Robots.TryGetValue(robotID, out oldRobot)) {
       if (oldRobot != null) {
         oldRobot.Dispose();
       }
+      _LastCurrentRobot = null;
       Robots.Remove(robotID);
     }
     
@@ -679,4 +697,22 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
+
+  #region Mocks
+
+  public void MockConnect() {
+
+    _IsRobotConnected = true;
+
+    const byte robotID = 1;
+
+    Robots[robotID] = new MockRobot(robotID);
+    CurrentRobotID = robotID;
+
+    if (RobotConnected != null) {
+      RobotConnected(robotID);
+    }
+  }
+
+  #endregion //Mocks
 }

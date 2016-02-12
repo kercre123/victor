@@ -124,6 +124,10 @@ public class Intro : MonoBehaviour {
     }
   }
 
+  public void PlayMock() {
+    RobotEngineManager.Instance.MockConnect();
+  }
+
   protected void SaveData() {
     LastIP = _RobotIPInputField.text;
     LastSimIP = _SimIPInputField.text;
