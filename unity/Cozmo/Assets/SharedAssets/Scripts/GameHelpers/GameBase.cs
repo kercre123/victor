@@ -45,6 +45,8 @@ public abstract class GameBase : MonoBehaviour {
 
   private float _GameStartTime;
 
+  public List<LightCube> CubesForGame;
+
   #region Initialization
 
   public void InitializeMinigame(ChallengeData challengeData) {
