@@ -132,6 +132,7 @@ namespace Anki {
     {
       switch(_state)
       {
+        case ActionResult::FAILURE_RETRY:
         case ActionResult::FAILURE_NOT_STARTED:
         case ActionResult::INTERRUPTED:
         {
@@ -278,6 +279,7 @@ namespace Anki {
       _preconditionsMet = false;
       _waitUntilTime = -1.f;
       _timeoutTime = -1.f;
+      ResetState();
       UnlockTracks();
     }
     

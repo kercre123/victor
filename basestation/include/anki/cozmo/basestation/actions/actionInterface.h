@@ -135,6 +135,8 @@ namespace Anki {
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
       
+      void ResetState() { _state = ActionResult::FAILURE_NOT_STARTED; }
+      
     private:
 
       u8            _numRetriesRemaining = 0;

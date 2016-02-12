@@ -41,6 +41,7 @@ namespace Anki {
     
     void ICompoundAction::Reset()
     {
+      ResetState();
       for(auto & actionPair : _actions) {
         actionPair.first = false;
         actionPair.second->Reset();
