@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     cout<<"Welcome to xythetaPlanner.\n";
 
     loggerProvider = new Anki::Util::PrintfLoggerProvider();
-    loggerProvider->SetMinLogLevel(0);
+    loggerProvider->SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
     Anki::Util::gLoggerProvider = loggerProvider;
   }
 

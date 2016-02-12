@@ -1648,7 +1648,8 @@ using namespace Anki::Cozmo;
 int main(int argc, char **argv)
 {
   Anki::Util::PrintfLoggerProvider loggerProvider;
-  loggerProvider.SetMinLogLevel(0);
+  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);  
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
   
