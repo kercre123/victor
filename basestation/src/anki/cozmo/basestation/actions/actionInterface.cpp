@@ -282,6 +282,7 @@ namespace Anki {
       _preconditionsMet = false;
       _waitUntilTime = -1.f;
       _timeoutTime = -1.f;
+      UnlockTracks();
     }
     
     ActionResult IAction::UpdateInternal()
