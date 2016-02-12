@@ -68,17 +68,13 @@ namespace Anki {
       // The animation should only contain a sound track!
       void SetPostDockLiftMovingAnimation(const std::string& animName);
       
-      virtual u8 GetAnimTracksToDisable() const override {
-        return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
-      }
-      
       // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
-      virtual u8 GetMovementTracksToIgnore() const override
+      virtual u8 GetTracksToLock() const override
       {
-        u8 ignoredTracks = (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK;
+        u8 ignoredTracks = (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
         if (!_useManualSpeed)
         {
-          ignoredTracks |= ((uint8_t)AnimTrackFlag::BODY_TRACK);
+          ignoredTracks |= ((u8)AnimTrackFlag::BODY_TRACK);
         }
         return ignoredTracks;
       }
@@ -237,7 +233,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::LIFT_TRACK; }
       
     protected:
       

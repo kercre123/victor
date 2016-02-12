@@ -72,7 +72,7 @@ namespace Anki {
     DriveToObjectAction::DriveToObjectAction(Robot& robot,
                                              const ObjectID& objectID,
                                              const PreActionPose::ActionType& actionType,
-                                             const PathMotionProfile motionProfile,
+                                             const PathMotionProfile& motionProfile,
                                              const f32 predockOffsetDistX_mm,
                                              const bool useApproachAngle,
                                              const f32 approachAngle_rad,
@@ -94,7 +94,7 @@ namespace Anki {
     DriveToObjectAction::DriveToObjectAction(Robot& robot,
                                              const ObjectID& objectID,
                                              const f32 distance,
-                                             const PathMotionProfile motionProfile,
+                                             const PathMotionProfile& motionProfile,
                                              const bool useManualSpeed)
     : IAction(robot)
     , _objectID(objectID)
@@ -282,6 +282,7 @@ namespace Anki {
       // In case we are re-running this action, make sure compound actions are cleared.
       // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)
       _compoundAction.ClearActions();
+      _compoundAction.ShouldSuppressTrackLocking(true);
 
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
@@ -292,7 +293,6 @@ namespace Anki {
           driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
           driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
           driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
-
           _compoundAction.AddAction(driveToPoseAction);
         }
         
@@ -305,11 +305,10 @@ namespace Anki {
                             GetName().c_str(),
                             faceObjectAction->GetTag(),
                             faceObjectAction->GetName().c_str());
-
           _compoundAction.AddAction(faceObjectAction);
         }
         
-        _compoundAction.SetEmitCompletionSignal(false);
+        _compoundAction.ShouldEmitCompletionSignal(false);
         
         // Go ahead and do the first Update on the compound action, so we don't
         // "waste" the first CheckIfDone call just initializing it
@@ -402,7 +401,7 @@ namespace Anki {
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(Robot& robot,
                                                                      const Pose3d& placementPose,
                                                                      const bool placeOnGround,
-                                                                     const PathMotionProfile motionProfile,
+                                                                     const PathMotionProfile& motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
     : DriveToObjectAction(robot,
@@ -488,7 +487,7 @@ namespace Anki {
 #pragma mark ---- DriveToPoseAction ----
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
-                                         const PathMotionProfile motionProf,
+                                         const PathMotionProfile& motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed) //, const Pose3d& pose)
     : IAction(robot)
@@ -507,7 +506,7 @@ namespace Anki {
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
                                          const Pose3d& pose,
-                                         const PathMotionProfile motionProf,
+                                         const PathMotionProfile& motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
@@ -524,7 +523,7 @@ namespace Anki {
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
                                          const std::vector<Pose3d>& poses,
-                                         const PathMotionProfile motionProf,
+                                         const PathMotionProfile& motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
@@ -819,7 +818,7 @@ namespace Anki {
     IDriveToInteractWithObject::IDriveToInteractWithObject(Robot& robot,
                                                            const ObjectID& objectID,
                                                            const PreActionPose::ActionType& actionType,
-                                                           const PathMotionProfile motionProfile,
+                                                           const PathMotionProfile& motionProfile,
                                                            const f32 distanceFromMarker_mm,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
@@ -843,7 +842,7 @@ namespace Anki {
     DriveToAlignWithObjectAction::DriveToAlignWithObjectAction(Robot& robot,
                                                                const ObjectID& objectID,
                                                                const f32 distanceFromMarker_mm,
-                                                               const PathMotionProfile motionProfile,
+                                                               const PathMotionProfile& motionProfile,
                                                                const bool useApproachAngle,
                                                                const f32 approachAngle_rad,
                                                                const bool useManualSpeed)
@@ -866,7 +865,7 @@ namespace Anki {
     
     DriveToPickupObjectAction::DriveToPickupObjectAction(Robot& robot,
                                                          const ObjectID& objectID,
-                                                         const PathMotionProfile motionProfile,
+                                                         const PathMotionProfile& motionProfile,
                                                          const bool useApproachAngle,
                                                          const f32 approachAngle_rad,
                                                          const bool useManualSpeed)
@@ -888,7 +887,7 @@ namespace Anki {
     
     DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(Robot& robot,
                                                            const ObjectID& objectID,
-                                                           const PathMotionProfile motionProfile,
+                                                           const PathMotionProfile& motionProfile,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed)
@@ -914,7 +913,7 @@ namespace Anki {
     
     DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(Robot& robot,
                                                              const ObjectID& objectID,
-                                                             const PathMotionProfile motionProfile,
+                                                             const PathMotionProfile& motionProfile,
                                                              const f32 placementOffsetX_mm,
                                                              const bool useApproachAngle,
                                                              const f32 approachAngle_rad,
@@ -941,7 +940,7 @@ namespace Anki {
     
     DriveToRollObjectAction::DriveToRollObjectAction(Robot& robot,
                                                      const ObjectID& objectID,
-                                                     const PathMotionProfile motionProfile,
+                                                     const PathMotionProfile& motionProfile,
                                                      const bool useApproachAngle,
                                                      const f32 approachAngle_rad,
                                                      const bool useManualSpeed)
@@ -963,7 +962,7 @@ namespace Anki {
     
     DriveToPopAWheelieAction::DriveToPopAWheelieAction(Robot& robot,
                                                        const ObjectID& objectID,
-                                                       const PathMotionProfile motionProfile,
+                                                       const PathMotionProfile& motionProfile,
                                                        const bool useApproachAngle,
                                                        const f32 approachAngle_rad,
                                                        const bool useManualSpeed)
@@ -985,7 +984,7 @@ namespace Anki {
     
     DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(Robot& robot,
                                                                    const ObjectID& objectID,
-                                                                   const PathMotionProfile motionProfile,
+                                                                   const PathMotionProfile& motionProfile,
                                                                    const bool useManualSpeed)
     : CompoundActionSequential(robot, {
       new DriveToObjectAction(robot,
@@ -1006,7 +1005,7 @@ namespace Anki {
     
     DriveToAndMountChargerAction::DriveToAndMountChargerAction(Robot& robot,
                                                                const ObjectID& objectID,
-                                                               const PathMotionProfile motionProfile,
+                                                               const PathMotionProfile& motionProfile,
                                                                const bool useManualSpeed)
     : CompoundActionSequential(robot, {
       new DriveToObjectAction(robot,

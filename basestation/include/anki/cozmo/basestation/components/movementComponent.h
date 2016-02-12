@@ -46,14 +46,13 @@ public:
   bool   IsHeadMoving() const {return _isHeadMoving;}
   bool   IsLiftMoving() const {return _isLiftMoving;}
   
-  bool IsMovementTrackIgnored(AnimTrackFlag track) const;
-  bool IsAnimTrackLocked(AnimTrackFlag track) const;
+  // Returns true if any of the tracks are locked
+  bool AreAnyTracksLocked(u8 tracks) const;
+  // Returns true if all of the specified tracks are locked
+  bool AreAllTracksLocked(u8 tracks) const;
   
-  void LockAnimTracks(uint8_t tracks);
-  void UnlockAnimTracks(uint8_t tracks);
-  
-  void IgnoreTrackMovement(uint8_t tracks);
-  void UnignoreTrackMovement(uint8_t tracks);
+  void LockTracks(u8 tracks);
+  void UnlockTracks(u8 tracks);
   
   // Enables lift power on the robot.
   // If disabled, lift goes limp.
@@ -93,6 +92,8 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
+  void PrintLockState() const;
+  
 private:
   
   void InitEventHandlers(IExternalInterface& interface);
@@ -112,10 +113,9 @@ private:
   
   //bool _trackWithHeadOnly = false;
 
-  void PrintAnimationLockState() const;
   
-  std::array<int, (size_t)AnimConstants::NUM_TRACKS> _animTrackLockCount;
-  std::array<int, (size_t)AnimConstants::NUM_TRACKS> _ignoreTrackMovementCount;
+  
+  std::array<int, (size_t)AnimConstants::NUM_TRACKS> _trackLockCount;
   
   struct FaceLayerToRemove {
     TimeStamp_t duration_ms;

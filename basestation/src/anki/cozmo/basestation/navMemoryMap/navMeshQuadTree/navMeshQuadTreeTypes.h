@@ -19,6 +19,9 @@
 
 namespace Anki {
 namespace Cozmo {
+
+struct INavMemoryMapQuadData;
+
 namespace NavMeshQuadTreeTypes {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,6 +42,18 @@ enum class ENodeContentType : uint8_t {
 
 // variable type in which we can pack ENodeContentType as flags. Check ENodeContentTypeToFlag
 using ENodeContentTypePackedType = uint32_t;
+
+// content for each node. INavMeshQuadTreeNodeData is polymorphic depending on the content type
+struct NodeContent {
+  explicit NodeContent(ENodeContentType t) : type(t), data(nullptr) {}
+  
+  // comparison operators
+  bool operator==(const NodeContent& other) const;
+  bool operator!=(const NodeContent& other) const;
+  
+  ENodeContentType type;
+  std::shared_ptr<INavMemoryMapQuadData> data;
+};
 
 // position with respect to the parent
 enum class EQuadrant : uint8_t {
@@ -64,6 +79,9 @@ enum EClockDirection { CW, CCW };
 // the smallest type possible since we have a lot of quad nodes, but I want to pass groups as bit flags in one
 // packed variable
 ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentType);
+
+// String representing ENodeContentType for debugging purposes
+const char* ENodeContentTypeToString(ENodeContentType nodeContentType);
 
 // return the opposite direction to the one given (eg: North vs South, West vs East)
 inline NavMeshQuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);

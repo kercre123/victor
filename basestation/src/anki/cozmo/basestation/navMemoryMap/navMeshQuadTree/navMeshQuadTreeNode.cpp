@@ -5,9 +5,12 @@
  * Date:   12/09/2015
  *
  * Description: Nodes in the nav mesh, represented as quad tree nodes.
+ * Note nodes can work with a processor to speed up algorithms and searches, however this implementation supports
+ * working with one processor only for any given node. Do not use more than one processor instance for nodes, or
+ * otherwise leaks and bad pointer references will happen.
  *
  * Copyright: Anki, Inc. 2015
- **/
+**/
 #include "navMeshQuadTreeNode.h"
 #include "navMeshQuadTreeProcessor.h"
 
@@ -20,6 +23,11 @@
 namespace Anki {
 namespace Cozmo {
 
+static_assert( !std::is_copy_assignable<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
+static_assert( !std::is_copy_constructible<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
+static_assert( !std::is_move_assignable<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
+static_assert( !std::is_move_constructible<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, NavMeshQuadTreeNode* parent)
 : _center(center)
@@ -27,12 +35,12 @@ NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
-, _contentType(ENodeContentType::Unknown)
+, _content(ENodeContentType::Unknown)
 {
   CORETECH_ASSERT(_quadrant <= EQuadrant::Root);
 
   // processor would need to know otherwise, like we do in ForceSetDetectedContentType
-  CORETECH_ASSERT(_contentType == ENodeContentType::Unknown);
+  CORETECH_ASSERT(_content.type == ENodeContentType::Unknown);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,7 +79,7 @@ Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor)
+bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
 {
   // we need to subdivide or fit within the given quad, since this implementation doesn't keep partial
   // info within nodes, that's what subquads would be for.
@@ -79,13 +87,14 @@ bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, ENodeContentType detectedC
                 ( FLT_LE(_sideLen,(quad.GetMaxX()-quad.GetMinX())) && (FLT_LE(_sideLen,quad.GetMaxY()-quad.GetMinY())) ),
                 "NavMeshQuadTreeNode.AddQuad.InputQuadTooSmall");
 
-  // if we are already of the expected type, we won't gain any info, no need to process
-  if ( _contentType == detectedContentType ) {
+  // if we won't gain any new info, no need to process
+  const bool isSameInfo = _content == detectedContent;
+  if ( isSameInfo ) {
     return false;
   }
   
   // to check for changes
-  ENodeContentType previousType = _contentType;
+  NodeContent previousContent = _content;
   bool childChanged = false;
 
   // check if the quad affects us
@@ -103,23 +112,23 @@ bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, ENodeContentType detectedC
       if ( IsSubdivided() )
       {
         // we are subdivided, see if we can merge children or we should tell them to add the new quad
-        if ( CanOverrideSelfAndChildrenWithContent(detectedContentType, overlap) )
+        if ( CanOverrideSelfAndChildrenWithContent(detectedContent.type, overlap) )
         {
-          // merge to the new content type, we already made sure we can override the type
-          Merge( detectedContentType, processor );
+          // merge to the new content, we already made sure we can override the type
+          Merge(detectedContent, processor);
         }
         else
         {
           // delegate on children
-          for( auto& child : _children ) {
-            childChanged = child.AddQuad(quad, detectedContentType, processor) || childChanged;
+          for( auto& childPtr : _childrenPtr ) {
+            childChanged = childPtr->AddQuad(quad, detectedContent, processor) || childChanged;
           }
         }
       }
       else
       {
         // we can try to set our content, since we fit fully and we don't have children
-        TrySetDetectedContentType( detectedContentType, overlap, processor );
+        TrySetDetectedContentType( detectedContent, overlap, processor );
       }
     }
     else
@@ -137,8 +146,8 @@ bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, ENodeContentType detectedC
       if ( isSubdivided )
       {
         // ask children to add quad
-        for( auto& child : _children ) {
-          childChanged = child.AddQuad(quad, detectedContentType, processor) || childChanged;
+        for( auto& childPtr : _childrenPtr ) {
+          childChanged = childPtr->AddQuad(quad, detectedContent, processor) || childChanged;
         }
         
         // try to automerge (if it does, our content type will change from subdivided to the merged type)
@@ -146,12 +155,12 @@ bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, ENodeContentType detectedC
       }
       else
       {
-        TrySetDetectedContentType(detectedContentType, overlap, processor);
+        TrySetDetectedContentType(detectedContent, overlap, processor);
       }
     }
   }
   
-  const bool ret = (_contentType != previousType) || childChanged;
+  const bool ret = (_content != previousContent) || childChanged;
   return ret;
 }
 
@@ -166,8 +175,8 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, NavMeshQuad
   }
 
   // save my old children to store in the child that is taking my spot
-  std::vector<NavMeshQuadTreeNode> oldChildren;
-  std::swap(oldChildren, _children);
+  std::vector< std::unique_ptr<NavMeshQuadTreeNode> > oldChildren;
+  std::swap(oldChildren, _childrenPtr);
 
   const bool xPlus = FLT_GTR_ZERO(direction.x());
   const bool yPlus = FLT_GTR_ZERO(direction.y());
@@ -178,29 +187,31 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, NavMeshQuad
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _children.emplace_back( Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this ); // up L
-  _children.emplace_back( Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this ); // up R
-  _children.emplace_back( Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this ); // lo L
-  _children.emplace_back( Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this ); // lo R
+  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this) ); // up L
+  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this) ); // up R
+  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this) ); // lo L
+  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this) ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
   if      ( !xPlus &&  yPlus ) { childIdx = 1; }
   else if (  xPlus && !yPlus ) { childIdx = 2; }
   else if (  xPlus &&  yPlus ) { childIdx = 3; }
-  NavMeshQuadTreeNode& childTakingMyPlace = _children[childIdx];
+  NavMeshQuadTreeNode& childTakingMyPlace = *_childrenPtr[childIdx];
   
   // set the new parent in my old children
-  for ( auto& child : oldChildren ) {
-    child.ChangeParent( &childTakingMyPlace );
+  for ( auto& childPtr : oldChildren ) {
+    childPtr->ChangeParent( &childTakingMyPlace );
   }
   
   // swap children with the temp
-  std::swap(childTakingMyPlace._children, oldChildren);
+  std::swap(childTakingMyPlace._childrenPtr, oldChildren);
 
   // set the content type I had in the child that takes my place
-  childTakingMyPlace.ForceSetDetectedContentType( _contentType, processor );
-  ForceSetDetectedContentType( ENodeContentType::Subdivided, processor );
+  childTakingMyPlace.ForceSetDetectedContentType( _content, processor );
+  
+  NodeContent emptySubdividedContent(ENodeContentType::Subdivided);
+  ForceSetDetectedContentType(emptySubdividedContent, processor);
   
   // upgrade my remaining stats
   _sideLen = _sideLen * 2.0f;
@@ -213,10 +224,10 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, NavMeshQuad
 void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVector) const
 {
   // if we have children, delegate on them, otherwise render ourselves
-  if ( _children.empty() )
+  if ( _childrenPtr.empty() )
   {
     ColorRGBA color =  Anki::NamedColors::WHITE;
-    switch(_contentType)
+    switch(_content.type)
     {
       case ENodeContentType::Invalid             : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
       case ENodeContentType::Subdivided          : { color = Anki::NamedColors::BLUE;     color.SetAlpha(1.0f); break; }
@@ -233,8 +244,8 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
   else
   {
     // delegate on each child
-    for( const auto& child : _children ) {
-      child.AddQuadsToDraw(quadVector);
+    for( const auto& childPtr : _childrenPtr ) {
+      childPtr->AddQuadsToDraw(quadVector);
     }
   }
 }
@@ -248,37 +259,45 @@ void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
   const float halfLen    = _sideLen * 0.50f;
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
-  _children.emplace_back( Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this ); // up L
-  _children.emplace_back( Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this ); // up R
-  _children.emplace_back( Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this ); // lo L
-  _children.emplace_back( Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this ); // lo E
+  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this) ); // up L
+  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this) ); // up R
+  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this) ); // lo L
+  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this) ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
-  for ( auto& child : _children )
+  for ( auto& childPtr : _childrenPtr )
   {
-    child.ForceSetDetectedContentType(_contentType, processor);
+    childPtr->ForceSetDetectedContentType(_content, processor);
   }
   
   // set our content type to subdivided
-  ForceSetDetectedContentType(ENodeContentType::Subdivided, processor);
-  
+  NodeContent emptySubdividedContent(ENodeContentType::Subdivided);
+  ForceSetDetectedContentType(emptySubdividedContent, processor);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::Merge(ENodeContentType newContentType, NavMeshQuadTreeProcessor& processor)
+void NavMeshQuadTreeNode::Merge(NodeContent& newContent, NavMeshQuadTreeProcessor& processor)
 {
   ASSERT_NAMED(IsSubdivided(), "NavMeshQuadTreeNode.Merge.InvalidState");
+
+  // since we are going to destroy the children, notify the processor of all the descendants about to be destroyed
+  ClearDescendants(processor);
   
-  // since we are going to destroy the children, notify the processor
-  for ( auto& child : _children ) {
-    processor.OnNodeDestroyed(&child);
+  // set our content to the one we will have after the merge
+  ForceSetDetectedContentType(newContent, processor);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeNode::ClearDescendants(NavMeshQuadTreeProcessor& processor)
+{
+  // iterate all children recursively destroying their children
+  for ( auto& childPtr : _childrenPtr ) {
+    childPtr->ClearDescendants(processor);
+    processor.OnNodeDestroyed(childPtr.get());
   }
   
   // now remove children
-  _children.clear();
-  
-  // set our content type to the one we will have after the merge
-  ForceSetDetectedContentType(newContentType, processor);
+  _childrenPtr.clear();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -290,13 +309,13 @@ bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContent
   }
 
   // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
-  if ( _contentType == ENodeContentType::Cliff ) {
+  if ( _content.type == ENodeContentType::Cliff ) {
     const bool isTotalClear = (newContentType == ENodeContentType::ClearOfCliff) && (overlap == EContentOverlap::Total);
     return isTotalClear;
   }
 
   // ClearOfCliff can only be overriden by Cliff
-  if ( _contentType == ENodeContentType::ClearOfCliff && newContentType == ENodeContentType::ClearOfObstacle ) {
+  if ( _content.type == ENodeContentType::ClearOfCliff && newContentType == ENodeContentType::ClearOfObstacle ) {
     return false;
   }
   
@@ -312,9 +331,9 @@ bool NavMeshQuadTreeNode::CanOverrideSelfAndChildrenWithContent(ENodeContentType
   }
 
   // ask children if they can
-  for ( const auto& child : _children )
+  for ( const auto& childPtr : _childrenPtr )
   {
-    const bool canOverrideChild = child.CanOverrideSelfAndChildrenWithContent(newContentType, overlap);
+    const bool canOverrideChild = childPtr->CanOverrideSelfAndChildrenWithContent(newContentType, overlap);
     if ( !canOverrideChild ) {
       return false;
     }
@@ -328,19 +347,19 @@ void NavMeshQuadTreeNode::TryAutoMerge(NavMeshQuadTreeProcessor& processor)
 {
   CORETECH_ASSERT(IsSubdivided());
 
-  // check if all children classified the same content type
-  ENodeContentType childType = _children[0].GetContentType();
+  // check if all children classified the same content
+  ENodeContentType childType = _childrenPtr[0]->GetContentType();
   if ( childType == ENodeContentType::Subdivided ) {
     // any subdivided quad prevents the parent from merging
     return;
   }
   
   bool allChildrenEqual = true;
-  for(size_t idx1=0; idx1<_children.size()-1; ++idx1)
+  for(size_t idx1=0; idx1<_childrenPtr.size()-1; ++idx1)
   {
-    for(size_t idx2=idx1+1; idx2<_children.size(); ++idx2)
+    for(size_t idx2=idx1+1; idx2<_childrenPtr.size(); ++idx2)
     {
-      if ( _children[idx1].GetContentType() != _children[idx2].GetContentType() )
+      if ( _childrenPtr[idx1]->GetContent() != _childrenPtr[idx2]->GetContent() )
       {
         allChildrenEqual = false;
         break;
@@ -351,35 +370,36 @@ void NavMeshQuadTreeNode::TryAutoMerge(NavMeshQuadTreeProcessor& processor)
   // if they did, we can merge and set that type on this parent
   if ( allChildrenEqual )
   {
-    Merge( childType, processor );
+    NodeContent childContent = _childrenPtr[0]->GetContent(); // do a copy since merging will destroy children
+    Merge( childContent, processor );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::TrySetDetectedContentType(ENodeContentType detectedContentType, EContentOverlap overlap,
+void NavMeshQuadTreeNode::TrySetDetectedContentType(NodeContent& detectedContent, EContentOverlap overlap,
   NavMeshQuadTreeProcessor& processor)
 {
   // if we don't want to override with the new content, do not call ForceSet
-  if ( !CanOverrideSelfWithContent(detectedContentType, overlap) ) {
+  if ( !CanOverrideSelfWithContent(detectedContent.type, overlap) ) {
     return;
   }
 
   // do the change
-  ForceSetDetectedContentType(detectedContentType, processor);
+  ForceSetDetectedContentType(detectedContent, processor);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::ForceSetDetectedContentType(ENodeContentType detectedContentType, NavMeshQuadTreeProcessor& processor)
+void NavMeshQuadTreeNode::ForceSetDetectedContentType(NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
 {
-  if ( _contentType != detectedContentType )
-  {
-    const ENodeContentType oldcontent = _contentType;
-    
-    // this is where we can detect changes in content, for example new obstacles or things disappearing
-    _contentType = detectedContentType;
-    
-    // notify the processor
-    processor.OnNodeContentTypeChanged(this, oldcontent, _contentType);
+  const ENodeContentType oldcontent = _content.type;
+  
+  // this is where we can detect changes in content, for example new obstacles or things disappearing
+  _content = detectedContent;
+  
+  // notify processor only when content type changes, not if the underlaying info changes
+  const bool typeChanged = oldcontent != _content.type;
+  if ( typeChanged ) {
+    processor.OnNodeContentTypeChanged(this, oldcontent, _content.type);
   }
 }
 
@@ -430,9 +450,9 @@ const NavMeshQuadTreeNode::MoveInfo* NavMeshQuadTreeNode::GetDestination(EQuadra
 const NavMeshQuadTreeNode* NavMeshQuadTreeNode::GetChild(EQuadrant quadrant) const
 {
   const NavMeshQuadTreeNode* ret =
-    ( _children.empty() ) ?
+    ( _childrenPtr.empty() ) ?
     ( nullptr ) :
-    ( &_children[(std::underlying_type<EQuadrant>::type)quadrant] );
+    ( _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant].get() );
   return ret;
 }
 
@@ -481,8 +501,8 @@ void NavMeshQuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDir
     
     CORETECH_ASSERT(firstChild != EQuadrant::Invalid);
     CORETECH_ASSERT(secondChild != EQuadrant::Invalid);
-    _children[(std::underlying_type<EQuadrant>::type)firstChild ].AddSmallestDescendants(direction, iterationDirection, descendants);
-    _children[(std::underlying_type<EQuadrant>::type)secondChild].AddSmallestDescendants(direction, iterationDirection, descendants);
+    _childrenPtr[(std::underlying_type<EQuadrant>::type)firstChild ]->AddSmallestDescendants(direction, iterationDirection, descendants);
+    _childrenPtr[(std::underlying_type<EQuadrant>::type)secondChild]->AddSmallestDescendants(direction, iterationDirection, descendants);
   }
 }
 

@@ -708,10 +708,10 @@ namespace Anki {
                "Action");
       
       // Prevent the compound action from signaling completion
-      _compoundAction.SetEmitCompletionSignal(false);
+      _compoundAction.ShouldEmitCompletionSignal(false);
       
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
-      _compoundAction.SetSuppressTrackLocking(true);
+      _compoundAction.ShouldSuppressTrackLocking(true);
       
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
@@ -852,7 +852,8 @@ namespace Anki {
       _facePoseCompoundActionDone = false;
       
       // Disable completion signals since this is inside another action
-      _visuallyVerifyAction.SetEmitCompletionSignal(false);
+      _visuallyVerifyAction.ShouldEmitCompletionSignal(false);
+      _visuallyVerifyAction.ShouldSuppressTrackLocking(true);
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
@@ -949,11 +950,13 @@ namespace Anki {
         {
           CrossBridgeAction* bridgeAction = new CrossBridgeAction(_robot, _objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
+          bridgeAction->ShouldSuppressTrackLocking(true);
           _chosenAction = bridgeAction;
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
           AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_robot, _objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
+          rampAction->ShouldSuppressTrackLocking(true);
           _chosenAction = rampAction;
         }
         else {
@@ -1108,7 +1111,9 @@ namespace Anki {
       }
       
       // Get lift out of the way
-      _moveLiftToHeightAction.SetEmitCompletionSignal(false);
+
+      _moveLiftToHeightAction.ShouldEmitCompletionSignal(false);
+      _moveLiftToHeightAction.ShouldSuppressTrackLocking(true);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
       

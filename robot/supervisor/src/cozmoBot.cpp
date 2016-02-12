@@ -10,6 +10,7 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "proxSensors.h"
+#include "version.h"
 #include "backpackLightController.h"
 #include "blockLightController.h"
 #include "speedController.h"
@@ -205,6 +206,8 @@ namespace Anki {
 
         robotStateMessageCounter_ = 0;
 
+				SendVersionInfo();
+
         return RESULT_OK;
 
       } // Robot::Init()
@@ -286,7 +289,7 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CARRY_NONE);
 #ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
-          AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
+          AnimationController::EnableTracks(ALL_TRACKS);
           HAL::FaceClear();
 #endif
           wasConnected_ = false;

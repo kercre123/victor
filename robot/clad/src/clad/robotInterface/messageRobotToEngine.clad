@@ -29,6 +29,13 @@ message RobotPoked
   uint_32 robotID
 }
 
+message RTIPVersionInfo
+{
+  uint_32 version,
+  uint_32 date,
+  string  description
+}
+
 /// *************** WiFi to Engine messages ******************************* ///
 
 // These two messages bookend animations as they are played on the robot
@@ -114,6 +121,9 @@ union RobotToEngine {
   NVStorage::NVStorageBlob   nvData                 = 0x88,
   NVStorage::NVOpResult      nvResult               = 0x98,
   CrashReport                crashReport            = 0x99,
+  
+  // From RTIP to WiFi specifically
+  RTIPVersionInfo            rtipVersion            = 0xFD
 }
 
 

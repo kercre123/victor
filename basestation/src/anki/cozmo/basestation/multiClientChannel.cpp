@@ -130,7 +130,7 @@ void MultiClientChannel::Update()
         
         if (_advertisingInfo.count(advertisementMessage.id) == 0) {
           PRINT_STREAM_DEBUG("MultiClientChannel.Update",
-                             "Detected advertising connection id " << advertisementMessage.id <<
+                             "Detected advertising connection id " << ((uint)advertisementMessage.id) <<
                              " when hosting on host " << advertisementMessage.ip <<
                              " at port " << advertisementMessage.port <<  ".");
         }
@@ -156,7 +156,7 @@ void MultiClientChannel::Update()
           
           if (_advertisingInfo.count(advertisementMessage.id) == 0) {
             PRINT_STREAM_DEBUG("MultiClientChannel.Update",
-                                 "Detected advertising connection id " << advertisementMessage.id <<
+                                 "Detected advertising connection id " << ((uint)advertisementMessage.id) <<
                               " when hosting on host " << advertisementMessage.ip <<
                               " at port " << advertisementMessage.port << ".");
           }

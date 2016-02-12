@@ -28,12 +28,16 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "util/logging/sosLoggerProvider.h"
+#include "util/logging/printfLoggerProvider.h"
+
 
 namespace Anki {
 namespace Cozmo {
 
 CozmoEngine::CozmoEngine(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
-  : _isInitialized(false)
+  : _loggerProvider({ new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider() })
+  , _isInitialized(false)
 #if DEVICE_VISION_MODE != DEVICE_VISION_MODE_OFF
   ,_deviceVisionThread(dataPlatform)
 #endif

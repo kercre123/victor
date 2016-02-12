@@ -220,7 +220,7 @@ namespace Anki {
     #pragma mark ---- DeviceAudioAction ----
 
     DeviceAudioAction::DeviceAudioAction(Robot& robot,
-                                         const Audio::GenericEvent event,
+                                         const Audio::GameEvent::GenericEvent event,
                                          const Audio::GameObjectType gameObj,
                                          const bool waitUntilDone)
     : IAction(robot)
@@ -241,12 +241,12 @@ namespace Anki {
     { }
 
     // Change Music state
-    DeviceAudioAction::DeviceAudioAction(Robot& robot, const Audio::MUSIC state)
+    DeviceAudioAction::DeviceAudioAction(Robot& robot, const Audio::GameState::Music state)
     : IAction(robot)
     , _actionType( AudioActionType::SetState )
     , _name( "PlayAudioMusicState_" + std::string(EnumToString(state)) )
-    , _stateGroup( Audio::StateGroupType::MUSIC )
-    , _state( static_cast<Audio::GenericState>(state) )
+    , _stateGroup( Audio::GameState::StateGroupType::Music )
+    , _state( static_cast<Audio::GameState::GenericState>(state) )
     { }
 
     void DeviceAudioAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -292,10 +292,10 @@ namespace Anki {
         case AudioActionType::SetState:
         {
           // FIXME: This is temp until we add boot process which will start music at launch
-          if (Audio::StateGroupType::MUSIC == _stateGroup) {
+          if (Audio::GameState::StateGroupType:: Music == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
-              _robot.GetRobotAudioClient()->PostEvent( static_cast<GenericEvent>(Music::PlayMusic), GameObjectType::Default );
+              _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(GameEvent::Music::Play), GameObjectType::Default );
               didStartMusic = true;
             }
           }

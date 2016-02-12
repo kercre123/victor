@@ -78,7 +78,7 @@ namespace AnimationController {
     AnkiDebug( 2, "AnimationController", 3, "Initializing", 0);
 #   endif
 
-    _tracksToPlay = ENABLE_ALL_TRACKS;
+    _tracksToPlay = ALL_TRACKS;
 
     Clear();
 

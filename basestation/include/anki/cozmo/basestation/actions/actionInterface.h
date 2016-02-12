@@ -89,20 +89,18 @@ namespace Anki {
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
-      // Override to have the action disable any animation tracks that may have
-      // already been streamed and are in the robot's buffer, so they don't
-      // interfere with the action. Note: uses the bits defined by AnimTrackFlag.
-      virtual u8 GetAnimTracksToDisable() const { return 0; }
-      
-      // Override these to have the action allow the robot to move certain
-      // subsystems while the action executes. I.e., by default actions
-      // will lockout all control of the robot, and extra movement commands are ignored.
+      // Override to have the action allow the robot to move certain
+      // subsystems while the action executes, also disables any tracks used by animations
+      // that may have already been streamed and are in the robot's buffer, so they don't interfere
+      // with the action. I.e., by default actions will lockout all control of the robot,
+      // and extra movement commands are ignored.
       // Note: uses the bits defined by AnimTrackFlag.
-      virtual u8 GetMovementTracksToIgnore() const;
+      virtual u8 GetTracksToLock() const;
       
       // Used (e.g. in initialization of CompoundActions) to specify that a
       // consituent action should not try to lock or unlock tracks it uses
-      void SetSuppressTrackLocking(bool tf) { _suppressTrackLocking = tf; }
+      void ShouldSuppressTrackLocking(bool tf) { _suppressTrackLocking = tf; }
+      bool IsSuppressingTrackLocking() const { return _suppressTrackLocking; }
 
       // Override this to fill in the ActionCompletedStruct emitted as part of the
       // completion signal with an action finishes. Note that this public because
@@ -114,12 +112,14 @@ namespace Anki {
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
       bool IsMessageDisplayEnabled() const { return _displayMessages; }
       
-      void SetEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
+      void ShouldEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
       bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
-
+      
       // Called when the action stops running and sets varibles needed for completion.
       // This calls the overload-able GetCompletionUnion() method above.
       void PrepForCompletion();
+      
+      void UnlockTracks();
 
     protected:
       
@@ -141,12 +141,11 @@ namespace Anki {
       
       std::string   _statusMsg;
       
-      ActionResult         _result;
+      ActionResult         _result = ActionResult::RUNNING;
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
       std::string          _name;
-      uint8_t              _animTracks      = (uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS;
-      uint8_t              _movementTracks  = (uint8_t)AnimTrackFlag::ENABLE_ALL_TRACKS;
+      u8                   _tracks          = (u8)AnimTrackFlag::ALL_TRACKS;
       
       bool          _suppressTrackLocking   = false;
       bool          _isRunning              = false;

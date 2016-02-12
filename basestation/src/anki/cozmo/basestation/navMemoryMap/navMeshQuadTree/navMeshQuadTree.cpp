@@ -63,7 +63,7 @@ void NavMeshQuadTree::Draw() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddQuad(const Quad2f& quad, ENodeContentType nodeType)
+void NavMeshQuadTree::AddQuad(const Quad2f& quad, NodeContent& nodeContent)
 {
   // render approx last quad added
   if ( kRenderLastAddedQuad )
@@ -87,7 +87,7 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, ENodeContentType nodeType)
   }
 
   // add quad now
-  _gfxDirty = _root.AddQuad(quad, nodeType, _processor) || _gfxDirty;
+  _gfxDirty = _root.AddQuad(quad, nodeContent, _processor) || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
