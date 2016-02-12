@@ -402,7 +402,7 @@ namespace HeadController {
       if (potentialBurnoutStartTime_ms == 0) {
         potentialBurnoutStartTime_ms = HAL::GetTimeStamp();
       } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms > BURNOUT_TIME_THRESH_MS) {
-        AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating.", 0);
+        AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating (power = %f)", 1, power_);
         StartCalibrationRoutine();
         potentialBurnoutStartTime_ms = 0;
         return true;
