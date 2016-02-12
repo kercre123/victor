@@ -79,10 +79,9 @@ using namespace Anki::Cozmo;
 
 
 int main(int argc, char **argv)
-{
-
-  Anki::Util::MultiFormattedLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider()});
-  loggerProvider.SetMinLogLevel(0);
+{  
+  Anki::Util::MultiFormattedLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN)});
+  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = &loggerProvider;
   // Get the last position of '/'
   std::string aux(argv[0]);
