@@ -21,9 +21,6 @@ extern "C" {
   // Hook for deinitialization. Should be fine to call startup after this call, even on failure.
   // Return value is just for informational purposes. Should never fail, even if not initialized.
   int cozmo_shutdown();
-    
-  // Update tick; only call if cozmo_startup succeeded.
-  int cozmo_update(float current_time);
   
   void Unity_DAS_Event(const char* eventName, const char* eventValue);
   

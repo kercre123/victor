@@ -100,17 +100,8 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
 
 int Anki::Cozmo::CSharpBinding::cozmo_game_destroy()
 {
-    if (gameAPI != nullptr) {
-        delete gameAPI;
-        gameAPI = nullptr;
-    }
+  Anki::Util::SafeDelete(gameAPI);
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
   Anki::Util::SafeDelete(dataPlatform);
     return (int)RESULT_OK;
-}
-
-int Anki::Cozmo::CSharpBinding::cozmo_game_update(float current_time)
-{
-  // This does not need to happen anymore
-  return RESULT_OK;
 }
