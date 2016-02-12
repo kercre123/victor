@@ -14,6 +14,7 @@
 #include "driver/sdio_slv.h"
 #include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
+#include "backgroundTask.h"
 #include "foregroundTask.h"
 #include "imageSender.h"
 
@@ -251,6 +252,7 @@ void i2spiTask(os_event_t *event)
                   // Going past the end is OKAY as that will be used to increment the buffer
                   os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
                   outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+                  backgroundTaskOnRTIPSync();
                   foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
                 }
               }
