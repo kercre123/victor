@@ -17,11 +17,11 @@ public class RobotEngineManager : MonoBehaviour {
   
   public static RobotEngineManager Instance = null;
 
-  public Dictionary<int, Robot> Robots { get; private set; }
+  public Dictionary<int, IRobot> Robots { get; private set; }
 
   public int CurrentRobotID { get; private set; }
 
-  public Robot CurrentRobot { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
+  public IRobot CurrentRobot { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
 
   public bool IsConnected { get { return (_Channel != null && _Channel.IsConnected); } }
 
@@ -124,7 +124,7 @@ public class RobotEngineManager : MonoBehaviour {
     _Channel.DisconnectedFromClient += Disconnected;
     _Channel.MessageReceived += ReceivedMessage;
 
-    Robots = new Dictionary<int, Robot>();
+    Robots = new Dictionary<int, IRobot>();
   }
 
   private void OnDisable() {
@@ -161,14 +161,14 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void AddRobot(byte robotID) {
     if (Robots.ContainsKey(robotID)) {
-      Robot oldRobot = Robots[robotID];
+      IRobot oldRobot = Robots[robotID];
       if (oldRobot != null) {
         oldRobot.Dispose();
       }
       Robots.Remove(robotID);
     }
     
-    Robot robot = new Robot(robotID);
+    IRobot robot = new Robot(robotID);
     Robots.Add(robotID, robot);
     CurrentRobotID = robotID;
   }
@@ -481,7 +481,7 @@ public class RobotEngineManager : MonoBehaviour {
     bool success = message.result == ActionResult.SUCCESS;
     CurrentRobot.TargetLockedObject = null;
 
-    CurrentRobot.LocalBusyTimer = 0f;
+    CurrentRobot.SetLocalBusyTimer(0f);
 
     if (SuccessOrFailure != null) {
       SuccessOrFailure(message.idTag, success, actionType);

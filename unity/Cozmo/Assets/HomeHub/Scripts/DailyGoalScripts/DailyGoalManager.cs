@@ -179,7 +179,7 @@ public class DailyGoalManager : MonoBehaviour {
   // Using current friendship level and the appropriate config file,
   // generate a series of random goals for the day.
   public StatContainer GenerateDailyGoals() {
-    Robot rob = RobotEngineManager.Instance.CurrentRobot;
+    IRobot rob = RobotEngineManager.Instance.CurrentRobot;
     FriendshipProgressionConfig config = _FriendshipProgConfig;
 
     int lvl = rob.FriendshipLevel;

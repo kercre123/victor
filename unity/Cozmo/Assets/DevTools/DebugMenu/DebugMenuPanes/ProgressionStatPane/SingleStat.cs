@@ -23,7 +23,7 @@ public class SingleStat : MonoBehaviour {
 
   private void HandleValueChanged(string newValue) {
     //DAS.Info("Single Stat " + _StatEnum, "HandleValueChanged: " + newValue);
-    Robot robot = RobotEngineManager.Instance.CurrentRobot;
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     int newStat;
 
     if (robot != null && int.TryParse(newValue, out newStat)) {

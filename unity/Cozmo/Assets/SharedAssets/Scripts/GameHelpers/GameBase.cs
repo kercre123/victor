@@ -25,7 +25,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameWinHandler OnMiniGameLose;
 
-  public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
+  public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private SharedMinigameView _SharedMinigameViewInstance;
 

@@ -23,7 +23,7 @@ namespace ScriptedSequences.Actions {
 
       // FIXME: This will change when we start using wwise to generate sound for Cozmo
       if (VolumeChannel == Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot) {
-        Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+        IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
         DOTween.To(() => currentRobot.GetRobotVolume(), x => currentRobot.SetRobotVolume(x), TargetVolume, Duration).OnComplete(() => DoneTween());
       }
       else {
