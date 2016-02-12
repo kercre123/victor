@@ -96,7 +96,6 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   }
 
   SubscribeToTags({{
-    EngineToGameTag::RobotCompletedAction,
     EngineToGameTag::RobotObservedFace,
     EngineToGameTag::RobotDeletedFace,
   }});
@@ -113,7 +112,7 @@ bool IBehaviorRequestGame::IsRunnable(const Robot& robot, double currentTime_sec
   u32 numBlocks = GetNumBlocks(robot);
   const bool hasBlocks = numBlocks == _requiredNumBlocks || (_moreBlocksOK && numBlocks > _requiredNumBlocks);
   
-  const bool ret = _isActing || (hasFace && hasBlocks);
+  const bool ret = IsActing() || (hasFace && hasBlocks);
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
     PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable",
@@ -159,22 +158,6 @@ void IBehaviorRequestGame::SendDeny(Robot& robot)
   using namespace ExternalInterface;
 
   robot.Broadcast( MessageEngineToGame( DenyGameStart() ) );
-}
-
-
-void IBehaviorRequestGame::StartActing(Robot& robot, IActionRunner* action)
-{
-  _lastActionTag = action->GetTag();
-  robot.GetActionList().QueueActionNow(action);
-  _isActing = true;
-}
-
-void IBehaviorRequestGame::CancelAction(Robot& robot)
-{
-  if( _isActing ) {
-    robot.GetActionList().Cancel( _lastActionTag );
-    _isActing = false;
-  }
 }
 
 u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
@@ -240,10 +223,6 @@ void IBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, const Ro
 {
   switch(event.GetData().GetTag())
   {
-    case EngineToGameTag::RobotCompletedAction:
-      // handled in WhileRunning
-      break;
-
     case EngineToGameTag::RobotObservedFace:
       HandleObservedFace(robot, event.GetData().Get_RobotObservedFace());
       break;
@@ -267,34 +246,6 @@ void IBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, Ro
   else {
     PRINT_NAMED_WARNING("IBehaviorRequestGame.InvalidTag",
                         "Received unexpected event with tag %hhu.", event.GetData().GetTag());
-  }
-}
-
-void IBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
-{
-  switch(event.GetData().GetTag())
-  {
-    case EngineToGameTag::RobotCompletedAction:
-      HandleActionCompleted(robot, event.GetData().Get_RobotCompletedAction());
-      break;
-
-    case EngineToGameTag::RobotObservedFace:
-    case EngineToGameTag::RobotDeletedFace:
-      // handled in AlwaysHandle
-      break;
-
-    default:
-      PRINT_NAMED_WARNING("IBehaviorRequestGame.InvalidTag",
-                          "Received unexpected event with tag %hhu.", event.GetData().GetTag());
-      break;
-  }
-}
-
-void IBehaviorRequestGame::HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg)
-{
-  if( _isActing && msg.idTag == _lastActionTag ) {
-    _isActing = false;
-    RequestGame_HandleActionCompleted(robot, msg.result);
   }
 }
 
