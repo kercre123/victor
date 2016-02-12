@@ -64,7 +64,9 @@ namespace Anki {
       message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
       p.dataLen = message.Size();
       p.destId = _hostUiDeviceID;
-      comms_->Send(p);
+      if( nullptr != comms_ ) {
+        comms_->Send(p);
+      }
 #else
       //MessageQueue::getInstance()->AddMessageForUi(msg);
 #endif

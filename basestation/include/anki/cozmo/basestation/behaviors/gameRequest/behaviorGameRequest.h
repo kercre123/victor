@@ -21,7 +21,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace ExternalInterface {
-struct RobotCompletedAction;
 struct RobotDeletedFace;
 struct RobotObservedFace;
 }
@@ -45,9 +44,6 @@ protected:
   virtual Result RequestGame_InitInternal(Robot& robot, double currentTime_sec) = 0;
   virtual void HandleGameDeniedRequest(Robot& robot) = 0;
 
-  // called only with results of actions from StartActing
-  virtual void RequestGame_HandleActionCompleted(Robot& robot, ActionResult result) {};
-
   // --------------------------------------------------------------------------------
   // Utility functions for sub-classes
   
@@ -60,10 +56,6 @@ protected:
 
   Face::ID_t GetFaceID() const { return _faceID; }
   f32 GetLastSeenFaceTime() const {return _lastFaceSeenTime_s;}
-
-  void StartActing(Robot& robot, IActionRunner* action);
-  bool IsActing() const { return _isActing; }
-  void CancelAction(Robot& robot);
     
   u32 GetNumBlocks(const Robot& robot) const;
   ObjectID GetRobotsBlockID(const Robot& robot) const;
@@ -78,7 +70,6 @@ protected:
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) final override;
 
   // --------------------------------------------------------------------------------
   // parameters read from json which children can use
@@ -87,20 +78,17 @@ protected:
 
 private:
 
-  u32        _lastActionTag = 0;
   u32        _requiredNumBlocks = 0;
   u32        _maxFaceAge_ms = 30000;
   f32        _minRequestDelay_s = 3.0f;
   f32        _requestTime_s = -1.0f;
   f32        _lastFaceSeenTime_s = -1.0f;
   Face::ID_t _faceID = Face::UnknownFace;
-  bool       _isActing = false;
   bool       _moreBlocksOK = false;
   
   void HandleObservedFace(const Robot& robot,
                           const ExternalInterface::RobotObservedFace& msg);
   void HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg);
-  void HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
 
 };
 

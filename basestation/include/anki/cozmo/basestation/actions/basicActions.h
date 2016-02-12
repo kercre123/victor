@@ -452,6 +452,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::HANG; }
+
+      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
       
     protected:
       
@@ -461,6 +463,42 @@ namespace Anki {
       std::string _name = "Hang";
 
     };
+
+    class WaitForLambdaAction : public IAction
+    {
+    public:
+      WaitForLambdaAction(Robot& robot, std::function<bool(Robot&)> lambda)
+        : IAction(robot)
+        , _lambda(lambda)
+        {
+        }
+      
+      virtual const std::string& GetName() const override { return _name; }
+      virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_LAMBDA; }
+
+      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
+      
+    protected:
+      
+      virtual ActionResult Init() override { return ActionResult::SUCCESS; }
+      virtual ActionResult CheckIfDone() override {
+        if( _lambda(_robot) ){
+          return ActionResult::SUCCESS;
+        }
+        else {
+          return ActionResult::RUNNING;
+        }
+      }
+      
+      std::string _name = "WaitForLambda";
+
+    private:
+      
+      std::function<bool(Robot&)> _lambda;
+
+    };
+
+      
   }
 }
 

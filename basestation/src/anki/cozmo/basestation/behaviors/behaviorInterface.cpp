@@ -9,13 +9,14 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -46,6 +47,17 @@ namespace Cozmo {
   , _enableRepetitionPenalty(true)
   {
     ReadFromJson(config);
+
+    if(_robot.HasExternalInterface()) {
+      // NOTE: this won't get sent down to derived classes (unless they also subscribe)
+      _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(
+                                EngineToGameTag::RobotCompletedAction,
+                                [this](const EngineToGameEvent& event) {
+                                  ASSERT_NAMED(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
+                                               "Wrong event type from callback");
+                                  HandleActionComplete(event.GetData().Get_RobotCompletedAction());
+                                } ));
+    }
   }
 
   bool IBehavior::ReadFromJson(const Json::Value& config)
@@ -213,6 +225,73 @@ namespace Cozmo {
     }
     
     return 0.0f;
+  }
+
+  bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback callback)
+  {
+    if( ! IsRunning() ) {
+      PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
+                          "Behavior '%s' can't start acting because it is not running",
+                          GetName().c_str());
+      return false;
+    }
+
+    if( IsActing() ) {
+      PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.AlreadyActing",
+                          "Behavior '%s' can't start acting because it is already running an action",
+                          GetName().c_str());
+      return false;
+    }
+
+    _actingCallback = callback;
+    _lastActionTag = action->GetTag();
+    _robot.GetActionList().QueueActionNow(action);
+    return true;
+  }
+
+  bool IBehavior::StartActing(IActionRunner* action, ActionResultCallback callback)
+  {
+    return StartActing(action,
+                       [callback](const ExternalInterface::RobotCompletedAction& msg) {
+                         callback(msg.result);
+                       });
+  }
+
+  bool IBehavior::StartActing(IActionRunner* action, SimpleCallback callback)
+  {
+    return StartActing(action, [callback](ActionResult ret){ callback(); });
+  }
+
+  bool IBehavior::StartActing(IActionRunner* action, SimpleCallbackWithRobot callback)
+  {
+    return StartActing(action, [this, callback](ActionResult ret){ callback(_robot); });
+  }
+
+  void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
+  {
+    if( IsActing() && msg.idTag == _lastActionTag ) {
+      _lastActionTag = ActionConstants::INVALID_TAG;
+
+      if( IsRunning() && _actingCallback ) {
+        _actingCallback(msg);
+      }
+    }
+  }
+
+  bool IBehavior::StopActing()
+  {
+    if( IsActing() ) {
+      // TODO:(bn) should we check IsRunning here? Currently, no, because we want to support this happening
+      // from Stop()
+      bool ret = _robot.GetActionList().Cancel( _lastActionTag );
+      // note that the callback, if there was one, should have already been called at this point, so it's safe
+      // to clear the tag. Also, if the cancel itself failed, that is probably a bug, but somehow the action
+      // is gone, so no sense keeping the tag around (and it clearly isn't running)
+      _lastActionTag = ActionConstants::INVALID_TAG;
+      return ret;
+    }
+
+    return false;
   }
 
 #pragma mark --- IReactionaryBehavior ----

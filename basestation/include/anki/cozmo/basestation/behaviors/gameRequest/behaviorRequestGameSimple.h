@@ -39,8 +39,6 @@ protected:
 
   virtual void HandleGameDeniedRequest(Robot& robot) override;
   
-  virtual void RequestGame_HandleActionCompleted(Robot& robot, ActionResult result) override;
-
 private:
 
   // ========== Members ==========
@@ -65,7 +63,21 @@ private:
   std::string _preDriveAnimationName;
   float       _verifyStartTime_s = 0.0f;
 
-  void TransitionTo(Robot& robot, State state);
+  void SetState_internal(State state, const std::string& stateName);
+
+  void TransitionToPlayingInitialAnimation(Robot& robot);
+  void TransitionToFacingBlock(Robot& robot);
+  void TransitionToPlayingPreDriveAnimation(Robot& robot);
+  void TransitionToPickingUpBlock(Robot& robot);
+  void TransitionToDrivingToFace(Robot& robot);
+  void TransitionToPlacingBlock(Robot& robot);
+  void TransitionToLookingAtFace(Robot& robot);
+  void TransitionToVerifyingFace(Robot& robot);
+  void TransitionToPlayingRequstAnim(Robot& robot);
+  void TransitionToTrackingFace(Robot& robot);
+  void TransitionToPlayingDenyAnim(Robot& robot);
+
+  
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
 
 };
