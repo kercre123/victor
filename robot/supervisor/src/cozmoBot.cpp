@@ -10,6 +10,7 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "proxSensors.h"
+#include "version.h"
 #include "backpackLightController.h"
 #include "blockLightController.h"
 #include "speedController.h"
@@ -204,6 +205,8 @@ namespace Anki {
         mode_ = INIT_MOTOR_CALIBRATION;
 
         robotStateMessageCounter_ = 0;
+
+				SendVersionInfo();
 
         return RESULT_OK;
 

@@ -57,10 +57,21 @@ NavMemoryMap::NavMemoryMap(VizManager* vizManager)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMap::AddQuad(const Quad2f& quad, EContentType type)
+void NavMemoryMap::AddQuadInternal(const Quad2f& quad, EContentType type)
 {
   const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
-  _navMesh.AddQuad(quad, nodeContentType);
+  NodeContent nodeContent(nodeContentType);
+  _navMesh.AddQuad(quad, nodeContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMap::AddQuadInternal(const Quad2f& quad, const INavMemoryMapQuadData& content)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
+  NodeContent nodeContent(nodeContentType);
+  nodeContent.data.reset( content.Clone() );
+
+  _navMesh.AddQuad(quad, nodeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
