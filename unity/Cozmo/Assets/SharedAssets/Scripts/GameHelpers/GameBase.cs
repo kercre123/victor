@@ -74,8 +74,9 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    SharedMinigameView.TitleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    SharedMinigameView.TitleWidget.Icon = data.ChallengeIcon;
+    ChallengeTitleWidget titleWidget = SharedMinigameView.TitleWidget;
+    titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
+    titleWidget.Icon = data.ChallengeIcon;
     SharedMinigameView.ShowBackButton();
   }
 
@@ -190,27 +191,31 @@ public abstract class GameBase : MonoBehaviour {
 
   public void RaiseMiniGameWin(string subtitleText = null) {
     _StateMachine.Stop();
-
     _WonChallenge = true;
-    _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
-    _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
-    _SharedMinigameViewInstance.PlayerScoreboard.IsWinner = true;
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
 
+    UpdateScoreboard(_WonChallenge);
     OpenChallengeEndedDialog(subtitleText);
   }
 
   public void RaiseMiniGameLose(string subtitleText = null) {
     _StateMachine.Stop();
     _WonChallenge = false;
-    _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
-    _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
-    _SharedMinigameViewInstance.CozmoScoreboard.IsWinner = true;
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
 
+    UpdateScoreboard(_WonChallenge);
     OpenChallengeEndedDialog(subtitleText);
+  }
+
+  private void UpdateScoreboard(bool didPlayerWin) {
+    ScoreWidget cozmoScoreboard = _SharedMinigameViewInstance.CozmoScoreboard;
+    cozmoScoreboard.Dim = false;
+    cozmoScoreboard.IsWinner = !didPlayerWin;
+    ScoreWidget playerScoreboard = _SharedMinigameViewInstance.PlayerScoreboard;
+    playerScoreboard.Dim = false;
+    playerScoreboard.IsWinner = didPlayerWin;
   }
 
   private void OpenChallengeEndedDialog(string subtitleText = null) {

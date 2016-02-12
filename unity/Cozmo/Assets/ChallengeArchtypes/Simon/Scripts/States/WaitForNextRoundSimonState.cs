@@ -18,7 +18,6 @@ namespace Simon {
 
       _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
         Localization.Get(LocalizationKeys.kButtonContinue));
-      _GameInstance.SharedMinigameView.EnableContinueButton(true);
 
       string headerTextKey = (_NextPlayer == PlayerType.Human) ? 
         LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;

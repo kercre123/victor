@@ -48,8 +48,9 @@ namespace AskCozmo {
       InitializeMinigameObjects();
 
       _AttemptsLeft = 3;
-      SharedMinigameView.AttemptBar.MaxAttempts = _AttemptsLeft;
-      SharedMinigameView.AttemptBar.AttemptsLeft = _AttemptsLeft;
+      Cozmo.MinigameWidgets.CozmoStatusWidget statusWidget = SharedMinigameView.AttemptBar;
+      statusWidget.MaxAttempts = _AttemptsLeft;
+      statusWidget.AttemptsLeft = _AttemptsLeft;
 
       _Progress = 0.5f;
       SharedMinigameView.ProgressBar.NumSegments = 4;
