@@ -195,6 +195,9 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
     _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
     _SharedMinigameViewInstance.PlayerScoreboard.IsWinner = true;
+
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
+
     OpenChallengeEndedDialog(subtitleText);
   }
 
@@ -204,6 +207,9 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
     _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
     _SharedMinigameViewInstance.CozmoScoreboard.IsWinner = true;
+
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
+
     OpenChallengeEndedDialog(subtitleText);
   }
 

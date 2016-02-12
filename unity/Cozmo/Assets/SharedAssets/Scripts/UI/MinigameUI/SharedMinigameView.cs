@@ -429,6 +429,11 @@ namespace Cozmo {
 
       public void HideGameStateSlide() {
         if (_CurrentSlide != null) {
+
+          if (_TransitionOutSlide != null) {
+            Destroy(_TransitionOutSlide.gameObject);
+          }
+
           // Set the instance to transition out slot
           _TransitionOutSlide = _CurrentSlide;
           _CurrentSlide = null;
@@ -444,7 +449,7 @@ namespace Cozmo {
 
           // At the end of the tween destroy the out slide
           _SlideOutTween.OnComplete(() => {
-            if (_TransitionOutSlide.gameObject != null) {
+            if (_TransitionOutSlide != null) {
               Destroy(_TransitionOutSlide.gameObject);
             }
           });

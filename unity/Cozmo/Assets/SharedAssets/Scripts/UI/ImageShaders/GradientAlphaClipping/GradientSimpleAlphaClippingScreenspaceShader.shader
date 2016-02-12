@@ -39,6 +39,8 @@
       float4 _AtlasUV;
       float4 _Clipping;
 
+      const float _ImageRatio = 16.0 / 9.0;
+
       v2f vert (appdata v)
       {
         v2f o;
@@ -47,7 +49,7 @@
         
         //modify uv x to match screen ratio since we are using PreserveAspect.
         o.uv.x -= 0.5;
-        o.uv.x *= (_AtlasUV.z / _AtlasUV.w) * (_ScreenParams.y / _ScreenParams.x);
+        o.uv.x *= _ImageRatio * (_ScreenParams.x / _ScreenParams.y);
         o.uv.x += 0.5;
 
         // translate atlas UV to sprite UV

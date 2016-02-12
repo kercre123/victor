@@ -15,11 +15,95 @@ namespace Anki {
         }
       }
 
+      [System.Serializable]
+      public struct AudioEventParameter {
+
+        public static AudioEventParameter DefaultClick = new AudioEventParameter(
+          GameEvent.GenericEvent.Sfx_Ui_Click_General_Play,
+          GameEvent.EventGroupType.UI,
+          GameObjectType.UI);
+
+        public static AudioEventParameter UIEvent(GameEvent.UI ui) {
+          return new AudioEventParameter(
+            (GameEvent.GenericEvent)ui,
+            GameEvent.EventGroupType.UI,
+            GameObjectType.UI);
+        }
+
+        public static AudioEventParameter VOEvent(GameEvent.GenericEvent evt) {
+          return new AudioEventParameter(
+            evt,
+            GameEvent.EventGroupType.GenericEvent,
+            GameObjectType.Aria);
+        }
+
+        public static AudioEventParameter SFXEvent(GameEvent.SFX sfx) {
+          return new AudioEventParameter(
+            (GameEvent.GenericEvent)sfx,
+            GameEvent.EventGroupType.SFX,
+            GameObjectType.SFX);
+        }
+
+        // Unity doesn't like uints for some reason
+        [SerializeField]
+        private int _Event;
+
+        [SerializeField]
+        private int _EventType;
+
+        [SerializeField]
+        private int _GameObjectType;
+
+        public AudioEventParameter(GameEvent.GenericEvent evt, GameEvent.EventGroupType evtType, GameObjectType gameObjectType) {
+          _Event = (int)(uint)evt;
+          _EventType = (int)(uint)evtType;
+          _GameObjectType = (int)(uint)gameObjectType;
+        }
+
+        public GameEvent.GenericEvent Event {
+          get {
+            return (GameEvent.GenericEvent)(uint)_Event;
+          }
+          set {
+            _Event = (int)(uint)value;
+          }
+        }
+
+        public GameEvent.EventGroupType EventType {
+          get {
+            return (GameEvent.EventGroupType)(uint)_EventType;
+          }
+          set {
+            _EventType = (int)(uint)value;
+          }
+        }
+
+        public GameObjectType GameObjectType {
+          get {
+            return (GameObjectType)(uint)_GameObjectType;
+          }
+          set {
+            _GameObjectType = (int)(uint)value;
+          }
+        }
+
+        public bool IsInvalid() {
+          return GameObjectType == GameObjectType.Invalid;
+        }
+      }
+
       public class GameAudioClient {
 
         // If you want to listen to all audio callback events register with Audio Client
         //    AudioClient client = AudioClient.Instance;
         //    client.OnAudioCallback += YourHandler
+
+        static public ushort PostAudioEvent(AudioEventParameter parameter,
+          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
+          CallbackHandler handler = null) {
+          AudioClient client = AudioClient.Instance;
+          return client.PostEvent(parameter.Event, parameter.GameObjectType, callbackFlag, handler);
+        }
 
         static public ushort PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI audioEvent,
                                          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,

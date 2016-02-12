@@ -114,16 +114,16 @@ namespace Anki {
         }
       }
 
-      /*
-      [SerializeField]
-      private AudioController.UIButtonAudioEvent
-      _UISoundEvent = AudioController.UIButtonAudioEvent.SelectSmall;
 
-      public AudioController.UIButtonAudioEvent SoundEvent {
+      [SerializeField]
+      private Anki.Cozmo.Audio.AudioEventParameter 
+      _UISoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+
+      public Anki.Cozmo.Audio.AudioEventParameter SoundEvent {
         get { return _UISoundEvent; }
         set { _UISoundEvent = value; }
       }
-      */
+
 
       public bool IsInteractable() {
         return _Interactable;
@@ -247,7 +247,7 @@ namespace Anki {
           return;
         }
 
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickGeneral);
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_UISoundEvent);
       }
 
       private void UpdateVisuals() {

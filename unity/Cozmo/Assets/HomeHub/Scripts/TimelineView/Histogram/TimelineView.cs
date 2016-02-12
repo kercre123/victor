@@ -7,6 +7,7 @@ using DataPersistence;
 using System.Linq;
 using Anki.UI;
 using Cozmo.UI;
+using Anki.Cozmo.Audio;
 
 namespace Cozmo.HomeHub {
   public class TimelineView : BaseView {
@@ -384,7 +385,7 @@ namespace Cozmo.HomeHub {
       AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm, AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoDisconnect));
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleEndSessionCancel);
       alertView.TitleLocKey = LocalizationKeys.kEndSessionTitle;
       alertView.DescriptionLocKey = LocalizationKeys.kEndSessionDescription;
