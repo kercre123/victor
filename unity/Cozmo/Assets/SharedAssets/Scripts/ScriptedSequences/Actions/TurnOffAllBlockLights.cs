@@ -8,7 +8,7 @@ namespace ScriptedSequences.Actions {
 
     public override ISimpleAsyncToken Act() {
       SimpleAsyncToken token = new SimpleAsyncToken();
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       foreach (KeyValuePair<int, LightCube> kvp in currentRobot.LightCubes) {
         kvp.Value.SetLEDs(0);
       }

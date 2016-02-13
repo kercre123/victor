@@ -12,20 +12,20 @@ using G2U = Anki.Cozmo.ExternalInterface;
 ///   our unity side representation of cozmo's current state
 ///   also wraps most messages related solely to him
 /// </summary>
-public class Robot : IDisposable {
-  public class Light {
+public class Robot : IRobot {
+  public class Light : ILight{
     private uint _LastOnColor;
-    public uint OnColor;
+    public uint OnColor { get; set; }
     private uint _LastOffColor;
-    public uint OffColor;
+    public uint OffColor { get; set; }
     private uint _LastOnPeriodMs;
-    public uint OnPeriodMs;
+    public uint OnPeriodMs { get; set; }
     private uint _LastOffPeriodMs;
-    public uint OffPeriodMs;
+    public uint OffPeriodMs { get; set; }
     private uint _LastTransitionOnPeriodMs;
-    public uint TransitionOnPeriodMs;
+    public uint TransitionOnPeriodMs { get; set; }
     private uint _LastTransitionOffPeriodMs;
-    public uint TransitionOffPeriodMs;
+    public uint TransitionOffPeriodMs { get; set; }
 
     public void SetLastInfo() {
       _LastOnColor = OnColor;
@@ -65,13 +65,8 @@ public class Robot : IDisposable {
 
     public const uint FOREVER = uint.MaxValue;
   }
-
-  public delegate void RobotCallback(bool success);
-
-
-  public delegate void FriendshipLevelUp(int newLevel);
-
-  public FriendshipLevelUp OnFriendshipLevelUp;
+    
+  public event FriendshipLevelUp OnFriendshipLevelUp;
 
   private struct RobotCallbackWrapper {
     public readonly uint IdTag;
@@ -159,7 +154,7 @@ public class Robot : IDisposable {
 
   public float[] EmotionValues { get; private set; }
 
-  public Light[] BackpackLights { get; private set; }
+  public ILight[] BackpackLights { get; private set; }
 
   private bool _LightsChanged {
     get {
@@ -248,20 +243,24 @@ public class Robot : IDisposable {
 
   private readonly List<RobotCallbackWrapper> _RobotCallbacks = new List<RobotCallbackWrapper>();
 
-  [System.NonSerialized] public float LocalBusyTimer = 0f;
-  [System.NonSerialized] public bool LocalBusyOverride = false;
+  private float _LocalBusyTimer = 0f;
+  private bool _LocalBusyOverride = false;
+
+  public void SetLocalBusyTimer(float localBusyTimer) {
+    _LocalBusyTimer = localBusyTimer;
+  }
 
   public bool IsBusy {
     get {
-      return LocalBusyOverride
-      || LocalBusyTimer > 0f
+      return _LocalBusyOverride
+      || _LocalBusyTimer > 0f
       || Status(RobotStatusFlag.IS_PATHING)
       || (Status(RobotStatusFlag.IS_ANIMATING) && !Status(RobotStatusFlag.IS_ANIMATING_IDLE))
       || Status(RobotStatusFlag.IS_PICKED_UP);
     }
 
     set {
-      LocalBusyOverride = value;
+      _LocalBusyOverride = value;
 
       if (value) {
         DriveWheels(0, 0); 
@@ -300,7 +299,7 @@ public class Robot : IDisposable {
       reverseSpeed_mmps: 0f
     );
             
-    BackpackLights = new Light[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
+    BackpackLights = new ILight[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
 
     EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];
 
@@ -325,8 +324,8 @@ public class Robot : IDisposable {
   }
 
   public void CooldownTimers(float delta) {
-    if (LocalBusyTimer > 0f) {
-      LocalBusyTimer -= delta;
+    if (_LocalBusyTimer > 0f) {
+      _LocalBusyTimer -= delta;
     }
   }
 
@@ -432,7 +431,7 @@ public class Robot : IDisposable {
     RightWheelSpeed = float.MaxValue;
     LiftHeight = float.MaxValue;
     BatteryPercent = float.MaxValue;
-    LocalBusyTimer = 0f;
+    _LocalBusyTimer = 0f;
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
       BackpackLights[i].ClearData();
@@ -821,7 +820,7 @@ public class Robot : IDisposable {
 
     SendQueueSingleAction(Singleton<PlaceObjectOnGroundHere>.Instance, callback, queueActionPosition);
 
-    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+    _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -926,7 +925,7 @@ public class Robot : IDisposable {
   /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (kMaxHeadAngle)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
   public void SetHeadAngle(float angleFactor = -0.8f, 
-                           Robot.RobotCallback callback = null,
+                           RobotCallback callback = null,
                            QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                            bool useExactAngle = false, 
                            float accelRadSec = 2f, 
@@ -1000,7 +999,7 @@ public class Robot : IDisposable {
   }
 
   public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
-                         Robot.RobotCallback callback = null,
+                         RobotCallback callback = null,
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Face Object " + observedObject);
@@ -1024,7 +1023,7 @@ public class Robot : IDisposable {
   }
 
   public void FacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
-    Robot.RobotCallback callback = null,
+    RobotCallback callback = null,
     QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
 
     SendQueueSingleAction(Singleton<FacePose>.Instance.Initialize(
@@ -1061,7 +1060,7 @@ public class Robot : IDisposable {
       callback, 
       queueActionPosition);
 
-    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+    _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1079,7 +1078,7 @@ public class Robot : IDisposable {
       callback, 
       queueActionPosition);
 
-    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+    _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1102,7 +1101,7 @@ public class Robot : IDisposable {
       callback, 
       queueActionPosition);
     
-    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+    _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void GotoPose(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1124,7 +1123,7 @@ public class Robot : IDisposable {
       callback, 
       queueActionPosition);
     
-    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+    _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1137,7 +1136,7 @@ public class Robot : IDisposable {
       callback, 
       queueActionPosition);
     
-    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+    _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, float approachAngleRad = 0.0f, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1154,7 +1153,7 @@ public class Robot : IDisposable {
       callback, 
       queueActionPosition);
 
-    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+    _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   // Height factor should be between 0.0f and 1.0f
@@ -1231,7 +1230,7 @@ public class Robot : IDisposable {
       Singleton<TraverseObject>.Instance.Initialize(PathMotionProfileDefault, usePreDockPose, useManualSpeed);
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+    _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void SetVisionMode(VisionMode mode, bool enable) {

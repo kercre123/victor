@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using CozmoAnimation;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Cozmo.Util;
 
 [RequireComponent(typeof(RawImage))]
 public class CozmoFace : MonoBehaviour {
@@ -93,7 +94,7 @@ public class CozmoFace : MonoBehaviour {
     }
   }
 
-  public static void PlayAnimation(string name, bool relative = false, System.Action callback = null) {
+  public static float PlayAnimation(string name, bool relative = false, System.Action callback = null) {
     List<KeyFrame> anim;
     if (!_Animations.TryGetValue(name, out anim)) {
       anim = LoadAnimation(name);
@@ -102,6 +103,14 @@ public class CozmoFace : MonoBehaviour {
     if (_Instance != null) {
       _Instance.PlayAnimation(anim, relative, callback);
     }
+    // Return the animation length
+    if (anim != null) {
+      var lastFrame = anim.LastOrDefault();
+      if (lastFrame != null) {
+        return (lastFrame.triggerTime_ms + lastFrame.durationTime_ms) * 0.001f;
+      }
+    }
+    return 0f;
   }
 
 

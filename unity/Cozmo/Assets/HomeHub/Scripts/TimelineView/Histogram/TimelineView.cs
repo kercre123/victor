@@ -120,7 +120,7 @@ namespace Cozmo.HomeHub {
       _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
 
       _EndSessionButton.onClick.AddListener(HandleEndSessionButtonTap);
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       _CozmoWidgetInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
 
       // Locking and expanding daily goals init
@@ -225,7 +225,7 @@ namespace Cozmo.HomeHub {
 
     private void UpdateDailySession() {
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       // check if the current session is still valid
       if (currentSession != null) {  
         _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
