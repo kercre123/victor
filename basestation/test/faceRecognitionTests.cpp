@@ -305,6 +305,9 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
                                                                                           "/config/basestation/vision"),
                                           Vision::FaceTracker::DetectionMode::Video);
     
+    // Enable ongoing enrollment
+    faceTracker->EnableNewFaceEnrollment(-1);
+    
     if(iReload > 0) {
       Result loadResult = faceTracker->LoadAlbum("testAlbum");
       ASSERT_EQ(loadResult, RESULT_OK);
