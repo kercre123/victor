@@ -1212,6 +1212,15 @@ namespace Cozmo {
                                    const std::vector<Quad2f>& markerQuads)
   {
     ASSERT_NAMED(_faceTracker != nullptr, "FaceTracker should not be null.");
+   
+    /*
+    // Periodic printouts of face tracker timings
+    static TimeStamp_t lastProfilePrint = 0;
+    if(grayImage.GetTimestamp() - lastProfilePrint > 2000) {
+      _faceTracker->PrintTiming();
+      lastProfilePrint = grayImage.GetTimestamp();
+    }
+     */
     
     Simulator::SetFaceDetectionReadyTime();
     
