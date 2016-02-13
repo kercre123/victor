@@ -1464,7 +1464,11 @@ namespace Anki {
                       printf("Assigning name '%s' to ID %d\n", assignNameToFace.name.c_str(), assignNameToFace.faceID);
                       SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
                     } else {
-                      printf("userName field is empty\n");
+                      // No user name, enable enrollment
+                      ExternalInterface::EnableNewFaceEnrollment enableEnrollment;
+                      enableEnrollment.numToEnroll = 1;
+                      printf("Enabling enrollment of next face\n");
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(enableEnrollment)));
                     }
                     
                   } else {
