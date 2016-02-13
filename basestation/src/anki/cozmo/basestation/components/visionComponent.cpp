@@ -79,6 +79,13 @@ namespace Cozmo {
           _visionSystem->AssignNameToFace(msg.faceID, msg.name);
           Unlock();
         }));
+      
+      // EnableNewFaceEnrollment
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableNewFaceEnrollment,
+        [this] (const AnkiEvent<MessageGameToEngine>& event) {
+          const ExternalInterface::EnableNewFaceEnrollment& msg = event.GetData().Get_EnableNewFaceEnrollment();
+          _visionSystem->EnableNewFaceEnrollment(msg.numToEnroll);
+        }));
     }
     
   } // VisionSystem()

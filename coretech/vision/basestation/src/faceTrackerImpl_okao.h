@@ -46,7 +46,7 @@ namespace Vision {
     
     static bool IsRecognitionSupported() { return true; }
     
-    void EnableNewFaceEnrollment(bool enable) { _recognizer.EnableNewFaceEnrollment(enable); }
+    void EnableNewFaceEnrollment(s32 numToEnroll) { _recognizer.EnableNewFaceEnrollment(numToEnroll); }
     bool IsNewFaceEnrollmentEnabled() const   { return _recognizer.IsNewFaceEnrollmentEnabled(); }
     
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }

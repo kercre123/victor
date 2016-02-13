@@ -71,8 +71,8 @@ namespace Vision {
     Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName);
     Result SaveAlbum(const std::string& albumName);
 
-    void EnableNewFaceEnrollment(bool enable) { _enrollNewFaces = enable; }
-    bool IsNewFaceEnrollmentEnabled() const   { return _enrollNewFaces; }
+    void EnableNewFaceEnrollment(s32 numToEnroll) { _numToEnroll = numToEnroll; }
+    bool IsNewFaceEnrollmentEnabled() const   { return _numToEnroll != 0; }
 
   private:
     
@@ -127,7 +127,7 @@ namespace Vision {
     std::list<INT32> _trackerIDsToRemove;
     
     INT32 _lastRegisteredUserID = 0;
-    bool  _enrollNewFaces = true;
+    s32   _numToEnroll = 0;
     
     // Store additinal bookkeeping information we need, on top of the album data
     // stored by Okao.

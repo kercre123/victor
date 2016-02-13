@@ -69,9 +69,9 @@ namespace Vision {
     return Impl::IsRecognitionSupported();
   }
   
-  void FaceTracker::EnableNewFaceEnrollment(bool enable)
+  void FaceTracker::EnableNewFaceEnrollment(s32 numToEnroll)
   {
-    _pImpl->EnableNewFaceEnrollment(enable);
+    _pImpl->EnableNewFaceEnrollment(numToEnroll);
   }
   
   bool FaceTracker::IsNewFaceEnrollmentEnabled() const

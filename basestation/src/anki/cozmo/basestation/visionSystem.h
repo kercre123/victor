@@ -191,6 +191,8 @@ namespace Cozmo {
     
     void AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name);
     
+    void EnableNewFaceEnrollment(s32 numToEnroll);
+    
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,
                    const s32 integerCountsIncrement,

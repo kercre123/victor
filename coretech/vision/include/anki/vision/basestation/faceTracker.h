@@ -44,7 +44,7 @@ namespace Vision {
     
     void EnableDisplay(bool enabled);
     
-    void EnableNewFaceEnrollment(bool enable);
+    void EnableNewFaceEnrollment(s32 numToEnroll);
     bool IsNewFaceEnrollmentEnabled() const;
     
     static bool IsRecognitionSupported();

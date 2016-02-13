@@ -344,7 +344,7 @@ namespace Vision {
   bool FaceRecognizer::IsEnrollable()
   {
     // TODO: Add checks for eyes open and smiling?
-    if(_enrollNewFaces &&
+    if(_numToEnroll != 0 &&
        _detectionInfo.nPose == POSE_YAW_FRONT &&
        _detectionInfo.nWidth*_detectionInfo.nHeight > 1000)
     {
@@ -401,6 +401,9 @@ namespace Vision {
       enrollData.oldestData++;
       if(enrollData.oldestData == MaxAlbumDataPerFace) {
         enrollData.oldestData = 0;
+      }
+      if(_numToEnroll > 0) {
+        --_numToEnroll;
       }
     }
     

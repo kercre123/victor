@@ -397,6 +397,14 @@ message AssignNameToFace {
   string name
 }
 
+// Start / stop face enrollment
+//   Use numToEnroll = 0 to stop enrollment.
+//   Use numToEnroll = -1 to enable ongoing enrollment.
+//   Use numToEnroll = N to enroll N faces and then turn off automaticall (N=1 is the mostly likely usage)
+message EnableNewFaceEnrollment {
+  int_32 numToEnroll
+}
+
 // SetBehaviorSystemEnabled
 message SetBehaviorSystemEnabled {
   bool enabled

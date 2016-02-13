@@ -1203,6 +1203,11 @@ namespace Cozmo {
     _faceTracker->AssignNameToID(faceID, name);
   }
   
+  void VisionSystem::EnableNewFaceEnrollment(s32 numToEnroll)
+  {
+    _faceTracker->EnableNewFaceEnrollment(numToEnroll);
+  }
+  
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
                                    const std::vector<Quad2f>& markerQuads)
   {

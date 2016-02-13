@@ -14,6 +14,7 @@
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/profiler.h"
 
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/rotation.h"
@@ -29,7 +30,7 @@
 namespace Anki {
 namespace Vision {
   
-  class FaceTracker::Impl
+  class FaceTracker::Impl : public Profiler
   {
   public:
     Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
@@ -42,14 +43,19 @@ namespace Vision {
     
     static bool IsRecognitionSupported() { return false; }
     
-    void EnableNewFaceEnrollment(bool enable) { }
+    void EnableNewFaceEnrollment(s32 numToEnroll=0) {
+      if(numToEnroll !=0) {
+        PRINT_NAMED_ERROR("FaceTracker.Impl.NoRecognitionSupport", "");
+      }
+    }
+    
     bool IsNewFaceEnrollmentEnabled() const { return false; }
     
     std::vector<u8> GetSerializedAlbum() { return std::vector<u8>(); }
     Result SetSerializedAlbum(const std::vector<u8>& serializedAlbum) { return RESULT_FAIL; }
     
     // No-ops but req'd by FaceTracker
-    void   AssignNametoID(TrackedFace::ID_t faceID, const std::string &name) { }
+    void   AssignNameToID(TrackedFace::ID_t faceID, const std::string &name) { }
     Result SaveAlbum(const std::string& albumName) { return RESULT_FAIL; }
     Result LoadAlbum(const std::string& albumName) { return RESULT_FAIL; }
     void   PrintTiming() { }
