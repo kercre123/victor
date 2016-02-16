@@ -1006,6 +1006,10 @@ public class Robot : IRobot {
 
   }
 
+  public ObservedObject GetCharger() {
+    return SeenObjects.Find(x => x.Family == ObjectFamily.Charger);
+  }
+
   public void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(
       Singleton<MountCharger>.Instance.Initialize(
