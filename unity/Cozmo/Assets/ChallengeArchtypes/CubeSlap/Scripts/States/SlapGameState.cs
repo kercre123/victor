@@ -14,7 +14,7 @@ namespace CubeSlap {
       base.Enter();
       _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
       _SlapDelay = _CubeSlapGame.GetSlapDelay();
-      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _CurrentRobot.SetLiftHeight(1.0f);
       _FirstTimestamp = Time.time;
       _SlapTriggered = false;

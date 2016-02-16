@@ -25,7 +25,7 @@ public class EmotionPane : MonoBehaviour {
     _Slider.onValueChanged.AddListener(HandleSliderChanged);
 
     // populate with known emotions.
-    Robot robot = RobotEngineManager.Instance.CurrentRobot;
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       int emoCount = (int)EmotionType.Count;
       for (int i = 0; i < emoCount; ++i) {
@@ -39,7 +39,7 @@ public class EmotionPane : MonoBehaviour {
 
   private void HandleSliderChanged(float newValue) {
     //DAS.Info("EmotionPane", "HandleSliderChanged: " + newValue);
-    Robot robot = RobotEngineManager.Instance.CurrentRobot;
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       EmotionType emoType = (EmotionType)(_EmotionSelect.value);
       robot.SetEmotion(emoType, newValue);
@@ -50,7 +50,7 @@ public class EmotionPane : MonoBehaviour {
   private void HandleDropDownChanged(int newIndex) {
     //DAS.Info("EmotionPane", "HandleDropdown: " + newIndex);
     // Sets the slider and label at the correct emotion value
-    Robot robot = RobotEngineManager.Instance.CurrentRobot;
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       float emoVal = robot.EmotionValues[newIndex];
       _EmotionValue.text = emoVal.ToString("F2");

@@ -16,7 +16,7 @@ public class Intro : MonoBehaviour {
 
   private const int kRobotID = 1;
 
-  private Robot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
+  private IRobot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private string LastEngineIP {
     get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
@@ -122,6 +122,10 @@ public class Intro : MonoBehaviour {
     else {
       _Error.text = errorText;
     }
+  }
+
+  public void PlayMock() {
+    RobotEngineManager.Instance.MockConnect();
   }
 
   protected void SaveData() {

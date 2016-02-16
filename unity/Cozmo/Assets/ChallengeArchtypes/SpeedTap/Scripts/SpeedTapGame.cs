@@ -152,9 +152,6 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetBehaviorSystem(false);
 
-      CurrentRobot.SetLiftHeight(0.0f);
-      CurrentRobot.SetHeadAngle(-1.0f);
-
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
     }
 

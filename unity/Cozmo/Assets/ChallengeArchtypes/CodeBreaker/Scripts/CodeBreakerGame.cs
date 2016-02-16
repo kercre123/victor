@@ -48,8 +48,6 @@ namespace CodeBreaker {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
-      CurrentRobot.SetLiftHeight(0.0f);
-      CurrentRobot.SetHeadAngle(-1.0f);
     }
 
     protected override void CleanUpOnDestroy() {

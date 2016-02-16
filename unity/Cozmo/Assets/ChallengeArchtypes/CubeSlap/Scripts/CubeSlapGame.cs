@@ -55,8 +55,6 @@ namespace CubeSlap {
 
       CurrentRobot.SetBehaviorSystem(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-      CurrentRobot.SetHeadAngle(-1.0f);
-      CurrentRobot.SetLiftHeight(0.0f);
 
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
 
@@ -64,13 +62,8 @@ namespace CubeSlap {
       _StateMachine.SetNextState(initCubeState);
     }
 
-    private void InitialCubesDone() {
-    }
-
     protected override void CleanUpOnDestroy() {
-
       RobotEngineManager.Instance.OnCliffEvent -= HandleCliffEvent;
-      
     }
 
     public LightCube GetCurrentTarget() {

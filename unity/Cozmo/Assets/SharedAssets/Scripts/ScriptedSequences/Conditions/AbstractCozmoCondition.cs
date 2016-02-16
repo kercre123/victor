@@ -3,7 +3,7 @@
 namespace ScriptedSequences.Conditions {
   public abstract class AbstractCozmoCondition : ScriptedSequenceCondition {
 
-    protected Robot Robot {
+    protected IRobot Robot {
       get { return RobotEngineManager.Instance.CurrentRobot; }
     }
 

@@ -256,7 +256,7 @@ namespace Cozmo.HomeHub {
         challengeState = ChallengeState.Completed;
       }
       else {
-        Robot currentRobot = RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null;
+        IRobot currentRobot = RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null;
         if (dataToTest.ChallengeReqs.MeetsRequirements(currentRobot, completedChallenges)) {
           // Otherwise, it is locked or unlocked based on its requirements
           // TODO: Add case for when the challenge is unlocked, but not actionable

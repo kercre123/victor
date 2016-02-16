@@ -95,7 +95,7 @@ namespace Simon {
     }
 
     private void OnBlockTapped(int id, int times) {
-      _CurrentRobot.SetHeadAngle(Random.Range(-0.6f, 0f));
+      _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       if (Time.time - _LastTappedTime < 0.4f || _StartLightBlinkTime != -1) {
         return;
       }
