@@ -76,6 +76,7 @@ private:
   double _lookPauseTimer = 0;
   Radians _faceAngleCenter;
   bool _faceAngleCenterSet = false;
+  bool _useFaceAngleCenter = true;
   
   float GetRandomPanAmount() const;
   void StartMoving(Robot& robot);

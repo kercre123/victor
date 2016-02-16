@@ -71,7 +71,9 @@ namespace Cozmo {
          {
            case BehaviorChooserType::Demo:
            {
-             SetupOctDemoBehaviorChooser(config);
+             if( ! _demoBehaviorChooserRunning ) {
+               SetupOctDemoBehaviorChooser(config);
+             }
              break;
            }
            case BehaviorChooserType::Selection:
@@ -128,6 +130,9 @@ namespace Cozmo {
   {
     IBehaviorChooser* chooser = new DemoBehaviorChooser(_robot, config);
     SetBehaviorChooser( chooser );
+
+    // hack: keep track of this so we don't delete the demo chooser if it was already running
+    _demoBehaviorChooserRunning = true;
     
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
@@ -398,6 +403,9 @@ namespace Cozmo {
 
     // force the new behavior chooser to select something now, instead of waiting for it to be ready
     SelectNextBehavior(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+
+    // hack: assume this isn't the demo behavior chooser (will be reset right after this if it was)
+    _demoBehaviorChooserRunning = false;
   }
   
   void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
