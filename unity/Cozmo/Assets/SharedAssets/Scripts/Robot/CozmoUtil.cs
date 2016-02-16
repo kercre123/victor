@@ -23,5 +23,5 @@ public static class CozmoUtil {
   public const float kCarriedObjectHeight = 75f;
   public const float kMaxVoltage = 5f;
   public const float kOriginToLowLiftDDistMM = 28f;
-
+  public const float kIdealBlockViewHeadValue = -0.6f;
 }

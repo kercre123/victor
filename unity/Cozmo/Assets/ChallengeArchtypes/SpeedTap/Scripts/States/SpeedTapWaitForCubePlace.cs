@@ -23,7 +23,7 @@ namespace SpeedTap {
       }
       // TODO: Set up UI
       _CurrentRobot.SetLiftHeight(1.0f);
-      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
 

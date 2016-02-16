@@ -18,7 +18,7 @@ public class InitialCubesState : State {
   public override void Enter() {
     base.Enter();
     _CurrentRobot.SetLiftHeight(0f);
-    _CurrentRobot.SetHeadAngle(0f);
+    _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
     _Game = _StateMachine.GetGame();
     _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);

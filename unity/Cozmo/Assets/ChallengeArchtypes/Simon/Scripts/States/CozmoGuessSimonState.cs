@@ -23,7 +23,7 @@ namespace Simon {
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
-      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetHeadAngle(-0.6f);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
     }
 
