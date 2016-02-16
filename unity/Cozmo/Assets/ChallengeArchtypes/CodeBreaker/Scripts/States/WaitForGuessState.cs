@@ -195,7 +195,7 @@ namespace CodeBreaker {
       };
 
       _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
-      _CurrentRobot.SetHeadAngle(0.0f);
+      _CurrentRobot.SetHeadAngle(-0.6f);
       _CurrentRobot.SetLiftHeight(0.0f);
     }
 
@@ -237,7 +237,7 @@ namespace CodeBreaker {
       Vector3 targetPosition = midpointPosition - (facingCubes.normalized * kCubeDistance);
 
       if (Vector3.Distance(targetPosition, _CurrentRobot.WorldPosition) > kDriveToCubeBuffer) {
-        _CurrentRobot.GotoPose(targetPosition, facingCubesQuaternion, callback:HandleMoveToCubeCallback);
+        _CurrentRobot.GotoPose(targetPosition, facingCubesQuaternion, callback: HandleMoveToCubeCallback);
         _IsDrivingToPose = true;
       }
       else {
