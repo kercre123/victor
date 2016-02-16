@@ -3,8 +3,6 @@ using UnityEngine;
 
 namespace Simon {
   public class CozmoTurnToCubeSimonState : State {
-    public const float kDriveWheelSpeed = 80f;
-    public const float kDotThreshold = 0.96f;
 
     private LightCube _TargetCube;
     private bool _BlinkLights = false;
@@ -20,12 +18,7 @@ namespace Simon {
       _IsTurning = true;
       _CurrentRobot.FaceObject(_TargetCube, false, 1000, 1000, HandleTurnFinished);
     }
-
-    public override void Exit() {
-      base.Exit();
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
-    }
-
+      
     public override void Update() {
       base.Update();
 

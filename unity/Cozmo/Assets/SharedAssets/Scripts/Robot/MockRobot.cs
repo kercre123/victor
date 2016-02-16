@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
 
 public class MockRobot : IRobot {
   #region IRobot implementation
@@ -226,7 +227,8 @@ public class MockRobot : IRobot {
       }
     }
 
-    // TODO Update cube position
+    CarryingObject.SetPosition(WorldPosition + Rotation * (Vector3.right * CozmoUtil.kOriginToLowLiftDDistMM));
+    CarryingObject.SetRotation(Rotation);
 
     CarryingObject = null;
     LiftHeight = 0f;
@@ -243,7 +245,11 @@ public class MockRobot : IRobot {
       }
     }
 
-    // TODO Update cube position
+    Rotation = Quaternion.Euler(0, 0, approachAngle);
+    CarryingObject.SetPosition(WorldPosition + Rotation * (Vector3.left * offsetFromMarker));
+    CarryingObject.SetRotation(Rotation);
+
+    WorldPosition = (CarryingObject.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
 
     CarryingObject = null;
     LiftHeight = 0f;
@@ -260,7 +266,10 @@ public class MockRobot : IRobot {
       }
     }
 
-    // TODO Update cube position
+    Rotation = Quaternion.Euler(0, 0, approachAngle);
+    CarryingObject.SetPosition(target.WorldPosition + Vector3.forward * CozmoUtil.kBlockLengthMM);
+    CarryingObject.SetRotation(Rotation);
+    WorldPosition = (target.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
 
     CarryingObject = null;
     LiftHeight = 0f;
@@ -391,14 +400,21 @@ public class MockRobot : IRobot {
     CarryingObject = selectedObject;
     LiftHeight = 1f;
 
-    // TODO: Update Carrying object position and Cozmo position
+    if (selectedObject != null) {
+      Rotation = CarryingObject.Rotation.zRotation();
+      CarryingObject.SetPosition(new Vector3(CarryingObject.WorldPosition.x, CarryingObject.WorldPosition.y, CozmoUtil.kCarriedObjectHeight));
+      WorldPosition = (CarryingObject.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
+    }
 
     QueueCallback(5f, callback);
   }
 
   public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
-    // TODO: Update object and cozmo positions
+    // Rather than figure out what side the cube was on, assume it just goes upright
+    Rotation = selectedObject.Rotation.zRotation();
+    selectedObject.SetRotation(Rotation);
+    WorldPosition = (selectedObject.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
 
     QueueCallback(3f, callback);
   }
@@ -412,7 +428,12 @@ public class MockRobot : IRobot {
       }
     }
 
-    // TODO Update cube position
+    CarryingObject.SetRotation(rotation);
+    CarryingObject.SetPosition(position);
+
+    Rotation = rotation;
+    WorldPosition = (CarryingObject.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
+
 
     CarryingObject = null;
     LiftHeight = 0f;
@@ -421,8 +442,14 @@ public class MockRobot : IRobot {
   }
 
   public void GotoPose(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
-    WorldPosition = position;
+    WorldPosition = position.xy0();
     Rotation = rotation;
+
+    if (CarryingObject != null) {
+      CarryingObject.SetPosition(WorldPosition + Rotation * (Vector3.right * CozmoUtil.kOriginToLowLiftDDistMM));
+      CarryingObject.SetRotation(rotation);
+
+    }
 
     QueueCallback(2f, callback);
   }
@@ -435,14 +462,15 @@ public class MockRobot : IRobot {
 
     var delta = (WorldPosition - obj.WorldPosition).normalized * distance_mm;
 
-    WorldPosition = obj.WorldPosition + delta;
+    WorldPosition = (obj.WorldPosition + delta).xy0();
 
     QueueCallback(2f, callback);
   }
 
   public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, float approachAngleRad = 0f, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
-    // TODO: Move position
+    Rotation = obj.Rotation.zRotation();
+    WorldPosition = (obj.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
 
     QueueCallback(3f, callback);
   }
@@ -585,6 +613,8 @@ public class MockRobot : IRobot {
   public void UpdateLightMessages(bool now = false) {
     // Do nothing
   }
+
+
 
   public byte ID {
     get ;
