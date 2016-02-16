@@ -241,10 +241,7 @@ namespace Vision {
                                 
       } else {
         // Otherwise, just use assumed fake eye locations
-        face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .25f*face.GetRect().GetWidth(),
-                                      face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
-        face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .25f*face.GetRect().GetWidth(),
-                                       face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+        face.SetFakeEyeCenters();
       }
       
     }

@@ -521,6 +521,9 @@ namespace Vision {
           // Switch to using the other handle so we don't step on its toes.
           std::swap(_okaoPartDetectionResultHandle, _okaoPartDetectionResultHandle2);
         }
+      } else {
+        // Make sure eyes get set to _something_ since we use them to estimate distance
+        face.SetFakeEyeCenters();
       }
       
       // Get whatever is the latest recognition information for the current tracker ID

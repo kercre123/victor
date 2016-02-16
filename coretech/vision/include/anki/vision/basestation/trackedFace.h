@@ -97,6 +97,11 @@ namespace Vision {
     void SetLeftEyeCenter(Point2f&& center);
     void SetRightEyeCenter(Point2f&& center);
     
+    // When eyes are not detected, use this to set their positions to default
+    // canonical locations based on the face rectangle size. (So SetRect() should
+    // have already been called!)
+    void SetFakeEyeCenters();
+    
     void SetRect(Rectangle<f32>&& rect);
     
     void SetThumbnail(const Image& image) { _thumbnailImage = image; }
@@ -216,6 +221,15 @@ namespace Vision {
   inline void TrackedFace::SetRightEyeCenter(Point2f &&center)
   {
     _rightEyeCen = center;
+  }
+
+  inline void TrackedFace::SetFakeEyeCenters()
+  {
+    ASSERT_NAMED(_rect.Area() > 0, "Invalid face rectangle");
+    SetLeftEyeCenter(Point2f(GetRect().GetXmid() - .25f*GetRect().GetWidth(),
+                             GetRect().GetYmid() - .125f*GetRect().GetHeight()));
+    SetRightEyeCenter(Point2f(GetRect().GetXmid() + .25f*GetRect().GetWidth(),
+                              GetRect().GetYmid() - .125f*GetRect().GetHeight()));
   }
   
   inline void TrackedFace::SetRect(Rectangle<f32> &&rect)
