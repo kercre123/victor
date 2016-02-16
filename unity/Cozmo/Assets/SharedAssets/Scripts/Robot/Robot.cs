@@ -529,6 +529,7 @@ public class Robot : IRobot {
       );
     RobotEngineManager.Instance.SendMessage();
 
+    DAS.Event("world.friendship.add_points", FriendshipPoints.ToString());
     ComputeFriendshipLevel();
   }
 
@@ -574,6 +575,7 @@ public class Robot : IRobot {
         );
       RobotEngineManager.Instance.SendMessage();
 
+      DAS.Event("world.friendship.level_up", FriendshipLevel.ToString());
     }
   }
 

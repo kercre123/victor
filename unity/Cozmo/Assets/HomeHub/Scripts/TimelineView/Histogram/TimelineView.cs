@@ -266,6 +266,18 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
       UpdateFriendshipPoints(timelineEntry, friendshipPoints);
 
+      int stat_count = (int)Anki.Cozmo.ProgressionStatType.Count; 
+      for (int i = 0; i < stat_count; ++i) {
+        var targetStat = (Anki.Cozmo.ProgressionStatType)i;
+        if (timelineEntry.Goals[targetStat] > 0 && timelineEntry.Goals[targetStat] > timelineEntry.Progress[targetStat]) {
+          DAS.Event("game.goal_complete", targetStat.ToString(), new Dictionary<string,string> { {
+              "$data",
+              timelineEntry.Goals[targetStat].ToString()
+            }
+          });
+        }
+      }
+
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
 
       ShowDailySessionPanel(timelineEntry, HandleOnFriendshipBarAnimateComplete);
