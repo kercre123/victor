@@ -6,32 +6,39 @@ set -u
 echo "=== Configure Info.plist ==="
 
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
-source "${SCRIPT_PATH}/build_env.sh"
+source "${SCRIPT_PATH}/../build_env.sh"
 
 # tools
-# VERSION_GENERATOR="${ANKI_BUILD_TOOLS_ROOT}/version-generator.py"
+VERSION_GENERATOR="${ANKI_BUILD_TOOLS_ROOT}/version-generator.py"
 
 # print environment 
-#printenv | grep "ANKI_BUILD"
+printenv | grep "ANKI_BUILD"
 
 echo ""
 echo "INFO_PLIST: ${INFO_PLIST}"
 echo "PROVISIONING_PROFILE: ${PROVISIONING_PROFILE}"
 echo ""
 
+
+echo "PLIST_BUDDY"
+which ${PLIST_BUDDY}
+
+more ${INFO_PLIST}
+
 pushdir ${ANKI_REPO_ROOT}
 
-#MARKETING_VERSION=`${PLIST_BUDDY} -c "Print :CFBundleShortVersionString" ${INFO_PLIST}`
-#DAS_VERSION=`${VERSION_GENERATOR} \
-#    --build-version ${ANKI_BUILD_VERSION} \
-#    --build-type ${ANKI_BUILD_TYPE} \
-#    ${MARKETING_VERSION}`
+MARKETING_VERSION=`${PLIST_BUDDY} -c "Print :CFBundleShortVersionString" ${INFO_PLIST}`
+DAS_VERSION=`${VERSION_GENERATOR} \
+    --build-version ${ANKI_BUILD_VERSION} \
+    --build-type ${ANKI_BUILD_TYPE} \
+    ${MARKETING_VERSION}`
 
 BUNDLE_ID=`${MP_PARSE} -f ${PROVISIONING_PROFILE} -o bundle_id`
 
 echo "CFBundleName: ${ANKI_BUILD_BUNDLE_NAME}"
 echo "CFBundleIdentifier: ${BUNDLE_ID}"
 echo "CFBundleVersion: ${ANKI_BUILD_VERSION}"
+echo "com.anki.das.version: ${DAS_VERSION}"
 
 ${PLIST_BUDDY} -c "Set :CFBundleVersion ${ANKI_BUILD_VERSION}" \
                -c "Set :CFBundleIdentifier ${BUNDLE_ID}" \
