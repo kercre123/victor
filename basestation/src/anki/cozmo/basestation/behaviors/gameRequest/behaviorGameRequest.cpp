@@ -23,12 +23,7 @@ namespace Cozmo {
 
 #define DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE 0
 
-static const char* kRequestAnimNameKey = "request_animName";
-static const char* kDenyAnimNameKey = "deny_animName";
 static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
-static const char* kMinRequestDelay = "minRequestDelay_s";
-static const char* kMoreBlocksAllowed = "moreBlocksAllowed";
-static const char* kNumBlocks = "numBlocks";
 
 IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -39,58 +34,9 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   }
   else {
     {
-      const Json::Value& val = config[kRequestAnimNameKey];
-      if( val.isString() ) {
-        _requestAnimationName = val.asCString();
-      }
-      else {
-        PRINT_NAMED_WARNING("IBehaviorRequestGame.Config.MissingKey",
-                            "Missing key '%s'",
-                            kRequestAnimNameKey);
-      }
-    }
-
-    {
-      const Json::Value& val = config[kDenyAnimNameKey];
-      if( val.isString() ) {
-        _denyAnimationName = val.asCString();
-      }
-      else {
-        PRINT_NAMED_WARNING("IBehaviorRequestGame.Config.MissingKey",
-                            "Missing key '%s'",
-                            kRequestAnimNameKey);
-      }
-    }
-
-    {
       const Json::Value& val = config[kMaxFaceAgeKey];
       if( val.isUInt() ) {
         _maxFaceAge_ms = val.asUInt();
-      }
-    }
-
-    {
-      const Json::Value& val = config[kMinRequestDelay];
-      if( val.isDouble() ) {
-        _minRequestDelay_s = val.asFloat();
-      }
-    }
-
-    {
-      const Json::Value& val = config[kNumBlocks];
-      if( val.isUInt() ) {
-        _requiredNumBlocks = val.asUInt();
-      }
-      else {
-        ASSERT_NAMED(false, "IBehaviorRequestGame.Config.MissingKey.RequiredNumBlocks");
-      }
-    }
-    
-    {
-      _moreBlocksOK = false;
-      const Json::Value& val = config[kMoreBlocksAllowed];
-      if( val.isBool() ) {
-        _moreBlocksOK = val.asBool();
       }
     }
   }
@@ -108,22 +54,15 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
 bool IBehaviorRequestGame::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
   const bool hasFace = HasFace(robot);
-
-  u32 numBlocks = GetNumBlocks(robot);
-  const bool hasBlocks = numBlocks == _requiredNumBlocks || (_moreBlocksOK && numBlocks > _requiredNumBlocks);
-  
-  const bool ret = IsActing() || (hasFace && hasBlocks);
+  const bool ret = IsActing() || hasFace;
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
     PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable",
-                      "'%s': %d: hasFace?%d hasBlocks?%d (numBlocks=%d, required %c= %d)",
+                      "'%s': %d: hasFace?%d (numBlocks=%d)",
                       GetName().c_str(),
                       ret,
                       hasFace,
-                      hasBlocks,
-                      numBlocks,
-                      _moreBlocksOK ? '>' : '=',
-                      _requiredNumBlocks);
+                      GetNumBlocks(robot));
   }
 
   return ret;

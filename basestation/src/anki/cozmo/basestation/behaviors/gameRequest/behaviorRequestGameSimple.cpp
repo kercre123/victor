@@ -28,9 +28,26 @@ namespace Cozmo {
 
 static const char* kInitialAnimationKey = "initial_animName";
 static const char* kPreDriveAnimationKey = "preDrive_animName";
+static const char* kRequestAnimNameKey = "request_animName";
+static const char* kDenyAnimNameKey = "deny_animName";
+static const char* kMinRequestDelay = "minRequestDelay_s";
+static const char* kZeroBlockGroupKey =  "zero_block_config";
+static const char* kOneBlockGroupKey =  "one_block_config";
+
+static const float kMinRequestDelayDefault = 5.0f;
+
 static const float kDistToMoveTowardsFace_mm = 120.0f;
 static const float kBackupDistance_mm = 80.0f;
 static const float kFaceVerificationTime_s = 0.5f;
+
+void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Value& config)
+{
+  initialAnimationName = config.get(kInitialAnimationKey, "").asString();
+  preDriveAnimationName = config.get(kPreDriveAnimationKey, "").asString();
+  requestAnimationName = config.get(kRequestAnimNameKey, "").asString();
+  denyAnimationName = config.get(kDenyAnimNameKey, "").asString();
+  minRequestDelay = config.get(kMinRequestDelay, kMinRequestDelayDefault).asFloat();
+}
 
 BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::Value& config)
   : IBehaviorRequestGame(robot, config)
@@ -42,30 +59,8 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
                         "Empty json config! This behavior will not function correctly");
   }
   else {
-    {
-      const Json::Value& val = config[kInitialAnimationKey];
-      if( val.isString() ) {
-        _initialAnimationName = val.asCString();
-      }
-      else {
-        PRINT_NAMED_WARNING("BehaviorRequestGame.Config.MissingKey",
-                            "Missing key '%s'",
-                            kInitialAnimationKey);
-      }
-    }
-
-    {
-      const Json::Value& val = config[kPreDriveAnimationKey];
-      if( val.isString() ) {
-        _preDriveAnimationName = val.asCString();
-      }
-      else {
-        PRINT_NAMED_WARNING("BehaviorRequestGame.Config.MissingKey",
-                            "Missing key '%s'",
-                            kPreDriveAnimationKey);
-      }
-    }
-      
+    _zeroBlockConfig.LoadFromJson(config[kZeroBlockGroupKey]);
+    _oneBlockConfig.LoadFromJson(config[kOneBlockGroupKey]);      
   }
 }
 
@@ -73,13 +68,18 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
                                                              double currentTime_sec)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
-    
-  if( ! IsActing() ) {
-    if( GetNumBlocksRequired() == 0 ) {
+
+
+  if( GetNumBlocks(robot) == 0 ) {
+    _activeConfig = &_zeroBlockConfig;
+    if( ! IsActing() ) {
       // skip the block stuff and go right to the face
       TransitionToLookingAtFace(robot);
     }
-    else {
+  }
+  else {
+    _activeConfig = &_oneBlockConfig;
+    if( ! IsActing() ) {
       TransitionToPlayingInitialAnimation(robot);
     }
   }
@@ -139,7 +139,7 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
 
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot)
 {
-  IActionRunner* animationAction = new PlayAnimationAction(robot, _initialAnimationName);
+  IActionRunner* animationAction = new PlayAnimationAction(robot, _activeConfig->initialAnimationName);
   StartActing( animationAction, &BehaviorRequestGameSimple::TransitionToFacingBlock );
   SET_STATE(State::PlayingInitialAnimation);
 }
@@ -154,7 +154,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robot)
 {
-  IActionRunner* animationAction = new PlayAnimationAction(robot, _preDriveAnimationName);
+  IActionRunner* animationAction = new PlayAnimationAction(robot, _activeConfig->preDriveAnimationName);
   StartActing(animationAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
   SET_STATE(State::PlayingPreDriveAnimation);
 }
@@ -273,7 +273,7 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot)
 {
-  StartActing(new PlayAnimationAction(robot, _requestAnimationName),
+  StartActing(new PlayAnimationAction(robot, _activeConfig->requestAnimationName),
               &BehaviorRequestGameSimple::TransitionToTrackingFace);
   SET_STATE(State::PlayingRequstAnim);
 }
@@ -299,7 +299,7 @@ void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 {
   // no callback here, behavior is over once this is Done
-  StartActing( new PlayAnimationAction( robot, _denyAnimationName ) );
+  StartActing( new PlayAnimationAction( robot, _activeConfig->denyAnimationName ) );
 
   SET_STATE(State::PlayingDenyAnim);
 }
