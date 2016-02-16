@@ -892,6 +892,7 @@ public:
     TracePrinter _traceHandler;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+    void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
