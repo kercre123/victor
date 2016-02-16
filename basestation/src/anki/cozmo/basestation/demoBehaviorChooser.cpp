@@ -84,7 +84,13 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
 IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
 #if USE_MOOD_MANAGER_FOR_DEMO_CHOOSER
-  return SimpleBehaviorChooser::ChooseNextBehavior(robot, currentTime_sec);
+  IBehavior* nextBehavior = SimpleBehaviorChooser::ChooseNextBehavior(robot, currentTime_sec);
+  if( nextBehavior == nullptr ) {
+    return _behaviorNone;
+  }
+  else {
+    return nextBehavior;
+  }
 #else
   auto runnable = [&robot,currentTime_sec](const IBehavior* behavior)
   {
