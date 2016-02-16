@@ -14,8 +14,6 @@ public class MockRobotTray : MonoBehaviour {
 
   public void Initialize(MockRobot robot) {
 
-    var cubeDict = robot.LightCubes;
-
     var cubes = new[] {
       new LightCube(1, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE1),
       new LightCube(2, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE2),
@@ -27,7 +25,9 @@ public class MockRobotTray : MonoBehaviour {
       debugCube.Initialize(cube);
 
       _SpawnedCubes[cube.ID] = debugCube;
-      cubeDict[cube.ID] = cube;
+      robot.LightCubes[cube.ID] = cube;
+      robot.SeenObjects.Add(cube);
+      robot.VisibleObjects.Add(cube);
 
       cube.MakeActiveAndVisible(true, true);
     }
