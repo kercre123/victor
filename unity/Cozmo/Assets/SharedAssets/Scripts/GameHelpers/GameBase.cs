@@ -70,6 +70,8 @@ public abstract class GameBase : MonoBehaviour {
     // Populate the view before opening it so that animations play correctly
     InitializeView(challengeData);
     _SharedMinigameViewInstance.OpenView();
+
+    DAS.Event("game.start", challengeData.name);
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
@@ -109,6 +111,8 @@ public abstract class GameBase : MonoBehaviour {
   protected abstract void CleanUpOnDestroy();
 
   public void OnDestroy() {
+    
+    DAS.Event("game.end", _ChallengeData.name);
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(() => {
         RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(AnimationName.kIdleBrickout);
