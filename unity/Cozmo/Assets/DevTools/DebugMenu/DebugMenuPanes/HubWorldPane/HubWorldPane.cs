@@ -32,9 +32,14 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private Button _SelfieAlbumButton;
 
+    [SerializeField]
+    private Button _CreateMockTrayButton;
 
     [SerializeField]
     private GameObject _SelfieAlbumPrefab;
+
+    [SerializeField]
+    private GameObject _MockTrayPrefab;
 
     [SerializeField]
     private ChallengeDataList _ChallengeDataList;
@@ -45,6 +50,7 @@ namespace Cozmo.HomeHub {
       _LoadHubWorldButton.onClick.AddListener(HandleLoadHubWorldButtonClicked);
       _CompleteChallengeButton.onClick.AddListener(HandleCompleteChallengeClicked);
       _SelfieAlbumButton.onClick.AddListener(HandleLoadSelfieAlbumButtonClicked);
+      _CreateMockTrayButton.onClick.AddListener(HandleCreateMockTrayButtonClicked);
 
 
       RaiseHubWorldPaneOpened(this);
@@ -54,6 +60,7 @@ namespace Cozmo.HomeHub {
       _LoadHubWorldButton.onClick.RemoveListener(HandleLoadHubWorldButtonClicked);
       _CompleteChallengeButton.onClick.RemoveListener(HandleCompleteChallengeClicked);
       _SelfieAlbumButton.onClick.RemoveListener(HandleLoadSelfieAlbumButtonClicked);
+      _CreateMockTrayButton.onClick.RemoveListener(HandleCreateMockTrayButtonClicked);
     }
 
     private void HandleLoadHubWorldButtonClicked() {
@@ -66,6 +73,27 @@ namespace Cozmo.HomeHub {
 
     private void HandleCompleteChallengeClicked() {
       _HubWorldInstance.TestCompleteChallenge(_ChallengeIdSelect.options[_ChallengeIdSelect.value].text);
+    }
+
+    private void HandleCreateMockTrayButtonClicked() {
+      var mockRobot = RobotEngineManager.Instance.CurrentRobot as MockRobot;
+
+      if (mockRobot != null) {
+        // transform.parent.parent relies on the current structure, which may change. we should
+        // find the proper canvas by name by walking the parent.
+        var tray = UIManager.CreateUIElement(_MockTrayPrefab, FindDebugCanvasParent(transform)).GetComponent<MockRobotTray>();
+        tray.Initialize(mockRobot);
+      }
+    }
+
+    private Transform FindDebugCanvasParent(Transform transform) {
+      if (transform == null) {
+        return null;
+      }
+      if (transform.name == "DebugMenuCanvas") {
+        return transform;
+      }
+      return FindDebugCanvasParent(transform.parent);
     }
   }
 }

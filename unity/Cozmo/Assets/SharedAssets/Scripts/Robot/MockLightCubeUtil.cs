@@ -62,6 +62,16 @@ public static class MockLightCubeUtil {
     return obj;
   }
 
+  public static RobotObservedObject MakeVisible(this RobotObservedObject obj, bool visible) {
+    obj.markersVisible = (byte)(visible ? 1 : 0);
+    return obj;
+  }
+
+  public static RobotObservedObject MakeActive(this RobotObservedObject obj, bool active) {
+    obj.isActive = (byte)(active ? 1 : 0);
+    return obj;
+  }
+
   public static void Apply(this RobotObservedObject msg, ObservedObject obj) {
     obj.UpdateInfo(msg);
   }
@@ -85,5 +95,10 @@ public static class MockLightCubeUtil {
   public static void SetPosition(this ObservedObject obj, Vector3 position) {
     obj.CurrentState().SetPosition(position).Apply(obj);
   }
+
+  public static void MakeActiveAndVisible(this ObservedObject obj, bool active, bool visible) {
+    obj.CurrentState().MakeActive(active).MakeVisible(visible).Apply(obj);
+  }
+
 }
 
