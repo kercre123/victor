@@ -59,8 +59,21 @@ private:
 
   State _state = State::PlayingInitialAnimation;
 
-  std::string _initialAnimationName;
-  std::string _preDriveAnimationName;
+  // there are two sets of values, based on whether there are 0 or more blocks available (at the time of Init)
+  struct ConfigPerNumBlocks {
+    void LoadFromJson(const Json::Value& config);
+    std::string initialAnimationName;
+    std::string preDriveAnimationName;
+    std::string requestAnimationName;
+    std::string denyAnimationName;
+    float       minRequestDelay = 5.0f;
+  };
+
+  ConfigPerNumBlocks _zeroBlockConfig;
+  ConfigPerNumBlocks _oneBlockConfig;
+
+  ConfigPerNumBlocks* _activeConfig = nullptr;
+  
   float       _verifyStartTime_s = 0.0f;
 
   void SetState_internal(State state, const std::string& stateName);
