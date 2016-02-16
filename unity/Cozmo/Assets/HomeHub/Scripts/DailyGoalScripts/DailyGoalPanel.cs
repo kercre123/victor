@@ -160,23 +160,21 @@ public class DailyGoalPanel : MonoBehaviour {
 
     // TODO: For each reward, tween it to the target goal
     _RewardTweens = new List<Sequence>();
-    Sequence rewardTween;
-    float tweenDelay; 
+    Sequence rewardTweenSequence;
+    Tweener rewardIconTween;
     Transform target;
     for (int stat = 0; stat < (int)ProgressionStatType.Count; stat++) {
       if (rewardIconsByStat[stat] != null) {
         if (_GoalCellsByStat[stat] != null) {
-          rewardTween = DOTween.Sequence();
-          tweenDelay = _RewardTweens.Count * 0.1f;
-          rewardTween.SetDelay(tweenDelay);
+          rewardTweenSequence = DOTween.Sequence();
           target = rewardIconsByStat[stat];
-          rewardTween.Join(
-            rewardIconsByStat[stat].DOMove(_GoalCellsByStat[stat].transform.position, 1.5f)
+          rewardIconTween = rewardIconsByStat[stat].DOMove(_GoalCellsByStat[stat].transform.position, 1.5f)
             .SetDelay(_RewardTweens.Count * 0.1f).SetEase(Ease.InOutBack).OnComplete(() => {
-              Destroy(target.gameObject);
-            }));
-          rewardTween.Play();
-          _RewardTweens.Add(rewardTween);
+            Destroy(target.gameObject);
+          });
+          rewardTweenSequence.Join(rewardIconTween);
+          rewardTweenSequence.Play();
+          _RewardTweens.Add(rewardTweenSequence);
         }
         else {
           DAS.Error(this, string.Format("Could not find GoalCell for stat {0} when tweening Rewards!", 
