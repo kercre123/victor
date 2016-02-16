@@ -63,7 +63,7 @@ python: $(OUTPUT_PYTHON)
 	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
 	if test -f $(OUTPUT_DIR)robot/$*.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*.h; fi
 	if test -f $(OUTPUT_DIR)robot/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)robot/$*.cpp; fi
-	python $(CLAD_CPPLITE) --max-message-size 1400 -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/robot/ $*.clad
+	python $(CLAD_CPPLITE) --no-size --max-message-size 1400 -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.h
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.cpp
 
