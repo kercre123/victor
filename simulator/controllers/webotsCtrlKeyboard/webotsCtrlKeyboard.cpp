@@ -930,11 +930,17 @@ namespace Anki {
                   else {
                     // get the behavior group enum
                     BehaviorGroup group = BehaviorGroupFromString(behaviorGroupStr);
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::BehaviorManagerMessage(
-                                    1,
-                                    ExternalInterface::BehaviorManagerMessageUnion(
-                                      ExternalInterface::SetEnableBehaviorGroup(group, false)))));
+                    if( group != BehaviorGroup::Count) {
+                      SendMessage(ExternalInterface::MessageGameToEngine(
+                                    ExternalInterface::BehaviorManagerMessage(
+                                      1,
+                                      ExternalInterface::BehaviorManagerMessageUnion(
+                                        ExternalInterface::SetEnableBehaviorGroup(group, false)))));
+                    }
+                    else {
+                      printf("ERROR: couldnt convert string to behavior group '%s'\n",
+                             behaviorGroupStr.c_str());
+                    }
                   }
                   
                 }
