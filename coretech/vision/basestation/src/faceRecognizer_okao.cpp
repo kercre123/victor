@@ -78,6 +78,8 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
     
+    _detectionInfo.nID = -1;
+    
     _recognitionRunning = true;
     _recognitionThread = std::thread(&FaceRecognizer::Run, this);
     
@@ -141,7 +143,7 @@ namespace Vision {
       const bool anythingToDo = (_numToEnroll > 0 || !_enrollmentData.empty());
       _mutex.unlock();
       
-      if(_currentTrackerID >= 0 && anythingToDo)
+      if(_detectionInfo.nID >= 0 && anythingToDo)
       {
         INT32 nWidth  = _img.GetNumCols();
         INT32 nHeight = _img.GetNumRows();
@@ -151,7 +153,7 @@ namespace Vision {
         // Get the faceID currently assigned to this tracker ID
         _mutex.lock();
         TrackedFace::ID_t faceID = TrackedFace::UnknownFace;
-        auto iter = _trackingToFaceID.find(_currentTrackerID);
+        auto iter = _trackingToFaceID.find(_detectionInfo.nID);
         if(iter != _trackingToFaceID.end()) {
           faceID = iter->second;
         }
@@ -206,7 +208,7 @@ namespace Vision {
               
               PRINT_NAMED_INFO("FaceRecognizer.Run.MergingFaces",
                                "Tracking %d: merging ID=%llu into ID=%llu",
-                               _currentTrackerID, mergeFrom, mergeTo);
+                               _detectionInfo.nID, mergeFrom, mergeTo);
               Result mergeResult = MergeFaces(mergeTo, mergeFrom);
               if(RESULT_OK != mergeResult) {
                 PRINT_NAMED_WARNING("FaceRecognizer.Run.MergeFail",
@@ -224,7 +226,7 @@ namespace Vision {
           //  and an entry for this faceID if there wasn't one already)
           if(TrackedFace::UnknownFace != faceID) {
             _mutex.lock();
-            _trackingToFaceID[_currentTrackerID] = faceID;
+            _trackingToFaceID[_detectionInfo.nID] = faceID;
             _enrollmentData[faceID].lastScore = score;
             _mutex.unlock();
           }
@@ -234,7 +236,7 @@ namespace Vision {
         }
         
         // Signify we're done and ready for next face
-        _currentTrackerID = -1;
+        _detectionInfo.nID = -1;
         
         // Clear any tracker IDs queuend up for removal
         _mutex.lock();
@@ -361,18 +363,16 @@ namespace Vision {
   }
   
   bool FaceRecognizer::SetNextFaceToRecognize(const Image& img,
-                                              INT32 trackerID,
                                               const DETECTION_INFO& detectionInfo,
                                               HPTRESULT okaoPartDetectionResultHandle)
   {
-    if(_currentTrackerID == -1)
+    if(_detectionInfo.nID == -1)
     {
       _mutex.lock();
       // Not currently busy: copy in the given data and start working on it
       
       img.CopyTo(_img);
       _okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
-      _currentTrackerID = trackerID;
       _detectionInfo = detectionInfo;
       
       _mutex.unlock();

@@ -48,7 +48,6 @@ namespace Vision {
     // otherwise. If true, the caller must not modify the part detection handle
     // while processing is running (i.e. until false is returned).
     bool SetNextFaceToRecognize(const Image& img,
-                                INT32 trackerID,
                                 const DETECTION_INFO& detectionInfo,
                                 HPTRESULT okaoPartDetectionResultHandle);
     
@@ -116,7 +115,6 @@ namespace Vision {
     void Run();
     
     // Passed-in state for processing
-    INT32          _currentTrackerID = -1;
     Image          _img;
     HPTRESULT      _okaoPartDetectionResultHandle = NULL;
     DETECTION_INFO _detectionInfo;

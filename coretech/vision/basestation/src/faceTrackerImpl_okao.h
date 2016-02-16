@@ -77,12 +77,6 @@ namespace Vision {
     
     std::list<TrackedFace> _faces;
     
-    // Mapping from tracking ID to recognition (identity) ID
-    struct TrackingData {
-      Vision::TrackedFace::ID_t assignedID = Vision::TrackedFace::UnknownFace;
-    };
-    std::map<INT32, TrackingData> _trackingData;
-    
     //u8* _workingMemory = nullptr;
     //u8* _backupMemory  = nullptr;
     

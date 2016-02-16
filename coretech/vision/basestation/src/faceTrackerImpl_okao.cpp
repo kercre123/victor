@@ -456,23 +456,7 @@ namespace Vision {
       
       TrackedFace& face = _faces.back();
 
-      const INT32 trackerID = detectionInfo.nID;
-      if(detectionInfo.nDetectionMethod == DET_METHOD_DETECTED_HIGH) {
-        // This face was found via detection
-        auto iter = _trackingData.find(trackerID);
-        if(iter != _trackingData.end()) {
-          // The detector seems to be reusing an existing tracking ID we've seen
-          // before. Remove it from the recognizer so we don't merge things inappropriately
-          _recognizer.RemoveTrackingID(trackerID);
-        }
-        _trackingData[trackerID].assignedID = Vision::TrackedFace::UnknownFace;
-        face.SetIsBeingTracked(false);
-      } else {
-        // This face was found via tracking: keep its existing recognition ID
-        ASSERT_NAMED(_trackingData.find(trackerID) != _trackingData.end(),
-                     "A tracked face should already have a recognition ID entry");
-        face.SetIsBeingTracked(true);
-      }
+      face.SetIsBeingTracked(detectionInfo.nDetectionMethod != DET_METHOD_DETECTED_HIGH);
  
       POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
       okaoResult = OKAO_CO_ConvertCenterToSquare(detectionInfo.ptCenter,
@@ -513,7 +497,7 @@ namespace Vision {
       // Face Recognition:
       if(facePartsFound)
       {
-        bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig, trackerID,
+        bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                               detectionInfo,
                                                               _okaoPartDetectionResultHandle);
         if(recognizing) {
@@ -527,33 +511,17 @@ namespace Vision {
       }
       
       // Get whatever is the latest recognition information for the current tracker ID
-      auto recognitionData = _recognizer.GetRecognitionData(trackerID);
+      auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID);
       
       if(recognitionData.isNew) {
         face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
       }
-      
-      /*
-      TrackingData& trackingData = _trackingData[trackerID];
-      Vision::TrackedFace::ID_t faceID = trackingData.assignedID;
-      INT32 recognitionScore = 0;
-      if(facePartsFound)
-      {
-       
-        // We've now assigned an identity to this tracker ID so we don't have to
-        // keep trying to recognize it while we're successfully tracking!
-        trackingData.assignedID = faceID;
-        
-        Toc("FaceRecognition");
-      } // if(facePartsFound)
-      */
       
       face.SetID(recognitionData.faceID); // could be unknown!
       face.SetScore(recognitionData.score); // could still be zero!
       if(TrackedFace::UnknownFace == recognitionData.faceID) {
         face.SetName("Unknown");
       } else {
-        _trackingData[trackerID].assignedID = recognitionData.faceID;
         if(recognitionData.name.empty()) {
           // Known, unnamed face
           face.SetName("KnownFace" + std::to_string(recognitionData.faceID));
