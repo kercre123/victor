@@ -656,7 +656,8 @@ union RobotActionUnion {
   SetHeadAngle              setHeadAngle,
   TurnInPlace               turnInPlace,
   TrackToFace               trackFace,
-  TrackToObject             trackObject
+  TrackToObject             trackObject,
+  MountCharger              mountCharger
 }
 
 // QueueSingleAction
