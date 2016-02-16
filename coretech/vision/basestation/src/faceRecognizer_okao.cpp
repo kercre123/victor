@@ -41,19 +41,19 @@ namespace Vision {
       // TODO: Save album first!
       
       if(OKAO_NORMAL != OKAO_FR_DeleteAlbumHandle(_okaoFaceAlbum)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoAlbumHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.OkaoAlbumHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoRecogMergeFeatureHandle) {
       if(OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecogMergeFeatureHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoRecognitionMergeFeatureHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.OkaoRecognitionMergeFeatureHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoRecognitionFeatureHandle) {
       if(OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecognitionFeatureHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoRecognitionFeatureHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.OkaoRecognitionFeatureHandleDeleteFail", "");
       }
     }
   }
@@ -62,19 +62,19 @@ namespace Vision {
   {
     _okaoRecognitionFeatureHandle = OKAO_FR_CreateFeatureHandle(okaoCommonHandle);
     if(NULL == _okaoRecognitionFeatureHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoFeatureHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoFeatureHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoRecogMergeFeatureHandle = OKAO_FR_CreateFeatureHandle(okaoCommonHandle);
     if(NULL == _okaoRecognitionFeatureHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoMergeFeatureHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoMergeFeatureHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoFaceAlbum = OKAO_FR_CreateAlbumHandle(okaoCommonHandle, MaxAlbumFaces, MaxAlbumDataPerFace);
     if(NULL == _okaoFaceAlbum) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoAlbumHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoAlbumHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
@@ -341,7 +341,7 @@ namespace Vision {
     _enrollmentData.emplace(_lastRegisteredUserID, std::move(enrollData));
     _mutex.unlock();
     
-    PRINT_NAMED_INFO("FaceTrackerImpl.RegisterNewUser.Success",
+    PRINT_NAMED_INFO("FaceRecognizer.RegisterNewUser.Success",
                      "Added user number %d to album", _lastRegisteredUserID);
     
     return RESULT_OK;
@@ -422,7 +422,7 @@ namespace Vision {
   {
     INT32 okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userID);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.RemoveUser.ClearUserFailed",
+      PRINT_NAMED_ERROR("FaceRecognizer.RemoveUser.ClearUserFailed",
                         "OKAO result=%d", okaoResult);
       return RESULT_FAIL;
     }
@@ -461,7 +461,7 @@ namespace Vision {
     INT32 numUsersInAlbum = 0;
     okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.RecognizeFace.OkaoGetNumUsersInAlbumFailed", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.RecognizeFace.OkaoGetNumUsersInAlbumFailed", "");
       return RESULT_FAIL;
     }
     
@@ -469,7 +469,7 @@ namespace Vision {
     
     if(numUsersInAlbum == 0 && IsEnrollable()) {
       // Nobody in album yet, add this person
-      PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingFirstUser",
+      PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.AddingFirstUser",
                        "Adding first user to empty album");
       Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle);
       if(RESULT_OK != lastResult) {
@@ -486,7 +486,7 @@ namespace Vision {
       Toc("OkaoIdentify");
       
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_WARNING("FaceTrackerImpl.RecognizeFace.OkaoFaceRecognitionIdentifyFailed",
+        PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.OkaoFaceRecognitionIdentifyFailed",
                             "OKAO Result Code=%d", okaoResult);
       } else {
         const INT32 RecognitionThreshold = 750; // TODO: Expose this parameter
@@ -532,12 +532,12 @@ namespace Vision {
             {
               Result result = MergeFaces(oldestID, userIDs[iResult]);
               if(RESULT_OK != result) {
-                PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.MergeFail",
+                PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.MergeFail",
                                  "Failed to merge frace %d with %d",
                                  userIDs[iResult], oldestID);
                 return result;
               } else {
-                PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.MergingRecords",
+                PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.MergingRecords",
                                  "Merging face %d with %d b/c its score %d is > %d",
                                  userIDs[iResult], oldestID, scores[iResult], MergeThreshold);
               }
@@ -550,7 +550,7 @@ namespace Vision {
           
         } else if(IsEnrollable()) {
           // No match found, add new user
-          PRINT_NAMED_INFO("FaceTrackerImpl.RecognizeFace.AddingNewUser",
+          PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.AddingNewUser",
                            "Observed new person. Adding to album.");
           Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle);
           if(RESULT_OK != lastResult) {
@@ -573,7 +573,7 @@ namespace Vision {
     INT32 numKeepData = 0;
     okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, (INT32)keepID, &numKeepData);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.MergeFaces.GetNumKeepDataFail",
+      PRINT_NAMED_ERROR("FaceRecognizer.MergeFaces.GetNumKeepDataFail",
                         "OKAO result=%d", okaoResult);
       return RESULT_FAIL;
     }
@@ -581,7 +581,7 @@ namespace Vision {
     INT32 numMergeData = 0;
     okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, (INT32)mergeID, &numMergeData);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.MergeFaces.GetNumMergeDataFail",
+      PRINT_NAMED_ERROR("FaceRecognizer.MergeFaces.GetNumMergeDataFail",
                         "OKAO result=%d", okaoResult);
       return RESULT_FAIL;
     }
@@ -605,7 +605,7 @@ namespace Vision {
       okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, (INT32)mergeID, iMerge,
                                                _okaoRecogMergeFeatureHandle);
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.MergeFaces.GetFeatureFail",
+        PRINT_NAMED_ERROR("FaceRecognizer.MergeFaces.GetFeatureFail",
                           "OKAO result=%d", okaoResult);
         return RESULT_FAIL;
       }
@@ -613,7 +613,7 @@ namespace Vision {
       okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, _okaoRecogMergeFeatureHandle,
                                         (INT32)keepID, numKeepData + iMerge);
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.MergeFaces.RegisterDataFail",
+        PRINT_NAMED_ERROR("FaceRecognizer.MergeFaces.RegisterDataFail",
                           "OKAO result=%d", okaoResult);
         return RESULT_FAIL;
       }
@@ -671,18 +671,18 @@ namespace Vision {
       UINT32 albumSize = 0;
       INT32 okaoResult = OKAO_FR_GetSerializedAlbumSize(_okaoFaceAlbum, &albumSize);
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.GetSizeFail",
+        PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.GetSizeFail",
                           "OKAO Result=%d", okaoResult);
       } else {
         serializedAlbum.resize(albumSize);
         okaoResult = OKAO_FR_SerializeAlbum(_okaoFaceAlbum, &(serializedAlbum[0]), albumSize);
         if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.SerializeFail",
+          PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.SerializeFail",
                             "OKAO Result=%d", okaoResult);
         }
       }
     } else {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.GetSerializedAlbum.NotInitialized", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.NotInitialized", "");
     }
     
     return serializedAlbum;
@@ -694,14 +694,14 @@ namespace Vision {
     FR_ERROR error;
     HALBUM restoredAlbum = OKAO_FR_RestoreAlbum(okaoCommonHandle, const_cast<UINT8*>(&(serializedAlbum[0])), (UINT32)serializedAlbum.size(), &error);
     if(NULL == restoredAlbum) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.SetSerializedAlbum.RestoreFail",
+      PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedAlbum.RestoreFail",
                         "OKAO Result=%d", error);
       return RESULT_FAIL;
     }
     
     INT32 okaoResult = OKAO_FR_DeleteAlbumHandle(_okaoFaceAlbum);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.SetSerializedAlbum.DeleteOldAlbumFail",
+      PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedAlbum.DeleteOldAlbumFail",
                         "OKAO Result=%d", okaoResult);
       return RESULT_FAIL;
     }
@@ -711,7 +711,7 @@ namespace Vision {
       BOOL isRegistered = false;
       okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, iUser, 0, &isRegistered);
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.SetSerializedAlbum.IsRegisteredCheckFail",
+        PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedAlbum.IsRegisteredCheckFail",
                           "OKAO Result=%d", okaoResult);
         return RESULT_FAIL;
       }
@@ -729,7 +729,7 @@ namespace Vision {
     if(iter != _enrollmentData.end()) {
       iter->second.name = name;
     } else {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.AssignNameToID.InvalidID",
+      PRINT_NAMED_ERROR("FaceRecognizer.AssignNameToID.InvalidID",
                         "Unknown ID %llu, ignoring name %s", faceID, name.c_str());
     }
     _mutex.unlock();
@@ -743,13 +743,13 @@ namespace Vision {
     
     std::vector<u8> serializedAlbum = GetSerializedAlbum();
     if(serializedAlbum.empty()) {
-      PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.EmptyAlbum",
+      PRINT_NAMED_ERROR("FaceRecognizer.SaveAlbum.EmptyAlbum",
                         "No serialized data returned from private implementation");
       result = RESULT_FAIL;
     } else {
       
       if(false == Util::FileUtils::CreateDirectory(albumName, false, true)) {
-        PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.DirCreationFail",
+        PRINT_NAMED_ERROR("FaceRecognizer.SaveAlbum.DirCreationFail",
                           "Tried to create: %s", albumName.c_str());
         result = RESULT_FAIL;
       } else {
@@ -758,7 +758,7 @@ namespace Vision {
         std::fstream fs;
         fs.open(dataFilename, std::ios::binary | std::ios::out);
         if(!fs.is_open()) {
-          PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
+          PRINT_NAMED_ERROR("FaceRecognizer.SaveAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
           result = RESULT_FAIL;
         } else {
           
@@ -766,7 +766,7 @@ namespace Vision {
           fs.close();
           
           if((fs.rdstate() & std::ios::badbit) || (fs.rdstate() & std::ios::failbit)) {
-            PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.FileWriteFail", "Filename: %s", dataFilename.c_str());
+            PRINT_NAMED_ERROR("FaceRecognizer.SaveAlbum.FileWriteFail", "Filename: %s", dataFilename.c_str());
             result = RESULT_FAIL;
           } else {
             Json::Value json;
@@ -786,7 +786,7 @@ namespace Vision {
             Json::FastWriter writer;
             fs.open(enrollDataFilename, std::ios::out);
             if (!fs.is_open()) {
-              PRINT_NAMED_ERROR("FaceTracker.SaveAlbum.EnrollDataFileOpenFail", "");
+              PRINT_NAMED_ERROR("FaceRecognizer.SaveAlbum.EnrollDataFileOpenFail", "");
               result = RESULT_FAIL;
             } else {
               fs << writer.write(json);
@@ -811,7 +811,7 @@ namespace Vision {
     const std::string dataFilename(albumName + "/data.bin");
     std::ifstream fs(dataFilename, std::ios::in | std::ios::binary);
     if(!fs.is_open()) {
-      PRINT_NAMED_ERROR("FaceTracker.LoadAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
+      PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
       result = RESULT_FAIL;
     } else {
       
@@ -831,7 +831,7 @@ namespace Vision {
       fs.close();
       
       if(serializedAlbum.size() != fileLength) {
-        PRINT_NAMED_ERROR("FaceTracker.LoadAlbum.FileReadFail", "Filename: %s", dataFilename.c_str());
+        PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.FileReadFail", "Filename: %s", dataFilename.c_str());
         result = RESULT_FAIL;
       } else {
         
@@ -846,14 +846,14 @@ namespace Vision {
           bool success = reader.parse(jsonFile, json);
           jsonFile.close();
           if(! success) {
-            PRINT_NAMED_ERROR("FaceTracker.LoadAlbum.EnrollDataFileReadFail", "");
+            PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.EnrollDataFileReadFail", "");
             result = RESULT_FAIL;
           } else {
             _enrollmentData.clear();
             for(auto & idStr : json.getMemberNames()) {
               TrackedFace::ID_t faceID = std::stol(idStr);
               if(!json.isMember(idStr)) {
-                PRINT_NAMED_ERROR("FaceTrackerImpl.LoadAlbum.BadFaceIdString",
+                PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.BadFaceIdString",
                                   "Could not find member for string %s with value %llu",
                                   idStr.c_str(), faceID);
                 _mutex.unlock();
@@ -869,7 +869,7 @@ namespace Vision {
                 
                 // TODO: Load enrollment image??
                 
-                PRINT_NAMED_INFO("FaceTracker.LoadAlbum.LoadedEnrollmentData", "ID=%llu, Name: '%s'",
+                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%llu, Name: '%s'",
                                  faceID, enrollData.name.c_str());
               }
             }
