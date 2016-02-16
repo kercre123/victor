@@ -530,6 +530,7 @@ public class Robot : IDisposable {
       );
     RobotEngineManager.Instance.SendMessage();
 
+    DAS.Event("game.friendship.add_points", FriendshipPoints.ToString());
     ComputeFriendshipLevel();
   }
 
@@ -575,6 +576,7 @@ public class Robot : IDisposable {
         );
       RobotEngineManager.Instance.SendMessage();
 
+      DAS.Event("game.friendship.level_up", FriendshipLevel.ToString());
     }
   }
 
