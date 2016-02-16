@@ -22,10 +22,10 @@ namespace Simon {
       base.Enter();
       List<LightCube> cubesForGame = _StateMachine.GetGame().CubesForGame;
       LightCube cubeA, cubeB;
-      CozmoUtil.GetCubesFurthestApart(cubesForGame, out cubeA, out cubeB);
-      _CubeMidpoint = CozmoUtil.GetMidpoint(cubeA, cubeB);
+      CozmoUtil.TryFindCubesFurthestApart(cubesForGame, out cubeA, out cubeB);
+      _CubeMidpoint = CozmoUtil.CalculateMidpoint(cubeA, cubeB);
       Vector2 cubeAlignmentVector = cubeA.WorldPosition - cubeB.WorldPosition;
-      Vector2 vectorFromBlocks = CozmoUtil.GetPerpendicularTowardsRobot(_CurrentRobot, cubeAlignmentVector);
+      Vector2 vectorFromBlocks = CozmoUtil.CalculatePerpendicularTowardsRobot(_CurrentRobot, cubeAlignmentVector);
 
       // Add the vector to the center of the blocks to figure out the target world position
       _TargetPosition = _CubeMidpoint + (vectorFromBlocks.normalized * kTargetDistance);

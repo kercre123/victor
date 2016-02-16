@@ -47,7 +47,7 @@ public static class CozmoUtil {
     return angleDiff;
   }
 
-  public static Vector2 GetPerpendicular(Vector2 vector) {
+  public static Vector2 CalculatePerpendicular(Vector2 vector) {
     return new Vector2(vector.y, -vector.x);
   }
 
@@ -55,7 +55,7 @@ public static class CozmoUtil {
 
   #region LightCube helpers
 
-  public static bool GetCubesFurthestApart(List<LightCube> cubesToCompare, out LightCube cubeA, out LightCube cubeB) {
+  public static bool TryFindCubesFurthestApart(List<LightCube> cubesToCompare, out LightCube cubeA, out LightCube cubeB) {
     bool success = false;
     cubeA = null;
     cubeB = null;
@@ -88,7 +88,7 @@ public static class CozmoUtil {
     return success;
   }
 
-  public static Vector2 GetMidpoint(LightCube cubeA, LightCube cubeB) {
+  public static Vector2 CalculateMidpoint(LightCube cubeA, LightCube cubeB) {
     return (cubeA.WorldPosition + cubeB.WorldPosition) * 0.5f;
   }
 
@@ -96,9 +96,9 @@ public static class CozmoUtil {
 
   #region Robot helpers
 
-  public static Vector2 GetPerpendicularTowardsRobot(IRobot robot, Vector2 vectorToUse) {
+  public static Vector2 CalculatePerpendicularTowardsRobot(IRobot robot, Vector2 vectorToUse) {
     // Get a vector perpendicular to vectorToUse
-    Vector2 perpendicular = GetPerpendicular(vectorToUse);
+    Vector2 perpendicular = CalculatePerpendicular(vectorToUse);
 
     // Use the dot product to determine if the perpendicular is facing away
     // from the robot, if so then flip the vector.
