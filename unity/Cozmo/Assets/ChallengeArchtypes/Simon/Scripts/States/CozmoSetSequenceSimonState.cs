@@ -29,7 +29,7 @@ namespace Simon {
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
-      _CurrentRobot.SetHeadAngle(-0.6f);
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
     }
 
     public override void Update() {
