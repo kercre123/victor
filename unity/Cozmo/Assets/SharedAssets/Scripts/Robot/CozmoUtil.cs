@@ -96,7 +96,7 @@ public static class CozmoUtil {
 
   #region Robot helpers
 
-  public static Vector2 GetPerpendicularTowardsRobot(Robot robot, Vector2 vectorToUse) {
+  public static Vector2 GetPerpendicularTowardsRobot(IRobot robot, Vector2 vectorToUse) {
     // Get a vector perpendicular to vectorToUse
     Vector2 perpendicular = GetPerpendicular(vectorToUse);
 
@@ -109,12 +109,12 @@ public static class CozmoUtil {
     return perpendicular;
   }
 
-  public static bool IsRobotNearPosition(Robot robot, Vector2 targetPosition, float distanceTolerance_mm) {
+  public static bool IsRobotNearPosition(IRobot robot, Vector2 targetPosition, float distanceTolerance_mm) {
     Vector2 robotPosition = new Vector2(robot.WorldPosition.x, robot.WorldPosition.y);
     return (((targetPosition - robotPosition).sqrMagnitude) > (distanceTolerance_mm * distanceTolerance_mm));
   }
 
-  public static bool IsRobotFacingAngle(Robot robot, Quaternion targetRotation, float angleTolerance_deg) {
+  public static bool IsRobotFacingAngle(IRobot robot, Quaternion targetRotation, float angleTolerance_deg) {
     float targetAngle = targetRotation.eulerAngles.z;
     float currentAngle = robot.Rotation.eulerAngles.z;
     float diffAngle = CalculateMinAngleBetween(currentAngle, targetAngle);
