@@ -22,7 +22,10 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
+static const char* kUseFaceAngleCenterKey = "center_face_angle";
+static const bool kUseFaceAngleCenterDefault = true;
+
 using namespace ExternalInterface;
 
 BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
@@ -30,6 +33,8 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   , _currentDriveActionID((uint32_t)ActionConstants::INVALID_TAG)
 {
   SetDefaultName("FindFaces");
+
+  _useFaceAngleCenter = config.get(kUseFaceAngleCenterKey, kUseFaceAngleCenterDefault).asBool();
   
   SubscribeToTags({{
     EngineToGameTag::RobotCompletedAction,
@@ -51,7 +56,7 @@ bool BehaviorFindFaces::IsRunnable(const Robot& robot, double currentTime_sec) c
     Pose3d facePose;
     auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
     
-    return (lastFaceTime < SEC_TO_MILIS(currentTime_sec - kMinimumTimeSinceSeenLastFace_sec));
+    return (lastFaceTime == 0 || lastFaceTime < SEC_TO_MILIS(currentTime_sec - kMinimumTimeSinceSeenLastFace_sec));
   }
   else {
     return true;
@@ -86,7 +91,7 @@ void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot
   
 void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
-  if (EngineToGameTag::RobotPickedUp == event.GetData().GetTag())
+  if (_useFaceAngleCenter && EngineToGameTag::RobotPickedUp == event.GetData().GetTag())
   {
     _faceAngleCenterSet = false;
   }
@@ -102,7 +107,7 @@ Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec)
 IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   // First time we're updating, set our face angle center
-  if (!_faceAngleCenterSet)
+  if (_useFaceAngleCenter && !_faceAngleCenterSet)
   {
     _faceAngleCenter = robot.GetPose().GetRotationAngle();
     _faceAngleCenterSet = true;
@@ -171,7 +176,8 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   
   Radians proposedNewAngle = Radians(currentBodyAngle + turnAmount);
   // If the potential turn takes us outside of our cone of focus, flip the sign on the turn
-  if(Anki::Util::Abs((proposedNewAngle - _faceAngleCenter).getDegrees()) > kFocusAreaAngle_deg / 2.0f)
+  if(_useFaceAngleCenter &&
+     Anki::Util::Abs((proposedNewAngle - _faceAngleCenter).getDegrees()) > kFocusAreaAngle_deg / 2.0f)
   {
     proposedNewAngle = Radians(currentBodyAngle - turnAmount);
   }
