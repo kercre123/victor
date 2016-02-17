@@ -405,7 +405,27 @@ namespace Anki {
         // Cubes
         //////////////////////////////////////////////////////////////
 
+        // Send "connected" state to engine
         MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
+        static bool lastSentCubeConnected[MAX_NUM_ACTIVE_OBJECTS] = {false};
+        const u8 CONNECTION_TIMEOUT_THRESH_MS = 100;
+        if (Messages::ReceivedInit()) {
+          for (u32 i=0; i<MAX_NUM_ACTIVE_OBJECTS; ++i) {
+            if (( lastSentCubeConnected[i] && (HAL::GetTimeStamp() - HAL::GetLastCubeContactTime(i) > CONNECTION_TIMEOUT_THRESH_MS)) ||
+                (!lastSentCubeConnected[i] && (HAL::GetTimeStamp() - HAL::GetLastCubeContactTime(i) < CONNECTION_TIMEOUT_THRESH_MS))) {
+              ObjectConnectionState msg;
+              msg.objectID = i;
+              msg.factoryID = HAL::GetCubeFactoryID(i);
+              msg.connected = !lastSentCubeConnected[i];
+              lastSentCubeConnected[i] = msg.connected;
+              RobotInterface::SendMessage(msg);
+            }
+          }
+        } else {
+          for (u32 i=0; i<MAX_NUM_ACTIVE_OBJECTS; ++i) {
+            lastSentCubeConnected[i] = false;
+          }
+        }
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display

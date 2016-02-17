@@ -1170,6 +1170,15 @@ namespace Anki {
       return SendBlockMessage(blockID, m);
     }
     
+    u32 HAL::GetLastCubeContactTime(u32 cubeID) {
+      return HAL::GetTimeStamp();
+    }
+    
+    u32 HAL::GetCubeFactoryID(u32 cubeID) {
+      // Just make factory id same as cubeID
+      return cubeID;
+    }
+    
     Result HAL::AssignCubeSlots(int total_ids, const uint32_t *ids)
     {
       return RESULT_OK;
