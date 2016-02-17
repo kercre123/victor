@@ -211,6 +211,7 @@ namespace Cozmo.HomeHub {
           _ScrollRect.transform.localPosition = Vector3.zero;
         }
         else {
+          _ScrollRect.horizontalNormalizedPosition = 1f;
           _ScrollRect.transform.localPosition = Vector2.left * (position - contentWidth);
         }
          

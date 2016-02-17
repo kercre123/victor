@@ -185,22 +185,41 @@ public class ProceduralEyeParameters
     };
   }
 
-  public void SetMaterialValues(Material mat, bool left) {
-    string prefix = left ? "_Left" : "_Right";
+  private const string kLeftEyeCenterScaleName = "_LeftEyeCenterScale";
+  private const string kLeftEyeAngleName = "_LeftEyeAngle";
+  private const string kLeftInnerRadiusName = "_LeftInnerRadius";
+  private const string kLeftOuterRadiusName = "_LeftOuterRadius";
+  private const string kLeftUpperLidYName = "_LeftUpperLidY";
+  private const string kLeftUpperLidAngleName = "_LeftUpperLidAngle";
+  private const string kLeftUpperLidBendName = "_LeftUpperLidBend";
+  private const string kLeftLowerLidYName = "_LeftLowerLidY";
+  private const string kLeftLowerLidAngleName = "_LeftLowerLidAngle";
+  private const string kLeftLowerLidBendName = "_LeftLowerLidBend";
+  private const string kRightEyeCenterScaleName = "_RightEyeCenterScale";
+  private const string kRightEyeAngleName = "_RightEyeAngle";
+  private const string kRightInnerRadiusName = "_RightInnerRadius";
+  private const string kRightOuterRadiusName = "_RightOuterRadius";
+  private const string kRightUpperLidYName = "_RightUpperLidY";
+  private const string kRightUpperLidAngleName = "_RightUpperLidAngle";
+  private const string kRightUpperLidBendName = "_RightUpperLidBend";
+  private const string kRightLowerLidYName = "_RightLowerLidY";
+  private const string kRightLowerLidAngleName = "_RightLowerLidAngle";
+  private const string kRightLowerLidBendName = "_RightLowerLidBend";
 
-    mat.SetVector(prefix + "EyeCenterScale", 
+  public void SetMaterialValues(Material mat, bool left) {
+    mat.SetVector(left ? kLeftEyeCenterScaleName : kRightEyeCenterScaleName, 
       new Vector4(EyeCenter.x, EyeCenter.y, EyeScale.x, EyeScale.y));
-    mat.SetFloat(prefix + "EyeAngle", EyeAngle);
-    mat.SetVector(prefix + "InnerRadius", 
+    mat.SetFloat(left ? kLeftEyeAngleName : kRightEyeAngleName, EyeAngle);
+    mat.SetVector(left ? kLeftInnerRadiusName : kRightInnerRadiusName, 
       new Vector4(LowerInnerRadius.x, LowerInnerRadius.y, UpperInnerRadius.x, UpperInnerRadius.y));
-    mat.SetVector(prefix + "OuterRadius", 
+    mat.SetVector(left ? kLeftOuterRadiusName : kRightOuterRadiusName, 
       new Vector4(UpperOuterRadius.x, UpperOuterRadius.y, LowerOuterRadius.x, LowerOuterRadius.y));
-    mat.SetFloat(prefix + "UpperLidY", UpperLidY);
-    mat.SetFloat(prefix + "UpperLidAngle", UpperLidAngle);
-    mat.SetFloat(prefix + "UpperLidBend", UpperLidBend);
-    mat.SetFloat(prefix + "LowerLidY", LowerLidY);
-    mat.SetFloat(prefix + "LowerLidAngle", LowerLidAngle);
-    mat.SetFloat(prefix + "LowerLidBend", LowerLidBend);
+    mat.SetFloat(left ? kLeftUpperLidYName : kRightUpperLidYName, UpperLidY);
+    mat.SetFloat(left ? kLeftUpperLidAngleName : kRightUpperLidAngleName, UpperLidAngle);
+    mat.SetFloat(left ? kLeftUpperLidBendName : kRightUpperLidBendName, UpperLidBend);
+    mat.SetFloat(left ? kLeftLowerLidYName : kRightLowerLidYName, LowerLidY);
+    mat.SetFloat(left ? kLeftLowerLidAngleName : kRightLowerLidAngleName, LowerLidAngle);
+    mat.SetFloat(left ? kLeftLowerLidBendName : kRightLowerLidBendName, LowerLidBend);
   }
 
 }
