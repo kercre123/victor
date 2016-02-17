@@ -42,7 +42,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public bool IsConnected { get { return (_Channel != null && _Channel.IsConnected); } }
 
-  private List<string> RobotAnimationNames = new List<string>();
+  private List<string> _RobotAnimationNames = new List<string>();
 
   [SerializeField] 
   private TextAsset _Configuration;
@@ -174,6 +174,10 @@ public class RobotEngineManager : MonoBehaviour {
       return;
 
     CurrentRobot.UpdateLightMessages();
+  }
+
+  public List<string> GetRobotAnimationNames() {
+    return _RobotAnimationNames;
   }
 
   public void AddRobot(byte robotID) {
@@ -524,8 +528,8 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.AnimationAvailable message) {
-    if (!RobotAnimationNames.Contains(message.animName))
-      RobotAnimationNames.Add(message.animName);
+    if (!_RobotAnimationNames.Contains(message.animName))
+      _RobotAnimationNames.Add(message.animName);
   }
 
   private void ReceivedSpecificMessage(G2U.MoodState message) {

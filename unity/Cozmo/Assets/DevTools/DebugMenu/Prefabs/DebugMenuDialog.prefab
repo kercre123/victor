@@ -382,7 +382,7 @@ MonoBehaviour:
   - name: Soundboard
     panePrefab: {fileID: 112558, guid: 080de521b73874292802d3f45d442914, type: 2}
   - name: Pattern Play
-    panePrefab: {fileID: 196276, guid: cb7a8c585deb2451e8c662434aaf4a7e, type: 2}
+    panePrefab: {fileID: 0}
   - name: Cozmo Face
     panePrefab: {fileID: 120700, guid: 3e54c04088ea04990bfdb49c134f6854, type: 2}
   - name: Progression Stat
@@ -395,6 +395,8 @@ MonoBehaviour:
     panePrefab: {fileID: 196276, guid: c2107abf77292453b9f2fc64e3f9a702, type: 2}
   - name: The Rest
     panePrefab: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
+  - name: Animation
+    panePrefab: {fileID: 113112, guid: 6edfb651b8cff462981b4979e7dd82f4, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 121806}
