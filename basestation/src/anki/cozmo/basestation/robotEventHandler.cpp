@@ -333,7 +333,12 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
   
 IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface::MountCharger& msg)
 {
-  ObjectID selectedObjectID = msg.objectID;
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
     return new DriveToAndMountChargerAction(robot,

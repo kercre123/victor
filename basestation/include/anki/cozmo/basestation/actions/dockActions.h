@@ -106,6 +106,8 @@ namespace Anki {
         // TODO: Annoying we have to copy this out, bet the Get_() method is const...
         ObjectInteractionCompleted interactionCompleted;
         interactionCompleted.result = _interactionResult;
+        interactionCompleted.numObjects = 1;
+        interactionCompleted.objectIDs[0] = _dockObjectID;
         completionUnion.Set_objectInteractionCompleted(interactionCompleted);
       }
       
