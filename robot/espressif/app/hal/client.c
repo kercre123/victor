@@ -128,10 +128,8 @@ sint8 clientInit()
   return ESPCONN_OK;
 }
 
-bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID)
+bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
 {
-  const bool reliable = msgID < 0xF0; /// TO_ENG_UNREL in messageEngineToRobot.clad
-  const bool hot = false;
   if (likely(clientConnected()))
   {
     if (unlikely(reliable))

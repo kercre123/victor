@@ -6,13 +6,14 @@ extern "C" {
 #include "anki/cozmo/robot/hal.h"
 #include "clad/types/imageTypes.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 namespace Anki {
   namespace Cozmo {
     namespace HAL {
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {
-        return clientSendMessage((u8*)buffer, size, msgID);
+        return clientSendMessage((u8*)buffer, size, msgID, msgID < RobotInterface::TO_ENG_UNREL, false);
       }
     }
     
@@ -27,7 +28,7 @@ namespace Anki {
         msg.frameTimeStamp  = imageChunkTimestamp_;
         msg.imageChunkCount = msg.chunkId + 1;
       }
-      clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image);
+      clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image, false, eof);
       if (eof)
       {
         msg.imageId++;
