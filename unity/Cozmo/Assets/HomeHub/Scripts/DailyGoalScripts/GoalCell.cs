@@ -81,7 +81,7 @@ namespace Cozmo {
         }
         _GoalIcon.sprite = ProgressionStatConfig.Instance.GetIconForStat(type);
         _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(type);
-        SetProgress(currProg);
+        SetProgress((float)currProg / (float)goal);
       }
 
       void OnProgressionStatUpdate(Anki.Cozmo.ProgressionStatType type, int count) {

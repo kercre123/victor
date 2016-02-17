@@ -205,7 +205,9 @@ namespace Cozmo {
 
         Sequence close = widgetToHide.CloseAnimationSequence();
         close.AppendCallback(() => {
-          widgetToHide.DestroyWidgetImmediately();
+          if (widgetToHide != null) {
+            widgetToHide.DestroyWidgetImmediately();
+          }
         });
         close.Play();
       }
