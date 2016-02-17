@@ -244,8 +244,11 @@ namespace Anki {
     
     void VizManager::DrawCameraFace(const Vision::TrackedFace& face, const ColorRGBA& color) {
       // Draw eyes
-      DrawCameraOval(face.GetLeftEyeCenter(), 1, 1, color);
-      DrawCameraOval(face.GetRightEyeCenter(), 1, 1, color);
+      Point2f leftEye, rightEye;
+      if(face.GetEyeCenters(leftEye, rightEye)) {
+        DrawCameraOval(leftEye,  1, 1, color);
+        DrawCameraOval(rightEye, 1, 1, color);
+      }
       
       // Draw features
       for(s32 iFeature=0; iFeature<(s32)Vision::TrackedFace::NumFeatures; ++iFeature)

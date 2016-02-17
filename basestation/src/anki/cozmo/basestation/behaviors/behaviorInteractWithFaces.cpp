@@ -806,16 +806,20 @@ namespace Cozmo {
     f32 xPixShift = 0.f, yPixShift = 0.f;
     if(currentTime - _lastEyeDartTime > _eyeDartSpacing)
     {
-      const Point2f& eyeCen = (_lookingAtLeftEye ? face->GetLeftEyeCenter() : face->GetRightEyeCenter());
-      
-      const f32 focalLength = robot.GetVisionComponent().GetCameraCalibration().GetFocalLength_x();
-      
-      xPixShift = HEAD_CAM_POSITION[0] * (eyeCen.x() - robot.GetVisionComponent().GetCameraCalibration().GetCenter_x()) / focalLength;
-      yPixShift = HEAD_CAM_POSITION[0] * (eyeCen.y() - robot.GetVisionComponent().GetCameraCalibration().GetCenter_y()) / focalLength;
-      
-      _lookingAtLeftEye = !_lookingAtLeftEye;
-      _lastEyeDartTime = currentTime;
-      _eyeDartSpacing = GetRNG().RandDblInRange(kEyeDartSpacingMin_sec, kEyeDartSpacingMax_sec);
+      Point2f leftEye, rightEye;
+      if(face->GetEyeCenters(leftEye, rightEye))
+      {
+        const Point2f& eyeCen = (_lookingAtLeftEye ? leftEye : rightEye);
+        
+        const f32 focalLength = robot.GetVisionComponent().GetCameraCalibration().GetFocalLength_x();
+        
+        xPixShift = HEAD_CAM_POSITION[0] * (eyeCen.x() - robot.GetVisionComponent().GetCameraCalibration().GetCenter_x()) / focalLength;
+        yPixShift = HEAD_CAM_POSITION[0] * (eyeCen.y() - robot.GetVisionComponent().GetCameraCalibration().GetCenter_y()) / focalLength;
+        
+        _lookingAtLeftEye = !_lookingAtLeftEye;
+        _lastEyeDartTime = currentTime;
+        _eyeDartSpacing = GetRNG().RandDblInRange(kEyeDartSpacingMin_sec, kEyeDartSpacingMax_sec);
+      }
     } // if(time to dart eyes)
 
     // TODO: Try to get this to work well (scale eyes with distance)

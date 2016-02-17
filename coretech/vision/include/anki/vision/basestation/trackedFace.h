@@ -54,9 +54,6 @@ namespace Vision {
     
     // NOTE: Left/right are from viewer's perspective! (i.e. as seen in the image)
     
-    const Point2f& GetLeftEyeCenter() const;
-    const Point2f& GetRightEyeCenter() const;
-    
     enum FeatureName {
       LeftEye = 0,
       RightEye,
@@ -91,13 +88,15 @@ namespace Vision {
     void AddPointToFeature(FeatureName whichFeature, Point2f&& point);
     void SetFeature(FeatureName whichFeature, Feature&& points);
     
-    void SetLeftEyeCenter(Point2f&& center);
-    void SetRightEyeCenter(Point2f&& center);
+    void SetEyeCenters(Point2f&& leftCen, Point2f&& rightCen);
     
-    // When eyes are not detected, use this to set their positions to default
-    // canonical locations based on the face rectangle size. (So SetRect() should
-    // have already been called!)
-    void SetFakeEyeCenters();
+    // Returns true if eye centers have been specified via SetEyeCenters, false otherwise
+    bool HasEyes() const { return _eyesDetected; }
+    
+    // Returns true if the face has eyes set and populates the left and right centers
+    // Returns false and does not change leftCen/rightCen if eyes were never set
+    bool GetEyeCenters(Point2f& leftCen, Point2f& rightCen) const;
+    f32  GetIntraEyeDistance() const;
     
     void SetRect(Rectangle<f32>&& rect);
     
@@ -114,9 +113,9 @@ namespace Vision {
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
     
-    void UpdateTranslation(const Vision::Camera& camera);
-    
-    f32 GetIntraEyeDistance() const;
+    // Returns true if real eye detections were used to update the translation, false
+    // if fake eye centers (based on detection rectangle) were used.
+    bool UpdateTranslation(const Vision::Camera& camera);
     
     // Return the histogram over all expressions
     std::array<f32, NumExpressions> GetExpressionValues() const;
@@ -139,6 +138,7 @@ namespace Vision {
     
     Rectangle<f32> _rect;
     
+    bool    _eyesDetected = false;
     Point2f _leftEyeCen, _rightEyeCen;
     
     std::array<Feature, NumFeatures> _features;
@@ -209,23 +209,20 @@ namespace Vision {
     _features[whichFeature].emplace_back(point);
   }
   
-  inline void TrackedFace::SetLeftEyeCenter(Point2f &&center)
+  inline void TrackedFace::SetEyeCenters(Point2f&& leftCen, Point2f&& rightCen)
   {
-    _leftEyeCen = center;
+    _leftEyeCen = leftCen;
+    _rightEyeCen = rightCen;
+    _eyesDetected = true;
   }
   
-  inline void TrackedFace::SetRightEyeCenter(Point2f &&center)
+  inline bool TrackedFace::GetEyeCenters(Point2f& leftCen, Point2f& rightCen) const
   {
-    _rightEyeCen = center;
-  }
-
-  inline void TrackedFace::SetFakeEyeCenters()
-  {
-    ASSERT_NAMED(_rect.Area() > 0, "Invalid face rectangle");
-    SetLeftEyeCenter(Point2f(GetRect().GetXmid() - .25f*GetRect().GetWidth(),
-                             GetRect().GetYmid() - .125f*GetRect().GetHeight()));
-    SetRightEyeCenter(Point2f(GetRect().GetXmid() + .25f*GetRect().GetWidth(),
-                              GetRect().GetYmid() - .125f*GetRect().GetHeight()));
+    if(HasEyes()) {
+      leftCen = _leftEyeCen;
+      rightCen = _rightEyeCen;
+    }
+    return _eyesDetected;
   }
   
   inline void TrackedFace::SetRect(Rectangle<f32> &&rect)
@@ -261,13 +258,6 @@ namespace Vision {
     _headPose = pose;
   }
   
-  inline const Point2f& TrackedFace::GetLeftEyeCenter() const {
-    return _leftEyeCen;
-  }
-  
-  inline const Point2f& TrackedFace::GetRightEyeCenter() const {
-    return _rightEyeCen;
-  }
   
 } // namespace Vision
 } // namespace Anki

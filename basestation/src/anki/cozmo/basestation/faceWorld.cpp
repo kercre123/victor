@@ -232,6 +232,14 @@ namespace Cozmo {
                          face.GetID(), face.GetTimeStamp());
       } else {
         // Update the existing face:
+        if(!face.HasEyes()) {
+          // If no eyes were detected, the translation we have at this point was
+          // computed using "fake" eye locations, so just use the last translation
+          // estimate since we matched this to an existing face:
+          Pose3d headPose = face.GetHeadPose();
+          headPose.SetTranslation(insertResult.first->second.face.GetHeadPose().GetTranslation());
+          face.SetHeadPose(headPose);
+        }
         insertResult.first->second.face = face;
       }
     } // if(false == Vision::FaceTracker::IsRecognitionSupported()

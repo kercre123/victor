@@ -303,11 +303,10 @@ namespace Vision {
     }
     
     // Set eye centers
-    face.SetLeftEyeCenter(Point2f(_facialParts[PT_POINT_LEFT_EYE].x,
-                                  _facialParts[PT_POINT_LEFT_EYE].y));
-    
-    face.SetRightEyeCenter(Point2f(_facialParts[PT_POINT_RIGHT_EYE].x,
-                                   _facialParts[PT_POINT_RIGHT_EYE].y));
+    face.SetEyeCenters(Point2f(_facialParts[PT_POINT_LEFT_EYE].x,
+                               _facialParts[PT_POINT_LEFT_EYE].y),
+                       Point2f(_facialParts[PT_POINT_RIGHT_EYE].x,
+                               _facialParts[PT_POINT_RIGHT_EYE].y));
     
     // Set other facial features
     SetFeatureHelper(_facialParts, {
@@ -505,10 +504,7 @@ namespace Vision {
           // Switch to using the other handle so we don't step on its toes.
           std::swap(_okaoPartDetectionResultHandle, _okaoPartDetectionResultHandle2);
         }
-      } else {
-        // Make sure eyes get set to _something_ since we use them to estimate distance
-        face.SetFakeEyeCenters();
-      }
+      } 
       
       // Get whatever is the latest recognition information for the current tracker ID
       auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID);

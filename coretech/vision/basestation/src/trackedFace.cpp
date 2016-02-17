@@ -29,7 +29,7 @@ namespace Vision {
   
   f32 TrackedFace::GetIntraEyeDistance() const
   {
-    const f32 imageDist = (GetLeftEyeCenter() - GetRightEyeCenter()).Length();
+    const f32 imageDist = (_leftEyeCen - _rightEyeCen).Length();
     
     const f32 roll = GetHeadRoll().ToFloat();
     const f32 yaw  = GetHeadYaw().ToFloat();
@@ -37,11 +37,25 @@ namespace Vision {
     return imageDist / std::cos(roll) / std::cos(yaw);
   }
   
-  void TrackedFace::UpdateTranslation(const Vision::Camera& camera)
+  bool TrackedFace::UpdateTranslation(const Vision::Camera& camera)
   {
+    bool usedRealCenters = true;
+    Point2f leftEye, rightEye;
+    if(!GetEyeCenters(leftEye, rightEye))
+    {
+      // No eyes set: Use fake eye centers
+      ASSERT_NAMED(_rect.Area() > 0, "Invalid face rectangle");
+      Point2f leftEye(GetRect().GetXmid() - .25f*GetRect().GetWidth(),
+                      GetRect().GetYmid() - .125f*GetRect().GetHeight());
+      Point2f rightEye(GetRect().GetXmid() + .25f*GetRect().GetWidth(),
+                       GetRect().GetYmid() - .125f*GetRect().GetHeight());
+
+      usedRealCenters = false;
+    }
+      
     // Get unit vector along camera ray from the point between the eyes in the image
-    Point2f eyeMidPoint(GetLeftEyeCenter());
-    eyeMidPoint += GetRightEyeCenter();
+    Point2f eyeMidPoint(leftEye);
+    eyeMidPoint += rightEye;
     eyeMidPoint *= 0.5f;
     
     Point3f ray(eyeMidPoint.x(), eyeMidPoint.y(), 1.f);
@@ -52,6 +66,8 @@ namespace Vision {
     
     _headPose.SetTranslation(ray);
     _headPose.SetParent(&camera.GetPose());
+    
+    return usedRealCenters;
   }
   
   std::array<f32, TrackedFace::NumExpressions> TrackedFace::GetExpressionValues() const

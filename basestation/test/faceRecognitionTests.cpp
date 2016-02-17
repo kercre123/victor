@@ -83,8 +83,11 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     const ColorRGBA& drawColor = ((shouldBeOwner && face.GetID()==1) || (!shouldBeOwner && face.GetID()!=1) ?
                                   NamedColors::GREEN : NamedColors::RED);
     dispImg.DrawRect(face.GetRect(), drawColor, 2);
-    dispImg.DrawPoint(face.GetLeftEyeCenter(), drawColor, 2);
-    dispImg.DrawPoint(face.GetRightEyeCenter(), drawColor, 2);
+    Point2f leftEye, rightEye;
+    if(face.GetEyeCenters(leftEye, rightEye)) {
+      dispImg.DrawPoint(leftEye,  drawColor, 2);
+      dispImg.DrawPoint(rightEye, drawColor, 2);
+    }
     
     std::string label;
     auto nameIter = idToName.find(face.GetID());
