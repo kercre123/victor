@@ -40,11 +40,11 @@ public static class VectorUtil {
   }
 
   public static bool IsNear(this Vector2 v, Vector2 targetPosition, float distanceTolerance_mm) {
-    return (((targetPosition - v).sqrMagnitude) > (distanceTolerance_mm * distanceTolerance_mm));
+    return (((targetPosition - v).sqrMagnitude) <= (distanceTolerance_mm * distanceTolerance_mm));
   }
 
   public static bool IsNear(this Vector3 v, Vector3 targetPosition, float distanceTolerance_mm) {
-    return (((targetPosition - v).sqrMagnitude) > (distanceTolerance_mm * distanceTolerance_mm));
+    return (((targetPosition - v).sqrMagnitude) <= (distanceTolerance_mm * distanceTolerance_mm));
   }
 
   public static Vector2 Average(this IEnumerable<Vector2> vectors) {
