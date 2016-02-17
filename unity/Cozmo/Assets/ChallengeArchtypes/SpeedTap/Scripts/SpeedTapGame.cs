@@ -172,13 +172,15 @@ namespace SpeedTap {
 
     public void UpdateUI() {
       int halfTotalRounds = (_Rounds + 1) / 2;
-      SharedMinigameView.CozmoScoreboard.Score = _CozmoScore;
-      SharedMinigameView.CozmoScoreboard.MaxRounds = halfTotalRounds;
-      SharedMinigameView.CozmoScoreboard.RoundsWon = _CozmoRoundsWon;
+      Cozmo.MinigameWidgets.ScoreWidget cozmoScoreWidget = SharedMinigameView.CozmoScoreboard;
+      cozmoScoreWidget.Score = _CozmoScore;
+      cozmoScoreWidget.MaxRounds = halfTotalRounds;
+      cozmoScoreWidget.RoundsWon = _CozmoRoundsWon;
 
-      SharedMinigameView.PlayerScoreboard.Score = _PlayerScore;
-      SharedMinigameView.PlayerScoreboard.MaxRounds = halfTotalRounds;
-      SharedMinigameView.PlayerScoreboard.RoundsWon = _PlayerRoundsWon;
+      Cozmo.MinigameWidgets.ScoreWidget playerScoreWidget = SharedMinigameView.PlayerScoreboard;
+      playerScoreWidget.Score = _PlayerScore;
+      playerScoreWidget.MaxRounds = halfTotalRounds;
+      playerScoreWidget.RoundsWon = _PlayerRoundsWon;
 
       // Display the current round
       SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);

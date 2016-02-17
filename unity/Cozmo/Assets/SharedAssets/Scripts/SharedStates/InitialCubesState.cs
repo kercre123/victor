@@ -27,6 +27,7 @@ public class InitialCubesState : State {
       Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound, 0),
       Cozmo.UI.UIColorPalette.NeutralTextColor());
     _Game.SharedMinigameView.EnableContinueButton(false);
+    _Game.CubesForGame = new List<LightCube>();
   }
 
   public override void Update() {
@@ -40,9 +41,15 @@ public class InitialCubesState : State {
       if (isValidCube && numValidCubes < _CubesRequired) { 
         lightCube.Value.SetLEDs(Color.white);
         numValidCubes++;
+        if (!_Game.CubesForGame.Contains(lightCube.Value)) {
+          _Game.CubesForGame.Add(lightCube.Value);
+        }
       }
       else {
         lightCube.Value.TurnLEDsOff();
+        if (_Game.CubesForGame.Contains(lightCube.Value)) {
+          _Game.CubesForGame.Remove(lightCube.Value);
+        }
       }
     }
 
@@ -68,10 +75,6 @@ public class InitialCubesState : State {
 
   public override void Exit() {
     base.Exit();
-
-    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
-      lightCube.Value.TurnLEDsOff();
-    }
 
     _Game.SharedMinigameView.HideGameStateSlide();
   }
