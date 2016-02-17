@@ -47,8 +47,10 @@ public class DailyGoalPanel : MonoBehaviour {
 
   private RectTransform _RectTransform;
 
+  private bool _Expanded = true;
+
   private GoalCell[] _GoalCellsByStat;
-  private List<Sequence> _RewardTweens;
+  private readonly List<Sequence> _RewardTweens = new List<Sequence>();
 
   void Awake() {
     _RectTransform = GetComponent<RectTransform>();
@@ -113,24 +115,30 @@ public class DailyGoalPanel : MonoBehaviour {
 
   // Show Hidden UI Elements when Expanding back to full
   public void Expand() {
-    Sequence fadeTween = DOTween.Sequence();
-    for (int i = 0; i < _GoalCells.Count; i++) {
-      GoalCell cell = _GoalCells[i];
-      fadeTween.Join(cell.GoalLabel.DOFade(1.0f, _kFadeTweenDuration));
+    if (!_Expanded) {
+      Sequence fadeTween = DOTween.Sequence();
+      for (int i = 0; i < _GoalCells.Count; i++) {
+        GoalCell cell = _GoalCells[i];
+        fadeTween.Join(cell.GoalLabel.DOFade(1.0f, _kFadeTweenDuration));
+      }
+      fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(1.0f, _kFadeTweenDuration));
+      fadeTween.Play();
+      _Expanded = true;
     }
-    fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(1.0f, _kFadeTweenDuration));
-    fadeTween.Play();
   }
 
   // Fade out Hidden UI elements when collapsed
   public void Collapse() {
-    Sequence fadeTween = DOTween.Sequence();
-    for (int i = 0; i < _GoalCells.Count; i++) {
-      GoalCell cell = _GoalCells[i];
-      fadeTween.Join(cell.GoalLabel.DOFade(0.0f, _kFadeTweenDuration));
+    if (_Expanded) {
+      Sequence fadeTween = DOTween.Sequence();
+      for (int i = 0; i < _GoalCells.Count; i++) {
+        GoalCell cell = _GoalCells[i];
+        fadeTween.Join(cell.GoalLabel.DOFade(0.0f, _kFadeTweenDuration));
+      }
+      fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(0.0f, _kFadeTweenDuration));
+      fadeTween.Play();
+      _Expanded = false;
     }
-    fadeTween.Join(_BonusBarPanel.BonusBarCanvas.DOFade(0.0f, _kFadeTweenDuration));
-    fadeTween.Play();
   }
 
   private void Update() {
@@ -159,22 +167,12 @@ public class DailyGoalPanel : MonoBehaviour {
     yield return new WaitForSeconds(0.1f);
 
     // TODO: For each reward, tween it to the target goal
-    _RewardTweens = new List<Sequence>();
-    Sequence rewardTweenSequence;
-    Tweener rewardIconTween;
-    Transform target;
+    _RewardTweens.Clear();
+
     for (int stat = 0; stat < (int)ProgressionStatType.Count; stat++) {
       if (rewardIconsByStat[stat] != null) {
         if (_GoalCellsByStat[stat] != null) {
-          rewardTweenSequence = DOTween.Sequence();
-          target = rewardIconsByStat[stat];
-          rewardIconTween = rewardIconsByStat[stat].DOMove(_GoalCellsByStat[stat].transform.position, 1.5f)
-            .SetDelay(_RewardTweens.Count * 0.1f).SetEase(Ease.InOutBack).OnComplete(() => {
-            Destroy(target.gameObject);
-          });
-          rewardTweenSequence.Join(rewardIconTween);
-          rewardTweenSequence.Play();
-          _RewardTweens.Add(rewardTweenSequence);
+          CreateSequenceForRewardIcon(rewardIconsByStat[stat], _GoalCellsByStat[stat].transform);
         }
         else {
           DAS.Error(this, string.Format("Could not find GoalCell for stat {0} when tweening Rewards!", 
@@ -182,5 +180,16 @@ public class DailyGoalPanel : MonoBehaviour {
         }
       }
     }
+  }
+
+  private void CreateSequenceForRewardIcon(Transform target, Transform goalCell) {
+    var rewardTweenSequence = DOTween.Sequence();
+    var rewardIconTween = target.DOMove(goalCell.position, 1.5f)
+      .SetDelay(_RewardTweens.Count * 0.1f).SetEase(Ease.InCubic).OnComplete(() => {
+        Destroy(target.gameObject);
+      });
+    rewardTweenSequence.Join(rewardIconTween);
+    rewardTweenSequence.Play();
+    _RewardTweens.Add(rewardTweenSequence);
   }
 }
