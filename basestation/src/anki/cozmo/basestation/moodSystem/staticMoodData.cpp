@@ -134,6 +134,12 @@ static const char* kEventMapperKey   = "eventMapper";
 static const char* kDefaultRepetitionPenaltyKey = "defaultRepetitionPenalty";
   
   
+bool StaticMoodData::LoadEmotionEvents(const Json::Value& inJson)
+{
+  return _emotionEventMapper.LoadEmotionEvents(inJson);
+}
+
+  
 bool StaticMoodData::ReadFromJson(const Json::Value& inJson)
 {
   _emotionEventMapper.Clear();
@@ -260,6 +266,14 @@ bool StaticMoodData::WriteToJson(Json::Value& outJson) const
     _emotionEventMapper.WriteToJson(emotionEventsJson);
     
     outJson[kEventMapperKey] = emotionEventsJson;
+  }
+  
+  {
+    Json::Value defaultRepetitionPenaltyJson;
+    if (_defaultRepetitionPenalty.WriteToJson(defaultRepetitionPenaltyJson))
+    {
+      outJson[kDefaultRepetitionPenaltyKey] = defaultRepetitionPenaltyJson;
+    }
   }
   
   return true;

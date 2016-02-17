@@ -242,9 +242,7 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
         if(!_initialReactionAnimPlayed)
         {
           // Robot gets more happy/excited and less calm when he sees motion.
-          robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
-                                               EmotionType::Excited, kEmotionChangeSmall,
-                                               EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact", MoodManager::GetCurrentTimeInSeconds());
+          robot.GetMoodManager().TriggerEmotionEvent("MotionReact", MoodManager::GetCurrentTimeInSeconds());
           
           // Turn to face the motion, also drop the lift, and lock it from animations
           PanAndTiltAction* panTiltAction = new PanAndTiltAction(robot,

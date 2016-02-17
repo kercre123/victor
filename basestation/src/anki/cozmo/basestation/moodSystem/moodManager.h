@@ -59,6 +59,8 @@ public:
   
   void Init(const Json::Value& inJson);
   
+  bool LoadEmotionEvents(const Json::Value& inJson);
+  
   void Reset();
   
   void Update(double currentTime);

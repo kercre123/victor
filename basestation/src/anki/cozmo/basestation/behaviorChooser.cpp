@@ -19,6 +19,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 
 
 #if ANKI_DEV_CHEATS
@@ -41,9 +42,12 @@ namespace Cozmo {
 SimpleBehaviorChooser::SimpleBehaviorChooser()
 {
   // MarkW:TODO move this to Json once the chooser creation flow is simplified
-  _minMarginToSwapRunningBehavior.AddNode( 2.0f, 2.0f); // up until this point, running behavior will almost definitely be kept running
-  _minMarginToSwapRunningBehavior.AddNode(10.0f, 0.1f); // after this point, a fairly small difference will allow it to swap behaviors
-  _minMarginToSwapRunningBehavior.AddNode(60.0f, 0.0f); // after this time a running behavior will only stay running if scored high
+  _minMarginToSwapRunningBehavior.Reserve(5);
+  _minMarginToSwapRunningBehavior.AddNode(  2.0f, 2.0f); // up until this point, running behavior will almost definitely be kept running
+  _minMarginToSwapRunningBehavior.AddNode( 10.0f, 0.1f); // after this point, a fairly small difference will allow it to swap behaviors
+  _minMarginToSwapRunningBehavior.AddNode( 60.0f, 0.0f); // after this time a running behavior will only stay running if scored high
+  _minMarginToSwapRunningBehavior.AddNode(120.0f, 0.0f); // start of score being reduced to encourage variety
+  _minMarginToSwapRunningBehavior.AddNode(240.0f,-0.5f); //
 }
 
 Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
@@ -161,6 +165,9 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
 
         // running behavior gets max possible random score
         scoreData.totalScore += kRandomFactor;
+
+        // don't allow margin and rand to push score out of >0 range
+        scoreData.totalScore = Util::Max(scoreData.totalScore, 0.01f);
       }
       else
       {

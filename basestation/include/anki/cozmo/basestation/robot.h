@@ -496,6 +496,9 @@ public:
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
+  
+    // Load in all data-driven emotion events
+    void LoadEmotionEvents();
 
     // Returns true if the robot is currently playing an animation, according
     // to most recent state message. NOTE: Will also be true if the animation

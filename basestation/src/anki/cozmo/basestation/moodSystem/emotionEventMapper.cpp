@@ -88,15 +88,39 @@ void EmotionEventMapper::AddEvent(EmotionEvent* emotionEvent)
 static const char* kEmotionEventsKey = "emotionEvents";
 
   
-bool EmotionEventMapper::ReadFromJson(const Json::Value& inJson)
+bool EmotionEventMapper::LoadEmotionEvent(const Json::Value& inJson)
 {
-  ClearEvents();
+  EmotionEvent* newEvent = new EmotionEvent();
+  if (newEvent->ReadFromJson(inJson))
+  {
+    AddEvent(newEvent);
+    return true;
+  }
+  else
+  {
+    delete newEvent;
+    return false;
+  }
+}
   
+  
+bool EmotionEventMapper::LoadEmotionEvents(const Json::Value& inJson)
+{
   const Json::Value& emotionEvents = inJson[kEmotionEventsKey];
   if (emotionEvents.isNull())
   {
-    PRINT_NAMED_WARNING("EmotionEventMapper.ReadFromJson.MissingValue", "Missing '%s' entry", kEmotionEventsKey);
-    return false;
+    // Might be 1 loose event instead of an array - try loading it
+    
+    if (inJson.isNull() || !LoadEmotionEvent(inJson))
+    {
+      PRINT_NAMED_WARNING("EmotionEventMapper.LoadEmotionEvents.MissingValue", "Missing '%s' entry", kEmotionEventsKey);
+      return false;
+    }
+    else
+    {
+      // Loaded single loose event correctly
+      return true;
+    }
   }
   
   const uint32_t numEvents = emotionEvents.size();
@@ -107,18 +131,21 @@ bool EmotionEventMapper::ReadFromJson(const Json::Value& inJson)
   {
     const Json::Value& eventJson = emotionEvents.get(i, kNullEventValue);
     
-    EmotionEvent* newEvent = new EmotionEvent();
-    if (eventJson.isNull() || !newEvent->ReadFromJson(eventJson))
+    if (eventJson.isNull() || !LoadEmotionEvent(eventJson))
     {
-      PRINT_NAMED_WARNING("EmotionEventMapper.ReadFromJson.BadEvent", "Event %u failed to read", i);
-      delete newEvent;
+      PRINT_NAMED_WARNING("EmotionEventMapper.LoadEmotionEvents.BadEvent", "Event %u failed to read", i);
       return false;
     }
-    
-    AddEvent(newEvent);
   }
   
   return true;
+}
+
+
+bool EmotionEventMapper::ReadFromJson(const Json::Value& inJson)
+{
+  ClearEvents();
+  return LoadEmotionEvents(inJson);
 }
 
 

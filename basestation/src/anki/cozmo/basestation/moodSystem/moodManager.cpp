@@ -61,7 +61,11 @@ void MoodManager::Init(const Json::Value& inJson)
 {
   GetStaticMoodData().Init(inJson);
 }
-
+  
+bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
+{
+  return GetStaticMoodData().LoadEmotionEvents(inJson);
+}
   
 void MoodManager::Reset()
 {
