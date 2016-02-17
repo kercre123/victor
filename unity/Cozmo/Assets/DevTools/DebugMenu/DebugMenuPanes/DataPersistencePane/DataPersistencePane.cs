@@ -122,7 +122,7 @@ namespace DataPersistence {
           var stat = (Anki.Cozmo.ProgressionStatType)j;
           if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
             int goal = UnityEngine.Random.Range(0, 6);
-            int progress = Mathf.Clamp(UnityEngine.Random.Range(0, goal * 2), 0, goal);
+            int progress = UnityEngine.Random.Range(0, 12);
             entry.Goals[stat] = goal;
             entry.Progress[stat] = progress;
           }
