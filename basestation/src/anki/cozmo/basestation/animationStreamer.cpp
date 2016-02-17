@@ -133,7 +133,8 @@ namespace Cozmo {
                        "Will start streaming '%s' animation %d times with tag=%d.\n",
                        _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
 #     endif
-    
+      Anki::Util::sEvent("robot.play_animation", {}, _streamingAnimation->GetName().c_str());
+      
       return _tagCtr;
     }
   }

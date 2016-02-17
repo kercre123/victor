@@ -239,6 +239,9 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
   AnkiEvent( 124, "UniqueID", 372, "SerialNumber = 0x%x", 1, *serialNumber);
+  Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
+  idMsg.robotID = *serialNumber;
+  Anki::Cozmo::RobotInterface::SendMessage(idMsg);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)
