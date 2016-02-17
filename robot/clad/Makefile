@@ -77,7 +77,7 @@ cpplilib: cpp
 	cd $(OUTPUT_DIR); /usr/bin/find . -type f -iname '*.cpp' > cpps.list; awk '{ print "#include \"" $$0 "\"" }' <cpps.list >clad.cpp
 	@rm $(OUTPUT_DIR)cpps.list
 
-k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
+k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
 
 esp: cpp $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
 
