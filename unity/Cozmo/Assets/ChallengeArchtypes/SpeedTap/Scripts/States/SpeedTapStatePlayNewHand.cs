@@ -23,12 +23,13 @@ namespace SpeedTap {
 
     public override void Enter() {
       base.Enter();
-      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Playful);
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _StartTimeMs = Time.time * 1000.0f;
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
       _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
       _LightsOn = false;
+
+      GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
 
       _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
@@ -86,6 +87,7 @@ namespace SpeedTap {
       // check for player tapped first here.
       CozmoDidTap();
     }
+
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);

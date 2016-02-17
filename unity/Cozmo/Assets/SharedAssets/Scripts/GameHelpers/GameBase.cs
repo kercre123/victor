@@ -33,6 +33,10 @@ public abstract class GameBase : MonoBehaviour {
     get { return _SharedMinigameViewInstance; }
   }
 
+  public Anki.Cozmo.Audio.GameState.Music GetMusicState() {
+    return _ChallengeData.Music;
+  }
+
   protected Transform SharedMinigameViewInstanceParent { get { return _SharedMinigameViewInstance.transform; } }
 
   protected ChallengeData _ChallengeData;
@@ -62,8 +66,6 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
       _ChallengeData.HowToPlayDialogContentLocKey);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
- 
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Playful);
 
     Initialize(challengeData.MinigameConfig);
 
