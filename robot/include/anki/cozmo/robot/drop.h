@@ -109,13 +109,7 @@ typedef enum
 #define JPEG_LENGTH(i) (((i+3) >> 2)&jpegLenMask)
 #define GET_JPEG_LENGTH(i) ((i&jpegLenMask) << 2)
 
-typedef enum 
-{
-  RTIP_MAX_CLAD_MSG_SIZE      = 253,  ///< Largest message payload we can possibly send to from RTIP to WiFi
-  RTIP_CLAD_MSG_RELIABLE_FLAG = 0x80, ///< Bit in length high byte used for flaging the message should be reliable
-  RTIP_CLAD_MSG_HOT_FLAG      = 0x40, ///< Bit in length high byte used for flagging the message should be sent hot
-  RTIP_CLAD_SIZE_HIGH_MASK    = 0x3f, ///< Mask on the length high byte for flags
-} CLADtoWiFiPipeFlags;
+#define RTIP_MAX_CLAD_MSG_SIZE (253)
 
 /// RTIP to WiFi state update message
 typedef struct

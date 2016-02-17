@@ -73,7 +73,7 @@ namespace Anki
       void DiscoverProp(uint32_t id) {
         ObjectDiscovered m;
         m.factory_id = id;
-        RobotInterface::SendMessage(m, false, false);
+        RobotInterface::SendMessage(m);
       }
       
       void GetPropState(int id, int x, int y, int z, int shocks) {

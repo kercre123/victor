@@ -727,7 +727,7 @@ namespace Anki {
           }
         }
 
-        if(RobotInterface::SendMessage(*m, false, false) == true) {
+        if(RobotInterface::SendMessage(*m) == true) {
           // Update send history
           robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
           if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;

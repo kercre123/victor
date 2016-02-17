@@ -33,22 +33,20 @@ static u8 blueState = 0;
 namespace Anki {
 namespace Cozmo {
 namespace HAL {
-  bool RadioSendMessage(const void* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+  bool RadioSendMessage(const void* buffer, const u16 size, const u8 msgID)
   {
-		AnkiConditionalErrorAndReturnValue(size <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
+    const uint16_t sizeWHeader = size+1;
+    const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
+		AnkiConditionalErrorAndReturnValue(sizeWHeader <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
 		const uint8_t rind = txRind;
 		uint8_t wind = txWind;
 		const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
-		while (available < (size + 4))
-		{ // Wait for room for message plus tag plus header plus one more so we can tell empty from full
+		while (available < (sizeWHeader + 2)) // Wait for room for message plus tag plus header plus one more so we can tell empty from full
+		{
 			if (!reliable) return false;
 		}
-		const uint16_t sizeWHeader = size+1;
 		const u8* msgPtr = (u8*)buffer;
-		txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
-		txBuf[wind++] = (reliable ? RTIP_CLAD_MSG_RELIABLE_FLAG : 0x00) |
-										(hot      ? RTIP_CLAD_MSG_HOT_FLAG      : 0x00) |
-										((sizeWHeader >> 8) & RTIP_CLAD_SIZE_HIGH_MASK); // Size high byte plus flags
+		txBuf[wind++] = sizeWHeader;
 		txBuf[wind++] = msgID;
 		for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
 		txWind = wind;

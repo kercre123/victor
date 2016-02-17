@@ -41,11 +41,10 @@ namespace Anki
        * Called by CLAD generated code
        * @param msgID The ID (tag) of the message to be sent
        * @param buffer A pointer to the message to be sent
-       * @param reliable Specifify if the message should be transferred reliably. Default true.
-       * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
+       * @param msgID The tag for the specified message
        * @return True if sucessfully queued, false otherwise
        */
-      bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot);
+      bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID);
     }
   } // Namespace Cozmo
 } // Namespace Anki
