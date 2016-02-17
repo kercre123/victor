@@ -496,6 +496,9 @@ public:
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
+  
+    // Load in all data-driven emotion events
+    void LoadEmotionEvents();
 
     // Returns true if the robot is currently playing an animation, according
     // to most recent state message. NOTE: Will also be true if the animation
@@ -796,7 +799,7 @@ public:
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
-    u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ENABLE_ALL_TRACKS;
+    u8               _enabledAnimTracks      = (u8)AnimTrackFlag::ALL_TRACKS;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,

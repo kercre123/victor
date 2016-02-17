@@ -39,8 +39,6 @@ protected:
 
   virtual void HandleGameDeniedRequest(Robot& robot) override;
   
-  virtual void RequestGame_HandleActionCompleted(Robot& robot, ActionResult result) override;
-
 private:
 
   // ========== Members ==========
@@ -61,11 +59,38 @@ private:
 
   State _state = State::PlayingInitialAnimation;
 
-  std::string _initialAnimationName;
-  std::string _preDriveAnimationName;
+  // there are two sets of values, based on whether there are 0 or more blocks available (at the time of Init)
+  struct ConfigPerNumBlocks {
+    void LoadFromJson(const Json::Value& config);
+    std::string initialAnimationName;
+    std::string preDriveAnimationName;
+    std::string requestAnimationName;
+    std::string denyAnimationName;
+    float       minRequestDelay = 5.0f;
+  };
+
+  ConfigPerNumBlocks _zeroBlockConfig;
+  ConfigPerNumBlocks _oneBlockConfig;
+
+  ConfigPerNumBlocks* _activeConfig = nullptr;
+  
   float       _verifyStartTime_s = 0.0f;
 
-  void TransitionTo(Robot& robot, State state);
+  void SetState_internal(State state, const std::string& stateName);
+
+  void TransitionToPlayingInitialAnimation(Robot& robot);
+  void TransitionToFacingBlock(Robot& robot);
+  void TransitionToPlayingPreDriveAnimation(Robot& robot);
+  void TransitionToPickingUpBlock(Robot& robot);
+  void TransitionToDrivingToFace(Robot& robot);
+  void TransitionToPlacingBlock(Robot& robot);
+  void TransitionToLookingAtFace(Robot& robot);
+  void TransitionToVerifyingFace(Robot& robot);
+  void TransitionToPlayingRequstAnim(Robot& robot);
+  void TransitionToTrackingFace(Robot& robot);
+  void TransitionToPlayingDenyAnim(Robot& robot);
+
+  
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
 
 };

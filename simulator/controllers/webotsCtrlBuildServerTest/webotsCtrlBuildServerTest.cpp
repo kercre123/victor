@@ -32,7 +32,8 @@ int main(int argc, char **argv)
 {
   // Setup logger
   Anki::Util::PrintfLoggerProvider loggerProvider;
-  loggerProvider.SetMinLogLevel(0);
+  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
   Anki::Util::gLoggerProvider = &loggerProvider;
   
   // Get the last position of '/'

@@ -41,6 +41,7 @@ namespace Anki {
     
     void ICompoundAction::Reset()
     {
+      ResetState();
       for(auto & actionPair : _actions) {
         actionPair.first = false;
         actionPair.second->Reset();
@@ -61,7 +62,7 @@ namespace Anki {
       action->EnableMessageDisplay(IsMessageDisplayEnabled());
       
       // As part of a compound action this should not emit completion
-      action->SetEmitCompletionSignal(false);
+      action->ShouldEmitCompletionSignal(false);
       
       _actions.emplace_back(false, action);
       _name += action->GetName();
@@ -81,6 +82,7 @@ namespace Anki {
       {
           assert((*iter).second != nullptr);
           // TODO: issue a warning when a group is deleted without all its actions completed?
+          (*iter).second->PrepForCompletion();
           Util::SafeDelete((*iter).second);
           iter = _actions.erase(iter);
       }
@@ -127,6 +129,9 @@ namespace Anki {
         IActionRunner* currentAction = _currentActionPair->second;
         assert(currentAction != nullptr); // should not have been allowed in by constructor
         
+        // If the compound action is suppressing track locking then the constituent actions should too
+        currentAction->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
         {
@@ -145,6 +150,9 @@ namespace Anki {
                 _waitUntilTime = currentTime + _delayBetweenActionsInSeconds;
               }
               
+              // Unlock tracks here as the action will not be deleted (unlock its tracks normally) until
+              // the compound action completes
+              _currentActionPair->second->UnlockTracks();
               ++_currentActionPair;
               
               // if that was the last action, we're done
@@ -157,6 +165,9 @@ namespace Anki {
                 PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
                                  "Moving to action %s", _currentActionPair->second->GetName().c_str());
                 
+                // If the compound action is suppressing track locking then the constituent actions should too
+                _currentActionPair->second->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+                
                 // Otherwise, we are still running. Go ahead and immediately do an
                 // update on the next action now to get its initialization and
                 // precondition checking going, to reduce lag between actions.
@@ -165,7 +176,10 @@ namespace Anki {
                 // In the special case that the sub-action sucessfully completed
                 // immediately, don't return SUCCESS if there are more actions left!
                 if(ActionResult::SUCCESS == subResult) {
+                
+                  _currentActionPair->second->UnlockTracks();
                   ++_currentActionPair;
+                  
                   if(_currentActionPair == _actions.end()) {
                     // no more actions, safe to return success for the compound action
 #                   if USE_ACTION_CALLBACKS
@@ -202,7 +216,9 @@ namespace Anki {
             case ActionResult::FAILURE_ABORT:
             case ActionResult::FAILURE_TIMEOUT:
             case ActionResult::FAILURE_PROCEED:
+            case ActionResult::FAILURE_TRACKS_LOCKED:
             case ActionResult::FAILURE_BAD_TAG:
+            case ActionResult::FAILURE_NOT_STARTED:
             case ActionResult::CANCELLED:
             case ActionResult::INTERRUPTED:
 #             if USE_ACTION_CALLBACKS
@@ -252,6 +268,9 @@ namespace Anki {
         if(!isDone) {
           IActionRunner* currentAction = currentActionPair.second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
+          
+          // If the compound action is suppressing track locking then the constituent actions should too
+          currentAction->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
 
           const ActionResult subResult = currentAction->Update();
           SetStatus(currentAction->GetStatus());
@@ -280,17 +299,16 @@ namespace Anki {
             case ActionResult::FAILURE_ABORT:
             case ActionResult::FAILURE_PROCEED:
             case ActionResult::FAILURE_TIMEOUT:
+            case ActionResult::FAILURE_TRACKS_LOCKED:
+            case ActionResult::FAILURE_BAD_TAG:
+            case ActionResult::FAILURE_NOT_STARTED:
+            case ActionResult::CANCELLED:
+            case ActionResult::INTERRUPTED:
               // Return failure, aborting updating remaining actions the group
 #             if USE_ACTION_CALLBACKS
               RunCallbacks(subResult);
 #             endif
               return subResult;
-              
-            default:
-              PRINT_NAMED_ERROR("CompoundActionParallel.Update.UnknownResultCase", "\n");
-              assert(false);
-              return ActionResult::FAILURE_ABORT;
-              
           } // switch(subResult)
           
         } // if(!isDone)
@@ -304,21 +322,6 @@ namespace Anki {
       
       return result;
     } // CompoundActionParallel::Update()
-    
-    u8 CompoundActionParallel::GetAnimTracksToDisable() const
-    {
-      u8 whichTracks = 0;
-      for(auto & action : _actions) {
-        whichTracks |= action.second->GetAnimTracksToDisable();
-      }
-      return whichTracks;
-    }
-    
-    void CompoundActionParallel::AddAction(IActionRunner* action)
-    {
-      action->SetSuppressTrackLocking(true);
-      ICompoundAction::AddAction(action);
-    }
     
   } // namespace Cozmo
 } // namespace Anki

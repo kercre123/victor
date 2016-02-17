@@ -38,9 +38,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
-      
-      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxSpeed(f32 maxSpeed_radPerSec);
@@ -88,9 +86,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_STRAIGHT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
-      
-      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
       
       void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
       void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
@@ -129,11 +125,9 @@ namespace Anki {
       
       virtual RobotActionType GetType() const override { return RobotActionType::PAN_AND_TILT; }
       
-      virtual u8 GetAnimTracksToDisable() const override {
+      virtual u8 GetTracksToLock() const override {
         return (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
       }
-      
-      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::BODY_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxPanSpeed(f32 maxSpeed_radPerSec);
@@ -189,9 +183,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
-      
-      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
       // TODO: Use setters for variability and tolerance too
@@ -255,9 +247,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; };
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
-      
-      virtual u8 GetMovementTracksToIgnore() const override { return (u8)AnimTrackFlag::LIFT_TRACK; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::LIFT_TRACK; }
       
       // how long this action should take (which, in turn, effects lift speed)
       void SetDuration(float duration_sec) { _duration = duration_sec; }
@@ -360,7 +350,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
       
     protected:
       virtual ActionResult Init() override;
@@ -462,6 +452,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::HANG; }
+
+      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
       
     protected:
       
@@ -471,6 +463,42 @@ namespace Anki {
       std::string _name = "Hang";
 
     };
+
+    class WaitForLambdaAction : public IAction
+    {
+    public:
+      WaitForLambdaAction(Robot& robot, std::function<bool(Robot&)> lambda)
+        : IAction(robot)
+        , _lambda(lambda)
+        {
+        }
+      
+      virtual const std::string& GetName() const override { return _name; }
+      virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_LAMBDA; }
+
+      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
+      
+    protected:
+      
+      virtual ActionResult Init() override { return ActionResult::SUCCESS; }
+      virtual ActionResult CheckIfDone() override {
+        if( _lambda(_robot) ){
+          return ActionResult::SUCCESS;
+        }
+        else {
+          return ActionResult::RUNNING;
+        }
+      }
+      
+      std::string _name = "WaitForLambda";
+
+    private:
+      
+      std::function<bool(Robot&)> _lambda;
+
+    };
+
+      
   }
 }
 

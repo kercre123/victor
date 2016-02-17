@@ -220,21 +220,6 @@ namespace Cozmo {
       }
     }
 
-    
-    if( robot.IsCarryingObject() ) {
-      LiftShouldBeLocked(robot);
-      if( _currentState == State::TrackingFace || _currentState == State::WaitingForBlock ) {
-        HeadShouldBeLocked(robot);
-      }
-      else {
-        HeadShouldBeUnlocked(robot);
-      }
-    }
-    else {
-      LiftShouldBeUnlocked(robot);
-      HeadShouldBeUnlocked(robot);
-    }
-
     // hack to track object motion
     if( _trackedObject.IsSet() ) {
       ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_trackedObject);
@@ -268,14 +253,6 @@ namespace Cozmo {
     
     if (_isActing || !_animActionTags.empty()) {
       return Status::Running;
-    }
-
-    // wait until after _isActing check for body lock so we can unlock it specifically for certain actions / animations
-    if( _currentState == State::TrackingFace ) {
-      BodyShouldBeUnlocked(robot);
-    }
-    else {
-      BodyShouldBeLocked(robot);
     }
 
     switch(_currentState)
@@ -1314,9 +1291,6 @@ namespace Cozmo {
                                      _trackedObject.IsSet() ? _trackedObject.GetValue() : -1);
                                      
               _trackedObject.UnSet();
-              
-
-              BodyShouldBeUnlocked(robot);
 
               // play the happy animation, then look at the user, then ignore the cubes until they move (wait
               // to ignore the cubes in case we shake / bump them during the other actions)
@@ -1681,73 +1655,6 @@ namespace Cozmo {
 
     return RESULT_OK;
   }
-
-  void BehaviorBlockPlay::LiftShouldBeLocked(Robot& robot)
-  {
-    if( ! _lockedLift ) {
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockLift",
-                             "LOCKED");
-
-      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
-      _lockedLift = true;
-    }
-  }
-
-  void BehaviorBlockPlay::LiftShouldBeUnlocked(Robot& robot)
-  {
-    if( _lockedLift ) {
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockLift",
-                             "UNLOCKED");
-
-      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
-      _lockedLift = false;
-    }
-  }
-
-  void BehaviorBlockPlay::HeadShouldBeLocked(Robot& robot)
-  {
-    if( ! _lockedHead ) {
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockHead",
-                             "LOCKED");
-
-      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
-      _lockedHead = true;
-    }
-  }
-
-  void BehaviorBlockPlay::HeadShouldBeUnlocked(Robot& robot)
-  {
-    if( _lockedHead ) {
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockHead",
-                             "UNLOCKED");
-
-      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK));
-      _lockedHead = false;
-    }
-  }
-
-  void BehaviorBlockPlay::BodyShouldBeLocked(Robot& robot)
-  {
-    if( ! _lockedBody ) {
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
-                             "LOCKED");
-
-      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
-      _lockedBody = true;
-    }
-  }
-
-  void BehaviorBlockPlay::BodyShouldBeUnlocked(Robot& robot)
-  {
-    if( _lockedBody ) {
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockBody",
-                             "UNLOCKED");
-
-      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK));
-      _lockedBody = false;
-    }
-  }
-
 
   void BehaviorBlockPlay::TrackBlockWithLift(Robot& robot, const Pose3d& objectPose)
   {

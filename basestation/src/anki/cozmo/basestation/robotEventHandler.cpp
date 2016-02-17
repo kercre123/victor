@@ -333,7 +333,12 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
   
 IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface::MountCharger& msg)
 {
-  ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
     return new DriveToAndMountChargerAction(robot,
@@ -494,6 +499,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionUnionTag::trackObject:
       return GetTrackObjectActionHelper(robot, actionUnion.Get_trackObject());
+      
+    case RobotActionUnionTag::mountCharger:
+      return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
       
       // TODO: Add cases for other actions
       
@@ -731,7 +739,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     return;
   }
   
-  if(robot->GetMoveComponent().IsMovementTrackIgnored(AnimTrackFlag::LIFT_TRACK)) {
+  if(robot->GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
                      "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
   } else {
@@ -768,7 +776,7 @@ void RobotEventHandler::HandleEnableLiftPower(const AnkiEvent<ExternalInterface:
     return;
   }
   
-  if(robot->GetMoveComponent().IsMovementTrackIgnored(AnimTrackFlag::LIFT_TRACK)) {
+  if(robot->GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleEnableLiftPower.LiftLocked",
                      "Ignoring ExternalInterface::EnableLiftPower while lift is locked.");
   } else {

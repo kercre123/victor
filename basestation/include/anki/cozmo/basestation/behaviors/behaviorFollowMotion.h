@@ -81,11 +81,6 @@ private:
   const f32 _maxBackupDistance = 250.0f;
   const f32 _backupSpeed = 80.0f;
   
-  
-  bool _lockedLift = false;
-  void LiftShouldBeLocked(Robot& robot);
-  void LiftShouldBeUnlocked(Robot& robot);
-  
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   void HandleObservedMotion(const EngineToGameEvent& event, Robot& robot);
   void HandleCompletedAction(const EngineToGameEvent& event, Robot& robot);

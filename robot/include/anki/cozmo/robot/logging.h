@@ -107,7 +107,7 @@ namespace Anki {
       
       #define AnkiDebugPeriodic(num_calls_between_prints, nameId, nameString, fmtId, fmtString, nargs, ...) \
       {   static u16 cnt = num_calls_between_prints; \
-          if (cnt++ >= num_calls_between_prints) { \
+          if (++cnt > num_calls_between_prints) { \
             Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
             cnt = 0; \
           } \

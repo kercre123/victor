@@ -45,9 +45,9 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
 {
   BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
 
-  _behaviorInteractWithFaces = behaviorFactory.CreateBehavior(BehaviorType::InteractWithFaces, robot, config);
-  _behaviorOCD               = behaviorFactory.CreateBehavior(BehaviorType::OCD, robot, config);
-  _behaviorLookAround        = behaviorFactory.CreateBehavior(BehaviorType::LookAround, robot, config);
+  // _behaviorInteractWithFaces = behaviorFactory.CreateBehavior(BehaviorType::InteractWithFaces, robot, config);
+  // _behaviorOCD               = behaviorFactory.CreateBehavior(BehaviorType::OCD, robot, config);
+  // _behaviorLookAround        = behaviorFactory.CreateBehavior(BehaviorType::LookAround, robot, config);
   _behaviorNone              = behaviorFactory.CreateBehavior(BehaviorType::NoneBehavior, robot, config);
   //_behaviorFidget            = behaviorFactory.CreateBehavior(BehaviorType::Fidget, robot, config);
   
@@ -59,6 +59,10 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
     {
       PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors.FailedToAdd",
                         "BehaviorFactory behavior '%s' failed to add to chooser!", behaviorToAdd->GetName().c_str());
+    }
+    else {
+      PRINT_NAMED_DEBUG("DemoBehaviorChooser.SetupBehaviors.AddedFromFactory",
+                        "Added behavior '%s' from factory", behaviorToAdd->GetName().c_str());
     }
   }
 }
@@ -84,7 +88,13 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
 IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
 #if USE_MOOD_MANAGER_FOR_DEMO_CHOOSER
-  return SimpleBehaviorChooser::ChooseNextBehavior(robot, currentTime_sec);
+  IBehavior* nextBehavior = SimpleBehaviorChooser::ChooseNextBehavior(robot, currentTime_sec);
+  if( nextBehavior == nullptr ) {
+    return _behaviorNone;
+  }
+  else {
+    return nextBehavior;
+  }
 #else
   auto runnable = [&robot,currentTime_sec](const IBehavior* behavior)
   {

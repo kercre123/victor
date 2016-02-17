@@ -50,37 +50,37 @@ namespace Anki {
       IActionRunner::sInUseTagSet.erase(_customTag);
       IActionRunner::sInUseTagSet.erase(_idTag);
       
-      if (_emitCompletionSignal && ActionResult::INTERRUPTED != _result)
+      if (_emitCompletionSignal && ActionResult::INTERRUPTED != _state)
       {
         // Notify any listeners about this action's completion.
         // TODO: Populate the signal with any action-specific info?
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), GetTag(), _type, _result, _completionUnion)));
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), GetTag(), _type, _state, _completionUnion)));
       }
     
       if(!_suppressTrackLocking)
       {
 #       if DEBUG_ANIM_TRACK_LOCKING
         PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                          _animTracks,
-                          AnimTrackFlagToString((AnimTrackFlag)_animTracks),
-                          _name.c_str(),
-                          _idTag);
+                         _tracks,
+                         AnimTrackFlagToString((AnimTrackFlag)_tracks),
+                         _name.c_str(),
+                         _idTag);
 #       endif
-        _robot.GetMoveComponent().UnlockAnimTracks(_animTracks);
-        _robot.GetMoveComponent().UnignoreTrackMovement(_movementTracks);
+        _robot.GetMoveComponent().UnlockTracks(_tracks);
       }
     }
+
     
     bool IActionRunner::SetTag(u32 tag)
     {
       // Probably a bad idea to be able to change the tag while the action is running
-      if(_isRunning)
+      if(_state == ActionResult::RUNNING)
       {
         PRINT_NAMED_WARNING("IActionRunner.SetTag", "Action %s [%d] is running unable to set tag to %d",
                             GetName().c_str(),
                             GetTag(),
                             tag);
-        _result = ActionResult::FAILURE_BAD_TAG;
+        _state = ActionResult::FAILURE_BAD_TAG;
         return false;
       }
       
@@ -95,7 +95,7 @@ namespace Anki {
          !IActionRunner::sInUseTagSet.insert(tag).second)
       {
         PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] is invalid", tag);
-        _result = ActionResult::FAILURE_BAD_TAG;
+        _state = ActionResult::FAILURE_BAD_TAG;
         return false;
       }
       _customTag = tag;
@@ -104,14 +104,14 @@ namespace Anki {
     
     bool IActionRunner::Interrupt()
     {
-      _isInterrupted = InterruptInternal();
-      if(_isInterrupted) {
+      if(InterruptInternal())
+      {
         Reset();
         
-        // Only need to unlock tracks if this is running because Init() locked tracks
-        if(!_suppressTrackLocking && _isRunning)
+        // Only need to unlock tracks if this is running because Update() locked tracks
+        if(!_suppressTrackLocking && _state == ActionResult::RUNNING)
         {
-          uint8_t tracks = GetAnimTracksToDisable();
+          u8 tracks = GetTracksToLock();
 #         if DEBUG_ANIM_TRACK_LOCKING
           PRINT_NAMED_INFO("IActionRunner.Interrupt.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
                            tracks,
@@ -119,85 +119,93 @@ namespace Anki {
                            _name.c_str(),
                            _idTag);
 #         endif
-          _robot.GetMoveComponent().UnlockAnimTracks(tracks);
-          _robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
+
+          _robot.GetMoveComponent().UnlockTracks(tracks);
         }
-        
-        _isRunning = false;
+        _state = ActionResult::INTERRUPTED;
+        return true;
       }
-      return _isInterrupted;
+      return false;
     }
     
     ActionResult IActionRunner::Update()
     {
-      // If for some reason someone tried to set the tag to an invalid tag and didn't check the return
-      // value, fail here
-      if(_result == ActionResult::FAILURE_BAD_TAG)
+      switch(_state)
       {
-        return _result;
-      }
-      
-      if(!_isRunning && !_suppressTrackLocking) {
-        // When the ActionRunner first starts, lock any specified subsystems
-        uint8_t disableTracks = GetAnimTracksToDisable();
-#       if DEBUG_ANIM_TRACK_LOCKING
-        PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
-                         disableTracks,
-                         AnimTrackFlagToString((AnimTrackFlag)disableTracks),
-                         GetName().c_str(),
-                         GetTag());
-
-#       endif
-        _robot.GetMoveComponent().LockAnimTracks(disableTracks);
-        _robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
-      }
-
-      if( ! _isRunning ) {
-        if( DEBUG_ACTION_RUNNING && _displayMessages ) {
-          PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s running",
-                            GetTag(),
-                            GetName().c_str());
+        case ActionResult::FAILURE_RETRY:
+        case ActionResult::FAILURE_NOT_STARTED:
+        case ActionResult::INTERRUPTED:
+        {
+          _state = ActionResult::RUNNING;
+          if(!_suppressTrackLocking)
+          {
+            // When the ActionRunner first starts, lock any specified subsystems
+            u8 tracksToLock = GetTracksToLock();
+            
+            if(_robot.GetMoveComponent().AreAnyTracksLocked(tracksToLock))
+            {
+              PRINT_NAMED_WARNING("IActionRunner.Update",
+                                  "Action %s [%d] not running because required tracks (0x%x) %s are locked",
+                                  GetName().c_str(),
+                                  GetTag(),
+                                  tracksToLock,
+                                  AnimTrackFlagToString((AnimTrackFlag)tracksToLock));
+              _state = ActionResult::FAILURE_TRACKS_LOCKED;
+              return ActionResult::FAILURE_TRACKS_LOCKED;
+            }
+            
+#           if DEBUG_ANIM_TRACK_LOCKING
+            PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
+                             tracksToLock,
+                             AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
+                             GetName().c_str(),
+                             GetTag());
+#           endif
+            
+            _robot.GetMoveComponent().LockTracks(tracksToLock);
+          }
+          
+          if( DEBUG_ACTION_RUNNING && _displayMessages )
+          {
+            PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s running",
+                              GetTag(),
+                              GetName().c_str());
+          }
         }
-
-        _isRunning = true;
+        case ActionResult::RUNNING:
+        {
+          _state = UpdateInternal();
+          
+          if(_state == ActionResult::RUNNING)
+          {
+            // Still running dont fall through
+            break;
+          }
+          // UpdateInternal() returned something other than running so fall through to handle action
+          // completion
+        }
+        // Every other case is a completion case (ie the action is no longer running due to success, failure, or
+        // cancel)
+        default:
+        {
+          if(_displayMessages) {
+            PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
+                             "%s [%d] %s.", GetName().c_str(),
+                             GetTag(),
+                             (_state==ActionResult::SUCCESS ? "succeeded" :
+                              _state==ActionResult::CANCELLED ? "was cancelled" : "failed"));
+          }
+          
+          PrepForCompletion();
+          
+          if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+            PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
+                              GetTag(),
+                              GetName().c_str());
+          }
+        }
       }
-      _result = ActionResult::RUNNING;
-      if(_isCancelled) {
-        if(_displayMessages) {
-          PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
-                           "Cancelling [%d] %s.", _idTag, GetName().c_str());
-        }
-        _result = ActionResult::CANCELLED;
-      } else if(_isInterrupted) {
-        if(_displayMessages) {
-          PRINT_NAMED_INFO("IActionRunner.Update.InterruptAction",
-                           "Interrupting [%d] %s", _idTag, GetName().c_str());
-        }
-        _result = ActionResult::INTERRUPTED;
-      } else {
-        _result = UpdateInternal();
-      }
-      
-      if(_result != ActionResult::RUNNING) {
-        if(_displayMessages) {
-          PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
-                           "%s [%d] %s.", GetName().c_str(),
-                           _idTag,
-                           (_result==ActionResult::SUCCESS ? "succeeded" :
-                            _result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
-        }
-        
-        PrepForCompletion();
-
-        if( DEBUG_ACTION_RUNNING && _displayMessages ) {
-          PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
-                            GetTag(),
-                            GetName().c_str());
-        }
-        _isRunning = false;
-      }
-
-      return _result;
+      return _state;
     }
     
     void IActionRunner::PrepForCompletion()
@@ -205,8 +213,7 @@ namespace Anki {
       GetCompletionUnion(_completionUnion);
       _type = GetType();
       _name = GetName();
-      _animTracks = GetAnimTracksToDisable();
-      _movementTracks = GetMovementTracksToIgnore();
+      _tracks = GetTracksToLock();
     }
     
     bool IActionRunner::RetriesRemain()
@@ -237,10 +244,26 @@ namespace Anki {
       }
     }
 #   endif // USE_ACTION_CALLBACKS
-    
-    u8 IActionRunner::GetMovementTracksToIgnore() const
+
+    u8 IActionRunner::GetTracksToLock() const
     {
-      return  (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
+      return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::BODY_TRACK;
+    }
+    
+    void IActionRunner::UnlockTracks()
+    {
+      if(!_suppressTrackLocking)
+      {
+        u8 tracks = GetTracksToLock();
+#         if DEBUG_ANIM_TRACK_LOCKING
+        PRINT_NAMED_INFO("IActionRunner.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                         tracks,
+                         AnimTrackFlagToString((AnimTrackFlag)tracks),
+                         _name.c_str(),
+                         _idTag);
+#         endif
+        _robot.GetMoveComponent().UnlockTracks(tracks);
+      }
     }
     
 #pragma mark ---- IAction ----
@@ -256,6 +279,8 @@ namespace Anki {
       _preconditionsMet = false;
       _waitUntilTime = -1.f;
       _timeoutTime = -1.f;
+      ResetState();
+      UnlockTracks();
     }
     
     ActionResult IAction::UpdateInternal()
