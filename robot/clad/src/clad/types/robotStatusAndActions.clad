@@ -42,7 +42,7 @@ enum uint_8 DockAction
   DA_MOUNT_CHARGER    // Reversing onto charger
 }
 
-enum uint_8 CarryStateEnum
+enum uint_8 CarryState
 {
   CARRY_NONE = 0,
   CARRY_1_BLOCK,
@@ -50,9 +50,9 @@ enum uint_8 CarryStateEnum
   NUM_CARRY_STATES
 }
 
-message CarryState
+message CarryStateUpdate
 {
-  CarryStateEnum state
+  CarryState state
 }
 
 // Structure definition for convenience

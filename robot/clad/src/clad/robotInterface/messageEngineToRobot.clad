@@ -275,7 +275,7 @@ union EngineToRobot
   StartControllerTestMode       startControllerTestMode     = 0x46,
   ControllerGains               setControllerGains          = 0x47,
   DockingErrorSignal            dockingErrorSignal          = 0x48,
-  CarryState                    setCarryState               = 0x49,
+  CarryStateUpdate              setCarryState               = 0x49,
   ImuRequest                    imuRequest                  = 0x4A,
   SyncTime                      syncTime                    = 0x4B,
   ImageRequest                  imageRequest                = 0x4C,
