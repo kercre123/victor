@@ -40,7 +40,7 @@ if [ -z ${ANKI_BUILD_VERSION+x} ]; then ANKI_BUILD_VERSION="0"; fi
 # iOS specific variables.
 #
 
-MP_PARSE="${ANKI_BUILD_TOOLS_ROOT}/../mobile_provisioning/mpParse"
+MP_PARSE="${TOPLEVEL}/project/ios/ProvisioningProfiles/mpParse"
 PLIST_BUDDY="/usr/libexec/PlistBuddy"
 
 # build info

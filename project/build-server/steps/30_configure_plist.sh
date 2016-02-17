@@ -2,6 +2,7 @@
 
 set -e
 set -u
+set -x
 
 echo "=== Configure Info.plist ==="
 
@@ -20,11 +21,6 @@ echo "PROVISIONING_PROFILE: ${PROVISIONING_PROFILE}"
 echo ""
 
 
-echo "PLIST_BUDDY"
-which ${PLIST_BUDDY}
-
-more ${INFO_PLIST}
-
 pushdir ${ANKI_REPO_ROOT}
 
 MARKETING_VERSION=`${PLIST_BUDDY} -c "Print :CFBundleShortVersionString" ${INFO_PLIST}`
@@ -33,7 +29,10 @@ DAS_VERSION=`${VERSION_GENERATOR} \
     --build-type ${ANKI_BUILD_TYPE} \
     ${MARKETING_VERSION}`
 
+
 BUNDLE_ID=`${MP_PARSE} -f ${PROVISIONING_PROFILE} -o bundle_id`
+
+echo "TEST"
 
 echo "CFBundleName: ${ANKI_BUILD_BUNDLE_NAME}"
 echo "CFBundleIdentifier: ${BUNDLE_ID}"
