@@ -295,7 +295,7 @@ union EngineToRobot
   WriteFlash                    writeFlash                  = 0x81,
   OTAUpgrade                    triggerOTAUpgrade           = 0x82,
   NVStorage::NVStorageBlob      writeNV                     = 0x83,
-  NVStorage::NVEntryTag         readNV                      = 0x84,
+  NVStorage::NVStorageRead      readNV                      = 0x84,
   // Reserved for FlashWriteAcknowledge message in OTA      = 0x85,
   RTIPVersionInfo               rtipVersion                 = 0x86,
   AbortAnimation                abortAnimation              = 0x90,

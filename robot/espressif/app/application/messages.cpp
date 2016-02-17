@@ -86,7 +86,18 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_readNV:
             {
               memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              foregroundTaskPost(taskReadNVAndSend, msg->readNV);
+              switch (msg->readNV.to)
+              {
+                case NVStorage::ENGINE:
+                {
+                  foregroundTaskPost(taskReadNVAndSend, msg->readNV.tag);
+                  break;
+                }
+                default:
+                {
+                  AnkiError( 126, "Messages.readNV", 379, "Reading to target %d not yet supported.", 1, msg->readNV.to)
+                }
+              }
               break;
             }
             case RobotInterface::EngineToRobot::Tag_rtipVersion:
