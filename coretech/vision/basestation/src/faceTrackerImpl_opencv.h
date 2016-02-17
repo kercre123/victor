@@ -35,9 +35,9 @@ namespace Vision {
   public:
     Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
     
-    Result Update(const Vision::Image& frameOrig);
-    
-    std::list<TrackedFace> GetFaces() const;
+    Result Update(const Vision::Image& frameOrig,
+                  std::list<TrackedFace>& faces,
+                  std::list<FaceTracker::UpdatedID>& updatedIDs);
     
     void EnableDisplay(bool enabled) { }
     
@@ -107,7 +107,9 @@ namespace Vision {
     _isInitialized = true;
   }
   
-  Result FaceTracker::Impl::Update(const Vision::Image& frame)
+  Result FaceTracker::Impl::Update(const Vision::Image& frame,
+                                   std::list<TrackedFace>& returnedFaces,
+                                   std::list<FaceTracker::UpdatedID>& updatedIDs)
   {
     if(!_isInitialized) {
       PRINT_NAMED_ERROR("FaceTracker.Impl.Update.Uninitialized", "");
@@ -246,19 +248,13 @@ namespace Vision {
       
     }
     
-    return RESULT_OK;
-  } // Update()
-  
-  std::list<TrackedFace> FaceTracker::Impl::GetFaces() const
-  {
-    std::list<TrackedFace> faces;
-    
+    // Populate the returned faces list 
     for(auto & existingFace : _faces) {
-      faces.emplace_back(existingFace.second);
+      returnedFaces.emplace_back(existingFace.second);
     }
     
-    return faces;
-  }
+    return RESULT_OK;
+  } // Update()
   
 } // namespace Vision
 } // namespace Anki
