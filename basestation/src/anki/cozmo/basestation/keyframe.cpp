@@ -394,9 +394,6 @@ return RESULT_FAIL; \
       // Populate the message with the next chunk of audio data and send it out
       if(_sampleIndex < _audioReferences[_selectedAudioIndex].numSamples)
       {
-        // TODO: Get next chunk of audio from wwise or something?
-        //wwise::GetNextSample(_audioSampleMsg.sample, 800);
-        
         if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name,
                                                          (uint32_t)_sampleIndex, _audioReferences[_selectedAudioIndex].volume, _audioSampleMsg)) {
           PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
