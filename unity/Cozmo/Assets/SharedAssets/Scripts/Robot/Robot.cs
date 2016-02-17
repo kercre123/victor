@@ -13,18 +13,29 @@ using G2U = Anki.Cozmo.ExternalInterface;
 ///   also wraps most messages related solely to him
 /// </summary>
 public class Robot : IRobot {
-  public class Light : ILight{
+  public class Light : ILight {
     private uint _LastOnColor;
+
     public uint OnColor { get; set; }
+
     private uint _LastOffColor;
+
     public uint OffColor { get; set; }
+
     private uint _LastOnPeriodMs;
+
     public uint OnPeriodMs { get; set; }
+
     private uint _LastOffPeriodMs;
+
     public uint OffPeriodMs { get; set; }
+
     private uint _LastTransitionOnPeriodMs;
+
     public uint TransitionOnPeriodMs { get; set; }
+
     private uint _LastTransitionOffPeriodMs;
+
     public uint TransitionOffPeriodMs { get; set; }
 
     public void SetLastInfo() {
@@ -65,7 +76,7 @@ public class Robot : IRobot {
 
     public const uint FOREVER = uint.MaxValue;
   }
-    
+
   public event FriendshipLevelUp OnFriendshipLevelUp;
 
   private struct RobotCallbackWrapper {
@@ -479,13 +490,12 @@ public class Robot : IRobot {
   private void SendQueueSingleAction<T>(T action, RobotCallback callback, QueueActionPosition queueActionPosition) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueSingleAction = 
-      Singleton<QueueSingleAction>.Instance.Initialize(
-        robotID: ID, 
-        idTag: tag, 
-        numRetries: 0, 
-        position: queueActionPosition, 
-        actionState: action);
-    RobotEngineManager.Instance.SendMessage();
+      Singleton<QueueSingleAction>.Instance.Initialize(robotID: ID, 
+      idTag: tag,  
+      numRetries: 0, 
+      position: queueActionPosition, 
+      actionState: action);
+    RobotEngineManager.Instance.SendMessage(); 
 
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
   }
@@ -500,15 +510,15 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.ProgressionMessage = 
       Singleton<ProgressionMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
+      ID, 
+      Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
     );
     RobotEngineManager.Instance.SendMessage();
 
     RobotEngineManager.Instance.Message.ProgressionMessage = 
       Singleton<ProgressionMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetFriendshipLevel>.Instance.Initialize(FriendshipLevel)
+      ID, 
+      Singleton<SetFriendshipLevel>.Instance.Initialize(FriendshipLevel)
     );
     RobotEngineManager.Instance.SendMessage();
 
@@ -524,9 +534,9 @@ public class Robot : IRobot {
     FriendshipPoints += deltaValue;
     RobotEngineManager.Instance.Message.ProgressionMessage = 
       Singleton<ProgressionMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
-      );
+      ID, 
+      Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
+    );
     RobotEngineManager.Instance.SendMessage();
 
     DAS.Event("world.friendship.add_points", FriendshipPoints.ToString());
@@ -563,16 +573,16 @@ public class Robot : IRobot {
       }
       RobotEngineManager.Instance.Message.ProgressionMessage = 
         Singleton<ProgressionMessage>.Instance.Initialize(
-          ID, 
-          Singleton<SetFriendshipLevel>.Instance.Initialize(FriendshipLevel)
-        );
+        ID, 
+        Singleton<SetFriendshipLevel>.Instance.Initialize(FriendshipLevel)
+      );
       RobotEngineManager.Instance.SendMessage();
 
       RobotEngineManager.Instance.Message.ProgressionMessage = 
         Singleton<ProgressionMessage>.Instance.Initialize(
-          ID,
-          Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
-        );
+        ID,
+        Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
+      );
       RobotEngineManager.Instance.SendMessage();
 
       DAS.Event("world.friendship.level_up", FriendshipLevel.ToString());
@@ -594,9 +604,9 @@ public class Robot : IRobot {
   public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
     RobotEngineManager.Instance.Message.ProgressionMessage = 
       Singleton<ProgressionMessage>.Instance.Initialize(
-        ID,
-        Singleton<AddToProgressionStat>.Instance.Initialize(index, deltaValue)
-      );
+      ID,
+      Singleton<AddToProgressionStat>.Instance.Initialize(index, deltaValue)
+    );
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -604,25 +614,25 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.VisualizeQuad = 
       Singleton<VisualizeQuad>.Instance.Initialize(
-        quadID: 0,
-        color: Color.black.ToUInt(),
-        xUpperLeft: lowerLeft.x,
-        yUpperLeft: upperRight.y,
+      quadID: 0,
+      color: Color.black.ToUInt(),
+      xUpperLeft: lowerLeft.x,
+      yUpperLeft: upperRight.y,
         // not sure how to play z. Assume its constant between lower left and upper right?
-        zUpperLeft: lowerLeft.z,
+      zUpperLeft: lowerLeft.z,
 
-        xLowerLeft: lowerLeft.x,
-        yLowerLeft: lowerLeft.y,
-        zLowerLeft: lowerLeft.z,
+      xLowerLeft: lowerLeft.x,
+      yLowerLeft: lowerLeft.y,
+      zLowerLeft: lowerLeft.z,
 
-        xUpperRight: upperRight.x,
-        yUpperRight: upperRight.y,
-        zUpperRight: upperRight.z,
+      xUpperRight: upperRight.x,
+      yUpperRight: upperRight.y,
+      zUpperRight: upperRight.z,
 
-        xLowerRight: upperRight.x,
-        yLowerRight: lowerLeft.y,
-        zLowerRight: upperRight.z
-      );
+      xLowerRight: upperRight.x,
+      yLowerRight: lowerLeft.y,
+      zLowerRight: upperRight.z
+    );
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -632,7 +642,7 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.MoodMessage = 
       Singleton<MoodMessage>.Instance.Initialize(ID, 
-        Singleton<AddToEmotion>.Instance.Initialize(type, deltaValue, source));
+      Singleton<AddToEmotion>.Instance.Initialize(type, deltaValue, source));
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -641,8 +651,8 @@ public class Robot : IRobot {
   public void SetEmotion(Anki.Cozmo.EmotionType type, float value) {
     RobotEngineManager.Instance.Message.MoodMessage = 
       Singleton<MoodMessage>.Instance.Initialize(
-        ID,
-        Singleton<SetEmotion>.Instance.Initialize(type, value));
+      ID,
+      Singleton<SetEmotion>.Instance.Initialize(type, value));
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -651,7 +661,7 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.ProgressionMessage = 
       Singleton<ProgressionMessage>.Instance.Initialize(ID, 
-        Singleton<SetProgressionStat>.Instance.Initialize(type, value));
+      Singleton<SetProgressionStat>.Instance.Initialize(type, value));
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -686,27 +696,27 @@ public class Robot : IRobot {
   public void SetEnableAllBehaviors(bool enabled) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetEnableAllBehaviors>.Instance.Initialize(enabled)
-      );
+      ID, 
+      Singleton<SetEnableAllBehaviors>.Instance.Initialize(enabled)
+    );
     RobotEngineManager.Instance.SendMessage();
   }
 
   public void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetEnableBehaviorGroup>.Instance.Initialize(behaviorGroup, enabled)
-      );
+      ID, 
+      Singleton<SetEnableBehaviorGroup>.Instance.Initialize(behaviorGroup, enabled)
+    ); 
     RobotEngineManager.Instance.SendMessage();
   }
 
   public void SetEnableBehavior(string behaviorName, bool enabled) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetEnableBehavior>.Instance.Initialize(behaviorName, enabled)
-      );
+      ID, 
+      Singleton<SetEnableBehavior>.Instance.Initialize(behaviorName, enabled)
+    );
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -719,9 +729,9 @@ public class Robot : IRobot {
   public void OverrideBehaviorScore(string behaviorName, float newScore) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-        ID, 
-        Singleton<OverrideBehaviorScore>.Instance.Initialize(behaviorName, newScore)
-      );
+      ID, 
+      Singleton<OverrideBehaviorScore>.Instance.Initialize(behaviorName, newScore)
+    );
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -788,15 +798,15 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.DisplayProceduralFace = 
       Singleton<DisplayProceduralFace>.Instance.Initialize(
-        robotID: ID,
-        faceAngle: faceAngle,
-        faceCenX: faceCenter.x,
-        faceCenY: faceCenter.y,
-        faceScaleX: faceScale.x,
-        faceScaleY: faceScale.y,
-        leftEye: leftEyeParams,
-        rightEye: rightEyeParams
-      );
+      robotID: ID,
+      faceAngle: faceAngle,
+      faceCenX: faceCenter.x,
+      faceCenY: faceCenter.y,
+      faceScaleX: faceScale.x,
+      faceScaleY: faceScale.y,
+      leftEye: leftEyeParams,
+      rightEye: rightEyeParams
+    );
     RobotEngineManager.Instance.SendMessage();
 
   }
@@ -829,13 +839,13 @@ public class Robot : IRobot {
     DAS.Debug(this, "PlaceObjectRel " + target.ID);
 
     SendQueueSingleAction(Singleton<PlaceRelObject>.Instance.Initialize(
-        approachAngle_rad: approachAngle,
-        placementOffsetX_mm: offsetFromMarker,
-        objectID: target.ID,
-        useApproachAngle: true,
-        usePreDockPose: true,
-        useManualSpeed: false,
-        motionProf: PathMotionProfileDefault),
+      approachAngle_rad: approachAngle,
+      placementOffsetX_mm: offsetFromMarker,
+      objectID: target.ID,
+      useApproachAngle: true,
+      usePreDockPose: true,
+      useManualSpeed: false,
+      motionProf: PathMotionProfileDefault),
       callback, 
       queueActionPosition);
   }
@@ -844,13 +854,13 @@ public class Robot : IRobot {
     DAS.Debug(this, "PlaceOnObject " + target.ID);
 
     SendQueueSingleAction(Singleton<PlaceOnObject>.Instance.Initialize(
-        approachAngle_rad: approachAngle,
-        objectID: target.ID,
-        useApproachAngle: true,
-        usePreDockPose: true,
-        useManualSpeed: false,
-        motionProf: PathMotionProfileDefault
-      ),
+      approachAngle_rad: approachAngle,
+      objectID: target.ID,
+      useApproachAngle: true,
+      usePreDockPose: true,
+      useManualSpeed: false,
+      motionProf: PathMotionProfileDefault
+    ),
       callback,
       queueActionPosition);
   }
@@ -982,10 +992,10 @@ public class Robot : IRobot {
 
     uint objId;
     if (observedObject != null) {
-        objId = (uint)observedObject;
+      objId = (uint)observedObject;
     }
     else {
-        objId = uint.MaxValue; //cancels tracking
+      objId = uint.MaxValue; //cancels tracking
     }
 
     DAS.Debug(this, "Track Head To Object " + objId);
@@ -994,6 +1004,18 @@ public class Robot : IRobot {
       Singleton<TrackToObject>.Instance.Initialize(objId, ID, headOnly);
     RobotEngineManager.Instance.SendMessage();
 
+  }
+
+  public ObservedObject GetCharger() {
+    return SeenObjects.Find(x => x.Family == ObjectFamily.Charger);
+  }
+
+  public void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(
+      Singleton<MountCharger>.Instance.Initialize(
+        charger.ID, PathMotionProfileDefault, false, false), 
+      callback, queueActionPosition
+    );
   }
 
   public void StopTrackToObject() {
@@ -1007,40 +1029,40 @@ public class Robot : IRobot {
     DAS.Debug(this, "Face Object " + observedObject);
 
     SendQueueSingleAction(Singleton<FaceObject>.Instance.Initialize(
-        objectID: observedObject,
-        robotID: ID,
-        maxTurnAngle: float.MaxValue,
-        panTolerance_rad: 5 * Mathf.Deg2Rad, // 1.7 degrees is the minimum in the engine
-        headTrackWhenDone: headTrackWhenDone,
-        maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
-        panAccel_radPerSec2: panAccel_radPerSec2,
-        maxTiltSpeed_radPerSec: 0f,
-        tiltAccel_radPerSec2: 0f,
-        tiltTolerance_rad: 0f,
-        visuallyVerifyWhenDone: false
-      ),
+      objectID: observedObject,
+      robotID: ID,
+      maxTurnAngle: float.MaxValue,
+      panTolerance_rad: 5 * Mathf.Deg2Rad, // 1.7 degrees is the minimum in the engine
+      headTrackWhenDone: headTrackWhenDone,
+      maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
+      panAccel_radPerSec2: panAccel_radPerSec2,
+      maxTiltSpeed_radPerSec: 0f,
+      tiltAccel_radPerSec2: 0f,
+      tiltTolerance_rad: 0f,
+      visuallyVerifyWhenDone: false
+    ),
       callback,
       queueActionPosition);
 
   }
 
   public void FacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
-    RobotCallback callback = null,
-    QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
+                       RobotCallback callback = null,
+                       QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
 
     SendQueueSingleAction(Singleton<FacePose>.Instance.Initialize(
-        world_x: face.WorldPosition.x,
-        world_y: face.WorldPosition.y,
-        world_z: face.WorldPosition.z,
-        maxTurnAngle: float.MaxValue,
-        maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
-        panAccel_radPerSec2: panAccel_radPerSec2,
-        panTolerance_rad: 5 * Mathf.Deg2Rad, // 1.7 degrees is the minimum in the engine
-        maxTiltSpeed_radPerSec: 0f,
-        tiltAccel_radPerSec2: 0f,
-        tiltTolerance_rad: 0f,
-        robotID: ID
-      ),
+      world_x: face.WorldPosition.x,
+      world_y: face.WorldPosition.y,
+      world_z: face.WorldPosition.z,
+      maxTurnAngle: float.MaxValue,
+      maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
+      panAccel_radPerSec2: panAccel_radPerSec2,
+      panTolerance_rad: 5 * Mathf.Deg2Rad, // 1.7 degrees is the minimum in the engine
+      maxTiltSpeed_radPerSec: 0f,
+      tiltAccel_radPerSec2: 0f,
+      tiltTolerance_rad: 0f,
+      robotID: ID
+    ),
       callback,
       queueActionPosition);
       
@@ -1070,13 +1092,13 @@ public class Robot : IRobot {
     DAS.Debug(this, "Roll Object " + selectedObject + " usePreDockPose " + usePreDockPose + " useManualSpeed " + usePreDockPose);
 
     SendQueueSingleAction(Singleton<RollObject>.Instance.Initialize(
-        selectedObject,
-        PathMotionProfileDefault,
-        approachAngle_rad: 0f,
-        useApproachAngle: false,
-        usePreDockPose: usePreDockPose,
-        useManualSpeed: useManualSpeed
-      ), 
+      selectedObject,
+      PathMotionProfileDefault,
+      approachAngle_rad: 0f,
+      useApproachAngle: false,
+      usePreDockPose: usePreDockPose,
+      useManualSpeed: useManualSpeed
+    ), 
       callback, 
       queueActionPosition);
 
@@ -1089,17 +1111,17 @@ public class Robot : IRobot {
 
 
     SendQueueSingleAction(Singleton<PlaceObjectOnGround>.Instance.Initialize(
-        x_mm: position.x,
-        y_mm: position.y,
-        qw: rotation.w,
-        qx: rotation.x,
-        qy: rotation.y,
-        qz: rotation.z,
-        motionProf: PathMotionProfileDefault,
-        level: System.Convert.ToByte(level),
-        useManualSpeed: useManualSpeed,
-        useExactRotation: false
-      ), 
+      x_mm: position.x,
+      y_mm: position.y,
+      qw: rotation.w,
+      qx: rotation.x,
+      qy: rotation.y,
+      qz: rotation.z,
+      motionProf: PathMotionProfileDefault,
+      level: System.Convert.ToByte(level),
+      useManualSpeed: useManualSpeed,
+      useExactRotation: false
+    ), 
       callback, 
       queueActionPosition);
     
@@ -1115,13 +1137,13 @@ public class Robot : IRobot {
     DAS.Debug(this, "Go to Pose: x: " + x_mm + " y: " + y_mm + " useManualSpeed: " + useManualSpeed + " level: " + level);
 
     SendQueueSingleAction(Singleton<GotoPose>.Instance.Initialize(
-        level: System.Convert.ToByte(level),
-        useManualSpeed: useManualSpeed,
-        x_mm: x_mm,
-        y_mm: y_mm,
-        rad: rad,
-        motionProf: PathMotionProfileDefault
-      ), 
+      level: System.Convert.ToByte(level),
+      useManualSpeed: useManualSpeed,
+      x_mm: x_mm,
+      y_mm: y_mm,
+      rad: rad,
+      motionProf: PathMotionProfileDefault
+    ), 
       callback, 
       queueActionPosition);
     
@@ -1130,11 +1152,11 @@ public class Robot : IRobot {
 
   public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(Singleton<GotoObject>.Instance.Initialize(
-        objectID: obj,
-        distanceFromObjectOrigin_mm: distance_mm,
-        useManualSpeed: false,
-        motionProf: PathMotionProfileDefault
-      ), 
+      objectID: obj,
+      distanceFromObjectOrigin_mm: distance_mm,
+      useManualSpeed: false,
+      motionProf: PathMotionProfileDefault
+    ), 
       callback, 
       queueActionPosition);
     
@@ -1171,11 +1193,11 @@ public class Robot : IRobot {
 
 
     SendQueueSingleAction(Singleton<SetLiftHeight>.Instance.Initialize(
-        height_mm: (heightFactor * (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM)) + CozmoUtil.kMinLiftHeightMM,
-        accel_rad_per_sec2: 5f,
-        max_speed_rad_per_sec: 10f,
-        duration_sec: 0f
-      ), 
+      height_mm: (heightFactor * (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM)) + CozmoUtil.kMinLiftHeightMM,
+      accel_rad_per_sec2: 5f,
+      max_speed_rad_per_sec: 10f,
+      duration_sec: 0f
+    ), 
       callback, 
       queueActionPosition);
   }
@@ -1217,10 +1239,10 @@ public class Robot : IRobot {
   public void TurnInPlace(float angle_rad, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
-        angle_rad, 
-        0, 
-        ID
-      ), 
+      angle_rad, 
+      0, 
+      ID
+    ), 
       callback, 
       queueActionPosition);
   }

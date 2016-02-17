@@ -89,8 +89,19 @@ namespace Cozmo.HomeHub {
     private void HandleSessionEndClicked() {
       RobotEngineManager.Instance.CurrentRobot.ResetRobotState(() => {
         CloseTimelineDialog();
-        ShowStartView();
+        ObservedObject charger = RobotEngineManager.Instance.CurrentRobot.GetCharger();
+        if (charger != null) {
+          RobotEngineManager.Instance.CurrentRobot.MountCharger(charger, HandleChargerMounted);
+        }
+        else {
+          ShowStartView();
+        }
+
       });
+    }
+
+    private void HandleChargerMounted(bool success) {
+      ShowStartView();
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
