@@ -34,7 +34,6 @@ namespace SpeedTap {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
-      RobotEngineManager.Instance.RobotCompletedAnimation += RobotCompletedTapAnimation;
     }
 
     public override void Update() {
@@ -46,7 +45,7 @@ namespace SpeedTap {
         if (_GotMatch) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(AnimationName.kTapCube);
+              _CurrentRobot.SendAnimation(AnimationName.kTapCube, RobotCompletedTapAnimation);
               _CozmoTapping = true;
             }
           }
@@ -54,7 +53,7 @@ namespace SpeedTap {
         else if (_TryFake) {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(AnimationName.kSpeedTapFake);
+              _CurrentRobot.SendAnimation(AnimationName.kSpeedTapFake, RobotCompletedFakeTapAnimation);
               _TriedFake = true;
             }
           }
@@ -79,24 +78,17 @@ namespace SpeedTap {
       base.Exit();
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
-      RobotEngineManager.Instance.RobotCompletedAnimation -= RobotCompletedTapAnimation;
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
     }
 
-    void RobotCompletedTapAnimation(bool success, string animName) {
-      DAS.Info("SpeedTapStatePlayNewHand.RobotCompletedTapAnimation", animName + " success = " + success);
-      switch (animName) {
-      case AnimationName.kTapCube:
-        DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
-        // check for player tapped first here.
-        CozmoDidTap();
-        break;
-      case AnimationName.kSpeedTapFake:
-        _CozmoTapping = false;
-        _CurrentRobot.SetLiftHeight(1.0f);
-        break;
-      }
-
+    void RobotCompletedTapAnimation(bool success) {
+      DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
+      // check for player tapped first here.
+      CozmoDidTap();
+    }
+    void RobotCompletedFakeTapAnimation(bool success) {
+      _CozmoTapping = false;
+      _CurrentRobot.SetLiftHeight(1.0f);
     }
 
     void CozmoDidTap() {
