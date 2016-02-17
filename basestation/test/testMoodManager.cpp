@@ -945,7 +945,7 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
   
   {
     EmotionEvent* newEvent = new EmotionEvent();
-    newEvent->SetName("TestEvent1");
+    newEvent->SetName("TestEvent1b");
     newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Brave, 0.11f));
     newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Happy, 0.22f));
     newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Calm,  0.33f));
@@ -955,7 +955,7 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
   
   {
     EmotionEvent* newEvent = new EmotionEvent();
-    newEvent->SetName("TestEvent2");
+    newEvent->SetName("TestEvent2b");
     newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Calm,  0.44f));
     newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Happy, 0.55f));
     
@@ -965,7 +965,7 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
   {
     // This event will clobber 1st event added
     EmotionEvent* newEvent = new EmotionEvent();
-    newEvent->SetName("TestEvent1");
+    newEvent->SetName("TestEvent1b");
     newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Brave, 0.66f));
     newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Happy, 0.77f));
     
@@ -983,7 +983,7 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
   EXPECT_TRUE(readRes);
   
   {
-    const EmotionEvent* foundEvent2 = testEventMapper2.FindEvent("TestEvent2");
+    const EmotionEvent* foundEvent2 = testEventMapper2.FindEvent("TestEvent2b");
     ASSERT_NE(foundEvent2, nullptr);
 
     EXPECT_EQ(foundEvent2->GetNumAffectors(), 2);
@@ -992,7 +992,7 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
     EXPECT_EQ(foundEvent2->GetAffector(1).GetType(),  EmotionType::Happy);
     EXPECT_EQ(foundEvent2->GetAffector(1).GetValue(), 0.55f);
     
-    const EmotionEvent* foundEvent1 = testEventMapper2.FindEvent("TestEvent1");
+    const EmotionEvent* foundEvent1 = testEventMapper2.FindEvent("TestEvent1b");
     ASSERT_NE(foundEvent1, nullptr);
     
     EXPECT_EQ(foundEvent1->GetNumAffectors(), 2);
@@ -1019,7 +1019,7 @@ static const char* kTestEmotionEventMapperJson =
 "               \"value\" : 0.22"
 "            }"
 "         ],"
-"         \"name\" : \"TestEvent1\""
+"         \"name\" : \"TestEvent1c\""
 "      },"
 "      {"
 "         \"emotionAffectors\" : ["
@@ -1032,11 +1032,35 @@ static const char* kTestEmotionEventMapperJson =
 "               \"value\" : 0.44"
 "            }"
 "         ],"
-"         \"name\" : \"TestEvent2\""
+"         \"name\" : \"TestEvent2c\""
 "      }"
 "   ]"
 "}";
 
+// Valid Json
+static const char* kTestEmotionEventMapperJson2 =
+"{"
+"   \"emotionEvents\" : ["
+"      {"
+"         \"emotionAffectors\" : ["
+"            {"
+"               \"emotionType\" : \"Happy\","
+"               \"value\" : 0.55"
+"            }"
+"         ],"
+"         \"name\" : \"TestEvent1c2\""
+"      },"
+"      {"
+"         \"emotionAffectors\" : ["
+"            {"
+"               \"emotionType\" : \"Brave\","
+"               \"value\" : 0.66"
+"            }"
+"         ],"
+"         \"name\" : \"TestEvent2c2\""
+"      }"
+"   ]"
+"}";
 
 TEST(MoodManager, EmotionEventMapperReadJson)
 {
@@ -1050,24 +1074,75 @@ TEST(MoodManager, EmotionEventMapperReadJson)
   
   EXPECT_TRUE(readRes);
   
+  // Load an additional loose event
   {
-    const EmotionEvent* foundEvent1 = testEventMapper.FindEvent("TestEvent1");
-    ASSERT_NE(foundEvent1, nullptr);
+    Json::Value  emotionEventJson;
+    Json::Reader reader;
+    const bool parsedOK = reader.parse(kTestEmotionEventJson, emotionEventJson, false);
+    ASSERT_TRUE(parsedOK);
     
-    EXPECT_EQ(foundEvent1->GetNumAffectors(), 2);
-    EXPECT_EQ(foundEvent1->GetAffector(0).GetType(),  EmotionType::Happy);
-    EXPECT_EQ(foundEvent1->GetAffector(0).GetValue(), 0.11f);
-    EXPECT_EQ(foundEvent1->GetAffector(1).GetType(),  EmotionType::Calm);
-    EXPECT_EQ(foundEvent1->GetAffector(1).GetValue(), 0.22f);
+    const bool readLooseRes = testEventMapper.LoadEmotionEvents(emotionEventJson);
+    EXPECT_TRUE(readLooseRes);
+  }
+  
+  // Load an additional set of loose events
+  {
+    Json::Value  emotionEventsJson;
+    Json::Reader reader;
+    const bool parsedOK = reader.parse(kTestEmotionEventMapperJson2, emotionEventsJson, false);
+    ASSERT_TRUE(parsedOK);
     
-    const EmotionEvent* foundEvent2 = testEventMapper.FindEvent("TestEvent2");
-    ASSERT_NE(foundEvent2, nullptr);
+    const bool readLooseRes = testEventMapper.LoadEmotionEvents(emotionEventsJson);
+    EXPECT_TRUE(readLooseRes);
+  }
+
+  {
+    const EmotionEvent* foundEvent = testEventMapper.FindEvent("TestEvent1c");
+    ASSERT_NE(foundEvent, nullptr);
     
-    EXPECT_EQ(foundEvent2->GetNumAffectors(), 2);
-    EXPECT_EQ(foundEvent2->GetAffector(0).GetType(),  EmotionType::Brave);
-    EXPECT_EQ(foundEvent2->GetAffector(0).GetValue(), 0.33f);
-    EXPECT_EQ(foundEvent2->GetAffector(1).GetType(),  EmotionType::Confident);
-    EXPECT_EQ(foundEvent2->GetAffector(1).GetValue(), 0.44f);
+    EXPECT_EQ(foundEvent->GetNumAffectors(), 2);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.11f);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  EmotionType::Calm);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetValue(), 0.22f);
+  }
+  {
+    const EmotionEvent* foundEvent = testEventMapper.FindEvent("TestEvent2c");
+    ASSERT_NE(foundEvent, nullptr);
+    
+    EXPECT_EQ(foundEvent->GetNumAffectors(), 2);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Brave);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.33f);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  EmotionType::Confident);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetValue(), 0.44f);
+  }
+  {
+    const EmotionEvent* foundEvent = testEventMapper.FindEvent("TestEvent1");
+    ASSERT_NE(foundEvent, nullptr);
+    
+    EXPECT_EQ(foundEvent->GetNumAffectors(), 3);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Brave);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.11f);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetValue(), 0.22f);
+    EXPECT_EQ(foundEvent->GetAffector(2).GetType(),  EmotionType::Calm);
+    EXPECT_EQ(foundEvent->GetAffector(2).GetValue(), 0.33f);
+  }
+  {
+    const EmotionEvent* foundEvent = testEventMapper.FindEvent("TestEvent1c2");
+    ASSERT_NE(foundEvent, nullptr);
+    
+    EXPECT_EQ(foundEvent->GetNumAffectors(), 1);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.55f);
+  }
+  {
+    const EmotionEvent* foundEvent = testEventMapper.FindEvent("TestEvent2c2");
+    ASSERT_NE(foundEvent, nullptr);
+    
+    EXPECT_EQ(foundEvent->GetNumAffectors(), 1);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Brave);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.66f);
   }
 }
 
@@ -1086,6 +1161,7 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
   testStaticData.InitDecayGraphs();
   testStaticData.SetDecayGraph(EmotionType::Happy, kTestDecayGraph);
   testStaticData.SetDecayGraph(EmotionType::Calm,  kTestNoDecayGraph);
+  testStaticData.SetDefaultRepetitionPenalty(kTestDefaultRepetitionPenaltyGraph);
   
   {
     EmotionEvent* newEvent = new EmotionEvent();
@@ -1227,6 +1303,18 @@ static const char* kTestStaticMoodDataJson =
 "             ],"
 "             \"name\" : \"TestEvent2\""
 "          }"
+"       ]"
+"    },"
+"   \"defaultRepetitionPenalty\" : {"
+"      \"nodes\" : ["
+"            {"
+"               \"x\" : 0.0,"
+"               \"y\" : 0.0"
+"            },"
+"            {"
+"               \"x\" : 30.0,"
+"               \"y\" : 1.0"
+"            }"
 "       ]"
 "    }"
 "}";

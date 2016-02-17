@@ -71,7 +71,7 @@ bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
   
   if (!eventNameField.isString())
   {
-    PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.MissingNAme", "Missing '%s' string entry", kEventName);
+    PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.MissingName", "Missing '%s' string entry", kEventName);
     return false;
   }
   
@@ -119,6 +119,8 @@ bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
   {
     _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
   }
+  
+  PRINT_NAMED_INFO("EmotionEvent.ReadFromJson", "Loaded event '%s'", _name.c_str());
   
   return true;
 }
