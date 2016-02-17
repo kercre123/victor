@@ -14,6 +14,7 @@
 #include "anki/planning/basestation/robotActionParams.h"
 #include "pathPlanner.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 
 
 namespace Anki {
