@@ -339,6 +339,8 @@ namespace Cozmo {
         {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
                                  "Selected %s to run next.", _nextBehavior->GetName().c_str());
+          
+          Anki::Util::sEvent("robot.behavior_transition", {{DDATA,_currentBehavior->GetName().c_str()}}, _nextBehavior->GetName().c_str());
         }
       }
     }

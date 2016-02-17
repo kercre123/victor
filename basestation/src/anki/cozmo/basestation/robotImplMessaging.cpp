@@ -186,7 +186,6 @@ void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   char string_id[8];
   snprintf(string_id, sizeof(string_id), "%08x", payload.robotID);
   Anki::Util::sSetGlobal(DPHYS, string_id);
-  printf("HandleRobotSetID (%s)", string_id);
 }
 
 void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)
