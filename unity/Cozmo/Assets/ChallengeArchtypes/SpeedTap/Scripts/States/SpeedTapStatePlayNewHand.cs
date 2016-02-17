@@ -10,9 +10,14 @@ namespace SpeedTap {
     private float _StartTimeMs = 0;
     private float _OnDelayTimeMs = 2000.0f;
     private float _OffDelayTimeMs = 2000.0f;
+    private float _PeekMinTimeMs = 500.0f;
+    private float _PeekMaxTimeMs = 1500.0f;
+    private float _PeekDelayTimeMs = 0.0f;
     private float _MinCozmoTapDelayTimeMs = 380.0f;
     private float _MaxCozmoTapDelayTimeMs = 700.0f;
     private float _MatchProbability = 0.35f;
+    private float _FakeProbability = 0.25f;
+    private float _PeekProbability = 0.40f;
 
     private bool _LightsOn = false;
     private bool _GotMatch = false;
@@ -59,10 +64,6 @@ namespace SpeedTap {
             }
           }
         }
-        else if (_TryPeek) {
-          _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_Peek);
-          _TryPeek = false;
-        }
         if ((currTimeMs - _StartTimeMs) >= _OnDelayTimeMs) {
           _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
           _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
@@ -75,6 +76,10 @@ namespace SpeedTap {
           RollForLights();
           _LightsOn = true;
           _StartTimeMs = currTimeMs;
+        }
+        else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
+          _TryPeek = false;
+          _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_Peek);
         }
       }
     }
@@ -140,9 +145,11 @@ namespace SpeedTap {
       _TriedFake = false;
       _CozmoTapDelayTimeMs = UnityEngine.Random.Range(_MinCozmoTapDelayTimeMs, _MaxCozmoTapDelayTimeMs);
 
-      _TryFake = UnityEngine.Random.Range(0.0f, 1.0f) < 0.25f;
-      _TryPeek = UnityEngine.Random.Range(0.0f, 1.0f) < 0.25f;
-
+      _TryFake = UnityEngine.Random.Range(0.0f, 1.0f) < _FakeProbability;
+      _TryPeek = UnityEngine.Random.Range(0.0f, 1.0f) < _PeekProbability;
+      if (_TryPeek) {
+        _PeekDelayTimeMs = UnityEngine.Random.Range(_PeekMinTimeMs, _PeekMaxTimeMs);
+      }
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
       _SpeedTapGame.Rules.SetLights(_GotMatch, _SpeedTapGame);
