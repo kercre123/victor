@@ -21,20 +21,18 @@ namespace Cozmo {
         _ContinueButton.onClick.AddListener(HandleContinueButtonClicked);
       }
 
+      public void Initialize(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
+                             string buttonText, string shelfText, Color shelfColor) {
+        _ContinueButton.Text = buttonText;
+        _OnClickCallback = buttonClickHandler;
+        SetShelfText(shelfText, shelfColor);
+      }
+
       public void SetShelfText(string text, Color textColor) {
         if (_ShelfTextLabel != null) {
           _ShelfTextLabel.text = text;
           _ShelfTextLabel.color = textColor;
         }
-      }
-
-      public void SetButtonText(string text) {
-        _ContinueButton.Text = text;
-      }
-
-      public void SetButtonListener(ContinueButtonClickHandler buttonClickHandler) {
-        _OnClickCallback = null;
-        _OnClickCallback = buttonClickHandler;
       }
 
       private void HandleContinueButtonClicked() {

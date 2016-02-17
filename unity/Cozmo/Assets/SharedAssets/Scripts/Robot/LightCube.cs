@@ -30,6 +30,43 @@ public class LightCube : ObservedObject {
     }
   }
 
+  #region LightCube helpers
+
+  public static bool TryFindCubesFurthestApart(List<LightCube> cubesToCompare, out LightCube cubeA, out LightCube cubeB) {
+    bool success = false;
+    cubeA = null;
+    cubeB = null;
+    if (cubesToCompare.Count >= 2) {
+      float longestDistanceSquared = -1f;
+      float distanceSquared = -1f;
+      Vector3 distanceVector;
+      // Check 0->1, 0->2, 0->3... 0->n then check 1->2, 1->3,...1->n all the way to (n-1)->n
+      // Distance checks are communicable so there's no use checking 0->1 and 1->0
+      for (int rootCube = 0; rootCube < cubesToCompare.Count - 1; rootCube++) {
+        for (int otherCube = rootCube + 1; otherCube < cubesToCompare.Count; otherCube++) {
+          distanceVector = cubesToCompare[rootCube].WorldPosition - cubesToCompare[otherCube].WorldPosition;
+          distanceSquared = distanceVector.sqrMagnitude;
+          if (distanceSquared > longestDistanceSquared) {
+            longestDistanceSquared = distanceSquared;
+            cubeA = cubesToCompare[rootCube];
+            cubeB = cubesToCompare[otherCube];
+          }
+        }
+      }
+      success = true;
+    }
+    else {
+      DAS.Error("CozmoUtil", string.Format("GetCubesFurthestApart: cubesToCompare has less than 2 cubes! cubesToCompare.Count: {0}", 
+        cubesToCompare.Count));
+      if (cubesToCompare.Count == 1) {
+        cubeA = cubesToCompare[0];
+      }
+    }
+    return success;
+  }
+
+  #endregion
+
   public bool IsMoving { get; private set; }
 
   public UpAxis UpAxis { get; private set; }

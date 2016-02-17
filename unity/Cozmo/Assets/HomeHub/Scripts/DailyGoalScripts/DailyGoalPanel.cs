@@ -6,6 +6,10 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.UI;
 
+// ProgressionStatType
+using Anki.Cozmo;
+
+
 // Panel for generating and displaying the ProgressionStat goals for the Day.
 public class DailyGoalPanel : MonoBehaviour {
   
@@ -43,14 +47,18 @@ public class DailyGoalPanel : MonoBehaviour {
 
   private RectTransform _RectTransform;
 
+  private GoalCell[] _GoalCellsByStat;
+  private List<Sequence> _RewardTweens;
+
   void Awake() {
     _RectTransform = GetComponent<RectTransform>();
     _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
+    _GoalCellsByStat = new GoalCell[(int)ProgressionStatType.Count];
   }
 
-  public void SetDailyGoals(StatContainer progress, StatContainer goals) {
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      var targetStat = (Anki.Cozmo.ProgressionStatType)i;
+  public void SetDailyGoals(StatContainer progress, StatContainer goals, Transform[] rewardIcons = null) {
+    for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
+      var targetStat = (ProgressionStatType)i;
       if (goals[targetStat] > 0) {
         CreateGoalCell(targetStat, progress[targetStat], goals[targetStat]);
       }
@@ -66,21 +74,35 @@ public class DailyGoalPanel : MonoBehaviour {
     }
 
     float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
     DailyGoalManager.Instance.PickMiniGameToRequest();
+
+    if (rewardIcons != null) {
+      bool anyExists = false; 
+      foreach (var reward in rewardIcons) {
+        if (reward != null) {
+          anyExists = true;
+          break;
+        }
+      }
+      if (anyExists) {
+        StartCoroutine(DelayedAnimateRewards(rewardIcons));
+      }
+    }
   }
 
   // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
-  public GoalCell CreateGoalCell(Anki.Cozmo.ProgressionStatType type, int prog, int goal) {
+  private GoalCell CreateGoalCell(ProgressionStatType type, int prog, int goal) {
     DAS.Event(this, string.Format("CreateGoalCell({0},{1},{2})", type, prog, goal));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     newBadge.Initialize(type, prog, goal);
     _GoalCells.Add(newBadge);
+    _GoalCellsByStat[(int)type] = newBadge;
     newBadge.OnProgChanged += RefreshProgress;
     return newBadge;
   }
 
-  public void RefreshProgress() {
+  private void RefreshProgress() {
     StatContainer progress = DataPersistence.DataPersistenceManager.Instance.CurrentSession.Progress;
     StatContainer goals = DataPersistence.DataPersistenceManager.Instance.CurrentSession.Goals;
     float dailyProg = DailyGoalManager.Instance.CalculateDailyGoalProgress(progress, goals);
@@ -122,5 +144,43 @@ public class DailyGoalPanel : MonoBehaviour {
       _GoalCells[i].OnProgChanged -= RefreshProgress;
     }
     _GoalCells.Clear();
+
+    if (_RewardTweens != null) {
+      StopCoroutine(DelayedAnimateRewards(null));
+      foreach (var tween in _RewardTweens) {
+        tween.Kill();
+      }
+      _RewardTweens.Clear();
+    }
+  }
+
+  private IEnumerator DelayedAnimateRewards(Transform[] rewardIconsByStat) {
+    // Wait so that the goal cells can lay out
+    yield return new WaitForSeconds(0.1f);
+
+    // TODO: For each reward, tween it to the target goal
+    _RewardTweens = new List<Sequence>();
+    Sequence rewardTweenSequence;
+    Tweener rewardIconTween;
+    Transform target;
+    for (int stat = 0; stat < (int)ProgressionStatType.Count; stat++) {
+      if (rewardIconsByStat[stat] != null) {
+        if (_GoalCellsByStat[stat] != null) {
+          rewardTweenSequence = DOTween.Sequence();
+          target = rewardIconsByStat[stat];
+          rewardIconTween = rewardIconsByStat[stat].DOMove(_GoalCellsByStat[stat].transform.position, 1.5f)
+            .SetDelay(_RewardTweens.Count * 0.1f).SetEase(Ease.InOutBack).OnComplete(() => {
+            Destroy(target.gameObject);
+          });
+          rewardTweenSequence.Join(rewardIconTween);
+          rewardTweenSequence.Play();
+          _RewardTweens.Add(rewardTweenSequence);
+        }
+        else {
+          DAS.Error(this, string.Format("Could not find GoalCell for stat {0} when tweening Rewards!", 
+            (ProgressionStatType)stat));
+        }
+      }
+    }
   }
 }

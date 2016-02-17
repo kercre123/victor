@@ -247,29 +247,21 @@ namespace Cozmo {
 
       public ScoreWidget CozmoScoreboard {
         get {
-          ShowCozmoScoreWidget();
+          if (_CozmoScoreWidgetInstance == null) {
+            _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
+              _CozmoPortraitSprite);            
+          }
           return _CozmoScoreWidgetInstance;
-        }
-      }
-
-      private void ShowCozmoScoreWidget() {
-        if (_CozmoScoreWidgetInstance == null) {
-          _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
-            _CozmoPortraitSprite);            
         }
       }
 
       public ScoreWidget PlayerScoreboard {
         get {
-          ShowPlayerScoreWidget();
+          if (_PlayerScoreWidgetInstance == null) {
+            _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
+              _PlayerPortraitSprite);            
+          }
           return _PlayerScoreWidgetInstance;
-        }
-      }
-
-      private void ShowPlayerScoreWidget() {
-        if (_PlayerScoreWidgetInstance == null) {
-          _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
-            _PlayerPortraitSprite);            
         }
       }
 
@@ -346,9 +338,8 @@ namespace Cozmo {
         }
         CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonShelfPrefab);
         _IsContinueButtonShelfCentered = false;
-        _ContinueButtonShelfInstance.SetButtonListener(buttonClickHandler);
-        _ContinueButtonShelfInstance.SetButtonText(buttonText);
-        _ContinueButtonShelfInstance.SetShelfText(shelfText, shelfColor);
+        _ContinueButtonShelfInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfColor);
+        EnableContinueButton(true);
       }
 
       public void ShowContinueButtonCentered(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
@@ -360,8 +351,8 @@ namespace Cozmo {
         }
         CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonCenterPrefab);
         _IsContinueButtonShelfCentered = true;
-        _ContinueButtonShelfInstance.SetButtonListener(buttonClickHandler);
-        _ContinueButtonShelfInstance.SetButtonText(buttonText);
+        _ContinueButtonShelfInstance.Initialize(buttonClickHandler, buttonText, string.Empty, Color.clear);
+        EnableContinueButton(true);
       }
 
       public void HideContinueButtonShelf() {

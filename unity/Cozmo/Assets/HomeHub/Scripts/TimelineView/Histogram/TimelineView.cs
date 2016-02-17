@@ -103,7 +103,7 @@ namespace Cozmo.HomeHub {
       _ScrollRect.onValueChanged.RemoveAllListeners();
     }
 
-    public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
+    public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, Transform[] rewardIcons = null) {
       _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<HomeHubChallengeListView>();
       _ChallengeListViewInstance.Initialize(challengeStatesById);
       _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
@@ -113,7 +113,7 @@ namespace Cozmo.HomeHub {
 
       _CozmoWidgetInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _CozmoWidgetContainer).GetComponent<CozmoWidget>();
 
-      UpdateDailySession();
+      UpdateDailySession(rewardIcons);
 
       PopulateTimeline(DataPersistenceManager.Instance.Data.Sessions);
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
@@ -223,40 +223,37 @@ namespace Cozmo.HomeHub {
 
     }
 
-    private void UpdateDailySession() {
+    private void UpdateDailySession(Transform[] rewardIcons = null) {
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
       IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       // check if the current session is still valid
       if (currentSession != null) {  
-        _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
-        float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
-        currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
-        DailyGoalManager.Instance.PickMiniGameToRequest();
-        return;
+        _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals, rewardIcons);
       }
+      else {
+        var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
 
-      var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+        if (lastSession != null && !lastSession.Complete) {
+          CompleteSession(lastSession);
+        }
 
-      if (lastSession != null && !lastSession.Complete) {
-        CompleteSession(lastSession);
+        // start a new session
+        StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
+
+        TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
+          StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
+          StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
+        };
+
+        newSession.Goals.Set(goals);
+
+        currentRobot.SetProgressionStats(newSession.Progress);
+        _DailyGoalInstance.SetDailyGoals(newSession.Progress, newSession.Goals, rewardIcons);
+
+        DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
+
+        DataPersistenceManager.Instance.Save();
       }
-
-      // start a new session
-      StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
-
-      TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
-        StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
-        StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
-      };
-
-      newSession.Goals.Set(goals);
-
-      currentRobot.SetProgressionStats(newSession.Progress);
-      _DailyGoalInstance.SetDailyGoals(newSession.Progress, newSession.Goals);
-
-      DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
-
-      DataPersistenceManager.Instance.Save();
     }
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
