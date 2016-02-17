@@ -24,7 +24,7 @@ static const s32 MaxImagesPerDir = 50;
 // we didn't add excessive IDs to the album in the process. These are checked
 // per user-directory of video frames
 static const f32 ExpectedDetectionPercent   = 90.f;
-static const f32 ExpectedRecognitionPercent = 85.f;
+static const f32 ExpectedRecognitionPercent = 80.f;
 static const s32 ExpectedNumFaceIDsLimit    = 10;
 static const f32 ExpectedFalsePositivePercent = 1.f;
 
@@ -61,13 +61,15 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
 # endif
   
   // Show the same frame N times to fake face being still in video for a few frames
+  std::list<Vision::TrackedFace> faces;
+  std::list<Vision::FaceTracker::UpdatedID> updatedIDs;
   for(s32 i=0; i<fakeVideoFrames; ++i) {
-    lastResult = faceTracker.Update(img);
+    lastResult = faceTracker.Update(img, faces, updatedIDs);
   }
   
   ASSERT_TRUE(RESULT_OK == lastResult);
   
-  for(auto & face : faceTracker.GetFaces()) {
+  for(auto & face : faces) {
     //PRINT_NAMED_INFO("FaceRecognition.PairwiseComparison.Recognize",
     //                 "FaceTracker observed face ID %llu at t=%d",
     //                 face.GetID(), img.GetTimestamp());
@@ -230,7 +232,8 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
             } else if(observedID != Vision::TrackedFace::UnknownFace && allNames.count(observedFace->GetName()) > 0) {
               stats.falsePositives++;
             }
-          } else if(observedID != Vision::TrackedFace::UnknownFace) {
+          } else if(observedID >= 0) {
+            // Recognized, not just tracked
             stats.facesRecognized++;
             faceTracker->AssignNameToID(observedID, testDir);
             isNameSet = true;

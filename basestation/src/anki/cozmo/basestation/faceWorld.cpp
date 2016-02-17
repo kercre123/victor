@@ -50,10 +50,12 @@ namespace Cozmo {
                                                         }));
   }
   
-  void FaceWorld::RemoveFace(KnownFaceIter& knownFaceIter)
+  void FaceWorld::RemoveFace(KnownFaceIter& knownFaceIter, bool broadcast)
   {
-    using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(knownFaceIter->first, _robot.GetID())));
+    if(broadcast) {
+      using namespace ExternalInterface;
+      _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(knownFaceIter->first, _robot.GetID())));
+    }
     _robot.GetContext()->GetVizManager()->EraseVizObject(knownFaceIter->second.vizHandle);
     knownFaceIter = _knownFaces.erase(knownFaceIter);
   }
@@ -76,9 +78,33 @@ namespace Cozmo {
     if(knownFaceIter != _knownFaces.end())
     {
       PRINT_NAMED_INFO("FaceWorld.RemoveFaceByID",
-                       "Removing face %llu", faceID);
+                       "Removing face %lld", faceID);
       
       RemoveFace(knownFaceIter);
+    }
+  }
+  
+  Result FaceWorld::ChangeFaceID(Vision::TrackedFace::ID_t oldID,
+                                 Vision::TrackedFace::ID_t newID)
+  {
+    auto knownFaceIter = _knownFaces.find(oldID);
+    if(knownFaceIter != _knownFaces.end()) {
+      // TODO: Is there a more efficient move operation I could do here?
+      knownFaceIter->second.face.SetID(newID);
+      _knownFaces.insert({newID, knownFaceIter->second.face});
+      RemoveFace(knownFaceIter, false); // NOTE: don't broadcast the deletion
+      
+      ExternalInterface::RobotChangedObservedFaceID msg;
+      msg.oldID = oldID;
+      msg.newID = newID;
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      
+      return RESULT_OK;
+    } else {
+      PRINT_NAMED_WARNING("FaceWorld.ChangeFaceID.BadOldID",
+                          "ID %lld does not exist, cannot update to %lld",
+                          oldID, newID);
+      return RESULT_FAIL;
     }
   }
   
@@ -98,6 +124,21 @@ namespace Cozmo {
     headPose.SetParent(_robot.GetWorldOrigin());
     face.SetHeadPose(headPose);
 
+    /*
+    PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace",
+                     "Updating with face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
+                     "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
+                     face.GetRect().GetX(), face.GetRect().GetY(),
+                     face.GetRect().GetWidth(), face.GetRect().GetHeight(),
+                     face.GetTimeStamp(),
+                     face.GetHeadRoll().getDegrees(),
+                     face.GetHeadPitch().getDegrees(),
+                     face.GetHeadYaw().getDegrees(),
+                     face.GetHeadPose().GetTranslation().x(),
+                     face.GetHeadPose().GetTranslation().y(),
+                     face.GetHeadPose().GetTranslation().z());
+    */
+    
     static const Point3f humanHeadSize{148.f, 225.f, 195.f};
     
     KnownFace* knownFace = nullptr;
@@ -214,7 +255,7 @@ namespace Cozmo {
           if(knownFaceIter->second.face.GetHeadPose().IsSameAs(face.GetHeadPose(), 100.f, DEG_TO_RAD(45)))
           {
             PRINT_NAMED_INFO("FaceWorld.UpdateFace.RemovingOverlappingFace",
-                             "Removing old face with ID=%llu because it overlaps new face %llu",
+                             "Removing old face with ID=%lld because it overlaps new face %lld",
                              knownFaceIter->second.face.GetID(), face.GetID());
             RemoveFace(knownFaceIter);
           } else {
@@ -253,10 +294,26 @@ namespace Cozmo {
         drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)knownFace->face.GetID());
       }
       
-      knownFace->vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(1+static_cast<u32>(knownFace->face.GetID()),
-                                                                      humanHeadSize,
-                                                                      knownFace->face.GetHeadPose(),
-                                                                      drawFaceColor);
+      /*
+      PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace",
+                       "Known face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
+                       "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
+                       knownFace->face.GetRect().GetX(), knownFace->face.GetRect().GetY(),
+                       knownFace->face.GetRect().GetWidth(), knownFace->face.GetRect().GetHeight(),
+                       knownFace->face.GetTimeStamp(),
+                       knownFace->face.GetHeadRoll().getDegrees(),
+                       knownFace->face.GetHeadPitch().getDegrees(),
+                       knownFace->face.GetHeadYaw().getDegrees(),
+                       knownFace->face.GetHeadPose().GetTranslation().x(),
+                       knownFace->face.GetHeadPose().GetTranslation().y(),
+                       knownFace->face.GetHeadPose().GetTranslation().z());
+      */
+      
+      const s32 vizID = (s32)knownFace->face.GetID() + (knownFace->face.GetID() >= 0 ? 1 : 0);
+      knownFace->vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(vizID,
+                                                                                 humanHeadSize,
+                                                                                 knownFace->face.GetHeadPose(),
+                                                                                 drawFaceColor);
 
       // Draw box around recognized face (with ID) now that we have the real ID set
       _robot.GetContext()->GetVizManager()->DrawCameraFace(knownFace->face, drawFaceColor);
@@ -307,7 +364,7 @@ namespace Cozmo {
       if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > _deletionTimeout_ms + face.GetTimeStamp()) {
         
         PRINT_NAMED_INFO("FaceWorld.Update.DeletingOldFace",
-                         "Removing face %llu at t=%d, because it hasn't been seen since t=%d.",
+                         "Removing face %lld at t=%d, because it hasn't been seen since t=%d.",
                          faceIter->first, _robot.GetLastImageTimeStamp(),
                          faceIter->second.face.GetTimeStamp());
         

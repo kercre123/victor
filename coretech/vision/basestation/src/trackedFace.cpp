@@ -85,7 +85,7 @@ namespace Vision {
     static const std::map<Expression, const char*> NameLUT{
       {Neutral,    "Neutral"},
       {Happiness,  "Happineess"},
-      {Surprise,   "Surpries"},
+      {Surprise,   "Surprise"},
       {Anger,      "Anger"},
       {Sadness,    "Sadness"},
     };

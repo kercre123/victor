@@ -54,14 +54,11 @@ namespace Vision {
 
   }
   
-  Result FaceTracker::Update(const Vision::Image &frameOrig)
+  Result FaceTracker::Update(const Vision::Image &frameOrig,
+                             std::list<TrackedFace>& faces,
+                             std::list<UpdatedID>&   updatedIDs)
   {
-    return _pImpl->Update(frameOrig);
-  }
- 
-  std::list<TrackedFace> FaceTracker::GetFaces() const
-  {
-    return _pImpl->GetFaces();
+    return _pImpl->Update(frameOrig, faces, updatedIDs);
   }
   
   bool FaceTracker::IsRecognitionSupported()

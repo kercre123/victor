@@ -320,8 +320,11 @@ namespace Cozmo {
 
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionComponent.SetNextImage.PoseHistoryFail",
-                          "Unable to get computed pose at image timestamp of %d. (have %zu from %d:%d)\n",
+                          "Unable to get computed pose at image timestamp of %d. (raw: have %zu from %d:%d, vision: have %zu from %d:%d)\n",
                           image.GetTimestamp(),
+                          robot.GetPoseHistory()->GetNumRawPoses(),
+                          robot.GetPoseHistory()->GetOldestTimeStamp(),
+                          robot.GetPoseHistory()->GetNewestTimeStamp(),
                           robot.GetPoseHistory()->GetNumVisionPoses(),
                           robot.GetPoseHistory()->GetOldestVisionOnlyTimeStamp(),
                           robot.GetPoseHistory()->GetNewestVisionOnlyTimeStamp());
@@ -588,15 +591,28 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     if(_visionSystem != nullptr)
     {
+      Vision::FaceTracker::UpdatedID updatedID;
+      while(true == _visionSystem->CheckMailbox(updatedID))
+      {
+        robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
+      }
+
       Vision::TrackedFace faceDetection;
-      while(true == _visionSystem->CheckMailbox(faceDetection)) {
+      while(true == _visionSystem->CheckMailbox(faceDetection))
+      {
         /*
          PRINT_NAMED_INFO("VisionComponent.Update",
-         "Robot %d reported seeing a face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
-         "at t=%d (lastImg t=%d).",
-         GetID(), faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
-         faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
-         faceDetection.GetTimeStamp(), GetLastImageTimeStamp());
+                          "Saw face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
+                          "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
+                          faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
+                          faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
+                          faceDetection.GetTimeStamp(),
+                          faceDetection.GetHeadRoll().getDegrees(),
+                          faceDetection.GetHeadPitch().getDegrees(),
+                          faceDetection.GetHeadYaw().getDegrees(),
+                          faceDetection.GetHeadPose().GetTranslation().x(),
+                          faceDetection.GetHeadPose().GetTranslation().y(),
+                          faceDetection.GetHeadPose().GetTranslation().z());
          */
         
         // Use the faceDetection to update FaceWorld:
@@ -607,6 +623,7 @@ namespace Cozmo {
           return lastResult;
         }
       }
+      
     } // if(_visionSystem != nullptr)
     return lastResult;
   } // UpdateFaces()

@@ -398,7 +398,9 @@ namespace Vision {
   } // EstimateExpression()
   
   
-  Result FaceTracker::Impl::Update(const Vision::Image& frameOrig)
+  Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
+                                   std::list<TrackedFace>& faces,
+                                   std::list<UpdatedID>&   updatedIDs)
   {
     // Initialize on first use
     if(!_isInitialized) {
@@ -436,8 +438,6 @@ namespace Vision {
     }
     Toc("FaceDetect");
     
-    _faces.clear();
-    
     for(INT32 detectionIndex=0; detectionIndex<numDetections; ++detectionIndex)
     {
       DETECTION_INFO detectionInfo;
@@ -452,9 +452,9 @@ namespace Vision {
       }
       
       // Add a new face to the list
-      _faces.emplace_back();
+      faces.emplace_back();
       
-      TrackedFace& face = _faces.back();
+      TrackedFace& face = faces.back();
 
       face.SetIsBeingTracked(detectionInfo.nDetectionMethod != DET_METHOD_DETECTED_HIGH);
  
@@ -515,16 +515,24 @@ namespace Vision {
       
       if(recognitionData.isNew) {
         face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
+        UpdatedID update{
+          .oldID = -detectionInfo.nID,
+          .newID = recognitionData.faceID
+        };
+        updatedIDs.push_back(std::move(update));
       }
       
-      face.SetID(recognitionData.faceID); // could be unknown!
       face.SetScore(recognitionData.score); // could still be zero!
       if(TrackedFace::UnknownFace == recognitionData.faceID) {
-        face.SetName("Unknown");
+        // No recognition ID: use the tracker ID as the face's handle/ID
+        ASSERT_NAMED(detectionInfo.nID > 0, "Expecting trackerID > 0");
+        face.SetID(-detectionInfo.nID);
+        face.SetName("Unknown" + std::to_string(face.GetID()));
       } else {
+        face.SetID(recognitionData.faceID);
         if(recognitionData.name.empty()) {
           // Known, unnamed face
-          face.SetName("KnownFace" + std::to_string(recognitionData.faceID));
+          face.SetName("KnownFace" + std::to_string(face.GetID()));
         } else {
           face.SetName(recognitionData.name);
         }
@@ -534,11 +542,6 @@ namespace Vision {
     
     return RESULT_OK;
   } // Update()
-  
-  std::list<TrackedFace> FaceTracker::Impl::GetFaces() const
-  {
-    return _faces;
-  }
   
   void FaceTracker::Impl::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
   {

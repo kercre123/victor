@@ -38,9 +38,11 @@ namespace Vision {
     
     ~FaceTracker();
     
-    Result Update(const Vision::Image& frameOrig);
+    using UpdatedID = struct { TrackedFace::ID_t oldID, newID; };
     
-    std::list<TrackedFace> GetFaces() const;
+    Result Update(const Vision::Image& frameOrig,
+                  std::list<TrackedFace>& faces,
+                  std::list<UpdatedID>&   updatedIDs);
     
     void EnableDisplay(bool enabled);
     

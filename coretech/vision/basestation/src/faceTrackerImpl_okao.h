@@ -38,9 +38,9 @@ namespace Vision {
     Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
     ~Impl();
     
-    Result Update(const Vision::Image& frameOrig);
-    
-    std::list<TrackedFace> GetFaces() const;
+    Result Update(const Vision::Image& frameOrig,
+                  std::list<TrackedFace>& faces,
+                  std::list<UpdatedID>&   updatedIDs);
     
     void EnableDisplay(bool enabled) { }
     
@@ -74,8 +74,6 @@ namespace Vision {
     bool _detectEmotion = true;
     
     static const s32   MaxFaces = 10; // detectable at once
-    
-    std::list<TrackedFace> _faces;
     
     //u8* _workingMemory = nullptr;
     //u8* _backupMemory  = nullptr;

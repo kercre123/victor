@@ -205,16 +205,19 @@ namespace Anki {
       return vizID;
     }
 
-    VizManager::Handle_t VizManager::DrawHumanHead(const u32 headID, const Point3f& size, const Pose3d& pose, const ColorRGBA& color)
+    VizManager::Handle_t VizManager::DrawHumanHead(const s32 headID, const Point3f& size, const Pose3d& pose, const ColorRGBA& color)
     {
-      if (headID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]) {
+      if (std::abs(headID) >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]) {
         PRINT_NAMED_ERROR("VizManager.DrawHumanHead.IDtooLarge", "Specified head ID=%d larger than maxID=%d",
           headID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]);
         return INVALID_HANDLE;
 
       }
       
-      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID;
+      const u32 vizID = (headID >= 0 ?
+                         VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID :
+                         _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID);
+                         
       DrawObject(vizID, VizObjectType::VIZ_OBJECT_HUMAN_HEAD, size, pose, color);
       return vizID;
     }
@@ -257,9 +260,7 @@ namespace Anki {
       
       // Draw name & most likely expression
       std::string name;
-      if(face.GetID() < 0) {
-        name = "Unknown";
-      } else if(face.GetName().empty()) {
+      if(face.GetName().empty()) {
         name = "Face" + std::to_string(face.GetID());
       } else {
         name = face.GetName() + "[" + std::to_string(face.GetID()) + "]";

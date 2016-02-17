@@ -26,6 +26,9 @@ namespace Cozmo {
     Result Update();
     Result AddOrUpdateFace(Vision::TrackedFace& face);
   
+    Result ChangeFaceID(Vision::TrackedFace::ID_t oldID,
+                        Vision::TrackedFace::ID_t newID);
+    
     // Returns nullptr if not found
     const Vision::TrackedFace* GetFace(Vision::TrackedFace::ID_t faceID) const;
     
@@ -76,8 +79,8 @@ namespace Cozmo {
     static constexpr float headCenterPointThreshold = 220.f;
     
     // Removes the face and advances the iterator. Notifies any listeners that
-    // the face was removed.
-    void RemoveFace(KnownFaceIter& faceIter);
+    // the face was removed if broadcast==true.
+    void RemoveFace(KnownFaceIter& faceIter, bool broadcast = true);
     
     void RemoveFaceByID(Vision::TrackedFace::ID_t faceID);
 

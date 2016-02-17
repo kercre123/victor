@@ -140,7 +140,7 @@ namespace Vision {
       // If we're not allowed to enroll new faces and there's nobody already
       // enrolled, we have nothing to do
       _mutex.lock();
-      const bool anythingToDo = (_numToEnroll > 0 || !_enrollmentData.empty());
+      const bool anythingToDo = (_numToEnroll != 0 || !_enrollmentData.empty());
       _mutex.unlock();
       
       if(_detectionInfo.nID >= 0 && anythingToDo)
