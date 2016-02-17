@@ -167,7 +167,7 @@ LOCAL bool TaskWriteFlash(uint32 param)
       resp.address = msg->address;
       resp.length  = msg->data_length;
       resp.writeNotErase = true;
-      RobotInterface::SendMessage(resp, true, true);
+      RobotInterface::SendMessage(resp);
       break;
     }
     case SPI_FLASH_RESULT_ERR:
@@ -176,7 +176,7 @@ LOCAL bool TaskWriteFlash(uint32 param)
       resp.address = msg->address;
       resp.length  = 0; // Indicates failure
       resp.writeNotErase = true;
-      RobotInterface::SendMessage(resp, true, true);
+      RobotInterface::SendMessage(resp);
       break;
     }
     case SPI_FLASH_RESULT_TIMEOUT:
@@ -192,7 +192,7 @@ LOCAL bool TaskWriteFlash(uint32 param)
         resp.address = msg->address;
         resp.length  = 0; // Indicates failure
         resp.writeNotErase = true;
-        RobotInterface::SendMessage(resp, true, true);
+        RobotInterface::SendMessage(resp);
         break;
       }
     }
@@ -713,7 +713,7 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
     if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
     {
       // Enter bootloader message from otaMessages.clad
-      if (i2spiQueueMessage((u8*)"\xfe\x01", 2) == false) return true;
+      if (i2spiQueueMessage((u8*)"\x30\x01", 2) == false) return true;
       os_printf("Flash staged, starting upgrade sequence\r\n");
     }
     else
@@ -733,7 +733,7 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
   else
   {
     // TODO tell the RTIP we're going away, in the mean time, at least tell it the connection is going away
-    i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
+    i2spiQueueMessage((u8*)"\x31\x00", 2); // FC is the tag for a radio connection state message to the robot
     
     RobotInterface::EraseFlash* taskMsg = static_cast<RobotInterface::EraseFlash*>(os_zalloc(msg.Size()));
     if (taskMsg == NULL)

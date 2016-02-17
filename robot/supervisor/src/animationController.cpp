@@ -201,7 +201,7 @@ namespace AnimationController {
     if (_isPlaying) msg.status     |= IS_ANIMATING;
     msg.enabledAnimTracks = GetEnabledTracks();
     msg.tag = GetCurrentTag();
-    if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
+    if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState))
     {
       return RESULT_OK;
     }
@@ -213,7 +213,9 @@ namespace AnimationController {
 
   static inline RobotInterface::EngineToRobot::Tag PeekBufferTag()
   {
-    return _keyFrameBuffer[_currentBufferPos];
+    int nextTagIndex = _currentBufferPos;
+    if (nextTagIndex > KEYFRAME_BUFFER_SIZE) nextTagIndex -= KEYFRAME_BUFFER_SIZE;
+    return _keyFrameBuffer[nextTagIndex];
   }
 
   static u32 GetFromBuffer(u8* data, u32 numBytes)
@@ -244,18 +246,28 @@ namespace AnimationController {
 
   static s32 GetFromBuffer(RobotInterface::EngineToRobot* msg)
   {
-    s32 readSoFar;
-    memset(msg, 0, sizeof(RobotInterface::EngineToRobot)); // Memset 0 - sets size to 1
-    readSoFar  = GetFromBuffer(msg->GetBuffer(), RobotInterface::EngineToRobot::MIN_SIZE); // Read in enough to know what it is
-    readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in the minimum size for the type to get length fields
-    readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in anything left now that we know how big minimum fields are
-    return readSoFar;
+    u16 size;
+    GetFromBuffer(reinterpret_cast<u8*>(&size), 2);
+    if (GetNumBytesAvailable() < size)
+    {
+      AnkiError( 125, "AnimationController.BufferCorrupt", 377, "Message size header (%d) greater than available bytes (%d), assuming corrupt and clearing", 2, GetNumBytesAvailable(), size);
+      Clear();
+      return 0;
+    }
+    GetFromBuffer(msg->GetBuffer(), size);
+    if (msg->Size() != size)
+    {
+      AnkiError( 125, "AnimationController.BufferCorrupt", 378, "Clad message size (%d) doesn't match stored header (%d), assuming corrupt and clearing", 2, msg->Size(), size);
+      Clear();
+      return 0;
+    }
+    return size+2;
   }
 
-  Result BufferKeyFrame(const RobotInterface::EngineToRobot& msg)
+  Result BufferKeyFrame(const u8* buffer, const u16 bufferSize)
   {
     const s32 numBytesAvailable = GetNumBytesAvailable();
-    const s32 numBytesNeeded = msg.Size();
+    const s32 numBytesNeeded = bufferSize + 2;
     if(numBytesAvailable < numBytesNeeded) {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
@@ -272,22 +284,25 @@ namespace AnimationController {
 
     AnkiAssert(numBytesNeeded < KEYFRAME_BUFFER_SIZE, 8);
 
+    _keyFrameBuffer[_lastBufferPos++] = bufferSize & 0xff;
+    _keyFrameBuffer[_lastBufferPos++] = bufferSize >> 8;
+
     if(_lastBufferPos + numBytesNeeded < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current end position to end of buffer to just
       // copy directly
-      memcpy(_keyFrameBuffer + _lastBufferPos, msg.GetBuffer(), numBytesNeeded);
+      memcpy(_keyFrameBuffer + _lastBufferPos, buffer, numBytesNeeded);
       _lastBufferPos += numBytesNeeded;
     } else {
       // Copy the first chunk into whatever fits from current position to end of
       // the buffer
       const s32 firstChunk = KEYFRAME_BUFFER_SIZE - _lastBufferPos;
-      memcpy(_keyFrameBuffer + _lastBufferPos, msg.GetBuffer(), firstChunk);
+      memcpy(_keyFrameBuffer + _lastBufferPos, buffer, firstChunk);
 
       // Copy the remaining data starting at the beginning of the buffer
-      memcpy(_keyFrameBuffer, msg.GetBuffer()+firstChunk, numBytesNeeded - firstChunk);
+      memcpy(_keyFrameBuffer, buffer+firstChunk, numBytesNeeded - firstChunk);
       _lastBufferPos = numBytesNeeded-firstChunk;
      }
-    switch(msg.tag) {
+    switch(buffer[0]) {
       case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
         ++_haveReceivedTerminationFrame;
       case RobotInterface::EngineToRobot::Tag_animAudioSample:
@@ -401,8 +416,8 @@ namespace AnimationController {
             if(_tracksToPlay & AUDIO_TRACK) {
               _playSilence = false;
               #ifdef TARGET_ESPRESSIF
-                u8 tag;
-                GetFromBuffer(&tag, 1); // Get the audio sample header out
+                u8 header[3];
+                GetFromBuffer(header, 3); // Get the size + audio sample header
                 GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the first MAX_AUDIO_BYTES_PER_DROP from the buffer
                 _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
                 return true; // Play audio

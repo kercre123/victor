@@ -5,6 +5,7 @@ extern "C" {
 #include "messages.h"
 #include "anki/cozmo/robot/esp.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/common/constantsAndMacros.h"
 #include "animationController.h"
 #include "rtip.h"
 #include "nvStorage.h"
@@ -42,45 +43,69 @@ namespace Anki {
       
       void ProcessMessage(u8* buffer, u16 bufferSize)
       {
-        RobotInterface::EngineToRobot msg;
-        AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 1, "Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
-        memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-        if (msg.tag < 0x80) // Message for RTIP not us
+        AnkiConditionalWarnAndReturn(buffer[0] > RobotInterface::TO_WIFI_END, 1, "Messages", 373, "ToRobot message %x[%d] looks has tag for engine (> 0x%x)", 3, buffer[0], bufferSize, (int)RobotInterface::TO_WIFI_END);
+        if (buffer[0] < RobotInterface::TO_WIFI_START) // Message for someone further down than us
         {
-          RTIP::SendMessage(msg);
+          RTIP::SendMessage(buffer, bufferSize);
         }
         else
         {
-          AnkiConditionalWarnAndReturn(msg.IsValid(), 1, "Messages", 257, "Received invalid message: %02x[%d]", 2, buffer[0], bufferSize);
-          switch(msg.tag)
+          u8 alignedBuffer[260];
+          RobotInterface::EngineToRobot* const msg = reinterpret_cast<RobotInterface::EngineToRobot*>(alignedBuffer);
+          AnkiConditionalWarnAndReturn(bufferSize <= msg->MAX_SIZE, 1, "Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg->MAX_SIZE);
+          switch(buffer[0])
           {
             case RobotInterface::EngineToRobot::Tag_eraseFlash:
             {
-              UpgradeController::EraseFlash(msg.eraseFlash);
+              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              UpgradeController::EraseFlash(msg->eraseFlash);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_writeFlash:
             {
-              UpgradeController::WriteFlash(msg.writeFlash);
+              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              UpgradeController::WriteFlash(msg->writeFlash);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
             {
-              UpgradeController::Trigger(msg.triggerOTAUpgrade);
+              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              UpgradeController::Trigger(msg->triggerOTAUpgrade);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_writeNV:
             {
+              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               NVStorage::NVOpResult result;
-              result.tag    = msg.writeNV.tag;
+              result.tag    = msg->writeNV.tag;
               result.write  = true;
-              result.result = NVStorage::Write(msg.writeNV);
+              result.result = NVStorage::Write(msg->writeNV);
               RobotInterface::SendMessage(result);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_readNV:
             {
-              foregroundTaskPost(taskReadNVAndSend, msg.readNV);
+              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              foregroundTaskPost(taskReadNVAndSend, msg->readNV);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_rtipVersion:
+            {
+              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              RTIP::Version = msg->rtipVersion.version;
+              RTIP::Date    = msg->rtipVersion.date;
+              int i = 0;
+              msg->rtipVersion.description_length = MIN(msg->rtipVersion.description_length, VERSION_DESCRIPTION_SIZE-1);
+              while (i < msg->rtipVersion.description_length)
+              {
+                RTIP::VersionDescription[i] = msg->rtipVersion.description[i];
+                i++;
+              }
+              while (i < VERSION_DESCRIPTION_SIZE)
+              {
+                RTIP::VersionDescription[i] = 0;
+                i++;
+              }
               break;
             }
             case RobotInterface::EngineToRobot::Tag_abortAnimation:
@@ -100,7 +125,7 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
             case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
             {
-              if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
+              if(AnimationController::BufferKeyFrame(buffer, bufferSize) != RESULT_OK) {
                 AnkiWarn( 1, "Messages", 258, "Failed to buffer a keyframe! Clearing Animation buffer!\n", 0);
                 AnimationController::Clear();
               }
@@ -108,22 +133,19 @@ namespace Anki {
             }
             case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
             {
-              AnimationController::DisableTracks(msg.disableAnimTracks.whichTracks);
+              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              AnimationController::DisableTracks(msg->disableAnimTracks.whichTracks);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_enableAnimTracks:
             {
-              AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_enterBootloader:
-            {
-              RTIP::SendMessage(msg);
+              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              AnimationController::EnableTracks(msg->enableAnimTracks.whichTracks);
               break;
             }
             default:
             {
-              AnkiWarn( 1, "Messages", 259, "Received message not expected here tag=%02x\n", 1, msg.tag);
+              AnkiWarn( 1, "Messages", 259, "Received message not expected here tag=%02x\n", 1, buffer[0]);
             }
           }
         }

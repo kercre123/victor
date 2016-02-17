@@ -26,17 +26,12 @@ u32 Version;
 u32 Date;
 char VersionDescription[VERSION_DESCRIPTION_SIZE]; 
 
-#define MIN(a,b) (a < b) ? a : b
-
 bool Init()
 {
-  Version = 0;
-  Date = 0;
-  VersionDescription[0] = 0;
   return true;
 }
 
-bool SendMessage(RobotInterface::EngineToRobot& msg)
+bool SendMessage(u8* buffer, u16 bufferSize)
 {
   static uint32_t lastCallTime = 0;
   static uint16_t sentThisTick = 0;
@@ -44,28 +39,15 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
   const uint32_t timeSinceLastCall = now - lastCallTime;
   const uint32_t flushed = BYTES_PER_TICK * timeSinceLastCall / TICK_TIME;
   sentThisTick = flushed > sentThisTick ? 0 : sentThisTick - flushed;
-  AnkiConditionalErrorAndReturnValue((msg.Size() + sentThisTick) <= BYTES_PER_TICK,  false, 30, "RTIP", 197, "SendMessage: Not enough buffer on RTIP", 0);
-  AnkiConditionalErrorAndReturnValue(msg.Size() <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, 30, "RTIP", 198, "SendMessage: Message too large for RTIP, %d > %d", 2, msg.Size(), DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-  AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(msg.GetBuffer(), msg.Size()), false, 30, "RTIP", 199, "SendMessage: Couldn't forward message to RTIP", 0);
+  AnkiConditionalErrorAndReturnValue((bufferSize + sentThisTick) <= BYTES_PER_TICK,  false, 30, "RTIP", 197, "SendMessage: Not enough buffer on RTIP", 0);
+  AnkiConditionalErrorAndReturnValue(bufferSize <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, 30, "RTIP", 198, "SendMessage: Message too large for RTIP, %d > %d", 2, bufferSize, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+  AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(buffer, bufferSize), false, 30, "RTIP", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP", 2, buffer[0], bufferSize);
   return true;
 }
 
-void UpdateVersionInfo(RobotInterface::RTIPVersionInfo& info)
+bool SendMessage(RobotInterface::EngineToRobot& msg)
 {
-  int i = 0;
-  info.description_length = MIN(info.description_length, VERSION_DESCRIPTION_SIZE-1);
-  while (i < info.description_length)
-  {
-    VersionDescription[i] = info.description[i];
-    i++;
-  }
-  while (i < VERSION_DESCRIPTION_SIZE)
-  {
-    VersionDescription[i] = 0;
-    i++;
-  }
-  Version = info.version;
-  Date    = info.date;
+  return SendMessage(msg.GetBuffer(), msg.Size());
 }
 
 #define RELAY_BUFFER_SIZE (384)
@@ -86,25 +68,29 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
   {
     os_memcpy(relayBuffer + relayQueued, payload, length);
     relayQueued += length;
-    while (relayQueued > 2) // Have a header +
+    while (relayQueued > 1) // Have a header +
     {
-      const uint16 size = relayBuffer[0] | ((relayBuffer[1] & RTIP_CLAD_SIZE_HIGH_MASK) << 8);
-      const uint16 sizeWHeader = size + 2;
+      const u8 size = relayBuffer[0];
+      const u8 sizeWHeader = size + 1;
       if (relayQueued >= sizeWHeader)
       {
-        if (relayBuffer[2] == RobotInterface::RobotToEngine::Tag_rtipVersion)
+        const u8 tag = relayBuffer[1];
+        if (tag < RobotInterface::TO_WIFI_START)
         {
-          RobotInterface::RTIPVersionInfo info;
-          os_memcpy(info.GetBuffer(), relayBuffer + 3, size - 1);
-          UpdateVersionInfo(info);
+          AnkiError( 50, "RTIP.AcceptRTIPMessage", 376, "WiFi received message from RTIP, %x[%d] that seems bound below (< 0x%x)", 3, tag, size, (int)RobotInterface::TO_WIFI_START);
         }
-        if (clientConnected())
+        else if (tag <= RobotInterface::TO_WIFI_END) // This message is for us
         {
-          const bool reliable = relayBuffer[1] & RTIP_CLAD_MSG_RELIABLE_FLAG;
-          const bool hot      = relayBuffer[1] & RTIP_CLAD_MSG_HOT_FLAG;
-          AnkiConditionalError(clientSendMessage(relayBuffer + 2, size, 0 /* GLOBAL_INVALID_TAG, fighting include nightmare here */, reliable, hot), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, relayBuffer[2], size);
+          Messages::ProcessMessage(relayBuffer + 1, size);
         }
-        relayQueued -= size + 2;
+        else // This message is above us
+        {
+          if (clientConnected())
+          {
+            AnkiConditionalError(clientSendMessage(relayBuffer + 1, size, RobotInterface::GLOBAL_INVALID_TAG), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, tag, size);
+          }
+        }
+        relayQueued -= sizeWHeader;
         os_memcpy(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
       }
       else

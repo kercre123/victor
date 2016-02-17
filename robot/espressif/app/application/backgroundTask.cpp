@@ -233,7 +233,7 @@ extern "C" void backgroundTaskOnConnect(void)
 {
   const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
-  i2spiQueueMessage((u8*)"\xfc\x01", 2); // FC is the tag for a radio connection state message to the robot
+  i2spiQueueMessage((u8*)"\x31\x01", 2); // FC is the tag for a radio connection state message to the robot
   Anki::Cozmo::Face::FaceUnPrintf();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
@@ -243,5 +243,5 @@ extern "C" void backgroundTaskOnConnect(void)
 
 extern "C" void backgroundTaskOnDisconnect(void)
 {
-  i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
+  i2spiQueueMessage((u8*)"\x31\x00", 2); // FC is the tag for a radio connection state message to the robot
 }

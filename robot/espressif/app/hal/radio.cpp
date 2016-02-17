@@ -10,9 +10,9 @@ extern "C" {
 namespace Anki {
   namespace Cozmo {
     namespace HAL {
-      bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable, const bool hot)
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {
-        return clientSendMessage((u8*)buffer, size, msgID, reliable, hot);
+        return clientSendMessage((u8*)buffer, size, msgID);
       }
     }
     
@@ -27,7 +27,7 @@ namespace Anki {
         msg.frameTimeStamp  = imageChunkTimestamp_;
         msg.imageChunkCount = msg.chunkId + 1;
       }
-      clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image, false, eof);
+      clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image);
       if (eof)
       {
         msg.imageId++;

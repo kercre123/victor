@@ -15,11 +15,10 @@ sint8 clientInit();
 /** Method for sending messages NOT PACKETS
  * @param msgID The ID (tag) of the message to be sent
  * @param buffer A pointer to the message to be sent
- * @param reliable Specifify if the message should be transferred reliably. Default true.
- * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
+ * @param msgID The message tag for the message
  * @return True if sucessfully queued, false otherwise
  */
-bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot);
+bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID);
 
 /** Callback for new received data from WiFi client
  * This function is called by but not defined in the client module and must be defined by the user application.
