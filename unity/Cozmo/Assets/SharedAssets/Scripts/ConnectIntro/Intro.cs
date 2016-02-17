@@ -151,9 +151,9 @@ public class Intro : MonoBehaviour {
       return;
     }
 
-    if (_Simulated && _Robot != null) {
-      _Robot.VisionWhileMoving(true);
-    }
+    #if UNITY_EDITOR
+    _Robot.SetRobotVolume(0.06f);
+    #endif
 
     _Error.text = "";
     DAS.Info(this, "Robot Connected!");
