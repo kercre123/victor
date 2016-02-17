@@ -59,13 +59,12 @@ public class InitialCubesState : State {
 
       if (_NumValidCubes >= _CubesRequired) {
         _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
-          _NumValidCubes), Cozmo.UI.UIColorPalette.CompleteTextColor());
+          _CubesRequired), Cozmo.UI.UIColorPalette.CompleteTextColor());
 
         _Game.SharedMinigameView.EnableContinueButton(true);
       }
       else {
         _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
-          _CubesRequired,
           _NumValidCubes), Cozmo.UI.UIColorPalette.NeutralTextColor());
 
         _Game.SharedMinigameView.EnableContinueButton(false);

@@ -155,6 +155,8 @@ public class Intro : MonoBehaviour {
     _Robot.SetRobotVolume(0.06f);
     #endif
 
+    Screen.sleepTimeout = SleepTimeout.NeverSleep;
+
     _Error.text = "";
     DAS.Info(this, "Robot Connected!");
   }
