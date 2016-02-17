@@ -43,10 +43,10 @@ namespace Simon {
     private void MoveToTargetLocation(Vector2 targetPosition, Quaternion targetRotation) {
       // Skip moving if we're already close to the target
       if (_CurrentRobot.WorldPosition.xy().IsNear(targetPosition, kDistanceThreshold)) {
-        _CurrentRobot.GotoPose(targetPosition, targetRotation, callback: HandleGotoPoseComplete);
+        HandleGotoPoseComplete(true);
       }
       else {
-        HandleGotoPoseComplete(true);
+        _CurrentRobot.GotoPose(targetPosition, targetRotation, callback: HandleGotoPoseComplete);
       }
     }
 

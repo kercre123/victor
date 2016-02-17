@@ -307,7 +307,7 @@ public class Robot : IRobot {
       pointTurnDecel_rad_per_sec2: 500.0f,
       dockSpeed_mmps: 100.0f,
       dockAccel_mmps2: 200.0f,
-      reverseSpeed_mmps: 0f
+      reverseSpeed_mmps: 60.0f
     );
             
     BackpackLights = new ILight[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
