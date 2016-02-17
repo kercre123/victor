@@ -66,7 +66,7 @@ public:
   
 private:
   
-  // There should never be more then 800 samples in the buffer
+  // There should never be more then Anki::Cozmo::AnimConstants.AUDIO_SAMPLE_SIZE keyframe audio samples in the buffer
   static constexpr size_t kAudioSampleBufferSize = 2000;
   
   // Cache Audio samples from PlugIn

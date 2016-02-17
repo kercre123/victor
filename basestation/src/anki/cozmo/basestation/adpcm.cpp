@@ -13,7 +13,7 @@ static uint8_t MuLawCompressTable[] =
 };
 
 // Resulting values are the state for the next block
-// Length is in input samples (800)
+// Length is in input samples
 
 void encodeMuLaw(int16_t *in, uint8_t *out, int length) {
 	for(;length > 0; length --) {

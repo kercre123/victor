@@ -97,6 +97,7 @@ size_t RobotAudioBuffer::CopyAudioSampleCacheToRobotAudioMessage( size_t blockSi
   ASSERT_NAMED( nullptr!= stream, "Must pass a Robot Audio Buffer Stream object" );
   RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( audioSample ) );
   
+  PRINT_NAMED_DEBUG("RobotAudioBuffer.CopyAudioSampleCacheToRobotAudioMessage", "PushRobotAudioMessage - AudioSample size: %zu", audioSample.Size());
   stream->PushRobotAudioMessage( audioMsg );
 
   return returnSize;
