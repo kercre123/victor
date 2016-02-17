@@ -45,7 +45,7 @@ namespace SpeedTap {
         }
         else {
           // restart this state
-          _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(true));
+          _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
         }
       }
     }
