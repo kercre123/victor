@@ -30,6 +30,8 @@ public class CozmoFace : MonoBehaviour {
 
   public RawImage Image;
 
+  private Material _ImageMaterial;
+
   private float _BlinkTimer;
 
   private List<KeyFrame> _CurrentSequence;
@@ -118,7 +120,7 @@ public class CozmoFace : MonoBehaviour {
     _Instance = this;
     FaceScale = Vector2.one;
     // clone our face material to avoid making changes to the original
-    Image.material = new Material(Image.material) { hideFlags = HideFlags.HideAndDontSave };
+    Image.material = _ImageMaterial = new Material(Image.material) { hideFlags = HideFlags.HideAndDontSave };
   }
 
   private void Update() {
@@ -265,7 +267,7 @@ public class CozmoFace : MonoBehaviour {
   }
 
   private void UpdateMaterial() {
-    var material = Image.material;
+    var material = _ImageMaterial;
 
     material.SetVector("_FaceCenterScale", 
       new Vector4(FaceCenter.x, FaceCenter.y, FaceScale.x, FaceScale.y));
