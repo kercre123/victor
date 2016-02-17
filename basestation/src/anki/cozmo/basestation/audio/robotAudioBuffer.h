@@ -40,9 +40,6 @@ class RobotAudioBuffer
   
 public:
   
-  // Default constructor
-  RobotAudioBuffer();
-  
   // This called when the plug-in is created
   void PrepareAudioBuffer();
   
@@ -66,20 +63,12 @@ public:
   
 private:
   
-  // There should never be more then Anki::Cozmo::AnimConstants.AUDIO_SAMPLE_SIZE keyframe audio samples in the buffer
-  static constexpr size_t kAudioSampleBufferSize = 2000;
-  
-  // Cache Audio samples from PlugIn
-  Util::CircularBuffer< uint8_t > _audioSampleCache;
-  
   // A queue of robot audio messages (continuous audio data)
   std::queue< RobotAudioMessageStream > _streamQueue;
   
   // Track what stream is in uses
   RobotAudioMessageStream* _currentStream = nullptr;
   
-  // Copy Audio Cache samples into Robot Audio Message and store in stream
-  size_t CopyAudioSampleCacheToRobotAudioMessage( size_t size, RobotAudioMessageStream* stream );
 };
 
 

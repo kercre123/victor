@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/audio/audioParameterTypes.h"
 #include <util/dispatchQueue/dispatchQueue.h>
 #include <util/helpers/templateHelpers.h>
 #include <util/logging/logging.h>
@@ -305,13 +306,7 @@ bool AudioController::RegisterGameObject( AudioEngine::AudioGameObject gameObjec
 // THIS IS TEMP
 void AudioController::StartUpSetDefaults()
 {
-  AudioEngine::AudioParameterId ROBOT_MASTER_VOLUME = 562892825;
-  AudioEngine::AudioParameterId ROBOT_VOLUME = 1669075520;
-
-  
-  SetParameter( ROBOT_VOLUME, 0.2, kInvalidAudioGameObject);
-  // This is effected by robot volume
-  SetParameter( ROBOT_MASTER_VOLUME, 0.9, kInvalidAudioGameObject);
+  SetParameter( static_cast<AudioEngine::AudioParameterId>( GameParameter::ParameterType::Robot_Volume ), 0.2, kInvalidAudioGameObject );
 }
 
 
@@ -397,7 +392,7 @@ void AudioController::PrintPlugInLog() {
         
       case LogEnumType::Update:
       {
-        printf("Update %s - time: %f mscp\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+        printf("Update %s - time: %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
         
         
         if ( isFirstUpdateLog ) {
