@@ -82,7 +82,7 @@ namespace Simon {
     }
 
     private void HandleOnCozmoStartAnimationDone(bool success) {
-      _StateMachine.SetNextState(new CozmoGuessSimonState());
+      _StateMachine.SetNextState(new CozmoMoveCloserToCubesState(new CozmoGuessSimonState()));
     }
   }
 }
