@@ -40,7 +40,7 @@ static const std::vector<const char*> imageFileExtensions = {"jpg", "jpeg", "png
 // then update FaceWorld with any resulting detections
 static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& faceTracker,
                       const std::string& filename, const char *dispName, bool shouldBeOwner,
-                      s32 fakeVideoFrames = 1)
+                      const std::map<Vision::TrackedFace::ID_t, std::string>& idToName)
 {
   Result lastResult = RESULT_OK;
   static TimeStamp_t timestamp = 0;
@@ -60,12 +60,9 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
   Vision::ImageRGB dispImg(img);
 # endif
   
-  // Show the same frame N times to fake face being still in video for a few frames
   std::list<Vision::TrackedFace> faces;
   std::list<Vision::FaceTracker::UpdatedID> updatedIDs;
-  for(s32 i=0; i<fakeVideoFrames; ++i) {
-    lastResult = faceTracker.Update(img, faces, updatedIDs);
-  }
+  lastResult = faceTracker.Update(img, faces, updatedIDs);
   
   ASSERT_TRUE(RESULT_OK == lastResult);
   
@@ -89,9 +86,12 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     dispImg.DrawPoint(face.GetLeftEyeCenter(), drawColor, 2);
     dispImg.DrawPoint(face.GetRightEyeCenter(), drawColor, 2);
     
-    std::string label = face.GetName();
-    if(label.empty()) {
+    std::string label;
+    auto nameIter = idToName.find(face.GetID());
+    if(nameIter == idToName.end()) {
       label = std::to_string(face.GetID());
+    } else {
+      label = nameIter->second;
     }
     if(face.IsBeingTracked()) {
       label += "*";
@@ -159,6 +159,8 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     allNames.insert(test.names.begin(), test.names.end());
   }
   
+  std::map<Vision::TrackedFace::ID_t, std::string> idToName;
+  
   for(s32 iReload=0; iReload<2; ++iReload)
   {
     faceTracker = new Vision::FaceTracker(cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
@@ -200,7 +202,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
       {
         const std::string& testFile = testFiles[iFile];
         
-        Recognize(robot, img, *faceTracker, testFile, "TestImage", true);
+        Recognize(robot, img, *faceTracker, testFile, "TestImage", true, idToName);
         stats.totalFrames++;
         
         // Get the faces observed in the current image
@@ -224,18 +226,23 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
           if(isNameSet)
           {
             auto observedFace = robot.GetFaceWorld().GetFace(observedID);
+            std::string observedName;
+            auto nameIter = idToName.find(observedID);
+            if(nameIter != idToName.end()) {
+              observedName = nameIter->second;
+            }
             ASSERT_NE(observedFace, nullptr);
-            if(test.names.count(observedFace->GetName()) > 0) {
+            if(test.names.count(observedName) > 0) {
               //PRINT_NAMED_INFO("FaceRecognition.VideoRecognitionAndTracking.RecognizedFace",
-              //                 "Correctly found %s", observedFace->GetName().c_str());
+              //                 "Correctly found %s", observedName.c_str());
               stats.facesRecognized++;
-            } else if(observedID != Vision::TrackedFace::UnknownFace && allNames.count(observedFace->GetName()) > 0) {
+            } else if(observedID != Vision::TrackedFace::UnknownFace && allNames.count(observedName) > 0) {
               stats.falsePositives++;
             }
           } else if(observedID >= 0) {
             // Recognized, not just tracked
             stats.facesRecognized++;
-            faceTracker->AssignNameToID(observedID, testDir);
+            idToName[observedID] = testDir;
             isNameSet = true;
           }
         } // for each observed face
@@ -265,7 +272,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
       
       // Show the system blank frames before next video so it stops tracking
       for(s32 iBlank=0; iBlank<NumBlankFramesBetweenPeople; ++iBlank) {
-        Recognize(robot, img, *faceTracker, "", "TestImage", true);
+        Recognize(robot, img, *faceTracker, "", "TestImage", true, idToName);
         
         // We should not detect faces in any frames past the "lost" count
         if(iBlank >= 2) {

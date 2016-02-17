@@ -98,7 +98,6 @@ namespace Vision {
       const TrackedFace::ID_t faceID = iter->second;
       auto & enrollData = _enrollmentData.at(faceID);
       entry.faceID = faceID;
-      entry.name   = enrollData.name;
       entry.score  = enrollData.lastScore;
       if(enrollData.isNew) {
         entry.isNew = true;
@@ -628,20 +627,6 @@ namespace Vision {
                  "ID to keep should have enrollment data entry");
     ASSERT_NAMED(mergeEnrollIter != _enrollmentData.end(),
                  "ID to merge should have enrollment data entry");
-    if(!mergeEnrollIter->second.name.empty())
-    {
-      if(keepEnrollIter->second.name.empty()) {
-        // The record we are merging into has no name set, but the one we're
-        // merging from does. Use the latter.
-        keepEnrollIter->second.name = mergeEnrollIter->second.name;
-      } else {
-        // Both records have a name! Issue a message.
-        PRINT_NAMED_WARNING("FaceRecognizer.MergeUsers.OverwritingNamedUser",
-                            "Removing name '%s' and merging its records into '%s'",
-                            mergeEnrollIter->second.name.c_str(),
-                            keepEnrollIter->second.name.c_str());
-      }
-    }
     keepEnrollIter->second.oldestData = std::min(keepEnrollIter->second.oldestData,
                                                  mergeEnrollIter->second.oldestData);
     
@@ -720,22 +705,6 @@ namespace Vision {
     return RESULT_OK;
   } // SetSerializedAlbum()
   
-  
-  void FaceRecognizer::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
-  {
-    // TODO: Handle duplicate name? Merge records with existing enrollment with same name?
-    _mutex.lock();
-    auto iter = _enrollmentData.find(faceID);
-    if(iter != _enrollmentData.end()) {
-      iter->second.name = name;
-    } else {
-      PRINT_NAMED_ERROR("FaceRecognizer.AssignNameToID.InvalidID",
-                        "Unknown ID %llu, ignoring name %s", faceID, name.c_str());
-    }
-    _mutex.unlock();
-  }
-  
-  
   Result FaceRecognizer::SaveAlbum(const std::string &albumName)
   {
     Result result = RESULT_OK;
@@ -773,9 +742,8 @@ namespace Vision {
             for(auto & enrollData : _enrollmentData)
             {
               Json::Value entry;
-              entry["name"]              = enrollData.second.name;
-              entry["oldestDataIndex"]   = enrollData.second.oldestData;
-              entry["enrollmentTime"]    = (Json::LargestInt)enrollData.second.enrollmentTime;
+              entry["oldestDataIndex"] = enrollData.second.oldestData;
+              entry["enrollmentTime"]  = (Json::LargestInt)enrollData.second.enrollmentTime;
               
               json[std::to_string(enrollData.first)] = entry;
               
@@ -863,14 +831,13 @@ namespace Vision {
                 EnrollmentData enrollData;
                 enrollData.enrollmentTime    = (time_t)entry["enrollmentTime"].asLargestInt();
                 enrollData.oldestData        = entry["oldestData"].asInt();
-                enrollData.name              = entry["name"].asString();
                 
                 _enrollmentData[faceID] = enrollData;
                 
                 // TODO: Load enrollment image??
                 
-                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%llu, Name: '%s'",
-                                 faceID, enrollData.name.c_str());
+                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%llu, EnrollTime: '%s'",
+                                 faceID, ctime(&enrollData.enrollmentTime));
               }
             }
           }

@@ -259,13 +259,8 @@ namespace Anki {
       }
       
       // Draw name & most likely expression
-      std::string name;
-      if(face.GetName().empty()) {
-        name = "Face" + std::to_string(face.GetID());
-      } else {
-        name = face.GetName() + "[" + std::to_string(face.GetID()) + "]";
-      }
-      name += "-";
+      std::string name = "Face[" + std::to_string(face.GetID());
+      name += "]-";
       name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       

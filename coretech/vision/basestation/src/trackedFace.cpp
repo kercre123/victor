@@ -21,7 +21,6 @@ namespace Vision {
   
   TrackedFace::TrackedFace()
   : _id(-1)
-  , _name("")
   , _isBeingTracked(false)
   , _headPose(M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f})
   {

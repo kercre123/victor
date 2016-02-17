@@ -527,26 +527,14 @@ namespace Vision {
         // No recognition ID: use the tracker ID as the face's handle/ID
         ASSERT_NAMED(detectionInfo.nID > 0, "Expecting trackerID > 0");
         face.SetID(-detectionInfo.nID);
-        face.SetName("Unknown" + std::to_string(face.GetID()));
       } else {
         face.SetID(recognitionData.faceID);
-        if(recognitionData.name.empty()) {
-          // Known, unnamed face
-          face.SetName("KnownFace" + std::to_string(face.GetID()));
-        } else {
-          face.SetName(recognitionData.name);
-        }
       }
       
     } // FOR each face
     
     return RESULT_OK;
   } // Update()
-  
-  void FaceTracker::Impl::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
-  {
-    _recognizer.AssignNameToID(faceID, name);
-  }
   
   Result FaceTracker::Impl::SaveAlbum(const std::string& albumName)
   {

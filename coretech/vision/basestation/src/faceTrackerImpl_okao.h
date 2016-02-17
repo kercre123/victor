@@ -52,8 +52,6 @@ namespace Vision {
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
     bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
 
-    void AssignNameToID(TrackedFace::ID_t faceID, const std::string& name);
-    
     Result LoadAlbum(const std::string& albumName);
     Result SaveAlbum(const std::string& albumName);
 

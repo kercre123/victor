@@ -38,8 +38,6 @@ namespace Vision {
     ~FaceRecognizer();
     
     Result Init(HCOMMON okaoCommonHandle);
-
-    void AssignNameToID(TrackedFace::ID_t faceID, const std::string& name);
     
     // Request that the recognizer work on assigning a new or existing FaceID
     // from its album of known faces to the specified trackerID, using the
@@ -56,7 +54,6 @@ namespace Vision {
     struct Entry
     {
       TrackedFace::ID_t         faceID = TrackedFace::UnknownFace;
-      std::string               name;
       INT32                     score  = 0;
       bool                      isNew  = false;
     };
@@ -132,7 +129,6 @@ namespace Vision {
     struct EnrollmentData {
       INT32           oldestData = 0;
       time_t          enrollmentTime;
-      std::string     name;
       INT32           lastScore = 0;
       Image           image;
       bool            isNew = false;

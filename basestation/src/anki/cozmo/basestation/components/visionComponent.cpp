@@ -70,16 +70,6 @@ namespace Cozmo {
           EnableMode(payload.mode, payload.enable);
         }));
       
-      // AssignNameToFace
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::AssignNameToFace,
-        [this] (const AnkiEvent<MessageGameToEngine>& event)
-        {
-          const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
-          Lock();
-          _visionSystem->AssignNameToFace(msg.faceID, msg.name);
-          Unlock();
-        }));
-      
       // EnableNewFaceEnrollment
       _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableNewFaceEnrollment,
         [this] (const AnkiEvent<MessageGameToEngine>& event) {
