@@ -47,8 +47,8 @@ public class MockRobot : IRobot {
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {
     var bounds = new Bounds(
-      new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f), 
-      Vector3.one * CozmoUtil.kBlockLengthMM);
+                   new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f), 
+                   Vector3.one * CozmoUtil.kBlockLengthMM);
 
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
@@ -129,7 +129,7 @@ public class MockRobot : IRobot {
     FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
     bool friendshipLevelChanged = false;
     while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length &&
-      levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
+           levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
       FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
       FriendshipLevel++;
       friendshipLevelChanged = true;
@@ -341,6 +341,7 @@ public class MockRobot : IRobot {
   }
 
   private float _RobotVolume = 0f;
+
   public void SetRobotVolume(float volume) {
     _RobotVolume = volume;
   }
@@ -352,6 +353,14 @@ public class MockRobot : IRobot {
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
     // TODO: Something?
     HeadTrackingObject = observedObject;
+  }
+
+  public ObservedObject GetCharger() {
+    return null;
+  }
+
+  public void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    
   }
 
   public void StopTrackToObject() {
@@ -520,7 +529,7 @@ public class MockRobot : IRobot {
   public void SetBackpackBarLED(LEDId ledToChange, Color color) {
     if (ledToChange == LEDId.LED_BACKPACK_LEFT || ledToChange == LEDId.LED_BACKPACK_RIGHT) {
       DAS.Warn("Robot", "BackpackLighting - LEDId.LED_BACKPACK_LEFT or LEDId.LED_BACKPACK_RIGHT " +
-        "does not have the full range of color. Taking the highest RGB value to use as the light intensity.");
+      "does not have the full range of color. Taking the highest RGB value to use as the light intensity.");
       float highestIntensity = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
       SetBackbackArrowLED(ledToChange, highestIntensity);
     }
@@ -543,14 +552,14 @@ public class MockRobot : IRobot {
   }
 
   private void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Robot.Light.FOREVER, uint offPeriod_ms = 0, 
-    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     for (int i = 0; i < BackpackLights.Length; ++i) {
       SetBackpackLED(i, onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
     }
   }
 
   private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Robot.Light.FOREVER, uint offPeriod_ms = 0, 
-    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     // Special case for arrow lights; they only accept red as a color
     if (index == (int)LEDId.LED_BACKPACK_LEFT || index == (int)LEDId.LED_BACKPACK_RIGHT) {
       //uint whiteUint = Color.white.ToUInt();
@@ -657,6 +666,7 @@ public class MockRobot : IRobot {
   }
 
   private readonly List<ObservedObject> _VisibleObjects = new List<ObservedObject>();
+
   public List<ObservedObject> VisibleObjects {
     get {
       return _VisibleObjects;
@@ -664,6 +674,7 @@ public class MockRobot : IRobot {
   }
 
   private readonly List<ObservedObject> _SeenObjects = new List<ObservedObject>();
+
   public List<ObservedObject> SeenObjects {
     get {
       return _SeenObjects;
@@ -671,6 +682,7 @@ public class MockRobot : IRobot {
   }
 
   private readonly List<ObservedObject> _DirtyObjects = new List<ObservedObject>();
+
   public List<ObservedObject> DirtyObjects {
     get {
       return _DirtyObjects;
@@ -678,6 +690,7 @@ public class MockRobot : IRobot {
   }
 
   private readonly Dictionary<int, LightCube> _LightCubes = new Dictionary<int, LightCube>();
+
   public Dictionary<int, LightCube> LightCubes {
     get {
       return _LightCubes;
@@ -685,6 +698,7 @@ public class MockRobot : IRobot {
   }
 
   private readonly List<Face> _Faces = new List<Face>();
+
   public List<Face> Faces {
     get {
       return _Faces;
@@ -702,6 +716,7 @@ public class MockRobot : IRobot {
   }
 
   private readonly float[] _EmotionValues = new float[(int)EmotionType.Count];
+
   public float[] EmotionValues {
     get {
       return _EmotionValues;
@@ -715,7 +730,8 @@ public class MockRobot : IRobot {
     new Robot.Light(),
     new Robot.Light(),
     new Robot.Light()
-  };    
+  };
+
   public ILight[] BackpackLights {
     get {
       return _BackpackLights;
@@ -745,6 +761,7 @@ public class MockRobot : IRobot {
   }
 
   private ObservedObject _CarryingObject;
+
   public ObservedObject CarryingObject {
     get { return _CarryingObject; }
     private set {
@@ -756,6 +773,7 @@ public class MockRobot : IRobot {
   }
 
   private ObservedObject _HeadTrackingObject;
+
   public ObservedObject HeadTrackingObject {
     get { return _HeadTrackingObject; }
     private set {
