@@ -37,7 +37,7 @@ namespace Anki.Cozmo.Audio {
     private List<EventTypeOption> _Options = new List<EventTypeOption>() {
       new EventTypeOption("VO", EventGroupType.GenericEvent, GameObjectType.Aria),
       new EventTypeOption("UI", EventGroupType.UI, GameObjectType.UI),
-      new EventTypeOption("SFX", EventGroupType.SFX, GameObjectType.SFX),
+      new EventTypeOption("SFX", EventGroupType.SFX, GameObjectType.SFX)
     };
 
 
