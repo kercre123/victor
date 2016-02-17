@@ -108,6 +108,8 @@ namespace Cozmo {
     
     const std::string& GetName() const { return _name; }
     const std::string& GetStateName() const { return _stateName; }
+
+    double GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
     
     // EvaluateEmotionScore is a score directly based on the given emotion rules
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
