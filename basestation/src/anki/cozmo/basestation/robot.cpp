@@ -565,8 +565,8 @@ namespace Anki {
       GetContext()->GetVizManager()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
-                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
-                                                (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+                                                (u8)MIN((u8)(1000.f/GetAverageImagePeriodMS()), u8_MAX),
+                                                (u8)MIN((u8)(1000.f/GetAverageImageProcPeriodMS()), u8_MAX),
                                                 _enabledAnimTracks,
                                                 _animationTag);
       
@@ -1126,7 +1126,7 @@ namespace Anki {
                _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
                _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-               (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+               (u8)MIN((u8)(1000.f/GetAverageImageProcPeriodMS()), u8_MAX),
                behaviorChooserName,
                behaviorName.c_str());
       

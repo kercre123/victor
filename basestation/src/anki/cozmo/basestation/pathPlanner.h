@@ -17,6 +17,7 @@
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/pathMotionProfile.h"
+#include "util/math/math.h"
 #include <set>
 
 

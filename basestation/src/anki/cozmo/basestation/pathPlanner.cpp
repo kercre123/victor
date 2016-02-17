@@ -179,8 +179,10 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
     // Limit linear speed based on direction-dependent max wheel speed
     f32 speed = lin_speed;
     if (seg.GetTargetSpeed() < 0) {
-      if (fabsf(motionProfile.reverseSpeed_mmps) > 0){
-        speed = fabsf(motionProfile.reverseSpeed_mmps);
+      const f32 absSpeed = fabsf(motionProfile.reverseSpeed_mmps);
+      if (FLT_GT(absSpeed, 0.0f))
+      {
+        speed = absSpeed;
       }
       else{
         PRINT_NAMED_WARNING("IPathPlanner.ApplyMotionProfile", "Tried to set speed to 0! PathMotionProfile.reverseSpeed_mmps = 0! Using speed_mmps instead.");
