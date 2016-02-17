@@ -225,6 +225,16 @@ enum uint_32 ToRobotAddressSpace
   TO_ENG_END    = 0xFE
 }
 
+message BodyUpgradeData
+{
+  uint_32 word
+}
+
+message RadioState
+{
+  bool wifiConnected
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot and within the robot
@@ -237,11 +247,11 @@ union EngineToRobot
   // 0x00 Is invalid message
   
   // 0x01 to 0x2f: Messages to the body / test fixture
-  uint_32                       bodyUpgradeData             = 0x01,
+  BodyUpgradeData               bodyUpgradeData             = 0x01,
   
   // 0x30 to 0x7f: To RTIP
   EnterBootloader               enterBootloader             = 0x30,
-  bool                          radioConnected              = 0x31,
+  RadioState                    radioConnected              = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,
   MoveLift                      moveLift                    = 0x34,
