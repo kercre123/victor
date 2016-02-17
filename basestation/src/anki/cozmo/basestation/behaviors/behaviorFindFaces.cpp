@@ -25,6 +25,8 @@ namespace Cozmo {
 
 static const char* kUseFaceAngleCenterKey = "center_face_angle";
 static const bool kUseFaceAngleCenterDefault = true;
+static const char* kMinimumFaceAgeKey = "minimum_face_age_s";
+static const double kMinimumFaceAgeDefault = 180.0;
 
 using namespace ExternalInterface;
 
@@ -35,6 +37,7 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   SetDefaultName("FindFaces");
 
   _useFaceAngleCenter = config.get(kUseFaceAngleCenterKey, kUseFaceAngleCenterDefault).asBool();
+  _minimumTimeSinceSeenLastFace_sec = config.get(kMinimumFaceAgeKey, kMinimumFaceAgeDefault).asDouble();
   
   SubscribeToTags({{
     EngineToGameTag::RobotCompletedAction,
@@ -56,12 +59,29 @@ bool BehaviorFindFaces::IsRunnable(const Robot& robot, double currentTime_sec) c
     Pose3d facePose;
     auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
     
-    return (lastFaceTime == 0 || lastFaceTime < SEC_TO_MILIS(currentTime_sec - kMinimumTimeSinceSeenLastFace_sec));
+    return (lastFaceTime == 0 || lastFaceTime < SEC_TO_MILIS(currentTime_sec - _minimumTimeSinceSeenLastFace_sec));
   }
   else {
     return true;
   }
 }
+
+float BehaviorFindFaces::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  double startTime_s = GetTimeStartedRunning_s();
+  Pose3d facePose;
+  auto lastFaceTime_ms = robot.GetFaceWorld().GetLastObservedFace(facePose);
+  double lastFaceTime_s = MILIS_TO_SEC(lastFaceTime_ms);
+
+  if( lastFaceTime_s > startTime_s ) {
+    // once this behavior finds a face, it doesn't want to run any more
+    return 0.0f;
+  }
+  else {
+    return super::EvaluateRunningScoreInternal(robot, currentTime_sec);
+  }
+}
+  
 
 void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
