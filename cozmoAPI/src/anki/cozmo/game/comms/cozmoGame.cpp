@@ -31,8 +31,7 @@ namespace Cozmo {
 #pragma mark - CozmoGame Implementation
     
   CozmoGameImpl::CozmoGameImpl(Util::Data::DataPlatform* dataPlatform)
-  : _isHost(true)
-  , _isEngineStarted(false)
+  : _isEngineStarted(false)
   , _runState(CozmoGame::STOPPED)
   , _desiredNumUiDevices(1)
   , _desiredNumRobots(1)
@@ -125,7 +124,6 @@ namespace Cozmo {
     // Subscribe to desired events
     _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
     _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
-    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::Ping, commonCallback));
     
     // Use a separate callback for StartEngine
     auto startEngineCallback = std::bind(&CozmoGameImpl::HandleStartEngine, this, std::placeholders::_1);
@@ -136,19 +134,10 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_FAIL;
     
-    if(!config.isMember("asHost")) {
-      
-      PRINT_NAMED_ERROR("CozmoGameImpl.StartEngine",
-                        "Missing 'asHost' field in configuration.");
-      return RESULT_FAIL;
-    }
-    
     // Pass the game's advertising IP/port info along to the engine:
     config[AnkiUtil::kP_ADVERTISING_HOST_IP]    = _config[AnkiUtil::kP_ADVERTISING_HOST_IP];
     config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT];
     config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = _config[AnkiUtil::kP_UI_ADVERTISING_PORT];
-    
-    _isHost = config["asHost"].asBool();
       
     PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.");
     
@@ -279,11 +268,7 @@ namespace Cozmo {
       }
       
     } else {
-      if(_isHost) {
-        lastResult = UpdateAsHost(currentTime_sec);
-      } else {
-        lastResult = UpdateAsClient(currentTime_sec);
-      }
+      lastResult = UpdateAsHost(currentTime_sec);
     }
     
     return lastResult;
@@ -444,18 +429,6 @@ namespace Cozmo {
     
   }
   
-  Result CozmoGameImpl::UpdateAsClient(const float currentTime_sec)
-  {
-    Result lastResult = RESULT_OK;
-    
-    // Don't tick the engine until it has been started
-    if(_runState != CozmoGame::STOPPED) {
-      lastResult = _cozmoEngine->Update(currentTime_sec);
-    }
-    
-    return lastResult;
-  } // UpdateAsClient()
-  
   void CozmoGameImpl::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
   {
     switch (event.GetData().GetTag())
@@ -532,8 +505,6 @@ namespace Cozmo {
     assert(msg.vizHostIP.size() <= 16);
     std::copy(msg.vizHostIP.begin(), msg.vizHostIP.end(), ip);
     config[AnkiUtil::kP_VIZ_HOST_IP] = ip;
-    
-    config[AnkiUtil::kP_AS_HOST] = msg.asHost;
     
     // Start the engine with that configuration
     StartEngine(config);

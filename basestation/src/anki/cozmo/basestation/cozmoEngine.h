@@ -75,7 +75,6 @@ namespace SpeechRecognition {
   class KeyWordRecognizer;
 }
 
-// Abstract base engine class
 class CozmoEngine
 {
 public:

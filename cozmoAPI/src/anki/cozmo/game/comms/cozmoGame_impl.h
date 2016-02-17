@@ -81,7 +81,6 @@ namespace Cozmo {
   protected:
     
     Result UpdateAsHost(const float currentTime_sec);
-    Result UpdateAsClient(const float currentTime_sec);
 
     void SetupSubscriptions();
     void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
@@ -95,7 +94,6 @@ namespace Cozmo {
     f32                              _lastPingTimeFromUI_sec;
     u32                              _lastPingCounterFromUI;
     
-    bool                             _isHost;
     bool                             _isEngineStarted;
     RunState                         _runState;
     

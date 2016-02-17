@@ -94,7 +94,7 @@ private:
   std::unique_ptr<RobotManager>                   _robotMgr;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMsgHandler;
   std::unique_ptr<VizManager>                     _vizManager;
-  std:: unique_ptr<Util::TransferQueueMgr>        _transferQueueMgr;
+  std::unique_ptr<Util::TransferQueueMgr>         _transferQueueMgr;
 };
   
 
