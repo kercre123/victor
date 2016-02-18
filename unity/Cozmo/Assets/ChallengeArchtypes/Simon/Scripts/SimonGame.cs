@@ -63,18 +63,22 @@ namespace Simon {
     }
 
     public void InitColorsAndSounds() {
-      _BlockIdToSound.Clear();
-      List<int> usedIndices = new List<int>();
-      int randomIndex = 0;
-      SimonSound randomSimonSound;
+      if (_BlockIdToSound.Count() == 0) {
+        List<int> usedIndices = new List<int>();
+        int randomIndex = 0;
+        SimonSound randomSimonSound;
+        foreach (LightCube cube in CubesForGame) {
+          do {
+            randomIndex = Random.Range(0, _CubeColorsAndSounds.Length);
+          } while (usedIndices.Contains(randomIndex));
+          usedIndices.Add(randomIndex);
+          randomSimonSound = _CubeColorsAndSounds[randomIndex];
+          _BlockIdToSound.Add(cube.ID, randomSimonSound);
+        }
+      }
+
       foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
-        do {
-          randomIndex = Random.Range(0, _CubeColorsAndSounds.Length);
-        } while (usedIndices.Contains(randomIndex));
-        usedIndices.Add(randomIndex);
-        randomSimonSound = _CubeColorsAndSounds[randomIndex];
-        _BlockIdToSound.Add(kvp.Key, randomSimonSound);
-        kvp.Value.SetLEDs(randomSimonSound.cubeColor);
+        kvp.Value.SetLEDs(_BlockIdToSound[kvp.Key].cubeColor);
       }
     }
 
