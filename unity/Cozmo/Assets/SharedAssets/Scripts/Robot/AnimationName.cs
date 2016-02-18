@@ -12,7 +12,6 @@ public static class AnimationName {
   public const string kSpeedTap_Tap_03 = "anim_speedTap_tap_03";
   public const string kSpeedTap_Peek = "anim_speedTap_lookAtPlayer";
   public const string kSpeedTap_FakeOut = "anim_speedTap_fakeOut_01";
-
   public const string kPounceForward = "pounceForward";
 
   public const string kMajorWin = "majorWin";
@@ -43,6 +42,8 @@ public static class AnimationName {
   public const string kreactToMotion = "ID_MotionFollow_ReactToMotion";
   public const string kByeBye = "ID_ByeBye";
   public const string kEnd = "ID_end";
+  public const string kFail = "ID_catch_fail";
+  public const string kSuccess = "ID_catch_success";
 
   public const string kIdleBrickout = "ID_idle_brickout";
   public const string kIdleHumming = "ID_idle_humming";

@@ -60,7 +60,7 @@ namespace SpeedTap {
         else if (_TryFake) {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(AnimationName.kSpeedTapFake, RobotCompletedFakeTapAnimation);
+              _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_FakeOut, RobotCompletedFakeTapAnimation);
               _TriedFake = true;
             }
           }
@@ -105,7 +105,6 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
     }
 

@@ -99,7 +99,7 @@ namespace SpeedTap {
             CurrentDifficulty++;
           }
             
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorFail, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kFail, HandleRoundAnimationDone)));
         }
         else {
           _CozmoRoundsWon++;
