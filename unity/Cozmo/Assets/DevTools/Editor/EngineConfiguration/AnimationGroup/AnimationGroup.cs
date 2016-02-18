@@ -14,7 +14,9 @@ namespace AnimationGroups {
 
       public string Name;
 
-      public List<EmotionScorer> MoodScorer = new List<EmotionScorer>();
+      public float Weight = 1;
+
+      public SimpleMoodType Mood;
     }
   }
 }

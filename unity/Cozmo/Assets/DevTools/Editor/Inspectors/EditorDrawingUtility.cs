@@ -60,6 +60,33 @@ public static class EditorDrawingUtility {
     }
   }
 
+  public static void DrawGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, Func<U,string> getGroupLabel)
+    where U : IComparable
+  {
+    EditorGUILayout.BeginVertical();
+    GUILayout.Label(label);
+
+    Debug.Log(list.Count);
+
+
+    var splitList = list.GroupBy(groupBy).Select(g => new KeyValuePair<U, List<T>>(g.Key, g.ToList()));
+
+    Debug.Log(splitList.Count());
+
+
+    foreach (var entry in splitList) {
+      DrawList(getGroupLabel(entry.Key), entry.Value, drawControls, createFunc);
+    }
+
+    var tmp = splitList.SelectMany(kvp => kvp.Value).ToArray();
+    list.Clear();
+    list.AddRange(tmp);
+
+    Debug.Log(list.Count);
+
+    EditorGUILayout.EndVertical();
+  }
+
   public static void DrawDictionary<T>(string label, Dictionary<string, T> dict, Func<T,T> drawControls, Func<T> createFunc) {
 
     var list = new List<KeyValuePair<string,T>>(dict);
