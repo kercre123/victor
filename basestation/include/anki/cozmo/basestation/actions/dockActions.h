@@ -104,8 +104,10 @@ namespace Anki {
       // Subclasses should call this because it sets the interaction result
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
         // TODO: Annoying we have to copy this out, bet the Get_() method is const...
-        ObjectInteractionCompleted interactionCompleted = completionUnion.Get_objectInteractionCompleted();
+        ObjectInteractionCompleted interactionCompleted;
         interactionCompleted.result = _interactionResult;
+        interactionCompleted.numObjects = 1;
+        interactionCompleted.objectIDs[0] = _dockObjectID;
         completionUnion.Set_objectInteractionCompleted(interactionCompleted);
       }
       

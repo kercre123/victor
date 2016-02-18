@@ -13,6 +13,9 @@ PROTO WebotsKeyboardController [
   #  Use "DISABLED" to disable behaviors
   field SFString behaviorName "DISABLED"
 
+  # Behavior group to enable or disable. Blank to enable or disable all
+  field SFString behaviorGroup "RequestSpeedTap"
+
   # BehaviorChooser to send
   field SFString behaviorChooserName "InvestorDemoFacesAndBlocks"
 

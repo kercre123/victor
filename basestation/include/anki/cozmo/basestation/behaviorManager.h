@@ -121,6 +121,8 @@ namespace Cozmo {
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;
     float _lastSwitchTime_sec;
+
+    bool _demoBehaviorChooserRunning = false;
     
     // For random numbers
     Util::RandomGenerator _rng;

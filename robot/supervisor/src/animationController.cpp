@@ -436,15 +436,7 @@ namespace AnimationController {
 #ifdef TARGET_ESPRESSIF
         if (!_playSilence)
         {
-          if (_audioReadInd == AUDIO_SAMPLE_SIZE-2) // XXX Temporary hack for EP1 compatibility until we can adjust the audio chunk size
-          {
-            GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP-1);
-            dest[MAX_AUDIO_BYTES_PER_DROP-1] = dest[MAX_AUDIO_BYTES_PER_DROP-2];
-          }
-          else
-          {
-            GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
-          }
+          GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
         }
         _audioReadInd += MAX_AUDIO_BYTES_PER_DROP;
         if (_audioReadInd >= AUDIO_SAMPLE_SIZE)

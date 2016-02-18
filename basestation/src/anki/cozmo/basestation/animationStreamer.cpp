@@ -133,7 +133,8 @@ namespace Cozmo {
                        "Will start streaming '%s' animation %d times with tag=%d.\n",
                        _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
 #     endif
-    
+      Anki::Util::sEvent("robot.play_animation", {}, _streamingAnimation->GetName().c_str());
+      
       return _tagCtr;
     }
   }
@@ -179,6 +180,9 @@ namespace Cozmo {
   
   Result AnimationStreamer::SetIdleAnimation(const std::string &name)
   {
+
+    Animation* oldIdleAnimation = _idleAnimation;
+    
     // Special cases for disabling, animation tool, or "live"
     if(name.empty() || name == "NONE") {
 #     if DEBUG_ANIMATION_STREAMING
@@ -186,29 +190,32 @@ namespace Cozmo {
                        "Disabling idle animation.\n");
 #     endif
       _idleAnimation = nullptr;
-      return RESULT_OK;
     } else if(name == LiveAnimation) {
       _idleAnimation = &_liveAnimation;
       _isLiveTwitchEnabled = true;
-      return RESULT_OK;
     } else if(name == AnimToolAnimation) {
       _idleAnimation = &_liveAnimation;
       _isLiveTwitchEnabled = false;
-      return RESULT_OK;
     }
+    else {
     
-    // Otherwise find the specified name and use that as the idle
-    _idleAnimation = _animationContainer.GetAnimation(name);
-    if(_idleAnimation == nullptr) {
-      return RESULT_FAIL;
-    }
+      // Otherwise find the specified name and use that as the idle
+      _idleAnimation = _animationContainer.GetAnimation(name);
+      if(_idleAnimation == nullptr) {
+        return RESULT_FAIL;
+      }
     
 #   if DEBUG_ANIMATION_STREAMING
-    PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
-                     "Setting idle animation to '%s'.\n",
-                     name.c_str());
+      PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
+                       "Setting idle animation to '%s'.\n",
+                       name.c_str());
 #   endif
+    }
 
+    if( oldIdleAnimation != _idleAnimation ) {
+      _isIdling = false;
+    }
+    
     return RESULT_OK;
   }
 
@@ -543,7 +550,7 @@ namespace Cozmo {
         
         if(paramsSet) {
 #         if DEBUG_ANIMATION_STREAMING
-          const Point2f& facePosition = interpolatedParams.GetFacePosition();
+          const Point2f& facePosition = interpolatedFace.GetFacePosition();
           PRINT_NAMED_INFO("AnimationStreamer.GetFaceHelper.EyeShift",
                            "Applying eye shift from face layer of (%.1f,%.1f)",
                            facePosition.x(), facePosition.y());
@@ -935,7 +942,8 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     if(!anim->IsInitialized()) {
-      PRINT_NAMED_ERROR("Animation.Update", "Animation must be initialized before it can be played/updated.");
+      PRINT_NAMED_ERROR("Animation.Update", "%s: Animation must be initialized before it can be played/updated.",
+                        anim != nullptr ? anim->GetName().c_str() : "<NULL>");
       return RESULT_FAIL;
     }
     
@@ -1283,7 +1291,8 @@ namespace Cozmo {
     s32 totalNumAudioFramesPlayed = robot.GetNumAnimationAudioFramesPlayed();
     
     bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
-    assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
+    ASSERT_NAMED((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow, ("AnimationStreamer.UpdateAmountToSend totalNumBytesStreamed: " + std::to_string(totalNumBytesStreamed) + "  totalNumBytesPlayed: " + std::to_string(totalNumBytesPlayed) + " overflow: " + (overflow ? "Yes" : "No")).c_str());
+
     
     s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
     if (overflow) {
