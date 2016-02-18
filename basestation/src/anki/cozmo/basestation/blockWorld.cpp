@@ -20,7 +20,6 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -1996,20 +1995,33 @@ namespace Cozmo {
     */
 
   
-    ObjectID BlockWorld::AddLightCube(u32 activeID, u32 factoryID)
+    ObjectID BlockWorld::AddLightCube(ActionableObject::ActiveID activeID, ActiveCube::FactoryID factoryID)
     {
-      if (activeID >= 4) {
+      if (activeID >= 4 || activeID < 0) {
         PRINT_NAMED_WARNING("BlockWorld.AddLightCube.InvalidActiveID", "activeID %d", activeID);
         return ObjectID();
       }
       
       // Is there an active object with the same activeID that already exists?
+      ObjectType cubeType = ActiveCube::GetTypeFromFactoryID(factoryID);
       ObjectsMapByType_t existingCubes = _existingObjects[ObjectFamily::LightCube];
       for (auto cubeTypeIt = existingCubes.begin(); cubeTypeIt != existingCubes.end(); ++cubeTypeIt) {
-        for (auto cubeIDIt = cubeTypeIt->second.begin(); cubeIDIt != cubeTypeIt->second.end(); ++cubeIDIt) {
-          if (cubeIDIt->second->GetActiveID() == activeID) {
-            PRINT_NAMED_INFO("BlockWorld.AddLightCube.AlreadyExists", "Cube with active ID %d already exists", activeID);
-            return cubeIDIt->second->GetID();
+        if (cubeTypeIt->first == cubeType) {
+          for (auto cubeIDIt = cubeTypeIt->second.begin(); cubeIDIt != cubeTypeIt->second.end(); ++cubeIDIt) {
+            if (cubeIDIt->second->GetActiveID() == activeID) {
+              PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatch",
+                               "objectID %d, activeID %d, type %d",
+                               cubeIDIt->second->GetID().GetValue(), cubeIDIt->second->GetActiveID(), cubeType);
+              return cubeIDIt->second->GetID();
+            }
+#           if ONLY_ALLOW_ONE_OBJECT_PER_TYPE > 0
+            else {
+              PRINT_NAMED_WARNING("BlockWorld.AddLightCube.FoundOtherCubeOfSameType",
+                                  "ActiveID %d is same type as another existing object (objectID %d, activeID %d, type %d). Multiple objects of same type not supported!",
+                                  activeID, cubeIDIt->second->GetID().GetValue(), cubeIDIt->second->GetActiveID(), cubeType);
+              return ObjectID();
+            }
+#           endif //if ONLY_ALLOW_ONE_OBJECT_PER_TYPE > 0
           }
         }
       }

@@ -22,6 +22,7 @@
 
 #include "anki/vision/basestation/observableObjectLibrary.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -73,7 +74,7 @@ namespace Anki
       // Adds a light cube object with the specified activeID and factoryID at
       // an unknown pose. To be used when the cube first comes into radio contact.
       // This function does nothing if a cube with the active ID already exists.
-      ObjectID AddLightCube(u32 activeID, u32 factoryID);
+      ObjectID AddLightCube(ObservableObject::ActiveID activeID, ActiveCube::FactoryID factoryID);
       
       //
       // Object Access

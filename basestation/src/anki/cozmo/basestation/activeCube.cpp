@@ -73,7 +73,7 @@ namespace Anki {
     }
     
     // Changes to this mapping should also be reflected in ActiveBlock::activeIDToFactoryIDMap_
-    ActiveCube::Type ActiveCube::GetTypeFromFactoryID(u32 id)
+    ActiveCube::Type ActiveCube::GetTypeFromFactoryID(FactoryID id)
     {
       static constexpr ObjectType factoryIDToObjectType[4] = {
         ObjectType::Block_LIGHTCUBE3,

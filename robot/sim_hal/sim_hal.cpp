@@ -438,7 +438,7 @@ namespace Anki {
       for (int i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
         sprintf(receiverName, "blockCommsReceiver%d", i);
         blockCommsReceiver_[i] = webotRobot_.getReceiver(receiverName);
-        blockCommsReceiver_[i]->setChannel(i); // Listen to all blocks
+        blockCommsReceiver_[i]->setChannel(i);
         blockCommsReceiver_[i]->enable(TIME_STEP);
       }
 
