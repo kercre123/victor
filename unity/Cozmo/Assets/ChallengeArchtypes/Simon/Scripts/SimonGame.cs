@@ -80,8 +80,24 @@ namespace Simon {
         }
       }
 
-      foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(_BlockIdToSound[kvp.Key].cubeColor);
+      SetCubeLightsDefaultOn();
+    }
+
+    public void SetCubeLightsDefaultOn() {
+      foreach (LightCube cube in CubesForGame) {
+        cube.SetLEDs(_BlockIdToSound[cube.ID].cubeColor);
+      }
+    }
+
+    public void SetCubeLightsGuessWrong() {
+      foreach (LightCube cube in CubesForGame) {
+        cube.SetFlashingLEDs(Color.red, 100, 100, 0);
+      }
+    }
+
+    public void SetCubeLightsGuessRight() {
+      foreach (LightCube cube in CubesForGame) {
+        cube.SetFlashingLEDs(_BlockIdToSound[cube.ID].cubeColor, 100, 100, 0);
       }
     }
 
@@ -89,8 +105,8 @@ namespace Simon {
       _CurrentIDSequence.Clear();
       for (int i = 0; i < sequenceLength; ++i) {
         int pickedID = -1;
-        int pickIndex = Random.Range(0, CurrentRobot.LightCubes.Count);
-        pickedID = CurrentRobot.LightCubes.ElementAt(pickIndex).Key;
+        int pickIndex = Random.Range(0, CubesForGame.Count);
+        pickedID = CubesForGame[pickIndex].ID;
         _CurrentIDSequence.Add(pickedID);
       }
     }

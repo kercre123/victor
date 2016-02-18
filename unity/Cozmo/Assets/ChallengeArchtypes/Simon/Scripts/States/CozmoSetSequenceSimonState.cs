@@ -66,9 +66,7 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, uint.MaxValue, 0, 0, 0);
-      }
+      _GameInstance.SetCubeLightsDefaultOn();
     }
   }
 

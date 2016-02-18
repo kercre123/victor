@@ -53,6 +53,7 @@ namespace Simon {
       base.Exit();
       LightCube.TappedAction -= OnBlockTapped;
       _CurrentRobot.DriveWheels(0f, 0f);
+      _GameInstance.SetCubeLightsDefaultOn();
     }
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
@@ -65,18 +66,14 @@ namespace Simon {
     }
 
     private void PlayerLoseGame() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetFlashingLEDs(Color.red, 100, 100, 0);
-      }
+      _GameInstance.SetCubeLightsGuessWrong();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnPlayerLoseAnimationDone));
     }
 
     private void PlayerWinGame() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetFlashingLEDs(kvp.Value.Lights[0].OnColor, 100, 100, 0);
-      }
+      _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
 
