@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 namespace DataPersistence {
   public class SaveData {
-    public Dictionary<string, bool> CompletedScriptedSequences = new Dictionary<string, bool>();
+    public Dictionary<string, bool> CompletedScriptedSequences;
 
-    public Conversations.ConversationHistory ConversationHistory = new Conversations.ConversationHistory();
+    public Conversations.ConversationHistory ConversationHistory;
 
-    public List<string> CompletedChallengeIds = new List<string>();
+    public List<string> CompletedChallengeIds;
 
-    public List<TimelineEntryData> Sessions = new List<TimelineEntryData>();
+    public List<TimelineEntryData> Sessions;
 
     public int FriendshipPoints;
 
@@ -18,6 +18,15 @@ namespace DataPersistence {
 
     public StatContainer CurrentStats;
 
-    public MinigameSaveData MinigameSaveData = new MinigameSaveData();
+    public MinigameSaveData MinigameSaveData;
+
+    public SaveData() {
+      CompletedScriptedSequences = new Dictionary<string, bool>();
+      ConversationHistory = new Conversations.ConversationHistory();
+      CompletedChallengeIds = new List<string>();
+      Sessions = new List<TimelineEntryData>();
+      CurrentStats = new StatContainer();
+      MinigameSaveData = new MinigameSaveData();
+    }
   }
 }

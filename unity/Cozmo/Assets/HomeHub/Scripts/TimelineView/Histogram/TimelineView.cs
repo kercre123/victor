@@ -315,7 +315,9 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
-      TimeSpan deltaTime = (DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date - DataPersistenceManager.Today);
+      
+      TimeSpan deltaTime = DataPersistenceManager.Instance.Data.Sessions.Count <= 1 ? new TimeSpan(1,0,0,0) : 
+        (DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date - DataPersistenceManager.Today);
       int friendshipPoints = ((int)deltaTime.TotalDays + 1) * 10;
       summaryPanel.FriendshipBarAnimateComplete -= HandleOnFriendshipBarAnimateComplete;
 
