@@ -629,7 +629,6 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void StartEngine(string vizHostIP) {
-    StartEngineMessage.asHost = 1;
     int length = 0;
     if (!string.IsNullOrEmpty(vizHostIP)) {
       length = Encoding.UTF8.GetByteCount(vizHostIP);
