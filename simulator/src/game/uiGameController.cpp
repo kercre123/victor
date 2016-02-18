@@ -475,7 +475,6 @@ namespace Anki {
             
             PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.");
             ExternalInterface::StartEngine msg;
-            msg.asHost = 1; // TODO: Support running as client?
             std::string vizIpStr = "127.0.0.1";
             std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
             std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
