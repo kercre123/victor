@@ -140,5 +140,7 @@
 	<integer>-1</integer>
         <key>com.anki.das.version</key>
         <string></string>
+        <key>com.anki.hockeyapp.appid</key>
+        <string></string>
 </dict>
 </plist>
