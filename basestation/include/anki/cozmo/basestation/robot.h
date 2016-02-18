@@ -683,14 +683,16 @@ public:
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   
-  const std::string& GetAnimationNameFromGroup(const std::string& name) const {
-    auto group = _animationGroups.GetAnimationGroup(name);
-    if(group != nullptr && !group->IsEmpty()) {
-      return group->GetAnimationName(GetMoodManager());
+    const std::string& GetAnimationNameFromGroup(const std::string& name) const {
+      auto group = _animationGroups.GetAnimationGroup(name);
+      if(group != nullptr && !group->IsEmpty()) {
+        return group->GetAnimationName(GetMoodManager());
+      }
+      static const std::string empty("");
+      return empty;
     }
-    static const std::string empty("");
-    return empty;
-  }
+  
+    ExternalInterface::RobotState GetRobotState();
   
   protected:
     const CozmoContext* _context;
