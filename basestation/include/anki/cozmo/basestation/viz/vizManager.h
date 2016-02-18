@@ -21,6 +21,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/types.h"
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/trackedFace.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "clad/types/imageTypes.h"
@@ -404,6 +405,9 @@ namespace Anki {
       
       // TODO: Won't need this offest once Polygon is implmeneted correctly (not drawing with path)
       const u32 _polyIDOffset = 2200;
+      
+      // For displaying assigned names with faces
+      std::map<Vision::TrackedFace::ID_t, std::string> _faceNameLUT;
       
       // For handling messages:
       std::vector<Signal::SmartHandle> _eventHandlers;

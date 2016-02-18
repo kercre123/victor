@@ -70,8 +70,6 @@ namespace Anki {
         
         ImageDeChunker _imageDeChunker;
         
-        std::map<Vision::TrackedFace::ID_t, std::string> faceIDtoNameLUT_;
-        
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
         ExternalInterface::RobotObservedFace _lastFace;
@@ -1460,8 +1458,7 @@ namespace Anki {
                     std::string userName = userNameField->getSFString();
                     if(!userName.empty())
                     {
-                      printf("Assigning name '%s' to ID %lld\n", userName.c_str(), GetLastObservedFaceID());
-                      faceIDtoNameLUT_[GetLastObservedFaceID()] = userName;
+                      AssignVizFaceName(userName, GetLastObservedFaceID());
                     } else {
                       // No user name, enable enrollment
                       ExternalInterface::EnableNewFaceEnrollment enableEnrollment;
