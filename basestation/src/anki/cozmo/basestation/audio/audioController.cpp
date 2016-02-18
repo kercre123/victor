@@ -247,7 +247,7 @@ bool AudioController::SetState( AudioEngine::AudioStateGroupId stateGroupId,
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    _audioEngine->SetState( stateGroupId, stateId );
+    success = _audioEngine->SetState( stateGroupId, stateId );
   }
 #endif
   return success;
@@ -261,7 +261,7 @@ bool AudioController::SetSwitchState( AudioEngine::AudioSwitchGroupId switchGrou
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    _audioEngine->SetSwitch( switchGroupId, switchStateId, gameObject );
+    success = _audioEngine->SetSwitch( switchGroupId, switchStateId, gameObject );
   }
 #endif
   return success;
@@ -277,11 +277,7 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    if ( AudioEngine::kInvalidAudioGameObject == gameObject ) {
-      // Set Global RTPC values
-      gameObject = _audioEngine->GetDefaultGameObjectId();
-    }
-    _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
+    success = _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
   }
 #endif
   return success;
