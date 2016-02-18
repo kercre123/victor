@@ -17,65 +17,85 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/soundManager.h"
+#include "anki/cozmo/basestation/multiClientComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
-#if(RUN_UI_MESSAGE_TCP_SERVER)
 #include "anki/cozmo/shared/cozmoConfig.h"
-#else
-#include "anki/cozmo/basestation/ui/messaging/messageQueue.h"
-#endif
 
 namespace Anki {
   namespace Cozmo {
 
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID)
-    : comms_(NULL)
+    : _uiComms(new MultiClientComms{})
+    , _uiAdvertisementService("UIAdvertisementService")
     , isInitialized_(false)
     , _hostUiDeviceID(hostUiDeviceID)
     {
+      PRINT_NAMED_INFO("UiMessageHandler.Constructor",
+                       "Starting UIAdvertisementService, reg port %d, ad port %d",
+                       UI_ADVERTISEMENT_REGISTRATION_PORT, UI_ADVERTISING_PORT);
       
+      _uiAdvertisementService.StartService(UI_ADVERTISEMENT_REGISTRATION_PORT,
+                                           UI_ADVERTISING_PORT);
     }
-    Result UiMessageHandler::Init(Comms::IComms*   comms)
+    
+    Result UiMessageHandler::Init(const Json::Value& config)
     {
-      Result retVal = RESULT_FAIL;
-      
-      if(comms != nullptr) {
-        comms_ = comms;
+      if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP) ||
+         !config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
         
-        isInitialized_ = true;
-        retVal = RESULT_OK;
+        PRINT_NAMED_ERROR("UiMessageHandler.Init", "Missing advertising hosdt / UI advertising port in Json config file.");
+        return RESULT_FAIL;
       }
+      
+      Result retVal = _uiComms->Init(config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
+                                     config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt());
+      
+      if(retVal != RESULT_OK) {
+        PRINT_NAMED_ERROR("UiMessageHandler.Init.Init", "Failed to initialize host uiComms.");
+        return retVal;
+      }
+      
+      if(!config.isMember(AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR)) {
+        PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No NumUiDevicesToWaitFor defined in Json config, defaulting to 1.");
+        _desiredNumUiDevices = 1;
+      } else {
+        _desiredNumUiDevices = config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR].asInt();
+      }
+      
+      isInitialized_ = true;
+      
+      // We'll use this callback for simple events we care about
+      auto commonCallback = std::bind(&UiMessageHandler::HandleEvents, this, std::placeholders::_1);
+      
+      // Subscribe to desired events
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
       
       return retVal;
     }
 
     void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame& message)
     {
-#if(RUN_UI_MESSAGE_TCP_SERVER)
-
       Comms::MsgPacket p;
       message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
       p.dataLen = message.Size();
       p.destId = _hostUiDeviceID;
-      if( nullptr != comms_ ) {
-        comms_->Send(p);
+      if( nullptr != _uiComms ) {
+        _uiComms->Send(p);
       }
-#else
-      //MessageQueue::getInstance()->AddMessageForUi(msg);
-#endif
     }
   
     Result UiMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
     {
-      Result retVal = RESULT_FAIL;
-      
       ExternalInterface::MessageGameToEngine message;
       if (message.Unpack(packet.data, packet.dataLen) != packet.dataLen) {
         PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
@@ -85,7 +105,7 @@ namespace Anki {
       // Send out this message to anyone that's subscribed
       Broadcast(std::move(message));
       
-      return retVal;
+      return RESULT_OK;
     } // ProcessBuffer()
     
     // Broadcasting MessageGameToEngine messages are only internal
@@ -140,10 +160,10 @@ namespace Anki {
       if(isInitialized_) {
         retVal = RESULT_OK;
         
-        while(comms_->GetNumPendingMsgPackets() > 0)
+        while(_uiComms->GetNumPendingMsgPackets() > 0)
         {
           Comms::MsgPacket packet;
-          comms_->GetNextMsgPacket(packet);
+          _uiComms->GetNextMsgPacket(packet);
           
           if(ProcessPacket(packet) != RESULT_OK) {
             retVal = RESULT_FAIL;
@@ -153,6 +173,109 @@ namespace Anki {
       
       return retVal;
     } // ProcessMessages()
+    
+    
+    Result UiMessageHandler::Update()
+    {
+      // Update UI comms
+      if(_uiComms->IsInitialized()) {
+        _uiComms->Update();
+        
+        if(_uiComms->GetNumConnectedDevices() > 0) {
+          // Ping the UI to let them know we're still here
+          ExternalInterface::MessageEngineToGame message;
+          message.Set_Ping(_pingToUI);
+          Broadcast(message);
+          ++_pingToUI.counter;
+        }
+      }
+      
+      Result lastResult = ProcessMessages();
+      if (RESULT_OK != lastResult)
+      {
+        return lastResult;
+      }
+      
+      if (!_hasDesiredUiDevices)
+      {
+        _uiAdvertisementService.Update();
+        
+        // TODO: Do we want to do this all the time in case UI devices want to join later?
+        // Notify the UI that there are advertising devices
+        std::vector<int> advertisingUiDevices;
+        _uiComms->GetAdvertisingDeviceIDs(advertisingUiDevices);
+        for(auto & device : advertisingUiDevices) {
+          if(device == GetHostUiDeviceID()) {
+            // Force connection to first (local) UI device
+            if(true == ConnectToUiDevice(device)) {
+              PRINT_NAMED_INFO("CozmoGameImpl.Update",
+                               "Automatically connected t o local UI device %d!", device);
+            }
+          } else {
+            Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceAvailable(device)));
+          }
+        }
+        
+        // LeeC TODO: What is the plan here?
+        //if(_uiComms->GetNumConnectedDevices() >= _desiredNumUiDevices) {
+          //        PRINT_NAMED_INFO("CozmoGameImpl.UpdateAsHost","Enough UI devices connected (%d), will wait for %d robots.",_desiredNumUiDevices, _desiredNumRobots);
+        //  _runState = CozmoGame::WAITING_FOR_ROBOTS;
+      }
+      return lastResult;
+    } // Update()
+    
+    bool UiMessageHandler::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
+    {
+      const bool success = _uiComms->ConnectToDeviceByID(whichDevice);
+      if(success) {
+        _connectedUiDevices.push_back(whichDevice);
+        if (_connectedUiDevices.size() >= _desiredNumUiDevices)
+        {
+          _hasDesiredUiDevices = true;
+        }
+      }
+      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceConnected(whichDevice, success)));
+      return success;
+    }
+    
+    void UiMessageHandler::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    {
+      switch (event.GetData().GetTag())
+      {
+        case ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice:
+        {
+          const ExternalInterface::ConnectToUiDevice& msg = event.GetData().Get_ConnectToUiDevice();
+          const bool success = ConnectToUiDevice(msg.deviceID);
+          if(success) {
+            PRINT_NAMED_INFO("UiMessageHandler.HandleEvents", "Connected to UI device %d!", msg.deviceID);
+          } else {
+            PRINT_NAMED_ERROR("UiMessageHandler.HandleEvents", "Failed to connect to UI device %d!", msg.deviceID);
+          }
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice:
+        {
+          const ExternalInterface::DisconnectFromUiDevice& msg = event.GetData().Get_DisconnectFromUiDevice();
+          _uiComms->DisconnectDeviceByID(msg.deviceID);
+          PRINT_NAMED_INFO("UiMessageHandler.ProcessMessage", "Disconnected from UI device %d!", msg.deviceID);
+          
+          if(_uiComms->GetNumConnectedDevices() == 0) {
+            //PRINT_NAMED_INFO("UiMessageHandler.ProcessMessage",
+            //                 "Last UI device just disconnected: forcing re-initialization.");
+            // LeeC TODO: Should we be doing this init anymore? It kind of breaks things, and I'm not sure it reflects
+            // the flow we should be doing now. It was also done in the game and not here, before this got moved
+            //Init(_config);
+          }
+          break;
+        }
+        default:
+        {
+          PRINT_STREAM_ERROR("UiMessageHandler.HandleEvents",
+                             "Subscribed to unhandled event of type "
+                             << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
+        }
+      }
+    }
     
   } // namespace Cozmo
 } // namespace Anki

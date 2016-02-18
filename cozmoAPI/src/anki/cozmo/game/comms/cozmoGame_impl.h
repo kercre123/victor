@@ -39,7 +39,6 @@ namespace Cozmo {
     using RunState     = CozmoGame::RunState;
     using PlaybackMode = CozmoGame::PlaybackMode;
     
-    using AdvertisingUiDevice = CozmoGame::AdvertisingUiDevice;
     using AdvertisingRobot    = CozmoGame::AdvertisingRobot;
     
     CozmoGameImpl(Util::Data::DataPlatform* dataPlatform);
@@ -53,8 +52,6 @@ namespace Cozmo {
     Result StartEngine(Json::Value config);
     
     Result Init(const Json::Value& config);
-    
-    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
     //
     // Running
@@ -89,28 +86,20 @@ namespace Cozmo {
     //
     // Member Variables
     //
-
-    ExternalInterface::Ping                  _pingToUI;
-    f32                              _lastPingTimeFromUI_sec;
-    u32                              _lastPingCounterFromUI;
     
     bool                             _isEngineStarted;
     RunState                         _runState;
     
     Json::Value                      _config;
     
-    int                              _desiredNumUiDevices;
     int                              _desiredNumRobots;
 
-    Comms::AdvertisementService      _uiAdvertisementService;
-    MultiClientComms                 _uiComms;
     UiMessageHandler                 _uiMsgHandler;
 
     std::vector<ExternalInterface::DeviceDetectedVisionMarker> _visionMarkersDetectedByDevice;
     
     std::vector<Signal::SmartHandle> _signalHandles;
 
-    std::vector<AdvertisingUiDevice> _connectedUiDevices;
     Util::Data::DataPlatform*        _dataPlatform;
     
     std::unique_ptr<CozmoEngine>     _cozmoEngine;

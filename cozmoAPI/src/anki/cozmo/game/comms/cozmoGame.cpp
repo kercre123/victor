@@ -21,33 +21,19 @@
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/gameStatusFlag.h"
 
 namespace Anki {
 namespace Cozmo {
-  
-  const float UI_PING_TIMEOUT_SEC = 5.0f;
   
 #pragma mark - CozmoGame Implementation
     
   CozmoGameImpl::CozmoGameImpl(Util::Data::DataPlatform* dataPlatform)
   : _isEngineStarted(false)
   , _runState(CozmoGame::STOPPED)
-  , _desiredNumUiDevices(1)
   , _desiredNumRobots(1)
-  , _uiAdvertisementService("UIAdvertisementService")
   , _uiMsgHandler(1)
   , _dataPlatform(dataPlatform)
   {
-    _pingToUI.counter = 0;
-    
-    
-    PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
-                     "Starting UIAdvertisementService, reg port %d, ad port %d",
-                     UI_ADVERTISEMENT_REGISTRATION_PORT, UI_ADVERTISING_PORT);
-    
-    _uiAdvertisementService.StartService(UI_ADVERTISEMENT_REGISTRATION_PORT,
-                                         UI_ADVERTISING_PORT);
   }
   
   CozmoGameImpl::~CozmoGameImpl()
@@ -63,8 +49,6 @@ namespace Cozmo {
   
   Result CozmoGameImpl::Init(const Json::Value& config)
   {
-    _lastPingTimeFromUI_sec = -1.f;
-    
     if(_isEngineStarted) {
       // We've already initialzed and started running before, so shut down the
       // already-running engine.
@@ -78,35 +62,18 @@ namespace Cozmo {
       SetupSubscriptions();
     }
     
-    if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP) ||
-       !config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
-      
-      PRINT_NAMED_ERROR("CozmoGameImpl.Init", "Missing advertising hosdt / UI advertising port in Json config file.");
-      return RESULT_FAIL;
-    }
-    
-    Result lastResult = _uiComms.Init(config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
-                                      config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt());
-
-    if(lastResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("CozmoGameImpl.Init", "Failed to initialize host uiComms.");
+    Result lastResult = _uiMsgHandler.Init(config);
+    if (RESULT_OK != lastResult)
+    {
+      PRINT_NAMED_ERROR("CozmoGameImpl.Init","Error initializing UIMessageHandler");
       return lastResult;
     }
-    
-    _uiMsgHandler.Init(&_uiComms);
     
     if(!config.isMember(AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR)) {
       PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.");
       _desiredNumRobots = 1;
     } else {
       _desiredNumRobots    = config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR].asInt();
-    }
-    
-    if(!config.isMember(AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR)) {
-      PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No NumUiDevicesToWaitFor defined in Json config, defaulting to 1.");
-      _desiredNumUiDevices = 1;
-    } else {
-      _desiredNumUiDevices = config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR].asInt();
     }
 
     _config = config;
@@ -118,13 +85,6 @@ namespace Cozmo {
   
   void CozmoGameImpl::SetupSubscriptions()
   {
-    // We'll use this callback for simple events we care about
-    auto commonCallback = std::bind(&CozmoGameImpl::HandleEvents, this, std::placeholders::_1);
-    
-    // Subscribe to desired events
-    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
-    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
-    
     // Use a separate callback for StartEngine
     auto startEngineCallback = std::bind(&CozmoGameImpl::HandleStartEngine, this, std::placeholders::_1);
     _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
@@ -179,16 +139,6 @@ namespace Cozmo {
     return _visionMarkersDetectedByDevice;
   }
   
-  bool CozmoGameImpl::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
-  {
-    const bool success = _uiComms.ConnectToDeviceByID(whichDevice);
-    if(success) {
-      _connectedUiDevices.push_back(whichDevice);
-    }
-    _uiMsgHandler.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceConnected(whichDevice, success)));
-    return success;
-  }
-  
   int CozmoGameImpl::GetNumRobots() const
   {
     if(_cozmoEngine) {
@@ -203,73 +153,20 @@ namespace Cozmo {
   Result CozmoGameImpl::Update(const float currentTime_sec)
   {
     Result lastResult = RESULT_OK;
-  
-    if(_lastPingTimeFromUI_sec > 0.f) {
-      const f32 timeSinceLastUiPing = currentTime_sec - _lastPingTimeFromUI_sec;
-      
-      if(timeSinceLastUiPing > UI_PING_TIMEOUT_SEC) {
-        /*
-        PRINT_NAMED_ERROR("CozmoGameImpl.Update",
-                          "Lost connection to UI (no ping in %.2f seconds). Resetting.",
-                          timeSinceLastUiPing);
-        
-        Init(_config);
-        return lastResult;
-         */
-        
-        PRINT_NAMED_WARNING("CozmoGameImpl.Update",
-                            "No ping from UI in %.2f seconds, but NOT ressetting.",
-                            timeSinceLastUiPing);
-        _lastPingTimeFromUI_sec = -1.f;
-      }
+    
+    // Handle UI
+    lastResult = _uiMsgHandler.Update();
+    if (RESULT_OK != lastResult)
+    {
+      PRINT_NAMED_ERROR("CozmoGameImpl.Update", "Error updating UIMessageHandler");
+      return lastResult;
     }
     
-    // Update UI comms
-    if(_uiComms.IsInitialized()) {
-      _uiComms.Update();
-      
-      if(_uiComms.GetNumConnectedDevices() > 0) {
-        // Ping the UI to let them know we're still here
-        ExternalInterface::MessageEngineToGame message;
-        message.Set_Ping(_pingToUI);
-        _uiMsgHandler.Broadcast(message);
-        ++_pingToUI.counter;
-      }
-    }
-    
-    // Handle UI messages
-    _uiMsgHandler.ProcessMessages();
-    
-    if(!_isEngineStarted || _runState == CozmoGame::WAITING_FOR_UI_DEVICES) {
-      // If we are still waiting on the engine to start, or even if it is started
-      // but we have not connected to enough UI devices, then keep ticking the
-      // UI advertisement service and connect to anything advertising until we
-      // have enough devices and can switch to looking for robots.
-      
-      _uiAdvertisementService.Update();
-      
-      // TODO: Do we want to do this all the time in case UI devices want to join later?
-      // Notify the UI that there are advertising devices
-      std::vector<int> advertisingUiDevices;
-      _uiComms.GetAdvertisingDeviceIDs(advertisingUiDevices);
-      for(auto & device : advertisingUiDevices) {
-        if(device == _uiMsgHandler.GetHostUiDeviceID()) {
-          // Force connection to first (local) UI device
-          if(true == ConnectToUiDevice(device)) {
-            PRINT_NAMED_INFO("CozmoGameImpl.Update",
-                             "Automatically connected t o local UI device %d!", device);
-          }
-        } else {
-          _uiMsgHandler.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceAvailable(device)));
-        }
-      }
-      
-      if(_uiComms.GetNumConnectedDevices() >= _desiredNumUiDevices) {
-//        PRINT_NAMED_INFO("CozmoGameImpl.UpdateAsHost","Enough UI devices connected (%d), will wait for %d robots.",_desiredNumUiDevices, _desiredNumRobots);
+    if (_uiMsgHandler.HasDesiredNumUiDevices()) {
+      if (_runState == CozmoGame::WAITING_FOR_UI_DEVICES)
+      {
         _runState = CozmoGame::WAITING_FOR_ROBOTS;
       }
-      
-    } else {
       lastResult = UpdateAsHost(currentTime_sec);
     }
     
@@ -354,66 +251,6 @@ namespace Cozmo {
     
     return lastResult;
     
-  }
-  
-  void CozmoGameImpl::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-  {
-    switch (event.GetData().GetTag())
-    {
-      case ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice:
-      {
-        const ExternalInterface::ConnectToUiDevice& msg = event.GetData().Get_ConnectToUiDevice();
-        const bool success = ConnectToUiDevice(msg.deviceID);
-        if(success) {
-          PRINT_NAMED_INFO("CozmoGameImpl.HandleEvents", "Connected to UI device %d!", msg.deviceID);
-        } else {
-          PRINT_NAMED_ERROR("CozmoGameImpl.HandleEvents", "Failed to connect to UI device %d!", msg.deviceID);
-        }
-        break;
-      }
-      case ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice:
-      {
-        const ExternalInterface::DisconnectFromUiDevice& msg = event.GetData().Get_DisconnectFromUiDevice();
-        _uiComms.DisconnectDeviceByID(msg.deviceID);
-        PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Disconnected from UI device %d!", msg.deviceID);
-        
-        if(_uiComms.GetNumConnectedDevices() == 0) {
-          PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage",
-                           "Last UI device just disconnected: forcing re-initialization.");
-          Init(_config);
-        }
-        break;
-      }
-      case ExternalInterface::MessageGameToEngineTag::Ping:
-      {
-        const ExternalInterface::Ping& msg = event.GetData().Get_Ping();
-        
-        _lastPingTimeFromUI_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        
-        if (_uiComms.GetNumConnectedDevices() > 1) {
-          // The ping counter check doesn't work for more than 1 UI client
-          return;
-        }
-        
-        // Check to see if the ping counter is sequential or if we've dropped packets/pings
-        const u32 counterDiff = msg.counter - _lastPingCounterFromUI;
-        _lastPingCounterFromUI = msg.counter;
-        
-        if(counterDiff > 1) {
-          PRINT_STREAM_WARNING("CozmoGameImpl.Update",
-                               "Counter difference > 1 betweeen last two pings from UI. (Difference was " << counterDiff << ".)\n");
-          
-          // TODO: Take action if we've dropped pings?
-        }
-        break;
-      }
-      default:
-      {
-        PRINT_STREAM_ERROR("CozmoGameImpl.HandleEvents",
-                           "Subscribed to unhandled event of type "
-                           << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
-      }
-    }
   }
   
   void CozmoGameImpl::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
