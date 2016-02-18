@@ -7,7 +7,8 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 
 [Serializable]
-public class StatContainer : IEquatable<StatContainer>, IDictionary<Anki.Cozmo.ProgressionStatType, int> {
+[JsonConverter(typeof(StatContainerConverter))]
+public class StatContainer : IEquatable<StatContainer> {
 
   private const int kCount = (int)Anki.Cozmo.ProgressionStatType.Count;
 
@@ -205,10 +206,5 @@ public class StatContainer : IEquatable<StatContainer>, IDictionary<Anki.Cozmo.P
     }
   }
 
-  IEnumerator IEnumerable.GetEnumerator() {
-    for (int i = 0; i < _Stats.Length; i++) {
-      yield return new DictionaryEntry((Anki.Cozmo.ProgressionStatType)i, _Stats[i]);
-    }
-  }
 #endregion
 }

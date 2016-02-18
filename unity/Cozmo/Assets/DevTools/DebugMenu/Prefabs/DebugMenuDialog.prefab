@@ -379,8 +379,8 @@ MonoBehaviour:
     panePrefab: {fileID: 100452, guid: ad3c2515bd1e8495eafd0da543d64c19, type: 2}
   - name: Performance
     panePrefab: {fileID: 113690, guid: 30ad73b1c18b443bdb77716d180d9439, type: 2}
-  - name: Soundboard
-    panePrefab: {fileID: 112558, guid: 080de521b73874292802d3f45d442914, type: 2}
+  - name: Audio
+    panePrefab: {fileID: 137948, guid: 76d4e2b85e93448c692795fe78d5479c, type: 2}
   - name: Pattern Play
     panePrefab: {fileID: 0}
   - name: Cozmo Face
@@ -391,8 +391,6 @@ MonoBehaviour:
     panePrefab: {fileID: 113112, guid: 3bd508acfffff402bb84d7e68c9e2964, type: 2}
   - name: Data Persistence
     panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
-  - name: Volume Mixer
-    panePrefab: {fileID: 196276, guid: c2107abf77292453b9f2fc64e3f9a702, type: 2}
   - name: The Rest
     panePrefab: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
   - name: Animation
@@ -581,7 +579,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.size
-      value: 10
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: tabButtonPrefab_
@@ -635,15 +633,15 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[2].name
-      value: Soundboard
+      value: Audio
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[2].panePrefab
       value: 
-      objectReference: {fileID: 112558, guid: 080de521b73874292802d3f45d442914, type: 2}
+      objectReference: {fileID: 137948, guid: 76d4e2b85e93448c692795fe78d5479c, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[9].name
-      value: Cozmo Face
+      value: The Rest
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[10].name
@@ -656,15 +654,15 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[9].panePrefab
       value: 
-      objectReference: {fileID: 120700, guid: 3e54c04088ea04990bfdb49c134f6854, type: 2}
+      objectReference: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[8].name
-      value: Volume Mixer
+      value: The Rest
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[8].panePrefab
       value: 
-      objectReference: {fileID: 196276, guid: c2107abf77292453b9f2fc64e3f9a702, type: 2}
+      objectReference: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 159258}
