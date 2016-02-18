@@ -129,12 +129,6 @@ namespace SpeedTap {
       }
     }
 
-    void BlockTapped(int blockID, int numTaps) {
-      if (blockID == _SpeedTapGame.PlayerBlock.ID) {
-        PlayerDidTap();
-      }   
-    }
-
     void PlayerDidTap() {
       _SpeedTapGame.PlayerTap = true;
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
@@ -150,6 +144,7 @@ namespace SpeedTap {
       _SpeedTapGame.RollingBlocks();
       _TriedFake = false;
       _CozmoTapDelayTimeMs = UnityEngine.Random.Range(_MinCozmoTapDelayTimeMs, _MaxCozmoTapDelayTimeMs);
+      _SpeedTapGame.PlayerTap = false;
 
       _TryFake = UnityEngine.Random.Range(0.0f, 1.0f) < _FakeProbability;
       _TryPeek = UnityEngine.Random.Range(0.0f, 1.0f) < _PeekProbability;
