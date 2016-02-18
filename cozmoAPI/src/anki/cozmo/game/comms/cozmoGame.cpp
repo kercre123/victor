@@ -141,7 +141,9 @@ namespace Cozmo {
       
     PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.");
     
-    // Destroy(if it exists) and create CozmoEngine
+    // Destroy(if it exists) and create CozmoEngine. We intentionally destory it first, then create the new one,
+    // because bad things happen if there happen to be multiple CozmoEngines existing at the same time.
+    _cozmoEngine.reset();
     _cozmoEngine.reset(new CozmoEngine(&_uiMsgHandler, _dataPlatform));
     _cozmoEngine->ListenForRobotConnections(true);
   
