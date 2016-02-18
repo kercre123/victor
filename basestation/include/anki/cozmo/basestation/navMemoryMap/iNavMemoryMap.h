@@ -1,5 +1,5 @@
 /**
- * File: navMemoryMapInterface.h
+ * File: iNavMemoryMap.h
  *
  * Author: Raul
  * Date:   12/09/2015
@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef ANKI_COZMO_NAV_MEMORY_MAP_INTERFACE_H
-#define ANKI_COZMO_NAV_MEMORY_MAP_INTERFACE_H
+#ifndef ANKI_COZMO_INAV_MEMORY_MAP_H
+#define ANKI_COZMO_INAV_MEMORY_MAP_H
 
 #include "navMemoryMapTypes.h"
 #include "iNavMemoryMapQuadData.h"
