@@ -325,7 +325,6 @@ namespace Anki {
     ActionResult DriveToObjectAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
-      PRINT_NAMED_INFO("", "DriveToObject %d", _objectID.GetValue());
       ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
@@ -357,7 +356,6 @@ namespace Anki {
         // Initialization has now moved and we may not be in position, even if
         // we completed the planned path successfully. If that's the case, we
         // want to retry.
-        PRINT_NAMED_INFO("", "CheckIfDone %d", _objectID.GetValue());
         ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("DriveToObjectAction.CheckIfDone.NoObjectWithID",
@@ -384,7 +382,6 @@ namespace Anki {
           
           std::vector<Pose3d> possiblePoses; // don't really need these
           bool inPosition = false;
-          PRINT_NAMED_INFO("", "DriveToObjectCheckIfDone %d", object->GetID().GetValue());
           result = GetPossiblePoses(object, possiblePoses, inPosition);
           
           if(!inPosition) {
@@ -825,7 +822,6 @@ namespace Anki {
                                                            const bool useManualSpeed)
     : CompoundActionSequential(robot)
     {
-      PRINT_NAMED_INFO("", "IDriveToInteractWithObject %d", objectID.GetValue());
       _driveToObjectAction = new DriveToObjectAction(robot,
                                                      objectID,
                                                      actionType,
@@ -901,7 +897,6 @@ namespace Anki {
                                  approachAngle_rad,
                                  useManualSpeed)
     {
-      PRINT_NAMED_INFO("", "DriveToPlaceOnObject %d", objectID.GetValue());
       PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
                                                               objectID,
                                                               false,

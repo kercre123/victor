@@ -143,14 +143,14 @@ namespace Anki {
           
           f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
           // If the angle wasn't clipped then the normal value for x_mm should be negated
-          // This is due to what the value of x_mm would be if angleDiff wasn't clipped
+          // This is due to what the value of x_mm would be from tangent of an unclipped angleDiff
+          // (the tangent of when angleDiff > 90)
           if(!angleClipped)
           {
             x_mm = -x_mm;
           }
           
           const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
-          PRINT_NAMED_INFO("", "cur: %f tar: %f dif: %f x_mm: %f shi: %f", currentAngle.getDegrees(), _targetAngle.getDegrees(), angleDiff.ToFloat(), x_mm, xPixShift);
           _robot.ShiftEyes(_eyeShiftTag, xPixShift, 0, 4*IKeyFrame::SAMPLE_LENGTH_MS, "TurnInPlaceEyeDart");
         }
       }

@@ -517,7 +517,6 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::mountCharger:
       return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
 
-      
       // TODO: Add cases for other actions
       
     default:
