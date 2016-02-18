@@ -34,14 +34,13 @@ namespace Simon {
 
     private void SetSimonNodeBlink() {
       SimonGame game = _StateMachine.GetGame() as SimonGame;
-      string animation = game.GetCozmoAnimationForBlock(_TargetCube.ID);
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _StartLightBlinkTime = Time.time;
       _CubeLightColor = _TargetCube.Lights[0].OnColor;
       _TargetCube.TurnLEDsOff();
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(_TargetCube.ID));
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(game.GetAudioForBlock(_TargetCube.ID));
 
-      _CurrentRobot.SendAnimation(animation, HandleAnimationEnd);
+      _CurrentRobot.SendAnimation(AnimationName.kSimonBlinkCube, HandleAnimationEnd);
       _IsAnimating = true;
     }
 

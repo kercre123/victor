@@ -54,5 +54,7 @@ public static class AnimationName {
   public const string kSpeedTap_Tap_03 = "anim_speedTap_tap_03";
   public const string kSpeedTap_Peek = "anim_speedTap_lookAtPlayer";
   public const string kSpeedTap_FakeOut = "anim_speedTap_fakeOut_01";
+
+  public const string kSimonBlinkCube = "Simon_Cube";
 }
 

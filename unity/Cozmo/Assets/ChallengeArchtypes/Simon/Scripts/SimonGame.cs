@@ -60,37 +60,24 @@ namespace Simon {
     }
 
     public void InitColorsAndSounds() {
-      // give cubes colors
-      List<Color> colors = new List<Color>();
-      colors.Add(Color.green);
-      colors.Add(Color.blue);
-      colors.Add(Color.red);
-      colors.Add(Color.yellow);
-      colors.Add(Color.magenta);
-      int colorCounter = 0;
-      foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(colors[colorCounter]);
-        colorCounter++;
-        colorCounter %= colors.Count;
-      }
+      // TODO: Serialize simon sounds
+      // Give cubes colors and sounds
+      SimonSound[] soundsWithColor = {
+        new SimonSound(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect, Color.green),
+        new SimonSound(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect, Color.blue),
+        new SimonSound(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect, Color.red),
+        new SimonSound(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect, Color.yellow),
+        new SimonSound(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect, Color.magenta)
+      };
 
       _BlockIdToSound.Clear();
-      int counter = 0;
-      string cozmoAnimationName = "Simon_Cube";
-      Anki.Cozmo.Audio.GameEvent.SFX[] playerAudio = { 
-        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect,
-        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect,
-        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect
-      };
-      int smallestArrayLength = playerAudio.Length;
-      SimonSound sound;
-      foreach (var kvp in CurrentRobot.LightCubes) {
-        sound = new SimonSound();
-        sound.cozmoAnimationName = cozmoAnimationName;
-        sound.playerSoundName = playerAudio[counter];
-        _BlockIdToSound.Add(kvp.Key, sound);
-        counter++;
-        counter %= smallestArrayLength;
+      int randomIndex = 0;
+      SimonSound randomSimonSound;
+      foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
+        randomIndex = Random.Range(0, soundsWithColor.Length);
+        randomSimonSound = soundsWithColor[randomIndex];
+        _BlockIdToSound.Add(kvp.Key, randomSimonSound);
+        kvp.Value.SetLEDs(randomSimonSound.cubeColor);
       }
     }
 
@@ -116,20 +103,11 @@ namespace Simon {
 
     }
 
-    public string GetCozmoAnimationForBlock(int blockId) {
-      string animationName = AnimationName.kSeeOldPattern;
-      SimonSound sound;
-      if (_BlockIdToSound.TryGetValue(blockId, out sound)) {
-        animationName = sound.cozmoAnimationName;
-      }
-      return animationName;
-    }
-
-    public Anki.Cozmo.Audio.GameEvent.SFX GetPlayerAudioForBlock(int blockId) {
+    public Anki.Cozmo.Audio.GameEvent.SFX GetAudioForBlock(int blockId) {
       Anki.Cozmo.Audio.GameEvent.SFX audioEvent = Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect;
       SimonSound sound;
       if (_BlockIdToSound.TryGetValue(blockId, out sound)) {
-        audioEvent = sound.playerSoundName;
+        audioEvent = (Anki.Cozmo.Audio.GameEvent.SFX)sound.soundName;
       }
       return audioEvent;
     }
@@ -147,8 +125,15 @@ namespace Simon {
   }
 
   public class SimonSound {
-    public string cozmoAnimationName;
-    public Anki.Cozmo.Audio.GameEvent.SFX playerSoundName;
+    // TODO: Store Anki.Cozmo.Audio.GameEvent.SFX instead of uint; apparently Unity
+    // doesn't like that.
+    public uint soundName;
+    public Color cubeColor;
+
+    public SimonSound(Anki.Cozmo.Audio.GameEvent.SFX soundName, Color cubeColor) {
+      this.soundName = (uint)soundName;
+      this.cubeColor = cubeColor;
+    }
   }
 
   public enum PlayerType {
