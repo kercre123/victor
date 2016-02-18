@@ -8,14 +8,14 @@ namespace Simon {
     public const float kDistanceThreshold = 20f;
     float kAngleTolerance = 2.5f;
 
-    private PlayerType _FirstPlayer;
+    private State _NextState;
 
     private Vector2 _TargetPosition;
     private Quaternion _TargetRotation;
     private Vector2 _CubeMidpoint;
 
-    public CozmoMoveCloserToCubesState(PlayerType firstPlayer) {
-      _FirstPlayer = firstPlayer;
+    public CozmoMoveCloserToCubesState(State nextState) {
+      _NextState = nextState;
     }
 
     public override void Enter() {
@@ -69,7 +69,7 @@ namespace Simon {
     }
 
     private void HandleGotoRotationComplete(bool success) {
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_FirstPlayer));
+      _StateMachine.SetNextState(_NextState);
     }
 
     #region Target Position calculations

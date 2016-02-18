@@ -27,7 +27,7 @@ public static class VectorUtil {
   }
 
   public static Vector2 PerpendicularAlignedWith(this Vector2 v, Vector2 alignVector) {
-    // Get a vector perpendicular to vectorToUse
+    // Get a vector perpendicular to v
     Vector2 perpendicular = v.Perpendicular();
 
     // Use the dot product to determine if the perpendicular is facing away

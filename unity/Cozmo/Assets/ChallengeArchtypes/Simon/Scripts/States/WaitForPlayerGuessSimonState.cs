@@ -24,7 +24,6 @@ namespace Simon {
       _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = false;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
     }
 
     public override void Update() {
@@ -54,38 +53,27 @@ namespace Simon {
       base.Exit();
       LightCube.TappedAction -= OnBlockTapped;
       _CurrentRobot.DriveWheels(0f, 0f);
+      _GameInstance.SetCubeLightsDefaultOn();
     }
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
-      BlackoutLights();
       _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
-      BlackoutLights();
       _GameInstance.RaiseMiniGameLose(Localization.GetWithArgs(
         LocalizationKeys.kSimonGameTextPatternLength, _SequenceList.Count));
     }
 
-    private void BlackoutLights() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetFlashingLEDs(Color.black, uint.MaxValue, 0, 0);
-      }
-    }
-
     private void PlayerLoseGame() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetFlashingLEDs(Color.red, 100, 100, 0);
-      }
+      _GameInstance.SetCubeLightsGuessWrong();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnPlayerLoseAnimationDone));
     }
 
     private void PlayerWinGame() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, 100, 100, 0, 0);
-      }
+      _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
 
@@ -104,14 +92,14 @@ namespace Simon {
       _StartLightBlinkTime = Time.time;
 
       SimonGame game = _StateMachine.GetGame() as SimonGame;
-      GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(id));
+      GameAudioClient.PostAudioEvent(game.GetAudioForBlock(id));
 
       _TargetCube = id;
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
       _TargetCubeColor = cube.Lights[0].OnColor;
       cube.TurnLEDsOff();
 
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(cube, false));
+      _CurrentRobot.FaceObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
     }
   }
 
