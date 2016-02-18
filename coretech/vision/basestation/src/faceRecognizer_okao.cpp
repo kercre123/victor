@@ -206,12 +206,12 @@ namespace Vision {
               }
               
               PRINT_NAMED_INFO("FaceRecognizer.Run.MergingFaces",
-                               "Tracking %d: merging ID=%llu into ID=%llu",
+                               "Tracking %d: merging ID=%d into ID=%d",
                                _detectionInfo.nID, mergeFrom, mergeTo);
               Result mergeResult = MergeFaces(mergeTo, mergeFrom);
               if(RESULT_OK != mergeResult) {
                 PRINT_NAMED_WARNING("FaceRecognizer.Run.MergeFail",
-                                    "Trying to merge %llu with %llu", faceID, recognizedID);
+                                    "Trying to merge %d with %d", faceID, recognizedID);
               }
             }
             // TODO: Notify the world somehow that an ID we were tracking got merged?
@@ -819,10 +819,10 @@ namespace Vision {
           } else {
             _enrollmentData.clear();
             for(auto & idStr : json.getMemberNames()) {
-              TrackedFace::ID_t faceID = std::stol(idStr);
+              TrackedFace::ID_t faceID = std::stoi(idStr);
               if(!json.isMember(idStr)) {
                 PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.BadFaceIdString",
-                                  "Could not find member for string %s with value %llu",
+                                  "Could not find member for string %s with value %d",
                                   idStr.c_str(), faceID);
                 _mutex.unlock();
                 result = RESULT_FAIL;
@@ -836,7 +836,7 @@ namespace Vision {
                 
                 // TODO: Load enrollment image??
                 
-                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%llu, EnrollTime: '%s'",
+                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%d, EnrollTime: '%s'",
                                  faceID, ctime(&enrollData.enrollmentTime));
               }
             }

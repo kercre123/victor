@@ -31,7 +31,7 @@ namespace Vision {
   {
   public:
     
-    using ID_t = int64_t;
+    using ID_t = int32_t;
     
     static const ID_t UnknownFace = -1;
     

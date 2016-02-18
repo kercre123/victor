@@ -1476,7 +1476,7 @@ namespace Anki {
                   
                 } else if(altPressed && !shiftPressed) {
                   // ALT+F: Turn to face the pose of the last observed face:
-                  printf("Turning to face ID = %llu\n", _lastFace.faceID);
+                  printf("Turning to face ID = %d\n", _lastFace.faceID);
                   ExternalInterface::FacePose facePose; // construct w/ defaults for speed
                   facePose.world_x = _lastFace.world_x;
                   facePose.world_y = _lastFace.world_y;

@@ -78,7 +78,7 @@ namespace Cozmo {
     if(knownFaceIter != _knownFaces.end())
     {
       PRINT_NAMED_INFO("FaceWorld.RemoveFaceByID",
-                       "Removing face %lld", faceID);
+                       "Removing face %d", faceID);
       
       RemoveFace(knownFaceIter);
     }
@@ -99,10 +99,14 @@ namespace Cozmo {
       msg.newID = newID;
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       
+      PRINT_NAMED_INFO("FaceWorld.ChangeFaceID.Success",
+                       "Updating old face %d to new ID %d",
+                       msg.oldID, msg.newID);
+      
       return RESULT_OK;
     } else {
       PRINT_NAMED_WARNING("FaceWorld.ChangeFaceID.BadOldID",
-                          "ID %lld does not exist, cannot update to %lld",
+                          "ID %d does not exist, cannot update to %d",
                           oldID, newID);
       return RESULT_FAIL;
     }
@@ -207,12 +211,12 @@ namespace Cozmo {
       // Didn't find a match based on pose, so add a new face with a new ID:
       else {
         PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
-                         "Added new face with ID=%lld at t=%d.", _idCtr, face.GetTimeStamp());
+                         "Added new face with ID=%d at t=%d.", _idCtr, face.GetTimeStamp());
         face.SetID(_idCtr); // Use our own ID here for the new face
         auto insertResult = _knownFaces.insert({_idCtr, face});
         if(insertResult.second == false) {
           PRINT_NAMED_ERROR("FaceWorld.UpdateFace.ExistingID",
-                            "Did not find a match by pose, but ID %lld already in use.",
+                            "Did not find a match by pose, but ID %d already in use.",
                             _idCtr);
           return RESULT_FAIL;
         }
@@ -228,7 +232,7 @@ namespace Cozmo {
       
       if(insertResult.second) {
         PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
-                         "Added new face with ID=%lld at t=%d.",
+                         "Added new face with ID=%d at t=%d.",
                          face.GetID(), face.GetTimeStamp());
       } else {
         // Update the existing face:
@@ -371,7 +375,7 @@ namespace Cozmo {
       if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > _deletionTimeout_ms + face.GetTimeStamp()) {
         
         PRINT_NAMED_INFO("FaceWorld.Update.DeletingOldFace",
-                         "Removing face %lld at t=%d, because it hasn't been seen since t=%d.",
+                         "Removing face %d at t=%d, because it hasn't been seen since t=%d.",
                          faceIter->first, _robot.GetLastImageTimeStamp(),
                          faceIter->second.face.GetTimeStamp());
         
