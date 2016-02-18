@@ -149,10 +149,14 @@ namespace Anki {
                 _waitUntilTime = currentTime + _delayBetweenActionsInSeconds;
               }
               
-              // Unlock tracks here as the action will not be deleted (unlock its tracks normally) until
-              // the compound action completes
-              _currentActionPair->second->UnlockTracks();
-              ++_currentActionPair;
+              // Store this actions completion union before deleting it
+              ActionCompletedUnion actionUnion;
+              _currentActionPair->second->GetCompletionUnion(actionUnion);
+              _completedActionInfoStack.push_back({actionUnion, _currentActionPair->second->GetType()});
+              
+              // Delete completed action
+              Util::SafeDelete(_currentActionPair->second);
+              _currentActionPair = _actions.erase(_currentActionPair);
               
               // if that was the last action, we're done
               if(_currentActionPair == _actions.end()) {
@@ -176,8 +180,14 @@ namespace Anki {
                 // immediately, don't return SUCCESS if there are more actions left!
                 if(ActionResult::SUCCESS == subResult) {
                 
-                  _currentActionPair->second->UnlockTracks();
-                  ++_currentActionPair;
+                  // Store this actions completion union before deleting it
+                  ActionCompletedUnion actionUnion;
+                  _currentActionPair->second->GetCompletionUnion(actionUnion);
+                  _completedActionInfoStack.push_back({actionUnion, _currentActionPair->second->GetType()});
+                  
+                  // Delete completed action
+                  Util::SafeDelete(_currentActionPair->second);
+                  _currentActionPair = _actions.erase(_currentActionPair);
                   
                   if(_currentActionPair == _actions.end()) {
                     // no more actions, safe to return success for the compound action
@@ -260,11 +270,11 @@ namespace Anki {
       
       SetStatus(GetName());
       
-      for(auto & currentActionPair : _actions)
+      for(auto currentActionPair = _actions.begin(); currentActionPair != _actions.end();)
       {
-        bool& isDone = currentActionPair.first;
+        bool& isDone = currentActionPair->first;
         if(!isDone) {
-          IActionRunner* currentAction = currentActionPair.second;
+          IActionRunner* currentAction = currentActionPair->second;
           assert(currentAction != nullptr); // should not have been allowed in by constructor
           
           // If the compound action is suppressing track locking then the constituent actions should too
@@ -275,13 +285,16 @@ namespace Anki {
           switch(subResult)
           {
             case ActionResult::SUCCESS:
-              // Just finished this action, mark it as done
+              // Just finished this action, mark it as done and delete it
               isDone = true;
+              Util::SafeDelete(currentAction);
+              currentActionPair = _actions.erase(currentActionPair);
               break;
               
             case ActionResult::RUNNING:
               // If any action is still running the group is still running
               result = ActionResult::RUNNING;
+              ++currentActionPair;
               break;
               
             case ActionResult::FAILURE_RETRY:

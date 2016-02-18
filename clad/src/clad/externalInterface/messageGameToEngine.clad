@@ -352,6 +352,25 @@ message TraverseObject {
   bool useManualSpeed
 }
 
+// DriveStraight
+message DriveStraight {
+  float_32 speed_mmps,
+  float_32 dist_mm
+}
+
+// PanAndTilt
+message PanAndTilt {
+  float_32 bodyPan,
+  float_32 headTilt,
+  bool isPanAbsolute,
+  bool isTiltAbsolute
+}
+
+// Wait
+message Wait {
+  float_32 time_s
+}
+
 // SetRobotCarryingObject
 // (Override robot's current belief about whether it's carrying a block)
 // (Ideally, for dev/prototyping only)
@@ -656,7 +675,10 @@ union RobotActionUnion {
   SetHeadAngle              setHeadAngle,
   TurnInPlace               turnInPlace,
   TrackToFace               trackFace,
-  TrackToObject             trackObject
+  TrackToObject             trackObject,
+  DriveStraight             driveStraight,
+  PanAndTilt                panAndTilt,
+  Wait                      wait,
 }
 
 // QueueSingleAction

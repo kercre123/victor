@@ -23,7 +23,7 @@ namespace Cozmo {
 ////////// Macros for condition checking and exiting ////////
   
 // For local testing, set to 1 so that Webots doesn't exit
-#define DO_NOT_QUIT_WEBOTS 0
+#define DO_NOT_QUIT_WEBOTS 1
   
 #if (DO_NOT_QUIT_WEBOTS == 1)
 #define CST_EXIT()  QuitController(_result);

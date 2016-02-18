@@ -68,6 +68,10 @@ namespace Anki {
       // ignore what they want to when running
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
+    protected:
+      // Stack of pairs of actionCompletionUnions and actionTypes of the already completed actions
+      std::list<std::pair<ActionCompletedUnion, RobotActionType>> _completedActionInfoStack;
+      
     private:
       virtual void Reset() override;
       

@@ -126,9 +126,31 @@ namespace Anki {
           
           // Move the eyes (only if not in position)
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
-          const Radians angleDiff = _targetAngle - currentAngle;
-          const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+          Radians angleDiff = _targetAngle - currentAngle;
+          
+          // Clip angleDiff to 89 degrees to prevent unintended behavior due to tangent
+          bool angleClipped = false;
+          if(angleDiff.getDegrees() > 89)
+          {
+            angleDiff = DEG_TO_RAD(89);
+            angleClipped = true;
+          }
+          else if(angleDiff.getDegrees() < -89)
+          {
+            angleDiff = DEG_TO_RAD(-89);
+            angleClipped = true;
+          }
+          
+          f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+          // If the angle wasn't clipped then the normal value for x_mm should be negated
+          // This is due to what the value of x_mm would be if angleDiff wasn't clipped
+          if(!angleClipped)
+          {
+            x_mm = -x_mm;
+          }
+          
           const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
+          PRINT_NAMED_INFO("", "cur: %f tar: %f dif: %f x_mm: %f shi: %f", currentAngle.getDegrees(), _targetAngle.getDegrees(), angleDiff.ToFloat(), x_mm, xPixShift);
           _robot.ShiftEyes(_eyeShiftTag, xPixShift, 0, 4*IKeyFrame::SAMPLE_LENGTH_MS, "TurnInPlaceEyeDart");
         }
       }
@@ -209,7 +231,7 @@ namespace Anki {
     {
       const Radians heading = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
       
-      const Vec3f& T = _robot.GetPose().GetTranslation();
+      const Vec3f& T = _robot.GetDriveCenterPose().GetTranslation();
       const f32 x_start = T.x();
       const f32 y_start = T.y();
       
