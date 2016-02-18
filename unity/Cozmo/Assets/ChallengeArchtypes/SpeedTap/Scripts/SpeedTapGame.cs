@@ -104,7 +104,7 @@ namespace SpeedTap {
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationGroupState(AnimationGroupName.kWin, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kSpeedTap_WinHand, HandleRoundAnimationDone)));
         }
 
         if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {

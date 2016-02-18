@@ -128,6 +128,10 @@ public class DailyGoalManager : MonoBehaviour {
   public void SetMinigameNeed() {
     // Calculate how far you are from 50% complete
     float prog = Math.Abs((GetTodayProgress() * 2.0f) - 1);
+    // Min desire to play if daily goals are complete
+    if (prog >= _kMinigameNeedMax) {
+      prog = 0.0f;
+    }
     prog = Mathf.Lerp(_kMinigameNeedMin, _kMinigameNeedMax, prog);
     PickMiniGameToRequest();
     RobotEngineManager.Instance.CurrentRobot.AddToEmotion(EmotionType.WantToPlay, prog, "DailyGoalProgress");
