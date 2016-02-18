@@ -25,6 +25,9 @@ internal class StatContainerConverter : JsonConverter
 
     var statContainer = (StatContainer)value;
 
+
+    UnityEngine.Debug.Log(statContainer);
+
     // Write non-zero stats.
     foreach (var stat in StatContainer.sKeys) {      
       if (statContainer[stat] != 0) {
@@ -37,10 +40,12 @@ internal class StatContainerConverter : JsonConverter
 
   public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
   {
+    UnityEngine.Debug.Log(existingValue);
+
     if (reader.TokenType == JsonToken.StartObject) {
       JObject jsonObject = JObject.Load(reader);
       var jsonProperties = jsonObject.Properties().ToList();
-      var outputObject = (StatContainer)(existingValue ?? Activator.CreateInstance(objectType));
+      var outputObject = (StatContainer)existingValue ?? new StatContainer();
       outputObject.Clear();
 
       foreach (var jsonProperty in jsonProperties) {
@@ -48,10 +53,13 @@ internal class StatContainerConverter : JsonConverter
           var key = (ProgressionStatType)Enum.Parse(typeof(ProgressionStatType), jsonProperty.Name);
           outputObject[key] = jsonProperty.Value.ToObject<int>();
         }
-        catch {
+        catch (Exception ex) {
           // Just Ignore any invalid properties
+          DAS.Error(this, ex);
         }
       }
+
+      UnityEngine.Debug.Log(jsonObject + "\n"+ outputObject);
 
       return outputObject;
     }

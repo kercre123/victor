@@ -4,19 +4,15 @@ using System.Collections.Generic;
 namespace DataPersistence {
   public class TimelineEntryData {
 
-    public TimelineEntryData(Date date) {
-      Date = date;
-    }
-
     public readonly Date Date;
 
-    public readonly StatContainer Goals = new StatContainer();
+    public readonly StatContainer Goals;
 
-    public readonly StatContainer Progress = new StatContainer();
+    public readonly StatContainer Progress;
 
     public float PlayTime;
 
-    public readonly List<CompletedChallengeData> CompletedChallenges = new List<CompletedChallengeData>();
+    public readonly List<CompletedChallengeData> CompletedChallenges;
 
     // The entry is complete after the friendship points have been awarded.
     public bool Complete;
@@ -32,6 +28,17 @@ namespace DataPersistence {
     // because each level resets friendship point count,
     // we won't be able to simply do ending points - starting points
     public int AwardedFriendshipPoints;
+
+    public TimelineEntryData() {
+      Goals = new StatContainer();
+      Progress = new StatContainer();
+      CompletedChallenges = new List<CompletedChallengeData>();
+    }
+
+    public TimelineEntryData(Date date) : this() {
+      Date = date;
+    }
+
   }
 
   public class CompletedChallengeData {
@@ -39,13 +46,18 @@ namespace DataPersistence {
 
     public DateTime EndTime;
 
-    public readonly StatContainer AvailableStats = new StatContainer();
+    public readonly StatContainer AvailableStats;
 
-    public readonly StatContainer RecievedStats = new StatContainer();
+    public readonly StatContainer RecievedStats;
 
     public string ChallengeId;
 
     public bool Won;
+
+    public CompletedChallengeData() {
+      AvailableStats = new StatContainer();
+      RecievedStats = new StatContainer();
+    }
   }
 }
 
