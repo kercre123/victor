@@ -14,6 +14,7 @@
  **/
 
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
@@ -75,40 +76,41 @@ namespace Anki {
       return _animations.empty();
     }
     
-    const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager) {
-      return GetAnimationName(moodManager.GetSimpleMood(), moodManager.GetLastUpdateTime());
+    const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager, AnimationGroupContainer& animationGroupContainer) const {
+      return GetAnimationName(moodManager.GetSimpleMood(), moodManager.GetLastUpdateTime(), animationGroupContainer);
     }
     
-    const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood, float currentTime_s) {
+    const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood, float currentTime_s, AnimationGroupContainer& animationGroupContainer) const {
       
       Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
       
       float totalWeight = 0.0f;
       
-      std::vector<std::vector<AnimationGroupEntry>::iterator> availableAnimations;
+      std::vector<const AnimationGroupEntry*> availableAnimations;
       
       for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
       {
-        if(entry->GetMood() == mood && !entry->IsInCooldown(currentTime_s)) {
+        if(entry->GetMood() == mood && !animationGroupContainer.IsAnimationOnCooldown(entry->GetName(),currentTime_s))
+        {
           totalWeight += entry->GetWeight();
-          availableAnimations.emplace_back(entry);
+          availableAnimations.emplace_back(&(*entry));
         }
       }
       
       float weightedSelection = rng.RandDbl(totalWeight);
       
-      auto lastEntry = _animations.end();
+      const AnimationGroupEntry* lastEntry = nullptr;
       
       for (auto entry : availableAnimations)
       {
         if(entry->GetMood() == mood) {
           
           if(weightedSelection < entry->GetWeight()) {
-            entry->StartCooldown(currentTime_s);
+            animationGroupContainer.SetAnimationCooldown(entry->GetName(), currentTime_s + entry->GetCooldown());
             return entry->GetName();
           }
           else {
-            lastEntry = entry;
+            lastEntry = &(*entry);
             weightedSelection -= entry->GetWeight();
           }
         }
@@ -116,8 +118,8 @@ namespace Anki {
       
       // Possible that if weightedSelection == totalWeight, we wouldn't
       // select any, so return the last one if its not the end
-      if(lastEntry != _animations.end()) {
-        lastEntry->StartCooldown(currentTime_s);
+      if(lastEntry != nullptr) {
+        animationGroupContainer.SetAnimationCooldown(lastEntry->GetName(), currentTime_s + lastEntry->GetCooldown());
         return lastEntry->GetName();
       }
       
@@ -126,7 +128,7 @@ namespace Anki {
         return empty;
       }
       else {
-        return GetAnimationName(SimpleMoodType::Default, currentTime_s);
+        return GetAnimationName(SimpleMoodType::Default, currentTime_s, animationGroupContainer);
       }
     }
     

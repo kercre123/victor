@@ -26,8 +26,7 @@ namespace Anki {
     static const char* kMoodKey = "Mood";
     static const char* kCooldownKey = "CooldownTime_Sec";
     
-    AnimationGroupEntry::AnimationGroupEntry() :
-    _lastUsedTime_s(-FLT_MAX)
+    AnimationGroupEntry::AnimationGroupEntry()
     {
     }
     

@@ -26,6 +26,7 @@ using namespace Anki::Cozmo;
 
 static const std::string kMajorWin = "majorWin";
 static const std::string kMajorWinBeatBox = "majorWinBeatBox";
+static const std::string kEmpty = "";
 
 
 static const char* kNoAnimationJson =
@@ -225,30 +226,33 @@ TEST(AnimationGroupContainer, AnimationGroupContainerDeserialization)
 
 TEST(AnimationGroup, GetOneAnimationName)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
   EXPECT_EQ(kMajorWin, name);
 }
 
 TEST(AnimationGroup, GetDefaultAnimationName)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
   EXPECT_EQ(kMajorWin, name);
 }
 
 TEST(AnimationGroup, GetAnimationNameBeforeCooldown)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -257,20 +261,20 @@ TEST(AnimationGroup, GetAnimationNameBeforeCooldown)
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
   EXPECT_EQ(kMajorWin, name);
   
   moodManager.Update(5);
   
-  name = group.GetAnimationName(moodManager);
+  const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
   
-  const std::string empty = "";
-  EXPECT_EQ(empty, name);
+  EXPECT_EQ(kEmpty, name2);
 }
 
 TEST(AnimationGroup, GetAnimationNameOnCooldown)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -279,19 +283,20 @@ TEST(AnimationGroup, GetAnimationNameOnCooldown)
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
   EXPECT_EQ(kMajorWin, name);
   
   moodManager.Update(10);
   
-  name = group.GetAnimationName(moodManager);
+  const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
   
-  EXPECT_EQ(kMajorWin, name);
+  EXPECT_EQ(kMajorWin, name2);
 }
 
 TEST(AnimationGroup, GetAnimationNameAfterCooldown)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -300,78 +305,78 @@ TEST(AnimationGroup, GetAnimationNameAfterCooldown)
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
   EXPECT_EQ(kMajorWin, name);
   
   moodManager.Update(15);
   
-  name = group.GetAnimationName(moodManager);
+  const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
   
-  EXPECT_EQ(kMajorWin, name);
+  EXPECT_EQ(kMajorWin, name2);
 }
 
 TEST(AnimationGroup, GetDefaultAnimationNameUnweighted)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodUnweightedJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
   EXPECT_EQ(kMajorWin, name);
 }
 
 TEST(AnimationGroup, GetOneHappyAnimationName)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationHappyMoodJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
   EXPECT_EQ(kMajorWin, name);
 }
 
 TEST(AnimationGroup, GetNoAnimationName)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kNoAnimationJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
-  const std::string empty = "";
-  
-  EXPECT_EQ(empty, name);
+  EXPECT_EQ(kEmpty, name);
 }
 
 TEST(AnimationGroup, GetNoDefaultAnimationName)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationHappyMoodJson);
   
-  auto name = group.GetAnimationName(moodManager);
+  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
   
-  const std::string empty = "";
-  
-  EXPECT_EQ(empty, name);
+  EXPECT_EQ(kEmpty, name);
 }
 
 // run a maximum of 100 times. It should be a 50-50 chance of getting
 // either name, so the chance of getting the same one all 100 times
 // is astronomical.
-void TestTwoAnimations100Times(const char* json, const MoodManager& moodManager, bool& foundMajorWin, bool& foundMajorWinBeatBox) {
+void TestTwoAnimations100Times(const char* json, const MoodManager& moodManager, AnimationGroupContainer& groupContainer, bool& foundMajorWin, bool& foundMajorWinBeatBox) {
   AnimationGroup group = DeserializeAnimationGroupFromJson(json);
 
   for(int i = 0; i < 100; i++) {
     
-    auto name = group.GetAnimationName(moodManager);
+    const std::string& name = group.GetAnimationName(moodManager, groupContainer);
     
     foundMajorWin |= (name == kMajorWin);
     foundMajorWinBeatBox |= (name == kMajorWinBeatBox);
@@ -380,10 +385,11 @@ void TestTwoAnimations100Times(const char* json, const MoodManager& moodManager,
 
 TEST(AnimationGroup, GetEitherAnimationNameOfTwo)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(kTwoAnimationsDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsDefaultMoodsJson, moodManager, groupContainer, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(foundMajorWin);
   EXPECT_TRUE(foundMajorWinBeatBox);
@@ -392,12 +398,13 @@ TEST(AnimationGroup, GetEitherAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetEitherDefaultAnimationNameOfTwo)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(kTwoAnimationsDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsDefaultMoodsJson, moodManager, groupContainer, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(foundMajorWin);
   EXPECT_TRUE(foundMajorWinBeatBox);
@@ -405,10 +412,11 @@ TEST(AnimationGroup, GetEitherDefaultAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetNeitherAnimationNameOfTwo)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(kTwoAnimationsHappySadMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsHappySadMoodsJson, moodManager, groupContainer, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(!foundMajorWin);
   EXPECT_TRUE(!foundMajorWinBeatBox);
@@ -417,12 +425,13 @@ TEST(AnimationGroup, GetNeitherAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetFirstAnimationNameOfTwo)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, groupContainer, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(foundMajorWin);
   EXPECT_TRUE(!foundMajorWinBeatBox);
@@ -430,10 +439,11 @@ TEST(AnimationGroup, GetFirstAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetSecondAnimationNameOfTwo)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, groupContainer, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(!foundMajorWin);
   EXPECT_TRUE(foundMajorWinBeatBox);
@@ -441,12 +451,13 @@ TEST(AnimationGroup, GetSecondAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetDefaultAnimationNameOfTwo)
 {
+  AnimationGroupContainer groupContainer;
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, -0.5);
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, groupContainer, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(!foundMajorWin);
   EXPECT_TRUE(foundMajorWinBeatBox);

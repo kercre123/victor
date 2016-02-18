@@ -28,6 +28,9 @@ namespace Json {
 namespace Anki {
   namespace Cozmo {
     
+    //Forward declaration
+    class AnimationGroupContainer;
+    
     class AnimationGroup
     {
     public:
@@ -38,7 +41,7 @@ namespace Anki {
       Result DefineFromJson(const std::string& name, const Json::Value& json);
 
       // Retrieve an animation based on the mood manager
-      const std::string& GetAnimationName(const MoodManager& moodManager);
+      const std::string& GetAnimationName(const MoodManager& moodManager, AnimationGroupContainer& animationGroupContainer) const;
 
       // An animation group is empty if it has no animations
       bool IsEmpty() const;
@@ -47,7 +50,7 @@ namespace Anki {
       
     private:
       // Retrieve an animation based on a simple mood
-      const std::string& GetAnimationName(SimpleMoodType mood, float currentTime_s);
+      const std::string& GetAnimationName(SimpleMoodType mood, float currentTime_s, AnimationGroupContainer& animationGroupContainer) const;
       
       // Name of this animation
       std::string _name;

@@ -44,20 +44,13 @@ namespace Anki {
       f32 GetWeight() const { return _weight; }
       SimpleMoodType  GetMood() const { return _mood; }
       
-      double IsInCooldown(double currentTime_s) const {
-        return currentTime_s - _cooldownTime_s < _lastUsedTime_s;
-      }
-      
-      void StartCooldown(float currentTime_s) {
-        _lastUsedTime_s = currentTime_s;
-      }
+      double GetCooldown() const { return _cooldownTime_s; }
       
     private:
       
       // Name of this animation
       std::string _name;
       double _cooldownTime_s;
-      double _lastUsedTime_s;
       f32 _weight;
       SimpleMoodType _mood;
       
