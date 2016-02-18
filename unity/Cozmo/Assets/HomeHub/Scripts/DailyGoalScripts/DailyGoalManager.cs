@@ -10,7 +10,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   #region constants
 
-  private const float _kMinigameNeedMin = -0.5f;
+  private const float _kMinigameNeedMin = 0.3f;
   private const float _kMinigameNeedMax = 1.0f;
 
   #endregion
@@ -103,6 +103,7 @@ public class DailyGoalManager : MonoBehaviour {
   /// <summary>
   /// Returns the current goal that's the furthest from being complete.
   /// Use to help determine which minigame cozmo wants to play
+  /// NOTE - Currently not in use
   /// </summary>
   /// <returns>The stat.</returns>
   public Anki.Cozmo.ProgressionStatType PrimaryStat() {
@@ -125,10 +126,9 @@ public class DailyGoalManager : MonoBehaviour {
   /// </summary>
   /// <returns>The minigame need.</returns>
   public void SetMinigameNeed() {
-    float prog = (GetTodayProgress() * 2.0f) - 1;
     // Calculate how far you are from 50% complete
-    // range from 0 -> 1.0
-    prog = Mathf.Lerp(_kMinigameNeedMin, _kMinigameNeedMax, Math.Abs(prog));
+    float prog = Math.Abs((GetTodayProgress() * 2.0f) - 1);
+    prog = Mathf.Lerp(_kMinigameNeedMin, _kMinigameNeedMax, prog);
     PickMiniGameToRequest();
     RobotEngineManager.Instance.CurrentRobot.AddToEmotion(EmotionType.WantToPlay, prog, "DailyGoalProgress");
   }
