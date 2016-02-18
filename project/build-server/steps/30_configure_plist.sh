@@ -2,7 +2,6 @@
 
 set -e
 set -u
-set -x
 
 echo "=== Configure Info.plist ==="
 
@@ -31,8 +30,6 @@ DAS_VERSION=`${VERSION_GENERATOR} \
 
 
 BUNDLE_ID=`${MP_PARSE} -f ${PROVISIONING_PROFILE} -o bundle_id`
-
-echo "TEST"
 
 echo "CFBundleName: ${ANKI_BUILD_BUNDLE_NAME}"
 echo "CFBundleIdentifier: ${BUNDLE_ID}"
