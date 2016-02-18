@@ -176,6 +176,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _isInitialized = true;
   
+  _blockFilter.Load(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"));
+  
   return RESULT_OK;
 }
   

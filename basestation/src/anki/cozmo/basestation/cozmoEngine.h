@@ -40,6 +40,7 @@
 #include "clad/types/imageTypes.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/blocks/blockFilter.h"
 
 
 #define DEVICE_VISION_MODE_OFF   0
@@ -160,6 +161,8 @@ protected:
   Anki::Cozmo::DebugConsoleManager _debugConsoleManager;
   
   std::unique_ptr<CozmoContext>    _context;
+  
+  BlockFilter _blockFilter;
   
 }; // class CozmoEngine
   
