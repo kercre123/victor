@@ -70,9 +70,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private AnkiButton _EndSessionButton;
 
-    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
+    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
 
-    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -155,9 +155,15 @@ namespace Cozmo.HomeHub {
       }
 
       for (int i = 0; i < kGeneratedTimelineHistoryLength; i++) {
-        var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
 
         var date = startDate.AddDays(i);
+
+        if (!(date < today)) {
+          break;
+        }
+
+        var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
+
         var entry = spawnedObject.GetComponent<TimelineEntry>();
 
         TimelineEntryData timelineEntry = null;
