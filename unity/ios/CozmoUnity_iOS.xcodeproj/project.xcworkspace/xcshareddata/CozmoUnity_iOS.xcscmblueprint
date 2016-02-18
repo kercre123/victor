@@ -5,30 +5,30 @@
   },
   "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
     "939B6C5ADD5D4B370627FE99FF28DDA54385458A" : 0,
-    "21EB2C31D6FCD312DEE52E3C48B2EFD67292CF90" : 0,
     "57A4392EEC832389E17757F60871A5718C3B4F4E" : 0,
-    "E62CD4A721A256AB0BFA980CD6BBCFED75C49A16" : 0
+    "E62CD4A721A256AB0BFA980CD6BBCFED75C49A16" : 0,
+    "90913405919E9B8A31537D54C42FD5B256BDD5DE" : 0
   },
   "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "A3BC9CF8-EAFB-4090-9BB8-B232BD0CA51E",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
     "939B6C5ADD5D4B370627FE99FF28DDA54385458A" : "cozmo-game\/",
-    "21EB2C31D6FCD312DEE52E3C48B2EFD67292CF90" : "cozmo-game\/lib\/anki\/cozmo-engine\/lib\/audio\/",
     "57A4392EEC832389E17757F60871A5718C3B4F4E" : "cozmo-game\/lib\/anki\/cozmo-engine\/",
-    "E62CD4A721A256AB0BFA980CD6BBCFED75C49A16" : "coretech-external\/"
+    "E62CD4A721A256AB0BFA980CD6BBCFED75C49A16" : "coretech-external\/",
+    "90913405919E9B8A31537D54C42FD5B256BDD5DE" : "cozmo-game\/lib\/anki\/cozmo-engine\/lib\/audio\/"
   },
   "DVTSourceControlWorkspaceBlueprintNameKey" : "CozmoUnity_iOS",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,
   "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "unity\/ios\/CozmoUnity_iOS.xcodeproj",
   "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
     {
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:anki\/drive-audio.git",
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "21EB2C31D6FCD312DEE52E3C48B2EFD67292CF90"
-    },
-    {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:anki\/products-cozmo.git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "57A4392EEC832389E17757F60871A5718C3B4F4E"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:anki\/drive-audio.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "90913405919E9B8A31537D54C42FD5B256BDD5DE"
     },
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/anki\/cozmo-game.git",
