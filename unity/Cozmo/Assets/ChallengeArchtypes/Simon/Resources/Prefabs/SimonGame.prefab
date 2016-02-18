@@ -39,19 +39,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 256c10f571a9642efba796207ce8bf7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameStateSlides:
-  - slideName: WatchCozmoPattern
-    slidePrefab: {fileID: 22581616, guid: 212fa9a0541b04228ab28808a53181b8, type: 2}
-  - slideName: RepeatPattern
-    slidePrefab: {fileID: 22581616, guid: 711511fb428484d35a044bfc4c5c88df, type: 2}
-  - slideName: NextRound
-    slidePrefab: {fileID: 22516030, guid: e9f1eaec7e850420cac3b5442661ddb9, type: 2}
-  - slideName: CreatePattern
-    slidePrefab: {fileID: 22568458, guid: 01d525b29ad9941fb81a4b48247441e6, type: 2}
-  - slideName: WatchCozmoGuess
-    slidePrefab: {fileID: 22581616, guid: 580048c4448de4d6bb3b1a36f7db0453, type: 2}
-  _HowToPlayDialogContentPrefab: {fileID: 164994, guid: 48a1471431f3346dca78aa7f0389fa3d,
-    type: 2}
+  _CubeColorsAndSounds:
+  - soundName:
+      _Event: -303697590
+      _EventType: 4
+      _GameObjectType: 3
+    cubeColor: {r: 1, g: 0, b: 0, a: 1}
+  - soundName:
+      _Event: -303697590
+      _EventType: 4
+      _GameObjectType: 3
+    cubeColor: {r: 0, g: 1, b: 0, a: 1}
+  - soundName:
+      _Event: -303697590
+      _EventType: 4
+      _GameObjectType: 3
+    cubeColor: {r: 0, g: 0, b: 1, a: 1}
+  - soundName:
+      _Event: -303697590
+      _EventType: 4
+      _GameObjectType: 3
+    cubeColor: {r: 1, g: 0, b: 1, a: 1}
+  - soundName:
+      _Event: -303697590
+      _EventType: 4
+      _GameObjectType: 3
+    cubeColor: {r: 1, g: 1, b: 0, a: 1}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -65,6 +78,10 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _HowToPlayPrefabs.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.size
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 0}
@@ -166,6 +183,94 @@ Prefab:
       propertyPath: _HowToPlayDialogContentPrefab
       value: 
       objectReference: {fileID: 164994, guid: 48a1471431f3346dca78aa7f0389fa3d, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[0].soundName._EventType
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[0].soundName._GameObjectType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[0].soundName._Event
+      value: -303697590
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._EventType
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._GameObjectType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._Event
+      value: -303697590
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._EventType
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._GameObjectType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._Event
+      value: -303697590
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._EventType
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._GameObjectType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._Event
+      value: -303697590
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[0].cubeColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[0].cubeColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[0].cubeColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[0].cubeColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[1].cubeColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[1].cubeColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[2].cubeColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[2].cubeColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[3].cubeColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[4].cubeColor.b
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 128684}

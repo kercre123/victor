@@ -71,7 +71,7 @@ namespace Simon {
       _StartLightBlinkTime = Time.time;
 
       SimonGame game = _StateMachine.GetGame() as SimonGame;
-      GameAudioClient.PostSFXEvent(game.GetAudioForBlock(id));
+      GameAudioClient.PostAudioEvent(game.GetAudioForBlock(id));
 
       _TargetCube = id;
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];

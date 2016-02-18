@@ -38,7 +38,7 @@ namespace Simon {
       _StartLightBlinkTime = Time.time;
       _CubeLightColor = _TargetCube.Lights[0].OnColor;
       _TargetCube.TurnLEDsOff();
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(game.GetAudioForBlock(_TargetCube.ID));
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(game.GetAudioForBlock(_TargetCube.ID));
 
       _CurrentRobot.SendAnimation(AnimationName.kSimonBlinkCube, HandleAnimationEnd);
       _IsAnimating = true;
