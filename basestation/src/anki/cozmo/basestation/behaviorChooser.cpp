@@ -13,6 +13,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -107,17 +108,83 @@ void SimpleBehaviorChooser::EnableBehaviorGroup(BehaviorGroup behaviorGroup, boo
 }
   
   
-void SimpleBehaviorChooser::EnableBehavior(const std::string& behaviorName, bool newVal)
+bool SimpleBehaviorChooser::EnableBehavior(const std::string& behaviorName, bool newVal)
 {
   const auto& it = _nameToBehaviorMap.find(behaviorName);
   if (it != _nameToBehaviorMap.end())
   {
     IBehavior* behavior = it->second;
     behavior->SetIsChoosable(newVal);
+    return true;
   }
   else
   {
     PRINT_NAMED_WARNING("EnableBehavior.NotFound", "No Behavior named '%s' (newVal = %d)", behaviorName.c_str(), (int)newVal);
+    return false;
+  }
+}
+ 
+
+static const char* kDisabledGroupsKey    = "disabledGroups";
+static const char* kEnabledGroupsKey     = "enabledGroups";
+static const char* kDisabledBehaviorsKey = "disabledBehaviors";
+static const char* kEnabledBehaviorsKey  = "enabledBehaviors";
+
+  
+void SimpleBehaviorChooser::InitEnabledBehaviors(const Json::Value& inJson)
+{
+  const Json::Value kNullValue;
+  
+  // Disable groups, then enable groups
+  
+  for (int pass = 0; pass < 2; ++pass)
+  {
+    const bool  enableGroup = (pass == 1);
+    const char* groupKey = (pass == 0) ? kDisabledGroupsKey : kEnabledGroupsKey;
+    
+    const Json::Value& groupArray = inJson[groupKey];
+    for (uint32_t i = 0; i < groupArray.size(); ++i)
+    {
+      const Json::Value& groupEntry = groupArray.get(i, kNullValue);
+
+      const char* behaviorGroupString = groupEntry.isString() ? groupEntry.asCString() : "";
+      const BehaviorGroup behaviorGroup = BehaviorGroupFromString(behaviorGroupString);
+      
+      if (behaviorGroup != BehaviorGroup::Count)
+      {
+        EnableBehaviorGroup(behaviorGroup, enableGroup);
+        PRINT_NAMED_INFO("InitEnabledBehaviors.EnableBehaviorGroup", "BehaviorGroup '%s' %sabled", behaviorGroupString, enableGroup ? "en" : "dis");
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("InitEnabledBehaviors.BadBehaviorGroup", "Failed to read %s group %u '%s'", groupKey, i, behaviorGroupString);
+      }
+    }
+  }
+  
+  // Disable specific behaviors, then enable specific behaviors
+  
+  for (int pass = 0; pass < 2; ++pass)
+  {
+    const bool  enableBehavior = (pass == 1);
+    const char* behaviorKey = (pass == 0) ? kDisabledBehaviorsKey : kEnabledBehaviorsKey;
+    
+    const Json::Value& behaviorArray = inJson[behaviorKey];
+    for (uint32_t i = 0; i < behaviorArray.size(); ++i)
+    {
+      const Json::Value& behaviorEntry = behaviorArray.get(i, kNullValue);
+
+      const char* behaviorName = behaviorEntry.isString() ? behaviorEntry.asCString() : "";
+      
+      if (EnableBehavior(behaviorName, enableBehavior))
+      {
+        PRINT_NAMED_INFO("InitEnabledBehaviors.EnableBehavior", "Behavior '%s' %sabled", behaviorName, enableBehavior ? "en" : "dis");
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("InitEnabledBehaviors.BadBehaviorName", "Failed to %s behavior %u '%s'", behaviorKey, i, behaviorName);
+      }
+    }
   }
 }
   
