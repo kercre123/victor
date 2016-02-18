@@ -102,7 +102,7 @@ namespace Simon {
       _TargetCubeColor = cube.Lights[0].OnColor;
       cube.TurnLEDsOff();
 
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(cube, false));
+      _CurrentRobot.FaceObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
     }
   }
 

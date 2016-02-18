@@ -9,6 +9,8 @@ namespace Simon {
 
     public const float kCozmoLightBlinkDelaySeconds = 0.1f;
     public const float kLightBlinkLengthSeconds = 0.3f;
+    public const float kTurnSpeed_rps = 100f;
+    public const float kTurnAccel_rps2 = 100f;
 
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();

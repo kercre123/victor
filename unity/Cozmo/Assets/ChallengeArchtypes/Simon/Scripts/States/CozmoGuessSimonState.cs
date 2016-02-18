@@ -67,7 +67,7 @@ namespace Simon {
 
       _CurrentRobot.SetAllBackpackBarLED(cubeLightColor);
 
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(target, true));
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(target));
     }
 
     public LightCube GetCurrentTarget() {

@@ -56,7 +56,7 @@ namespace Simon {
       _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
         _CurrentSequenceIndex + 1, _SequenceLength);
       _LastSequenceTime = Time.time;
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget()));
     }
 
     public LightCube GetCurrentTarget() {
