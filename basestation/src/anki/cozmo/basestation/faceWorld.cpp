@@ -346,6 +346,7 @@ namespace Cozmo {
                                                              q.y(),
                                                              q.z())));
       
+      /*
       const Vision::Image& faceThumbnail = knownFace->face.GetThumbnail();
       if(!faceThumbnail.IsEmpty()) {
         // TODO: Expose quality parameter
@@ -359,7 +360,7 @@ namespace Cozmo {
 
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       }
-      
+      */
     }
     
     return RESULT_OK;

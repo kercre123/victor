@@ -14,6 +14,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "anki/vision/basestation/profiler.h"
+#include "anki/vision/basestation/enrolledFaceEntry.h"
 
 // Omron OKAO Vision
 #include <OkaoAPI.h>
@@ -51,14 +52,7 @@ namespace Vision {
     
     void RemoveTrackingID(INT32 trackerID);
     
-    struct Entry
-    {
-      TrackedFace::ID_t         faceID = TrackedFace::UnknownFace;
-      INT32                     score  = 0;
-      bool                      isNew  = false;
-    };
-    
-    Entry GetRecognitionData(INT32 forTrackingID);
+    EnrolledFaceEntry GetRecognitionData(INT32 forTrackingID);
     
     // Get a byte buffer containing the enrollment image for the given face ID,
     // as a JPG image. Byte buffer will be empty if faceID is not valid.
@@ -126,14 +120,7 @@ namespace Vision {
     
     // Store additinal bookkeeping information we need, on top of the album data
     // stored by Okao.
-    struct EnrollmentData {
-      INT32           oldestData = 0;
-      time_t          enrollmentTime;
-      INT32           lastScore = 0;
-      Image           image;
-      bool            isNew = false;
-    };
-    std::map<TrackedFace::ID_t,EnrollmentData> _enrollmentData;
+    std::map<TrackedFace::ID_t,EnrolledFaceEntry> _enrollmentData;
     
     
   }; // class FaceRecognizer

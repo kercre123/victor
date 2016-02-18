@@ -510,7 +510,7 @@ namespace Vision {
       auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID);
       
       if(recognitionData.isNew) {
-        face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
+        //face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
         UpdatedID update{
           .oldID = -detectionInfo.nID,
           .newID = recognitionData.faceID

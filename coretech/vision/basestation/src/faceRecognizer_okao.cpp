@@ -88,22 +88,20 @@ namespace Vision {
     return RESULT_OK;
   }
   
-  FaceRecognizer::Entry FaceRecognizer::GetRecognitionData(INT32 forTrackingID)
+  EnrolledFaceEntry FaceRecognizer::GetRecognitionData(INT32 forTrackingID)
   {
-    Entry entry;
+    EnrolledFaceEntry entry;
     
     _mutex.lock();
     auto iter = _trackingToFaceID.find(forTrackingID);
     if(iter != _trackingToFaceID.end()) {
       const TrackedFace::ID_t faceID = iter->second;
-      auto & enrollData = _enrollmentData.at(faceID);
-      entry.faceID = faceID;
-      entry.score  = enrollData.lastScore;
-      if(enrollData.isNew) {
-        entry.isNew = true;
-        enrollData.isNew = false;
-      } else {
-        entry.isNew = false;
+      ASSERT_NAMED(faceID != TrackedFace::UnknownFace,
+                   "Enrollment entry should not have unknown face ID");
+      auto & enrolledEntry = _enrollmentData.at(faceID);
+      entry = enrolledEntry;
+      if(enrolledEntry.isNew) {
+        enrolledEntry.isNew = false;
       }
     }
     _mutex.unlock();
@@ -118,7 +116,8 @@ namespace Vision {
     _mutex.lock();
     auto iter = _enrollmentData.find(forFaceID);
     if(iter != _enrollmentData.end()) {
-      iter->second.image.CopyTo(image);
+      // TODO: Copy image data?
+      //iter->second.image.CopyTo(image);
     }
     _mutex.unlock();
     
@@ -226,7 +225,7 @@ namespace Vision {
           if(TrackedFace::UnknownFace != faceID) {
             _mutex.lock();
             _trackingToFaceID[_detectionInfo.nID] = faceID;
-            _enrollmentData[faceID].lastScore = score;
+            _enrollmentData[faceID].score = score;
             _mutex.unlock();
           }
           
@@ -317,14 +316,12 @@ namespace Vision {
       return RESULT_FAIL;
     }
 
-    
-    EnrollmentData enrollData;
-    enrollData.enrollmentTime = time(0);
-    enrollData.lastScore = 1000;
-    enrollData.oldestData = 0;
+    // Create new enrollment entry (defaults set by constructor)
+    EnrolledFaceEntry enrollData(_lastRegisteredUserID);
     enrollData.isNew = true;
-    
 
+    // TODO: Populate enrollment image
+    /*
     POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
     okaoResult = OKAO_CO_ConvertCenterToSquare(_detectionInfo.ptCenter,
                                                _detectionInfo.nHeight,
@@ -340,7 +337,7 @@ namespace Vision {
                        ptRightBottom.y-ptLeftTop.y);
 
     enrollData.image = _img.GetROI(roi);
-    
+    */
     _mutex.lock();
     _enrollmentData.emplace(_lastRegisteredUserID, std::move(enrollData));
     _mutex.unlock();
@@ -635,14 +632,8 @@ namespace Vision {
                  "ID to keep should have enrollment data entry");
     ASSERT_NAMED(mergeEnrollIter != _enrollmentData.end(),
                  "ID to merge should have enrollment data entry");
-    keepEnrollIter->second.oldestData = std::min(keepEnrollIter->second.oldestData,
-                                                 mergeEnrollIter->second.oldestData);
     
-    keepEnrollIter->second.enrollmentTime = std::min(keepEnrollIter->second.enrollmentTime,
-                                                     mergeEnrollIter->second.enrollmentTime);
-    
-    keepEnrollIter->second.lastScore = std::max(keepEnrollIter->second.lastScore,
-                                                mergeEnrollIter->second.lastScore);
+    keepEnrollIter->second.MergeWith(keepEnrollIter->second);
     _mutex.unlock();
     
     
@@ -750,10 +741,8 @@ namespace Vision {
             for(auto & enrollData : _enrollmentData)
             {
               Json::Value entry;
-              entry["oldestDataIndex"] = enrollData.second.oldestData;
-              entry["enrollmentTime"]  = (Json::LargestInt)enrollData.second.enrollmentTime;
-              
-              json[std::to_string(enrollData.first)] = entry;
+              enrollData.second.FillJson(entry);
+              json[std::to_string(enrollData.first)] = std::move(entry);
               
               // TODO: Save enrollment image?? Privacy issues??
             }
@@ -835,17 +824,11 @@ namespace Vision {
                 _mutex.unlock();
                 result = RESULT_FAIL;
               } else {
-                const Json::Value& entry = json[idStr];
-                EnrollmentData enrollData;
-                enrollData.enrollmentTime    = (time_t)entry["enrollmentTime"].asLargestInt();
-                enrollData.oldestData        = entry["oldestData"].asInt();
-                
-                _enrollmentData[faceID] = enrollData;
+                _enrollmentData[faceID] = EnrolledFaceEntry(faceID, json[idStr]);
                 
                 // TODO: Load enrollment image??
                 
-                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%d, EnrollTime: '%s'",
-                                 faceID, ctime(&enrollData.enrollmentTime));
+                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%d", faceID);
               }
             }
           }
