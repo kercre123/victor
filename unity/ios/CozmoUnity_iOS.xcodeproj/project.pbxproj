@@ -143,7 +143,6 @@
 		7921A7066543F104AC8E8CB3 /* Il2CppMetadataRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD577426FE0C6E03EE40B0B /* Il2CppMetadataRegistration.cpp */; };
 		C1497303C23E867ECDA84DCF /* Il2CppMetadataUsage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 30D911E931B7982DD394F1A1 /* Il2CppMetadataUsage.cpp */; };
 		3E2FE15E93E1B9EF8F461198 /* Il2CppMethodPointerTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87EEE4C8E35C05A18245D3CC /* Il2CppMethodPointerTable.cpp */; };
-		7F854C9E7157E5B4FA2A84B1 /* Il2CppMethodReferences.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3739408D6750D213BF23A925 /* Il2CppMethodReferences.cpp */; };
 		A3BB8802BBA5F0511D78BA5A /* Il2CppTypeDefinitions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21D757B2A462F4E8561834B3 /* Il2CppTypeDefinitions.cpp */; };
 		B0D30F01018D2E6B98A8801D /* UnityClassRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9F19161D83B78854419A9B97 /* UnityClassRegistration.cpp */; };
 		69F66058287B0C4C5877BFBF /* UnityICallRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 789BA5853B7AE960A1A5FF08 /* UnityICallRegistration.cpp */; };
@@ -378,7 +377,6 @@
 		CBD577426FE0C6E03EE40B0B /* Il2CppMetadataRegistration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMetadataRegistration.cpp; path = UnityBuild/Classes/Native/Il2CppMetadataRegistration.cpp; sourceTree = "<group>"; };
 		30D911E931B7982DD394F1A1 /* Il2CppMetadataUsage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMetadataUsage.cpp; path = UnityBuild/Classes/Native/Il2CppMetadataUsage.cpp; sourceTree = "<group>"; };
 		87EEE4C8E35C05A18245D3CC /* Il2CppMethodPointerTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMethodPointerTable.cpp; path = UnityBuild/Classes/Native/Il2CppMethodPointerTable.cpp; sourceTree = "<group>"; };
-		3739408D6750D213BF23A925 /* Il2CppMethodReferences.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMethodReferences.cpp; path = UnityBuild/Classes/Native/Il2CppMethodReferences.cpp; sourceTree = "<group>"; };
 		21D757B2A462F4E8561834B3 /* Il2CppTypeDefinitions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppTypeDefinitions.cpp; path = UnityBuild/Classes/Native/Il2CppTypeDefinitions.cpp; sourceTree = "<group>"; };
 		9F19161D83B78854419A9B97 /* UnityClassRegistration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnityClassRegistration.cpp; path = UnityBuild/Classes/Native/UnityClassRegistration.cpp; sourceTree = "<group>"; };
 		789BA5853B7AE960A1A5FF08 /* UnityICallRegistration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnityICallRegistration.cpp; path = UnityBuild/Classes/Native/UnityICallRegistration.cpp; sourceTree = "<group>"; };
@@ -716,7 +714,6 @@
 				CBD577426FE0C6E03EE40B0B /* Il2CppMetadataRegistration.cpp */,
 				30D911E931B7982DD394F1A1 /* Il2CppMetadataUsage.cpp */,
 				87EEE4C8E35C05A18245D3CC /* Il2CppMethodPointerTable.cpp */,
-				3739408D6750D213BF23A925 /* Il2CppMethodReferences.cpp */,
 				21D757B2A462F4E8561834B3 /* Il2CppTypeDefinitions.cpp */,
 				9F19161D83B78854419A9B97 /* UnityClassRegistration.cpp */,
 				789BA5853B7AE960A1A5FF08 /* UnityICallRegistration.cpp */,
@@ -1075,7 +1072,6 @@
 				7921A7066543F104AC8E8CB3 /* Il2CppMetadataRegistration.cpp in Sources */,
 				C1497303C23E867ECDA84DCF /* Il2CppMetadataUsage.cpp in Sources */,
 				3E2FE15E93E1B9EF8F461198 /* Il2CppMethodPointerTable.cpp in Sources */,
-				7F854C9E7157E5B4FA2A84B1 /* Il2CppMethodReferences.cpp in Sources */,
 				A3BB8802BBA5F0511D78BA5A /* Il2CppTypeDefinitions.cpp in Sources */,
 				B0D30F01018D2E6B98A8801D /* UnityClassRegistration.cpp in Sources */,
 				69F66058287B0C4C5877BFBF /* UnityICallRegistration.cpp in Sources */,
