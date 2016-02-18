@@ -68,6 +68,8 @@ message DriveWheels {
 // If isAbsolute != 0, turns to the specified absolute orientation.
 message TurnInPlace {
     float_32 angle_rad, // relative mode: postive turns left negative turns right
+    float_32 speed_rad_per_sec = 0.0,
+    float_32 accel_rad_per_sec2 = 0.0,
     uint_8 isAbsolute,    // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
     uint_8 robotID
 }

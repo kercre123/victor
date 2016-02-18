@@ -684,11 +684,13 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendTurnInPlace(const f32 angle_rad)
+    void UiGameController::SendTurnInPlace(const f32 angle_rad, const f32 speed_radPerSec, const f32 accel_radPerSec2)
     {
       ExternalInterface::TurnInPlace m;
       m.robotID = 1;
       m.angle_rad = angle_rad;
+      m.speed_rad_per_sec = speed_radPerSec;
+      m.accel_rad_per_sec2 = accel_radPerSec2;
       m.isAbsolute = false;
       ExternalInterface::MessageGameToEngine message;
       message.Set_TurnInPlace(m);

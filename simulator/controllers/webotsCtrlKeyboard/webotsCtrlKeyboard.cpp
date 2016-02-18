@@ -342,8 +342,10 @@ namespace Anki {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
           
-          // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
+          // Point turn amount and speed/accel
+          f32 pointTurnAngle = std::fabs(root_->getField("pointTurnAngle_deg")->getSFFloat());
           f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          f32 pointTurnAccel = std::fabs(root_->getField("pointTurnAccel_degPerSec2")->getSFFloat());
           
           // Dock speed
           const f32 dockSpeed_mmps = root_->getField("dockSpeed_mmps")->getSFFloat();
@@ -470,9 +472,9 @@ namespace Anki {
               case (s32)'<':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(1440));
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 } else {
-                  SendTurnInPlace(DEG_TO_RAD(45));
+                  SendTurnInPlace(DEG_TO_RAD(pointTurnAngle), DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 }
                 break;
               }
@@ -480,9 +482,9 @@ namespace Anki {
               case (s32)'>':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(1440));
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 } else {
-                  SendTurnInPlace(DEG_TO_RAD(-45));
+                  SendTurnInPlace(DEG_TO_RAD(-pointTurnAngle), DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 }
                 break;
               }

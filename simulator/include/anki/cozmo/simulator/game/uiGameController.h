@@ -99,7 +99,7 @@ protected:
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
   void SendPing();
   void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
-  void SendTurnInPlace(const f32 angle_rad);
+  void SendTurnInPlace(const f32 angle_rad, const f32 speed_radPerSec = 0.f, const f32 accel_radPerSec2 = 0.f);
   void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2);
   void SendMoveHead(const f32 speed_rad_per_sec);
   void SendMoveLift(const f32 speed_rad_per_sec);
