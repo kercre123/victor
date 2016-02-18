@@ -22,8 +22,14 @@ namespace Cozmo {
   {
   public:
     static const s32 NUM_LEDS = 4;
+  
+    using ActiveID = u32;
+    using FactoryID = u32;
     
     ActiveCube(Type type);
+    ActiveCube(ActiveID activeID, FactoryID factoryID);
+    
+    static Type GetTypeFromFactoryID(u32 id);
     
     virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
     
@@ -89,6 +95,8 @@ namespace Cozmo {
     
     virtual s32 GetActiveID() const override { return _activeID; }
     
+    FactoryID GetFactoryID() const { return _factoryID; }
+    
     static void RegisterAvailableID(s32 activeID);
     static void ClearAvailableIDs();
     
@@ -142,6 +150,7 @@ namespace Cozmo {
   protected:
     
     s32 _activeID;
+    u32 _factoryID;
     
     bool        _isMoving = false;
     TimeStamp_t _movingTime = 0;

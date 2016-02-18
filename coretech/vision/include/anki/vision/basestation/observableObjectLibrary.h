@@ -58,6 +58,10 @@ namespace Anki {
       std::set<const ObsObjectType*> const& GetObjectsWithMarker(const Marker& marker) const;
       std::set<const ObsObjectType*> const& GetObjectsWithCode(const Marker::Code& code) const;
       
+      typedef typename std::list<const ObsObjectType*>::const_iterator const_iterator;
+      const_iterator begin() const {return _knownObjects.begin();}
+      const_iterator end() const {return _knownObjects.end();}
+      
     protected:
       
       static const std::set<const ObsObjectType*> sEmptyObjectVector;

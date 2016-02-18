@@ -70,6 +70,11 @@ namespace Anki
       // Adds a cliff (detected with cliff detector)
       Result AddCliff(const Pose3d& p);
       
+      // Adds a light cube object with the specified activeID and factoryID at
+      // an unknown pose. To be used when the cube first comes into radio contact.
+      // This function does nothing if a cube with the active ID already exists.
+      ObjectID AddLightCube(u32 activeID, u32 factoryID);
+      
       //
       // Object Access
       //

@@ -58,6 +58,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleBlockPlaced, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectDiscovered,
     std::bind(&Robot::HandleActiveObjectDiscovered, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectConnectionState,
+    std::bind(&Robot::HandleActiveObjectConnectionState, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectMoved,
     std::bind(&Robot::HandleActiveObjectMoved, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectStopped,
@@ -241,6 +243,42 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
     PRINT_NAMED_INFO("ActiveObjectDiscovered", "%8x", payload.factory_id);
   }
 #endif
+}
+
+ 
+void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
+  
+  ObjectID objID;
+  if (payload.connected) {
+    // Add cube to blockworld if not already there
+    objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
+    if (objID.IsSet()) {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
+                       "Object %d (activeID %d, factoryID 0x%x)",
+                       objID.GetValue(), payload.objectID, payload.factoryID);
+    }
+  } else {
+    // Remove cube from blockworld if it exists
+    ObservableObject* obj = GetActiveObjectByActiveID(payload.objectID);
+    if (obj) {
+      GetBlockWorld().ClearObject(obj);
+      objID = obj->GetID();
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
+                       "Object %d (activeID %d, factoryID 0x%x)",
+                       objID.GetValue(), payload.objectID, payload.factoryID);
+    }
+  }
+  
+
+  if (objID.IsSet()) {
+    // Update the objectID to be blockworld ID
+    payload.objectID = objID.GetValue();
+  
+    // Forward on to game
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(payload)));
+  }
 }
   
 

@@ -3046,13 +3046,6 @@ namespace Anki {
         return nullptr;
       }
       
-      if(object->GetIdentityState() != ActiveIdentityState::Identified) {
-        PRINT_NAMED_ERROR("Robot.GetActiveObject",
-                          "Object %d is active but has not been identified.",
-                          objectID.GetValue());
-        return nullptr;
-      }
-      
       return object;
     } // GetActiveObject()
     

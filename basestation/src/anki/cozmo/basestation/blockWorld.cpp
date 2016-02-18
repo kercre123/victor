@@ -584,20 +584,51 @@ namespace Cozmo {
         
         //const float minDimSeen = objSeen->GetMinDim();
         
-        // Store pointers to any existing objects that overlap with this one
-        //std::vector<ObservableObject*> overlappingObjects;
-        //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        ObservableObject* matchingObject = nullptr;
         
-        // Override the default filter function to intentionally consider objects
-        // that are unknown here. Otherwise, we'd never be able to match new
-        // observations to existing objects whose pose has been set to unknown!
-        BlockWorldFilter filter;
-        filter.SetFilterFcn([] (ObservableObject*) { return true; });
+        if (objSeen->IsActive()) {
+          // Find all objects of the same type
+          BlockWorldFilter filter;
+          filter.SetFilterFcn([objSeen] (ObservableObject* obj) { return objSeen->GetType() == obj->GetType(); });
+          std::vector<ObservableObject*> blocks;
+          FindMatchingObjects(filter, blocks);
+          
+          if (blocks.size() > 1) {
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForActiveObject",
+                                "Observed active object of type %d matches %lu existing objects. Multiple blocks of same type not currently supported.",
+                                objSeen->GetType(), blocks.size());
+            
+          } else if (blocks.size() == 0) {
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
+                                "Observed active object of type %d does not match an existing object. Is the battery plugged in?",
+                                objSeen->GetType());
+          } else {
+            matchingObject = blocks.front();
+            //PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.FoundMatchingActiveObject",
+            //                 "Observed active object of type %d matches existing objectID %d (activeID %d)",
+            //                 objSeen->GetType(), matchingObject->GetID().GetValue(), matchingObject->GetActiveID());
 
-        ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
-                                                                     objSeen->GetSameDistanceTolerance(),
-                                                                     objSeen->GetSameAngleTolerance(),
-                                                                     filter);
+          }
+          
+        } else {
+          
+          // Store pointers to any existing objects that overlap with this one
+          //std::vector<ObservableObject*> overlappingObjects;
+          //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+          
+          // Override the default filter function to intentionally consider objects
+          // that are unknown here. Otherwise, we'd never be able to match new
+          // observations to existing objects whose pose has been set to unknown!
+          BlockWorldFilter filter;
+          filter.SetFilterFcn([] (ObservableObject*) { return true; });
+          
+          matchingObject = FindClosestMatchingObject(*objSeen,
+                                                     objSeen->GetSameDistanceTolerance(),
+                                                     objSeen->GetSameAngleTolerance(),
+                                                     filter);
+        }
+        
+        
         
         // If this is the object we're carrying, do nothing and continue to the next observed object
         if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
@@ -1048,7 +1079,8 @@ namespace Cozmo {
           {
             ObservableObject* object = objectIter->second;
             
-            if(object->GetLastObservedTime() < atTimestamp &&
+            if(object->GetPoseState() != ObservableObject::PoseState::Unknown &&
+               object->GetLastObservedTime() < atTimestamp &&
                &object->GetPose().FindOrigin() == _robot->GetWorldOrigin())
             {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
@@ -1928,6 +1960,34 @@ namespace Cozmo {
     }
     */
 
+  
+    ObjectID BlockWorld::AddLightCube(u32 activeID, u32 factoryID)
+    {
+      if (activeID >= 4) {
+        PRINT_NAMED_WARNING("BlockWorld.AddLightCube.InvalidActiveID", "activeID %d", activeID);
+        return ObjectID();
+      }
+      
+      // Is there an active object with the same activeID that already exists?
+      ObjectsMapByType_t existingCubes = _existingObjects[ObjectFamily::LightCube];
+      for (auto cubeTypeIt = existingCubes.begin(); cubeTypeIt != existingCubes.end(); ++cubeTypeIt) {
+        for (auto cubeIDIt = cubeTypeIt->second.begin(); cubeIDIt != cubeTypeIt->second.end(); ++cubeIDIt) {
+          if (cubeIDIt->second->GetActiveID() == activeID) {
+            PRINT_NAMED_INFO("BlockWorld.AddLightCube.AlreadyExists", "Cube with active ID %d already exists", activeID);
+            return cubeIDIt->second->GetID();
+          }
+        }
+      }
+      
+      // An existing object with activeID was not found so add it
+      ActiveCube* cube = new ActiveCube(activeID, factoryID);
+      cube->SetPoseParent(_robot->GetWorldOrigin());
+      cube->SetPoseState(ObservableObject::PoseState::Unknown);
+      AddNewObject(ObjectFamily::LightCube, cube);
+      PRINT_NAMED_INFO("BlockWorld.AddLightCube.Added", "objectID %d (activeID %d)", cube->GetID().GetValue(), cube->GetActiveID());
+      return cube->GetID();
+    }
+  
     Result BlockWorld::AddCliff(const Pose3d& p)
     {
       // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
