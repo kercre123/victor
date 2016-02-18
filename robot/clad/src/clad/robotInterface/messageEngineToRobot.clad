@@ -247,10 +247,11 @@ union EngineToRobot
   // 0x00 Is invalid message
   
   // 0x01 to 0x2f: Messages to the body / test fixture
-  BodyUpgradeData               bodyUpgradeData             = 0x01,
+  BootloadBody                  bootloadBody                = 0x01,
+  BodyUpgradeData               bodyUpgradeData             = 0x02,
   
   // 0x30 to 0x7f: To RTIP
-  EnterBootloader               enterBootloader             = 0x30,
+  BootloadRTIP                  bootloadRTIP                = 0x30,
   RadioState                    radioConnected              = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,
@@ -297,7 +298,8 @@ union EngineToRobot
   NVStorage::NVStorageBlob      writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
   // Reserved for FlashWriteAcknowledge message in OTA      = 0x85,
-  RTIPVersionInfo               rtipVersion                 = 0x86,
+  BodyFirmwareState             bodyState                   = 0x86,
+  RTIPVersionInfo               rtipVersion                 = 0x87,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
