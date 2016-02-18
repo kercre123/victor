@@ -158,7 +158,7 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 12;
             m.parallel = false;
-            m.numRetries = 2;
+            m.numRetries = 5;
             // Pickup object 1
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(1, motionProfile2, 0, false, true, false));
             // Place object 1 on object 0
@@ -179,16 +179,15 @@ namespace Anki {
           GetObjectPose(0, pose0);
           Pose3d pose1;
           GetObjectPose(1, pose1);
-          PRINT_NAMED_ERROR("", "%f %f", pose0.GetTranslation().z(), pose1.GetTranslation().z());
-          // Sometimes stacking the blocks can fail as the visuallyVerifyObjectAction can timeout because
+          // Stacking the blocks can fail (rare) as the visuallyVerifyObjectAction can timeout because
           // it ends up not being able to see the second block after turning to face it. So if this happens just
           // say it completed
           IF_CONDITION_WITH_TIMEOUT_ASSERT(_actionFailed || (!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
                                            NEAR(pose0.GetTranslation().z(), 22, 10) &&
                                            NEAR(pose1.GetTranslation().z(), 65, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 120, 20) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 24, 20)), 20)
+                                           NEAR(GetRobotPose().GetTranslation().x(), 100, 30) &&
+                                           NEAR(GetRobotPose().GetTranslation().y(), 24, 20)), 30)
           {
             CST_EXIT();
           }
@@ -204,7 +203,8 @@ namespace Anki {
     {
       if (msg.result == ActionResult::SUCCESS) {
         _lastActionSucceeded = true;
-      } else if(msg.result == ActionResult::FAILURE_TIMEOUT && msg.idTag == 10032) {
+      // 12 is the id of the action that can fail due to timeout
+      } else if(msg.result == ActionResult::FAILURE_TIMEOUT && msg.idTag == 12) {
         PRINT_NAMED_WARNING("", "Failed with timeout saying success");
         _actionFailed = true;
       }

@@ -434,7 +434,6 @@ namespace Anki {
                           _robot.GetID());
         result = ActionResult::FAILURE_ABORT;
       } else {
-        PRINT_NAMED_INFO("", "asdfghjkl");
         _objectID = _robot.GetCarryingObject();
         
         ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));

@@ -170,7 +170,7 @@ namespace Anki {
             // Pickup object 1
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(1, motionProfile, 0, false, true, false));
             // Wait a few seconds to see the block behind the one we just picked up
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::Wait(1));
+            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::Wait(2));
             // Place object 1 on object 2
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(2, motionProfile, 0, false, true, false));
             ExternalInterface::MessageGameToEngine message;

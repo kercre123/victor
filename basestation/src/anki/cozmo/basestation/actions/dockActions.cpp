@@ -921,7 +921,11 @@ namespace Anki {
     void PlaceObjectOnGroundAtPoseAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       // Use the completion union of the constituent PlaceObjectOnGround action
-      completionUnion = _completedActionInfoStack.back().first;
+      if(_actions.size() > 0) {
+        _actions.back().second->GetCompletionUnion(completionUnion);
+      } else {
+        completionUnion = _completedActionInfoStack.back().first;
+      }
     }
     
 #pragma mark ---- PlaceRelObjectAction ----
