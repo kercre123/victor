@@ -7,6 +7,7 @@ namespace Simon {
 
   public class SimonGame : GameBase {
 
+    public const float kCozmoLightBlinkDelaySeconds = 0.1f;
     public const float kLightBlinkLengthSeconds = 0.3f;
 
     // list of ids of LightCubes that are tapped, in order.
