@@ -13,6 +13,7 @@
 #include "behaviorExploreCliff.h"
 
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/navMemoryMap/quadData/navMemoryMapQuadData_Cliff.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "util/console/consoleInterface.h"
@@ -24,9 +25,9 @@ namespace Anki {
 namespace Cozmo {
   
 CONSOLE_VAR(uint8_t, kEcMaxBorderGoals, "BehaviorExploreCliff", 1); // max number of goals to ask the planner
-CONSOLE_VAR(uint8_t, kEcDistanceMinFactor, "BehaviorExploreCliff", 0.01f); // minimum factor applied to the robot size to find destination from border center
-CONSOLE_VAR(uint8_t, kEcDistanceMaxFactor, "BehaviorExploreCliff", 0.01f); // maximum factor applied to the robot size to find destination from border center
-CONSOLE_VAR(uint8_t, kEcDrawDebugInfo, "BehaviorExploreCliff", false); // if set to true the behavior renders debug privimitives
+CONSOLE_VAR(float, kEcDistanceMinWidthFactor, "BehaviorExploreCliff", 0.25f); // minimum factor applied to the robot size to find destination from border center
+CONSOLE_VAR(float, kEcDistanceMaxWidthFactor, "BehaviorExploreCliff", 0.35f); // maximum factor applied to the robot size to find destination from border center
+CONSOLE_VAR(bool, kEcDrawDebugInfo, "BehaviorExploreCliff", true); // if set to true the behavior renders debug privimitives
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreCliff::BehaviorExploreCliff(Robot& robot, const Json::Value& config)
@@ -81,19 +82,19 @@ Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec)
     for ( const auto& bG : borderGoals )
     {
       const NavMemoryMapTypes::Border& b = bG.borderInfo;
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", b.from, b.to, Anki::NamedColors::DARKGREEN, false, 60.0f);
       Vec3f centerLine = (b.from + b.to)*0.5f;
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", centerLine, centerLine+b.normal*5.0f, Anki::NamedColors::GREEN, false, 60.0f);
     }
 
     // vantage points
     for ( const auto& p : _currentVantagePoints )
     {
       Point3f testOrigin{};
-      Point3f testDir = X_AXIS_3D() * 20.0f;
+      Point3f testDir = X_AXIS_3D() * 10.0f;
       testOrigin = p * testOrigin;
       testDir = p * testDir;
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", testOrigin, testDir, Anki::NamedColors::GREEN, false, 60.0f);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreCliff::InitInternal", testOrigin, testDir, Anki::NamedColors::CYAN, false, 61.0f);
     }
   }
 
@@ -194,6 +195,15 @@ void BehaviorExploreCliff::PickGoals(Robot& robot, BorderScoreVector& outGoals) 
     outGoals.reserve(kEcMaxBorderGoals);
     for ( const auto& border : borders )
     {
+      // grab extra info from the border
+      INavMemoryMapQuadData* extraInfoPtr = border.extraData.get();
+      NavMemoryMapQuadData_Cliff* extraInfo = INavMemoryMapQuadDataCast<NavMemoryMapQuadData_Cliff>( extraInfoPtr );
+      ASSERT_NAMED(nullptr!=extraInfo, "BehaviorExploreCliff.PickGoals.CliffBorderWithoutExtraInfo");
+      if ( nullptr == extraInfo  ) {
+        // in shipping, ignore this border if it ever happened
+        continue;
+      }
+    
       // find where this goal would go with respect to the rest
       // note we compare the center of the border, not the destination point we will choose to go to
       const float curDistSQ = (border.GetCenter() - robot.GetPose().GetTranslation()).LengthSq();
@@ -240,13 +250,13 @@ void BehaviorExploreCliff::GenerateVantagePoints(Robot& robot, const BorderScore
   Util::RandomGenerator rng; // TODO: rsam replay-ability issue
 
   // TODO Shouldn't this be asked to the robot instance instead? Otherwise we only support 1 robot size
-  const float robotFwdLen = ROBOT_BOUNDING_X_FRONT + ROBOT_BOUNDING_X_LIFT;
+  const float robotWidth = ROBOT_BOUNDING_Y;
 
   outVantagePoints.clear();
   for ( const auto& goal : goals )
   {
-    const float randomFactor = rng.RandDblInRange(kEcDistanceMinFactor, kEcDistanceMaxFactor);
-    const float distanceFromGoal = robotFwdLen * randomFactor;
+    const float randomFactor = rng.RandDblInRange(kEcDistanceMinWidthFactor, kEcDistanceMaxWidthFactor);
+    const float distanceFromGoal = robotWidth * randomFactor;
     
     const Point3f vantagePointPos = goal.borderInfo.GetCenter() + (goal.borderInfo.normal * distanceFromGoal);
     
@@ -254,7 +264,13 @@ void BehaviorExploreCliff::GenerateVantagePoints(Robot& robot, const BorderScore
     const Vec3f& kRightVector = -Y_AXIS_3D();
     const Vec3f& kUpVector = Z_AXIS_3D();
     
-    Vec3f vantagePointDir = -goal.borderInfo.normal;
+    // grab extra info from the border
+    INavMemoryMapQuadData* extraInfoPtr = goal.borderInfo.extraData.get();
+    NavMemoryMapQuadData_Cliff* extraInfo = INavMemoryMapQuadDataCast<NavMemoryMapQuadData_Cliff>( extraInfoPtr );
+    ASSERT_NAMED(nullptr!=extraInfo, "BehaviorExploreCliff.GenerateVantagePoints.CliffBorderWithoutExtraInfo");
+    
+    // use directionality from the extra info to point in the same direction
+    Vec3f vantagePointDir{extraInfo->directionality.x(), extraInfo->directionality.y(), 0.0f};
     const float fwdAngleCos = DotProduct(vantagePointDir, kFwdVector);
     const bool isPositiveAngle = (DotProduct(vantagePointDir, kRightVector) >= 0.0f);
     float rotRads = isPositiveAngle ? -std::acos(fwdAngleCos) : std::acos(fwdAngleCos);

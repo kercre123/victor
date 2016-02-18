@@ -13,9 +13,9 @@ enum uint_32 GenericSwitch
 enum uint_32 Mood
 {
   Invalid = 0,
-  Mood_Angry = 1069533850,
   Mood_Happy = 457607035,
   Mood_Neutral = 3970296952,
+  Mood_Sad = 777739821,
 }
 
 enum uint_32 Relationship

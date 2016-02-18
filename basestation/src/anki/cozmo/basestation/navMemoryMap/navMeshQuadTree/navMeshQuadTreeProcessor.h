@@ -116,7 +116,10 @@ private:
   static Vec3f CalculateBorderWaypointCenter(const BorderWaypoint& waypoint);
 
   // given 3d points and their neighbor directions, calculate a 3D border definition (line + normal)
-  static NavMemoryMapTypes::Border MakeBorder(const Point3f& origin, const Point3f& dest, EDirection firstEDirection, EDirection lastEDirection);
+  static NavMemoryMapTypes::Border MakeBorder(const Point3f& origin, const Point3f& dest,
+                                              const NavMemoryMapTypes::Border::DataType& data,
+                                              EDirection firstEDirection,
+                                              EDirection lastEDirection);
   
   // returns true if the given contentType is contained within the set of types defined in the packedTypes
   static bool IsInENodeContentTypePackedType(ENodeContentType contentType, ENodeContentTypePackedType contentPackedTypes);
