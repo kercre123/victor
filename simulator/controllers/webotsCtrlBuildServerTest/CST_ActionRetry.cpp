@@ -118,9 +118,9 @@ namespace Anki {
         case TestState::PlaceObject:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 5) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 128, 5) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 1, 5) &&
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 128, 10) &&
+                                           NEAR(GetRobotPose().GetTranslation().y(), 1, 10) &&
                                            GetCarryingObjectID() == 0, 10)
           {
             ExternalInterface::QueueSingleAction m;
@@ -143,8 +143,8 @@ namespace Anki {
           Pose3d pose;
           GetObjectPose(0, pose);
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 5) ||
-                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 5)) &&
+                                           (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10) ||
+                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 10)) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 191, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 100, 10) &&
                                            GetCarryingObjectID() == -1 &&
