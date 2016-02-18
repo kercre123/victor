@@ -8,6 +8,13 @@ using Anki.Cozmo;
 
 public class DailyGoalManager : MonoBehaviour {
 
+  #region constants
+
+  private const float _kMinigameNeedMin = -0.5f;
+  private const float _kMinigameNeedMax = 1.0f;
+
+  #endregion
+
   public Action<string> MinigameConfirmed;
 
   [SerializeField]
@@ -117,38 +124,13 @@ public class DailyGoalManager : MonoBehaviour {
   ///  Returns a value between -1 and 1 based on how close AND far you are from completing daily goal
   /// </summary>
   /// <returns>The minigame need.</returns>
-  public float GetMinigameNeed_Extremes() {
+  public void SetMinigameNeed() {
     float prog = (GetTodayProgress() * 2.0f) - 1;
     // Calculate how far you are from 50% complete
     // range from 0 -> 1.0
-    prog = (Mathf.Abs(prog) * 2.0f) - 1;
-    if (prog > 1.0f) {
-      return 0.0f;
-    }
-    return prog;
-  }
-
-  /// <summary>
-  ///  Returns a value between -1 and 1 based on how close you are to completing daily goal
-  /// </summary>
-  /// <returns>The minigame need.</returns>
-  public float GetMinigameNeed_Close() {
-    float prog = GetTodayProgress();
-    prog = (prog - 0.5f) * 2.0f;
-    if (prog > 1.0f) {
-      return 0.0f;
-    }
-    return prog;
-  }
-
-  /// <summary>
-  ///  Returns a value between -1 and 1 based on how far you are to completing daily goal
-  /// </summary>
-  /// <returns>The minigame need.</returns>
-  public float GetMinigameNeed_Far() {
-    float prog = GetTodayProgress();
-    prog = (0.5f - prog) * 2.0f;
-    return prog;
+    prog = Mathf.Lerp(_kMinigameNeedMin, _kMinigameNeedMax, Math.Abs(prog));
+    PickMiniGameToRequest();
+    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(EmotionType.WantToPlay, prog, "DailyGoalProgress");
   }
 
   #endregion

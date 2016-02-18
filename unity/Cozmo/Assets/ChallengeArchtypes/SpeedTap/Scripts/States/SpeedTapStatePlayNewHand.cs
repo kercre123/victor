@@ -130,9 +130,9 @@ namespace SpeedTap {
     }
 
     void PlayerDidTap() {
-      _SpeedTapGame.PlayerTap = true;
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
       if (_GotMatch) {
+        _SpeedTapGame.PlayerTap = true;
         _StateMachine.SetNextState(new SpeedTapPlayerWins());
       }
       else if (_LightsOn) {
