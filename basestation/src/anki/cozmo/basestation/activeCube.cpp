@@ -72,8 +72,7 @@ namespace Anki {
       _factoryID = factoryID;
     }
     
-    // This is just what the mapping happens to be in EP2. Changes to this mapping should
-    // also be reflected in ActiveBlock::GenerateFactoryIDFromActiveID()
+    // Changes to this mapping should also be reflected in ActiveBlock::activeIDToFactoryIDMap_
     ActiveCube::Type ActiveCube::GetTypeFromFactoryID(u32 id)
     {
       static constexpr ObjectType factoryIDToObjectType[4] = {

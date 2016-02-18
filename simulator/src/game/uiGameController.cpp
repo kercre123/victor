@@ -242,6 +242,12 @@ namespace Anki {
       HandleImageChunk(msg);
     } // HandleImageChunk()
     
+    void UiGameController::HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg)
+    {
+      PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ActiveID %d (factoryID 0x%x): %s",
+                       msg.objectID, msg.factoryID, msg.connected ? "CONNECTED" : "DISCONNECTED");
+      HandleActiveObjectConnectionState(msg);
+    }
     
     void UiGameController::HandleActiveObjectMovedBase(ObjectMoved const& msg)
     {
@@ -370,6 +376,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotCompletedAction:
             HandleRobotCompletedActionBase(message.Get_RobotCompletedAction());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectConnectionState:
+            HandleActiveObjectConnectionStateBase(message.Get_ObjectConnectionState());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectMoved:
             HandleActiveObjectMovedBase(message.Get_ObjectMoved());
