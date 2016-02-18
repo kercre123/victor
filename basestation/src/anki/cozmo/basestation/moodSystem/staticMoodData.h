@@ -55,6 +55,8 @@ public:
   
   // ===== Json =====
   
+  bool LoadEmotionEvents(const Json::Value& inJson);
+  
   bool ReadFromJson(const Json::Value& inJson);
   bool WriteToJson(Json::Value& outJson) const;
   

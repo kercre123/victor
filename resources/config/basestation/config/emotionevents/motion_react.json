@@ -1,0 +1,18 @@
+{
+    "name" : "MotionReact",
+    "emotionAffectors" : [										  
+       {
+          "emotionType" : "Happy",
+          "value" : 0.12
+       },
+       {
+          "emotionType" : "Excited",
+          "value" : 0.12
+       },
+       {
+          "emotionType" : "Calm",
+          "value" : -0.12
+       }
+    ]
+  }
+}

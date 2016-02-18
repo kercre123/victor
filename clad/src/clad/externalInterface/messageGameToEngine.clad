@@ -679,6 +679,7 @@ union RobotActionUnion {
   DriveStraight             driveStraight,
   PanAndTilt                panAndTilt,
   Wait                      wait,
+  MountCharger              mountCharger
 }
 
 // QueueSingleAction

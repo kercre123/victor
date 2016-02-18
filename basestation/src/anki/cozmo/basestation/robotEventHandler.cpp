@@ -334,7 +334,12 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
   
 IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface::MountCharger& msg)
 {
-  ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
     return new DriveToAndMountChargerAction(robot,
@@ -508,6 +513,10 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionUnionTag::wait:
       return new WaitAction(robot, actionUnion.Get_wait().time_s);
+
+    case RobotActionUnionTag::mountCharger:
+      return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
+
       
       // TODO: Add cases for other actions
       

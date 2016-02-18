@@ -20,8 +20,8 @@ enum uint_8 AnimTrackFlag {
 
 enum int_32 AnimConstants
 {
-  AUDIO_SAMPLE_RATE     = 22320,
-  AUDIO_SAMPLE_SIZE     = 800,
+  AUDIO_SAMPLE_RATE     = 22320,  // 7440 Hz (Robot clock speed) * 3
+  AUDIO_SAMPLE_SIZE     = 744,    // (1 sec / 30 frames) * 22,320 Sample Rate = 744 Audio Samples
   MAX_FACE_FRAME_SIZE   = 1024,
   KEYFRAME_BUFFER_SIZE  = 16384,
   NUM_TRACKS            = 8
@@ -31,7 +31,7 @@ namespace AnimKeyFrame {
 
   message AudioSample
   {
-    uint_8 sample[800] // AUDIO_SAMPLE_SIZE above
+    uint_8 sample[744] // AUDIO_SAMPLE_SIZE above
   }
 
   message AudioSilence

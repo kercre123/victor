@@ -45,6 +45,7 @@ namespace Cozmo {
   namespace ExternalInterface {
     class MessageEngineToGame;
     class MessageGameToEngine;
+    struct RobotCompletedAction;
   }
   template<typename TYPE> class AnkiEvent;
   
@@ -88,7 +89,8 @@ namespace Cozmo {
     // derived class should implement.
     Status Update(double currentTime_sec) ;
     
-    // This behavior was the currently running behavior, but is now stopping (to make way for a new current behavior)
+    // This behavior was the currently running behavior, but is now stopping (to make way for a new current
+    // behavior). Any behaviors from StartActing will be canceled
     void Stop(double currentTime_sec);
     
     //
@@ -106,6 +108,8 @@ namespace Cozmo {
     
     const std::string& GetName() const { return _name; }
     const std::string& GetStateName() const { return _stateName; }
+
+    double GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
     
     // EvaluateEmotionScore is a score directly based on the given emotion rules
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
@@ -157,6 +161,8 @@ namespace Cozmo {
     virtual void   StopInternal(Robot& robot, double currentTime_sec) = 0;
     
     bool ReadFromJson(const Json::Value& config);
+
+    Util::RandomGenerator& GetRNG() const;
     
     // Convenience aliases
     using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
@@ -195,14 +201,63 @@ namespace Cozmo {
     // NOTE: AlwaysHandle is called first!
     virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
-    
-    Util::RandomGenerator& GetRNG() const;
-    
+
+    // Many behaviors use a pattern of executing an action, then waiting for it to finish before selecting the
+    // next action. Instead of directly starting actions and handling ActionCompleted callbacks, derived
+    // classes can use the functions below. Note: none of the StartActing functions can be called when the
+    // behavior is not running (will result in an error and no action). Also, if the behavior was running when
+    // you called StartActing, but is no longer running when the action completed, the callback will NOT be
+    // called (this is necessary to prevent non-running behaviors from doing things with the robot). If the
+    // behavior is stopped, within the Stop function, any actions which are still running will be canceled
+    // (and you will not get any callback for it).
+
+    // returns true if any action from StartAction is currently running
+    inline bool IsActing() const;
+
+    // Each StartActing function returns true if the action was started, false otherwise. Reasons actions
+    // might not be started include:
+    // 1. Another action (from StartActing) is currently running or queued
+    // 2. You are not running ( IsRunning() returns false )
+
+    // Start an action now, and optionally provide a callback which will be called with the
+    // RobotCompletedAction that corresponds to the action
+    using RobotCompletedActionCallback = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
+    bool StartActing(IActionRunner* action, RobotCompletedActionCallback callback = {});
+
+    // helper that just looks at the result (simpler, but you can't get things like the completion union)
+    using ActionResultCallback = std::function<void(ActionResult)>;
+    bool StartActing(IActionRunner* action, ActionResultCallback callback);
+
+    // If you want to do something when the action finishes, regardless of it's result, you can use the
+    // following callbacks, with either a callback function taking no arguments or taking a single Robot&
+    // argument. You can also use member functions. The callback will be called when action completes for any
+    // reason (as long as the behavior is running)
+
+    using SimpleCallback = std::function<void(void)>;
+    bool StartActing(IActionRunner* action, SimpleCallback callback);
+
+    using SimpleCallbackWithRobot = std::function<void(Robot& robot)>;
+    bool StartActing(IActionRunner* action, SimpleCallbackWithRobot callback);
+
+    template<typename T>
+    bool StartActing(IActionRunner* action, void(T::*callback)(Robot&));
+
+    template<typename T>
+    bool StartActing(IActionRunner* action, void(T::*callback)(void));
+
+    // This function cancels the action started by StartActing (if there is one). Returns true if an action
+    // was canceled, false otherwise. Note that if you are running, this will trigger a callback for the
+    // cancellation
+    bool StopActing();
+
   private:
             
     template<class EventType>
     void HandleEvent(const EventType& event);
 
+    // this is an internal handler just form StartActing
+    void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
+    
     // ==================== Static Member Vars ====================
             
     static const char* kBaseDefaultName;
@@ -223,6 +278,10 @@ namespace Cozmo {
     double _lastRunTime_s;
 
     float _overrideScore; // any value >= 0 implies it should be used
+
+    // for Start/StopActing if invalid, no action
+    u32 _lastActionTag = ActionConstants::INVALID_TAG;
+    RobotCompletedActionCallback  _actingCallback;
     
     BehaviorGroupFlags  _behaviorGroups;
 
@@ -250,6 +309,7 @@ namespace Cozmo {
   {
     StopInternal(_robot, currentTime_sec);
     _lastRunTime_s = currentTime_sec;
+    StopActing();
   }
   
   inline Result IBehavior::Interrupt(double currentTime_sec)
@@ -268,6 +328,23 @@ namespace Cozmo {
     {
       _name = inName;
     }
+  }
+
+  template<typename T>
+  bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(Robot&))
+  {
+    return StartActing(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+  }
+
+  template<typename T>
+  bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(void))
+  {
+    std::function<void(void)> boundCallback = std::bind(callback, static_cast<T*>(this));
+    return StartActing(action, boundCallback);
+  }
+
+  inline bool IBehavior::IsActing() const {
+    return _lastActionTag != ActionConstants::INVALID_TAG;
   }
   
   template<class EventType>
