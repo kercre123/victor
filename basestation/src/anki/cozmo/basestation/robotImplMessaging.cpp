@@ -265,7 +265,7 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     }
   } else {
     // Remove cube from blockworld if it exists
-    ObservableObject* obj = GetActiveObjectByActiveID(payload.objectID);
+    ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
       GetBlockWorld().ClearObject(obj);
       objID = obj->GetID();
@@ -294,7 +294,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -364,7 +364,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -422,7 +422,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {

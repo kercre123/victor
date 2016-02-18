@@ -273,7 +273,55 @@ namespace Cozmo {
       // ID not found!
       return nullptr;
     }
+
+    ObservableObject* BlockWorld::GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const
+    {
+      const ObservableObject* object = nullptr;
+      const char* familyStr = nullptr;
+      if(inFamily == ObjectFamily::Unknown) {
+        object = GetObjectByID(objectID);
+        familyStr = EnumToString(inFamily);
+      } else {
+        object = GetObjectByIDandFamily(objectID, inFamily);
+        familyStr = "any";
+      }
+      
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not exist in %s family.",
+                          objectID.GetValue(), EnumToString(inFamily));
+        return nullptr;
+      }
+      
+      if(!object->IsActive()) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not appear to be an active object.",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      return (ObservableObject*)object;
+    } // GetActiveObject()
     
+    ObservableObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const
+    {
+      for(auto objectsByType : _existingObjects) {
+        if(inFamily == ObjectFamily::Unknown || inFamily == objectsByType.first) {
+          for(auto objectsByID : objectsByType.second) {
+            for(auto objectWithID : objectsByID.second) {
+              ObservableObject* object = objectWithID.second;
+              if(object->IsActive() && object->GetActiveID() == activeID) {
+                return object;
+              }
+            }
+          }
+        } // if(inFamily == ObjectFamily::Unknown || inFamily == objectsByFamily.first)
+      } // for each family
+      
+      return nullptr;
+    } // GetActiveObjectByActiveID()
+
+  
     void CheckForOverlapHelper(const ObservableObject* objectToMatch,
                                ObservableObject* objectToCheck,
                                std::vector<ObservableObject*>& overlappingObjects)
