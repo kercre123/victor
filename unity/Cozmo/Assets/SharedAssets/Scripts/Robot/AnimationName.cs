@@ -7,6 +7,12 @@ public static class AnimationName {
   public const string kFinishTapCubeWin = "finishTapCubeWin";
   public const string kFinishTabCubeLose = "finishTapCubeLose";
 
+  public const string kSpeedTap_Tap_01 = "anim_speedTap_tap_01";
+  public const string kSpeedTap_Tap_02 = "anim_speedTap_tap_02";
+  public const string kSpeedTap_Tap_03 = "anim_speedTap_tap_03";
+  public const string kSpeedTap_Peek = "anim_speedTap_lookAtPlayer";
+  public const string kSpeedTap_FakeOut = "anim_speedTap_fakeOut_01";
+
   public const string kPounceForward = "pounceForward";
 
   public const string kMajorWin = "majorWin";
@@ -48,12 +54,6 @@ public static class AnimationName {
 
   public const string kCodeBreakerThinking = "MM_thinking";
   public const string kCodeBreakerNewIdea = "MM_newIdea";
-
-  public const string kSpeedTap_Tap_01 = "anim_speedTap_tap_01";
-  public const string kSpeedTap_Tap_02 = "anim_speedTap_tap_02";
-  public const string kSpeedTap_Tap_03 = "anim_speedTap_tap_03";
-  public const string kSpeedTap_Peek = "anim_speedTap_lookAtPlayer";
-  public const string kSpeedTap_FakeOut = "anim_speedTap_fakeOut_01";
 
   public const string kSimonBlinkCube = "Simon_Cube";
 }
