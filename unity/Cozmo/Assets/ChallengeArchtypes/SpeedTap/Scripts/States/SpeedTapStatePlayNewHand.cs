@@ -34,6 +34,7 @@ namespace SpeedTap {
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
       _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
       _LightsOn = false;
+      _SpeedTapGame.PlayerTap = false;
 
       GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
 
@@ -111,7 +112,9 @@ namespace SpeedTap {
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
       // check for player tapped first here.
-      CozmoDidTap();
+      if (_SpeedTapGame.PlayerTap == false) {
+        CozmoDidTap();
+      }
     }
 
     void RobotCompletedFakeTapAnimation(bool success) {
@@ -121,7 +124,9 @@ namespace SpeedTap {
 
     void CozmoDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.cozmo_tap", "");
-      _StateMachine.SetNextState(new SpeedTapCozmoWins());
+      if (_SpeedTapGame.PlayerTap == false) {
+        _StateMachine.SetNextState(new SpeedTapCozmoWins());
+      }
     }
 
     void BlockTapped(int blockID, int numTaps) {
@@ -131,6 +136,7 @@ namespace SpeedTap {
     }
 
     void PlayerDidTap() {
+      _SpeedTapGame.PlayerTap = true;
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
       if (_GotMatch) {
         _StateMachine.SetNextState(new SpeedTapPlayerWins());
