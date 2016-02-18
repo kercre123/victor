@@ -89,6 +89,52 @@ NavMeshSettings:
 Transform:
   m_PrefabParentObject: {fileID: 470864, guid: 7b7a57b40595f4c89ae6caa8d458e89f, type: 2}
   m_PrefabInternal: {fileID: 1448825417}
+--- !u!1001 &208619310
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 261074296}
+    m_Modifications:
+    - target: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+      propertyPath: m_RootOrder
+      value: 11
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: f98247e582409455889fdcc099c73aae, type: 2}
+  m_IsPrefabParent: 0
+--- !u!4 &208619311 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 430874, guid: f98247e582409455889fdcc099c73aae, type: 2}
+  m_PrefabInternal: {fileID: 208619310}
 --- !u!1 &261074295
 GameObject:
   m_ObjectHideFlags: 0
@@ -125,6 +171,7 @@ Transform:
   - {fileID: 1822022318}
   - {fileID: 307913140}
   - {fileID: 1063340309}
+  - {fileID: 208619311}
   m_Father: {fileID: 0}
   m_RootOrder: 1
 --- !u!1001 &276104606
