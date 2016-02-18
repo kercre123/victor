@@ -281,7 +281,7 @@ namespace Vision {
     BOOL isRegistered = true;
     auto tries = 0;
     do {
-      okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _lastRegisteredUserID, 0, &isRegistered);
+      okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _lastRegisteredUserID-1, 0, &isRegistered);
       
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.IsRegisteredCheckFailed",
@@ -293,11 +293,14 @@ namespace Vision {
       if(isRegistered) {
         // Try next ID
         ++_lastRegisteredUserID;
-        if(_lastRegisteredUserID >= MaxAlbumFaces) {
+        if(_lastRegisteredUserID > MaxAlbumFaces) {
           // Roll over
-          _lastRegisteredUserID = 0;
+          _lastRegisteredUserID = 1;
         }
       }
+      
+      ASSERT_NAMED(_lastRegisteredUserID != Vision::TrackedFace::UnknownFace,
+                   "LastRegisteredID should not be the UnknownFace ID");
       
     } while(isRegistered && tries++ < 2*MaxAlbumFaces);
     
@@ -307,7 +310,7 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, _lastRegisteredUserID, 0);
+    okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, _lastRegisteredUserID-1, 0);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.RegisterFailed",
                         "Failed trying to register user %d", _lastRegisteredUserID);
@@ -394,7 +397,7 @@ namespace Vision {
     ASSERT_NAMED(enrollDataIter != _enrollmentData.end(), "Missing enrollment status");
     auto & enrollData = enrollDataIter->second;
     
-    INT32 okaoResult=  OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID, enrollData.oldestData);
+    INT32 okaoResult=  OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID-1, enrollData.oldestData);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingUser.RegisterFailed",
                         "Failed to trying to register data %d for existing user %d",
@@ -419,7 +422,7 @@ namespace Vision {
   
   Result FaceRecognizer::RemoveUser(INT32 userID)
   {
-    INT32 okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userID);
+    INT32 okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userID-1);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceRecognizer.RemoveUser.ClearUserFailed",
                         "OKAO result=%d", okaoResult);
@@ -494,6 +497,11 @@ namespace Vision {
         
         if(resultNum > 0 && scores[0] > RecognitionThreshold)
         {
+          // Our ID numbering starts at 1, Okao's starts at 0:
+          for(s32 iResult=0; iResult<resultNum; ++iResult) {
+            userIDs[iResult] += 1;
+          }
+          
           INT32 oldestID = userIDs[0];
           
           auto enrollStatusIter = _enrollmentData.find(oldestID);
@@ -570,7 +578,7 @@ namespace Vision {
     INT32 okaoResult = OKAO_NORMAL;
     
     INT32 numKeepData = 0;
-    okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, (INT32)keepID, &numKeepData);
+    okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, keepID-1, &numKeepData);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceRecognizer.MergeFaces.GetNumKeepDataFail",
                         "OKAO result=%d", okaoResult);
@@ -578,7 +586,7 @@ namespace Vision {
     }
     
     INT32 numMergeData = 0;
-    okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, (INT32)mergeID, &numMergeData);
+    okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, mergeID-1, &numMergeData);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceRecognizer.MergeFaces.GetNumMergeDataFail",
                         "OKAO result=%d", okaoResult);
@@ -601,7 +609,7 @@ namespace Vision {
     
     for(s32 iMerge=0; iMerge < numMergeData; ++iMerge) {
       
-      okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, (INT32)mergeID, iMerge,
+      okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, mergeID-1, iMerge,
                                                _okaoRecogMergeFeatureHandle);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_ERROR("FaceRecognizer.MergeFaces.GetFeatureFail",
@@ -610,7 +618,7 @@ namespace Vision {
       }
       
       okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, _okaoRecogMergeFeatureHandle,
-                                        (INT32)keepID, numKeepData + iMerge);
+                                        keepID-1, numKeepData + iMerge);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_ERROR("FaceRecognizer.MergeFaces.RegisterDataFail",
                           "OKAO result=%d", okaoResult);

@@ -33,7 +33,7 @@ namespace Vision {
     
     using ID_t = int32_t;
     
-    static const ID_t UnknownFace = -1;
+    static const ID_t UnknownFace = 0;
     
     // Constructor:
     TrackedFace();

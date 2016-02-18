@@ -121,7 +121,7 @@ namespace Vision {
     
     std::list<INT32> _trackerIDsToRemove;
     
-    INT32 _lastRegisteredUserID = 0;
+    INT32 _lastRegisteredUserID = 1; // Don't start at zero: that's the UnknownFace ID!
     s32   _numToEnroll = 0;
     
     // Store additinal bookkeeping information we need, on top of the album data
