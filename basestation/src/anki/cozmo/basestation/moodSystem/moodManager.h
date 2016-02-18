@@ -17,6 +17,7 @@
 
 #include "anki/cozmo/basestation/moodSystem/emotion.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
+#include "clad/types/simpleMoodTypes.h"
 #include "clad/types/emotionTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include <assert.h>
@@ -95,6 +96,18 @@ public:
   {
     return GetEmotion(emotionType).GetDeltaRecentSeconds(secondsBackwards);
   }
+  
+  SimpleMoodType GetSimpleMood() const {
+    float happiness = GetEmotion(EmotionType::Happy).GetValue();
+    if(happiness < -0.33) {
+      return SimpleMoodType::Sad;
+    }
+    if(happiness > 0.33) {
+      return SimpleMoodType::Happy;
+    }
+    return SimpleMoodType::Default;
+  }
+
   
   // ==================== Event/Message Handling ====================
   

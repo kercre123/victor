@@ -76,32 +76,40 @@ namespace Anki {
     }
     
     const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager) const {
-      const float kRandomFactor = 0.1f;
+      static const std::string empty = "";
       
       if(IsEmpty()) {
-        static const std::string empty = "";
         return empty;
       }
       
       Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
       
-      auto bestEntry = _animations.end();
-      float bestScore = -FLT_MAX;
+      float totalWeight = 0;
+      SimpleMoodType mood = moodManager.GetSimpleMood();
+      
       for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
       {
-        auto entryScore = entry->EvaluateScore(moodManager);
-        auto totalScore    = entryScore;
-        
-        totalScore += rng.RandDbl(kRandomFactor);
-        
-        if (totalScore > bestScore)
-        {
-          bestEntry = entry;
-          bestScore = totalScore;
+        if(entry->GetMood() == mood) {
+          totalWeight += entry->GetWeight();
         }
       }
       
-      return bestEntry->GetName();
+      float weightedSelection = rng.RandDbl(totalWeight);
+      
+      for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
+      {
+        if(entry->GetMood() == mood) {
+          if(weightedSelection <= entry->GetWeight()) {
+            return entry->GetName();
+          }
+          else {
+            weightedSelection -= entry->GetWeight();
+          }
+        }
+      }
+      
+      // This should be impossible.
+      return empty;
     }
     
   } // namespace Cozmo
