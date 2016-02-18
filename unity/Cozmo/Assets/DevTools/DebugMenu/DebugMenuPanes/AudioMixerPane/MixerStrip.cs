@@ -12,13 +12,15 @@ namespace Anki.Cozmo.Audio {
     [SerializeField]
     private Text _Label;
 
-    private VolumeParameters.VolumeType _VolumeType;
+    // Unity Complains about having an enum field that is backed by uint
+    // just use an int field and cast it.
+    private int _VolumeType;
 
     public VolumeParameters.VolumeType VolumeType {
-      get { return _VolumeType; }
+      get { return (VolumeParameters.VolumeType)_VolumeType; }
       set { 
         _Label.text = value.ToString(); 
-        _VolumeType = value;
+        _VolumeType = (int)value;
       }
     }
 
