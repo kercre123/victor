@@ -409,13 +409,14 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
         static bool lastSentCubeConnected[MAX_NUM_ACTIVE_OBJECTS] = {false};
 #ifdef SIMULATOR
+        // This amount is just higher than the rate at which ObjectDiscovered messages are being sent from sim_hal
         const u16 CONNECTION_TIMEOUT_THRESH_MS = 1100;
 #else
-        const u16 CONNECTION_TIMEOUT_THRESH_MS = 100;
+        // TODO: This should be _much_ smaller! Block messages are being dropped. HW team will look into why eventually.
+        const u16 CONNECTION_TIMEOUT_THRESH_MS = 500;
 #endif
         if (Messages::ReceivedInit()) {
           for (u32 i=0; i<MAX_NUM_ACTIVE_OBJECTS; ++i) {
-
             if ((HAL::GetLastCubeContactTime(i) > 0) &&
                 (( lastSentCubeConnected[i] && (HAL::GetTimeStamp() - HAL::GetLastCubeContactTime(i) > CONNECTION_TIMEOUT_THRESH_MS)) ||
                  (!lastSentCubeConnected[i] && (HAL::GetTimeStamp() - HAL::GetLastCubeContactTime(i) < CONNECTION_TIMEOUT_THRESH_MS)))) {
