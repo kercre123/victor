@@ -66,13 +66,7 @@ public static class EditorDrawingUtility {
     EditorGUILayout.BeginVertical();
     GUILayout.Label(label);
 
-    Debug.Log(list.Count);
-
-
     var splitList = list.GroupBy(groupBy).Select(g => new KeyValuePair<U, List<T>>(g.Key, g.ToList()));
-
-    Debug.Log(splitList.Count());
-
 
     foreach (var entry in splitList) {
       DrawList(getGroupLabel(entry.Key), entry.Value, drawControls, createFunc);
@@ -81,8 +75,6 @@ public static class EditorDrawingUtility {
     var tmp = splitList.SelectMany(kvp => kvp.Value).ToArray();
     list.Clear();
     list.AddRange(tmp);
-
-    Debug.Log(list.Count);
 
     EditorGUILayout.EndVertical();
   }

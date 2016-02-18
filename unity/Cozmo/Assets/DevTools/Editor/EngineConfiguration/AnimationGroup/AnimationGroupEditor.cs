@@ -187,12 +187,16 @@ public class AnimationGroupEditor : EditorWindow {
   }
 
   public AnimationGroup.AnimationGroupEntry DrawAnimationGroupEntry(AnimationGroup.AnimationGroupEntry entry) {
+    EditorGUILayout.BeginVertical();
     entry.Name = _AnimationNameOptions[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(_AnimationNameOptions, entry.Name)), _AnimationNameOptions)];
 
+    EditorGUILayout.BeginHorizontal();
     entry.Mood = (Anki.Cozmo.SimpleMoodType)EditorGUILayout.EnumPopup("Mood", entry.Mood);
 
     entry.Weight = EditorGUILayout.FloatField("Weight", entry.Weight);
-
+    entry.CooldownTime_Sec = EditorGUILayout.FloatField("Cooldown (Seconds)", entry.CooldownTime_Sec);   
+    EditorGUILayout.EndHorizontal();
+    EditorGUILayout.EndVertical();
     return entry;
   }
     

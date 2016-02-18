@@ -16,6 +16,8 @@ namespace AnimationGroups {
 
       public float Weight = 1;
 
+      public float CooldownTime_Sec;
+
       public SimpleMoodType Mood;
     }
   }
