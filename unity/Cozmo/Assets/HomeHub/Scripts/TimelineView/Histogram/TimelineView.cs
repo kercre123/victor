@@ -70,9 +70,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private AnkiButton _EndSessionButton;
 
-    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
+    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
 
-    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -307,11 +307,13 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
+      DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
       var summaryPanel = UIManager.OpenView(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
       summaryPanel.Initialize(session);
       if (onComplete != null) {
         summaryPanel.FriendshipBarAnimateComplete += onComplete;
       }
+      summaryPanel.ViewClosed += HandleDailySummaryClosed;
     }
 
     private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
@@ -326,6 +328,11 @@ namespace Cozmo.HomeHub {
         UpdateFriendshipPoints(data, friendshipPoints);
         summaryPanel.AnimateFriendshipBar(data);
       }
+    }
+
+    private void HandleDailySummaryClosed() {
+      this.ViewClosed -= HandleDailySummaryClosed;
+      RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(Anki.Cozmo.BehaviorGroup.MiniGame, true);
     }
 
     #region Daily Goal locking

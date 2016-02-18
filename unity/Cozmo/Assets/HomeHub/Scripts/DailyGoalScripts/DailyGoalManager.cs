@@ -208,7 +208,7 @@ public class DailyGoalManager : MonoBehaviour {
     }
 
     ChallengeData data = _LastChallengeData;
-    // Do not reate the minigame message if the challenge is invalid.
+    // Do not send the minigame message if the challenge is invalid.
     if (data == null) {
       return;
     }
