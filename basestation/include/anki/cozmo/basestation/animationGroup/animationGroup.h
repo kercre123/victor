@@ -36,16 +36,18 @@ namespace Anki {
       
       // For reading animation groups from files
       Result DefineFromJson(const std::string& name, const Json::Value& json);
-      
-      // Retrieve an animation based on a set of moods
-      const std::string& GetAnimationName(const MoodManager& moodManager) const;
-      
+
+      // Retrieve an animation based on the mood manager
+      const std::string& GetAnimationName(const MoodManager& moodManager);
+
       // An animation group is empty if it has no animations
       bool IsEmpty() const;
       
       const std::string& GetName() const { return _name; }
       
     private:
+      // Retrieve an animation based on a simple mood
+      const std::string& GetAnimationName(SimpleMoodType mood, float currentTime_s);
       
       // Name of this animation
       std::string _name;

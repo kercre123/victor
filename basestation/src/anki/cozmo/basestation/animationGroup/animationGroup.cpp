@@ -75,41 +75,59 @@ namespace Anki {
       return _animations.empty();
     }
     
-    const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager) const {
-      static const std::string empty = "";
-      
-      if(IsEmpty()) {
-        return empty;
-      }
+    const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager) {
+      return GetAnimationName(moodManager.GetSimpleMood(), moodManager.GetLastUpdateTime());
+    }
+    
+    const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood, float currentTime_s) {
       
       Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
       
-      float totalWeight = 0;
-      SimpleMoodType mood = moodManager.GetSimpleMood();
+      float totalWeight = 0.0f;
+      
+      std::vector<std::vector<AnimationGroupEntry>::iterator> availableAnimations;
       
       for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
       {
-        if(entry->GetMood() == mood) {
+        if(entry->GetMood() == mood && !entry->IsInCooldown(currentTime_s)) {
           totalWeight += entry->GetWeight();
+          availableAnimations.emplace_back(entry);
         }
       }
       
       float weightedSelection = rng.RandDbl(totalWeight);
       
-      for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
+      auto lastEntry = _animations.end();
+      
+      for (auto entry : availableAnimations)
       {
         if(entry->GetMood() == mood) {
-          if(weightedSelection <= entry->GetWeight()) {
+          
+          if(weightedSelection < entry->GetWeight()) {
+            entry->StartCooldown(currentTime_s);
             return entry->GetName();
           }
           else {
+            lastEntry = entry;
             weightedSelection -= entry->GetWeight();
           }
         }
       }
       
-      // This should be impossible.
-      return empty;
+      // Possible that if weightedSelection == totalWeight, we wouldn't
+      // select any, so return the last one if its not the end
+      if(lastEntry != _animations.end()) {
+        lastEntry->StartCooldown(currentTime_s);
+        return lastEntry->GetName();
+      }
+      
+      if(mood == SimpleMoodType::Default) {
+        static const std::string empty = "";
+        return empty;
+      }
+      else {
+        return GetAnimationName(SimpleMoodType::Default, currentTime_s);
+      }
     }
     
   } // namespace Cozmo

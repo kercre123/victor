@@ -97,17 +97,9 @@ public:
     return GetEmotion(emotionType).GetDeltaRecentSeconds(secondsBackwards);
   }
   
-  SimpleMoodType GetSimpleMood() const {
-    float happiness = GetEmotion(EmotionType::Happy).GetValue();
-    if(happiness < -0.33) {
-      return SimpleMoodType::Sad;
-    }
-    if(happiness > 0.33) {
-      return SimpleMoodType::Happy;
-    }
-    return SimpleMoodType::Default;
-  }
-
+  SimpleMoodType GetSimpleMood() const;
+  
+  double GetLastUpdateTime() const { return _lastUpdateTime; }
   
   // ==================== Event/Message Handling ====================
   

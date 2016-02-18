@@ -34,133 +34,95 @@ static const char* kNoAnimationJson =
 "}";
 
 
-static const char* kOneAnimationNoScorersJson =
+static const char* kOneAnimationDefaultMoodJson =
 "{"
 "  \"Animations\": ["
 "    {"
 "      \"Name\": \"majorWin\","
-"      \"MoodScorer\": []"
+"      \"Mood\": \"Default\","
+"      \"Weight\": 1.0"
 "    }"
 "  ]"
 "}";
 
-static const char* kOneAnimationOneScorerJson =
+static const char* kOneAnimationDefaultMoodCooldownJson =
 "{"
 "  \"Animations\": ["
 "    {"
 "      \"Name\": \"majorWin\","
-"      \"MoodScorer\": ["
-"        {"
-"          \"emotionType\": \"Happy\","
-"          \"trackDelta\": false,"
-"          \"scoreGraph\": {"
-"            \"nodes\": ["
-"              {"
-"                \"x\": -1.0,"
-"                \"y\": 0.0"
-"              },"
-"              {"
-"                \"x\": 1.0,"
-"                \"y\": 1.0"
-"              }"
-"            ]"
-"          }"
-"        }"
-"      ]"
+"      \"Mood\": \"Default\","
+"      \"Weight\": 1.0,"
+"      \"CooldownTime_Sec\": 10.0"
 "    }"
 "  ]"
 "}";
 
-static const char* kTwoAnimationsNoScorersJson =
+static const char* kOneAnimationDefaultMoodUnweightedJson =
 "{"
 "  \"Animations\": ["
 "    {"
 "      \"Name\": \"majorWin\","
-"      \"MoodScorer\": []"
+"      \"Mood\": \"Default\","
+"      \"Weight\": 0.0"
+"    }"
+"  ]"
+"}";
+
+static const char* kOneAnimationHappyMoodJson =
+"{"
+"  \"Animations\": ["
+"    {"
+"      \"Name\": \"majorWin\","
+"      \"Mood\": \"Happy\","
+"      \"Weight\": 1.0"
+"    }"
+"  ]"
+"}";
+
+static const char* kTwoAnimationsDefaultMoodsJson =
+"{"
+"  \"Animations\": ["
+"    {"
+"      \"Name\": \"majorWin\","
+"      \"Mood\": \"Default\","
+"      \"Weight\": 1.0"
 "    },"
 "    {"
 "      \"Name\": \"majorWinBeatBox\","
-"      \"MoodScorer\": []"
+"      \"Mood\": \"Default\","
+"      \"Weight\": 1.0"
 "    }"
 "  ]"
 "}";
 
-static const char* kTwoAnimationsTwoScorersJson =
+static const char* kTwoAnimationsHappyDefaultMoodsJson =
 "{"
 "  \"Animations\": ["
 "    {"
 "      \"Name\": \"majorWin\","
-"      \"MoodScorer\": ["
-"        {"
-"          \"emotionType\": \"Happy\","
-"          \"trackDelta\": false,"
-"          \"scoreGraph\": {"
-"            \"nodes\": ["
-"              {"
-"                \"x\": -1.0,"
-"                \"y\": 0.0"
-"              },"
-"              {"
-"                \"x\": 1.0,"
-"                \"y\": 1.0"
-"              }"
-"            ]"
-"          }"
-"        },"
-"        {"
-"          \"emotionType\": \"Calm\","
-"          \"trackDelta\": false,"
-"          \"scoreGraph\": {"
-"            \"nodes\": ["
-"              {"
-"                \"x\": -1.0,"
-"                \"y\": 0.0"
-"              },"
-"              {"
-"                \"x\": 1.0,"
-"                \"y\": 1.0"
-"              }"
-"            ]"
-"          }"
-"        }"
-"      ]"
+"      \"Mood\": \"Happy\","
+"      \"Weight\": 1.0"
 "    },"
 "    {"
 "      \"Name\": \"majorWinBeatBox\","
-"      \"MoodScorer\": ["
-"        {"
-"          \"emotionType\": \"Happy\","
-"          \"trackDelta\": false,"
-"          \"scoreGraph\": {"
-"            \"nodes\": ["
-"              {"
-"                \"x\": -1.0,"
-"                \"y\": 1.0"
-"              },"
-"              {"
-"                \"x\": 1.0,"
-"                \"y\": 0.0"
-"              }"
-"            ]"
-"          }"
-"        },"
-"        {"
-"          \"emotionType\": \"Calm\","
-"          \"trackDelta\": false,"
-"          \"scoreGraph\": {"
-"            \"nodes\": ["
-"              {"
-"                \"x\": -1.0,"
-"                \"y\": 1.0"
-"              },"
-"              {"
-"                \"x\": 1.0,"
-"                \"y\": 0.0"
-"              }"
-"            ]"
-"          }"
-"        }"
-"      ]"
+"      \"Mood\": \"Default\","
+"      \"Weight\": 1.0"
+"    }"
+"  ]"
+"}";
+
+static const char* kTwoAnimationsHappySadMoodsJson =
+"{"
+"  \"Animations\": ["
+"    {"
+"      \"Name\": \"majorWin\","
+"      \"Mood\": \"Happy\","
+"      \"Weight\": 1.0"
+"    },"
+"    {"
+"      \"Name\": \"majorWinBeatBox\","
+"      \"Mood\": \"Sad\","
+"      \"Weight\": 1.0"
 "    }"
 "  ]"
 "}";
@@ -200,13 +162,15 @@ TEST(AnimationGroup, DeserializeAnimationGroup)
 {
   DeserializeAnimationGroupFromJson(kNoAnimationJson);
 
-  DeserializeAnimationGroupFromJson(kOneAnimationNoScorersJson);
+  DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodJson);
   
-  DeserializeAnimationGroupFromJson(kOneAnimationOneScorerJson);
+  DeserializeAnimationGroupFromJson(kOneAnimationHappyMoodJson);
 
-  DeserializeAnimationGroupFromJson(kTwoAnimationsNoScorersJson);
+  DeserializeAnimationGroupFromJson(kTwoAnimationsDefaultMoodsJson);
   
-  DeserializeAnimationGroupFromJson(kTwoAnimationsTwoScorersJson);
+  DeserializeAnimationGroupFromJson(kTwoAnimationsHappyDefaultMoodsJson);
+  
+  DeserializeAnimationGroupFromJson(kTwoAnimationsHappySadMoodsJson);
 }
 
 TEST(AnimationGroupContainer, AnimationGroupContainerDeserialization)
@@ -216,24 +180,24 @@ TEST(AnimationGroupContainer, AnimationGroupContainerDeserialization)
   
   EXPECT_EQ(1, container.GetAnimationGroupNames().size());
   
-  DeserializeAnimationGroupContainerFromJson(container, "b", kOneAnimationNoScorersJson);
+  DeserializeAnimationGroupContainerFromJson(container, "b", kOneAnimationDefaultMoodJson);
 
   EXPECT_EQ(2, container.GetAnimationGroupNames().size());
 
-  DeserializeAnimationGroupContainerFromJson(container, "c", kOneAnimationOneScorerJson);
+  DeserializeAnimationGroupContainerFromJson(container, "c", kOneAnimationHappyMoodJson);
 
   EXPECT_EQ(3, container.GetAnimationGroupNames().size());
 
-  DeserializeAnimationGroupContainerFromJson(container, "d", kTwoAnimationsNoScorersJson);
+  DeserializeAnimationGroupContainerFromJson(container, "d", kTwoAnimationsDefaultMoodsJson);
 
   EXPECT_EQ(4, container.GetAnimationGroupNames().size());
 
-  DeserializeAnimationGroupContainerFromJson(container, "e", kTwoAnimationsTwoScorersJson);
+  DeserializeAnimationGroupContainerFromJson(container, "e", kTwoAnimationsHappyDefaultMoodsJson);
 
   EXPECT_EQ(5, container.GetAnimationGroupNames().size());
   
   // Redeserialize the last one
-  DeserializeAnimationGroupContainerFromJson(container, "e", kTwoAnimationsTwoScorersJson);
+  DeserializeAnimationGroupContainerFromJson(container, "e", kTwoAnimationsHappyDefaultMoodsJson);
   
   EXPECT_EQ(5, container.GetAnimationGroupNames().size());
   
@@ -243,7 +207,7 @@ TEST(AnimationGroupContainer, AnimationGroupContainerDeserialization)
   EXPECT_EQ(0, container.GetAnimationGroupNames().size());
   
   // now redeserialize the last one.
-  DeserializeAnimationGroupContainerFromJson(container, "e", kTwoAnimationsTwoScorersJson);
+  DeserializeAnimationGroupContainerFromJson(container, "e", kTwoAnimationsHappyDefaultMoodsJson);
   
   EXPECT_EQ(1, container.GetAnimationGroupNames().size());
 
@@ -263,7 +227,110 @@ TEST(AnimationGroup, GetOneAnimationName)
 {
   MoodManager moodManager;
   
-  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationNoScorersJson);
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodJson);
+  
+  auto name = group.GetAnimationName(moodManager);
+  
+  EXPECT_EQ(kMajorWin, name);
+}
+
+TEST(AnimationGroup, GetDefaultAnimationName)
+{
+  MoodManager moodManager;
+  
+  moodManager.SetEmotion(EmotionType::Happy, 0.5);
+  
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodJson);
+  
+  auto name = group.GetAnimationName(moodManager);
+  
+  EXPECT_EQ(kMajorWin, name);
+}
+
+TEST(AnimationGroup, GetAnimationNameBeforeCooldown)
+{
+  MoodManager moodManager;
+  
+  moodManager.SetEmotion(EmotionType::Happy, 0.5);
+  
+  moodManager.Update(0);
+  
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
+  
+  auto name = group.GetAnimationName(moodManager);
+  
+  EXPECT_EQ(kMajorWin, name);
+  
+  moodManager.Update(5);
+  
+  name = group.GetAnimationName(moodManager);
+  
+  const std::string empty = "";
+  EXPECT_EQ(empty, name);
+}
+
+TEST(AnimationGroup, GetAnimationNameOnCooldown)
+{
+  MoodManager moodManager;
+  
+  moodManager.SetEmotion(EmotionType::Happy, 0.5);
+  
+  moodManager.Update(0);
+  
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
+  
+  auto name = group.GetAnimationName(moodManager);
+  
+  EXPECT_EQ(kMajorWin, name);
+  
+  moodManager.Update(10);
+  
+  name = group.GetAnimationName(moodManager);
+  
+  EXPECT_EQ(kMajorWin, name);
+}
+
+TEST(AnimationGroup, GetAnimationNameAfterCooldown)
+{
+  MoodManager moodManager;
+  
+  moodManager.SetEmotion(EmotionType::Happy, 0.5);
+  
+  moodManager.Update(0);
+  
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
+  
+  auto name = group.GetAnimationName(moodManager);
+  
+  EXPECT_EQ(kMajorWin, name);
+  
+  moodManager.Update(15);
+  
+  name = group.GetAnimationName(moodManager);
+  
+  EXPECT_EQ(kMajorWin, name);
+}
+
+TEST(AnimationGroup, GetDefaultAnimationNameUnweighted)
+{
+  MoodManager moodManager;
+  
+  moodManager.SetEmotion(EmotionType::Happy, 0.5);
+  
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodUnweightedJson);
+  
+  auto name = group.GetAnimationName(moodManager);
+  
+  EXPECT_EQ(kMajorWin, name);
+}
+
+TEST(AnimationGroup, GetOneHappyAnimationName)
+{
+  MoodManager moodManager;
+  
+  moodManager.SetEmotion(EmotionType::Happy, 0.5);
+  
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationHappyMoodJson);
   
   auto name = group.GetAnimationName(moodManager);
   
@@ -283,11 +350,24 @@ TEST(AnimationGroup, GetNoAnimationName)
   EXPECT_EQ(empty, name);
 }
 
+TEST(AnimationGroup, GetNoDefaultAnimationName)
+{
+  MoodManager moodManager;
+  
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationHappyMoodJson);
+  
+  auto name = group.GetAnimationName(moodManager);
+  
+  const std::string empty = "";
+  
+  EXPECT_EQ(empty, name);
+}
+
 // run a maximum of 100 times. It should be a 50-50 chance of getting
 // either name, so the chance of getting the same one all 100 times
 // is astronomical.
-void TestTwoAnimations100Times(const MoodManager& moodManager, bool& foundMajorWin, bool& foundMajorWinBeatBox) {
-  AnimationGroup group = DeserializeAnimationGroupFromJson(kTwoAnimationsTwoScorersJson);
+void TestTwoAnimations100Times(const char* json, const MoodManager& moodManager, bool& foundMajorWin, bool& foundMajorWinBeatBox) {
+  AnimationGroup group = DeserializeAnimationGroupFromJson(json);
 
   for(int i = 0; i < 100; i++) {
     
@@ -298,82 +378,76 @@ void TestTwoAnimations100Times(const MoodManager& moodManager, bool& foundMajorW
   }
 }
 
-TEST(AnimationGroup, GetOneOfTwoAnimationNames)
+TEST(AnimationGroup, GetEitherAnimationNameOfTwo)
 {
   MoodManager moodManager;
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(foundMajorWin);
   EXPECT_TRUE(foundMajorWinBeatBox);
 }
 
-TEST(AnimationGroup, GetFirstAnimationNameWithOneEmotions)
+
+TEST(AnimationGroup, GetEitherDefaultAnimationNameOfTwo)
 {
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  
+  EXPECT_TRUE(foundMajorWin);
+  EXPECT_TRUE(foundMajorWinBeatBox);
+}
+
+TEST(AnimationGroup, GetNeitherAnimationNameOfTwo)
+{
+  MoodManager moodManager;
+  
+  bool foundMajorWin = false, foundMajorWinBeatBox = false;
+  TestTwoAnimations100Times(kTwoAnimationsHappySadMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  
+  EXPECT_TRUE(!foundMajorWin);
+  EXPECT_TRUE(!foundMajorWinBeatBox);
+}
+
+
+TEST(AnimationGroup, GetFirstAnimationNameOfTwo)
+{
+  MoodManager moodManager;
+  
+  moodManager.SetEmotion(EmotionType::Happy, 0.5);
+  
+  bool foundMajorWin = false, foundMajorWinBeatBox = false;
+  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(foundMajorWin);
   EXPECT_TRUE(!foundMajorWinBeatBox);
 }
 
-TEST(AnimationGroup, GetSecondAnimationNameWithOneEmotions)
+TEST(AnimationGroup, GetSecondAnimationNameOfTwo)
+{
+  MoodManager moodManager;
+  
+  bool foundMajorWin = false, foundMajorWinBeatBox = false;
+  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
+  
+  EXPECT_TRUE(!foundMajorWin);
+  EXPECT_TRUE(foundMajorWinBeatBox);
+}
+
+TEST(AnimationGroup, GetDefaultAnimationNameOfTwo)
 {
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, -0.5);
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(moodManager, foundMajorWin, foundMajorWinBeatBox);
+  TestTwoAnimations100Times(kTwoAnimationsHappyDefaultMoodsJson, moodManager, foundMajorWin, foundMajorWinBeatBox);
   
   EXPECT_TRUE(!foundMajorWin);
-  EXPECT_TRUE(foundMajorWinBeatBox);
-}
-
-TEST(AnimationGroup, GetFirstAnimationNameWithTwoEmotions)
-{
-  MoodManager moodManager;
-  
-  moodManager.SetEmotion(EmotionType::Happy, 0.5);
-  moodManager.SetEmotion(EmotionType::Calm, 0.5);
-  
-  bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(moodManager, foundMajorWin, foundMajorWinBeatBox);
-  
-  EXPECT_TRUE(foundMajorWin);
-  EXPECT_TRUE(!foundMajorWinBeatBox);
-}
-
-TEST(AnimationGroup, GetSecondAnimationNameWithTwoEmotions)
-{
-  MoodManager moodManager;
-  
-  moodManager.SetEmotion(EmotionType::Happy, -0.5);
-  moodManager.SetEmotion(EmotionType::Calm, -0.5);
-  
-  bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(moodManager, foundMajorWin, foundMajorWinBeatBox);
-  
-  EXPECT_TRUE(!foundMajorWin);
-  EXPECT_TRUE(foundMajorWinBeatBox);
-}
-
-
-TEST(AnimationGroup, GetOneOfTwoAnimationNamesWithTwoEmotions)
-{
-  MoodManager moodManager;
-  
-  moodManager.SetEmotion(EmotionType::Happy, 0.5);
-  moodManager.SetEmotion(EmotionType::Calm, -0.5);
-  
-  bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(moodManager, foundMajorWin, foundMajorWinBeatBox);
-  
-  EXPECT_TRUE(foundMajorWin);
   EXPECT_TRUE(foundMajorWinBeatBox);
 }

@@ -24,8 +24,10 @@ namespace Anki {
     static const char* kNameKey = "Name";
     static const char* kWeightKey = "Weight";
     static const char* kMoodKey = "Mood";
+    static const char* kCooldownKey = "CooldownTime_Sec";
     
-    AnimationGroupEntry::AnimationGroupEntry()
+    AnimationGroupEntry::AnimationGroupEntry() :
+    _lastUsedTime_s(-FLT_MAX)
     {
     }
     
@@ -70,6 +72,15 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      const Json::Value& jsonCooldown = jsonRoot[kCooldownKey];
+      
+      // Cooldown is optional
+      if(jsonWeight.isDouble()) {
+        _cooldownTime_s = jsonCooldown.asDouble();
+      }
+      else {
+        _cooldownTime_s = 0;
+      }
       
       return RESULT_OK;
     }
