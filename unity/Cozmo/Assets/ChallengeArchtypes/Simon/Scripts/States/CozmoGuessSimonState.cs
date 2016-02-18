@@ -93,7 +93,7 @@ namespace Simon {
 
     private void CozmoWinGame() {
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, 100, 100, 0, 0);
+        kvp.Value.SetFlashingLEDs(kvp.Value.Lights[0].OnColor, 100, 100, 0);
       }
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
@@ -104,20 +104,12 @@ namespace Simon {
     }
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
-      BlackoutLights();
       _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
-      BlackoutLights();
       _GameInstance.RaiseMiniGameWin(Localization.GetWithArgs(
         LocalizationKeys.kSimonGameTextPatternLength, _CurrentSequence.Count));
-    }
-
-    private void BlackoutLights() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetFlashingLEDs(Color.black, uint.MaxValue, 0, 0);
-      }
     }
   }
 }
