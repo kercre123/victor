@@ -130,15 +130,16 @@ namespace Anki {
                                            NEAR(GetRobotPose().GetTranslation().x(), 191, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 100, 10) &&
                                            GetCarryingObjectID() == -1 &&
-                                           NEAR(pose.GetRotationAxis().x(), 0.0, 0.05) &&
-                                           NEAR(pose.GetRotationAxis().y(), 0.0, 0.05) &&
-                                           (NEAR(pose.GetRotationAxis().z(), 1, 0.05) ||
-                                            NEAR(pose.GetRotationAxis().z(), -1, 0.05)), 10)
+                                           NEAR(pose.GetRotationAxis().x(), 0.0, 0.1) &&
+                                           NEAR(pose.GetRotationAxis().y(), 0.0, 0.1) &&
+                                           (NEAR(pose.GetRotationAxis().z(), 1, 0.1) ||
+                                            NEAR(pose.GetRotationAxis().z(), -1, 0.1)), 10)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 11;
+            m.numRetries = 3;
             // Roll object 0
             m.action.Set_rollObject(ExternalInterface::RollObject(0, motionProfile, 0, false, true, false));
             ExternalInterface::MessageGameToEngine message;
@@ -159,14 +160,14 @@ namespace Anki {
                                              NEAR(pose.GetRotationAxis().z(), 0.707, 0.1)) ||
                                             (NEAR(pose.GetRotationAxis().x(), -0.707, 0.1) &&
                                              NEAR(pose.GetRotationAxis().z(), -0.707, 0.1))) &&
-                                           NEAR(pose.GetRotationAxis().y(), 0.0, 0.05), 20)
+                                           NEAR(pose.GetRotationAxis().y(), 0.0, 0.1), 30)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 12;
             m.parallel = false;
-            m.numRetries = 2;
+            m.numRetries = 3;
             // Pickup object 1
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(1, motionProfile, 0, false, true, false));
             // Wait a few seconds to see the block behind the one we just picked up
@@ -192,9 +193,9 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
                                            NEAR(pose0.GetTranslation().z(), 65, 10) &&
-                                           NEAR(pose1.GetTranslation().z(), 22, 5) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 166, 20) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), -88, 20), 20)
+                                           NEAR(pose1.GetTranslation().z(), 22, 10) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 170, 30) &&
+                                           NEAR(GetRobotPose().GetTranslation().y(), -88, 20), 30)
           {
             CST_EXIT();
           }

@@ -203,8 +203,8 @@ namespace Anki {
     {
       if (msg.result == ActionResult::SUCCESS) {
         _lastActionSucceeded = true;
-      // 12 is the id of the action that can fail due to timeout
-      } else if(msg.result == ActionResult::FAILURE_TIMEOUT && msg.idTag == 12) {
+      // 12 is the id of the action that can fail due to not seeing the second block when stacking
+      } else if(msg.idTag == 12) {
         PRINT_NAMED_WARNING("", "Failed with timeout saying success");
         _actionFailed = true;
       }

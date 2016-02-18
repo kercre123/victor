@@ -124,7 +124,7 @@ namespace Anki {
         {
           // Verify robot is 50 mm forwards
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 50, 5), 5)
+                                           NEAR(GetRobotPose().GetTranslation().x(), 50, 10), 5)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -143,8 +143,8 @@ namespace Anki {
         {
           // Verify robot is at starting point
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 5) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 5), 5)
+                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 10) &&
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), 5)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -163,7 +163,7 @@ namespace Anki {
         {
           // Verify robot turned to 90 degrees
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 5), 5)
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 10), 5)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -182,7 +182,7 @@ namespace Anki {
         {
           // Verify robot turned back to 0 degrees
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 5), 5)
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), 5)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -201,8 +201,8 @@ namespace Anki {
         {
           // Verify robot turned 180 degrees and head is at right angle
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 5) ||
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 5)) &&
+                                           (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10) ||
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 10)) &&
                                            NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL), 5)
           {
             ExternalInterface::QueueSingleAction m;
@@ -244,7 +244,7 @@ namespace Anki {
         {
           // Verify robot is facing the object
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 5) &&
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 0, 10), 5)
           {
             CST_EXIT();
