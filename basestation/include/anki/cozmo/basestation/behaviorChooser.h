@@ -26,6 +26,11 @@
 #include <functional>
 
 
+namespace Json {
+  class Value;
+}
+
+
 namespace Anki {
 namespace Cozmo {
   
@@ -58,7 +63,9 @@ public:
   
   virtual void EnableAllBehaviors(bool newVal = true) = 0;
   virtual void EnableBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) = 0;
-  virtual void EnableBehavior(const std::string& behaviorName, bool newVal = true) = 0;
+  virtual bool EnableBehavior(const std::string& behaviorName, bool newVal = true) = 0;
+  
+  virtual void InitEnabledBehaviors(const Json::Value& inJson) = 0;
 
 }; // class IBehaviorChooser
   
@@ -88,7 +95,9 @@ public:
   
   virtual void EnableAllBehaviors(bool newVal = true) override;
   virtual void EnableBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) override;
-  virtual void EnableBehavior(const std::string& behaviorName, bool newVal = true) override;
+  virtual bool EnableBehavior(const std::string& behaviorName, bool newVal = true) override;
+  
+  void InitEnabledBehaviors(const Json::Value& inJson) override;
   
   // We need to clean up the behaviors we've been given to hold onto
   virtual ~SimpleBehaviorChooser();
