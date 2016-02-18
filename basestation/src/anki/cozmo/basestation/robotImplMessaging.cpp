@@ -258,6 +258,10 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
                        "Object %d (activeID %d, factoryID 0x%x)",
                        objID.GetValue(), payload.objectID, payload.factoryID);
+      
+      // Turn off lights upon connection
+      std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
+      SendRobotMessage<CubeLights>(lights, payload.objectID);
     }
   } else {
     // Remove cube from blockworld if it exists
