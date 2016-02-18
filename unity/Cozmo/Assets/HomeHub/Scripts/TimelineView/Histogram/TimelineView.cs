@@ -91,6 +91,7 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     DailySummaryPanel _DailySummaryPrefab;
+    DailySummaryPanel _DailySummaryInstance;
 
     [SerializeField]
     CozmoWidget _CozmoWidgetPrefab;
@@ -100,6 +101,7 @@ namespace Cozmo.HomeHub {
     private float _ScrollLockedOffset;
 
     protected override void CleanUp() {
+      _DailySummaryInstance.CloseView();
       _ScrollRect.onValueChanged.RemoveAllListeners();
     }
 
@@ -307,8 +309,12 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
+      if (_DailySummaryInstance != null) {
+        return;
+      }
       DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
       var summaryPanel = UIManager.OpenView(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
+      _DailySummaryInstance = summaryPanel;
       summaryPanel.Initialize(session);
       if (onComplete != null) {
         summaryPanel.FriendshipBarAnimateComplete += onComplete;
@@ -331,8 +337,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleDailySummaryClosed() {
-      this.ViewClosed -= HandleDailySummaryClosed;
-      RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(Anki.Cozmo.BehaviorGroup.MiniGame, true);
+      DailyGoalManager.Instance.SetMinigameNeed();
     }
 
     #region Daily Goal locking
