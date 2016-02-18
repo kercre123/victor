@@ -29,7 +29,7 @@ Once you set your paths you need to restart your terminal for the settings to ta
 
 ### Unity
 
-We are using [Unity 5.3.2](http://unity3d.com/get-unity/download/archive).
+We are using [Unity 5.3.1](http://unity3d.com/get-unity/download/archive).
 
 A dev scene that includes a simple list of challenges for Cozmo. Useful for skipping the metagame stuff to work on the individual challenges.
 
