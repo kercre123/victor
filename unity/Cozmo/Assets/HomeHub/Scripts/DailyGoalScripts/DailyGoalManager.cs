@@ -127,14 +127,15 @@ public class DailyGoalManager : MonoBehaviour {
   /// <returns>The minigame need.</returns>
   public void SetMinigameNeed() {
     // Calculate how far you are from 50% complete
-    float prog = Math.Abs((GetTodayProgress() * 2.0f) - 1);
+    float prog = (GetTodayProgress() * 2.0f) - 1.0f;
     // Min desire to play if daily goals are complete
     if (prog >= _kMinigameNeedMax) {
       prog = 0.0f;
     }
+    prog = Math.Abs(prog);
     prog = Mathf.Lerp(_kMinigameNeedMin, _kMinigameNeedMax, prog);
     PickMiniGameToRequest();
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(EmotionType.WantToPlay, prog, "DailyGoalProgress");
+    RobotEngineManager.Instance.CurrentRobot.SetEmotion(EmotionType.WantToPlay, prog);
   }
 
   #endregion
@@ -227,7 +228,6 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
     DisableRequestGameBehaviorGroups();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
@@ -237,14 +237,12 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleMiniGameConfirm() {
     DAS.Info(this, "HandleMiniGameConfirm");
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
     DisableRequestGameBehaviorGroups();
     MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
     DAS.Info(this, "HandleExternalRejection"); 
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
     DisableRequestGameBehaviorGroups();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
