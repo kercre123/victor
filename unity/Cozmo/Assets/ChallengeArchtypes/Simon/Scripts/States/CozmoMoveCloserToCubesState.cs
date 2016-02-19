@@ -29,7 +29,7 @@ namespace Simon {
 
       // Add the vector to the center of the blocks to figure out the target world position
       _TargetPosition = _CubeMidpoint + (-perpendicularToCubes.normalized * kTargetDistance);
-      float targetAngle = Mathf.Atan2(perpendicularToCubes.y, perpendicularToCubes.x);
+      float targetAngle = Mathf.Atan2(perpendicularToCubes.y, perpendicularToCubes.x) * Mathf.Rad2Deg;
       _TargetRotation = Quaternion.Euler(0, 0, targetAngle);
 
       MoveToTargetLocation(_TargetPosition, _TargetRotation);
