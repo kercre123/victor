@@ -26,6 +26,7 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
+#include "anki/common/basestation/utils/timer.h"
 #include <functional>
 
 // Whether or not to handle prox obstacle events
@@ -524,7 +525,14 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
     Vision::ImageRGB image(height,width,cvImg.data);
     image.SetTimestamp(payload.frameTimeStamp);
-
+    
+    /* For help debugging COZMO-694:
+    PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
+                     "About to process image: robot timestamp %d, message time %f, basestation timestamp %d",
+                     image.GetTimestamp(), message.GetCurrentTime(),
+                     BaseStationTimer::getInstance()->GetCurrentTimeStamp());
+     */
+    
 #   if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
     // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`
     static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
