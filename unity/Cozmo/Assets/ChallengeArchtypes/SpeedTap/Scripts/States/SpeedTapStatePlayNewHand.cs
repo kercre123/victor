@@ -124,9 +124,7 @@ namespace SpeedTap {
 
     void CozmoDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.cozmo_tap", "");
-      if (_SpeedTapGame.PlayerTap == false) {
-        _StateMachine.SetNextState(new SpeedTapCozmoWins());
-      }
+      _StateMachine.SetNextState(new SpeedTapCozmoWins());
     }
 
     void PlayerDidTap() {

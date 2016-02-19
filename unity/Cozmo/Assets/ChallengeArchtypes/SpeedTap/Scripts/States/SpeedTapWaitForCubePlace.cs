@@ -31,7 +31,7 @@ namespace SpeedTap {
         return;
       }
 
-      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 60f, HandleGotoObjectComplete);
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 50f, HandleGotoObjectComplete);
 
       if (_ShowHowToPlay) {
         _StateMachine.PushSubState(new HowToPlayState(null));

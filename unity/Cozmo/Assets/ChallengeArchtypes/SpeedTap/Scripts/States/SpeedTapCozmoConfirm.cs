@@ -6,7 +6,7 @@ namespace SpeedTap {
   public class SpeedTapCozmoConfirm : State {
 
     private SpeedTapGame _SpeedTapGame = null;
-    private float _DriveTime = 1.2f;
+    private float _DriveTime = 1.5f;
 
     public override void Enter() {
       base.Enter();
@@ -20,7 +20,6 @@ namespace SpeedTap {
       if (_DriveTime < 0.0f) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kSpeedTap_Tap_01, HandleTapDone));
       }
-
     }
 
     private void HandleTapDone(bool success) {
@@ -31,6 +30,7 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
+      _SpeedTapGame.PlayPos = _CurrentRobot.WorldPosition;
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
   }
