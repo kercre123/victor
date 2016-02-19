@@ -46,14 +46,12 @@ void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, size_t sampleCount 
   // Pad the back of the buffer with 0s
   // This should only apply to the last frame
   if (sampleCount < static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE )) {
-    PRINT_NAMED_DEBUG("RobotAudioBuffer.UpdateBuffer", "Pad audioSample remaining bytes - current size %zu of %d", sampleCount,AnimConstants::AUDIO_SAMPLE_SIZE);
     std::fill( audioSample.sample.begin() + sampleCount, audioSample.sample.end(), 0 );
   }
   
   ASSERT_NAMED( nullptr!= _currentStream, "Must pass a Robot Audio Buffer Stream object" );
   RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( audioSample ) );
   
-  PRINT_NAMED_DEBUG("RobotAudioBuffer.UpdateBuffer", "PushRobotAudioMessage - AudioSample size: %zu", audioSample.Size());
   _currentStream->PushRobotAudioMessage( audioMsg );
 }
 

@@ -255,7 +255,7 @@ namespace Anki {
       
       bool isValid = (numChannels == 1) // mono
                       && (format == 1) // PCM
-                      && (sampleRateHz == 24000)
+                      && (sampleRateHz == static_cast<uint32_t>(AnimConstants::AUDIO_SAMPLE_RATE))
                       && (bitsPerSample == 16);
       
       //PRINT_NAMED_INFO("SoundManager.IsValidRobotAudio.WavProperties",

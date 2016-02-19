@@ -24,9 +24,9 @@ namespace Anki {
 namespace Cozmo {
   
 CONSOLE_VAR(uint8_t, kEmcMaxBorderGoals, "BehaviorExploreMarkedCube", 1); // max number of goals to ask the planner
-CONSOLE_VAR(uint8_t, kEmcDistanceMinFactor, "BehaviorExploreMarkedCube", 2.0f); // minimum factor applied to the robot size to find destination from border center
-CONSOLE_VAR(uint8_t, kEmcDistanceMaxFactor, "BehaviorExploreMarkedCube", 4.0f); // maximum factor applied to the robot size to find destination from border center
-CONSOLE_VAR(uint8_t, kEmcDrawDebugInfo, "BehaviorExploreMarkedCube", false); // if set to true the behavior renders debug privimitives
+CONSOLE_VAR(float, kEmcDistanceMinFactor, "BehaviorExploreMarkedCube", 2.0f); // minimum factor applied to the robot size to find destination from border center
+CONSOLE_VAR(float, kEmcDistanceMaxFactor, "BehaviorExploreMarkedCube", 4.0f); // maximum factor applied to the robot size to find destination from border center
+CONSOLE_VAR(bool, kEmcDrawDebugInfo, "BehaviorExploreMarkedCube", false); // if set to true the behavior renders debug privimitives
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config)
