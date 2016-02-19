@@ -103,16 +103,11 @@ namespace Anki {
       
       for (auto entry : availableAnimations)
       {
-        if(entry->GetMood() == mood) {
-          
-          if(weightedSelection < entry->GetWeight()) {
-            animationGroupContainer.SetAnimationCooldown(entry->GetName(), currentTime_s + entry->GetCooldown());
-            return entry->GetName();
-          }
-          else {
-            lastEntry = &(*entry);
-            weightedSelection -= entry->GetWeight();
-          }
+        lastEntry = &(*entry);
+        weightedSelection -= entry->GetWeight();
+
+        if(weightedSelection < 0) {
+          break;
         }
       }
       
