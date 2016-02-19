@@ -18,6 +18,7 @@ namespace SpeedTap {
     private float _MatchProbability = 0.35f;
     private float _FakeProbability = 0.25f;
     private float _PeekProbability = 0.40f;
+    private float _AdjustTime = 1.5f;
 
     private bool _LightsOn = false;
     private bool _GotMatch = false;
@@ -36,11 +37,11 @@ namespace SpeedTap {
       _LightsOn = false;
       _SpeedTapGame.PlayerTap = false;
 
-      GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
-      _CurrentRobot.GotoPose(_SpeedTapGame.PlayPos, _CurrentRobot.Rotation, false, false, HandleAdjustDone);
+      _CurrentRobot.DriveWheels(25.0f, 25.0f);
     }
 
-    void HandleAdjustDone(bool success) {
+    void AdjustDone() {
+      GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
       _StartTimeMs = Time.time * 1000.0f;
       _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
@@ -52,6 +53,10 @@ namespace SpeedTap {
       base.Update();
       // Wait until _StartTime has been set before considering the round started.
       if (_StartTimeMs == -1.0f) {
+        _AdjustTime -= Time.deltaTime;
+        if (_AdjustTime < 0.0f) {
+          AdjustDone();
+        }
         return;
       }
       float currTimeMs = Time.time * 1000.0f;

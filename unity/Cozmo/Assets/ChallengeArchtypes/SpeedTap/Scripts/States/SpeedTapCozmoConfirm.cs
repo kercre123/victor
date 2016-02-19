@@ -23,6 +23,8 @@ namespace SpeedTap {
     }
 
     private void HandleTapDone(bool success) {
+      _SpeedTapGame.PlayPos = _CurrentRobot.WorldPosition;
+      _SpeedTapGame.PlayRot = _CurrentRobot.Rotation;
       _StateMachine.SetNextState(new SpeedTapPlayerConfirm());
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
       _CurrentRobot.SetLiftHeight(1.0f);
@@ -30,8 +32,6 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      _SpeedTapGame.PlayPos = _CurrentRobot.WorldPosition;
-      _SpeedTapGame.PlayRot = _CurrentRobot.Rotation;
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
   }
