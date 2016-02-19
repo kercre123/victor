@@ -180,16 +180,14 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   Json::Value config;
   config["faceDetection"]["detectionMode"] = "video";
   // Since we're processing faster than real time (using saved images)
-  config["faceRecognition"]["timeBetweenInitialEnrollmentUpdates_sec"] = 0;
+  config["faceRecognition"]["timeBetweenInitialEnrollmentUpdates_sec"] = 0.01;
+  config["faceRecognition"]["recognitionThreshold"] = 600;
   
   for(s32 iReload=0; iReload<2; ++iReload)
   {
     faceTracker = new Vision::FaceTracker(cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                                                           "/config/basestation/vision"),
                                           config);
-    
-    // Enable ongoing enrollment
-    faceTracker->EnableNewFaceEnrollment(-1);
     
     if(iReload > 0) {
       Result loadResult = faceTracker->LoadAlbum("testAlbum");
@@ -203,6 +201,12 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     
     for(auto & test : testDirData)
     {
+      if(test.isForTraining) {
+        faceTracker->EnableNewFaceEnrollment(1);
+      } else {
+        faceTracker->EnableNewFaceEnrollment(0);
+      }
+      
       const char* testDir = test.dirName;
       bool isNameSet = !test.isForTraining;
       
@@ -296,6 +300,11 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
       // Show the system blank frames before next video so it stops tracking
       for(s32 iBlank=0; iBlank<NumBlankFramesBetweenPeople; ++iBlank) {
         Recognize(robot, img, *faceTracker, "", "TestImage", true, idToName);
+        
+        // Since we won't detect anything in these blank frames, we could
+        // move through them too quickly and cause the tracker to persist
+        // across people (??)
+        std::this_thread::sleep_for(std::chrono::milliseconds(15));
         
         // We should not detect faces in any frames past the "lost" count
         if(iBlank >= 2) {
