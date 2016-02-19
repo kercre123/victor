@@ -8,7 +8,6 @@
 
 #include "csharp-binding.h"
 
-#include "anki/cozmo/game/cozmoGame.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
