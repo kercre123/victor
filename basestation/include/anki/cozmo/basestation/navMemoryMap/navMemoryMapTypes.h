@@ -15,10 +15,14 @@
 #include "anki/common/basestation/math/point.h"
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
+
+struct INavMemoryMapQuadData;
+
 namespace NavMemoryMapTypes {
 
 // content detected in the map
@@ -35,17 +39,23 @@ enum class EContentType : uint8_t {
 bool ExpectsAdditionalData(EContentType type);
 
 // struct that defines a border
-struct Border {
-  Border() : from{}, to{}, normal{} {}
-  Border(const Point3f& f, const Point3f& t, const Vec3f& n) : from(f), to(t), normal(n) {}
+struct Border
+{
+  using DataType = std::shared_ptr<INavMemoryMapQuadData>;
+  Border() : from{}, to{}, normal{}, extraData(nullptr) {}
+  Border(const Point3f& f, const Point3f& t, const Vec3f& n, const DataType& data) : from(f), to(t), normal(n), extraData(data) {}
+  // -- attributes
   Point3f from;
   Point3f to;
-  Vec3f normal; // perpendicular to the segment, in outwards direction with respect to the content.
   // Note the normal could be embedded in the order 'from->to', but a separate variable makes it easier to use
-  Point3f GetCenter() const { return (from + to) * 0.5f; }
+  Vec3f normal; // perpendicular to the segment, in outwards direction with respect to the content.
+  // additional information for this segment. Can be null if no additional data is available
+  DataType extraData;
+  
+  // calculate segment center point
+  inline Point3f GetCenter() const { return (from + to) * 0.5f; }
 };
 using BorderVector = std::vector<Border>;
-
 
 } // namespace
 } // namespace

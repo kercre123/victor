@@ -146,6 +146,7 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
     EDirection firstNeighborDir = borderCombination.waypoints[0].direction;
     Point3f curOrigin = CalculateBorderWaypointCenter(borderCombination.waypoints[0]);
     Point3f curDest   = curOrigin;
+    const NodeContent* curBorderContentPtr = &(borderCombination.waypoints[0].from->GetContent());
     
     // note: curNeighborDirection could be first, last, average, ... all should yield same result, so I'm doing first
   
@@ -179,6 +180,13 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
         canMergeIntoPreviousLine = dotProduct >= kDotBorderEpsilon;
       }
       
+      // check if the extra data can be shared between the current border and the waypoint we intend to add
+      if ( canMergeIntoPreviousLine ) {
+        const NodeContent& waypointContent = borderCombination.waypoints[idx].from->GetContent();
+        const bool canShareData = ((*curBorderContentPtr) == waypointContent);
+        canMergeIntoPreviousLine = canShareData;
+      }
+      
       //  canMergeIntoPrev ; isEnd ; expected
       //               0        0   ==> AddLine(), origin <- dest, dest <- center
       //               0        1   ==> AddLine(), origin <- dest, dest <- center, AddLine(), resetDir
@@ -193,11 +201,12 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
       {
         // add border
         const EDirection lastNeighborDir = borderCombination.waypoints[idx-1].direction;
-        outBorders.emplace_back( MakeBorder(curOrigin, curDest, firstNeighborDir, lastNeighborDir) );
+        outBorders.emplace_back( MakeBorder(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
         
         // origin <- dest
         curOrigin = curDest;
         firstNeighborDir = lastNeighborDir;
+        curBorderContentPtr = &(borderCombination.waypoints[idx].from->GetContent());
       }
       
       curDest = borderCenter;
@@ -206,7 +215,7 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
       {
         // add border
         const EDirection lastNeighborDir = borderCombination.waypoints[idx].direction;
-        outBorders.emplace_back( MakeBorder(curOrigin, curDest, firstNeighborDir, lastNeighborDir) );
+        outBorders.emplace_back( MakeBorder(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
         
         // if there are more waypoints, reset current data so that the next waypoint doesn't start on us
         const size_t nextIdx = idx+1;
@@ -214,6 +223,7 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
           firstNeighborDir = borderCombination.waypoints[nextIdx].direction;
           curOrigin = CalculateBorderWaypointCenter(borderCombination.waypoints[nextIdx]);
           curDest   = curOrigin;
+          curBorderContentPtr = &(borderCombination.waypoints[nextIdx].from->GetContent());
         }
       }
       
@@ -228,11 +238,11 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
     _vizManager->EraseSegments("NavMeshQuadTreeProcessorBorderSegments");
     for ( const auto& b : outBorders )
     {
-      const Vec3f centerLine = (b.from + b.to)*0.5f;
+      Vec3f centerLine = (b.from + b.to)*0.5f;
       _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
         b.from, b.to, Anki::NamedColors::YELLOW, false, 50.0f);
       _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
-        centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::BLUE, false, 50.0f);
+        centerLine, centerLine+b.normal*5.0f, Anki::NamedColors::BLUE, false, 50.0f);
     }
   }
 }
@@ -388,7 +398,9 @@ Vec3f NavMeshQuadTreeProcessor::CalculateBorderWaypointCenter(const BorderWaypoi
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMemoryMapTypes::Border NavMeshQuadTreeProcessor::MakeBorder(const Point3f& origin, const Point3f& dest,
-  EDirection firstEDirection, EDirection lastEDirection)
+                                              const NavMemoryMapTypes::Border::DataType& data,
+                                              EDirection firstEDirection,
+                                              EDirection lastEDirection)
 {
   // Border.from   = origin
   // Border.to     = dest
@@ -420,7 +432,7 @@ NavMemoryMapTypes::Border NavMeshQuadTreeProcessor::MakeBorder(const Point3f& or
     }
   }
 
-  NavMemoryMapTypes::Border ret{origin, dest, perpendicular};
+  NavMemoryMapTypes::Border ret{origin, dest, perpendicular, data};
   return ret;
 }
 

@@ -31,7 +31,7 @@ INavMemoryMapQuadData* NavMemoryMapQuadData_Cliff::Clone() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMemoryMapQuadData_Cliff::Equals(const INavMemoryMapQuadData* other) const
 {
-  if ( other->type != type ) {
+  if ( other == nullptr || other->type != type ) {
     return false;
   }
 

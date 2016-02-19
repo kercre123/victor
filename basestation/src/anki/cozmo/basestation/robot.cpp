@@ -917,6 +917,11 @@ namespace Anki {
         
       } // if (GetCamera().IsCalibrated())
       
+      ///////// MemoryMap ///////////
+      
+      // update navigation memory map
+      _blockWorld.UpdateNavMemoryMap();        
+      
       ///////// Update the behavior manager ///////////
       
       // TODO: This object encompasses, for the time-being, what some higher level
@@ -1063,9 +1068,6 @@ namespace Anki {
           }
         }
       }
-      
-      // update navigation memory map
-      _blockWorld.UpdateNavMemoryMap();        
       
       /////////// Update visualization ////////////
       

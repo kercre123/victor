@@ -133,7 +133,8 @@ namespace Cozmo {
                        "Will start streaming '%s' animation %d times with tag=%d.\n",
                        _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
 #     endif
-    
+      Anki::Util::sEvent("robot.play_animation", {}, _streamingAnimation->GetName().c_str());
+      
       return _tagCtr;
     }
   }
@@ -1290,7 +1291,8 @@ namespace Cozmo {
     s32 totalNumAudioFramesPlayed = robot.GetNumAnimationAudioFramesPlayed();
     
     bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
-    assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
+    ASSERT_NAMED((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow, ("AnimationStreamer.UpdateAmountToSend totalNumBytesStreamed: " + std::to_string(totalNumBytesStreamed) + "  totalNumBytesPlayed: " + std::to_string(totalNumBytesPlayed) + " overflow: " + (overflow ? "Yes" : "No")).c_str());
+
     
     s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
     if (overflow) {

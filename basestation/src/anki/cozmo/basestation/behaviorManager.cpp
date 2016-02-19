@@ -51,6 +51,8 @@ namespace Cozmo {
 
   }
   
+  static const char* kChooserConfigKey = "chooserConfig";
+  
   Result BehaviorManager::Init(const Json::Value &config)
   {
     BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
@@ -59,7 +61,9 @@ namespace Cozmo {
     
     // TODO: Only load behaviors specified by Json?
     
-    SetupOctDemoBehaviorChooser(config);
+    const Json::Value& chooserConfigJson = config[kChooserConfigKey];
+    
+    SetupOctDemoBehaviorChooser(chooserConfigJson);
     
     if (_robot.HasExternalInterface())
     {
@@ -139,8 +143,7 @@ namespace Cozmo {
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
 
-    // disable mini game request until we get one from unity
-    chooser->EnableBehaviorGroup(BehaviorGroup::MiniGame, false);
+    chooser->InitEnabledBehaviors(config);
 
     // // HACK: enable speed tab requests
     // chooser->EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap, true);
@@ -339,6 +342,8 @@ namespace Cozmo {
         {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
                                  "Selected %s to run next.", _nextBehavior->GetName().c_str());
+          
+          Anki::Util::sEvent("robot.behavior_transition", {{DDATA,_currentBehavior->GetName().c_str()}}, _nextBehavior->GetName().c_str());
         }
       }
     }

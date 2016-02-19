@@ -19,6 +19,9 @@ PROTO WebotsKeyboardController [
   # BehaviorChooser to send
   field SFString behaviorChooserName "InvestorDemoFacesAndBlocks"
 
+  field SFString emotionName "WantToPlay"
+  field SFFloat emotionVal 1.0
+
   field SFString controllerArgs ""
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0

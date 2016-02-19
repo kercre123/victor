@@ -86,6 +86,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleNVData, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::nvResult,
     std::bind(&Robot::HandleNVOpResult, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::robotAvailable,
+                                                     std::bind(&Robot::HandleRobotSetID, this, std::placeholders::_1)));
   
 
   // lambda wrapper to call internal handler
@@ -175,6 +177,15 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
                                                         //       and/or when we do on-engine calibration with images of tool code.
   
   SetPhysicalRobot(payload.isPhysicalRobots);  
+}
+  
+void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
+  // Set DAS Global on all messages
+  char string_id[8];
+  snprintf(string_id, sizeof(string_id), "%08x", payload.robotID);
+  Anki::Util::sSetGlobal(DPHYS, string_id);
 }
 
 void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)
