@@ -77,7 +77,7 @@ void EnrolledFaceEntry::MergeWith(EnrolledFaceEntry& otherEntry)
   
 void EnrolledFaceEntry::FillJson(Json::Value& entry) const
 {
-  entry["oldestDataIndex"]    = oldestData;
+  entry["oldestData"]         = oldestData;
   entry["enrollmentTime"]     = (Json::LargestInt)enrollmentTime;
   entry["lastDataUpdateTime"] = (Json::LargestInt)lastDataUpdateTime;
 }
