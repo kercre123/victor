@@ -359,6 +359,7 @@ namespace Vision {
     */
     _mutex.lock();
     _enrollmentData.emplace(_lastRegisteredUserID, std::move(enrollData));
+    --_numToEnroll;
     _mutex.unlock();
     
     PRINT_NAMED_INFO("FaceRecognizer.RegisterNewUser.Success",
@@ -378,6 +379,13 @@ namespace Vision {
     } else {
       return false;
     }
+  }
+  
+  void FaceRecognizer::EnableNewFaceEnrollment(s32 numToEnroll)
+  {
+    _mutex.lock();
+    _numToEnroll = numToEnroll;
+    _mutex.unlock();
   }
   
   bool FaceRecognizer::SetNextFaceToRecognize(const Image& img,
@@ -503,7 +511,11 @@ namespace Vision {
     
     const INT32 MaxScore = 1000;
     
-    if(numUsersInAlbum == 0 && IsEnrollable()) {
+    _mutex.lock();
+    const bool isEnrollable = IsEnrollable();
+    _mutex.unlock();
+    
+    if(numUsersInAlbum == 0 && isEnrollable) {
       // Nobody in album yet, add this person
       PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.AddingFirstUser",
                        "Adding first user to empty album");
@@ -589,7 +601,7 @@ namespace Vision {
           faceID = oldestID;
           recognitionScore = scores[0];
           
-        } else if(IsEnrollable()) {
+        } else if(isEnrollable) {
           // No match found, add new user
           PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.AddingNewUser",
                            "Observed new person. Adding to album.");

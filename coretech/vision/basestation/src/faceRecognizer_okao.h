@@ -65,7 +65,7 @@ namespace Vision {
     Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName);
     Result SaveAlbum(const std::string& albumName);
 
-    void EnableNewFaceEnrollment(s32 numToEnroll) { _numToEnroll = numToEnroll; }
+    void EnableNewFaceEnrollment(s32 numToEnroll);
     bool IsNewFaceEnrollmentEnabled() const   { return _numToEnroll != 0; }
 
   private:
