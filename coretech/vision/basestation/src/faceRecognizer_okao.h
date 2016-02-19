@@ -83,9 +83,15 @@ namespace Vision {
     
     Result SetSerializedAlbum(HCOMMON okaoCommonHandle, const std::vector<u8>&serializedAlbum);
 
+    // These cannot be changed while running (requires re-init of Okao album)
     static const INT32 MaxAlbumDataPerFace = 10; // can't be more than 10
     static const INT32 MaxAlbumFaces = 100; // can't be more than 1000
-    static const s32   TimeBetweenEnrollmentUpdates_ms = 2000;
+    
+    // Time between adding enrollment data for an existing user. "Initial" version
+    // is used until all the slots are filled.
+    // TODO: Expose as parameters
+    static constexpr f32   TimeBetweenEnrollmentUpdates_sec = 60.f;
+    static constexpr f32   TimeBetweenInitialEnrollmentUpdates_sec = 0.5f;
     
     static_assert(MaxAlbumFaces <= 1000 && MaxAlbumFaces > 1,
                   "MaxAlbumFaces should be between 1 and 1000 for OKAO Library.");

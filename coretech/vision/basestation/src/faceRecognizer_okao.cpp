@@ -387,27 +387,45 @@ namespace Vision {
   {
     Result result = RESULT_OK;
     
+    const time_t updateTime = time(0);
+    
+    
     _mutex.lock();
     
     auto enrollDataIter = _enrollmentData.find(userID);
     ASSERT_NAMED(enrollDataIter != _enrollmentData.end(), "Missing enrollment status");
     auto & enrollData = enrollDataIter->second;
     
-    INT32 okaoResult=  OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID-1, enrollData.oldestData);
+    INT32 numDataStored = 0;
+    INT32 okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, userID-1, &numDataStored);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingUser.RegisterFailed",
-                        "Failed to trying to register data %d for existing user %d",
-                        enrollData.oldestData, userID);
+      PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingUser.GetNumDataFailed",
+                        "Failed to trying to get num data registered for existing user %d",
+                        userID);
       result = RESULT_FAIL;
-    } else {
-      // Update the enrollment data
-      enrollData.enrollmentTime = time(0);
-      enrollData.oldestData++;
-      if(enrollData.oldestData == MaxAlbumDataPerFace) {
-        enrollData.oldestData = 0;
-      }
-      if(_numToEnroll > 0) {
-        --_numToEnroll;
+    }
+    
+    ASSERT_NAMED(numDataStored > 0, "Num data for user should be > 0 if we are updating!");
+    
+    // Only update if it has been long enough (where "long enough" can depend on
+    // whether we've already filled up all data slots yet)
+    auto const timeSinceLastUpdate = updateTime - enrollData.lastDataUpdateTime;
+    if(timeSinceLastUpdate > TimeBetweenEnrollmentUpdates_sec ||
+       ((numDataStored <= MaxAlbumDataPerFace) &&  timeSinceLastUpdate > TimeBetweenInitialEnrollmentUpdates_sec))
+    {
+      okaoResult=  OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID-1, enrollData.oldestData);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingUser.RegisterFailed",
+                          "Failed to trying to register data %d for existing user %d",
+                          enrollData.oldestData, userID);
+        result = RESULT_FAIL;
+      } else {
+        // Update the enrollment data
+        enrollData.lastDataUpdateTime = updateTime;
+        enrollData.oldestData++;
+        if(enrollData.oldestData == MaxAlbumDataPerFace) {
+          enrollData.oldestData = 0;
+        }
       }
     }
     
@@ -501,6 +519,7 @@ namespace Vision {
           INT32 oldestID = userIDs[0];
           
           auto enrollStatusIter = _enrollmentData.find(oldestID);
+          auto oldestEnrollIter = enrollStatusIter;
           
           ASSERT_NAMED(enrollStatusIter != _enrollmentData.end(),
                        "ID should have enrollment status entry");
@@ -519,14 +538,10 @@ namespace Vision {
             {
               oldestID = userIDs[lastResult];
               earliestEnrollmentTime = enrollStatusIter->second.enrollmentTime;
+              oldestEnrollIter = enrollStatusIter;
             }
             
             ++lastResult;
-          }
-          
-          Result result = UpdateExistingUser(oldestID, _okaoRecognitionFeatureHandle);
-          if(RESULT_OK != result) {
-            return result;
           }
           
           for(INT32 iResult = 0; iResult < lastResult; ++iResult)
@@ -546,6 +561,11 @@ namespace Vision {
               }
             }
             ++iResult;
+          }
+          
+          Result result = UpdateExistingUser(oldestID, _okaoRecognitionFeatureHandle);
+          if(RESULT_OK != result) {
+            return result;
           }
           
           faceID = oldestID;
