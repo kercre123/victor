@@ -188,19 +188,6 @@ message RobotDeletedObject {
     uint_32 objectID
 }
 
-// DeviceDetectedVisionMarker
-message DeviceDetectedVisionMarker {
-    uint_32 markerType,
-    float_32 x_upperLeft,
-    float_32 y_upperLeft,
-    float_32 x_lowerLeft,
-    float_32 y_lowerLeft,
-    float_32 x_upperRight,
-    float_32 y_upperRight,
-    float_32 x_lowerRight,
-    float_32 y_lowerRight
-}
-
 // RobotMarkedObjectPoseUnknown
 message RobotMarkedObjectPoseUnknown {
     uint_32 robotID,

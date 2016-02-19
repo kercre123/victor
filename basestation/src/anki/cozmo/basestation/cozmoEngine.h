@@ -6,7 +6,6 @@
  *                required to run Cozmo on a device. We can derive classes to be host or client
  *                for now host/client has been removed until we know more about multi-robot requirements.
  *
- *                 - Device Vision Processor (for processing images from the host device's camera)
  *                 - Robot Vision Processor (for processing images from a physical robot's camera)
  *                 - RobotComms
  *                 - GameComms and GameMsgHandler
@@ -19,9 +18,6 @@
  *                     from the robot to the basestation.
  *                   - While we only have TCP support on robot, RobotVisionMsgHandler 
  *                     will also forward non-image messages from the robot on to the basestation.
- *                 - DeviceVisionMsgHandler
- *                   - Look into mailbox that Device Vision Processor dumps results 
- *                     into and sends them off to basestation over GameComms.
  *
  * Author: Andrew Stein / Kevin Yoon
  *
@@ -35,19 +31,12 @@
 #include "anki/vision/basestation/image.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
-#include "anki/cozmo/basestation/multiClientChannel.h"
 
 #include "clad/types/imageTypes.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
-#include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/game/comms/uiMessageHandler.h"
 
+#include <memory>
 
-#define DEVICE_VISION_MODE_OFF   0
-#define DEVICE_VISION_MODE_SYNC  1
-#define DEVICE_VISION_MODE_ASYNC 2
-
-#define DEVICE_VISION_MOIDE DEVICE_VISION_MODE_OFF
 
 namespace Anki {
   
@@ -64,6 +53,8 @@ namespace Cozmo {
 class Robot;
 class IExternalInterface;
 class CozmoContext;
+class MultiClientChannel;
+class UiMessageHandler;
   
 template <typename Type>
 class AnkiEvent;
@@ -88,10 +79,6 @@ public:
 
   // Hook this up to whatever is ticking the game "heartbeat"
   Result Update(const float currTime_sec);
-
-  // Provide an image from the device's camera for processing with the engine's
-  // DeviceVisionProcessor
-  void ProcessDeviceImage(const Vision::Image& image);
 
   // Removing this now that robot availability emits a signal.
   // Get list of available robots
@@ -138,30 +125,22 @@ protected:
   
   std::vector<::Signal::SmartHandle> _signalHandles;
   
-  bool                      _isInitialized;
-  Json::Value               _config;
-  MultiClientChannel        _robotChannel;
-  
-# if DEVISION_VISION_MODE != DEVICE_VISION_MODE_OFF
-  VisionProcessingThread    _deviceVisionThread;
-# endif
+  bool                                                      _isInitialized = false;
+  bool                                                      _isListeningForRobots = false;
+  Json::Value                                               _config;
+  std::unique_ptr<MultiClientChannel>                       _robotChannel;
+  std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
+  std::unique_ptr<SpeechRecognition::KeyWordRecognizer>     _keywordRecognizer;
+  std::unique_ptr<CozmoContext>                             _context;
+  std::map<AdvertisingRobot, bool>                          _forceAddedRobots;
+  Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
   
   virtual Result InitInternal();
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  Result StartEngine(Json::Value config);
+  Result StartEngine();
   
   Result AddRobot(RobotID_t robotID);
-  
-  bool                         _isListeningForRobots;
-  UiMessageHandler                 _uiMsgHandler;
-  SpeechRecognition::KeyWordRecognizer* _keywordRecognizer;
-  
-  std::map<AdvertisingRobot, bool> _forceAddedRobots;
-  
-  Anki::Cozmo::DebugConsoleManager _debugConsoleManager;
-  
-  std::unique_ptr<CozmoContext>    _context;
   
   enum class EngineState
   {

@@ -29,23 +29,28 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include <anki/messaging/basestation/IComms.h>
+#include <anki/messaging/basestation/advertisementService.h>
 
 namespace Anki {
   namespace Cozmo {
 
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID)
     : _uiComms(new MultiClientComms{})
-    , _uiAdvertisementService("UIAdvertisementService")
-    , isInitialized_(false)
+    , _uiAdvertisementService(new Comms::AdvertisementService("UIAdvertisementService"))
+    , _isInitialized(false)
     , _hostUiDeviceID(hostUiDeviceID)
     {
       PRINT_NAMED_INFO("UiMessageHandler.Constructor",
                        "Starting UIAdvertisementService, reg port %d, ad port %d",
                        UI_ADVERTISEMENT_REGISTRATION_PORT, UI_ADVERTISING_PORT);
       
-      _uiAdvertisementService.StartService(UI_ADVERTISEMENT_REGISTRATION_PORT,
+      _uiAdvertisementService->StartService(UI_ADVERTISEMENT_REGISTRATION_PORT,
                                            UI_ADVERTISING_PORT);
     }
+    
+    // This needs to be defined in the cpp so that the full definition of unique_ptr types is available for destruction
+    UiMessageHandler::~UiMessageHandler() = default;
     
     Result UiMessageHandler::Init(const Json::Value& config)
     {
@@ -71,7 +76,7 @@ namespace Anki {
         _desiredNumUiDevices = config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR].asInt();
       }
       
-      isInitialized_ = true;
+      _isInitialized = true;
       
       // We'll use this callback for simple events we care about
       auto commonCallback = std::bind(&UiMessageHandler::HandleEvents, this, std::placeholders::_1);
@@ -157,7 +162,7 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      if(isInitialized_) {
+      if(_isInitialized) {
         retVal = RESULT_OK;
         
         while(_uiComms->GetNumPendingMsgPackets() > 0)
@@ -198,7 +203,7 @@ namespace Anki {
       
       if (!_hasDesiredUiDevices)
       {
-        _uiAdvertisementService.Update();
+        _uiAdvertisementService->Update();
         
         // TODO: Do we want to do this all the time in case UI devices want to join later?
         // Notify the UI that there are advertising devices

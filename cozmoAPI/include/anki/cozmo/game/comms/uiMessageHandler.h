@@ -14,15 +14,21 @@
 #define COZMO_UI_MESSAGEHANDLER_H
 
 #include "anki/common/types.h"
-#include <anki/messaging/basestation/IComms.h>
-#include <anki/messaging/basestation/advertisementService.h>
-//#include "anki/cozmo/basestation/cozmoEngine.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "util/signals/simpleSignal_fwd.h"
 
+#include <memory>
+
+// Forward declarations
+namespace Anki {
+namespace Comms {
+  class AdvertisementService;
+  class MsgPacket;
+}
+}
 
 namespace Anki {
   namespace Cozmo {
@@ -38,6 +44,7 @@ namespace Anki {
     public:
       
       UiMessageHandler(u32 hostUiDeviceID); // Force construction with stuff in Init()?
+      virtual ~UiMessageHandler();
       
       Result Init(const Json::Value& config);
       
@@ -62,16 +69,16 @@ namespace Anki {
       
     protected:
       
-      MultiClientComms*                       _uiComms;
-      Comms::AdvertisementService             _uiAdvertisementService;
+      std::unique_ptr<MultiClientComms>             _uiComms;
+      std::unique_ptr<Comms::AdvertisementService>  _uiAdvertisementService;
       
-      bool                                    isInitialized_ = false;
-      u32                                     _hostUiDeviceID = 0;
-      int                                     _desiredNumUiDevices = 0;
-      bool                                    _hasDesiredUiDevices = false;
-      ExternalInterface::Ping                 _pingToUI = {};
-      std::vector<Signal::SmartHandle>        _signalHandles;
-      std::vector<AdvertisingUiDevice>        _connectedUiDevices;
+      bool                                          _isInitialized = false;
+      u32                                           _hostUiDeviceID = 0;
+      int                                           _desiredNumUiDevices = 0;
+      bool                                          _hasDesiredUiDevices = false;
+      ExternalInterface::Ping                       _pingToUI = {};
+      std::vector<Signal::SmartHandle>              _signalHandles;
+      std::vector<AdvertisingUiDevice>              _connectedUiDevices;
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
