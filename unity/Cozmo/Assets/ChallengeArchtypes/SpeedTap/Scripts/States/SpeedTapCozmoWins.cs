@@ -15,7 +15,7 @@ namespace SpeedTap {
       for (int i = 0; i < 4; i++) {
         _SpeedTapGame.CozmoBlock.Lights[i].SetFlashingLED(_SpeedTapGame.CozmoWinColors[i], 100, 100, 0);
       }
-      _CurrentRobot.GotoPose(_SpeedTapGame.PlayPos, _CurrentRobot.Rotation, false, false, HandleAdjustDone);
+      _CurrentRobot.GotoPose(_SpeedTapGame.PlayPos, _SpeedTapGame.PlayRot, false, false, HandleAdjustDone);
     }
 
     private void HandleAdjustDone(bool success) {

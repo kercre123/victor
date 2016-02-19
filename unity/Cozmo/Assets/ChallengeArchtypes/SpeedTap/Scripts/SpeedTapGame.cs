@@ -14,6 +14,7 @@ namespace SpeedTap {
     public bool PlayerTap = false;
     public bool AllRoundsOver = false;
     public Vector3 PlayPos = Vector3.zero;
+    public Quaternion PlayRot = Quaternion.identity;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -84,7 +85,22 @@ namespace SpeedTap {
     }
 
     private void HandleRoundAnimationDone(bool success) {
-      _StateMachine.SetNextState(new SteerState(50.0f, 50.0f, 0.8f, new SpeedTapWaitForCubePlace(false)));
+      int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
+      int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
+      int roundsLeft = _Rounds - losingScore - winningScore;
+      if (winningScore > losingScore + roundsLeft) {
+        AllRoundsOver = true;
+        if (_PlayerRoundsWon > _CozmoRoundsWon) {
+          RaiseMiniGameWin();
+        }
+        else {
+          RaiseMiniGameLose();
+        }
+      }
+      else {
+        ResetScore();
+      }
+      _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
     }
 
     private void CheckRounds() {
@@ -113,19 +129,6 @@ namespace SpeedTap {
           _CloseRoundCount++;
         }
 
-        int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
-        int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
-        int roundsLeft = _Rounds - losingScore - winningScore;
-        if (winningScore > losingScore + roundsLeft) {
-          AllRoundsOver = true;
-          if (_PlayerRoundsWon > _CozmoRoundsWon) {
-            RaiseMiniGameWin();
-          }
-          else {
-            RaiseMiniGameLose();
-          }
-        }
-        ResetScore();
       }
     }
 
@@ -270,7 +273,7 @@ namespace SpeedTap {
     }
 
     public void ShowPlayerTapSlide() {
-      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
+      SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
   }
 }
