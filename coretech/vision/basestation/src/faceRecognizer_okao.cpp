@@ -643,11 +643,11 @@ namespace Vision {
     
     while((numMergeData+numKeepData) >= MaxAlbumDataPerFace)
     {
-      --numMergeData;
+      --numKeepData;
       if((numMergeData+numKeepData) < MaxAlbumDataPerFace) {
         break;
       }
-      --numKeepData;
+      --numMergeData;
     }
     ASSERT_NAMED((numMergeData+numKeepData) < MaxAlbumDataPerFace,
                  "Total merge and keep data should be less than max data per face");
