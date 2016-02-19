@@ -13,15 +13,25 @@ using Cozmo.Util;
 // ending and to start/restart games. Also has interface for killing games
 public abstract class GameBase : MonoBehaviour {
 
+  private const string kDasGameStartUUID = "game.start";
+  private const string kDasGameStartType = "game.type";
+  private const string kDasGameEnd = "game.end";
+  private const string kDasGameQuit = "game.quit";
+  private const string kDasGameEndWithRank = "game.end.player_rank";
+  private const string kDasRankPlayerLose = "1";
+  private const string kDasRankPlayerWon = "0";
+  private const string kDasGameEndRewards = "game.end.goalPoints_earned.{0}";
+  private System.Guid _GameUUID = null;
+
   public delegate void MiniGameQuitHandler();
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -73,7 +83,8 @@ public abstract class GameBase : MonoBehaviour {
     InitializeView(challengeData);
     _SharedMinigameViewInstance.OpenView();
 
-    DAS.Event("game.start", challengeData.name);
+    DAS.Event(kDasGameStartUUID, GetGameUUID());
+    DAS.Event(kDasGameStartType, GetDasGameName());
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
@@ -113,8 +124,8 @@ public abstract class GameBase : MonoBehaviour {
   protected abstract void CleanUpOnDestroy();
 
   public void OnDestroy() {
-    
-    DAS.Event("game.end", _ChallengeData.name);
+    DAS.Event(kDasGameEnd, GetGameTimeElapsedAsStr());
+
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(() => {
         RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
@@ -191,6 +202,7 @@ public abstract class GameBase : MonoBehaviour {
   protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
 
+    DAS.Event(kDasGameQuit, GetQuitGameState());
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
@@ -263,15 +275,19 @@ public abstract class GameBase : MonoBehaviour {
 
     // Pass icons and xp to HomeHub
     if (_WonChallenge) {
+      DAS.Event(kDasGameEndWithRank, kDasRankPlayerWon);
       if (OnMiniGameWin != null) {
         OnMiniGameWin(_RewardedXp, rewardIconObjects);
-      }
+      } 
     }
     else {
+      DAS.Event(kDasGameEndWithRank, kDasRankPlayerLose);
       if (OnMiniGameLose != null) {
         OnMiniGameLose(_RewardedXp, rewardIconObjects);
       }
     }
+
+    SendEventForRewards(_RewardedXp);
 
     // Close minigame UI
     CloseMinigameImmediately();
@@ -298,6 +314,44 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void OnDifficultySet(int difficulty) {
+  }
+
+  #endregion
+
+  // end DAS
+
+  #region DAS Events
+
+  private string GetGameUUID() {
+    // TODO: Does this need to be more complicated?
+    if (_GameUUID == null) {
+      _GameUUID = System.Guid.NewGuid();
+    }
+    return _GameUUID.ToString();
+  }
+
+  private string GetDasGameName() {
+    return _ChallengeData.ChallengeID;
+  }
+
+  private string GetGameTimeElapsedAsStr() {
+    return string.Format("{0}s", Time.time - _GameStartTime);
+  }
+
+  private string GetQuitGameState() {
+    // TODO
+    return null;
+  }
+
+  private void SendEventForRewards(StatContainer rewards) {
+    int rewardAmount;
+    foreach (var statType in StatContainer.sKeys) {
+      if (rewards.TryGetValue(statType, out rewardAmount)) {
+        DAS.Event(
+          string.Format(kDasGameEndRewards, statType), 
+          string.Format("{0}_{1}", statType, rewardAmount));
+      }
+    }
   }
 
   #endregion
