@@ -19,14 +19,14 @@
 #include "faceRecognizer_okao.h"
 
 // Omron OKAO Vision
-#include <OkaoAPI.h>
-#include <OkaoDtAPI.h> // Face Detection
-#include <OkaoPtAPI.h> // Face parts detection
-#include <OkaoExAPI.h> // Expression recognition
-#include <CommonDef.h>
-#include <DetectorComDef.h>
+#include "OkaoAPI.h"
+#include "OkaoDtAPI.h" // Face Detection
+#include "OkaoPtAPI.h" // Face parts detection
+#include "OkaoExAPI.h" // Expression recognition
+#include "CommonDef.h"
+#include "DetectorComDef.h"
 
-#include <json/json.h>
+#include "json/json.h"
 
 #include <list>
 #include <ctime>

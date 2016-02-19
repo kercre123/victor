@@ -18,10 +18,10 @@
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 
-#include <json/json.h>
+#include "json/json.h"
 #include "anki/common/basestation/jsonTools.h"
 
-#include <OkaoCoAPI.h>
+#include "OkaoCoAPI.h"
 
 #include <fstream>
 

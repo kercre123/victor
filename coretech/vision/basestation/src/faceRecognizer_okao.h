@@ -17,11 +17,11 @@
 #include "anki/vision/basestation/enrolledFaceEntry.h"
 
 // Omron OKAO Vision
-#include <OkaoAPI.h>
-#include <OkaoPtAPI.h> // Face parts detection
-#include <OkaoFrAPI.h> // Face Recognition
-#include <CommonDef.h>
-#include <DetectorComDef.h>
+#include "OkaoAPI.h"
+#include "OkaoPtAPI.h" // Face parts detection
+#include "OkaoFrAPI.h" // Face Recognition
+#include "CommonDef.h"
+#include "DetectorComDef.h"
 
 #include <list>
 #include <ctime>
