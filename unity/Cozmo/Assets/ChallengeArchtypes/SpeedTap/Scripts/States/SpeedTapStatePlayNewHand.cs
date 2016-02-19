@@ -43,6 +43,7 @@ namespace SpeedTap {
     void AdjustDone() {
       GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
       _StartTimeMs = Time.time * 1000.0f;
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
