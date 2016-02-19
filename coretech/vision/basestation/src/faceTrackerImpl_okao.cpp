@@ -509,10 +509,10 @@ namespace Vision {
       // Get whatever is the latest recognition information for the current tracker ID
       auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID);
       
-      if(recognitionData.isNew) {
+      if(recognitionData.faceID != recognitionData.prevID) {
         //face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
         UpdatedID update{
-          .oldID = -detectionInfo.nID,
+          .oldID = (recognitionData.prevID == TrackedFace::UnknownFace ? -detectionInfo.nID : recognitionData.prevID),
           .newID = recognitionData.faceID
         };
         updatedIDs.push_back(std::move(update));

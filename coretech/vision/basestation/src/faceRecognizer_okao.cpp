@@ -100,9 +100,7 @@ namespace Vision {
                    "Enrollment entry should not have unknown face ID");
       auto & enrolledEntry = _enrollmentData.at(faceID);
       entry = enrolledEntry;
-      if(enrolledEntry.isNew) {
-        enrolledEntry.isNew = false;
-      }
+      enrolledEntry.prevID = enrolledEntry.faceID; // no longer "new" or "updated"
     }
     _mutex.unlock();
     
@@ -181,7 +179,7 @@ namespace Vision {
           } else if(faceID != recognizedID) {
             // We recognized this face as a different ID than the one currently
             // assigned to the tracking ID. Trust the tracker that they are in
-            // fact the same and merge the two, keeping the original (minimum ID)
+            // fact the same and merge the two, keeping the original (first enrolled)
             auto faceIDenrollData = _enrollmentData.find(faceID);
             if(faceIDenrollData == _enrollmentData.end()) {
               // The tracker's assigned ID got removed (via merge while doing RecognizeFaces).
@@ -213,7 +211,8 @@ namespace Vision {
                                     "Trying to merge %d with %d", faceID, recognizedID);
               }
             }
-            // TODO: Notify the world somehow that an ID we were tracking got merged?
+          
+            
           } else {
             // We recognized this person as the same ID already assigned to its tracking ID
             ASSERT_NAMED(faceID == recognizedID, "Expecting faceID to match recognizedID");
@@ -317,8 +316,8 @@ namespace Vision {
     }
 
     // Create new enrollment entry (defaults set by constructor)
+    // NOTE: enrollData.prevID == UnknownID now, which indicates this is "new"
     EnrolledFaceEntry enrollData(_lastRegisteredUserID);
-    enrollData.isNew = true;
 
     // TODO: Populate enrollment image
     /*
@@ -478,7 +477,7 @@ namespace Vision {
       recognitionScore = MaxScore;
     } else {
       INT32 resultNum = 0;
-      const s32 MaxResults = 2;
+      const s32 MaxResults = 2; // TODO: Increase this to allow merging or more than two results below?
       INT32 userIDs[MaxResults], scores[MaxResults];
       Tic("OkaoIdentify");
       okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, MaxResults, userIDs, scores, &resultNum);
@@ -633,15 +632,14 @@ namespace Vision {
     ASSERT_NAMED(mergeEnrollIter != _enrollmentData.end(),
                  "ID to merge should have enrollment data entry");
     
-    keepEnrollIter->second.MergeWith(keepEnrollIter->second);
+    keepEnrollIter->second.MergeWith(mergeEnrollIter->second);
     _mutex.unlock();
     
     
     // After merging it, remove the old user that just got merged
-    // TODO: check return val
-    RemoveUser((INT32)mergeID);
+    Result removeResult = RemoveUser((INT32)mergeID);
     
-    return RESULT_OK;
+    return removeResult;
     
   } // MergeFaces()
   

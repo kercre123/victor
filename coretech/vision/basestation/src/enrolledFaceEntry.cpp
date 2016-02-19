@@ -59,7 +59,11 @@ EnrolledFaceEntry::EnrolledFaceEntry(TrackedFace::ID_t withID, Json::Value& json
 
 void EnrolledFaceEntry::MergeWith(EnrolledFaceEntry& otherEntry)
 {
-  // NOTE: keeping "this" faceID!
+  // Keep "this" faceID but notify that other ID was merged into this one if the other
+  // one was not brand new
+  if(otherEntry.prevID == otherEntry.faceID) {
+    prevID = otherEntry.faceID;
+  }
   
   if(otherEntry.lastDataUpdateTime > lastDataUpdateTime)
   {

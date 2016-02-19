@@ -40,7 +40,7 @@ static const std::vector<const char*> imageFileExtensions = {"jpg", "jpeg", "png
 // then update FaceWorld with any resulting detections
 static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& faceTracker,
                       const std::string& filename, const char *dispName, bool shouldBeOwner,
-                      const std::map<Vision::TrackedFace::ID_t, std::string>& idToName)
+                      std::map<Vision::TrackedFace::ID_t, std::string>& idToName)
 {
   Result lastResult = RESULT_OK;
   static TimeStamp_t timestamp = 0;
@@ -65,6 +65,19 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
   lastResult = faceTracker.Update(img, faces, updatedIDs);
   
   ASSERT_TRUE(RESULT_OK == lastResult);
+  
+  for(auto & updateID : updatedIDs)
+  {
+    Result changeResult = robot.GetFaceWorld().ChangeFaceID(updateID.oldID, updateID.newID);
+    ASSERT_EQ(changeResult, RESULT_OK);
+    
+    // Update our name LUT
+    auto oldNameIter = idToName.find(updateID.oldID);
+    if(oldNameIter != idToName.end()) {
+      idToName[updateID.newID] = oldNameIter->second;
+      idToName.erase(oldNameIter);
+    }
+  }
   
   for(auto & face : faces) {
     //PRINT_NAMED_INFO("FaceRecognition.PairwiseComparison.Recognize",
@@ -246,6 +259,8 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
             // Recognized, not just tracked
             stats.facesRecognized++;
             idToName[observedID] = testDir;
+            PRINT_NAMED_INFO("FaceRecogntion.VideoRecognitionAndTracking.AddingName",
+                             "Registering '%s' to ID %d", testDir, observedID);
             isNameSet = true;
           }
         } // for each observed face

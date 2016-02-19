@@ -30,13 +30,13 @@ namespace Vision {
 struct EnrolledFaceEntry
 {
   TrackedFace::ID_t         faceID;
+  TrackedFace::ID_t         prevID = TrackedFace::UnknownFace;
   
   time_t                    enrollmentTime;         // when first added to album
   time_t                    lastDataUpdateTime;     // last time data was updated
   
   s32                       score      = 1000;      // [0,1000]
   s32                       oldestData = 0;         // index of last data update
-  bool                      isNew      = false;     // True if first time reported via GetRecognitionData()
   
   EnrolledFaceEntry(TrackedFace::ID_t withID = TrackedFace::UnknownFace);
   EnrolledFaceEntry(TrackedFace::ID_t withID, Json::Value& json);
