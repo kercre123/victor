@@ -85,6 +85,37 @@ public class ChallengeData : ScriptableObject {
     get { return _HowToPlayDialogContentPrefab; }
   }
 
+  [SerializeField]
+  protected MusicStateWrapper _Music;
+
+  public Anki.Cozmo.Audio.GameState.Music Music {
+    get { return _Music.Music; }
+  }
+
   // string path to MinigameConfig
   public MinigameConfigBase MinigameConfig;
+}
+
+[System.Serializable]
+public struct MusicStateWrapper {
+
+  public MusicStateWrapper(Anki.Cozmo.Audio.GameState.Music music) {
+    _Music = (int)music;
+  }
+
+  [SerializeField]
+  private int _Music;
+
+  public Anki.Cozmo.Audio.GameState.Music Music { 
+    get { return (Anki.Cozmo.Audio.GameState.Music)_Music; }
+    set { _Music = (int)value; }
+  }
+
+  public static implicit operator Anki.Cozmo.Audio.GameState.Music(MusicStateWrapper other) {
+    return other.Music;
+  }
+
+  public static implicit operator MusicStateWrapper(Anki.Cozmo.Audio.GameState.Music other) {
+    return new MusicStateWrapper(other);
+  }
 }

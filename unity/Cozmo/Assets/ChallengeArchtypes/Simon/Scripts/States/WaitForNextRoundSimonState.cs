@@ -30,7 +30,7 @@ namespace Simon {
 
     private void HandleContinuePressed() {
       _GameInstance.SharedMinigameView.HideContinueButtonShelf();
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Playful);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetMusicState());
       if (_NextPlayer == PlayerType.Cozmo) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
       }
@@ -40,7 +40,7 @@ namespace Simon {
     }
 
     private void HandleOnCozmoStartAnimationDone(bool success) {
-      _StateMachine.SetNextState(new CozmoSetSequenceSimonState());
+      _StateMachine.SetNextState(new CozmoMoveCloserToCubesState(new CozmoSetSequenceSimonState()));
     }
   }
 }

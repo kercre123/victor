@@ -91,6 +91,7 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     DailySummaryPanel _DailySummaryPrefab;
+    DailySummaryPanel _DailySummaryInstance;
 
     [SerializeField]
     CozmoWidget _CozmoWidgetPrefab;
@@ -100,6 +101,9 @@ namespace Cozmo.HomeHub {
     private float _ScrollLockedOffset;
 
     protected override void CleanUp() {
+      if (_DailySummaryInstance != null) {
+        _DailySummaryInstance.CloseView();
+      }
       _ScrollRect.onValueChanged.RemoveAllListeners();
     }
 
@@ -155,9 +159,15 @@ namespace Cozmo.HomeHub {
       }
 
       for (int i = 0; i < kGeneratedTimelineHistoryLength; i++) {
-        var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
 
         var date = startDate.AddDays(i);
+
+        if (!(date < today)) {
+          break;
+        }
+
+        var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
+
         var entry = spawnedObject.GetComponent<TimelineEntry>();
 
         TimelineEntryData timelineEntry = null;
@@ -301,15 +311,23 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
+      if (_DailySummaryInstance != null) {
+        return;
+      }
+      DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
       var summaryPanel = UIManager.OpenView(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
+      _DailySummaryInstance = summaryPanel;
       summaryPanel.Initialize(session);
       if (onComplete != null) {
         summaryPanel.FriendshipBarAnimateComplete += onComplete;
       }
+      summaryPanel.ViewClosed += HandleDailySummaryClosed;
     }
 
     private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
-      TimeSpan deltaTime = (DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date - DataPersistenceManager.Today);
+      
+      TimeSpan deltaTime = DataPersistenceManager.Instance.Data.Sessions.Count <= 1 ? new TimeSpan(1, 0, 0, 0) : 
+        (DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date - DataPersistenceManager.Today);
       int friendshipPoints = ((int)deltaTime.TotalDays + 1) * 10;
       summaryPanel.FriendshipBarAnimateComplete -= HandleOnFriendshipBarAnimateComplete;
 
@@ -318,6 +336,10 @@ namespace Cozmo.HomeHub {
         UpdateFriendshipPoints(data, friendshipPoints);
         summaryPanel.AnimateFriendshipBar(data);
       }
+    }
+
+    private void HandleDailySummaryClosed() {
+      DailyGoalManager.Instance.SetMinigameNeed();
     }
 
     #region Daily Goal locking

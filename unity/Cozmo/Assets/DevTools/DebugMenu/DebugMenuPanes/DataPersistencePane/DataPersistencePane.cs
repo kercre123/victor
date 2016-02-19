@@ -94,12 +94,12 @@ namespace DataPersistence {
 
     private void StartNewSessionButtonClicked() {
 
-      var field = typeof(TimelineEntryData).GetField("Date");
-
-      int days = -1;
-      int.TryParse(_SessionDays.text, out days);
-      if (days < 0) {
-        DataPersistenceManager.Instance.Data.Sessions.ForEach(x => field.SetValue(x, x.Date.AddDays(days)));
+      int days;
+      if (!int.TryParse(_SessionDays.text, out days)) {
+        days = 1;
+      }
+      if (days > 0) {
+        DataPersistenceManager.Instance.Data.Sessions.ForEach(x => x.Date = x.Date.AddDays(-days));
         DataPersistenceManager.Instance.Save();
       }
 

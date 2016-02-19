@@ -307,7 +307,7 @@ public class Robot : IRobot {
       pointTurnDecel_rad_per_sec2: 500.0f,
       dockSpeed_mmps: 100.0f,
       dockAccel_mmps2: 200.0f,
-      reverseSpeed_mmps: 0f
+      reverseSpeed_mmps: 60.0f
     );
             
     BackpackLights = new ILight[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
@@ -1134,7 +1134,7 @@ public class Robot : IRobot {
   }
 
   public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    DAS.Debug(this, "Go to Pose: x: " + x_mm + " y: " + y_mm + " useManualSpeed: " + useManualSpeed + " level: " + level);
+    DAS.Debug(this, "Go to Pose: x: " + x_mm + " y: " + y_mm + " rad: " + rad);
 
     SendQueueSingleAction(Singleton<GotoPose>.Instance.Initialize(
       level: System.Convert.ToByte(level),

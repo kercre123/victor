@@ -17,11 +17,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -31,6 +31,10 @@ public abstract class GameBase : MonoBehaviour {
 
   public SharedMinigameView SharedMinigameView {
     get { return _SharedMinigameViewInstance; }
+  }
+
+  public Anki.Cozmo.Audio.GameState.Music GetMusicState() {
+    return _ChallengeData.Music;
   }
 
   protected Transform SharedMinigameViewInstanceParent { get { return _SharedMinigameViewInstance.transform; } }
@@ -62,8 +66,6 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
       _ChallengeData.HowToPlayDialogContentLocKey);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
- 
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Playful);
 
     Initialize(challengeData.MinigameConfig);
 
@@ -115,7 +117,8 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event("game.end", _ChallengeData.name);
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(() => {
-        RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(AnimationName.kIdleBrickout);
+        RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
       });
     }
     if (_SharedMinigameViewInstance != null) {

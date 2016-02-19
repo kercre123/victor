@@ -4,6 +4,10 @@ using System.Collections.Generic;
 
 public class MockRobotTray : MonoBehaviour {
 
+  private static MockRobotTray _Instance;
+
+  public static MockRobotTray Instance { get { return _Instance; } }
+
   [SerializeField]
   private DebugCube _DebugCubePrefab;
 
@@ -12,6 +16,14 @@ public class MockRobotTray : MonoBehaviour {
 
   private readonly Dictionary<int, DebugCube> _SpawnedCubes = new Dictionary<int, DebugCube>();
 
+
+  private void Awake() {
+    if (_Instance != null) {
+      Destroy(_Instance.gameObject);
+    }
+    _Instance = this;
+  }
+
   public void Initialize(MockRobot robot) {
 
     var cubes = new[] {
@@ -19,6 +31,10 @@ public class MockRobotTray : MonoBehaviour {
       new LightCube(2, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE2),
       new LightCube(3, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE3)
     };
+
+    robot.LightCubes.Clear();
+    robot.SeenObjects.Clear();
+    robot.VisibleObjects.Clear();
 
     foreach (var cube in cubes) {
       var debugCube = UIManager.CreateUIElement(_DebugCubePrefab, _CubeTray).GetComponent<DebugCube>();

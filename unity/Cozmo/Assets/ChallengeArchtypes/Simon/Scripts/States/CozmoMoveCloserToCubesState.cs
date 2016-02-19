@@ -8,14 +8,14 @@ namespace Simon {
     public const float kDistanceThreshold = 20f;
     float kAngleTolerance = 2.5f;
 
-    private PlayerType _FirstPlayer;
+    private State _NextState;
 
     private Vector2 _TargetPosition;
     private Quaternion _TargetRotation;
     private Vector2 _CubeMidpoint;
 
-    public CozmoMoveCloserToCubesState(PlayerType firstPlayer) {
-      _FirstPlayer = firstPlayer;
+    public CozmoMoveCloserToCubesState(State nextState) {
+      _NextState = nextState;
     }
 
     public override void Enter() {
@@ -29,7 +29,7 @@ namespace Simon {
 
       // Add the vector to the center of the blocks to figure out the target world position
       _TargetPosition = _CubeMidpoint + (-perpendicularToCubes.normalized * kTargetDistance);
-      float targetAngle = Mathf.Atan2(perpendicularToCubes.y, perpendicularToCubes.x);
+      float targetAngle = Mathf.Atan2(perpendicularToCubes.y, perpendicularToCubes.x) * Mathf.Rad2Deg;
       _TargetRotation = Quaternion.Euler(0, 0, targetAngle);
 
       MoveToTargetLocation(_TargetPosition, _TargetRotation);
@@ -43,10 +43,10 @@ namespace Simon {
     private void MoveToTargetLocation(Vector2 targetPosition, Quaternion targetRotation) {
       // Skip moving if we're already close to the target
       if (_CurrentRobot.WorldPosition.xy().IsNear(targetPosition, kDistanceThreshold)) {
-        _CurrentRobot.GotoPose(targetPosition, targetRotation, callback: HandleGotoPoseComplete);
+        HandleGotoPoseComplete(true);
       }
       else {
-        HandleGotoPoseComplete(true);
+        _CurrentRobot.GotoPose(targetPosition, targetRotation, callback: HandleGotoPoseComplete);
       }
     }
 
@@ -69,7 +69,7 @@ namespace Simon {
     }
 
     private void HandleGotoRotationComplete(bool success) {
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_FirstPlayer));
+      _StateMachine.SetNextState(_NextState);
     }
 
     #region Target Position calculations

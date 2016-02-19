@@ -25,8 +25,7 @@ namespace Anki.Cozmo.Audio {
       public EventGroupType EventType;
       public GameObjectType GameObjectType;
 
-      public EventTypeOption(string name, EventGroupType eventType, GameObjectType gameObjectType)
-      {
+      public EventTypeOption(string name, EventGroupType eventType, GameObjectType gameObjectType) {
         OptionName = name;
         EventType = eventType;
         GameObjectType = gameObjectType;
@@ -37,7 +36,7 @@ namespace Anki.Cozmo.Audio {
     private List<EventTypeOption> _Options = new List<EventTypeOption>() {
       new EventTypeOption("VO", EventGroupType.GenericEvent, GameObjectType.Aria),
       new EventTypeOption("UI", EventGroupType.UI, GameObjectType.UI),
-      new EventTypeOption("SFX", EventGroupType.SFX, GameObjectType.SFX),
+      new EventTypeOption("SFX", EventGroupType.SFX, GameObjectType.SFX)
     };
 
 
@@ -50,7 +49,7 @@ namespace Anki.Cozmo.Audio {
       EditorGUI.BeginProperty(position, label, property);
 
       // Draw label
-      position = EditorGUI.PrefixLabel (position, GUIUtility.GetControlID (FocusType.Passive), label);
+      position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label);
 
       var eventProp = property.FindPropertyRelative("_Event");
       var eventTypeProp = property.FindPropertyRelative("_EventType");

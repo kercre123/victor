@@ -42,38 +42,43 @@ public class DebugCube : MonoBehaviour {
 
       var l = Lights[i];
 
+      var onColor = cl.OnColor.ToColor();
+      var offColor = cl.OffColor.ToColor();
+      onColor.a = 1f;
+      offColor.a = 1f;
+
       if (cl.OnPeriodMs == Robot.Light.FOREVER) {
-        l.color = cl.OnColor.ToColor();
+        l.color = onColor;
       }
       else {
         long totalCycleTime = cl.OnPeriodMs + cl.OffPeriodMs + cl.TransitionOffPeriodMs + cl.TransitionOffPeriodMs;
 
         if (totalCycleTime == 0) {
-          l.color = cl.OnColor.ToColor();
+          l.color = onColor;
           continue;
         }
 
         long phaseTime = timeMs % totalCycleTime;
 
         if (phaseTime < cl.OnPeriodMs) {
-          l.color = cl.OnColor.ToColor();
+          l.color = onColor;
           continue;
         }
         phaseTime -= cl.OnPeriodMs;
         if (phaseTime < cl.TransitionOffPeriodMs) {
-          l.color = Color.Lerp(cl.OnColor.ToColor(), cl.OffColor.ToColor(), phaseTime / (float)cl.TransitionOffPeriodMs);
+          l.color = Color.Lerp(onColor, offColor, phaseTime / (float)cl.TransitionOffPeriodMs);
           continue;
         }
         phaseTime -= cl.TransitionOffPeriodMs;
 
         if (phaseTime < cl.OffPeriodMs) {
-          l.color = cl.OffColor.ToColor();
+          l.color = offColor;
           continue;
         }
 
         phaseTime -= cl.OffPeriodMs;
 
-        l.color = Color.Lerp(cl.OffColor.ToColor(), cl.OnColor.ToColor(), phaseTime / (float)cl.TransitionOnPeriodMs);
+        l.color = Color.Lerp(offColor, onColor, phaseTime / (float)cl.TransitionOnPeriodMs);
       }
     }
 
