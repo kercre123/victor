@@ -184,7 +184,7 @@ void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGa
   
   _context->GetRobotMsgHandler()->Init(_robotChannel.get(), _context->GetRobotManager());
   
-  _engineState = EngineState::WaitingForUIDevices;
+  SetEngineState(EngineState::WaitingForUIDevices);
 }
   
 bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
@@ -209,9 +209,7 @@ bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
   
   // Another exception for hosts: have to tell the basestation to add the robot as well
   AddRobot(whichRobot);
-  _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotConnected(
-                                                                                                         whichRobot, result
-                                                                                                         )));
+  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(whichRobot, result);
   return result;
 }
   
@@ -245,7 +243,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     case EngineState::WaitingForUIDevices:
     {
       if (_uiMsgHandler->HasDesiredNumUiDevices()) {
-        _engineState = EngineState::Running;
+        SetEngineState(EngineState::Running);
       }
       break;
     }
@@ -255,7 +253,7 @@ Result CozmoEngine::Update(const float currTime_sec)
       std::vector<Comms::ConnectionId> advertisingRobots;
       _robotChannel->GetAdvertisingConnections(advertisingRobots);
       for(auto robot : advertisingRobots) {
-        _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotAvailable(robot)));
+        _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotAvailable>(robot);
       }
       
       _robotChannel->Update();
@@ -281,6 +279,21 @@ Result CozmoEngine::Update(const float currTime_sec)
   }
   
   return RESULT_OK;
+}
+  
+void CozmoEngine::SetEngineState(EngineState newState)
+{
+  EngineState oldState = _engineState;
+  if (oldState == newState)
+  {
+    return;
+  }
+  
+  _engineState = newState;
+  
+  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdateEngineState>(oldState, newState);
+  
+  PRINT_NAMED_EVENT("app.engine.state","%s => %s", EngineStateToString(oldState), EngineStateToString(newState));
 }
 
 void CozmoEngine::ReadAnimationsFromDisk()

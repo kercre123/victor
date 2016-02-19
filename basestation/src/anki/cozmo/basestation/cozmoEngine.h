@@ -33,6 +33,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 #include "clad/types/imageTypes.h"
+#include "clad/types/engineState.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
 
 #include <memory>
@@ -138,17 +139,9 @@ protected:
   virtual Result InitInternal();
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  Result StartEngine();
+  void SetEngineState(EngineState newState);
   
   Result AddRobot(RobotID_t robotID);
-  
-  enum class EngineState
-  {
-    Stopped,
-    WaitingForUIDevices,
-    WaitingForRobots,
-    Running
-  };
   
   EngineState _engineState = EngineState::Stopped;
   

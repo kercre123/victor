@@ -11,6 +11,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/powerMessages.clad"
 #include "clad/types/debugConsoleTypes.clad"
+#include "clad/types/engineState.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -286,6 +287,14 @@ message VerifyDebugConsoleVarMessage {
   string varName,
   string statusMessage,
   ConsoleVarUnion varValue
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// State
+///////////////////////////////////////////////////////////////////////////////
+message UpdateEngineState {
+  EngineState oldState,
+  EngineState newState
 }
 
 ///////////////////////////////////////////////////////////////////////////////
