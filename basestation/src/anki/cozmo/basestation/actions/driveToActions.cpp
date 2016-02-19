@@ -324,7 +324,6 @@ namespace Anki {
     ActionResult DriveToObjectAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
-      
       ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
@@ -356,7 +355,6 @@ namespace Anki {
         // Initialization has now moved and we may not be in position, even if
         // we completed the planned path successfully. If that's the case, we
         // want to retry.
-        
         ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("DriveToObjectAction.CheckIfDone.NoObjectWithID",
@@ -432,7 +430,6 @@ namespace Anki {
                           _robot.GetID());
         result = ActionResult::FAILURE_ABORT;
       } else {
-        
         _objectID = _robot.GetCarryingObject();
         
         ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));

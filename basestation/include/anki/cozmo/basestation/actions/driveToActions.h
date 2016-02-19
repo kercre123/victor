@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "clad/types/animationKeyFrames.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
   
@@ -341,9 +342,12 @@ namespace Anki {
       
       // Use AlignWithObjectAction's completion info
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        _actions.back().second->GetCompletionUnion(completionUnion);
+        if(_actions.size() > 0) {
+          _actions.back()->GetCompletionUnion(completionUnion);
+        } else {
+          completionUnion = _completedActionInfoStack.back().first;
+        }
       }
-      
     };
     
     
@@ -364,11 +368,21 @@ namespace Anki {
       
       // GetType returns the type from the PickupObjectAction, which is
       // determined dynamically
-      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      virtual RobotActionType GetType() const override {
+        if(_actions.size() > 0) {
+          return _actions.back()->GetType();
+        } else {
+          return _completedActionInfoStack.back().second;
+        }
+      }
       
       // Use PickupObjectAction's completion info
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        _actions.back().second->GetCompletionUnion(completionUnion);
+        if(_actions.size() > 0) {
+          _actions.back()->GetCompletionUnion(completionUnion);
+        } else {
+          completionUnion = _completedActionInfoStack.back().first;
+        }
       }
       
     };
@@ -391,11 +405,21 @@ namespace Anki {
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
-      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      virtual RobotActionType GetType() const override {
+        if(_actions.size() > 0) {
+          return _actions.back()->GetType();
+        } else {
+          return _completedActionInfoStack.back().second;
+        }
+      }
       
       // Use PlaceRelObjectAction's completion info
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        _actions.back().second->GetCompletionUnion(completionUnion);
+        if(_actions.size() > 0) {
+          _actions.back()->GetCompletionUnion(completionUnion);
+        } else {
+          completionUnion = _completedActionInfoStack.back().first;
+        }
       }
       
     };
@@ -425,11 +449,21 @@ namespace Anki {
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
-      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      virtual RobotActionType GetType() const override {
+        if(_actions.size() > 0) {
+          return _actions.back()->GetType();
+        } else {
+          return _completedActionInfoStack.back().second;
+        }
+      }
       
       // Use PlaceRelObjectAction's completion info
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        _actions.back().second->GetCompletionUnion(completionUnion);
+        if(_actions.size() > 0) {
+          _actions.back()->GetCompletionUnion(completionUnion);
+        } else {
+          completionUnion = _completedActionInfoStack.back().first;
+        }
       }
       
     };
@@ -452,13 +486,23 @@ namespace Anki {
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
-      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      virtual RobotActionType GetType() const override {
+        if(_actions.size() > 0) {
+          return _actions.back()->GetType();
+        } else {
+          return _completedActionInfoStack.back().second;
+        }
+      }
       
       // Use RollObjectAction's completion signal
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        _actions.back().second->GetCompletionUnion(completionUnion);
+        if(_actions.size() > 0) {
+          _actions.back()->GetCompletionUnion(completionUnion);
+        } else {
+          completionUnion = _completedActionInfoStack.back().first;
+        }
       }
-      
+
     };
     
     
@@ -478,11 +522,21 @@ namespace Anki {
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
-      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      virtual RobotActionType GetType() const override {
+        if(_actions.size() > 0) {
+          return _actions.back()->GetType();
+        } else {
+          return _completedActionInfoStack.back().second;
+        }
+      }
       
       // Use RollObjectAction's completion signal
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        _actions.back().second->GetCompletionUnion(completionUnion);
+        if(_actions.size() > 0) {
+          _actions.back()->GetCompletionUnion(completionUnion);
+        } else {
+          completionUnion = _completedActionInfoStack.back().first;
+        }
       }
     };
   
