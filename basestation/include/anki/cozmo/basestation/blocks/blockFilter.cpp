@@ -12,16 +12,15 @@
 
 
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/logging/logging.h"
 
-#include <util/helpers/includeSstream.h>
 #include <util/helpers/includeFstream.h>
-
+//
 #include <sys/stat.h>
-#include <cstdio>
-#include <string>
-#include <sstream>
 
 namespace Anki {
 namespace Cozmo {
@@ -35,6 +34,7 @@ BlockFilter::BlockFilter(const ObjectIDSet &vehicleIds)
   : _blocks()
   , _path()
   , _enabled(true)
+  , _externalInterface(nullptr)
 {
 }
 
@@ -42,8 +42,24 @@ BlockFilter::BlockFilter(const std::string &path)
   : _blocks()
   , _path(path)
   , _enabled(true)
+  , _externalInterface(nullptr)
 {
   Load(_path);
+}
+  
+void BlockFilter::Init(const std::string &path, IExternalInterface* externalInterface)
+{
+  if( _externalInterface == nullptr)
+  {
+    _path = path;
+    _externalInterface = externalInterface;
+    _enabled = Load(path);
+    
+    auto callback = std::bind(&BlockFilter::HandleGameEvents, this, std::placeholders::_1);
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage, callback));
+  }
 }
 
 void BlockFilter::GetObjectIds(ObjectIDSet &objectIds) const
@@ -128,11 +144,6 @@ bool BlockFilter::Save() const
 bool BlockFilter::Load(const std::string &path)
 {
   ObjectIDSet blocks;
-  
-  if( _path.empty() )
-  {
-    _path = path;
-  }
 
   std::ifstream inputFileSteam;
   inputFileSteam.open(path);
@@ -161,6 +172,56 @@ bool BlockFilter::Load(const std::string &path)
   inputFileSteam.close();
 
   return true;
+}
+  
+void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  switch (event.GetData().GetTag())
+  {
+    // Debug menu tab just opened, asking for the current state of things
+    case ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage:
+    {
+      ExternalInterface::InitBlockPoolMessage msg;
+      msg.blockPoolEnabled = _enabled;
+      
+      std::vector<ExternalInterface::BlockPoolBlockData> allBlocks;
+      for (const ObjectID &objectId : _blocks ) {
+        ExternalInterface::BlockPoolBlockData blockData;
+        blockData.enabled = true;
+        blockData.id = objectId.GetValue();
+        allBlocks.push_back(blockData);
+      }
+      // TODO: push in all discovered by robot but unlisted blocks here as well.
+      
+      //msg.blockData = allBlocks;
+      
+      _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage:
+    {
+      const Anki::Cozmo::ExternalInterface::BlockPoolEnabledMessage& msg = event.GetData().Get_BlockPoolEnabledMessage();
+      _enabled = msg.enabled;
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage:
+    {
+      const Anki::Cozmo::ExternalInterface::BlockSelectedMessage& msg = event.GetData().Get_BlockSelectedMessage();
+      if( msg.selected != 0 )
+      {
+        AddObjectId( msg.blockId );
+      }
+      else
+      {
+        RemoveObjectId(msg.blockId);
+      }
+      break;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("BlockFilter::HandleGameEvents unexpected message","%hhu",event.GetData().GetTag());
+    }
+  }
 }
 
 } // namespace Cozmo

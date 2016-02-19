@@ -312,7 +312,7 @@ structure BlockPoolBlockData {
 
 message InitBlockPoolMessage {
   uint_8              blockPoolEnabled,
-  BlockPoolBlockData statValues[uint_8]
+  BlockPoolBlockData  blockData[uint_8]
 }
 
 ///////////////////////////////////////////////////////////////////////////////

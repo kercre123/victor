@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_Blocks_BlockFilter_H__
 
 #include "anki/common/basestation/objectIDs.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <string>
 #include <unordered_set>
@@ -23,6 +24,14 @@
 namespace Anki {
 namespace Cozmo {
 
+class IExternalInterface;
+template <typename Type>
+class AnkiEvent;
+
+namespace ExternalInterface {
+  class MessageGameToEngine;
+}
+  
 class BlockFilter {
 public: 
   using ObjectIDSet = std::unordered_set<ObjectID>;
@@ -50,12 +59,18 @@ public:
   void SetEnabled(bool isEnabled) { _enabled = isEnabled; }
   bool IsEnabled() const { return _enabled; }
   
-  void SetPath(const std::string &path) { _path = path; }
+  void Init(const std::string &path, IExternalInterface* externalInterface);
 
 private:
+  
+  void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
   ObjectIDSet _blocks;
   std::string _path;
-  bool _enabled;
+  bool        _enabled;
+  
+  std::vector<Signal::SmartHandle> _signalHandles;
+  IExternalInterface* _externalInterface;
 
 };
 
