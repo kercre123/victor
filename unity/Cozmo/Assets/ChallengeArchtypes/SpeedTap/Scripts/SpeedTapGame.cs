@@ -45,6 +45,9 @@ namespace SpeedTap {
 
     public ISpeedTapRules Rules;
 
+    private const float _kRetreatSpeed = -50.0f;
+    private const float _kRetreatTime = 1.25f;
+
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
@@ -118,11 +121,11 @@ namespace SpeedTap {
             CurrentDifficulty++;
           }
             
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kFail, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(AnimationName.kFail, HandleRoundAnimationDone)));
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kSpeedTap_WinHand, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(AnimationName.kSpeedTap_WinHand, HandleRoundAnimationDone)));
         }
 
         if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {

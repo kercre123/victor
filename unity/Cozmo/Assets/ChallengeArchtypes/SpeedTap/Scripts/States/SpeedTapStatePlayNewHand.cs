@@ -18,7 +18,7 @@ namespace SpeedTap {
     private float _MatchProbability = 0.35f;
     private float _FakeProbability = 0.25f;
     private float _PeekProbability = 0.40f;
-    private float _AdjustTime = 1.5f;
+    private float _AdjustTime = 1.0f;
 
     private bool _LightsOn = false;
     private bool _GotMatch = false;
@@ -37,14 +37,14 @@ namespace SpeedTap {
       _LightsOn = false;
       _SpeedTapGame.PlayerTap = false;
 
-      _CurrentRobot.DriveWheels(25.0f, 25.0f);
+      _CurrentRobot.SetLiftHeight(1.0f);
+      _CurrentRobot.DriveWheels(20.0f, 20.0f);
     }
 
     void AdjustDone() {
       GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
       _StartTimeMs = Time.time * 1000.0f;
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;

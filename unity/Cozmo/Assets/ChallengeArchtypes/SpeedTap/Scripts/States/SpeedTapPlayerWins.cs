@@ -14,7 +14,7 @@ namespace SpeedTap {
         _SpeedTapGame.PlayerBlock.Lights[i].SetFlashingLED(_SpeedTapGame.PlayerWinColors[i], 100, 100, 0);
       }
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
-      _CurrentRobot.GotoPose(_SpeedTapGame.PlayPos, _CurrentRobot.Rotation, false, false, HandleAdjustDone);
+      _CurrentRobot.FaceObject(_SpeedTapGame.CozmoBlock, false, 4.3f, 10.0f, HandleAdjustDone);
     }
 
     private void HandleAdjustDone(bool success) {

@@ -12,7 +12,7 @@ namespace SpeedTap {
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _SpeedTapGame.PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
-      _CurrentRobot.GotoPose(_SpeedTapGame.PlayPos, _CurrentRobot.Rotation, false, false, HandleAdjustDone);
+      _CurrentRobot.FaceObject(_SpeedTapGame.CozmoBlock, false, 4.3f, 10.0f, HandleAdjustDone);
       _SpeedTapGame.PlayerLosesHand();
     }
 
