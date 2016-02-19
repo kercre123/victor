@@ -273,9 +273,6 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotObservedNothing:
       ReceivedSpecificMessage(message.RobotObservedNothing);
       break;
-    case G2U.MessageEngineToGame.Tag.DeviceDetectedVisionMarker:
-      ReceivedSpecificMessage(message.DeviceDetectedVisionMarker);
-      break;
     case G2U.MessageEngineToGame.Tag.PlaySound:
       ReceivedSpecificMessage(message.PlaySound);
       break;
@@ -561,10 +558,6 @@ public class RobotEngineManager : MonoBehaviour {
         }
       }
     }
-  }
-
-  private void ReceivedSpecificMessage(G2U.DeviceDetectedVisionMarker message) {
-
   }
 
   private void ReceivedSpecificMessage(G2U.PlaySound message) {
