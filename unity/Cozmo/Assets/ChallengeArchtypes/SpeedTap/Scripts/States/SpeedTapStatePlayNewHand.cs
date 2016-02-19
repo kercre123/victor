@@ -7,7 +7,7 @@ namespace SpeedTap {
   public class SpeedTapStatePlayNewHand : State {
 
     private SpeedTapGame _SpeedTapGame = null;
-    private float _StartTimeMs = 0;
+    private float _StartTimeMs = -1.0f;
     private float _OnDelayTimeMs = 2000.0f;
     private float _OffDelayTimeMs = 2000.0f;
     private float _PeekMinTimeMs = 500.0f;
@@ -30,14 +30,18 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _StartTimeMs = Time.time * 1000.0f;
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
       _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
+      _StartTimeMs = -1.0f;
       _LightsOn = false;
       _SpeedTapGame.PlayerTap = false;
 
       GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
+      _CurrentRobot.GotoPose(_SpeedTapGame.PlayPos, _CurrentRobot.Rotation, false, false, HandleAdjustDone);
+    }
 
+    void HandleAdjustDone(bool success) {
+      _StartTimeMs = Time.time * 1000.0f;
       _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
@@ -46,7 +50,10 @@ namespace SpeedTap {
 
     public override void Update() {
       base.Update();
-
+      // Wait until _StartTime has been set before considering the round started.
+      if (_StartTimeMs == -1.0f) {
+        return;
+      }
       float currTimeMs = Time.time * 1000.0f;
 
       if (_LightsOn) {
