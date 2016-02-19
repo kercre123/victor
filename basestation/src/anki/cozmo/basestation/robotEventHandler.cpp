@@ -62,6 +62,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       ExternalInterface::MessageGameToEngineTag::TrackToObject,
       ExternalInterface::MessageGameToEngineTag::TrackToFace,
       ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
+      ExternalInterface::MessageGameToEngineTag::PanAndTilt,
     };
     
     // Subscribe to desired events
@@ -500,9 +501,22 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::trackObject:
       return GetTrackObjectActionHelper(robot, actionUnion.Get_trackObject());
       
+    case RobotActionUnionTag::driveStraight:
+      return new DriveStraightAction(robot, actionUnion.Get_driveStraight().dist_mm,
+                                     actionUnion.Get_driveStraight().speed_mmps);
+      
+    case RobotActionUnionTag::panAndTilt:
+      return new PanAndTiltAction(robot, Radians(actionUnion.Get_panAndTilt().bodyPan),
+                                  Radians(actionUnion.Get_panAndTilt().headTilt),
+                                  actionUnion.Get_panAndTilt().isPanAbsolute,
+                                  actionUnion.Get_panAndTilt().isTiltAbsolute);
+      
+    case RobotActionUnionTag::wait:
+      return new WaitAction(robot, actionUnion.Get_wait().time_s);
+
     case RobotActionUnionTag::mountCharger:
       return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
-      
+
       // TODO: Add cases for other actions
       
     default:

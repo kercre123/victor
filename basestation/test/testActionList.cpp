@@ -114,7 +114,7 @@ class TestCompoundActionSequential : public CompoundActionSequential
 public:
   TestCompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
   virtual ~TestCompoundActionSequential() { actionsDestroyed.push_back(_name); }
-  virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
+  virtual std::list<IActionRunner*> GetActions() { return _actions; }
 private:
   std::string _name;
 };
@@ -133,7 +133,7 @@ class TestCompoundActionParallel : public CompoundActionParallel
 public:
   TestCompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
   virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(_name); }
-  virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
+  virtual std::list<IActionRunner*> GetActions() { return _actions; }
 private:
   std::string name;
 };
@@ -191,7 +191,7 @@ ActionResult TestActionWithinAction::CheckIfDone()
   bool result = true;
   for(auto action : _compoundAction.GetActions())
   {
-    result &= ((TestAction*)action.second)->_complete;
+    result &= ((TestAction*)action)->_complete;
   }
   return (result ? ActionResult::SUCCESS : ActionResult::RUNNING);
 }
@@ -515,7 +515,7 @@ TEST(QueueAction, CompoundActionSequentialSingle)
   CheckTracksUnlocked(r, track1 | track2);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  CheckActionDestroyed({"Comp1", "Test1", "Test2"});
+  CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
 // Tests queueing a sequential compound action made of two actions and they complete at different times
@@ -543,7 +543,6 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
   CheckTracksUnlocked(r, track1);
   CheckTracksLocked(r, track2);
   
-  EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
@@ -552,7 +551,7 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
   CheckTracksUnlocked(r, track2);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  CheckActionDestroyed({"Comp1", "Test1", "Test2"});
+  CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
 // Tests queueing a sequential compound action that initially has two actions and a third action is added to
@@ -593,7 +592,7 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  CheckActionDestroyed({"Comp1", "Test1", "Test2", "Test3"});
+  CheckActionDestroyed({"Test1", "Test2", "Test3", "Comp1"});
 }
 
 // Tests queueing an empty sequential compound action and adding three additional actions to it at various times
@@ -634,7 +633,7 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
   CheckTracksUnlocked(r, track1 | track2 | track3);
   
   r.GetActionList().Update();
-  CheckActionDestroyed({"Comp1", "Test1", "Test2", "Test3"});
+  CheckActionDestroyed({"Test1", "Test2", "Test3", "Comp1"});
 }
 
 // Tests queueing a parallel compound action with two actions that complete immediately
@@ -662,7 +661,7 @@ TEST(QueueAction, ParallelActionImmediateComplete)
   CheckTracksUnlocked(r, track1 | track2);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  CheckActionDestroyed({"Comp1", "Test1", "Test2"});
+  CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
 // Tests queueing a parallel compound action with two actions where one completes before the other
@@ -690,7 +689,7 @@ TEST(QueueAction, ParallelActionOneCompleteBefore)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  CheckActionDestroyed({"Comp1", "Test1", "Test2"});
+  CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
 // Tests queueing actions at the NOW position
@@ -982,8 +981,8 @@ TEST(QueueAction, QueueActionWithinAction)
   for(auto action : subActions)
   {
     // Set during Init() when RegisterSubActions() is called
-    EXPECT_EQ(&(((TestAction*)action.second)->GetRobot()), &r);
-    ((TestAction*)action.second)->_complete = true;
+    EXPECT_EQ(&(((TestAction*)action)->GetRobot()), &r);
+    ((TestAction*)action)->_complete = true;
   }
   
   r.GetActionList().Update();
@@ -1027,9 +1026,8 @@ TEST(QueueAction, ActionFailureRetry)
   // Both actions are set to complete but testAction2 is going to retry once
   // so it is still left
   auto actions = compoundAction->GetActions();
-  EXPECT_EQ(actions.size(), 2);
-  EXPECT_EQ(actions.front().second->GetName(), "Test1");
-  EXPECT_EQ(actions.back().second->GetName(), "Test2");
+  EXPECT_EQ(actions.size(), 1);
+  EXPECT_EQ(actions.front()->GetName(), "Test2");
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   
@@ -1037,7 +1035,7 @@ TEST(QueueAction, ActionFailureRetry)
   CheckTracksUnlocked(r, track1 | track2);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  CheckActionDestroyed({"Comp1", "Test1", "Test2"});
+  CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
 // Tests queueing duplicate actions

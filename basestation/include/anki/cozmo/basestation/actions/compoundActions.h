@@ -23,7 +23,7 @@ namespace Anki {
     class ICompoundAction : public IActionRunner
     {
     public:
-      ICompoundAction(Robot& robot, std::initializer_list<IActionRunner*> actions);
+      ICompoundAction(Robot& robot, std::list<IActionRunner*> actions);
       
       virtual void AddAction(IActionRunner* action);
       
@@ -45,7 +45,7 @@ namespace Anki {
       // Call the constituent actions' Reset() methods and mark them each not done.
       virtual void Reset() override;
       
-      std::list<std::pair<bool, IActionRunner*> > _actions;
+      std::list<IActionRunner*> _actions;
       std::string _name;
       
     private:
@@ -58,7 +58,7 @@ namespace Anki {
     {
     public:
       CompoundActionSequential(Robot& robot);
-      CompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions);
+      CompoundActionSequential(Robot& robot, std::list<IActionRunner*> actions);
       
       // Add a delay, in seconds, between running each action in the group.
       // Default is 0 (no delay).
@@ -68,14 +68,21 @@ namespace Anki {
       // ignore what they want to when running
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
+    protected:
+      // Stack of pairs of actionCompletionUnions and actionTypes of the already completed actions
+      std::list<std::pair<ActionCompletedUnion, RobotActionType>> _completedActionInfoStack;
+      
     private:
       virtual void Reset() override;
       
       virtual ActionResult UpdateInternal() override final;
       
+      // Stores the _currentActionPair's completion union and then deletes _currentActionPair
+      void StoreUnionAndDelete();
+      
       f32 _delayBetweenActionsInSeconds;
       f32 _waitUntilTime;
-      std::list<std::pair<bool,IActionRunner*> >::iterator _currentActionPair;
+      std::list<IActionRunner*>::iterator _currentAction;
       bool _wasJustReset;
       
     }; // class CompoundActionSequential
@@ -89,7 +96,7 @@ namespace Anki {
     {
     public:
       CompoundActionParallel(Robot& robot);
-      CompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions);
+      CompoundActionParallel(Robot& robot, std::list<IActionRunner*> actions);
       
     protected:
       
