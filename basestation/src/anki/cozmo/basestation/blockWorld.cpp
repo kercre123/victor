@@ -2004,27 +2004,31 @@ namespace Cozmo {
       
       // Is there an active object with the same activeID that already exists?
       ObjectType cubeType = ActiveCube::GetTypeFromFactoryID(factoryID);
-      ObjectsMapByType_t existingCubes = _existingObjects[ObjectFamily::LightCube];
-      for (auto cubeTypeIt = existingCubes.begin(); cubeTypeIt != existingCubes.end(); ++cubeTypeIt) {
-        if (cubeTypeIt->first == cubeType) {
-          for (auto cubeIDIt = cubeTypeIt->second.begin(); cubeIDIt != cubeTypeIt->second.end(); ++cubeIDIt) {
-            if (cubeIDIt->second->GetActiveID() == activeID) {
-              PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatch",
-                               "objectID %d, activeID %d, type %d",
-                               cubeIDIt->second->GetID().GetValue(), cubeIDIt->second->GetActiveID(), cubeType);
-              return cubeIDIt->second->GetID();
-            }
-#           if ONLY_ALLOW_ONE_OBJECT_PER_TYPE > 0
-            else {
-              PRINT_NAMED_WARNING("BlockWorld.AddLightCube.FoundOtherCubeOfSameType",
-                                  "ActiveID %d is same type as another existing object (objectID %d, activeID %d, type %d). Multiple objects of same type not supported!",
-                                  activeID, cubeIDIt->second->GetID().GetValue(), cubeIDIt->second->GetActiveID(), cubeType);
-              return ObjectID();
-            }
-#           endif //if ONLY_ALLOW_ONE_OBJECT_PER_TYPE > 0
+      ObservableObject* matchingObject = GetActiveObjectByActiveID(activeID);
+      if (matchingObject == nullptr) {
+        // If no match found, find one with an invalid activeID and assume it's that
+        const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(cubeType);
+        for (auto& cubeIt : objectsOfSameType) {
+          if (cubeIt.second->GetActiveID() < 0) {
+            ActiveCube* activeObj = dynamic_cast<ActiveCube*>(cubeIt.second);
+            activeObj->SetActiveID(activeID);
+            PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingObjectWithNoActiveID",
+                             "objectID %d, activeID %d, type %d",
+                             cubeIt.second->GetID().GetValue(), cubeIt.second->GetActiveID(), cubeType);
+            return cubeIt.second->GetID();
+          } else {
+            PRINT_NAMED_WARNING("BlockWorld.AddLightCube.FoundOtherCubeOfSameType",
+                                "ActiveID %d is same type as another existing object (objectID %d, activeID %d, type %d). Multiple objects of same type not supported!",
+                                activeID, cubeIt.second->GetID().GetValue(), cubeIt.second->GetActiveID(), cubeType);
+            return ObjectID();
           }
         }
+      } else {
+        PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundActiveObject",
+                         "objectID %d, activeID %d, type %d",
+                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType);
       }
+  
       
       // An existing object with activeID was not found so add it
       ActiveCube* cube = new ActiveCube(activeID, factoryID);

@@ -92,6 +92,7 @@ namespace Cozmo {
     
     virtual bool CanBeUsedForLocalization() const override;
     
+    void SetActiveID(ActiveID activeID) { _activeID = activeID; }
     virtual ActiveID GetActiveID() const override { return _activeID; }
     
     FactoryID GetFactoryID() const { return _factoryID; }
