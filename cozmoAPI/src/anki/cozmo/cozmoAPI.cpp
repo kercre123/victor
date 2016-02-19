@@ -12,7 +12,7 @@
  **/
 
 #include "anki/cozmo/cozmoAPI.h"
-#include "anki/cozmo/game/cozmoGame.h"
+#include "anki/cozmo/basestation/cozmoEngine.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "util/logging/logging.h"
 #include <chrono>
@@ -109,7 +109,7 @@ void CozmoAPI::Clear()
 
 CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                                                    const Json::Value& config, bool& initResult)
-: _cozmoInstance(new CozmoGame(dataPlatform))
+: _cozmoInstance(new CozmoEngine(dataPlatform))
 , _isRunning(true)
 {
   Result initResultReturn = _cozmoInstance->Init(config);

@@ -40,6 +40,7 @@
 #include "clad/types/imageTypes.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/game/comms/uiMessageHandler.h"
 
 
 #define DEVICE_VISION_MODE_OFF   0
@@ -79,7 +80,7 @@ class CozmoEngine
 {
 public:
 
-  CozmoEngine(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
+  CozmoEngine(Util::Data::DataPlatform* dataPlatform);
   virtual ~CozmoEngine();
 
 
@@ -146,12 +147,14 @@ protected:
 # endif
   
   virtual Result InitInternal();
-  virtual Result UpdateInternal(const BaseStationTime_t currTime_ns);
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  Result StartEngine(Json::Value config);
   
   Result AddRobot(RobotID_t robotID);
   
   bool                         _isListeningForRobots;
+  UiMessageHandler                 _uiMsgHandler;
   SpeechRecognition::KeyWordRecognizer* _keywordRecognizer;
   
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
@@ -159,6 +162,16 @@ protected:
   Anki::Cozmo::DebugConsoleManager _debugConsoleManager;
   
   std::unique_ptr<CozmoContext>    _context;
+  
+  enum class EngineState
+  {
+    Stopped,
+    WaitingForUIDevices,
+    WaitingForRobots,
+    Running
+  };
+  
+  EngineState _engineState = EngineState::Stopped;
   
 }; // class CozmoEngine
   
