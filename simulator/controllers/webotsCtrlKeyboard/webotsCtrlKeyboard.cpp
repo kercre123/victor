@@ -686,7 +686,15 @@ namespace Anki {
                 
               case (s32)'D':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+              
+                // Shift+Alt+D = delocalize
+                if((modifier_key & webots::Supervisor::KEYBOARD_ALT) &&
+                   (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) )
+                {
+                  ExternalInterface::ForceDelocalizeRobot delocMsg;
+                  delocMsg.robotID = 1;
+                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   
                   static const std::array<std::pair<bool,bool>,4> enableModes = {{
                     {false, false}, {false, true}, {true, false}, {true, true}

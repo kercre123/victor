@@ -73,8 +73,12 @@ void TESTDONOTCOMITRec();
   uint8_t GetLevel() const { return _level; }
   float GetSideLen() const { return _sideLen; }
   const Point3f& GetCenter() const { return _center; }
-  ENodeContentType GetContentType() const { return _content.type; }
   const NodeContent& GetContent() const { return _content; }
+
+  // consider using the concrete checks if you are going to do GetContentType() == X, in case the meaning of that
+  // comparison changes
+  ENodeContentType GetContentType() const { return _content.type; }
+  bool IsContentTypeUnknown() const { return _content.type == ENodeContentType::Unknown; }
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
   bool Contains(const Quad2f& quad) const;
@@ -110,6 +114,10 @@ void TESTDONOTCOMITRec();
   // iterationDirection: when there're more than one neighbor in that direction, which one comes first in the list
   // NOTE: this method is expected to NOT clear the vector before adding neighbors
   void AddSmallestNeighbors(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& neighbors) const;
+ 
+  // adds to the given vector the smallest descendants of every branch. If a node is a leaf, it adds itself,
+  // otherwise it recursively asks children to do the same
+  void AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render

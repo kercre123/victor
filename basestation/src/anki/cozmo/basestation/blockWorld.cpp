@@ -41,6 +41,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
+#include "util/console/consoleInterface.h"
+#include "util/global/globalDefinitions.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
@@ -72,12 +74,14 @@
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
+
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
     , _didObjectsChange(false)
     , _canDeleteObjects(true)
     , _canAddObjects(true)
-    , _navMemoryMap( nullptr )
+    , _currentNavMemoryMapOrigin(nullptr)
     , _isOnCliff(false)
     , _enableDraw(false)
     {
@@ -195,13 +199,7 @@ namespace Cozmo {
       {
         SetupEventHandlers(*_robot->GetExternalInterface());
       }
-      
-      //////////////////////////////////////////////////////////////////////////
-      // NavMemoryMap
-      //
-      // Uncomment this line to create and use navMemoryMap. Commented out to not enable yet in master
-      // _navMemoryMap.reset( new NavMemoryMap(_robot->GetContext()->GetVizManager()) );
-      
+            
     } // BlockWorld() Constructor
   
     void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
@@ -507,12 +505,67 @@ namespace Cozmo {
       }
     }
     
+    // if memory maps are enabled, we can merge old into new
+    if ( kEnableMapMemory )
+    {
+      // oldOrigin is the pointer/id of the current map
+      // worldOrigin is the pointer/id of the map we can merge into/from
+      ASSERT_NAMED( _navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
+      ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
+      ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
+      ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastOld");
+      ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastNew");
+
+      // grab the underlying memory map and merge them
+      NavMemoryMap* oldMap = dynamic_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() );
+      NavMemoryMap* newMap = dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() );
+      newMap->Merge(oldMap, *oldOrigin);
+      
+      // switch back to what is becoming the new map
+      _currentNavMemoryMapOrigin = newOrigin;
+      
+      // now we can delete what is become the old map, since we have merged its data into the new one
+      _navMemoryMaps.erase( oldOrigin );
+    }
+    
     return result;
   }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  const INavMemoryMap* BlockWorld::GetNavMemoryMap() const
+  {
+    const INavMemoryMap* curMap = nullptr;
+    if ( nullptr != _currentNavMemoryMapOrigin ) {
+      auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
+      if ( matchPair != _navMemoryMaps.end() ) {
+        curMap = matchPair->second.get();
+      } else {
+        ASSERT_NAMED(false, "BlockWorld.GetNavMemoryMap.MissingMap");
+      }
+    }
+    return curMap;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  INavMemoryMap* BlockWorld::GetNavMemoryMap()
+  {
+    INavMemoryMap* curMap = nullptr;
+    if ( nullptr != _currentNavMemoryMapOrigin ) {
+      auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
+      if ( matchPair != _navMemoryMaps.end() ) {
+        curMap = matchPair->second.get();
+      } else {
+        ASSERT_NAMED(false, "BlockWorld.GetNavMemoryMap.MissingMap");
+      }
+    }
+    return curMap;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::UpdateNavMemoryMap()
   {
-    if ( nullptr != _navMemoryMap )
+    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    if ( nullptr != currentNavMemoryMap )
     {
       // cliff quad: clear or cliff
       {
@@ -535,19 +588,69 @@ namespace Cozmo {
           NavMemoryMapQuadData_Cliff cliffData;
           Vec3f rotatedFwdVector = _robot->GetPose().GetRotation() * X_AXIS_3D();
           cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
-          _navMemoryMap->AddQuad(cliffquad, cliffData);
+          currentNavMemoryMap->AddQuad(cliffquad, cliffData);
         }
         else
         {
-          _navMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
+          currentNavMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
         }
       
       }
       
-      _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
+      currentNavMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
     }
   }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr)
+  {
+    // can disable the feature completely
+    if ( !kEnableMapMemory ) {
+      return;
+    }
+  
+    // clear all memory map rendering because indexHints are changing
+    #if ANKI_DEVELOPER_CODE
+    {
+      for ( const auto& memMapPair : _navMemoryMaps )
+      {
+        memMapPair.second->ClearDraw();
+      }
+    }
+    #endif
+    
+    // if the origin is null, we would never merge the map, which could leak if a new one was created
+    // do not support this by not creating one at all if the origin is null
+    ASSERT_NAMED(nullptr != worldOriginPtr, "BlockWorld.CreateLocalizedMemoryMap.NullOrigin");
+    if ( nullptr != worldOriginPtr )
+    {
+      // create a new memory map in the given origin
+      VizManager* vizMgr = _robot->GetContext()->GetVizManager();
+      _navMemoryMaps.emplace( std::make_pair(worldOriginPtr, std::unique_ptr<INavMemoryMap>(new NavMemoryMap( vizMgr ))) );
+      _currentNavMemoryMapOrigin = worldOriginPtr;
+    }
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DrawNavMemoryMap() const
+  {
+    #if ANKI_DEVELOPER_CODE
+    {
+      size_t lastIndexNonCurrent = 0;
+    
+      // rendering all current maps with indexHint
+      for (const auto& memMapPair : _navMemoryMaps)
+      {
+        const bool isCurrent = memMapPair.first == _currentNavMemoryMapOrigin;
+        
+        size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
+        memMapPair.second->Draw(indexHint);
+      }
+    }
+    #endif
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
   {
     if(!object->GetID().IsSet()) {
@@ -804,7 +907,7 @@ namespace Cozmo {
                   }
                 }
               }
-            } else if(!_robot->IsPickingOrPlacing()) { // Don't do identification if picking and placing
+            } else if(!_robot->IsPickingOrPlacing() && !_robot->GetMoveComponent().IsMoving()) { // Don't do identification if picking and placing or moving
               // Tick the fake identification process for any as-yet-unidentified active
               // objects. This is to simulate the fact that identification is not instantaneous
               // and is asynchronous.
@@ -1006,8 +1109,9 @@ namespace Cozmo {
         }
         
         // Update navMemory map
-        if ( nullptr != _navMemoryMap ) {
-          _navMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(), INavMemoryMap::EContentType::ObstacleCube);
+        INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+        if ( nullptr != currentNavMemoryMap ) {
+          currentNavMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(), INavMemoryMap::EContentType::ObstacleCube);
         }
         
         _didObjectsChange = true;
@@ -1797,7 +1901,8 @@ namespace Cozmo {
           object->SetPoseParent(_robot->GetWorldOrigin());
 
           // update navmesh with a quadrilateral between the robot and the seen object
-          if ( nullptr != _navMemoryMap )
+          INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+          if ( nullptr != currentNavMemoryMap )
           {
             // robot corners
             const Quad2f& robotQuad = _robot->GetBoundingQuadXY();
@@ -1816,7 +1921,7 @@ namespace Cozmo {
               // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
               // the navmesh that it should be clear, since we saw the marker
               Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
-              _navMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
+              currentNavMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
             }
           }
           
@@ -2908,12 +3013,5 @@ namespace Cozmo {
       
     } // DrawAllObjects()
   
-    void BlockWorld::DrawNavMemoryMap() const
-    {
-      if ( _navMemoryMap ) {
-        _navMemoryMap->Draw();
-      }
-    }
-    
 } // namespace Cozmo
 } // namespace Anki
