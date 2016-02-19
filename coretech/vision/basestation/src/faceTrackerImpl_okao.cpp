@@ -17,17 +17,36 @@
 
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/rotation.h"
+#include "anki/common/basestation/jsonTools.h"
+
 #include "util/logging/logging.h"
 #include "util/helpers/boundedWhile.h"
 
 namespace Anki {
 namespace Vision {
   
-  FaceTracker::Impl::Impl(const std::string& modelPath, FaceTracker::DetectionMode mode)
-  : _detectionMode(mode)
+  FaceTracker::Impl::Impl(const std::string& modelPath, const Json::Value& config)
+  : _recognizer(config)
   {
-    
+    if(config.isMember("faceDetection")) {
+      _config = config["faceDetection"];
+    } else {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Constructor.NoFaceDetectConfig",
+                          "Did not find 'faceDetection' field in config");
+    }
   } // Impl Constructor()
+  
+  template<class T>
+  static inline bool SetParamHelper(const Json::Value& config, const std::string& keyName, T& value)
+  {
+    if(JsonTools::GetValueOptional(config, keyName, value)) {
+      // TODO: Print value too...
+      PRINT_NAMED_INFO("FaceTrackerImpl.SetParamHelper", "%s", keyName.c_str());
+      return true;
+    } else {
+      return false;
+    }
+  }
   
   Result FaceTracker::Impl::Init()
   {
@@ -60,9 +79,10 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
 
-    switch(_detectionMode)
+    std::string detectionMode = "video";
+    if(SetParamHelper(_config, "detectionMode", detectionMode))
     {
-      case FaceTracker::DetectionMode::Video:
+      if(detectionMode == "video")
       {
         _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_MOVIE, MaxFaces);
         if(NULL == _okaoDetectorHandle) {
@@ -101,22 +121,22 @@ namespace Vision {
           PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetAccuracyFailed", "");
           return RESULT_FAIL_INVALID_PARAMETER;
         }
-        
-        break;
       }
         
-      case FaceTracker::DetectionMode::SingleImage:
+      else if(detectionMode == "singleImage")
+      {
         _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_STILL, MaxFaces);
         if(NULL == _okaoDetectorHandle) {
           PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoDetectionHandleAllocFail.StillMode", "");
           return RESULT_FAIL_MEMORY;
         }
-        break;
+      }
         
-      default:
+      else {
         PRINT_NAMED_ERROR("FaceTrackerImpl.Init.UnknownDetectionMode",
-                          "Requested mode = %hhu", _detectionMode);
+                          "Requested mode = %s", detectionMode.c_str());
         return RESULT_FAIL;
+      }
     }
     
     //okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_HALF_PROFILE,
@@ -127,13 +147,20 @@ namespace Vision {
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
-    okaoResult = OKAO_DT_SetSizeRange(_okaoDetectorHandle, 60, 640);
+    s32 minFaceSize = 60;
+    s32 maxFaceSize = 640;
+    SetParamHelper(_config, "minFaceSize", minFaceSize);
+    SetParamHelper(_config, "maxFaceSize", maxFaceSize);
+
+    okaoResult = OKAO_DT_SetSizeRange(_okaoDetectorHandle, minFaceSize, maxFaceSize);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetSizeRangeFailed", "");
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
-    okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, 500);
+    s32 detectionThreshold = 500;
+    SetParamHelper(_config, "detectionThreshold", detectionThreshold);
+    okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, detectionThreshold);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetThresholdFailed", "");
       return RESULT_FAIL_INVALID_PARAMETER;

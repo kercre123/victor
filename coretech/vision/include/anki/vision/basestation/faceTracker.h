@@ -18,6 +18,10 @@
 
 #include <list>
 
+// Forward declaration:
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
 namespace Vision {
@@ -28,13 +32,7 @@ namespace Vision {
   {
   public:
     
-    enum class DetectionMode : u8 {
-      SingleImage,
-      Video
-    };
-    
-    FaceTracker(const std::string& modelPath,
-                DetectionMode mode = DetectionMode::Video);
+    FaceTracker(const std::string& modelPath, const Json::Value& config);
     
     ~FaceTracker();
     

@@ -28,13 +28,17 @@
 #include <thread>
 #include <mutex>
 
+namespace Json {
+  class Value;
+}
+
 namespace Anki {
 namespace Vision {
 
   class FaceRecognizer : public Profiler
   {
   public:
-    FaceRecognizer() { }
+    FaceRecognizer(const Json::Value& config);
     
     ~FaceRecognizer();
     
@@ -87,16 +91,24 @@ namespace Vision {
     static const INT32 MaxAlbumDataPerFace = 10; // can't be more than 10
     static const INT32 MaxAlbumFaces = 100; // can't be more than 1000
     
-    // Time between adding enrollment data for an existing user. "Initial" version
-    // is used until all the slots are filled.
-    // TODO: Expose as parameters
-    static constexpr f32   TimeBetweenEnrollmentUpdates_sec = 60.f;
-    static constexpr f32   TimeBetweenInitialEnrollmentUpdates_sec = 0.5f;
-    
     static_assert(MaxAlbumFaces <= 1000 && MaxAlbumFaces > 1,
                   "MaxAlbumFaces should be between 1 and 1000 for OKAO Library.");
     static_assert(MaxAlbumDataPerFace > 1 && MaxAlbumDataPerFace <= 10,
                   "MaxAlbumDataPerFace should be between 1 and 10 for OKAO Library.");
+
+    //
+    // Parameters (initialized from Json config)
+    //
+    
+    INT32 _recognitionThreshold = 750;
+    INT32 _mergeThreshold       = 500;
+    
+    // Time between adding enrollment data for an existing user. "Initial" version
+    // is used until all the slots are filled.
+    // TODO: Expose as parameters
+    f32   _timeBetweenEnrollmentUpdates_sec = 60.f;
+    f32   _timeBetweenInitialEnrollmentUpdates_sec = 0.5f;
+    
     
     bool _isInitialized = false;
     

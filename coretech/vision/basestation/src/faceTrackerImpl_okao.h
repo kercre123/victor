@@ -26,6 +26,8 @@
 #include <CommonDef.h>
 #include <DetectorComDef.h>
 
+#include <json/json.h>
+
 #include <list>
 #include <ctime>
 
@@ -35,7 +37,7 @@ namespace Vision {
   class FaceTracker::Impl : public Profiler
   {
   public:
-    Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
+    Impl(const std::string& modelPath, const Json::Value& config);
     ~Impl();
     
     Result Update(const Vision::Image& frameOrig,
@@ -68,8 +70,9 @@ namespace Vision {
     bool IsEnrollable(const DETECTION_INFO& detectionInfo);
     
     bool _isInitialized = false;
-    FaceTracker::DetectionMode _detectionMode;
     bool _detectEmotion = true;
+    
+    Json::Value _config;
     
     static const s32   MaxFaces = 10; // detectable at once
     

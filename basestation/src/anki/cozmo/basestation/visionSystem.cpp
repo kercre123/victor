@@ -1730,7 +1730,7 @@ namespace Cozmo {
         break;
     }
     AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
-                                       "VisionSystem.InvalidCalibrationResolution",
+                                       "VisionSystem.Init.InvalidCalibrationResolution",
                                        "Unexpected calibration resolution (%dx%d)\n",
                                        camCalib.GetNcols(), camCalib.GetNrows());
     
@@ -1750,9 +1750,23 @@ namespace Cozmo {
     _wasCalledOnce             = false;
     _havePrevPoseData          = false;
     
-    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+    PRINT_NAMED_INFO("VisionSystem.Init.InstantiatingFaceTracker",
                      "With model path %s.", _dataPath.c_str());
-    _faceTracker = new Vision::FaceTracker(_dataPath);
+    
+    // Read in parameters from the Json config file:
+    Json::Value config;
+    const std::string paramsFilename(_dataPath + "/visionParameters.json");
+    std::ifstream jsonFile(paramsFilename);
+    Json::Reader reader;
+    const bool success = reader.parse(jsonFile, config);
+    jsonFile.close();
+    if(! success) {
+      PRINT_NAMED_ERROR("VisionSystem.Init.JsonReadFail",
+                        "Failed to parse Json file %s.", paramsFilename.c_str());
+      return RESULT_FAIL;
+    }
+
+    _faceTracker = new Vision::FaceTracker(_dataPath, config);
     PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
     
     _camera.SetCalibration(camCalib);

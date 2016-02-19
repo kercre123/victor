@@ -177,11 +177,16 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   
   std::map<Vision::TrackedFace::ID_t, std::string> idToName;
   
+  Json::Value config;
+  config["faceDetection"]["detectionMode"] = "video";
+  // Since we're processing faster than real time (using saved images)
+  config["faceRecognition"]["timeBetweenInitialEnrollmentUpdates_sec"] = 0;
+  
   for(s32 iReload=0; iReload<2; ++iReload)
   {
     faceTracker = new Vision::FaceTracker(cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                                                           "/config/basestation/vision"),
-                                          Vision::FaceTracker::DetectionMode::Video);
+                                          config);
     
     // Enable ongoing enrollment
     faceTracker->EnableNewFaceEnrollment(-1);

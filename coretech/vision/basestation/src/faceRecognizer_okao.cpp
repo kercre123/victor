@@ -18,7 +18,8 @@
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 
-#include "json/json.h"
+#include <json/json.h>
+#include "anki/common/basestation/jsonTools.h"
 
 #include <OkaoCoAPI.h>
 
@@ -26,6 +27,25 @@
 
 namespace Anki {
 namespace Vision {
+  
+  FaceRecognizer::FaceRecognizer(const Json::Value& config)
+  {
+    // Macro to prevent typos: name in json must match member variable name (w/ preceding underscore)
+#   define SetParam(__NAME__) JsonTools::GetValueOptional(recognitionConfig, QUOTE(__NAME__), _##__NAME__)
+    if(config.isMember("faceRecognition"))
+    {
+      const Json::Value& recognitionConfig = config["faceRecognition"];
+      
+      SetParam(recognitionThreshold);
+      SetParam(mergeThreshold);
+      SetParam(timeBetweenEnrollmentUpdates_sec);
+      SetParam(timeBetweenInitialEnrollmentUpdates_sec);
+    } else {
+      PRINT_NAMED_WARNING("FaceRecognizer.Constructor.NoFaceRecParameters",
+                          "Did not find 'faceRecognition' field in config");
+    }
+#   undef SetParam
+  }
   
   FaceRecognizer::~FaceRecognizer()
   {
@@ -410,8 +430,8 @@ namespace Vision {
     // Only update if it has been long enough (where "long enough" can depend on
     // whether we've already filled up all data slots yet)
     auto const timeSinceLastUpdate = updateTime - enrollData.lastDataUpdateTime;
-    if(timeSinceLastUpdate > TimeBetweenEnrollmentUpdates_sec ||
-       ((numDataStored <= MaxAlbumDataPerFace) &&  timeSinceLastUpdate > TimeBetweenInitialEnrollmentUpdates_sec))
+    if(timeSinceLastUpdate > _timeBetweenEnrollmentUpdates_sec ||
+       ((numDataStored <= MaxAlbumDataPerFace) &&  timeSinceLastUpdate > _timeBetweenInitialEnrollmentUpdates_sec))
     {
       okaoResult=  OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID-1, enrollData.oldestData);
       if(OKAO_NORMAL != okaoResult) {
@@ -505,11 +525,9 @@ namespace Vision {
         PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.OkaoFaceRecognitionIdentifyFailed",
                             "OKAO Result Code=%d", okaoResult);
       } else {
-        const INT32 RecognitionThreshold = 750; // TODO: Expose this parameter
-        const INT32 MergeThreshold       = 500; // TODO: Expose this parameter
         //const f32   RelativeRecogntionThreshold = 1.5; // Score of top result must be this times the score of the second best result
         
-        if(resultNum > 0 && scores[0] > RecognitionThreshold)
+        if(resultNum > 0 && scores[0] > _recognitionThreshold)
         {
           // Our ID numbering starts at 1, Okao's starts at 0:
           for(s32 iResult=0; iResult<resultNum; ++iResult) {
@@ -528,7 +546,7 @@ namespace Vision {
           
           // Merge all results that are above threshold together, keeping the one enrolled earliest
           INT32 lastResult = 1;
-          while(lastResult < resultNum && scores[lastResult] > MergeThreshold)
+          while(lastResult < resultNum && scores[lastResult] > _mergeThreshold)
           {
             enrollStatusIter = _enrollmentData.find(userIDs[lastResult]);
             
@@ -557,7 +575,7 @@ namespace Vision {
               } else {
                 PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.MergingRecords",
                                  "Merging face %d with %d b/c its score %d is > %d",
-                                 userIDs[iResult], oldestID, scores[iResult], MergeThreshold);
+                                 userIDs[iResult], oldestID, scores[iResult], _mergeThreshold);
               }
             }
             ++iResult;
