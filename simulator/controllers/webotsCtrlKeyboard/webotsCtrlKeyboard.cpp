@@ -430,6 +430,11 @@ namespace Anki {
                   p2 = (s32)LEDId::LED_BACKPACK_RIGHT;
                   p3 = (s32)LEDColor::LED_GREEN;
                   break;
+                case TestMode::TM_STOP_TEST:
+                  p1 = 100;  // slow speed (mmps)
+                  p2 = 200;  // fast speed (mmps)
+                  p3 = 1000; // period (ms)
+                  break;
                 default:
                   break;
               }
