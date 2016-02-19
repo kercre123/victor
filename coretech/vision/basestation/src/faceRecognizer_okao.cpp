@@ -161,6 +161,9 @@ namespace Vision {
       
       if(_detectionInfo.nID >= 0 && anythingToDo)
       {
+        //PRINT_NAMED_DEBUG("FaceRecognizer.Run.Starting",
+        //                  "Starting to recognize tracked ID %d", -_detectionInfo.nID);
+
         INT32 nWidth  = _img.GetNumCols();
         INT32 nHeight = _img.GetNumRows();
         RAWIMAGE* dataPtr = _img.GetDataPointer();
@@ -253,6 +256,9 @@ namespace Vision {
         }
         
         // Signify we're done and ready for next face
+        //PRINT_NAMED_DEBUG("FaceRecognizer.Run.DoneWithFace",
+        //                  "Finished recognizing tracked ID %d as recognized ID %d",
+        //                  -_detectionInfo.nID, faceID);
         _detectionInfo.nID = -1;
         
         // Clear any tracker IDs queuend up for removal
@@ -400,6 +406,9 @@ namespace Vision {
       img.CopyTo(_img);
       _okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
       _detectionInfo = detectionInfo;
+      
+      //PRINT_NAMED_DEBUG("FaceRecognizer.SetNextFaceToRecognize.SetNextFace",
+      //                  "Setting next face to recognize: tracked ID %d", -_detectionInfo.nID);
       
       _mutex.unlock();
       return true;
