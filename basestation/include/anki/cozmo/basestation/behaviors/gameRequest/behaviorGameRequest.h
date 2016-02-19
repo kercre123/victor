@@ -60,8 +60,6 @@ protected:
   u32 GetNumBlocks(const Robot& robot) const;
   ObjectID GetRobotsBlockID(const Robot& robot) const;
 
-  u32 GetNumBlocksRequired() const { return _requiredNumBlocks; }
-  
   bool HasFace(const Robot& robot) const;
   bool GetFacePose(const Robot& robot, Pose3d& facePose) const;
 
@@ -71,20 +69,13 @@ protected:
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
 
-  // --------------------------------------------------------------------------------
-  // parameters read from json which children can use
-  std::string _requestAnimationName;
-  std::string _denyAnimationName;
-
 private:
 
-  u32        _requiredNumBlocks = 0;
   u32        _maxFaceAge_ms = 30000;
   f32        _minRequestDelay_s = 3.0f;
   f32        _requestTime_s = -1.0f;
   f32        _lastFaceSeenTime_s = -1.0f;
   Face::ID_t _faceID = Face::UnknownFace;
-  bool       _moreBlocksOK = false;
   
   void HandleObservedFace(const Robot& robot,
                           const ExternalInterface::RobotObservedFace& msg);

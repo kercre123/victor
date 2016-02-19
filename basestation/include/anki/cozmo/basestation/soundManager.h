@@ -89,7 +89,7 @@ namespace Anki {
       FILE* _currOpenSoundFilePtr;
       u32 _currOpenSoundNumSamples;
       s16 _soundBuf[MAX_SOUND_BUFFER_SIZE];
-      static const u32 SOUND_SAMPLE_SIZE = 800;
+      static const u32 SOUND_SAMPLE_SIZE = static_cast<u32>(AnimConstants::AUDIO_SAMPLE_SIZE);
       static const u32 UNENCODED_SOUND_SAMPLE_SIZE = SOUND_SAMPLE_SIZE * 2;
       static const u32 MAX_SOUND_BUFFER_DURATION_MS = MAX_SOUND_BUFFER_SIZE * 33 / UNENCODED_SOUND_SAMPLE_SIZE;
             

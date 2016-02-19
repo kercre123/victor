@@ -153,6 +153,8 @@ namespace Anki {
         }
         
         _moodManager->Init(moodConfig);
+        
+        LoadEmotionEvents();
       }
       
       LoadBehaviors();
@@ -914,6 +916,11 @@ namespace Anki {
         
       } // if (GetCamera().IsCalibrated())
       
+      ///////// MemoryMap ///////////
+      
+      // update navigation memory map
+      _blockWorld.UpdateNavMemoryMap();        
+      
       ///////// Update the behavior manager ///////////
       
       // TODO: This object encompasses, for the time-being, what some higher level
@@ -1060,9 +1067,6 @@ namespace Anki {
           }
         }
       }
-      
-      // update navigation memory map
-      _blockWorld.UpdateNavMemoryMap();        
       
       /////////// Update visualization ////////////
       
@@ -1504,6 +1508,43 @@ namespace Anki {
         
         _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
       }      
+    }
+    
+    void Robot::LoadEmotionEvents()
+    {
+      if (_context->GetDataPlatform() == nullptr)
+      {
+        return;
+      }
+      
+      // For now we'll keep this in the engine, rather than in e.g. "assets/emotionevents/" as they're more
+      // heavily coupled with the code than with assets
+      
+      const std::string eventFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/emotionevents/");
+      
+      DIR* dir = opendir(eventFolder.c_str());
+      if ( dir != nullptr)
+      {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr)
+        {
+          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
+          {
+            std::string fullFileName = eventFolder + ent->d_name;
+            
+            Json::Value eventJson;
+            const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, eventJson);
+            if (success && !eventJson.empty() && _moodManager->LoadEmotionEvents(eventJson))
+            {
+              PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", fullFileName.c_str());
+            }
+            else
+            {
+              PRINT_NAMED_WARNING("Robot.LoadEmotionEvents", "Failed to read '%s'", fullFileName.c_str());
+            }
+          }
+        }
+      }
     }
     
     void Robot::LoadBehaviors()
