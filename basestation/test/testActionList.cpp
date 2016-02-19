@@ -114,7 +114,7 @@ class TestCompoundActionSequential : public CompoundActionSequential
 public:
   TestCompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
   virtual ~TestCompoundActionSequential() { actionsDestroyed.push_back(_name); }
-  virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
+  virtual std::list<IActionRunner*> GetActions() { return _actions; }
 private:
   std::string _name;
 };
@@ -133,7 +133,7 @@ class TestCompoundActionParallel : public CompoundActionParallel
 public:
   TestCompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
   virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(_name); }
-  virtual std::list<std::pair<bool, IActionRunner*>> GetActions() { return _actions; }
+  virtual std::list<IActionRunner*> GetActions() { return _actions; }
 private:
   std::string name;
 };
@@ -191,7 +191,7 @@ ActionResult TestActionWithinAction::CheckIfDone()
   bool result = true;
   for(auto action : _compoundAction.GetActions())
   {
-    result &= ((TestAction*)action.second)->_complete;
+    result &= ((TestAction*)action)->_complete;
   }
   return (result ? ActionResult::SUCCESS : ActionResult::RUNNING);
 }
@@ -981,8 +981,8 @@ TEST(QueueAction, QueueActionWithinAction)
   for(auto action : subActions)
   {
     // Set during Init() when RegisterSubActions() is called
-    EXPECT_EQ(&(((TestAction*)action.second)->GetRobot()), &r);
-    ((TestAction*)action.second)->_complete = true;
+    EXPECT_EQ(&(((TestAction*)action)->GetRobot()), &r);
+    ((TestAction*)action)->_complete = true;
   }
   
   r.GetActionList().Update();
@@ -1027,7 +1027,7 @@ TEST(QueueAction, ActionFailureRetry)
   // so it is still left
   auto actions = compoundAction->GetActions();
   EXPECT_EQ(actions.size(), 1);
-  EXPECT_EQ(actions.front().second->GetName(), "Test2");
+  EXPECT_EQ(actions.front()->GetName(), "Test2");
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   

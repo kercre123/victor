@@ -922,7 +922,7 @@ namespace Anki {
     {
       // Use the completion union of the constituent PlaceObjectOnGround action
       if(_actions.size() > 0) {
-        _actions.back().second->GetCompletionUnion(completionUnion);
+        _actions.back()->GetCompletionUnion(completionUnion);
       } else {
         completionUnion = _completedActionInfoStack.back().first;
       }
