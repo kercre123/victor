@@ -8,6 +8,13 @@ using Anki.Cozmo;
 
 public class DailyGoalManager : MonoBehaviour {
 
+  #region constants
+
+  private const float _kMinigameNeedMin = 0.3f;
+  private const float _kMinigameNeedMax = 1.0f;
+
+  #endregion
+
   public Action<string> MinigameConfirmed;
 
   [SerializeField]
@@ -96,6 +103,7 @@ public class DailyGoalManager : MonoBehaviour {
   /// <summary>
   /// Returns the current goal that's the furthest from being complete.
   /// Use to help determine which minigame cozmo wants to play
+  /// NOTE - Currently not in use
   /// </summary>
   /// <returns>The stat.</returns>
   public Anki.Cozmo.ProgressionStatType PrimaryStat() {
@@ -117,38 +125,17 @@ public class DailyGoalManager : MonoBehaviour {
   ///  Returns a value between -1 and 1 based on how close AND far you are from completing daily goal
   /// </summary>
   /// <returns>The minigame need.</returns>
-  public float GetMinigameNeed_Extremes() {
-    float prog = (GetTodayProgress() * 2.0f) - 1;
+  public void SetMinigameNeed() {
     // Calculate how far you are from 50% complete
-    // range from 0 -> 1.0
-    prog = (Mathf.Abs(prog) * 2.0f) - 1;
-    if (prog > 1.0f) {
-      return 0.0f;
+    float prog = (GetTodayProgress() * 2.0f) - 1.0f;
+    // Min desire to play if daily goals are complete
+    if (prog >= _kMinigameNeedMax) {
+      prog = 0.0f;
     }
-    return prog;
-  }
-
-  /// <summary>
-  ///  Returns a value between -1 and 1 based on how close you are to completing daily goal
-  /// </summary>
-  /// <returns>The minigame need.</returns>
-  public float GetMinigameNeed_Close() {
-    float prog = GetTodayProgress();
-    prog = (prog - 0.5f) * 2.0f;
-    if (prog > 1.0f) {
-      return 0.0f;
-    }
-    return prog;
-  }
-
-  /// <summary>
-  ///  Returns a value between -1 and 1 based on how far you are to completing daily goal
-  /// </summary>
-  /// <returns>The minigame need.</returns>
-  public float GetMinigameNeed_Far() {
-    float prog = GetTodayProgress();
-    prog = (0.5f - prog) * 2.0f;
-    return prog;
+    prog = Math.Abs(prog);
+    prog = Mathf.Lerp(_kMinigameNeedMin, _kMinigameNeedMax, prog);
+    PickMiniGameToRequest();
+    RobotEngineManager.Instance.CurrentRobot.SetEmotion(EmotionType.WantToPlay, prog);
   }
 
   #endregion
@@ -222,7 +209,7 @@ public class DailyGoalManager : MonoBehaviour {
     }
 
     ChallengeData data = _LastChallengeData;
-    // Do not reate the minigame message if the challenge is invalid.
+    // Do not send the minigame message if the challenge is invalid.
     if (data == null) {
       return;
     }
@@ -241,7 +228,6 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
     DisableRequestGameBehaviorGroups();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
@@ -251,14 +237,12 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleMiniGameConfirm() {
     DAS.Info(this, "HandleMiniGameConfirm");
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
     DisableRequestGameBehaviorGroups();
     MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
     DAS.Info(this, "HandleExternalRejection"); 
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, -1.0f, "WantToPlayConfirm");
     DisableRequestGameBehaviorGroups();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();

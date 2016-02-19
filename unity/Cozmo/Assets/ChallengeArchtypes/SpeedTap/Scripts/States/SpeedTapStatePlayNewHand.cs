@@ -34,6 +34,7 @@ namespace SpeedTap {
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
       _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
       _LightsOn = false;
+      _SpeedTapGame.PlayerTap = false;
 
       GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
 
@@ -60,7 +61,7 @@ namespace SpeedTap {
         else if (_TryFake) {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(AnimationName.kSpeedTapFake, RobotCompletedFakeTapAnimation);
+              _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_FakeOut, RobotCompletedFakeTapAnimation);
               _TriedFake = true;
             }
           }
@@ -105,14 +106,15 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
     }
 
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
       // check for player tapped first here.
-      CozmoDidTap();
+      if (_SpeedTapGame.PlayerTap == false) {
+        CozmoDidTap();
+      }
     }
 
     void RobotCompletedFakeTapAnimation(bool success) {
@@ -125,15 +127,10 @@ namespace SpeedTap {
       _StateMachine.SetNextState(new SpeedTapCozmoWins());
     }
 
-    void BlockTapped(int blockID, int numTaps) {
-      if (blockID == _SpeedTapGame.PlayerBlock.ID) {
-        PlayerDidTap();
-      }   
-    }
-
     void PlayerDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
       if (_GotMatch) {
+        _SpeedTapGame.PlayerTap = true;
         _StateMachine.SetNextState(new SpeedTapPlayerWins());
       }
       else if (_LightsOn) {
@@ -145,6 +142,7 @@ namespace SpeedTap {
       _SpeedTapGame.RollingBlocks();
       _TriedFake = false;
       _CozmoTapDelayTimeMs = UnityEngine.Random.Range(_MinCozmoTapDelayTimeMs, _MaxCozmoTapDelayTimeMs);
+      _SpeedTapGame.PlayerTap = false;
 
       _TryFake = UnityEngine.Random.Range(0.0f, 1.0f) < _FakeProbability;
       _TryPeek = UnityEngine.Random.Range(0.0f, 1.0f) < _PeekProbability;
