@@ -11,7 +11,7 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _CurrentRobot.DriveWheels(20.0f, 20.0f);
+      _CurrentRobot.DriveWheels(25.0f, 25.0f);
     }
 
     public override void Update() {

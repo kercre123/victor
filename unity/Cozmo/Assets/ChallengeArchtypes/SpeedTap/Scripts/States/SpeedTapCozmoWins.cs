@@ -7,7 +7,7 @@ namespace SpeedTap {
   public class SpeedTapCozmoWins : State {
 
     private SpeedTapGame _SpeedTapGame = null;
-    private float _DriveTime = 1.25f;
+    private float _DriveTime = 0.5f;
 
     public override void Enter() {
       base.Enter();
