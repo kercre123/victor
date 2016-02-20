@@ -278,13 +278,16 @@ namespace Cozmo {
           
         case IBehavior::Status::Complete:
           // Behavior complete, try to select and switch to next
+          StopCurrentBehavior(currentTime_sec);
           lastResult = SelectNextBehavior(currentTime_sec);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_WARNING("BehaviorManager.Update.Complete.SelectNextFailed",
                                 "Failed trying to select next behavior.");
             lastResult = RESULT_OK;
           }
-          SwitchToNextBehavior(currentTime_sec);
+          else {
+            SwitchToNextBehavior(currentTime_sec);
+          }
           break;
           
         case IBehavior::Status::Failure:
@@ -292,6 +295,8 @@ namespace Cozmo {
                             "Behavior '%s' failed to Update().",
                             _currentBehavior->GetName().c_str());
           lastResult = RESULT_FAIL;
+
+          StopCurrentBehavior(currentTime_sec);
           
           // Force a re-init so if we reselect this behavior
           _forceReInit = true;
@@ -412,15 +417,18 @@ namespace Cozmo {
     // hack: assume this isn't the demo behavior chooser (will be reset right after this if it was)
     _demoBehaviorChooserRunning = false;
   }
-  
-  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
+
+  void BehaviorManager::StopCurrentBehavior(double currentTime_sec)
   {
     // stop current
     if (_currentBehavior) {
       _currentBehavior->SetIsRunning(false);
       _currentBehavior->Stop(currentTime_sec);
     }
-    
+  }
+
+  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
+  {    
     // set current <- new
     _currentBehavior = newBehavior;
     
