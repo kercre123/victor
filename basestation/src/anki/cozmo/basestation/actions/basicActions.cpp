@@ -1034,6 +1034,8 @@ namespace Anki {
       {
         PRINT_NAMED_ERROR("FacePoseAction.Init.PoseOriginFailure",
                           "Could not get pose w.r.t. robot pose.");
+        _poseWrtRobot.Print();
+        _poseWrtRobot.PrintNamedPathToOrigin(false);
         return ActionResult::FAILURE_ABORT;
       }
       
