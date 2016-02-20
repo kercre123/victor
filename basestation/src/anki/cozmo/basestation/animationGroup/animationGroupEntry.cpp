@@ -16,15 +16,17 @@
 #include "anki/cozmo/basestation/animationGroup/animationGroupEntry.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/cozmo/basestation/moodSystem/simpleMoodTypesHelpers.h"
 
 namespace Anki {
   namespace Cozmo {
     
     static const char* kNameKey = "Name";
-    static const char* kMoodScorerKey = "MoodScorer";
+    static const char* kWeightKey = "Weight";
+    static const char* kMoodKey = "Mood";
+    static const char* kCooldownKey = "CooldownTime_Sec";
     
     AnimationGroupEntry::AnimationGroupEntry()
-    : _moodScorer()
     {
     }
     
@@ -40,23 +42,46 @@ namespace Anki {
       
       _name = jsonName.asString();
       
-      const Json::Value& jsonEmotionScorers = jsonRoot[kMoodScorerKey];
+      const Json::Value& jsonWeight = jsonRoot[kWeightKey];
       
-      _moodScorer.ClearEmotionScorers();
-      
-      if(!_moodScorer.ReadFromJson(jsonEmotionScorers)) {
-        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.BadMoodScorer",
-                          "'%s' field contains bad data", kMoodScorerKey);
+      if(!jsonWeight.isDouble()) {
+        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoWeight",
+                          "Missing '%s' field for animation.", kWeightKey);
         
         return RESULT_FAIL;
       }
       
+      _weight = jsonWeight.asFloat();
+      
+      const Json::Value& jsonMood = jsonRoot[kMoodKey];
+      
+      if(!jsonMood.isString()) {
+        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoMood",
+                          "Missing '%s' field for animation.", kMoodKey);
+        
+        return RESULT_FAIL;
+      }
+      
+      const char* moodTypeString = jsonMood.asCString();
+      _mood  = SimpleMoodTypeFromString( moodTypeString );
+      
+      if (_mood == SimpleMoodType::Count)
+      {
+        PRINT_NAMED_WARNING("SimpleMoodScorer.ReadFromJson.BadType", "Bad '%s' = '%s'", kMoodKey, moodTypeString);
+        return RESULT_FAIL;
+      }
+      
+      const Json::Value& jsonCooldown = jsonRoot[kCooldownKey];
+      
+      // Cooldown is optional
+      if(jsonWeight.isDouble()) {
+        _cooldownTime_s = jsonCooldown.asDouble();
+      }
+      else {
+        _cooldownTime_s = 0;
+      }
+      
       return RESULT_OK;
-    }
-    
-    
-    float AnimationGroupEntry::EvaluateScore(const MoodManager& moodManager) const {
-      return _moodScorer.EvaluateEmotionScore(moodManager);
     }
     
   } // namespace Cozmo

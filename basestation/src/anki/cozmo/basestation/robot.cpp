@@ -1488,6 +1488,15 @@ namespace Anki {
 
     }
     
+    const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
+      const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
+      if(group != nullptr && !group->IsEmpty()) {
+        return group->GetAnimationName(GetMoodManager(), _animationGroups);
+      }
+      static const std::string empty("");
+      return empty;
+    }
+    
     // Read the animation groups in a dir
     void Robot::ReadAnimationGroupFile(const char* filename)
     {
