@@ -1187,56 +1187,17 @@ namespace Anki {
       message.Set_ErasePoseMarker(m);
       SendMessage(message);
     }
-
-    void UiGameController::SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
-                                  const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight)
-    {
-      ExternalInterface::SetWheelControllerGains m;
-      m.kpLeft = kpLeft;
-      m.kiLeft = kiLeft;
-      m.maxIntegralErrorLeft = maxErrorSumLeft;
-      m.kpRight = kpRight;
-      m.kiRight = kiRight;
-      m.maxIntegralErrorRight = maxErrorSumRight;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetWheelControllerGains(m);
-      SendMessage(message);
-    }
-
     
-    void UiGameController::SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum)
+    void UiGameController::SendControllerGains(ControllerChannel channel, f32 kp, f32 ki, f32 kd, f32 maxErrorSum)
     {
-      ExternalInterface::SetHeadControllerGains m;
+      ExternalInterface::ControllerGains m;
+      m.controller = channel;
       m.kp = kp;
       m.ki = ki;
       m.kd = kd;
       m.maxIntegralError = maxErrorSum;
       ExternalInterface::MessageGameToEngine message;
-      message.Set_SetHeadControllerGains(m);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum)
-    {
-      ExternalInterface::SetLiftControllerGains m;
-      m.kp = kp;
-      m.ki = ki;
-      m.kd = kd;
-      m.maxIntegralError = maxErrorSum;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetLiftControllerGains(m);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendSteeringControllerGains(const f32 k1, const f32 k2, const f32 dockPathDistOffsetCap_mm, const f32 dockPathAngularOffsetCap_rad)
-    {
-      ExternalInterface::SetSteeringControllerGains m;
-      m.k1 = k1;
-      m.k2 = k2;
-      m.dockPathDistOffsetCap_mm = dockPathDistOffsetCap_mm;
-      m.dockPathAngularOffsetCap_rad = dockPathAngularOffsetCap_rad;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetSteeringControllerGains(m);
+      message.Set_ControllerGains(m);
       SendMessage(message);
     }
     

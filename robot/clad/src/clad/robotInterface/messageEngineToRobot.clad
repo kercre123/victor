@@ -10,6 +10,7 @@
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
+#include "clad/types/controllerChannels.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/nvStorage.clad"
@@ -159,14 +160,6 @@ message ImageRequest
 {
   ImageSendMode  sendMode,
   ImageResolution resolution,
-}
-
-enum uint_8 ControllerChannel
-{
-  controller_wheel,
-  controller_head,
-  controller_lift,
-  controller_steering
 }
 
 message ControllerGains

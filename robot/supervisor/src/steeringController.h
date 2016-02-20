@@ -82,6 +82,9 @@ namespace Anki {
     //(since cozmo can be fairly far off path when docking)
     void SetGains(f32 k1, f32 k2, f32 dockPathDistOffsetCap_mm, f32 dockPathAngularOffsetCap_rad);
     
+    // Set gains for point turning
+    void SetPointTurnGains(f32 kp, f32 ki, f32 kd, f32 maxIntegralError);
+    
     // Function to init steering controller when we expect to feed it a discontinuous
     // follow line index so that it doesn't compare it to the previous follow line index.
     void ReInit(void);

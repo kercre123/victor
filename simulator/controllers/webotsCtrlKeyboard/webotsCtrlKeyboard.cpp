@@ -1121,34 +1121,40 @@ namespace Anki {
                     f32 steerAngOffsetCap = root_->getField("steerAngOffsetCap_rad")->getSFFloat();
                     printf("New steering gains: k1 %f, k2 %f, distOffsetCap %f, angOffsetCap %f\n",
                            steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
-                    SendSteeringControllerGains(steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
+                    SendControllerGains(ControllerChannel::controller_steering, steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
+                    
+                    // Point turn gains
+                    f32 kp = root_->getField("pointTurnKp")->getSFFloat();
+                    f32 ki = root_->getField("pointTurnKi")->getSFFloat();
+                    f32 kd = root_->getField("pointTurnKd")->getSFFloat();
+                    f32 maxErrorSum = root_->getField("pointTurnMaxErrorSum")->getSFFloat();
+                    printf("New pointTurn gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
+                    SendControllerGains(ControllerChannel::controller_pointTurn, kp, ki, kd, maxErrorSum);
                     
                   } else {
                     
                     // Wheel gains
-                    f32 kpLeft = root_->getField("lWheelKp")->getSFFloat();
-                    f32 kiLeft = root_->getField("lWheelKi")->getSFFloat();
-                    f32 maxErrorSumLeft = root_->getField("lWheelMaxErrorSum")->getSFFloat();
-                    f32 kpRight = root_->getField("rWheelKp")->getSFFloat();
-                    f32 kiRight = root_->getField("rWheelKi")->getSFFloat();
-                    f32 maxErrorSumRight = root_->getField("rWheelMaxErrorSum")->getSFFloat();
-                    printf("New wheel gains: left %f %f %f, right %f %f %f\n", kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
-                    SendWheelControllerGains(kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
+                    f32 kp = root_->getField("wheelKp")->getSFFloat();
+                    f32 ki = root_->getField("wheelKi")->getSFFloat();
+                    f32 kd = 0;
+                    f32 maxErrorSum = root_->getField("wheelMaxErrorSum")->getSFFloat();
+                    printf("New wheel gains: kp=%f ki=%f kd=%f\n", kp, ki, maxErrorSum);
+                    SendControllerGains(ControllerChannel::controller_wheel, kp, ki, kd, maxErrorSum);
                     
                     // Head and lift gains
-                    f32 kp = root_->getField("headKp")->getSFFloat();
-                    f32 ki = root_->getField("headKi")->getSFFloat();
-                    f32 kd = root_->getField("headKd")->getSFFloat();
-                    f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
+                    kp = root_->getField("headKp")->getSFFloat();
+                    ki = root_->getField("headKi")->getSFFloat();
+                    kd = root_->getField("headKd")->getSFFloat();
+                    maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
                     printf("New head gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
-                    SendHeadControllerGains(kp, ki, kd, maxErrorSum);
+                    SendControllerGains(ControllerChannel::controller_head, kp, ki, kd, maxErrorSum);
                     
                     kp = root_->getField("liftKp")->getSFFloat();
                     ki = root_->getField("liftKi")->getSFFloat();
                     kd = root_->getField("liftKd")->getSFFloat();
                     maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
                     printf("New lift gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
-                    SendLiftControllerGains(kp, ki, kd, maxErrorSum);
+                    SendControllerGains(ControllerChannel::controller_lift, kp, ki, kd, maxErrorSum);
                   }
                 } else {
                   printf("No WebotsKeyboardController was found in world\n");

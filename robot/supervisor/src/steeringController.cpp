@@ -71,6 +71,14 @@ namespace Anki {
       f32 angularDistExpected_;
       f32 angularDistTraversed_;
       
+      f32 pointTurnKp_ = 400;
+      f32 pointTurnKd_ = 5000;
+      f32 pointTurnKi_ = 0;
+      f32 pointTurnMaxIntegralError_ = 100;
+      f32 prevPointTurnAngleError_ = 0;
+      f32 pointTurnAngleErrorSum_ = 0;
+
+      
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
 
@@ -103,7 +111,16 @@ namespace Anki {
       PATH_ANGULAR_OFFSET_CAP_RAD = dockPathAngularOffsetCap_rad;
     }
 
-
+    void SetPointTurnGains(f32 kp, f32 ki, f32 kd, f32 maxIntegralError)
+    {
+      pointTurnKp_ = kp;
+      pointTurnKd_ = kd;
+      pointTurnKi_ = ki;
+      pointTurnMaxIntegralError_ = maxIntegralError;
+      
+      AnkiInfo( 125, "SteeringController.SetPointTurnGains", 373, "New gains: kp %f, ki %f, kd %f, maxSum %f", 4, kp, ki, kd, maxIntegralError);
+    }
+    
     SteerMode GetMode()
     {
       return currSteerMode_;
@@ -433,6 +450,8 @@ namespace Anki {
 
       maxAngularVel_ = maxAngularVel;
       angularAccel_ = angularAccel;
+      prevPointTurnAngleError_ = 0;
+      pointTurnAngleErrorSum_ = 0;
 
       // Check that the maxAngularVel is greater than the terminal speed
       // If not, make it at least that big.
@@ -582,9 +601,11 @@ namespace Anki {
 
       // PID control for maintaining heading
       f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
-      const f32 pointTurnKp_ = 500;
-      //PRINT("PT comp: arcVel %d, comp %f\n", arcVel, angularDistToCurrDesiredAngle * pointTurnKp_);
-      arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_);
+      arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_ +
+                      (angularDistToCurrDesiredAngle - prevPointTurnAngleError_) * pointTurnKd_ +
+                      pointTurnAngleErrorSum_ * pointTurnKi_);
+      prevPointTurnAngleError_ = angularDistToCurrDesiredAngle;
+      pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
 
 
       // Compute the wheel velocities

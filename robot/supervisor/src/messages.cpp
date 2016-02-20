@@ -468,27 +468,32 @@ namespace Anki {
 #endif
       } // ProcessImageRequestMessage()
 
-      void Process_setControllerGains(const Anki::Cozmo::RobotInterface::ControllerGains& msg) {
+      void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {
-          case RobotInterface::controller_wheel:
+          case controller_wheel:
           {
             WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
             break;
           }
-          case RobotInterface::controller_head:
+          case controller_head:
           {
             HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case RobotInterface::controller_lift:
+          case controller_lift:
           {
             LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case RobotInterface::controller_steering:
+          case controller_steering:
           {
             SteeringController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError); // Coopting structure
+            break;
+          }
+          case controller_pointTurn:
+          {
+            SteeringController::SetPointTurnGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
           default:

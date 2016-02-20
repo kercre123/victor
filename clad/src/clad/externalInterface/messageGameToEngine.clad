@@ -16,6 +16,7 @@
 #include "clad/types/progressionStatTypes.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
+#include "clad/types/controllerChannels.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
@@ -445,6 +446,16 @@ message DrawPoseMarker {
 
 // ErasePoseMarker
 message ErasePoseMarker {
+}
+
+// ControllerGains
+message ControllerGains
+{
+  float_32 kp,
+  float_32 ki,
+  float_32 kd,
+  float_32 maxIntegralError,
+  ControllerChannel controller
 }
 
 // SetWheelControllerGains
