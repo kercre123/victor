@@ -57,6 +57,7 @@ bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& 
   // Game init happens in CozmoInstanceRunner construction, so we get the result
   // If we already had an instance, kill it and start again
   bool gameInitResult = false;
+  _cozmoRunner.reset();
   _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
   
   return gameInitResult;
