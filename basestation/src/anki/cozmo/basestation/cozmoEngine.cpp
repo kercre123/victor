@@ -89,6 +89,8 @@ CozmoEngine::~CozmoEngine()
   
   BaseStationTimer::removeInstance();
   _context->GetVizManager()->Disconnect();
+  
+  SoundManager::removeInstance();
 }
 
 Result CozmoEngine::Init(const Json::Value& config) {
