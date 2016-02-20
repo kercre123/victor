@@ -28,7 +28,7 @@
 #include <mutex>
 
 namespace Anki {
-  
+
 // Forward declaration
 namespace Util {
 namespace Data {
@@ -52,6 +52,8 @@ namespace RobotInterface {
 
 // Forward declaration
 class Robot;
+class CozmoContext;
+class VizManager;
   
 struct DockingErrorSignal;
 
@@ -64,7 +66,7 @@ struct DockingErrorSignal;
       Asynchronous
     };
     
-    VisionComponent(RobotID_t robotID, RunMode mode, Util::Data::DataPlatform* dataPlatform);
+    VisionComponent(RobotID_t robotID, RunMode mode, const CozmoContext* context);
     virtual ~VisionComponent();
     
     void SetRunMode(RunMode mode);
@@ -146,6 +148,7 @@ struct DockingErrorSignal;
   protected:
     
     VisionSystem* _visionSystem = nullptr;
+    VizManager*   _vizManager = nullptr;
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
@@ -238,4 +241,3 @@ struct DockingErrorSignal;
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
-

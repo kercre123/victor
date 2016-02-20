@@ -33,29 +33,45 @@
 #define ANKI_DEBUG_INFO 1
 #endif
 
-/** Hideous macro recursion chain for counting the number of arguments passed to a variatic macro
- */
-#define PP_NARG(...) \
-         PP_NARG_(__VA_ARGS__,PP_RSEQ_N())
-#define PP_NARG_(...) \
-         PP_ARG_N(__VA_ARGS__)
-#define PP_ARG_N( \
-          _1, _2, _3, _4, _5, _6, _7, _8, _9,_10, \
-         _11,_12,_13,_14,_15,_16,_17,_18,_19,_20, \
-         _21,_22,_23,_24,_25,_26,_27,_28,_29,_30, \
-         _31,_32,_33,_34,_35,_36,_37,_38,_39,_40, \
-         _41,_42,_43,_44,_45,_46,_47,_48,_49,_50, \
-         _51,_52,_53,_54,_55,_56,_57,_58,_59,_60, \
-         _61,_62,_63,N,...) N
-#define PP_RSEQ_N() \
-         63,62,61,60,                   \
-         59,58,57,56,55,54,53,52,51,50, \
-         49,48,47,46,45,44,43,42,41,40, \
-         39,38,37,36,35,34,33,32,31,30, \
-         29,28,27,26,25,24,23,22,21,20, \
-         19,18,17,16,15,14,13,12,11,10, \
-         9,8,7,6,5,4,3,2,1,0         
-// End macro abhorence
+template<typename T>
+inline int trace_cast(const T arg)
+{
+  return (int)arg;
+}
+
+// No floats on the espressif
+#ifndef TARGET_ESPRESSIF
+template<> inline int trace_cast(const float arg)
+{
+  return *((int*)&arg);
+}
+
+template<> inline int trace_cast(const double arg)
+{
+  const float fltArg = (float)arg;
+  return *((int*)&fltArg);
+}
+#endif
+
+// Macro ball based loosely on http://stackoverflow.com/questions/6707148/foreach-macro-on-macros-arguments#6707531
+// Paste macro is two layers to force extra eval
+#define Paste(a,b) a ## b
+#define XPASTE(a,b) Paste(a, b)
+#define  CAST0()  0
+#define  CAST1(a) trace_cast(a)
+#define  CAST2(a, b) CAST1(a),  CAST1(b)
+#define  CAST3(a, b, c) CAST1(a),  CAST2(b, c)
+#define  CAST4(a, b, c, d) CAST1(a),  CAST3(b, c, d)
+#define  CAST5(a, b, c, d, e) CAST1(a),  CAST4(b, c, d, e)
+#define  CAST6(a, b, c, d, e, f) CAST1(a),  CAST5(b, c, d, e, f)
+#define  CAST7(a, b, c, d, e, f, g) CAST1(a),  CAST6(b, c, d, e, f, g)
+#define  CAST8(a, b, c, d, e, f, g, h) CAST1(a),  CAST7(b, c, d, e, f, g, h)
+#define  CAST9(a, b, c, d, e, f, g, h, i) CAST1(a),  CAST8(b, c, d, e, f, g, h, i)
+#define CAST10(a, b, c, d, e, f, g, h, i, j) CAST1(a),  CAST9(b, c, d, e, f, g, h, i, j)
+#define CAST11(a, b, c, d, e, f, g, h, i, j, k) CAST1(a), CAST10(b, c, d, e, f, g, h, i, j, k)
+#define CAST12(a, b, c, d, e, f, g, h, i, j, k, l) CAST1(a), CAST11(b, c, d, e, f, g, h, i, j, k, l)
+#define CASTn(M, ...) M(__VA_ARGS__)
+#define CASTx(nargs, ...) CASTn(XPASTE(CAST, nargs), __VA_ARGS__)
 
 #include "clad/types/robotLogging.h"
 
@@ -64,100 +80,129 @@ namespace Anki {
     namespace RobotInterface {
       /** Sends a log event to the base station.
        * @param level The event log level
-       * @param name The event enum / name / format string
-       * @param numArgs (int) The number of variable arguments
-       * Remaining args are packed into array / format string
+       * @param name The name of the event / warning / error / etc.
+       * @param formatId The ID of the format string for this event
+       * @param numArgs The number of var args for the format
+       * Remaining args are packed into array and used by format string on base station
        */
-      int SendLog(const LogLevel level, ...);
+      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...);
 		
 #if ANKI_DEBUG_EVENTS
-      #define AnkiEvent(eventName, ...) \
-      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_EVENT, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); }
+      #define AnkiEvent(nameId, nameString, fmtId, fmtString, nargs, ...) \
+      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_EVENT, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); }
 #else
-      #define AnkiEvent(eventName, ...)
+      #define AnkiEvent(...)
 #endif
 
 #if ANKI_DEBUG_INFO
-      #define AnkiInfo(eventName, ...) \
-      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_INFO, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); }
+      #define AnkiInfo(nameId, nameString, fmtId, fmtString, nargs, ...) \
+      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_INFO, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); }
 #else
-      #define AnkiInfo(eventName, ...)
+      #define AnkiInfo(...)
 #endif
 
 #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_MINIMAL
-      #define AnkiDebug(eventName, ...) \
-      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); }
+      #define AnkiDebug(nameId, nameString, fmtId, fmtString, nargs, ...) \
+      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); }
+      
+      #define AnkiDebugPeriodic(num_calls_between_prints, nameId, nameString, fmtId, fmtString, nargs, ...) \
+      {   static u16 cnt = num_calls_between_prints; \
+          if (++cnt > num_calls_between_prints) { \
+            Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+            cnt = 0; \
+          } \
+      }
 #else
-      #define AnkiDebug(eventName, ...)
+      #define AnkiDebug(...)
+      #define AnkiDebugPeriodic(...)
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
-      #define AnkiError(eventName, ...) \
-      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); }
+      #define AnkiError(nameId, nameString, fmtId, fmtString, nargs, ...) \
+      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); }
 
-      #define AnkiConditionalError(expression, eventName, ...) \
+      #define AnkiConditionalError(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
         }
 
-      #define AnkiConditionalErrorAndReturn(expression, eventName, ...) \
+      #define AnkiConditionalErrorAndReturn(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           return; \
         }
       
-      #define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, ...) \
+      #define AnkiConditionalErrorAndReturnValue(expression, returnValue, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if(!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           return returnValue; \
         }
 #else
-      #define AnkiError(eventName, ...)
-      #define AnkiConditionalError (espression, eventName, ...)
-      #define AnkiConditionalErrorAndReturn (espression, eventName, ...)
-      #define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, ...)
+      #define AnkiError(...)
+      #define AnkiConditionalError (...)
+      #define AnkiConditionalErrorAndReturn (...)
+      #define AnkiConditionalErrorAndReturnValue(...)
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
-      #define AnkiWarn(eventName, ...) \
-      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); }
+      #define AnkiWarn(nameId, nameString, fmtId, fmtString, nargs, ...) \
+      { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); }
 
-      #define AnkiConditionalWarn(espression, eventName, ...) \
+      #define AnkiConditionalWarn(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
         }
 
-      #define AnkiConditionalWarnAndReturn(expression, eventName, ...) \
+      #define AnkiConditionalWarnAndReturn(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           return; \
         }
       
-      #define AnkiConditionalWarnAndReturnValue(expression, returnValue, eventName, ...) \
+      #define AnkiConditionalWarnAndReturnValue(expression, returnValue, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if(!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, eventName, PP_NARG(__VA_ARGS__), ##__VA_ARGS__); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           return returnValue;\
         }
 #else
-      #define AnkiWarn(eventName, ...)
-      #define AnkiConditionalWarn(espression, eventName, ...)
-      #define AnkiConditionalWarnAndReturn(espression, eventName, ...)
-      #define AnkiConditionalWarnAndReturnValue(expression, returnValue, eventName, ...)
+      #define AnkiWarn(...)
+      #define AnkiConditionalWarn(...)
+      #define AnkiConditionalWarnAndReturn(...)
+      #define AnkiConditionalWarnAndReturnValue(...)
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-      #define AnkiAssert(expression, eventName) \
+
+#if defined(TARGET_ESPRESSIF)
+	#define ANKI_ASSERT_SHOW Face::FacePrintf("ASSERT in " __FILE__ ", line %d", __LINE__)
+#elif defined(TARGET_K02)
+ #define ANKI_ASSERT_SHOW for (int i=0; i<5; ++i) Anki::Cozmo::HAL::SetLED(i, 0x7c00)
+#else
+ #define ANKI_ASSERT_SHOW
+#endif
+				
+      // Anki assert sends assesrt CLAD message and then halts main exec
+      #define AnkiAssert(expression, fmtId) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ASSERT, eventName); \
-          assert(false); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ASSERT, 0, fmtId, 1, __LINE__); \
+					ANKI_ASSERT_SHOW; \
+          while(true); \
         }
 #else
-      #define AnkiAssert(expression, eventName)
+      #define AnkiAssert(...)
 #endif
 
     }
   }
 }
 
+#if defined(TARGET_ESPRESSIF)
+	extern "C" void FacePrintf(const char *format, ...); // Forward declaration instead of include because we don't want that include everywhere this is.
+#elif defined(TARGET_K02)
+ // Forward declaration instead of include because we don't want that include everywhere this is.
+ namespace Anki { namespace Cozmo { namespace HAL {
+	void SetLED(uint8_t led_id, uint16_t color);
+ }}}
+#endif
 
 #endif

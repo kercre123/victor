@@ -11,18 +11,23 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
-#include "anki/common/shared/radians.h"
+#include "util/math/math.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
 
 namespace Anki {
 namespace Cozmo {
-  
+
+static const char* kUseFaceAngleCenterKey = "center_face_angle";
+static const bool kUseFaceAngleCenterDefault = true;
+static const char* kMinimumFaceAgeKey = "minimum_face_age_s";
+static const double kMinimumFaceAgeDefault = 180.0;
+
 using namespace ExternalInterface;
 
 BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
@@ -30,10 +35,14 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   , _currentDriveActionID((uint32_t)ActionConstants::INVALID_TAG)
 {
   SetDefaultName("FindFaces");
+
+  _useFaceAngleCenter = config.get(kUseFaceAngleCenterKey, kUseFaceAngleCenterDefault).asBool();
+  _minimumTimeSinceSeenLastFace_sec = config.get(kMinimumFaceAgeKey, kMinimumFaceAgeDefault).asDouble();
   
-  SubscribeToTags({
-    EngineToGameTag::RobotCompletedAction
-  });
+  SubscribeToTags({{
+    EngineToGameTag::RobotCompletedAction,
+    EngineToGameTag::RobotPickedUp
+  }});
 
   if (GetEmotionScorerCount() == 0)
   {
@@ -45,8 +54,34 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   
 bool BehaviorFindFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
-  return true;
+  if(_currentState == State::Inactive) {
+    
+    Pose3d facePose;
+    auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
+    
+    return (lastFaceTime == 0 || lastFaceTime < SEC_TO_MILIS(currentTime_sec - _minimumTimeSinceSeenLastFace_sec));
+  }
+  else {
+    return true;
+  }
 }
+
+float BehaviorFindFaces::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  double startTime_s = GetTimeStartedRunning_s();
+  Pose3d facePose;
+  auto lastFaceTime_ms = robot.GetFaceWorld().GetLastObservedFace(facePose);
+  double lastFaceTime_s = MILIS_TO_SEC(lastFaceTime_ms);
+
+  if( lastFaceTime_s > startTime_s ) {
+    // once this behavior finds a face, it doesn't want to run any more
+    return 0.0f;
+  }
+  else {
+    return super::EvaluateRunningScoreInternal(robot, currentTime_sec);
+  }
+}
+  
 
 void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
@@ -61,6 +96,11 @@ void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot
       }
       break;
     }
+    case EngineToGameTag::RobotPickedUp:
+    {
+      // Handled in AlwaysHandle
+      break;
+    }
     default:
       PRINT_NAMED_ERROR("BehaviorLookAround.HandleWhileRunning.InvalidTag",
                         "Received event with unhandled tag %hhu.",
@@ -69,7 +109,15 @@ void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot
   }
 }
   
-Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  if (_useFaceAngleCenter && EngineToGameTag::RobotPickedUp == event.GetData().GetTag())
+  {
+    _faceAngleCenterSet = false;
+  }
+}
+  
+Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec)
 {
   _currentDriveActionID = (uint32_t)ActionConstants::INVALID_TAG;
   _currentState = State::WaitToFinishMoving;
@@ -78,6 +126,13 @@ Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec, boo
 
 IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot, double currentTime_sec)
 {
+  // First time we're updating, set our face angle center
+  if (_useFaceAngleCenter && !_faceAngleCenterSet)
+  {
+    _faceAngleCenter = robot.GetPose().GetRotationAngle();
+    _faceAngleCenterSet = true;
+  }
+  
   switch (_currentState)
   {
     case State::Inactive:
@@ -116,10 +171,10 @@ IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot, double current
   return Status::Complete;
 }
   
-void BehaviorFindFaces::StartMoving(Robot& robot)
+float BehaviorFindFaces::GetRandomPanAmount() const
 {
   float randomPan = (float) GetRNG().RandDbl(2.0);
-  Radians panRads;
+  float panRads;
   // > 1 means positive pan
   if (randomPan > 1.0f)
   {
@@ -131,25 +186,55 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
     panRads = -DEG_TO_RAD(((kPanMax - kPanMin) * randomPan) + kPanMin);
   }
   
+  return panRads;
+}
+  
+void BehaviorFindFaces::StartMoving(Robot& robot)
+{
+  Radians currentBodyAngle = robot.GetPose().GetRotationAngle().ToFloat();
+  float turnAmount = GetRandomPanAmount();
+  
+  Radians proposedNewAngle = Radians(currentBodyAngle + turnAmount);
+  // If the potential turn takes us outside of our cone of focus, flip the sign on the turn
+  if(_useFaceAngleCenter &&
+     Anki::Util::Abs((proposedNewAngle - _faceAngleCenter).getDegrees()) > kFocusAreaAngle_deg / 2.0f)
+  {
+    proposedNewAngle = Radians(currentBodyAngle - turnAmount);
+  }
+  
+  // In the case where this is our first time moving, if our head wasn't already in the ideal range, move the head only
+  // and cancel out the body movement
+  static bool firstTimeMoving = true;
+  if (firstTimeMoving && robot.GetHeadAngle() < kTiltMin)
+  {
+    proposedNewAngle = currentBodyAngle;
+    firstTimeMoving = false;
+  }
+  
   float randomTilt = (float) GetRNG().RandDbl();
   Radians tiltRads(DEG_TO_RAD(((kTiltMax - kTiltMin) * randomTilt) + kTiltMin));
   
-  IActionRunner* moveAction = new PanAndTiltAction(panRads, tiltRads, false, true);
+  IActionRunner* moveAction = new PanAndTiltAction(robot, proposedNewAngle, tiltRads, true, true);
   _currentDriveActionID = moveAction->GetTag();
-  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveAction);
+  robot.GetActionList().QueueActionAtEnd(moveAction);
   
   _currentState = State::WaitToFinishMoving;
 }
 
-Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   _currentState = State::Inactive;
+  return Result::RESULT_OK;
+}
+  
+void BehaviorFindFaces::StopInternal(Robot& robot, double currentTime_sec)
+{
   if (_currentDriveActionID != (uint32_t)ActionConstants::INVALID_TAG)
   {
     robot.GetActionList().Cancel(_currentDriveActionID);
     _currentDriveActionID = (uint32_t)ActionConstants::INVALID_TAG;
   }
-  return Result::RESULT_OK;
 }
+  
 } // namespace Cozmo
 } // namespace Anki

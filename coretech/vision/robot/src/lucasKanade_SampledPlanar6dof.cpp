@@ -207,14 +207,14 @@ namespace Anki
         const s32 numPyramidLevels,
         const Transformations::TransformType transformType,
         const s32 numFiducialSquareSamples,
-        const Point2f& fiducialSquareThicknessFraction,
+        const Point<f32>& fiducialSquareThicknessFraction,
         const s32 maxSamplesAtBaseLevel,
         const s32 numSamplingRegions,
         const f32 focalLength_x,
         const f32 focalLength_y,
         const f32 camCenter_x,
         const f32 camCenter_y,
-        const Point2f& templateSize_mm,
+        const Point<f32>& templateSize_mm,
         MemoryStack ccmMemory,
         MemoryStack &onchipScratch,
         MemoryStack offchipScratch)
@@ -356,10 +356,10 @@ namespace Anki
         // Note the initial corners for the transformation are the 3D template
         // corners, since the transformation in this case maps the 3D corners
         // into the image plane
-        Quadrilateral<f32> initCorners(Point2f(template3d[0].x, template3d[0].y),
-          Point2f(template3d[1].x, template3d[1].y),
-          Point2f(template3d[2].x, template3d[2].y),
-          Point2f(template3d[3].x, template3d[3].y));
+        Quadrilateral<f32> initCorners(Point<float>(template3d[0].x, template3d[0].y),
+          Point<float>(template3d[1].x, template3d[1].y),
+          Point<float>(template3d[2].x, template3d[2].y),
+          Point<float>(template3d[3].x, template3d[3].y));
 
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE,
           initCorners, initialHomography, centerOffset,
@@ -977,11 +977,11 @@ namespace Anki
             interiorHalfWidth  = 0.5f*templateSize_mm.x*(1.f - 4.f*fiducialSquareThicknessFraction.x);
             interiorHalfHeight = 0.5f*templateSize_mm.y*(1.f - 4.f*fiducialSquareThicknessFraction.y);
 
-            const Point2f fiducialSquareCenter(0.5f * (1.f - fiducialSquareThicknessFraction.x)*templateSize_mm.x,
+            const Point<f32> fiducialSquareCenter(0.5f * (1.f - fiducialSquareThicknessFraction.x)*templateSize_mm.x,
                                                0.5f * (1.f - fiducialSquareThicknessFraction.y)*templateSize_mm.y);
-            const Point2f gapCenter(0.5f * (1.f - 3.f*fiducialSquareThicknessFraction.x)*templateSize_mm.x,
+            const Point<f32> gapCenter(0.5f * (1.f - 3.f*fiducialSquareThicknessFraction.x)*templateSize_mm.x,
                                     0.5f * (1.f - 3.f*fiducialSquareThicknessFraction.y)*templateSize_mm.y);
-            const Point2f gapSidesStart(0.5f * (1.f - 4.f*fiducialSquareThicknessFraction.x)*templateSize_mm.x,
+            const Point<f32> gapSidesStart(0.5f * (1.f - 4.f*fiducialSquareThicknessFraction.x)*templateSize_mm.x,
                                         0.5f * (1.f - 4.f*fiducialSquareThicknessFraction.y)*templateSize_mm.y);
 
             // Top/Bottom Bars of the Square

@@ -1,0 +1,56 @@
+// CLAD message definitions for messages sent to BehaviorManager
+// Author: Mark Wesley
+// Created: 01/25/16
+// Copyright: Anki Inc (c) 2016
+
+#include "clad/types/behaviorGroup.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace ExternalInterface {
+
+
+// The "messages" in BehaviorManagerMessageUnion are deliberately marked as  structures, to
+// enforce that they're only used in the union (there is no handler to receive them unless they
+// are within a BehaviorManagerMessageUnion in BehaviorManagerMessage message)
+// See BehaviorManagerMessage in messagesGameToEngine.clad for usage of the union
+
+// SetEnable functions can be used to enable or disable depending on whether enable == true / false
+structure SetEnableAllBehaviors
+{
+  bool enable
+}
+
+structure SetEnableBehaviorGroup
+{
+  BehaviorGroup behaviorGroup,
+  bool enable
+}
+
+structure SetEnableBehavior
+{
+  string behaviorName,
+  bool enable
+}
+
+structure ClearAllBehaviorScoreOverrides
+{
+}
+
+structure OverrideBehaviorScore
+{
+  string    behaviorName,
+  float_32  newScore
+}
+
+union BehaviorManagerMessageUnion {
+  SetEnableAllBehaviors SetEnableAllBehaviors,
+  SetEnableBehaviorGroup SetEnableBehaviorGroup,
+  SetEnableBehavior SetEnableBehavior,
+  ClearAllBehaviorScoreOverrides ClearAllBehaviorScoreOverrides,
+  OverrideBehaviorScore OverrideBehaviorScore
+}
+
+} // namespace U2G
+} // namespace Cozmo
+} // namespace Anki

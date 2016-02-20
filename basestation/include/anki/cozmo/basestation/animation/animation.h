@@ -41,15 +41,27 @@ public:
   Animation(const std::string& name = "");
 
   // For reading canned animations from files
-  Result DefineFromJson(const std::string& name, Json::Value& json);
+  Result DefineFromJson(const std::string& name, const Json::Value& json);
 
   // For defining animations at runtime (e.g. live animation)
   template<class KeyFrameType>
-  Result AddKeyFrame(const KeyFrameType& kf);
+  Result AddKeyFrameToBack(const KeyFrameType& kf);
+  
+  template<class KeyFrameType>
+  Result AddKeyFrameByTime(const KeyFrameType& kf);
 
   // Get a track by KeyFrameType
   template<class KeyFrameType>
   Animations::Track<KeyFrameType>& GetTrack();
+  
+  // Const version of GetTrack
+  template<class KeyFrameType>
+  const Animations::Track<KeyFrameType>& GetTrack() const
+  {
+    // Normally I hate using const_cast, but GetTrack is a template function where the actual implementation
+    // is to have a different specialization for each type, in order to return the correct Track member.
+    return const_cast<Animation*>(this)->GetTrack<KeyFrameType>();
+  }
   
   // Calls all tracks' Init() methods
   Result Init();
@@ -94,11 +106,23 @@ private:
 
 
 template<class KeyFrameType>
-Result Animation::AddKeyFrame(const KeyFrameType& kf)
+Result Animation::AddKeyFrameToBack(const KeyFrameType& kf)
 {
-  Result addResult = GetTrack<KeyFrameType>().AddKeyFrame(kf);
+  Result addResult = GetTrack<KeyFrameType>().AddKeyFrameToBack(kf);
   if(RESULT_OK != addResult) {
-    PRINT_NAMED_ERROR("Animiation.AddKeyFrame.Failed", "");
+    PRINT_NAMED_ERROR("Animiation.AddKeyFrameToBack.Failed", "");
+  }
+
+  return addResult;
+}
+
+
+template<class KeyFrameType>
+Result Animation::AddKeyFrameByTime(const KeyFrameType& kf)
+{
+  Result addResult = GetTrack<KeyFrameType>().AddKeyFrameByTime(kf);
+  if(RESULT_OK != addResult) {
+    PRINT_NAMED_ERROR("Animiation.AddKeyFrameByTime.Failed", "");
   }
 
   return addResult;

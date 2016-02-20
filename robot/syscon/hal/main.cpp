@@ -15,6 +15,8 @@
 #include "radio.h"
 #include "rng.h"
 
+#include "bootloader.h"
+
 #include "anki/cozmo/robot/spineData.h"
 
 #define SET_GREEN(v, b)  (b ? (v |= 0x00FF00) : (v &= ~0x00FF00))
@@ -24,7 +26,13 @@ static const u32 MAX_FAILED_TRANSFER_COUNT = 18000; // 1.5m for auto shutdown (i
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
-extern void EnterRecovery(void) {
+void EnterRecovery(void) {
+  for (int i = 0; i < 32; i++) {
+    if (i == PIN_PWR_EN) continue ;
+    nrf_gpio_cfg_default(i);
+  }
+  MicroWait(250000);
+  
   __enable_irq();
   __asm { SVC 0 };
 }
@@ -50,6 +58,8 @@ void MotorsUpdate(void* userdata) {
     {
       Motors::setPower(i, g_dataToBody.motorPWM[i]);
     }
+
+    Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
   }
 }
 
@@ -57,20 +67,28 @@ int main(void)
 {
   // Initialize our scheduler
   RTOS::init();
-  RTOS::schedule(MotorsUpdate);   // This is our periodic PWM update
 
   // Initialize the hardware peripherals
+  
+  // WARNING: DO NOT CALL THIS UNLESS YOU GET APPROVAL FROM SOMEONE ON THE
+  // FIRMWARE TEAM.  YOU CAN BRICK YOUR COZMO AND MAKE EVERYONE VERY SAD.
+
+  Bootloader::init();
+  
   Battery::init();
   Timer::Init();
   Motors::init();
-  Head::init();
   Lights::init();
   Random::init();
-  //Radio::init();
+  Radio::init();
   Battery::powerOn();
 
   // Let the test fixtures run, if nessessary
   TestFixtures::run();
+
+  // Only use Head/body if tests are not enabled
+  Head::init();
+  RTOS::schedule(MotorsUpdate);   
   
   // Start the scheduler
   RTOS::run();

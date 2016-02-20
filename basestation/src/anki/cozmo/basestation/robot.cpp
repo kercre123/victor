@@ -15,9 +15,9 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -63,31 +63,34 @@
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 #define MIN_DISTANCE_FOR_MINANGLE_PLANNER 1.0f
 
+#define DEBUG_BLOCK_LIGHTS 0
+
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
-                 IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
-    : _externalInterface(externalInterface)
-    , _dataPlatform(dataPlatform)
+    // static initializers
+    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0});
+    
+    
+    Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
+    : _context(context)
     , _ID(robotID)
     , _timeSynced(false)
-    , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
     , _movementComponent(*this)
-    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, dataPlatform)
+    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
-    , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
-                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
+    , _headCamPose(_kDefaultHeadCamRotation, {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
-    , _animationStreamer(_externalInterface, _cannedAnimations, _audioClient)
+    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
     , _imageDeChunker(new ImageDeChunker())
+    , _traceHandler(_context->GetDataPlatform())
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -103,18 +106,14 @@ namespace Anki {
       _isLocalized = true;
       SetLocalizedTo(nullptr);
       
-      InitRobotMessageComponent(_msgHandler,robotID);
+      InitRobotMessageComponent(_context->GetRobotMsgHandler(),robotID);
       
       if (HasExternalInterface())
       {
-        SetupGainsHandlers(*_externalInterface);
-        SetupVisionHandlers(*_externalInterface);
-        SetupMiscHandlers(*_externalInterface);
+        SetupGainsHandlers(*_context->GetExternalInterface());
+        SetupVisionHandlers(*_context->GetExternalInterface());
+        SetupMiscHandlers(*_context->GetExternalInterface());
       }
-      
-      _proceduralFace.MarkAsSentToRobot(false);
-      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
-      _lastProceduralFace.MarkAsSentToRobot(true);
       
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
@@ -123,14 +122,15 @@ namespace Anki {
       _lastDebugStringHash = 0;
 
       ReadAnimationDir();
+      ReadAnimationGroupDir();
       
       // Set up the neutral face to use when resetting procedural animations
       static const char* neutralFaceAnimName = "neutral_face";
       Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
       if (nullptr != neutralFaceAnim)
       {
-        auto frameIter = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
-        ProceduralFaceParams::SetResetData(frameIter->GetFace().GetParams());
+        auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
+        ProceduralFace::SetResetData(frame->GetFace());
       }
       else
       {
@@ -140,11 +140,11 @@ namespace Anki {
       }
       
       // Read in Mood Manager Json
-      if (nullptr != _dataPlatform)
+      if (nullptr != _context->GetDataPlatform())
       {
         Json::Value moodConfig;
         std::string jsonFilename = "config/basestation/config/mood_config.json";
-        bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, moodConfig);
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, jsonFilename, moodConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.MoodConfigJsonNotFound",
@@ -153,16 +153,18 @@ namespace Anki {
         }
         
         _moodManager->Init(moodConfig);
+        
+        LoadEmotionEvents();
       }
       
       LoadBehaviors();
       
       // Read in behavior manager Json
       Json::Value behaviorConfig;
-      if (nullptr != _dataPlatform)
+      if (nullptr != _context->GetDataPlatform())
       {
         std::string jsonFilename = "config/basestation/config/behavior_config.json";
-        bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
@@ -173,10 +175,10 @@ namespace Anki {
       _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
-      _pdo = new PathDolerOuter(msgHandler, robotID);
+      _pdo = new PathDolerOuter(_context->GetRobotMsgHandler(), robotID);
 
-      if (nullptr != _dataPlatform) {
-        _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
+      if (nullptr != _context->GetDataPlatform()) {
+        _longPathPlanner  = new LatticePlanner(this, _context->GetDataPlatform());
       }
       else {
         // For unit tests, or cases where we don't have data, use the short planner in it's place
@@ -267,9 +269,9 @@ namespace Anki {
       //++_frameId;
      
       // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
-      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
@@ -278,7 +280,7 @@ namespace Anki {
     Result Robot::SetLocalizedTo(const ObservableObject* object)
     {
       if(object == nullptr) {
-        VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+        GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                            "LocalizedTo: Odometry");
         _localizedToID.UnSet();
         _isLocalized = true;
@@ -315,10 +317,10 @@ namespace Anki {
       _isLocalized = true;
       
       // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
-      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+      GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
@@ -341,7 +343,7 @@ namespace Anki {
       if(_stateSaveMode != SAVE_OFF)
       {
         // Make sure image capture folder exists
-        std::string robotStateCaptureDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
+        std::string robotStateCaptureDir = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
         if (!Util::FileUtils::CreateDirectory(robotStateCaptureDir, false, true)) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.CreateDirFailed","%s", robotStateCaptureDir.c_str());
         }
@@ -370,7 +372,7 @@ namespace Anki {
         
         Json::Value json = msg.CreateJson();
         PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Writing RobotState JSON to file %s", msgFilename.c_str());
-        _dataPlatform->writeAsJson(Util::Data::Scope::Cache, msgFilename, json);
+        _context->GetDataPlatform()->writeAsJson(Util::Data::Scope::Cache, msgFilename, json);
         */
 #if(0)
         // Compose line for IMU output file.
@@ -427,16 +429,15 @@ namespace Anki {
       SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
       
       SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
+
+      GetMoveComponent().Update(msg);
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      _isMoving = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_MOVING);
-      _isHeadMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
-      _isLiftMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
       _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
-      _hasMovedSinceLocalization |= _isMoving || _isPickedUp;
+      _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _isPickedUp;
       
       Pose3d newPose;
       
@@ -561,11 +562,12 @@ namespace Anki {
       RobotState stateMsg(msg);
       
       // Send state to visualizer for displaying
-      VizManager::getInstance()->SendRobotState(stateMsg,
+      GetContext()->GetVizManager()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
                                                 (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+                                                _enabledAnimTracks,
                                                 _animationTag);
       
       return lastResult;
@@ -577,24 +579,16 @@ namespace Anki {
       return _newStateMsgAvailable;
     }
     
+    void Robot::SetCameraRotation(f32 roll, f32 pitch, f32 yaw)
+    {
+      RotationMatrix3d rot(roll, -pitch, yaw);
+      _headCamPose.SetRotation(rot * _kDefaultHeadCamRotation);
+      PRINT_NAMED_INFO("Robot.SetCameraRotation", "yaw_corr=%f, pitch_corr=%f, roll_corr=%f", yaw, pitch, roll);
+    }
+    
     void Robot::SetPhysicalRobot(bool isPhysical)
     {
-      if (_isPhysical != isPhysical) {
-        if (isPhysical) {
-          // "Recalibrate" camera pose within head for physical robot
-          // TODO: Do this properly!
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_YAW_CORR, Z_AXIS_3D()));
-          _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D()));
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_ROLL_CORR, X_AXIS_3D()));
-          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_NAMED_INFO("Robot.SetPhysicalRobot", "Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, roll_corr=%f, x_trans_corr=%fmm", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_ROLL_CORR, HEAD_CAM_TRANS_X_CORR);
-        } else {
-          _headCamPose.SetRotation({0,0,1,  -1,0,0,  0,-1,0});
-          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_STREAM_INFO("Robot.SetPhysicalRobot", "Slop factor removed from head cam pose for simulated robot");
-        }
-        _isPhysical = isPhysical;
-      }
+      _isPhysical = isPhysical;
       
       // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
       // We do this regardless of previous state to ensure it works when adding 1st simulated robot (as _isPhysical already == false in that case)
@@ -690,7 +684,7 @@ namespace Anki {
       return RESULT_OK;
 #endif
       
-      VizManager::getInstance()->SendStartRobotUpdate();
+      GetContext()->GetVizManager()->SendStartRobotUpdate();
       
       /* DEBUG
        const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -734,6 +728,11 @@ namespace Anki {
         
       } // if (GetCamera().IsCalibrated())
       
+      ///////// MemoryMap ///////////
+      
+      // update navigation memory map
+      _blockWorld.UpdateNavMemoryMap();        
+      
       ///////// Update the behavior manager ///////////
       
       // TODO: This object encompasses, for the time-being, what some higher level
@@ -768,12 +767,12 @@ namespace Anki {
         }
       }
       
-      VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
+      GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
                                          "Behavior:%s:%s", behaviorChooserName, behaviorName.c_str());
 
       
       //////// Update Robot's State Machine /////////////
-      Result actionResult = _actionList.Update(*this);
+      Result actionResult = _actionList.Update();
       if(actionResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.", GetID());
       }
@@ -880,7 +879,6 @@ namespace Anki {
           }
         }
       }
-        
       
       /////////// Update visualization ////////////
       
@@ -890,14 +888,17 @@ namespace Anki {
       // Draw All Objects by calling their Visualize() methods.
       _blockWorld.DrawAllObjects();
       
+      // Nav memory map
+      _blockWorld.DrawNavMemoryMap();
+      
       // Always draw robot w.r.t. the origin, not in its current frame
       Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToOrigin();
       
       // Triangle pose marker
-      VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin);
+      GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin);
       
       // Full Webots CozmoBot model
-      VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
+      GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
       
       // Robot bounding box
       static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
@@ -910,7 +911,7 @@ namespace Anki {
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
                             Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
     
-      VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
+      GetContext()->GetVizManager()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
       
       /*
       // Draw 3d bounding box
@@ -918,26 +919,28 @@ namespace Anki {
       vizTranslation.z() += 0.5f*ROBOT_BOUNDING_Z;
       Pose3d vizPose(GetPose().GetRotation(), vizTranslation);
       
-      VizManager::getInstance()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
+      GetContext()->GetVizManager()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
                                             vizPose, ROBOT_BOUNDING_QUAD_COLOR);
       */
       
-      VizManager::getInstance()->SendEndRobotUpdate();
+      GetContext()->GetVizManager()->SendEndRobotUpdate();
       
       
       // Sending debug string to game and viz
       char buffer [128];
+
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c lock:%c%c%c %s:%s ",
-               IsLiftMoving() ? 'L' : ' ',
-               IsHeadMoving() ? 'H' : ' ',
-               IsMoving() ? 'B' : ' ',
+               "r:%c%c%c%c lock:%c%c%c %2dHz %s:%s ",
+               GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
+               GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
+               GetMoveComponent().IsMoving() ? 'B' : ' ',
                IsCarryingObject() ? 'C' : ' ',
-               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
-               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-               _movementComponent.IsAnimTrackLocked(AnimTrackFlag::HEAD_TRACK) ? 'B' : ' ',
+               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+               (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                behaviorChooserName,
                behaviorName.c_str());
       
@@ -1232,124 +1235,38 @@ namespace Anki {
     {
       return _animationStreamer.GetIdleAnimationName();
     }
-  
-    void Robot::SetProceduralFace(const ProceduralFace& face)
-    {
-      // First one
-      if(_lastProceduralFace.GetTimeStamp() == 0) {
-        _lastProceduralFace = face;
-        _lastProceduralFace.MarkAsSentToRobot(true);
-        _proceduralFace.MarkAsSentToRobot(true);
-      } else {
-        if(_proceduralFace.HasBeenSentToRobot()) {
-          // If the current face has already been sent, make it the
-          // last procedural face (sent). Otherwise, we'll just
-          // replace the current face and leave "last" as is.
-          std::swap(_lastProceduralFace, _proceduralFace);
-        }
-        _proceduralFace = face;
-        _proceduralFace.MarkAsSentToRobot(false);
-      }
-    }
-    
-    void Robot::MarkProceduralFaceAsSent()
-    {
-      _proceduralFace.MarkAsSentToRobot(true);
-    }
     
     const std::string Robot::GetStreamingAnimationName() const
     {
       return _animationStreamer.GetStreamingAnimationName();
     }
 
-    u32 Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent)
+    void Robot::ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
+                          TimeStamp_t duration_ms, const std::string& name)
     {
-      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent);
-    }
-    
-    u32 Robot::ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                                 TimeStamp_t duration_ms, bool makePersistent)
-    {
-      u32 layerTag = 0;
+      ProceduralFace procFace;
+      ProceduralFace::Value xMin=0, xMax=0, yMin=0, yMax=0;
+      procFace.GetEyeBoundingBox(xMin, xMax, yMin, yMax);
+      procFace.LookAt(xPix, yPix,
+                      std::max(xMin, ProceduralFace::WIDTH-xMax),
+                      std::max(yMin, ProceduralFace::HEIGHT-yMax),
+                      1.1f, 0.85f, 0.1f);
       
-      // Clip, but retain sign
-      xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
-      yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
+      ProceduralFaceKeyFrame keyframe(procFace, duration_ms);
       
-      //PRINT_NAMED_DEBUG("Robot.ShiftAndScaleEyes", "shift=(%.3f,%.3f) scale=(%.3f,%.3f)",
-      //                  xPix, yPix, xScale, yScale);
-      
-      AnimationStreamer::FaceTrack faceTrack;
-      
-      if(duration_ms == 0) {
-        // Dart over three frames: go 2/3 of the distance in the first frame,
-        // 2/9 the second (that's 2/3 of the remaining 1/3) and then the final 1/9
-        // at the end.
-        
-        const f32 dist = std::sqrt(xPix*xPix + yPix*yPix);
-        const f32 divisor = (dist > 0 ? 1.f/dist : 1.f); // prevent divide by zero when (xPix==yPix==0)
-        const f32 cosAngle = xPix * divisor;
-        const f32 sinAngle = yPix * divisor;
-        
-        ProceduralFace procFace;
-        ProceduralFaceParams& faceParams = procFace.GetParams();
-        
-        TimeStamp_t t=0;
-        for(auto frac : {0.666667f, 0.888889f, 1.f})
-        {
-          const f32 x = frac * dist * cosAngle;
-          const f32 y = frac * dist * sinAngle;
-          faceParams.SetFacePosition(Point2f(x,y));
-          
-          // Scale "further" eye down a little and "closer" eye up a little
-          const f32 MaxScaleAdj = 0.25f;
-          f32 leftScaleY = 1.f, rightScaleY = 1.f;
-          const f32 xScaleAdj = std::abs(x) * MaxScaleAdj / (0.5f * ProceduralFace::WIDTH);
-          if(x > 0) {
-            leftScaleY  += xScaleAdj;
-            rightScaleY -= xScaleAdj;
-          } else if(x < 0) {
-            leftScaleY  -= xScaleAdj;
-            rightScaleY += xScaleAdj;
-          }
-
-          const f32 scaleY = (frac*(yScale-1.f)+1.f) - std::abs(y) / (0.5f * ProceduralFace::HEIGHT) * 0.2f;
-          
-          faceParams.SetParameter(ProceduralFace::WhichEye::Left,
-                                  ProceduralEyeParameter::EyeScaleY, leftScaleY * scaleY);
-          faceParams.SetParameter(ProceduralFace::WhichEye::Right,
-                                  ProceduralEyeParameter::EyeScaleY, rightScaleY * scaleY);
-          
-          const f32 scaleX = frac*(xScale-1.f)+1.f;
-          faceParams.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, scaleX);
-          
-          ASSERT_NAMED(!(std::isnan(leftScaleY) || std::isnan(rightScaleY) ||
-                         std::isnan(scaleY) || std::isnan(scaleX) ||
-                         std::isnan(x) || std::isnan(y)),
-                       "Shift/scale values should be non-nan!");
-          
-          faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
+      if(AnimationStreamer::NotAnimatingTag == tag) {
+        AnimationStreamer::FaceTrack faceTrack;
+        if(duration_ms > 0) {
+          // Add an initial no-adjustment frame so we have something to interpolate
+          // from on our way to the specified shift
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame());
         }
+        faceTrack.AddKeyFrameToBack(std::move(keyframe));
+        tag = GetAnimationStreamer().AddPersistentFaceLayer(name, std::move(faceTrack));
       } else {
-        //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
-        
-        ProceduralFace procFace;
-        ProceduralFaceParams& params = procFace.GetParams();
-        params.SetFacePosition({xPix, yPix});
-        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
-        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
-        
-        faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, duration_ms));
+        GetAnimationStreamer().AddToPersistentFaceLayer(tag, std::move(keyframe));
       }
-      
-      if(makePersistent) {
-        layerTag = _animationStreamer.AddPersistentFaceLayer(std::move(faceTrack));
-      } else {
-        _animationStreamer.AddFaceLayer(std::move(faceTrack));
-      }
-      
-      return layerTag;
-    } // ShiftAndScaleEyes()
+    }
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
@@ -1364,47 +1281,92 @@ namespace Anki {
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
     } // StopSound()
-      
-      
-    Result Robot::StopAnimation()
-    {
-      return SendAbortAnimation();
-    }
 
     // Read the animations in a dir
     void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
     {
       Json::Value animDefs;
-      const bool success = _dataPlatform->readAsJson(filename, animDefs);
+      const bool success = _context->GetDataPlatform()->readAsJson(filename, animDefs);
       if (success && !animDefs.empty()) {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
+        //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
+        
+        if(std::string(filename).find(animationId) == std::string::npos) {
+          PRINT_NAMED_WARNING("Robot.ReadAnimationFile.AnimationNameMismatch",
+                              "Animation name '%s' does not match seem to match "
+                              "filename '%s'", animationId.c_str(), filename);
+        }
       }
 
-    }
-
-    static bool HasSuffix(const char* inFilename, const char* inSuffix)
-    {
-      const size_t filenameLen = strlen(inFilename);
-      const size_t suffixLen   = strlen(inSuffix);
-      
-      if (filenameLen < suffixLen)
-      {
-        return false;
-      }
-      
-      const int cmp = strcmp(&inFilename[filenameLen-suffixLen], inSuffix);
-      return (cmp == 0);
     }
     
-    void Robot::LoadBehaviors()
+    // Read the animation groups in a dir
+    void Robot::ReadAnimationGroupFile(const char* filename)
     {
-      if (_dataPlatform == nullptr)
+      Json::Value animGroupDef;
+      const bool success = _context->GetDataPlatform()->readAsJson(filename, animGroupDef);
+      if (success && !animGroupDef.empty()) {
+        
+        std::string fullName(filename);
+        
+        // remove path
+        auto slashIndex = fullName.find_last_of("/");
+        std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
+        // remove extension
+        auto dotIndex = jsonName.find_last_of(".");
+        std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
+
+        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
+        
+        _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
+      }      
+    }
+    
+    void Robot::LoadEmotionEvents()
+    {
+      if (_context->GetDataPlatform() == nullptr)
       {
         return;
       }
       
-      const std::string behaviorFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/behaviors/");
+      // For now we'll keep this in the engine, rather than in e.g. "assets/emotionevents/" as they're more
+      // heavily coupled with the code than with assets
+      
+      const std::string eventFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/emotionevents/");
+      
+      DIR* dir = opendir(eventFolder.c_str());
+      if ( dir != nullptr)
+      {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr)
+        {
+          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
+          {
+            std::string fullFileName = eventFolder + ent->d_name;
+            
+            Json::Value eventJson;
+            const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, eventJson);
+            if (success && !eventJson.empty() && _moodManager->LoadEmotionEvents(eventJson))
+            {
+              PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", fullFileName.c_str());
+            }
+            else
+            {
+              PRINT_NAMED_WARNING("Robot.LoadEmotionEvents", "Failed to read '%s'", fullFileName.c_str());
+            }
+          }
+        }
+      }
+    }
+    
+    void Robot::LoadBehaviors()
+    {
+      if (_context->GetDataPlatform() == nullptr)
+      {
+        return;
+      }
+      
+      const std::string behaviorFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/behaviors/");
       
       DIR* dir = opendir(behaviorFolder.c_str());
       if ( dir != nullptr)
@@ -1412,15 +1374,15 @@ namespace Anki {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr)
         {
-          if ((ent->d_type == DT_REG) && HasSuffix(ent->d_name, ".json"))
+          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
           {
             std::string fullFileName = behaviorFolder + ent->d_name;
             
             Json::Value behaviorJson;
-            const bool success = _dataPlatform->readAsJson(fullFileName, behaviorJson);
+            const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, behaviorJson);
             if (success && !behaviorJson.empty())
             {
-              PRINT_NAMED_INFO("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+              //PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
               _behaviorMgr.LoadBehaviorFromJson(behaviorJson);
             }
             else
@@ -1435,13 +1397,23 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
     {
-      if (_dataPlatform == nullptr) { return; }
+      // Disable super-verbose warnings about clipping face parameters in json files
+      // To help find bad/deprecated animations, try removing this.
+      ProceduralFace::EnableClippingWarning(false);
+
+      ReadAnimationDirImpl("assets/animations/");
+      ReadAnimationDirImpl("config/basestation/animations/");
+    }
+    
+    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
+    {
+      if (_context->GetDataPlatform() == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
-      SoundManager::getInstance()->LoadSounds(_dataPlatform);
-      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
+      SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
+      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
       
       const std::string animationFolder =
-        _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animations/");
+        _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, animationDir);
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -1485,9 +1457,69 @@ namespace Anki {
       if (HasExternalInterface()) {
         std::vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
         for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
+          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
+      
+      ProceduralFace::EnableClippingWarning(true);
+    }
+    
+    // Read the animationGroups in a dir
+    void Robot::ReadAnimationGroupDir()
+    {
+      if (_context->GetDataPlatform() == nullptr) { return; }
+      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
+      
+      const std::string animationGroupFolder =
+      _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
+      s32 loadedFileCount = 0;
+      DIR* dir = opendir(animationGroupFolder.c_str());
+      if ( dir != nullptr) {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr) {
+          
+          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
+            std::string fullFileName = animationGroupFolder + ent->d_name;
+            struct stat attrib{0};
+            int result = stat(fullFileName.c_str(), &attrib);
+            if (result == -1) {
+              PRINT_NAMED_WARNING("Robot.ReadAnimationGroupFile", "could not get mtime for %s", fullFileName.c_str());
+              continue;
+            }
+            bool loadFile = false;
+            auto mapIt = _loadedAnimationGroupFiles.find(fullFileName);
+            if (mapIt == _loadedAnimationGroupFiles.end()) {
+              _loadedAnimationGroupFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
+              loadFile = true;
+            } else {
+              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
+                mapIt->second = attrib.st_mtimespec.tv_sec;
+                loadFile = true;
+              } else {
+                //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());
+              }
+            }
+            if (loadFile) {
+              ReadAnimationGroupFile(fullFileName.c_str());
+              ++loadedFileCount;
+            }
+          }
+        }
+        closedir(dir);
+      } else {
+        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "folder not found %s", animationGroupFolder.c_str());
+      }
+      
+      // TODO: Implement external interface
+      /*
+      // Tell UI about available animationGroups
+      if (HasExternalInterface()) {
+        std::vector<std::string> animNames(_cannedAnimationGroups.GetAnimationGroupNames());
+        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
+        }
+      }
+       */
     }
 
     Result Robot::SyncTime()
@@ -1942,7 +1974,7 @@ namespace Anki {
     // Clears the path that the robot is executing which also stops the robot
     Result Robot::ClearPath()
     {
-      VizManager::getInstance()->ErasePath(_ID);
+      GetContext()->GetVizManager()->ErasePath(_ID);
       _pdo->ClearPath();
       return SendMessage(RobotInterface::EngineToRobot(RobotInterface::ClearPath(0)));
     }
@@ -1967,7 +1999,7 @@ namespace Anki {
         }
         
         // Visualize path if robot has just started traversing it.
-        VizManager::getInstance()->DrawPath(_ID, path, NamedColors::EXECUTED_PATH);
+        GetContext()->GetVizManager()->DrawPath(_ID, path, NamedColors::EXECUTED_PATH);
         
       }
       
@@ -2244,10 +2276,14 @@ namespace Anki {
       }
     }
     
-    void Robot::UnSetCarryingObjects()
+    void Robot::UnSetCarryingObjects(bool topOnly)
     {
       std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
       for (auto& objID : carriedObjectIDs) {
+        if (topOnly && objID != _carryingObjectOnTopID) {
+          continue;
+        }
+        
         ObservableObject* object = _blockWorld.GetObjectByID(objID);
         if(object == nullptr) {
           PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
@@ -2270,16 +2306,29 @@ namespace Anki {
           }
         }
       }
-      
-      // Tell the robot it's not carrying anything
-      if (_carryingObjectID.IsSet()) {
-        SendSetCarryState(CarryState::CARRY_NONE);
-      }
 
-      // Even if the above failed, still mark the robot's carry ID as unset
-      _carryingObjectID.UnSet();
+      if (!topOnly) {      
+        // Tell the robot it's not carrying anything
+        if (_carryingObjectID.IsSet()) {
+          SendSetCarryState(CarryState::CARRY_NONE);
+        }
+
+        // Even if the above failed, still mark the robot's carry ID as unset
+        _carryingObjectID.UnSet();
+      }
       _carryingObjectOnTopID.UnSet();
     }
+    
+    void Robot::UnSetCarryObject(ObjectID objID)
+    {
+      // If it's the bottom object in the stack, unset all carried objects.
+      if (_carryingObjectID == objID) {
+        UnSetCarryingObjects(false);
+      } else if (_carryingObjectOnTopID == objID) {
+        UnSetCarryingObjects(true);
+      }
+    }
+    
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {
@@ -2435,7 +2484,7 @@ namespace Anki {
     
     Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
     {
-      Result sendResult = _msgHandler->SendMessage(_ID, msg, reliable, hot);
+      Result sendResult = _context->GetRobotMsgHandler()->SendMessage(_ID, msg, reliable, hot);
       if(sendResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.", _ID);
       }
@@ -2451,7 +2500,7 @@ namespace Anki {
       
       if(result == RESULT_OK) {
         result = SendMessage(RobotInterface::EngineToRobot(
-          RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::CVGA)));
+          RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::QVGA)));
         
         // Reset pose on connect
         PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
@@ -2533,7 +2582,7 @@ namespace Anki {
       if (_imageSaveMode != SAVE_OFF) {
         
         // Make sure image capture folder exists
-        std::string imageCaptureDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
+        std::string imageCaptureDir = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
         if (!Util::FileUtils::CreateDirectory(imageCaptureDir, false, true)) {
           PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","%s",imageCaptureDir.c_str());
         }
@@ -2803,7 +2852,6 @@ namespace Anki {
       return poseUpdated;
     }
     
-
     void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
@@ -2811,15 +2859,14 @@ namespace Anki {
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                                   const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
     {
-      ASSERT_NAMED((int)LEDId::NUM_BACKPACK_LEDS == 5, "Robot.wrong.number.of.backpack.ligths");
-      std::array<Anki::Cozmo::LightState, 5> lights;
-      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i){
-        lights[i].onColor = onColor[i];
-        lights[i].offColor = offColor[i];
-        lights[i].onPeriod_ms = onPeriod_ms[i];
-        lights[i].offPeriod_ms = offPeriod_ms[i];
-        lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
-        lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+      std::array<Anki::Cozmo::LightState, (size_t)LEDId::NUM_BACKPACK_LEDS> lights;
+      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i) {
+        lights[i].onColor  = ENCODED_COLOR(onColor[i]);
+        lights[i].offColor = ENCODED_COLOR(offColor[i]);
+        lights[i].onFrames  = MS_TO_LED_FRAMES(onPeriod_ms[i]);
+        lights[i].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
+        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
+        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
       }
 
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
@@ -2914,13 +2961,20 @@ namespace Anki {
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
           const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-          lights[i].onColor = ledState.onColor;
-          lights[i].offColor = ledState.offColor;
-          lights[i].onPeriod_ms = ledState.onPeriod_ms;
-          lights[i].offPeriod_ms = ledState.offPeriod_ms;
-          lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
-          lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
+          lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+          lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+          lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+          lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+          lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+          lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
+
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
     }
@@ -2949,14 +3003,21 @@ namespace Anki {
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          lights[i].onColor = onColor[i];
-          lights[i].offColor = offColor[i];
-          lights[i].onPeriod_ms = onPeriod_ms[i];
-          lights[i].offPeriod_ms = offPeriod_ms[i];
-          lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
-          lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+          lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+          lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+          lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+          lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+          lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
         }
 
+        if( DEBUG_BLOCK_LIGHTS ) {
+          PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
+                            "Setting lights for object %d",
+                            objectID.GetValue());
+        }
+        
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
 
@@ -3061,7 +3122,7 @@ namespace Anki {
       m.onPeriod_ms = onPeriod_ms;
       m.offPeriod_ms = offPeriod_ms;
 
-      return _msgHandler->SendMessage(GetID(), m);
+      return _context->GetRobotMsgHandler()->SendMessage(GetID(), m);
     }
        */
       
@@ -3110,12 +3171,12 @@ namespace Anki {
       ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
       for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
         const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-        lights[i].onColor = ledState.onColor;
-        lights[i].offColor = ledState.offColor;
-        lights[i].onPeriod_ms = ledState.onPeriod_ms;
-        lights[i].offPeriod_ms = ledState.offPeriod_ms;
-        lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
-        lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
+        lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+        lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+        lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+        lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
       }
       return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }
@@ -3139,7 +3200,7 @@ namespace Anki {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DebugString(str)));
       
       // Send message to viz
-      VizManager::getInstance()->SetText(VizManager::DEBUG_STRING,
+      GetContext()->GetVizManager()->SetText(VizManager::DEBUG_STRING,
                                          NamedColors::ORANGE,
                                          "%s", text);
       

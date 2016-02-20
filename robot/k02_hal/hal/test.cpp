@@ -119,6 +119,7 @@ int RunTests(void) {
   g_dataToBody.motorPWM[3] = 0x0;
   
   // Light test!
+  /*
   uint32_t *lightValue = (uint32_t*) &g_dataToBody.backpackColors;  
   memset(g_dataToBody.backpackColors, 0, sizeof(g_dataToBody.backpackColors));
   
@@ -135,6 +136,7 @@ int RunTests(void) {
   TestPause(5);
 
   memset(g_dataToBody.backpackColors, 0, sizeof(g_dataToBody.backpackColors));
+  */
 
   for (int i = 0; i < 4; i++) {
     if (MOTOR_THRESHOLD[i] > forward[i] - start[i]) {

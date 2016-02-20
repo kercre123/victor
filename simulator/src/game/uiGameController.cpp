@@ -277,7 +277,7 @@ namespace Anki {
     
     void UiGameController::HandleDebugStringBase(ExternalInterface::DebugString const& msg)
     {
-      PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
+      //PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
       HandleDebugString(msg);
     }
     
@@ -745,6 +745,15 @@ namespace Anki {
       m.duration_sec = duration_sec;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetLiftHeight(m);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendEnableLiftPower(bool enable)
+    {
+      ExternalInterface::EnableLiftPower m;
+      m.enable = enable;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_EnableLiftPower(m);
       SendMessage(message);
     }
     
@@ -1322,7 +1331,6 @@ namespace Anki {
     void UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
       ExternalInterface::QueueSingleAction msg;
       msg.robotID = 1;
-      msg.inSlot = 1;
       msg.position = pos;
       msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(msg.robotID, numLoops, animName));
 

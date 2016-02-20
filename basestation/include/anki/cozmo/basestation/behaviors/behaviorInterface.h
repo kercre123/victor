@@ -12,15 +12,20 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
-#include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
+#include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "util/random/randomGenerator.h"
 #include "json/json.h"
 #include <set>
 
+#include "util/bitFlags/bitFlags.h"
+#include "util/logging/logging.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
+#include "clad/types/behaviorGroup.h"
 
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
 // All args following the first are passed directly to the chosen print macro
@@ -40,6 +45,7 @@ namespace Cozmo {
   namespace ExternalInterface {
     class MessageEngineToGame;
     class MessageGameToEngine;
+    struct RobotCompletedAction;
   }
   template<typename TYPE> class AnkiEvent;
   
@@ -71,15 +77,21 @@ namespace Cozmo {
     bool IsRunning() const { return _isRunning; }
     void SetIsRunning(bool tf) { _isRunning = tf; }
     
+    double GetRunningDuration(double currentTime_sec) const;
+    
     // Will be called upon first switching to a behavior before calling update.
     // Calls protected virtual InitInternal() method, which each derived class
     // should implement.
-    Result Init(double currentTime_sec, bool isResuming);
+    Result Init(double currentTime_sec);
 
     // Step through the behavior and deliver rewards to the robot along the way
     // This calls the protected virtual UpdateInternal() method, which each
     // derived class should implement.
     Status Update(double currentTime_sec) ;
+    
+    // This behavior was the currently running behavior, but is now stopping (to make way for a new current
+    // behavior). Any behaviors from StartActing will be canceled
+    void Stop(double currentTime_sec);
     
     //
     // Abstract methods to be overloaded:
@@ -92,39 +104,50 @@ namespace Cozmo {
     // Tell this behavior to finish up ASAP so we can switch to a new one.
     // This should trigger any cleanup and get Update() to return COMPLETE
     // as quickly as possible.
-    Result Interrupt(double currentTime_sec, bool isShortInterrupt);
+    Result Interrupt(double currentTime_sec);
     
     const std::string& GetName() const { return _name; }
     const std::string& GetStateName() const { return _stateName; }
+
+    double GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
     
     // EvaluateEmotionScore is a score directly based on the given emotion rules
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
     
     // EvaluateScoreInternal is used to score each behavior for behavior selection - by default it just uses EvaluateEmotionScore
+    virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const;
     virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const;
     
-    float EvaluateScore(const Robot& robot, double currentTime_sec) const
-    {
-      return IsRunnable(robot, currentTime_sec) ? EvaluateScoreInternal(robot, currentTime_sec) : 0.0f;
-    }
+    float EvaluateScore(const Robot& robot, double currentTime_sec) const;
 
-    void ClearEmotionScorers()                         { _emotionScorers.clear(); }
-    void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }
-    size_t GetEmotionScorerCount() const { return _emotionScorers.size(); }
-    const EmotionScorer& GetEmotionScorer(size_t index) const { return _emotionScorers[index]; }
+    const MoodScorer& GetMoodScorer() const { return _moodScorer; }
+    
+    void ClearEmotionScorers()                         { _moodScorer.ClearEmotionScorers(); }
+    void AddEmotionScorer(const EmotionScorer& scorer) { _moodScorer.AddEmotionScorer(scorer); }
+    size_t GetEmotionScorerCount() const { return _moodScorer.GetEmotionScorerCount(); }
+    const EmotionScorer& GetEmotionScorer(size_t index) const { return _moodScorer.GetEmotionScorer(index); }
+    
+    
+    void SetOverrideScore(float newVal) { _overrideScore = newVal; }
+    
+    float EvaluateRepetitionPenalty(double currentTime_sec) const;
+    const Util::GraphEvaluator2d& GetRepetionalPenalty() const { return _repetitionPenalty; }
     
     bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
-    // Some behaviors are short interruptions that can resume directly to previous behavior
-    virtual bool IsShortInterruption() const { return false; }
-    virtual bool WantsToResume() const { return false; }
-    
-    // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
-    static const ActionList::SlotHandle sActionSlot;
+    bool IsChoosable() const { return _isChoosable; }
+    void SetIsChoosable(bool newVal) { _isChoosable = newVal; }
     
     virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
     
+    bool IsBehaviorGroup(BehaviorGroup behaviorGroup) const { return _behaviorGroups.IsBitFlagSet(behaviorGroup); }
+    bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags::StorageType& flags) const { return _behaviorGroups.AreAnyBitsInMaskSet(flags); }
+    bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags& groupFlags) const { return MatchesAnyBehaviorGroups(groupFlags.GetFlags()); }
+    
   protected:
+  
+    void ClearBehaviorGroups() { _behaviorGroups.ClearFlags(); }
+    void SetBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) { _behaviorGroups.SetBitFlag(behaviorGroup, newVal); }
     
     // Going forward we don't want names being set arbitrarily (they can come from data etc.)
     void DEMO_HACK_SetName(const char* inName) { _name = inName; }
@@ -132,11 +155,14 @@ namespace Cozmo {
     inline void SetDefaultName(const char* inName);
     inline void SetStateName(const std::string& inName) { _stateName = inName; }
     
-    virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) = 0;
+    virtual Result InitInternal(Robot& robot, double currentTime_sec) = 0;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) = 0;
-    virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) = 0;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) = 0;
+    virtual void   StopInternal(Robot& robot, double currentTime_sec) = 0;
     
     bool ReadFromJson(const Json::Value& config);
+
+    Util::RandomGenerator& GetRNG() const;
     
     // Convenience aliases
     using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
@@ -175,49 +201,124 @@ namespace Cozmo {
     // NOTE: AlwaysHandle is called first!
     virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
-    
-    Util::RandomGenerator& GetRNG() const;
-    
+
+    // Many behaviors use a pattern of executing an action, then waiting for it to finish before selecting the
+    // next action. Instead of directly starting actions and handling ActionCompleted callbacks, derived
+    // classes can use the functions below. Note: none of the StartActing functions can be called when the
+    // behavior is not running (will result in an error and no action). Also, if the behavior was running when
+    // you called StartActing, but is no longer running when the action completed, the callback will NOT be
+    // called (this is necessary to prevent non-running behaviors from doing things with the robot). If the
+    // behavior is stopped, within the Stop function, any actions which are still running will be canceled
+    // (and you will not get any callback for it).
+
+    // returns true if any action from StartAction is currently running
+    inline bool IsActing() const;
+
+    // Each StartActing function returns true if the action was started, false otherwise. Reasons actions
+    // might not be started include:
+    // 1. Another action (from StartActing) is currently running or queued
+    // 2. You are not running ( IsRunning() returns false )
+
+    // Start an action now, and optionally provide a callback which will be called with the
+    // RobotCompletedAction that corresponds to the action
+    using RobotCompletedActionCallback = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
+    bool StartActing(IActionRunner* action, RobotCompletedActionCallback callback = {});
+
+    // helper that just looks at the result (simpler, but you can't get things like the completion union)
+    using ActionResultCallback = std::function<void(ActionResult)>;
+    bool StartActing(IActionRunner* action, ActionResultCallback callback);
+
+    // If you want to do something when the action finishes, regardless of it's result, you can use the
+    // following callbacks, with either a callback function taking no arguments or taking a single Robot&
+    // argument. You can also use member functions. The callback will be called when action completes for any
+    // reason (as long as the behavior is running)
+
+    using SimpleCallback = std::function<void(void)>;
+    bool StartActing(IActionRunner* action, SimpleCallback callback);
+
+    using SimpleCallbackWithRobot = std::function<void(Robot& robot)>;
+    bool StartActing(IActionRunner* action, SimpleCallbackWithRobot callback);
+
+    template<typename T>
+    bool StartActing(IActionRunner* action, void(T::*callback)(Robot&));
+
+    template<typename T>
+    bool StartActing(IActionRunner* action, void(T::*callback)(void));
+
+    // This function cancels the action started by StartActing (if there is one). Returns true if an action
+    // was canceled, false otherwise. Note that if you are running, this will trigger a callback for the
+    // cancellation
+    bool StopActing();
+
   private:
+            
+    template<class EventType>
+    void HandleEvent(const EventType& event);
+
+    // this is an internal handler just form StartActing
+    void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
+    
+    // ==================== Static Member Vars ====================
+            
+    static const char* kBaseDefaultName;
+                
+    // ==================== Member Vars ====================
     
     std::string _name;
     std::string _stateName = "";
-    
-    static const char* kBaseDefaultName;
-    
-    // A random number generator for all behaviors to share
-    static Util::RandomGenerator sRNG;
-    
-    std::vector<EmotionScorer> _emotionScorers;
+        
+    MoodScorer                 _moodScorer;
+    Util::GraphEvaluator2d     _repetitionPenalty;
     
     Robot& _robot;
     
-    bool _isRunning;
-    bool _isOwnedByFactory;
-
     std::vector<::Signal::SmartHandle> _eventHandles;
     
-    template<class EventType>
-    void HandleEvent(const EventType& event);
+    double _startedRunningTime_s;
+    double _lastRunTime_s;
+
+    float _overrideScore; // any value >= 0 implies it should be used
+
+    // for Start/StopActing if invalid, no action
+    u32 _lastActionTag = ActionConstants::INVALID_TAG;
+    RobotCompletedActionCallback  _actingCallback;
+    
+    BehaviorGroupFlags  _behaviorGroups;
+
+    bool _isRunning;
+    bool _isOwnedByFactory;
+    bool _isChoosable;
+    
+    bool _enableRepetitionPenalty;
     
   }; // class IBehavior
   
-  inline Result IBehavior::Init(double currentTime_sec, bool isResuming)
+  inline Result IBehavior::Init(double currentTime_sec)
   {
-    return InitInternal(_robot, currentTime_sec, isResuming);
+    _startedRunningTime_s = currentTime_sec;
+    return InitInternal(_robot, currentTime_sec);
   }
   
   inline IBehavior::Status IBehavior::Update(double currentTime_sec)
   {
+    ASSERT_NAMED(IsRunning(), "IBehavior::UpdateNotRunning");
     return UpdateInternal(_robot, currentTime_sec);
   }
-  
-  inline Result IBehavior::Interrupt(double currentTime_sec, bool isShortInterrupt)
+
+  inline void IBehavior::Stop(double currentTime_sec)
   {
-    return InterruptInternal(_robot, currentTime_sec, isShortInterrupt);
+    StopInternal(_robot, currentTime_sec);
+    _lastRunTime_s = currentTime_sec;
+    StopActing();
+  }
+  
+  inline Result IBehavior::Interrupt(double currentTime_sec)
+  {
+    return InterruptInternal(_robot, currentTime_sec);
   }
   
   inline Util::RandomGenerator& IBehavior::GetRNG() const {
+    static Util::RandomGenerator sRNG;
     return sRNG;
   }
   
@@ -227,6 +328,23 @@ namespace Cozmo {
     {
       _name = inName;
     }
+  }
+
+  template<typename T>
+  bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(Robot&))
+  {
+    return StartActing(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+  }
+
+  template<typename T>
+  bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(void))
+  {
+    std::function<void(void)> boundCallback = std::bind(callback, static_cast<T*>(this));
+    return StartActing(action, boundCallback);
+  }
+
+  inline bool IBehavior::IsActing() const {
+    return _lastActionTag != ActionConstants::INVALID_TAG;
   }
   
   template<class EventType>
@@ -247,7 +365,7 @@ namespace Cozmo {
   protected:
     
     // Enforce creation through BehaviorFactory
-    IReactionaryBehavior(Robot& robot, const Json::Value& config) : IBehavior(robot, config) { }
+    IReactionaryBehavior(Robot& robot, const Json::Value& config);
     virtual ~IReactionaryBehavior() {}
     
   public:

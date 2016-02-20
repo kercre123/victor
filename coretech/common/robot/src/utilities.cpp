@@ -6,7 +6,7 @@ Created: 2013
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
-
+#include <assert.h>
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/array2d.h"
@@ -275,7 +275,7 @@ namespace Anki
       // TODO: Fix build error when using this in an iOS build for arm architectures
       gettimeofday(&time, NULL);
 #     endif
-      
+
       // Subtract startSeconds, so the floating point number has reasonable precision
       static long startSeconds = 0;
       if(startSeconds == 0) {
@@ -314,8 +314,8 @@ namespace Anki
 #     ifndef ANKI_IOS_BUILD
       // TODO: Fix build error when using this in an iOS build for arm architectures
       gettimeofday(&time, NULL);
-#     endif 
-      
+#     endif
+
       // Subtract startSeconds, so the floating point number has reasonable precision
       static long startSeconds = 0;
       if(startSeconds == 0) {

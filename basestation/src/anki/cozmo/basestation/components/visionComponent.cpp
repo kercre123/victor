@@ -13,9 +13,9 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/visionSystem.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
@@ -37,26 +37,27 @@
 namespace Anki {
 namespace Cozmo {
   
-  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, Util::Data::DataPlatform* dataPlatform)
-  : _camera(robotID)
+  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, const CozmoContext* context)
+  : _vizManager(context->GetVizManager())
+  , _camera(robotID)
   , _runMode(mode)
   {
     std::string dataPath("");
-    if(dataPlatform != nullptr) {
-      dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources,
+    if(context->GetDataPlatform() != nullptr) {
+      dataPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                               "/config/basestation/vision");
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Constructor.NullDataPlatform",
                           "Insantiating VisionSystem with a empty DataPath.");
     }
     
-    _visionSystem = new VisionSystem(dataPath);
+    _visionSystem = new VisionSystem(dataPath, _vizManager);
     
   } // VisionSystem()
 
   void VisionComponent::SetCameraCalibration(const Robot& robot, const Vision::CameraCalibration& camCalib)
   {
-    if(_camCalib != camCalib)
+    if(_camCalib != camCalib || !_isCamCalibSet)
     {
       _camCalib = camCalib;
       _camera.SetSharedCalibration(&_camCalib);
@@ -269,7 +270,7 @@ namespace Cozmo {
         
         // Wait for initialization to complete (i.e. Matlab to start up, if needed)
         while(!_visionSystem->IsInitialized()) {
-          usleep(500);
+          std::this_thread::sleep_for(std::chrono::microseconds(500));
         }
         
         if(_runMode == RunMode::Asynchronous) {
@@ -333,25 +334,27 @@ namespace Cozmo {
             _visionSystem->Update(_nextPoseData, image);
             _lastImg = image;
             
-            VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+            _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                                                "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
           }
           break;
         }
         case RunMode::Asynchronous:
         {
-          Lock();
-          
-          if(!_nextImg.IsEmpty()) {
-            PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
-                             "Setting next image with t=%d, but existing next image from t=%d not yet processed.",
-                             image.GetTimestamp(), _nextImg.GetTimestamp());
+          if(!_paused) {
+            Lock();
+            
+            if(!_nextImg.IsEmpty()) {
+              PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
+                               "Setting next image with t=%d, but existing next image from t=%d not yet processed (currently on t=%d).",
+                               image.GetTimestamp(), _nextImg.GetTimestamp(), _currentImg.GetTimestamp());
+            }
+            
+            // TODO: Avoid the copying here (shared memory?)
+            image.CopyTo(_nextImg);
+            
+            Unlock();
           }
-          
-          // TODO: Avoid the copying here (shared memory?)
-          image.CopyTo(_nextImg);
-          
-          Unlock();
           break;
         }
         default:
@@ -469,7 +472,7 @@ namespace Cozmo {
     while (_running) {
       
       if(_paused) {
-        usleep(100);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
         continue;
       }
       
@@ -480,7 +483,7 @@ namespace Cozmo {
         //assert(_currentImg != nullptr);
         _visionSystem->Update(_currentPoseData, _currentImg);
         
-        VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+        _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                                            "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
         
         Lock();
@@ -505,7 +508,7 @@ namespace Cozmo {
         _nextImg = {};
         Unlock();
       } else {
-        usleep(100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
       }
       
     } // while(_running)
@@ -545,8 +548,8 @@ namespace Cozmo {
     TimeStamp_t t;
     RobotPoseStamp* p = nullptr;
     HistPoseKey poseKey;
-    
     lastResult = robot.GetPoseHistory()->ComputeAndInsertPoseAt(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
+
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
                           "Time: %d, hist: %d to %d\n",
@@ -560,74 +563,53 @@ namespace Cozmo {
     // and this should be true
     assert(markerOrig.GetTimeStamp() == t);
     
+    // Check to see if the robot's body or head are
+    // moving too fast to queue this marker
     if(!robot.IsPickingOrPlacing())
     {
-      const bool checkBody = _markerDetectionBodyTurnSpeedThreshold_radPerSec > 0.f;
-      const bool checkHead = _markerDetectionHeadTurnSpeedThreshold_radPerSec > 0.f;
-      
       TimeStamp_t t_prev, t_next;
       RobotPoseStamp p_prev, p_next;
-      f32 dtPrev_sec = 0.f;
-      f32 dtNext_sec = 0.f;
       
-      if(checkBody || checkHead)
-      {
-        lastResult = robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
-                              "Could not get next/previous poses for t = %d, so "
-                              "cannot compute angular velocity. Ignoring marker.", t);
-          
-          // Don't return failure, but don't queue the marker either (since we
-          // couldn't check the angular velocity while seeing it
-          return RESULT_OK;
-        }
+      lastResult = robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
+                            "Could not get next/previous poses for t = %d, so "
+                            "cannot compute angular velocity. Ignoring marker.\n", t);
         
-        assert(t_prev < t);
-        assert(t_next > t);
-        dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
-        dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
-      }
-      
-      if(checkBody)
-      {
-        const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
-        const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
-        
-        if(turnSpeedNext > _markerDetectionBodyTurnSpeedThreshold_radPerSec ||
-           turnSpeedPrev > _markerDetectionBodyTurnSpeedThreshold_radPerSec)
-        {
-          PRINT_NAMED_INFO("VisionComponent.QueueObservedMarker.RobotBodyMoving",
-                           "Ignoring vision marker seen while turning with angular "
-                           "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)",
-                           RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
-                           RAD_TO_DEG(_markerDetectionBodyTurnSpeedThreshold_radPerSec));
-          return RESULT_OK;
-        }
-      } else if(robot.IsMoving()) {
-        PRINT_NAMED_INFO("VisionComponent.QueueObservedMarker.RobotBodyMoving",
-                         "Ignoring vision marker seen while turning b/c thresh = 0 deg/sec");
+        // Don't return failure, but don't queue the marker either (since we
+        // couldn't check the angular velocity while seeing it
         return RESULT_OK;
       }
       
-      if(checkHead)
+      const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
+      const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
+      
+      assert(t_prev < t);
+      assert(t_next > t);
+      const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
+      const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
+      const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
+      const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
+      const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
+      const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
+      
+      if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+         turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
       {
-        const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
-        const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
-        
-        if(headSpeedNext > _markerDetectionHeadTurnSpeedThreshold_radPerSec ||
-           headSpeedPrev > _markerDetectionHeadTurnSpeedThreshold_radPerSec)
-        {
-          PRINT_NAMED_INFO("VisionComponent.QueueObservedMarker.RobotHeadMoving",
-                           "Ignoring vision marker seen while head moving with angular "
-                           "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)",
-                           RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
-                           RAD_TO_DEG(_markerDetectionHeadTurnSpeedThreshold_radPerSec));
-          return RESULT_OK;
-        }
-      } else if(robot.IsHeadMoving()) {
-        PRINT_NAMED_INFO("VisionComponent.QueueObservedMarker.RobotHeadMoving",
-                         "Ignoring vision marker seen while head moving b/c thresh = 0 deg/sec");
+        //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
+        //                              "Ignoring vision marker seen while turning with angular "
+        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+        //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
+        //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+        return RESULT_OK;
+      } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+                headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+      {
+        //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
+        //                              "Ignoring vision marker seen while head moving with angular "
+        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+        //                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
+        //                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
         return RESULT_OK;
       }
       
@@ -654,11 +636,11 @@ namespace Cozmo {
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_WARNING("Robot.Update.ReactionCallbackFailed",
                               "Reaction callback failed for robot %d observing marker with code %d.\n",
-                              GetID(), marker.GetCode());
+                              robot.GetID(), marker.GetCode());
         }
       }
     }
-    */
+     */
     
     // Visualize the marker in 3D
     // TODO: disable this block when not debugging / visualizing
@@ -691,7 +673,7 @@ namespace Cozmo {
                                 "Could not estimate pose of block marker. Not visualizing.\n");
           } else {
             if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+              robot.GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                   "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
@@ -716,7 +698,7 @@ namespace Cozmo {
                                 "Could not estimate pose of mat marker. Not visualizing.\n");
           } else {
             if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
+              robot.GetContext()->GetVizManager()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                   "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
@@ -748,7 +730,7 @@ namespace Cozmo {
         }
         
         const Quad2f& corners = visionMarker.GetImageCorners();
-        VizManager::getInstance()->SendVisionMarker(corners[Quad::TopLeft].x(),  corners[Quad::TopLeft].y(),
+        _vizManager->SendVisionMarker(corners[Quad::TopLeft].x(),  corners[Quad::TopLeft].y(),
                                                     corners[Quad::TopRight].x(),  corners[Quad::TopRight].y(),
                                                     corners[Quad::BottomRight].x(),  corners[Quad::BottomRight].y(),
                                                     corners[Quad::BottomLeft].x(),  corners[Quad::BottomLeft].y(),
@@ -781,9 +763,6 @@ namespace Cozmo {
                             "Got FaceDetection from vision processing but failed to update it.");
           return lastResult;
         }
-        
-        VizManager::getInstance()->DrawCameraFace(faceDetection,
-                                                  faceDetection.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
       }
     } // if(_visionSystem != nullptr)
     return lastResult;
@@ -796,7 +775,7 @@ namespace Cozmo {
       VizInterface::TrackerQuad trackerQuad;
       if(true == _visionSystem->CheckMailbox(trackerQuad)) {
         // Send tracker quad info to viz
-        VizManager::getInstance()->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
+        _vizManager->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
                                                    trackerQuad.topRight_x, trackerQuad.topRight_y,
                                                    trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
                                                    trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
@@ -838,7 +817,7 @@ namespace Cozmo {
         dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
         
         // Visualize docking error signal
-        VizManager::getInstance()->SetDockingError(dockErrMsg.x_distErr,
+        _vizManager->SetDockingError(dockErrMsg.x_distErr,
                                                    dockErrMsg.y_horErr,
                                                    dockErrMsg.angleErr);
         

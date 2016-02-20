@@ -27,6 +27,8 @@
 namespace Anki {
 namespace Cozmo {
 
+  static const char* kNameKey = "Name";
+  
   Animation::Animation(const std::string& name)
   : _name(name)
   , _isInitialized(false)
@@ -34,17 +36,9 @@ namespace Cozmo {
     
   }
   
-  Result Animation::DefineFromJson(const std::string& name, Json::Value &jsonRoot)
+  Result Animation::DefineFromJson(const std::string& name, const Json::Value &jsonRoot)
   {
-    /*
-    if(!jsonRoot.isMember("Name")) {
-      PRINT_NAMED_ERROR("Animation.DefineFromJson.NoName",
-                        "Missing 'Name' field for animation.");
-      return RESULT_FAIL;
-    }
-     */
-    
-    _name = name; //jsonRoot["Name"].asString();
+    _name = name;
     
     // Clear whatever is in the existing animation
     Clear();
@@ -52,40 +46,50 @@ namespace Cozmo {
     const s32 numFrames = jsonRoot.size();
     for(s32 iFrame = 0; iFrame < numFrames; ++iFrame)
     {
-      Json::Value& jsonFrame = jsonRoot[iFrame];
+      const Json::Value& jsonFrame = jsonRoot[iFrame];
       
-      if(!jsonFrame.isMember("Name")) {
-        PRINT_NAMED_ERROR("Animation.DefineFromJson.NoFrameName",
-                          "Missing 'Name' field for frame %d of '%s' animation.",
+      if(!jsonFrame.isObject()) {
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameMissing",
+                          "frame %d of '%s' animation is missing or incorrect type.",
                           iFrame, _name.c_str());
         return RESULT_FAIL;
       }
       
-      const std::string& frameName = jsonFrame["Name"].asString();
+      const Json::Value& jsonFrameName = jsonFrame[kNameKey];
+      
+      if(!jsonFrameName.isString()) {
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.FrameNameMissing",
+                          "Missing '%s' field for frame %d of '%s' animation.",
+                          kNameKey, iFrame, _name.c_str());
+        return RESULT_FAIL;
+      }
+      
+      const std::string& frameName = jsonFrameName.asString();
+      
       
       Result addResult = RESULT_FAIL;
       
       // Map from string name of frame to which track we want to store it in:
       if(frameName == HeadAngleKeyFrame::GetClassName()) {
-        addResult = _headTrack.AddKeyFrame(jsonFrame);
+        addResult = _headTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
-        addResult = _liftTrack.AddKeyFrame(jsonFrame);
+        addResult = _liftTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == FaceAnimationKeyFrame::GetClassName()) {
-        addResult = _faceAnimTrack.AddKeyFrame(jsonFrame);
+        addResult = _faceAnimTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == FacePositionKeyFrame::GetClassName()) {
-        addResult = _facePosTrack.AddKeyFrame(jsonFrame);
+        addResult = _facePosTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == DeviceAudioKeyFrame::GetClassName()) {
-        addResult = _deviceAudioTrack.AddKeyFrame(jsonFrame);
+        addResult = _deviceAudioTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == BlinkKeyFrame::GetClassName()) {
-        addResult = _blinkTrack.AddKeyFrame(jsonFrame);
+        addResult = _blinkTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == RobotAudioKeyFrame::GetClassName()) {
-        addResult = _robotAudioTrack.AddKeyFrame(jsonFrame);
+        addResult = _robotAudioTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
-        addResult = _backpackLightsTrack.AddKeyFrame(jsonFrame);
+        addResult = _backpackLightsTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == BodyMotionKeyFrame::GetClassName()) {
-        addResult = _bodyPosTrack.AddKeyFrame(jsonFrame);
+        addResult = _bodyPosTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == ProceduralFaceKeyFrame::GetClassName()) {
-        addResult = _proceduralFaceTrack.AddKeyFrame(jsonFrame);
+        addResult = _proceduralFaceTrack.AddKeyFrameToBack(jsonFrame, name);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
                           "Frame %d in '%s' animation has unrecognized name '%s'.",
@@ -156,9 +160,9 @@ namespace Cozmo {
   }
   
   /*
-  Result Animation::AddKeyFrame(const HeadAngleKeyFrame& kf)
+  Result Animation::AddKeyFrameToBack(const HeadAngleKeyFrame& kf)
   {
-    return _headTrack.AddKeyFrame(kf);
+    return _headTrack.AddKeyFrameToBack(kf);
   }
    */
   

@@ -45,16 +45,25 @@ void EmotionEvent::AddEmotionAffector(const EmotionAffector& inAffector)
 
   _affectors.push_back(inAffector);
 }
+  
+  
+float EmotionEvent::CalculateRepetitionPenalty(float timeSinceLastOccurence) const
+{
+  const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceLastOccurence);
+  return repetitionPenalty;
+}
 
   
-static const char* kEmotionAffectorsKey = "emotionAffectors";
-static const char* kEventName           = "name";
+static const char* kEmotionAffectorsKey  = "emotionAffectors";
+static const char* kEventName            = "name";
+static const char* kRepetitionPenaltyKey = "repetitionPenalty";
 
 
 bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
 {
   _affectors.clear();
   _name.clear();
+  _repetitionPenalty.Clear();
   
   // Name
   
@@ -62,7 +71,7 @@ bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
   
   if (!eventNameField.isString())
   {
-    PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.MissingNAme", "Missing '%s' string entry", kEventName);
+    PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.MissingName", "Missing '%s' string entry", kEventName);
     return false;
   }
   
@@ -96,6 +105,23 @@ bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
     _affectors.push_back(newAffector);
   }
   
+  const Json::Value& repetitionPenaltyJson = inJson[kRepetitionPenaltyKey];
+  if (!repetitionPenaltyJson.isNull())
+  {
+    if (!_repetitionPenalty.ReadFromJson(repetitionPenaltyJson))
+    {
+      PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.BadRepetitionPenalty", "Behavior '%s': %s failed to read", _name.c_str(), kRepetitionPenaltyKey);
+    }
+  }
+  
+  // Ensure there is a valid graph
+  if (_repetitionPenalty.GetNumNodes() == 0)
+  {
+    _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
+  }
+  
+  PRINT_NAMED_INFO("EmotionEvent.ReadFromJson", "Loaded event '%s'", _name.c_str());
+  
   return true;
 }
 
@@ -118,6 +144,13 @@ bool EmotionEvent::WriteToJson(Json::Value& outJson) const
     }
     
     outJson[kEmotionAffectorsKey] = emotionAffectorsJson;
+  }
+  
+  {
+    Json::Value repetitionPenaltyJson;
+    _repetitionPenalty.WriteToJson(repetitionPenaltyJson);
+    
+    outJson[kRepetitionPenaltyKey] = repetitionPenaltyJson;
   }
   
   return true;

@@ -352,14 +352,14 @@ namespace Anki
           const s32 numPyramidLevels,
           const Transformations::TransformType transformType,
           const s32 numFiducialSquareSamples,
-          const Point2f& fiducialSquareThicknessFraction,
+          const Point<f32>& fiducialSquareThicknessFraction,
           const s32 maxSamplesAtBaseLevel,
           const s32 numSamplingRegions,
           const f32 focalLength_x,
           const f32 focalLength_y,
           const f32 camCenter_x,
           const f32 camCenter_y,
-          const Point2f& templateSize_mm, // actual physical size of the template
+          const Point<f32>& templateSize_mm, // actual physical size of the template
           MemoryStack ccmMemory,
           MemoryStack &onchipScratch,
           MemoryStack offchipScratch);

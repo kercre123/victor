@@ -30,11 +30,12 @@ namespace Cozmo {
     
     Result DefineHardCoded(); // called at construction
     
-    Result DefineFromJson(Json::Value& jsonRoot, std::string& loadedAnimName);
+    Result DefineFromJson(const Json::Value& jsonRoot, std::string& loadedAnimName);
     
     Result AddAnimation(const std::string& name);
     
     Animation* GetAnimation(const std::string& name);
+    const Animation* GetAnimation(const std::string& name) const;
     
     std::vector<std::string> GetAnimationNames();
     

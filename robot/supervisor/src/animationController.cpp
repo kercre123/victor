@@ -1,29 +1,28 @@
+// This enables AnkiAsserts(), which are always no-ops by default (see config.h)
+#ifndef _DEBUG
+#define _DEBUG
+#endif
+
+#include "anki/cozmo/robot/hal.h"
 #include "animationController.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "timeProfiler.h"
-
+#include "anki/cozmo/robot/logging.h"
 #ifdef TARGET_ESPRESSIF
 #include "anki/cozmo/robot/esp.h"
 #include "rtip.h"
-#include "anki/cozmo/robot/logging.h"
 #include "face.h"
 extern "C" {
   #include "client.h"
   #include "anki/cozmo/robot/drop.h"
 }
+extern "C" void FacePrintf(const char *format, ...);
 #define ONCHIP
-
 #else // Not on Espressif
-#include <assert.h>
-#include "anki/cozmo/robot/hal.h"
-#include "anki/common/robot/errorHandling.h"
-//#include "anki/common/robot/utilities_c.h"
-//#include "anki/common/shared/radians.h"
-//#include "anki/common/shared/velocityProfileGenerator.h"
+#include <string.h>
 #include "headController.h"
 #include "liftController.h"
-#include "localization.h"
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"
@@ -55,7 +54,7 @@ namespace AnimationController {
     u8  _currentTag = 0;
 
     bool _isBufferStarved;
-    bool _haveReceivedTerminationFrame;
+    u16 _haveReceivedTerminationFrame;
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
 
@@ -76,10 +75,10 @@ namespace AnimationController {
   Result Init()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Initializing AnimationController\r\n");
+    AnkiDebug( 2, "AnimationController", 3, "Initializing", 0);
 #   endif
 
-    _tracksToPlay = ENABLE_ALL_TRACKS;
+    _tracksToPlay = ALL_TRACKS;
 
     Clear();
 
@@ -127,23 +126,29 @@ namespace AnimationController {
       // (For now, this just means motor-based tracks.) Note that we don't
       // stop tracks we weren't using, in case we were, for example, playing
       // a head animation while driving a path.
+#ifdef TARGET_ESPRESSIF
+      RobotInterface::EngineToRobot msg;
+#endif
       if(_tracksInUse & HEAD_TRACK) {
 #ifdef TARGET_ESPRESSIF
-        // Don't have an API for this on Espressif right now, PUNT
+        msg.tag = RobotInterface::EngineToRobot::Tag_moveHead;
+        msg.moveHead.speed_rad_per_sec = 0.0f;
+        RTIP::SendMessage(msg);
 #else
         HeadController::SetAngularVelocity(0);
 #endif
       }
       if(_tracksInUse & LIFT_TRACK) {
 #ifdef TARGET_ESPRESSIF
-        // Don't have an API for this on Espressif right now, PUNT
+        msg.tag = RobotInterface::EngineToRobot::Tag_moveLift;
+        msg.moveLift.speed_rad_per_sec = 0.0f;
+        RTIP::SendMessage(msg);
 #else
         LiftController::SetAngularVelocity(0);
 #endif
       }
       if(_tracksInUse & BODY_TRACK) {
 #ifdef TARGET_ESPRESSIF
-        RobotInterface::EngineToRobot msg;
         msg.tag = RobotInterface::EngineToRobot::Tag_animBodyMotion;
         msg.animBodyMotion.speed = 0;
         msg.animBodyMotion.curvatureRadius_mm = 0;
@@ -159,13 +164,11 @@ namespace AnimationController {
   void Clear()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Clearing AnimationController\n");
+    AnkiDebug( 2, "AnimationController", 4, "Clearing", 0);
 #   endif
 
     _numBytesPlayed += GetNumBytesInBuffer();
     _numAudioFramesPlayed += _numAudioFramesBuffered;
-
-    //PRINT("CLEAR NumBytesPlayed %d (%d)\n", _numBytesPlayed, GetNumBytesInBuffer());
 
     _currentBufferPos = 0;
     _lastBufferPos = 0;
@@ -173,7 +176,7 @@ namespace AnimationController {
 
     _numAudioFramesBuffered = 0;
 
-    _haveReceivedTerminationFrame = false;
+    _haveReceivedTerminationFrame = 0;
     _isPlaying = false;
     _isBufferStarved = false;
     _bufferFullMessagePrintedThisTick = false;
@@ -196,6 +199,7 @@ namespace AnimationController {
     msg.status = 0;
     if (IsBufferFull()) msg.status |= IS_ANIM_BUFFER_FULL;
     if (_isPlaying) msg.status     |= IS_ANIMATING;
+    msg.enabledAnimTracks = GetEnabledTracks();
     msg.tag = GetCurrentTag();
     if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
     {
@@ -214,8 +218,8 @@ namespace AnimationController {
 
   static u32 GetFromBuffer(u8* data, u32 numBytes)
   {
-    assert(numBytes < KEYFRAME_BUFFER_SIZE);
-
+    AnkiAssert(numBytes < KEYFRAME_BUFFER_SIZE, 5);
+    
     if(_currentBufferPos + numBytes < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current position to end of buffer to just
       // copy directly
@@ -234,7 +238,6 @@ namespace AnimationController {
 
     // Increment total number of bytes played since startup
     _numBytesPlayed += numBytes;
-    //PRINT("NumBytesPlayed %d (%d) (%d)\r\n", _numBytesPlayed, numBytes, *((u32*)data));
 
     return numBytes;
   }
@@ -242,7 +245,7 @@ namespace AnimationController {
   static s32 GetFromBuffer(RobotInterface::EngineToRobot* msg)
   {
     s32 readSoFar;
-    memset(msg, 0, sizeof(RobotInterface::EngineToRobot)); // Memset 0, presumably sets all size fields to 0
+    memset(msg, 0, sizeof(RobotInterface::EngineToRobot)); // Memset 0 - sets size to 1
     readSoFar  = GetFromBuffer(msg->GetBuffer(), RobotInterface::EngineToRobot::MIN_SIZE); // Read in enough to know what it is
     readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in the minimum size for the type to get length fields
     readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in anything left now that we know how big minimum fields are
@@ -257,17 +260,17 @@ namespace AnimationController {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
       if(!_bufferFullMessagePrintedThisTick) {
-        PRINT("AnimationController.BufferKeyFrame.BufferFull %d bytes available, %d needed.\r\n",
+        AnkiDebug( 2, "AnimationController", 6, "BufferKeyFrame.BufferFull %d bytes available, %d needed.", 2,
                   numBytesAvailable, numBytesNeeded);
         _bufferFullMessagePrintedThisTick = true;
       }
       return RESULT_FAIL;
     }
 #if DEBUG_ANIMATION_CONTROLLER > 1
-    PRINT("BufferKeyFrame, %d -> %d (%d)\r\n", numBytesNeeded, _lastBufferPos, numBytesAvailable);
+    AnkiDebug( 2, "AnimationController", 7, "BufferKeyFrame, %d -> %d (%d)", 3, numBytesNeeded, _lastBufferPos, numBytesAvailable);
 #endif
 
-    assert(numBytesNeeded < KEYFRAME_BUFFER_SIZE);
+    AnkiAssert(numBytesNeeded < KEYFRAME_BUFFER_SIZE, 8);
 
     if(_lastBufferPos + numBytesNeeded < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current end position to end of buffer to just
@@ -286,7 +289,7 @@ namespace AnimationController {
      }
     switch(msg.tag) {
       case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
-        _haveReceivedTerminationFrame = true;
+        ++_haveReceivedTerminationFrame;
       case RobotInterface::EngineToRobot::Tag_animAudioSample:
       case RobotInterface::EngineToRobot::Tag_animAudioSilence:
         ++_numAudioFramesBuffered;
@@ -295,7 +298,7 @@ namespace AnimationController {
         break;
     }
 
-    assert(_lastBufferPos >= 0 && _lastBufferPos < KEYFRAME_BUFFER_SIZE);
+    AnkiAssert(_lastBufferPos >= 0 && _lastBufferPos < KEYFRAME_BUFFER_SIZE, 9);
 
     return RESULT_OK;
   }
@@ -326,7 +329,7 @@ namespace AnimationController {
       if (!ready) {
         if (!_isBufferStarved) {
           _isBufferStarved = true;
-          PRINT("AnimationController.IsReadyToPlay.BufferStarved\r\n");
+          AnkiWarn( 2, "AnimationController", 10, "IsReadyToPlay.BufferStarved", 0);
         }
       } else {
         _isBufferStarved = false;
@@ -334,7 +337,7 @@ namespace AnimationController {
 
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
+      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame > 0);
       if(ready) {
         _isPlaying = true;
         _isBufferStarved = false;
@@ -345,7 +348,7 @@ namespace AnimationController {
       }
     }
 
-    //assert(_currentFrame <= _lastFrame);
+    //AnkiAssert(_currentFrame <= _lastFrame, 11);
 
     return ready;
   } // IsReadyToPlay()
@@ -365,12 +368,18 @@ namespace AnimationController {
         RobotInterface::EngineToRobot::Tag msgID = PeekBufferTag();
         RobotInterface::EngineToRobot msg;
 
-        // If the next message is not audio, then delete it until it is.
-        while(msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
-              msgID != RobotInterface::EngineToRobot::Tag_animAudioSample) {
-          PRINT("Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead). Dumping message. (FYI AudioSample_ID = 0x%02x)\n", msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
-          GetFromBuffer(&msg);
-          msgID = PeekBufferTag();
+        // If the next message is not audio, the animation queue has completely desynchronized
+        // We almost certainly are looking at the middle of a message (and not start), so we can't continue
+        // If it's not an animationController bug, it's most likely a mismatch between basestation and Espressif CLAD builds
+        if (msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
+              msgID != RobotInterface::EngineToRobot::Tag_animAudioSample)
+        {
+          // Shut down, and report back what happened
+          Clear();
+          RobotInterface::AnimationEnded aem;
+          aem.tag = _currentTag;
+          RobotInterface::SendMessage(aem);
+          return false;
         }
 
         switch(msgID)
@@ -416,7 +425,7 @@ namespace AnimationController {
           }
           default:
           {
-            PRINT("Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)\n", msgID);
+            AnkiWarn( 2, "AnimationController", 13, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
             Clear();
             return false;
           }
@@ -427,15 +436,7 @@ namespace AnimationController {
 #ifdef TARGET_ESPRESSIF
         if (!_playSilence)
         {
-          if (_audioReadInd == AUDIO_SAMPLE_SIZE-2) // XXX Temporary hack for EP1 compatibility until we can adjust the audio chunk size
-          {
-            GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP-1);
-            dest[MAX_AUDIO_BYTES_PER_DROP-1] = dest[MAX_AUDIO_BYTES_PER_DROP-2];
-          }
-          else
-          {
-            GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
-          }
+          GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
         }
         _audioReadInd += MAX_AUDIO_BYTES_PER_DROP;
         if (_audioReadInd >= AUDIO_SAMPLE_SIZE)
@@ -443,7 +444,7 @@ namespace AnimationController {
           --_numAudioFramesBuffered;
           ++_numAudioFramesPlayed;
 #         if DEBUG_ANIMATION_CONTROLLER
-          PRINT("AC::Update()\tari = %d\tnafb = %d\r\n", _audioReadInd, _numAudioFramesBuffered);
+          AnkiDebug( 2, "AnimationController", 14, "Update()\tari = %d\tnafb = %d", 2, _audioReadInd, _numAudioFramesBuffered);
 #         endif
           _audioReadInd = 0;
           Update(); // Done with audio message, grab next thing from buffer
@@ -488,7 +489,7 @@ namespace AnimationController {
           // (Note that IsReadyToPlay() checks for there being at least _two_
           //  keyframes in the buffer, where a "keyframe" is considered an
           //  audio sample (or silence) or an end-of-animation indicator.)
-          PRINT("Ran out of animation buffer after getting audio/silence.\n");
+          AnkiWarn( 2, "AnimationController", 15, "Ran out of animation buffer after getting audio/silence.", 0);
           return RESULT_FAIL;
         }
 
@@ -516,14 +517,14 @@ namespace AnimationController {
             RobotInterface::SendMessage(msg);
 
 #             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
+              AnkiDebug( 2, "AnimationController", 16, "StartOfAnimation w/ tag=%d", 1, _currentTag);
 #           endif
             break;
           }
           case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
           {
 #           if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] hit EndOfAnimation\n",
+              AnkiDebug( 2, "AnimationController", 17, "[t=%dms(%d)] hit EndOfAnimation", 2,
                     _currentTime_ms, system_get_time());
 #           endif
             GetFromBuffer(&msg);
@@ -557,7 +558,7 @@ namespace AnimationController {
             GetFromBuffer(&msg);
             if(_tracksToPlay & HEAD_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
+              AnkiDebug( 2, "AnimationController", 18, "[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec", 4,
                     _currentTime_ms, system_get_time(),
                     msg.animHeadAngle.angle_deg, static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
 #               endif
@@ -577,7 +578,7 @@ namespace AnimationController {
             GetFromBuffer(&msg);
             if(_tracksToPlay & LIFT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
+              AnkiDebug( 2, "AnimationController", 19, "[t=%dms(%d)] requesting lift height of %dmm over %.2fsec", 4,
                     _currentTime_ms, system_get_time(),
                     msg.animLiftHeight.height_mm, static_cast<f32>(msg.animLiftHeight.time_ms)*.001f);
 #               endif
@@ -599,7 +600,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
+              AnkiDebug( 2, "AnimationController", 20, "[t=%dms(%d)] setting backpack LEDs.", 2,
                     _currentTime_ms, system_get_time());
 #               endif
 
@@ -621,15 +622,11 @@ namespace AnimationController {
 
             if(_tracksToPlay & FACE_IMAGE_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
+              AnkiDebug( 2, "AnimationController", 21, "[t=%dms(%d)] setting face frame.", 2,
                     _currentTime_ms, system_get_time());
 #               endif
 
-              #ifdef TARGET_ESPRESSIF
-                Face::Update(msg.animFaceImage);
-              #else
-                HAL::FaceAnimate(msg.animFaceImage.image);
-              #endif
+              HAL::FaceAnimate(msg.animFaceImage.image, msg.animFaceImage.image_length);
 
               _tracksInUse |= FACE_IMAGE_TRACK;
             }
@@ -642,7 +639,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & FACE_POS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
+              AnkiDebug( 2, "AnimationController", 22, "[t=%dms(%d)] setting face position to (%d,%d).", 4,
                     _currentTime_ms, system_get_time(), msg.animFacePosition.xCen, msg.animFacePosition.yCen);
 #               endif
 
@@ -663,7 +660,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & BLINK_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] Blinking.\n",
+              AnkiDebug( 2, "AnimationController", 23, "[t=%dms(%d)] Blinking.", 2,
                     _currentTime_ms, system_get_time());
 #               endif
 
@@ -691,7 +688,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
+              AnkiDebug( 2, "AnimationController", 24, "[t=%dms(%d)] setting body motion to radius=%d, speed=%d", 4,
                     _currentTime_ms, system_get_time(), msg.animBodyMotion.curvatureRadius_mm,
                     msg.animBodyMotion.speed);
 #               endif
@@ -735,7 +732,7 @@ namespace AnimationController {
 
           default:
           {
-            PRINT("Unexpected message type %d in animation buffer!\n", msgID);
+            AnkiWarn( 2, "AnimationController", 25, "Unexpected message type %d in animation buffer!", 1, msgID);
             return RESULT_FAIL;
           }
 
@@ -749,11 +746,12 @@ namespace AnimationController {
 
       if(terminatorFound) {
         _isPlaying = false;
-        _haveReceivedTerminationFrame = false;
+        AnkiAssert(_haveReceivedTerminationFrame > 0, 281);
+        _haveReceivedTerminationFrame--;
         --_numAudioFramesBuffered;
         ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
 #         if DEBUG_ANIMATION_CONTROLLER
-        PRINT("Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
+        AnkiDebug( 2, "AnimationController", 26, "Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).", 4,
               _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         _currentTag = 0;
@@ -777,6 +775,11 @@ namespace AnimationController {
   void DisableTracks(u8 whichTracks)
   {
     _tracksToPlay &= ~whichTracks;
+  }
+  
+  u8 GetEnabledTracks()
+  {
+    return _tracksToPlay;
   }
 
   u8 GetCurrentTag()

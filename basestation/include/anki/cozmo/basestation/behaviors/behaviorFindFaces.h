@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorFindFaces_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/common/shared/radians.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -24,6 +25,8 @@ namespace ExternalInterface { class MessageEngineToGame; }
   
 class BehaviorFindFaces : public IBehavior
 {
+private:
+  using super = IBehavior;
 protected:
   
   // Enforce creation through BehaviorFactory
@@ -36,11 +39,15 @@ public:
   
 protected:
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
+  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+
+  virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const override;
   
 private:
   enum class State {
@@ -51,7 +58,7 @@ private:
   };
   
   // Min angle to move relative to current, in degrees
-  constexpr static float kPanMin = 25;
+  constexpr static float kPanMin = 35;
   // Max angle to move relative to current, in degrees
   constexpr static float kPanMax = 80;
   // Min absolute angle to move head to, in degrees
@@ -62,11 +69,21 @@ private:
   constexpr static float kPauseMin_sec = 1;
   // Max time to pause after moving
   constexpr static float kPauseMax_sec = 3.5;
+  // Width of zone to focus on
+  constexpr static float kFocusAreaAngle_deg = 120;
   
+  // The length of time in seconds it has to have been since we last
+  // saw a face in order to enter this behavior
+  double _minimumTimeSinceSeenLastFace_sec;
+
   State _currentState = State::Inactive;
   uint32_t _currentDriveActionID; // Init in cpp to not have constants include in header
   double _lookPauseTimer = 0;
+  Radians _faceAngleCenter;
+  bool _faceAngleCenterSet = false;
+  bool _useFaceAngleCenter = true;
   
+  float GetRandomPanAmount() const;
   void StartMoving(Robot& robot);
 };
   

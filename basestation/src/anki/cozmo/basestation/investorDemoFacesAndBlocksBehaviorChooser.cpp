@@ -80,7 +80,10 @@ InvestorDemoFacesAndBlocksBehaviorChooser::InvestorDemoFacesAndBlocksBehaviorCho
   // enable live idle animation
   robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
 
-  // robot.GetVisionComponent().EnableMode(VisionMode::DetectingFacesAndBlocks, true);
+  // pick the appropriate vision modes
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion,  false);
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingFaces,   true);
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
 }
 
 

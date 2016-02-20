@@ -11,7 +11,8 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -62,11 +63,9 @@ bool BehaviorReactToCliff::IsRunnable(const Robot& robot, double currentTime_sec
   return false;
 }
 
-Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec)
 {
-  robot.GetMoodManager().AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
-                                       EmotionType::Calm,  -kEmotionChangeSmall,
-                                       EmotionType::Brave, -kEmotionChangeSmall, "CliffReact");
+  robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
 
   return Result::RESULT_OK;
 }
@@ -79,9 +78,8 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
     {
       if (_cliffDetected)
       {
-        robot.GetMoodManager().AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
-                                             EmotionType::Calm,  -kEmotionChangeSmall,
-                                             EmotionType::Brave, -kEmotionChangeSmall, "CliffDetected");
+        robot.GetMoodManager().TriggerEmotionEvent("CliffDetected", MoodManager::GetCurrentTimeInSeconds());
+
         _currentState = State::CliffDetected;
         return Status::Running;
       }
@@ -93,9 +91,9 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
       // For now we simply rotate through the animations we want to play when cliff detected
       if (!_animReactions.empty())
       {
-        IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
+        IActionRunner* newAction = new PlayAnimationAction(robot, _animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
-        robot.GetActionList().QueueActionNow(0, newAction);
+        robot.GetActionList().QueueActionNow(newAction);
         animIndex = ++animIndex % _animReactions.size();
       }
       _waitingForAnimComplete = true;
@@ -127,7 +125,7 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
   return Status::Complete;
 }
 
-Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)
@@ -135,6 +133,10 @@ Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_
     return Result::RESULT_FAIL;
   }
   return Result::RESULT_OK;
+}
+  
+void BehaviorReactToCliff::StopInternal(Robot& robot, double currentTime_sec)
+{
 }
 
 void BehaviorReactToCliff::HandleCliffEvent(const EngineToGameEvent& event)

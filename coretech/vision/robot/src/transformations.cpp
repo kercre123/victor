@@ -527,7 +527,7 @@ namespace Anki
         const f32 dy = rightMidpoint.y - transformedCenter.y;
         const f32 dx = rightMidpoint.x - transformedCenter.x;
 
-        const f32 orientation = atan2_acc(dy, dx);
+        const f32 orientation = atan2(dy, dx);
 
         return orientation;
       }

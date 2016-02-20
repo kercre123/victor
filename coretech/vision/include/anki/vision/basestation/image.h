@@ -25,6 +25,13 @@
 
 namespace Anki {
 namespace Vision {
+  
+  enum class ResizeMethod : u8 {
+    NearestNeighbor = 0,
+    Linear,
+    Cubic,
+    AverageArea
+  };
 
   template<typename T>
   class ImageBase : public Array2d<T>
@@ -34,6 +41,9 @@ namespace Vision {
     ImageBase(s32 nrows, s32 ncols) : Array2d<T>(nrows, ncols) { }
     ImageBase(s32 nrows, s32 ncols, T* data) : Array2d<T>(nrows, ncols, data) { }
     ImageBase(Array2d<T>&& array) : Array2d<T>(array) { }
+    
+    // Read from file
+    Result Load(const std::string& filename);
     
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<T>
@@ -51,20 +61,24 @@ namespace Vision {
     void Display(const char *windowName, s32 pauseTime_ms = 5) const;
 
     // Resize in place by scaleFactor
-    void Resize(f32 scaleFactor);
+    void Resize(f32 scaleFactor, ResizeMethod method = ResizeMethod::Linear);
     
     // Resize in place to a specific size
-    void Resize(s32 desiredRows, s32 desiredCols);
+    void Resize(s32 desiredRows, s32 desiredCols, ResizeMethod method = ResizeMethod::Linear);
     
     // Resize into the new image (which is already the desired size)
-    void Resize(ImageBase<T>& resizedImage) const;
+    void Resize(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
     
     void DrawLine(const Point2f& start, const Point2f& end,
                   const ColorRGBA& color, const s32 thickness);
     
     void DrawPoint(const Point2f& point, const ColorRGBA& color, const s32 size);
 
+    void DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness);
     void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness);
+    
+    // TODO: Expose font?
+    void DrawText(const Point2f& position, const std::string& str, const ColorRGBA& color, f32 scale = 1.f);
     
     using Array2d<T>::GetDataPointer;
     using Array2d<T>::IsEmpty;
@@ -116,6 +130,10 @@ namespace Vision {
     
     s32 GetConnectedComponents(Array2d<s32>& labelImage,
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
+    
+    // Get image negatives (i.e. invert black-on-white to white-on-black)
+    Image& Negate();
+    Image  GetNegative() const;
     
     virtual s32 GetNumChannels() const override { return 1; }
     

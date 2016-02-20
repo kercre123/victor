@@ -100,7 +100,7 @@ namespace Anki {
     void Charger::Visualize(const ColorRGBA& color) const
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
-      _vizHandle = VizManager::getInstance()->DrawCharger(GetID().GetValue(), Charger::PlatformLength + Charger::WallWidth,
+      _vizHandle = _vizManager->DrawCharger(GetID().GetValue(), Charger::PlatformLength + Charger::WallWidth,
                                                           Charger::SlopeLength, Charger::Width,
                                                           Charger::Height, vizPose, color);
     } // Visualize()
@@ -110,7 +110,7 @@ namespace Anki {
     {
       // Erase the Charger
       if(_vizHandle != VizManager::INVALID_HANDLE) {
-        VizManager::getInstance()->EraseVizObject(_vizHandle);
+        _vizManager->EraseVizObject(_vizHandle);
         _vizHandle = VizManager::INVALID_HANDLE;
       }
       

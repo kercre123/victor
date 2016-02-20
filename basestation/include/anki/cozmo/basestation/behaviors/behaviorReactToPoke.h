@@ -35,9 +35,10 @@ public:
   
 protected:
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
+  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   
 private:
   

@@ -11,7 +11,8 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -66,10 +67,10 @@ bool BehaviorReactToPoke::IsRunnable(const Robot& robot, double currentTime_sec)
   return true;
 }
 
-Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec)
 {
-  robot.GetActionList().Cancel(-1, RobotActionType::TRACK_FACE);
-  robot.GetActionList().Cancel(-1, RobotActionType::TRACK_OBJECT);
+  robot.GetActionList().Cancel(RobotActionType::TRACK_FACE);
+  robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
   return Result::RESULT_OK;
 }
 
@@ -93,11 +94,11 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
     case State::ReactToPoke:
     {
       // Decrease happy
-      robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeLarge, "Poked");
+      robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeLarge, "Poked", currentTime_sec);
       
       // Do startled animation
       s32 animIndex = robot.GetLastMsgTimestamp() % _animStartled.size(); // Randomly select anim to play
-      StartActing(robot, new PlayAnimationAction(_animStartled[animIndex]));
+      StartActing(robot, new PlayAnimationAction(robot, _animStartled[animIndex]));
       _currentState = State::TurnToFace;
       break;
     }
@@ -109,7 +110,9 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       if (lastObservedFaceTime > 0 &&
           (robot.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeSinceLastObservedFace_ms)) {
         PRINT_NAMED_INFO("BehaviorReactToPoke.TurnToFace.TurningToLastObservedFace","time = %d", lastObservedFaceTime);
-        FacePoseAction* action = new FacePoseAction(facePose, DEG_TO_RAD(3), DEG_TO_RAD(180));
+
+        FacePoseAction* action = new FacePoseAction(robot, facePose, DEG_TO_RAD(180));
+        action->SetPanTolerance(DEG_TO_RAD(3));
         action->SetMaxPanSpeed(DEG_TO_RAD(1080));
         action->SetMaxTiltSpeed(DEG_TO_RAD(1080));
         action->SetPanAccel(200);
@@ -134,7 +137,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       PRINT_NAMED_INFO("BehaviorReactToPoke.Update.HappyVal", "happy: %f, animIndex: %d", happyVal, animIndex);
       
       
-      StartActing(robot, new PlayAnimationAction(_animReactions[animIndex]));
+      StartActing(robot, new PlayAnimationAction(robot, _animReactions[animIndex]));
       _currentState = State::Inactive;
       _doReaction = false;
       
@@ -150,7 +153,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
   return Status::Running;
 } 
   
-Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)
@@ -158,6 +161,10 @@ Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_s
     return Result::RESULT_FAIL;
   }
   return Result::RESULT_OK;
+}
+
+void BehaviorReactToPoke::StopInternal(Robot& robot, double currentTime_sec)
+{
 }
 
 void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
@@ -193,7 +200,7 @@ void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
   {
     
     _lastActionTag = action->GetTag();
-    robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, action);
+    robot.GetActionList().QueueActionAtEnd(action);
     _isActing = true;
   }
 

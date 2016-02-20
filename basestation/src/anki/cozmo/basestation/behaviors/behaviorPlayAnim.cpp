@@ -11,7 +11,8 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -23,14 +24,11 @@ using namespace ExternalInterface;
   
   
 static const char* kAnimNameKey = "animName";
-static const char* kMinTimeBetweenRunsKey = "minTimeBetweenRuns";
   
 
 BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _animationName()
-  , _minTimeBetweenRuns(0.0)
-  , _lastRunTime_sec(0.0)
   , _loopCount(1)
   , _loopsLeft(0)
   , _lastActionTag(0)
@@ -47,13 +45,6 @@ BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
       if (valueJson.isString())
       {
         _animationName = valueJson.asCString();
-      }
-    }
-    {
-      const Json::Value& valueJson = config[kMinTimeBetweenRunsKey];
-      if (valueJson.isNumeric())
-      {
-        _minTimeBetweenRuns = valueJson.asDouble();
       }
     }
   }
@@ -77,18 +68,17 @@ void BehaviorPlayAnim::SetAnimationName(const std::string& inName)
   
 bool BehaviorPlayAnim::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
-  const bool retVal = (_lastRunTime_sec == 0.0) || (currentTime_sec > (_lastRunTime_sec + _minTimeBetweenRuns));
+  const bool retVal = true;
   return retVal;
 }
   
 
-Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec)
 {
   _isInterrupted = false;
   _isActing = false;
   _loopsLeft = _loopCount;
   _lastActionTag = 0;
-  _lastRunTime_sec = currentTime_sec;
   
   return Result::RESULT_OK;
 }
@@ -106,7 +96,7 @@ BehaviorPlayAnim::Status BehaviorPlayAnim::UpdateInternal(Robot& robot, double c
 }
 
 
-Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   if (_isInterruptable)
   {
@@ -115,7 +105,12 @@ Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec,
   
   return Result::RESULT_OK;
 }
+
   
+void BehaviorPlayAnim::StopInternal(Robot& robot, double currentTime_sec)
+{
+}
+
 
 void BehaviorPlayAnim::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
@@ -147,8 +142,8 @@ void BehaviorPlayAnim::PlayAnimation(Robot& robot, const std::string& animName)
   --_loopsLeft;  
   SetStateName("Play" + std::to_string(_loopsLeft));
   
-  PlayAnimationAction* animAction = new PlayAnimationAction(animName);
-  robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
+  PlayAnimationAction* animAction = new PlayAnimationAction(robot, animName);
+  robot.GetActionList().QueueActionNow(animAction);
   _lastActionTag = animAction->GetTag();
   _isActing = true;
 }

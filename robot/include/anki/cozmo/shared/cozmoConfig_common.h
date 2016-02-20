@@ -8,7 +8,7 @@
 const f32 WHEEL_DIAMETER_MM  = 29.f;
 const f32 HALF_WHEEL_CIRCUM  = WHEEL_DIAMETER_MM * M_PI_2;
 const f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
-const f32 WHEEL_DIST_MM      = 47.7f; // approx distance b/w the center of the front treads
+const f32 WHEEL_DIST_MM      = 46.f; // approx distance b/w the center of the front treads
 const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
 const f32 WHEEL_BASE_MM      = 48.f;
 
@@ -16,9 +16,9 @@ const f32 WHEEL_BASE_MM      = 48.f;
 // i.e. If motor is within this tolerance of the target angle, it is done moving.
 const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2);
 const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5);
-const f32 POINT_TURN_ANGLE_TOL = DEG_TO_RAD(1.7);
+const f32 POINT_TURN_ANGLE_TOL = DEG_TO_RAD(1.f);
 
-const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-20.f);
+const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-23.f);
 const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
 
 // Head angle may exceed limits by this amount before
@@ -27,7 +27,7 @@ const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(3.f);
 
 // Safe head angle for the proximity sensors to be usable with the lift
 // either up or down
-const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = -0.32f;
+const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = DEG_TO_RAD(-15.f);
 
 // Theoretically equivalent to ORIGIN_TO_LOW_LIFT_DIST_MM...
 const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
@@ -36,7 +36,7 @@ const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
 // the drive center is the location between the two wheels)
-const f32 DRIVE_CENTER_OFFSET = 0.f;
+const f32 DRIVE_CENTER_OFFSET = -15.f;
 
 // The height of the lift at various configurations
 // Actual limit in proto is closer to 20.4mm, but there is a weird
@@ -69,10 +69,10 @@ const f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
 const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
 
 // camera relative to neck joint
-const f32 HEAD_CAM_POSITION[3]   = {17.7f, 0.f, -8.f};
+const f32 HEAD_CAM_POSITION[3]   = {17.52f, 0.f, -8.f};
 
 // Upper shoulder joint relative to robot origin
-const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 31.3f + WHEEL_RAD_TO_MM}; // relative to robot origin
+const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 30.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
 
 // IMU position relative to neck joint
 const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
@@ -132,6 +132,14 @@ const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
 
 // How fast (in mm/sec) can a wheel spin at max
 const f32 MAX_WHEEL_SPEED_MMPS = 220.f;
+const f32 MAX_WHEEL_ACCEL_MMPS2 = 10000.f;  // TODO: Actually measure this!
+
+// Maximum angular velocity
+// Determined experimentally by turning robot in place at max speed.
+// Speed, in radians, should be (MAX_WHEEL_SPEED_MMPS / WHEEL_DIST_HALF_MM), but tread slip makes this not true.
+const f32 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC = 250;
+const f32 MAX_BODY_ROTATION_SPEED_RAD_PER_SEC = DEG_TO_RAD_F32(MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+const f32 MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2 = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC * MAX_WHEEL_ACCEL_MMPS2 / MAX_WHEEL_SPEED_MMPS;
 
 
 /***************************************************************************

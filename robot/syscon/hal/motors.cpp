@@ -32,6 +32,7 @@ struct MotorInfo
   u8 isBackward;   // True if wired backward
   u8 lastP;        // Last value of pPin
   u8 encoderPins[2];
+  nrf_gpio_pin_pull_t encoderPull;
   
   Fixed unitsPerTick;
   Fixed64 position;
@@ -82,6 +83,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     0,
     PIN_ENCODER_LEFT,
     ENCODER_NONE,
+    NRF_GPIO_PIN_NOPULL,
     1, // units per tick = 1 tick
     0, 0, 0, 0, 0, 0
   },
@@ -93,6 +95,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     0,
     PIN_ENCODER_RIGHT,
     ENCODER_NONE,
+    NRF_GPIO_PIN_NOPULL,
     1, // units per tick = 1 tick
     0, 0, 0, 0, 0, 0
   },
@@ -104,6 +107,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     0,
     PIN_ENCODER_LIFTA,
     PIN_ENCODER_LIFTB,
+    NRF_GPIO_PIN_NOPULL,
     RADIANS_PER_LIFT_TICK,
     0, 0, 0, 0, 0, 0
   },
@@ -115,6 +119,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     0,
     PIN_ENCODER_HEADA,
     PIN_ENCODER_HEADB,
+    NRF_GPIO_PIN_NOPULL,
     RADIANS_PER_HEAD_TICK,
     0, 0, 0, 0, 0, 0
   },
@@ -176,17 +181,17 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   NRF_PPI->CH[ppiChannel + 3].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 1];
 }
 
-static void ConfigurePinSense(u8 pin, u32 pinState)
+static void ConfigurePinSense(u8 pin, u32 pinState, nrf_gpio_pin_pull_t pullDirection)
 {
   u32 mask = 1 << pin;
     
   // Configure initial pin sensing (used for inversion with whack-a-mole)
   if (pinState & mask)
   {
-    nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
+    nrf_gpio_cfg_sense_input(pin, pullDirection, NRF_GPIO_PIN_SENSE_LOW);
     m_lastState |= mask;
   } else {
-    nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_HIGH);
+    nrf_gpio_cfg_sense_input(pin, pullDirection, NRF_GPIO_PIN_SENSE_HIGH);
   }
 }
 
@@ -277,7 +282,7 @@ void Motors::init()
   
   // Clear pending interrupts and enable the GPIOTE interrupt
   NVIC_ClearPendingIRQ(GPIOTE_IRQn);
-  NVIC_SetPriority(GPIOTE_IRQn, 0);//IRQ_PRIORITY);
+  NVIC_SetPriority(GPIOTE_IRQn, IRQ_PRIORITY);
   NVIC_EnableIRQ(GPIOTE_IRQn);
   
   // Clear pending events
@@ -302,10 +307,10 @@ void Motors::init()
     nrf_gpio_cfg_output(motorInfo->pPin);
     
     // Enable sensing for each encoder pin (only one per quadrature encoder)
-    ConfigurePinSense(motorInfo->encoderPins[0], state);
+    ConfigurePinSense(motorInfo->encoderPins[0], state, motorInfo->encoderPull);
     if (motorInfo->encoderPins[1] != ENCODER_NONE)
     {
-      nrf_gpio_cfg_input(motorInfo->encoderPins[1], NRF_GPIO_PIN_NOPULL);
+      nrf_gpio_cfg_input(motorInfo->encoderPins[1], motorInfo->encoderPull);
     }
   }
 
@@ -468,6 +473,7 @@ s32 Motors::debugWheelsGetTicks(u8 motorID)
                                 | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos)
 
 // TODO: This should be optimized
+#if 0
 static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
 {
   u32 pin = motorInfo->encoderPins[0];
@@ -508,6 +514,7 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
     }
   }
 }
+#endif
 
 void Motors::printEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
 {

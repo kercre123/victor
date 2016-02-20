@@ -20,6 +20,7 @@ message RobotStateMessage
   int_32 numAnimAudioFramesFree,
   uint_8 videoFrameRateHz,
   uint_8 imageProcFrameRateHz,
+  uint_8 enabledAnimTracks,
   uint_8 animTag
 }
 
@@ -42,6 +43,16 @@ message Object
   float_32   objParameters[4] // for object-specific parameters
 }
 
+// SegmentPrimitive
+message SegmentPrimitive
+{
+  string identifier,
+  uint_32 color,
+  float_32 origin[3],
+  float_32 dest[3],
+  bool clearPrevious  // if set to true, previous segments with same ID will be erased, otherwise drawn together
+}
+
 // VizQuad
 message Quad
 {
@@ -60,6 +71,33 @@ message Quad
   float_32 xLowerRight,
   float_32 yLowerRight,
   float_32 zLowerRight,
+}
+
+// SimpleQuad: Axis aligned quad. Any axis can be fixed or applied sideSize, depending on convention between parts
+structure SimpleQuad
+{
+  uint_32 color,
+  float_32 sideSize,
+  float_32 center[3],
+}
+
+// SimpleQuadVectorMessageBegin: we are about to send one or several messages with quads
+message SimpleQuadVectorMessageBegin
+{
+  string identifier,
+}
+
+// SimpleQuadVectorMessage: a group of simple quads
+message SimpleQuadVectorMessage
+{
+  string identifier,
+  SimpleQuad quads[uint_8],
+}
+
+// SimpleQuadVectorMessageBegin: we finished sending messages with quads for the given id
+message SimpleQuadVectorMessageEnd
+{
+  string identifier,
 }
 
 // VizCameraQuad
@@ -111,6 +149,12 @@ message EraseObject
   uint_32 objectID,
   uint_32 lower_bound_id,
   uint_32 upper_bound_id,
+}
+
+// EraseSegmentPrimitives
+message EraseSegmentPrimitives
+{
+  string identifier,
 }
 
 // EraseQuad

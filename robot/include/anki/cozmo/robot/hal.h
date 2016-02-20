@@ -37,6 +37,7 @@
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/robotInterface/messageToActiveObject.h"
 
 // Set to 0 if you want to read printf output in a terminal and you're not
 // using UART as radio. The radio is effectively disabled in this case.
@@ -162,16 +163,6 @@ namespace Anki
       //
       const f32 MOTOR_MAX_POWER = 1.0f;
 
-      ///////////////////
-      // TODO: The following are constants for a naive linear approximation of power to speed,
-      // which is definitely a non-linear relationship. Eventually, we should figure out the true
-      // relationship on the robot so that the simulator can approximate it.
-
-      // The max angular speed the head can move when max power is commanded.
-      const f32 MAX_HEAD_SPEED = 2*PI; // rad/s
-
-      //////////////////////
-
       //
       // Simulator-only functions - not needed by real hardware
       // TBD:  If these aren't hardware features, can they go elsewhere?
@@ -272,6 +263,9 @@ namespace Anki
       // z-axis points out the top of cozmo's head
       // NB: DO NOT CALL THIS MORE THAN ONCE PER MAINEXECUTION TIC!!!
       void IMUReadData(IMU_DataStructure &IMUData);
+
+      // Read raw unscaled IMU values
+      void IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp);
 
 // #pragma mark --- UART/Wifi ---
       /////////////////////////////////////////////////////////////////////
@@ -379,7 +373,7 @@ namespace Anki
         sharpID       latest;   // Most up to date sensor value
       } ProximityValues;
 
-
+/*
       // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
       // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
       //       - returns data (from last function call)
@@ -389,7 +383,12 @@ namespace Anki
       // Only call once every 5ms (1 main loop)
       // current order is left -> right -> forward
       void GetProximity(ProximityValues *prox);
-
+*/
+      
+      // Returns distance in mm
+      // If 0, nothing is detected
+      u8 GetForwardProxSensor();
+      
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
       // BATTERY
@@ -409,7 +408,7 @@ namespace Anki
       // UI LEDs
 
       // Light up one of the eye LEDs to the specified 24-bit RGB color
-      void SetLED(LEDId led_id, u32 color);
+      void SetLED(LEDId led_id, u16 color);
 
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
@@ -428,7 +427,7 @@ namespace Anki
       //  1-63 draw N full lines (N*128 pixels) of black or blue
       //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
       // The decoder starts out drawing black, and inverts the color on every byte >= 64
-      void FaceAnimate(u8* frame);
+      void FaceAnimate(u8* frame, const u16 length);
 
       // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
       // This position is relative to the animation displayed when FaceAnimate() was
@@ -486,9 +485,11 @@ namespace Anki
       void FlashBlockIDs();
 
       // Set the color and flashing of each LED on a block separately
-      Result SetBlockLight(const u32 blockID, const LightState* lights);
+      Result AssignCubeSlots(int total_ids, const uint32_t* ids);
+      Result SetBlockLight(const u32 blockID, const u16* colors);
 
-      void ManageCubes(void);
+      void DiscoverProp(uint32_t id);
+      void GetPropState(int id, int x, int y, int z, int shocks);
 
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT

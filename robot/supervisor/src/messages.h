@@ -29,9 +29,6 @@
 #include "anki/types.h"
 #include <stdarg.h>
 #include <stddef.h>
-#ifdef SIMULATOR
-#include "anki/common/robot/array2d_declarations.h"
-#endif
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
@@ -72,12 +69,6 @@ namespace Anki {
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
 
-      // For sending trace message to basestation
-      int SendTrace(const RobotInterface::RtipTrace name, const int numParams, ...);
-
-      // va_list version
-      int SendTrace(const RobotInterface::LogLevel level, const RobotInterface::RtipTrace name, const int numParams, va_list vaList);
-
 #ifndef TARGET_K02
       // For sending text message to basestation
       int SendText(const char *format, ...);
@@ -97,7 +88,7 @@ namespace Anki {
 
 #     ifdef SIMULATOR
       // Send out a chunked up JPEG-compressed image
-      Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime);
+      Result CompressAndSendImage(const u8* img, const s32 captureHeight, const s32 captureWidth, const TimeStamp_t captureTime);
 #     endif
 
     } // namespace Messages

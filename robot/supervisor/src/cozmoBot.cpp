@@ -1,32 +1,35 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
-#include "anki/cozmo/robot/debug.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/powerMessages.h"
 #include "timeProfiler.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#ifndef TARGET_K02
-#include "imuFilter.h"
-#include "pickAndPlaceController.h"
-#include "dockingController.h"
-#include "headController.h"
 #include "liftController.h"
-#include "testModeController.h"
-#include "localization.h"
-#include "pathFollower.h"
+#include "headController.h"
+#include "imuFilter.h"
+#include "proxSensors.h"
+#include "version.h"
+#include "backpackLightController.h"
+#include "blockLightController.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
+#include "localization.h"
+#include "pickAndPlaceController.h"
+#include "dockingController.h"
+#include "pathFollower.h"
+#include "testModeController.h"
+#include "anki/cozmo/robot/logging.h"
+#ifndef TARGET_K02
 #include "animationController.h"
-#include "proxSensors.h"
-#include "backpackLightController.h"
-#include "blockLightController.h"
+#include "anki/common/shared/utilities_shared.h"
 #endif
 
 #ifdef SIMULATOR
 #include "anki/vision/CameraSettings.h"
+#include <math.h>
 #endif
 
 ///////// TESTING //////////
@@ -43,7 +46,7 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
-      ImageResolution captureResolution_ = CVGA;
+      ImageResolution captureResolution_ = QVGA;
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
@@ -98,11 +101,9 @@ namespace Anki {
 
       void StartMotorCalibrationRoutine()
       {
-#ifndef TARGET_K02
         LiftController::StartCalibrationRoutine();
         HeadController::StartCalibrationRoutine();
         SteeringController::ExecuteDirectDrive(0,0);
-#endif
       }
 
 
@@ -110,22 +111,15 @@ namespace Anki {
       // Returns true when done.
       bool MotorCalibrationUpdate()
       {
-#ifndef TARGET_K02
         bool isDone = false;
 
-        if(
-           LiftController::IsCalibrated()
-           && HeadController::IsCalibrated()
-           ) {
-          PRINT("Motors calibrated\n");
+        if (LiftController::IsCalibrated() && HeadController::IsCalibrated())
+				{
+          AnkiEvent( 38, "CozmoBot", 239, "Motors calibrated", 0);
           IMUFilter::Reset();
           isDone = true;
         }
-
         return isDone;
-#else
-        return true;
-#endif
       }
 
 
@@ -148,32 +142,26 @@ namespace Anki {
         // HAL and supervisor init
 #ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
         lastResult = HAL::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "HAL init failed.\n");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 240, "HAL init failed.\n", 0);
 #endif
 #ifndef TARGET_K02
         lastResult = Messages::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "Messages / Reliable Transport init failed.\n");
-
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 241, "Messages / Reliable Transport init failed.\n", 0);
+#endif
 
         lastResult = Localization::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "Localization System init failed.\n");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 242, "Localization System init failed.\n", 0);
 
         /*
         lastResult = VisionSystem::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "Vision System init failed.\n");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 243, "Vision System init failed.\n", 0);
          */
 
         lastResult = PathFollower::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "PathFollower System init failed.\n");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 244, "PathFollower System init failed.\n", 0);
 
         lastResult = BackpackLightController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "BackpackLightController init failed.\n");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 245, "BackpackLightController init failed.\n", 0);
 
         // Initialize subsystems if/when available:
         /*
@@ -197,25 +185,19 @@ namespace Anki {
          return RESULT_FAIL;
          }
          */
-
         lastResult = DockingController::Init();;
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "DockingController init failed.\n");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 246, "DockingController init failed.\n", 0);
 
         // Before liftController?!
         lastResult = PickAndPlaceController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "PickAndPlaceController init failed.\n");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 247, "PickAndPlaceController init failed.\n", 0);
 
         lastResult = LiftController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "LiftController init failed.\n");
-
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 248, "LiftController init failed.\n", 0);
+#ifndef TARGET_K02
         lastResult = AnimationController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "AnimationController init failed.\n");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 249, "AnimationController init failed.\n", 0);
 #endif
-
         // Start calibration
         StartMotorCalibrationRoutine();
 
@@ -223,6 +205,8 @@ namespace Anki {
         mode_ = INIT_MOTOR_CALIBRATION;
 
         robotStateMessageCounter_ = 0;
+
+				SendVersionInfo();
 
         return RESULT_OK;
 
@@ -265,13 +249,13 @@ namespace Anki {
 
         if (++cnt == (200 * interval_seconds)) {
           u32 numTicsPerSec = (cnt * 1000000) / (cycleStartTime - startTime);
-          PRINT("TicsPerSec %d\n", numTicsPerSec);
+          AnkiInfo( 94, "CozmoBot.TicsPerSec", 347, "%d", 1, numTicsPerSec);
           startTime = cycleStartTime;
           cnt = 0;
         }
 */
 
-#ifndef TARGET_K02
+
         //////////////////////////////////////////////////////////////
         // Test Mode
         //////////////////////////////////////////////////////////////
@@ -284,7 +268,6 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, LOC);
         Localization::Update();
-#endif
 
         //////////////////////////////////////////////////////////////
         // Communications
@@ -292,24 +275,21 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          PRINT("Robot radio is connected.\n");
+          AnkiEvent( 40, "Radio", 250, "Robot radio is connected.", 0);
           wasConnected_ = true;
-#ifndef TARGET_K02
           BackpackLightController::TurnOffAll();
-#endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
-          PRINT("Radio disconnected\n");
+          AnkiEvent( 40, "Radio", 251, "Radio disconnected", 0);
           Messages::ResetInit();
-#ifndef TARGET_K02
-          TestModeController::Start(TM_NONE);
           SteeringController::ExecuteDirectDrive(0,0);
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
+          BackpackLightController::Init();
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
-          BackpackLightController::TurnOffAll();
-          BackpackLightController::SetParams(LED_BACKPACK_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
-          AnimationController::EnableTracks(ENABLE_ALL_TRACKS);
+#ifndef TARGET_K02
+          TestModeController::Start(TM_NONE);
+          AnimationController::EnableTracks(ALL_TRACKS);
           HAL::FaceClear();
 #endif
           wasConnected_ = false;
@@ -319,14 +299,13 @@ namespace Anki {
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::ProcessBTLEMessages();
-
+#endif
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, IMU);
         IMUFilter::Update();
         ProxSensors::Update();
-
 
         //////////////////////////////////////////////////////////////
         // Power management
@@ -351,26 +330,30 @@ namespace Anki {
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
+#ifndef TARGET_K02
         if(AnimationController::Update() != RESULT_OK) {
-          PRINT("Failed updating AnimationController. Clearing.\n");
+          AnkiWarn( 38, "CozmoBot", 252, "Failed updating AnimationController. Clearing.", 0);
           AnimationController::Clear();
         }
+#endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
+        BackpackLightController::Update();
+        BlockLightController::Update();
 
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
-        BackpackLightController::Update();
-        BlockLightController::Update();
 
+#ifndef TARGET_K02
         //////////////////////////////////////////////////////////////
         // Audio Subsystem
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, AUDIO);
         Anki::Cozmo::HAL::AudioFill();
+#endif
 
         //////////////////////////////////////////////////////////////
         // State Machine
@@ -383,11 +366,11 @@ namespace Anki {
             if(MotorCalibrationUpdate()) {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
+#ifndef TARGET_K02
               RobotInterface::RobotAvailable msg;
               msg.robotID = HAL::GetIDCard()->esn;
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
               RobotInterface::SendMessage(msg);
-
               // Start test mode
               if (DEFAULT_TEST_MODE != TM_NONE) {
                 if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
@@ -395,7 +378,7 @@ namespace Anki {
                   return RESULT_FAIL;
                 }
               }
-
+#endif
               mode_ = WAITING;
             }
 
@@ -409,7 +392,7 @@ namespace Anki {
           }
 
           default:
-            PRINT("Unrecognized CozmoBot mode.\n");
+            AnkiWarn( 38, "CozmoBot", 253, "Unrecognized CozmoBot mode.", 0);
 
         } // switch(mode_)
 
@@ -418,14 +401,15 @@ namespace Anki {
         SteeringController::Manage();
         WheelController::Manage();
 
-        MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
-        Anki::Cozmo::HAL::ManageCubes();
+        //////////////////////////////////////////////////////////////
+        // Cubes
+        //////////////////////////////////////////////////////////////
 
+        MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
-#endif
 
         Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
@@ -498,7 +482,7 @@ namespace Anki {
           // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
           // (The available frame is still one frame behind? I.e. we are just *about* to capture
           //  the next one?)
-          TimeStamp_t currentImageTime = std::floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
+          TimeStamp_t currentImageTime = floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
 
           // Keep up with the capture time of the last image we sent
           static TimeStamp_t lastImageSentTime = 0;
@@ -512,25 +496,17 @@ namespace Anki {
 
             static const int bufferSize = 1000000;
             static u8 buffer[bufferSize];
-            Embedded::MemoryStack scratch(buffer, bufferSize);
-            Embedded::Array<u8> image(captureHeight, captureWidth,
-                                      scratch, Embedded::Flags::Buffer(false,false,false));
 
-            HAL::CameraGetFrame(reinterpret_cast<u8*>(image.get_buffer()),
+            HAL::CameraGetFrame(buffer,
                                 HAL::captureResolution_, false);
-            if(!image.IsValid()) {
-              retVal = RESULT_FAIL;
-            } else {
+            // Send the image, with its actual capture time (not the current system time)
+            Messages::CompressAndSendImage(buffer, captureHeight, captureWidth, currentImageTime);
 
-              // Send the image, with its actual capture time (not the current system time)
-              Messages::CompressAndSendImage(image, currentImageTime);
+            //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
+            //      robotState.timestamp, currentImageTime);
 
-              //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
-              //      robotState.timestamp, currentImageTime);
-
-              // Mark that we've already sent the image for the current time
-              lastImageSentTime = currentImageTime;
-            }
+            // Mark that we've already sent the image for the current time
+            lastImageSentTime = currentImageTime;
           } // if(lastImageSentTime != currentImageTime)
 
 

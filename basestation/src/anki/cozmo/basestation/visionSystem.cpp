@@ -65,13 +65,19 @@ namespace Cozmo {
   
   using namespace Embedded;
   
-  VisionSystem::VisionSystem(const std::string& dataPath)
+  VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
   : _isInitialized(false)
   , _dataPath(dataPath)
   , _faceTracker(nullptr)
+  , _vizManager(vizMan)
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
    
+#   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+    // Force the NN library to load _now_, not on first use
+    VisionMarker::GetNearestNeighborLibrary();
+#   endif
+    
   } // VisionSystem()
   
   VisionSystem::~VisionSystem()
@@ -168,7 +174,16 @@ namespace Cozmo {
       } else {
         StopTracking();
       }
-    } else {
+    } else if(whichMode == VisionMode::Idle) {
+      if(enabled) {
+        // "Enabling" idle means to turn everything off
+        PRINT_NAMED_INFO("VisionSystem.EnableMode.Idle",
+                         "Disabling all vision modes");
+        _mode = static_cast<u32>(VisionMode::Idle);
+      } else {
+        PRINT_NAMED_WARNING("VisionSystem.EnableMode.InvalidRequest", "Ignoring request to 'disable' idle mode.");
+      }
+    }else {
       if(enabled) {
         const bool modeAlreadyEnabled = _mode & static_cast<u32>(whichMode);
         if(!modeAlreadyEnabled) {
@@ -436,122 +451,151 @@ namespace Cozmo {
     Array<u8> grayscaleImage(captureHeight, captureWidth,
                              _memory._onchipScratch, Flags::Buffer(false,false,false));
     
-    GetImageHelper(inputImageGray, grayscaleImage);
-    
-    PreprocessImage(grayscaleImage);
-    
-    Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory._markers;
-    const s32 maxMarkers = markers.get_maximumSize();
-    
-    markers.set_size(maxMarkers);
-    for(s32 i=0; i<maxMarkers; i++) {
-      Array<f32> newArray(3, 3, _memory._ccmScratch);
-      markers[i].homography = newArray;
-    }
-    
-    // TODO: Re-enable DebugStream for Basestation
-    //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
-    
-#   if USE_MATLAB_DETECTOR
-    const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
-#   else
-    const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
-    
-    // Convert "basestation" detection parameters to "embedded" parameters
-    // TODO: Merge the fiducial detection parameters structs
-    Embedded::FiducialDetectionParameters embeddedParams;
-    embeddedParams.useIntegralImageFiltering = true;
-    embeddedParams.scaleImage_numPyramidLevels = _detectionParameters.scaleImage_numPyramidLevels;
-    embeddedParams.scaleImage_thresholdMultiplier = _detectionParameters.scaleImage_thresholdMultiplier;
-    embeddedParams.component1d_minComponentWidth = _detectionParameters.component1d_minComponentWidth;
-    embeddedParams.component1d_maxSkipDistance =  _detectionParameters.component1d_maxSkipDistance;
-    embeddedParams.component_minimumNumPixels = _detectionParameters.component_minimumNumPixels;
-    embeddedParams.component_maximumNumPixels = _detectionParameters.component_maximumNumPixels;
-    embeddedParams.component_sparseMultiplyThreshold = _detectionParameters.component_sparseMultiplyThreshold;
-    embeddedParams.component_solidMultiplyThreshold = _detectionParameters.component_solidMultiplyThreshold;
-    embeddedParams.component_minHollowRatio = _detectionParameters.component_minHollowRatio;
-    embeddedParams.cornerMethod = cornerMethod;
-    embeddedParams.minLaplacianPeakRatio = _detectionParameters.minLaplacianPeakRatio;
-    embeddedParams.quads_minQuadArea = _detectionParameters.quads_minQuadArea;
-    embeddedParams.quads_quadSymmetryThreshold = _detectionParameters.quads_quadSymmetryThreshold;
-    embeddedParams.quads_minDistanceFromImageEdge = _detectionParameters.quads_minDistanceFromImageEdge;
-    embeddedParams.decode_minContrastRatio = _detectionParameters.decode_minContrastRatio;
-    embeddedParams.maxConnectedComponentSegments = _detectionParameters.maxConnectedComponentSegments;
-    embeddedParams.maxExtractedQuads = _detectionParameters.maxExtractedQuads;
-    embeddedParams.refine_quadRefinementIterations = _detectionParameters.quadRefinementIterations;
-    embeddedParams.refine_numRefinementSamples = _detectionParameters.numRefinementSamples;
-    embeddedParams.refine_quadRefinementMaxCornerChange = _detectionParameters.quadRefinementMaxCornerChange;
-    embeddedParams.refine_quadRefinementMinCornerChange = _detectionParameters.quadRefinementMinCornerChange;
-    embeddedParams.returnInvalidMarkers = _detectionParameters.keepUnverifiedMarkers;
-    embeddedParams.doCodeExtraction = true;
-    
-    const Result result = DetectFiducialMarkers(grayscaleImage,
-                                                markers,
-                                                embeddedParams,
-                                                _memory._ccmScratch,
-                                                _memory._onchipScratch,
-                                                _memory._offchipScratch);
-#   endif // USE_MATLAB_DETECTOR
-    
-    if(result != RESULT_OK) {
-      return result;
-    }
-    
-    EndBenchmark("VisionSystem_LookForMarkers");
-    
-    // TODO: Re-enable DebugStream for Basestation
-    /*
-     DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
-     
-     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
-     const VisionMarker crntMarker = markers[i_marker];
-     
-     MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
-     }
-     
-     MatlabVisualization::SendDrawNow();
-     */
-    
-    const s32 numMarkers = _memory._markers.get_size();
-    markerQuads.reserve(numMarkers);
-    
-    for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+    std::list<bool> imageInversions;
+    switch(_detectionParameters.markerAppearance)
     {
-      const VisionMarker& crntMarker = _memory._markers[i_marker];
-      
-      // Construct a basestation quad from an embedded one:
-      Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
-        crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
-      
-      markerQuads.emplace_back(quad);
-      
-      Vision::ObservedMarker obsMarker(inputImageGray.GetTimestamp(),
-                                       crntMarker.markerType,
-                                       quad, _camera);
-      
-      _visionMarkerMailbox.putMessage(obsMarker);
-      
-      // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
-      if(!IsModeEnabled(VisionMode::Tracking)     &&
-         _markerToTrack.IsSpecified() &&
-         _markerToTrack.Matches(crntMarker))
-      {
-        if((lastResult = InitTemplate(grayscaleImage, crntMarker.corners)) != RESULT_OK) {
-          PRINT_NAMED_ERROR("VisionSystem.LookForMarkers.InitTemplateFailed","");
-          return lastResult;
-        }
-
-        // Template initialization succeeded, switch to tracking mode:
-        EnableMode(VisionMode::Tracking, true);
+      case VisionMarkerAppearance::BLACK_ON_WHITE:
+        // "Normal" appearance
+        imageInversions.push_back(false);
+        break;
         
-      } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
-    } // for(each marker)
+      case VisionMarkerAppearance::WHITE_ON_BLACK:
+        // Use same code as for black-on-white, but invert the image first
+        imageInversions.push_back(true);
+        break;
+        
+      case VisionMarkerAppearance::BOTH:
+        // Will run detection twice, with and without inversion
+        imageInversions.push_back(false);
+        imageInversions.push_back(true);
+        break;
+        
+      default:
+        PRINT_NAMED_WARNING("VisionSystem.DetectMarkers.BadMarkerAppearanceSetting",
+                            "Will use normal processing without inversion.");
+        imageInversions.push_back(false);
+        break;
+    }
+    
+    for(auto invertImage : imageInversions)
+    {
+      if(invertImage) {
+        GetImageHelper(inputImageGray.GetNegative(), grayscaleImage);
+      } else {
+        GetImageHelper(inputImageGray, grayscaleImage);
+      }
+      
+      PreprocessImage(grayscaleImage);
+      
+      Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory._markers;
+      const s32 maxMarkers = markers.get_maximumSize();
+      
+      markers.set_size(maxMarkers);
+      
+      // TODO: Re-enable DebugStream for Basestation
+      //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
+      
+#     if USE_MATLAB_DETECTOR
+      const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
+#     else
+      const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+      
+      // Convert "basestation" detection parameters to "embedded" parameters
+      // TODO: Merge the fiducial detection parameters structs
+      Embedded::FiducialDetectionParameters embeddedParams;
+      embeddedParams.useIntegralImageFiltering = true;
+      embeddedParams.scaleImage_numPyramidLevels = _detectionParameters.scaleImage_numPyramidLevels;
+      embeddedParams.scaleImage_thresholdMultiplier = _detectionParameters.scaleImage_thresholdMultiplier;
+      embeddedParams.component1d_minComponentWidth = _detectionParameters.component1d_minComponentWidth;
+      embeddedParams.component1d_maxSkipDistance =  _detectionParameters.component1d_maxSkipDistance;
+      embeddedParams.component_minimumNumPixels = _detectionParameters.component_minimumNumPixels;
+      embeddedParams.component_maximumNumPixels = _detectionParameters.component_maximumNumPixels;
+      embeddedParams.component_sparseMultiplyThreshold = _detectionParameters.component_sparseMultiplyThreshold;
+      embeddedParams.component_solidMultiplyThreshold = _detectionParameters.component_solidMultiplyThreshold;
+      embeddedParams.component_minHollowRatio = _detectionParameters.component_minHollowRatio;
+      embeddedParams.cornerMethod = cornerMethod;
+      embeddedParams.minLaplacianPeakRatio = _detectionParameters.minLaplacianPeakRatio;
+      embeddedParams.quads_minQuadArea = _detectionParameters.quads_minQuadArea;
+      embeddedParams.quads_quadSymmetryThreshold = _detectionParameters.quads_quadSymmetryThreshold;
+      embeddedParams.quads_minDistanceFromImageEdge = _detectionParameters.quads_minDistanceFromImageEdge;
+      embeddedParams.decode_minContrastRatio = _detectionParameters.decode_minContrastRatio;
+      embeddedParams.maxConnectedComponentSegments = _detectionParameters.maxConnectedComponentSegments;
+      embeddedParams.maxExtractedQuads = _detectionParameters.maxExtractedQuads;
+      embeddedParams.refine_quadRefinementIterations = _detectionParameters.quadRefinementIterations;
+      embeddedParams.refine_numRefinementSamples = _detectionParameters.numRefinementSamples;
+      embeddedParams.refine_quadRefinementMaxCornerChange = _detectionParameters.quadRefinementMaxCornerChange;
+      embeddedParams.refine_quadRefinementMinCornerChange = _detectionParameters.quadRefinementMinCornerChange;
+      embeddedParams.returnInvalidMarkers = _detectionParameters.keepUnverifiedMarkers;
+      embeddedParams.doCodeExtraction = true;
+      
+      const Result result = DetectFiducialMarkers(grayscaleImage,
+                                                  markers,
+                                                  embeddedParams,
+                                                  _memory._ccmScratch,
+                                                  _memory._onchipScratch,
+                                                  _memory._offchipScratch);
+#     endif // USE_MATLAB_DETECTOR
+      
+      if(result != RESULT_OK) {
+        return result;
+      }
+      
+      EndBenchmark("VisionSystem_LookForMarkers");
+      
+      // TODO: Re-enable DebugStream for Basestation
+      /*
+       DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
+       
+       for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
+       const VisionMarker crntMarker = markers[i_marker];
+       
+       MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
+       }
+       
+       MatlabVisualization::SendDrawNow();
+       */
+      
+      const s32 numMarkers = _memory._markers.get_size();
+      markerQuads.reserve(numMarkers);
+      
+      for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+      {
+        const VisionMarker& crntMarker = _memory._markers[i_marker];
+        
+        // Construct a basestation quad from an embedded one:
+        Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
+          crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
+        
+        markerQuads.emplace_back(quad);
+        
+        Vision::ObservedMarker obsMarker(inputImageGray.GetTimestamp(),
+                                         crntMarker.markerType,
+                                         quad, _camera);
+        
+        _visionMarkerMailbox.putMessage(obsMarker);
+        
+        // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
+        if(!IsModeEnabled(VisionMode::Tracking)     &&
+           _markerToTrack.IsSpecified() &&
+           _markerToTrack.Matches(crntMarker))
+        {
+          if((lastResult = InitTemplate(grayscaleImage, crntMarker.corners)) != RESULT_OK) {
+            PRINT_NAMED_ERROR("VisionSystem.LookForMarkers.InitTemplateFailed","");
+            return lastResult;
+          }
+          
+          // Template initialization succeeded, switch to tracking mode:
+          EnableMode(VisionMode::Tracking, true);
+          
+        } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
+      } // for(each marker)
+    } // for(invertImage)
     
     return RESULT_OK;
   } // DetectMarkers()
@@ -900,7 +944,7 @@ namespace Cozmo {
         PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target Z angle too large.");
         trackingSucceeded = false;
       }
-      else if(atan_fast(fabs(_tracker.GetTranslation().x) / _tracker.GetTranslation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
+      else if(atan(fabs(_tracker.GetTranslation().x) / _tracker.GetTranslation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
       {
         PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: FOV angle too large.");
         trackingSucceeded = false;
@@ -1057,7 +1101,7 @@ namespace Cozmo {
     // MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
     Anki::Quad2f vizQuad;
     GetVizQuad(currentQuad, vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(vizQuad, ::Anki::NamedColors::BLUE);
+    _vizManager->DrawCameraQuad(vizQuad, ::Anki::NamedColors::BLUE);
     
     // Ask VisionState how much we've moved since last call (in robot coordinates)
     Radians theta_robot;
@@ -1132,7 +1176,7 @@ namespace Cozmo {
     // TODO: Re-enable tracker prediction viz on basestation
     //MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
     GetVizQuad(GetTrackerQuad(scratch), vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(vizQuad, ::Anki::NamedColors::GREEN);
+    _vizManager->DrawCameraQuad(vizQuad, ::Anki::NamedColors::GREEN);
     
     return result;
   } // TrackerPredictionUpdate()
@@ -1256,7 +1300,7 @@ namespace Cozmo {
   }
   
   
-  Result VisionSystem::DetectMotion(const Vision::ImageRGB &image)
+  Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
     const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
                                 _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
@@ -1268,7 +1312,16 @@ namespace Cozmo {
                            NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
                                 _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
                                 DEG_TO_RAD(0.1)));
-    
+    Vision::ImageRGB image;
+    f32 scaleMultiplier = 1.f;
+    const bool useHalfRes = true;
+    if(useHalfRes) {
+      image = Vision::ImageRGB(imageIn.GetNumRows()/2,imageIn.GetNumCols()/2);
+      imageIn.Resize(image, Vision::ResizeMethod::NearestNeighbor);
+      scaleMultiplier = 2.f;
+    } else {
+      image = imageIn;
+    }
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
     if(headSame && poseSame && !_poseData.isMoving && !_prevImage.IsEmpty() &&
@@ -1337,7 +1390,7 @@ namespace Cozmo {
                                          //        const size_t minAreaDivisor = 36; // 1/6 of each image dimension
                                          //#       endif
       const size_t minArea = image.GetNumElements() / minAreaDivisor;
-      size_t imgRegionArea = 0;
+      f32 imgRegionArea    = 0.f;
       f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea) {
         imgRegionArea = GetCentroid(foregroundMotion, minArea, centroid);
@@ -1347,6 +1400,8 @@ namespace Cozmo {
       if(_poseData.groundPlaneVisible && _prevPoseData.groundPlaneVisible)
       {
         Quad2f imgQuad = _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography);
+        
+        imgQuad *= 1.f / scaleMultiplier;
         
         const Anki::Rectangle<s32> boundingRect(imgQuad); // Not Embedded::
         Vision::Image groundPlaneForegroundMotion;
@@ -1399,6 +1454,10 @@ namespace Cozmo {
         
         if(groundRegionArea > 0.f)
         {
+          // Switch centroid back to original resolution, since that's where the
+          // homography information is valid
+          groundPlaneCentroid *= scaleMultiplier;
+          
           // Make ground region area into a fraction of the ground ROI area
           groundRegionArea /= imgQuadArea;
           
@@ -1419,7 +1478,7 @@ namespace Cozmo {
       if(imgRegionArea > 0 || groundRegionArea > 0.f)
       {
         PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
-                         "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
+                         "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
                          "-- %.1f%% of ground area at (%.1f,%.1f)",
                          imgRegionArea, centroid.x(), centroid.y(),
                          groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
@@ -1434,7 +1493,9 @@ namespace Cozmo {
           ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
                        centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
                        "Motion centroid should be within image bounds.");
-          centroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
+          
+          // make relative to image center *at processing resolution*
+          centroid -= _camera.GetCalibration().GetCenter() * (1.f/scaleMultiplier);
           
           // Filter so as not to move too much from last motion detection,
           // IFF we observed motion in the previous check
@@ -1446,9 +1507,11 @@ namespace Cozmo {
             _prevCentroidFilterWeight = 0.1f;
           }
           
-          msg.img_x = centroid.x();
-          msg.img_y = centroid.y();
-          msg.img_area = static_cast<u32>(imgRegionArea);
+          // Convert area to fraction of image area (to be resolution-independent)
+          // Using scale multiplier to return the coordinates in original image coordinates
+          msg.img_x = centroid.x() * scaleMultiplier;
+          msg.img_y = centroid.y() * scaleMultiplier;
+          msg.img_area = imgRegionArea / static_cast<f32>(image.GetNumElements());
         } else {
           msg.img_area = 0;
           msg.img_x = 0;
@@ -1511,6 +1574,14 @@ namespace Cozmo {
       //_prevRatioImg = ratio12;
       
     } // if(headSame && poseSame)
+    
+    // Store a copy of the current image for next time (at correct resolution!)
+    // NOTE: Now _prevImage should correspond to _prevRobotState
+    // TODO: switch to just swapping pointers between current and previous image
+#   if USE_THREE_FRAME_MOTION_DETECTION
+    _prevImage.CopyTo(_prevPrevImage);
+#   endif
+    image.CopyTo(_prevImage);
     
     return RESULT_OK;
   } // DetectMotion()
@@ -1903,6 +1974,7 @@ namespace Cozmo {
       }
     }
     
+    /*
     // Store a copy of the current image for next time
     // NOTE: Now _prevImage should correspond to _prevRobotState
     // TODO: switch to just swapping pointers between current and previous image
@@ -1910,6 +1982,7 @@ namespace Cozmo {
     _prevImage.CopyTo(_prevPrevImage);
 #   endif
     inputImage.CopyTo(_prevImage);
+    */
     
     return lastResult;
   } // Update()

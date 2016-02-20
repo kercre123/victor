@@ -587,9 +587,9 @@ GTEST_TEST(CoreTech_Vision, KLT)
   ArrayToCvMat<u8>(image1, &image1Cv);
   ArrayToCvMat<u8>(image2, &image2Cv);
 
-  std::vector<cv::Point2f> pointsCv[2];
+  std::vector<cv::Point<float>> pointsCv[2];
 
-  std::vector<cv::Point2f> cornersCv;
+  std::vector<cv::Point<float>> cornersCv;
   cv::goodFeaturesToTrack(image1Cv, pointsCv[0], maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
 
   cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, termination_maxCount, termination_epsilon);
@@ -757,7 +757,7 @@ GTEST_TEST(CoreTech_Vision, Harris)
   ASSERT_TRUE(gftResult == RESULT_OK);
 
 #ifdef TEST_OPENCV_HARRIS
-  std::vector<cv::Point2f> cornersCv;
+  std::vector<cv::Point<float>> cornersCv;
   cv::goodFeaturesToTrack(imageCv, cornersCv, maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
 
   cv::Mat drawnCorners(image.get_size(0), image.get_size(1), CV_8UC3);
@@ -3049,7 +3049,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   const u8 verify_maxPixelDifference = 30;
 
   const s32 numFiducialSquareSamples = 100;
-  const Point2f fiducialSquareWidthFraction(0.1f, 0.1f);
+  const Point<f32> fiducialSquareWidthFraction(0.1f, 0.1f);
 
   const s32 maxSamplesAtBaseLevel = 500;
   
@@ -3091,7 +3091,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
       HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
       HEAD_CAM_CALIB_CENTER_X,
       HEAD_CAM_CALIB_CENTER_Y,
-      Point2f(DEFAULT_BLOCK_MARKER_WIDTH_MM, DEFAULT_BLOCK_MARKER_WIDTH_MM),
+      Point<f32>(DEFAULT_BLOCK_MARKER_WIDTH_MM, DEFAULT_BLOCK_MARKER_WIDTH_MM),
       scratchCcm,
       scratchOnchip,
       scratchOffchip);
@@ -3651,19 +3651,19 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       // Sort the quads to ignore differing corner orderings for markers that
       // are rotationally symmetric
       const Quadrilateral<f32> currentCorners = markers[iMarkerDet].corners.ComputeClockwiseCorners<f32>();
-      Quadrilateral<f32> trueCorners(Point2f(corners_groundTruth[iMarkerTrue][0][0],
+      Quadrilateral<f32> trueCorners(Point<float>(corners_groundTruth[iMarkerTrue][0][0],
         corners_groundTruth[iMarkerTrue][0][1]),
-        Point2f(corners_groundTruth[iMarkerTrue][1][0],
+        Point<float>(corners_groundTruth[iMarkerTrue][1][0],
         corners_groundTruth[iMarkerTrue][1][1]),
-        Point2f(corners_groundTruth[iMarkerTrue][2][0],
+        Point<float>(corners_groundTruth[iMarkerTrue][2][0],
         corners_groundTruth[iMarkerTrue][2][1]),
-        Point2f(corners_groundTruth[iMarkerTrue][3][0],
+        Point<float>(corners_groundTruth[iMarkerTrue][3][0],
         corners_groundTruth[iMarkerTrue][3][1]));
       trueCorners = trueCorners.ComputeClockwiseCorners<f32>();
 
       for(s32 iCorner=0; iCorner<4; iCorner++) {
-        const Point2f& currentCorner = currentCorners[iCorner];
-        const Point2f& trueCorner    = trueCorners[iCorner];
+        const Point<float>& currentCorner = currentCorners[iCorner];
+        const Point<float>& trueCorner    = trueCorners[iCorner];
 
         ASSERT_TRUE( (currentCorner - trueCorner).Length() < cornerDistanceTolerance );
       } // FOR each corner

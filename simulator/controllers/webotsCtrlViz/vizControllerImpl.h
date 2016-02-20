@@ -97,7 +97,15 @@ private:
   
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
-  using BehaviorScoreBuffer = Util::CircularBuffer<float>;
+  
+  struct BehaviorScoreEntry
+  {
+    explicit BehaviorScoreEntry(float inValue = 0.0f, uint32_t numEntriesSinceReal = 0) :_value(inValue), _numEntriesSinceReal(numEntriesSinceReal) { }
+    float     _value;
+    uint32_t  _numEntriesSinceReal;
+  };
+  using BehaviorScoreBuffer = Util::CircularBuffer<BehaviorScoreEntry>;
+  
   using BehaviorScoreBufferMap = std::map<std::string, BehaviorScoreBuffer>;
   using BehaviorEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
   

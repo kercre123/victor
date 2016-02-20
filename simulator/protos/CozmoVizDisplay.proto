@@ -4,13 +4,19 @@ PROTO CozmoVizDisplay
 [ 
   # Resolution of incoming camera images.
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
-  field SFString streamResolution "CVGA"
+  field SFString streamResolution "QVGA"
   
   # Following (but with PixelSize=2) works well on Macbook screen (size=1 for monitor)
-  field SFFloat moodPixelSize 0.0
-  field SFFloat behaviorSelectionPixelSize 0.0
+  field SFFloat pixelSize 1.0
+
+  field SFBool moodViz FALSE
   field SFVec2f moodPos 1.0 0.35
+  field SFBool behaviorSelectionViz FALSE
   field SFVec2f behaviorSelectionPos 1.0 0.63
+
+  field SFBool dockViz FALSE
+  field SFBool infoViz TRUE
+  field SFBool camViz TRUE
 ]
 {
 Supervisor {
@@ -38,7 +44,11 @@ Supervisor {
       width 200
       height 240
       windowPosition 1 1
-      pixelSize 1
+      %{ if fields.dockViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
     }
 
 
@@ -64,7 +74,11 @@ Supervisor {
       width 300
       height 200
       windowPosition 1 1
-      pixelSize 1
+      %{ if fields.infoViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
     }
     
     DEF DISPLAY_PLANE Display {
@@ -89,7 +103,11 @@ Supervisor {
       width 450
       height 150
       windowPosition %{=fields.moodPos.value.x}% %{=fields.moodPos.value.y}%
-      pixelSize %{=fields.moodPixelSize.value}%
+      %{ if fields.moodViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
     }
     
     DEF DISPLAY_PLANE Display {
@@ -114,7 +132,11 @@ Supervisor {
       width 450
       height 150
       windowPosition %{=fields.behaviorSelectionPos.value.x}% %{=fields.behaviorSelectionPos.value.y}%
-      pixelSize %{=fields.behaviorSelectionPixelSize.value}%
+      %{ if fields.behaviorSelectionViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
     }
 
     DEF CAM_DISPLAY_PLANE Display {
@@ -141,24 +163,31 @@ Supervisor {
       %{ if fields.streamResolution.value == "VGA" then }%
       width 640
       height 480
-      pixelSize 0.5
+      #pixelSize 0.5
       %{ elseif fields.streamResolution.value == "QVGA" then }%
       width 320
       height 240
-      pixelSize 1
+      #pixelSize 1
       %{ elseif fields.streamResolution.value == "QQVGA" then }%
       width 160
       height 120
-      pixelSize 2
+      #pixelSize 2
       %{ elseif fields.streamResolution.value == "QQQVGA" then }%
       width 80
       height 60
-      pixelSize 4
+      #pixelSize 4
       %{ elseif fields.streamResolution.value == "CVGA" then }%
       width 400
       height 296
-      pixelSize 1
+      #pixelSize 1
       %{ end }%
+
+      %{ if fields.camViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
+
       windowPosition 0 1
     }
   ]

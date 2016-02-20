@@ -29,6 +29,7 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/vizInterface/messageViz.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/math/numericCast.h"
 #include <vector>
 
 namespace Anki {
@@ -48,7 +49,6 @@ namespace Anki {
     
     class IExternalInterface;
 
-  // NOTE: this is a singleton class
     class VizManager
     {
     public:
@@ -59,19 +59,18 @@ namespace Anki {
         WORLD_ORIGIN,
         VISION_MODE,
         BEHAVIOR_STATE,
+        ANIMATION_NAME,
         DEBUG_STRING
       } TextLabelType;
       
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
       
+      VizManager();
+      
       // NOTE: Connect() will call Disconnect() first if already connected.
       Result Connect(const char *udp_host_address, const unsigned short port);
       Result Disconnect();
-      
-      // Get a pointer to the singleton instance
-      inline static VizManager* getInstance();
-      static void removeInstance();
       
       // Whether or not to display the viz objects
       void ShowObjects(bool show);
@@ -276,6 +275,8 @@ namespace Anki {
       void DrawPoly(const u32 polyID,
                     const FastPolygon& poly,
                     const ColorRGBA& color);
+
+      // ==== Erase functions =====
       
       void ErasePoly(u32 polyID);
       
@@ -291,6 +292,24 @@ namespace Anki {
       void EraseAllPlannerObstacles(const bool isReplan);
       
       void EraseAllMatMarkers();
+
+      // ==== Draw functions without identifier =====
+      // This supports sending requests to draw primitives without requiring to assign a single ID to every
+      // one of them, but a group. Used for debugging purposes where the underlaying geometry is not directly
+      // related to a given object
+      
+      void DrawSegment(const std::string& identifier,
+        const Point3f& from, const Point3f& to, const ColorRGBA& color, bool clearPrevious, float zOffset=0.0f);
+      void EraseSegments(const std::string& identifier);
+      
+      // vector of simple quads (note a simple quad is an axis aligned quad with a color)
+      using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
+      void DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads);
+      void EraseQuadVector(const std::string& identifier);
+      
+      // helper to create SimpleQuads from Color and coordinates/size in millimeters. Note SimpleQuad uses floats
+      template <typename T>
+      static VizInterface::SimpleQuad MakeSimpleQuad(const ColorRGBA& color, const Point<3, T>& centerMM, T sideSizeMM);
       
       // ==== Circle functions =====
       template<typename T>
@@ -348,6 +367,7 @@ namespace Anki {
                           const s32 numAnimAudioFramesFree,
                           const u8 videoFrameRateHz,
                           const u8 imageProcFrameRateHz,
+                          const u8 enabledAnimTracks,
                           const u8 animTag);
       
       void SetOrigin(const SetVizOrigin& msg);
@@ -366,13 +386,8 @@ namespace Anki {
 
     protected:
       
-      // Protected default constructor for singleton.
-      VizManager();
-      
       void SendMessage(const VizInterface::MessageViz& message);
 
-      static VizManager* _singletonInstance;
-      
       bool               _isInitialized;
       UdpClient          _vizClient;
       
@@ -394,16 +409,6 @@ namespace Anki {
       std::vector<Signal::SmartHandle> _eventHandlers;
     }; // class VizManager
     
-    
-    inline VizManager* VizManager::getInstance()
-    {
-      // If we haven't already instantiated the singleton, do so now.
-      if(0 == _singletonInstance) {
-        _singletonInstance = new VizManager();
-      }
-      
-      return _singletonInstance;
-    }
     
     template<typename T>
     void VizManager::DrawQuad(const VizQuadType quadType, const u32 quadID, const Quadrilateral<2,T>& quad,
@@ -563,6 +568,18 @@ namespace Anki {
                                     const ColorRGBA& color)
     {
       DrawQuad(VizQuadType::VIZ_QUAD_POSE_MARKER, quadID, quad, 0.5f, color);
+    }
+    
+    template <typename T>
+    VizInterface::SimpleQuad VizManager::MakeSimpleQuad(const ColorRGBA& color, const Point<3, T>& centerMM, T sideSizeMM)
+    {
+      VizInterface::SimpleQuad ret;
+      ret.color = color.AsRGBA();
+      ret.sideSize = Anki::Util::numeric_cast<float>(MM_TO_M(sideSizeMM));;
+      ret.center[0] = Anki::Util::numeric_cast<float>(MM_TO_M(centerMM[0]));
+      ret.center[1] = Anki::Util::numeric_cast<float>(MM_TO_M(centerMM[1]));
+      ret.center[2] = Anki::Util::numeric_cast<float>(MM_TO_M(centerMM[2]));
+      return ret;
     }
     
     template <typename T>

@@ -9,8 +9,13 @@
 #define DMA_BUF_SIZE (512) /// This must be 512 Espressif DMA to work and for logic in i2spi.c to work
 /// How often we will garuntee servicing the DMA buffers
 #define DMA_SERVICE_INTERVAL_MS (5)
-/// How many buffers are required given the above constraints. + 1 for ceiling function
-#define DMA_BUF_COUNT ((I2SPI_RAW_BYTES_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE) + 1)
+/// How many buffers are required given the above constraints.
+#define DMA_BUF_COUNT ((I2SPI_RAW_BYTES_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE))
+/// Buffer size for sending messages to the RTIP
+#define I2SPI_MESSAGE_BUF_SIZE (1024)
+ASSERT_IS_POWER_OF_TWO(I2SPI_MESSAGE_BUF_SIZE); // Required for mask below
+/// Size mask for index math on message buffer
+#define I2SPI_MESSAGE_BUF_SIZE_MASK (I2SPI_MESSAGE_BUF_SIZE-1)
 
 /// Task priority level for processing I2SPI data
 #define I2SPI_PRIO USER_TASK_PRIO_2
@@ -31,11 +36,17 @@ typedef enum {
 int8_t i2spiInit(void);
 
 /** Queues a buffer to transmit over I2S
- * @param msgData a pointer to the data to be sent to the RTIP
- * @param msgLen the number of bytes of message data pointed to by msgData
+ * @param msgData A pointer to the data to be sent to the RTIP
+ * @param msgLen The number of bytes of message data pointed to by msgData.
+ *               Must be no more than DROP_TO_RTIP_MAX_VAR_PAYLOAD
  * @return true if the data was successfully queued or false if it could not be queued.
  */
-bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen);
+bool i2spiQueueMessage(uint8_t* msgData, int msgLen);
+
+/** Check if the I2SPI message queue is empty
+ * @return True if there are no clad messages waiting to be sent
+ */
+bool i2spiMessageQueueIsEmpty(void);
 
 /** Switch the operating mode of the I2SPI interface
  * I2SPI_NORMAL is the default mode
@@ -54,7 +65,7 @@ uint32_t i2spiGetBodyBootloaderCode(void);
 /** Push a chunk of firmware to the RTIP
  * @param chunk a Pointer to data to be sent
  */
-void i2spiBootloaderPushChunk(FirmwareBlock* chunk);
+bool i2spiBootloaderPushChunk(FirmwareBlock* chunk);
 
 /// Count how many tx underruns we've had
 extern uint32_t i2spiTxUnderflowCount;

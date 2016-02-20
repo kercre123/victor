@@ -16,13 +16,15 @@ namespace Anki {
       }
     }
     
+    static u32 imageChunkTimestamp_;
+    
     void sendImgChunk(ImageChunk& msg, bool eof)
     {
       msg.imageEncoding = JPEGMinimizedGray;
       msg.resolution    = QVGA;
       if (eof)
       {
-        msg.frameTimeStamp  = system_get_time(); //XXX Need to replace with real image time stamp as soon as we have one
+        msg.frameTimeStamp  = imageChunkTimestamp_;
         msg.imageChunkCount = msg.chunkId + 1;
       }
       clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image, false, eof);
@@ -46,11 +48,17 @@ namespace Anki {
       {
         sendImgChunk(msg, false); // Send what we have
       }
-      os_memcpy(msg.data + msg.data_length, imgData, len);
-      msg.data_length += len;
       if (eof)
       {
+        os_memcpy(msg.data + msg.data_length, imgData, len-4);
+        msg.data_length += len - 4;
+        imageChunkTimestamp_ = *((u32*)(imgData + len-4));
         sendImgChunk(msg, true);
+      }
+      else
+      {
+        os_memcpy(msg.data + msg.data_length, imgData, len);
+        msg.data_length += len;
       }
     }
 

@@ -32,19 +32,16 @@ public:
   
   void SetAnimationName(const std::string& inName);
   
-  void SetMinTimeBetweenRuns(double newVal) { _minTimeBetweenRuns = newVal; }
-  
   void SetLoopCount(int newVal) { _loopCount = newVal; } // -ve means loop forever
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
   
-  virtual bool IsShortInterruption() const override { return true; }
-  
 protected:
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
+  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   
@@ -55,9 +52,6 @@ private:
   // ========== Members ==========
   
   std::string   _animationName;
-  
-  double        _minTimeBetweenRuns;
-  double        _lastRunTime_sec;
   
   int           _loopCount;
 

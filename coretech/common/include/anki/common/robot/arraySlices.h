@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/arraySlices_declarations.h"
 #include "anki/common/robot/array2d.h"
+#include "anki/common/robot/errorHandling.h"
 
 namespace Anki
 {

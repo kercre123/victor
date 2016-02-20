@@ -1,27 +1,32 @@
+// Available Game States in project
 
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+namespace GameState {
 
-enum uint_32 GameStateGroupType
+enum uint_32 GenericState
+{
+  Invalid = 0,
+}
+
+enum uint_32 Music
+{
+  Cube_Interactionfirst = 379889963,
+  Gp_Simon = 2606448607,
+  Gp_Speed_Tap = 1944187438,
+  Invalid = 0,
+  Playful = 1971384320,
+  Silence = 3041563226,
+}
+
+enum uint_32 StateGroupType
 {
   Invalid = 0,
   Music = 3991942870,
 }
 
-enum uint_32 GameStateType
-{
-  Invalid = 0,
-}
-
-// Specific Music Stats
-enum uint_32 MusicGroupStates
-{
-  CUBE_INTERACTIONFIRST = 379889963,
-  PLAYFUL = 1971384320,
-  SILENCE = 3041563226,
-}
-
-}
-}
-}
+} // GameState
+} // Audio
+} // Cozmo
+} // Anki

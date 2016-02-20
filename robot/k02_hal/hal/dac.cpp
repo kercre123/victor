@@ -15,6 +15,9 @@ static const int SAMPLE_RATE = MAX_AUDIO_BYTES_PER_DROP * DROPS_PER_SECOND;
 static const int CLOCK_MOD = PERF_CLOCK / SAMPLE_RATE;
 
 static volatile uint16_t* DAC_WRITE = (volatile uint16_t*) &DAC0_DAT0L;
+static const int DAC_WORDS = 16;
+
+static unsigned int write_pointer = 0;
 
 void Anki::Cozmo::HAL::DAC::Init(void) {
   #ifdef EP1_HEADBOARD
@@ -61,34 +64,39 @@ void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
 }
 
 static inline uint16_t MuLawDecompress(uint8_t byte) {
+  uint16_t bits = byte & 0xF;
   uint8_t exp = (byte >> 4) & 0x7;
-  uint8_t bits = byte & 0xF;
 
   if (exp) {
-    bits = ((exp ? 0x10 : 0) | bits) << (exp - 1);
+    bits = (0x10 | bits) << (exp - 1);
   }
 
   return 0x7FF + ((byte & 0x80) ? -bits : bits);
 }
 
-void Anki::Cozmo::HAL::DAC::Feed(uint8_t* samples, int length) {  
-  static int write_pointer = 0;
-  
-  while (length-- > 0) {
+void Anki::Cozmo::HAL::DAC::Sync() {
+  // Set the write pointer to be the current read pointer minus one
+  // The next feed will have moved ~MAX_AUDIO_BYTES_PER_DROP bytes 
+  // forward, making this the ideal write location
+  write_pointer = ((DAC0_C2 >> 4) - 1) % DAC_WORDS;
+}
+
+void Anki::Cozmo::HAL::DAC::Feed(uint8_t* samples) {  
+  for (int length = MAX_AUDIO_BYTES_PER_DROP; length > 0; length--) {
     DAC_WRITE[write_pointer] = MuLawDecompress(*(samples++));
-    write_pointer = (write_pointer+1) % 16;
+    write_pointer = (write_pointer+1) % DAC_WORDS;
   }
 }
 
 void Anki::Cozmo::HAL::DAC::Tone(void) {
   EnableAudio(true);
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < DAC_WORDS; i++) {
     DAC_WRITE[i] = 0x100 + 0xFF * sinf(i * M_PI_2 / 16);
   }
-  
-  MicroWait(100000);
-  
-  for (int i = 0; i < 16; i++) {
+}
+
+void Anki::Cozmo::HAL::DAC::Mute(void) {
+  for (int i = 0; i < DAC_WORDS; i++) {
     DAC_WRITE[i] = 0;
   }
 

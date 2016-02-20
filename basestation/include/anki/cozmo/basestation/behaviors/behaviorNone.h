@@ -46,7 +46,7 @@ public:
   
 protected:
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override
   {
     _isInterrupted = false; return Result::RESULT_OK;
   }
@@ -57,9 +57,13 @@ protected:
     return retval;
   }
 
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override
   {
     _isInterrupted = true; return Result::RESULT_OK;
+  }
+
+  virtual void StopInternal(Robot& robot, double currentTime_sec) override
+  {
   }
   
   bool _isInterrupted = false;

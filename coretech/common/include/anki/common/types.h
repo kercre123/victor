@@ -83,6 +83,7 @@ namespace Anki
 namespace Anki {
 #endif
   // Return values:
+  // TODO: add toString!!!
   typedef enum {
     RESULT_OK                        = 0,
     RESULT_FAIL                      = 0x00000001,

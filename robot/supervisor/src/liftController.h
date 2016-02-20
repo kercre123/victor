@@ -22,10 +22,11 @@ namespace Anki {
       
       Result Init();
 
-      // Enable/Disable commands to the motor via HAL functions
-      // Mostly for debug.
+      // Enable/Disable motor.
+      // When disabled, lift goes limp. If autoReEnable, lift will re-enable
+      // if it doesn't move for a certain period of time
       void Enable();
-      void Disable();
+      void Disable(bool autoReEnable = false);
       
       // Moves lift all the way down and sets that position to 0
       void StartCalibrationRoutine();
@@ -60,19 +61,6 @@ namespace Anki {
       
       f32 GetDesiredHeight();
       bool IsInPosition();
-      
-      // Nod head between the two given heights at the given speed, until
-      // SetDesiredHeight() or StopNodding() are called or the number of loops (up/down cycles)
-      // is completed. If StopNodding() is called, lift will be returned to the original
-      // angle it started at. Use numLoops <= 0 to nod "forever".
-      void StartNodding(const f32 lowHeight, const f32 highHeight, const u16 period_ms, const s32 numLoops,
-                        const f32 easeInFraction, const f32 easeOutFraction);
-      void StopNodding();
-      bool IsNodding();
-
-      // Tap carried block on ground.
-      // Successive calls to TapBlockOnGround() will accumulate the number of times to tap.
-      void TapBlockOnGround(u8 numTaps);
       
       // Whether or not the lift is moving.
       // False if speed is 0 for more than LIFT_STOP_TIME.

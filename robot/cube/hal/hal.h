@@ -26,14 +26,19 @@
 //#define DEBUG_PAYLOAD
 //#define DO_MISSED_PACKET_TEST
 
+//#define SNIFFER
+
 // Board definition
 //#define IS_CHARGER
 //#define EMULATE_BODY
-//#define COMPATIBILITY_MODE_4P0
+#define COMPATIBILITY_MODE_4P0
 
-#define RELEASE
+//#define RELEASE
 
-
+#if defined(SNIFFER)
+#define USE_EVAL_BOARD
+#define USE_UART
+#endif
 
 #if defined(EMULATE_BODY)
 #define USE_EVAL_BOARD
@@ -103,12 +108,24 @@ void RunTests();
 
 // radio.c
 #ifdef COMPATIBILITY_MODE_4P0
-#define CHANNEL_4P0 	83
 #undef RADIO_PAYLOAD_LENGTH
 #undef CHANNEL_RATE
 #define RADIO_PAYLOAD_LENGTH 13
 #define CHANNEL_RATE 	HAL_NRF_250KBPS
-static const u8 code ADDRESS_4P0[5] = {0xB2, 0xC2, 0xC2, 0xC2, 0xC2}; // default
+/*
+Cube PCB Num      ID
+1                 0xB4
+2                 0xB3
+3                 0xB2
+4                 0xB5
+A = 84
+B = 83
+C = 82
+D = 81
+*/
+#define BLOCK_ID 0xA2
+#define CHANNEL_4P0 	84
+static const u8 code ADDRESS_4P0[5] = {BLOCK_ID, 0xC2, 0xC2, 0xC2, 0xC2}; // default
 #endif
 
 #ifdef EMULATE_BODY

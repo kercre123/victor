@@ -14,6 +14,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
+#include "clad/types/animationKeyFrames.h"
 #include "util/logging/logging.h"
 
 #include <opencv2/highgui.hpp>
@@ -149,11 +150,13 @@ namespace Cozmo {
                       ++emptyFramesAdded;
                     }
                     
+                    /*
                     if(emptyFramesAdded > 0) {
-                      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
-                                       "Inserted %d empty frames before frame %d in animation %s.",
-                                       emptyFramesAdded, frameNum, animName.c_str());
+                      PRINT_NAMED_DEBUG("FaceAnimationManager.ReadFaceAnimationDir.InsertEmptyFrames",
+                                        "Inserted %d empty frames before frame %d in animation %s.",
+                                        emptyFramesAdded, frameNum, animName.c_str());
                     }
+                     */
                   }
                   
                   // Read the image
@@ -182,16 +185,16 @@ namespace Cozmo {
               }
             }
             
-            PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
-                             "Added %lu files/frames to animation %s",
-                             _availableAnimations[animName].GetNumFrames(),
-                             animName.c_str());
+            //PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
+            //                 "Added %lu files/frames to animation %s",
+            //                 _availableAnimations[animName].GetNumFrames(),
+            //                 animName.c_str());
           }
         }
       }
       closedir(dir);
     } else {
-      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir", "folder not found %s", animationFolder.c_str());
+      PRINT_NAMED_WARNING("FaceAnimationManager.ReadFaceAnimationDir", "folder not found %s", animationFolder.c_str());
     }
     
   } // ReadFaceAnimationDir()
@@ -352,7 +355,15 @@ namespace Cozmo {
       
       rleData.push_back(0x80 | ((count-1) << 2) | pattern);
     }
-    
+
+    if (rleData.size() >= static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE)) { // RLE compression didn't make the image smaller so just send it raw
+      rleData.resize(static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE));
+      uint8_t* packedPtr = (uint8_t*)packed;
+      for (int i=0; i<static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE); ++i) {
+        rleData[i] = *packedPtr;
+        packedPtr++;
+      }
+    }
     return RESULT_OK;
   }
   
@@ -366,7 +377,17 @@ namespace Cozmo {
     outImg.FillWith(0);
     
     uint64_t decodedImg[FaceAnimationManager::IMAGE_WIDTH];
-    FaceDisplayDecode(rleData.data(), FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH, decodedImg);
+    if (rleData.size() == static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE)) {
+      uint8_t* packedPtr = (uint8_t*)decodedImg;
+      for (int i=0; i<static_cast<size_t>(AnimConstants::MAX_FACE_FRAME_SIZE); ++i) {
+        *packedPtr = rleData[i];
+        packedPtr++;
+      }
+    }
+    else
+    {
+      FaceDisplayDecode(rleData.data(), FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH, decodedImg);
+    }
     
     // Translate from 1-bit/pixel,column-major ordering to 1-byte/pixel, row-major
     for (u8 i = 0; i < FaceAnimationManager::IMAGE_WIDTH; ++i) {

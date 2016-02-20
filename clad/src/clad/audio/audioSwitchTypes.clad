@@ -1,18 +1,39 @@
+// Available Game Switch States in project
 
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+namespace SwitchState {
 
-enum uint_32 SwitchStateGroupType
+enum uint_32 GenericSwitch
 {
   Invalid = 0,
 }
 
-enum uint_32 SwitchStateType
+enum uint_32 Mood
 {
   Invalid = 0,
+  Mood_Happy = 457607035,
+  Mood_Neutral = 3970296952,
+  Mood_Sad = 777739821,
 }
 
+enum uint_32 Relationship
+{
+  Invalid = 0,
+  Realtionship_Bff = 743952678,
+  Realtionship_Friend = 1061927592,
+  Relationship_Stranger = 3087192196,
 }
+
+enum uint_32 SwitchGroupType
+{
+  Invalid = 0,
+  Mood = 3128647864,
+  Relationship = 3723222599,
 }
-}
+
+} // SwitchState
+} // Audio
+} // Cozmo
+} // Anki

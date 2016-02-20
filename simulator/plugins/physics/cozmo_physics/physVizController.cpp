@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "anki/common/basestation/colorRGBA.h"
+#include "anki/common/basestation/exceptions.h"
 #include "clad/vizInterface/messageViz.h"
 #include <OpenGL/OpenGL.h>
 #include <plugins/physics.h>
@@ -55,6 +56,22 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizShowObjectsMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SetVizOrigin,
             std::bind(&PhysVizController::ProcessVizSetOriginMessage, this, std::placeholders::_1));
+  
+  // primitives
+  Subscribe(VizInterface::MessageVizTag::SegmentPrimitive,
+            std::bind(&PhysVizController::ProcessVizSegmentPrimitiveMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EraseSegmentPrimitives,
+            std::bind(&PhysVizController::ProcessVizEraseSegmentPrimitivesMessage, this, std::placeholders::_1));
+  
+
+  // simple quad messages
+  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageBegin,
+    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageBegin, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessage,
+    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageEnd,
+    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageEnd, this, std::placeholders::_1));
+
 
   _server.StartListening((uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
 
@@ -182,23 +199,24 @@ void PhysVizController::Draw(int pass, const char *view)
           DrawTextAtOffset(idString, 0.6*obj->x_size_m, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
           DrawTextAtOffset(idString, -0.6*obj->x_size_m, -0.6*obj->y_size_m, -0.6*obj->z_size_m);
 
+          const float axisLineFactor = 0.1f;
           // AXES:
           glColor4ub(255, 0, 0, 255);
           glBegin(GL_LINES);
           glVertex3f(0,0,0);
-          glVertex3f(obj->x_size_m, 0, 0);
+          glVertex3f(obj->x_size_m*axisLineFactor, 0, 0);
           glEnd();
 
           glColor4ub(0, 255, 0, 255);
           glBegin(GL_LINES);
           glVertex3f(0, 0, 0);
-          glVertex3f(0, obj->y_size_m, 0);
+          glVertex3f(0, obj->y_size_m*axisLineFactor, 0);
           glEnd();
 
           glColor4ub(0, 0, 255, 255);
           glBegin(GL_LINES);
           glVertex3f(0, 0, 0);
-          glVertex3f(0, 0, obj->z_size_m);
+          glVertex3f(0, 0, obj->z_size_m*axisLineFactor);
           glEnd();
 
           break;
@@ -272,6 +290,55 @@ void PhysVizController::Draw(int pass, const char *view)
       } // for each quad
     } // for each quad type
 
+    // Draw simple quad vectors
+    for(const auto & quadVectorPerIdentifier : _simpleQuadVectorMapReady) {
+      for(const auto & quadInVector : quadVectorPerIdentifier.second) {
+
+        // Set color for the quad
+        Anki::ColorRGBA quadColor(quadInVector.color);
+        glColor4ub(quadColor.r(), quadColor.g(), quadColor.b(), quadColor.alpha());
+        
+        const float halfSize = quadInVector.sideSize*0.5f;
+        DrawQuadFill(
+            quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
+            quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L
+            quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
+            quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
+         );
+        
+//        glColor4ub(255,255,255,255);
+//        DrawQuad(
+//            quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
+//            quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L
+//            quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
+//            quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
+//         );
+      } // for each quadInVector
+    } // for each vector in map
+    
+    // Draw segment primitives
+    glBegin(GL_LINES);
+    for ( const auto& segmentVectorPerIdentifier : _segmentPrimitives )
+    {
+      for ( const auto& segmentInVector : segmentVectorPerIdentifier.second )
+      {
+        // Set color for the segment
+        Anki::ColorRGBA segmentColor(segmentInVector.color);
+        glColor4ub(segmentColor.r(), segmentColor.g(), segmentColor.b(), segmentColor.alpha());
+        
+        // draw segment
+        glVertex3f(segmentInVector.origin[0], segmentInVector.origin[1], segmentInVector.origin[2] );
+        glVertex3f(segmentInVector.dest[0], segmentInVector.dest[1], segmentInVector.dest[2]);
+      }
+    }
+    glEnd();
+
+    // Restore default color
+    glColor4ub(::Anki::NamedColors::DEFAULT.r(),
+      ::Anki::NamedColors::DEFAULT.g(),
+      ::Anki::NamedColors::DEFAULT.b(),
+      ::Anki::NamedColors::DEFAULT.alpha());
+
     glPopMatrix(); // global viz transform
     
   } // if (pass == 1 && view == NULL)
@@ -309,6 +376,22 @@ void PhysVizController::ProcessVizObjectMessage(const AnkiEvent<VizInterface::Me
   _objectMap[payload.objectID] = VizInterface::Object(payload);
 }
 
+void PhysVizController::ProcessVizSegmentPrimitiveMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SegmentPrimitive();
+  PRINT("Processing SegmentPrimitive (%s)\n", payload.identifier.c_str());
+  
+  if ( payload.clearPrevious ) {
+    _segmentPrimitives[payload.identifier].clear();
+  }
+  
+  _segmentPrimitives[payload.identifier].emplace_back( payload.color, payload.origin, payload.dest );
+  
+  // some limits to catch when things get out of control in a loop
+  CORETECH_ASSERT(_segmentPrimitives.size() < 128);
+  CORETECH_ASSERT(_segmentPrimitives[payload.identifier].size() < 1024);
+}
+
 void PhysVizController::ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_Quad();
@@ -319,6 +402,43 @@ void PhysVizController::ProcessVizQuadMessage(const AnkiEvent<VizInterface::Mess
     payload.xLowerRight, payload.yLowerRight, payload.zLowerRight);
 
   _quadMap[(int)payload.quadType][payload.quadID] = VizInterface::Quad(payload);
+}
+
+void PhysVizController::ProcessVizSimpleQuadVectorMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessageBegin();
+  PRINT("Processing SimpleQuadVectorMessageBegin '%s'\n", payload.identifier.c_str());
+
+  // clear the vector in Incoming
+  _simpleQuadVectorMapIncoming[payload.identifier].clear();
+}
+
+void PhysVizController::ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessage();
+  PRINT("Processing SimpleQuadVectorMessage '%s' (quad count: %zu)\n",
+    payload.identifier.c_str(), payload.quads.size());
+
+  // ideally I would like to move vectors, but messages are const in case more listeners subscribe
+  SimpleQuadVector& dest = _simpleQuadVectorMapIncoming[payload.identifier];
+  //  dest.insert(
+  //      dest.end(),
+  //      std::make_move_iterator(payload.quads.begin()),
+  //      std::make_move_iterator(payload.quads.end())
+  //    );
+  const size_t newSize = dest.size() + payload.quads.size();
+  CORETECH_ASSERT( newSize <= 4096 ); // Debug set to a limit, no rationale on actual number.
+  dest.reserve( newSize );
+  dest.insert( dest.end(), payload.quads.begin(), payload.quads.end());
+}
+
+void PhysVizController::ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessageEnd();
+  PRINT("Processing SimpleQuadVectorMessageEnd '%s'\n", payload.identifier.c_str());
+
+  // swap the vectors from incoming - ready
+  std::swap(_simpleQuadVectorMapIncoming[payload.identifier], _simpleQuadVectorMapReady[payload.identifier]);
 }
 
 void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -343,6 +463,14 @@ void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterfac
   } else {
     _objectMap.erase(payload.objectID);
   }
+}
+
+void PhysVizController::ProcessVizEraseSegmentPrimitivesMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_EraseSegmentPrimitives();
+  PRINT("Processing EraseSegmentPrimitives (%s)\n", payload.identifier.c_str());
+  
+  _segmentPrimitives.erase(payload.identifier);
 }
 
 void PhysVizController::ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -701,6 +829,20 @@ void PhysVizController::DrawQuad(const float xUpperLeft,  const float yUpperLeft
   glVertex3f(xUpperRight, yUpperRight, zUpperRight);
   glVertex3f(xLowerRight, yLowerRight, zLowerRight);
   glVertex3f(xLowerLeft,  yLowerLeft,  zLowerLeft );
+  glEnd();
+}
+
+void PhysVizController::DrawQuadFill(
+  const float xUpperLeft,  const float yUpperLeft, const float zUpperLeft,
+  const float xLowerLeft,  const float yLowerLeft, const float zLowerLeft,
+  const float xUpperRight, const float yUpperRight, const float zUpperRight,
+  const float xLowerRight, const float yLowerRight, const float zLowerRight)
+{
+  glBegin(GL_TRIANGLE_FAN);
+  glVertex3f(xUpperLeft,  yUpperLeft,  zUpperLeft );
+  glVertex3f(xLowerLeft,  yLowerLeft,  zLowerLeft );
+  glVertex3f(xLowerRight, yLowerRight, zLowerRight);
+  glVertex3f(xUpperRight, yUpperRight, zUpperRight);
   glEnd();
 }
 

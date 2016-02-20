@@ -55,21 +55,16 @@ __Signature     DCB     'C','Z','M','0'
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
-                  
-                EXPORT  __ESPRESSIF_SERIAL_NUMBER
-__ESPRESSIF_SERIAL_NUMBER
-                DCD     0xDEADFACE
 
 ; Vector Table Mapped, aligned to a a 1kbyte boundary
 
-                AREA    |.text|, CODE, READONLY, ALIGN=10
+                AREA    VECTORS, DATA, READWRITE, ALIGN=8
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
+                EXPORT  I2C0_Proc
 
-                IMPORT  |Image$$ARM_LIB_STACK$$ZI$$Limit|
-
-__Vectors       DCD     |Image$$ARM_LIB_STACK$$ZI$$Limit| ; Top of Stack
+__Vectors       DCD     __initial_sp   ; Top of Stack
                 DCD     Reset_Handler  ; Reset Handler
                 DCD     NMI_Handler                         ;NMI Handler
                 DCD     HardFault_Handler                   ;Hard Fault Handler
@@ -111,7 +106,7 @@ __Vectors       DCD     |Image$$ARM_LIB_STACK$$ZI$$Limit| ; Top of Stack
                 DCD     LLW_IRQHandler                      ;Low Leakage Wakeup
                 DCD     WDOG_EWM_IRQHandler                 ;WDOG Interrupt
                 DCD     Reserved39_IRQHandler               ;Reserved Interrupt 39
-                DCD     I2C0_IRQHandler                     ;I2C0 interrupt
+I2C0_Proc       DCD     I2C0_IRQHandler                     ;I2C0 interrupt
                 DCD     Reserved41_IRQHandler               ;Reserved Interrupt 41
                 DCD     SPI0_IRQHandler                     ;SPI0 Interrupt
                 DCD     Reserved43_IRQHandler               ;Reserved Interrupt 43
@@ -135,204 +130,41 @@ __Vectors       DCD     |Image$$ARM_LIB_STACK$$ZI$$Limit| ; Top of Stack
                 DCD     Reserved61_IRQHandler               ;Reserved interrupt 61
                 DCD     Reserved62_IRQHandler               ;Reserved interrupt 62
                 DCD     Reserved63_IRQHandler               ;Reserved interrupt 63
-                DCD     PIT0_IRQHandler                     ;PIT timer channel 0 interrupt
-                DCD     PIT1_IRQHandler                     ;PIT timer channel 1 interrupt
-                DCD     PIT2_IRQHandler                     ;PIT timer channel 2 interrupt
-                DCD     PIT3_IRQHandler                     ;PIT timer channel 3 interrupt
-                DCD     PDB0_IRQHandler                     ;PDB0 Interrupt
-                DCD     Reserved69_IRQHandler               ;Reserved interrupt 69
-                DCD     Reserved70_IRQHandler               ;Reserved interrupt 70
-                DCD     Reserved71_IRQHandler               ;Reserved interrupt 71
-                DCD     DAC0_IRQHandler                     ;DAC0 interrupt
-                DCD     MCG_IRQHandler                      ;MCG Interrupt
-                DCD     LPTMR0_IRQHandler                   ;LPTimer interrupt
-                DCD     PORTA_IRQHandler                    ;Port A interrupt
-                DCD     PORTB_IRQHandler                    ;Port B interrupt
-                DCD     PORTC_IRQHandler                    ;Port C interrupt
-                DCD     PORTD_IRQHandler                    ;Port D interrupt
-                DCD     PORTE_IRQHandler                    ;Port E interrupt
-                DCD     SWI_IRQHandler                      ;Software interrupt
-                DCD     Reserved81_IRQHandler               ;Reserved interrupt 81
-                DCD     Reserved82_IRQHandler               ;Reserved interrupt 82
-                DCD     Reserved83_IRQHandler               ;Reserved interrupt 83
-                DCD     Reserved84_IRQHandler               ;Reserved interrupt 84
-                DCD     Reserved85_IRQHandler               ;Reserved interrupt 85
-                DCD     Reserved86_IRQHandler               ;Reserved interrupt 86
-                DCD     Reserved87_IRQHandler               ;Reserved interrupt 87
-                DCD     Reserved88_IRQHandler               ;Reserved interrupt 88
-                DCD     Reserved89_IRQHandler               ;Reserved interrupt 89
-                DCD     DefaultISR                          ;90
-                DCD     DefaultISR                          ;91
-                DCD     DefaultISR                          ;92
-                DCD     DefaultISR                          ;93
-                DCD     DefaultISR                          ;94
-                DCD     DefaultISR                          ;95
-                DCD     DefaultISR                          ;96
-                DCD     DefaultISR                          ;97
-                DCD     DefaultISR                          ;98
-                DCD     DefaultISR                          ;99
-                DCD     DefaultISR                          ;100
-                DCD     DefaultISR                          ;101
-                DCD     DefaultISR                          ;102
-                DCD     DefaultISR                          ;103
-                DCD     DefaultISR                          ;104
-                DCD     DefaultISR                          ;105
-                DCD     DefaultISR                          ;106
-                DCD     DefaultISR                          ;107
-                DCD     DefaultISR                          ;108
-                DCD     DefaultISR                          ;109
-                DCD     DefaultISR                          ;110
-                DCD     DefaultISR                          ;111
-                DCD     DefaultISR                          ;112
-                DCD     DefaultISR                          ;113
-                DCD     DefaultISR                          ;114
-                DCD     DefaultISR                          ;115
-                DCD     DefaultISR                          ;116
-                DCD     DefaultISR                          ;117
-                DCD     DefaultISR                          ;118
-                DCD     DefaultISR                          ;119
-                DCD     DefaultISR                          ;120
-                DCD     DefaultISR                          ;121
-                DCD     DefaultISR                          ;122
-                DCD     DefaultISR                          ;123
-                DCD     DefaultISR                          ;124
-                DCD     DefaultISR                          ;125
-                DCD     DefaultISR                          ;126
-                DCD     DefaultISR                          ;127
-                DCD     DefaultISR                          ;128
-                DCD     DefaultISR                          ;129
-                DCD     DefaultISR                          ;130
-                DCD     DefaultISR                          ;131
-                DCD     DefaultISR                          ;132
-                DCD     DefaultISR                          ;133
-                DCD     DefaultISR                          ;134
-                DCD     DefaultISR                          ;135
-                DCD     DefaultISR                          ;136
-                DCD     DefaultISR                          ;137
-                DCD     DefaultISR                          ;138
-                DCD     DefaultISR                          ;139
-                DCD     DefaultISR                          ;140
-                DCD     DefaultISR                          ;141
-                DCD     DefaultISR                          ;142
-                DCD     DefaultISR                          ;143
-                DCD     DefaultISR                          ;144
-                DCD     DefaultISR                          ;145
-                DCD     DefaultISR                          ;146
-                DCD     DefaultISR                          ;147
-                DCD     DefaultISR                          ;148
-                DCD     DefaultISR                          ;149
-                DCD     DefaultISR                          ;150
-                DCD     DefaultISR                          ;151
-                DCD     DefaultISR                          ;152
-                DCD     DefaultISR                          ;153
-                DCD     DefaultISR                          ;154
-                DCD     DefaultISR                          ;155
-                DCD     DefaultISR                          ;156
-                DCD     DefaultISR                          ;157
-                DCD     DefaultISR                          ;158
-                DCD     DefaultISR                          ;159
-                DCD     DefaultISR                          ;160
-                DCD     DefaultISR                          ;161
-                DCD     DefaultISR                          ;162
-                DCD     DefaultISR                          ;163
-                DCD     DefaultISR                          ;164
-                DCD     DefaultISR                          ;165
-                DCD     DefaultISR                          ;166
-                DCD     DefaultISR                          ;167
-                DCD     DefaultISR                          ;168
-                DCD     DefaultISR                          ;169
-                DCD     DefaultISR                          ;170
-                DCD     DefaultISR                          ;171
-                DCD     DefaultISR                          ;172
-                DCD     DefaultISR                          ;173
-                DCD     DefaultISR                          ;174
-                DCD     DefaultISR                          ;175
-                DCD     DefaultISR                          ;176
-                DCD     DefaultISR                          ;177
-                DCD     DefaultISR                          ;178
-                DCD     DefaultISR                          ;179
-                DCD     DefaultISR                          ;180
-                DCD     DefaultISR                          ;181
-                DCD     DefaultISR                          ;182
-                DCD     DefaultISR                          ;183
-                DCD     DefaultISR                          ;184
-                DCD     DefaultISR                          ;185
-                DCD     DefaultISR                          ;186
-                DCD     DefaultISR                          ;187
-                DCD     DefaultISR                          ;188
-                DCD     DefaultISR                          ;189
-                DCD     DefaultISR                          ;190
-                DCD     DefaultISR                          ;191
-                DCD     DefaultISR                          ;192
-                DCD     DefaultISR                          ;193
-                DCD     DefaultISR                          ;194
-                DCD     DefaultISR                          ;195
-                DCD     DefaultISR                          ;196
-                DCD     DefaultISR                          ;197
-                DCD     DefaultISR                          ;198
-                DCD     DefaultISR                          ;199
-                DCD     DefaultISR                          ;200
-                DCD     DefaultISR                          ;201
-                DCD     DefaultISR                          ;202
-                DCD     DefaultISR                          ;203
-                DCD     DefaultISR                          ;204
-                DCD     DefaultISR                          ;205
-                DCD     DefaultISR                          ;206
-                DCD     DefaultISR                          ;207
-                DCD     DefaultISR                          ;208
-                DCD     DefaultISR                          ;209
-                DCD     DefaultISR                          ;210
-                DCD     DefaultISR                          ;211
-                DCD     DefaultISR                          ;212
-                DCD     DefaultISR                          ;213
-                DCD     DefaultISR                          ;214
-                DCD     DefaultISR                          ;215
-                DCD     DefaultISR                          ;216
-                DCD     DefaultISR                          ;217
-                DCD     DefaultISR                          ;218
-                DCD     DefaultISR                          ;219
-                DCD     DefaultISR                          ;220
-                DCD     DefaultISR                          ;221
-                DCD     DefaultISR                          ;222
-                DCD     DefaultISR                          ;223
-                DCD     DefaultISR                          ;224
-                DCD     DefaultISR                          ;225
-                DCD     DefaultISR                          ;226
-                DCD     DefaultISR                          ;227
-                DCD     DefaultISR                          ;228
-                DCD     DefaultISR                          ;229
-                DCD     DefaultISR                          ;230
-                DCD     DefaultISR                          ;231
-                DCD     DefaultISR                          ;232
-                DCD     DefaultISR                          ;233
-                DCD     DefaultISR                          ;234
-                DCD     DefaultISR                          ;235
-                DCD     DefaultISR                          ;236
-                DCD     DefaultISR                          ;237
-                DCD     DefaultISR                          ;238
-                DCD     DefaultISR                          ;239
-                DCD     DefaultISR                          ;240
-                DCD     DefaultISR                          ;241
-                DCD     DefaultISR                          ;242
-                DCD     DefaultISR                          ;243
-                DCD     DefaultISR                          ;244
-                DCD     DefaultISR                          ;245
-                DCD     DefaultISR                          ;246
-                DCD     DefaultISR                          ;247
-                DCD     DefaultISR                          ;248
-                DCD     DefaultISR                          ;249
-                DCD     DefaultISR                          ;250
-                DCD     DefaultISR                          ;251
-                DCD     DefaultISR                          ;252
-                DCD     DefaultISR                          ;253
-                DCD     DefaultISR                          ;254
-                DCD     0xFFFFFFFF                          ; Reserved for user TRIM value
+                ; DCD     PIT0_IRQHandler                     ;PIT timer channel 0 interrupt
+                ; DCD     PIT1_IRQHandler                     ;PIT timer channel 1 interrupt
+                ; DCD     PIT2_IRQHandler                     ;PIT timer channel 2 interrupt
+                ; DCD     PIT3_IRQHandler                     ;PIT timer channel 3 interrupt
+                ; DCD     PDB0_IRQHandler                     ;PDB0 Interrupt
+                ; DCD     Reserved69_IRQHandler               ;Reserved interrupt 69
+                ; DCD     Reserved70_IRQHandler               ;Reserved interrupt 70
+                ; DCD     Reserved71_IRQHandler               ;Reserved interrupt 71
+                ; DCD     DAC0_IRQHandler                     ;DAC0 interrupt
+                ; DCD     MCG_IRQHandler                      ;MCG Interrupt
+                ; DCD     LPTMR0_IRQHandler                   ;LPTimer interrupt
+                ; DCD     PORTA_IRQHandler                    ;Port A interrupt
+                ; DCD     PORTB_IRQHandler                    ;Port B interrupt
+                ; DCD     PORTC_IRQHandler                    ;Port C interrupt
+                ; DCD     PORTD_IRQHandler                    ;Port D interrupt
+                ; DCD     PORTE_IRQHandler                    ;Port E interrupt
+                ; DCD     SWI_IRQHandler                      ;Software interrupt
+                ; DCD     Reserved81_IRQHandler               ;Reserved interrupt 81
+                ; DCD     Reserved82_IRQHandler               ;Reserved interrupt 82
+                ; DCD     Reserved83_IRQHandler               ;Reserved interrupt 83
+                ; DCD     Reserved84_IRQHandler               ;Reserved interrupt 84
+                ; DCD     Reserved85_IRQHandler               ;Reserved interrupt 85
+                ; DCD     Reserved86_IRQHandler               ;Reserved interrupt 86
+                ; DCD     Reserved87_IRQHandler               ;Reserved interrupt 87
+                ; DCD     Reserved88_IRQHandler               ;Reserved interrupt 88
+                ; DCD     Reserved89_IRQHandler               ;Reserved interrupt 89
 __Vectors_End
 
 __Vectors_Size 	EQU     __Vectors_End - __Vectors
 
 _NVIC_ICER0     EQU   0xE000E180
 _NVIC_ICPR0     EQU   0xE000E280
+
+__initial_sp    EQU   0x1FFFE600        ; 1.5KB of stack at BOTTOM of RAM
+                EXPORT __initial_sp
 
                 AREA    |.text|, CODE, READONLY
 
@@ -457,32 +289,32 @@ Default_Handler\
                 EXPORT  Reserved61_IRQHandler         [WEAK]
                 EXPORT  Reserved62_IRQHandler         [WEAK]
                 EXPORT  Reserved63_IRQHandler         [WEAK]
-                EXPORT  PIT0_IRQHandler         [WEAK]
-                EXPORT  PIT1_IRQHandler         [WEAK]
-                EXPORT  PIT2_IRQHandler         [WEAK]
-                EXPORT  PIT3_IRQHandler         [WEAK]
-                EXPORT  PDB0_IRQHandler         [WEAK]
-                EXPORT  Reserved69_IRQHandler         [WEAK]
-                EXPORT  Reserved70_IRQHandler         [WEAK]
-                EXPORT  Reserved71_IRQHandler         [WEAK]
-                EXPORT  DAC0_IRQHandler         [WEAK]
-                EXPORT  MCG_IRQHandler         [WEAK]
-                EXPORT  LPTMR0_IRQHandler         [WEAK]
-                EXPORT  PORTA_IRQHandler         [WEAK]
-                EXPORT  PORTB_IRQHandler         [WEAK]
-                EXPORT  PORTC_IRQHandler         [WEAK]
-                EXPORT  PORTD_IRQHandler         [WEAK]
-                EXPORT  PORTE_IRQHandler         [WEAK]
-                EXPORT  SWI_IRQHandler         [WEAK]
-                EXPORT  Reserved81_IRQHandler         [WEAK]
-                EXPORT  Reserved82_IRQHandler         [WEAK]
-                EXPORT  Reserved83_IRQHandler         [WEAK]
-                EXPORT  Reserved84_IRQHandler         [WEAK]
-                EXPORT  Reserved85_IRQHandler         [WEAK]
-                EXPORT  Reserved86_IRQHandler         [WEAK]
-                EXPORT  Reserved87_IRQHandler         [WEAK]
-                EXPORT  Reserved88_IRQHandler         [WEAK]
-                EXPORT  Reserved89_IRQHandler         [WEAK]
+                ;EXPORT  PIT0_IRQHandler         [WEAK]
+                ;EXPORT  PIT1_IRQHandler         [WEAK]
+                ;EXPORT  PIT2_IRQHandler         [WEAK]
+                ;EXPORT  PIT3_IRQHandler         [WEAK]
+                ;EXPORT  PDB0_IRQHandler         [WEAK]
+                ;EXPORT  Reserved69_IRQHandler         [WEAK]
+                ;EXPORT  Reserved70_IRQHandler         [WEAK]
+                ;EXPORT  Reserved71_IRQHandler         [WEAK]
+                ;EXPORT  DAC0_IRQHandler         [WEAK]
+                ;EXPORT  MCG_IRQHandler         [WEAK]
+                ;EXPORT  LPTMR0_IRQHandler         [WEAK]
+                ;EXPORT  PORTA_IRQHandler         [WEAK]
+                ;EXPORT  PORTB_IRQHandler         [WEAK]
+                ;EXPORT  PORTC_IRQHandler         [WEAK]
+                ;EXPORT  PORTD_IRQHandler         [WEAK]
+                ;EXPORT  PORTE_IRQHandler         [WEAK]
+                ;EXPORT  SWI_IRQHandler         [WEAK]
+                ;EXPORT  Reserved81_IRQHandler         [WEAK]
+                ;EXPORT  Reserved82_IRQHandler         [WEAK]
+                ;EXPORT  Reserved83_IRQHandler         [WEAK]
+                ;EXPORT  Reserved84_IRQHandler         [WEAK]
+                ;EXPORT  Reserved85_IRQHandler         [WEAK]
+                ;EXPORT  Reserved86_IRQHandler         [WEAK]
+                ;EXPORT  Reserved87_IRQHandler         [WEAK]
+                ;EXPORT  Reserved88_IRQHandler         [WEAK]
+                ;EXPORT  Reserved89_IRQHandler         [WEAK]
                 EXPORT  DefaultISR         [WEAK]
 DMA0_IRQHandler
 DMA1_IRQHandler
@@ -532,32 +364,32 @@ FTM2_IRQHandler
 Reserved61_IRQHandler
 Reserved62_IRQHandler
 Reserved63_IRQHandler
-PIT0_IRQHandler
-PIT1_IRQHandler
-PIT2_IRQHandler
-PIT3_IRQHandler
-PDB0_IRQHandler
-Reserved69_IRQHandler
-Reserved70_IRQHandler
-Reserved71_IRQHandler
-DAC0_IRQHandler
-MCG_IRQHandler
-LPTMR0_IRQHandler
-PORTA_IRQHandler
-PORTB_IRQHandler
-PORTC_IRQHandler
-PORTD_IRQHandler
-PORTE_IRQHandler
-SWI_IRQHandler
-Reserved81_IRQHandler
-Reserved82_IRQHandler
-Reserved83_IRQHandler
-Reserved84_IRQHandler
-Reserved85_IRQHandler
-Reserved86_IRQHandler
-Reserved87_IRQHandler
-Reserved88_IRQHandler
-Reserved89_IRQHandler
+;PIT0_IRQHandler
+;PIT1_IRQHandler
+;PIT2_IRQHandler
+;PIT3_IRQHandler
+;PDB0_IRQHandler
+;Reserved69_IRQHandler
+;Reserved70_IRQHandler
+;Reserved71_IRQHandler
+;DAC0_IRQHandler
+;MCG_IRQHandler
+;LPTMR0_IRQHandler
+;PORTA_IRQHandler
+;PORTB_IRQHandler
+;PORTC_IRQHandler
+;PORTD_IRQHandler
+;PORTE_IRQHandler
+;SWI_IRQHandler
+;Reserved81_IRQHandler
+;Reserved82_IRQHandler
+;Reserved83_IRQHandler
+;Reserved84_IRQHandler
+;Reserved85_IRQHandler
+;Reserved86_IRQHandler
+;Reserved87_IRQHandler
+;Reserved88_IRQHandler
+;Reserved89_IRQHandler
 DefaultISR
                 B      DefaultISR
                 ENDP

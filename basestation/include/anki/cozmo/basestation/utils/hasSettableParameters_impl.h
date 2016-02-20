@@ -55,6 +55,24 @@ namespace Cozmo {
   }
   
   template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
+  const typename HasSettableParameters<Param_t,SetMsgTag,Value_t>::ParamContainer& HasSettableParameters<Param_t,SetMsgTag,Value_t>::GetAllParams()
+  {
+    if(!_isInitialized) {
+      _isInitialized = true; // Before SetDefaultParams to avoid infinite loop!
+      SetDefaultParams();
+    }
+    
+    return _params;
+  }
+  
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
+  void HasSettableParameters<Param_t,SetMsgTag,Value_t>::SetAllParams(const ParamContainer& allParams)
+  {
+    _params = allParams;
+    _isInitialized = true;
+  }
+  
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
   void HasSettableParameters<Param_t,SetMsgTag,Value_t>::SetParam(Param_t whichParam,
                                                                  Value_t newValue)
   {

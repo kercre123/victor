@@ -65,6 +65,7 @@ message RobotState {
     float_32 pose_y,
     float_32 pose_z,
     float_32 poseAngle_rad,    // heading in X-Y plane
+    float_32 posePitch_rad,    // robot pitch angle
     float_32 pose_qw,          // full 3d rotation as a quaternion
     float_32 pose_qx,          //  "
     float_32 pose_qy,          //  "
@@ -162,7 +163,7 @@ message RobotObservedFace {
 // RobotObservedMotion
 message RobotObservedMotion {
     uint_32  timestamp, // Of the corresponding image
-    uint_32   img_area, // Size of the region of detected motion, in pixels
+    float_32 img_area,  // Size of the region of detected motion, as a fraction of image
     int_16   img_x,     // Centroid of the motion region relative to image center, in pixels
     int_16   img_y,
     float_32 ground_area, // Amount of motion on the ground, as a fraction of the ground ROI (0 if none)
@@ -275,7 +276,7 @@ message MoodState {
 
 message ProgressionStats {
   uint_8  robotID,
-  uint_32 statValues[uint_8]
+  int_32 statValues[uint_8]
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -300,6 +301,12 @@ message VerifyDebugConsoleVarMessage {
   ConsoleVarUnion varValue
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  GAME  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// The behavior wants the UI to pop up a game request
+message RequestGameStart {}
 
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"

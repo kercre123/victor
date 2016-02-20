@@ -29,7 +29,7 @@
 // This is a temporary switch to use the old SoundManager for streaming robot
 // audio for animations, until we manage to fully hook up Jordan's stuff for
 // using (and syncing) wwise AudioManager.
-#define USE_SOUND_MANAGER_FOR_ROBOT_AUDIO 1
+#define USE_SOUND_MANAGER_FOR_ROBOT_AUDIO 0
 
 namespace Anki {
 namespace Cozmo {
@@ -64,9 +64,9 @@ namespace Cozmo {
     // is playing in
     void SetTriggerTime(TimeStamp_t triggerTime_ms) { _triggerTime_ms = triggerTime_ms; }
     
-    // Set all members from Json. Calls virtual SetMembersFromJson() method so
-    // subclasses can specify how to populate their members.
-    Result DefineFromJson(const Json::Value &json);
+    // Set all members from Json. Calls virtual SetMembersFromJson() method so subclasses can specify how to
+    // populate their members. Second argument is used to print nicer debug strings if something goes wrong
+    Result DefineFromJson(const Json::Value &json, const std::string& animNameDebug = "");
     
     // Fill some kind of message for streaming and return it. Return nullptr
     // if not available.
@@ -80,7 +80,7 @@ namespace Cozmo {
   protected:
     
     // Populate members from Json
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) = 0;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") = 0;
     
     //void SetIsValid(bool isValid) { _isValid = isValid; }
     
@@ -117,7 +117,7 @@ namespace Cozmo {
     }
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     TimeStamp_t _durationTime_ms;
@@ -145,7 +145,7 @@ namespace Cozmo {
     }
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     TimeStamp_t _durationTime_ms;
@@ -176,7 +176,7 @@ namespace Cozmo {
     }
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     std::string _audioName;
@@ -206,13 +206,13 @@ namespace Cozmo {
       s32 numSamples;
       f32 volume;
       // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
-      Audio::EventType audioEvent = Audio::EventType::Invalid;
+      Audio::GameEvent::GenericEvent audioEvent = Audio::GameEvent::GenericEvent::Invalid;
     };
     
     const AudioRef& GetAudioRef() const;
 
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
 
   private:
     
@@ -240,18 +240,18 @@ namespace Cozmo {
     }
     
     struct AudioRef {
-      Audio::EventType audioEvent;
+      Audio::GameEvent::GenericEvent audioEvent;
       // TODO: We can add other audio controlls to animation data - JMR
     };
     
     const AudioRef& GetAudioRef() const;
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     
-    Result AddAudioRef(const Audio::EventType event);
+    Result AddAudioRef(const Audio::GameEvent::GenericEvent event);
 
     std::vector<AudioRef> _audioReferences;
     
@@ -277,7 +277,7 @@ namespace Cozmo {
     }
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     u32 _imageID;
@@ -297,6 +297,10 @@ namespace Cozmo {
   {
   public:
     FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
+    FaceAnimationKeyFrame(const AnimKeyFrame::FaceImage& faceImageMsg, const std::string& faceAnimName = "")
+    : _animName(faceAnimName)
+    , _faceImageMsg(faceImageMsg)
+    { }
     
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
@@ -307,8 +311,11 @@ namespace Cozmo {
 
     virtual bool IsDone() override;
     
+    const std::string& GetName() const { return _animName; }
+    const AnimKeyFrame::FaceImage& GetFaceImage() const { return _faceImageMsg; }
+    
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     std::string  _animName;
@@ -334,9 +341,9 @@ namespace Cozmo {
     // keyframe and the one in the next keyframe.
     //RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
     
-    // Returns the interpolated face params between the current keyframe and the next.
-    // If the nextFrame is nullptr, then this frame's procedural face params are returned.
-    ProceduralFaceParams GetInterpolatedFaceParams(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms);
+    // Returns the interpolated face between the current keyframe and the next.
+    // If the nextFrame is nullptr, then this frame's procedural face are returned.
+    ProceduralFace GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms);
     
     static const std::string& GetClassName() {
       static const std::string ClassName("ProceduralFaceKeyFrame");
@@ -348,7 +355,7 @@ namespace Cozmo {
     const ProceduralFace& GetFace() const { return _procFace; }
 
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     ProceduralFace  _procFace;
@@ -388,7 +395,7 @@ namespace Cozmo {
     }
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     
@@ -413,7 +420,7 @@ namespace Cozmo {
     virtual bool IsDone() override;
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     
@@ -439,7 +446,7 @@ namespace Cozmo {
     }
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     
@@ -466,7 +473,7 @@ namespace Cozmo {
     virtual bool IsDone() override;
     
   protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     

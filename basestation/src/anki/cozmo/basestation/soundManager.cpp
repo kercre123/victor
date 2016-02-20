@@ -255,7 +255,7 @@ namespace Anki {
       
       bool isValid = (numChannels == 1) // mono
                       && (format == 1) // PCM
-                      && (sampleRateHz == 24000)
+                      && (sampleRateHz == static_cast<uint32_t>(AnimConstants::AUDIO_SAMPLE_RATE))
                       && (bitsPerSample == 16);
       
       //PRINT_NAMED_INFO("SoundManager.IsValidRobotAudio.WavProperties",
@@ -313,7 +313,7 @@ namespace Anki {
               // Add to availble robot sound if it has proper encoding
               if (isRobotAudio) {
                 if (IsValidRobotAudio(fullSoundFilename)) {
-                  PRINT_NAMED_INFO("SoundManager.ReadSoundDir.FoundRobotSound", "%s", fullSoundFilename.c_str());
+                  //PRINT_NAMED_DEBUG("SoundManager.ReadSoundDir.FoundRobotSound", "%s", fullSoundFilename.c_str());
                   
                   // Cap duration if it exceeds buffer size
                   if (availableSound.duration_ms > MAX_SOUND_BUFFER_DURATION_MS) {

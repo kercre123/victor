@@ -40,6 +40,7 @@ namespace Anki
     class RobotMessageHandler;
     class ActiveCube;
     class IExternalInterface;
+    class INavMemoryMap;
     
     class BlockWorld
     {
@@ -63,9 +64,11 @@ namespace Anki
       
       Result QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker);
 
-      // Adds a proximity obstacle (like cliffs and random objects detected in front of the robot with
-      // the IR sensor) at the given pose.
+      // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);
+      
+      // Adds a cliff (detected with cliff detector)
+      Result AddCliff(const Pose3d& p);
       
       //
       // Object Access
@@ -101,15 +104,10 @@ namespace Anki
       // Same as above, but only searches a given family of objects
       ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily);
       const ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
-      
-      // Store your own objects, with a handle you can use to refer to them.
-      // The BlockWorld ObjectID is returned.
-      // (This gives BlockWorld responsibility for the deleting as well.)
-      ObjectID AddObject(ObservableObject* object,
-                         ObjectFamily inFamily,
-                         long long userHandle);
-      ObservableObject* GetObjectByUserHandle(long long userHandle,
-                                              const ObjectFamily inFamily);
+
+      // returns (in arguments) all objects matching a filter
+      // NOTE: does not clear result (thus can be used multiple times with the same vector)
+      void FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension, relative to world origin!) and
@@ -203,6 +201,20 @@ namespace Anki
       Result UpdateObjectOrigins(const Pose3d* oldOrigin,
                                  const Pose3d* newOrigin);
       
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Navigation memory
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      
+      // sets whether we are currently on a cliff or over ground
+      void SetIsOnCliff(bool value) { _isOnCliff = value; }
+
+      // return pointer to current INavMemoryMap (it may be null if not enabled)
+      const INavMemoryMap* GetNavMemoryMap() const { return _navMemoryMap.get(); }
+      INavMemoryMap* GetNavMemoryMap() { return _navMemoryMap.get(); }
+      
+      // update memory map
+      void UpdateNavMemoryMap();      
+      
       //
       // Visualization
       //
@@ -215,6 +227,9 @@ namespace Anki
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
       void DrawAllObjects() const;
+      
+      // Visualize the navigation memory information
+      void DrawNavMemoryMap() const;
       
     protected:
       
@@ -349,6 +364,12 @@ namespace Anki
 
       // For tracking, keep track of the id of the actions we are doing
       u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
+      
+      // Map the world knows the robot has traveled
+      std::unique_ptr<INavMemoryMap> _navMemoryMap;
+      
+      // set to true/false upon cliff sensor notifications
+      bool _isOnCliff;
                   
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;

@@ -12,6 +12,8 @@
 
 #include "anki/cozmo/robot/spineData.h"
 
+#include "spine.h"
+
 #define MAX(a, b) ((a > b) ? a : b)
 
 uint8_t txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
@@ -84,12 +86,14 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       nrf_gpio_cfg_output(PIN_TX_HEAD);
       break ;
     case TRANSMIT_RECEIVE:
+      #ifndef DUMP_DISCOVER
       nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
 
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       MicroWait(10);
       NRF_UART0->PSELRXD = PIN_TX_HEAD;
       break ;
+      #endif
     case TRANSMIT_DEBUG:
       if (!UART::DebugQueue()) return ;
 
@@ -119,7 +123,9 @@ inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
+  Spine::dequeue(g_dataToHead.spineMessage);
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
+  g_dataToHead.spineMessage.opcode = NO_OPERATION;
   txRxIndex = 0;
 
   setTransmitMode(TRANSMIT_SEND);
@@ -149,14 +155,10 @@ void UART0_IRQHandler()
     // We received a full packet
     if (++txRxIndex >= sizeof(GlobalDataToBody)) {
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
+      Spine::processMessage(g_dataToBody.spineMessage);
       Head::spokenTo = true;
       
-      // Secret recovery flag, set dark byte to zero, and set secret to a magic number
-      if (g_dataToBody.recover == recovery_secret_code) {
-        EnterRecovery();
-      } else {
-        setTransmitMode(TRANSMIT_DEBUG);
-      }
+      setTransmitMode(TRANSMIT_DEBUG);
     }
   }
 
@@ -169,7 +171,11 @@ void UART0_IRQHandler()
       case TRANSMIT_SEND:
         // We are in regular head transmission mode
         if (txRxIndex >= sizeof(GlobalDataToHead)) {
+          #ifdef DUMP_DISCOVER
+          setTransmitMode(TRANSMIT_DEBUG);
+          #else
           setTransmitMode(TRANSMIT_RECEIVE);
+          #endif
         } else {
           transmitByte();
         }

@@ -17,11 +17,11 @@ LDFLAGS   = -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L 
 LD_SCRIPT = rboot.ld
 
 BOOT=0
-SPI_FREQ_DIV?=15
-SPI_MODE?=0
-SPI_SIZE_MAP?=3
-flash?=2048
-addr?=0x00000
+SPI_FREQ_DIV?=15 # 80MHz
+SPI_MODE?=0      # QSPI
+SPI_SIZE_MAP?=3  # 1MB images
+flash?=2048      # 2MB total flash
+addr?=0x00000    # Bootloader goes at the very beginning of flash
 
 all: $(RBOOT_BUILD_BASE) $(RBOOT_FW_BASE) $(RBOOT_FW_BASE)/rboot.bin
 

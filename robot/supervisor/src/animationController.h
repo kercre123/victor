@@ -73,6 +73,7 @@ namespace Anki {
       // discarded (but the numBytesPlayed count is still incremented)
       void EnableTracks(u8 whichTracks);
       void DisableTracks(u8 whichTracks);
+      u8 GetEnabledTracks();
       
       // Return the "tag" from the most recent StartOfAnimation keyframe
       u8 GetCurrentTag();

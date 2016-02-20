@@ -51,20 +51,22 @@ namespace Anki {
       return GetTriggerTime() + startTime_ms <= currTime_ms;
     }
     
-    Result IKeyFrame::DefineFromJson(const Json::Value &json)
+    Result IKeyFrame::DefineFromJson(const Json::Value &json, const std::string& animNameDebug)
     {
       Result lastResult = RESULT_OK;
       
       // Read the frame time from the json file as well
       if(!json.isMember("triggerTime_ms")) {
-        PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson", "Expecting 'triggerTime_ms' field in KeyFrame Json.\n");
+        PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson",
+                          "%s: Expecting 'triggerTime_ms' field in KeyFrame Json.\n",
+                          animNameDebug.c_str());
         lastResult = RESULT_FAIL;
       } else {
         _triggerTime_ms = json["triggerTime_ms"].asUInt();
       }
       
       if(lastResult == RESULT_OK) {
-        lastResult = SetMembersFromJson(json);
+        lastResult = SetMembersFromJson(json, animNameDebug);
       }
       
       return lastResult;
@@ -116,7 +118,7 @@ return RESULT_FAIL; \
       return new RobotInterface::EngineToRobot(AnimKeyFrame::HeadAngle(_streamHeadMsg));
     }
     
-    Result HeadAngleKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result HeadAngleKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
       GET_MEMBER_FROM_JSON(jsonRoot, angle_deg);
@@ -154,7 +156,7 @@ return RESULT_FAIL; \
       return new RobotInterface::EngineToRobot(AnimKeyFrame::LiftHeight(_streamLiftMsg));
     }
     
-    Result LiftHeightKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result LiftHeightKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
       GET_MEMBER_FROM_JSON(jsonRoot, height_mm);
@@ -169,7 +171,7 @@ return RESULT_FAIL; \
     // FaceImageKeyFrame
     //
     
-    Result FaceImageKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result FaceImageKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, imageID);
       
@@ -213,7 +215,7 @@ return RESULT_FAIL; \
 #pragma mark -
 #pragma mark FaceAnimationKeyFrame
     
-    Result FaceAnimationKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result FaceAnimationKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, animName);
       
@@ -221,7 +223,8 @@ return RESULT_FAIL; \
       size_t lastSlash = _animName.find_last_of("/");
       if(lastSlash != std::string::npos) {
         PRINT_NAMED_WARNING("FaceAnimationKeyFrame.SetMembersFromJson",
-                            "Removing path from animation name: %s\n",
+                            "%s: Removing path from animation name: %s\n",
+                            animNameDebug.c_str(),
                             _animName.c_str());
         _animName = _animName.substr(lastSlash+1, std::string::npos);
       }
@@ -276,9 +279,9 @@ return RESULT_FAIL; \
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame
     
-    Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      _procFace.GetParams().SetFromJson(jsonRoot);
+      _procFace.SetFromJson(jsonRoot);
       Reset();
       return RESULT_OK;
     }
@@ -338,17 +341,17 @@ return RESULT_FAIL; \
     }
      */
     
-    ProceduralFaceParams ProceduralFaceKeyFrame::GetInterpolatedFaceParams(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms)
+    ProceduralFace ProceduralFaceKeyFrame::GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms)
     {
       // The interpolation fraction is how far along in time we are from this frame's
       // trigger time (which currentTime was initialized to) and the next frame's
       // trigger time.
       const f32 fraction = std::min(1.f, static_cast<f32>(currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
       
-      ProceduralFaceParams interpParams;
-      interpParams.Interpolate(_procFace.GetParams(), nextFrame._procFace.GetParams(), fraction);
+      ProceduralFace interpFace;
+      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
       
-      return interpParams;
+      return interpFace;
     }
     
 #pragma mark -
@@ -392,9 +395,6 @@ return RESULT_FAIL; \
       // Populate the message with the next chunk of audio data and send it out
       if(_sampleIndex < _audioReferences[_selectedAudioIndex].numSamples)
       {
-        // TODO: Get next chunk of audio from wwise or something?
-        //wwise::GetNextSample(_audioSampleMsg.sample, 800);
-        
         if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name,
                                                          (uint32_t)_sampleIndex, _audioReferences[_selectedAudioIndex].volume, _audioSampleMsg)) {
           PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
@@ -428,7 +428,7 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
-    Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       // Get volume
       f32 volume = 1.0;
@@ -437,7 +437,8 @@ return RESULT_FAIL; \
       
       if(!jsonRoot.isMember("audioName")) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.MissingAudioName",
-                          "No 'audioName' field in Json frame.\n");
+                          "%s: No 'audioName' field in Json frame.\n",
+                          animNameDebug.c_str());
         return RESULT_FAIL;
       }
       
@@ -480,7 +481,7 @@ return RESULT_FAIL; \
     
 #   else // (if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO==0)
     
-    Result RobotAudioKeyFrame::AddAudioRef(const Audio::EventType event)
+    Result RobotAudioKeyFrame::AddAudioRef(const Audio::GameEvent::GenericEvent event)
     {
       // TODO: Need a way to verify the event is valid while loading animation metadata - JMR
       _audioReferences.push_back({.audioEvent = event});
@@ -493,7 +494,7 @@ return RESULT_FAIL; \
       if(_audioReferences.empty()) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
                           "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        static const AudioRef InvalidRef{.audioEvent = Audio::EventType::Invalid};
+        static const AudioRef InvalidRef{.audioEvent = Audio::GameEvent::GenericEvent::Invalid};
         return InvalidRef;
       }
       
@@ -508,7 +509,7 @@ return RESULT_FAIL; \
     }
     
     
-    Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       // Get volume
       f32 volume = 1.0;
@@ -517,7 +518,8 @@ return RESULT_FAIL; \
       
       if(!jsonRoot.isMember("audioName")) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.MissingAudioName",
-                          "No 'audioName' field in Json frame.\n");
+                          "%s: No 'audioName' field in Json frame.",
+                          animNameDebug.c_str());
         return RESULT_FAIL;
       }
       
@@ -525,14 +527,14 @@ return RESULT_FAIL; \
       if(jsonAudioNames.isArray()) {
         for(s32 i=0; i<jsonAudioNames.size(); ++i) {
           // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-          Result addResult = AddAudioRef( static_cast<Audio::EventType>( jsonAudioNames[i].asUInt64() ));
+          Result addResult = AddAudioRef( static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() ));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       } else {
         // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-        Result addResult = AddAudioRef( static_cast<Audio::EventType>( jsonAudioNames.asUInt64() ));
+        Result addResult = AddAudioRef( static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() ));
         if(addResult != RESULT_OK) {
           return addResult;
         }
@@ -549,7 +551,7 @@ return RESULT_FAIL; \
     // DeviceAudioKeyFrame
     //
     
-    Result DeviceAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result DeviceAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, audioName);
       
@@ -583,7 +585,7 @@ return RESULT_FAIL; \
       return new RobotInterface::EngineToRobot(AnimKeyFrame::FacePosition(_streamMsg));
     }
     
-    Result FacePositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result FacePositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       // Just store the center point directly in the message.
       // No need to duplicate since we don't do anything extra to the stored
@@ -639,15 +641,17 @@ return RESULT_FAIL; \
       return new RobotInterface::EngineToRobot(AnimKeyFrame::Blink(_streamMsg));
     }
     
-    Result BlinkKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result BlinkKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       if(!jsonRoot.isMember("command")) {
         PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.MissingCommand",
-                          "Missing 'command' field.\n");
+                          "%s: Missing 'command' field.",
+                          animNameDebug.c_str());
         return RESULT_FAIL;
       } else if(!jsonRoot["command"].isString()) {
         PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.BadCommand",
-                          "Expecting 'command' field to be a string.\n");
+                          "%s: Expecting 'command' field to be a string.",
+                          animNameDebug.c_str());
         return RESULT_FAIL;
       }
       
@@ -661,7 +665,8 @@ return RESULT_FAIL; \
         GET_MEMBER_FROM_JSON(jsonRoot, duration_ms);
       } else {
         PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.BadCommandString",
-                          "Unrecognized string for 'command' field: %s.\n",
+                          "%s: Unrecognized string for 'command' field: %s.",
+                          animNameDebug.c_str(),
                           commandStr.c_str());
         return RESULT_FAIL;
       }
@@ -672,18 +677,19 @@ return RESULT_FAIL; \
 #pragma mark -
 #pragma mark BackpackLightsKeyFrame
     
-    Result BackpackLightsKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result BackpackLightsKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       ColorRGBA color;
      
       // Special helper macro for getting the LED colors out of the Json and
       // store them directly in the streamMsg
-#define GET_COLOR_FROM_JSON(__NAME__, __LED_NAME__) do { \
+#define GET_COLOR_FROM_JSON(__NAME__, __LED_NAME__) do {             \
 if(!JsonTools::GetColorOptional(jsonRoot, QUOTE(__NAME__), color)) { \
-PRINT_NAMED_ERROR("BackpackLightsKeyFrame.SetMembersFromJson", \
-"Failed to get '%s' LED color from Json file.\n", QUOTE(__NAME__)); \
-return RESULT_FAIL; \
-} \
+  PRINT_NAMED_ERROR("BackpackLightsKeyFrame.SetMembersFromJson",        \
+                    "%s: Failed to get '%s' LED color from Json file.\n", \
+                    animNameDebug.c_str(), QUOTE(__NAME__));            \
+  return RESULT_FAIL;                                                   \
+}                                                                       \
 _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift the Alpha out, since it's unused
 
       GET_COLOR_FROM_JSON(Back, (int)LEDId::LED_BACKPACK_BACK);
@@ -719,29 +725,63 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
       _streamMsg.curvatureRadius_mm = curvatureRadius_mm;
     }
     
-    Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, speed, streamMsg.speed);
       
       if(!jsonRoot.isMember("radius_mm")) {
         PRINT_NAMED_ERROR("BodyMotionKeyFrame.SetMembersFromJson.MissingRadius",
-                          "Missing 'radius_mm' field.\n");
+                          "%s: Missing 'radius_mm' field.",
+                          animNameDebug.c_str());
         return RESULT_FAIL;
       } else if(jsonRoot["radius_mm"].isString()) {
         const std::string& radiusStr = jsonRoot["radius_mm"].asString();
         if(radiusStr == "TURN_IN_PLACE" || radiusStr == "POINT_TURN") {
           _streamMsg.curvatureRadius_mm = 0;
+          
+          // Check that speed is valid
+          if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
+            PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.PointTurnSpeedExceedsLimit",
+                                "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                                animNameDebug.c_str(),
+                                std::abs(_streamMsg.speed),
+                                MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+            _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC, MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+          }
         } else if(radiusStr == "STRAIGHT") {
           _streamMsg.curvatureRadius_mm = s16_MAX;
+          
+          // Check that speed is valid
+          if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
+            PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.StraightSpeedExceedsLimit",
+                                "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                                animNameDebug.c_str(),
+                                std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+            _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
+          }
         } else {
           PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
-                            "Unrecognized string for 'radius_mm' field: %s.\n",
+                            "%s: Unrecognized string for 'radius_mm' field: %s.\n",
+                            animNameDebug.c_str(),
                             radiusStr.c_str());
           return RESULT_FAIL;
         }
       } else {
         _streamMsg.curvatureRadius_mm = (uint16_t)jsonRoot["radius_mm"].asInt();
+        
+        // Check that speed is valid
+        // NOTE: This should actually be checking the speed of the outer wheel
+        //       when driving at the given curvature, but not exactly sure what
+        //       speed limit should look like between straight and point turns so
+        //       just using straight limit for now as a sanity check.
+        if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
+          PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.ArcSpeedExceedsLimit",
+                              "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                              animNameDebug.c_str(),
+                              std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+          _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
+        }
       }
       
       return RESULT_OK;

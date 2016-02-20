@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -20,24 +21,23 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 #include <unistd.h>
 
-Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
-Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
+Anki::Cozmo::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests
 
 TEST(DataPlatform, ReadWrite)
 {
-  ASSERT_TRUE(dataPlatform != nullptr);
+  ASSERT_TRUE(cozmoContext->GetDataPlatform() != nullptr);
   Json::Value config;
-  const bool readSuccess = dataPlatform->readAsJson(
+  const bool readSuccess = cozmoContext->GetDataPlatform()->readAsJson(
     Anki::Util::Data::Scope::Resources,
     "config/basestation/config/configuration.json",
     config);
   EXPECT_TRUE(readSuccess);
 
   config["blah"] = 7;
-  const bool writeSuccess = dataPlatform->writeAsJson(Anki::Util::Data::Scope::Cache, "someRandomFolder/A/writeTest.json", config);
+  const bool writeSuccess = cozmoContext->GetDataPlatform()->writeAsJson(Anki::Util::Data::Scope::Cache, "someRandomFolder/A/writeTest.json", config);
   EXPECT_TRUE(writeSuccess);
 
-  std::string someRandomFolder = dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "someRandomFolder");
+  std::string someRandomFolder = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Cache, "someRandomFolder");
   Anki::Util::FileUtils::RemoveDirectory(someRandomFolder);
 }
 
@@ -54,8 +54,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   Result lastResult;
   
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, nullptr);
+  Robot robot(1, cozmoContext);
   robot.FakeSyncTimeAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
@@ -71,7 +70,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_EQ(lastResult, RESULT_OK);
 
   // Fake an observation of a block:
-  const ObjectType testType = ObjectType::Block_BULLSEYE2;
+  const ObjectType testType = ObjectType::Block_LIGHTCUBE1;
   Block_Cube1x1 testCube(testType);
   Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   
@@ -140,7 +139,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_EQ(object->GetType(), testType);
   
   // Returned object should be dynamically-castable to its base class:
-  Block_Cube1x1* block = dynamic_cast<Block_Cube1x1*>(object);
+  Block* block = dynamic_cast<Block*>(object);
   ASSERT_NE(block, nullptr);
   
   // Now try deleting the object, and make sure we can't still get it using the old ID
@@ -191,14 +190,13 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
   fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
 
-  const bool jsonParseResult = dataPlatform->readAsJson(Anki::Util::Data::Scope::Resources, jsonFilename, jsonRoot);
+  const bool jsonParseResult = cozmoContext->GetDataPlatform()->readAsJson(Anki::Util::Data::Scope::Resources, jsonFilename, jsonRoot);
   ASSERT_TRUE(jsonParseResult);
 
   // Create the modules we need (and stubs of those we don't)
-  RobotManager        robotMgr(nullptr, nullptr);
-  RobotInterface::MessageHandlerStub  msgHandler;
+  RobotManager        robotMgr(nullptr);
  
-  robotMgr.AddRobot(0, &msgHandler);
+  robotMgr.AddRobot(0);
   Robot& robot = *robotMgr.GetRobotByID(0);
   
 //  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
@@ -555,8 +553,8 @@ INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
 int main(int argc, char ** argv)
 {
   //LEAKING HERE
-  loggerProvider = new Anki::Util::PrintfLoggerProvider();
-  loggerProvider->SetMinLogLevel(0);
+  Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
+  loggerProvider->SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = loggerProvider;
 
 
@@ -606,7 +604,8 @@ int main(int argc, char ** argv)
     externalPath = workRoot + "/temp";
   }
   //LEAKING HERE
-  dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, nullptr);
 
   //// should we do this here? clean previously dirty folders?
   //std::string cache = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "");

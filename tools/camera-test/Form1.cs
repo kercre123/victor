@@ -251,15 +251,16 @@ namespace BlueCode
             }
         }
 
-        private void receiveNoHeader(byte[] buf)
+        private void receiveNoHeader(byte[] buf, int start, int end, bool eof)
         {
-            for (int i = 0; i < buf.Length; i++)
-                m_image[i + m_imageLen] = buf[i];
+            int len = end - start;
+            for (int i = 0; i < len; i++)
+                m_image[i + m_imageLen] = buf[i + start];
 
-            m_imageLen += buf.Length;
-            System.Console.WriteLine(buf.Length + "/" + m_imageLen);
+            m_imageLen += len;
+            //System.Console.WriteLine(len + "/" + m_imageLen);
 
-            if (buf.Length < 1300)
+            if (eof)
             {
                 m_readyImage = m_image;
                 m_readyLen = m_imageLen;
@@ -303,6 +304,12 @@ namespace BlueCode
 	            0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 
 	            0x00, 0x00, 0x3F, 0x00
             };
+
+            int width = 320, height = 240;
+            header[0x5f] = (byte)height;
+            header[0x5e] = (byte)(height >> 8);
+            header[0x61] = (byte)width;
+            header[0x60] = (byte)(width >> 8);
 
             // Allocate enough space for worst case expansion
             byte[] bout = new byte[len * 2 + header.Length];
@@ -436,38 +443,31 @@ namespace BlueCode
                 byte[] buf = m_udp.EndReceive(ar, ref m_ep);
                 packetcount++;
                 bufs[packetcount] = buf;
+                //Console.WriteLine(buf.Length);
 
-                int start = 0;
-                while (start < buf.Length)
-                    if (buf[start++] == '\n')
-                        break;
-                while (start < buf.Length)
-                    if (buf[start++] == '=')
-                        break;
-                /*
-                for (int i = start - 2; i < buf.Length; i++)
-                    Console.Write(Convert.ToChar(buf[i]));
-                */
-                //Console.WriteLine(packetcount + ":" + (start-2) + "-" + buf.Length + " " + expect.ToString("x4"));
-                while (start+4 < buf.Length && buf[start-2] == '\n' && buf[start-1] == '=')
+                // Parse reliable transport header, copying any image data we find
+                // See "robot reliable transport in brief.md"
+                int i = 14;     // Skip RT header (14 bytes)
+
+                // While there could be another chunk for us to read...
+                while (i + 8 < buf.Length)
                 {
-                    byte[] val = new byte[4];
-                    Array.Copy(buf, start, val, 0, 4);
-                    String value = ASCIIEncoding.ASCII.GetString(val);
-                    int that = -1;
-                    int.TryParse(value, NumberStyles.AllowHexSpecifier, null, out that);
-                    if (expect != that)
+                    int len = buf[i + 1] + buf[i + 2] * 256;
+                    i += 3;
+                    int tag = buf[i];
+                    if (tag == 130)
                     {
-                        Console.WriteLine("ERROR " + packetcount + ":" + (start-2) + "-" + buf.Length + " " + value + " != " + expect.ToString("x4"));
-                        if (that > 2)
-                            expect = that;
+                        i += 15;        // Skip CLAD type + image chunk header
+                        len -= 15;
+                        int chunkCount = buf[i - 4];
+                        int chunkId = buf[i - 3];
+                        bool eof = chunkCount != 0;
+                        //Console.WriteLine(chunkCount + " " + chunkId + " " + len);
+                        receiveNoHeader(buf, i, i + len, eof);
                     }
-                    expect++;
-                    if ((expect & 0xfff) >= 0x1e1)
-                        expect = (expect + 0xe1f) & 0xffff;
-                    //Console.Write(expect.ToString("x4") + ".");
-                    start += LINELEN;
-                }
+                    i += len;
+                } 
+
                 //receiveNoHeader(buf);
             }
             catch (Exception x)

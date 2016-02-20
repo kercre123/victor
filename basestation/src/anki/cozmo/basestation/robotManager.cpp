@@ -8,6 +8,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -15,24 +16,18 @@
 namespace Anki {
   namespace Cozmo {
     
-    RobotManager::RobotManager(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
-    : _externalInterface(externalInterface)
-    , _dataPlatform(dataPlatform)
-    , _robotEventHandler(*this, externalInterface)
+    RobotManager::RobotManager(const CozmoContext* context)
+    : _context(context)
+    , _robotEventHandler(context)
     {
       
     }
     
-    void RobotManager::AddRobot(const RobotID_t withID, RobotInterface::MessageHandler* msgHandler)
+    void RobotManager::AddRobot(const RobotID_t withID)
     {
-      if(msgHandler == nullptr) {
-        PRINT_NAMED_ERROR("RobotManager.AddRobot", "Can't add robot with null message handler.\n");
-        return;
-      }
-      
       if (_robots.find(withID) == _robots.end()) {
         PRINT_STREAM_INFO("RobotManager.AddRobot", "Adding robot with ID=" << withID);
-        _robots[withID] = new Robot(withID, msgHandler, _externalInterface, _dataPlatform);
+        _robots[withID] = new Robot(withID, _context);
         _IDs.push_back(withID);
       } else {
         PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
@@ -81,6 +76,8 @@ namespace Anki {
         return _robots[robotID];
       }
       
+      PRINT_NAMED_WARNING("RobotManager.GetRobotByID.InvalidID", "No robot with ID=%d", robotID);
+      
       return nullptr;
     }
     
@@ -117,7 +114,7 @@ namespace Anki {
             PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
             //CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
             _robotDisconnectedSignal.emit(r->first);
-            _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
+            _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
             
             delete r->second;
             r = _robots.erase(r);

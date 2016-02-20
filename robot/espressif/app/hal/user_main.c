@@ -9,6 +9,7 @@
 #include "client.h"
 #include "driver/uart.h"
 #include "driver/i2spi.h"
+#include "driver/crash.h"
 #include "gpio.h"
 #include "backgroundTask.h"
 #include "foregroundTask.h"
@@ -103,9 +104,14 @@ static void checkAndClearBootloaderConfig(void)
  */
 void user_rf_pre_init(void)
 {
+  crashHandlerInit(); // Set up our own crash handler, so we can record crashes in more detail
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
   //system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
 }
+
+/// Forward declarations
+int NVCheckIntegrity(const bool recollect, const bool defragment);
+void NVWipeAll(void);
 
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
@@ -115,6 +121,15 @@ static void system_init_done(void)
   // Check bootloader config and clear if nessisary
   // Do this before i2spiInit so we don't desynchronize
   checkAndClearBootloaderConfig();
+  
+  // Check the file system integrity
+#if 1
+  const int nvops = NVCheckIntegrity(false, false); /// @TODO do the recollect and defragment operations
+  os_printf("Completed %d non-volatile file system operations\r\n", nvops);
+#else
+  NVWipeAll();
+  os_printf("Wiped all NV storage\r\n");
+#endif
   
   // Setup Basestation client
   clientInit();
@@ -155,21 +170,13 @@ void user_init(void)
 
   os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
+  uint8 macaddr[6];
+  wifi_get_macaddr(SOFTAP_IF, macaddr);
+  
   if (*serialNumber == 0xFFFFffff)
   {
     os_printf("No serial number present, will use MAC instead\r\n");
-    // Get the mac address
-    uint8 macaddr[6];
-    err = wifi_get_macaddr(SOFTAP_IF, macaddr);
-    if (err == false)
-    {
-      os_printf("Error getting mac address info\r\n");
-      return;
-    }
-    else
-    {
-      os_sprintf(ssid, "FAIL%02x%02x", macaddr[4], macaddr[5]);
-    }
+    os_sprintf(ssid, "FAIL%02x%02x", macaddr[4], macaddr[5]);
   }
   else
   {
@@ -177,6 +184,30 @@ void user_init(void)
   }
 
   struct softap_config ap_config;
+  
+  // Create config for Wifi AP
+  err = wifi_softap_get_config(&ap_config);
+  if (err == false)
+  {
+    os_printf("Error getting wifi softap config\r\n");
+  }
+
+  os_sprintf((char*)ap_config.ssid, ssid);
+  os_sprintf((char*)ap_config.password, AP_KEY);
+  ap_config.ssid_len = 0;
+  ap_config.channel = (macaddr[5]/24) + 1;
+  ap_config.authmode = AUTH_WPA2_PSK;
+  ap_config.max_connection = AP_MAX_CONNECTIONS;
+  ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
+  ap_config.beacon_interval = 35 + ap_config.channel; // Must be 50 or lower for iOS devices to connect
+
+  // Setup ESP module to AP mode and apply settings
+  wifi_set_opmode(SOFTAP_MODE);
+  wifi_softap_set_config(&ap_config);
+  wifi_set_phy_mode(PHY_MODE_11G);
+  // Disable radio sleep
+  //wifi_set_sleep_type(NONE_SLEEP_T);
+  wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
   
   // Disable DHCP server before setting static IP info
   err = wifi_softap_dhcps_stop();
@@ -197,40 +228,26 @@ void user_init(void)
     os_printf("Couldn't set IP info\r\n");
   }
 
+  // Configure the DHCP server
+  struct dhcps_lease dhcpInfo;
+  dhcpInfo.start_ip.addr = ipaddr_addr(DHCP_START);
+  dhcpInfo.end_ip.addr   = ipaddr_addr(DHCP_END);
+  err = wifi_softap_set_dhcps_lease(&dhcpInfo);
+  if (err == false)
+  {
+    os_printf("Couldn't set DHCPS lease information\r\n");
+  }
+
   // Start DHCP server
   err = wifi_softap_dhcps_start();
   if (err == false)
   {
     os_printf("Couldn't restart DHCP server\r\n");
   }
-  
-  // Create config for Wifi AP
-  err = wifi_softap_get_config(&ap_config);
-  if (err == false)
-  {
-    os_printf("Error getting wifi softap config\r\n");
-  }
-
-  os_sprintf((char*)ap_config.ssid, ssid);
-  os_sprintf((char*)ap_config.password, AP_KEY);
-  ap_config.ssid_len = 0;
-  ap_config.channel = 9;
-  ap_config.authmode = AUTH_WPA2_PSK;
-  ap_config.max_connection = AP_MAX_CONNECTIONS;
-  ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
-  ap_config.beacon_interval = 35; // Must be 50 or lower for iOS devices to connect
-
-  // Setup ESP module to AP mode and apply settings
-  wifi_set_opmode(SOFTAP_MODE);
-  wifi_softap_set_config(&ap_config);
-  wifi_set_phy_mode(PHY_MODE_11G);
-  // Disable radio sleep
-  //wifi_set_sleep_type(NONE_SLEEP_T);
-  wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
 
   os_printf("SSID: %s\r\nPSK: %s\r\n", ap_config.ssid, ap_config.password);
 
   // Register callbacks
   system_init_done_cb(&system_init_done);
-  wifi_set_event_handler_cb(wifi_event_callback);
+  //wifi_set_event_handler_cb(wifi_event_callback);
 }

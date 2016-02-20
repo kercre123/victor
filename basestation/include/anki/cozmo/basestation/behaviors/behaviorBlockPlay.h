@@ -35,6 +35,9 @@
 namespace Anki {
 namespace Cozmo {
   
+  // Forward declaration
+  class IDriveToInteractWithObject;
+  
   class BehaviorBlockPlay : public IBehavior
   {
   protected:
@@ -72,11 +75,13 @@ namespace Cozmo {
       SearchingForMissingBlock, // this is only entered if a block "disappears" on us
     };
     
-    virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
+    virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
    
     // Finish placing current object if there is one, otherwise good to go
-    virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
+    
+    virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
     
     // If the robot is not executing any action for this amount of time,
     // something went wrong so start it up again.
@@ -92,6 +97,8 @@ namespace Cozmo {
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
+
+    virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) override;
     
     // Handlers for signals coming from the engine
     Result HandleObservedObjectWhileRunning(Robot& robot,
@@ -116,17 +123,23 @@ namespace Cozmo {
                                  double currentTime_sec);
     Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
 
-
     void TrackBlockWithLift(Robot& robot, const Pose3d& objectPose);
+
+    // tries to move the robot towards a face, properly handling things like if the robot is holding a cube,
+    // if it has seen a face, etc
+    void TurnTowardsAFace(Robot& robot);
     
     void InitState(const Robot& robot);
     void SetCurrState(State s);
+    void UpdateStateName();
     void PlayAnimation(Robot& robot, const std::string& animName, bool sequential = true);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
 
-    using ActionResultCallback = std::function<void(ActionResult result)>;
+    // returns true if the callback handled the action, false if we should continue to handle it in HandleActionCompleted
+    using ActionResultCallback = std::function<bool(ActionResult result)>;
     
     void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
+    void SetDriveToObjectSounds(IDriveToInteractWithObject* action);
     
     State _currentState;
     bool  _interrupted;
@@ -166,9 +179,6 @@ namespace Cozmo {
     // ID of player face that Cozmo will interact with for this behavior
     Face::ID_t _faceID;
     
-    // This is the last known pose of a face that has been tracked
-    Pose3d _lastKnownFacePose;
-    bool   _hasValidLastKnownFacePose;
     double _noFacesStartTime = -1.0;
     
     float _oldHeadAngle_rads = 0.0f;
@@ -179,7 +189,7 @@ namespace Cozmo {
     // blocks that should be ignored (which happens at the end of the demo)
     std::set<ObjectID> _objectsToIgnore;
 
-    std::vector<ObjectID> _objectsToTurnOffLights;
+    std::set<ObjectID> _objectsToTurnOffLights;
 
     // used for moving the lift to track (grab at) the cube
     const f32 _maxObjectDistToMoveLift = 145.0f;
@@ -189,23 +199,13 @@ namespace Cozmo {
     const f32 _speedToDriveForwardWhileTracking = 90.0f;
     const f32 _highLiftHeight = 70.0f;
     const f32 _minHeadAngleforLiftUp_rads = DEG_TO_RAD(20.0f);
-    const f32 _lostBlockTimeToLookDown = 1.5f;
+    const f32 _lostBlockTimeToLookDown = 1.2f;
     const f32 _waitForBlockHeadAngle_rads = DEG_TO_RAD(-10.0f);
     const f32 _timetoInspectBlock = 0.3f;
+    const f32 _robotObjectOrientationDiffThreshForDirectPickup = DEG_TO_RAD(3);
+    const f32 _angleToObjectThreshForDirectPickup = DEG_TO_RAD(3);
     u32 _driveForwardActionTag = 0;
     bool _isDrivingForward = false;
-
-    bool _lockedLift = false;
-    void LiftShouldBeLocked(Robot& robot);
-    void LiftShouldBeUnlocked(Robot& robot);
-
-    bool _lockedHead = false;
-    void HeadShouldBeLocked(Robot& robot);
-    void HeadShouldBeUnlocked(Robot& robot);
-
-    bool _lockedBody = false;
-    void BodyShouldBeLocked(Robot& robot);
-    void BodyShouldBeUnlocked(Robot& robot);
 
     void IgnoreObject(Robot& robot, ObjectID objectID);
 
@@ -226,6 +226,9 @@ namespace Cozmo {
     // This is the block upon which the first block is placed.
     ObjectID _objectToPlaceOn;
 
+    // The higher this gets, the more frustrated
+    // TODO: Base on moodmanager instead?
+    s32 _attemptCounter = 0;
     
   }; // class BehaviorBlockPlay
 

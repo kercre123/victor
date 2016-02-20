@@ -8,7 +8,7 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
-#include "driver/i2spi.h"
+#include "backgroundTask.h"
 #include "transport/IReceiver.h"
 #include "transport/reliableTransport.h"
 
@@ -21,6 +21,7 @@
 static struct espconn* socket;
 static ReliableConnection* clientConnection;
 static uint32_t clientConnectionId;
+static bool sendHoldoff;
 
 bool clientConnected(void)
 {
@@ -39,23 +40,37 @@ void clientUpdate(void)
   }
 }
 
+ReliableConnection g_conn;   // So we can check canaries when we crash
 static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   struct espconn* src = (struct espconn*)arg;
+  static esp_udp s_dest;
+
+  sendHoldoff = false;
   
   if (unlikely(!clientConnected()))
   {
+    remot_info *remote = NULL;
+    sint8 err;
+    err = espconn_get_connection_info(src,&remote,0);
+    if (err != ESPCONN_OK)
+    {
+      os_printf("ERROR, couldn't get remote info for connection! %d\r\n", err);
+      return;
+    }
+    
 #ifdef DEBUG_CLIENT
-    printf("Initalizing new connection from  %d.%d.%d.%d:%d\r\n", src->proto.udp->remote_ip[0], src->proto.udp->remote_ip[1], src->proto.udp->remote_ip[2], src->proto.udp->remote_ip[3], src->proto.udp->remote_port);
+    printf("Initalizing new connection from  %d.%d.%d.%d:%d\r\n", remote->remote_ip[0], remote->remote_ip[1], remote->remote_ip[2], remote->remote_ip[3], remote->remote_port);
 #endif    
-    esp_udp* dest    = os_zalloc(sizeof(esp_udp));
-    clientConnection = os_zalloc(sizeof(ReliableConnection));
+    esp_udp* dest    = &s_dest;
+    clientConnection = &g_conn;
     if (unlikely(clientConnection == NULL || dest == NULL))
     {
       os_printf("DIE! Couldn't allocate memory for reliable connection!\r\n");
       return;
     }
-    os_memcpy(dest, src->proto.udp, sizeof(esp_udp));
+    os_memcpy(dest->remote_ip, remote->remote_ip, 4);
+    dest->remote_port = remote->remote_port;
     ReliableConnection_Init(clientConnection, dest);
   }
   else if (unlikely(!destsEqual(src->proto.udp, (esp_udp*)clientConnection->dest)))
@@ -76,16 +91,20 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 sint8 clientInit()
 {
   int8 err;
-
+  static struct espconn s_socket;
+  static esp_udp s_udp;
+  
   printf("clientInit\r\n");
 
   clientConnection = NULL;
   clientConnectionId = 0;
+  sendHoldoff = false;
 
-  socket = (struct espconn *)os_zalloc(sizeof(struct espconn));
+
+  socket = &s_socket;
   os_memset( socket, 0, sizeof( struct espconn ) );
   socket->type = ESPCONN_UDP;
-  socket->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
+  socket->proto.udp = &s_udp;
   os_memset(socket->proto.udp, 0, sizeof(esp_udp));
   socket->proto.udp->local_port = 5551;
 
@@ -139,20 +158,33 @@ bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const b
 
 bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 {
+  const esp_udp* const dest = (esp_udp*)clientConnection->dest;
+  os_memcpy(socket->proto.udp->remote_ip, dest->remote_ip, 4);
+  socket->proto.udp->remote_port = dest->remote_port;
+  
+  
 #ifdef DEBUG_CLIENT
   printf("clientQueuePacket to %d.%d.%d.%d:%d\r\n", socket->proto.udp->remote_ip[0], socket->proto.udp->remote_ip[1],
                     socket->proto.udp->remote_ip[2], socket->proto.udp->remote_ip[3], socket->proto.udp->remote_port);
 #endif
 
-  const int8 err = espconn_send(socket, data, len);
-  if (err < 0) // I think a negative number is an error. 0 is OK, I don't know what positive numbers are
+  if (sendHoldoff)
   {
-    printf("Failed to queue UDP packet %d\r\n", err);
     return false;
   }
   else
   {
-    return true;
+    const int8 err = espconn_send(socket, data, len);
+    if (err < 0) // I think a negative number is an error. 0 is OK, I don't know what positive numbers are
+    {
+      printf("FQUP %d\r\n", err);
+      sendHoldoff = true;
+      return false;
+    }
+    else
+    {
+      return true;
+    }
   }
 }
 
@@ -163,8 +195,7 @@ void Receiver_OnConnectionRequest(ReliableConnection* conn)
   {
     ReliableTransport_FinishConnection(conn); // Accept the connection
     clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
-    uint8_t msg[2] = {0xFC, true}; // FC is the tag for a radio connection state message to the robot
-    i2spiQueueMessage(msg, 2);
+    backgroundTaskOnConnect();
   }
   else // The engine is trying to reconnect
   {
@@ -187,10 +218,7 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
   else
   {
-    uint8_t msg[2] = {0xFC, false}; // FC is the tag for a radio connection state message to the robot
-    i2spiQueueMessage(msg, 2);
-    os_free(clientConnection->dest);
-    os_free(clientConnection);
+    backgroundTaskOnDisconnect();
     clientConnection = NULL;
     clientConnectionId = 0;
   }

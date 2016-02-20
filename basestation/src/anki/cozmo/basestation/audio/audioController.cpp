@@ -14,6 +14,8 @@
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "clad/types/animationKeyFrames.h"
+#include "clad/audio/audioParameterTypes.h"
 #include <util/dispatchQueue/dispatchQueue.h>
 #include <util/helpers/templateHelpers.h>
 #include <util/logging/logging.h>
@@ -72,7 +74,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 #if USE_AUDIO_ENGINE
     
     // Setup CozmoPlugIn & RobotAudioBuffer
-    _cozmoPlugIn = new CozmoPlugIn();
+    _cozmoPlugIn = new CozmoPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
     _robotAudioBuffer = new RobotAudioBuffer();
     
     // Setup Callbacks
@@ -117,10 +119,9 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
       "Init.bnk",
       "Music.bnk",
       "UI.bnk",
-      "VO_Aria.bnk",
+      "SFX.bnk",
       "VO_Cozmo.bnk",
-      "Cozmo_Movement.bnk",
-      "Debug.bnk",
+      "Dev_Debug.bnk",
     };
     const std::string sceneTitle = "InitScene";
     AudioScene initScene = AudioScene( sceneTitle, AudioEventList(), bankList );
@@ -246,7 +247,7 @@ bool AudioController::SetState( AudioEngine::AudioStateGroupId stateGroupId,
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    _audioEngine->SetState( stateGroupId, stateId );
+    success = _audioEngine->SetState( stateGroupId, stateId );
   }
 #endif
   return success;
@@ -260,7 +261,7 @@ bool AudioController::SetSwitchState( AudioEngine::AudioSwitchGroupId switchGrou
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    _audioEngine->SetSwitch( switchGroupId, switchStateId, gameObject );
+    success = _audioEngine->SetSwitch( switchGroupId, switchStateId, gameObject );
   }
 #endif
   return success;
@@ -276,11 +277,7 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    if ( AudioEngine::kInvalidAudioGameObject == gameObject ) {
-      // Set Global RTPC values
-      gameObject = _audioEngine->GetDefaultGameObjectId();
-    }
-    _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
+    success = _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
   }
 #endif
   return success;
@@ -304,13 +301,7 @@ bool AudioController::RegisterGameObject( AudioEngine::AudioGameObject gameObjec
 // THIS IS TEMP
 void AudioController::StartUpSetDefaults()
 {
-  AudioEngine::AudioParameterId ROBOT_MASTER_VOLUME = 562892825;
-  AudioEngine::AudioParameterId ROBOT_VOLUME = 1669075520;
-
-  
-  SetParameter( ROBOT_VOLUME, 0.2, kInvalidAudioGameObject);
-  // This is effected by robot volume
-  SetParameter( ROBOT_MASTER_VOLUME, 0.9, kInvalidAudioGameObject);
+  SetParameter( static_cast<AudioEngine::AudioParameterId>( GameParameter::ParameterType::Robot_Volume ), 0.2, kInvalidAudioGameObject );
 }
 
 
@@ -380,7 +371,7 @@ void AudioController::PrintPlugInLog() {
         postTime = aLog.TimeInNanoSec;
         
         printf("----------------------------------------------\n \
-               Post Event %s - time: %f\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+               Post Event %s - time: %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
       }
         break;
         
@@ -389,22 +380,22 @@ void AudioController::PrintPlugInLog() {
         createTime = aLog.TimeInNanoSec;
         isFirstUpdateLog = true;
         
-        printf("Create PlugIn %s - time: %f\n \
-               - Post -> Create time delta = %f\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ), ConvertToMiliSec( createTime - postTime ));
+        printf("Create PlugIn %s - time: %f ms\n \
+               - Post -> Create time delta = %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ), ConvertToMiliSec( createTime - postTime ));
       }
         break;
         
       case LogEnumType::Update:
       {
-        printf("Update %s - time: %f\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+        printf("Update %s - time: %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
         
         
         if ( isFirstUpdateLog ) {
-          printf("- Post -> Update time delta = %f\n \
-                  - Create -> Update time delta = %f\n", ConvertToMiliSec( aLog.TimeInNanoSec - postTime ), ConvertToMiliSec( aLog.TimeInNanoSec - createTime ));
+          printf("- Post -> Update time delta = %f ms\n \
+                  - Create -> Update time delta = %f ms\n", ConvertToMiliSec( aLog.TimeInNanoSec - postTime ), ConvertToMiliSec( aLog.TimeInNanoSec - createTime ));
         }
         else {
-          printf("- Previous Update -> Update time delta = %f\n", ConvertToMiliSec( aLog.TimeInNanoSec - updateTime ));
+          printf("- Previous Update -> Update time delta = %f ms\n", ConvertToMiliSec( aLog.TimeInNanoSec - updateTime ));
           
         }
         
@@ -415,7 +406,7 @@ void AudioController::PrintPlugInLog() {
         
       case LogEnumType::DestoryPlugIn:
       {
-        printf("Destory Plugin %s - time: %f\n \
+        printf("Destory Plugin %s - time: %f ms\n \
                ----------------------------------------------\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
       }
         break;

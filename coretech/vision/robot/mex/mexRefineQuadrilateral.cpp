@@ -55,7 +55,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   initialQuadF32.SetCast<s16>(initialQuad);
 
-  Anki::Result lastResult = RefineQuadrilateral(initialQuadF32, initialHomography, image, Point2f(squareWidthFraction, squareWidthFraction), iterations, darkGray, brightGray, numSamples, maxCornerChange, minCornerChange, refinedQuad, refinedHomography, scratch);
+  Anki::Result lastResult = RefineQuadrilateral(initialQuadF32, initialHomography, image, Point<f32>(squareWidthFraction, squareWidthFraction), iterations, darkGray, brightGray, numSamples, maxCornerChange, minCornerChange, refinedQuad, refinedHomography, scratch);
   
   // Create outputs before the next error check, in case it fails (for example, if homography refinement failed)
   plhs[0] = mxCreateDoubleMatrix(4,2, mxREAL);

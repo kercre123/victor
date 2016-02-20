@@ -281,8 +281,7 @@ def parse_engine_arguments():
 #################################
 
 def install_dependencies(options):
-    # TODO: is this fast engouh to run as part of every configure run? should this be a tool on its own?
-    options.deps = [] #, 'ninja']
+    options.deps = ['ninja', 'python3']
     if options.deps:
         print_status('Checking dependencies...')
         installer = ankibuild.installBuildDeps.DependencyInstaller(options);
@@ -372,9 +371,7 @@ class EnginePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
-        print "******************HERE1"
         generate_gyp(self.gyp_dir, self.platform, self.options)
-        print "******************HERE2"
         ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
     def build(self):

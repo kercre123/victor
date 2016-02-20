@@ -2,7 +2,8 @@
 #include <float.h>
 #include <math.h>
 #include "anki/cozmo/robot/hal.h"
-#include "anki/common/robot/trig_fast.h"
+#include "trig_fast.h"
+#include "anki/cozmo/robot/logging.h"
 #include "hal/portable.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h" // for calibration parameters
@@ -64,6 +65,16 @@ namespace Anki
         280.139456164f,
         199.567887592f,
         151.843694566f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+      
+      static HAL::CameraInfo camCal_0040 = {
+        278.097576248f,
+        279.784530486f,
+        206.263281121f,
+        150.982344827f,
         0.f,
         HEAD_CAM_CALIB_HEIGHT,
         HEAD_CAM_CALIB_WIDTH
@@ -1316,8 +1327,10 @@ namespace Anki
           case 0x3AA0:
             return &camCal_3AA0;
           case 0x3AA7:
-          default:
             return &camCal_3AA7;
+          case 0x0040:
+          default:
+            return &camCal_0040;
         }
       }
     }

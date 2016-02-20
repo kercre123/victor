@@ -88,7 +88,7 @@ namespace Anki {
       const Quadrilateral<f32>& initialQuad,
       const Array<f32>& initialHomography,
       const Array<u8> &image,
-      const Point2f& squareSizeFraction,
+      const Point<f32>& squareSizeFraction,
       const s32 maxIterations,
       const f32 darkGray,
       const f32 brightGray,

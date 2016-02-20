@@ -42,6 +42,10 @@ namespace Cozmo {
   class Reward;
   class Robot;
   
+  namespace ExternalInterface {
+    class BehaviorManagerMessageUnion;
+  }
+  
   class BehaviorManager
   {
   public:
@@ -67,11 +71,6 @@ namespace Cozmo {
     // behavior does not exist or the selected behavior is not runnable.
     Result SelectNextBehavior(const std::string& name, double currentTime_sec);
     
-    // Add a new behavior to the available ones to be selected from.
-    // The new behavior will be stored in the current IBehaviorChooser, which will
-    // be responsible for destroying it when the chooser is destroyed
-    Result AddBehavior(IBehavior* newBehavior);
-    
     // Specify the minimum time we should stay in each behavior before
     // considering switching
     void SetMinBehaviorTime(float time_sec) { _minBehaviorTime_sec = time_sec; }
@@ -89,6 +88,11 @@ namespace Cozmo {
           BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
     
     IBehavior* LoadBehaviorFromJson(const Json::Value& behaviorJson);
+    
+    void ClearAllBehaviorOverrides();
+    bool OverrideBehaviorScore(const std::string& behaviorName, float newScore);
+    
+    void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
 
   private:
     
@@ -102,6 +106,8 @@ namespace Cozmo {
     void   SetupOctDemoBehaviorChooser(const Json::Value &config);
     void   AddReactionaryBehavior(IReactionaryBehavior* behavior);
     
+    void   SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec);
+    
     // Factory creates and tracks data-driven behaviors etc
     BehaviorFactory* _behaviorFactory;
     
@@ -111,11 +117,12 @@ namespace Cozmo {
     IBehavior* _currentBehavior = nullptr;
     IBehavior* _nextBehavior = nullptr;
     IBehavior* _forceSwitchBehavior = nullptr;
-    IBehavior* _resumeBehavior = nullptr;
     
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;
     float _lastSwitchTime_sec;
+
+    bool _demoBehaviorChooserRunning = false;
     
     // For random numbers
     Util::RandomGenerator _rng;

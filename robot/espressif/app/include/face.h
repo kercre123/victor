@@ -37,14 +37,20 @@ namespace Anki {
       
       // Enables or disables periodic blinking
       void EnableBlink(bool enable);
-      
+
       extern "C"
       {
+        // Check for screen updates when the screen is idle
+        void ManageScreen(void);
+        
         // Display text on the screen until turned off
         void FacePrintf(const char *format, ...);
         
         // Return display to normal function
         void FaceUnPrintf(void);
+        
+        // Invert the display for future FacePrintf calls
+        void FaceInvertPrintf(bool blackOnBlue);
       }
     } // Face
   } // Cozmo

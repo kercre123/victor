@@ -1,17 +1,34 @@
+// Available Game parameters in project
 
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+namespace GameParameter {
 
 enum uint_32 ParameterType
 {
   Invalid = 0,
-
-  ROBOT_MASTER_VOLUME = 562892825,
-  ROBOT_VOLUME = 1669075520
-
+  Mood = 3128647864,
+  Music_Volume = 1006694123,
+  Relationship = 3723222599,
+  Robot_Master_Volume = 562892825,
+  Robot_Volume = 1669075520,
+  Sfx_Volume = 1564184899,
+  Ss_Air_Fear = 1351367891,
+  Ss_Air_Freefall = 3002758120,
+  Ss_Air_Fury = 1029930033,
+  Ss_Air_Month = 2648548617,
+  Ss_Air_Presence = 3847924954,
+  Ss_Air_Rpm = 822163944,
+  Ss_Air_Size = 3074696722,
+  Ss_Air_Storm = 3715662592,
+  Ss_Air_Timeofday = 3203397129,
+  Ss_Air_Turbulence = 4160247818,
+  Ui_Volume = 1719345792,
+  Vo_Volume = 2295491857,
 }
 
-}
-}
-}
+} // GameParameter
+} // Audio
+} // Cozmo
+} // Anki

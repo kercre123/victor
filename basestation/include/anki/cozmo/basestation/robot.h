@@ -35,13 +35,15 @@
 #include "anki/planning/shared/path.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
@@ -50,6 +52,8 @@
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/tracePrinter.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -124,8 +128,7 @@ class Robot
 {
 public:
     
-    Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
-          IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
+    Robot(const RobotID_t robotID, const CozmoContext* context);
     ~Robot();
     // Explicitely delete copy and assignment operators (class doesn't support shallow copy)
     Robot(const Robot&) = delete;
@@ -174,14 +177,7 @@ public:
     
     // Returns true if robot is not traversing a path and has no actions in its queue.
     bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
-    
-    // True if wheel speeds are non-zero in most recent RobotState message
-    bool   IsMoving() const {return _isMoving;}
-    
-    // True if head/lift is on its way to a commanded angle/height
-    bool   IsHeadMoving() const {return _isHeadMoving;}
-    bool   IsLiftMoving() const {return _isLiftMoving;}
-    
+  
     // True if we are on the sloped part of a ramp
     bool   IsOnRamp() const { return _onRamp; }
     
@@ -222,6 +218,9 @@ public:
   
     // Returns the average period of image processing
     u32 GetAverageImageProcPeriodMS() const;
+
+    // Set the calibrated rotation of the camera
+    void SetCameraRotation(f32 roll, f32 pitch, f32 yaw);
   
     // Specify whether this robot is a physical robot or not.
     // Currently, adjusts headCamPose by slop factor if it's physical.
@@ -246,10 +245,11 @@ public:
     void SetPose(const Pose3d &newPose);
     void SetHeadAngle(const f32& angle);
     void SetLiftAngle(const f32& angle);
-  
-    // Get 3D bounding box of the robot at its current pose or a given pose
-    void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
-    void GetBoundingBox(const Pose3d& atPose, std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
+
+// #notImplemented
+//    // Get 3D bounding box of the robot at its current pose or a given pose
+//    void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
+//    void GetBoundingBox(const Pose3d& atPose, std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
 
     // Get the bounding quad of the robot at its current or a given pose
     Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
@@ -336,8 +336,12 @@ public:
     bool IsPickedUp()         const {return _isPickedUp;}
     
     void SetCarryingObject(ObjectID carryObjectID);
-    void UnSetCarryingObjects();
-    
+    void UnSetCarryingObjects(bool topOnly = false);
+  
+    // If objID == carryingObjectOnTopID, only that object's carry state is unset.
+    // If objID == carryingObjectID, all carried objects' carry states are unset.
+    void UnSetCarryObject(ObjectID objID);
+  
     // Tell the physical robot to dock with the specified marker
     // of the specified object that it should currently be seeing.
     // If pixel_radius == u8_MAX, the marker can be seen anywhere in the image,
@@ -417,10 +421,6 @@ public:
     // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
     ActionList& GetActionList() { return _actionList; }
   
-    static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
-    static const ActionList::SlotHandle FaceAnimationSlot = 1;
-    static const ActionList::SlotHandle SoundSlot = 2;
-  
     // Send a message to the robot to place whatever it is carrying on the
     // ground right where it is. Returns RESULT_FAIL if robot is not carrying
     // anything.
@@ -445,11 +445,6 @@ public:
     // Returns "" if no non-idle animation is streaming.
     const std::string GetStreamingAnimationName() const;
     
-    const ProceduralFace& GetProceduralFace() const { return _proceduralFace; }
-    const ProceduralFace& GetLastProceduralFace() const { return _lastProceduralFace; }
-    void SetProceduralFace(const ProceduralFace& face);
-    void MarkProceduralFaceAsSent();
-    
     // Returns the number of animation bytes or audio frames played on the robot since
     // it was initialized with SyncTime.
     s32 GetNumAnimationBytesPlayed() const;
@@ -465,14 +460,11 @@ public:
   
     // Tell the animation streamer to move the eyes by this x,y amount over the
     // specified duration (layered on top of any other animation that's playing).
-    // If makePersistent is true, a looping face layer will be used and it is the
-    // caller's responsibility to remove that layer using the returned tag.
-    // (Otherwise - when makePersistent=false - the tag is 0 and can be ignored.)
-    u32 ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent = false);
-  
-    // Same as above, but shifts and scales
-    u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
-                          TimeStamp_t duration_ms, bool makePersistent = false);
+    // Use tag = AnimationStreamer::NotAnimatingTag to start a new layer (in which
+    // case tag will be set to the new layer's tag), or use an existing tag
+    // to add the shift to that layer.
+    void ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
+                   TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
@@ -483,17 +475,25 @@ public:
     // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
-    
-    Result StopAnimation();
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
-
+  
     // Read the animations in a dir
     void ReadAnimationDir();
+    void ReadAnimationDirImpl(const std::string& animationDir);
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupDir();
+
+    // Read the animation groups in a dir
+    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
+  
+    // Load in all data-driven emotion events
+    void LoadEmotionEvents();
 
     // Returns true if the robot is currently playing an animation, according
     // to most recent state message. NOTE: Will also be true if the animation
@@ -608,6 +608,8 @@ public:
     
     // =========  Other State  ============
     f32 GetBatteryVoltage() const { return _battVoltage; }
+  
+    u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
     
     // Abort everything the robot is doing, including path following, actions,
     // animations, and docking. This is like the big red E-stop button.
@@ -637,12 +639,12 @@ public:
     // =========  Events  ============
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
-    bool HasExternalInterface() const { return _externalInterface != nullptr; }
+    bool HasExternalInterface() const { return _context->GetExternalInterface() != nullptr; }
     IExternalInterface* GetExternalInterface() {
-      ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface;
+      ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr"); return _context->GetExternalInterface();
     }
     RobotInterface::MessageHandler* GetRobotMessageHandler() {
-      ASSERT_NAMED(_msgHandler != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _msgHandler;
+      ASSERT_NAMED(_context->GetRobotMsgHandler() != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _context->GetRobotMsgHandler();
     }
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
@@ -652,6 +654,9 @@ public:
 
     const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
           MoodManager& GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+
+    const BehaviorManager& GetBehaviorManager() const { return _behaviorMgr; }
+          BehaviorManager& GetBehaviorManager()       { return _behaviorMgr; }
 
     const BehaviorFactory& GetBehaviorFactory() const { return _behaviorMgr.GetBehaviorFactory(); }
           BehaviorFactory& GetBehaviorFactory()       { return _behaviorMgr.GetBehaviorFactory(); }
@@ -668,11 +673,23 @@ public:
     // if there was no external interface).
     bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
   
-    Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
+    Util::Data::DataPlatform* GetDataPlatform() { return _context->GetDataPlatform(); }
+    const CozmoContext* GetContext() const { return _context; }
+  
+    const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
+  
+  const std::string& GetAnimationNameFromGroup(const std::string& name) const {
+    auto group = _animationGroups.GetAnimationGroup(name);
+    if(group != nullptr && !group->IsEmpty()) {
+      return group->GetAnimationName(GetMoodManager());
+    }
+    static const std::string empty("");
+    return empty;
+  }
   
   protected:
-    IExternalInterface* _externalInterface;
-    Util::Data::DataPlatform* _dataPlatform;
+    const CozmoContext* _context;
+  
     RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
     // The robot's identifier
     RobotID_t         _ID;
@@ -683,9 +700,6 @@ public:
   
     // Flag indicating whether a robotStateMessage was ever received
     bool              _newStateMsgAvailable = false;
-    
-    // A reference to the MessageHandler that the robot uses for outgoing comms
-    RobotInterface::MessageHandler* _msgHandler;
     
     // A reference to the BlockWorld the robot lives in
     BlockWorld        _blockWorld;
@@ -752,6 +766,7 @@ public:
     
     const Pose3d     _neckPose;     // joint around which head rotates
     Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
+    static const RotationMatrix3d _kDefaultHeadCamRotation;
     const Pose3d     _liftBasePose; // around which the base rotates/lifts
     Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
@@ -776,12 +791,10 @@ public:
     // State
     bool             _isPickingOrPlacing = false;
     bool             _isPickedUp         = false;
-    bool             _isMoving           = false;
-    bool             _isHeadMoving       = false;
-    bool             _isLiftMoving       = false;
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
+    u8               _enabledAnimTracks      = (u8)AnimTrackFlag::ALL_TRACKS;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -833,7 +846,8 @@ public:
     std::string _lastPlayedAnimationId;
 
     std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    
+    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+  
     ///////// Modifiers ////////
     
     void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
@@ -851,8 +865,8 @@ public:
     ///////// Animation /////////
     
     CannedAnimationContainer _cannedAnimations;
+    AnimationGroupContainer  _animationGroups;
     AnimationStreamer        _animationStreamer;
-    ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed         = 0;
     s32 _numAnimationBytesStreamed       = 0;
@@ -873,17 +887,23 @@ public:
     ImageDeChunker* _imageDeChunker;
     uint8_t _imuSeqID = 0;
     std::ofstream _imuLogFileStream;
+    TracePrinter _traceHandler;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+    void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
@@ -893,8 +913,12 @@ public:
     // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  
+    void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void SetupMiscHandlers(IExternalInterface& externalInterface);
     void SetupVisionHandlers(IExternalInterface& externalInterface);

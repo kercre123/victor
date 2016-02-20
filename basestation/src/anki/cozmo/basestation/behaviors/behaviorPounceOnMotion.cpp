@@ -15,7 +15,8 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -178,7 +179,7 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
 }
 
   
-Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec)
 {
   if( _numValidPouncePoses == 0 ) {
     PRINT_NAMED_WARNING("BehaviorPounceOnMotion.Init.NoPouncePose", "");
@@ -187,15 +188,14 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
 
   _prePouncePitch = robot.GetPitchAngle();
   
-  // TEMP: 
-  std::string _pounceAnimation = "invDemo_P05_CatchFwd"; // TEMP: 
+  std::string _pounceAnimation = "invDemo_P05_CatchFwd";
 
   // disable idle
   _previousIdleAnimation = robot.GetIdleAnimationName();
   robot.SetIdleAnimation("NONE");
   
   _state = State::Pouncing;
-  IActionRunner* animAction = new PlayAnimationAction( _pounceAnimation );
+  IActionRunner* animAction = new PlayAnimationAction(robot, _pounceAnimation);
 
   IActionRunner* actionToRun = animAction;
 
@@ -207,12 +207,12 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
                      "driving forward %fmm before playing pounce animation",
                      distToDrive);
     
-    IActionRunner* driveAction = new DriveStraightAction(distToDrive, 150.0f);
-    actionToRun = new CompoundActionSequential({driveAction, animAction});
+    IActionRunner* driveAction = new DriveStraightAction(robot, distToDrive, 150.0f);
+    actionToRun = new CompoundActionSequential(robot, {driveAction, animAction});
   }
 
   _waitForActionTag = actionToRun->GetTag();
-  robot.GetActionList().QueueActionNow(0, actionToRun);
+  robot.GetActionList().QueueActionNow(actionToRun);
 
   return Result::RESULT_OK;
 }
@@ -221,14 +221,15 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
 {
   // Arbitrarily tuned for robot A0
   const float liftHeightThresh = 37.5f;
-  const float bodyAngleThresh = 0.025f;
+  const float bodyAngleThresh = 0.02f;
 
   float robotBodyAngleDelta = robot.GetPitchAngle() - _prePouncePitch;
     
   // check the lift angle, after some time, transition state
-  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%f -> %f)",
+  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
                    robot.GetLiftHeight(),
                    RAD_TO_DEG(robotBodyAngleDelta),
+                   robotBodyAngleDelta,
                    RAD_TO_DEG(_prePouncePitch),
                    RAD_TO_DEG(robot.GetPitchAngle()));
 
@@ -241,16 +242,16 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    newAction = new PlayAnimationAction( "ID_catch_success" );
+    newAction = new PlayAnimationAction(robot, "ID_catch_success" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new PlayAnimationAction( "ID_catch_fail" );
+    newAction = new PlayAnimationAction(robot, "ID_catch_fail" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
   _waitForActionTag = newAction->GetTag();
-  robot.GetActionList().QueueActionNow(0, newAction);
+  robot.GetActionList().QueueActionNow(newAction);
   _state = State::PlayingFinalReaction;
   
   robot.GetMoveComponent().EnableLiftPower(true);
@@ -284,7 +285,7 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot, double cu
   return Status::Running;
 }
 
-Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if( _state == State::Inactive ) {
@@ -294,6 +295,11 @@ Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTim
   }
 
   return Result::RESULT_FAIL;
+}
+  
+void BehaviorPounceOnMotion::StopInternal(Robot& robot, double currentTime_sec)
+{
+  Cleanup(robot);
 }
 
 

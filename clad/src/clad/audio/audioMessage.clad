@@ -14,9 +14,9 @@ namespace Audio {
 
 message PostAudioEvent
 {
-  EventType         audioEvent,
-  GameObjectType    gameObject,
-  uint_16           callbackId = 0  // Send all callbacks if this is NOT == 0
+  GameEvent::GenericEvent   audioEvent,
+  GameObjectType            gameObject,
+  uint_16                   callbackId = 0  // Send all callbacks if this is NOT == 0
 }
 
 message StopAllAudioEvents
@@ -26,24 +26,24 @@ message StopAllAudioEvents
 
 message PostAudioGameState
 {
-  GameStateGroupType  gameStateGroup,
-  GameStateType       gameState,
+  GameState::StateGroupType  stateGroup,
+  GameState::GenericState    stateValue,
 }
 
 message PostAudioSwitchState
 {
-  SwitchStateGroupType  switchStateGroup,
-  SwitchStateType       switchState,
-  GameObjectType        gameObject,
+  SwitchState::SwitchGroupType  switchStateGroup,
+  SwitchState::GenericSwitch    switchStateValue,
+  GameObjectType                gameObject,
 }
 
 message PostAudioParameter
 {
-  ParameterType   parameter,
-  float_32        parameterValue      = 0.0,
-  GameObjectType  gameObject,
-  int_32          timeInMilliSeconds  = 0,
-  CurveType       curve,
+  GameParameter::ParameterType  parameter,
+  float_32                      parameterValue      = 0.0,
+  GameObjectType                gameObject,
+  int_32                        timeInMilliSeconds  = 0,
+  CurveType                     curve,
 }
 
 

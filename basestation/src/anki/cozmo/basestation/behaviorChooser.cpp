@@ -13,11 +13,14 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 
 
 #if ANKI_DEV_CHEATS
@@ -37,6 +40,17 @@ namespace Anki {
 namespace Cozmo {
 
 #pragma mark --- SimpleBehaviorChooser IBehaviorChooser Members ---
+SimpleBehaviorChooser::SimpleBehaviorChooser()
+{
+  // MarkW:TODO move this to Json once the chooser creation flow is simplified
+  _minMarginToSwapRunningBehavior.Reserve(5);
+  _minMarginToSwapRunningBehavior.AddNode(  2.0f, 2.0f); // up until this point, running behavior will almost definitely be kept running
+  _minMarginToSwapRunningBehavior.AddNode( 10.0f, 0.1f); // after this point, a fairly small difference will allow it to swap behaviors
+  _minMarginToSwapRunningBehavior.AddNode( 60.0f, 0.0f); // after this time a running behavior will only stay running if scored high
+  _minMarginToSwapRunningBehavior.AddNode(120.0f, 0.0f); // start of score being reduced to encourage variety
+  _minMarginToSwapRunningBehavior.AddNode(240.0f,-0.5f); //
+}
+
 Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
 {
   if (nullptr == newBehavior)
@@ -47,25 +61,140 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
   
   assert(newBehavior->IsOwnedByFactory()); // we assume all behaviors are created and owned by factory now
   
-  // If a behavior already exists in the list with this name, replace it
-  for (auto& behavior : _behaviorList)
+  auto newEntry = _nameToBehaviorMap.insert( NameToBehaviorMap::value_type(newBehavior->GetName(), newBehavior) );
+  const bool addedNewEntry = newEntry.second;
+  if (!addedNewEntry)
   {
-    if (behavior->GetName() == newBehavior->GetName())
+    // a behavior already exists in the list with this name, replace it
+    
+    IBehavior* oldBehavior = newEntry.first->second;
+    
+    PRINT_NAMED_WARNING("SimpleBehaviorChooser.AddBehavior.ReplaceExisting",
+                             "Replacing existing '%s' behavior.", oldBehavior->GetName().c_str());
+
+    assert(oldBehavior->IsOwnedByFactory()); // otherwise we'd be leaking the old behavior
+    newEntry.first->second = newBehavior;
+
+    return Result::RESULT_OK;
+  }
+  
+  return Result::RESULT_OK;
+}
+
+  
+void SimpleBehaviorChooser::EnableAllBehaviors(bool newVal)
+{
+  for (const auto& kv : _nameToBehaviorMap)
+  {
+    IBehavior* behavior = kv.second;
+    behavior->SetIsChoosable(newVal);
+  }
+}
+  
+  
+void SimpleBehaviorChooser::EnableBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal)
+{
+  BehaviorGroupFlags behaviorGroupFlags;
+  behaviorGroupFlags.SetBitFlag(behaviorGroup, true);
+  
+  for (const auto& kv : _nameToBehaviorMap)
+  {
+    IBehavior* behavior = kv.second;
+    if (behavior->MatchesAnyBehaviorGroups(behaviorGroupFlags))
     {
-      PRINT_NAMED_WARNING("SimpleBehaviorChooser.AddBehavior.ReplaceExisting",
-                               "Replacing existing '%s' behavior.", behavior->GetName().c_str());
+      behavior->SetIsChoosable(newVal);
+    }
+  }
+}
+  
+  
+bool SimpleBehaviorChooser::EnableBehavior(const std::string& behaviorName, bool newVal)
+{
+  const auto& it = _nameToBehaviorMap.find(behaviorName);
+  if (it != _nameToBehaviorMap.end())
+  {
+    IBehavior* behavior = it->second;
+    behavior->SetIsChoosable(newVal);
+    return true;
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("EnableBehavior.NotFound", "No Behavior named '%s' (newVal = %d)", behaviorName.c_str(), (int)newVal);
+    return false;
+  }
+}
+ 
 
-      assert(behavior->IsOwnedByFactory()); // otherwise we'd be leaking the old behavior
-      behavior = newBehavior;
+static const char* kDisabledGroupsKey    = "disabledGroups";
+static const char* kEnabledGroupsKey     = "enabledGroups";
+static const char* kDisabledBehaviorsKey = "disabledBehaviors";
+static const char* kEnabledBehaviorsKey  = "enabledBehaviors";
 
-      return Result::RESULT_OK;
+  
+void SimpleBehaviorChooser::InitEnabledBehaviors(const Json::Value& inJson)
+{
+  const Json::Value kNullValue;
+  
+  // Disable groups, then enable groups
+  
+  for (int pass = 0; pass < 2; ++pass)
+  {
+    const bool  enableGroup = (pass == 1);
+    const char* groupKey = (pass == 0) ? kDisabledGroupsKey : kEnabledGroupsKey;
+    
+    const Json::Value& groupArray = inJson[groupKey];
+    for (uint32_t i = 0; i < groupArray.size(); ++i)
+    {
+      const Json::Value& groupEntry = groupArray.get(i, kNullValue);
+
+      const char* behaviorGroupString = groupEntry.isString() ? groupEntry.asCString() : "";
+      const BehaviorGroup behaviorGroup = BehaviorGroupFromString(behaviorGroupString);
+      
+      if (behaviorGroup != BehaviorGroup::Count)
+      {
+        EnableBehaviorGroup(behaviorGroup, enableGroup);
+        PRINT_NAMED_INFO("InitEnabledBehaviors.EnableBehaviorGroup", "BehaviorGroup '%s' %sabled", behaviorGroupString, enableGroup ? "en" : "dis");
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("InitEnabledBehaviors.BadBehaviorGroup", "Failed to read %s group %u '%s'", groupKey, i, behaviorGroupString);
+      }
     }
   }
   
-  // Otherwise just push the new behavior onto the list
-  _behaviorList.push_back(newBehavior);
-  return Result::RESULT_OK;
+  // Disable specific behaviors, then enable specific behaviors
+  
+  for (int pass = 0; pass < 2; ++pass)
+  {
+    const bool  enableBehavior = (pass == 1);
+    const char* behaviorKey = (pass == 0) ? kDisabledBehaviorsKey : kEnabledBehaviorsKey;
+    
+    const Json::Value& behaviorArray = inJson[behaviorKey];
+    for (uint32_t i = 0; i < behaviorArray.size(); ++i)
+    {
+      const Json::Value& behaviorEntry = behaviorArray.get(i, kNullValue);
+
+      const char* behaviorName = behaviorEntry.isString() ? behaviorEntry.asCString() : "";
+      
+      if (EnableBehavior(behaviorName, enableBehavior))
+      {
+        PRINT_NAMED_INFO("InitEnabledBehaviors.EnableBehavior", "Behavior '%s' %sabled", behaviorName, enableBehavior ? "en" : "dis");
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("InitEnabledBehaviors.BadBehaviorName", "Failed to %s behavior %u '%s'", behaviorKey, i, behaviorName);
+      }
+    }
+  }
 }
+  
+
+float SimpleBehaviorChooser::MinMarginToSwapRunningBehavior(float runningDuration) const
+{
+  const float minMargin = _minMarginToSwapRunningBehavior.EvaluateY(runningDuration);
+  return minMargin;
+}
+  
 
 IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
@@ -77,8 +206,15 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
   
   IBehavior* bestBehavior = nullptr;
   float bestScore = 0.0f;
-  for (IBehavior* behavior : _behaviorList)
+  for (const auto& kv : _nameToBehaviorMap)
   {
+    IBehavior* behavior = kv.second;
+    
+    if (!behavior->IsChoosable())
+    {
+      continue;
+    }
+        
     VizInterface::BehaviorScoreData scoreData;
     
     scoreData.behaviorScore = behavior->EvaluateScore(robot, currentTime_sec);
@@ -87,7 +223,24 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
     
     if (scoreData.totalScore > 0.0f)
     {
-      scoreData.totalScore += rng.RandDbl(kRandomFactor);
+      if (behavior->IsRunning())
+      {
+        const float runningDuration = Util::numeric_cast<float>(behavior->GetRunningDuration(currentTime_sec));
+        const float minMarginToSwitch = MinMarginToSwapRunningBehavior(runningDuration);
+        
+        scoreData.totalScore += minMarginToSwitch;
+
+        // running behavior gets max possible random score
+        scoreData.totalScore += kRandomFactor;
+
+        // don't allow margin and rand to push score out of >0 range
+        scoreData.totalScore = Util::Max(scoreData.totalScore, 0.01f);
+      }
+      else
+      {
+        // randomization only for non-running behaviors
+        scoreData.totalScore += rng.RandDbl(kRandomFactor);
+      }
       
       if (scoreData.totalScore > bestScore)
       {
@@ -99,20 +252,20 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
     VIZ_BEHAVIOR_SELECTION_ONLY( robotBehaviorSelectData.scoreData.push_back(scoreData) );
   }
   
-  VIZ_BEHAVIOR_SELECTION_ONLY( VizManager::getInstance()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
+  VIZ_BEHAVIOR_SELECTION_ONLY( robot.GetContext()->GetVizManager()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
   
   return bestBehavior;
 }
   
 IBehavior* SimpleBehaviorChooser::GetBehaviorByName(const std::string& name) const
 {
-  for (auto behavior : _behaviorList)
+  const auto& it = _nameToBehaviorMap.find(name);
+  if (it != _nameToBehaviorMap.end())
   {
-    if (behavior->GetName() == name)
-    {
-      return behavior;
-    }
+    IBehavior* behavior = it->second;
+    return behavior;
   }
+  
   return nullptr;
 }
   
@@ -120,8 +273,9 @@ IBehavior* SimpleBehaviorChooser::GetBehaviorByName(const std::string& name) con
 SimpleBehaviorChooser::~SimpleBehaviorChooser()
 {
   #if ANKI_DEVELOPER_CODE
-  for (auto& behavior : _behaviorList)
+  for (const auto& kv : _nameToBehaviorMap)
   {
+    const IBehavior* behavior = kv.second;
     ASSERT_NAMED(behavior->IsOwnedByFactory(), "Behavior not owned by factory - shouldn't be possible!");
   }
   #endif //ANKI_DEVELOPER_CODE

@@ -68,7 +68,7 @@
           <BeforeMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash prebuild.bash</UserProg1Name>
+            <UserProg1Name>bash -c "make k02"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -76,7 +76,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>c:\cygwin\bin\python2.7 ./sign/sign.py ./build/41/robot.out ./build/41/robot.safe  ./build/robot.bin</UserProg1Name>
+            <UserProg1Name>c:\cygwin\bin\python2.7 ./tools/sign.py ./build/41/robot.out ./build/41/robot.safe  ./build/robot.bin</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -169,7 +169,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -190,7 +190,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>1</AdsALst>
+            <AdsALst>0</AdsALst>
             <AdsACrf>0</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>TARGET_K02,COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
+              <Define>TARGET_K02,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
               <IncludePath>.;supervisor/src;include;k02_hal/lib;k02_hal/;k02_hal/startup;k02_hal/lib/device;k02_hal/lib/drivers;k02_hal/lib/hal;generated/clad/robot;.\supervisor\src</IncludePath>
             </VariousControls>
@@ -388,12 +388,9 @@
             <ScatterFile>.\k02_hal\scatter.scf</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc>--remove 
---predefine="-D__stack_size__=0x400" 
---predefine="-D__heap_size__=0x400" 
-</Misc>
+            <Misc>--remove</Misc>
             <LinkerInputFile></LinkerInputFile>
-            <DisabledWarnings>6314</DisabledWarnings>
+            <DisabledWarnings></DisabledWarnings>
           </LDads>
         </TargetArmAds>
       </TargetOption>
@@ -425,26 +422,6 @@
               <FileName>enjpeg.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dac.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>oled.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>spi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -465,8 +442,8 @@
                 <FileArmAds>
                   <Cads>
                     <interw>2</interw>
-                    <Optim>1</Optim>
-                    <oTime>2</oTime>
+                    <Optim>4</Optim>
+                    <oTime>1</oTime>
                     <SplitLS>2</SplitLS>
                     <OneElfS>2</OneElfS>
                     <Strict>2</Strict>
@@ -474,7 +451,7 @@
                     <PlainCh>2</PlainCh>
                     <Ropi>2</Ropi>
                     <Rwpi>2</Rwpi>
-                    <wLevel>2</wLevel>
+                    <wLevel>0</wLevel>
                     <uThumb>2</uThumb>
                     <uSurpInc>2</uSurpInc>
                     <VariousControls>
@@ -486,6 +463,26 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>dac.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>oled.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>uart.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
               <FileName>power.cpp</FileName>
@@ -516,6 +513,31 @@
               <FileName>wifi.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\wifi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\motors.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\lights.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\battery.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cube.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\cube.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spine.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\spine.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -556,6 +578,111 @@
               <FileName>messages.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\messages.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>liftController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\liftController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>velocityProfileGenerator.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>radians.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\radians.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>headController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\headController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imuFilter.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\imuFilter.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>trig_fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ledController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>blockLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dockingController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>localization.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\localization.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>localization_geometry.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\localization_geometry.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>path.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\path.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pathFollower.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pickAndPlaceController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>speedController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\speedController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>steeringController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\steeringController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>timeProfiler.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>wheelController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>proxSensors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>testModeController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
             </File>
           </Files>
         </Group>

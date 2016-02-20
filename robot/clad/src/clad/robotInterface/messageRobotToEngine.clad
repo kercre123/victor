@@ -12,6 +12,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/powerMessages.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
+#include "clad/types/nvStorage.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -28,16 +29,14 @@ message RobotPoked
   uint_32 robotID
 }
 
-/// *************** WiFi to Engine messages ******************************* ///
-
-message AnimationState
+message RTIPVersionInfo
 {
-  uint_32 timestamp,
-  int_32  numAnimBytesPlayed,
-  int_32  numAudioFramesPlayed,
-  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
-  uint_8 tag,
+  uint_32 version,
+  uint_32 date,
+  string  description
 }
+
+/// *************** WiFi to Engine messages ******************************* ///
 
 // These two messages bookend animations as they are played on the robot
 message AnimationStarted
@@ -50,18 +49,6 @@ message AnimationEnded
   uint_8 tag
 }
 
-message CameraCalibration
-{
-  float_32 focalLength_x,
-  float_32 focalLength_y,
-  float_32 center_x,
-  float_32 center_y,
-  float_32 skew,
-  uint_16  nrows,
-  uint_16  ncols,
-  bool     isPhysicalRobots,
-}
-
 message RobotAvailable
 {
   uint_32 robotID,
@@ -72,6 +59,20 @@ message FlashWriteAcknowledge
   uint_32 address,      ///< The address we wrote to
   uint_8  length,       ///< The number of 32 bit words we wrote, will be 0 on failure
   bool    writeNotErase ///< True if acknowledging a write, false if acknowledging an erase
+}
+
+enum int_8 CrashSource
+{
+  WiFiCrash,
+  RTIPCrash,
+  BodyCrash,
+  PropCrash,
+}
+
+message CrashReport
+{
+  uint_32 dump[128],
+  CrashSource which,
 }
 
 /// *************** Overall message pipe ******************************* ///
@@ -103,6 +104,10 @@ union RobotToEngine {
   SyncTimeAck                syncTimeAck            = 0x14,
   RobotPoked                 robotPoked             = 0x15,
   ChargerMountComplete       chargerMountCompleted  = 0x16,
+  MovingLiftPostDock         movingLiftPostDock     = 0x17,
+  ProxObstacle               proxObstacle           = 0x18,
+  ObjectDiscovered           activeObjectDiscovered = 0x19,
+  IMURawDataChunk            imuRawDataChunk        = 0x20,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,
@@ -113,6 +118,12 @@ union RobotToEngine {
   FlashWriteAcknowledge      flashWriteAck          = 0x85,
   AnimationStarted           animStarted            = 0x86,
   AnimationEnded             animEnded              = 0x87,
+  NVStorage::NVStorageBlob   nvData                 = 0x88,
+  NVStorage::NVOpResult      nvResult               = 0x98,
+  CrashReport                crashReport            = 0x99,
+  
+  // From RTIP to WiFi specifically
+  RTIPVersionInfo            rtipVersion            = 0xFD
 }
 
 

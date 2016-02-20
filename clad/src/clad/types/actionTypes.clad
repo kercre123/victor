@@ -8,7 +8,7 @@
 namespace Anki {
 namespace Cozmo {
 
-enum uint_32 ActionConstants {
+enum no_cpp_class uint_32 ActionConstants {
   INVALID_TAG = 0
 }
 
@@ -41,6 +41,8 @@ enum int_32 RobotActionType {
     PLAY_ANIMATION,
     DEVICE_AUDIO,              // This calls audio from WWise
     WAIT,
+    HANG,
+    WAIT_FOR_LAMBDA,
     MOVE_LIFT_TO_HEIGHT,
     PAN_AND_TILT,
     DRIVE_STRAIGHT,
@@ -50,22 +52,40 @@ enum int_32 RobotActionType {
 }
 
 
-// TODO: Convert to uint_8
-enum int_32 ActionResult {
+enum uint_8 ActionResult {
     SUCCESS = 0,
     RUNNING,
+    FAILURE_NOT_STARTED,
     FAILURE_TIMEOUT,
     FAILURE_PROCEED,
     FAILURE_RETRY,
     FAILURE_ABORT,
-    CANCELLED
+    FAILURE_TRACKS_LOCKED,
+    FAILURE_BAD_TAG,
+    CANCELLED,
+    INTERRUPTED
+}
+
+enum uint_8 ObjectInteractionResult {
+    SUCCESS = 0,
+
+    // Failures types:
+    INCOMPLETE,
+    INVALID_OBJECT,                 // e.g., doesn't exist or wrong type
+    NO_PREACTION_POSES,
+    DID_NOT_REACH_PREACTION_POSE,
+    NOT_CARRYING,                   // When trying to place or after picking up
+    STILL_CARRYING,                 // When trying to do something not possible while carrying or after placing
+    VISUAL_VERIFICATION_FAILED,     // Didn't see object after reaching pre-action pose
+    UNKNOWN_PROBLEM,
 }
 
 
 // Object Interaction completed is used actions that interact with objects
 structure ObjectInteractionCompleted {
     int_32     objectIDs[5],
-    uint_8     numObjects,
+    uint_8     numObjects = 0,
+    ObjectInteractionResult result,
 }
 
 // Used by PlayAnimationAction
@@ -75,7 +95,7 @@ structure AnimationCompleted {
 
 // Used by DeviceAudioAction
 structure DeviceAudioCompleted {
-  Audio::EventType eventType,
+  Audio::GameEvent::GenericEvent audioEvent,
 }
 
 // Used by TrackFaceAction
@@ -97,7 +117,8 @@ enum uint_8 QueueActionPosition {
     NOW_AND_CLEAR_REMAINING, // Queue now and clear rest of queue
     NOW_AND_RESUME,          // Queue now, reset current and return to it once new action completes
     NEXT,
-    AT_END
+    AT_END,
+    IN_PARALLEL
 }
 
 } // namespace Cozmo

@@ -1,0 +1,65 @@
+#VRML_SIM V8.2.1 utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation 0.0014247 -0.383339 -0.923607 3.13471
+  position -0.121573 1.61847 1.80926
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  showMarkers FALSE
+}
+Face {
+  translation -0.004046 -0.474987 -0.13
+}
+Face {
+  translation -0.544046 0.0050129 0.45
+  rotation 0 0 1 4.71239
+  image "face02.png"
+}
+Face {
+  translation 0.475954 0.00501299 -0.14
+  rotation 0 0 1 4.71239
+  image "face03.png"
+}
+LightCube {
+  translation -0.0919206 0.451759 0.022
+  rotation -0.113999 0.986919 0.113999 1.58396
+}
+LightCube {
+  translation 0.000979558 0.448267 0.022
+  rotation 0 0 1 0.23
+  ID 3
+}
+SolidBox {
+  translation -0.0310205 0.357748 6.66134e-16
+  size 0.2 0.05 0.2
+}
+BlockWorldComms {
+}
+DEF Cozmo_1 CozmoBot {
+  name "CozmoBot_1"
+}
+CozmoVizDisplay {
+  moodViz TRUE
+  behaviorSelectionViz TRUE
+}

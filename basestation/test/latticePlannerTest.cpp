@@ -18,17 +18,17 @@
 #define private public
 #define protected public
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/latticePlanner.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
 using namespace Anki;
 using namespace Cozmo;
 
-extern Anki::Util::Data::DataPlatform* dataPlatform;
+extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 // Motion profile for test
 const f32 defaultPathSpeed_mmps = 60;
@@ -52,9 +52,7 @@ PathMotionProfile defaultMotionProfile(defaultPathSpeed_mmps,
 
 TEST(LatticePlanner, Create)
 {
-
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -78,7 +76,7 @@ void little_sleep(std::chrono::microseconds us)
 }
 
 
-void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner)
+void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner, int minPlanTimeMs = 2)
 {
   bool done = false;
   int ms = 0;
@@ -107,7 +105,9 @@ void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner)
 
   ASSERT_TRUE(done) << "planner didn't finish";
 
-  EXPECT_GT(ms, 2) << "the planner might be fast, but not that fast!";
+  std::cout<<"planner took "<<ms<<"ms\n";
+  
+  EXPECT_GE(ms, minPlanTimeMs) << "the planner might be fast, but not that fast!";
   EXPECT_LT(ms, maxTimeMs) << "shouldn't use all the available time";
 
   printf("planner finished after %dms\n", ms);
@@ -117,8 +117,7 @@ void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner)
 
 TEST(LatticePlanner, PlanOnceEmpty)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -129,7 +128,7 @@ TEST(LatticePlanner, PlanOnceEmpty)
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
-  ExpectPlanComplete(100, planner);
+  ExpectPlanComplete(100, planner, 0);
 
   size_t selectedTargetIdx = 100;
   Planning::Path path;
@@ -143,8 +142,7 @@ TEST(LatticePlanner, PlanOnceEmpty)
 
 TEST(LatticePlanner, PlanTwiceEmpty)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -155,7 +153,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
-  ExpectPlanComplete(100, planner);
+  ExpectPlanComplete(100, planner, 0);
 
   size_t selectedTargetIdx = 100;
   Planning::Path path;
@@ -174,7 +172,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   ret = planner->ComputePath(start2, goal2);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
-  ExpectPlanComplete(100, planner);
+  ExpectPlanComplete(100, planner, 0);
 
   selectedTargetIdx = 200;
 
@@ -194,8 +192,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
 // This test is disabled because it relies on timing, which won't always work on e.g. the build server
 TEST(LatticePlanner, DISABLED_PlanWhilePlanning)
 {
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -230,9 +227,8 @@ TEST(LatticePlanner, StopPlanning)
   // NOTE: this test could start failing if the planner gets too fast, and finished before the Stop can go
   // through. If this happens, just make it plan a further distance, or add some complex obstacles to the
   // environment to slow it down
-
-  RobotInterface::MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr, dataPlatform);
+  
+  Robot robot(1, cozmoContext);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
   ASSERT_TRUE(planner != nullptr);
@@ -297,7 +293,7 @@ TEST(LatticePlanner, StopPlanning)
   ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
     
-  ExpectPlanComplete(1000, planner);
+  ExpectPlanComplete(1000, planner, 6);
 
   size_t selectedTargetIdx = 100;
 

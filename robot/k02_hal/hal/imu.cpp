@@ -1,10 +1,14 @@
+// Low-level driver for Bosch BMI160 combo gyro+accelerometer
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 #include "hal/i2c.h"
 #include "hal/imu.h"
+#include "hal/uart.h"
 #include "MK02F12810.h"
 #include <string.h>
 #include "anki/cozmo/robot/drop.h"
+
+//#define IMU_DEBUG   // Uncomment for low level debugging printed out the UART
 
 static const int IMU_UPDATE_FREQUENCY = 200; // 200hz (5ms)
 
@@ -103,41 +107,96 @@ static const uint8_t PMU_STATUS = 0x03;
 static const uint8_t ERR_REG = 0x02;
 static const uint8_t CHIP_ID = 0x00;
 
-static const uint8_t RANGE_2G = 0x03;   
+static const uint8_t RANGE_2G = 0x03;
 static const uint8_t INT_OPEN_DRAIN = 0x44;
 static const uint8_t RANGE_500DPS = 0x02;
 static const uint8_t BW_200 = 0x19;           // Maybe?
+static const uint8_t CONF_GYRO = 0x09;    // 4x oversample, 200Hz update
+
+static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;      //In 2g mode, 16384 LSB/g
+static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
+
+static bool readyForIMU = true;
+static IMUData imu_state;
 
 void Anki::Cozmo::HAL::IMU::Init(void) {
-  I2C::WriteAndVerify(ADDR_IMU, ACC_RANGE, RANGE_2G);
-  I2C::WriteAndVerify(ADDR_IMU, ACC_CONF, BW_200);
-  I2C::WriteAndVerify(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
-  I2C::WriteAndVerify(ADDR_IMU, GYR_RANGE, RANGE_500DPS);
+  // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
+  I2C::WriteReg(ADDR_IMU, CMD, 0x10 + 1); // Power up accelerometer (normal mode)
+  MicroWait(4000);   // Datasheet says wait 4ms
+  I2C::WriteReg(ADDR_IMU, CMD, 0x10 + 1); // Power up accelerometer (normal mode)
+  MicroWait(4000);   // Datasheet says wait 4ms
+
+  I2C::WriteReg(ADDR_IMU, CMD, 0x14 + 1); // Power up gyroscope (normal mode)
+  MicroWait(81000);   // Datasheet says wait 80ms
+
+#ifdef IMU_DEBUG
+  UART::DebugPrintf("IMU status after power up: %02x %02x %02x\n", I2C::ReadReg(ADDR_IMU, 0x0), I2C::ReadReg(ADDR_IMU, 0x2), I2C::ReadReg(ADDR_IMU, 0x3));
+#endif
+
+  I2C::WriteReg(ADDR_IMU, ACC_RANGE, RANGE_2G);
+  I2C::WriteReg(ADDR_IMU, ACC_CONF, BW_200);
+  I2C::WriteReg(ADDR_IMU, INT_OUT_CTRL, INT_OPEN_DRAIN);
+  I2C::WriteReg(ADDR_IMU, GYR_RANGE, RANGE_500DPS);
+  I2C::WriteReg(ADDR_IMU, GYR_CONF, CONF_GYRO);
+  
+  ReadID();
 
   Manage();
 }
 
-static void copy_state(const void *data, int count) {
+static void copy_state() {
   using namespace Anki::Cozmo::HAL;
-  memcpy(&IMU::IMUState, data, count);
+  memcpy(&IMU::IMUState, &imu_state, sizeof(IMUData));
+
+#ifdef IMU_DEBUG
+  for (int i = 0; i < sizeof(IMUData); i++)
+    UART::DebugPrintf("%02x ", ((uint8_t*) data)[i]);
+  UART::DebugPrintf("\n");
+#endif
+}
+
+void Anki::Cozmo::HAL::IMU::Update(void) {
+  readyForIMU = true;
 }
 
 void Anki::Cozmo::HAL::IMU::Manage(void) {
-  // Eventually, this should probably be synced to the body
-  static const uint8_t DATA_8 = 0x0C;
-  static int imu_update = 0;
-  static IMUData imu_state;
-
-  imu_update += IMU_UPDATE_FREQUENCY;
-  if (imu_update < DROPS_PER_SECOND) {
+  if (!readyForIMU) {
     return ;
   }
-  imu_update -= DROPS_PER_SECOND;
+  readyForIMU = false;
 
-  I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), NULL, I2C_FORCE_START);
-  I2C::Read(SLAVE_READ(ADDR_IMU), (uint8_t*) &imu_state, sizeof(IMUData), &copy_state);
+  // Configure I2C bus to read IMU data
+  I2C::SetupRead(&imu_state, sizeof(IMUData), copy_state);
+
+  I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), I2C_FORCE_START);
+  I2C::Read(SLAVE_READ(ADDR_IMU));
 }
 
 uint8_t Anki::Cozmo::HAL::IMU::ReadID(void) {
   return I2C::ReadReg(ADDR_IMU, 0);
+}
+
+void Anki::Cozmo::HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)
+{
+  accel[0] = IMU::IMUState.acc[2];
+  accel[1] = IMU::IMUState.acc[1];
+  accel[2] = -IMU::IMUState.acc[0];
+  gyro[0] = IMU::IMUState.gyro[2];
+  gyro[1] = IMU::IMUState.gyro[1];
+  gyro[2] = -IMU::IMUState.gyro[0];
+  *timestamp = IMU::IMUState.timestamp;
+}
+
+void Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
+{
+  // Accelerometer uses 12 most significant bits - gyro uses all 16
+  #define ACC_CONVERT(raw)  (ACC_RANGE_CONST  * raw)
+  #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * raw)
+
+  imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[2]);
+  imuData.rate_x = GYRO_CONVERT(IMU::IMUState.gyro[2]);
+  imuData.acc_y  = ACC_CONVERT(IMU::IMUState.acc[1]);
+  imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1]);
+  imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0]);
+  imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0]);
 }

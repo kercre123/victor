@@ -18,21 +18,20 @@
 namespace Anki {
   namespace Cozmo {
     namespace BackpackLightController {
-      
+
       Result Init();
       Result Update();
-      
+
       // Enable/Disable the controller.
       // Mostly only useful for test mode or special simluation modes.
       void Enable();
       void Disable();
-      
+
       void TurnOffAll();
-      
-      void SetParams(LEDId whichLED, u32 onColor, u32 offColor,
-                     u32 onPeriod_ms, u32 offPeriod_ms,
-                     u32 transitionOnPeriod_ms, u32 transitionOffPeriod_ms);
-      
+
+      void SetParams(const LEDId whichLED, const u16 onColor, const u16 offColor,
+                     const u8 onFrames, const u8 offFrames, const u8 transitionOnFrames, const u8 transitionOffFrames);
+
     } // namespace BackpackLightController
   } // namespace Anki
 } // namespace Cozmo

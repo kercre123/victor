@@ -21,6 +21,10 @@ enum uint_8 BehaviorType {
   UnityDriven,
   PounceOnMotion,
   FindFaces,
+  GatherBlocks,
+  ExploreMarkedCube,
+  ExploreCliff,
+  RequestGameSimple,
 
   Count
 }

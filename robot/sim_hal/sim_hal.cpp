@@ -111,9 +111,7 @@ namespace Anki {
       webots::Accelerometer* accel_;
 
       // Prox sensors
-      webots::DistanceSensor *proxLeft_;
       webots::DistanceSensor *proxCenter_;
-      webots::DistanceSensor *proxRight_;
       webots::DistanceSensor *cliffSensor_;
 
       // Charge contact
@@ -192,6 +190,12 @@ namespace Anki {
         float rad_per_s = power / 0.05f;
         return rad_per_s;
       }
+      
+      // Approximate open-loop conversion of head power to angular head speed
+      float HeadPowerToAngSpeed(float power)
+      {
+        return power * 2*PI_F;
+      }
 
 
       void MotorUpdate()
@@ -253,13 +257,6 @@ namespace Anki {
           #endif
         }
       }
-
-
-      void SetHeadAngularVelocity(const f32 rad_per_sec)
-      {
-        headMotor_->setVelocity(rad_per_sec);
-      }
-
 
       Result SendBlockMessage(const u8 blockID, const BlockMessages::LightCubeMessage& msg)
       {
@@ -418,14 +415,10 @@ namespace Anki {
       accel_->enable(TIME_STEP);
 
       // Proximity sensors
-      proxLeft_ = webotRobot_.getDistanceSensor("proxSensorLeft");
-      proxCenter_ = webotRobot_.getDistanceSensor("proxSensorCenter");
-      proxRight_ = webotRobot_.getDistanceSensor("proxSensorRight");
+      proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
       cliffSensor_ = webotRobot_.getDistanceSensor("cliffSensor");
       
-      proxLeft_->enable(TIME_STEP);
       proxCenter_->enable(TIME_STEP);
-      proxRight_->enable(TIME_STEP);
       cliffSensor_->enable(TIME_STEP);
 
       // Charge contact
@@ -580,6 +573,14 @@ namespace Anki {
       IMUData.acc_y = (f32)(vals[1] * 1000);
       IMUData.acc_z = (f32)(vals[2] * 1000);
     }
+    
+    void HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)
+    {
+      // Just storing junk values since this function exists purely for HW debug
+      *timestamp = HAL::GetTimeStamp() % u8_MAX;
+      accel[0] = accel[1] = accel[2] = 0;
+      gyro[0] = gyro[1] = gyro[2] = 0;
+    }
 
 
     // Set the motor power in the unitless range [-1.0, 1.0]
@@ -597,7 +598,7 @@ namespace Anki {
           break;
         case MOTOR_HEAD:
           // TODO: Assuming linear relationship, but it's not!
-          SetHeadAngularVelocity(power * MAX_HEAD_SPEED);
+          headMotor_->setVelocity(HeadPowerToAngSpeed(power));
           break;
         default:
           PRINT("ERROR (HAL::MotorSetPower) - Undefined motor type %d\n", motor);
@@ -985,10 +986,13 @@ namespace Anki {
       //timeStamp_ = t;
     };
 
-    void HAL::SetLED(LEDId led_id, u32 color) {
+    void HAL::SetLED(LEDId led_id, u16 color) {
       #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
-        leds_[led_id]->set(color);
+        leds_[led_id]->set( ((color & LED_ENC_IR) ? LED_IR : 0) |
+                           (((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT) << (16 + 3)) |
+                           (((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT) << ( 8 + 3)) |
+                           (((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT) << ( 0 + 3)));
       } else {
         PRINT("Unhandled LED %d\n", led_id);
       }
@@ -1034,13 +1038,14 @@ namespace Anki {
       face_->setColor(0x0000f0ff);
     }
 
-    void HAL::FaceAnimate(u8* src)
+    void HAL::FaceAnimate(u8* src, const u16 length)
     {
       // Clear the display
       FaceClear();
 
-      // Decode face
-      FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
+      // Decode the image
+      if (length == MAX_FACE_FRAME_SIZE) memcpy(faceFrame_, src, MAX_FACE_FRAME_SIZE);
+      else FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
 
       // Draw face
       FaceMove(facePosX_, facePosY_);
@@ -1101,37 +1106,12 @@ namespace Anki {
     {
       return 0;
     }
-   
-
-    void HAL::GetProximity(ProximityValues *prox)
+    
+    u8 HAL::GetForwardProxSensor()
     {
-      static int proxID = IRleft;
-      switch(proxID)
-      {
-        case IRforward:
-          prox->forward = proxCenter_->getValue();
-          prox->latest  = IRforward;
-          proxID = IRleft;
-          break;
-
-        case IRleft:
-          prox->left = proxLeft_->getValue();
-          prox->latest = IRleft;
-          proxID = IRright;
-          break;
-
-        case IRright:
-          prox->right = proxRight_->getValue();
-          prox->latest = IRright;
-          proxID = IRforward;
-          break;
-          
-        default:
-          AnkiAssert(false);
-      }
-
-      return;
-    } // GetProximity_INT()
+      double val = proxCenter_->getValue();
+      return val >= 150 ? 0 : val;      // 150mm is from proto file
+    }
     
     bool HAL::IsCliffDetected()
     {
@@ -1178,28 +1158,23 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
 
-    Result HAL::SetBlockLight(const u32 blockID, const LightState* lights)
+    Result HAL::SetBlockLight(const u32 blockID, const u16* colors)
     {
       BlockMessages::LightCubeMessage m;
       m.tag = BlockMessages::LightCubeMessage::Tag_setCubeLights;
       for (int i=0; i<NUM_CUBE_LEDS; ++i) {
-        m.setCubeLights.lights[i].onColor = lights[i].onColor;
-        m.setCubeLights.lights[i].offColor = lights[i].offColor;
-        m.setCubeLights.lights[i].onPeriod_ms = lights[i].onPeriod_ms;
-        m.setCubeLights.lights[i].offPeriod_ms = lights[i].offPeriod_ms;
-        m.setCubeLights.lights[i].transitionOnPeriod_ms = lights[i].transitionOnPeriod_ms;
-        m.setCubeLights.lights[i].transitionOffPeriod_ms = lights[i].transitionOffPeriod_ms;
+        m.setCubeLights.lights[i].onColor = colors[i];
       }
       m.setCubeLights.objectID = blockID;
 
       return SendBlockMessage(blockID, m);
     }
-
-    void HAL::ManageCubes(void)
+    
+    Result HAL::AssignCubeSlots(int total_ids, const uint32_t *ids)
     {
-      // Stub
+      return RESULT_OK;
     }
-
+ 
     void HAL::FacePrintf(const char *format, ...)
     {
       // Stub

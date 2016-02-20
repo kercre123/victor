@@ -25,6 +25,21 @@ namespace Vision {
 #pragma mark --- ImageBase ---
   
   template<typename T>
+  Result ImageBase<T>::Load(const std::string& filename)
+  {
+    
+    this->get_CvMat_() = cv::imread(filename, (GetNumChannels() == 1 ?
+                                               CV_LOAD_IMAGE_GRAYSCALE :
+                                               CV_LOAD_IMAGE_COLOR));
+    
+    if(IsEmpty()) {
+      return RESULT_FAIL;
+    } else {
+      return RESULT_OK;
+    }
+  }
+  
+  template<typename T>
   ImageBase<T>& ImageBase<T>::operator= (const ImageBase<T> &other)
   {
     SetTimestamp(other.GetTimestamp());
@@ -94,29 +109,69 @@ namespace Vision {
     DrawLine(quad[CornerName::BottomLeft], quad[CornerName::BottomRight], color, thickness);
   }
   
-  template<typename T>
-  void ImageBase<T>::Resize(f32 scaleFactor)
+  // Compile time "LUT" for converting from our resize method to OpenCV's
+  static inline int GetOpenCvInterpMethod(ResizeMethod method)
   {
-    cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor, CV_INTER_LINEAR);
+    switch(method)
+    {
+      case ResizeMethod::NearestNeighbor:
+        return CV_INTER_NN;
+        
+      case ResizeMethod::Linear:
+        return CV_INTER_LINEAR;
+        
+      case ResizeMethod::Cubic:
+        return CV_INTER_CUBIC;
+        
+      case ResizeMethod::AverageArea:
+        return CV_INTER_AREA;
+    }
+  }
+  
+  
+  template<typename T>
+  void ImageBase<T>::DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness)
+  {
+    DrawLine(rect.GetTopLeft(), rect.GetTopRight(), color, thickness);
+    DrawLine(rect.GetTopLeft(), rect.GetBottomLeft(), color, thickness);
+    DrawLine(rect.GetTopRight(), rect.GetBottomRight(), color, thickness);
+    DrawLine(rect.GetBottomLeft(), rect.GetBottomRight(), color, thickness);
   }
   
   template<typename T>
-  void ImageBase<T>::Resize(s32 desiredRows, s32 desiredCols)
+  void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
+                              const ColorRGBA& color, f32 scale)
+  {
+    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor((color)));
+  }
+  
+  template<typename T>
+  void ImageBase<T>::Resize(f32 scaleFactor, ResizeMethod method)
+  {
+    cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor,
+               GetOpenCvInterpMethod(method));
+  }
+  
+  template<typename T>
+  void ImageBase<T>::Resize(s32 desiredRows, s32 desiredCols, ResizeMethod method)
   {
     if(desiredRows != GetNumRows() || desiredCols != GetNumCols()) {
       const cv::Size desiredSize(desiredCols, desiredRows);
-      cv::resize(this->get_CvMat_(), this->get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+      cv::resize(this->get_CvMat_(), this->get_CvMat_(), desiredSize, 0, 0,
+                 GetOpenCvInterpMethod(method));
     }
   }
   
   template<typename T>
-  void ImageBase<T>::Resize(ImageBase<T>& resizedImage) const
+  void ImageBase<T>::Resize(ImageBase<T>& resizedImage, ResizeMethod method) const
   {
     if(resizedImage.IsEmpty()) {
       printf("Image::Resize - Output image should already be the desired size.\n");
     } else {
       const cv::Size desiredSize(resizedImage.GetNumCols(), resizedImage.GetNumRows());
-      cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+      cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0,
+                 GetOpenCvInterpMethod(method));
+      resizedImage.SetTimestamp(this->GetTimestamp());
     }
   }
   
@@ -159,7 +214,20 @@ namespace Vision {
     
   }
 #endif
+  
+  Image& Image::Negate()
+  {
+    cv::bitwise_not(get_CvMat_(), get_CvMat_());
+    return *this;
+  }
  
+  Image Image::GetNegative() const
+  {
+    Image output;
+    cv::bitwise_not(get_CvMat_(), output.get_CvMat_());
+    return output;
+  }
+  
   Image& Image::Threshold(u8 value)
   {
     get_CvMat_() = get_CvMat_() > value;

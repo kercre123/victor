@@ -35,7 +35,7 @@
 /// Number of usable bytes on the I2SPI bus for drops from RTIP to WiFi
 #define DROP_TO_WIFI_SIZE (100)
 /// Number of usable bytes on the I2SPI bus for drops from WiFi to the RTIP
-#define DROP_TO_RTIP_SIZE (DROP_PREAMBLE_SIZE + MAX_AUDIO_BYTES_PER_DROP + 1 + MAX_SCREEN_BYTES_PER_DROP + 1 + DROP_TO_RTIP_MAX_VAR_PAYLOAD + 1)
+#define DROP_TO_RTIP_SIZE (DROP_PREAMBLE_SIZE + MAX_AUDIO_BYTES_PER_DROP + 1 + MAX_SCREEN_BYTES_PER_DROP + DROP_TO_RTIP_MAX_VAR_PAYLOAD + 1)
 /// Number of bytes of drop prefix
 #define DROP_PREAMBLE_SIZE sizeof(preambleType)
 /// Preamble for drops from WiFi to RTIP
@@ -47,11 +47,11 @@
 #define MAX_SCREEN_BYTES_PER_DROP 4
 
 /// What fraction of the time to send screen data
-#define TX_SCREEN_DATA_EVERY (2)
-#define TX_SCREEN_DATA_OUTOF (3)
+#define MAX_TX_CHAIN_COUNT 2
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (64)
+// This is as much as we have time for without interfering with I2C timing on the RTIP
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (57)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,
@@ -65,7 +65,6 @@ typedef struct
 {
   preambleType preamble; ///< Synchronization Preamble indicating drop destination
   uint8_t  audioData[MAX_AUDIO_BYTES_PER_DROP];   ///< Isochronous audio data
-  uint8_t  screenInd;                             ///< Where in the screen memory to write the data
   uint8_t  screenData[MAX_SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
   uint8_t  payloadLen;                            ///< Number of data bytes in payload
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data
@@ -73,6 +72,7 @@ typedef struct
 } DropToRTIP;
 
 ct_assert(sizeof(DropToRTIP) == DROP_TO_RTIP_SIZE);
+ASSERT_IS_MULTIPLE_OF_TWO(DROP_TO_RTIP_SIZE);
 
 /// Message receive buffer size on the RTIP
 #define RTIP_MSG_BUF_SIZE (128)
@@ -86,11 +86,12 @@ typedef struct
 {
   preambleType preamble;
   uint8_t payloadLen;  ///< Number of bytes of message data following JPEG data
-  uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
   uint8_t droplet; ///< Drop flags and bit fields
+  uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
 } DropToWiFi;
 
 ct_assert(sizeof(DropToWiFi) == DROP_TO_WIFI_SIZE);
+ASSERT_IS_MULTIPLE_OF_TWO(DROP_TO_WIFI_SIZE);
 
 /// Droplet bit masks and flags.
 typedef enum
@@ -102,11 +103,11 @@ typedef enum
 // To RTIP drop fields
   audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
   screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid
-// Shared fields
-  ToWiFi = 1<<7,       ///< Assert bit for this droplet value being on a drop from RTIP to WiFi
+  screenRectData    = 1<<2,    ///< Bytes in the iscochronous screen field are bounding data
 } Droplet;
 
 #define JPEG_LENGTH(i) (((i+3) >> 2)&jpegLenMask)
+#define GET_JPEG_LENGTH(i) ((i&jpegLenMask) << 2)
 
 typedef enum 
 {

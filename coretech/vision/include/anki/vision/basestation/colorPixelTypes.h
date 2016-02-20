@@ -157,7 +157,7 @@ namespace cv {
     typedef u8  value_type;
     typedef s32 work_type;
     typedef u8  channel_type;
-    enum { channels = 3, fmt='u', type = CV_8UC3 };
+    enum { channels = 3, fmt='u', type = CV_8UC3, depth = channels };
   };
 
   template<> class cv::DataType<Anki::Vision::PixelRGBA>
@@ -166,7 +166,7 @@ namespace cv {
     typedef u8  value_type;
     typedef s32 work_type;
     typedef u8  channel_type;
-    enum { channels = 4, fmt='u', type = CV_8UC4 };
+    enum { channels = 4, fmt='u', type = CV_8UC4, depth = channels };
   };
 
 } // namespace cv

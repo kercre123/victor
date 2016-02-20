@@ -14,4 +14,13 @@
  */
 int8_t backgroundTaskInit(void);
 
+/// Callback for head RTIP sync events
+void backgroundTaskOnRTIPSync(void);
+
+/// Callback for client connect events
+void backgroundTaskOnConnect(void);
+
+/// Callback for client disconnect events
+void backgroundTaskOnDisconnect(void);
+
 #endif

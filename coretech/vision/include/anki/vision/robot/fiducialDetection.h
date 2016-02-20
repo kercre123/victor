@@ -14,14 +14,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/connectedComponents.h"
 #include "anki/vision/robot/fiducialMarkers.h"
+#include "anki/common/robot/geometry_declarations.h"
 
 namespace Anki
 {
   namespace Embedded
   {
     // TODO: make this into a parameter stored elsewhere?
-    //const f32 FIDUCIAL_SQUARE_WIDTH_FRACTION = 0.1f;
-    const Point2f FIDUCIAL_SQUARE_THICKNESS_FRACTION(0.1f, 0.1f);
+    const Point<f32> FIDUCIAL_SQUARE_THICKNESS_FRACTION(0.1f, 0.1f);
     
     enum CornerMethod {
       CORNER_METHOD_LAPLACIAN_PEAKS = 0,
@@ -142,7 +142,7 @@ namespace Anki
       const Quadrilateral<f32>& initialQuad,
       const Array<f32>& initialHomography,
       const Array<u8> &image,
-      const Point2f& squareSizeFraction,
+      const Point<f32>& squareSizeFraction,
       const s32 maxIterations,
       const f32 darkValue,
       const f32 brightValue,

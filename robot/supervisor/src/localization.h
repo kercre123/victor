@@ -1,18 +1,17 @@
 #ifndef LOCALIZATION_H
 #define LOCALIZATION_H
-
-#include "anki/common/shared/radians.h"
+#include "localization_geometry.h"
+#include "radians.h"
 #include "anki/types.h"
-#include "anki/common/robot/geometry.h"
 
 namespace Anki {
   namespace Cozmo {
     namespace Localization {
 
       Result Init();
-      
+
       Embedded::Pose2d GetCurrPose();
-      
+
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
       void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle);
 
@@ -21,9 +20,9 @@ namespace Anki {
 
       void GetDriveCenterPose(f32& x, f32& y, Radians& angle);
       void SetDriveCenterPose(const f32 &x, const f32 &y, const Radians &angle);
-      
+
       f32 GetDriveCenterOffset();
-      
+
       // Given a robotOriginPose, returns the pose of the drive center
       void ConvertToDriveCenterPose(const Anki::Embedded::Pose2d &robotOriginPose,
                                     Anki::Embedded::Pose2d &driveCenterPose);
@@ -31,15 +30,15 @@ namespace Anki {
       // Given a drive center pose, returns the robot origin pose
       void ConvertToOriginPose(const Anki::Embedded::Pose2d &driveCenterPose,
                                Anki::Embedded::Pose2d &robotOriginPose);
-      
+
       // Get the current pose frame ID
       PoseFrameID_t GetPoseFrameId();
-      
+
       // Clears internal pose history and sets pose frame ID to 0
       void ResetPoseFrame();
-      
+
       void Update();
-      
+
       // Uses the keyframe ("ground truth") pose at some past time as given
       // by the basestation after it has processed a mat marker to
       // update the current pose by transforming the given keyframe pose
@@ -53,30 +52,32 @@ namespace Anki {
       // Otherwise returns FAIL, but p will still be set to the closest pose
       // in history at time t. It just may not be very close at all...
       Result GetHistPoseAtTime(TimeStamp_t t, Anki::Embedded::Pose2d& p);
-      
+
       // Sets whether robot is on a ramp or not (the actual sloped portion),
       // and notifies the basestation when there is a change in ramp state.
       Result SetOnRamp(bool onRamp);
-      
+
       // Sets whether robot is on a bridge or not, and notifies the
       // basestation when there is a change in bridge state.
       Result SetOnBridge(bool onBridge);
-      
+
       // Returns true if robot is detected to be on a ramp.
       // This only works if the ramp is traversed using the controller.
       // i.e. Can't detect when manually driving up ramp.
       bool IsOnRamp();
-      
+
       // Returns true if robot is detected to be on a bridge.
       // This only works if the bridge is traversed using the controller.
       // i.e. Can't detect when manually driving over a bridge.
       bool IsOnBridge();
-      
+
       // Returns distance between the current pose and the given xy coordinates
       f32 GetDistTo(const f32 x, const f32 y);
-      
+
+      // Set motion model parameters
+      void SetMotionModelParams(f32 slipFactor);
+
     } // Localization
   } // Cozmo
 } // Anki
 #endif
-

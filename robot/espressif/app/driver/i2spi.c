@@ -14,6 +14,7 @@
 #include "driver/sdio_slv.h"
 #include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
+#include "backgroundTask.h"
 #include "foregroundTask.h"
 #include "imageSender.h"
 
@@ -72,8 +73,18 @@ static struct sdio_queue rxQueue[DMA_BUF_COUNT];
 static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
-/// Phase relationship between incoming drops and outgoing drops, determined through experimentation
+/** Phase relationship between incoming drops and outgoing drops
+ * This comes from the phase relationship between I2SPI transmission and reception required for DMA timing on the K02,
+ * the phase offset introduced by the I2S FIFO on the Espressif, aiming for the middle of the SPI receive buffer on the
+ * K02 and experimentally determined fudge factor.
+ */
 #define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
+/// Buffer for message to send to the RTIP
+static uint8_t messageBuffer[I2SPI_MESSAGE_BUF_SIZE];
+/// Write index into message buffer
+static uint16_t messageBufferWind;
+/// Read index into message Buffer
+static uint16_t messageBufferRind;
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
 /// The last state we've received from the RTIP updating the Body bootloader state
@@ -110,31 +121,32 @@ void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
-  if (drop->droplet & bootloaderStatus) os_memcpy(&bodyBootloaderCode, drop->payload, 4);
+  if (unlikely(drop->droplet & bootloaderStatus && drop->payloadLen == sizeof(bodyBootloaderCode)))
+  {
+    //static unsigned int prevValue;
+    os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, drop->payloadLen);
+    /*if (bodyBootloaderCode != prevValue)
+    {
+      os_printf("BS: %08x\r\n", bodyBootloaderCode);
+      prevValue = bodyBootloaderCode;
+    }*/
+  }
   else if (drop->payloadLen > 0)
   {
-    const uint8 jpegOffset = (drop->droplet & jpegLenMask) * 4;
-    AcceptRTIPMessage(drop->payload + jpegOffset, drop->payloadLen);
+    AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
   }
 }
 
 /** Fills a drop into the outgoing DMA buffers
  * Uses the outgoingPhase and nextOutgoingDesc module variables and advances them as nessisary
- * @param payload A pointer to the payload data to fill the drop with or NULL
- * @param length The number of bytes of payload to be put into this drop
+ * Data is gathered by calling PumpAudioData and PumpScreenData and pulling from messageBuffer which is filled by
+ * i2spiQueueMessage.
  */
-bool makeDrop(uint8_t* payload, uint8_t length)
+void makeDrop(void)
 {
-  static int8_t screenTxFraction = 0;
   if ((outgoingPhase + (DROP_TO_RTIP_SIZE/2)) > (DMA_BUF_SIZE/2)) // Will roll over making this drop
   {
-    if (txFillCount > (DMA_BUF_COUNT-4))
-    {
-      i2spiTxOverflowCount++;
-      //os_printf("i2spi tx overflow: %d, %d\r\n", i2spiTxOverflowCount, i2spiTxUnderflowCount);
-      return false;
-    }
-    else if (outgoingPhase > (DMA_BUF_SIZE/2)) // Rolling over right now
+    if (outgoingPhase > (DMA_BUF_SIZE/2)) // Rolling over right now
     {
       outgoingPhase -= DMA_BUF_SIZE/2;
       nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
@@ -148,25 +160,38 @@ bool makeDrop(uint8_t* payload, uint8_t length)
     }
     txFillCount++;
   }
-
+  
   DropToRTIP drop;
   os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
   drop.preamble = TO_RTIP_PREAMBLE;
   // Fill in the drop itself
   if (PumpAudioData(drop.audioData)) drop.droplet |= audioDataValid;
   
-  if (screenTxFraction++ < TX_SCREEN_DATA_EVERY)
-  {
-    drop.screenInd = PumpScreenData(drop.screenData);
-    drop.droplet  |= screenDataValid;
-  }
-  else if (screenTxFraction >= TX_SCREEN_DATA_OUTOF) screenTxFraction = 0;
+  drop.droplet |= PumpScreenData(drop.screenData);
   
-  if (payload != NULL)
+  if (messageBufferRind != messageBufferWind)
   {
-    os_memcpy(&(drop.payload), payload, length);
-    drop.payloadLen = length;
+    const uint16_t messageAvailable = I2SPI_MESSAGE_BUF_SIZE - ((messageBufferRind - messageBufferWind) & I2SPI_MESSAGE_BUF_SIZE_MASK);
+    const uint8_t messageSize = messageBuffer[messageBufferRind];
+    if (unlikely(messageSize > messageAvailable))
+    {
+      os_printf("ERROR I2SPI messageBuffer is corrupt! %d > %d, %02x\r\n", messageSize, messageAvailable, messageBuffer[(messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK]);
+    }
+    else
+    {
+      messageBufferRind = (messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance past size
+      for (drop.payloadLen=0; drop.payloadLen<messageSize; ++drop.payloadLen)
+      {
+        drop.payload[drop.payloadLen] = messageBuffer[messageBufferRind];
+        messageBufferRind = (messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK;
+      }
+    }
   }
+  else
+  {
+    i2spiTxUnderflowCount++; // Keep track of the underflow
+  }
+  
   // Copy into the DMA buffer
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   if (((DMA_BUF_SIZE/2) - outgoingPhase) >= (DROP_TO_RTIP_SIZE/2)) // Whole drop fits here
@@ -183,7 +208,6 @@ bool makeDrop(uint8_t* payload, uint8_t length)
     halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
     outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
   }
-  return true;
 }
 
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
@@ -210,32 +234,39 @@ void i2spiTask(os_event_t *event)
       uint16_t* buf = (uint16_t*)(desc->buf_ptr);
       while(true)
       {
-        while((dropPhase < DMA_BUF_SIZE/2) && (dropWrInd == 0)) // Search for preamble
+        if (dropWrInd == 0) // If we're looking for the next drop, not in the middle of an existing one
         {
-          if (buf[dropPhase] == TO_WIFI_PREAMBLE)
+          while(dropPhase < DMA_BUF_SIZE/2) // Search for preamble
           {
-            if (unlikely(drift > DRIFT_MARGIN)) 
+            if (buf[dropPhase] == TO_WIFI_PREAMBLE)
             {
-              i2spiRxOverflowCount++;
-              os_put_char('!'); os_put_char('T'); os_put_char('M'); os_put_char('D'); os_put_hex(drift, 4);
+              if (unlikely(drift > DRIFT_MARGIN)) 
+              {
+                i2spiRxOverflowCount++;
+                os_put_char('!'); os_put_char('T'); os_put_char('M'); os_put_char('D'); os_put_hex(drift, 4);
+              }
+              if (unlikely(outgoingPhase < PHASE_FLAGS)) // Haven't established outgoing phase yet
+              {
+                if (outgoingPhase == UNINITALIZED_PHASE)
+                {
+                  // Going past the end is OKAY as that will be used to increment the buffer
+                  os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
+                  outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+                  backgroundTaskOnRTIPSync();
+                  foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
+                }
+              }
+              else // Have a phase, just adjust for drift
+              {
+                outgoingPhase += drift;
+              }
+              i2spiIntegralDrift += drift;
+              drift = -DRIFT_MARGIN;
+              break;
             }
-            if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Haven't established outgoing phase yet
-            {
-              // Going past the end is OKAY as that will be used to increment the buffer
-              os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
-              outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
-              foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
-            }
-            else // Have a phase, just adjust for drift
-            {
-              outgoingPhase += drift;
-            }
-            i2spiIntegralDrift += drift;
-            drift = -DRIFT_MARGIN;
-            break;
+            dropPhase++;
+            drift++;
           }
-          dropPhase++;
-          drift++;
         }
         if (likely(dropPhase < DMA_BUF_SIZE/2)) // If we found a header
         {
@@ -279,9 +310,9 @@ void i2spiTask(os_event_t *event)
       else // When running
       {
         if (txFillCount > 0) txFillCount--; // We just transmitted one 
-        while ((txFillCount < 8) && makeDrop(NULL, 0)) // Fill in drops until we are as far ahead as we want to be
+        while (txFillCount < (DMA_BUF_COUNT-2)) // Need to leave space for buffer owned by DMA right now and one in transition
         {
-          i2spiTxUnderflowCount++; // Keep track of the underflow
+          makeDrop();
         }
       }
       break;
@@ -434,6 +465,8 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   i2spiPhaseErrorCount  = 0;
   i2spiIntegralDrift    = 0;
   txFillCount           = 0;
+  messageBufferWind     = 0;
+  messageBufferRind     = 0;
   rtipBootloaderState   = STATE_UNKNOWN;
   bodyBootloaderCode    = STATE_UNKNOWN;
 
@@ -562,26 +595,47 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   return 0;
 }
 
-bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen)
+bool ICACHE_FLASH_ATTR i2spiQueueMessage(uint8_t* msgData, int msgLen)
 {
   if (unlikely(outgoingPhase < PHASE_FLAGS))
   {
     return false;
   }
+  else if (unlikely(msgLen > DROP_TO_RTIP_MAX_VAR_PAYLOAD))
+  {
+    os_printf("ERROR i2spiQueueMessage(%02x..., %d) bigger than limit %d\r\n", msgData[0], msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+    return false;
+  }
   else
   {
-    uint16_t queued = 0;
-    while (queued < msgLen)
+    const uint16_t available = I2SPI_MESSAGE_BUF_SIZE - ((messageBufferWind - messageBufferRind) & I2SPI_MESSAGE_BUF_SIZE_MASK);
+    if (unlikely((msgLen + 1) >= available)) // Leave space for length field and to prevent index overlap
     {
-      uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-      if (makeDrop(msgData + queued, payloadLen) == false)
-      {
-        return false;
-      }
-      queued += payloadLen;
+      return false;
     }
-    return true;
+    else
+    {
+      messageBuffer[messageBufferWind] = msgLen;
+      messageBufferWind = (messageBufferWind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance past size field
+      const int firstCopy = I2SPI_MESSAGE_BUF_SIZE - messageBufferWind;
+      if (likely(firstCopy >= msgLen))
+      {
+        os_memcpy(messageBuffer + messageBufferWind, msgData, msgLen);
+      }
+      else
+      {
+        os_memcpy(messageBuffer + messageBufferWind, msgData, firstCopy);
+        os_memcpy(messageBuffer, msgData + firstCopy, msgLen - firstCopy);
+      }
+      messageBufferWind = (messageBufferWind + msgLen) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance the write index
+      return true;
+    }
   }
+}
+
+bool ICACHE_FLASH_ATTR i2spiMessageQueueIsEmpty(void)
+{
+  return messageBufferRind == messageBufferWind;
 }
 
 void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
@@ -647,22 +701,33 @@ uint32_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderCode(void)
   else return bodyBootloaderCode;
 }
 
-void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
+bool ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
 {
-  int wInd = 0;
-  int rInd = 0;
-  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-  uint16_t* data  = (uint16_t*)(chunk);
-  txBuf[wInd++] = COMMAND_HEADER;
-  txBuf[wInd++] = COMMAND_FLASH;
-  while (rInd < (sizeof(FirmwareBlock)/2))
+  const int availableBuffers = DMA_BUF_COUNT - 3 - txFillCount; // Leave space for 2 in pipeline plus one more for end of firmware message
+  const int availableSpace   = availableBuffers * DMA_BUF_SIZE;
+  if (availableSpace > sizeof(FirmwareBlock))
   {
-    while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
+    int wInd = 0;
+    int rInd = 0;
+    uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    uint16_t* data  = (uint16_t*)(chunk);
+    txBuf[wInd++] = COMMAND_HEADER;
+    txBuf[wInd++] = COMMAND_FLASH;
+    while (rInd < (sizeof(FirmwareBlock)/2))
     {
-      txBuf[wInd++] = data[rInd++];
+      while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
+      {
+        txBuf[wInd++] = data[rInd++];
+      }
+      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      txFillCount++;
+      txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+      wInd = 0;
     }
-    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-    txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    wInd = 0;
+    return true;
   }
+  else
+  {
+    return false;
   }
+}

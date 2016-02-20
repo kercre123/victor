@@ -88,7 +88,7 @@ class Upgrader:
 
     def __init__(self):
         self.acked = None
-        robotInterface.Init()
+        robotInterface.Init(False)
         robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.flashWriteAck, self.recieveAck)
 
 def UpgradeWiFi(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_WiFi_flash_address):
@@ -109,9 +109,9 @@ def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
         up.ota(a, RI.OTACommand.OTA_RTIP, version, f)
         time.sleep(1.0) # Wait for finish
 
-DEFAULT_WIFI_IMAGE = os.path.join("espressif", "bin", "upgrade", "user1.2048.new.3.bin")
-DEFAULT_RTIP_IMAGE = os.path.join("build", "41", "robot.safe")
-DEFAULT_BODY_IMAGE = os.path.join("syscon", "build", "syscon.safe")
+DEFAULT_WIFI_IMAGE = os.path.join("releases", "esp.user.bin")
+DEFAULT_RTIP_IMAGE = os.path.join("releases", "robot.safe")
+DEFAULT_BODY_IMAGE = os.path.join("releases", "syscon.safe")
 
 def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RTIP_IMAGE, bodyImage=DEFAULT_BODY_IMAGE):
     "Stages all firmware upgrades and triggers upgrade"
@@ -124,11 +124,11 @@ def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RT
 
 # Script entry point
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        sys.exit(USAGE)
     up = Upgrader()
     robotInterface.Connect()
-    if sys.argv[1] == 'all':
+    if len(sys.argv) < 2:
+        UpgradeAll(up)
+    elif sys.argv[1] == 'all':
         UpgradeAll(up)
     elif sys.argv[1] == 'wifi':
         UpgradeWiFi(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_WIFI_IMAGE)

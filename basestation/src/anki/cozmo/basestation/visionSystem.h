@@ -57,17 +57,21 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
-namespace Anki {  
+namespace Anki {
+namespace Embedded {
+  typedef Point<float> Point2f;
+}
 namespace Cozmo {
     
   // Forward declaration:
   class Robot;
+  class VizManager;
 
   class VisionSystem
   {
   public:
 
-    VisionSystem(const std::string& dataPath);
+    VisionSystem(const std::string& dataPath, VizManager* vizMan);
     ~VisionSystem();
     
     //
@@ -221,6 +225,7 @@ namespace Cozmo {
 #   endif
     
     // Previous image for doing background subtraction, e.g. for saliency
+    // NOTE: previous images stored at resolution of motion detection processing.
     Vision::ImageRGB _prevImage;
     Vision::ImageRGB _prevPrevImage;
     TimeStamp_t      _lastMotionTime = 0;
@@ -334,7 +339,10 @@ namespace Cozmo {
     ImageResolution               _nextSendImageResolution = ImageResolution::ImageResolutionNone;
     
     // FaceTracking
-    Vision::FaceTracker*            _faceTracker;
+    Vision::FaceTracker*          _faceTracker;
+    
+    // We hold a reference to the VizManager since we often want to draw to it
+    VizManager*                   _vizManager = nullptr;
 
     struct VisionMemory {
       /* 10X the memory for debugging on a PC

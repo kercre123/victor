@@ -36,9 +36,9 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event,
-                                                                GameObjectType gameObject,
-                                                                CallbackFunc callback )
+  AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( GameEvent::GenericEvent event,
+                                                                  GameObjectType gameObject,
+                                                                  CallbackFunc callback )
 {
   if ( nullptr != _messageHandler ) {
     
@@ -73,7 +73,7 @@ void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostGameState( GameStateGroupType gameStateGroup, GameStateType gameState )
+  void AudioEngineClient::PostGameState( GameState::StateGroupType gameStateGroup, GameState::GenericState gameState )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( (PostAudioGameState( gameStateGroup, gameState )) );
@@ -85,10 +85,12 @@ void AudioEngineClient::PostGameState( GameStateGroupType gameStateGroup, GameSt
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, GameObjectType gameObject )
+  void AudioEngineClient::PostSwitchState( SwitchState::SwitchGroupType switchGroup,
+                                           SwitchState::GenericSwitch switchState,
+                                           GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioSwitchState( switchStateGroup, switchState, gameObject ) );
+    const MessageAudioClient msg( PostAudioSwitchState( switchGroup, switchState, gameObject ) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -97,7 +99,7 @@ void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostParameter( ParameterType parameter,
+void AudioEngineClient::PostParameter( GameParameter::ParameterType parameter,
                                        float parameterValue,
                                        GameObjectType gameObject,
                                        int32_t timeInMilliSeconds,

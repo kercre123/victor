@@ -6,6 +6,7 @@
 
 #include "spi.h"
 #include "uart.h"
+#include "spine.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -33,7 +34,6 @@ volatile uint16_t Anki::Cozmo::HAL::UART::RecoveryStateUpdated = 0;
 static TRANSFER_MODE uart_mode;
 
 static int txRxIndex;
-static bool enter_recovery;
 
 inline void transmit_mode(TRANSFER_MODE mode);
 
@@ -53,14 +53,9 @@ inline void transmit_mode(TRANSFER_MODE mode) {
   switch (mode) {
     case TRANSMIT_SEND:
       // Special case mode where we force the head to enter recovery mode
-      if (enter_recovery) {
-        g_dataToBody.cubeStatus.ledDark = 0;
-        g_dataToBody.recover = recovery_secret_code;
-        enter_recovery = false;
-      }
-
+      Anki::Cozmo::HAL::Spine::Dequeue(g_dataToBody.spineMessage);
       memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
-      g_dataToBody.recover = 0; // Don't keep sending this
+
 
       PORTD_PCR6 = PORT_PCR_MUX(0);
       PORTD_PCR7 = PORT_PCR_MUX(3);
@@ -87,7 +82,10 @@ inline void transmit_mode(TRANSFER_MODE mode) {
 }
 
 void Anki::Cozmo::HAL::UART::EnterBodyRecovery(void) {
-  enter_recovery = true;
+  SpineProtocol msg;
+  
+  msg.opcode = ENTER_RECOVERY;
+  Spine::Enqueue(msg);
 }
 
 void Anki::Cozmo::HAL::UART::SendRecoveryData(const uint8_t* data, int bytes) {
