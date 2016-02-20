@@ -6,12 +6,12 @@ namespace SpeedTap {
   public class SpeedTapCozmoConfirm : State {
 
     private SpeedTapGame _SpeedTapGame = null;
-    private float _DriveTime = 1.5f;
+    private float _DriveTime = 1.25f;
 
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _CurrentRobot.DriveWheels(25.0f, 25.0f);
+      _CurrentRobot.DriveWheels(20.0f, 20.0f);
     }
 
     public override void Update() {

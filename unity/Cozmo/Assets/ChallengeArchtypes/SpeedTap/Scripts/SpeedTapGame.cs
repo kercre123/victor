@@ -46,7 +46,7 @@ namespace SpeedTap {
     public ISpeedTapRules Rules;
 
     private const float _kRetreatSpeed = -50.0f;
-    private const float _kRetreatTime = 1.25f;
+    private const float _kRetreatTime = 1.5f;
 
     private int _CozmoScore;
     private int _PlayerScore;
@@ -72,12 +72,14 @@ namespace SpeedTap {
     }
 
     public void CozmoWinsHand() {
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
       _CozmoScore++;
       CheckRounds();
       UpdateUI();
     }
 
     public void PlayerWinsHand() {
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
       _PlayerScore++;
       CheckRounds();
       UpdateUI();
@@ -203,7 +205,7 @@ namespace SpeedTap {
     }
 
     public void RollingBlocks() {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
     }
 
     private void UIButtonTapped() {
