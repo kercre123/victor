@@ -29,7 +29,7 @@
 // This is a temporary switch to use the old SoundManager for streaming robot
 // audio for animations, until we manage to fully hook up Jordan's stuff for
 // using (and syncing) wwise AudioManager.
-#define USE_SOUND_MANAGER_FOR_ROBOT_AUDIO 0
+#define USE_SOUND_MANAGER_FOR_ROBOT_AUDIO 1
 
 namespace Anki {
 namespace Cozmo {
