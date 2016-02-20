@@ -74,10 +74,7 @@ public class DailyGoalPanel : MonoBehaviour {
       // This might not be the best place to do this, but it should be ok for now.
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.RelationshipGain);
     }
-
-    float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
-    RobotEngineManager.Instance.CurrentRobot.AddToEmotion(EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
-    DailyGoalManager.Instance.PickMiniGameToRequest();
+    DailyGoalManager.Instance.SetMinigameNeed();
 
     if (rewardIcons != null) {
       bool anyExists = false; 
@@ -186,8 +183,8 @@ public class DailyGoalPanel : MonoBehaviour {
     var rewardTweenSequence = DOTween.Sequence();
     var rewardIconTween = target.DOMove(goalCell.position, 1.5f)
       .SetDelay(_RewardTweens.Count * 0.1f).SetEase(Ease.InCubic).OnComplete(() => {
-        Destroy(target.gameObject);
-      });
+      Destroy(target.gameObject);
+    });
     rewardTweenSequence.Join(rewardIconTween);
     rewardTweenSequence.Play();
     _RewardTweens.Add(rewardTweenSequence);

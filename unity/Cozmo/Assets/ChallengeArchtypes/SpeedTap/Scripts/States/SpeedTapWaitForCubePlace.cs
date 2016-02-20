@@ -26,8 +26,12 @@ namespace SpeedTap {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
+      // Just hold on this state if all rounds are over.
+      if (_SpeedTapGame.AllRoundsOver) {
+        return;
+      }
 
-      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 60f, HandleGotoObjectComplete);
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 50f, HandleGotoObjectComplete);
 
       if (_ShowHowToPlay) {
         _StateMachine.PushSubState(new HowToPlayState(null));

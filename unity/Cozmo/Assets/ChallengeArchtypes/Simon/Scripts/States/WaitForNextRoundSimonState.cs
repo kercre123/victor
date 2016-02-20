@@ -40,7 +40,7 @@ namespace Simon {
     }
 
     private void HandleOnCozmoStartAnimationDone(bool success) {
-      _StateMachine.SetNextState(new CozmoSetSequenceSimonState());
+      _StateMachine.SetNextState(new CozmoMoveCloserToCubesState(new CozmoSetSequenceSimonState()));
     }
   }
 }

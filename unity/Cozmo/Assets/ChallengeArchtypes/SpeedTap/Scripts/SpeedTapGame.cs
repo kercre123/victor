@@ -11,6 +11,9 @@ namespace SpeedTap {
 
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
+    public bool PlayerTap = false;
+    public bool AllRoundsOver = false;
+    public Vector3 PlayPos = Vector3.zero;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -99,11 +102,11 @@ namespace SpeedTap {
             CurrentDifficulty++;
           }
             
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorFail, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kFail, HandleRoundAnimationDone)));
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationGroupState(AnimationGroupName.kWin, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kSpeedTap_WinHand, HandleRoundAnimationDone)));
         }
 
         if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
@@ -114,6 +117,7 @@ namespace SpeedTap {
         int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
         int roundsLeft = _Rounds - losingScore - winningScore;
         if (winningScore > losingScore + roundsLeft) {
+          AllRoundsOver = true;
           if (_PlayerRoundsWon > _CozmoRoundsWon) {
             RaiseMiniGameWin();
           }
@@ -182,8 +186,14 @@ namespace SpeedTap {
       playerScoreWidget.MaxRounds = halfTotalRounds;
       playerScoreWidget.RoundsWon = _PlayerRoundsWon;
 
-      // Display the current round
-      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      if (AllRoundsOver) {
+        // Hide Current Round at end
+        SharedMinigameView.InfoTitleText = string.Empty;
+      }
+      else {
+        // Display the current round
+        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      }
     }
 
     public void RollingBlocks() {
