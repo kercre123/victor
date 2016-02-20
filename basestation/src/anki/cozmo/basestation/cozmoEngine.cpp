@@ -172,7 +172,7 @@ void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGa
   const char *ipString = _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
   int port =_config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
   if (port < 0 || port >= 0x10000) {
-    PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine", "Failed to initialize RobotComms; bad port.");
+    PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine", "Failed to initialize RobotComms; bad port %d", port);
     return;
   }
   Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
@@ -224,7 +224,7 @@ void CozmoEngine::DisconnectFromRobot(RobotID_t whichRobot)
 Result CozmoEngine::Update(const float currTime_sec)
 {
   if(!_isInitialized) {
-    PRINT_NAMED_ERROR("CozmoEngine.Update", "Cannot update CozmoEngine before it is initialized.\n");
+    PRINT_NAMED_ERROR("CozmoEngine.Update", "Cannot update CozmoEngine before it is initialized.");
     return RESULT_FAIL;
   }
   

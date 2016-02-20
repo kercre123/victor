@@ -94,9 +94,7 @@ namespace Anki {
       message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
       p.dataLen = message.Size();
       p.destId = _hostUiDeviceID;
-      if( nullptr != _uiComms ) {
-        _uiComms->Send(p);
-      }
+      _uiComms->Send(p);
     }
   
     Result UiMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
@@ -105,6 +103,8 @@ namespace Anki {
       if (message.Unpack(packet.data, packet.dataLen) != packet.dataLen) {
         PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
                           "Buffer's size does not match expected size for this message ID. (Msg " << ExternalInterface::MessageGameToEngineTagToString(message.GetTag()) << ", expected " << message.Size() << ", recvd " << packet.dataLen << ")");
+        
+        return RESULT_FAIL;
       }
       
       // Send out this message to anyone that's subscribed
