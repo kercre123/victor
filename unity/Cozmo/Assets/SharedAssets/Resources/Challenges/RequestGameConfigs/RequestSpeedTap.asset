@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Name: RequestSpeedTap
   m_EditorClassIdentifier: 
   ChallengeID: SpeedTapGame
-  RequestBehaviorGroup: 7
+  RequestBehaviorGroup: 6

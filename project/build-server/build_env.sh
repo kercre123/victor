@@ -40,7 +40,7 @@ if [ -z ${ANKI_BUILD_VERSION+x} ]; then ANKI_BUILD_VERSION="0"; fi
 # iOS specific variables.
 #
 
-MP_PARSE="${ANKI_BUILD_TOOLS_ROOT}/../mobile_provisioning/mpParse"
+MP_PARSE="${TOPLEVEL}/project/ios/ProvisioningProfiles/mpParse"
 PLIST_BUDDY="/usr/libexec/PlistBuddy"
 
 # build info
@@ -53,8 +53,8 @@ DERIVED_DATA_PATH=${ANKI_BUILD_ROOT}/${l_OS}/derived-data/${GENERATED_DD_FOLDER}
 
 BUILT_PRODUCTS_PATH=${DERIVED_DATA_PATH}/Build/Products/${ANKI_BUILD_CONFIGURATION}-${SDK_PLATFORM}
 
-PROVISIONING_PROFILE="${ANKI_REPO_ROOT}/projects/ios/ProvisioningProfiles/${ANKI_BUILD_PROVISIONING_PROFILE_NAME}.mobileprovision"
-INFO_PLIST="${ANKI_REPO_ROOT}/project/ios/${ANKI_BUILD_BUNDLE_NAME}/${ANKI_BUILD_BUNDLE_NAME}/Info.plist"
+PROVISIONING_PROFILE="${ANKI_REPO_ROOT}/project/ios/ProvisioningProfiles/${ANKI_BUILD_PROVISIONING_PROFILE_NAME}.mobileprovision"
+INFO_PLIST="${ANKI_REPO_ROOT}/unity/ios/Info.plist"
 
 DIST_ROOT="${ANKI_BUILD_ROOT}/dist"
 

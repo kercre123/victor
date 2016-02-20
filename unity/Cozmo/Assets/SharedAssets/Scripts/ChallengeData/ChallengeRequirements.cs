@@ -33,7 +33,7 @@ public class ChallengeRequirements : ISerializationCallbackReceiver {
     }
   }
 
-  public bool MeetsRequirements(Robot robot, List<string> completedChallengeIds) {
+  public bool MeetsRequirements(IRobot robot, List<string> completedChallengeIds) {
     for (int i = 0; i < ChallengeGateKeys.Length; ++i) {
       if (completedChallengeIds.Contains(ChallengeGateKeys[i]) == false) {
         return false;

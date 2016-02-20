@@ -13,7 +13,7 @@ public class RobotStateTextField : MonoBehaviour {
     }
 
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      Robot robot = RobotEngineManager.Instance.CurrentRobot;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot.CurrentBehaviorString != _RobotStateLabel.text) {
         _RobotStateLabel.text = robot.CurrentBehaviorString;
       }

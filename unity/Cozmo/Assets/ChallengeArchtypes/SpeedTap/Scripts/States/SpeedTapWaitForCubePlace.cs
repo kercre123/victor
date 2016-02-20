@@ -23,11 +23,15 @@ namespace SpeedTap {
       }
       // TODO: Set up UI
       _CurrentRobot.SetLiftHeight(1.0f);
-      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
+      // Just hold on this state if all rounds are over.
+      if (_SpeedTapGame.AllRoundsOver) {
+        return;
+      }
 
-      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 60f, HandleGotoObjectComplete);
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 50f, HandleGotoObjectComplete);
 
       if (_ShowHowToPlay) {
         _StateMachine.PushSubState(new HowToPlayState(null));
@@ -48,24 +52,6 @@ namespace SpeedTap {
           _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
         }
       }
-    }
-
-    public override void Exit() {
-      base.Exit();
-      // set idle parameters
-      /*Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
-        Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementSpacingMin_ms,
-        Anki.Cozmo.LiveIdleAnimationParameter.LiftMovementSpacingMin_ms,
-        Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
-      };
-
-      float[] paramValues = {
-        float.MaxValue,
-        float.MaxValue,
-        20.0f
-      };
-      _CurrentRobot.SetIdleAnimation("_LIVE_");
-      _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);*/
     }
   }
 

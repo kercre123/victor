@@ -78,6 +78,7 @@
 		168068ED061645941133D425 /* Bulk_Assembly-CSharp_5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A65E9D7950F7B3B01F7245AF /* Bulk_Assembly-CSharp_5.cpp */; };
 		1EFC5F228838075AF70E3BEA /* Bulk_Assembly-CSharp_6.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C266F53834BF2C008905CD93 /* Bulk_Assembly-CSharp_6.cpp */; };
 		2106AB99F33BE6AFDD3D7D18 /* Bulk_Assembly-CSharp_7.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2E899C14299A10E6DD9E2A /* Bulk_Assembly-CSharp_7.cpp */; };
+		2A272FACABEE862608C98C5C /* Bulk_Assembly-CSharp_8.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 919E007E74AB82E4BA1FCC0A /* Bulk_Assembly-CSharp_8.cpp */; };
 		73F6F9B404514A3F3F49FD47 /* Bulk_DOTween43_0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 308B9A709015B7FD8A0C3F46 /* Bulk_DOTween43_0.cpp */; };
 		8DE7CBACEB0AE58531FC1993 /* Bulk_DOTween46_0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13796C55DB323A39C0D79C76 /* Bulk_DOTween46_0.cpp */; };
 		99B95D70CB2A25032ECF6211 /* Bulk_DOTweenPro_0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 32CA94687AE47C83B7266CE3 /* Bulk_DOTweenPro_0.cpp */; };
@@ -91,6 +92,7 @@
 		0D78E9A191593119EF9382D6 /* Bulk_Generics_13.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 581C3019FF21F798AFDFAD2C /* Bulk_Generics_13.cpp */; };
 		082FCAF36C8FBE066A8E2E2C /* Bulk_Generics_14.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01DD5C8FC2BF3C8315D74F4E /* Bulk_Generics_14.cpp */; };
 		67FBFE6F502C4C942A56AC92 /* Bulk_Generics_15.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 186913D684A9FD1C99F3D945 /* Bulk_Generics_15.cpp */; };
+		5CC3ECDC257E6DF4DCF0D17E /* Bulk_Generics_16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 891ECBCE255BBCDA7DA8088B /* Bulk_Generics_16.cpp */; };
 		61A741AA05DC425FD2B553A5 /* Bulk_Generics_2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0213C4137261AE8E2114739 /* Bulk_Generics_2.cpp */; };
 		E012A297444367E49097530F /* Bulk_Generics_3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1050D66FDD44AF93A60F66BC /* Bulk_Generics_3.cpp */; };
 		8C6D820A5209AC167AE02C23 /* Bulk_Generics_4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */; };
@@ -318,6 +320,7 @@
 		A65E9D7950F7B3B01F7245AF /* Bulk_Assembly-CSharp_5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_5.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_5.cpp"; sourceTree = "<group>"; };
 		C266F53834BF2C008905CD93 /* Bulk_Assembly-CSharp_6.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_6.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_6.cpp"; sourceTree = "<group>"; };
 		DF2E899C14299A10E6DD9E2A /* Bulk_Assembly-CSharp_7.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_7.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_7.cpp"; sourceTree = "<group>"; };
+		919E007E74AB82E4BA1FCC0A /* Bulk_Assembly-CSharp_8.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_8.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_8.cpp"; sourceTree = "<group>"; };
 		308B9A709015B7FD8A0C3F46 /* Bulk_DOTween43_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_DOTween43_0.cpp; path = UnityBuild/Classes/Native/Bulk_DOTween43_0.cpp; sourceTree = "<group>"; };
 		13796C55DB323A39C0D79C76 /* Bulk_DOTween46_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_DOTween46_0.cpp; path = UnityBuild/Classes/Native/Bulk_DOTween46_0.cpp; sourceTree = "<group>"; };
 		32CA94687AE47C83B7266CE3 /* Bulk_DOTweenPro_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_DOTweenPro_0.cpp; path = UnityBuild/Classes/Native/Bulk_DOTweenPro_0.cpp; sourceTree = "<group>"; };
@@ -331,6 +334,7 @@
 		581C3019FF21F798AFDFAD2C /* Bulk_Generics_13.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_13.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_13.cpp; sourceTree = "<group>"; };
 		01DD5C8FC2BF3C8315D74F4E /* Bulk_Generics_14.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_14.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_14.cpp; sourceTree = "<group>"; };
 		186913D684A9FD1C99F3D945 /* Bulk_Generics_15.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_15.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_15.cpp; sourceTree = "<group>"; };
+		891ECBCE255BBCDA7DA8088B /* Bulk_Generics_16.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_16.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_16.cpp; sourceTree = "<group>"; };
 		F0213C4137261AE8E2114739 /* Bulk_Generics_2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_2.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_2.cpp; sourceTree = "<group>"; };
 		1050D66FDD44AF93A60F66BC /* Bulk_Generics_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_3.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_3.cpp; sourceTree = "<group>"; };
 		8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_4.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_4.cpp; sourceTree = "<group>"; };
@@ -661,6 +665,7 @@
 				A65E9D7950F7B3B01F7245AF /* Bulk_Assembly-CSharp_5.cpp */,
 				C266F53834BF2C008905CD93 /* Bulk_Assembly-CSharp_6.cpp */,
 				DF2E899C14299A10E6DD9E2A /* Bulk_Assembly-CSharp_7.cpp */,
+				919E007E74AB82E4BA1FCC0A /* Bulk_Assembly-CSharp_8.cpp */,
 				308B9A709015B7FD8A0C3F46 /* Bulk_DOTween43_0.cpp */,
 				13796C55DB323A39C0D79C76 /* Bulk_DOTween46_0.cpp */,
 				32CA94687AE47C83B7266CE3 /* Bulk_DOTweenPro_0.cpp */,
@@ -674,6 +679,7 @@
 				581C3019FF21F798AFDFAD2C /* Bulk_Generics_13.cpp */,
 				01DD5C8FC2BF3C8315D74F4E /* Bulk_Generics_14.cpp */,
 				186913D684A9FD1C99F3D945 /* Bulk_Generics_15.cpp */,
+				891ECBCE255BBCDA7DA8088B /* Bulk_Generics_16.cpp */,
 				F0213C4137261AE8E2114739 /* Bulk_Generics_2.cpp */,
 				1050D66FDD44AF93A60F66BC /* Bulk_Generics_3.cpp */,
 				8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */,
@@ -1087,7 +1093,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -e\nset -x\n\nif test -z \"$ANKI_BUILD_REPO_ROOT\"\nthen\n    echo \"No ANKI_BUILD_REPO_ROOT set; expected ios.xcconfig to exist.\" >&2\n    exit 1\nfi\n\nCONFIG=$(echo ${CONFIGURATION} | tr '[:upper:]' '[:lower:]')\n\n#if [ ${ANKI_BUILD_MODE:=auto} == \"auto\" ]; then\n\n# If we're not using a PREBUILT_UNITY, then build unity now.\n\npython -u \"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/tools/anki-util/tools/build-tools/tools/ankibuild/unity.py\" \\\n--platform ios \\\n--config \"${CONFIG}\" \\\n--sdk \"${PLATFORM_NAME}\" \\\n--script-engine mono \\\n--build-dir \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \\\n--log-file \"${ANKI_BUILD_UNITY_BUILD_DIR}/UnityBuild-${CONFIG}-${PLATFORM_NAME}.log\" \\\n--xcode-build-dir \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \\\n--with-unity \"${ANKI_BUILD_UNITY_EXE}\" \\\n--verbose \\\n\"${ANKI_BUILD_UNITY_PROJECT_PATH}\"\n\n#fi\n\n# update our symlink\nrm -rf \"${SRCROOT}/UnityBuild\"\nln -s \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \"${SRCROOT}/UnityBuild\"\n";
+			shellScript = "set -e\nset -x\n\nif test -z \"$ANKI_BUILD_REPO_ROOT\"\nthen\n    echo \"No ANKI_BUILD_REPO_ROOT set; expected ios.xcconfig to exist.\" >&2\n    exit 1\nfi\n\nCONFIG=$(echo ${CONFIGURATION} | tr '[:upper:]' '[:lower:]')\n\n#if [ ${ANKI_BUILD_MODE:=auto} == \"auto\" ]; then\n\n# If we're not using a PREBUILT_UNITY, then build unity now.\n\npython -u \"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/tools/anki-util/tools/build-tools/tools/ankibuild/unity.py\" \\\n--platform ios \\\n--config \"${CONFIG}\" \\\n--sdk \"${PLATFORM_NAME}\" \\\n--script-engine il2cpp \\\n--build-dir \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \\\n--log-file \"${ANKI_BUILD_UNITY_BUILD_DIR}/UnityBuild-${CONFIG}-${PLATFORM_NAME}.log\" \\\n--xcode-build-dir \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \\\n--with-unity \"${ANKI_BUILD_UNITY_EXE}\" \\\n--verbose \\\n\"${ANKI_BUILD_UNITY_PROJECT_PATH}\"\n\n#fi\n\n# update our symlink\nrm -rf \"${SRCROOT}/UnityBuild\"\nln -s \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \"${SRCROOT}/UnityBuild\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1111,6 +1117,7 @@
 				168068ED061645941133D425 /* Bulk_Assembly-CSharp_5.cpp in Sources */,
 				1EFC5F228838075AF70E3BEA /* Bulk_Assembly-CSharp_6.cpp in Sources */,
 				2106AB99F33BE6AFDD3D7D18 /* Bulk_Assembly-CSharp_7.cpp in Sources */,
+				2A272FACABEE862608C98C5C /* Bulk_Assembly-CSharp_8.cpp in Sources */,
 				73F6F9B404514A3F3F49FD47 /* Bulk_DOTween43_0.cpp in Sources */,
 				8DE7CBACEB0AE58531FC1993 /* Bulk_DOTween46_0.cpp in Sources */,
 				99B95D70CB2A25032ECF6211 /* Bulk_DOTweenPro_0.cpp in Sources */,
@@ -1124,6 +1131,7 @@
 				0D78E9A191593119EF9382D6 /* Bulk_Generics_13.cpp in Sources */,
 				082FCAF36C8FBE066A8E2E2C /* Bulk_Generics_14.cpp in Sources */,
 				67FBFE6F502C4C942A56AC92 /* Bulk_Generics_15.cpp in Sources */,
+				5CC3ECDC257E6DF4DCF0D17E /* Bulk_Generics_16.cpp in Sources */,
 				61A741AA05DC425FD2B553A5 /* Bulk_Generics_2.cpp in Sources */,
 				E012A297444367E49097530F /* Bulk_Generics_3.cpp in Sources */,
 				8C6D820A5209AC167AE02C23 /* Bulk_Generics_4.cpp in Sources */,

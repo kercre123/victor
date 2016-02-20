@@ -94,12 +94,12 @@ namespace DataPersistence {
 
     private void StartNewSessionButtonClicked() {
 
-      var field = typeof(TimelineEntryData).GetField("Date");
-
-      int days = -1;
-      int.TryParse(_SessionDays.text, out days);
-      if (days < 0) {
-        DataPersistenceManager.Instance.Data.Sessions.ForEach(x => field.SetValue(x, x.Date.AddDays(days)));
+      int days;
+      if (!int.TryParse(_SessionDays.text, out days)) {
+        days = 1;
+      }
+      if (days > 0) {
+        DataPersistenceManager.Instance.Data.Sessions.ForEach(x => x.Date = x.Date.AddDays(-days));
         DataPersistenceManager.Instance.Save();
       }
 
@@ -122,7 +122,7 @@ namespace DataPersistence {
           var stat = (Anki.Cozmo.ProgressionStatType)j;
           if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
             int goal = UnityEngine.Random.Range(0, 6);
-            int progress = Mathf.Clamp(UnityEngine.Random.Range(0, goal * 2), 0, goal);
+            int progress = UnityEngine.Random.Range(0, 12);
             entry.Goals[stat] = goal;
             entry.Progress[stat] = progress;
           }

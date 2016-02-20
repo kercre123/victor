@@ -23,8 +23,7 @@ namespace Simon {
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
-      _CurrentRobot.SetHeadAngle(-1.0f);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
     }
 
     public override void Update() {
@@ -43,15 +42,14 @@ namespace Simon {
         _ShouldWinGame = true;
       }
       else {
-        // Determine if Cozmo wins on the last color of the sequence
         float coinFlip = Random.Range(0f, 1f);
         if (coinFlip > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
           _ShouldWinGame = false;
           int correctId = _CurrentSequence[_CurrentSequenceIndex];
           List<int> blockIds = new List<int>();
-          foreach (int id in _CurrentRobot.LightCubes.Keys) {
-            if (id != correctId) {
-              blockIds.Add(id);
+          foreach (LightCube cube in _GameInstance.CubesForGame) {
+            if (cube.ID != correctId) {
+              blockIds.Add(cube.ID);
             }
           }
           int targetId = blockIds[Random.Range(0, blockIds.Count)];
@@ -68,7 +66,7 @@ namespace Simon {
 
       _CurrentRobot.SetAllBackpackBarLED(cubeLightColor);
 
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(target, true));
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(target));
     }
 
     public LightCube GetCurrentTarget() {
@@ -78,24 +76,18 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, uint.MaxValue, 0, 0, 0);
-      }
+      _GameInstance.SetCubeLightsDefaultOn();
     }
 
     private void CozmoLoseGame() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetFlashingLEDs(Color.red, 100, 100, 0);
-      }
+      _GameInstance.SetCubeLightsGuessWrong();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
       _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleOnCozmoLoseAnimationDone));
     }
 
     private void CozmoWinGame() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, 100, 100, 0, 0);
-      }
+      _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
 
@@ -105,20 +97,12 @@ namespace Simon {
     }
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
-      BlackoutLights();
       _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
-      BlackoutLights();
       _GameInstance.RaiseMiniGameWin(Localization.GetWithArgs(
         LocalizationKeys.kSimonGameTextPatternLength, _CurrentSequence.Count));
-    }
-
-    private void BlackoutLights() {
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetFlashingLEDs(Color.black, uint.MaxValue, 0, 0);
-      }
     }
   }
 }

@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Name: RequestSimon
   m_EditorClassIdentifier: 
   ChallengeID: SimonGame
-  RequestBehaviorGroup: 8
+  RequestBehaviorGroup: 7

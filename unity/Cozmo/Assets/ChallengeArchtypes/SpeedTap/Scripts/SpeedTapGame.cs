@@ -11,6 +11,9 @@ namespace SpeedTap {
 
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
+    public bool PlayerTap = false;
+    public bool AllRoundsOver = false;
+    public Vector3 PlayPos = Vector3.zero;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -99,11 +102,11 @@ namespace SpeedTap {
             CurrentDifficulty++;
           }
             
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kMajorFail, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kFail, HandleRoundAnimationDone)));
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationGroupState(AnimationGroupName.kWin, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kSpeedTap_WinHand, HandleRoundAnimationDone)));
         }
 
         if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
@@ -114,6 +117,7 @@ namespace SpeedTap {
         int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
         int roundsLeft = _Rounds - losingScore - winningScore;
         if (winningScore > losingScore + roundsLeft) {
+          AllRoundsOver = true;
           if (_PlayerRoundsWon > _CozmoRoundsWon) {
             RaiseMiniGameWin();
           }
@@ -152,9 +156,6 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetBehaviorSystem(false);
 
-      CurrentRobot.SetLiftHeight(0.0f);
-      CurrentRobot.SetHeadAngle(-1.0f);
-
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
     }
 
@@ -175,16 +176,24 @@ namespace SpeedTap {
 
     public void UpdateUI() {
       int halfTotalRounds = (_Rounds + 1) / 2;
-      SharedMinigameView.CozmoScoreboard.Score = _CozmoScore;
-      SharedMinigameView.CozmoScoreboard.MaxRounds = halfTotalRounds;
-      SharedMinigameView.CozmoScoreboard.RoundsWon = _CozmoRoundsWon;
+      Cozmo.MinigameWidgets.ScoreWidget cozmoScoreWidget = SharedMinigameView.CozmoScoreboard;
+      cozmoScoreWidget.Score = _CozmoScore;
+      cozmoScoreWidget.MaxRounds = halfTotalRounds;
+      cozmoScoreWidget.RoundsWon = _CozmoRoundsWon;
 
-      SharedMinigameView.PlayerScoreboard.Score = _PlayerScore;
-      SharedMinigameView.PlayerScoreboard.MaxRounds = halfTotalRounds;
-      SharedMinigameView.PlayerScoreboard.RoundsWon = _PlayerRoundsWon;
+      Cozmo.MinigameWidgets.ScoreWidget playerScoreWidget = SharedMinigameView.PlayerScoreboard;
+      playerScoreWidget.Score = _PlayerScore;
+      playerScoreWidget.MaxRounds = halfTotalRounds;
+      playerScoreWidget.RoundsWon = _PlayerRoundsWon;
 
-      // Display the current round
-      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      if (AllRoundsOver) {
+        // Hide Current Round at end
+        SharedMinigameView.InfoTitleText = string.Empty;
+      }
+      else {
+        // Display the current round
+        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      }
     }
 
     public void RollingBlocks() {
@@ -209,12 +218,12 @@ namespace SpeedTap {
       float minDist = float.MaxValue;
       ObservedObject closest = null;
 
-      for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
-        if (CurrentRobot.SeenObjects[i] is LightCube) {
-          float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
+      for (int i = 0; i < CubesForGame.Count; ++i) {
+        if (CubesForGame[i] != PlayerBlock) {
+          float d = Vector3.Distance(CubesForGame[i].WorldPosition, CurrentRobot.WorldPosition);
           if (d < minDist) {
             minDist = d;
-            closest = CurrentRobot.SeenObjects[i];
+            closest = CubesForGame[i];
           }
         }
       }
@@ -225,12 +234,12 @@ namespace SpeedTap {
       float maxDist = 0;
       ObservedObject farthest = null;
 
-      for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
-        if (CurrentRobot.SeenObjects[i] is LightCube) {
-          float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
+      for (int i = 0; i < CubesForGame.Count; ++i) {
+        if (CubesForGame[i] != CozmoBlock) {
+          float d = Vector3.Distance(CubesForGame[i].WorldPosition, CurrentRobot.WorldPosition);
           if (d >= maxDist) {
             maxDist = d;
-            farthest = CurrentRobot.SeenObjects[i];
+            farthest = CubesForGame[i];
           }
         }
       }

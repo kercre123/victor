@@ -13,7 +13,7 @@ public class ProgressionStatPane : MonoBehaviour {
 
   private void Start() {
     // populate with known stats.
-    Robot robot = RobotEngineManager.Instance.CurrentRobot;
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       int statCount = (int)ProgressionStatType.Count;
       for (int i = 0; i < statCount; ++i) {

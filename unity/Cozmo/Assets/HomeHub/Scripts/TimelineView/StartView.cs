@@ -18,10 +18,14 @@ public class StartView : BaseView {
   [SerializeField]
   private Image _BluetoothIndicator;
 
+  [SerializeField]
+  private Button _SecretSkipButton;
+
   public event System.Action OnConnectClicked;
 
   private void Awake() {
     _ConnectButton.onClick.AddListener(HandleConnectClicked);
+    _SecretSkipButton.onClick.AddListener(HandleSecretSkipButtonClicked);
     LoopRobotSleep();
   }
 
@@ -78,6 +82,13 @@ public class StartView : BaseView {
         ProceduralEyeParameters.MakeDefaultRightEye());
     }
 
+    if (OnConnectClicked != null) {
+      OnConnectClicked();
+    }
+  }
+
+  private void HandleSecretSkipButtonClicked() {
+    // just trigger our callback. Everything should get cleaned up
     if (OnConnectClicked != null) {
       OnConnectClicked();
     }

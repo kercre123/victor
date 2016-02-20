@@ -17,20 +17,24 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
-  public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
+  public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
   public SharedMinigameView SharedMinigameView {
     get { return _SharedMinigameViewInstance; }
+  }
+
+  public Anki.Cozmo.Audio.GameState.Music GetMusicState() {
+    return _ChallengeData.Music;
   }
 
   protected Transform SharedMinigameViewInstanceParent { get { return _SharedMinigameViewInstance.transform; } }
@@ -44,6 +48,8 @@ public abstract class GameBase : MonoBehaviour {
   private StatContainer _RewardedXp;
 
   private float _GameStartTime;
+
+  public List<LightCube> CubesForGame;
 
   #region Initialization
 
@@ -60,22 +66,23 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
       _ChallengeData.HowToPlayDialogContentLocKey);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
- 
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Playful);
 
     Initialize(challengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
     InitializeView(challengeData);
     _SharedMinigameViewInstance.OpenView();
+
+    DAS.Event("game.start", challengeData.name);
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
 
   protected virtual void InitializeView(ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    SharedMinigameView.TitleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    SharedMinigameView.TitleWidget.Icon = data.ChallengeIcon;
+    ChallengeTitleWidget titleWidget = SharedMinigameView.TitleWidget;
+    titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
+    titleWidget.Icon = data.ChallengeIcon;
     SharedMinigameView.ShowBackButton();
   }
 
@@ -106,9 +113,12 @@ public abstract class GameBase : MonoBehaviour {
   protected abstract void CleanUpOnDestroy();
 
   public void OnDestroy() {
+    
+    DAS.Event("game.end", _ChallengeData.name);
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(() => {
-        RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(AnimationName.kIdleBrickout);
+        RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
       });
     }
     if (_SharedMinigameViewInstance != null) {
@@ -190,27 +200,31 @@ public abstract class GameBase : MonoBehaviour {
 
   public void RaiseMiniGameWin(string subtitleText = null) {
     _StateMachine.Stop();
-
     _WonChallenge = true;
-    _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
-    _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
-    _SharedMinigameViewInstance.PlayerScoreboard.IsWinner = true;
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
 
+    UpdateScoreboard(_WonChallenge);
     OpenChallengeEndedDialog(subtitleText);
   }
 
   public void RaiseMiniGameLose(string subtitleText = null) {
     _StateMachine.Stop();
     _WonChallenge = false;
-    _SharedMinigameViewInstance.CozmoScoreboard.Dim = false;
-    _SharedMinigameViewInstance.PlayerScoreboard.Dim = false;
-    _SharedMinigameViewInstance.CozmoScoreboard.IsWinner = true;
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
 
+    UpdateScoreboard(_WonChallenge);
     OpenChallengeEndedDialog(subtitleText);
+  }
+
+  private void UpdateScoreboard(bool didPlayerWin) {
+    ScoreWidget cozmoScoreboard = _SharedMinigameViewInstance.CozmoScoreboard;
+    cozmoScoreboard.Dim = false;
+    cozmoScoreboard.IsWinner = !didPlayerWin;
+    ScoreWidget playerScoreboard = _SharedMinigameViewInstance.PlayerScoreboard;
+    playerScoreboard.Dim = false;
+    playerScoreboard.IsWinner = didPlayerWin;
   }
 
   private void OpenChallengeEndedDialog(string subtitleText = null) {
@@ -235,6 +249,7 @@ public abstract class GameBase : MonoBehaviour {
           _RewardedXp[statType] = grantedXp;
           _ChallengeEndViewInstance.AddReward(statType, grantedXp);
 
+          // TODO: Move granting to after animation?
           // Grant right away even if there are animations in the daily goal ui
           CurrentRobot.AddToProgressionStat(statType, grantedXp);
         }
@@ -243,16 +258,22 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void HandleChallengeResultViewClosed() {
+    // Get unparented reward icons
+    Transform[] rewardIconObjects = _ChallengeEndViewInstance.GetRewardIconsByStat();
+
+    // Pass icons and xp to HomeHub
     if (_WonChallenge) {
       if (OnMiniGameWin != null) {
-        OnMiniGameWin(_RewardedXp);
+        OnMiniGameWin(_RewardedXp, rewardIconObjects);
       }
     }
     else {
       if (OnMiniGameLose != null) {
-        OnMiniGameLose(_RewardedXp);
+        OnMiniGameLose(_RewardedXp, rewardIconObjects);
       }
     }
+
+    // Close minigame UI
     CloseMinigameImmediately();
   }
 

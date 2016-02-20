@@ -16,7 +16,7 @@ public class Intro : MonoBehaviour {
 
   private const int kRobotID = 1;
 
-  private Robot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
+  private IRobot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private string LastEngineIP {
     get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
@@ -124,6 +124,10 @@ public class Intro : MonoBehaviour {
     }
   }
 
+  public void PlayMock() {
+    RobotEngineManager.Instance.MockConnect();
+  }
+
   protected void SaveData() {
     LastIP = _RobotIPInputField.text;
     LastSimIP = _SimIPInputField.text;
@@ -147,9 +151,11 @@ public class Intro : MonoBehaviour {
       return;
     }
 
-    if (_Simulated && _Robot != null) {
-      _Robot.VisionWhileMoving(true);
-    }
+    #if UNITY_EDITOR
+    _Robot.SetRobotVolume(0.06f);
+    #endif
+
+    Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
     _Error.text = "";
     DAS.Info(this, "Robot Connected!");

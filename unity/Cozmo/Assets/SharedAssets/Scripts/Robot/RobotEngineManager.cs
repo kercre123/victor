@@ -17,15 +17,32 @@ public class RobotEngineManager : MonoBehaviour {
   
   public static RobotEngineManager Instance = null;
 
-  public Dictionary<int, Robot> Robots { get; private set; }
+  public Dictionary<int, IRobot> Robots { get; private set; }
+
+  // Cache the last current robot
+  private int _LastCurrentRobotID;
+  private IRobot _LastCurrentRobot;
 
   public int CurrentRobotID { get; private set; }
 
-  public Robot CurrentRobot { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
+  public IRobot CurrentRobot { 
+    get { 
+      if (_LastCurrentRobot != null && _LastCurrentRobotID == CurrentRobotID) {
+        return _LastCurrentRobot;
+      }
+      IRobot current;
+      if (Robots.TryGetValue(CurrentRobotID, out current)) {
+        _LastCurrentRobot = current;
+        _LastCurrentRobotID = CurrentRobotID;
+        return current;
+      }
+      return null; 
+    } 
+  }
 
   public bool IsConnected { get { return (_Channel != null && _Channel.IsConnected); } }
 
-  private List<string> RobotAnimationNames = new List<string>();
+  private List<string> _RobotAnimationNames = new List<string>();
 
   [SerializeField] 
   private TextAsset _Configuration;
@@ -124,7 +141,7 @@ public class RobotEngineManager : MonoBehaviour {
     _Channel.DisconnectedFromClient += Disconnected;
     _Channel.MessageReceived += ReceivedMessage;
 
-    Robots = new Dictionary<int, Robot>();
+    Robots = new Dictionary<int, IRobot>();
   }
 
   private void OnDisable() {
@@ -159,16 +176,21 @@ public class RobotEngineManager : MonoBehaviour {
     CurrentRobot.UpdateLightMessages();
   }
 
+  public List<string> GetRobotAnimationNames() {
+    return _RobotAnimationNames;
+  }
+
   public void AddRobot(byte robotID) {
-    if (Robots.ContainsKey(robotID)) {
-      Robot oldRobot = Robots[robotID];
+    IRobot oldRobot;
+    if (Robots.TryGetValue(robotID, out oldRobot)) {
       if (oldRobot != null) {
         oldRobot.Dispose();
       }
+      _LastCurrentRobot = null;
       Robots.Remove(robotID);
     }
     
-    Robot robot = new Robot(robotID);
+    IRobot robot = new Robot(robotID);
     Robots.Add(robotID, robot);
     CurrentRobotID = robotID;
   }
@@ -481,7 +503,7 @@ public class RobotEngineManager : MonoBehaviour {
     bool success = message.result == ActionResult.SUCCESS;
     CurrentRobot.TargetLockedObject = null;
 
-    CurrentRobot.LocalBusyTimer = 0f;
+    CurrentRobot.SetLocalBusyTimer(0f);
 
     if (SuccessOrFailure != null) {
       SuccessOrFailure(message.idTag, success, actionType);
@@ -506,8 +528,8 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.AnimationAvailable message) {
-    if (!RobotAnimationNames.Contains(message.animName))
-      RobotAnimationNames.Add(message.animName);
+    if (!_RobotAnimationNames.Contains(message.animName))
+      _RobotAnimationNames.Add(message.animName);
   }
 
   private void ReceivedSpecificMessage(G2U.MoodState message) {
@@ -679,4 +701,22 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
+
+  #region Mocks
+
+  public void MockConnect() {
+
+    _IsRobotConnected = true;
+
+    const byte robotID = 1;
+
+    Robots[robotID] = new MockRobot(robotID);
+    CurrentRobotID = robotID;
+
+    if (RobotConnected != null) {
+      RobotConnected(robotID);
+    }
+  }
+
+  #endregion //Mocks
 }

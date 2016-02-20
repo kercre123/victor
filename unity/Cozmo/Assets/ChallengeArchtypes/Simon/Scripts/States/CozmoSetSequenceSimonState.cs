@@ -29,7 +29,7 @@ namespace Simon {
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
-      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
     }
 
     public override void Update() {
@@ -56,7 +56,7 @@ namespace Simon {
       _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
         _CurrentSequenceIndex + 1, _SequenceLength);
       _LastSequenceTime = Time.time;
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget(), true));
+      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget()));
     }
 
     public LightCube GetCurrentTarget() {
@@ -66,9 +66,7 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, uint.MaxValue, 0, 0, 0);
-      }
+      _GameInstance.SetCubeLightsDefaultOn();
     }
   }
 

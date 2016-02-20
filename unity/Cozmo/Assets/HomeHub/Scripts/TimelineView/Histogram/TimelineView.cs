@@ -91,6 +91,7 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     DailySummaryPanel _DailySummaryPrefab;
+    DailySummaryPanel _DailySummaryInstance;
 
     [SerializeField]
     CozmoWidget _CozmoWidgetPrefab;
@@ -100,10 +101,13 @@ namespace Cozmo.HomeHub {
     private float _ScrollLockedOffset;
 
     protected override void CleanUp() {
+      if (_DailySummaryInstance != null) {
+        _DailySummaryInstance.CloseView();
+      }
       _ScrollRect.onValueChanged.RemoveAllListeners();
     }
 
-    public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
+    public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, Transform[] rewardIcons = null) {
       _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<HomeHubChallengeListView>();
       _ChallengeListViewInstance.Initialize(challengeStatesById);
       _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
@@ -113,14 +117,14 @@ namespace Cozmo.HomeHub {
 
       _CozmoWidgetInstance = UIManager.CreateUIElement(_CozmoWidgetPrefab.gameObject, _CozmoWidgetContainer).GetComponent<CozmoWidget>();
 
-      UpdateDailySession();
+      UpdateDailySession(rewardIcons);
 
       PopulateTimeline(DataPersistenceManager.Instance.Data.Sessions);
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
       _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
 
       _EndSessionButton.onClick.AddListener(HandleEndSessionButtonTap);
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       _CozmoWidgetInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
 
       // Locking and expanding daily goals init
@@ -155,9 +159,15 @@ namespace Cozmo.HomeHub {
       }
 
       for (int i = 0; i < kGeneratedTimelineHistoryLength; i++) {
-        var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
 
         var date = startDate.AddDays(i);
+
+        if (!(date < today)) {
+          break;
+        }
+
+        var spawnedObject = UIManager.CreateUIElement(_TimelineEntryPrefab, _TimelineContainer);
+
         var entry = spawnedObject.GetComponent<TimelineEntry>();
 
         TimelineEntryData timelineEntry = null;
@@ -211,6 +221,7 @@ namespace Cozmo.HomeHub {
           _ScrollRect.transform.localPosition = Vector3.zero;
         }
         else {
+          _ScrollRect.horizontalNormalizedPosition = 1f;
           _ScrollRect.transform.localPosition = Vector2.left * (position - contentWidth);
         }
          
@@ -223,40 +234,37 @@ namespace Cozmo.HomeHub {
 
     }
 
-    private void UpdateDailySession() {
+    private void UpdateDailySession(Transform[] rewardIcons = null) {
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
-      Robot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       // check if the current session is still valid
       if (currentSession != null) {  
-        _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals);
-        float currNeed = DailyGoalManager.Instance.GetMinigameNeed_Extremes();
-        currentRobot.AddToEmotion(Anki.Cozmo.EmotionType.WantToPlay, currNeed, "DailyGoalProgress");
-        DailyGoalManager.Instance.PickMiniGameToRequest();
-        return;
+        _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals, rewardIcons);
       }
+      else {
+        var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
 
-      var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+        if (lastSession != null && !lastSession.Complete) {
+          CompleteSession(lastSession);
+        }
 
-      if (lastSession != null && !lastSession.Complete) {
-        CompleteSession(lastSession);
+        // start a new session
+        StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
+
+        TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
+          StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
+          StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
+        };
+
+        newSession.Goals.Set(goals);
+
+        currentRobot.SetProgressionStats(newSession.Progress);
+        _DailyGoalInstance.SetDailyGoals(newSession.Progress, newSession.Goals, rewardIcons);
+
+        DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
+
+        DataPersistenceManager.Instance.Save();
       }
-
-      // start a new session
-      StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
-
-      TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
-        StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
-        StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
-      };
-
-      newSession.Goals.Set(goals);
-
-      currentRobot.SetProgressionStats(newSession.Progress);
-      _DailyGoalInstance.SetDailyGoals(newSession.Progress, newSession.Goals);
-
-      DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
-
-      DataPersistenceManager.Instance.Save();
     }
 
     private void CompleteSession(TimelineEntryData timelineEntry) {
@@ -265,6 +273,18 @@ namespace Cozmo.HomeHub {
 
       RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
       UpdateFriendshipPoints(timelineEntry, friendshipPoints);
+
+      int stat_count = (int)Anki.Cozmo.ProgressionStatType.Count; 
+      for (int i = 0; i < stat_count; ++i) {
+        var targetStat = (Anki.Cozmo.ProgressionStatType)i;
+        if (timelineEntry.Goals[targetStat] > 0 && timelineEntry.Goals[targetStat] > timelineEntry.Progress[targetStat]) {
+          DAS.Event("game.goal_complete", targetStat.ToString(), new Dictionary<string,string> { {
+              "$data",
+              timelineEntry.Goals[targetStat].ToString()
+            }
+          });
+        }
+      }
 
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
 
@@ -291,15 +311,23 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
+      if (_DailySummaryInstance != null) {
+        return;
+      }
+      DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
       var summaryPanel = UIManager.OpenView(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
+      _DailySummaryInstance = summaryPanel;
       summaryPanel.Initialize(session);
       if (onComplete != null) {
         summaryPanel.FriendshipBarAnimateComplete += onComplete;
       }
+      summaryPanel.ViewClosed += HandleDailySummaryClosed;
     }
 
     private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
-      TimeSpan deltaTime = (DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date - DataPersistenceManager.Today);
+      
+      TimeSpan deltaTime = DataPersistenceManager.Instance.Data.Sessions.Count <= 1 ? new TimeSpan(1, 0, 0, 0) : 
+        (DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date - DataPersistenceManager.Today);
       int friendshipPoints = ((int)deltaTime.TotalDays + 1) * 10;
       summaryPanel.FriendshipBarAnimateComplete -= HandleOnFriendshipBarAnimateComplete;
 
@@ -308,6 +336,10 @@ namespace Cozmo.HomeHub {
         UpdateFriendshipPoints(data, friendshipPoints);
         summaryPanel.AnimateFriendshipBar(data);
       }
+    }
+
+    private void HandleDailySummaryClosed() {
+      DailyGoalManager.Instance.SetMinigameNeed();
     }
 
     #region Daily Goal locking

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 /// <summary>
@@ -17,10 +18,12 @@ public static class CozmoUtil {
   public const float kLiftRequestTime = 3f;
   public const float kMinHeadAngle = -25f;
   public const float kMaxHeadAngle = 34f;
+  public const float kHeadHeightMM = 49f;
   public const float kMaxSpeedRadPerSec = 5f;
   public const float kHeadAngleRequestTime = 3f;
   public const float kCarriedObjectHeight = 75f;
   public const float kMaxVoltage = 5f;
   public const float kOriginToLowLiftDDistMM = 28f;
 
+  public const float kIdealBlockViewHeadValue = -0.6f;
 }
