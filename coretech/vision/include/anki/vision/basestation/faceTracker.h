@@ -38,15 +38,21 @@ namespace Vision {
     
     using UpdatedID = struct { TrackedFace::ID_t oldID, newID; };
     
-    Result Update(const Vision::Image& frameOrig,
+    // Returns the faces found and any IDs that may have been updated (e.g. due
+    // to a new recognition or a merge of existing records)
+    Result Update(const Vision::Image&    frameOrig,
                   std::list<TrackedFace>& faces,
                   std::list<UpdatedID>&   updatedIDs);
     
     void EnableDisplay(bool enabled);
     
+    // Set the number of new users to enroll.
+    // If numToEnroll == 0, new face enrollment is disabled.
+    // If numToEnroll == -1, all new faces are enrolled ongoing.
     void EnableNewFaceEnrollment(s32 numToEnroll);
     bool IsNewFaceEnrollmentEnabled() const;
     
+    // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
     
     Result SaveAlbum(const std::string& albumName);

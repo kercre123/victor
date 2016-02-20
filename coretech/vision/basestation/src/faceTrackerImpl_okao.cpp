@@ -29,6 +29,7 @@ namespace Vision {
   : _recognizer(config)
   {
     if(config.isMember("faceDetection")) {
+      // TODO: Use string constants
       _config = config["faceDetection"];
     } else {
       PRINT_NAMED_WARNING("FaceTrackerImpl.Constructor.NoFaceDetectConfig",
@@ -39,6 +40,7 @@ namespace Vision {
   template<class T>
   static inline bool SetParamHelper(const Json::Value& config, const std::string& keyName, T& value)
   {
+    // TODO: Use string constants
     if(JsonTools::GetValueOptional(config, keyName, value)) {
       // TODO: Print value too...
       PRINT_NAMED_INFO("FaceTrackerImpl.SetParamHelper", "%s", keyName.c_str());
@@ -50,7 +52,7 @@ namespace Vision {
   
   Result FaceTracker::Impl::Init()
   {
-    // Get and pring Okao library version as a sanity check that we can even
+    // Get and print Okao library version as a sanity check that we can even
     // talk to the library
     UINT8 okaoVersionMajor=0, okaoVersionMinor = 0;
     INT32 okaoResult = OKAO_CO_GetVersion(&okaoVersionMajor, &okaoVersionMinor);

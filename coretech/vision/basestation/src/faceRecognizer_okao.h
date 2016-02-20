@@ -38,6 +38,7 @@ namespace Vision {
   class FaceRecognizer : public Profiler
   {
   public:
+    
     FaceRecognizer(const Json::Value& config);
     
     ~FaceRecognizer();
@@ -50,6 +51,7 @@ namespace Vision {
     // the recognizer isn't already busy with another request) and false
     // otherwise. If true, the caller must not modify the part detection handle
     // while processing is running (i.e. until false is returned).
+    // If running synchronously, always returns true.
     bool SetNextFaceToRecognize(const Image& img,
                                 const DETECTION_INFO& detectionInfo,
                                 HPTRESULT okaoPartDetectionResultHandle);
@@ -58,17 +60,20 @@ namespace Vision {
     
     EnrolledFaceEntry GetRecognitionData(INT32 forTrackingID);
     
-    // Get a byte buffer containing the enrollment image for the given face ID,
-    // as a JPG image. Byte buffer will be empty if faceID is not valid.
-    Image GetEnrollmentImage(TrackedFace::ID_t forFaceID);
-    
     Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName);
     Result SaveAlbum(const std::string& albumName);
 
+    // See FaceTracker for description
     void EnableNewFaceEnrollment(s32 numToEnroll);
     bool IsNewFaceEnrollmentEnabled() const   { return _numToEnroll != 0; }
 
   private:
+    
+    // Called by Run() in async mode whenever there's a new image to be processed.
+    // Called on each use of SetNextFaceToRecognize() when running synchronously.
+    // Assumes state is HasNewImage at start and goes to FeaturesReady on success
+    // or Idle on failure.
+    void ExtractFeatures();
     
     Result RegisterNewUser(HFEATURE& hFeature);
     
@@ -76,8 +81,7 @@ namespace Vision {
     
     Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
     
-    Result RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                         TrackedFace::ID_t& faceID, INT32& recognitionScore);
+    Result RecognizeFace(TrackedFace::ID_t& faceID, INT32& recognitionScore);
     
     Result MergeFaces(TrackedFace::ID_t keepID, TrackedFace::ID_t mergeID);
     
@@ -109,7 +113,6 @@ namespace Vision {
     f32   _timeBetweenEnrollmentUpdates_sec = 60.f;
     f32   _timeBetweenInitialEnrollmentUpdates_sec = 0.5f;
     
-    
     bool _isInitialized = false;
     
     // Okao handles allocated by this class
@@ -118,9 +121,17 @@ namespace Vision {
     HALBUM      _okaoFaceAlbum                 = NULL;
     
     // Threading
+    enum class ProcessingState : u8 {
+      Idle,
+      HasNewImage,
+      ExtractingFeatures,
+      FeaturesReady
+    };
     std::mutex  _mutex;
     std::thread _recognitionThread;
     bool        _recognitionRunning = false;
+    bool        _isRunningAsync = true;
+    ProcessingState _state = ProcessingState::Idle;
     void Run();
     
     // Passed-in state for processing
@@ -130,8 +141,6 @@ namespace Vision {
     
     // Internal bookkeeping and parameters
     std::map<INT32, TrackedFace::ID_t> _trackingToFaceID;
-    
-    std::list<INT32> _trackerIDsToRemove;
     
     INT32 _lastRegisteredUserID = 1; // Don't start at zero: that's the UnknownFace ID!
     s32   _numToEnroll = 0;

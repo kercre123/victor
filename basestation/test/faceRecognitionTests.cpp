@@ -179,9 +179,11 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   
   Json::Value config;
   config["faceDetection"]["detectionMode"] = "video";
+  config["faceRecognition"]["recognitionThreshold"] = 600;
+  
   // Since we're processing faster than real time (using saved images)
   config["faceRecognition"]["timeBetweenInitialEnrollmentUpdates_sec"] = 0.01;
-  config["faceRecognition"]["recognitionThreshold"] = 600;
+  config["faceRecognition"]["runMode"] = "synchronous";
   
   for(s32 iReload=0; iReload<2; ++iReload)
   {

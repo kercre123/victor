@@ -222,7 +222,7 @@ namespace Vision {
       leftCen = _leftEyeCen;
       rightCen = _rightEyeCen;
     }
-    return _eyesDetected;
+    return HasEyes();
   }
   
   inline void TrackedFace::SetRect(Rectangle<f32> &&rect)

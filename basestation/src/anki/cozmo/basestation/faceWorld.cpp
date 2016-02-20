@@ -104,11 +104,16 @@ namespace Cozmo {
                        msg.oldID, msg.newID);
       
       return RESULT_OK;
-    } else {
+    } else if(oldID > 0){
       PRINT_NAMED_WARNING("FaceWorld.ChangeFaceID.BadOldID",
                           "ID %d does not exist, cannot update to %d",
                           oldID, newID);
       return RESULT_FAIL;
+    } else {
+      // Probably no match for old ID because it was a tracked ID and wasn't
+      // even added to face world before being recognized and being assigned this
+      // new recognized ID
+      return RESULT_OK;
     }
   }
   

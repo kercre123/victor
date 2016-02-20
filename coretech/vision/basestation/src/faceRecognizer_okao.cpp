@@ -34,12 +34,24 @@ namespace Vision {
 #   define SetParam(__NAME__) JsonTools::GetValueOptional(recognitionConfig, QUOTE(__NAME__), _##__NAME__)
     if(config.isMember("faceRecognition"))
     {
+      // TODO: Use string constants
       const Json::Value& recognitionConfig = config["faceRecognition"];
       
       SetParam(recognitionThreshold);
       SetParam(mergeThreshold);
       SetParam(timeBetweenEnrollmentUpdates_sec);
       SetParam(timeBetweenInitialEnrollmentUpdates_sec);
+      
+      std::string runModeStr;
+      if(JsonTools::GetValueOptional(recognitionConfig, "runMode", runModeStr)) {
+        if(runModeStr == "asynchronous") {
+          _isRunningAsync = true;
+        } else if(runModeStr == "synchronous") {
+          _isRunningAsync = false;
+        } else {
+          ASSERT_NAMED(false, "Unrecognized FaceRecognizer run mode. Should be 'synchronous' or 'asynchronous'");
+        }
+      }
     } else {
       PRINT_NAMED_WARNING("FaceRecognizer.Constructor.NoFaceRecParameters",
                           "Did not find 'faceRecognition' field in config");
@@ -52,7 +64,7 @@ namespace Vision {
     // Wait for recognition thread to die before destructing since we gave it a
     // reference to *this
     _recognitionRunning = false;
-    if(_recognitionThread.joinable()) {
+    if(_isRunningAsync && _recognitionThread.joinable()) {
       _recognitionThread.join();
     }
     
@@ -87,7 +99,7 @@ namespace Vision {
     }
     
     _okaoRecogMergeFeatureHandle = OKAO_FR_CreateFeatureHandle(okaoCommonHandle);
-    if(NULL == _okaoRecognitionFeatureHandle) {
+    if(NULL == _okaoRecogMergeFeatureHandle) {
       PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoMergeFeatureHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
@@ -101,7 +113,9 @@ namespace Vision {
     _detectionInfo.nID = -1;
     
     _recognitionRunning = true;
-    _recognitionThread = std::thread(&FaceRecognizer::Run, this);
+    if(_isRunningAsync) {
+      _recognitionThread = std::thread(&FaceRecognizer::Run, this);
+    }
     
     _isInitialized = true;
     
@@ -112,7 +126,99 @@ namespace Vision {
   {
     EnrolledFaceEntry entry;
     
-    _mutex.lock();
+    if(ProcessingState::FeaturesReady == _state)
+    {
+      // Feature extraction thread is done: finish the rest of the recognition
+      // process so we can start accepting new requests to recognize
+      TrackedFace::ID_t recognizedID = TrackedFace::UnknownFace;
+      s32 score = 0;
+      Result result = RecognizeFace(recognizedID, score);
+      
+      // For simulating slow processing (e.g. on a device)
+      //std::this_thread::sleep_for(std::chrono::milliseconds(250));
+      
+      if(RESULT_OK == result)
+      {
+        // See who we're currently recognizing this tracker ID as
+        TrackedFace::ID_t faceID = TrackedFace::UnknownFace;
+        auto iter = _trackingToFaceID.find(_detectionInfo.nID);
+        if(iter != _trackingToFaceID.end()) {
+          faceID = iter->second;
+        }
+        
+        if(TrackedFace::UnknownFace == recognizedID) {
+          // We did not recognize the tracked face in its current position, just leave
+          // the faceID alone
+          
+          // (Nothing to do)
+          
+        } else if(TrackedFace::UnknownFace == faceID) {
+          // We have not yet assigned a recognition ID to this tracker ID. Use the
+          // one we just found via recognition.
+          faceID = recognizedID;
+          
+        } else if(faceID != recognizedID) {
+          // We recognized this face as a different ID than the one currently
+          // assigned to the tracking ID. Trust the tracker that they are in
+          // fact the same and merge the two, keeping the original (first enrolled)
+          auto faceIDenrollData = _enrollmentData.find(faceID);
+          if(faceIDenrollData == _enrollmentData.end()) {
+            // The tracker's assigned ID got removed (via merge while doing RecognizeFaces).
+            faceID = recognizedID;
+          } else {
+            auto recIDenrollData  = _enrollmentData.find(recognizedID);
+            ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
+                         "RecognizedID should have enrollment data by now");
+            
+            TrackedFace::ID_t mergeTo, mergeFrom;
+            
+            if(faceIDenrollData->second.enrollmentTime <= recIDenrollData->second.enrollmentTime)
+            {
+              mergeFrom = recognizedID;
+              mergeTo   = faceID;
+            } else {
+              mergeFrom = faceID;
+              mergeTo   = recognizedID;
+              
+              faceID = mergeTo;
+            }
+            
+            PRINT_NAMED_INFO("FaceRecognizer.Run.MergingFaces",
+                             "Tracking %d: merging ID=%d into ID=%d",
+                             _detectionInfo.nID, mergeFrom, mergeTo);
+            Result mergeResult = MergeFaces(mergeTo, mergeFrom);
+            if(RESULT_OK != mergeResult) {
+              PRINT_NAMED_WARNING("FaceRecognizer.Run.MergeFail",
+                                  "Trying to merge %d with %d", faceID, recognizedID);
+            }
+          }
+          
+          
+        } else {
+          // We recognized this person as the same ID already assigned to its tracking ID
+          ASSERT_NAMED(faceID == recognizedID, "Expecting faceID to match recognizedID");
+        }
+        
+        // Update the stored faceID assigned to this trackerID
+        // (This creates an entry for the current trackerID if there wasn't one already,
+        //  and an entry for this faceID if there wasn't one already)
+        if(TrackedFace::UnknownFace != faceID) {
+          _trackingToFaceID[_detectionInfo.nID] = faceID;
+          _enrollmentData[faceID].score = score;
+        }
+        
+      } else {
+        PRINT_NAMED_ERROR("FaceRecognizer.Run.RecognitionFailed", "");
+      }
+      
+      // Signify we're done and ready for next face
+      //PRINT_NAMED_DEBUG("FaceRecognizer.Run.DoneWithFace",
+      //                  "Finished recognizing tracked ID %d as recognized ID %d",
+      //                  -_detectionInfo.nID, faceID);
+      _state = ProcessingState::Idle;
+      
+    } // if(ProcessingState::FeaturesReady == _state)
+    
     auto iter = _trackingToFaceID.find(forTrackingID);
     if(iter != _trackingToFaceID.end()) {
       const TrackedFace::ID_t faceID = iter->second;
@@ -122,172 +228,81 @@ namespace Vision {
       entry = enrolledEntry;
       enrolledEntry.prevID = enrolledEntry.faceID; // no longer "new" or "updated"
     }
-    _mutex.unlock();
     
     return entry;
-  }
-  
-  Image FaceRecognizer::GetEnrollmentImage(TrackedFace::ID_t forFaceID)
-  {
-    Image image;
-    
-    _mutex.lock();
-    auto iter = _enrollmentData.find(forFaceID);
-    if(iter != _enrollmentData.end()) {
-      // TODO: Copy image data?
-      //iter->second.image.CopyTo(image);
-    }
-    _mutex.unlock();
-    
-    return image;
-  }
+  } // GetRecognitionData()
+
   
   void FaceRecognizer::RemoveTrackingID(INT32 trackerID)
   {
-    _mutex.lock();
-    _trackerIDsToRemove.push_back(trackerID);
-    _mutex.unlock();
+    _trackingToFaceID.erase(trackerID);
   }
   
   void FaceRecognizer::Run()
   {
     while(_recognitionRunning)
     {
-      // If we're not allowed to enroll new faces and there's nobody already
-      // enrolled, we have nothing to do
       _mutex.lock();
-      const bool anythingToDo = (_numToEnroll != 0 || !_enrollmentData.empty());
+      const bool anythingToDo = ProcessingState::HasNewImage == _state;
       _mutex.unlock();
       
-      if(_detectionInfo.nID >= 0 && anythingToDo)
-      {
-        //PRINT_NAMED_DEBUG("FaceRecognizer.Run.Starting",
-        //                  "Starting to recognize tracked ID %d", -_detectionInfo.nID);
-
-        INT32 nWidth  = _img.GetNumCols();
-        INT32 nHeight = _img.GetNumRows();
-        RAWIMAGE* dataPtr = _img.GetDataPointer();
-        INT32 score = 0;
+      if(anythingToDo) {
         
-        // Get the faceID currently assigned to this tracker ID
-        _mutex.lock();
-        TrackedFace::ID_t faceID = TrackedFace::UnknownFace;
-        auto iter = _trackingToFaceID.find(_detectionInfo.nID);
-        if(iter != _trackingToFaceID.end()) {
-          faceID = iter->second;
-        }
-        _mutex.unlock();
-        
-        TrackedFace::ID_t recognizedID = TrackedFace::UnknownFace;
-        Result result = RecognizeFace(nWidth, nHeight, dataPtr, recognizedID, score);
-        
-        // For simulating slow processing (e.g. on a device)
-        //std::this_thread::sleep_for(std::chrono::milliseconds(250));
-        
-        if(RESULT_OK == result)
-        {
-          // TODO: Tic("FaceRecognition");
-          
-          if(TrackedFace::UnknownFace == recognizedID) {
-            // We did not recognize the tracked face in its current position, just leave
-            // the faceID alone
-            
-            // (Nothing to do)
-            
-          } else if(TrackedFace::UnknownFace == faceID) {
-            // We have not yet assigned a recognition ID to this tracker ID. Use the
-            // one we just found via recognition.
-            faceID = recognizedID;
-            
-          } else if(faceID != recognizedID) {
-            // We recognized this face as a different ID than the one currently
-            // assigned to the tracking ID. Trust the tracker that they are in
-            // fact the same and merge the two, keeping the original (first enrolled)
-            auto faceIDenrollData = _enrollmentData.find(faceID);
-            if(faceIDenrollData == _enrollmentData.end()) {
-              // The tracker's assigned ID got removed (via merge while doing RecognizeFaces).
-              faceID = recognizedID;
-            } else {
-              auto recIDenrollData  = _enrollmentData.find(recognizedID);
-              ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
-                           "RecognizedID should have enrollment data by now");
-              
-              TrackedFace::ID_t mergeTo, mergeFrom;
-              
-              if(faceIDenrollData->second.enrollmentTime <= recIDenrollData->second.enrollmentTime)
-              {
-                mergeFrom = recognizedID;
-                mergeTo   = faceID;
-              } else {
-                mergeFrom = faceID;
-                mergeTo   = recognizedID;
-                
-                faceID = mergeTo;
-              }
-              
-              PRINT_NAMED_INFO("FaceRecognizer.Run.MergingFaces",
-                               "Tracking %d: merging ID=%d into ID=%d",
-                               _detectionInfo.nID, mergeFrom, mergeTo);
-              Result mergeResult = MergeFaces(mergeTo, mergeFrom);
-              if(RESULT_OK != mergeResult) {
-                PRINT_NAMED_WARNING("FaceRecognizer.Run.MergeFail",
-                                    "Trying to merge %d with %d", faceID, recognizedID);
-              }
-            }
-          
-            
-          } else {
-            // We recognized this person as the same ID already assigned to its tracking ID
-            ASSERT_NAMED(faceID == recognizedID, "Expecting faceID to match recognizedID");
-          }
-          
-          // Update the stored faceID assigned to this trackerID
-          // (This creates an entry for the current trackerID if there wasn't one already,
-          //  and an entry for this faceID if there wasn't one already)
-          if(TrackedFace::UnknownFace != faceID) {
-            _mutex.lock();
-            _trackingToFaceID[_detectionInfo.nID] = faceID;
-            _enrollmentData[faceID].score = score;
-            _mutex.unlock();
-          }
-          
-        } else {
-          PRINT_NAMED_ERROR("FaceRecognizer.Run.RecognitionFailed", "");
-        }
-        
-        // Signify we're done and ready for next face
-        //PRINT_NAMED_DEBUG("FaceRecognizer.Run.DoneWithFace",
-        //                  "Finished recognizing tracked ID %d as recognized ID %d",
-        //                  -_detectionInfo.nID, faceID);
-        _detectionInfo.nID = -1;
-        
-        // Clear any tracker IDs queuend up for removal
-        _mutex.lock();
-        if(!_trackerIDsToRemove.empty())
-        {
-          for(auto trackerID : _trackerIDsToRemove) {
-            _trackingToFaceID.erase(trackerID);
-          }
-          _trackerIDsToRemove.clear();
-        }
-        _mutex.unlock();
+        // Note: this puts us in FeaturesReady state when done (or Idle if failure)
+        ExtractFeatures();
         
       } else {
+        // Nothing to do: just sleep
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
       }
-      /*
-       INT32 resultNum = 0;
-       const s32 MaxResults = 2;
-       INT32 userIDs[MaxResults], scores[MaxResults];
-       INT32 okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum,
-       MaxResults, userIDs, scores, &resultNum);
-       */
     }
   } // Run()
   
   
+  void FaceRecognizer::ExtractFeatures()
+  {
+    ASSERT_NAMED(ProcessingState::HasNewImage == _state,
+                 "Should be in 'HasNewImage' state to start extracting features.");
+    
+    // If we're not allowed to enroll new faces and there's nobody already
+    // enrolled, we have nothing to do
+    _mutex.lock();
+    _state = ProcessingState::ExtractingFeatures;
+    _mutex.unlock();
+    
+    //PRINT_NAMED_DEBUG("FaceRecognizer.Run.Starting",
+    //                  "Starting to recognize tracked ID %d", -_detectionInfo.nID);
+    
+    INT32 nWidth  = _img.GetNumCols();
+    INT32 nHeight = _img.GetNumRows();
+    RAWIMAGE* dataPtr = _img.GetDataPointer();
+    
+    Tic("OkaoFeatureExtraction");
+    INT32 okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
+                                                  dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
+                                                  _okaoPartDetectionResultHandle);
+    Toc("OkaoFeatureExtraction");
+    
+    ProcessingState newState = ProcessingState::FeaturesReady;
+    
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_WARNING("FaceRecognizer.ExtractFeatures.OkaoFailure",
+                          "Going back to Idle state. Okao Result=%d", okaoResult);
+      newState = ProcessingState::Idle;
+    }
+    
+    _mutex.lock();
+    _state = newState;
+    _mutex.unlock();
+    
+  } // ExtractFeatures()
+  
+  
   Result FaceRecognizer::RegisterNewUser(HFEATURE& hFeature)
   {
+    ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
+                 "Should only be registering new user if features are ready");
+    
     INT32 numUsersInAlbum = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
     if(OKAO_NORMAL != okaoResult) {
@@ -326,9 +341,9 @@ namespace Vision {
       ASSERT_NAMED(_lastRegisteredUserID != Vision::TrackedFace::UnknownFace,
                    "LastRegisteredID should not be the UnknownFace ID");
       
-    } while(isRegistered && tries++ < 2*MaxAlbumFaces);
+    } while(isRegistered && tries++ < MaxAlbumFaces);
     
-    if(tries >= 2*MaxAlbumFaces) {
+    if(tries >= MaxAlbumFaces) {
       PRINT_NAMED_ERROR("FaceRecognizer.RegisturNewUser.NoIDsAvailable",
                         "Could not find a free ID to use for new face");
       return RESULT_FAIL;
@@ -363,10 +378,8 @@ namespace Vision {
 
     enrollData.image = _img.GetROI(roi);
     */
-    _mutex.lock();
     _enrollmentData.emplace(_lastRegisteredUserID, std::move(enrollData));
     --_numToEnroll;
-    _mutex.unlock();
     
     PRINT_NAMED_INFO("FaceRecognizer.RegisterNewUser.Success",
                      "Added user number %d to album", _lastRegisteredUserID);
@@ -376,41 +389,50 @@ namespace Vision {
   
   bool FaceRecognizer::IsEnrollable()
   {
+    bool retVal = false;
     // TODO: Add checks for eyes open and smiling?
     if(_numToEnroll != 0 &&
        _detectionInfo.nPose == POSE_YAW_FRONT &&
        _detectionInfo.nWidth*_detectionInfo.nHeight > 1000)
     {
       return true;
-    } else {
-      return false;
     }
+    return retVal;
   }
   
   void FaceRecognizer::EnableNewFaceEnrollment(s32 numToEnroll)
   {
-    _mutex.lock();
     _numToEnroll = numToEnroll;
-    _mutex.unlock();
   }
   
   bool FaceRecognizer::SetNextFaceToRecognize(const Image& img,
                                               const DETECTION_INFO& detectionInfo,
                                               HPTRESULT okaoPartDetectionResultHandle)
   {
-    if(_detectionInfo.nID == -1)
+    // Nothing to do if we aren't allowed to enroll anyone and there's nobody
+    // in the album yet to match this face to
+    const bool anythingToDo = (_numToEnroll != 0 || !_enrollmentData.empty());
+    
+    if(ProcessingState::Idle == _state && anythingToDo)
     {
-      _mutex.lock();
       // Not currently busy: copy in the given data and start working on it
       
+      _mutex.lock();
       img.CopyTo(_img);
       _okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
       _detectionInfo = detectionInfo;
       
       //PRINT_NAMED_DEBUG("FaceRecognizer.SetNextFaceToRecognize.SetNextFace",
       //                  "Setting next face to recognize: tracked ID %d", -_detectionInfo.nID);
-      
+
+      _state = ProcessingState::HasNewImage;
       _mutex.unlock();
+      
+      if(!_isRunningAsync) {
+        // Immediately extract features when running synchronously
+        ExtractFeatures();
+      }
+      
       return true;
       
     } else {
@@ -422,12 +444,12 @@ namespace Vision {
   
   Result FaceRecognizer::UpdateExistingUser(INT32 userID, HFEATURE& hFeature)
   {
+    ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
+                 "Should be in 'FeaturesReady' state if updating user record");
+    
     Result result = RESULT_OK;
     
     const time_t updateTime = time(0);
-    
-    
-    _mutex.lock();
     
     auto enrollDataIter = _enrollmentData.find(userID);
     ASSERT_NAMED(enrollDataIter != _enrollmentData.end(), "Missing enrollment status");
@@ -466,7 +488,6 @@ namespace Vision {
       }
     }
     
-    _mutex.unlock();
     return result;
   } // UpdateExistingUser()
   
@@ -480,7 +501,6 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    _mutex.lock();
     _enrollmentData.erase(userID);
     
     // TODO: Keep a reference to which trackerIDs are pointing to each faceID to avoid this search
@@ -492,27 +512,18 @@ namespace Vision {
         ++iter;
       }
     }
-    _mutex.unlock();
     
     return RESULT_OK;
   }
   
-  Result FaceRecognizer::RecognizeFace(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                                       TrackedFace::ID_t& faceID, INT32& recognitionScore)
+
+  Result FaceRecognizer::RecognizeFace(TrackedFace::ID_t& faceID, INT32& recognitionScore)
   {
-    // NOTE: This is the "slow" call: extracting the features for recognition, given the
-    //  facial part locations. This is the majority of the reason we are using a
-    //  separate thread in the first place. We aren't touching any of the enrollment/tracking
-    //  data structures, so we do not lock the mutex, meaning those data structures
-    //  can be modified while this runs.
-    Tic("OkaoFeatureExtraction");
-    INT32 okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
-                                                  dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
-                                                  _okaoPartDetectionResultHandle);
-    Toc("OkaoFeatureExtraction");
+    ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
+                 "Must be in 'FeaturesReady' state to call RecognizeFace");
     
     INT32 numUsersInAlbum = 0;
-    okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
+    INT32 okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceRecognizer.RecognizeFace.OkaoGetNumUsersInAlbumFailed", "");
       return RESULT_FAIL;
@@ -520,9 +531,7 @@ namespace Vision {
     
     const INT32 MaxScore = 1000;
     
-    _mutex.lock();
     const bool isEnrollable = IsEnrollable();
-    _mutex.unlock();
     
     if(numUsersInAlbum == 0 && isEnrollable) {
       // Nobody in album yet, add this person
@@ -599,7 +608,6 @@ namespace Vision {
                                  userIDs[iResult], oldestID, scores[iResult], _mergeThreshold);
               }
             }
-            ++iResult;
           }
           
           Result result = UpdateExistingUser(oldestID, _okaoRecognitionFeatureHandle);
@@ -630,6 +638,9 @@ namespace Vision {
   Result FaceRecognizer::MergeFaces(TrackedFace::ID_t keepID,
                                     TrackedFace::ID_t mergeID)
   {
+    ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
+                 "Should be in 'FeaturesReady' state if merging faces");
+    
     INT32 okaoResult = OKAO_NORMAL;
     
     INT32 numKeepData = 0;
@@ -683,7 +694,6 @@ namespace Vision {
     
     
     // Merge the enrollment data
-    _mutex.lock();
     auto keepEnrollIter = _enrollmentData.find(keepID);
     auto mergeEnrollIter = _enrollmentData.find(mergeID);
     ASSERT_NAMED(keepEnrollIter != _enrollmentData.end(),
@@ -692,7 +702,6 @@ namespace Vision {
                  "ID to merge should have enrollment data entry");
     
     keepEnrollIter->second.MergeWith(mergeEnrollIter->second);
-    _mutex.unlock();
     
     
     // After merging it, remove the old user that just got merged
@@ -764,7 +773,6 @@ namespace Vision {
   Result FaceRecognizer::SaveAlbum(const std::string &albumName)
   {
     Result result = RESULT_OK;
-    _mutex.lock();
     
     std::vector<u8> serializedAlbum = GetSerializedAlbum();
     if(serializedAlbum.empty()) {
@@ -819,7 +827,6 @@ namespace Vision {
       }
     }
     
-    _mutex.unlock();
     return result;
   } // SaveAlbum()
   
@@ -827,8 +834,6 @@ namespace Vision {
   Result FaceRecognizer::LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName)
   {
     Result result = RESULT_OK;
-    
-    _mutex.lock();
     
     const std::string dataFilename(albumName + "/data.bin");
     std::ifstream fs(dataFilename, std::ios::in | std::ios::binary);
@@ -878,7 +883,6 @@ namespace Vision {
                 PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.BadFaceIdString",
                                   "Could not find member for string %s with value %d",
                                   idStr.c_str(), faceID);
-                _mutex.unlock();
                 result = RESULT_FAIL;
               } else {
                 _enrollmentData[faceID] = EnrolledFaceEntry(faceID, json[idStr]);
@@ -893,9 +897,8 @@ namespace Vision {
       }
     }
     
-    _mutex.unlock();
     return result;
-  }
+  } // LoadAlbum()
   
 } // namespace Vision
 } // namespace Anki
