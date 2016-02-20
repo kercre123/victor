@@ -104,8 +104,8 @@ namespace SpeedTap {
       }
       else {
         ResetScore();
+        _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
       }
-      _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
     }
 
     private void CheckRounds() {

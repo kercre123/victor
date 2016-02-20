@@ -7,6 +7,7 @@ namespace SpeedTap {
   public class SpeedTapCozmoWins : State {
 
     private SpeedTapGame _SpeedTapGame = null;
+    private float _DriveTime = 1.25f;
 
     public override void Enter() {
       base.Enter();
@@ -15,11 +16,19 @@ namespace SpeedTap {
       for (int i = 0; i < 4; i++) {
         _SpeedTapGame.CozmoBlock.Lights[i].SetFlashingLED(_SpeedTapGame.CozmoWinColors[i], 100, 100, 0);
       }
-      _CurrentRobot.FaceObject(_SpeedTapGame.CozmoBlock, false, 4.3f, 10.0f, HandleAdjustDone);
+      _CurrentRobot.DriveWheels(-20.0f, -20.0f);
+    }
+
+    public override void Update() {
+      base.Update();
+      _DriveTime -= Time.deltaTime;
+      if (_DriveTime < 0.0f) {
+        _StateMachine.SetNextState(new AnimationState(AnimationName.kSpeedTap_Tap_01, HandleAdjustDone));
+      }
     }
 
     private void HandleAdjustDone(bool success) {
-      _CurrentRobot.SendAnimation(AnimationName.kSuccess, HandleAnimationDone);
+      _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_WinHand, HandleAnimationDone);
     }
 
     private void HandleAnimationDone(bool success) {
