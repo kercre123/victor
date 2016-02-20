@@ -921,6 +921,7 @@ namespace Anki {
                   
                   std::string behaviorGroupStr = behaviorGroupField->getSFString();
                   if (behaviorGroupStr.empty()) {
+                    printf("sending SetEnableAllBehaviors(%s)\n", enable ? "true" : "false");
                     // enable or disable all
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::BehaviorManagerMessage(
@@ -932,11 +933,13 @@ namespace Anki {
                     // get the behavior group enum
                     BehaviorGroup group = BehaviorGroupFromString(behaviorGroupStr);
                     if( group != BehaviorGroup::Count) {
+                      printf("sending EnableBehgaviorGroup(%s, %s)\n", behaviorGroupStr.c_str(),
+                             enable ? "true" : "false");
                       SendMessage(ExternalInterface::MessageGameToEngine(
                                     ExternalInterface::BehaviorManagerMessage(
                                       1,
                                       ExternalInterface::BehaviorManagerMessageUnion(
-                                        ExternalInterface::SetEnableBehaviorGroup(group, false)))));
+                                        ExternalInterface::SetEnableBehaviorGroup(group, enable)))));
                     }
                     else {
                       printf("ERROR: couldnt convert string to behavior group '%s'\n",

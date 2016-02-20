@@ -485,6 +485,8 @@ namespace Cozmo {
         const auto& msg = message.Get_SetEnableAllBehaviors();
         if (_behaviorChooser)
         {
+          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableAllBehaviors", "%s",
+                            msg.enable ? "true" : "false");
           _behaviorChooser->EnableAllBehaviors(msg.enable);
         }
         else
@@ -499,6 +501,9 @@ namespace Cozmo {
         const auto& msg = message.Get_SetEnableBehaviorGroup();
         if (_behaviorChooser)
         {
+          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehaviorGroup", "%s: %s",
+                            BehaviorGroupToString(msg.behaviorGroup),
+                            msg.enable ? "true" : "false");
           _behaviorChooser->EnableBehaviorGroup(msg.behaviorGroup, msg.enable);
         }
         else
@@ -513,6 +518,9 @@ namespace Cozmo {
         const auto& msg = message.Get_SetEnableBehavior();
         if (_behaviorChooser)
         {
+          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehavior", "%s: %s",
+                            msg.behaviorName.c_str(),
+                            msg.enable ? "true" : "false");
           _behaviorChooser->EnableBehavior(msg.behaviorName, msg.enable);
         }
         else
