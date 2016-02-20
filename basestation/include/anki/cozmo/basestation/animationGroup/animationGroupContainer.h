@@ -43,9 +43,15 @@ namespace Anki {
       
       void Clear();
       
+      bool IsAnimationOnCooldown(const std::string& name, double currentTime_s);
+      
+      void SetAnimationCooldown(const std::string& name, double cooldownExpiration_s);
+      
     private:
       
       std::unordered_map<std::string, AnimationGroup> _animationGroups;
+      
+      std::unordered_map<std::string, double> _animationCooldowns;
       
     }; // class AnimationGroupContainer
     
