@@ -474,13 +474,8 @@ namespace Anki {
             // robot if necessary, and switch states in the UI
             
             PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.");
-            ExternalInterface::StartEngine msg;
-            std::string vizIpStr = "127.0.0.1";
-            std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
-            std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_StartEngine(msg);
-            _msgHandler.SendMessage(1, message); // TODO: don't hardcode ID here
+            // TODO: don't hardcode ID here
+            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(ExternalInterface::StartEngine{}));
             
             bool didForceAdd = ForceAddRobotIfSpecified();
             

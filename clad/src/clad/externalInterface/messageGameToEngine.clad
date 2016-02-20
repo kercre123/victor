@@ -51,9 +51,8 @@ message ForceAddRobot {
 }
 
 // StartEngine
-// Tell game to start the engine with the configuration specified by the message members.
+// Tell the engine to start running.
 message StartEngine {
-    uint_8 vizHostIP[16] // if first char is '\0' disables viz
 }
 
 // DriveWheels

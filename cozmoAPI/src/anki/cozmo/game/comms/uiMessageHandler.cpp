@@ -220,11 +220,6 @@ namespace Anki {
             Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceAvailable(device)));
           }
         }
-        
-        // LeeC TODO: What is the plan here?
-        //if(_uiComms->GetNumConnectedDevices() >= _desiredNumUiDevices) {
-          //        PRINT_NAMED_INFO("CozmoGameImpl.UpdateAsHost","Enough UI devices connected (%d), will wait for %d robots.",_desiredNumUiDevices, _desiredNumRobots);
-        //  _runState = CozmoGame::WAITING_FOR_ROBOTS;
       }
       return lastResult;
     } // Update()
