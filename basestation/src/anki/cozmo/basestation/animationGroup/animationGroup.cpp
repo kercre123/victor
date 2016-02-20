@@ -106,7 +106,7 @@ namespace Anki {
         lastEntry = &(*entry);
         weightedSelection -= entry->GetWeight();
 
-        if(weightedSelection < 0) {
+        if(weightedSelection < 0.0f) {
           break;
         }
       }
