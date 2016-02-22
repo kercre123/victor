@@ -13,10 +13,11 @@ enum uint_32 GenericState
 enum uint_32 Music
 {
   Cube_Interactionfirst = 379889963,
+  Gp_Simon = 2606448607,
+  Gp_Speed_Tap = 1944187438,
   Invalid = 0,
   Playful = 1971384320,
   Silence = 3041563226,
-  Speed_Tap = 1337686304,
 }
 
 enum uint_32 StateGroupType

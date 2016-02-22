@@ -53,7 +53,7 @@ void ReliableUDPChannel::StartClient()
   }
   reliableTransport.StartClient();
   isStarted = true;
-  isHost = true;
+  isHost = false;
 }
 
 void ReliableUDPChannel::StartHost(const TransportAddress& bindAddress)
@@ -63,14 +63,6 @@ void ReliableUDPChannel::StartHost(const TransportAddress& bindAddress)
   ConfigureReliableTransport();
 
   Stop_Internal();
-
-  // TODO: This check shouldn't be necessary
-  // but it's needed because StopClient doesn't actually do anything
-  if (!unreliableTransport.IsConnected()) {
-    // TODO: Bind to specific IP address
-    //unreliableTransport.SetAddress(bindAddress.GetIPAddress());
-    unreliableTransport.SetPort(bindAddress.GetIPPort());
-  }
 
   reliableTransport.StartHost();
   isHost = true;

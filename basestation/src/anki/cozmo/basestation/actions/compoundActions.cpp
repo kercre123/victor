@@ -21,7 +21,7 @@ namespace Anki {
     
 #pragma mark ---- ICompoundAction ----
     
-    ICompoundAction::ICompoundAction(Robot& robot, std::initializer_list<IActionRunner*> actions)
+    ICompoundAction::ICompoundAction(Robot& robot, std::list<IActionRunner*> actions)
     : IActionRunner(robot)
     {
       for(IActionRunner* action : actions) {
@@ -42,9 +42,8 @@ namespace Anki {
     void ICompoundAction::Reset()
     {
       ResetState();
-      for(auto & actionPair : _actions) {
-        actionPair.first = false;
-        actionPair.second->Reset();
+      for(auto & action : _actions) {
+        action->Reset();
       }
     }
     
@@ -64,7 +63,7 @@ namespace Anki {
       // As part of a compound action this should not emit completion
       action->ShouldEmitCompletionSignal(false);
       
-      _actions.emplace_back(false, action);
+      _actions.emplace_back(action);
       _name += action->GetName();
       _name += "]";
     }
@@ -80,10 +79,10 @@ namespace Anki {
     {
       for(auto iter = _actions.begin(); iter != _actions.end();)
       {
-          assert((*iter).second != nullptr);
+          assert((*iter) != nullptr);
           // TODO: issue a warning when a group is deleted without all its actions completed?
-          (*iter).second->PrepForCompletion();
-          Util::SafeDelete((*iter).second);
+          (*iter)->PrepForCompletion();
+          Util::SafeDelete(*iter);
           iter = _actions.erase(iter);
       }
     }
@@ -96,7 +95,7 @@ namespace Anki {
       
     }
     
-    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions)
+    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::list<IActionRunner*> actions)
     : ICompoundAction(robot, actions)
     , _delayBetweenActionsInSeconds(0)
     {
@@ -107,7 +106,7 @@ namespace Anki {
     {
       ICompoundAction::Reset();
       _waitUntilTime = -1.f;
-      _currentActionPair = _actions.begin();
+      _currentAction = _actions.begin();
       _wasJustReset = true;
     }
     
@@ -117,70 +116,60 @@ namespace Anki {
       
       if(_wasJustReset) {
         // In case actions were added after construction/reset
-        _currentActionPair = _actions.begin();
+        _currentAction = _actions.begin();
         _wasJustReset = false;
       }
       
-      if(_currentActionPair != _actions.end())
+      if(_currentAction != _actions.end())
       {
-        bool& isDone = _currentActionPair->first;
-        assert(isDone == false);
-        
-        IActionRunner* currentAction = _currentActionPair->second;
-        assert(currentAction != nullptr); // should not have been allowed in by constructor
+        assert((*_currentAction) != nullptr); // should not have been allowed in by constructor
         
         // If the compound action is suppressing track locking then the constituent actions should too
-        currentAction->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
         
         double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
         {
-          ActionResult subResult = currentAction->Update();
-          SetStatus(currentAction->GetStatus());
+          ActionResult subResult = (*_currentAction)->Update();
+          SetStatus((*_currentAction)->GetStatus());
           switch(subResult)
           {
             case ActionResult::SUCCESS:
             {
-              // Finished the current action, move ahead to the next
-              isDone = true; // mark as done (not strictly necessary)
-              
               if(_delayBetweenActionsInSeconds > 0.f) {
                 // If there's a delay specified, figure out how long we need to
                 // wait from now to start next action
                 _waitUntilTime = currentTime + _delayBetweenActionsInSeconds;
               }
               
-              // Unlock tracks here as the action will not be deleted (unlock its tracks normally) until
-              // the compound action completes
-              _currentActionPair->second->UnlockTracks();
-              ++_currentActionPair;
+              // Store this actions completion union and delete _currentActionPair
+              StoreUnionAndDelete();
               
               // if that was the last action, we're done
-              if(_currentActionPair == _actions.end()) {
+              if(_currentAction == _actions.end()) {
 #               if USE_ACTION_CALLBACKS
                 RunCallbacks(ActionResult::SUCCESS);
 #               endif
                 return ActionResult::SUCCESS;
               } else if(currentTime >= _waitUntilTime) {
                 PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
-                                 "Moving to action %s", _currentActionPair->second->GetName().c_str());
+                                 "Moving to action %s", (*_currentAction)->GetName().c_str());
                 
                 // If the compound action is suppressing track locking then the constituent actions should too
-                _currentActionPair->second->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+                (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
                 
                 // Otherwise, we are still running. Go ahead and immediately do an
                 // update on the next action now to get its initialization and
                 // precondition checking going, to reduce lag between actions.
-                subResult = _currentActionPair->second->Update();
+                subResult = (*_currentAction)->Update();
                 
                 // In the special case that the sub-action sucessfully completed
                 // immediately, don't return SUCCESS if there are more actions left!
                 if(ActionResult::SUCCESS == subResult) {
                 
-                  _currentActionPair->second->UnlockTracks();
-                  ++_currentActionPair;
+                  StoreUnionAndDelete();
                   
-                  if(_currentActionPair == _actions.end()) {
+                  if(_currentAction == _actions.end()) {
                     // no more actions, safe to return success for the compound action
 #                   if USE_ACTION_CALLBACKS
                     RunCallbacks(ActionResult::SUCCESS);
@@ -206,7 +195,7 @@ namespace Anki {
               // and try again as long as there are retries remaining
               if(RetriesRemain()) {
                 PRINT_NAMED_INFO("CompoundActionSequential.Update.Retrying",
-                                 "%s triggered retry.\n", currentAction->GetName().c_str());
+                                 "%s triggered retry.\n", (*_currentAction)->GetName().c_str());
                 Reset();
                 return ActionResult::RUNNING;
               }
@@ -237,6 +226,18 @@ namespace Anki {
       return ActionResult::SUCCESS;
       
     } // CompoundActionSequential::Update()
+    
+    void CompoundActionSequential::StoreUnionAndDelete()
+    {
+      // Store this actions completion union before deleting it
+      ActionCompletedUnion actionUnion;
+      (*_currentAction)->GetCompletionUnion(actionUnion);
+      _completedActionInfoStack.push_back({actionUnion, (*_currentAction)->GetType()});
+      
+      // Delete completed action
+      Util::SafeDelete(*_currentAction);
+      _currentAction = _actions.erase(_currentAction);
+    }
 
     
 #pragma mark ---- CompoundActionParallel ----
@@ -247,7 +248,7 @@ namespace Anki {
       
     }
     
-    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions)
+    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::list<IActionRunner*> actions)
     : ICompoundAction(robot, actions)
     {
       
@@ -262,56 +263,53 @@ namespace Anki {
       
       SetStatus(GetName());
       
-      for(auto & currentActionPair : _actions)
+      for(auto currentAction = _actions.begin(); currentAction != _actions.end();)
       {
-        bool& isDone = currentActionPair.first;
-        if(!isDone) {
-          IActionRunner* currentAction = currentActionPair.second;
-          assert(currentAction != nullptr); // should not have been allowed in by constructor
-          
-          // If the compound action is suppressing track locking then the constituent actions should too
-          currentAction->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        assert((*currentAction) != nullptr); // should not have been allowed in by constructor
+        
+        // If the compound action is suppressing track locking then the constituent actions should too
+        (*currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
 
-          const ActionResult subResult = currentAction->Update();
-          SetStatus(currentAction->GetStatus());
-          switch(subResult)
-          {
-            case ActionResult::SUCCESS:
-              // Just finished this action, mark it as done
-              isDone = true;
-              break;
-              
-            case ActionResult::RUNNING:
-              // If any action is still running the group is still running
-              result = ActionResult::RUNNING;
-              break;
-              
-            case ActionResult::FAILURE_RETRY:
-              // If any retries are left, reset the group and try again.
-              if(RetriesRemain()) {
-                PRINT_NAMED_INFO("CompoundActionParallel.Update.Retrying",
-                                 "%s triggered retry.\n", currentAction->GetName().c_str());
-                Reset();
-                return ActionResult::RUNNING;
-              }
-              
-              // If not, just fall through to other failure handlers:
-            case ActionResult::FAILURE_ABORT:
-            case ActionResult::FAILURE_PROCEED:
-            case ActionResult::FAILURE_TIMEOUT:
-            case ActionResult::FAILURE_TRACKS_LOCKED:
-            case ActionResult::FAILURE_BAD_TAG:
-            case ActionResult::FAILURE_NOT_STARTED:
-            case ActionResult::CANCELLED:
-            case ActionResult::INTERRUPTED:
-              // Return failure, aborting updating remaining actions the group
+        const ActionResult subResult = (*currentAction)->Update();
+        SetStatus((*currentAction)->GetStatus());
+        switch(subResult)
+        {
+          case ActionResult::SUCCESS:
+            // Just finished this action, delete it
+            Util::SafeDelete(*currentAction);
+            currentAction = _actions.erase(currentAction);
+            break;
+            
+          case ActionResult::RUNNING:
+            // If any action is still running the group is still running
+            result = ActionResult::RUNNING;
+            ++currentAction;
+            break;
+            
+          case ActionResult::FAILURE_RETRY:
+            // If any retries are left, reset the group and try again.
+            if(RetriesRemain()) {
+              PRINT_NAMED_INFO("CompoundActionParallel.Update.Retrying",
+                               "%s triggered retry.\n", (*currentAction)->GetName().c_str());
+              Reset();
+              return ActionResult::RUNNING;
+            }
+            
+            // If not, just fall through to other failure handlers:
+          case ActionResult::FAILURE_ABORT:
+          case ActionResult::FAILURE_PROCEED:
+          case ActionResult::FAILURE_TIMEOUT:
+          case ActionResult::FAILURE_TRACKS_LOCKED:
+          case ActionResult::FAILURE_BAD_TAG:
+          case ActionResult::FAILURE_NOT_STARTED:
+          case ActionResult::CANCELLED:
+          case ActionResult::INTERRUPTED:
+            // Return failure, aborting updating remaining actions the group
 #             if USE_ACTION_CALLBACKS
-              RunCallbacks(subResult);
+            RunCallbacks(subResult);
 #             endif
-              return subResult;
-          } // switch(subResult)
-          
-        } // if(!isDone)
+            return subResult;
+        } // switch(subResult)
       } // for each action in the group
       
 #     if USE_ACTION_CALLBACKS

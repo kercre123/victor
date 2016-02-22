@@ -706,25 +706,25 @@ void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
 void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
 {
-  auto helper = AnkiEventUtil<Robot, decltype(_signalHandles)>(externalInterface, *this, _signalHandles);
+  auto helper = MakeAnkiEventUtil(externalInterface, *this, _signalHandles);
   
   using namespace ExternalInterface;
-  helper.SubscribeInternal<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
-  helper.SubscribeInternal<MessageGameToEngineTag::CancelAction>();
-  helper.SubscribeInternal<MessageGameToEngineTag::DrawPoseMarker>();
-  helper.SubscribeInternal<MessageGameToEngineTag::IMURequest>();
-  helper.SubscribeInternal<MessageGameToEngineTag::EnableRobotPickupParalysis>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetBackpackLEDs>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetIdleAnimation>();
-  helper.SubscribeInternal<MessageGameToEngineTag::ReplayLastAnimation>();
-  helper.SubscribeInternal<MessageGameToEngineTag::ExecuteTestPlan>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SaveImages>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SaveRobotState>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetRobotCarryingObject>();
-  helper.SubscribeInternal<MessageGameToEngineTag::AbortPath>();
-  helper.SubscribeInternal<MessageGameToEngineTag::AbortAll>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetActiveObjectLEDs>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetIdleAnimation>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReplayLastAnimation>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveRobotState>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
 }
 
 template<>

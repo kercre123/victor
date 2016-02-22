@@ -153,8 +153,11 @@ void AudioServer::ProcessMessage( const PostAudioParameter& message, ConnectionI
   // Decode Parameter Message
   const AudioParameterId parameterId = static_cast<AudioParameterId>( message.parameter );
   const AudioRTPCValue value = static_cast<AudioRTPCValue>( message.parameterValue );
-  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   const AudioTimeMs duration = static_cast<AudioTimeMs>( message.timeInMilliSeconds );
+  
+  // Translate Invalid Game Object Id
+  const AudioGameObject objectId = (message.gameObject == GameObjectType::Invalid) ?
+                                    kInvalidAudioGameObject : static_cast<AudioGameObject>( message.gameObject );
   
   // Translate Curve Enum types
   static const std::unordered_map< Anki::Cozmo::Audio::CurveType,

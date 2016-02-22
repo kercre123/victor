@@ -14,6 +14,7 @@
  **/
 
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
@@ -75,33 +76,55 @@ namespace Anki {
       return _animations.empty();
     }
     
-    const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager) const {
-      const float kRandomFactor = 0.1f;
-      
-      if(IsEmpty()) {
-        static const std::string empty = "";
-        return empty;
-      }
+    const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager, AnimationGroupContainer& animationGroupContainer) const {
+      return GetAnimationName(moodManager.GetSimpleMood(), moodManager.GetLastUpdateTime(), animationGroupContainer);
+    }
+    
+    const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood, float currentTime_s, AnimationGroupContainer& animationGroupContainer) const {
       
       Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
       
-      auto bestEntry = _animations.end();
-      float bestScore = -FLT_MAX;
+      float totalWeight = 0.0f;
+      
+      std::vector<const AnimationGroupEntry*> availableAnimations;
+      
       for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
       {
-        auto entryScore = entry->EvaluateScore(moodManager);
-        auto totalScore    = entryScore;
-        
-        totalScore += rng.RandDbl(kRandomFactor);
-        
-        if (totalScore > bestScore)
+        if(entry->GetMood() == mood && !animationGroupContainer.IsAnimationOnCooldown(entry->GetName(),currentTime_s))
         {
-          bestEntry = entry;
-          bestScore = totalScore;
+          totalWeight += entry->GetWeight();
+          availableAnimations.emplace_back(&(*entry));
         }
       }
       
-      return bestEntry->GetName();
+      float weightedSelection = rng.RandDbl(totalWeight);
+      
+      const AnimationGroupEntry* lastEntry = nullptr;
+      
+      for (auto entry : availableAnimations)
+      {
+        lastEntry = &(*entry);
+        weightedSelection -= entry->GetWeight();
+
+        if(weightedSelection < 0.0f) {
+          break;
+        }
+      }
+      
+      // Possible that if weightedSelection == totalWeight, we wouldn't
+      // select any, so return the last one if its not the end
+      if(lastEntry != nullptr) {
+        animationGroupContainer.SetAnimationCooldown(lastEntry->GetName(), currentTime_s + lastEntry->GetCooldown());
+        return lastEntry->GetName();
+      }
+      
+      if(mood == SimpleMoodType::Default) {
+        static const std::string empty = "";
+        return empty;
+      }
+      else {
+        return GetAnimationName(SimpleMoodType::Default, currentTime_s, animationGroupContainer);
+      }
     }
     
   } // namespace Cozmo
