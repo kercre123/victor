@@ -698,8 +698,8 @@ public class Robot : IRobot {
     // If the goal has been completed for the first time, send a DAS event on goal complete
     DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
     StatContainer goals = currentSession.Goals;
-    bool wasGoalComplete = ProgressionStats[index] > goals[index];
-    bool isGoalCompleteNow = value > goals[index];
+    bool wasGoalComplete = ProgressionStats[index] >= goals[index];
+    bool isGoalCompleteNow = value >= goals[index];
     if (!wasGoalComplete && isGoalCompleteNow) {
       string goalDate = DASUtil.FormatDate(currentSession.Date);
       DAS.Event(kDasGoalComplete, goalDate, new Dictionary<string,string> { 
