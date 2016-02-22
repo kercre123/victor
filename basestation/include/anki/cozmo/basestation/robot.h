@@ -202,17 +202,11 @@ public:
     //
     VisionComponent&         GetVisionComponent() { return _visionComponent; }
     const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
-    void                     EnableVisionWhileMoving(bool enable);
     Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
     Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
     Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
   
     Result ProcessImage(const Vision::ImageRGB& image);
-  
-    // Queue an observed vision marker for processing with BlockWorld.
-    // Note that this is a NON-const reference: the marker's camera will be updated
-    // to use a pose from pose history.
-    Result QueueObservedMarker(const Vision::ObservedMarker& marker);
     
     // Get a *copy* of the current image on this robot's vision processing thread
     // TODO: Remove this method? I don't think anyone is using it...
@@ -496,6 +490,9 @@ public:
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
+  
+    // Load in all data-driven emotion events
+    void LoadEmotionEvents();
 
     // Returns true if the robot is currently playing an animation, according
     // to most recent state message. NOTE: Will also be true if the animation
@@ -680,14 +677,9 @@ public:
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   
-  const std::string& GetAnimationNameFromGroup(const std::string& name) const {
-    auto group = _animationGroups.GetAnimationGroup(name);
-    if(group != nullptr && !group->IsEmpty()) {
-      return group->GetAnimationName(GetMoodManager());
-    }
-    static const std::string empty("");
-    return empty;
-  }
+    const std::string& GetAnimationNameFromGroup(const std::string& name);
+  
+    ExternalInterface::RobotState GetRobotState();
   
   protected:
     const CozmoContext* _context;
@@ -741,9 +733,6 @@ public:
     // This functions sets _selectedPathPlanner to the appropriate planner
     void SelectPlanner(const Pose3d& targetPose);
     void SelectPlanner(const std::vector<Pose3d>& targetPoses);
-
-    // Sends a path to the robot to be immediately executed
-    bool                      _visionWhileMovingEnabled = false;
 
     /*
     // Proximity sensors
@@ -892,6 +881,7 @@ public:
     TracePrinter _traceHandler;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+    void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -982,9 +972,6 @@ inline const Pose3d& Robot::GetPose(void) const
 
 inline const Pose3d& Robot::GetDriveCenterPose(void) const
 {return _driveCenterPose; }
-
-inline void Robot::EnableVisionWhileMoving(bool enable)
-{ _visionWhileMovingEnabled = enable; }
 
 inline const f32 Robot::GetHeadAngle() const
 { return _currentHeadAngle; }

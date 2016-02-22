@@ -48,7 +48,9 @@ public:
   bool IsLive() const { return _isLive; }
 
   Result AddKeyFrameToBack(const FRAME_TYPE& keyFrame);
-  Result AddKeyFrameToBack(const Json::Value& jsonRoot);
+
+  // Define from json. Second argument is used to print nicer debug strings if something goes wrong
+  Result AddKeyFrameToBack(const Json::Value& jsonRoot, const std::string& animNameDebug = "");
   
   Result AddKeyFrameByTime(const FRAME_TYPE& keyFrame);
 
@@ -240,14 +242,14 @@ RobotInterface::EngineToRobot* Animations::Track<FRAME_TYPE>::GetCurrentStreamin
 
 
 template<typename FRAME_TYPE>
-Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonRoot)
+Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonRoot, const std::string& animNameDebug)
 {
   Result lastResult = AddKeyFrameToBack(FRAME_TYPE());
   if(RESULT_OK != lastResult) {
     return lastResult;
   }
 
-  lastResult = _frames.back().DefineFromJson(jsonRoot);
+  lastResult = _frames.back().DefineFromJson(jsonRoot, animNameDebug);
 
   if(lastResult == RESULT_OK) {
     if(_frames.size() > 1) {

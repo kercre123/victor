@@ -3,8 +3,8 @@
  * Auto generated Run-Time-Environment Component Configuration File
  *      *** Do not modify ! ***
  *
- * Project: 'syscon' 
- * Target:  'syscon' 
+ * Project: 'sys_boot' 
+ * Target:  'sys_boot' 
  */
 
 #ifndef RTE_COMPONENTS_H

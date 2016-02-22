@@ -25,6 +25,8 @@ namespace ExternalInterface { class MessageEngineToGame; }
   
 class BehaviorFindFaces : public IBehavior
 {
+private:
+  using super = IBehavior;
 protected:
   
   // Enforce creation through BehaviorFactory
@@ -44,6 +46,8 @@ protected:
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+
+  virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const override;
   
 private:
   enum class State {
@@ -53,9 +57,6 @@ private:
     PauseToSee
   };
   
-  // The length of time in seconds it has to have been since we last
-  // saw a face in order to enter this behavior
-  constexpr static double kMinimumTimeSinceSeenLastFace_sec = 180; // 3 minutes
   // Min angle to move relative to current, in degrees
   constexpr static float kPanMin = 35;
   // Max angle to move relative to current, in degrees
@@ -71,11 +72,16 @@ private:
   // Width of zone to focus on
   constexpr static float kFocusAreaAngle_deg = 120;
   
+  // The length of time in seconds it has to have been since we last
+  // saw a face in order to enter this behavior
+  double _minimumTimeSinceSeenLastFace_sec;
+
   State _currentState = State::Inactive;
   uint32_t _currentDriveActionID; // Init in cpp to not have constants include in header
   double _lookPauseTimer = 0;
   Radians _faceAngleCenter;
   bool _faceAngleCenterSet = false;
+  bool _useFaceAngleCenter = true;
   
   float GetRandomPanAmount() const;
   void StartMoving(Robot& robot);

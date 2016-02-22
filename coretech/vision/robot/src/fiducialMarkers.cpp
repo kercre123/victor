@@ -907,8 +907,7 @@ namespace Anki
 #endif
     
 
-    Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image,
-      const Array<f32> &homography, const f32 minContrastRatio,
+    Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image, const f32 minContrastRatio,
       f32& brightValue, f32& darkValue, bool& enoughContrast)
     {
 #     if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
@@ -1084,22 +1083,30 @@ namespace Anki
       return lastResult;
     }
 
-    Result VisionMarker::RefineCorners(
-      const Array<u8> &image,
-      const Array<f32> &initHomography, const f32 minContrastRatio,
-      const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange, const f32 refine_quadRefinementMinCornerChange,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
-      Array<f32> &refinedHomography, u8 &meanGrayvalueThreshold,
-      MemoryStack scratch)
+    Result VisionMarker::RefineCorners(const Array<u8> &image,
+                                       const f32 minContrastRatio,
+                                       const s32 refine_quadRefinementIterations,
+                                       const s32 refine_numRefinementSamples,
+                                       const f32 refine_quadRefinementMaxCornerChange,
+                                       const f32 refine_quadRefinementMinCornerChange,
+                                       const s32 quads_minQuadArea,
+                                       const s32 quads_quadSymmetryThreshold,
+                                       const s32 quads_minDistanceFromImageEdge,
+                                       u8 &meanGrayvalueThreshold,
+                                       MemoryStack scratch)
     {
       Result lastResult = RESULT_FAIL;
 
+      // Store a copy of the initial homography in case we need to restore it later
+      Array<f32> initHomography(3,3,scratch);
+      initHomography.Set(homography);
+      
       this->validity = UNKNOWN;
 
       BeginBenchmark("vmrc_brightdarkvals");
       f32 brightValue = 0.f, darkValue = 0.f;
       bool enoughContrast = false;
-      if((lastResult = this->ComputeBrightDarkValues(image, initHomography, minContrastRatio, brightValue, darkValue, enoughContrast)) != RESULT_OK) {
+      if((lastResult = this->ComputeBrightDarkValues(image, minContrastRatio, brightValue, darkValue, enoughContrast)) != RESULT_OK) {
         return lastResult;
       }
       EndBenchmark("vmrc_brightdarkvals");
@@ -1118,7 +1125,7 @@ namespace Anki
             initQuad,
             initHomography,
             image,
-            FIDUCIAL_SQUARE_WIDTH_FRACTION,
+            FIDUCIAL_SQUARE_THICKNESS_FRACTION,
             refine_quadRefinementIterations,
             darkValue,
             brightValue,
@@ -1126,7 +1133,7 @@ namespace Anki
             refine_quadRefinementMaxCornerChange,
             refine_quadRefinementMinCornerChange,
             this->corners,
-            refinedHomography,
+            this->homography,
             scratch)) != RESULT_OK)
           {
             // TODO: Don't fail? Just warn and keep original quad?
@@ -1147,7 +1154,7 @@ namespace Anki
           EndBenchmark("vmrc_quadrefine");
         } else {
           // If we're not refining, the refined homography is the same as the initial one
-          refinedHomography.Set(initHomography);
+          homography.Set(initHomography);
         }
       } else {
         // Not enough contrast at bright/dark pairs.
@@ -1168,7 +1175,6 @@ namespace Anki
     
     
     Result VisionMarker::Extract(const Array<u8> &image,
-                                 const Array<f32> &homography,
                                  const u8 grayvalueThreshold, // Trees: for thresholding probes, NN: max distance threshold
                                  const f32 minContrastRatio,
                                  MemoryStack scratch)

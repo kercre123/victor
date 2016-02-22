@@ -40,6 +40,26 @@ struct INavMemoryMapQuadData
 protected:
   INavMemoryMapQuadData(NavMemoryMapTypes::EContentType t) : type(t) {}
 };
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helper functions
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+template <class T>
+T* INavMemoryMapQuadDataCast(INavMemoryMapQuadData* ptr)
+{
+  assert( ptr->type == T().type );
+  assert( dynamic_cast<T*>(ptr) );
+  return static_cast<T*>(ptr);
+}
+
+template <class T>
+const T* INavMemoryMapQuadDataCast(const INavMemoryMapQuadData* ptr)
+{
+  assert( ptr->type == T().type );
+  assert( dynamic_cast<const T*>(ptr) );
+  return static_cast<const T*>(ptr);
+}
   
 } // namespace
 } // namespace

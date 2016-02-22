@@ -17,6 +17,7 @@
 
 #include "anki/cozmo/basestation/moodSystem/emotion.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
+#include "clad/types/simpleMoodTypes.h"
 #include "clad/types/emotionTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include <assert.h>
@@ -59,6 +60,8 @@ public:
   
   void Init(const Json::Value& inJson);
   
+  bool LoadEmotionEvents(const Json::Value& inJson);
+  
   void Reset();
   
   void Update(double currentTime);
@@ -93,6 +96,10 @@ public:
   {
     return GetEmotion(emotionType).GetDeltaRecentSeconds(secondsBackwards);
   }
+  
+  SimpleMoodType GetSimpleMood() const;
+  
+  double GetLastUpdateTime() const { return _lastUpdateTime; }
   
   // ==================== Event/Message Handling ====================
   

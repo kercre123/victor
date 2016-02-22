@@ -116,9 +116,9 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.EnableVisionWhileMoving(true);
+  robot.GetVisionComponent().EnableVisionWhileMoving(true);
   
-  lastResult = robot.QueueObservedMarker(marker);
+  lastResult = robot.GetVisionComponent().QueueObservedMarker(robot, marker);
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // Tick the robot, which will tick the BlockWorld, which will use the queued marker

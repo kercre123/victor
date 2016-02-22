@@ -34,7 +34,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
+#include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
 #include "anki/cozmo/basestation/navMemoryMap/quadData/navMemoryMapQuadData_Cliff.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -528,10 +528,13 @@ namespace Cozmo {
           {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
         };
         _robot->GetPose().ApplyTo(cliffquad, cliffquad);
-      
+        
         if ( _isOnCliff )
         {
+          // build data we want to embed for this quad
           NavMemoryMapQuadData_Cliff cliffData;
+          Vec3f rotatedFwdVector = _robot->GetPose().GetRotation() * X_AXIS_3D();
+          cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
           _navMemoryMap->AddQuad(cliffquad, cliffData);
         }
         else

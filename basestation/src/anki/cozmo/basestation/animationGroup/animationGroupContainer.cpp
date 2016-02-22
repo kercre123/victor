@@ -102,5 +102,21 @@ namespace Anki {
       _animationGroups.clear();
     } // Clear()
     
+    
+    
+    bool AnimationGroupContainer::IsAnimationOnCooldown(const std::string& name, double currentTime_s) {
+      auto retVal = _animationCooldowns.find(name);
+      if(retVal == _animationCooldowns.end()) {
+        return false;
+      } else {
+        return  currentTime_s < retVal->second;
+      }
+    }
+    
+    void AnimationGroupContainer::SetAnimationCooldown(const std::string& name, double cooldownExpiration_s)
+    {
+      _animationCooldowns[name] = cooldownExpiration_s;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

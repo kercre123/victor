@@ -19,13 +19,15 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/sequences_declarations.h"
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-namespace cv
-{
-  class Mat;
-  template<typename Type> class Mat_;
-}
-#endif
+//#if ANKICORETECH_EMBEDDED_USE_OPENCV
+//namespace cv
+//{
+//  class Mat;
+//  template<typename Type> class Mat_;
+//}
+//#endif
+
+#include <opencv2/core.hpp>
 
 namespace Anki
 {

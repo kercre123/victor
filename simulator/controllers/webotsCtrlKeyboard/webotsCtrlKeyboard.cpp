@@ -15,10 +15,12 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/vision/basestation/image.h"
-#include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
+#include "anki/cozmo/basestation/imageDeChunker.h"
+#include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "anki/cozmo/basestation/block.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "clad/types/actionTypes.h"
@@ -233,7 +235,6 @@ namespace Anki {
         printf("              Abort current path:  q\n");
         printf("                Abort everything:  Shift+q\n");
         printf("         Update controller gains:  k\n");
-        printf("             Cycle sound schemes:  m\n");
         printf("                 Request IMU log:  o\n");
         printf("           Toggle face detection:  f (Shift+f)\n");
         printf("          Turn towards last face:  Alt+f\n");
@@ -243,6 +244,9 @@ namespace Anki {
         printf("        Force-add specifed robot:  Shift+r\n");
         printf("                 Select behavior:  Shift+c\n");
         printf("         Select behavior chooser:  h\n");
+        printf("           Enable behavior group:  Shift+h\n");
+        printf("          Disable behavior group:  Alt+h\n");
+        printf("            Set emotion to value:  m\n");
         printf("           Set DemoState Default:  j\n");
         printf("         Set DemoState FacesOnly:  Shift+j\n");
         printf("        Set DemoState BlocksOnly:  Alt+j\n");
@@ -892,34 +896,116 @@ namespace Anki {
 
               case (s32)'H':
               {
-                // select behavior chooser
-                webots::Field* behaviorChooserNameField = root_->getField("behaviorChooserName");
-                if (behaviorChooserNameField == nullptr) {
-                  printf("ERROR: No behaviorChooserNameField field found in WebotsKeyboardController.proto\n");
+
+                if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ||
+                    modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+
+                  if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT &&
+                      modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                    printf("ERROR: invalid hotkey\n");
+                    break;
+                  }
+
+                  // TODO:(bn) don't spam this so often?
+                  SendMessage(ExternalInterface::MessageGameToEngine(
+                                ExternalInterface::SetBehaviorSystemEnabled(true)));
+
+                  bool enable = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
+                  
+                  // handle behavior group
+                  webots::Field* behaviorGroupField = root_->getField("behaviorGroup");
+                  if (behaviorGroupField == nullptr) {
+                    printf("ERROR: No behaviorGroup field found in WebotsKeyboardController.proto\n");
+                    break;
+                  }
+                  
+                  std::string behaviorGroupStr = behaviorGroupField->getSFString();
+                  if (behaviorGroupStr.empty()) {
+                    // enable or disable all
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::BehaviorManagerMessage(
+                                    1,
+                                    ExternalInterface::BehaviorManagerMessageUnion(
+                                      ExternalInterface::SetEnableAllBehaviors(enable)))));
+                  }
+                  else {
+                    // get the behavior group enum
+                    BehaviorGroup group = BehaviorGroupFromString(behaviorGroupStr);
+                    if( group != BehaviorGroup::Count) {
+                      SendMessage(ExternalInterface::MessageGameToEngine(
+                                    ExternalInterface::BehaviorManagerMessage(
+                                      1,
+                                      ExternalInterface::BehaviorManagerMessageUnion(
+                                        ExternalInterface::SetEnableBehaviorGroup(group, false)))));
+                    }
+                    else {
+                      printf("ERROR: couldnt convert string to behavior group '%s'\n",
+                             behaviorGroupStr.c_str());
+                    }
+                  }
+                  
+                }
+                else {
+                  // select behavior chooser
+                  webots::Field* behaviorChooserNameField = root_->getField("behaviorChooserName");
+                  if (behaviorChooserNameField == nullptr) {
+                    printf("ERROR: No behaviorChooserNameField field found in WebotsKeyboardController.proto\n");
+                    break;
+                  }
+                  
+                  std::string behaviorChooserName = behaviorChooserNameField->getSFString();
+                  if (behaviorChooserName.empty()) {
+                    printf("ERROR: behaviorChooserName field is empty\n");
+                    break;
+                  }
+                  
+                  BehaviorChooserType chooser = BehaviorChooserTypeFromString(behaviorChooserName);
+                  if( chooser == BehaviorChooserType::Count ) {
+                    printf("ERROR: could not convert string '%s' to valid behavior chooser type\n",
+                           behaviorChooserName.c_str());
+                    break;
+                  }
+
+                  printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
+                
+                  SendMessage(ExternalInterface::MessageGameToEngine(
+                                ExternalInterface::SetBehaviorSystemEnabled(true)));
+
+                  SendMessage(ExternalInterface::MessageGameToEngine(
+                                ExternalInterface::ActivateBehaviorChooser(chooser)));
+                }
+                
+                break;
+              }
+
+              case (s32)'M':
+              {
+                webots::Field* emotionNameField = root_->getField("emotionName");
+                if (emotionNameField == nullptr) {
+                  printf("ERROR: No emotionNameField field found in WebotsKeyboardController.proto\n");
                   break;
                 }
-                  
-                std::string behaviorChooserName = behaviorChooserNameField->getSFString();
-                if (behaviorChooserName.empty()) {
-                  printf("ERROR: behaviorChooserName field is empty\n");
+                
+                std::string emotionName = emotionNameField->getSFString();
+                if (emotionName.empty()) {
+                  printf("ERROR: emotionName field is empty\n");
                   break;
                 }
-                  
-                BehaviorChooserType chooser = BehaviorChooserTypeFromString(behaviorChooserName);
-                if( chooser == BehaviorChooserType::Count ) {
-                  printf("ERROR: could not convert string '%s' to valid behavior chooser type\n",
-                         behaviorChooserName.c_str());
+                
+                webots::Field* emotionValField = root_->getField("emotionVal");
+                if (emotionValField == nullptr) {
+                  printf("ERROR: No emotionValField field found in WebotsKeyboardController.proto\n");
                   break;
                 }
 
-                printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
-                
-                SendMessage(ExternalInterface::MessageGameToEngine(
-                              ExternalInterface::SetBehaviorSystemEnabled(true)));
+                float emotionVal = emotionValField->getSFFloat();
+                EmotionType emotionType = EmotionTypeFromString(emotionName.c_str());
 
                 SendMessage(ExternalInterface::MessageGameToEngine(
-                              ExternalInterface::ActivateBehaviorChooser(chooser)));
-                
+                              ExternalInterface::MoodMessage(1,
+                                ExternalInterface::MoodMessageUnion(
+                                  ExternalInterface::SetEmotion( emotionType, emotionVal )))));
+
                 break;
               }
                 

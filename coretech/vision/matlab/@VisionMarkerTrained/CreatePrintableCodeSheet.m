@@ -31,14 +31,15 @@ function CreatePrintableCodeSheet(varargin)
 %    currently set in VisionMarkerTrained.TrainingImageDir.
 %
 %  'markerSize' [25]
-%    Outside width of the marker fiducial, in mm.
+%    Outside width of the marker fiducial, in mm. 
+%    Can also specify both width and height as [width height]
 %
 %  'numPerCode' [1]
 %    Print this many copies of each marker on the sheet (as many as will
 %    fit). Use this, for example, to fill up a sheet when there are fewer
 %    markers in the directory than will fit on the sheet.
 %
-%  'outsideBorderWidth' [markerSize + 4]
+%  'outsideBorderSize' [markerSize + 4]
 %    Add a light gray, dotted border of this size around each code. If
 %    zero, the border will not be printed.
 %
@@ -67,21 +68,25 @@ pageWidth  = 11 * 25.4; % in mm
 markerImageDir = [];
 markerSize = 25; % in mm
 numPerCode = 1;
-outsideBorderWidth = []; % in mm, empty to not use
+outsideBorderSize = []; % in mm, empty to not use
 backgroundColor = [1 1 1];
 whiteOnBlack = false;
 
 parseVarargin(varargin{:});
 
-assert(isempty(outsideBorderWidth) || outsideBorderWidth > markerSize, ...
+assert(isempty(outsideBorderSize) || all(outsideBorderSize > markerSize), ...
     'If specified, outsideBorderWidth should be larger than the markerSize.');
 
-if isempty(outsideBorderWidth)
-    outsideBorderWidth = markerSize + 4;
+if isempty(outsideBorderSize)
+    outsideBorderSize = markerSize + 4;
 end
 
-if isscalar(backgroundColor)
-  backgroundColor = backgroundColor * [1 1 1];
+if length(markerSize)==1
+  markerSize = [markerSize markerSize];
+end
+
+if length(outsideBorderSize)==1
+  outsideBorderSize = [outsideBorderSize outsideBorderSize];
 end
 
 % For now, assume all the training images were in a "rotated" subdir and
@@ -113,11 +118,11 @@ fprintf('Found %d total images.\n', numImages);
 numImages = numImages * numPerCode;
 fnames = repmat(fnames(:), [numPerCode 1]);
 
-numRows = floor( (pageHeight - 2*marginSpacing + codeSpacing)/(markerSize + codeSpacing) );
-numCols = floor( (pageWidth  - 2*marginSpacing + codeSpacing)/(markerSize + codeSpacing) );
+numRows = floor( (pageHeight - 2*marginSpacing + codeSpacing)/(markerSize(2) + codeSpacing) );
+numCols = floor( (pageWidth  - 2*marginSpacing + codeSpacing)/(markerSize(1) + codeSpacing) );
 
-xcenters = linspace(marginSpacing+markerSize/2, pageWidth-marginSpacing-markerSize/2, numCols)/10;
-ycenters = linspace(marginSpacing+markerSize/2, pageHeight-marginSpacing-markerSize/2,numRows)/10;
+xcenters = linspace(marginSpacing+markerSize(1)/2, pageWidth-marginSpacing-markerSize(1)/2, numCols)/10;
+ycenters = linspace(marginSpacing+markerSize(2)/2, pageHeight-marginSpacing-markerSize(2)/2,numRows)/10;
 
 [xgrid,ygrid] = meshgrid(xcenters,ycenters);
 xgrid = xgrid';
@@ -152,14 +157,14 @@ for iFile = 1:numImages
         
         colormap(h_axes, gray);
         
-        if outsideBorderWidth > 0
-            borderStr = sprintf('%.1fmm Border, ', outsideBorderWidth);
+        if outsideBorderSize > 0
+            borderStr = sprintf('%.1fx%.1fmm Border, ', outsideBorderSize(1), outsideBorderSize(2));
         else
             borderStr = '';
         end
         text(marginSpacing/10, marginSpacing/20, ...
-            sprintf('VisionMarkers, %.1fmm Width, %s%s', ...
-            markerSize, borderStr, datestr(now, 31)));
+            sprintf('VisionMarkers, %.1fx%.1fmm Size, %s%s', ...
+            markerSize(1), markerSize(2), borderStr, datestr(now, 31)));
     end
     
     [img, ~, alpha] = imread(fnames{iFile});
@@ -169,8 +174,8 @@ for iFile = 1:numImages
     iPos = mod(iFile-1, numRows*numCols) + 1;
     
     if outsideBorderWidth > 0
-      h_rect = rectangle('Position', [xgrid(iPos)-outsideBorderWidth/20 ....
-        ygrid(iPos)-outsideBorderWidth/20 outsideBorderWidth/10*[1 1]], ...
+      h_rect = rectangle('Position', [xgrid(iPos)-outsideBorderSize(1)/20 ....
+        ygrid(iPos)-outsideBorderSize(2)/20 outsideBorderBorderSize/10*[1 1]], ...
         'Parent', h_axes, 'EdgeColor', [0.8 0.8 0.8], ...
         'LineWidth', .5, 'LineStyle', ':');
       if whiteOnBlack
@@ -183,8 +188,8 @@ for iFile = 1:numImages
       end
     end
     
-    h_img = imagesc(xgrid(iPos)+markerSize/10*[-.5 .5], ...
-      ygrid(iPos)+markerSize/10*[-.5 .5], img, ...
+    h_img = imagesc(xgrid(iPos)+markerSize(1)/10*[-.5 .5], ...
+      ygrid(iPos)+markerSize(2)/10*[-.5 .5], img, ...
       'AlphaData', alpha, ...
       'Parent', h_axes);
     

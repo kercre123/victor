@@ -122,7 +122,7 @@ namespace Cozmo {
   
   void VisionSystem::MarkerToTrack::Clear() {
     type        = Anki::Vision::MARKER_UNKNOWN;
-    width_mm    = 0;
+    size_mm     = 0;
     imageCenter = Embedded::Point2f(-1.f, -1.f);
     imageSearchRadius = -1.f;
     checkAngleX = true;
@@ -315,17 +315,17 @@ namespace Cozmo {
       
       if(_markerToTrack.IsSpecified()) {
         
-        AnkiConditionalErrorAndReturnValue(_markerToTrack.width_mm > 0.f,
+        AnkiConditionalErrorAndReturnValue(_markerToTrack.size_mm > 0.f,
                                            RESULT_FAIL_INVALID_PARAMETER,
                                            "VisionSystem::UpdateMarkerToTrack()",
-                                           "Invalid marker width specified.");
+                                           "Invalid marker size specified.");
         
-        // Set canonical 3D marker's corner coordinates
-        const P3P_PRECISION markerHalfWidth = _markerToTrack.width_mm * P3P_PRECISION(0.5);
-        _canonicalMarker3d[0] = Embedded::Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
-        _canonicalMarker3d[1] = Embedded::Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
-        _canonicalMarker3d[2] = Embedded::Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
-        _canonicalMarker3d[3] = Embedded::Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
+        // Set canonical 3D marker's corner coordinates)
+        const Anki::Point<2,P3P_PRECISION> markerHalfSize = _markerToTrack.size_mm * P3P_PRECISION(0.5);
+        _canonicalMarker3d[0] = Embedded::Point3<P3P_PRECISION>(-markerHalfSize.x(), -markerHalfSize.y(), 0);
+        _canonicalMarker3d[1] = Embedded::Point3<P3P_PRECISION>(-markerHalfSize.x(),  markerHalfSize.y(), 0);
+        _canonicalMarker3d[2] = Embedded::Point3<P3P_PRECISION>( markerHalfSize.x(), -markerHalfSize.y(), 0);
+        _canonicalMarker3d[3] = Embedded::Point3<P3P_PRECISION>( markerHalfSize.x(),  markerHalfSize.y(), 0);
       } // if markerToTrack is valid
       
       _newMarkerToTrack.Clear();
@@ -492,16 +492,12 @@ namespace Cozmo {
       Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory._markers;
       const s32 maxMarkers = markers.get_maximumSize();
       
-      FixedLengthList<Array<f32> > homographies(maxMarkers, _memory._ccmScratch);
-      
       markers.set_size(maxMarkers);
-      homographies.set_size(maxMarkers);
-      
       for(s32 i=0; i<maxMarkers; i++) {
         Array<f32> newArray(3, 3, _memory._ccmScratch);
-        homographies[i] = newArray;
+        markers[i].homography = newArray;
       }
-      
+
       // TODO: Re-enable DebugStream for Basestation
       //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
       
@@ -540,7 +536,6 @@ namespace Cozmo {
       
       const Result result = DetectFiducialMarkers(grayscaleImage,
                                                   markers,
-                                                  homographies,
                                                   embeddedParams,
                                                   _memory._ccmScratch,
                                                   _memory._onchipScratch,
@@ -779,15 +774,16 @@ namespace Cozmo {
                                                                     _trackerParameters.numPyramidLevels,
                                                                     Transformations::TRANSFORM_PROJECTIVE,
                                                                     _trackerParameters.numFiducialEdgeSamples,
-                                                                    FIDUCIAL_SQUARE_WIDTH_FRACTION,
+                                                                    FIDUCIAL_SQUARE_THICKNESS_FRACTION,
                                                                     _trackerParameters.numInteriorSamples,
                                                                     _trackerParameters.numSamplingRegions,
                                                                     calib.GetFocalLength_x(),
                                                                     calib.GetFocalLength_y(),
                                                                     calib.GetCenter_x(),
                                                                     calib.GetCenter_y(),
-                                                                    _markerToTrack.width_mm,
-                                                                    ccmScratch,
+                                                                    Embedded::Point2f(_markerToTrack.size_mm.x(),
+                                                                                      _markerToTrack.size_mm.y()),
+                                                                     ccmScratch,
                                                                     onchipMemory,
                                                                     offchipMemory);
     
@@ -1064,7 +1060,7 @@ namespace Cozmo {
         
         // This resets docking, puttings us back in VISION_MODE_DETECTING_MARKERS mode
         SetMarkerToTrack(_markerToTrack.type,
-                         _markerToTrack.width_mm,
+                         _markerToTrack.size_mm,
                          _markerToTrack.imageCenter,
                          _markerToTrack.imageSearchRadius,
                          _markerToTrack.checkAngleX,
@@ -1629,8 +1625,8 @@ namespace Cozmo {
     return downsampleFactor;
   }
   
-  f32 VisionSystem::GetTrackingMarkerWidth() {
-    return _markerToTrack.width_mm;
+  const Anki::Point2f& VisionSystem::GetTrackingMarkerSize() {
+    return _markerToTrack.size_mm;
   }
   
   f32 VisionSystem::GetVerticalFOV() {
@@ -1784,17 +1780,17 @@ namespace Cozmo {
   
   
   Result VisionSystem::SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
-                                        const f32 markerWidth_mm,
+                                        const Anki::Point2f& markerSize_mm,
                                         const bool checkAngleX)
   {
     const Embedded::Point2f imageCenter(-1.f, -1.f);
     const f32     searchRadius = -1.f;
-    return SetMarkerToTrack(markerTypeToTrack, markerWidth_mm,
+    return SetMarkerToTrack(markerTypeToTrack, markerSize_mm,
                             imageCenter, searchRadius, checkAngleX);
   }
   
   Result VisionSystem::SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
-                                        const f32 markerWidth_mm,
+                                        const Anki::Point2f& markerSize_mm,
                                         const Embedded::Point2f& atImageCenter,
                                         const f32 imageSearchRadius,
                                         const bool checkAngleX,
@@ -1803,7 +1799,7 @@ namespace Cozmo {
                                         const f32 postOffsetAngle_rad)
   {
     _newMarkerToTrack.type              = markerTypeToTrack;
-    _newMarkerToTrack.width_mm          = markerWidth_mm;
+    _newMarkerToTrack.size_mm           = markerSize_mm;
     _newMarkerToTrack.imageCenter       = atImageCenter;
     _newMarkerToTrack.imageSearchRadius = imageSearchRadius;
     _newMarkerToTrack.checkAngleX       = checkAngleX;

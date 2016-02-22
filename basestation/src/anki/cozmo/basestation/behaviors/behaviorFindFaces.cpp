@@ -22,7 +22,12 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
+static const char* kUseFaceAngleCenterKey = "center_face_angle";
+static const bool kUseFaceAngleCenterDefault = true;
+static const char* kMinimumFaceAgeKey = "minimum_face_age_s";
+static const double kMinimumFaceAgeDefault = 180.0;
+
 using namespace ExternalInterface;
 
 BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
@@ -30,6 +35,9 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   , _currentDriveActionID((uint32_t)ActionConstants::INVALID_TAG)
 {
   SetDefaultName("FindFaces");
+
+  _useFaceAngleCenter = config.get(kUseFaceAngleCenterKey, kUseFaceAngleCenterDefault).asBool();
+  _minimumTimeSinceSeenLastFace_sec = config.get(kMinimumFaceAgeKey, kMinimumFaceAgeDefault).asDouble();
   
   SubscribeToTags({{
     EngineToGameTag::RobotCompletedAction,
@@ -51,12 +59,29 @@ bool BehaviorFindFaces::IsRunnable(const Robot& robot, double currentTime_sec) c
     Pose3d facePose;
     auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
     
-    return (lastFaceTime < SEC_TO_MILIS(currentTime_sec - kMinimumTimeSinceSeenLastFace_sec));
+    return (lastFaceTime == 0 || lastFaceTime < SEC_TO_MILIS(currentTime_sec - _minimumTimeSinceSeenLastFace_sec));
   }
   else {
     return true;
   }
 }
+
+float BehaviorFindFaces::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  double startTime_s = GetTimeStartedRunning_s();
+  Pose3d facePose;
+  auto lastFaceTime_ms = robot.GetFaceWorld().GetLastObservedFace(facePose);
+  double lastFaceTime_s = MILIS_TO_SEC(lastFaceTime_ms);
+
+  if( lastFaceTime_s > startTime_s ) {
+    // once this behavior finds a face, it doesn't want to run any more
+    return 0.0f;
+  }
+  else {
+    return super::EvaluateRunningScoreInternal(robot, currentTime_sec);
+  }
+}
+  
 
 void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
@@ -86,7 +111,7 @@ void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot
   
 void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
-  if (EngineToGameTag::RobotPickedUp == event.GetData().GetTag())
+  if (_useFaceAngleCenter && EngineToGameTag::RobotPickedUp == event.GetData().GetTag())
   {
     _faceAngleCenterSet = false;
   }
@@ -102,7 +127,7 @@ Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec)
 IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   // First time we're updating, set our face angle center
-  if (!_faceAngleCenterSet)
+  if (_useFaceAngleCenter && !_faceAngleCenterSet)
   {
     _faceAngleCenter = robot.GetPose().GetRotationAngle();
     _faceAngleCenterSet = true;
@@ -171,7 +196,8 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   
   Radians proposedNewAngle = Radians(currentBodyAngle + turnAmount);
   // If the potential turn takes us outside of our cone of focus, flip the sign on the turn
-  if(Anki::Util::Abs((proposedNewAngle - _faceAngleCenter).getDegrees()) > kFocusAreaAngle_deg / 2.0f)
+  if(_useFaceAngleCenter &&
+     Anki::Util::Abs((proposedNewAngle - _faceAngleCenter).getDegrees()) > kFocusAreaAngle_deg / 2.0f)
   {
     proposedNewAngle = Radians(currentBodyAngle - turnAmount);
   }

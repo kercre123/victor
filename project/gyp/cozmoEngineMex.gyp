@@ -74,11 +74,11 @@
       'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
     },
     'include_dirs': [
+      '<@(opencv_includes)',
       '<(matlabRootDir)/extern/include',
       '../../include',
       '<(coretechDir)/common/include',
       '<(coretechDir)/vision/include',
-      '<@(opencv_includes)',
     ],
     'libraries': [
       '<@(opencv_libs)',
@@ -111,7 +111,7 @@
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
             'LIBRARY_SEARCH_PATHS': [
-              '<@(opencv_lib_search_path_mac_debug)',
+              '<@(opencv_lib_search_path_debug)',
               '<(matlabRootDir)/bin/maci64',
             ],
            },
@@ -127,7 +127,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
-              '<@(opencv_lib_search_path_mac_release)',
+              '<@(opencv_lib_search_path_release)',
               '<(matlabRootDir)/bin/maci64'
             ],
            },
@@ -143,7 +143,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
-              '<@(opencv_lib_search_path_mac_release)',
+              '<@(opencv_lib_search_path_release)',
               '<(matlabRootDir)/bin/maci64'
             ],
            },

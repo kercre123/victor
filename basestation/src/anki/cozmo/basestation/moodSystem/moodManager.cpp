@@ -61,7 +61,11 @@ void MoodManager::Init(const Json::Value& inJson)
 {
   GetStaticMoodData().Init(inJson);
 }
-
+  
+bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
+{
+  return GetStaticMoodData().LoadEmotionEvents(inJson);
+}
   
 void MoodManager::Reset()
 {
@@ -240,6 +244,12 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, double curre
     }
     
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(eventName.c_str()) );
+    
+    // Trying to answer the question of why emotions are changing
+    std::ostringstream stream;
+    std::for_each(_emotions, _emotions+((size_t)(EmotionType::Count)),
+                  [&stream](const Emotion &iter){ stream<<iter.GetValue(); stream<<","; });
+    Anki::Util::sEvent("robot.mood_values", {{DDATA,eventName.c_str()}}, stream.str().c_str());
   }
   else
   {
@@ -292,6 +302,18 @@ void MoodManager::SetEmotion(EmotionType emotionType, float value)
 {
   GetEmotion(emotionType).SetValue(value);
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent("SetEmotion") );
+}
+  
+SimpleMoodType MoodManager::GetSimpleMood() const
+{
+  float happiness = GetEmotion(EmotionType::Happy).GetValue();
+  if(happiness < -0.33f) {
+    return SimpleMoodType::Sad;
+  }
+  if(happiness > 0.33f) {
+    return SimpleMoodType::Happy;
+  }
+  return SimpleMoodType::Default;
 }
 
   

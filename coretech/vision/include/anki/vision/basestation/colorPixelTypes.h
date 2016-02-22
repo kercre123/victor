@@ -14,7 +14,7 @@
 #define __Anki_Coretech_Vision_Basestation_ColorPixelTypes_H__
 
 #include "util/math/constantsAndMacros.h"
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 
 namespace Anki {
 namespace Vision {
@@ -148,6 +148,9 @@ namespace Vision {
 // "Register" our RGB/RGBA pixels as DataTypes with OpenCV
 namespace cv {
 
+  template<> class DataDepth<Anki::Vision::PixelRGB> { public: enum { value = CV_8UC3, fmt=(int)'u' }; };
+  template<> class DataDepth<Anki::Vision::PixelRGBA> { public: enum { value = CV_8UC4, fmt=(int)'u' }; };
+  
   template<> class cv::DataType<Anki::Vision::PixelRGB>
   {
   public:

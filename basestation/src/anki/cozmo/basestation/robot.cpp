@@ -48,6 +48,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "clad/types/gameStatusFlag.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/transport/reliableConnection.h"
@@ -153,6 +154,8 @@ namespace Anki {
         }
         
         _moodManager->Init(moodConfig);
+        
+        LoadEmotionEvents();
       }
       
       LoadBehaviors();
@@ -603,21 +606,6 @@ namespace Anki {
       }
       #endif // !(ANKI_IOS_BUILD || ANDROID)
     }
-    
-    f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
-    {
-      const Radians poseAngle1( p1.GetPose().GetRotationAngle<'Z'>() );
-      const Radians poseAngle2( p2.GetPose().GetRotationAngle<'Z'>() );
-      const f32 poseAngSpeed = std::abs((poseAngle1-poseAngle2).ToFloat()) / dt;
-      
-      return poseAngSpeed;
-    }
-
-    f32 ComputeHeadAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
-    {
-      const f32 headAngSpeed = std::abs((Radians(p1.GetHeadAngle()) - Radians(p2.GetHeadAngle())).ToFloat()) / dt;
-      return headAngSpeed;
-    }
 
     Vision::Camera Robot::GetHistoricalCamera(TimeStamp_t t_request) const
     {
@@ -657,179 +645,6 @@ namespace Anki {
       
       return camera;
     }
-    
-    Result Robot::QueueObservedMarker(const Vision::ObservedMarker& markerOrig)
-    {
-      Result lastResult = RESULT_OK;
-      
-      // Get historical robot pose at specified timestamp to get
-      // head angle and to attach as parent of the camera pose.
-      TimeStamp_t t;
-      RobotPoseStamp* p = nullptr;
-      HistPoseKey poseKey;
-      lastResult = ComputeAndInsertPoseIntoHistory(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
-                            "Time: %d, hist: %d to %d\n",
-                            markerOrig.GetTimeStamp(),
-                            _poseHistory->GetOldestTimeStamp(),
-                            _poseHistory->GetNewestTimeStamp());
-        return lastResult;
-      }
-      
-      // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded
-      // and this should be true
-      assert(markerOrig.GetTimeStamp() == t);
-      
-      // If this is not a face marker and "Vision while moving" is disabled and
-      // we aren't picking/placing, check to see if the robot's body or head are
-      // moving too fast to queue this marker
-      if(!_visionWhileMovingEnabled && !IsPickingOrPlacing())
-      {
-        TimeStamp_t t_prev, t_next;
-        RobotPoseStamp p_prev, p_next;
-        
-        lastResult = _poseHistory->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
-                              "Could not get next/previous poses for t = %d, so "
-                              "cannot compute angular velocity. Ignoring marker.\n", t);
-          
-          // Don't return failure, but don't queue the marker either (since we
-          // couldn't check the angular velocity while seeing it
-          return RESULT_OK;
-        }
-
-        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
-        const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
-        
-        assert(t_prev < t);
-        assert(t_next > t);
-        const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
-        const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
-        const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
-        const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
-        const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
-        const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
-        
-        if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-           turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
-        {
-          //          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-          //                              "Ignoring vision marker seen while turning with angular "
-          //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-          //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
-          //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
-          return RESULT_OK;
-        } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-                  headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
-        {
-          //          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-          //                              "Ignoring vision marker seen while head moving with angular "
-          //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-          //                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
-          //                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
-          return RESULT_OK;
-        }
-        
-      } // if(!_visionWhileMovingEnabled)
-      
-      // Update the marker's camera to use a pose from pose history, and
-      // create a new marker with the updated camera
-      assert(nullptr != p);
-      Vision::ObservedMarker marker(markerOrig.GetTimeStamp(), markerOrig.GetCode(),
-                                    markerOrig.GetImageCorners(),
-                                    GetHistoricalCamera(*p, markerOrig.GetTimeStamp()),
-                                    markerOrig.GetUserHandle());
-      
-      // Queue the marker for processing by the blockWorld
-      _blockWorld.QueueObservedMarker(poseKey, marker);
-      
-      // React to the marker if there is a callback for it
-      auto reactionIter = _reactionCallbacks.find(marker.GetCode());
-      if(reactionIter != _reactionCallbacks.end()) {
-        // Run each reaction for this code, in order:
-        for(auto & reactionCallback : reactionIter->second) {
-          lastResult = reactionCallback(this, &marker);
-          if(lastResult != RESULT_OK) {
-            PRINT_NAMED_WARNING("Robot.Update.ReactionCallbackFailed",
-                                "Reaction callback failed for robot %d observing marker with code %d.\n",
-                                GetID(), marker.GetCode());
-          }
-        }
-      }
-      
-      // Visualize the marker in 3D
-      // TODO: disable this block when not debugging / visualizing
-      if(true){
-        
-        // Note that this incurs extra computation to compute the 3D pose of
-        // each observed marker so that we can draw in the 3D world, but this is
-        // purely for debug / visualization
-        u32 quadID = 0;
-        
-        // When requesting the markers' 3D corners below, we want them
-        // not to be relative to the object the marker is part of, so we
-        // will request them at a "canonical" pose (no rotation/translation)
-        const Pose3d canonicalPose;
-        
-        
-        // Block Markers
-        std::set<const ObservableObject*> const& blocks = _blockWorld.GetObjectLibrary(ObjectFamily::Block).GetObjectsWithMarker(marker);
-        for(auto block : blocks) {
-          std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
-          
-          for(auto blockMarker : blockMarkers) {
-            
-            Pose3d markerPose;
-            Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                     blockMarker->Get3dCorners(canonicalPose),
-                                                                     markerPose);
-            if(poseResult != RESULT_OK) {
-              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
-                                  "Could not estimate pose of block marker. Not visualizing.\n");
-            } else {
-              if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-                GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
-              } else {
-                PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                    "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
-              }
-            }
-          }
-        }
-        
-        
-        // Mat Markers
-        std::set<const ObservableObject*> const& mats = _blockWorld.GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithMarker(marker);
-        for(auto mat : mats) {
-          std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
-          
-          for(auto matMarker : matMarkers) {
-            Pose3d markerPose;
-            Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                     matMarker->Get3dCorners(canonicalPose),
-                                                                     markerPose);
-            if(poseResult != RESULT_OK) {
-              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
-                                  "Could not estimate pose of mat marker. Not visualizing.\n");
-            } else {
-              if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-                GetContext()->GetVizManager()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
-              } else {
-                PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                    "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
-              }
-            }
-          }
-        }
-        
-      } // 3D marker visualization
-      
-      return lastResult;
-      
-    } // QueueObservedMarker()
-
     
     // Flashes a pattern on an active block
     void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
@@ -913,6 +728,11 @@ namespace Anki {
         }
         
       } // if (GetCamera().IsCalibrated())
+      
+      ///////// MemoryMap ///////////
+      
+      // update navigation memory map
+      _blockWorld.UpdateNavMemoryMap();        
       
       ///////// Update the behavior manager ///////////
       
@@ -1060,9 +880,6 @@ namespace Anki {
           }
         }
       }
-      
-      // update navigation memory map
-      _blockWorld.UpdateNavMemoryMap();        
       
       /////////// Update visualization ////////////
       
@@ -1484,6 +1301,15 @@ namespace Anki {
 
     }
     
+    const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
+      const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
+      if(group != nullptr && !group->IsEmpty()) {
+        return group->GetAnimationName(GetMoodManager(), _animationGroups);
+      }
+      static const std::string empty("");
+      return empty;
+    }
+    
     // Read the animation groups in a dir
     void Robot::ReadAnimationGroupFile(const char* filename)
     {
@@ -1504,6 +1330,43 @@ namespace Anki {
         
         _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
       }      
+    }
+    
+    void Robot::LoadEmotionEvents()
+    {
+      if (_context->GetDataPlatform() == nullptr)
+      {
+        return;
+      }
+      
+      // For now we'll keep this in the engine, rather than in e.g. "assets/emotionevents/" as they're more
+      // heavily coupled with the code than with assets
+      
+      const std::string eventFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/emotionevents/");
+      
+      DIR* dir = opendir(eventFolder.c_str());
+      if ( dir != nullptr)
+      {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr)
+        {
+          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
+          {
+            std::string fullFileName = eventFolder + ent->d_name;
+            
+            Json::Value eventJson;
+            const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, eventJson);
+            if (success && !eventJson.empty() && _moodManager->LoadEmotionEvents(eventJson))
+            {
+              PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", fullFileName.c_str());
+            }
+            else
+            {
+              PRINT_NAMED_WARNING("Robot.LoadEmotionEvents", "Failed to read '%s'", fullFileName.c_str());
+            }
+          }
+        }
+      }
     }
     
     void Robot::LoadBehaviors()
@@ -3391,5 +3254,63 @@ namespace Anki {
         return false;
       }
     }
+    
+    ExternalInterface::RobotState Robot::GetRobotState()
+    {
+      ExternalInterface::RobotState msg;
+      
+      msg.robotID = GetID();
+      
+      msg.pose_x = GetPose().GetTranslation().x();
+      msg.pose_y = GetPose().GetTranslation().y();
+      msg.pose_z = GetPose().GetTranslation().z();
+      
+      msg.poseAngle_rad = GetPose().GetRotationAngle<'Z'>().ToFloat();
+      msg.posePitch_rad = GetPitchAngle();
+      const UnitQuaternion<float>& q = GetPose().GetRotation().GetQuaternion();
+      msg.pose_qw = q.w();
+      msg.pose_qx = q.x();
+      msg.pose_qy = q.y();
+      msg.pose_qz = q.z();
+      
+      msg.leftWheelSpeed_mmps  = GetLeftWheelSpeed();
+      msg.rightWheelSpeed_mmps = GetRigthWheelSpeed();
+      
+      msg.headAngle_rad = GetHeadAngle();
+      msg.liftHeight_mm = GetLiftHeight();
+      
+      msg.status = 0;
+      if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
+      if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
+      if(IsPickedUp())         { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
+      if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
+      if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
+      if(IsCarryingObject())   {
+        msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
+        msg.carryingObjectID = GetCarryingObject();
+        msg.carryingObjectOnTopID = GetCarryingObjectOnTop();
+      } else {
+        msg.carryingObjectID = -1;
+      }
+      if(!GetActionList().IsEmpty()) {
+        msg.status |= (uint32_t)RobotStatusFlag::IS_PATHING;
+      }
+      
+      msg.gameStatus = 0;
+      if (IsLocalized() && !IsPickedUp()) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
+      
+      msg.headTrackingObjectID = GetMoveComponent().GetTrackToObject();
+      
+      msg.localizedToObjectID = GetLocalizedTo();
+      
+      // TODO: Add proximity sensor data to state message
+      
+      msg.batteryVoltage = GetBatteryVoltage();
+      
+      msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();
+      
+      return msg;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

@@ -61,8 +61,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <iostream>
 #include <fstream>
 #include "opencv2/video/tracking.hpp"
-#include "opencv2/contrib/contrib.hpp"
+//#include "opencv2/contrib/contrib.hpp"
 #endif
+
+#define TEST_FACE_DETECTION 0
+#define TEST_FACE_RECOGNITION 0
 
 using namespace Anki;
 using namespace Anki::Embedded;
@@ -74,7 +77,7 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
-#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS) && TEST_FACE_RECOGNITION
 static Result FaceRecognizer_LoadTrainingImages(
   FixedLengthList<Array<u8> > &trainingImages,
   FixedLengthList<Rectangle<s32> > &faceLocations,
@@ -109,7 +112,7 @@ static Result FaceRecognizer_LoadTrainingImages(
     RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Aliased");
 
   // TODO: are these const casts okay?
-  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpTEST_FACE_DETECTION_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
   const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
   const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
   const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
@@ -205,9 +208,9 @@ static Result FaceRecognizer_LoadTrainingImages(
 
   return RESULT_OK;
 }
-#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS) && TEST_FACE_RECOGNITION
 
-#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS) && TEST_FACE_RECOGNITION
 GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -307,9 +310,9 @@ GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
-#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS) && TEST_FACE_RECOGNITION
 
-#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS) && TEST_FACE_RECOGNITION
 GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
 {
   const s32 trainingWidth = 64;
@@ -511,7 +514,7 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
-#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS) && TEST_FACE_RECOGNITION
 
 GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 {
@@ -1498,7 +1501,7 @@ GTEST_TEST(CoreTech_Vision, Vignetting)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, Vignetting)
 
-#if defined(RUN_PC_ONLY_TESTS)
+#if defined(RUN_PC_ONLY_TESTS) && TEST_FACE_DETECTION
 GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 {
   using namespace std;
@@ -1654,8 +1657,9 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection_All)
-#endif // #if defined(RUN_PC_ONLY_TESTS)
+#endif // #if defined(RUN_PC_ONLY_TESTS) && TEST_FACE_DETECTION
 
+#if TEST_FACE_DETECTION
 GTEST_TEST(CoreTech_Vision, FaceDetection)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -1748,6 +1752,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection)
+#endif // TEST_FACE_DETECTION
 
 GTEST_TEST(CoreTech_Vision, ResizeImage)
 {
@@ -3044,7 +3049,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   const u8 verify_maxPixelDifference = 30;
 
   const s32 numFiducialSquareSamples = 100;
-  const f32 fiducialSquareWidthFraction = 0.1f;
+  const Point<f32> fiducialSquareWidthFraction(0.1f, 0.1f);
 
   const s32 maxSamplesAtBaseLevel = 500;
   
@@ -3086,7 +3091,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
       HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
       HEAD_CAM_CALIB_CENTER_X,
       HEAD_CAM_CALIB_CENTER_Y,
-      DEFAULT_BLOCK_MARKER_WIDTH_MM,
+      Point<f32>(DEFAULT_BLOCK_MARKER_WIDTH_MM, DEFAULT_BLOCK_MARKER_WIDTH_MM),
       scratchCcm,
       scratchOnchip,
       scratchOffchip);
@@ -3552,16 +3557,15 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   //ASSERT_TRUE(IsnewFiducials_320x240Valid(image.Pointer(0,0), false));
 
   FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
-  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
 
   markers.set_size(maxMarkers);
-  homographies.set_size(maxMarkers);
-
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f32> newArray(3, 3, scratchCcm);
-    homographies[i] = newArray;
+    markers[i].homography = newArray;
+    ASSERT_TRUE(markers[i].homography.IsValid());
+    ASSERT_TRUE(markers[i].homography.get_size(0)==3 && markers[i].homography.get_size(1)==3);
   } // for(s32 i=0; i<maximumSize; i++)
-
+  
   InitBenchmarking();
 
   {
@@ -3570,7 +3574,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
     const Result result = DetectFiducialMarkers(
       image,
       markers,
-      homographies,
       params,
       scratchCcm,
       scratchOnchip,
@@ -3735,14 +3738,11 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   //ASSERT_TRUE(IssimpleFiducials_320x240Valid(image.Pointer(0,0), false));
 
   FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
-  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
 
   markers.set_size(maxMarkers);
-  homographies.set_size(maxMarkers);
-
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f32> newArray(3, 3, scratchCcm);
-    homographies[i] = newArray;
+    markers[i].homography = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
   const s32 numRuns = 1;
@@ -3758,7 +3758,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
     const Result result_integral = DetectFiducialMarkers(
       image,
       markers,
-      homographies,
       params,
       scratchCcm,
       scratchOnchip,
@@ -3855,14 +3854,12 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
   //ASSERT_TRUE(IssimpleFiducials_320x240Valid(image.Pointer(0,0), false));
 
   FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
-  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
 
   markers.set_size(maxMarkers);
-  homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f32> newArray(3, 3, scratchCcm);
-    homographies[i] = newArray;
+    markers[i].homography = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
   const s32 numRuns = 2;
@@ -3877,7 +3874,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
     const Result result_binomial = DetectFiducialMarkers(
       image640,
       markers,
-      homographies,
       false,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
@@ -3908,7 +3904,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
     const Result result_integral = DetectFiducialMarkers(
       image640,
       markers,
-      homographies,
       true,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
