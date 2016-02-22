@@ -37,10 +37,6 @@ namespace DataPersistence {
     public TimelineEntryData(Date date) : this() {
       Date = date;
     }
-
-    public string FormatForDasDate() {
-      return string.Format("{0}/{1}", Date.Month, Date.Day);
-    }
   }
 
   public class CompletedChallengeData {

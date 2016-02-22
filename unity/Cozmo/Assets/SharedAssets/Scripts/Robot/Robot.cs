@@ -701,9 +701,9 @@ public class Robot : IRobot {
     bool wasGoalComplete = ProgressionStats[index] > goals[index];
     bool isGoalCompleteNow = value > goals[index];
     if (!wasGoalComplete && isGoalCompleteNow) {
-      string goalDate = currentSession.FormatForDasDate();
+      string goalDate = DASUtil.FormatDate(currentSession.Date);
       DAS.Event(kDasGoalComplete, goalDate, new Dictionary<string,string> { 
-        { "$data", StatContainer.FormatForDasGoalEvent(index, value, goals[index]) } 
+        { "$data", DASUtil.FormatGoal(index, value, goals[index]) } 
       });
     }
   }

@@ -349,7 +349,7 @@ public abstract class GameBase : MonoBehaviour {
       if (rewards.TryGetValue(statType, out rewardAmount)) {
         DAS.Event(
           string.Format(kDasGameEndRewards, statType), 
-          StatContainer.FormatForDasStatEvent(statType, rewardAmount));
+          DASUtil.FormatStatAmount(statType, rewardAmount));
       }
     }
   }

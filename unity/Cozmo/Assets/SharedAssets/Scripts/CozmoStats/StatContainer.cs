@@ -9,15 +9,6 @@ using System.Collections.Generic;
 [Serializable]
 [JsonConverter(typeof(StatContainerConverter))]
 public class StatContainer : IEquatable<StatContainer> {
-
-  public static string FormatForDasStatEvent(Anki.Cozmo.ProgressionStatType type, int amount) {
-    return string.Format("{0}_{1}", type, amount);
-  }
-
-  public static string FormatForDasGoalEvent(Anki.Cozmo.ProgressionStatType type, int currentAmount, int amountNeeded) {
-    return string.Format("{0}_{1}/{2}", type, currentAmount, amountNeeded);
-  }
-
   private const int kCount = (int)Anki.Cozmo.ProgressionStatType.Count;
 
   public static readonly Anki.Cozmo.ProgressionStatType[] sKeys;
