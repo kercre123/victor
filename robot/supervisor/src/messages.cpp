@@ -27,6 +27,7 @@
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
+#include "battery.h"
 #ifndef TARGET_K02
 #include "animationController.h"
 #endif
@@ -678,7 +679,15 @@ namespace Anki {
       {
         // Nothing to do here, handled in body
       }
-      void Process_enterBootloader(const RobotInterface::EnterBootloader& ebl)
+      void Process_powerState(const PowerState& msg)
+      {
+        HAL::Battery::HandlePowerStateUpdate(msg);
+      }
+      void Process_getPropState(const PropState& msg)
+      {
+        HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
+      }
+      void Process_enterBootloader(Anki::Cozmo::RobotInterface::EnterBootloader const&)
       {
 				// Nothing to do here, handled in spi
       }

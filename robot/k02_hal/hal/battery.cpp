@@ -1,7 +1,4 @@
-#include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/spineData.h"
-#include "uart.h"
-#include <limits.h>
+#include "battery.h"
 
 namespace Anki
 {
@@ -9,9 +6,22 @@ namespace Anki
   {
     namespace HAL
     {
+      namespace {
+        float vBat;
+        float vExt;
+        u8 chargeStat;
+      }
+      
+      void Battery::HandlePowerStateUpdate(PowerState& msg)
+      {
+        vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
+        vExt = static_cast<float>(msg.VExtFixed)/65536.0f;
+        chargeStat = msg.chargeStat;
+      }
+      
       u8 BatteryGetVoltage10x()
       {
-        return (g_dataToHead.VBat * 10)/65535; // XXX Returning battery voltage * 10 for now
+        return static_cast<u8>(vBat * 10.0f); // XXX Returning battery voltage * 10 for now
       }
 
       bool BatteryIsCharging()
@@ -22,7 +32,7 @@ namespace Anki
       bool BatteryIsOnCharger()
       {
         // Let's say we consider it to be on charger if 4.0V is detected. 
-        return (g_dataToHead.VExt / 65536.0f) > 4.0f; 
+        return vExt > 4.0f; 
       }
     }
   }
