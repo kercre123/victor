@@ -91,22 +91,31 @@ namespace SpeedTap {
       CozmoWinsHand();
     }
 
-    private void HandleRoundAnimationDone(bool success) {
+    private void HandleRoundRetreatDone(bool success) {
       int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
       int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
       int roundsLeft = _Rounds - losingScore - winningScore;
       if (winningScore > losingScore + roundsLeft) {
         AllRoundsOver = true;
         if (_PlayerRoundsWon > _CozmoRoundsWon) {
-          RaiseMiniGameWin();
+          _StateMachine.SetNextState(new AnimationState(RandomWinSession()), HandleSessionAnimDone);
         }
         else {
-          RaiseMiniGameLose();
+          _StateMachine.SetNextState(new AnimationState(RandomLoseSession()), HandleSessionAnimDone);
         }
       }
       else {
         ResetScore();
         _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
+      }
+    }
+
+    private void HandleSessionAnimDone(bool success) {
+      if (_PlayerRoundsWon > _CozmoRoundsWon) {
+        RaiseMiniGameWin();
+      }
+      else {
+        RaiseMiniGameLose();
       }
     }
 
@@ -125,11 +134,11 @@ namespace SpeedTap {
             CurrentDifficulty++;
           }
             
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomLoseRound(), HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomLoseRound(), HandleRoundRetreatDone)));
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomWinRound(), HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomWinRound(), HandleRoundRetreatDone)));
         }
 
         if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
@@ -370,6 +379,44 @@ namespace SpeedTap {
       return animName;
     }
 
+    public string RandomWinSession() {
+      string animName = "";
+      CozmoAdjustTime = 0.0f;
+      CozmoAdjustSpeed = 0.0f;
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_winSession_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_winSession_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_winSession_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomLoseSession() {
+      string animName = "";
+      CozmoAdjustTime = 0.0f;
+      CozmoAdjustSpeed = 0.0f;
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_loseSession_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_loseSession_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_loseSession_03;
+        break;
+      }
+      return animName;
+    }
+
     public string RandomTap() {
       string tapName = "";
       CozmoAdjustTime = 0.0f;
@@ -377,9 +424,13 @@ namespace SpeedTap {
       int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
+        CozmoAdjustTime = 0.132f;
+        CozmoAdjustSpeed = 51.0f;
         tapName = AnimationName.kSpeedTap_Tap_01;
         break;
       case 1:
+        CozmoAdjustTime = 0.132f;
+        CozmoAdjustSpeed = -51.0f;
         tapName = AnimationName.kSpeedTap_Tap_02;
         break;
       default:

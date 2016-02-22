@@ -45,6 +45,8 @@ namespace SpeedTap {
     public override void Update() {
       if (_GotoObjectComplete) {
         if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < 90f) {
+          _SpeedTapGame.CozmoAdjustSpeed = 25.0f;
+          _SpeedTapGame.CozmoAdjustTime = 1.0f;
           _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
         }
         else {

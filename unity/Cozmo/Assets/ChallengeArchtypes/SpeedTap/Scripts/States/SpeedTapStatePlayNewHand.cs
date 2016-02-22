@@ -119,6 +119,9 @@ namespace SpeedTap {
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);
+      _SpeedTapGame.CozmoAdjustTime = 0.242f;
+      _SpeedTapGame.CozmoAdjustSpeed = 30.0f;
+      _SpeedTapGame.CozmoAdjust();
     }
 
     void CozmoDidTap() {
