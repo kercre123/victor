@@ -47,9 +47,6 @@ void configure_game(Json::Value config)
   if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
-  if(!config.isMember(AnkiUtil::kP_AS_HOST)) {
-    config[AnkiUtil::kP_AS_HOST] = true;
-  }
   
   config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
   config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
