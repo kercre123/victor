@@ -150,7 +150,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 4;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(PI/2, false, 1));
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(PI/2, DEG_TO_RAD(100), 0, false, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -169,7 +169,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 5;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-PI/2, false, 1));
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-PI/2, DEG_TO_RAD(100), 0, false, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
