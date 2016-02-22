@@ -422,7 +422,6 @@ namespace Cozmo {
   {
     // stop current
     if (_currentBehavior) {
-      _currentBehavior->SetIsRunning(false);
       _currentBehavior->Stop(currentTime_sec);
     }
   }
@@ -433,19 +432,12 @@ namespace Cozmo {
     _currentBehavior = newBehavior;
     
     // initialize new
-    if (_currentBehavior) {
-      // flag as the running behavior
-      _currentBehavior->SetIsRunning(true);
-    
+    if (_currentBehavior) {    
       const Result initRet = _currentBehavior->Init(currentTime_sec);
       if ( initRet != RESULT_OK ) {
         PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
                         "Failed to initialize %s behavior.",
                         _currentBehavior->GetName().c_str());
-
-        // if the behavior fails to initialize, it is no longer running
-        _currentBehavior->SetIsRunning(false);
-        
       }
       else {
         PRINT_NAMED_DEBUG("BehaviorManger.InitBehavior.Success",
