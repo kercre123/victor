@@ -6,18 +6,21 @@ namespace SpeedTap {
   public class SpeedTapCozmoConfirm : State {
 
     private SpeedTapGame _SpeedTapGame = null;
-    private float _DriveTime = 1.35f;
+    private float _DriveTime = 0.0f;
 
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _CurrentRobot.DriveWheels(25.0f, 25.0f);
+      _SpeedTapGame.CozmoAdjust();
     }
 
     public override void Update() {
       base.Update();
-      _DriveTime -= Time.deltaTime;
-      if (_DriveTime < 0.0f) {
+      if (_SpeedTapGame.CozmoAdjustTimeLeft > 0.0f) {
+        _SpeedTapGame.CozmoAdjustTimeLeft -= Time.deltaTime;
+      }
+      else {
+        _CurrentRobot.DriveWheels(0.0f, 0.0f);
         _StateMachine.SetNextState(new AnimationState(_SpeedTapGame.RandomTap(), HandleTapDone));
       }
     }
@@ -26,11 +29,6 @@ namespace SpeedTap {
       _StateMachine.SetNextState(new SpeedTapPlayerConfirm());
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
       _CurrentRobot.SetLiftHeight(1.0f);
-    }
-
-    public override void Exit() {
-      base.Exit();
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
   }
 

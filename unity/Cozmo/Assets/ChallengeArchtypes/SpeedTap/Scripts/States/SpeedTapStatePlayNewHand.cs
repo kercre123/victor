@@ -39,7 +39,7 @@ namespace SpeedTap {
       _SpeedTapGame.PlayerTap = false;
 
       _CurrentRobot.SetLiftHeight(1.0f);
-      _CurrentRobot.DriveWheels(30.0f, 30.0f);
+      _SpeedTapGame.CozmoAdjust();
     }
 
     void AdjustDone() {
@@ -56,12 +56,12 @@ namespace SpeedTap {
     public override void Update() {
       base.Update();
       // Wait until _StartTime has been set before considering the round started.
-      if (_StartTimeMs == -1.0f) {
-        _AdjustTime -= Time.deltaTime;
-        if (_AdjustTime < 0.0f) {
-          AdjustDone();
-        }
+      if (_SpeedTapGame.CozmoAdjustTimeLeft > 0.0f) {
+        _SpeedTapGame.CozmoAdjustTimeLeft -= Time.deltaTime;
         return;
+      }
+      else {
+        AdjustDone();
       }
       float currTimeMs = Time.time * 1000.0f;
 
@@ -114,9 +114,6 @@ namespace SpeedTap {
       if (_SpeedTapGame.PlayerTap == false) {
         CozmoDidTap();
       }
-      _StartTimeMs = -1.0f;
-      _CurrentRobot.DriveWheels(-30.0f, -30.0f);
-      _AdjustTime = -0.25f;
     }
 
     void RobotCompletedFakeTapAnimation(bool success) {

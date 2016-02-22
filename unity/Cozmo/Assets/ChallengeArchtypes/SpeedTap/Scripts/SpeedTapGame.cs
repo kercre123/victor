@@ -16,6 +16,7 @@ namespace SpeedTap {
     // Used for matching animation values and fixing cozmo's position after animations play
     public float CozmoAdjustTime = 0.0f;
     public float CozmoAdjustSpeed = 0.0f;
+    public float CozmoAdjustTimeLeft = 0.0f;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -285,6 +286,13 @@ namespace SpeedTap {
     #region RandomAnims
 
     // Temp Functions for random animation until anim groups are ready
+
+    public void CozmoAdjust() {
+      if (CozmoAdjustTime != 0.0f) {
+        CozmoAdjustTimeLeft = CozmoAdjustTime;
+        CurrentRobot.DriveWheels(CozmoAdjustSpeed, CozmoAdjustSpeed);
+      }
+    }
 
     public string RandomWinHand() {
       string animName = "";
