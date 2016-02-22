@@ -20,6 +20,9 @@
 #include <math.h>
 #include "trig_fast.h"
 
+#define ENABLE_TEST_MODES 0
+
+
 namespace Anki {
   namespace Cozmo {
     namespace TestModeController {
@@ -27,6 +30,7 @@ namespace Anki {
       // "Private Member Variables"
       namespace {
 
+#if(ENABLE_TEST_MODES)
         // Some common vars that can be used across multiple tests
         u32 ticCnt_, ticCnt2_;   // Multi-purpose tic counters
         bool pathStarted_;       // Flag for whether or not we started to traverse a path
@@ -247,7 +251,7 @@ namespace Anki {
         // The number of cycles in between printouts
         // in those tests that print something out.
         u32 printCyclePeriod_;
-
+#endif
         // Current test mode
         TestMode testMode_ = TM_NONE;
 
@@ -293,7 +297,7 @@ namespace Anki {
         return RESULT_OK;
       }
 
-
+#if(ENABLE_TEST_MODES)
       Result PlaceOnGroundTestInit(s32 x_offset_mm, s32 y_offset_mm, s32 angle_offset_degrees)
       {
         AnkiInfo( 64, "TestModeController.PlaceOnGroundTestInit", 309, "xOffset %d mm, yOffset %d mm, angleOffset %d degrees", 3,
@@ -1112,10 +1116,13 @@ namespace Anki {
         }
         return RESULT_OK;
       }
+#endif
 
       Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3)
       {
         Result ret = RESULT_OK;
+        
+#if(ENABLE_TEST_MODES)
         testMode_ = mode;
 
         switch(testMode_) {
@@ -1186,7 +1193,7 @@ namespace Anki {
             ret = RESULT_FAIL;
             break;
         }
-        
+#endif
         return ret;
       }
 
