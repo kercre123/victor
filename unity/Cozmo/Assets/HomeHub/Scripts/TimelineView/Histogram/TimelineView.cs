@@ -276,12 +276,13 @@ namespace Cozmo.HomeHub {
       int stat_count = (int)Anki.Cozmo.ProgressionStatType.Count; 
       for (int i = 0; i < stat_count; ++i) {
         var targetStat = (Anki.Cozmo.ProgressionStatType)i;
-        if (timelineEntry.Goals[targetStat] > 0 && timelineEntry.Goals[targetStat] > timelineEntry.Progress[targetStat]) {
-          DAS.Event("game.goal_complete", targetStat.ToString(), new Dictionary<string,string> { {
-              "$data",
-              timelineEntry.Goals[targetStat].ToString()
-            }
-          });
+        if (timelineEntry.Goals[targetStat] > 0) {
+          DAS.Event("world.daily_report", DASUtil.FormatDate(timelineEntry.Date), 
+            new Dictionary<string,string> { {
+                "$data",
+                DASUtil.FormatGoal(targetStat, timelineEntry.Progress[targetStat], timelineEntry.Goals[targetStat])
+              }
+            });
         }
       }
 
