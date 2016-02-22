@@ -13,6 +13,9 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
