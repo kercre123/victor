@@ -64,6 +64,7 @@ namespace SpeedTap {
       }
       else if (_StartTimeMs == -1.0f) {
         AdjustDone();
+        return;
       }
       float currTimeMs = Time.time * 1000.0f;
 

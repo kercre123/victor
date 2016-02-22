@@ -15,13 +15,13 @@ namespace SpeedTap {
         _SpeedTapGame.CozmoBlock.Lights[i].SetFlashingLED(_SpeedTapGame.CozmoWinColors[i], 100, 100, 0);
       }
       _CurrentRobot.SendAnimation(_SpeedTapGame.RandomWinHand(), HandleAnimationDone);
-      _SpeedTapGame.PlayerLosesHand();
     }
 
     private void HandleAnimationDone(bool success) {
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
       _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
+      _SpeedTapGame.PlayerLosesHand();
     }
   }
 

@@ -97,6 +97,7 @@ namespace SpeedTap {
       int roundsLeft = _Rounds - losingScore - winningScore;
       if (winningScore > losingScore + roundsLeft) {
         AllRoundsOver = true;
+        Debug.LogWarning("RYAN - All Rounds Done Session is complete");
         if (_PlayerRoundsWon > _CozmoRoundsWon) {
           _StateMachine.SetNextState(new AnimationState(RandomWinSession(), HandleSessionAnimDone));
         }
@@ -105,6 +106,7 @@ namespace SpeedTap {
         }
       }
       else {
+        Debug.LogWarning("RYAN - Start Next Round");
         ResetScore();
         _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
       }
@@ -295,9 +297,11 @@ namespace SpeedTap {
 
     // Temp Functions for random animation until anim groups are ready
 
+    // Moves cozmo based on a certain speed and amount of time
     public void CozmoAdjust() {
       if (CozmoAdjustTime != 0.0f) {
         CozmoAdjustTimeLeft = CozmoAdjustTime;
+        CozmoAdjustTime = 0.0f;
         CurrentRobot.DriveWheels(CozmoAdjustSpeed, CozmoAdjustSpeed);
       }
     }
