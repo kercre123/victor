@@ -25,7 +25,7 @@ namespace SpeedTap {
     private bool _TriedFake = false;
     private bool _TryFake = false;
     private bool _TryPeek = false;
-    private bool _MidRound = false;
+    private bool _MidHand = false;
     private float _CozmoTapDelayTimeMs = 0f;
 
     public override void Enter() {
@@ -36,7 +36,7 @@ namespace SpeedTap {
       _StartTimeMs = -1.0f;
       _LightsOn = false;
       _SpeedTapGame.PlayerTap = false;
-      _MidRound = false;
+      _MidHand = false;
 
       _CurrentRobot.SetLiftHeight(1.0f);
       _SpeedTapGame.CozmoAdjust();
@@ -47,11 +47,11 @@ namespace SpeedTap {
       _StartTimeMs = Time.time * 1000.0f;
       _SpeedTapGame.CozmoAdjustTime = 0.0f;
       _SpeedTapGame.CozmoAdjustSpeed = 0.0f;
-      if (_MidRound == false) {
+      if (_MidHand == false) {
         GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
         _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
-        _MidRound = true;
+        _MidHand = true;
       }
     }
 

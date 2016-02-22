@@ -6,9 +6,11 @@ namespace SpeedTap {
   public class SpeedTapPlayerWins : State {
 
     private SpeedTapGame _SpeedTapGame = null;
+    private bool _AdjustDone;
 
     public override void Enter() {
       base.Enter();
+      _AdjustDone = false;
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _SpeedTapGame.CozmoBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
       for (int i = 0; i < 4; i++) {
@@ -22,7 +24,8 @@ namespace SpeedTap {
       if (_SpeedTapGame.CozmoAdjustTimeLeft > 0.0f) {
         _SpeedTapGame.CozmoAdjustTimeLeft -= Time.deltaTime;
       }
-      else {
+      else if (!_AdjustDone) {
+        _AdjustDone = true;
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
         _StateMachine.SetNextState(new AnimationState(_SpeedTapGame.RandomLoseHand(), HandleAnimationDone));
       }
