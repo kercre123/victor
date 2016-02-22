@@ -121,6 +121,10 @@ namespace SpeedTap {
 
     private void CheckRounds() {
       if (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound) {
+        
+        if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
+          _CloseRoundCount++;
+        }
 
         if (_PlayerScore > _CozmoScore) {
           _PlayerRoundsWon++;
@@ -140,11 +144,6 @@ namespace SpeedTap {
           _CozmoRoundsWon++;
           _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomWinRound(), HandleRoundRetreatDone)));
         }
-
-        if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
-          _CloseRoundCount++;
-        }
-
       }
     }
 

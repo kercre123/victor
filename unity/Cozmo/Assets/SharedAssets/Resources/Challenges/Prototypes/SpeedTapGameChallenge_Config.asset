@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Name: SpeedTapGameChallenge_Config
   m_EditorClassIdentifier: 
   Rounds: 3
-  MaxScorePerRound: 5
+  MaxScorePerRound: 3
   DifficultyOptions:
   - DifficultyId: 1
     DifficultyName: Easy

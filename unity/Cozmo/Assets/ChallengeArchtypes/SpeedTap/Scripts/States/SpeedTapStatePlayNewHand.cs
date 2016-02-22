@@ -36,6 +36,7 @@ namespace SpeedTap {
       _StartTimeMs = -1.0f;
       _LightsOn = false;
       _SpeedTapGame.PlayerTap = false;
+      _MidRound = false;
 
       _CurrentRobot.SetLiftHeight(1.0f);
       _SpeedTapGame.CozmoAdjust();
@@ -44,6 +45,8 @@ namespace SpeedTap {
     void AdjustDone() {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _StartTimeMs = Time.time * 1000.0f;
+      _SpeedTapGame.CozmoAdjustTime = 0.0f;
+      _SpeedTapGame.CozmoAdjustSpeed = 0.0f;
       if (_MidRound == false) {
         GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
@@ -59,7 +62,7 @@ namespace SpeedTap {
         _SpeedTapGame.CozmoAdjustTimeLeft -= Time.deltaTime;
         return;
       }
-      else {
+      else if (_StartTimeMs == -1.0f) {
         AdjustDone();
       }
       float currTimeMs = Time.time * 1000.0f;
@@ -77,6 +80,8 @@ namespace SpeedTap {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_FakeOut, RobotCompletedFakeTapAnimation);
+              _SpeedTapGame.CozmoAdjustTime = 0.242f;
+              _SpeedTapGame.CozmoAdjustSpeed = 30.0f;
               _TriedFake = true;
             }
           }
@@ -113,13 +118,15 @@ namespace SpeedTap {
       if (_SpeedTapGame.PlayerTap == false) {
         CozmoDidTap();
       }
+      else {
+        _SpeedTapGame.CozmoAdjust();
+      }
     }
 
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);
-      _SpeedTapGame.CozmoAdjustTime = 0.242f;
-      _SpeedTapGame.CozmoAdjustSpeed = 30.0f;
+      _StartTimeMs = -1.0f;
       _SpeedTapGame.CozmoAdjust();
     }
 
