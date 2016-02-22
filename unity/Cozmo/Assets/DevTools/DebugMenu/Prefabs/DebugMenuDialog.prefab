@@ -393,6 +393,8 @@ MonoBehaviour:
     panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
   - name: The Rest
     panePrefab: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
+  - name: BlockPool
+    panePrefab: {fileID: 113112, guid: caced7547f49649ddb9e729689c70d39, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 121806}
@@ -577,7 +579,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.size
-      value: 9
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: tabButtonPrefab_
@@ -639,7 +641,7 @@ Prefab:
       objectReference: {fileID: 137948, guid: 76d4e2b85e93448c692795fe78d5479c, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[9].name
-      value: Animation
+      value: BlockPool
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[10].name
@@ -652,7 +654,7 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[9].panePrefab
       value: 
-      objectReference: {fileID: 113112, guid: 6edfb651b8cff462981b4979e7dd82f4, type: 2}
+      objectReference: {fileID: 113112, guid: caced7547f49649ddb9e729689c70d39, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[8].name
       value: The Rest

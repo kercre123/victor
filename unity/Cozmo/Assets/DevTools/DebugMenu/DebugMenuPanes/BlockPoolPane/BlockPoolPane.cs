@@ -56,7 +56,7 @@ public class BlockPoolPane : MonoBehaviour {
       int id = initMsg.blockData[i].id;
       bool is_enabled = initMsg.blockData[i].enabled > 0 ? true : false;
       _BlockStates.Add(id, is_enabled);
-      txt.text = id.ToString() + " , " + is_enabled;
+      txt.text = id.ToString("X") + " , " + is_enabled;
       btn.onClick.AddListener(() => HandleButtonClick(id, txt));
     }
 
@@ -68,7 +68,7 @@ public class BlockPoolPane : MonoBehaviour {
       bool is_enabled = !was_enabled;
       _BlockStates[id] = is_enabled;
       
-      txt.text = id.ToString() + " , " + is_enabled;
+      txt.text = id.ToString("X") + " , " + is_enabled;
       _BlockSelectedMessage.blockId = id;
       _BlockSelectedMessage.selected = is_enabled ? (byte)1 : (byte)0;
       RobotEngineManager.Instance.Message.BlockSelectedMessage = _BlockSelectedMessage;
