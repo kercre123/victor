@@ -1,4 +1,3 @@
-
 /**
  * File: behaviorManager.cpp
  *
@@ -249,8 +248,8 @@ namespace Cozmo {
       // We've been in the current behavior long enough to consider switching
       lastResult = SelectNextBehavior(currentTime_sec);
       if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("BehaviorManager.Update.SelectNextFailed",
-                            "Failed trying to select next behavior, continuing with current.");
+        PRINT_NAMED_INFO("BehaviorManager.Update.SelectNextFailed",
+                         "Failed trying to select next behavior, continuing with current.");
         lastResult = RESULT_OK;
       }
       
@@ -343,7 +342,7 @@ namespace Cozmo {
         // to the selected next behavior
         initResult = _currentBehavior->Interrupt(currentTime_sec);
         
-        if (nullptr != _nextBehavior)
+        if (nullptr != _nextBehavior && initResult == RESULT_OK)
         {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
                                  "Selected %s to run next.", _nextBehavior->GetName().c_str());
@@ -434,7 +433,7 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.OldBehaviorStillRunning",
                         "Behavior '%s' is still running, but should have been stopped (Trying to switch to '%s').",
                         _currentBehavior->GetName().c_str(),
-                        newBehavior->GetName().c_str());
+                        newBehavior != nullptr ? newBehavior->GetName().c_str() : "<NULL>");
       _currentBehavior->Stop(currentTime_sec);      
     }
     

@@ -316,7 +316,13 @@ namespace Cozmo {
   
   inline Result IBehavior::Interrupt(double currentTime_sec)
   {
-    return InterruptInternal(_robot, currentTime_sec);
+    Result interruptResult = InterruptInternal(_robot, currentTime_sec);
+    if( interruptResult != RESULT_OK ) {
+      PRINT_NAMED_DEBUG("BehaviorInterface.Interrupt.Failure",
+                        "interrupting behavior '%s' failed",
+                        GetName().c_str());
+    }
+    return interruptResult;
   }
   
   inline Util::RandomGenerator& IBehavior::GetRNG() const {
