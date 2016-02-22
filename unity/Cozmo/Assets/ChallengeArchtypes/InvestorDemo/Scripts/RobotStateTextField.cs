@@ -8,6 +8,7 @@ public class RobotStateTextField : MonoBehaviour {
   private AnkiTextLabel _RobotStateLabel;
 
   private void Update() {
+    // This is toggled on and off on the DebugMenuCanvas layer, so odds are it won't re-order much.
     if (transform.GetSiblingIndex() != this.transform.parent.childCount - 1) {
       transform.SetAsLastSibling();
     }
