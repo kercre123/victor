@@ -680,17 +680,7 @@ public class Robot : IRobot {
   private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
     bool valueChanged = ProgressionStats[index] != value;
     if (valueChanged) {
-      // If the goal has been completed for the first time, send a DAS event on goal complete
-      DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
-      StatContainer goals = currentSession.Goals;
-      bool wasGoalComplete = ProgressionStats[index] > goals[index];
-      bool isGoalCompleteNow = value > goals[index];
-      if (!wasGoalComplete && isGoalCompleteNow) {
-        string goalDate = currentSession.FormatForDasDate();
-        DAS.Event(kDasGoalComplete, goalDate, new Dictionary<string,string> { 
-          { "$data", StatContainer.FormatForDasGoalEvent(index, value, goals[index]) } 
-        });
-      }
+      TrySendGoalCompleteDasEvent(index, value);
 
       // Update data and save to actually grant progress.
       ProgressionStats[index] = value;
@@ -702,6 +692,20 @@ public class Robot : IRobot {
       DataPersistence.DataPersistenceManager.Instance.Save();
     }
 
+  }
+
+  private void TrySendGoalCompleteDasEvent(Anki.Cozmo.ProgressionStatType index, int value) {
+    // If the goal has been completed for the first time, send a DAS event on goal complete
+    DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
+    StatContainer goals = currentSession.Goals;
+    bool wasGoalComplete = ProgressionStats[index] > goals[index];
+    bool isGoalCompleteNow = value > goals[index];
+    if (!wasGoalComplete && isGoalCompleteNow) {
+      string goalDate = currentSession.FormatForDasDate();
+      DAS.Event(kDasGoalComplete, goalDate, new Dictionary<string,string> { 
+        { "$data", StatContainer.FormatForDasGoalEvent(index, value, goals[index]) } 
+      });
+    }
   }
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
