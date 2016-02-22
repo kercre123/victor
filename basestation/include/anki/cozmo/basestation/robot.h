@@ -683,14 +683,9 @@ public:
   
     const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
   
-  const std::string& GetAnimationNameFromGroup(const std::string& name) const {
-    auto group = _animationGroups.GetAnimationGroup(name);
-    if(group != nullptr && !group->IsEmpty()) {
-      return group->GetAnimationName(GetMoodManager());
-    }
-    static const std::string empty("");
-    return empty;
-  }
+    const std::string& GetAnimationNameFromGroup(const std::string& name);
+  
+    ExternalInterface::RobotState GetRobotState();
   
   protected:
     const CozmoContext* _context;
@@ -895,6 +890,7 @@ public:
     TracePrinter _traceHandler;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+    void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);

@@ -37,9 +37,12 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   // Render navmesh
-  void Draw() const;
+  void Draw(size_t mapIdxHint) const;
+
+  // Stop rendering navmesh
+  void ClearDraw() const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -47,6 +50,9 @@ public:
 
   // notify the navmesh that the given quad has the specified content
   void AddQuad(const Quad2f& quad, NodeContent& nodeContent);
+  
+  // merge the given quadtree into this quad tree, applying to the quads from other the given transform
+  void Merge(const NavMeshQuadTree& other, const Pose3d& transform);
   
   // return the Processor associated to this QuadTree for queries
   NavMeshQuadTreeProcessor& GetProcessor() { return _processor; }

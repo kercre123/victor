@@ -199,23 +199,24 @@ void PhysVizController::Draw(int pass, const char *view)
           DrawTextAtOffset(idString, 0.6*obj->x_size_m, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
           DrawTextAtOffset(idString, -0.6*obj->x_size_m, -0.6*obj->y_size_m, -0.6*obj->z_size_m);
 
+          const float axisLineFactor = 0.1f;
           // AXES:
           glColor4ub(255, 0, 0, 255);
           glBegin(GL_LINES);
           glVertex3f(0,0,0);
-          glVertex3f(obj->x_size_m, 0, 0);
+          glVertex3f(obj->x_size_m*axisLineFactor, 0, 0);
           glEnd();
 
           glColor4ub(0, 255, 0, 255);
           glBegin(GL_LINES);
           glVertex3f(0, 0, 0);
-          glVertex3f(0, obj->y_size_m, 0);
+          glVertex3f(0, obj->y_size_m*axisLineFactor, 0);
           glEnd();
 
           glColor4ub(0, 0, 255, 255);
           glBegin(GL_LINES);
           glVertex3f(0, 0, 0);
-          glVertex3f(0, 0, obj->z_size_m);
+          glVertex3f(0, 0, obj->z_size_m*axisLineFactor);
           glEnd();
 
           break;
@@ -304,14 +305,17 @@ void PhysVizController::Draw(int pass, const char *view)
             quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
             quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
          );
-        
-//        glColor4ub(255,255,255,255);
-//        DrawQuad(
-//            quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
-//            quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L
-//            quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
-//            quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
-//         );
+
+        const bool kRenderQuadBorder = false;
+        if ( kRenderQuadBorder ) {
+          glColor4ub(255,255,255,255);
+          DrawQuad(
+              quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
+              quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L
+              quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
+              quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
+          );
+        }
       } // for each quadInVector
     } // for each vector in map
     

@@ -209,11 +209,17 @@ namespace Anki
       void SetIsOnCliff(bool value) { _isOnCliff = value; }
 
       // return pointer to current INavMemoryMap (it may be null if not enabled)
-      const INavMemoryMap* GetNavMemoryMap() const { return _navMemoryMap.get(); }
-      INavMemoryMap* GetNavMemoryMap() { return _navMemoryMap.get(); }
+      const INavMemoryMap* GetNavMemoryMap() const;
+      INavMemoryMap* GetNavMemoryMap();
       
       // update memory map
       void UpdateNavMemoryMap();      
+
+      // create a new memory map from current robot frame of reference. The pointer is used as an identifier
+      void CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr);
+      
+      // Visualize the navigation memory information
+      void DrawNavMemoryMap() const;
       
       //
       // Visualization
@@ -227,9 +233,6 @@ namespace Anki
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
       void DrawAllObjects() const;
-      
-      // Visualize the navigation memory information
-      void DrawNavMemoryMap() const;
       
     protected:
       
@@ -366,7 +369,9 @@ namespace Anki
       u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
       
       // Map the world knows the robot has traveled
-      std::unique_ptr<INavMemoryMap> _navMemoryMap;
+      using NavMemoryMapTable = std::map<const Pose3d*, std::unique_ptr<INavMemoryMap>>;
+      NavMemoryMapTable _navMemoryMaps;
+      const Pose3d* _currentNavMemoryMapOrigin;
       
       // set to true/false upon cliff sensor notifications
       bool _isOnCliff;

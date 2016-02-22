@@ -141,6 +141,10 @@ void BehaviorReactToCliff::StopInternal(Robot& robot, double currentTime_sec)
 
 void BehaviorReactToCliff::HandleCliffEvent(const EngineToGameEvent& event)
 {
+  if( ! IsChoosable() ) {
+    return;
+  }
+
   // We want to get these messages, even when not running
   switch (event.GetData().GetTag())
   {

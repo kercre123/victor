@@ -126,8 +126,22 @@ namespace Anki {
           
           // Move the eyes (only if not in position)
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
-          const Radians angleDiff = _targetAngle - currentAngle;
-          const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+          Radians angleDiff = _targetAngle - currentAngle;
+          
+          // Clip angleDiff to 89 degrees to prevent unintended behavior due to tangent
+          bool angleClipped = false;
+          if(angleDiff.getDegrees() > 89)
+          {
+            angleDiff = DEG_TO_RAD(89);
+            angleClipped = true;
+          }
+          else if(angleDiff.getDegrees() < -89)
+          {
+            angleDiff = DEG_TO_RAD(-89);
+            angleClipped = true;
+          }
+          
+          f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
           const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
           _robot.ShiftEyes(_eyeShiftTag, xPixShift, 0, 4*IKeyFrame::SAMPLE_LENGTH_MS, "TurnInPlaceEyeDart");
         }
@@ -209,7 +223,7 @@ namespace Anki {
     {
       const Radians heading = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
       
-      const Vec3f& T = _robot.GetPose().GetTranslation();
+      const Vec3f& T = _robot.GetDriveCenterPose().GetTranslation();
       const f32 x_start = T.x();
       const f32 y_start = T.y();
       
@@ -1020,6 +1034,8 @@ namespace Anki {
       {
         PRINT_NAMED_ERROR("FacePoseAction.Init.PoseOriginFailure",
                           "Could not get pose w.r.t. robot pose.");
+        _poseWrtRobot.Print();
+        _poseWrtRobot.PrintNamedPathToOrigin(false);
         return ActionResult::FAILURE_ABORT;
       }
       

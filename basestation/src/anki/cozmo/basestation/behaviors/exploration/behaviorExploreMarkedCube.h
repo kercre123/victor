@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorExploreMarkedCube_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
+#include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
 
 #include "anki/common/basestation/math/pose.h"
 

@@ -232,7 +232,7 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
       case ENodeContentType::Invalid             : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
       case ENodeContentType::Subdivided          : { color = Anki::NamedColors::BLUE;     color.SetAlpha(1.0f); break; }
       case ENodeContentType::Unknown             : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
-      case ENodeContentType::ClearOfObstacle     : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.2f); break; }
+      case ENodeContentType::ClearOfObstacle     : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
       case ENodeContentType::ClearOfCliff        : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
       case ENodeContentType::ObstacleCube        : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
       case ENodeContentType::ObstacleUnrecognized: { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
@@ -554,6 +554,17 @@ void NavMeshQuadTreeNode::AddSmallestNeighbors(EDirection direction,
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeNode::AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const
+{
+  if ( !IsSubdivided() ) {
+    descendants.emplace_back(this);
+  } else {
+    for( const auto& cPtr : _childrenPtr ) {
+      cPtr->AddSmallestDescendantsDepthFirst(descendants);
+    }
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki

@@ -51,10 +51,8 @@ message ForceAddRobot {
 }
 
 // StartEngine
-// Tell game to start the engine with the configuration specified by the message members.
+// Tell the engine to start running.
 message StartEngine {
-    uint_8 asHost,
-    uint_8 vizHostIP[16] // if first char is '\0' disables viz
 }
 
 // DriveWheels
@@ -350,6 +348,25 @@ message TraverseObject {
   PathMotionProfile motionProf,
   bool usePreDockPose,
   bool useManualSpeed
+}
+
+// DriveStraight
+message DriveStraight {
+  float_32 speed_mmps,
+  float_32 dist_mm
+}
+
+// PanAndTilt
+message PanAndTilt {
+  float_32 bodyPan,
+  float_32 headTilt,
+  bool isPanAbsolute,
+  bool isTiltAbsolute
+}
+
+// Wait
+message Wait {
+  float_32 time_s
 }
 
 // SetRobotCarryingObject
@@ -657,6 +674,9 @@ union RobotActionUnion {
   TurnInPlace               turnInPlace,
   TrackToFace               trackFace,
   TrackToObject             trackObject,
+  DriveStraight             driveStraight,
+  PanAndTilt                panAndTilt,
+  Wait                      wait,
   MountCharger              mountCharger
 }
 

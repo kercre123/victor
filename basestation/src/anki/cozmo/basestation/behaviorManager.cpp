@@ -51,6 +51,8 @@ namespace Cozmo {
 
   }
   
+  static const char* kChooserConfigKey = "chooserConfig";
+  
   Result BehaviorManager::Init(const Json::Value &config)
   {
     BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
@@ -59,7 +61,9 @@ namespace Cozmo {
     
     // TODO: Only load behaviors specified by Json?
     
-    SetupOctDemoBehaviorChooser(config);
+    const Json::Value& chooserConfigJson = config[kChooserConfigKey];
+    
+    SetupOctDemoBehaviorChooser(chooserConfigJson);
     
     if (_robot.HasExternalInterface())
     {
@@ -139,8 +143,7 @@ namespace Cozmo {
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
 
-    // disable mini game request until we get one from unity
-    chooser->EnableBehaviorGroup(BehaviorGroup::MiniGame, false);
+    chooser->InitEnabledBehaviors(config);
 
     // // HACK: enable speed tab requests
     // chooser->EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap, true);
@@ -275,13 +278,16 @@ namespace Cozmo {
           
         case IBehavior::Status::Complete:
           // Behavior complete, try to select and switch to next
+          StopCurrentBehavior(currentTime_sec);
           lastResult = SelectNextBehavior(currentTime_sec);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_WARNING("BehaviorManager.Update.Complete.SelectNextFailed",
                                 "Failed trying to select next behavior.");
             lastResult = RESULT_OK;
           }
-          SwitchToNextBehavior(currentTime_sec);
+          else {
+            SwitchToNextBehavior(currentTime_sec);
+          }
           break;
           
         case IBehavior::Status::Failure:
@@ -289,6 +295,8 @@ namespace Cozmo {
                             "Behavior '%s' failed to Update().",
                             _currentBehavior->GetName().c_str());
           lastResult = RESULT_FAIL;
+
+          StopCurrentBehavior(currentTime_sec);
           
           // Force a re-init so if we reselect this behavior
           _forceReInit = true;
@@ -339,6 +347,8 @@ namespace Cozmo {
         {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
                                  "Selected %s to run next.", _nextBehavior->GetName().c_str());
+          
+          Anki::Util::sEvent("robot.behavior_transition", {{DDATA,_currentBehavior->GetName().c_str()}}, _nextBehavior->GetName().c_str());
         }
       }
     }
@@ -407,32 +417,37 @@ namespace Cozmo {
     // hack: assume this isn't the demo behavior chooser (will be reset right after this if it was)
     _demoBehaviorChooserRunning = false;
   }
-  
-  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
+
+  void BehaviorManager::StopCurrentBehavior(double currentTime_sec)
   {
     // stop current
     if (_currentBehavior) {
-      _currentBehavior->SetIsRunning(false);
       _currentBehavior->Stop(currentTime_sec);
+    }
+  }
+
+  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
+  {
+
+    // make sure the old behavior is stopped (should have been done already)
+    if( _currentBehavior != nullptr && _currentBehavior->IsRunning() ) {
+      PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.OldBehaviorStillRunning",
+                        "Behavior '%s' is still running, but should have been stopped (Trying to switch to '%s').",
+                        _currentBehavior->GetName().c_str(),
+                        newBehavior->GetName().c_str());
+      _currentBehavior->Stop(currentTime_sec);      
     }
     
     // set current <- new
     _currentBehavior = newBehavior;
     
     // initialize new
-    if (_currentBehavior) {
-      // flag as the running behavior
-      _currentBehavior->SetIsRunning(true);
-    
+    if (_currentBehavior) {    
       const Result initRet = _currentBehavior->Init(currentTime_sec);
       if ( initRet != RESULT_OK ) {
         PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
                         "Failed to initialize %s behavior.",
                         _currentBehavior->GetName().c_str());
-
-        // if the behavior fails to initialize, it is no longer running
-        _currentBehavior->SetIsRunning(false);
-        
       }
       else {
         PRINT_NAMED_DEBUG("BehaviorManger.InitBehavior.Success",
@@ -480,6 +495,8 @@ namespace Cozmo {
         const auto& msg = message.Get_SetEnableAllBehaviors();
         if (_behaviorChooser)
         {
+          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableAllBehaviors", "%s",
+                            msg.enable ? "true" : "false");
           _behaviorChooser->EnableAllBehaviors(msg.enable);
         }
         else
@@ -494,6 +511,9 @@ namespace Cozmo {
         const auto& msg = message.Get_SetEnableBehaviorGroup();
         if (_behaviorChooser)
         {
+          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehaviorGroup", "%s: %s",
+                            BehaviorGroupToString(msg.behaviorGroup),
+                            msg.enable ? "true" : "false");
           _behaviorChooser->EnableBehaviorGroup(msg.behaviorGroup, msg.enable);
         }
         else
@@ -508,6 +528,9 @@ namespace Cozmo {
         const auto& msg = message.Get_SetEnableBehavior();
         if (_behaviorChooser)
         {
+          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehavior", "%s: %s",
+                            msg.behaviorName.c_str(),
+                            msg.enable ? "true" : "false");
           _behaviorChooser->EnableBehavior(msg.behaviorName, msg.enable);
         }
         else

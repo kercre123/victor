@@ -71,11 +71,7 @@ namespace Cozmo {
       Complete
     };
     
-    // BehaviorManager uses SetIsRunning() when it starts or stops a behavior.
-    // IsRunning() allows querying from inside a subclass to do things differently
-    // (such as handling events) depending on running state.
     bool IsRunning() const { return _isRunning; }
-    void SetIsRunning(bool tf) { _isRunning = tf; }
     
     double GetRunningDuration(double currentTime_sec) const;
     
@@ -295,8 +291,13 @@ namespace Cozmo {
   
   inline Result IBehavior::Init(double currentTime_sec)
   {
+    _isRunning = true;
     _startedRunningTime_s = currentTime_sec;
-    return InitInternal(_robot, currentTime_sec);
+    Result initResult = InitInternal(_robot, currentTime_sec);
+    if ( initResult != RESULT_OK ) {
+      _isRunning = false;
+    }
+    return initResult;
   }
   
   inline IBehavior::Status IBehavior::Update(double currentTime_sec)
@@ -307,6 +308,7 @@ namespace Cozmo {
 
   inline void IBehavior::Stop(double currentTime_sec)
   {
+    _isRunning = false;
     StopInternal(_robot, currentTime_sec);
     _lastRunTime_s = currentTime_sec;
     StopActing();
