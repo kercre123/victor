@@ -565,7 +565,7 @@ namespace Cozmo {
     
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
-    if(!robot.IsPickingOrPlacing())
+    if(!_visionWhileMovingEnabled && !robot.IsPickingOrPlacing())
     {
       TimeStamp_t t_prev, t_next;
       RobotPoseStamp p_prev, p_next;

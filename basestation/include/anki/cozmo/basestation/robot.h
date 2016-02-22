@@ -202,7 +202,6 @@ public:
     //
     VisionComponent&         GetVisionComponent() { return _visionComponent; }
     const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
-    void                     EnableVisionWhileMoving(bool enable);
     Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
     Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
     Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
@@ -735,9 +734,6 @@ public:
     void SelectPlanner(const Pose3d& targetPose);
     void SelectPlanner(const std::vector<Pose3d>& targetPoses);
 
-    // Sends a path to the robot to be immediately executed
-    bool                      _visionWhileMovingEnabled = false;
-
     /*
     // Proximity sensors
     std::array<u8,   NUM_PROX>  _proxVals;
@@ -976,9 +972,6 @@ inline const Pose3d& Robot::GetPose(void) const
 
 inline const Pose3d& Robot::GetDriveCenterPose(void) const
 {return _driveCenterPose; }
-
-inline void Robot::EnableVisionWhileMoving(bool enable)
-{ _visionWhileMovingEnabled = enable; }
 
 inline const f32 Robot::GetHeadAngle() const
 { return _currentHeadAngle; }

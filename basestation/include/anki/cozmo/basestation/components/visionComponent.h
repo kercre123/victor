@@ -111,6 +111,10 @@ struct DockingErrorSignal;
     // if the robot wasn't moving too much while it was observed
     Result QueueObservedMarker(Robot& robot, const Vision::ObservedMarker& marker);
     
+    // Set whether or not markers queued while robot is "moving" (meaning it is
+    // turning too fast or head is moving too fast) will be considered
+    void   EnableVisionWhileMoving(bool enable);
+    
     Result UpdateFaces(Robot& robot);
     Result UpdateVisionMarkers(Robot& robot);
     Result UpdateTrackingQuad(Robot& robot);
@@ -171,6 +175,7 @@ struct DockingErrorSignal;
 
     VisionSystem::PoseData   _currentPoseData;
     VisionSystem::PoseData   _nextPoseData;
+    bool                     _visionWhileMovingEnabled = false;
     
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);
@@ -212,6 +217,10 @@ struct DockingErrorSignal;
   
   inline const Vision::CameraCalibration& VisionComponent::GetCameraCalibration() const {
     return _camCalib;
+  }
+  
+  inline void VisionComponent::EnableVisionWhileMoving(bool enable) {
+    _visionWhileMovingEnabled = enable;
   }
   
   inline void VisionComponent::SetMarkerDetectionTurnSpeedThresholds(f32 bodyTurnSpeedThresh_degPerSec,
