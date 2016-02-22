@@ -53,9 +53,9 @@ inline void transmit_mode(TRANSFER_MODE mode) {
   switch (mode) {
     case TRANSMIT_SEND:
       // Special case mode where we force the head to enter recovery mode
-      Anki::Cozmo::HAL::Spine::Dequeue(g_dataToBody.spineMessage);
-      memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
-
+      const GlobalDataToBody* txBufferStruct = reinterpret_cast<GlobalDataToBody*>(txRxBuffer);
+      memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody)-SPINE_MAX_CLAD_MSG_SIZE);
+      Anki::Cozmo::HAL::Spine::Dequeue(txBufferStruct.cladBuffer);
 
       PORTD_PCR6 = PORT_PCR_MUX(0);
       PORTD_PCR7 = PORT_PCR_MUX(3);

@@ -1,66 +1,69 @@
 #include <string.h>
 
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/logging.h"
 #include "spine.h"
-#include "cube.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 namespace Anki {
 namespace Cozmo {
 namespace HAL {
   static const int QUEUE_DEPTH = 8;
   
-  static SpineProtocol spinebuffer[QUEUE_DEPTH];
+  static u8 spinebuffer[QUEUE_DEPTH][SPINE_MAX_CLAD_MSG_SIZE];
   static volatile int spine_enter = 0;
   static volatile int spine_exit = 0;
 
-  void Spine::Dequeue(SpineProtocol& msg) {
+  int Spine::Dequeue(u8* dest) {
     if (spine_enter == spine_exit) {
-      Cube::SpineIdle(msg);
-      return ;
+      *dest = 0; // Invalid tag
     }
-    
-    memcpy(&msg, &spinebuffer[spine_enter], sizeof(SpineProtocol));
-    spine_enter = (spine_enter+1) % QUEUE_DEPTH;
+    else
+    {
+      memcpy(dest, spinebuffer[spine_enter], SPINE_MAX_CLAD_MSG_SIZE);
+      spine_enter = (spine_enter+1) % QUEUE_DEPTH;
+    }
   }
   
-  void Spine::Enqueue(SpineProtocol& msg) {
-    int exit = (spine_exit+1) % QUEUE_DEPTH;
+  bool Spine::Enqueue(const u8* data, const u8 length) {
+    const int exit = (spine_exit+1) % QUEUE_DEPTH;
     if (spine_enter == exit) {
-      return ;
+      return false;
     }
-
-    memcpy(&spinebuffer[spine_exit], &msg, sizeof(SpineProtocol));
-    spine_exit = exit;
+    else if (length > SPINE_MAX_CLAD_MSG_SIZE)
+    {
+      AnkiWarn("Spine.Enqueue", "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", data[0], length, SPINE_MAX_CLAD_MSG_SIZE);
+      return false;
+    }
+    else
+    {
+      memcpy(spinebuffer[spine_exit], data, length);
+      spine_exit = exit;
+      return true;
+    }
   }
 
-  void Spine::Manage(SpineProtocol& msg) {
-    switch(msg.opcode) {
-      case GET_PROP_STATE:
-        Anki::Cozmo::HAL::GetPropState(
-          msg.GetPropState.slot, 
-          msg.GetPropState.x, msg.GetPropState.y, msg.GetPropState.z, 
-          msg.GetPropState.shockCount);
-        break ;
-      
-      case PROP_DISCOVERED:
-        Anki::Cozmo::HAL::DiscoverProp(msg.PropDiscovered.prop_id);
-        break ;
-    
-      case REQUEST_PROPS:
-        Cube::SendPropIds();
-        break ;
-
-      // No operation and body only messages
-      case NO_OPERATION:
-      case ASSIGN_PROP:
-      case SET_PROP_STATE:
-      case SET_BACKPACK_STATE:
-      case ENTER_RECOVERY:
-        break ;
+  void Spine::Manage() {
+    const u8 tag = g_dataToHead.cladBuffer[0];
+    if (tag == RobotInterface::GLOBAL_INVALID_TAG)
+    {
+      // pass
     }
-
+    else if (tag < RobotInterface::TO_RTIP_START)
+    {
+      AnkiError("Spine.Manage", "Received message %x that seems bound below", tag);
+    }
+    else if (tag > RobotInterface::TO_RTIP_END)
+    {
+      RadioSendMessage(g_dataToHead.cladBuffer+1, SPINE_MAX_CLAD_MSG_SIZE-1, tag);
+    }
+    else
+    {
+      RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToHead.cladBuffer);
+      Messages::ProcessMessage(*msg);
+    }
     // Prevent same messagr from getting processed twice (if the spine desyncs)
-    msg.opcode = NO_OPERATION;
+    msg.cladBuffer[0] = RobotInterface::GLOBAL_INVALID_TAG;
   }
 
 }

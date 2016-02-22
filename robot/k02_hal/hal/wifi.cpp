@@ -121,7 +121,7 @@ namespace HAL {
           }
           else if (msgTag < RobotInterface::TO_RTIP_START)
           {
-            Spine::Enqueue(msgBuffer, msgLen);
+            while (Spine::Enqueue(msgBuffer, msgLen) == false) ; // Spin until success
           }
           else if (msg->Size() != msgLen)
           {

@@ -51,7 +51,8 @@ struct AcceleratorPacket {
   (((r >> 3) & 0x1F) << 10)     \
 )
 
-#define SPINE_MAX_CLAD_MSG_SIZE (32)
+// 32 bytes of payload plus tag
+#define SPINE_MAX_CLAD_MSG_SIZE (33)
 
 struct GlobalDataToHead
 {
