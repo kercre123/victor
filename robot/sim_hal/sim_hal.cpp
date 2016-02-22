@@ -383,7 +383,7 @@ namespace Anki {
         motorPositions_[i] = 0;
         motorPrevPositions_[i] = 0;
         motorSpeeds_[i] = 0;
-        motorSpeedCoeffs_[i] = 0.2;
+        motorSpeedCoeffs_[i] = 0.8;
       }
 
       // Enable position measurements on head, lift, and wheel motors

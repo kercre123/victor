@@ -71,20 +71,24 @@ namespace Anki {
       f32 angularDistExpected_;
       f32 angularDistTraversed_;
       
-      f32 pointTurnKp_ = 400;
-      f32 pointTurnKd_ = 5000;
-      f32 pointTurnKi_ = 0;
+      f32 pointTurnKp_ = 250;
+      f32 pointTurnKd_ = 3000;
+      f32 pointTurnKi_ = 0.2;
       f32 pointTurnMaxIntegralError_ = 100;
       f32 prevPointTurnAngleError_ = 0;
       f32 pointTurnAngleErrorSum_ = 0;
-
+      TimeStamp_t inPositionStartTime_ = 0;
+      
+      // Amount of time orientation is within tolerance of target angle before
+      // the controller is considered to have reached the target point turn angle.
+      const u32 IN_POSITION_THRESHOLD_MS = 100;
       
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
 
       VelocityProfileGenerator vpg_;
 
-      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = DEG_TO_RAD(20.f);
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0;
 
     } // Private namespace
 
@@ -487,9 +491,10 @@ namespace Anki {
 
     void ExitPointTurn()
     {
-      SetSteerMode(SM_PATH_FOLLOW);
+      WheelController::SetDesiredWheelSpeeds(0,0);
       currAngularVel_ = 0;
       startedPointTurn_ = false;
+      SetSteerMode(SM_PATH_FOLLOW);
     }
 
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
@@ -564,33 +569,41 @@ namespace Anki {
 
       if (isPointTurnWithTarget_) {
 
+        angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
+        prevAngle_ = currAngle;
+
+        
         // Compute distance to target
-        float angularDistToTarget = currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
-
-
-        //PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
-        //          currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle);
-
-
+        float angularDistToTarget = ABS(angularDistTraversed_) > POINT_TURN_ANGLE_TOL ?
+                                    (targetRad_ - currAngle).ToFloat() :
+                                    currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
+        
         // Check for stop condition
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
         if (absAngularDistToTarget < POINT_TURN_ANGLE_TOL) {
-          ExitPointTurn();
-  #if(DEBUG_STEERING_CONTROLLER)
-          AnkiDebug( 12, "POINT TURN", 110, "Stopping", 0);
-  #endif
+          if (inPositionStartTime_ == 0) {
+            AnkiInfo( 126, "PointTurnInRange", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+            inPositionStartTime_ = HAL::GetTimeStamp();
+          } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS) {
+#           if(DEBUG_STEERING_CONTROLLER)
+            f32 lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed;
+            WheelController::GetFilteredWheelSpeeds(lWheelSpeed, rWheelSpeed);
+            WheelController::GetDesiredWheelSpeeds(lDesSpeed, rDesSpeed);
+            AnkiDebug( 12, "POINT TURN", 110,
+                      "Stopping (currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f)", 9,
+                      currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currAngularVel_), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed);
+#           endif
+            ExitPointTurn();
+            return;
+          }
+        } else {
+          AnkiDebugPeriodic(100, 127, "PointTurnOOR", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+          inPositionStartTime_ = 0;
+
         }
 
+        
 
-        // Check if the angular dist to target is growing
-        angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
-        prevAngle_ = currAngle;
-        if (ABS(angularDistTraversed_) > ABS(angularDistExpected_) ) {
-          ExitPointTurn();
-  #if(DEBUG_STEERING_CONTROLLER)
-          AnkiDebug( 12, "POINT TURN", 111, "Stopping because turned more than expected", 0);
-  #endif
-        }
       }
 
 
@@ -618,19 +631,19 @@ namespace Anki {
 #endif
 
       WheelController::SetDesiredWheelSpeeds(wleft, wright);
+      //WheelController::ResetIntegralGainSums();
 
       // If target velocity is zero then we might need to stop
       if (!isPointTurnWithTarget_) {
         if (arcVel == 0 && maxAngularVel_ == 0) {
-          WheelController::SetDesiredWheelSpeeds(0,0);
           ExitPointTurn();
 #if(DEBUG_STEERING_CONTROLLER)
           AnkiDebug( 12, "POINT TURN", 113, "Stopping because 0 vel reached", 0);
 #endif
+          return;
         }
       }
     }
-
 
   } // namespace SteeringController
   } // namespace Cozmo

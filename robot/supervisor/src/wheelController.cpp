@@ -29,7 +29,7 @@ namespace Anki {
       const float DEFAULT_WHEEL_KI = 0.00005f;
 
       // Speed filtering rate
-      const f32 ENCODER_FILTERING_COEFF = 0.9f;
+      const f32 ENCODER_FILTERING_COEFF = 0.f;  // TODO: If this seems to be ok at 0, get rid of filteredWheelSpeeds
 
       f32 Kp_ = DEFAULT_WHEEL_KP;
       f32 Ki_ = DEFAULT_WHEEL_KI;
@@ -63,6 +63,12 @@ namespace Anki {
 
       // Whether or not controller should run
       bool enable_ = true;
+      
+      TimeStamp_t lastMovedTime_ = 0;
+      
+      // Amount of time the wheels have stopped moving for before the wheels
+      // are externally considered to have stopped moving.
+      const u32 HAS_STOPPED_MOVING_THRESHOLD_MS = 200;
 
     } // private namespace
 
@@ -139,8 +145,8 @@ namespace Anki {
 #endif
 
         //Compute the error between dessired and actual (filtered)
-        f32 errorL = (desiredWheelSpeedL_ - filterWheelSpeedL_);
-        f32 errorR = (desiredWheelSpeedR_ - filterWheelSpeedR_);
+        f32 errorL = (desiredWheelSpeedL_ - measuredWheelSpeedL_);
+        f32 errorR = (desiredWheelSpeedR_ - measuredWheelSpeedR_);
 
         // Compute power to command to motors
         f32 outl = ComputeWheelPower(desiredWheelSpeedL_, errorL, error_sumL_);
@@ -168,14 +174,14 @@ namespace Anki {
 
 
         // If considered stopped, force stop
-        if (ABS(desiredWheelSpeedL_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
+        if (ABS(desiredWheelSpeedL_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S && ABS(measuredWheelSpeedL_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
           power_l_ = 0;
           error_sumL_ = 0;
         }
 
 
         // If considered stopped, force stop
-        if (ABS(desiredWheelSpeedR_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
+        if (ABS(desiredWheelSpeedR_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S && ABS(measuredWheelSpeedR_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
           power_r_ = 0;
           error_sumR_ = 0;
         }
@@ -210,6 +216,10 @@ namespace Anki {
       HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, power_l_);
       HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, power_r_);
 
+      // Update last moved time
+      if (!(NEAR_ZERO(filterWheelSpeedL_) && NEAR_ZERO(filterWheelSpeedR_))) {
+        lastMovedTime_ = HAL::GetTimeStamp();
+      }
 
     } // Run()
 
@@ -305,8 +315,7 @@ namespace Anki {
 
     bool AreWheelsMoving()
     {
-      return (fabsf(filterWheelSpeedL_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S) ||
-             (fabsf(filterWheelSpeedR_) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S);
+      return (HAL::GetTimeStamp() - lastMovedTime_) < HAS_STOPPED_MOVING_THRESHOLD_MS;
     }
 
     void ResetIntegralGainSums(void)
