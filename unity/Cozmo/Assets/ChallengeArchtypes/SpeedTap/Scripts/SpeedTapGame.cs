@@ -98,10 +98,10 @@ namespace SpeedTap {
       if (winningScore > losingScore + roundsLeft) {
         AllRoundsOver = true;
         if (_PlayerRoundsWon > _CozmoRoundsWon) {
-          _StateMachine.SetNextState(new AnimationState(RandomWinSession()), HandleSessionAnimDone);
+          _StateMachine.SetNextState(new AnimationState(RandomWinSession(), HandleSessionAnimDone));
         }
         else {
-          _StateMachine.SetNextState(new AnimationState(RandomLoseSession()), HandleSessionAnimDone);
+          _StateMachine.SetNextState(new AnimationState(RandomLoseSession(), HandleSessionAnimDone));
         }
       }
       else {

@@ -18,7 +18,6 @@ namespace SpeedTap {
     private float _MatchProbability = 0.35f;
     private float _FakeProbability = 0.25f;
     private float _PeekProbability = 0.40f;
-    private float _AdjustTime = 0.5f;
 
     private bool _LightsOn = false;
     private bool _GotMatch = false;
