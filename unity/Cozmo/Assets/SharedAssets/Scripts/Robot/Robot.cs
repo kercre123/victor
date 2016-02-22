@@ -1134,7 +1134,7 @@ public class Robot : IRobot {
   }
 
   public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    DAS.Debug(this, "Go to Pose: x: " + x_mm + " y: " + y_mm + " useManualSpeed: " + useManualSpeed + " level: " + level);
+    DAS.Debug(this, "Go to Pose: x: " + x_mm + " y: " + y_mm + " rad: " + rad);
 
     SendQueueSingleAction(Singleton<GotoPose>.Instance.Initialize(
       level: System.Convert.ToByte(level),

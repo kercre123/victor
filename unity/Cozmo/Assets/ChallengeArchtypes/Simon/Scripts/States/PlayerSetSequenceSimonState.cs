@@ -30,7 +30,6 @@ namespace Simon {
       _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = false;
 
       _CurrentRobot.SetHeadAngle(1.0f);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
     }
 
     public override void Update() {
@@ -71,18 +70,18 @@ namespace Simon {
       _StartLightBlinkTime = Time.time;
 
       SimonGame game = _StateMachine.GetGame() as SimonGame;
-      GameAudioClient.PostSFXEvent(game.GetPlayerAudioForBlock(id));
+      GameAudioClient.PostAudioEvent(game.GetAudioForBlock(id));
 
       _TargetCube = id;
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
       _TargetCubeColor = cube.Lights[0].OnColor;
       cube.TurnLEDsOff();
 
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(cube, false));
+      _CurrentRobot.FaceObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
     }
 
     private void HandleOnCozmoStartAnimationDone(bool success) {
-      _StateMachine.SetNextState(new CozmoGuessSimonState());
+      _StateMachine.SetNextState(new CozmoMoveCloserToCubesState(new CozmoGuessSimonState()));
     }
   }
 }

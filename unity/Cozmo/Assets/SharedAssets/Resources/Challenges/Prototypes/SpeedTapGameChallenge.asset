@@ -24,5 +24,5 @@ MonoBehaviour:
   _HowToPlayDialogContentLocKey: speedTap.text.howToPlay
   _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:
-    _Music: 1337686304
+    _Music: 1944187438
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}

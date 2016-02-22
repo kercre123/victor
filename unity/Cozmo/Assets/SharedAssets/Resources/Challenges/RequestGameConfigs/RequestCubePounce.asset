@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Name: RequestCubePounce
   m_EditorClassIdentifier: 
   ChallengeID: CubePounceGame
-  RequestBehaviorGroup: 9
+  RequestBehaviorGroup: 8

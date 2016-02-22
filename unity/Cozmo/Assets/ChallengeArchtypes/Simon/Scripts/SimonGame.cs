@@ -7,7 +7,10 @@ namespace Simon {
 
   public class SimonGame : GameBase {
 
+    public const float kCozmoLightBlinkDelaySeconds = 0.1f;
     public const float kLightBlinkLengthSeconds = 0.3f;
+    public const float kTurnSpeed_rps = 100f;
+    public const float kTurnAccel_rps2 = 100f;
 
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();
@@ -22,6 +25,9 @@ namespace Simon {
     private PlayerType _FirstPlayer = PlayerType.Cozmo;
 
     public AnimationCurve CozmoWinPercentage { get { return _Config.CozmoGuessCubeCorrectPercentage; } }
+
+    [SerializeField]
+    private SimonSound[] _CubeColorsAndSounds;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = (SimonGameConfig)minigameConfig;
@@ -38,7 +44,7 @@ namespace Simon {
       else {
         _FirstPlayer = PlayerType.Cozmo;
       }
-      State nextState = new CozmoMoveCloserToCubesState(_FirstPlayer);
+      State nextState = new CozmoMoveCloserToCubesState(new WaitForNextRoundSimonState(_FirstPlayer));
       InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(nextState), _Config.NumCubesRequired());
       _StateMachine.SetNextState(initCubeState);
 
@@ -60,37 +66,38 @@ namespace Simon {
     }
 
     public void InitColorsAndSounds() {
-      // give cubes colors
-      List<Color> colors = new List<Color>();
-      colors.Add(Color.green);
-      colors.Add(Color.blue);
-      colors.Add(Color.red);
-      colors.Add(Color.yellow);
-      colors.Add(Color.magenta);
-      int colorCounter = 0;
-      foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDs(colors[colorCounter]);
-        colorCounter++;
-        colorCounter %= colors.Count;
+      if (_BlockIdToSound.Count() == 0) {
+        List<int> usedIndices = new List<int>();
+        int randomIndex = 0;
+        SimonSound randomSimonSound;
+        foreach (LightCube cube in CubesForGame) {
+          do {
+            randomIndex = Random.Range(0, _CubeColorsAndSounds.Length);
+          } while (usedIndices.Contains(randomIndex));
+          usedIndices.Add(randomIndex);
+          randomSimonSound = _CubeColorsAndSounds[randomIndex];
+          _BlockIdToSound.Add(cube.ID, randomSimonSound);
+        }
       }
 
-      _BlockIdToSound.Clear();
-      int counter = 0;
-      string cozmoAnimationName = "Simon_Cube";
-      Anki.Cozmo.Audio.GameEvent.SFX[] playerAudio = { 
-        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect,
-        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect,
-        Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect
-      };
-      int smallestArrayLength = playerAudio.Length;
-      SimonSound sound;
-      foreach (var kvp in CurrentRobot.LightCubes) {
-        sound = new SimonSound();
-        sound.cozmoAnimationName = cozmoAnimationName;
-        sound.playerSoundName = playerAudio[counter];
-        _BlockIdToSound.Add(kvp.Key, sound);
-        counter++;
-        counter %= smallestArrayLength;
+      SetCubeLightsDefaultOn();
+    }
+
+    public void SetCubeLightsDefaultOn() {
+      foreach (LightCube cube in CubesForGame) {
+        cube.SetLEDs(_BlockIdToSound[cube.ID].cubeColor);
+      }
+    }
+
+    public void SetCubeLightsGuessWrong() {
+      foreach (LightCube cube in CubesForGame) {
+        cube.SetFlashingLEDs(Color.red, 100, 100, 0);
+      }
+    }
+
+    public void SetCubeLightsGuessRight() {
+      foreach (LightCube cube in CubesForGame) {
+        cube.SetFlashingLEDs(_BlockIdToSound[cube.ID].cubeColor, 100, 100, 0);
       }
     }
 
@@ -98,8 +105,8 @@ namespace Simon {
       _CurrentIDSequence.Clear();
       for (int i = 0; i < sequenceLength; ++i) {
         int pickedID = -1;
-        int pickIndex = Random.Range(0, CurrentRobot.LightCubes.Count);
-        pickedID = CurrentRobot.LightCubes.ElementAt(pickIndex).Key;
+        int pickIndex = Random.Range(0, CubesForGame.Count);
+        pickedID = CubesForGame[pickIndex].ID;
         _CurrentIDSequence.Add(pickedID);
       }
     }
@@ -116,20 +123,12 @@ namespace Simon {
 
     }
 
-    public string GetCozmoAnimationForBlock(int blockId) {
-      string animationName = AnimationName.kSeeOldPattern;
+    public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
+      Anki.Cozmo.Audio.AudioEventParameter audioEvent = 
+        Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
       SimonSound sound;
       if (_BlockIdToSound.TryGetValue(blockId, out sound)) {
-        animationName = sound.cozmoAnimationName;
-      }
-      return animationName;
-    }
-
-    public Anki.Cozmo.Audio.GameEvent.SFX GetPlayerAudioForBlock(int blockId) {
-      Anki.Cozmo.Audio.GameEvent.SFX audioEvent = Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect;
-      SimonSound sound;
-      if (_BlockIdToSound.TryGetValue(blockId, out sound)) {
-        audioEvent = sound.playerSoundName;
+        audioEvent = (Anki.Cozmo.Audio.AudioEventParameter)sound.soundName;
       }
       return audioEvent;
     }
@@ -146,9 +145,12 @@ namespace Simon {
     }
   }
 
+  [System.Serializable]
   public class SimonSound {
-    public string cozmoAnimationName;
-    public Anki.Cozmo.Audio.GameEvent.SFX playerSoundName;
+    // TODO: Store Anki.Cozmo.Audio.GameEvent.SFX instead of uint; apparently Unity
+    // doesn't like that.
+    public Anki.Cozmo.Audio.AudioEventParameter soundName;
+    public Color cubeColor;
   }
 
   public enum PlayerType {

@@ -14,7 +14,11 @@ namespace SpeedTap {
         _SpeedTapGame.PlayerBlock.Lights[i].SetFlashingLED(_SpeedTapGame.PlayerWinColors[i], 100, 100, 0);
       }
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
-      _CurrentRobot.SendAnimation(AnimationName.kFinishTabCubeLose, HandleAnimationDone);
+      _CurrentRobot.GotoPose(_SpeedTapGame.PlayPos, _CurrentRobot.Rotation, false, false, HandleAdjustDone);
+    }
+
+    private void HandleAdjustDone(bool success) {
+      _CurrentRobot.SendAnimation(AnimationName.kFail, HandleAnimationDone);
     }
 
     private void HandleAnimationDone(bool success) {
