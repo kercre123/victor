@@ -16,6 +16,7 @@ extern "C" {
 #include "upgradeController.h"
 #include "anki/cozmo/robot/esp.h"
 #include "anki/cozmo/robot/logging.h"
+#include "rtip.h"
 #include "clad/robotInterface/otaMessages.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -374,7 +375,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         else // Done writing firmware
         {
           AnkiInfo( 29, "UpgradeController", 180, "RTIP OTA transfer complete", 0);
-          if (flashStagedFlags[0] != 0xFFFFffff)
+          if (flashStagedFlags[0] != 0xFFFFffff && flashStagedFlags[1] != 0)
           {
             uint32 flag = 0;
             if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS+4, &flag, 4) != SPI_FLASH_RESULT_OK)
@@ -382,8 +383,11 @@ LOCAL bool TaskOtaRTIP(uint32 param)
               os_printf("Couldn't set stage 2 staged upgrade flag\r\n");
             }
           }
-          i2spiSwitchMode(I2SPI_NORMAL);
-          state->phase = 3;
+          if (i2spiBootloaderCommandDone())
+          {
+            i2spiSwitchMode(I2SPI_NORMAL);
+            state->phase = 3;
+          }
           return true;
         }
       }
@@ -706,24 +710,6 @@ LOCAL bool TaskCheckSig(uint32 param)
   }
 }
   
-extern "C" bool i2spiSynchronizedCallback(uint32 param)
-{
-  if (flashStagedFlags[0] != 0xFFFFFFFF)
-  {
-    if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
-    {
-      // Enter bootloader message from otaMessages.clad
-      if (i2spiQueueMessage((u8*)"\x30\x01", 2) == false) return true;
-      os_printf("Flash staged, starting upgrade sequence\r\n");
-    }
-    else
-    {
-      StartWiFiUpgrade(true);
-    }
-  }
-  return false;
-}
-  
 void EraseFlash(RobotInterface::EraseFlash& msg)
 {
   if (msg.start < FLASH_WRITE_START_ADDRESS) // Refuse to erase addresses that are too low
@@ -835,6 +821,25 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
         }
       }
     }
+  }
+  
+  bool CheckForAndDoStaged(void)
+  {
+    if (flashStagedFlags[0] != 0xFFFFFFFF)
+    {
+      if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
+      {
+        u8 msg = RobotInterface::EngineToRobot::Tag_bootloadBody;
+        os_printf("Flash staged, starting upgrade sequence\r\n");
+        return RTIP::SendMessage(&msg, 1);
+      }
+      else
+      {
+        StartWiFiUpgrade(true);
+      }
+      return true;
+    }
+    return false;
   }
   
   void StartRTIPUpgrade(void)

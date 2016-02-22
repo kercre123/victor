@@ -224,9 +224,11 @@ extern "C" int8_t backgroundTaskInit(void)
   }
 }
 
-extern "C" void backgroundTaskOnRTIPSync(void)
+extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
+  if (Anki::Cozmo::UpgradeController::CheckForAndDoStaged()) return false;
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
+  return false;
 }
 
 extern "C" void backgroundTaskOnConnect(void)

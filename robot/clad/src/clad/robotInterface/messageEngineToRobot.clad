@@ -13,6 +13,7 @@
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/nvStorage.clad"
 
@@ -204,11 +205,28 @@ message EnableLiftPower
   bool enable
 }
 
+message SetBodyLights // XXX Remove this and pipe BackpackLights all the way down
+{
+  uint_16 spineColors[3],
+  uint_8  turnSignals[2],
+  bool    flashlight,
+}
+
 message RTIPVersionInfo
 {
   uint_32 version,
   uint_32 date,
   string  description
+}
+
+message BodyUpgradeData
+{
+  uint_32 word
+}
+
+message RadioState
+{
+  bool wifiConnected
 }
 
 enum uint_32 ToRobotAddressSpace
@@ -225,16 +243,6 @@ enum uint_32 ToRobotAddressSpace
   TO_ENG_END    = 0xFE
 }
 
-message BodyUpgradeData
-{
-  uint_32 word
-}
-
-message RadioState
-{
-  bool wifiConnected
-}
-
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot and within the robot
@@ -248,7 +256,9 @@ union EngineToRobot
   
   // 0x01 to 0x2f: Messages to the body / test fixture
   BootloadBody                  bootloadBody                = 0x01,
-  BodyUpgradeData               bodyUpgradeData             = 0x02,
+  // Reserved for bootloader data message to get moved here = 0x02,
+  SetPropState                  setPropState                = 0x03,
+  SetBodyLights                 setBodyLights               = 0x04,
   
   // 0x30 to 0x7f: To RTIP
   BootloadRTIP                  bootloadRTIP                = 0x30,
@@ -289,6 +299,9 @@ union EngineToRobot
   RawPWM                        setRawPWM                   = 0x53,
   SetMotionModelParams          setMotionModelParams        = 0x54,
   CubeSlots                     assignCubeSlots             = 0x55,
+  BodyUpgradeData               bodyUpgradeData             = 0x56,
+  PowerState                    powerState                  = 0x57,
+  PropState                     getPropState                = 0x58,
   
   // 0x80 to 0xAF: To WiFi
   // Flash and OTA message must not be changed or OTA will break

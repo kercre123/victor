@@ -100,7 +100,7 @@ def UpgradeRTIP(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_R
     up.ota(fwPathName, RI.OTACommand.OTA_RTIP, version, flashAddress)
 
 def UpgradeBody(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_body_flash_address):
-    up.send(RI.EngineToRobot(enterBootloader=RI.EnterBootloader(RI.EnterBootloaderWhich.BOOTLOAD_BODY)))
+    up.send(RI.EngineToRobot(bootloadBody=RI.bootloadBody()))
     up.ota(fwPathName, RI.OTACommand.OTA_body, version, flashAddress)
 
 def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):

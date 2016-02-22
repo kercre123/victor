@@ -56,26 +56,6 @@ namespace Anki
         }
       }
       
-      void Cube::SendPropIds(void) {
-        for (int i = 0; i < MAX_CUBES; i++) {
-          if (g_SlotId[i]) {
-            SpineProtocol msg;
-
-            msg.opcode = ASSIGN_PROP;
-            msg.AssignProp.slot = i;
-            msg.AssignProp.prop_id = g_SlotId[i];
-            
-            Spine::Enqueue(msg);
-          }
-        }
-      }
-      
-      void DiscoverProp(uint32_t id) {
-        ObjectDiscovered m;
-        m.factory_id = id;
-        RobotInterface::SendMessage(m);
-      }
-      
       void GetPropState(int id, int x, int y, int z, int shocks) {
         // Tap detection
         if (id >= MAX_CUBES) {

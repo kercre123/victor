@@ -6,6 +6,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
+#include "clad/robotInterface/messageEngineToRobot.clad"
 
 #include "spi.h"
 #include "uart.h"
@@ -61,41 +62,26 @@ static bool ProcessDrop(void) {
     
     if (drop->payloadLen)
     {
-      uint8_t *payload_data = (uint8_t*) drop->payload;
-      // Handle OTA related messages right here so it's harder to break them
-      switch (*payload_data)
+      uint8_t *payload_data = (uint8_t*)drop->payload;
+      switch(payload_data[0])
       {
-      case DROP_EnterBootloader:
-      {
-        EnterBootloader ebl;
-          memcpy(&ebl, payload_data+1, sizeof(ebl));
-          switch (ebl.which)
-          {
-          case BOOTLOAD_RTIP:
-            {
-            SPI::EnterRecoveryMode();
-              break;
-            }
-          case BOOTLOAD_BODY:
-            {
-            UART::EnterBodyRecovery();
-              break;
+        // Handle OTA related messages here rather than in message dispatch loop so it's harder to break
+        case RobotInterface::EngineToRobot::Tag_bootloadRTIP:
+        {
+          SPI::EnterRecoveryMode();
+          break;
         }
-          }
-        break;
-      }
-      case DROP_BodyUpgradeData:
-      {
-        BodyUpgradeData bud;
-        memcpy(&bud, payload_data+1, sizeof(bud));
-        UART::SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
-        break;
-      }
+        case RobotInterface::EngineToRobot::Tag_bodyUpgradeData:
+        {
+          assert(drop->payloadLen-1 == RobotInterface::BodyUpgradeData::MAX_SIZE);
+          UART::SendRecoveryData(payload_data+1, RobotInterface::BodyUpgradeData::MAX_SIZE);
+          break;
+        }
         default:
-      {
-          WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
+        {
+          Wifi::ReceiveMessage(drop->payload, drop->payloadLen);
+        }
       }
-    }
     }
     
     return true;
@@ -135,9 +121,9 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) {
   
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;
 	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
-	if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(BodyState))) // Have nothing to send so transmit body state info
+	if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(RobotInterface::BodyFirmwareState))) // Have nothing to send so transmit body state info
 	{
-		BodyState bodyState;
+		BodyFirmwareState bodyState;
 		bodyState.state = UART::recoveryMode;
 		bodyState.count = UART::RecoveryStateUpdated;
 		memcpy(drop_addr, &bodyState, sizeof(BodyState));

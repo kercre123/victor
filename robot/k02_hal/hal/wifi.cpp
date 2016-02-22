@@ -83,9 +83,10 @@ namespace HAL {
       const uint8_t rind = rxRind;
       uint8_t wind = rxWind;
       const int available = RX_BUF_SIZE - ((wind - rind) & RX_BUF_SIZE_MASK);
-      if (length < available)
+      if ((length+1) < available)
       {
         int i;
+        rxBuf[wind++] = length;
         for (i=0; i<length; i++) rxBuf[wind++] = data[i];
         rxWind = wind;
         return true;
@@ -104,11 +105,35 @@ namespace HAL {
       else
       {
         uint8_t available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-        while (available)
+        while ((available) && (available > rxBuf[rind]))
         {
-					uint32_t cladBuffer[(DROP_TO_RTIP_MAX_VAR_PAYLOAD/4)+1];
-					RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
-					uint8_t* msgBuffer = msg->GetBuffer();
+          uint32_t cladBuffer[(DROP_TO_RTIP_MAX_VAR_PAYLOAD/4)+1]; // Allocate as u32 to guarantee aligntment
+          RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
+          uint8_t* msgBuffer = msg->GetBuffer();
+          const uint8_t msgLen = rxBuf[rind++];
+          const uint8_t msgTag = rxBuf[rind];
+          for (uint8_t i=0; i<msgLen; i++) msgBuffer[i] = rxBuf[rind++];
+          rxRind = rind;
+          available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
+          if (msg->tag > RobotInterface::TO_RTIP_END)
+          {
+            AnkiError( 127, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg->tag);
+          }
+          else if (msg->tag < RobotInterface::TO_RTIP_START)
+          {
+            Spine::Enqueue(msg->GetBuffer(), msgLen);
+          }
+          else if (msg->Size() != msgLen)
+          {
+            AnkiError( 127, "WiFi.Update", 381, "CLAD message 0x%x size %d doesn't match size in buffer %d", 3, msg->tag, msg->Size(), msgLen);
+          }
+          else
+          {
+            Messages::ProcessMessage(*msg);
+          }
+          
+          
+          
           if (available >= msg->MIN_SIZE) // First pass, read the minimum there could possible be for any message
           {
             uint8_t i;
