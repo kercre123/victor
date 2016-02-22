@@ -49,7 +49,7 @@ MonoBehaviour:
       _Event: -508669529
       _EventType: 4
       _GameObjectType: 3
-    cubeColor: {r: 0, g: 1, b: 0, a: 1}
+    cubeColor: {r: 0, g: 1, b: .296551704, a: 1}
   - soundName:
       _Event: -508669529
       _EventType: 4
@@ -64,7 +64,7 @@ MonoBehaviour:
       _Event: -508669529
       _EventType: 4
       _GameObjectType: 3
-    cubeColor: {r: 1, g: 1, b: 0, a: 1}
+    cubeColor: {r: 1, g: .765517235, b: 0, a: 1}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -253,7 +253,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[1].cubeColor.b
-      value: 0
+      value: .296551704
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[2].cubeColor.r
@@ -274,6 +274,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[4].soundName._Event
       value: -508669529
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CubeColorsAndSounds.Array.data[4].cubeColor.g
+      value: .765517235
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
