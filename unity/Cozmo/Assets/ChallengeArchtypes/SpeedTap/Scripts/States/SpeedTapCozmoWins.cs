@@ -16,8 +16,20 @@ namespace SpeedTap {
       for (int i = 0; i < 4; i++) {
         _SpeedTapGame.CozmoBlock.Lights[i].SetFlashingLED(_SpeedTapGame.CozmoWinColors[i], 100, 100, 0);
       }
-      _CurrentRobot.SendAnimation(_SpeedTapGame.RandomWinHand(), HandleAnimationDone);
+      _SpeedTapGame.CozmoAdjust();
     }
+
+    public override void Update() {
+      base.Update();
+      if (_SpeedTapGame.CozmoAdjustTimeLeft > 0.0f) {
+        _SpeedTapGame.CozmoAdjustTimeLeft -= Time.deltaTime;
+      }
+      else {
+        _CurrentRobot.DriveWheels(0.0f, 0.0f);
+        _CurrentRobot.SendAnimation(_SpeedTapGame.RandomWinHand(), HandleAnimationDone);
+      }
+    }
+
 
     private void HandleAnimationDone(bool success) {
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);

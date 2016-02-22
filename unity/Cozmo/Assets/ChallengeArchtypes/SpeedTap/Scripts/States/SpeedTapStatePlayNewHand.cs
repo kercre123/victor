@@ -143,7 +143,7 @@ namespace SpeedTap {
         _StateMachine.SetNextState(new SpeedTapPlayerWins());
       }
       else if (_LightsOn) {
-        _StateMachine.SetNextState(new SpeedTapPlayerLoses());
+        _StateMachine.SetNextState(new SpeedTapCozmoWins());
       }
     }
 

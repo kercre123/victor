@@ -299,7 +299,7 @@ namespace SpeedTap {
 
     // Moves cozmo based on a certain speed and amount of time
     public void CozmoAdjust() {
-      if (CozmoAdjustTime != 0.0f) {
+      if ((CozmoAdjustTime != 0.0f) && (CozmoAdjustTimeLeft <= 0.0f)) {
         CozmoAdjustTimeLeft = CozmoAdjustTime;
         CozmoAdjustTime = 0.0f;
         CurrentRobot.DriveWheels(CozmoAdjustSpeed, CozmoAdjustSpeed);
