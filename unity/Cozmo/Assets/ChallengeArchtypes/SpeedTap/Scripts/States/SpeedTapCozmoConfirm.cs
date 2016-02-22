@@ -11,6 +11,8 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _SpeedTapGame.CozmoAdjustSpeed = 20.0f;
+      _SpeedTapGame.CozmoAdjustTime = 1.0f;
       _SpeedTapGame.CozmoAdjust();
     }
 
