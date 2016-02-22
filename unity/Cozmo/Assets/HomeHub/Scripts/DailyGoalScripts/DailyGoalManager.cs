@@ -10,7 +10,6 @@ public class DailyGoalManager : MonoBehaviour {
 
   #region constants
 
-  private const string _kDasGoalGenerated = "world.daily_goals";
   private const float _kMinigameNeedMin = 0.3f;
   private const float _kMinigameNeedMax = 1.0f;
 
@@ -216,7 +215,7 @@ public class DailyGoalManager : MonoBehaviour {
     for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
       Anki.Cozmo.ProgressionStatType index = (Anki.Cozmo.ProgressionStatType)i;
       if (goals[index] > 0) {
-        DAS.Event(_kDasGoalGenerated, DASUtil.FormatDate(DataPersistenceManager.Today),
+        DAS.Event("world.daily_goals", DASUtil.FormatDate(DataPersistenceManager.Today),
           new Dictionary<string,string> {
             { "$data", DASUtil.FormatStatAmount(index, goals[index]) }
           });

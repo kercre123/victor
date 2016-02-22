@@ -12,7 +12,7 @@ using Anki.Cozmo.Audio;
 namespace Cozmo.HomeHub {
   public class TimelineView : BaseView {
 
-    public static int kGeneratedTimelineHistoryLength = 21;
+    public const int kGeneratedTimelineHistoryLength = 21;
 
     [SerializeField]
     private float _TimelineStartOffset = 150f;
