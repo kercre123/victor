@@ -21,7 +21,7 @@ public abstract class GameBase : MonoBehaviour {
   private const string kDasRankPlayerLose = "1";
   private const string kDasRankPlayerWon = "0";
   private const string kDasGameEndRewards = "game.end.goalPoints_earned.{0}";
-  private System.Guid _GameUUID = null;
+  private System.Guid? _GameUUID;
 
   public delegate void MiniGameQuitHandler();
 
@@ -324,10 +324,10 @@ public abstract class GameBase : MonoBehaviour {
 
   private string GetGameUUID() {
     // TODO: Does this need to be more complicated?
-    if (_GameUUID == null) {
+    if (!_GameUUID.HasValue) {
       _GameUUID = System.Guid.NewGuid();
     }
-    return _GameUUID.ToString();
+    return _GameUUID.Value.ToString();
   }
 
   private string GetDasGameName() {
@@ -349,7 +349,7 @@ public abstract class GameBase : MonoBehaviour {
       if (rewards.TryGetValue(statType, out rewardAmount)) {
         DAS.Event(
           string.Format(kDasGameEndRewards, statType), 
-          string.Format("{0}_{1}", statType, rewardAmount));
+          StatContainer.FormatForDasStatEvent(statType, rewardAmount));
       }
     }
   }

@@ -13,6 +13,11 @@ using G2U = Anki.Cozmo.ExternalInterface;
 ///   also wraps most messages related solely to him
 /// </summary>
 public class Robot : IRobot {
+
+  private const string kDasAddFriendshipPoints = "world.friendship.add_points";
+  private const string kDasFriendshipLevelUp = "world.friendship.level_up";
+  private const string kDasGoalComplete = "world.goal_complete";
+
   public class Light : ILight {
     private uint _LastOnColor;
 
@@ -539,7 +544,7 @@ public class Robot : IRobot {
     );
     RobotEngineManager.Instance.SendMessage();
 
-    DAS.Event("world.friendship.add_points", FriendshipPoints.ToString());
+    DAS.Event(kDasAddFriendshipPoints, FriendshipPoints.ToString());
     ComputeFriendshipLevel();
   }
 
@@ -585,7 +590,7 @@ public class Robot : IRobot {
       );
       RobotEngineManager.Instance.SendMessage();
 
-      DAS.Event("world.friendship.level_up", FriendshipLevel.ToString());
+      DAS.Event(kDasFriendshipLevelUp, FriendshipLevel.ToString());
     }
   }
 
@@ -675,7 +680,21 @@ public class Robot : IRobot {
   private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
     bool valueChanged = ProgressionStats[index] != value;
     if (valueChanged) {
+      // If the goal has been completed for the first time, send a DAS event on goal complete
+      DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
+      StatContainer goals = currentSession.Goals;
+      bool wasGoalComplete = ProgressionStats[index] > goals[index];
+      bool isGoalCompleteNow = value > goals[index];
+      if (!wasGoalComplete && isGoalCompleteNow) {
+        string goalDate = currentSession.FormatForDasDate();
+        DAS.Event(kDasGoalComplete, goalDate, new Dictionary<string,string> { 
+          { "$data", StatContainer.FormatForDasGoalEvent(index, value, goals[index]) } 
+        });
+      }
+
+      // Update data and save to actually grant progress.
       ProgressionStats[index] = value;
+
       var session = DataPersistence.DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());

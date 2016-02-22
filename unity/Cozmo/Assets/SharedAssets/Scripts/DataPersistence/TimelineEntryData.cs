@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace DataPersistence {
   public class TimelineEntryData {
-
     public Date Date;
 
     public StatContainer Goals;
@@ -39,6 +38,9 @@ namespace DataPersistence {
       Date = date;
     }
 
+    public string FormatForDasDate() {
+      return string.Format("{0}/{1}", Date.Month, Date.Day);
+    }
   }
 
   public class CompletedChallengeData {
