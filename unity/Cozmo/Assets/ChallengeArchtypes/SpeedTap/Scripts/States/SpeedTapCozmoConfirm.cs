@@ -18,13 +18,11 @@ namespace SpeedTap {
       base.Update();
       _DriveTime -= Time.deltaTime;
       if (_DriveTime < 0.0f) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kSpeedTap_Tap_01, HandleTapDone));
+        _StateMachine.SetNextState(new AnimationState(_SpeedTapGame.RandomTap(), HandleTapDone));
       }
     }
 
     private void HandleTapDone(bool success) {
-      _SpeedTapGame.PlayPos = _CurrentRobot.WorldPosition;
-      _SpeedTapGame.PlayRot = _CurrentRobot.Rotation;
       _StateMachine.SetNextState(new SpeedTapPlayerConfirm());
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
       _CurrentRobot.SetLiftHeight(1.0f);

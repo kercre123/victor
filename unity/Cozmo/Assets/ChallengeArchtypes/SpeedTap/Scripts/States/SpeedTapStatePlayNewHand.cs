@@ -18,7 +18,7 @@ namespace SpeedTap {
     private float _MatchProbability = 0.35f;
     private float _FakeProbability = 0.25f;
     private float _PeekProbability = 0.40f;
-    private float _AdjustTime = 0.7f;
+    private float _AdjustTime = 0.5f;
 
     private bool _LightsOn = false;
     private bool _GotMatch = false;
@@ -26,6 +26,7 @@ namespace SpeedTap {
     private bool _TriedFake = false;
     private bool _TryFake = false;
     private bool _TryPeek = false;
+    private bool _MidRound = false;
     private float _CozmoTapDelayTimeMs = 0f;
 
     public override void Enter() {
@@ -38,16 +39,18 @@ namespace SpeedTap {
       _SpeedTapGame.PlayerTap = false;
 
       _CurrentRobot.SetLiftHeight(1.0f);
-      _CurrentRobot.DriveWheels(25.0f, 25.0f);
+      _CurrentRobot.DriveWheels(30.0f, 30.0f);
     }
 
     void AdjustDone() {
-      GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
-      _StartTimeMs = Time.time * 1000.0f;
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
-
-      _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
+      _StartTimeMs = Time.time * 1000.0f;
+      if (_MidRound == false) {
+        GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
+        _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+        _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
+        _MidRound = true;
+      }
     }
 
     public override void Update() {
@@ -66,7 +69,7 @@ namespace SpeedTap {
         if (_GotMatch) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(RandomTap(), RobotCompletedTapAnimation);
+              _CurrentRobot.SendAnimation(_SpeedTapGame.RandomTap(), RobotCompletedTapAnimation);
               _CozmoTapping = true;
             }
           }
@@ -94,26 +97,9 @@ namespace SpeedTap {
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_Peek);
+          _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_LookAtPlayer);
         }
       }
-    }
-
-    private string RandomTap() {
-      string tapName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        tapName = AnimationName.kSpeedTap_Tap_01;
-        break;
-      case 1:
-        tapName = AnimationName.kSpeedTap_Tap_02;
-        break;
-      default:
-        tapName = AnimationName.kSpeedTap_Tap_03;
-        break;
-      }
-      return tapName;
     }
 
     public override void Exit() {
@@ -128,6 +114,9 @@ namespace SpeedTap {
       if (_SpeedTapGame.PlayerTap == false) {
         CozmoDidTap();
       }
+      _StartTimeMs = -1.0f;
+      _CurrentRobot.DriveWheels(-30.0f, -30.0f);
+      _AdjustTime = -0.25f;
     }
 
     void RobotCompletedFakeTapAnimation(bool success) {

@@ -11,8 +11,10 @@ namespace SpeedTap {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _SpeedTapGame.PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
-      _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
-      _CurrentRobot.SendAnimation(AnimationName.kSuccess, HandleAnimationDone);
+      for (int i = 0; i < 4; i++) {
+        _SpeedTapGame.CozmoBlock.Lights[i].SetFlashingLED(_SpeedTapGame.CozmoWinColors[i], 100, 100, 0);
+      }
+      _CurrentRobot.SendAnimation(_SpeedTapGame.RandomWinHand(), HandleAnimationDone);
       _SpeedTapGame.PlayerLosesHand();
     }
 

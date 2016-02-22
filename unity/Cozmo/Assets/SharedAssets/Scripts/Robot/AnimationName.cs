@@ -55,7 +55,25 @@ public static class AnimationName {
   public const string kSpeedTap_Tap_01 = "anim_speedTap_tap_01";
   public const string kSpeedTap_Tap_02 = "anim_speedTap_tap_02";
   public const string kSpeedTap_Tap_03 = "anim_speedTap_tap_03";
-  public const string kSpeedTap_Peek = "anim_speedTap_lookAtPlayer";
+  public const string kSpeedTap_Ask2Play = "anim_speedTap_ask2play_01";
+  public const string kSpeedTap_foundBlock = "anim_speedTap_foundBlock_01";
+  public const string kSpeedTap_look4Block = "anim_speedTap_look4Block_01";
+  public const string kSpeedTap_loseHand_01 = "anim_speedTap_loseHand_01";
+  public const string kSpeedTap_loseHand_02 = "anim_speedTap_loseHand_02";
+  public const string kSpeedTap_loseHand_03 = "anim_speedTap_loseHand_03";
+  public const string kSpeedTap_loseRound_01 = "anim_speedTap_loseRound_01";
+  public const string kSpeedTap_loseRound_02 = "anim_speedTap_loseRound_02";
+  public const string kSpeedTap_loseRound_03 = "anim_speedTap_loseRound_03";
+  public const string kSpeedTap_winHand_01 = "anim_speedTap_winHand_01";
+  public const string kSpeedTap_winHand_02 = "anim_speedTap_winHand_02";
+  public const string kSpeedTap_winHand_03 = "anim_speedTap_winHand_03";
+  public const string kSpeedTap_winRound_01 = "anim_speedTap_winRound_01";
+  public const string kSpeedTap_winRound_02 = "anim_speedTap_winRound_02";
+  public const string kSpeedTap_winRound_03 = "anim_speedTap_winRound_03";
+  public const string kSpeedTap_playerNo_01 = "anim_speedTap_playerNo_01";
+  public const string kSpeedTap_playerYes_01 = "anim_speedTap_playerYes_01";
+
+  public const string kSpeedTap_LookAtPlayer = "anim_speedTap_lookAtPlayer";
   public const string kSpeedTap_FakeOut = "anim_speedTap_fakeOut_01";
   public const string kSpeedTap_WinHand = "anim_speedTap_handWin_01";
 }

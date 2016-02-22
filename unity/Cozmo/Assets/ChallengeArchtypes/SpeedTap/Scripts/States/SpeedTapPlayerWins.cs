@@ -13,8 +13,8 @@ namespace SpeedTap {
       for (int i = 0; i < 4; i++) {
         _SpeedTapGame.PlayerBlock.Lights[i].SetFlashingLED(_SpeedTapGame.PlayerWinColors[i], 100, 100, 0);
       }
-      _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
-      _CurrentRobot.SendAnimation(AnimationName.kFail, HandleAnimationDone);
+      _SpeedTapGame.CozmoBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
+      _CurrentRobot.SendAnimation(_SpeedTapGame.RandomLoseHand(), HandleAnimationDone);
     }
 
     private void HandleAnimationDone(bool success) {

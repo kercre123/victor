@@ -13,8 +13,9 @@ namespace SpeedTap {
     public LightCube PlayerBlock;
     public bool PlayerTap = false;
     public bool AllRoundsOver = false;
-    public Vector3 PlayPos = Vector3.zero;
-    public Quaternion PlayRot = Quaternion.identity;
+    // Used for matching animation values and fixing cozmo's position after animations play
+    public float CozmoAdjustTime = 0.0f;
+    public float CozmoAdjustSpeed = 0.0f;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -123,11 +124,11 @@ namespace SpeedTap {
             CurrentDifficulty++;
           }
             
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(AnimationName.kFail, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomLoseRound(), HandleRoundAnimationDone)));
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(AnimationName.kSpeedTap_WinHand, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomWinRound(), HandleRoundAnimationDone)));
         }
 
         if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
@@ -280,5 +281,106 @@ namespace SpeedTap {
     public void ShowPlayerTapSlide() {
       SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
+
+    #region RandomAnims
+
+    // Temp Functions for random animation until anim groups are ready
+
+    public string RandomWinHand() {
+      string animName = "";
+      CozmoAdjustTime = 0.0f;
+      CozmoAdjustSpeed = 0.0f;
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_winHand_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_winHand_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_winHand_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomLoseHand() {
+      string animName = "";
+      CozmoAdjustTime = 0.0f;
+      CozmoAdjustSpeed = 0.0f;
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_loseHand_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_loseHand_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_loseHand_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomWinRound() {
+      string animName = "";
+      CozmoAdjustTime = 0.0f;
+      CozmoAdjustSpeed = 0.0f;
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_winRound_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_winRound_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_winRound_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomLoseRound() {
+      string animName = "";
+      CozmoAdjustTime = 0.0f;
+      CozmoAdjustSpeed = 0.0f;
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_loseRound_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_loseRound_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_loseRound_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomTap() {
+      string tapName = "";
+      CozmoAdjustTime = 0.0f;
+      CozmoAdjustSpeed = 0.0f;
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        tapName = AnimationName.kSpeedTap_Tap_01;
+        break;
+      case 1:
+        tapName = AnimationName.kSpeedTap_Tap_02;
+        break;
+      default:
+        tapName = AnimationName.kSpeedTap_Tap_03;
+        break;
+      }
+      return tapName;
+    }
+
+    #endregion
   }
 }
