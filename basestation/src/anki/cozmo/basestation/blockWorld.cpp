@@ -551,8 +551,8 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastNew");
 
       // grab the underlying memory map and merge them
-      NavMemoryMap* oldMap = dynamic_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() );
-      NavMemoryMap* newMap = dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() );
+      NavMemoryMap* oldMap = static_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() );
+      NavMemoryMap* newMap = static_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() );
       newMap->Merge(oldMap, *oldOrigin);
       
       // switch back to what is becoming the new map
