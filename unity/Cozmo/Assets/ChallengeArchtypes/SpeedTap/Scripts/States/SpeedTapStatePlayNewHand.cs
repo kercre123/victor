@@ -120,6 +120,7 @@ namespace SpeedTap {
         CozmoDidTap();
       }
       else {
+        _StartTimeMs = -1.0f;
         _SpeedTapGame.CozmoAdjust();
       }
     }
