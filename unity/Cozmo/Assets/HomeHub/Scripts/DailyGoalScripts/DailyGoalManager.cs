@@ -10,6 +10,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   #region constants
 
+  private const string _kDasGoalGenerated = "world.daily_goals";
   private const float _kMinigameNeedMin = 0.3f;
   private const float _kMinigameNeedMax = 1.0f;
 
@@ -157,15 +158,21 @@ public class DailyGoalManager : MonoBehaviour {
     }
   }
 
-  void Start() {
+  private void Start() {
     Instance = this;
     RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
+  }
+
+  private void OnDestroy() {
+    RobotEngineManager.Instance.OnRequestGameStart -= HandleAskForMinigame;
+    RobotEngineManager.Instance.OnDenyGameStart -= HandleExternalRejection;
   }
 	
   // Using current friendship level and the appropriate config file,
   // generate a series of random goals for the day.
   public StatContainer GenerateDailyGoals() {
+
     IRobot rob = RobotEngineManager.Instance.CurrentRobot;
     FriendshipProgressionConfig config = _FriendshipProgConfig;
 
@@ -199,7 +206,22 @@ public class DailyGoalManager : MonoBehaviour {
       possibleStats[targetStat] = false;
       goals[targetStat] = UnityEngine.Random.Range(min, max);
     }
+
+    SendDasEventsForGoalGeneration(goals);
+
     return goals;
+  }
+
+  private void SendDasEventsForGoalGeneration(StatContainer goals) {
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
+      Anki.Cozmo.ProgressionStatType index = (Anki.Cozmo.ProgressionStatType)i;
+      if (goals[index] > 0) {
+        DAS.Event(_kDasGoalGenerated, DASUtil.FormatDate(DataPersistenceManager.Today),
+          new Dictionary<string,string> {
+            { "$data", DASUtil.FormatGoal(index, 0, goals[index]) }
+          });
+      }
+    }
   }
 
   private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
@@ -281,7 +303,7 @@ public class DailyGoalManager : MonoBehaviour {
   public float CalculateBonusMult(StatContainer progress, StatContainer goal) {
     int totalProgress = 0, totalGoal = 0;
     float bonusMult = 0.0f;
-    if (IsDailyGoalComplete(progress, goal) == true) {
+    if (AreAllDailyGoalsComplete(progress, goal) == true) {
       for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
         var stat = (Anki.Cozmo.ProgressionStatType)i;
         totalProgress += progress[stat];
@@ -297,7 +319,7 @@ public class DailyGoalManager : MonoBehaviour {
     return bonusMult;
   }
 
-  public bool IsDailyGoalComplete(StatContainer progress, StatContainer goal) {
+  public bool AreAllDailyGoalsComplete(StatContainer progress, StatContainer goal) {
     bool isDone = true;
     for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
       var stat = (Anki.Cozmo.ProgressionStatType)i;
