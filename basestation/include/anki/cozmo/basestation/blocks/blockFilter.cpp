@@ -159,9 +159,9 @@ bool BlockFilter::Load(const std::string &path)
 
     if (line.compare(0,2,"0x") == 0) {
       try {
-        unsigned long v = std::stoul(line, nullptr, 16);
-        blocks.insert(ObjectID((int)(v)));
-        PRINT_NAMED_DEBUG("BlockFilter.Load", "0x%lu", v);
+        int v = std::stoi(line, nullptr, 16);
+        blocks.insert(ObjectID(v));
+        PRINT_NAMED_DEBUG("BlockFilter.Load", "%#08x", v);
       } catch (std::exception e) {
         PRINT_NAMED_DEBUG("BlockFilter.Load.ParseError", "%s", line.c_str());
       }
