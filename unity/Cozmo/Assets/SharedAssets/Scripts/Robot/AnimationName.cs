@@ -72,9 +72,7 @@ public static class AnimationName {
   public const string kSpeedTap_winRound_03 = "anim_speedTap_winRound_03";
   public const string kSpeedTap_playerNo_01 = "anim_speedTap_playerNo_01";
   public const string kSpeedTap_playerYes_01 = "anim_speedTap_playerYes_01";
-
-  public const string kSpeedTap_LookAtPlayer = "anim_speedTap_lookAtPlayer";
   public const string kSpeedTap_FakeOut = "anim_speedTap_fakeOut_01";
-  public const string kSpeedTap_WinHand = "anim_speedTap_handWin_01";
+  public const string kSpeedTap_LookAtPlayer = "anim_speedTap_lookAtPlayer";
 }
 
