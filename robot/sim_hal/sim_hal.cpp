@@ -120,7 +120,7 @@ namespace Anki {
 
       // Emitter / receiver for block communication
       webots::Emitter *blockCommsEmitter_;
-      webots::Receiver *blockCommsReceiver_;
+      webots::Receiver *blockCommsReceiver_[MAX_NUM_ACTIVE_OBJECTS];
 
       // Block ID flashing parameters
       s32 flashBlockIdx_ = -1;
@@ -128,6 +128,10 @@ namespace Anki {
 
       // List of all blockIDs
       std::set<s32> blockIDs_;
+      
+      // Map of block factoryIDs indexed by activeID
+      std::map<u32, u32> blockFactoryIDByActiveID_;
+      std::map<u32, TimeStamp_t> blockLastHeardTimeByActiveID_;
 
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
@@ -429,9 +433,14 @@ namespace Anki {
 
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
-      blockCommsReceiver_ = webotRobot_.getReceiver("blockCommsReceiver");
-      blockCommsReceiver_->setChannel(-1); // Listen to all blocks
-      blockCommsReceiver_->enable(TIME_STEP);
+      
+      char receiverName[32];
+      for (int i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
+        sprintf(receiverName, "blockCommsReceiver%d", i);
+        blockCommsReceiver_[i] = webotRobot_.getReceiver(receiverName);
+        blockCommsReceiver_[i]->setChannel(i);
+        blockCommsReceiver_[i]->enable(TIME_STEP);
+      }
 
       // Reset index of block that is currently flashing ID
       flashBlockIdx_ = -1;
@@ -769,41 +778,54 @@ namespace Anki {
         // Pass along block-moved messages to basestation
         // TODO: Make block comms receiver checking into a HAL function at some point
         //   and call it from the main execution loop
-        while(blockCommsReceiver_->getQueueLength() > 0) {
-          BlockMessages::LightCubeMessage lcm;
-          memcpy(lcm.GetBuffer(), blockCommsReceiver_->getData(), blockCommsReceiver_->getDataSize());
-          switch(lcm.tag)
-          {
-            case BlockMessages::LightCubeMessage::Tag_moved:
+        for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
+          while(blockCommsReceiver_[i]->getQueueLength() > 0) {
+            BlockMessages::LightCubeMessage lcm;
+            memcpy(lcm.GetBuffer(), blockCommsReceiver_[i]->getData(), blockCommsReceiver_[i]->getDataSize());
+            switch(lcm.tag)
             {
-              ObjectMoved m;
-              memcpy(m.GetBuffer(), lcm.moved.GetBuffer(), lcm.moved.Size());
-              m.timestamp = HAL::GetTimeStamp();
-              RobotInterface::SendMessage(m);
-              break;
+              case BlockMessages::LightCubeMessage::Tag_moved:
+              {
+                ObjectMoved m;
+                memcpy(m.GetBuffer(), lcm.moved.GetBuffer(), lcm.moved.Size());
+                m.timestamp = HAL::GetTimeStamp();
+                RobotInterface::SendMessage(m);
+                break;
+              }
+              case BlockMessages::LightCubeMessage::Tag_stopped:
+              {
+                ObjectStoppedMoving m;
+                memcpy(m.GetBuffer(), lcm.stopped.GetBuffer(), lcm.stopped.Size());
+                m.timestamp = HAL::GetTimeStamp();
+                RobotInterface::SendMessage(m);
+                break;
+              }
+              case BlockMessages::LightCubeMessage::Tag_tapped:
+              {
+                ObjectTapped m;
+                memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
+                m.timestamp = HAL::GetTimeStamp();
+                RobotInterface::SendMessage(m);
+                break;
+              }
+              case BlockMessages::LightCubeMessage::Tag_discovered:
+              {
+                ObjectDiscovered m;
+                memcpy(m.GetBuffer(), lcm.discovered.GetBuffer(), lcm.discovered.Size());
+                RobotInterface::SendMessage(m);
+                
+                u32 activeID = i;
+                blockFactoryIDByActiveID_[activeID] = m.factory_id;
+                blockLastHeardTimeByActiveID_[activeID] = HAL::GetTimeStamp();
+                break;
+              }
+              default:
+              {
+                printf("Received unexpected message from simulated object: %d\r\n", static_cast<int>(lcm.tag));
+              }
             }
-            case BlockMessages::LightCubeMessage::Tag_stopped:
-            {
-              ObjectStoppedMoving m;
-              memcpy(m.GetBuffer(), lcm.stopped.GetBuffer(), lcm.stopped.Size());
-              m.timestamp = HAL::GetTimeStamp();
-              RobotInterface::SendMessage(m);
-              break;
-            }
-            case BlockMessages::LightCubeMessage::Tag_tapped:
-            {
-              ObjectTapped m;
-              memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
-              m.timestamp = HAL::GetTimeStamp();
-              RobotInterface::SendMessage(m);
-              break;
-            }
-            default:
-            {
-              printf("Received unexpected message from simulated object: %d\r\n", static_cast<int>(lcm.tag));
-            }
+            blockCommsReceiver_[i]->nextPacket();
           }
-          blockCommsReceiver_->nextPacket();
         }
 
 
@@ -1168,6 +1190,16 @@ namespace Anki {
       m.setCubeLights.objectID = blockID;
 
       return SendBlockMessage(blockID, m);
+    }
+    
+    u32 HAL::GetLastCubeContactTime(u32 cubeID) {
+      assert(cubeID < MAX_NUM_ACTIVE_OBJECTS);
+      return blockLastHeardTimeByActiveID_[cubeID];
+    }
+    
+    u32 HAL::GetCubeFactoryID(u32 cubeID) {
+      assert(cubeID < MAX_NUM_ACTIVE_OBJECTS);
+      return blockFactoryIDByActiveID_[cubeID];
     }
     
     Result HAL::AssignCubeSlots(int total_ids, const uint32_t *ids)

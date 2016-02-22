@@ -52,6 +52,7 @@ namespace Anki {
     ActiveCube::ActiveCube(ObjectType type)
     : Block(ObjectFamily::LightCube, type)
     , _activeID(-1)
+    , _factoryID(0)
     {
       // For now, assume 6 different markers, so we can avoid rotation ambiguities
       // Verify that here by making sure a set of markers has as many elements
@@ -62,6 +63,27 @@ namespace Anki {
         uniqueCodes.insert(marker.GetCode());
       }
       CORETECH_ASSERT(uniqueCodes.size() == markerList.size());
+    }
+    
+    ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID)
+    : ActiveCube(GetTypeFromFactoryID(factoryID))
+    {
+      _activeID = activeID;
+      _factoryID = factoryID;
+    }
+    
+    // Changes to this mapping should also be reflected in ActiveBlock::activeIDToFactoryIDMap_
+    ActiveCube::Type ActiveCube::GetTypeFromFactoryID(FactoryID id)
+    {
+      static constexpr ObjectType factoryIDToObjectType[4] = {
+        ObjectType::Block_LIGHTCUBE3,
+        ObjectType::Block_LIGHTCUBE2,
+        ObjectType::Block_LIGHTCUBE1,
+        ObjectType::Block_LIGHTCUBE4
+      };
+      
+      u8 typeID = id & 0x3;
+      return factoryIDToObjectType[typeID];
     }
   
     void ActiveCube::SetLEDs(const WhichCubeLEDs whichLEDs,
@@ -298,28 +320,23 @@ namespace Anki {
         {
           case Vision::MARKER_1:
           case Vision::MARKER_LIGHTNINGBOLT_01:
-            _activeID = kHardCodedActiveCubeID0;
             _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_1:
           case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
-            _activeID = kHardCodedActiveCubeID1;
             _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
-            _activeID = kHardCodedActiveCubeID2;
             _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_01:
-            _activeID = kHardCodedActiveCubeID3;
             _identityState = ActiveIdentityState::Identified;
             break;
             
           default:
-            _activeID = -1;
             _identityState = ActiveIdentityState::Unidentified;
             PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
                               "ActiveID not defined for block with front marker = %d\n",

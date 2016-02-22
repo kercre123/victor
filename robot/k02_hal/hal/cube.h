@@ -1,16 +1,11 @@
 #ifndef __CUBE_H
 #define __CUBE_H
 
-#define MAX_CUBES 7
-#define NUM_BLOCK_LEDS 4
-
-extern AcceleratorPacket g_AccelStatus[MAX_CUBES];
-extern uint16_t g_LedStatus[MAX_CUBES][NUM_BLOCK_LEDS];
-
 namespace Anki {
   namespace Cozmo {
     namespace HAL {
       namespace Cube {
+        void Update(void);
         void SpineIdle(SpineProtocol& msg);
         void SendPropIds(void);
       }

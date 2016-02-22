@@ -578,15 +578,6 @@ public:
     
     // =========  Block messages  ============
   
-    // Dynamically cast the given object ID into the templated active object type
-    // Return nullptr on failure to find ActiveObject
-    ObservableObject* GetActiveObject(const ObjectID objectID,
-                                      const ObjectFamily inFamily = ObjectFamily::Unknown);
-  
-    // Same as above, but search by active ID instead of (BlockWorld-assigned) object ID.
-    ObservableObject* GetActiveObjectByActiveID(const s32 activeID,
-                                                const ObjectFamily inFamily = ObjectFamily::Unknown);
-  
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
                            const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
@@ -898,6 +889,7 @@ public:
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message);  
     void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);

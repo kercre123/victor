@@ -58,6 +58,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleBlockPlaced, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectDiscovered,
     std::bind(&Robot::HandleActiveObjectDiscovered, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectConnectionState,
+    std::bind(&Robot::HandleActiveObjectConnectionState, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectMoved,
     std::bind(&Robot::HandleActiveObjectMoved, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectStopped,
@@ -253,6 +255,46 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
   }
 #endif
 }
+
+ 
+void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
+  
+  ObjectID objID;
+  if (payload.connected) {
+    // Add cube to blockworld if not already there
+    objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
+    if (objID.IsSet()) {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
+                       "Object %d (activeID %d, factoryID 0x%x)",
+                       objID.GetValue(), payload.objectID, payload.factoryID);
+      
+      // Turn off lights upon connection
+      std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
+      SendRobotMessage<CubeLights>(lights, payload.objectID);
+    }
+  } else {
+    // Remove cube from blockworld if it exists
+    ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+    if (obj) {
+      GetBlockWorld().ClearObject(obj);
+      objID = obj->GetID();
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
+                       "Object %d (activeID %d, factoryID 0x%x)",
+                       objID.GetValue(), payload.objectID, payload.factoryID);
+    }
+  }
+  
+
+  if (objID.IsSet()) {
+    // Update the objectID to be blockworld ID
+    payload.objectID = objID.GetValue();
+  
+    // Forward on to game
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(payload)));
+  }
+}
   
 
 void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -263,7 +305,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -333,7 +375,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -391,7 +433,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
