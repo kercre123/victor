@@ -257,8 +257,9 @@ union EngineToRobot
   // 0x01 to 0x2f: Messages to the body / test fixture
   BootloadBody                  bootloadBody                = 0x01,
   // Reserved for bootloader data message to get moved here = 0x02,
-  SetPropState                  setPropState                = 0x03,
-  SetBodyLights                 setBodyLights               = 0x04,
+  BackpackLights                setBackpackLights           = 0x03,
+  CubeLights                    setCubeLights               = 0x04,
+  CubeSlots                     assignCubeSlots             = 0x05,
   
   // 0x30 to 0x7f: To RTIP
   BootloadRTIP                  bootloadRTIP                = 0x30,
@@ -290,18 +291,15 @@ union EngineToRobot
   ImuRequest                    imuRequest                  = 0x4A,
   SyncTime                      syncTime                    = 0x4B,
   ImageRequest                  imageRequest                = 0x4C,
-  BackpackLights                setBackpackLights           = 0x4D,
-  CubeLights                    setCubeLights               = 0x4E,
-  FlashObjectIDs                flashObjectIDs              = 0x4F,
-  ObjectBeingCarried            setObjectBeingCarried       = 0x50,
-  EnablePickupParalysis         enablePickupParalysis       = 0x51,
-  EnableLiftPower               enableLiftPower             = 0x52,
-  RawPWM                        setRawPWM                   = 0x53,
-  SetMotionModelParams          setMotionModelParams        = 0x54,
-  CubeSlots                     assignCubeSlots             = 0x55,
-  BodyUpgradeData               bodyUpgradeData             = 0x56,
-  PowerState                    powerState                  = 0x57,
-  PropState                     getPropState                = 0x58,
+  FlashObjectIDs                flashObjectIDs              = 0x4D,
+  ObjectBeingCarried            setObjectBeingCarried       = 0x4E,
+  EnablePickupParalysis         enablePickupParalysis       = 0x4F,
+  EnableLiftPower               enableLiftPower             = 0x50,
+  RawPWM                        setRawPWM                   = 0x51,
+  SetMotionModelParams          setMotionModelParams        = 0x52,
+  BodyUpgradeData               bodyUpgradeData             = 0x53,
+  PowerState                    powerState                  = 0x54,
+  PropState                     getPropState                = 0x55,
   
   // 0x80 to 0xAF: To WiFi
   // Flash and OTA message must not be changed or OTA will break
