@@ -32,7 +32,8 @@ namespace ExternalInterface {
   class MessageGameToEngine;
 }
   
-class BlockFilter {
+class BlockFilter
+{
 public: 
   using ObjectIDSet = std::unordered_set<ObjectID>;
 
