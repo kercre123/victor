@@ -1,0 +1,19 @@
+// File: engineState
+// Author: Lee Crippen
+// Created: 2/19/2016
+// Copyright: Anki, inc. 2016
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 EngineState {
+  Stopped,
+  WaitingForUIDevices,
+  WaitingForRobots,
+  Running,
+
+  Count
+}
+
+} // namespace Cozmo
+} // namespace Anki

@@ -862,11 +862,11 @@ namespace Anki {
       auto helper = AnkiEventUtil<VizManager, decltype(_eventHandlers)>(externalInterface, *this, _eventHandlers);
       
       using namespace ExternalInterface;
-      helper.SubscribeInternal<MessageGameToEngineTag::EnableDisplay>();
-      helper.SubscribeInternal<MessageGameToEngineTag::ErasePoseMarker>();
-      helper.SubscribeInternal<MessageGameToEngineTag::VisualizeQuad>();
-      helper.SubscribeInternal<MessageGameToEngineTag::SetVizOrigin>();
-      helper.SubscribeInternal<MessageGameToEngineTag::EraseQuad>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDisplay>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::ErasePoseMarker>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::VisualizeQuad>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetVizOrigin>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseQuad>();
     }
     
     template<>
