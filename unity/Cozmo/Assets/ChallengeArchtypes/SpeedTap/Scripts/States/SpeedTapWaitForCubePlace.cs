@@ -31,7 +31,7 @@ namespace SpeedTap {
         return;
       }
 
-      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 60f, HandleGotoObjectComplete);
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 80f, HandleGotoObjectComplete);
 
       if (_ShowHowToPlay) {
         _StateMachine.PushSubState(new HowToPlayState(null));
@@ -44,7 +44,7 @@ namespace SpeedTap {
 
     public override void Update() {
       if (_GotoObjectComplete) {
-        if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < 80f) {
+        if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < 90f) {
           _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
         }
         else {
