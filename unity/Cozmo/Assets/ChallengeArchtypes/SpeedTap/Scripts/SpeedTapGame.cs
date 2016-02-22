@@ -97,7 +97,6 @@ namespace SpeedTap {
       int roundsLeft = _Rounds - losingScore - winningScore;
       if (winningScore > losingScore + roundsLeft) {
         AllRoundsOver = true;
-        Debug.LogWarning("RYAN - All Rounds Done Session is complete");
         if (_PlayerRoundsWon > _CozmoRoundsWon) {
           _StateMachine.SetNextState(new AnimationState(RandomWinSession(), HandleSessionAnimDone));
         }
@@ -106,7 +105,6 @@ namespace SpeedTap {
         }
       }
       else {
-        Debug.LogWarning("RYAN - Start Next Round");
         ResetScore();
         _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
       }
