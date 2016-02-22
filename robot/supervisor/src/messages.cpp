@@ -541,15 +541,6 @@ namespace Anki {
       }
 #endif
 
-      void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
-      {
-        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
-          BackpackLightController::SetParams((LEDId)i, msg.lights[i].onColor, msg.lights[i].offColor,
-                                             msg.lights[i].onFrames, msg.lights[i].offFrames,
-                                             msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
-        }
-      }
-
       void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
       {
         IMUFilter::EnablePickupParalysis(msg.enable);
@@ -571,16 +562,6 @@ namespace Anki {
       {
         // Start flash pattern on blocks
         HAL::FlashBlockIDs();
-      }
-
-      void Process_assignCubeSlots(const CubeSlots& msg)
-      {
-        HAL::AssignCubeSlots(msg.factory_id_length, msg.factory_id);
-      }
-      
-      void Process_setCubeLights(const CubeLights& msg)
-      {
-        BlockLightController::SetLights(msg.objectID, msg.lights);
       }
 
       void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)

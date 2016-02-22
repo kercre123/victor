@@ -5,7 +5,6 @@
 #include "uart.h"
 #include "hal/portable.h"
 #include "messages.h"
-#include "cube.h"
 #include "spine.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/robotInterface/messageToActiveObject.h"
@@ -14,8 +13,6 @@
 #include "uart.h"
 
 AcceleratorPacket g_AccelStatus[MAX_CUBES];
-uint16_t g_LedStatus[MAX_CUBES][NUM_BLOCK_LEDS];
-uint32_t g_SlotId[MAX_CUBES];
 
 namespace Anki
 {
@@ -23,39 +20,6 @@ namespace Anki
   {
     namespace HAL
     {
-      extern void GetBackpack(uint16_t* colors);
-
-      Result AssignCubeSlots(int total_ids, const uint32_t* ids) {
-        int slots = MIN(total_ids, MAX_CUBES);
-
-        for (int i = 0; i < slots; i++) {
-          g_SlotId[i] = ids[i];
-        }
-
-        Cube::SendPropIds();
-
-        return RESULT_OK;
-      }
-      
-      // ONE DAY THIS WILL DO BETTER STUFF
-      void Cube::SpineIdle(SpineProtocol& msg) {
-        static int index = 0;
-        static int prop = 0;
-
-        if (prop < MAX_CUBES && g_SlotId[prop]) {
-          msg.opcode = SET_PROP_STATE;
-          msg.SetPropState.slot = prop;
-          memcpy((void*)&msg.SetPropState.colors, &g_LedStatus[prop], sizeof(msg.SetPropState.colors));
-        } else {
-          msg.opcode = SET_BACKPACK_STATE;
-          GetBackpack(msg.SetBackpackState.colors);
-        }
-
-        if (prop++ > MAX_CUBES) {
-          prop = 0;
-        }
-      }
-      
       void GetPropState(int id, int x, int y, int z, int shocks) {
         // Tap detection
         if (id >= MAX_CUBES) {
@@ -144,17 +108,6 @@ namespace Anki
           RobotInterface::SendMessage(m);
           isMoving[id] = false;
         }
-      }
-
-      Result SetBlockLight(const u32 blockID, const u16* colors)
-      {
-        if (blockID >= MAX_CUBES) {
-          return RESULT_FAIL;
-        }
-        
-        memcpy(g_LedStatus[blockID], colors, sizeof(g_LedStatus[blockID]));
-        
-        return RESULT_OK;
       }
     }
   }
