@@ -159,12 +159,12 @@ TEST(BehaviorInterface, Run)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
   for(int i=0; i<5; i++) {
     b.Update(0.01 * i);
   }
-  b.SetIsRunning(false);
+  
   b.Stop(2.0);
   
   EXPECT_TRUE( b._inited );
@@ -181,7 +181,7 @@ TEST(BehaviorInterface, HandleMessages)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
 
   EXPECT_EQ(b._alwaysHandleCalls, 0);
@@ -196,7 +196,7 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b._handleWhileRunningCalls, 1);
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
 
-  b.SetIsRunning(false);
+  
   b.Stop(2.0);
 
   robot.Broadcast( MessageEngineToGame( Ping() ) );
@@ -222,7 +222,7 @@ TEST(BehaviorInterface, OutsideAction)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
   
   b.Update(0.0f);
@@ -306,7 +306,7 @@ TEST(BehaviorInterface, StartActingSimple)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
 
   DoTicks(robot, b, 3);
@@ -339,7 +339,7 @@ TEST(BehaviorInterface, StartActingFailures)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
 
   DoTicks(robot, b, 3);
@@ -401,7 +401,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
 
   bool done = false;
@@ -465,12 +465,12 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
 
   DoTicks(robot, b, 3);
 
-  b.SetIsRunning(false);
+  
   b.Stop(2.0);
 
   bool done1 = false;
@@ -483,7 +483,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   EXPECT_FALSE(ret) << "should fail to start acting since the behavior isn't running";
 
 
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
 
   DoTicks(robot, b, 3);
@@ -504,7 +504,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
   
-  b.SetIsRunning(false);
+  
   b.Stop(2.0);
   
   robot.GetActionList().Update();
@@ -568,7 +568,7 @@ TEST(BehaviorInterface, StartActingInsideInit)
 
   TestInitBehavior b(robot, empty);
 
-  b.SetIsRunning(true);
+  
   b.Init(0.0f);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty()) << "action should be started by Init";
