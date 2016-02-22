@@ -83,6 +83,12 @@ namespace Anki {
       // the controller is considered to have reached the target point turn angle.
       const u32 IN_POSITION_THRESHOLD_MS = 100;
       
+      // For checking if robot is not turning despite maxed integral power being applied
+      TimeStamp_t pointTurnIntegralPowerMaxedStartTime_ = 0;
+      Radians pointTurnIntegralPowerMaxedStartAngle_ = 0;
+      const u32 POINT_TURN_STUCK_THRESHOLD_MS = 500;
+      const f32 POINT_TURN_STUCK_THRESHOLD_RAD = DEG_TO_RAD(0.5);
+      
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
 
@@ -582,24 +588,37 @@ namespace Anki {
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
         if (absAngularDistToTarget < POINT_TURN_ANGLE_TOL) {
           if (inPositionStartTime_ == 0) {
-            AnkiInfo( 126, "PointTurnInRange", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+            AnkiDebug( 126, "ManagePointTurn.InRange", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
             inPositionStartTime_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS) {
 #           if(DEBUG_STEERING_CONTROLLER)
             f32 lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed;
             WheelController::GetFilteredWheelSpeeds(lWheelSpeed, rWheelSpeed);
             WheelController::GetDesiredWheelSpeeds(lDesSpeed, rDesSpeed);
-            AnkiDebug( 12, "POINT TURN", 110,
-                      "Stopping (currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f)", 9,
-                      currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currAngularVel_), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed);
+            AnkiDebug( 130, "ManagePointTurn.Stopping", 376, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
+                      currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currAngularVel_), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), 0,0,0,0);
 #           endif
             ExitPointTurn();
             return;
           }
         } else {
-          AnkiDebugPeriodic(100, 127, "PointTurnOOR", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+          AnkiDebugPeriodic(100, 127, "ManagePointTurn.OOR", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
           inPositionStartTime_ = 0;
 
+          
+          // Check if robot has stopped turning despite integral gain maxing out.
+          // Something might be physically obstructing the robot from turning.
+          if (ABS(pointTurnAngleErrorSum_) == pointTurnMaxIntegralError_) {
+            if (pointTurnIntegralPowerMaxedStartTime_ == 0 || ABS((pointTurnIntegralPowerMaxedStartAngle_ - currAngle).ToFloat()) < POINT_TURN_STUCK_THRESHOLD_RAD) {
+              pointTurnIntegralPowerMaxedStartTime_ = HAL::GetTimeStamp();
+              pointTurnIntegralPowerMaxedStartAngle_ = currAngle;
+            } else if (HAL::GetTimeStamp() - pointTurnIntegralPowerMaxedStartTime_ > POINT_TURN_STUCK_THRESHOLD_MS) {
+              AnkiInfo( 129, "ManagePointTurn.StoppingCuzStuck", 375, "currAngle %f, currDesired %f", 2, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle));
+              ExitPointTurn();
+              return;
+            }
+          }
+          
         }
 
         
