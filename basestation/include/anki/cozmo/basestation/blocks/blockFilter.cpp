@@ -159,9 +159,9 @@ bool BlockFilter::Load(const std::string &path)
 
     if (line.compare(0,2,"0x") == 0) {
       try {
-        ObjectID v = std::stoi(line, nullptr, 16);
-        blocks.insert(v);
-        PRINT_NAMED_DEBUG("BlockFilter.Load", "0x%d", v.GetValue());
+        unsigned long v = std::stoul(line, nullptr, 16);
+        blocks.insert(ObjectID((int)(v)));
+        PRINT_NAMED_DEBUG("BlockFilter.Load", "0x%lu", v);
       } catch (std::exception e) {
         PRINT_NAMED_DEBUG("BlockFilter.Load.ParseError", "%s", line.c_str());
       }
@@ -193,7 +193,7 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       }
       // TODO: push in all discovered by robot but unlisted blocks here as well.
       
-      //msg.blockData = allBlocks;
+      msg.blockData = allBlocks;
       
       _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       break;
