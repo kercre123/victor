@@ -27,7 +27,6 @@
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
-#include "battery.h"
 #ifndef TARGET_K02
 #include "animationController.h"
 #endif
@@ -59,6 +58,10 @@ namespace Anki {
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
+        // Cache for power state information
+        float vBat;
+        float vExt;
+        u8 chargeStat;
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -137,7 +140,7 @@ namespace Anki {
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 
-        robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
+        robotState_.battVolt10x = static_cast<u8>(vBat * 10.0f);
 
         robotState_.status = 0;
         // TODO: Make this a parameters somewhere?
@@ -154,8 +157,8 @@ namespace Anki {
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
-        robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
-        robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
+        robotState_.status |= (vExt > 4.0f) ? IS_ON_CHARGER : 0;
+        robotState_.status |= false ? IS_CHARGING : 0;
         robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
       }
 
@@ -662,7 +665,9 @@ namespace Anki {
       }
       void Process_powerState(const PowerState& msg)
       {
-        HAL::Battery::HandlePowerStateUpdate(msg);
+        vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
+        vExt = static_cast<float>(msg.VExtFixed)/65536.0f;
+        chargeStat = msg.chargeStat;
       }
       void Process_getPropState(const PropState& msg)
       {
