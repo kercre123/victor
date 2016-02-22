@@ -4,6 +4,7 @@
 
 #include "wifi.h"
 #include "messages.h"
+#include "spine.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
 #include "anki/cozmo/robot/logging.h"

@@ -6,7 +6,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
-#include "clad/robotInterface/messageEngineToRobot.clad"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "spi.h"
 #include "uart.h"
@@ -66,20 +66,20 @@ static bool ProcessDrop(void) {
       switch(payload_data[0])
       {
         // Handle OTA related messages here rather than in message dispatch loop so it's harder to break
-        case RobotInterface::EngineToRobot::Tag_bootloadRTIP:
+        case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bootloadRTIP:
         {
           SPI::EnterRecoveryMode();
           break;
         }
-        case RobotInterface::EngineToRobot::Tag_bodyUpgradeData:
+        case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bodyUpgradeData:
         {
-          assert(drop->payloadLen-1 == RobotInterface::BodyUpgradeData::MAX_SIZE);
-          UART::SendRecoveryData(payload_data+1, RobotInterface::BodyUpgradeData::MAX_SIZE);
+          //assert(drop->payloadLen-1 == Anki::Cozmo::RobotInterface::BodyUpgradeData::MAX_SIZE);
+          UART::SendRecoveryData(payload_data+1, Anki::Cozmo::RobotInterface::BodyUpgradeData::MAX_SIZE);
           break;
         }
         default:
         {
-          Wifi::ReceiveMessage(drop->payload, drop->payloadLen);
+          Anki::Cozmo::HAL::WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
         }
       }
     }
@@ -123,11 +123,11 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) {
 	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
 	if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(RobotInterface::BodyFirmwareState))) // Have nothing to send so transmit body state info
 	{
-		BodyFirmwareState bodyState;
+		Anki::Cozmo::RobotInterface::BodyFirmwareState bodyState;
 		bodyState.state = UART::recoveryMode;
 		bodyState.count = UART::RecoveryStateUpdated;
-		memcpy(drop_addr, &bodyState, sizeof(BodyState));
-		drop_tx->payloadLen = sizeof(BodyState);
+		memcpy(drop_addr, &bodyState, sizeof(Anki::Cozmo::RobotInterface::BodyFirmwareState));
+		drop_tx->payloadLen = sizeof(Anki::Cozmo::RobotInterface::BodyFirmwareState);
 		drop_tx->droplet |= bootloaderStatus;
 	}
 }

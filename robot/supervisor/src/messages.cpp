@@ -73,7 +73,7 @@ namespace Anki {
 
       void ProcessBadTag_EngineToRobot(RobotInterface::EngineToRobot::Tag badTag)
       {
-        AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %02x", 1, badTag);
+        AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %z", 1, badTag);
       }
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
@@ -382,9 +382,9 @@ namespace Anki {
                                              msg.accel_rad_per_sec2, true);
       }
 
-      void Process_setCarryState(const CarryState& state)
+      void Process_setCarryState(const CarryStateUpdate& update)
       {
-        PickAndPlaceController::SetCarryState(state);
+        PickAndPlaceController::SetCarryState(update.state);
       }
 
       void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
@@ -670,17 +670,17 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_writeFlash(RobotInterface::WriteFlash const&)
+      void Process_writeFlash(RobotInterface::WriteFlash &)
       {
         // Nothing to do here
       }
-      void Process_bodyUpgradeData(unsigned int const&)
+      void Process_bodyUpgradeData(Anki::Cozmo::RobotInterface::BodyUpgradeData const&)
       {
-        // Nothing to do here
+        // Nothing to do here, handled in body
       }
-      void Process_enterBootloader(Anki::Cozmo::RobotInterface::EnterBootloader const&)
+      void Process_enterBootloader(const RobotInterface::EnterBootloader& ebl)
       {
-        // Nothing to do here
+				// Nothing to do here, handled in spi
       }
       void Process_triggerOTAUpgrade(Anki::Cozmo::RobotInterface::OTAUpgrade const&)
       {
@@ -690,7 +690,7 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_readNV(Anki::Cozmo::NVStorage::NVEntryTag const&)
+      void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const&)
       {
         // Nothing to do here
       }
@@ -698,10 +698,14 @@ namespace Anki {
       {
         // Not used here
       }
-      void Process_radioConnected(const bool& wifi)
+      void Process_radioConnected(const Anki::Cozmo::RobotInterface::RadioState& state)
       {
-        HAL::RadioUpdateState(wifi, false);
+        HAL::RadioUpdateState(state.wifiConnected, false);
       }
+			void Process_rtipVersion(const Anki::Cozmo::RobotInterface::RTIPVersionInfo&)
+			{
+				// Not processed here
+			}
 
 // ----------- Send messages -----------------
 
