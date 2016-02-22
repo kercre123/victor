@@ -97,7 +97,8 @@ namespace Anki {
       //for (auto &r : _robots) {
       for(auto r = _robots.begin(); r != _robots.end(); ) {
         // Call update
-        Result result = r->second->Update();
+        Robot* robot = r->second;
+        Result result = robot->Update();
         
         switch(result)
         {
@@ -129,8 +130,16 @@ namespace Anki {
             ++r;
             break;
         }
-      }
+
+        if(robot->HasReceivedRobotState()) {
+          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(robot->GetRobotState()));
+        } else {
+          PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots",
+                              "Not sending robot %d state (none available).",
+                              r->first);
+        }
+      } // End loop on _robots
+      
     }
-    
   } // namespace Cozmo
 } // namespace Anki

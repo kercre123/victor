@@ -685,6 +685,8 @@ public:
   
     const std::string& GetAnimationNameFromGroup(const std::string& name);
   
+    ExternalInterface::RobotState GetRobotState();
+  
   protected:
     const CozmoContext* _context;
   

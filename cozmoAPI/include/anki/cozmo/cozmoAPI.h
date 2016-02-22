@@ -31,7 +31,7 @@ namespace Data {
   
 namespace Cozmo {
 
-class CozmoGame;
+class CozmoEngine;
 
 class CozmoAPI : private Util::noncopyable
 {
@@ -63,7 +63,7 @@ private:
     bool Update(const double currentTime_sec);
     
   private:
-    std::unique_ptr<CozmoGame> _cozmoInstance;
+    std::unique_ptr<CozmoEngine> _cozmoInstance;
     std::atomic<bool> _isRunning;
     
   }; // class CozmoInstanceRunner

@@ -28,6 +28,7 @@
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -47,11 +48,22 @@ public:
   { }
   
   template <ExternalInterface::MessageGameToEngineTag Tag>
-  void SubscribeInternal()
+  void SubscribeGameToEngine()
   {
     T& temp = _object;
     _eventHandlers.push_back(_interface.Subscribe(Tag,
       [&temp] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+      {
+        temp.HandleMessage(event.GetData().Get_<Tag>());
+      }));
+  }
+  
+  template <ExternalInterface::MessageEngineToGameTag Tag>
+  void SubscribeEngineToGame()
+  {
+    T& temp = _object;
+    _eventHandlers.push_back(_interface.Subscribe(Tag,
+      [&temp] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
       {
         temp.HandleMessage(event.GetData().Get_<Tag>());
       }));
@@ -62,9 +74,14 @@ private:
   T& _object;
   H& _eventHandlers;
   
-}; // class Event
+}; // class AnkiEventUtil
 
-
+template <typename TNew, typename HNew>
+static AnkiEventUtil<TNew, HNew> MakeAnkiEventUtil(IExternalInterface& externalInterface, TNew& object, HNew& handlersIn)
+{
+  return AnkiEventUtil<TNew, HNew>(externalInterface, object, handlersIn);
+}
+  
 } // namespace Cozmo
 } // namespace Anki
 
