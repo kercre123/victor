@@ -872,46 +872,15 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
 
 void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
 {
-  // SetWheelControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetWheelControllerGains,
+  // SetControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ControllerGains,
     [this] (const GameToEngineEvent& event)
     {
-      const ExternalInterface::SetWheelControllerGains& msg = event.GetData().Get_SetWheelControllerGains();
+      const ExternalInterface::ControllerGains& msg = event.GetData().Get_ControllerGains();
       
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kpLeft, msg.kiLeft, 0.0f, msg.maxIntegralErrorLeft,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel);
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError, msg.controller);
     }));
-  
-  // SetHeadControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetHeadControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetHeadControllerGains& msg = event.GetData().Get_SetHeadControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_head);
-    }));
-  
-  // SetLiftControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetLiftControllerGains& msg = event.GetData().Get_SetLiftControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift);
-    }));
-  
-  // SetSteeringControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetSteeringControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, msg.dockPathDistOffsetCap_mm, msg.dockPathAngularOffsetCap_rad,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_steering);
-    }));
-  
+
   // SetMotionModelParams
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetMotionModelParams,
     [this] (const GameToEngineEvent& event)
