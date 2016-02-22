@@ -112,6 +112,10 @@ namespace Anki {
     // "Apply" Pose to a 2D point (i.e. transform that point by this Pose)
     Point2f operator*(const Point2f &point) const;
     
+    template<typename T>
+    void ApplyTo(const Quadrilateral<2,T> &quadIn,
+                       Quadrilateral<2,T> &quadOut) const;
+    
     Pose2d  GetInverse(void) const; // return new Pose
     Pose2d& Invert(void); // in place
     
@@ -143,6 +147,16 @@ namespace Anki {
     
   }; // class Pose2d
   
+  template<typename T>
+  void Pose2d::ApplyTo(const Quadrilateral<2,T> &quadIn,
+                       Quadrilateral<2,T>       &quadOut) const
+  {
+    using namespace Quad;
+    quadOut[TopLeft]     = (*this) * quadIn[TopLeft];
+    quadOut[TopRight]    = (*this) * quadIn[TopRight];
+    quadOut[BottomLeft]  = (*this) * quadIn[BottomLeft];
+    quadOut[BottomRight] = (*this) * quadIn[BottomRight];
+  }
   
   // TODO: Add thin wrapper or typedef for "Transform2d/3d" objects?
   

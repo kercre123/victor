@@ -18,6 +18,7 @@
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad.h"
+#include "anki/common/basestation/math/pose.h"
 #include "util/logging/logging.h"
 
 #include <set>
@@ -62,6 +63,12 @@ public:
     AddQuadInternal(quad, content);
   }
   
+  // merge the given map into this map by applying to the other's information the given transform
+  // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not
+  // expected to provide support for merging other subclasses, but only other instances from the same
+  // subclass
+  virtual void Merge(const INavMemoryMap* other, const Pose3d& transform) = 0;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -82,8 +89,9 @@ public:
   // Debug
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // Render memory map
-  virtual void Draw() const = 0;
+  // Render/stop rendering memory map
+  virtual void Draw(size_t mapIdxHint) const = 0;
+  virtual void ClearDraw() const = 0;
   
 protected:
 

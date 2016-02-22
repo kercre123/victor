@@ -554,6 +554,17 @@ void NavMeshQuadTreeNode::AddSmallestNeighbors(EDirection direction,
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeNode::AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const
+{
+  if ( !IsSubdivided() ) {
+    descendants.emplace_back(this);
+  } else {
+    for( const auto& cPtr : _childrenPtr ) {
+      cPtr->AddSmallestDescendantsDepthFirst(descendants);
+    }
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki

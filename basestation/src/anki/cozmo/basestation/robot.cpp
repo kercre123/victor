@@ -276,6 +276,10 @@ namespace Anki {
                                          "WorldOrigin[%lu]: %s",
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
+      
+      // create a new memory map for this origin
+      _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
+      
     } // Delocalize()
     
     Result Robot::SetLocalizedTo(const ObservableObject* object)

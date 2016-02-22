@@ -71,6 +71,8 @@ public:
   
   // render debug information for the processor (will only redraw if required)
   void Draw() const;
+  // remove current debug information
+  void ClearDraw() const;
  
 private:
 
