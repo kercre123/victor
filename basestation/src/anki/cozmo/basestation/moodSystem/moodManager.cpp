@@ -303,6 +303,18 @@ void MoodManager::SetEmotion(EmotionType emotionType, float value)
   GetEmotion(emotionType).SetValue(value);
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent("SetEmotion") );
 }
+  
+SimpleMoodType MoodManager::GetSimpleMood() const
+{
+  float happiness = GetEmotion(EmotionType::Happy).GetValue();
+  if(happiness < -0.33f) {
+    return SimpleMoodType::Sad;
+  }
+  if(happiness > 0.33f) {
+    return SimpleMoodType::Happy;
+  }
+  return SimpleMoodType::Default;
+}
 
   
 #if SEND_MOOD_TO_VIZ_DEBUG

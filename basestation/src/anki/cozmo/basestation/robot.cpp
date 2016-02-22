@@ -48,6 +48,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "clad/types/gameStatusFlag.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/transport/reliableConnection.h"
@@ -1486,6 +1487,15 @@ namespace Anki {
         }
       }
 
+    }
+    
+    const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
+      const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
+      if(group != nullptr && !group->IsEmpty()) {
+        return group->GetAnimationName(GetMoodManager(), _animationGroups);
+      }
+      static const std::string empty("");
+      return empty;
     }
     
     // Read the animation groups in a dir
@@ -3432,5 +3442,63 @@ namespace Anki {
         return false;
       }
     }
+    
+    ExternalInterface::RobotState Robot::GetRobotState()
+    {
+      ExternalInterface::RobotState msg;
+      
+      msg.robotID = GetID();
+      
+      msg.pose_x = GetPose().GetTranslation().x();
+      msg.pose_y = GetPose().GetTranslation().y();
+      msg.pose_z = GetPose().GetTranslation().z();
+      
+      msg.poseAngle_rad = GetPose().GetRotationAngle<'Z'>().ToFloat();
+      msg.posePitch_rad = GetPitchAngle();
+      const UnitQuaternion<float>& q = GetPose().GetRotation().GetQuaternion();
+      msg.pose_qw = q.w();
+      msg.pose_qx = q.x();
+      msg.pose_qy = q.y();
+      msg.pose_qz = q.z();
+      
+      msg.leftWheelSpeed_mmps  = GetLeftWheelSpeed();
+      msg.rightWheelSpeed_mmps = GetRigthWheelSpeed();
+      
+      msg.headAngle_rad = GetHeadAngle();
+      msg.liftHeight_mm = GetLiftHeight();
+      
+      msg.status = 0;
+      if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
+      if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
+      if(IsPickedUp())         { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
+      if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
+      if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
+      if(IsCarryingObject())   {
+        msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
+        msg.carryingObjectID = GetCarryingObject();
+        msg.carryingObjectOnTopID = GetCarryingObjectOnTop();
+      } else {
+        msg.carryingObjectID = -1;
+      }
+      if(!GetActionList().IsEmpty()) {
+        msg.status |= (uint32_t)RobotStatusFlag::IS_PATHING;
+      }
+      
+      msg.gameStatus = 0;
+      if (IsLocalized() && !IsPickedUp()) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
+      
+      msg.headTrackingObjectID = GetMoveComponent().GetTrackToObject();
+      
+      msg.localizedToObjectID = GetLocalizedTo();
+      
+      // TODO: Add proximity sensor data to state message
+      
+      msg.batteryVoltage = GetBatteryVoltage();
+      
+      msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();
+      
+      return msg;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

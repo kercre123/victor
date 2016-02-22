@@ -122,9 +122,6 @@ int main(int argc, char **argv)
   if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
-  if(!config.isMember(AnkiUtil::kP_AS_HOST)) {
-    config[AnkiUtil::kP_AS_HOST] = true;
-  }
   
   int numUIDevicesToWaitFor = 1;
 #ifndef NO_WEBOTS

@@ -40,13 +40,13 @@ MovementComponent::MovementComponent(Robot& robot)
   
 void MovementComponent::InitEventHandlers(IExternalInterface& interface)
 {
-  auto helper = AnkiEventUtil<MovementComponent, decltype(_eventHandles)>(interface, *this, _eventHandles);
+  auto helper = MakeAnkiEventUtil(interface, *this, _eventHandles);
   
-  helper.SubscribeInternal<MessageGameToEngineTag::DriveWheels>();
-  helper.SubscribeInternal<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
-  helper.SubscribeInternal<MessageGameToEngineTag::MoveHead>();
-  helper.SubscribeInternal<MessageGameToEngineTag::MoveLift>();
-  helper.SubscribeInternal<MessageGameToEngineTag::StopAllMotors>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveWheels>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveHead>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveLift>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::StopAllMotors>();
 }
   
 void MovementComponent::Update(const Cozmo::RobotState& robotState)
