@@ -17,41 +17,55 @@
       '<(coretech_external_path)/opencv-<(opencv_version)/modules/videoio/include',
     ],
     
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      #'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
-      'libopencv_imgcodecs.a',
-      'libopencv_videoio.a',
-    ],
-
-    'opencv_lib_search_path_mac_debug': [
-        '<(coretech_external_path)/build/opencv-<(opencv_version)/lib/Debug',
-        '<(coretech_external_path)/build/opencv-<(opencv_version)/3rdparty/lib/Debug',
-    ],
-
-    'opencv_lib_search_path_mac_release': [
-        '<(coretech_external_path)/build/opencv-<(opencv_version)/lib/Release',
-        '<(coretech_external_path)/build/opencv-<(opencv_version)/3rdparty/lib/Release',
-    ],
-
-    'opencv_lib_search_path_ios_debug': [
-        '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
-    ],
-
-    'opencv_lib_search_path_ios_release': [
-        '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
+    'conditions': [
+      [
+        'OS=="ios"',
+        {
+          'opencv_libs': [
+            'opencv2.framework'
+          ],
+          
+          'opencv_lib_search_path_debug': [
+            '<(coretech_external_path)/build/opencv-ios',
+          ],
+          
+          'opencv_lib_search_path_release': [
+            '<(coretech_external_path)/build/opencv-ios',
+          ],
+        },
+        
+        'OS=="mac"',
+        {
+          'opencv_libs': [
+            'libzlib.a',
+            'liblibjpeg.a',
+            'liblibpng.a',
+            'liblibtiff.a',
+            'liblibjasper.a',
+            'libIlmImf.a',
+            'libopencv_core.a',
+            'libopencv_imgproc.a',
+            'libopencv_highgui.a',
+            'libopencv_calib3d.a',
+            #'libopencv_contrib.a',
+            'libopencv_objdetect.a',
+            'libopencv_video.a',
+            'libopencv_features2d.a',
+            'libopencv_imgcodecs.a',
+            'libopencv_videoio.a',
+          ],
+          
+          'opencv_lib_search_path_debug': [
+            '<(coretech_external_path)/build/opencv-<(opencv_version)/lib/Debug',
+            '<(coretech_external_path)/build/opencv-<(opencv_version)/3rdparty/lib/Debug',
+          ],
+          
+          'opencv_lib_search_path_release': [
+            '<(coretech_external_path)/build/opencv-<(opencv_version)/lib/Release',
+            '<(coretech_external_path)/build/opencv-<(opencv_version)/3rdparty/lib/Release',
+          ],
+        },
+      ],
     ],
     
   }, # variables

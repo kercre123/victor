@@ -213,7 +213,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_debug)',
-                    '<@(opencv_lib_search_path_ios_debug)',
+                    '<@(opencv_lib_search_path_debug)',
                     '<(webots_path)/lib/',
                 ],
               },
@@ -222,7 +222,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_debug)',
-                    '<@(opencv_lib_search_path_mac_debug)',
+                    '<@(opencv_lib_search_path_debug)',
                     '<(webots_path)/lib/',
                 ],
               },
@@ -246,7 +246,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_release)',
-                    '<@(opencv_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/'
                 ],
               },
@@ -255,7 +255,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_release)',
-                    '<@(opencv_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/'
                 ],
               },
@@ -279,7 +279,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_release)',
-                    '<@(opencv_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/'
                 ],
               },
@@ -288,7 +288,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_release)',
-                    '<@(opencv_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/'
                 ],
               },
