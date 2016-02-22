@@ -427,7 +427,17 @@ namespace Cozmo {
   }
 
   void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
-  {    
+  {
+
+    // make sure the old behavior is stopped (should have been done already)
+    if( _currentBehavior != nullptr && _currentBehavior->IsRunning() ) {
+      PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.OldBehaviorStillRunning",
+                        "Behavior '%s' is still running, but should have been stopped (Trying to switch to '%s').",
+                        _currentBehavior->GetName().c_str(),
+                        newBehavior->GetName().c_str());
+      _currentBehavior->Stop(currentTime_sec);      
+    }
+    
     // set current <- new
     _currentBehavior = newBehavior;
     
