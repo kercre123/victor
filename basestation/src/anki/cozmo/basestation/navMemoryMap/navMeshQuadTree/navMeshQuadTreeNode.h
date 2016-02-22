@@ -92,7 +92,7 @@ void TESTDONOTCOMITRec();
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // helper for the specific add functions. It properly processes the quad down the tree for the given content
-  bool AddQuad(const Quad2f& quad, NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddQuad(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
@@ -164,7 +164,7 @@ private:
 
   // subdivide/merge children
   void Subdivide(NavMeshQuadTreeProcessor& processor);
-  void Merge(NodeContent& newContent, NavMeshQuadTreeProcessor& processor);
+  void Merge(const NodeContent& newContent, NavMeshQuadTreeProcessor& processor);
   void ClearDescendants(NavMeshQuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
@@ -172,9 +172,9 @@ private:
   
   // sets the content type to the detected one.
   // try checks por priority first, then calls force
-  void TrySetDetectedContentType(NodeContent& detectedContent, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
+  void TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
   // force sets the type and updates shared container
-  void ForceSetDetectedContentType(NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  void ForceSetDetectedContentType(const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
   
   // sets a new parent to this node. Used on expansions
   void ChangeParent(const NavMeshQuadTreeNode* newParent) { _parent = newParent; }

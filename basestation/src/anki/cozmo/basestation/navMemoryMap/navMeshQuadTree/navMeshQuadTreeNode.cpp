@@ -79,7 +79,7 @@ Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
 {
   // we need to subdivide or fit within the given quad, since this implementation doesn't keep partial
   // info within nodes, that's what subquads would be for.
@@ -276,7 +276,7 @@ void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::Merge(NodeContent& newContent, NavMeshQuadTreeProcessor& processor)
+void NavMeshQuadTreeNode::Merge(const NodeContent& newContent, NavMeshQuadTreeProcessor& processor)
 {
   ASSERT_NAMED(IsSubdivided(), "NavMeshQuadTreeNode.Merge.InvalidState");
 
@@ -376,7 +376,7 @@ void NavMeshQuadTreeNode::TryAutoMerge(NavMeshQuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::TrySetDetectedContentType(NodeContent& detectedContent, EContentOverlap overlap,
+void NavMeshQuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap,
   NavMeshQuadTreeProcessor& processor)
 {
   // if we don't want to override with the new content, do not call ForceSet
@@ -389,7 +389,7 @@ void NavMeshQuadTreeNode::TrySetDetectedContentType(NodeContent& detectedContent
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::ForceSetDetectedContentType(NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+void NavMeshQuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
 {
   const ENodeContentType oldcontent = _content.type;
   
