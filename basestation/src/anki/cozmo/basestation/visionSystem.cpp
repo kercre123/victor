@@ -491,7 +491,11 @@ namespace Cozmo {
       const s32 maxMarkers = markers.get_maximumSize();
       
       markers.set_size(maxMarkers);
-      
+      for(s32 i=0; i<maxMarkers; i++) {
+        Array<f32> newArray(3, 3, _memory._ccmScratch);
+        markers[i].homography = newArray;
+      }
+
       // TODO: Re-enable DebugStream for Basestation
       //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
       
