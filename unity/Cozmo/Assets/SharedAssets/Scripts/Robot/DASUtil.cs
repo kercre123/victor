@@ -1,13 +1,15 @@
-﻿public static class DASUtil {
+﻿using System;
+
+public static class DASUtil {
   public static string FormatDate(DataPersistence.Date date) {
-    return string.Format("{0}/{1}", date.Month, date.Day);
+    return string.Format("{0}/{1}/{2}", date.Month, date.Day, date.Year);
   }
 
   public static string FormatStatAmount(Anki.Cozmo.ProgressionStatType type, int amount) {
-    return string.Format("{0}_{1}", type, amount);
+    return string.Format("{0}_{1}", type.ToString().ToLower(), amount);
   }
 
   public static string FormatGoal(Anki.Cozmo.ProgressionStatType type, int currentAmount, int amountNeeded) {
-    return string.Format("{0}_{1}/{2}", type, currentAmount, amountNeeded);
+    return string.Format("{0}_{1}/{2}", type.ToString().ToLower(), currentAmount, amountNeeded);
   }
 }

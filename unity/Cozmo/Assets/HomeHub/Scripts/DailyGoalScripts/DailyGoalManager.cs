@@ -218,7 +218,7 @@ public class DailyGoalManager : MonoBehaviour {
       if (goals[index] > 0) {
         DAS.Event(_kDasGoalGenerated, DASUtil.FormatDate(DataPersistenceManager.Today),
           new Dictionary<string,string> {
-            { "$data", DASUtil.FormatGoal(index, 0, goals[index]) }
+            { "$data", DASUtil.FormatStatAmount(index, goals[index]) }
           });
       }
     }
