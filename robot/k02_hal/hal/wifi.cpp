@@ -115,13 +115,13 @@ namespace HAL {
           for (uint8_t i=0; i<msgLen; i++) msgBuffer[i] = rxBuf[rind++];
           rxRind = rind;
           available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-          if (msg->tag > RobotInterface::TO_RTIP_END)
+          if (msgTag > RobotInterface::TO_RTIP_END)
           {
             AnkiError( 127, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg->tag);
           }
-          else if (msg->tag < RobotInterface::TO_RTIP_START)
+          else if (msgTag < RobotInterface::TO_RTIP_START)
           {
-            Spine::Enqueue(msg->GetBuffer(), msgLen);
+            Spine::Enqueue(msgBuffer, msgLen);
           }
           else if (msg->Size() != msgLen)
           {
@@ -131,29 +131,6 @@ namespace HAL {
           {
             Messages::ProcessMessage(*msg);
           }
-          
-          
-          
-          if (available >= msg->MIN_SIZE) // First pass, read the minimum there could possible be for any message
-          {
-            uint8_t i;
-            for (i=0; i<msg->MIN_SIZE; i++) msgBuffer[i] = rxBuf[rind++];
-            uint8_t size = msg->Size();
-            if (available >= size) // Second pass, read the minimum there could possibly be for this message type
-            {
-              for (; i<size; i++) msgBuffer[i] = rxBuf[rind++];
-              size = msg->Size();
-              if (available >= size) // Final pass, read the full size of this actual message
-              {
-                for (; i<size; i++) msgBuffer[i] = rxBuf[rind++];
-                rxRind = rind;
-                available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-                Messages::ProcessMessage(*msg);
-                continue;
-              }
-            }
-          }
-          break;
         }
         return RESULT_OK;
       }
