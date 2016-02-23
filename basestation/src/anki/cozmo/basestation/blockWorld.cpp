@@ -2117,7 +2117,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
     */
 
   
-    ObjectID BlockWorld::AddLightCube(ActionableObject::ActiveID activeID, ActiveCube::FactoryID factoryID)
+    ObjectID BlockWorld::AddLightCube(ActionableObject::ActiveID activeID, FactoryID factoryID)
     {
       if (activeID >= 4 || activeID < 0) {
         PRINT_NAMED_WARNING("BlockWorld.AddLightCube.InvalidActiveID", "activeID %d", activeID);
