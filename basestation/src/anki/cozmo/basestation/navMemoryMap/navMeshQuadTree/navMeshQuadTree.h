@@ -49,7 +49,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // notify the navmesh that the given quad has the specified content
-  void AddQuad(const Quad2f& quad, NodeContent& nodeContent);
+  void AddQuad(const Quad2f& quad, const NodeContent& nodeContent);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   void Merge(const NavMeshQuadTree& other, const Pose3d& transform);

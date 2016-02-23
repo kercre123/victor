@@ -88,6 +88,7 @@ protected:
   virtual void HandleRobotConnected(ExternalInterface::RobotConnected const &msg){};
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
   virtual void HandleImageChunk(ImageChunk const& msg){};
+  virtual void HandleActiveObjectConnectionState(ObjectConnectionState const& msg){};
   virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
@@ -99,7 +100,7 @@ protected:
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
   void SendPing();
   void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
-  void SendTurnInPlace(const f32 angle_rad);
+  void SendTurnInPlace(const f32 angle_rad, const f32 speed_radPerSec = 0.f, const f32 accel_radPerSec2 = 0.f);
   void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2);
   void SendMoveHead(const f32 speed_rad_per_sec);
   void SendMoveLift(const f32 speed_rad_per_sec);
@@ -217,12 +218,7 @@ protected:
   void SendAbortAll();
   void SendDrawPoseMarker(const Pose3d& p);
   void SendErasePoseMarker();
-  void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
-    const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight);
-  void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
-  void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
-  void SendSteeringControllerGains(const f32 k1, const f32 k2,
-                                   const f32 dockPathDistOffsetCap_mm, const f32 dockPathAngularOffsetCap_rad);
+  void SendControllerGains(ControllerChannel channel, f32 kp, f32 ki, f32 kd, f32 maxErrorSum);
   void SendSetRobotVolume(const f32 volume);
   void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
@@ -290,6 +286,7 @@ private:
   void HandleRobotConnectedBase(ExternalInterface::RobotConnected const &msg);
   void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);
   void HandleImageChunkBase(ImageChunk const& msg);
+  void HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg);
   void HandleActiveObjectMovedBase(ObjectMoved const& msg);
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);

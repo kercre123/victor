@@ -235,7 +235,7 @@ namespace Anki {
   {
     using namespace Quad;
     
-    Point<N,T> centroid = this->computeCentroid();
+    Point<N,T> centroid = this->ComputeCentroid();
     
     // Shift each point to be relative to the center point, scale it,
     // and then put it back relative to that center

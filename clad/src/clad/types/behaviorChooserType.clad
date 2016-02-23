@@ -7,11 +7,8 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 BehaviorChooserType {
-  Demo,
+  Default,
   Selection,
-  InvestorDemoMotion,
-  InvestorDemoFacesAndBlocks,
-  InvestorDemoFacesOnly,
   Count
 }
 

@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
-#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "anki/cozmo/basestation/block.h"
@@ -343,8 +342,10 @@ namespace Anki {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
           
-          // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
+          // Point turn amount and speed/accel
+          f32 pointTurnAngle = std::fabs(root_->getField("pointTurnAngle_deg")->getSFFloat());
           f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          f32 pointTurnAccel = std::fabs(root_->getField("pointTurnAccel_degPerSec2")->getSFFloat());
           
           // Dock speed
           const f32 dockSpeed_mmps = root_->getField("dockSpeed_mmps")->getSFFloat();
@@ -429,6 +430,11 @@ namespace Anki {
                   p2 = (s32)LEDId::LED_BACKPACK_RIGHT;
                   p3 = (s32)LEDColor::LED_GREEN;
                   break;
+                case TestMode::TM_STOP_TEST:
+                  p1 = 100;  // slow speed (mmps)
+                  p2 = 200;  // fast speed (mmps)
+                  p3 = 1000; // period (ms)
+                  break;
                 default:
                   break;
               }
@@ -471,9 +477,9 @@ namespace Anki {
               case (s32)'<':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(1440));
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 } else {
-                  SendTurnInPlace(DEG_TO_RAD(45));
+                  SendTurnInPlace(DEG_TO_RAD(pointTurnAngle), DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 }
                 break;
               }
@@ -481,9 +487,9 @@ namespace Anki {
               case (s32)'>':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(1440));
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 } else {
-                  SendTurnInPlace(DEG_TO_RAD(-45));
+                  SendTurnInPlace(DEG_TO_RAD(-pointTurnAngle), DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 }
                 break;
               }
@@ -1157,34 +1163,40 @@ namespace Anki {
                     f32 steerAngOffsetCap = root_->getField("steerAngOffsetCap_rad")->getSFFloat();
                     printf("New steering gains: k1 %f, k2 %f, distOffsetCap %f, angOffsetCap %f\n",
                            steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
-                    SendSteeringControllerGains(steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
+                    SendControllerGains(ControllerChannel::controller_steering, steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
+                    
+                    // Point turn gains
+                    f32 kp = root_->getField("pointTurnKp")->getSFFloat();
+                    f32 ki = root_->getField("pointTurnKi")->getSFFloat();
+                    f32 kd = root_->getField("pointTurnKd")->getSFFloat();
+                    f32 maxErrorSum = root_->getField("pointTurnMaxErrorSum")->getSFFloat();
+                    printf("New pointTurn gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
+                    SendControllerGains(ControllerChannel::controller_pointTurn, kp, ki, kd, maxErrorSum);
                     
                   } else {
                     
                     // Wheel gains
-                    f32 kpLeft = root_->getField("lWheelKp")->getSFFloat();
-                    f32 kiLeft = root_->getField("lWheelKi")->getSFFloat();
-                    f32 maxErrorSumLeft = root_->getField("lWheelMaxErrorSum")->getSFFloat();
-                    f32 kpRight = root_->getField("rWheelKp")->getSFFloat();
-                    f32 kiRight = root_->getField("rWheelKi")->getSFFloat();
-                    f32 maxErrorSumRight = root_->getField("rWheelMaxErrorSum")->getSFFloat();
-                    printf("New wheel gains: left %f %f %f, right %f %f %f\n", kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
-                    SendWheelControllerGains(kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
+                    f32 kp = root_->getField("wheelKp")->getSFFloat();
+                    f32 ki = root_->getField("wheelKi")->getSFFloat();
+                    f32 kd = 0;
+                    f32 maxErrorSum = root_->getField("wheelMaxErrorSum")->getSFFloat();
+                    printf("New wheel gains: kp=%f ki=%f kd=%f\n", kp, ki, maxErrorSum);
+                    SendControllerGains(ControllerChannel::controller_wheel, kp, ki, kd, maxErrorSum);
                     
                     // Head and lift gains
-                    f32 kp = root_->getField("headKp")->getSFFloat();
-                    f32 ki = root_->getField("headKi")->getSFFloat();
-                    f32 kd = root_->getField("headKd")->getSFFloat();
-                    f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
+                    kp = root_->getField("headKp")->getSFFloat();
+                    ki = root_->getField("headKi")->getSFFloat();
+                    kd = root_->getField("headKd")->getSFFloat();
+                    maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
                     printf("New head gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
-                    SendHeadControllerGains(kp, ki, kd, maxErrorSum);
+                    SendControllerGains(ControllerChannel::controller_head, kp, ki, kd, maxErrorSum);
                     
                     kp = root_->getField("liftKp")->getSFFloat();
                     ki = root_->getField("liftKi")->getSFFloat();
                     kd = root_->getField("liftKd")->getSFFloat();
                     maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
                     printf("New lift gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
-                    SendLiftControllerGains(kp, ki, kd, maxErrorSum);
+                    SendControllerGains(ControllerChannel::controller_lift, kp, ki, kd, maxErrorSum);
                   }
                 } else {
                   printf("No WebotsKeyboardController was found in world\n");

@@ -20,7 +20,6 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -144,19 +143,6 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE4));
       
-      if (nullptr != _robot)
-      {
-        // TODO: HACK: Manually clearing the LEDs on the active blocks here when the engine is getting set up.
-        // It isn't pretty, and it will likely change as block communication changes going forward, but for now
-        // this is as good a place as any to clear out the lights when starting up.
-        std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
-        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID0);
-        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID1);
-        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID2);
-        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID3);
-        // END_HACK
-      }
-
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
@@ -284,7 +270,55 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       // ID not found!
       return nullptr;
     }
+
+    ObservableObject* BlockWorld::GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const
+    {
+      const ObservableObject* object = nullptr;
+      const char* familyStr = nullptr;
+      if(inFamily == ObjectFamily::Unknown) {
+        object = GetObjectByID(objectID);
+        familyStr = EnumToString(inFamily);
+      } else {
+        object = GetObjectByIDandFamily(objectID, inFamily);
+        familyStr = "any";
+      }
+      
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not exist in %s family.",
+                          objectID.GetValue(), EnumToString(inFamily));
+        return nullptr;
+      }
+      
+      if(!object->IsActive()) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not appear to be an active object.",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      return (ObservableObject*)object;
+    } // GetActiveObject()
     
+    ObservableObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const
+    {
+      for(auto objectsByType : _existingObjects) {
+        if(inFamily == ObjectFamily::Unknown || inFamily == objectsByType.first) {
+          for(auto objectsByID : objectsByType.second) {
+            for(auto objectWithID : objectsByID.second) {
+              ObservableObject* object = objectWithID.second;
+              if(object->IsActive() && object->GetActiveID() == activeID) {
+                return object;
+              }
+            }
+          }
+        } // if(inFamily == ObjectFamily::Unknown || inFamily == objectsByFamily.first)
+      } // for each family
+      
+      return nullptr;
+    } // GetActiveObjectByActiveID()
+
+  
     void CheckForOverlapHelper(const ObservableObject* objectToMatch,
                                ObservableObject* objectToCheck,
                                std::vector<ObservableObject*>& overlappingObjects)
@@ -517,8 +551,8 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastNew");
 
       // grab the underlying memory map and merge them
-      NavMemoryMap* oldMap = dynamic_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() );
-      NavMemoryMap* newMap = dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() );
+      NavMemoryMap* oldMap = static_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() );
+      NavMemoryMap* newMap = static_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() );
       newMap->Merge(oldMap, *oldOrigin);
       
       // switch back to what is becoming the new map
@@ -690,26 +724,71 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
         
         //const float minDimSeen = objSeen->GetMinDim();
         
-        // Store pointers to any existing objects that overlap with this one
-        //std::vector<ObservableObject*> overlappingObjects;
-        //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        ObservableObject* matchingObject = nullptr;
         
-        // Override the default filter function to intentionally consider objects
-        // that are unknown here. Otherwise, we'd never be able to match new
-        // observations to existing objects whose pose has been set to unknown!
-        BlockWorldFilter filter;
-        filter.SetFilterFcn([] (ObservableObject*) { return true; });
+#if(OBJECTS_HEARABLE)
+        if (objSeen->IsActive()) {
+          // Find all objects of the same type
+          BlockWorldFilter filter;
+          filter.SetFilterFcn([objSeen] (ObservableObject* obj) { return objSeen->GetType() == obj->GetType(); });
+          std::vector<ObservableObject*> blocks;
+          FindMatchingObjects(filter, blocks);
+          
+          if (blocks.size() > 1) {
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForActiveObject",
+                                "Observed active object of type %d matches %lu existing objects. Multiple blocks of same type not currently supported.",
+                                objSeen->GetType(), blocks.size());
+            
+          } else if (blocks.size() == 0) {
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
+                                "Observed active object of type %d does not match an existing object. Is the battery plugged in?",
+                                objSeen->GetType());
+          } else {
+            matchingObject = blocks.front();
+            //PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.FoundMatchingActiveObject",
+            //                 "Observed active object of type %d matches existing objectID %d (activeID %d)",
+            //                 objSeen->GetType(), matchingObject->GetID().GetValue(), matchingObject->GetActiveID());
 
-        ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
-                                                                     objSeen->GetSameDistanceTolerance(),
-                                                                     objSeen->GetSameAngleTolerance(),
-                                                                     filter);
-        
-        // If this is the object we're carrying, do nothing and continue to the next observed object
-        if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
-          delete objSeen;
-          continue;
+          }
+
+          // If this is the object we're carrying observed in the carry position, do nothing and continue to the next observed object.
+          // Otherwise, it must've been moved off the lift so unset its carry state.
+          if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
+            if (matchingObject->GetPose().IsSameAs(objSeen->GetPose(),
+                                                   objSeen->GetSameDistanceTolerance(),
+                                                   objSeen->GetSameAngleTolerance())) {
+              delete objSeen;
+              continue;
+            } else {
+              _robot->UnSetCarryObject(matchingObject->GetID());
+            }
+          }
+
+        } else {
+#endif
+          // Store pointers to any existing objects that overlap with this one
+          //std::vector<ObservableObject*> overlappingObjects;
+          //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+          
+          // Override the default filter function to intentionally consider objects
+          // that are unknown here. Otherwise, we'd never be able to match new
+          // observations to existing objects whose pose has been set to unknown!
+          BlockWorldFilter filter;
+          filter.SetFilterFcn([] (ObservableObject*) { return true; });
+          
+          matchingObject = FindClosestMatchingObject(*objSeen,
+                                                     objSeen->GetSameDistanceTolerance(),
+                                                     objSeen->GetSameAngleTolerance(),
+                                                     filter);
+          
+          // If this is the object we're carrying, do nothing and continue to the next observed object
+          if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
+            delete objSeen;
+            continue;
+          }
+#if(OBJECTS_HEARABLE)
         }
+#endif
         
         
         // As of now the object will be w.r.t. the robot's origin.  If we
@@ -1155,7 +1234,8 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
           {
             ObservableObject* object = objectIter->second;
             
-            if(object->GetLastObservedTime() < atTimestamp &&
+            if(object->GetPoseState() != ObservableObject::PoseState::Unknown &&
+               object->GetLastObservedTime() < atTimestamp &&
                &object->GetPose().FindOrigin() == _robot->GetWorldOrigin())
             {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
@@ -2036,6 +2116,51 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
     }
     */
 
+  
+    ObjectID BlockWorld::AddLightCube(ActionableObject::ActiveID activeID, FactoryID factoryID)
+    {
+      if (activeID >= 4 || activeID < 0) {
+        PRINT_NAMED_WARNING("BlockWorld.AddLightCube.InvalidActiveID", "activeID %d", activeID);
+        return ObjectID();
+      }
+      
+      // Is there an active object with the same activeID that already exists?
+      ObjectType cubeType = ActiveCube::GetTypeFromFactoryID(factoryID);
+      ObservableObject* matchingObject = GetActiveObjectByActiveID(activeID);
+      if (matchingObject == nullptr) {
+        // If no match found, find one with an invalid activeID and assume it's that
+        const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(cubeType);
+        for (auto& cubeIt : objectsOfSameType) {
+          if (cubeIt.second->GetActiveID() < 0) {
+            ActiveCube* activeObj = dynamic_cast<ActiveCube*>(cubeIt.second);
+            activeObj->SetActiveID(activeID);
+            PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingObjectWithNoActiveID",
+                             "objectID %d, activeID %d, type %d",
+                             cubeIt.second->GetID().GetValue(), cubeIt.second->GetActiveID(), cubeType);
+            return cubeIt.second->GetID();
+          } else {
+            PRINT_NAMED_WARNING("BlockWorld.AddLightCube.FoundOtherCubeOfSameType",
+                                "ActiveID %d is same type as another existing object (objectID %d, activeID %d, type %d). Multiple objects of same type not supported!",
+                                activeID, cubeIt.second->GetID().GetValue(), cubeIt.second->GetActiveID(), cubeType);
+            return ObjectID();
+          }
+        }
+      } else {
+        PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundActiveObject",
+                         "objectID %d, activeID %d, type %d",
+                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType);
+      }
+  
+      
+      // An existing object with activeID was not found so add it
+      ActiveCube* cube = new ActiveCube(activeID, factoryID);
+      cube->SetPoseParent(_robot->GetWorldOrigin());
+      cube->SetPoseState(ObservableObject::PoseState::Unknown);
+      AddNewObject(ObjectFamily::LightCube, cube);
+      PRINT_NAMED_INFO("BlockWorld.AddLightCube.Added", "objectID %d (activeID %d)", cube->GetID().GetValue(), cube->GetActiveID());
+      return cube->GetID();
+    }
+  
     Result BlockWorld::AddCliff(const Pose3d& p)
     {
       // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
