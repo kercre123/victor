@@ -259,6 +259,7 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
  
 void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
+#if(OBJECTS_HEARABLE)
   ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
   
   ObjectID objID;
@@ -294,6 +295,7 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     // Forward on to game
     Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(payload)));
   }
+#endif
 }
   
 
@@ -379,8 +381,8 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   
   if(nullptr == object)
   {
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnknownActiveID",
-                     "Could not find match for active object ID %d", payload.objectID);
+    PRINT_NAMED_WARNING("Robot.HandleActiveObjectStopped.UnknownActiveID",
+                        "Could not find match for active object ID %d", payload.objectID);
     return;
   }
   // Ignore stopped-moving messages for objects we are docking to, since we expect to bump them

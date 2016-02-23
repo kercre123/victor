@@ -260,9 +260,7 @@ void MovementComponent::UnlockTracks(uint8_t tracks)
       // It doesn't matter if there are more unlocks than locks
       if(_trackLockCount[i] < 0)
       {
-#       if DEBUG_ANIMATION_LOCKING
         PRINT_NAMED_WARNING("MovementComponent.UnlockTracks", "Track locks and unlocks do not match");
-#       endif
         _trackLockCount[i] = 0;
       }
     }

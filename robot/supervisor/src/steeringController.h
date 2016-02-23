@@ -10,7 +10,7 @@
 #ifndef STEERING_CONTROLLER_H_
 #define STEERING_CONTROLLER_H_
 
-#include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/types.h"
 
 // TODO: Note that the steering controller is not necessarily cozmo-specific!
 //       (So I didn't put it in a "Cozmo" and it coudl potentially be moved

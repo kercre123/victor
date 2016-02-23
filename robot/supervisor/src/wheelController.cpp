@@ -7,8 +7,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "steeringController.h"
-#include "speedController.h"
 #include "wheelController.h"
 #include "messages.h"
 #include "anki/cozmo/robot/logging.h"
@@ -203,7 +201,7 @@ namespace Anki {
 
         // Cancel coast until stop if we've stopped.
         if (coastUntilStop_ &&
-            SpeedController::GetCurrentMeasuredVehicleSpeed() == 0) {
+            measuredWheelSpeedL_ == 0 && measuredWheelSpeedR_ == 0) {
           coastUntilStop_ = FALSE;
         }
       }
