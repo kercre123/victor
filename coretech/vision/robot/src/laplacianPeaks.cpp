@@ -12,6 +12,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking.h"
 
+#define DRAW_LINE_FITS 1
+
+#if DRAW_LINE_FITS
+#  include "anki/vision/basestation/image.h"
+#endif
+
 typedef struct
 {
   f32 slope;
@@ -41,6 +47,10 @@ namespace Anki
         
       const f32 sigma = static_cast<f32>(boundaryLength) / 64.0f;
 
+#     if DRAW_LINE_FITS
+      Vision::Image blankImg(imageHeight, imageWidth);
+#     endif
+      
       // Copy the boundary to a f32 openCV array
       cv::Mat_<f32> boundaryCv(2, boundaryLength);
       const Point<s16> * restrict pBoundary = boundary.Pointer(0);
@@ -49,6 +59,10 @@ namespace Anki
       for(s32 i=0; i<boundaryLength; i++) {
         pBoundaryCv0[i] = pBoundary[i].y; // Note that order is (y,x)
         pBoundaryCv1[i] = pBoundary[i].x;
+        
+#       if DRAW_LINE_FITS
+        blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), NamedColors::GREEN, 2);
+#       endif
       }
       
       // Create a DoG filter kernel
@@ -186,6 +200,21 @@ namespace Anki
           
           lineFits[iBin].slope = p[iBin][0];
           lineFits[iBin].intercept = p[iBin][1];
+          
+#         if DRAW_LINE_FITS
+          {
+            if(lineFits[iBin].switched) {
+              blankImg.DrawLine(Point2f(lineFits[iBin].intercept, 0),
+                                Point2f(lineFits[iBin].intercept, imageHeight-1),
+                                NamedColors::RED, 1);
+            } else {
+              blankImg.DrawLine(Point2f(0, lineFits[iBin].intercept),
+                                Point2f(imageWidth-1, lineFits[iBin].slope*(imageWidth-1) + lineFits[iBin].intercept),
+                                NamedColors::RED, 1);
+            }
+          }
+#         endif
+          
         } else {
           didFitFourLines = false;
           break;
@@ -217,6 +246,10 @@ namespace Anki
             
             if(xInt >= 0 && xInt < imageWidth && yInt >= 0 && yInt < imageHeight) {
               corners.push_back(cv::Point_<f32>(xInt, yInt));
+              
+#             if DRAW_LINE_FITS
+              blankImg.DrawPoint(Point2f(xInt,yInt), NamedColors::BLUE, 3);
+#             endif
             }
           } // for(s32 jLine=0; jLine<4; jLine++)
         } // for(s32 iLine=0; iLine<4; iLine++)
@@ -248,6 +281,10 @@ namespace Anki
         
         peaks.Clear();
       }
+      
+#     if DRAW_LINE_FITS
+      blankImg.Display("LineFits");
+#     endif
       
       return RESULT_OK;
     } // ExtractLineFitsPeaks()
