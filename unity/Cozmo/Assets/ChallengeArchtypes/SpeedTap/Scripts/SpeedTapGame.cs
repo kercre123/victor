@@ -11,7 +11,6 @@ namespace SpeedTap {
 
     private const float _kRetreatSpeed = -50.0f;
     private const float _kRetreatTime = 1.5f;
-    // TODO: If we need these constants still, cozmo is not ready to ship.
     private const float _kTapAdjustRange = 5.0f;
 
     private Vector3 _CozmoPos;
