@@ -510,6 +510,16 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>clad</GroupName>
+          <Files>
+            <File>
+              <FileName>clad.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\generated\clad\clad.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
