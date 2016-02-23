@@ -276,6 +276,10 @@ namespace Anki {
                                          "WorldOrigin[%lu]: %s",
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
+      
+      // create a new memory map for this origin
+      _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
+      
     } // Delocalize()
     
     Result Robot::SetLocalizedTo(const ObservableObject* object)
@@ -1417,7 +1421,32 @@ namespace Anki {
     
     Result Robot::SetIdleAnimation(const std::string &animName)
     {
+      _idleAnimationNameStack.clear();
       return _animationStreamer.SetIdleAnimation(animName);
+    }
+
+    Result Robot::PushIdleAnimation(const std::string& animName)
+    {
+      _idleAnimationNameStack.push_back(GetIdleAnimationName());
+      return _animationStreamer.SetIdleAnimation(animName);
+    }
+      
+    bool Robot::PopIdleAnimation()
+    {
+      if( _idleAnimationNameStack.empty() ) {
+        return false;
+      }
+      
+      Result ret = _animationStreamer.SetIdleAnimation(_idleAnimationNameStack.back());
+      if( ret != RESULT_OK ) {
+        PRINT_NAMED_WARNING("Robot.PopIdleAnimation",
+                            "Trying to return to idle animation '%s', but Set failed",
+                            _idleAnimationNameStack.back().c_str());
+      }
+      
+      _idleAnimationNameStack.pop_back();
+
+      return ret == RESULT_OK;
     }
 
     const std::string& Robot::GetIdleAnimationName() const
@@ -3070,67 +3099,6 @@ namespace Anki {
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
     }
     
-    ObservableObject* Robot::GetActiveObject(const ObjectID     objectID,
-                                             const ObjectFamily inFamily)
-    {
-      ObservableObject* object = nullptr;
-      const char* familyStr = nullptr;
-      if(inFamily == ObjectFamily::Unknown) {
-        object = GetBlockWorld().GetObjectByID(objectID);
-        familyStr = EnumToString(inFamily);
-      } else {
-        object = GetBlockWorld().GetObjectByIDandFamily(objectID, inFamily);
-        familyStr = "any";
-      }
-      
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("Robot.GetActiveObject",
-                          "Object %d does not exist in %s family.",
-                          objectID.GetValue(), EnumToString(inFamily));
-        return nullptr;
-      }
-      
-      if(!object->IsActive()) {
-        PRINT_NAMED_ERROR("Robot.GetActiveObject",
-                          "Object %d does not appear to be an active object.",
-                          objectID.GetValue());
-        return nullptr;
-      }
-      
-      if(object->GetIdentityState() != ActiveIdentityState::Identified) {
-        PRINT_NAMED_ERROR("Robot.GetActiveObject",
-                          "Object %d is active but has not been identified.",
-                          objectID.GetValue());
-        return nullptr;
-      }
-      
-      return object;
-    } // GetActiveObject()
-    
-    ObservableObject* Robot::GetActiveObjectByActiveID(const s32 activeID, const ObjectFamily inFamily)
-    {
-      for(auto objectsByType : GetBlockWorld().GetAllExistingObjects())
-      {
-        if(inFamily == ObjectFamily::Unknown || inFamily == objectsByType.first)
-        {
-          for(auto objectsByID : objectsByType.second)
-          {
-            for(auto objectWithID : objectsByID.second)
-            {
-              ObservableObject* object = objectWithID.second;
-              if(object->IsActive() && object->GetActiveID() == activeID)
-              {
-                return object;
-              }
-            }
-          }
-        } // if(inFamily == ObjectFamily::Unknown || inFamily == objectsByFamily.first)
-      } // for each family
-      
-      return nullptr;
-    } // GetActiveObjectByActiveID()
-    
-    
     Result Robot::SetObjectLights(const ObjectID& objectID,
                                   const WhichCubeLEDs whichLEDs,
                                   const u32 onColor, const u32 offColor,
@@ -3140,7 +3108,7 @@ namespace Anki {
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetActiveObject(objectID, ObjectFamily::LightCube));
+      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetBlockWorld().GetActiveObjectByID(objectID, ObjectFamily::LightCube));
       if(activeCube == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
         return RESULT_FAIL_INVALID_OBJECT;
@@ -3187,7 +3155,7 @@ namespace Anki {
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetActiveObject(objectID, ObjectFamily::LightCube));
+      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetBlockWorld().GetActiveObjectByID(objectID, ObjectFamily::LightCube));
       if(activeCube == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;

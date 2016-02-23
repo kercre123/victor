@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+#include "anki/cozmo/basestation/pathMotionProfileHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -30,15 +31,24 @@ static const char* kInitialAnimationKey = "initial_animName";
 static const char* kPreDriveAnimationKey = "preDrive_animName";
 static const char* kRequestAnimNameKey = "request_animName";
 static const char* kDenyAnimNameKey = "deny_animName";
-static const char* kMinRequestDelay = "minRequestDelay_s";
+static const char* kMinRequestDelayKey = "minRequestDelay_s";
+static const char* kScoreFactorKey = "score_factor";
 static const char* kZeroBlockGroupKey =  "zero_block_config";
 static const char* kOneBlockGroupKey =  "one_block_config";
+static const char* kAfterPlaceBackupDistance_mmKey = "after_place_backup_dist_mm";
+static const char* kAfterPlaceBackupSpeed_mmpsKey = "after_place_backup_speed_mmps";
+static const char* kPickupMotionProfileKey = "pickup_motion_profile";
+static const char* kPlaceMotionProfileKey = "place_motion_profile";
+static const char* kDriveToPlacePoseThreshold_mmKey = "place_position_threshold_mm";
+static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshold_rads";
 
 static const float kMinRequestDelayDefault = 5.0f;
-
+static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
+static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
 static const float kDistToMoveTowardsFace_mm = 120.0f;
-static const float kBackupDistance_mm = 80.0f;
-static const float kFaceVerificationTime_s = 0.5f;
+static const float kFaceVerificationTime_s = 0.75f;
+static const float kDriveToPlacePoseThreshold_mmDefault = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
+static const float kDriveToPlacePoseThreshold_radsDefault = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
 
 void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Value& config)
 {
@@ -46,7 +56,8 @@ void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Val
   preDriveAnimationName = config.get(kPreDriveAnimationKey, "").asString();
   requestAnimationName = config.get(kRequestAnimNameKey, "").asString();
   denyAnimationName = config.get(kDenyAnimNameKey, "").asString();
-  minRequestDelay = config.get(kMinRequestDelay, kMinRequestDelayDefault).asFloat();
+  minRequestDelay = config.get(kMinRequestDelayKey, kMinRequestDelayDefault).asFloat();
+  scoreFactor = config.get(kScoreFactorKey, 1.0f).asFloat();
 }
 
 BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::Value& config)
@@ -60,7 +71,21 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
   }
   else {
     _zeroBlockConfig.LoadFromJson(config[kZeroBlockGroupKey]);
-    _oneBlockConfig.LoadFromJson(config[kOneBlockGroupKey]);      
+    _oneBlockConfig.LoadFromJson(config[kOneBlockGroupKey]);
+
+    LoadPathMotionProfileFromJson(_driveToPickupProfile, config[kPickupMotionProfileKey]);
+    LoadPathMotionProfileFromJson(_driveToPlaceProfile, config[kPlaceMotionProfileKey]);
+
+    _driveToPlacePoseThreshold_mm = config.get(kDriveToPlacePoseThreshold_mmKey,
+                                               kDriveToPlacePoseThreshold_mmDefault).asFloat();
+    _driveToPlacePoseThreshold_rads = config.get(kDriveToPlacePoseThreshold_radsKey,
+                                               kDriveToPlacePoseThreshold_radsDefault).asFloat();
+
+      
+    _afterPlaceBackupDist_mm = config.get(kAfterPlaceBackupDistance_mmKey,
+                                          kAfterPlaceBackupDistance_mmDefault).asFloat();
+    _afterPlaceBackupSpeed_mmps = config.get(kAfterPlaceBackupSpeed_mmpsKey,
+                                             kAfterPlaceBackupSpeed_mmpsDefault).asFloat();
   }
 }
 
@@ -69,6 +94,8 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
+  // disable idle animation, but save the old one on the stack
+  robot.PushIdleAnimation("NONE");
 
   if( GetNumBlocks(robot) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
@@ -135,6 +162,21 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
 
   // don't use transition to because we don't want to do anything
   _state = State::PlayingInitialAnimation;
+
+  robot.PopIdleAnimation();
+}
+
+float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  // NOTE: can't use _activeConfig because we haven't been Init'd yet  
+  float score = IBehavior::EvaluateScoreInternal(robot, currentTime_sec);
+  if( GetNumBlocks(robot) == 0 ) {
+    score *= _zeroBlockConfig.scoreFactor;
+  }
+  else {
+    score *= _oneBlockConfig.scoreFactor;
+  }
+  return score;
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot)
@@ -162,9 +204,10 @@ void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robo
 void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
-  StartActing(new DriveToPickupObjectAction(robot, targetBlockID),
+  StartActing(new DriveToPickupObjectAction(robot, targetBlockID, _driveToPickupProfile),
               [this, &robot](ActionResult result) {
                 if ( result == ActionResult::SUCCESS ) {
+                  ComputeFaceInteractionPose(robot);
                   TransitionToDrivingToFace(robot);
                 }
                 else if ( result == ActionResult::FAILURE_RETRY ) {
@@ -179,13 +222,30 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
   SET_STATE(State::PickingUpBlock);
 }
 
+void BehaviorRequestGameSimple::ComputeFaceInteractionPose(Robot& robot)
+{
+  _hasFaceInteractionPose = GetFaceInteractionPose(robot, _faceInteractionPose);
+}
+
 void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
 {
-  Pose3d faceInteractionPose;
-  if( GetFaceInteractionPose(robot, faceInteractionPose) ) {
-    StartActing(new DriveToPoseAction( robot, faceInteractionPose ),
+  if( ! _hasFaceInteractionPose ) {
+    PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransitionToDrivingToFace.NoPose",
+                     "%s: No interaction pose set to drive to face!",
+                     GetName().c_str());
+    return;
+  }
+  else {
+    StartActing(new DriveToPoseAction(robot,
+                                      _faceInteractionPose,
+                                      _driveToPlaceProfile,
+                                      false,
+                                      false,
+                                      _driveToPlacePoseThreshold_mm,
+                                      _driveToPlacePoseThreshold_rads),
                 [this, &robot](ActionResult result) {
                   if ( result == ActionResult::SUCCESS ) {
+                    // transition back here, but don't reset the face pose to drive to
                     TransitionToPlacingBlock(robot);
                   }
                   else if (result == ActionResult::FAILURE_RETRY) {
@@ -207,7 +267,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
                 {
                   new PlaceObjectOnGroundAction(robot),
                   // TODO:(bn) use same motion profile here
-                  new DriveStraightAction(robot, -kBackupDistance_mm, -80.0f)
+                  new DriveStraightAction(robot, -_afterPlaceBackupDist_mm, -_afterPlaceBackupSpeed_mmps)
                 }),
               [this, &robot](ActionResult result) {
                 if ( result == ActionResult::SUCCESS ) {
@@ -334,6 +394,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
   Radians targetAngle = std::atan2(relY, relX);
 
   targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, &robot.GetPose() };
+  targetPose = targetPose.GetWithRespectToOrigin();
 
   return true;
 }

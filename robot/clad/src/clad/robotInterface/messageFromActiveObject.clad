@@ -13,6 +13,13 @@ message ObjectDiscovered
   uint_32     factory_id
 }
 
+message ObjectConnectionState
+{
+  uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32 factoryID,
+  bool connected
+}
+
 message ObjectMoved
 {
   uint_32     timestamp,

@@ -10,6 +10,7 @@ namespace Anki
     namespace HAL
     {
       const f32 FIXED_TO_F32 = 65536.0f;
+      Fixed motorPositionOffsets[4] = {0};
 
       void MotorSetPower(MotorID motor, f32 power)
       {
@@ -27,6 +28,7 @@ namespace Anki
       void MotorResetPosition(MotorID motor)
       {
         // ASSERT(motor < MOTOR_COUNT);
+        motorPositionOffsets[motor] = g_dataToHead.positions[motor];
       }
 
       f32 MotorGetSpeed(MotorID motor)
@@ -44,7 +46,7 @@ namespace Anki
         f32 multiplier = (motor == MOTOR_LEFT_WHEEL || motor == MOTOR_RIGHT_WHEEL) ? 1000.f : 1.f;
 
         // ASSERT(motor < MOTOR_COUNT);
-        return g_dataToHead.positions[motor] / FIXED_TO_F32 * multiplier;
+        return (g_dataToHead.positions[motor] - motorPositionOffsets[motor]) / FIXED_TO_F32 * multiplier;
       }
 
       s32 MotorGetLoad()

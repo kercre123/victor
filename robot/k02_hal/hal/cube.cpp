@@ -13,9 +13,11 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "uart.h"
 
-AcceleratorPacket g_AccelStatus[MAX_CUBES];
-uint16_t g_LedStatus[MAX_CUBES][NUM_BLOCK_LEDS];
-uint32_t g_SlotId[MAX_CUBES];
+
+AcceleratorPacket g_AccelStatus[Anki::Cozmo::MAX_NUM_ACTIVE_OBJECTS];
+uint16_t g_LedStatus[Anki::Cozmo::MAX_NUM_ACTIVE_OBJECTS][Anki::Cozmo::NUM_CUBE_LEDS];
+uint32_t g_SlotId[Anki::Cozmo::MAX_NUM_ACTIVE_OBJECTS];
+uint32_t g_LastContactTimestamp[Anki::Cozmo::MAX_NUM_ACTIVE_OBJECTS] = {0};
 
 namespace Anki
 {
@@ -26,7 +28,7 @@ namespace Anki
       extern void GetBackpack(uint16_t* colors);
 
       Result AssignCubeSlots(int total_ids, const uint32_t* ids) {
-        int slots = MIN(total_ids, MAX_CUBES);
+        int slots = MIN(total_ids, MAX_NUM_ACTIVE_OBJECTS);
 
         for (int i = 0; i < slots; i++) {
           g_SlotId[i] = ids[i];
@@ -42,7 +44,7 @@ namespace Anki
         static int index = 0;
         static int prop = 0;
 
-        if (prop < MAX_CUBES && g_SlotId[prop]) {
+        if (prop < MAX_NUM_ACTIVE_OBJECTS && g_SlotId[prop]) {
           msg.opcode = SET_PROP_STATE;
           msg.SetPropState.slot = prop;
           memcpy((void*)&msg.SetPropState.colors, &g_LedStatus[prop], sizeof(msg.SetPropState.colors));
@@ -51,13 +53,13 @@ namespace Anki
           GetBackpack(msg.SetBackpackState.colors);
         }
 
-        if (prop++ > MAX_CUBES) {
+        if (prop++ > MAX_NUM_ACTIVE_OBJECTS) {
           prop = 0;
         }
       }
       
       void Cube::SendPropIds(void) {
-        for (int i = 0; i < MAX_CUBES; i++) {
+        for (int i = 0; i < MAX_NUM_ACTIVE_OBJECTS; i++) {
           if (g_SlotId[i]) {
             SpineProtocol msg;
 
@@ -78,10 +80,12 @@ namespace Anki
       
       void GetPropState(int id, int x, int y, int z, int shocks) {
         // Tap detection
-        if (id >= MAX_CUBES) {
+        if (id >= MAX_NUM_ACTIVE_OBJECTS) {
           return ;
         }
 
+        g_LastContactTimestamp[id] = HAL::GetTimeStamp();
+        
         uint8_t count = shocks - g_AccelStatus[id].shockCount;
 
         g_AccelStatus[id].x = x;
@@ -102,9 +106,9 @@ namespace Anki
         // Detect if block moved from accel data
         const u8 START_MOVING_COUNT_THRESH = 5;  // Determines number of motion tics that much be observed before Moving msg is sent
         const u8 STOP_MOVING_COUNT_THRESH = 20;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
-        static u8 movingTimeoutCtr[MAX_CUBES] = {0};
-        static bool isMoving[MAX_CUBES] = {false};
-        static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};
+        static u8 movingTimeoutCtr[MAX_NUM_ACTIVE_OBJECTS] = {0};
+        static bool isMoving[MAX_NUM_ACTIVE_OBJECTS] = {false};
+        static UpAxis prevUpAxis[MAX_NUM_ACTIVE_OBJECTS] = {Unknown};
 
         s8 ax = g_AccelStatus[id].x;
         s8 ay = g_AccelStatus[id].y;
@@ -168,7 +172,7 @@ namespace Anki
 
       Result SetBlockLight(const u32 blockID, const u16* colors)
       {
-        if (blockID >= MAX_CUBES) {
+        if (blockID >= MAX_NUM_ACTIVE_OBJECTS) {
           return RESULT_FAIL;
         }
         
@@ -176,6 +180,22 @@ namespace Anki
         
         return RESULT_OK;
       }
+      
+      u32 GetLastCubeContactTime(const u32 cubeID) {
+        if (cubeID >= MAX_NUM_ACTIVE_OBJECTS) {
+          return 0;
+        }
+        return g_LastContactTimestamp[cubeID];
+      }
+      
+      u32 GetCubeFactoryID(u32 cubeID)
+      {
+        if (cubeID >= MAX_NUM_ACTIVE_OBJECTS) {
+          return 0;
+        }
+        return g_SlotId[cubeID];
+      }
+      
     }
   }
 }

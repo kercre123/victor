@@ -338,6 +338,18 @@ void NavMeshQuadTreeProcessor::Draw() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeProcessor::ClearDraw() const
+{
+  // clear content and borders
+  _vizManager->EraseQuadVector("NavMeshQuadTreeProcessorContent");
+  _vizManager->EraseQuadVector("NavMeshQuadTreeProcessorBorders");
+  
+  // flag as dirty for next draw
+  _contentGfxDirty = true;
+  _borderGfxDirty = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeProcessor::IsCached(ENodeContentType contentType)
 {
   const bool isCached = (contentType == ENodeContentType::ObstacleCube         ) ||

@@ -43,7 +43,7 @@ enum class ENodeContentType : uint8_t {
 // variable type in which we can pack ENodeContentType as flags. Check ENodeContentTypeToFlag
 using ENodeContentTypePackedType = uint32_t;
 
-// content for each node. INavMeshQuadTreeNodeData is polymorphic depending on the content type
+// content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
 struct NodeContent {
   explicit NodeContent(ENodeContentType t) : type(t), data(nullptr) {}
   

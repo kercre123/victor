@@ -353,6 +353,14 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
   }
 }
 
+IActionRunner* GetTurnInPlaceActionHelper(Robot& robot, const ExternalInterface::TurnInPlace& msg)
+{
+  TurnInPlaceAction* action = new TurnInPlaceAction(robot, msg.angle_rad, msg.isAbsolute);
+  action->SetMaxSpeed(msg.speed_rad_per_sec);
+  action->SetAccel(msg.accel_rad_per_sec2);
+  return action;
+}
+
   
 IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::FaceObject& msg)
 {
@@ -438,10 +446,8 @@ IActionRunner* CreateNewActionByType(Robot& robot,
   switch(actionUnion.GetTag())
   {
     case RobotActionUnionTag::turnInPlace:
-    {
-      auto & turnInPlace = actionUnion.Get_turnInPlace();
-      return new TurnInPlaceAction(robot, turnInPlace.angle_rad, turnInPlace.isAbsolute);
-    }
+      return GetTurnInPlaceActionHelper(robot, actionUnion.Get_turnInPlace());
+
     case RobotActionUnionTag::playAnimation:
     {
       auto & playAnimation = actionUnion.Get_playAnimation();
@@ -639,8 +645,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::TurnInPlace:
     {
-      newAction = new TurnInPlaceAction(robot, event.GetData().Get_TurnInPlace().angle_rad,
-                                        event.GetData().Get_TurnInPlace().isAbsolute);
+      newAction = GetTurnInPlaceActionHelper(robot, event.GetData().Get_TurnInPlace());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TrackToFace:
