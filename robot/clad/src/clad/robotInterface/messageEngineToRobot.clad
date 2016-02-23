@@ -295,11 +295,10 @@ union EngineToRobot
   ObjectBeingCarried            setObjectBeingCarried       = 0x4E,
   EnablePickupParalysis         enablePickupParalysis       = 0x4F,
   EnableLiftPower               enableLiftPower             = 0x50,
-  RawPWM                        setRawPWM                   = 0x51,
-  SetMotionModelParams          setMotionModelParams        = 0x52,
-  BodyUpgradeData               bodyUpgradeData             = 0x53,
-  PowerState                    powerState                  = 0x54,
-  PropState                     getPropState                = 0x55,
+  SetMotionModelParams          setMotionModelParams        = 0x51,
+  BodyUpgradeData               bodyUpgradeData             = 0x52,
+  PowerState                    powerState                  = 0x53,
+  PropState                     getPropState                = 0x54,
   
   // 0x80 to 0xAF: To WiFi
   // Flash and OTA message must not be changed or OTA will break
