@@ -673,7 +673,7 @@ namespace Anki {
       {
         HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
       }
-      void Process_enterBootloader(Anki::Cozmo::RobotInterface::EnterBootloader const&)
+      void Process_bootloadRTIP(Anki::Cozmo::RobotInterface::BootloadRTIP const&)
       {
 				// Nothing to do here, handled in spi
       }

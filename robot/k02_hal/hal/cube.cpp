@@ -12,6 +12,7 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "uart.h"
 
+#define MAX_CUBES 7
 AcceleratorPacket g_AccelStatus[MAX_CUBES];
 
 namespace Anki

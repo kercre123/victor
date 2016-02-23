@@ -3,7 +3,9 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include "spine.h"
+#include "uart.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "messages.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -14,7 +16,7 @@ namespace HAL {
   static volatile int spine_enter = 0;
   static volatile int spine_exit = 0;
 
-  int Spine::Dequeue(u8* dest) {
+  void Spine::Dequeue(u8* dest) {
     if (spine_enter == spine_exit) {
       *dest = 0; // Invalid tag
     }
@@ -63,7 +65,7 @@ namespace HAL {
       Messages::ProcessMessage(*msg);
     }
     // Prevent same messagr from getting processed twice (if the spine desyncs)
-    msg.cladBuffer[0] = RobotInterface::GLOBAL_INVALID_TAG;
+    g_dataToHead.cladBuffer[0] = RobotInterface::GLOBAL_INVALID_TAG;
   }
 
 }
