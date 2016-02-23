@@ -129,7 +129,7 @@ public abstract class GameBase : MonoBehaviour {
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(() => {
         RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
       });
     }
     if (_SharedMinigameViewInstance != null) {

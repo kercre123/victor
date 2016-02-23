@@ -78,8 +78,8 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _TimelineViewInstance.Initialize(_ChallengeStatesById, rewardIcons);
 
-      // For now Demo is freeplay. 
-      RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+      // The Default chooser is used for freeplay. 
+      RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
 
       RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
       DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
