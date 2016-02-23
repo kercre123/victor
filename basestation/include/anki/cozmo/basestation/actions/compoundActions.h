@@ -73,7 +73,7 @@ namespace Anki {
       std::list<std::pair<ActionCompletedUnion, RobotActionType>> _completedActionInfoStack;
       
     private:
-      virtual void Reset(bool shouldUnlockTracks = true) override;
+      virtual void Reset(bool shouldUnlockTracks = true) override final;
       
       virtual ActionResult UpdateInternal() override final;
       
