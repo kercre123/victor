@@ -9,28 +9,19 @@ using System.Collections.Generic;
 [Serializable]
 [JsonConverter(typeof(StatContainerConverter))]
 public class StatContainer : IEquatable<StatContainer> {
-
-  public static string FormatForDasStatEvent(Anki.Cozmo.ProgressionStatType type, int amount) {
-    return string.Format("{0}_{1}", type, amount);
-  }
-
-  public static string FormatForDasGoalEvent(Anki.Cozmo.ProgressionStatType type, int currentAmount, int amountNeeded) {
-    return string.Format("{0}_{1}/{2}", type, currentAmount, amountNeeded);
-  }
-
-  private const int kCount = (int)Anki.Cozmo.ProgressionStatType.Count;
+  private const int _kCount = (int)Anki.Cozmo.ProgressionStatType.Count;
 
   public static readonly Anki.Cozmo.ProgressionStatType[] sKeys;
 
   static StatContainer() {
-    sKeys = new Anki.Cozmo.ProgressionStatType[kCount];
-    for (int i = 0; i < kCount; i++) {
+    sKeys = new Anki.Cozmo.ProgressionStatType[_kCount];
+    for (int i = 0; i < _kCount; i++) {
       sKeys[i] = (Anki.Cozmo.ProgressionStatType)i;
     }
   }
 
   [SerializeField]
-  private int[] _Stats = new int[kCount];
+  private int[] _Stats = new int[_kCount];
 
   public int this[Anki.Cozmo.ProgressionStatType stat] {
     get {
@@ -114,7 +105,7 @@ public class StatContainer : IEquatable<StatContainer> {
 
     sb.Append("[StatContainer: ");
 
-    for (int i = 0; i < kCount; i++) {
+    for (int i = 0; i < _kCount; i++) {
       if (i > 0) {
         sb.Append(", ");
       }
@@ -199,7 +190,7 @@ public class StatContainer : IEquatable<StatContainer> {
 
   public int Count {
     get {
-      return kCount;
+      return _kCount;
     }
   }
 

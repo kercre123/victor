@@ -14,10 +14,6 @@ using G2U = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class Robot : IRobot {
 
-  private const string kDasAddFriendshipPoints = "world.friendship.add_points";
-  private const string kDasFriendshipLevelUp = "world.friendship.level_up";
-  private const string kDasGoalComplete = "world.goal_complete";
-
   public class Light : ILight {
     private uint _LastOnColor;
 
@@ -544,7 +540,7 @@ public class Robot : IRobot {
     );
     RobotEngineManager.Instance.SendMessage();
 
-    DAS.Event(kDasAddFriendshipPoints, FriendshipPoints.ToString());
+    DAS.Event(DASConstants.Friendship.kAddPoints, FriendshipPoints.ToString());
     ComputeFriendshipLevel();
   }
 
@@ -590,7 +586,7 @@ public class Robot : IRobot {
       );
       RobotEngineManager.Instance.SendMessage();
 
-      DAS.Event(kDasFriendshipLevelUp, FriendshipLevel.ToString());
+      DAS.Event(DASConstants.Friendship.kLevelUp, FriendshipLevel.ToString());
     }
   }
 
@@ -698,12 +694,12 @@ public class Robot : IRobot {
     // If the goal has been completed for the first time, send a DAS event on goal complete
     DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
     StatContainer goals = currentSession.Goals;
-    bool wasGoalComplete = ProgressionStats[index] > goals[index];
-    bool isGoalCompleteNow = value > goals[index];
+    bool wasGoalComplete = ProgressionStats[index] >= goals[index];
+    bool isGoalCompleteNow = value >= goals[index];
     if (!wasGoalComplete && isGoalCompleteNow) {
-      string goalDate = currentSession.FormatForDasDate();
-      DAS.Event(kDasGoalComplete, goalDate, new Dictionary<string,string> { 
-        { "$data", StatContainer.FormatForDasGoalEvent(index, value, goals[index]) } 
+      string goalDate = DASUtil.FormatDate(currentSession.Date);
+      DAS.Event(DASConstants.Goal.kComplete, goalDate, new Dictionary<string,string> { 
+        { "$data", DASUtil.FormatGoal(index, value, goals[index]) } 
       });
     }
   }
