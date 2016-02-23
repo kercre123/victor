@@ -140,7 +140,7 @@ namespace Anki {
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 
-        robotState_.battVolt10x = static_cast<u8>(vBat * 10.0f);
+        robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
         // TODO: Make this a parameters somewhere?
@@ -157,8 +157,8 @@ namespace Anki {
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
-        robotState_.status |= (vExt > 4.0f) ? IS_ON_CHARGER : 0;
-        robotState_.status |= false ? IS_CHARGING : 0;
+        robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
+        robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
       }
 
@@ -835,6 +835,19 @@ namespace Anki {
     } // namespace RobotInterface
 
     namespace HAL {
+      u8 BatteryGetVoltage10x()
+      {
+        return static_cast<u8>(vBat * 10.0f);
+      }
+      bool BatteryIsCharging()
+      {
+        return false;
+      }
+      bool BatteryIsOnCharger()
+      {
+        return vExt > 4.0f;
+      }
+      
 #ifndef TARGET_K02
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
       {
