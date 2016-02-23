@@ -41,27 +41,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _CubeColorsAndSounds:
   - soundName:
-      _Event: -508669529
+      _Event: 1895821627
       _EventType: 4
       _GameObjectType: 3
     cubeColor: {r: 1, g: 0, b: 0, a: 1}
   - soundName:
-      _Event: -508669529
+      _Event: 1684077083
       _EventType: 4
       _GameObjectType: 3
     cubeColor: {r: 0, g: 1, b: .296551704, a: 1}
   - soundName:
-      _Event: -508669529
+      _Event: -1536128318
       _EventType: 4
       _GameObjectType: 3
     cubeColor: {r: 0, g: 0, b: 1, a: 1}
   - soundName:
-      _Event: -508669529
+      _Event: -1063871600
       _EventType: 4
       _GameObjectType: 3
     cubeColor: {r: 1, g: 0, b: 1, a: 1}
   - soundName:
-      _Event: -508669529
+      _Event: -874045390
       _EventType: 4
       _GameObjectType: 3
     cubeColor: {r: 1, g: .765517235, b: 0, a: 1}
@@ -193,7 +193,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[0].soundName._Event
-      value: -508669529
+      value: 1895821627
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._EventType
@@ -205,7 +205,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._Event
-      value: -508669529
+      value: 1684077083
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._EventType
@@ -217,7 +217,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._Event
-      value: -508669529
+      value: -1536128318
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._EventType
@@ -229,7 +229,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._Event
-      value: -508669529
+      value: -1063871600
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[0].cubeColor.r
@@ -273,7 +273,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[4].soundName._Event
-      value: -508669529
+      value: -874045390
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[4].cubeColor.g
