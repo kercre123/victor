@@ -39,9 +39,9 @@ RobotAudioClient::~RobotAudioClient()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event )
+AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback )
 {
-  const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation );
+  const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation, callback );
   
   return callbackId;
 }
@@ -71,31 +71,28 @@ bool RobotAudioClient::LoadAnimationAudio(Animation* anAnimation)
   // Prep sound
   Animations::Track<RobotAudioKeyFrame>& audioTrack = anAnimation->GetTrack<RobotAudioKeyFrame>();
 
+  AnimationEvent::AnimationEventId eventId = AnimationEvent::kInvalidAnimationEventId;
   while ( audioTrack.HasFramesLeft() ) {
     RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
     audioTrack.MoveToNextKeyFrame();
     
     const GameEvent::GenericEvent event = aFrame.GetAudioRef().audioEvent;
     if ( GameEvent::GenericEvent::Invalid != event ) {
-      _animationEventList.emplace_back( aFrame.GetAudioRef().audioEvent, aFrame.GetTriggerTime() );
+      _animationEventList.emplace_back( ++eventId, aFrame.GetAudioRef().audioEvent, aFrame.GetTriggerTime() );
     }
   }
-  
+
   // Setup timers to process audio events relevant to each other
   if ( _animationEventList.size() > 0 ) {
     // Schedule the events
-    bool firstEvent = true;
+    _firstAudioEventOffset = _animationEventList.front().TimeInMS;
     for ( auto& anEvent : _animationEventList ) {
-      if ( firstEvent ) {
-        firstEvent = false;
-        _firstAudioEventOffset = anEvent.TimeInMS;
-      }
-      
-      const GameEvent::GenericEvent event = anEvent.AudioEvent;
-      Util::Dispatch::After( _postEventTimerQueue, std::chrono::milliseconds( anEvent.TimeInMS - _firstAudioEventOffset ), [this, event] ()
+      const GameEvent::GenericEvent animationEvent = anEvent.AudioEvent;
+      const AnimationEvent::AnimationEventId animationEventId = anEvent.EventId;
+      Util::Dispatch::After( _postEventTimerQueue, std::chrono::milliseconds( anEvent.TimeInMS - _firstAudioEventOffset ), [this, animationEvent, animationEventId] ()
       {
         // Trigger events
-        PostCozmoEvent( event );
+        PostCozmoEvent( animationEvent, [this, animationEventId]( AudioCallback callback ) { HandleCozmoEventCallback( animationEventId, callback ); } );
       } );
     }
   }
@@ -133,6 +130,23 @@ bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeSt
   if ( nullptr == _currentBufferStream ) {
     // Check if we need the next stream
     if ( !_animationEventList.empty() ) {
+      // Check for invalid audio events
+      _invalidAnimationIdLock.lock();
+      if ( !_invalidAnimationIds.empty() ) {
+        // Remove events from animation event list
+        for ( auto& anInvalidEventId : _invalidAnimationIds ) {
+          // Find and remove animation event
+          for ( auto animationEventIt = _animationEventList.begin(); animationEventIt != _animationEventList.end(); ++animationEventIt ) {
+            if ( animationEventIt->EventId == anInvalidEventId ) {
+              _animationEventList.erase( animationEventIt );
+              break;
+            }
+          } // iterate _animationEventList
+        } // iterate _invalidAnimationIds
+        _invalidAnimationIds.clear();
+      }
+      _invalidAnimationIdLock.unlock();
+      
       // Check if it's time for the next audio buffer stream to start
       if ( _animationEventList.front().TimeInMS <= relevantTimeMS ) {
         // Get next buffer stream if available && pop pending animation event
@@ -237,6 +251,20 @@ bool RobotAudioClient::IsFirstBufferReady()
   return _isFirstBufferLoaded;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::HandleCozmoEventCallback( AnimationEvent::AnimationEventId eventId, AudioCallback& callback )
+{
+  // Cancel this animation event if the audio event has an error.
+  if ( callback.callbackInfo.GetTag() == AudioCallbackInfoTag::callbackError ) {
+    PRINT_STREAM_WARNING( "RobotAudioClient.HandleCozmoEventCallback",
+                          "Animation Event: " + std::to_string(eventId) + " failed to play" );
+  
+    // Add event to Invalid Id vector
+    _invalidAnimationIdLock.lock();
+    _invalidAnimationIds.emplace_back(eventId);
+    _invalidAnimationIdLock.unlock();
+  }
+}
 
 } // Audio
 } // Cozmo

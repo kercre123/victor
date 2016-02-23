@@ -37,20 +37,20 @@ void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, size_t sampleCount 
   ASSERT_NAMED( sampleCount <= static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ), ("RobotAudioBuffer.UpdateBuffer buffer is too big!"+ std::to_string(sampleCount) + " > " + std::to_string(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ))).c_str() );
   
   // Create Audio Frame
-  AnimKeyFrame::AudioSample audioSample = AnimKeyFrame::AudioSample();
-  ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= audioSample.Size(), "Block size must be less or equal to audioSameple size");
+  AnimKeyFrame::AudioSample audioFrame = AnimKeyFrame::AudioSample();
+  ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= audioFrame.Size(), "Block size must be less or equal to audioSameple size");
   // Copy samples into audioSample
-  memcpy(audioSample.sample.data(), samples, sampleCount * sizeof(uint8_t));
+  memcpy(audioFrame.sample.data(), samples, sampleCount * sizeof(uint8_t));
   
   
   // Pad the back of the buffer with 0s
   // This should only apply to the last frame
   if (sampleCount < static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE )) {
-    std::fill( audioSample.sample.begin() + sampleCount, audioSample.sample.end(), 0 );
+    std::fill( audioFrame.sample.begin() + sampleCount, audioFrame.sample.end(), 0 );
   }
   
   ASSERT_NAMED( nullptr!= _currentStream, "Must pass a Robot Audio Buffer Stream object" );
-  RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( audioSample ) );
+  RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( audioFrame ) );
   
   _currentStream->PushRobotAudioMessage( audioMsg );
 }

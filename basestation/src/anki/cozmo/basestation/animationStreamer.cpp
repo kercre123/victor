@@ -174,6 +174,7 @@ namespace Cozmo {
       robot.AbortAnimation();
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
+//      _audioClient.ClearAnimation();
     }
   } // Abort()
   
@@ -256,7 +257,7 @@ namespace Cozmo {
       // Prep sound
       _audioClient.LoadAnimationAudio(anim);
       // Set Pre Buffer Key Frame Size
-      _audioClient.SetPreBufferRobotAudioMessageCount(10);
+      _audioClient.SetPreBufferRobotAudioMessageCount(0);
 #     endif
       
 #     if PLAY_ROBOT_AUDIO_ON_DEVICE
