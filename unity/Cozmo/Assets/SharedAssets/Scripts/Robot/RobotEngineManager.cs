@@ -73,7 +73,7 @@ public class RobotEngineManager : MonoBehaviour {
   #endregion
 
   private bool _CozmoBindingStarted = false;
-  private ChannelBase _Channel = null;
+  private RobotUdpChannel _Channel = null;
   private bool _IsRobotConnected = false;
 
   private const int _UIDeviceID = 1;
@@ -84,9 +84,9 @@ public class RobotEngineManager : MonoBehaviour {
 
   public bool AllowImageSaving { get; private set; }
 
-  private U2G.MessageGameToEngine _Message = new G2U.MessageGameToEngine();
+  private RobotMessageOut _MessageOut = new RobotMessageOut();
 
-  public U2G.MessageGameToEngine Message { get { return _Message; } }
+  public U2G.MessageGameToEngine Message { get { return _MessageOut.Message; } }
 
   private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
   private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
@@ -136,7 +136,7 @@ public class RobotEngineManager : MonoBehaviour {
 
     Application.runInBackground = true;
 
-    _Channel = new UdpChannel();
+    _Channel = new RobotUdpChannel();
     _Channel.ConnectedToClient += Connected;
     _Channel.DisconnectedFromClient += Disconnected;
     _Channel.MessageReceived += ReceivedMessage;
@@ -246,10 +246,11 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     }
 
-    _Channel.Send(Message);
+    _Channel.Send(_MessageOut);
   }
 
-  private void ReceivedMessage(G2U.MessageEngineToGame message) {
+  private void ReceivedMessage(RobotMessageIn messageIn) {
+    var message = messageIn.Message;
     switch (message.GetTag()) {
     case G2U.MessageEngineToGame.Tag.Ping:
       break;
