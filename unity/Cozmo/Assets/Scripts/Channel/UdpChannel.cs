@@ -124,12 +124,56 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     callback_SimpleSend_Complete = SimpleSend_Complete;
   }
 
+  public override void Connect(int deviceID, int localPort) {
+    // dunno if 0 is good or not, so allowing it
+    if (deviceID < 0 || deviceID > byte.MaxValue) {
+      throw new ArgumentException("Device id must be 0 to 255.", "deviceID");
+    }
+
+    if (IsActive) {
+      throw new InvalidOperationException("UdpChannel is already active. Disconnect first.");
+    }
+
+    lock (sync) {
+      // should only become active through this call
+      if (connectionState != ConnectionState.Disconnected) {
+        throw new InvalidOperationException("You should only call Connect on the main Unity thread.");
+      }
+
+      lastUpdateTime = Time.realtimeSinceStartup;
+
+      try {
+        BeforeConnect((byte)deviceID);
+
+        // set up main socket
+        localEndPoint = new IPEndPoint(IPAddress.Any, localPort);
+        mainServer = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+        mainServer.Bind(localEndPoint);
+
+        ServerReceive();
+      }
+      catch (Exception e) {
+        Debug.LogException(e);
+        DestroySynchronously(DisconnectionReason.FailedToListen);
+        return;
+      }
+        
+      // set state
+      connectionState = ConnectionState.Advertising;
+      IsActive = true;
+      IsConnected = false;
+
+      DAS.Debug(this, "UdpConnection: Listening on " + mainServer.LocalEndPoint.ToString() + ".");
+    }
+  }
+
   // synchronous
   public override void Connect(int deviceID, int localPort, string advertisingIP, int advertisingPort) {
     IPAddress advertisingAddress;
     if (!IPAddress.TryParse(advertisingIP, out advertisingAddress)) {
       throw new ArgumentException("Could not parse ip address.", "advertisingIP");
     }
+
 
     // dunno if 0 is good or not, so allowing it
     if (deviceID < 0 || deviceID > byte.MaxValue) {
@@ -633,6 +677,10 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
   // either
   private void SendAdvertisement() {
+    if (advertisementClient == null) {
+      return;
+    }
+
     if (advertisementSend != null || lastAdvertiseTime + AdvertiseTick > lastUpdateTime) {
       return;
     }

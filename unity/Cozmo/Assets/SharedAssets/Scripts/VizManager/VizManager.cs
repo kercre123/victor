@@ -54,10 +54,9 @@ namespace Anki.Cozmo {
     public event Action<DisconnectionReason> DisconnectedFromClient;
 
     private const int _UIDeviceID = 1;
-    private const int _UIAdvertisingRegistrationPort = 6103;
     // 0 means random unused port
     // Used to be 5106
-    private const int _UILocalPort = 0;
+    private const int _UILocalPort = 5352;
 
   
     public static VizManager Instance { get; private set; }
@@ -77,10 +76,16 @@ namespace Anki.Cozmo {
       _Channel.ConnectedToClient += Connected;
       _Channel.DisconnectedFromClient += Disconnected;
       _Channel.MessageReceived += ReceivedMessage;
+
+      Listen();
+    }
+
+    private void Update() {
+      _Channel.Update();
     }
   
-    public void Connect(string engineIP) {
-      _Channel.Connect(_UIDeviceID, _UILocalPort, engineIP, _UIAdvertisingRegistrationPort);
+    public void Listen() {
+      _Channel.Connect(_UIDeviceID, _UILocalPort);
     }
 
     public void Disconnect() {
@@ -123,6 +128,7 @@ namespace Anki.Cozmo {
     }
 
     private void ReceivedMessage(MessageVizWrapper messageWrapper) {
+      UnityEngine.Debug.Log("Received message with tag " + messageWrapper.GetTag());
       var message = messageWrapper.Message;
       switch (message.GetTag()) {
       case MessageViz.Tag.Quad:

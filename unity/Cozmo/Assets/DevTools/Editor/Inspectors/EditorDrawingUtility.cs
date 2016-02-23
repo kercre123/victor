@@ -64,7 +64,12 @@ public static class EditorDrawingUtility {
     where U : IComparable
   {
     EditorGUILayout.BeginVertical();
+    EditorGUILayout.BeginHorizontal();
     GUILayout.Label(label);
+    if (GUILayout.Button("+", GUILayout.Width(30))) {
+      list.Insert(0, createFunc());
+    }
+    EditorGUILayout.EndHorizontal();
 
     var splitList = list.GroupBy(groupBy).Select(g => new KeyValuePair<U, List<T>>(g.Key, g.ToList()));
 

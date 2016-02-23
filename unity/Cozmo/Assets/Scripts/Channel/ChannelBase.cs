@@ -96,6 +96,14 @@ public abstract class ChannelBase<MessageIn, MessageOut> where MessageIn : IMess
   public abstract void Connect(int deviceID, int localPort, string advertisingIP, int advertisingPort);
 
   /// <summary>
+  /// Initializes the server without advertising
+  /// </summary>
+  /// <param name="deviceID">A number representing this device.</param> 
+  /// <param name="localPort">Local port to listen on.</param>
+  public abstract void Connect(int deviceID, int localPort);
+
+
+  /// <summary>
   /// Disconnects this server immediately. No DisconnectedFromClient event will be raised.
   /// </summary>
   /// <remarks>Only call this from the main Unity thread.</remarks>
