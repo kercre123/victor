@@ -82,11 +82,27 @@ namespace Anki {
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
-        #ifdef TARGET_K02
-        #include "clad/robotInterface/messageEngineToRobot_switch.def"
-        #else
-        #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
-        #endif
+        switch(msg.tag)
+        {
+          #ifdef TARGET_K02
+          #include "clad/robotInterface/messageEngineToRobot_switch_from_0x30_to_0x7f.def"
+          // Need to add additional messages for special cases handled both on the Espressif and K02
+          case RobotInterface::EngineToRobot::Tag_animHeadAngle:
+            Process_animHeadAngle(msg.animHeadAngle);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animBodyMotion:
+            Process_animBodyMotion(msg.animBodyMotion);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animLiftHeight:
+            Process_animLiftHeight(msg.animLiftHeight);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animBackpackLights:
+            Process_animBackpackLights(msg.animBackpackLights);
+            break;
+          #else
+          #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
+          #endif
+        }
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
           if (msg.tag == lookForID_)
@@ -641,28 +657,6 @@ namespace Anki {
           HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
         }
       }
-      void Process_animEndOfAnimation(const Anki::Cozmo::AnimKeyFrame::EndOfAnimation&)
-      {
-        // Handled on the Espressif
-      }
-      void Process_animStartOfAnimation(const Anki::Cozmo::AnimKeyFrame::StartOfAnimation&)
-      {
-        // Handled on the Espressif
-      }
-
-      // ---------- Firmware over the air stubs for espressif -----------
-      void Process_eraseFlash(Anki::Cozmo::RobotInterface::EraseFlash const&)
-      {
-        // Nothing to do here
-      }
-      void Process_writeFlash(RobotInterface::WriteFlash &)
-      {
-        // Nothing to do here
-      }
-      void Process_bodyUpgradeData(Anki::Cozmo::RobotInterface::BodyUpgradeData const&)
-      {
-        // Nothing to do here, handled in body
-      }
       void Process_powerState(const PowerState& msg)
       {
         vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
@@ -673,34 +667,10 @@ namespace Anki {
       {
         HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
       }
-      void Process_bootloadRTIP(Anki::Cozmo::RobotInterface::BootloadRTIP const&)
-      {
-				// Nothing to do here, handled in spi
-      }
-      void Process_triggerOTAUpgrade(Anki::Cozmo::RobotInterface::OTAUpgrade const&)
-      {
-        // Nothing to do here
-      }
-      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageBlob const&)
-      {
-        // Nothing to do here
-      }
-      void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const&)
-      {
-        // Nothing to do here
-      }
-      void Process_setRawPWM(Anki::Cozmo::RawPWM const&)
-      {
-        // Not used here
-      }
-      void Process_radioConnected(const Anki::Cozmo::RobotInterface::RadioState& state)
+      void Process_radioConnected(const bool& wifi)
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
       }
-			void Process_rtipVersion(const Anki::Cozmo::RobotInterface::RTIPVersionInfo&)
-			{
-				// Not processed here
-			}
 
 // ----------- Send messages -----------------
 
