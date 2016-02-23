@@ -810,7 +810,7 @@ message BlockPoolEnabledMessage {
 }
 
 message BlockSelectedMessage {
-  int_32 blockId,
+  uint_32 blockId,
   bool   selected
 }
 // Query for E2Gmessage: InitBlockPoolMessage
