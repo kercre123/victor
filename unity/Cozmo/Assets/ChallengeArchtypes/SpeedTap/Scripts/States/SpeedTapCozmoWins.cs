@@ -20,7 +20,7 @@ namespace SpeedTap {
     }
 
     private void HandleAdjustDone(bool success) {
-      _StateMachine.SetNextState(new AnimationState(_SpeedTapGame.RandomWinHand(), HandleAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinHand, HandleAnimationDone));
     }
 
     private void HandleAnimationDone(bool success) {

@@ -97,10 +97,10 @@ namespace SpeedTap {
       if (winningScore > losingScore + roundsLeft) {
         AllRoundsOver = true;
         if (_PlayerRoundsWon > _CozmoRoundsWon) {
-          _StateMachine.SetNextState(new AnimationState(RandomLoseSession(), HandleSessionAnimDone));
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleSessionAnimDone));
         }
         else {
-          _StateMachine.SetNextState(new AnimationState(RandomWinSession(), HandleSessionAnimDone));
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleSessionAnimDone));
         }
       }
       else {
@@ -137,11 +137,14 @@ namespace SpeedTap {
             CurrentDifficulty++;
           }
             
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomLoseRound(), HandleRoundRetreatDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime,
+            new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, HandleRoundRetreatDone)));
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomWinRound(), HandleRoundRetreatDone)));
+
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, 
+            new AnimationGroupState(AnimationGroupName.kSpeedTap_WinRound, HandleRoundRetreatDone)));
         }
       }
     }
@@ -290,14 +293,13 @@ namespace SpeedTap {
       SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
 
-    #region RandomAnims
-
-    // Temp Functions for random animation until anim groups are ready
-
+    // Sets Cozmo's original Position information, may need to also set rotation quaternion as well
     public void SetCozmoOrigPos() {
       _CozmoPos = CurrentRobot.WorldPosition;
     }
 
+    // Check to see if Cozmo should Adjust, includes hook for callback for after adjust is complete.
+    // If cozmo doesn't need to adjust, will immediately invoke callback.
     public void CheckForAdjust(RobotCallback adjustCallback = null) {
       float dist = 0.0f;
       dist = (CurrentRobot.WorldPosition - _CozmoPos).magnitude;
@@ -311,125 +313,5 @@ namespace SpeedTap {
       }
     }
 
-    public string RandomWinHand() {
-      string animName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        animName = AnimationName.kSpeedTap_winHand_01;
-        break;
-      case 1:
-        animName = AnimationName.kSpeedTap_winHand_02;
-        break;
-      default:
-        animName = AnimationName.kSpeedTap_winHand_03;
-        break;
-      }
-      return animName;
-    }
-
-    public string RandomLoseHand() {
-      string animName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        animName = AnimationName.kSpeedTap_loseHand_01;
-        break;
-      case 1:
-        animName = AnimationName.kSpeedTap_loseHand_02;
-        break;
-      default:
-        animName = AnimationName.kSpeedTap_loseHand_03;
-        break;
-      }
-      return animName;
-    }
-
-    public string RandomWinRound() {
-      string animName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        animName = AnimationName.kSpeedTap_winRound_01;
-        break;
-      case 1:
-        animName = AnimationName.kSpeedTap_winRound_02;
-        break;
-      default:
-        animName = AnimationName.kSpeedTap_winRound_03;
-        break;
-      }
-      return animName;
-    }
-
-    public string RandomLoseRound() {
-      string animName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        animName = AnimationName.kSpeedTap_loseRound_01;
-        break;
-      case 1:
-        animName = AnimationName.kSpeedTap_loseRound_02;
-        break;
-      default:
-        animName = AnimationName.kSpeedTap_loseRound_03;
-        break;
-      }
-      return animName;
-    }
-
-    public string RandomWinSession() {
-      string animName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        animName = AnimationName.kSpeedTap_winSession_01;
-        break;
-      case 1:
-        animName = AnimationName.kSpeedTap_winSession_02;
-        break;
-      default:
-        animName = AnimationName.kSpeedTap_winSession_03;
-        break;
-      }
-      return animName;
-    }
-
-    public string RandomLoseSession() {
-      string animName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        animName = AnimationName.kSpeedTap_loseSession_01;
-        break;
-      case 1:
-        animName = AnimationName.kSpeedTap_loseSession_02;
-        break;
-      default:
-        animName = AnimationName.kSpeedTap_loseSession_03;
-        break;
-      }
-      return animName;
-    }
-
-    public string RandomTap() {
-      string tapName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        tapName = AnimationName.kSpeedTap_Tap_01;
-        break;
-      case 1:
-        tapName = AnimationName.kSpeedTap_Tap_02;
-        break;
-      default:
-        tapName = AnimationName.kSpeedTap_Tap_03;
-        break;
-      }
-      return tapName;
-    }
-
-    #endregion
   }
 }
