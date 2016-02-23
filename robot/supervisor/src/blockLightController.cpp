@@ -58,7 +58,8 @@ namespace BlockLightController {
     }
 
     if (blockLEDsUpdated) {
-      HAL::SetBlockLight(blockID, m);
+			// Stubbed out for now TODO move all this functionality to body.
+      //HAL::SetBlockLight(blockID, m);
     }
   }
 

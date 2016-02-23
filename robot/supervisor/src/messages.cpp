@@ -667,10 +667,18 @@ namespace Anki {
       {
         HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
       }
-      void Process_radioConnected(const bool& wifi)
+      void Process_radioConnected(const RobotInterface::RadioState& state)
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
       }
+			void Process_bootloadRTIP(const RobotInterface::BootloadRTIP&)
+			{
+				// Handled in HAL SPI not here
+			}
+			void Process_bodyUpgradeData(const RobotInterface::BodyUpgradeData&)
+			{
+				// Handled in HAL SPI not here
+			}
 
 // ----------- Send messages -----------------
 
@@ -811,7 +819,7 @@ namespace Anki {
     namespace HAL {
       u8 BatteryGetVoltage10x()
       {
-        return static_cast<u8>(vBat * 10.0f);
+        return static_cast<u8>(Messages::vBat * 10.0f);
       }
       bool BatteryIsCharging()
       {
@@ -819,7 +827,7 @@ namespace Anki {
       }
       bool BatteryIsOnCharger()
       {
-        return vExt > 4.0f;
+        return Messages::vExt > 4.0f;
       }
       
 #ifndef TARGET_K02
