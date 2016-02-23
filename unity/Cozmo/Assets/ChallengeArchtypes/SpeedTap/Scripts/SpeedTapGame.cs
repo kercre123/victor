@@ -9,14 +9,17 @@ namespace SpeedTap {
 
   public class SpeedTapGame : GameBase {
 
+    private const float _kRetreatSpeed = -50.0f;
+    private const float _kRetreatTime = 1.5f;
+    // TODO: If we need these constants still, cozmo is not ready to ship.
+    private const float _kTapAdjustRange = 5.0f;
+
+    private Vector3 _CozmoPos;
+
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
     public bool PlayerTap = false;
     public bool AllRoundsOver = false;
-    // Used for matching animation values and fixing cozmo's position after animations play
-    public float CozmoAdjustTime = 0.0f;
-    public float CozmoAdjustSpeed = 0.0f;
-    public float CozmoAdjustTimeLeft = 0.0f;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -46,9 +49,6 @@ namespace SpeedTap {
     }
 
     public ISpeedTapRules Rules;
-
-    private const float _kRetreatSpeed = -50.0f;
-    private const float _kRetreatTime = 1.5f;
 
     private int _CozmoScore;
     private int _PlayerScore;
@@ -295,19 +295,25 @@ namespace SpeedTap {
 
     // Temp Functions for random animation until anim groups are ready
 
-    // Moves cozmo based on a certain speed and amount of time
-    public void CozmoAdjust() {
-      if ((CozmoAdjustTime != 0.0f) && (CozmoAdjustTimeLeft <= 0.0f)) {
-        CozmoAdjustTimeLeft = CozmoAdjustTime;
-        CozmoAdjustTime = 0.0f;
-        CurrentRobot.DriveWheels(CozmoAdjustSpeed, CozmoAdjustSpeed);
+    public void SetCozmoOrigPos() {
+      _CozmoPos = CurrentRobot.WorldPosition;
+    }
+
+    public void CheckForAdjust(RobotCallback adjustCallback = null) {
+      float dist = 0.0f;
+      dist = (CurrentRobot.WorldPosition - _CozmoPos).magnitude;
+      if (dist > _kTapAdjustRange) {
+        CurrentRobot.GotoPose(_CozmoPos, CurrentRobot.Rotation, false, false, adjustCallback);
+      }
+      else {
+        if (adjustCallback != null) {
+          adjustCallback.Invoke(false);
+        }
       }
     }
 
     public string RandomWinHand() {
       string animName = "";
-      CozmoAdjustTime = 0.0f;
-      CozmoAdjustSpeed = 0.0f;
       int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
@@ -325,8 +331,6 @@ namespace SpeedTap {
 
     public string RandomLoseHand() {
       string animName = "";
-      CozmoAdjustTime = 0.0f;
-      CozmoAdjustSpeed = 0.0f;
       int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
@@ -344,8 +348,6 @@ namespace SpeedTap {
 
     public string RandomWinRound() {
       string animName = "";
-      CozmoAdjustTime = 0.0f;
-      CozmoAdjustSpeed = 0.0f;
       int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
@@ -363,8 +365,6 @@ namespace SpeedTap {
 
     public string RandomLoseRound() {
       string animName = "";
-      CozmoAdjustTime = 0.0f;
-      CozmoAdjustSpeed = 0.0f;
       int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
@@ -382,8 +382,6 @@ namespace SpeedTap {
 
     public string RandomWinSession() {
       string animName = "";
-      CozmoAdjustTime = 0.0f;
-      CozmoAdjustSpeed = 0.0f;
       int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
@@ -401,8 +399,6 @@ namespace SpeedTap {
 
     public string RandomLoseSession() {
       string animName = "";
-      CozmoAdjustTime = 0.0f;
-      CozmoAdjustSpeed = 0.0f;
       int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
@@ -420,18 +416,12 @@ namespace SpeedTap {
 
     public string RandomTap() {
       string tapName = "";
-      CozmoAdjustTime = 0.0f;
-      CozmoAdjustSpeed = 0.0f;
       int roll = UnityEngine.Random.Range(0, 4);
       switch (roll) {
       case 0:
-        CozmoAdjustTime = 0.132f;
-        CozmoAdjustSpeed = 51.0f;
         tapName = AnimationName.kSpeedTap_Tap_01;
         break;
       case 1:
-        CozmoAdjustTime = 0.132f;
-        CozmoAdjustSpeed = -51.0f;
         tapName = AnimationName.kSpeedTap_Tap_02;
         break;
       default:

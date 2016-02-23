@@ -26,6 +26,7 @@ namespace SpeedTap {
     private bool _TryFake = false;
     private bool _TryPeek = false;
     private bool _MidHand = false;
+    private bool _PlayReady = false;
     private float _CozmoTapDelayTimeMs = 0f;
 
     public override void Enter() {
@@ -37,16 +38,16 @@ namespace SpeedTap {
       _LightsOn = false;
       _SpeedTapGame.PlayerTap = false;
       _MidHand = false;
+      _PlayReady = false;
 
       _CurrentRobot.SetLiftHeight(1.0f);
-      _SpeedTapGame.CozmoAdjust();
+      _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
 
-    void AdjustDone() {
+    void AdjustDone(bool success) {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _StartTimeMs = Time.time * 1000.0f;
-      _SpeedTapGame.CozmoAdjustTime = 0.0f;
-      _SpeedTapGame.CozmoAdjustSpeed = 0.0f;
+      _PlayReady = true;
       if (_MidHand == false) {
         GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
@@ -57,13 +58,8 @@ namespace SpeedTap {
 
     public override void Update() {
       base.Update();
-      // Wait until _StartTime has been set before considering the round started.
-      if (_SpeedTapGame.CozmoAdjustTimeLeft > 0.0f) {
-        _SpeedTapGame.CozmoAdjustTimeLeft -= Time.deltaTime;
-        return;
-      }
-      else if (_StartTimeMs == -1.0f) {
-        AdjustDone();
+      // Do not run game while not ready for play
+      if (_PlayReady == false) {
         return;
       }
       float currTimeMs = Time.time * 1000.0f;
@@ -81,8 +77,6 @@ namespace SpeedTap {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_FakeOut, RobotCompletedFakeTapAnimation);
-              _SpeedTapGame.CozmoAdjustTime = 0.242f;
-              _SpeedTapGame.CozmoAdjustSpeed = 30.0f;
               _TriedFake = true;
             }
           }
@@ -119,17 +113,12 @@ namespace SpeedTap {
       if (_SpeedTapGame.PlayerTap == false) {
         CozmoDidTap();
       }
-      else {
-        _StartTimeMs = -1.0f;
-        _SpeedTapGame.CozmoAdjust();
-      }
     }
 
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);
-      _StartTimeMs = -1.0f;
-      _SpeedTapGame.CozmoAdjust();
+      _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
 
     void CozmoDidTap() {
