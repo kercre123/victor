@@ -215,7 +215,7 @@ public class DailyGoalManager : MonoBehaviour {
     for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
       Anki.Cozmo.ProgressionStatType index = (Anki.Cozmo.ProgressionStatType)i;
       if (goals[index] > 0) {
-        DAS.Event("world.daily_goals", DASUtil.FormatDate(DataPersistenceManager.Today),
+        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
           new Dictionary<string,string> {
             { "$data", DASUtil.FormatStatAmount(index, goals[index]) }
           });

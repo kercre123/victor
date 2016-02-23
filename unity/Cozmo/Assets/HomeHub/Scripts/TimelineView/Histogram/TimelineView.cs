@@ -277,7 +277,7 @@ namespace Cozmo.HomeHub {
       for (int i = 0; i < stat_count; ++i) {
         var targetStat = (Anki.Cozmo.ProgressionStatType)i;
         if (timelineEntry.Goals[targetStat] > 0) {
-          DAS.Event("world.daily_report", DASUtil.FormatDate(timelineEntry.Date), 
+          DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date), 
             new Dictionary<string,string> { {
                 "$data",
                 DASUtil.FormatGoal(targetStat, timelineEntry.Progress[targetStat], timelineEntry.Goals[targetStat])

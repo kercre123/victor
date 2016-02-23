@@ -540,7 +540,7 @@ public class Robot : IRobot {
     );
     RobotEngineManager.Instance.SendMessage();
 
-    DAS.Event("world.friendship.add_points", FriendshipPoints.ToString());
+    DAS.Event(DASConstants.Friendship.kAddPoints, FriendshipPoints.ToString());
     ComputeFriendshipLevel();
   }
 
@@ -586,7 +586,7 @@ public class Robot : IRobot {
       );
       RobotEngineManager.Instance.SendMessage();
 
-      DAS.Event("world.friendship.level_up", FriendshipLevel.ToString());
+      DAS.Event(DASConstants.Friendship.kLevelUp, FriendshipLevel.ToString());
     }
   }
 
@@ -698,7 +698,7 @@ public class Robot : IRobot {
     bool isGoalCompleteNow = value >= goals[index];
     if (!wasGoalComplete && isGoalCompleteNow) {
       string goalDate = DASUtil.FormatDate(currentSession.Date);
-      DAS.Event("world.goal_complete", goalDate, new Dictionary<string,string> { 
+      DAS.Event(DASConstants.Goal.kComplete, goalDate, new Dictionary<string,string> { 
         { "$data", DASUtil.FormatGoal(index, value, goals[index]) } 
       });
     }
