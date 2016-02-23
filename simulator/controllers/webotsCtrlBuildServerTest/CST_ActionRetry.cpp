@@ -90,7 +90,7 @@ namespace Anki {
           m.robotID = 1;
           m.position = QueueActionPosition::AT_END;
           m.idTag = 5;
-          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-PI/4, false, 1));
+          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-PI/4, DEG_TO_RAD(100), 0, false, 1));
           message.Set_QueueSingleAction(m);
           SendMessage(message);
           _testState = TestState::PickupObject;

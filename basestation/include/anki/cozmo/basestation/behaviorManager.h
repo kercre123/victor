@@ -105,7 +105,8 @@ namespace Cozmo {
     Result InitNextBehaviorHelper(float currentTime_sec);
     void   SetupOctDemoBehaviorChooser(const Json::Value &config);
     void   AddReactionaryBehavior(IReactionaryBehavior* behavior);
-    
+
+    void   StopCurrentBehavior(double currentTime_sec);
     void   SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec);
     
     // Factory creates and tracks data-driven behaviors etc

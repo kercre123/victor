@@ -10,30 +10,27 @@ namespace HAL {
   static const int QUEUE_DEPTH = 8;
   
   static SpineProtocol spinebuffer[QUEUE_DEPTH];
-  static int spine_enter = 0;
-  static int spine_exit = 0;
-  static int spine_count = 0;
-   
+  static volatile int spine_enter = 0;
+  static volatile int spine_exit = 0;
 
   void Spine::Dequeue(SpineProtocol& msg) {
-    if (spine_count <= 0) {
+    if (spine_enter == spine_exit) {
       Cube::SpineIdle(msg);
       return ;
     }
     
     memcpy(&msg, &spinebuffer[spine_enter], sizeof(SpineProtocol));
     spine_enter = (spine_enter+1) % QUEUE_DEPTH;
-    spine_count--;
   }
   
   void Spine::Enqueue(SpineProtocol& msg) {
-    if (spine_count >= QUEUE_DEPTH) {
+    int exit = (spine_exit+1) % QUEUE_DEPTH;
+    if (spine_enter == exit) {
       return ;
     }
 
     memcpy(&spinebuffer[spine_exit], &msg, sizeof(SpineProtocol));
-    spine_exit = (spine_exit+1) % QUEUE_DEPTH;
-    spine_count++;
+    spine_exit = exit;
   }
 
   void Spine::Manage(SpineProtocol& msg) {

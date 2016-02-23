@@ -90,8 +90,21 @@ Supervisor {
 		  name "blockCommsEmitter"
 		}
 		
+		# There should be a total of MAX_NUM_ACTIVE_OBJECTS (defined in activeObjectTypes.clad) receivers
 		Receiver {
-		  name "blockCommsReceiver"
+		  name "blockCommsReceiver0"
+		}
+		Receiver {
+		  name "blockCommsReceiver1"
+		}
+		Receiver {
+		  name "blockCommsReceiver2"
+		}
+		Receiver {
+		  name "blockCommsReceiver3"
+		}
+		Receiver {
+		  name "blockCommsReceiver4"
 		}
    	
 		# Are these still needed?
