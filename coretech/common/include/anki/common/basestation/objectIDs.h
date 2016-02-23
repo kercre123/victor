@@ -109,17 +109,4 @@ namespace Anki {
   
 } // namespace Anki
 
-// explicit hash for easy use within sets
-namespace std
-{
-  template <>
-  struct hash<Anki::ObjectID>
-  {
-    size_t operator()(const Anki::ObjectID& id) const
-    {
-      return std::hash<Anki::ObjectID::StorageType>()(id.GetValue());
-    }
-  };
-}
-
 #endif // __Anki_Common_ObjectIDs_H__

@@ -4,7 +4,7 @@
  * Author: Molly Jameson
  * Date:   2/18/2016
  *
- * Description: blockFilter is a serializable set of objectIDs.
+ * Description: blockFilter is a serializable set of factoryIds.
  *                So Cozmo only uses certain blocks.
  *
  * Copyright: Anki, Inc. 2016
@@ -26,12 +26,12 @@ namespace Anki {
 namespace Cozmo {
     
 BlockFilter::BlockFilter()
-  : BlockFilter(ObjectIDSet())
+  : BlockFilter(FactoryIDSet())
 {
 }
 
-BlockFilter::BlockFilter(const ObjectIDSet &objectIds)
-  : _blocks(objectIds)
+BlockFilter::BlockFilter(const FactoryIDSet &factoryIds)
+  : _blocks(factoryIds)
   , _path()
   , _enabled(false)
   , _externalInterface(nullptr)
@@ -62,40 +62,40 @@ void BlockFilter::Init(const std::string &path, IExternalInterface* externalInte
   }
 }
 
-void BlockFilter::GetObjectIds(ObjectIDSet &objectIds) const
+void BlockFilter::GetFactoryIds(FactoryIDSet &factoryIds) const
 {
-  objectIds.insert(_blocks.begin(), _blocks.end());
+  factoryIds.insert(_blocks.begin(), _blocks.end());
 }
 
-bool BlockFilter::ContainsObjectId(ObjectID objectId) const
+bool BlockFilter::ContainsFactoryId(FactoryID factoryId) const
 {
-  return !_enabled || (_blocks.find(objectId) != std::end(_blocks));
+  return !_enabled || (_blocks.find(factoryId) != std::end(_blocks));
 }
 
-void BlockFilter::AddObjectId(const ObjectID objectId)
+void BlockFilter::AddFactoryId(const FactoryID factoryId)
 {
-  _blocks.insert(objectId);
+  _blocks.insert(factoryId);
 }
 
-void BlockFilter::AddObjectIds(const ObjectIDSet &objectIds)
+void BlockFilter::AddFactoryIds(const FactoryIDSet &factoryIds)
 {
-  _blocks.insert(objectIds.begin(), objectIds.end());
+  _blocks.insert(factoryIds.begin(), factoryIds.end());
 }
 
-void BlockFilter::RemoveObjectId(const ObjectID objectId)
+void BlockFilter::RemoveFactoryId(const FactoryID factoryId)
 {
-  _blocks.erase(objectId);
+  _blocks.erase(factoryId);
 }
 
-void BlockFilter::RemoveObjectIds(const ObjectIDSet &objectIds)
+void BlockFilter::RemoveFactoryIds(const FactoryIDSet &factoryIds)
 {
-  for (const ObjectID &objectId : objectIds)
+  for (const FactoryID &factoryID : factoryIds)
   {
-    _blocks.erase(objectId);
+    _blocks.erase(factoryID);
   }
 }
 
-void BlockFilter::RemoveAllObjectIds()
+void BlockFilter::RemoveAllFactoryIds()
 {
   _blocks.clear();
 }
@@ -119,13 +119,13 @@ bool BlockFilter::Save(const std::string &path) const
   try
   {
     outputFileSteam.open(path);
-    for (ObjectIDSet::const_iterator it = std::begin(_blocks); it != std::end(_blocks); ++it)
+    for (FactoryIDSet::const_iterator it = std::begin(_blocks); it != std::end(_blocks); ++it)
     {
-      const ObjectID &objectId = *it;
+      const FactoryID &factoryId = *it;
       outputFileSteam << "0x";
-      outputFileSteam << std::hex << objectId;
+      outputFileSteam << std::hex << factoryId;
       outputFileSteam << "\n";
-      PRINT_NAMED_DEBUG("BlockFilter.Save", "0x%d", objectId.GetValue());
+      PRINT_NAMED_DEBUG("BlockFilter.Save", "%#08x", factoryId);
     }
     outputFileSteam.close();
   }
@@ -148,7 +148,7 @@ bool BlockFilter::Save() const
 
 bool BlockFilter::Load(const std::string &path)
 {
-  ObjectIDSet blocks;
+  FactoryIDSet blocks;
 
   std::ifstream inputFileSteam;
   inputFileSteam.open(path);
@@ -168,8 +168,8 @@ bool BlockFilter::Load(const std::string &path)
     {
       try
       {
-        int v = std::stoi(line, nullptr, 16);
-        blocks.insert(ObjectID(v));
+        FactoryID v = (FactoryID)std::stoul(line, nullptr, 16);
+        blocks.insert(v);
         PRINT_NAMED_DEBUG("BlockFilter.Load", "%#08x", v);
       }
       catch (std::exception e)
@@ -196,10 +196,10 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       msg.blockPoolEnabled = _enabled;
       
       std::vector<ExternalInterface::BlockPoolBlockData> allBlocks;
-      for (const ObjectID &objectId : _blocks ) {
+      for (const FactoryID &factoryId : _blocks ) {
         ExternalInterface::BlockPoolBlockData blockData;
         blockData.enabled = true;
-        blockData.id = objectId.GetValue();
+        blockData.id = factoryId;
         allBlocks.push_back(blockData);
       }
       // TODO: push in all discovered by robot but unlisted blocks here as well.
@@ -220,11 +220,11 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       const Anki::Cozmo::ExternalInterface::BlockSelectedMessage& msg = event.GetData().Get_BlockSelectedMessage();
       if( msg.selected != 0 )
       {
-        AddObjectId( msg.blockId );
+        AddFactoryId( msg.blockId );
       }
       else
       {
-        RemoveObjectId(msg.blockId);
+        RemoveFactoryId(msg.blockId);
       }
       break;
     }

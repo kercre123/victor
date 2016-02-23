@@ -4,7 +4,7 @@
  * Author: Molly Jameson
  * Date:   2/18/2016
  *
- * Description: blockFilter is a serializable set of objectIDs.
+ * Description: blockFilter is a serializable set of factoryIds.
  *                So Cozmo only uses certain blocks.
  *
  * Copyright: Anki, Inc. 2016
@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Blocks_BlockFilter_H__
 #define __Cozmo_Basestation_Blocks_BlockFilter_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <string>
@@ -35,21 +35,21 @@ namespace ExternalInterface {
 class BlockFilter
 {
 public: 
-  using ObjectIDSet = std::unordered_set<ObjectID>;
+  using FactoryIDSet = std::unordered_set<FactoryID>;
 
   BlockFilter();
-  explicit BlockFilter(const ObjectIDSet &objectIds);
+  explicit BlockFilter(const FactoryIDSet &factoryIds);
   explicit BlockFilter(const std::string &path);
 
-  void AddObjectId(const ObjectID objectId);
-  void AddObjectIds(const ObjectIDSet &objectIds);
+  void AddFactoryId(const FactoryID factoryId);
+  void AddFactoryIds(const FactoryIDSet &factoryIds);
 
-  void RemoveObjectId(const ObjectID objectId);
-  void RemoveObjectIds(const ObjectIDSet &objectIds);
-  void RemoveAllObjectIds();
+  void RemoveFactoryId(const FactoryID factoryId);
+  void RemoveFactoryIds(const FactoryIDSet &factoryIds);
+  void RemoveAllFactoryIds();
 
-  void GetObjectIds(ObjectIDSet &objectIds) const;
-  bool ContainsObjectId(ObjectID objectId) const;
+  void GetFactoryIds(FactoryIDSet &factoryIds) const;
+  bool ContainsFactoryId(FactoryID factoryId) const;
   bool IsEmpty() const { return _blocks.empty(); }
 
   bool Save(const std::string &path) const;
@@ -66,7 +66,7 @@ private:
   
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
-  ObjectIDSet _blocks;
+  FactoryIDSet _blocks;
   std::string _path;
   bool        _enabled;
   
