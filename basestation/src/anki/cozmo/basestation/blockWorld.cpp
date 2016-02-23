@@ -726,6 +726,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
         
         ObservableObject* matchingObject = nullptr;
         
+#if(OBJECTS_HEARABLE)
         if (objSeen->IsActive()) {
           // Find all objects of the same type
           BlockWorldFilter filter;
@@ -764,7 +765,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
           }
 
         } else {
-          
+#endif
           // Store pointers to any existing objects that overlap with this one
           //std::vector<ObservableObject*> overlappingObjects;
           //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
@@ -785,8 +786,9 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
             delete objSeen;
             continue;
           }
-           
+#if(OBJECTS_HEARABLE)
         }
+#endif
         
         
         // As of now the object will be w.r.t. the robot's origin.  If we
