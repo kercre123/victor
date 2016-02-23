@@ -114,7 +114,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   params.doCodeExtraction                 = true;
   
   params.cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
-  if(nrhs >= 22) {
+  if(nrhs >= 21) {
     params.cornerMethod = static_cast<CornerMethod>(Round<s32>(mxGetScalar(prhs[21])));
   }
   
