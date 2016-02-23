@@ -11,6 +11,8 @@
 #include "hardware.h"
 
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/logging.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "spine.h"
 
@@ -123,13 +125,62 @@ inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
-  Spine::dequeue(g_dataToHead.spineMessage);
+  Spine::Dequeue(g_dataToHead.cladBuffer);
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
-  g_dataToHead.spineMessage.opcode = NO_OPERATION;
+  g_dataToHead.cladBuffer[0] = Anki::Cozmo::RobotInterface::GLOBAL_INVALID_TAG;
   txRxIndex = 0;
 
   setTransmitMode(TRANSMIT_SEND);
   transmitByte();
+}
+
+extern void EnterRecovery(void);
+
+static void Process_bootloadBody(const Anki::Cozmo::RobotInterface::BootloadBody& msg)
+{
+  EnterRecovery();
+}
+static void Process_setBackpackLights(const Anki::Cozmo::RobotInterface::BackpackLights& msg)
+{
+  // TODO poke this into LED controller running down here
+}
+static void Process_setCubeLights(const Anki::Cozmo::CubeLights& msg)
+{
+  // TODO poke this into LED controller running down here
+}
+static void Process_assignCubeSlots(const Anki::Cozmo::CubeSlots& msg)
+{
+  int i;
+  for (i=0; i<MAX_ACCESSORIES; ++i)
+  {
+    Radio::assignProp(i, msg.factory_id[i]);
+  }
+}
+
+static void ProcessMessage()
+{
+  using namespace Anki::Cozmo;
+  const u8 tag = g_dataToBody.cladBuffer[0];
+  if (tag == RobotInterface::GLOBAL_INVALID_TAG)
+  {
+    // pass
+  }
+  else if (tag > RobotInterface::TO_BODY_END)
+  {
+    AnkiError("Spine.ProcessMessage", "Body received message %x that seems bound above", tag);
+  }
+  else
+  {
+    u8 cladBuffer[SPINE_MAX_CLAD_MSG_SIZE + 4];
+    RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
+    memcpy(msg->GetBuffer(), g_dataToBody.cladBuffer, SPINE_MAX_CLAD_MSG_SIZE);
+    switch(tag)
+    {
+      #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"
+      default:
+        AnkiError("Head.ProcessMessage.BadTag", "Message to body, unhandled tag 0x%x", tag);
+    }
+  }
 }
 
 extern "C"
@@ -155,7 +206,7 @@ void UART0_IRQHandler()
     // We received a full packet
     if (++txRxIndex >= sizeof(GlobalDataToBody)) {
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
-      Spine::processMessage(g_dataToBody.spineMessage);
+      ProcessMessage();
       Head::spokenTo = true;
       
       setTransmitMode(TRANSMIT_DEBUG);

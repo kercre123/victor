@@ -3,70 +3,51 @@
 
 #include "nrf.h"
 #include "anki/cozmo/robot/spineData.h"
-
+#include "anki/cozmo/robot/logging.h"
 #include "radio.h"
 #include "spine.h"
 #include "lights.h"
 
 extern void EnterRecovery(void);
 
-static const int FIFO_LIMIT = 4;
-static SpineProtocol queue[FIFO_LIMIT];
+static const int QUEUE_DEPTH = 4;
+static u8 spinebuffer[QUEUE_DEPTH][SPINE_MAX_CLAD_MSG_SIZE];
+static volatile int spine_enter = 0;
+static volatile int spine_exit  = 0;
 
-static int fifoStart = 0;
-static int fifoEnd = 0; 
-static int fifoCount = 0;
 
-namespace Spine {
-  void enqueue(SpineProtocol& msg) {
-    if (fifoCount == FIFO_LIMIT) {
-      return ;
-    }
-
-    NVIC_DisableIRQ(UART0_IRQn);
-    fifoCount++;
-    memcpy(&queue[fifoEnd], &msg, sizeof(SpineProtocol));
-    if (++fifoEnd >= FIFO_LIMIT) fifoEnd = 0;
-    NVIC_EnableIRQ(UART0_IRQn);
+bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
+{
+  const int exit = (spine_exit+1) % QUEUE_DEPTH;
+  if (spine_enter == exit) {
+    return false;
   }
-  
-  void dequeue(SpineProtocol& msg) {
-    if (fifoCount == 0) {
-      return ;
-    }
-    
-    NVIC_DisableIRQ(RADIO_IRQn);
-    fifoCount--;
-    memcpy(&msg, &queue[fifoStart], sizeof(SpineProtocol));
-    if (++fifoStart >= FIFO_LIMIT) fifoStart = 0;
-    NVIC_EnableIRQ(RADIO_IRQn);
+  else if ((size + 1) > SPINE_MAX_CLAD_MSG_SIZE)
+  {
+    AnkiError("Spine.Enqueue.MessageTooLong", "Message %x[%d] too long to enqueue to head. MAX_SIZE = %d", msgID == 0 ? data[0] : msgID, size, SPINE_MAX_CLAD_MSG_SIZE);
+    return false;
   }
-
-  void processMessage(SpineProtocol& msg) {
-    switch (msg.opcode) {
-    case ASSIGN_PROP:
-      Radio::assignProp(msg.AssignProp.slot, msg.AssignProp.prop_id);
-      break ;
-    case SET_PROP_STATE:
-      uint16_t colors[4];
-      memcpy(&colors, (void*)&msg.SetPropState.colors, sizeof(colors));
-      Radio::setPropState(msg.SetPropState.slot, colors);
-      break ;
-    case ENTER_RECOVERY:
-      EnterRecovery();
-      break ;
-    case SET_BACKPACK_STATE:
-      {  
-        Lights::setLights(msg.SetBackpackState.colors);
-      }
-      break;
-
-    // NO OPS AND HEAD ONLY OPERATIONS
-    case REQUEST_PROPS:      
-    case NO_OPERATION:
-    case GET_PROP_STATE:
-    case PROP_DISCOVERED:
-      break ;
+  else
+  {
+    u8* dest = spinebuffer[spine_exit];
+    if (msgID != 0) {
+      *dest = msgID;
+      ++dest;
     }
+    memcpy(dest, data, size);
+    spine_exit = exit;
+    return true;
+  }
+}
+
+void Spine::Dequeue(u8* dest) {
+  if (spine_enter == spine_exit)
+  {
+    *dest = 0; // Invalid tag
+  }
+  else
+  {
+    memcpy(dest, spinebuffer[spine_enter, SPINE_MAX_CLAD_MSG_SIZE]);
+    spine_enter = (spine_enter + 1) % QUEUE_DEPTH;
   }
 }

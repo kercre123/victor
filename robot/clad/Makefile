@@ -24,8 +24,12 @@ OUTPUT_PYTHON=$(patsubst %.clad, %.py, $(INPUT_FILES))
 ENGINE_TO_ROBOT_UNION:=./clad/robotInterface/messageEngineToRobot
 ROBOT_TO_ENGINE_UNION:=./clad/robotInterface/messageRobotToEngine
 LIGHT_CUBE_UNION:=./clad/robotInterface/lightCubeMessage
-K02_START_TAG:=0x30
-K02_END_TAG:=0x7F
+BODY_START_TAG:=0x01
+BODY_END_TAG:=0x2F
+RTIP_START_TAG:=0x30
+RTIP_END_TAG:=0x7F
+WIFI_START_TAG:=0x80
+WIFI_END_TAG:=0xAF
 
 vpath %.clad $(INPUT_DIR)
 vpath %.h $(OUTPUT_DIR)/robot/
@@ -41,20 +45,25 @@ cpp: $(OUTPUT_H_AND_CPP)
 
 python: $(OUTPUT_PYTHON)
 
-%_switch_group_anim.def : %.clad $(CLAD_CPP_SWITCH)
-	if test -f $(OUTPUT_DIR)robot/$*_switch_group_anim.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_group_anim.def; fi
-	python $(CLAD_CPP_SWITCH) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
-	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_group_anim.def
-
 %_switch.def : %.clad $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR)robot/$*_switch.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch.def; fi
 	python $(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch.def
 
-%_switch_from_$(K02_START_TAG)_to_$(K02_END_TAG).def : %.clad $(CLAD_CPP_SWITCH)
-		if test -f $(OUTPUT_DIR)robot/$*_switch.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch.def; fi
-		python $(CLAD_CPP_SWITCH) --start=$(K02_START_TAG) --end=$(K02_END_TAG) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
-		chmod -f 555 $(OUTPUT_DIR)robot/$*_switch.def
+%_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def : %.clad $(CLAD_CPP_SWITCH)
+		if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def; fi
+		python $(CLAD_CPP_SWITCH) --start=$(BODY_START_TAG) --end=$(BODY_END_TAG) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+		chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def
+
+%_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def : %.clad $(CLAD_CPP_SWITCH)
+		if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def; fi
+		python $(CLAD_CPP_SWITCH) --start=$(RTIP_START_TAG) --end=$(RTIP_END_TAG) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+		chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def
+
+%_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def : %.clad $(CLAD_CPP_SWITCH)
+		if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def; fi
+		python $(CLAD_CPP_SWITCH) --start=$(WIFI_START_TAG) --end=$(WIFI_END_TAG) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+		chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def
 
 %_declarations.def : %.clad $(CLAD_CPP_DECL)
 	if test -f $(OUTPUT_DIR)robot/$*_declarations.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_declarations.def; fi
@@ -84,11 +93,11 @@ cpplilib: cpp
 	cd $(OUTPUT_DIR); /usr/bin/find . -type f -iname '*.cpp' > cpps.list; awk '{ print "#include \"" $$0 "\"" }' <cpps.list >clad.cpp
 	@rm $(OUTPUT_DIR)cpps.list
 
-k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(K02_START_TAG)_to_$(K02_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
+nrf: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
 
-esp: cpp $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
+k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
 
-fourzero: cpp $(ENGINE_TO_ROBOT_UNION)_switch_group_anim.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
+esp: cpp $(ENGINE_TO_ROBOT_UNION)_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
 
 lightCube: $(LIGHT_CUBE_UNION)_declarations.def $(LIGHT_CUBE_UNION)_send_helper.h $(LIGHT_CUBE_UNION)_switch.def
 

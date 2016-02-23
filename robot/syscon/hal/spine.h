@@ -2,9 +2,15 @@
 #define __SPINE_H
 
 namespace Spine {
-  bool enqueue(const u8* data, const u8 length);
-  int  dequeue(u8* dest, const u8 maxLength);
-  void processMessage(SpineProtocol& msg);
+  int  Dequeue(u8* dest);
+}
+
+namespace Anki {
+  namespace Cozmo {
+    namespace HAL {
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID=0);
+    }
+  }
 }
 
 #endif

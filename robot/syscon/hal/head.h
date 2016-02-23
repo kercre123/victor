@@ -11,7 +11,6 @@ namespace Head {
   // Initialize the SPI peripheral on the designated pins in the source file.
   void init();
   void manage(void* userdata);
-  void processSpine(SpineProtocol& msg);
 }
 
 #endif

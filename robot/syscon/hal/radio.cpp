@@ -19,6 +19,9 @@
 #include "rng.h"
 #include "spine.h"
 
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
 #ifdef DUMP_DISCOVER
 #include "head.h"
 #endif
@@ -220,10 +223,6 @@ void Radio::init() {
     };
     setPropState(slot, reset_state);
   }
-  
-  SpineProtocol msg;
-  msg.opcode = REQUEST_PROPS;
-  Spine::enqueue(msg);
 }
 
 static int LocateAccessory(uint32_t id) {
@@ -312,11 +311,9 @@ extern "C" void uesb_event_handler(void)
       // Attempt to locate existing accessory and repair
       slot = LocateAccessory(packet.id);
       if (slot < 0) {
-        SpineProtocol msg;
-        msg.opcode = PROP_DISCOVERED;
-        msg.PropDiscovered.prop_id = packet.id;
-                
-        Spine::enqueue(msg);
+        Anki::Cozmo::ObjectDiscovered msg;
+        msg.factory_id = packet.id;
+        Anki::Cozmo::RobotInterface::SendMessage(msg);
         
         #ifdef DUMP_DISCOVER
         if (packet.id < 0x8000) UART::print("%x\r\n", (uint16_t) packet.id);
@@ -350,14 +347,13 @@ extern "C" void uesb_event_handler(void)
 
       AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
 
-      SpineProtocol msg;
-      msg.opcode = GET_PROP_STATE;
-      msg.GetPropState.slot = currentAccessory;
-      msg.GetPropState.x = ap->x;
-      msg.GetPropState.y = ap->y;
-      msg.GetPropState.z = ap->z;
-      msg.GetPropState.shockCount = ap->shockCount;
-      Spine::enqueue(msg);
+      Anki::Cozmo::PropState msg;
+      msg.slot = currentAccessory;
+      msg.x = ap->x;
+      msg.y = ap->y;
+      msg.z = ap->z;
+      msg.shockCount = ap->shockCount;
+      Anki::Cozmo::RobotInterface::SendMessage(msg);
 
       send_dummy_byte();
       break ;

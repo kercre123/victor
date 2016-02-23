@@ -30,6 +30,9 @@ $(VERSION_HEADER):
 sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make fourzero -C clad -j4
 
+nrf: $(ANKI_LOG_TABLE_JSON)
+	make $@ -C clad -j4
+
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 

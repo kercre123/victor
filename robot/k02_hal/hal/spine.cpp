@@ -18,7 +18,7 @@ namespace HAL {
 
   void Spine::Dequeue(u8* dest) {
     if (spine_enter == spine_exit) {
-      *dest = 0; // Invalid tag
+      *dest = RobotInterface::GLOBAL_INVALID_TAG;
     }
     else
     {
@@ -34,7 +34,7 @@ namespace HAL {
     }
     else if (length > SPINE_MAX_CLAD_MSG_SIZE)
     {
-      AnkiWarn( 128, "Spine.Enqueue", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, data[0], length, SPINE_MAX_CLAD_MSG_SIZE);
+      AnkiError( 128, "Spine.Enqueue.MessageTooLong", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, data[0], length, SPINE_MAX_CLAD_MSG_SIZE);
       return false;
     }
     else
@@ -61,7 +61,9 @@ namespace HAL {
     }
     else
     {
-      RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToHead.cladBuffer);
+      u8 cladBuffer[SPINE_MAX_CLAD_MSG_SIZE + 4];
+      RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
+      memcpy(msg->GetBuffer(), g_dataToHead.cladBuffer, SPINE_MAX_CLAD_MSG_SIZE);
       Messages::ProcessMessage(*msg);
     }
     // Prevent same messagr from getting processed twice (if the spine desyncs)

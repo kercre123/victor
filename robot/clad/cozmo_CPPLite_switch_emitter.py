@@ -48,7 +48,7 @@ class UnionSwitchEmitter(ast.NodeVisitor):
     def writeFooter(self, node, globals):
         if self.groupedSwitchMembers:
             for member in self.groupedSwitchMembers:
-                self.output.write('case {member_tag}:\n'.format(member_tag=member.tag))
+                self.output.write('case 0x{member_tag:x}:\n'.format(member_tag=member.tag))
             self.output.write('\tProcess_{group_prefix}(msg);\n\tbreak;\n'.format(group_prefix=self.groupSwitchPrefix))
 
     def writeMemberCases(self, node, globals):
@@ -78,7 +78,6 @@ if __name__ == '__main__':
             arg, param = a.split('=')
             UnionSwitchEmitter.groupSwitchPrefix = param
             suffix += '_group_' + param
-            break
         elif a.startswith('--start='):
             arg, param = a.split('=')
             UnionSwitchEmitter.startID = int(eval(param))
