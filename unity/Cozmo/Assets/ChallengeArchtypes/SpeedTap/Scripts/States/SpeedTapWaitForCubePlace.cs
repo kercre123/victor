@@ -30,7 +30,7 @@ namespace SpeedTap {
       if (_SpeedTapGame.AllRoundsOver) {
         return;
       }
-
+      _GotoObjectComplete = false;
       _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 70f, HandleGotoObjectComplete);
 
       if (_ShowHowToPlay) {
@@ -51,6 +51,7 @@ namespace SpeedTap {
         }
         else {
           // restart this state
+          _SpeedTapGame.InitialCubesDone();
           _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
         }
       }
