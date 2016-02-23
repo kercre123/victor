@@ -1,8 +1,10 @@
 #ifndef __SPINE_H
 #define __SPINE_H
 
+#include "portable.h"
+
 namespace Spine {
-  int  Dequeue(u8* dest);
+  void Dequeue(u8* dest);
 }
 
 namespace Anki {

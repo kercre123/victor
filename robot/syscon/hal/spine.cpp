@@ -24,7 +24,7 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
   }
   else if ((size + 1) > SPINE_MAX_CLAD_MSG_SIZE)
   {
-    AnkiError( 128, "Spine.Enqueue.MessageTooLong", 386, "Message %x[%d] too long to enqueue to head. MAX_SIZE = %d", 3, msgID == 0 ? data[0] : msgID, size, SPINE_MAX_CLAD_MSG_SIZE);
+    AnkiError( 128, "Spine.Enqueue.MessageTooLong", 386, "Message %x[%d] too long to enqueue to head. MAX_SIZE = %d", 3, msgID, size, SPINE_MAX_CLAD_MSG_SIZE);
     return false;
   }
   else
@@ -34,7 +34,7 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       *dest = msgID;
       ++dest;
     }
-    memcpy(dest, data, size);
+    memcpy(dest, buffer, size);
     spine_exit = exit;
     return true;
   }
@@ -47,7 +47,7 @@ void Spine::Dequeue(u8* dest) {
   }
   else
   {
-    memcpy(dest, spinebuffer[spine_enter, SPINE_MAX_CLAD_MSG_SIZE]);
+    memcpy(dest, spinebuffer[spine_enter], SPINE_MAX_CLAD_MSG_SIZE);
     spine_enter = (spine_enter + 1) % QUEUE_DEPTH;
   }
 }

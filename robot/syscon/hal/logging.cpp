@@ -1,6 +1,8 @@
 #include <stdarg.h>
+#include "spine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "anki/cozmo/robot/logging.h"
 
 int Anki::Cozmo::RobotInterface::SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
 {

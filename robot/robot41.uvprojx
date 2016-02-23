@@ -548,11 +548,6 @@
               <FilePath>.\k02_hal\hal\lights.cpp</FilePath>
             </File>
             <File>
-              <FileName>battery.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\battery.cpp</FilePath>
-            </File>
-            <File>
               <FileName>cube.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\cube.cpp</FilePath>

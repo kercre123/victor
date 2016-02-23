@@ -151,7 +151,7 @@ static void Process_setCubeLights(const Anki::Cozmo::CubeLights& msg)
 static void Process_assignCubeSlots(const Anki::Cozmo::CubeSlots& msg)
 {
   int i;
-  for (i=0; i<MAX_ACCESSORIES; ++i)
+  for (i=0; i<7; ++i) // 7 is the number supported in messageToActiveObject.clad
   {
     Radio::assignProp(i, msg.factory_id[i]);
   }
@@ -172,8 +172,8 @@ static void ProcessMessage()
   else
   {
     u8 cladBuffer[SPINE_MAX_CLAD_MSG_SIZE + 4];
-    RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
-    memcpy(msg->GetBuffer(), g_dataToBody.cladBuffer, SPINE_MAX_CLAD_MSG_SIZE);
+    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
+    memcpy(msg.GetBuffer(), g_dataToBody.cladBuffer, SPINE_MAX_CLAD_MSG_SIZE);
     switch(tag)
     {
       #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"

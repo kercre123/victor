@@ -4,6 +4,9 @@
 #include "debug.h"
 #include "timer.h"
 #include "anki/cozmo/robot/spineData.h"
+#include "spine.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "hardware.h"
 #include "rtos.h"
@@ -30,6 +33,8 @@ const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
+
+Fixed vBat, vExt;
 
 // Which pin is currently being used in the ADC mux
 AnalogInput m_pinIndex;
@@ -96,8 +101,8 @@ void Battery::init()
 
   NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
 
-  g_dataToHead.VBat = getADCsample(ANALOG_V_BAT_SENSE, VBAT_SCALE); // Battery voltage
-  g_dataToHead.VExt = getADCsample(ANALOG_V_EXT_SENSE, VEXT_SCALE); // External voltage
+  vBat = getADCsample(ANALOG_V_BAT_SENSE, VBAT_SCALE); // Battery voltage
+  vExt = getADCsample(ANALOG_V_EXT_SENSE, VEXT_SCALE); // External voltage
   int temp = getADCsample(ANALOG_CLIFF_SENSE, VEXT_SCALE);
 
   startADCsample(ANALOG_CLIFF_SENSE);
@@ -151,20 +156,20 @@ static inline void sampleCliffSensor() {
 
 void Battery::manage(void* userdata)
 {
-  if (!NRF_ADC->EVENTS_END) {
+	if (!NRF_ADC->EVENTS_END) {
     return ;
   }
 
   switch (m_pinIndex)
   {
     case ANALOG_V_BAT_SENSE:
-      g_dataToHead.VBat = calcResult(VBAT_SCALE);
+      vBat = calcResult(VBAT_SCALE);
       startADCsample(ANALOG_V_EXT_SENSE);
 
       // after 1 minute of low battery, turn off
       static const int LOW_BAT_TIME = 1000 / 20; // 1 minute
       static int lowBatTimer = 0;
-      if (g_dataToHead.VBat < VBAT_CHGD_LO_THRESHOLD) {
+      if (vBat < VBAT_CHGD_LO_THRESHOLD) {
         if (++lowBatTimer >= LOW_BAT_TIME) {
           powerOff();
         }
@@ -188,9 +193,15 @@ void Battery::manage(void* userdata)
           ground_short = 0;
         }
       
-        g_dataToHead.VExt = calcResult(VEXT_SCALE);
-        onContacts = g_dataToHead.VExt > VEXT_DETECT_THRESHOLD;
+        vExt = calcResult(VEXT_SCALE);
+        onContacts = vExt > VEXT_DETECT_THRESHOLD;
 
+				Anki::Cozmo::PowerState msg;
+				msg.VBatFixed = vBat;
+				msg.VExtFixed = vExt;
+				msg.chargeStat = onContacts;
+				Anki::Cozmo::RobotInterface::SendMessage(msg);
+				
         startADCsample(ANALOG_CLIFF_SENSE);
       }
       break ;
