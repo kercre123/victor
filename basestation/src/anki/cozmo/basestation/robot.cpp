@@ -1421,7 +1421,32 @@ namespace Anki {
     
     Result Robot::SetIdleAnimation(const std::string &animName)
     {
+      _idleAnimationNameStack.clear();
       return _animationStreamer.SetIdleAnimation(animName);
+    }
+
+    Result Robot::PushIdleAnimation(const std::string& animName)
+    {
+      _idleAnimationNameStack.push_back(GetIdleAnimationName());
+      return _animationStreamer.SetIdleAnimation(animName);
+    }
+      
+    bool Robot::PopIdleAnimation()
+    {
+      if( _idleAnimationNameStack.empty() ) {
+        return false;
+      }
+      
+      Result ret = _animationStreamer.SetIdleAnimation(_idleAnimationNameStack.back());
+      if( ret != RESULT_OK ) {
+        PRINT_NAMED_WARNING("Robot.PopIdleAnimation",
+                            "Trying to return to idle animation '%s', but Set failed",
+                            _idleAnimationNameStack.back().c_str());
+      }
+      
+      _idleAnimationNameStack.pop_back();
+
+      return ret == RESULT_OK;
     }
 
     const std::string& Robot::GetIdleAnimationName() const

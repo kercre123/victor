@@ -440,9 +440,18 @@ public:
     // Returns the streaming tag, so you can find out when it is done.
     u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
   
-    // Set the animation to be played when no other animation has been specified.
-    // Use the empty string to disable idle animation.
+    // Set the animation to be played when no other animation has been specified.  Use the empty string to
+    // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
     Result SetIdleAnimation(const std::string& animName);
+
+    // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
+    // idle (even if it came from SetIdleAnimation) is always on the stack
+    Result PushIdleAnimation(const std::string& animName);
+
+    // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
+    // Returns true if it had an animation to return to, otherwise doesn't change the animation and returns
+    // false. If SetIdleAnimation has been called since then, this is invalid and will return false.
+    bool PopIdleAnimation();
 
     const std::string& GetIdleAnimationName() const;
     
@@ -786,6 +795,8 @@ public:
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
     u8               _enabledAnimTracks      = (u8)AnimTrackFlag::ALL_TRACKS;
+
+    std::vector<std::string> _idleAnimationNameStack;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,

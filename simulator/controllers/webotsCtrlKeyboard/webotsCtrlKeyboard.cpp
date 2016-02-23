@@ -490,7 +490,7 @@ namespace Anki {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 } else {
-                  SendTurnInPlace(DEG_TO_RAD(-pointTurnAngle), DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
+                  SendTurnInPlace(DEG_TO_RAD(-pointTurnAngle), DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 }
                 break;
               }

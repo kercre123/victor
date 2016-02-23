@@ -321,22 +321,37 @@ namespace Anki {
           case Vision::MARKER_1:
           case Vision::MARKER_LIGHTNINGBOLT_01:
             _identityState = ActiveIdentityState::Identified;
+#if(OBJECTS_HEARABLE==0)
+            _activeID = 0;
+#endif
             break;
             
           case Vision::MARKER_INVERTED_1:
           case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
             _identityState = ActiveIdentityState::Identified;
+#if(OBJECTS_HEARABLE==0)
+            _activeID = 1;
+#endif
             break;
             
           case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
             _identityState = ActiveIdentityState::Identified;
+#if(OBJECTS_HEARABLE==0)
+            _activeID = 2;
+#endif
             break;
             
           case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_01:
             _identityState = ActiveIdentityState::Identified;
+#if(OBJECTS_HEARABLE==0)
+            _activeID = 3;
+#endif
             break;
             
           default:
+#if(OBJECTS_HEARABLE==0)
+            _activeID = -1;
+#endif
             _identityState = ActiveIdentityState::Unidentified;
             PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
                               "ActiveID not defined for block with front marker = %d\n",
