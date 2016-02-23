@@ -23,12 +23,12 @@ namespace Anki {
       
       bool taskReadNVAndSend(u32 tag)
       {
-        NVStorage::NVStorageBlob entry;
-        entry.tag = tag;
-        const NVStorage::NVResult result = NVStorage::Read(entry);
+        RobotInterface::NVReadResult rslt;
+        rslt.blob.tag = tag;
+        const NVStorage::NVResult result = NVStorage::Read(rslt.blob);
         if (result == NVStorage::NV_OKAY)
         {
-          RobotInterface::SendMessage(entry);
+          RobotInterface::SendMessage(rslt);
         }
         else
         {

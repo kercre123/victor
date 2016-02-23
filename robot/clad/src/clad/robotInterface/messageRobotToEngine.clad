@@ -43,6 +43,12 @@ message RobotAvailable
   uint_32 robotID,
 }
 
+message NVReadResult
+{
+  uint_32 robotAddress,
+  NVStorage::NVStorageBlob blob,
+}
+
 message FlashWriteAcknowledge
 {
   uint_32 address,      ///< The address we wrote to
@@ -103,7 +109,7 @@ union RobotToEngine {
   RobotAvailable             robotAvailable         = 0xC9,
   AnimationStarted           animStarted            = 0xCA,
   AnimationEnded             animEnded              = 0xCB,
-  NVStorage::NVStorageBlob   nvData                 = 0xCD,
+  NVReadResult               nvData                 = 0xCD,
   NVStorage::NVOpResult      nvResult               = 0xCE,
   CrashReport                crashReport            = 0xCF,
   
