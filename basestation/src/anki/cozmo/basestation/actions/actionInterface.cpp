@@ -57,7 +57,7 @@ namespace Anki {
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), GetTag(), _type, _state, _completionUnion)));
       }
     
-      if(!_suppressTrackLocking)
+      if(!_suppressTrackLocking && _state != ActionResult::FAILURE_NOT_STARTED)
       {
 #       if DEBUG_ANIM_TRACK_LOCKING
         PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
