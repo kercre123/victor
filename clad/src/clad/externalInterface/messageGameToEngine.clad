@@ -793,12 +793,12 @@ message GetAllDebugConsoleVarMessage {
 }
 
 message BlockPoolEnabledMessage {
-  uint_8 enabled
+  bool enabled
 }
 
 message BlockSelectedMessage {
-  int_32              blockId,
-  uint_8              selected
+  int_32 blockId,
+  bool   selected
 }
 // Query for E2Gmessage: InitBlockPoolMessage
 message GetBlockPoolMessage {

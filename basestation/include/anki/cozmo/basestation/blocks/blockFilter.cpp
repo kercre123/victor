@@ -30,8 +30,8 @@ BlockFilter::BlockFilter()
 {
 }
 
-BlockFilter::BlockFilter(const ObjectIDSet &vehicleIds)
-  : _blocks()
+BlockFilter::BlockFilter(const ObjectIDSet &objectIds)
+  : _blocks(objectIds)
   , _path()
   , _enabled(false)
   , _externalInterface(nullptr)
@@ -121,11 +121,11 @@ bool BlockFilter::Save(const std::string &path) const
     outputFileSteam.open(path);
     for (ObjectIDSet::const_iterator it = std::begin(_blocks); it != std::end(_blocks); ++it)
     {
-      const ObjectID &vehicleId = *it;
+      const ObjectID &objectId = *it;
       outputFileSteam << "0x";
-      outputFileSteam << std::hex << vehicleId;
+      outputFileSteam << std::hex << objectId;
       outputFileSteam << "\n";
-      PRINT_NAMED_DEBUG("BlockFilter.Save", "0x%d", vehicleId.GetValue());
+      PRINT_NAMED_DEBUG("BlockFilter.Save", "0x%d", objectId.GetValue());
     }
     outputFileSteam.close();
   }

@@ -302,7 +302,7 @@ message UpdateEngineState {
 
 structure BlockPoolBlockData {
   int_32 id,
-  uint_8 enabled
+  bool enabled
 }
 
 message InitBlockPoolMessage {
