@@ -234,12 +234,12 @@ void MovementComponent::LockTracks(uint8_t tracks)
       }
     }
   }
-#if DEBUG_ANIMATION_LOCKING
-  PRINT_NAMED_INFO("MovementComponent.LockTracks", "locked: (0x%x) %s, result:",
-                   tracks,
-                   AnimTrackFlagHelpers::AnimTrackFlagsToString(tracks).c_str());
-  PrintLockState();
-#endif
+  if(DEBUG_ANIMATION_LOCKING) {
+    PRINT_NAMED_INFO("MovementComponent.LockTracks", "locked: (0x%x) %s, result:",
+                     tracks,
+                     AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str());
+    PrintLockState();
+  }
 }
 
 void MovementComponent::UnlockTracks(uint8_t tracks)
@@ -265,12 +265,12 @@ void MovementComponent::UnlockTracks(uint8_t tracks)
       }
     }
   }
-#if DEBUG_ANIMATION_LOCKING
-  PRINT_NAMED_INFO("MovementComponent.LockTracks", "unlocked: (0x%x) %s, result:",
-                   tracks,
-                   AnimTrackFlagHelpers::AnimTrackFlagsToString(tracks).c_str());
-  PrintLockState();
-#endif
+  if(DEBUG_ANIMATION_LOCKING) {
+    PRINT_NAMED_INFO("MovementComponent.LockTracks", "unlocked: (0x%x) %s, result:",
+                     tracks,
+                     AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str());
+    PrintLockState();
+  }
 }
 
 void MovementComponent::PrintLockState() const

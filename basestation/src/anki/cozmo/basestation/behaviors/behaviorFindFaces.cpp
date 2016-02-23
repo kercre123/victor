@@ -32,6 +32,8 @@ static const float kPauseMinSecDefault = 1.0f;
 static const char* kPauseMaxSecKey = "maximum_pause_s";
 static const float kPauseMaxSecDefault = 3.5f;
 
+#define DISABLE_IDLE_DURING_FIND_FACES 1
+
 using namespace ExternalInterface;
 
 #define DEBUG_BEHAVIOR_FIND_FACES_CONFIG 1
@@ -138,6 +140,9 @@ void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot
   
 Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec)
 {
+  if( DISABLE_IDLE_DURING_FIND_FACES ) {
+    robot.PushIdleAnimation("NONE");
+  }
   _currentDriveActionID = (uint32_t)ActionConstants::INVALID_TAG;
   _currentState = State::WaitToFinishMoving;
   return Result::RESULT_OK;
@@ -248,6 +253,9 @@ Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec
   
 void BehaviorFindFaces::StopInternal(Robot& robot, double currentTime_sec)
 {
+  if( DISABLE_IDLE_DURING_FIND_FACES ) {
+    robot.PopIdleAnimation();
+  }
   if (_currentDriveActionID != (uint32_t)ActionConstants::INVALID_TAG)
   {
     robot.GetActionList().Cancel(_currentDriveActionID);
