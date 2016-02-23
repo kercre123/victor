@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace DataPersistence {
   public class TimelineEntryData {
-
     public Date Date;
 
     public StatContainer Goals;
@@ -38,7 +37,6 @@ namespace DataPersistence {
     public TimelineEntryData(Date date) : this() {
       Date = date;
     }
-
   }
 
   public class CompletedChallengeData {

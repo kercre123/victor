@@ -96,7 +96,7 @@ public class FPSCalculator : MonoBehaviour {
   private void HandlePerformanceCounterButtonClicked() {
     // Create counter instance if it doesn't exist
     if (_FpsCounterInstance == null) {
-      GameObject fpsCounter = UIManager.CreateUIElement(_FpsCounterPrefab.gameObject);
+      GameObject fpsCounter = UIManager.CreateUIElement(_FpsCounterPrefab.gameObject, DebugMenuManager.Instance.DebugOverlayCanvas.transform);
       _FpsCounterInstance = fpsCounter.GetComponent<SimpleFPSCounterLabel>();
       _FpsCounterInstance.SetFPS(CalculateAvgFPS());
     }

@@ -19,7 +19,7 @@ public class BlockPoolPane : MonoBehaviour {
   
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
-  private Dictionary<int,bool> _BlockStates;
+  private Dictionary<uint,bool> _BlockStates;
 
   void Start() {
 
@@ -27,7 +27,7 @@ public class BlockPoolPane : MonoBehaviour {
     
     _BlockPoolEnabledMessage = new U2G.BlockPoolEnabledMessage();
     _BlockSelectedMessage = new U2G.BlockSelectedMessage();
-    _BlockStates = new Dictionary<int, bool>();
+    _BlockStates = new Dictionary<uint, bool>();
 
     RobotEngineManager.Instance.OnInitBlockPoolMsg += HandleInitBlockPool;
     
@@ -53,8 +53,8 @@ public class BlockPoolPane : MonoBehaviour {
       GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
       Button btn = gameObject.GetComponent<Button>();
       Text txt = btn.GetComponentInChildren<Text>();
-      int id = initMsg.blockData[i].id;
-      bool is_enabled = initMsg.blockData[i].enabled > 0 ? true : false;
+      uint id = initMsg.blockData[i].id;
+      bool is_enabled = initMsg.blockData[i].enabled;
       _BlockStates.Add(id, is_enabled);
       txt.text = id.ToString("X") + " , " + is_enabled;
       btn.onClick.AddListener(() => HandleButtonClick(id, txt));
@@ -62,7 +62,7 @@ public class BlockPoolPane : MonoBehaviour {
 
   }
 
-  private void HandleButtonClick(int id, Text txt) {
+  private void HandleButtonClick(uint id, Text txt) {
     bool was_enabled = false;
     if (_BlockStates.TryGetValue(id, out was_enabled)) {
       bool is_enabled = !was_enabled;
@@ -70,14 +70,14 @@ public class BlockPoolPane : MonoBehaviour {
       
       txt.text = id.ToString("X") + " , " + is_enabled;
       _BlockSelectedMessage.blockId = id;
-      _BlockSelectedMessage.selected = is_enabled ? (byte)1 : (byte)0;
+      _BlockSelectedMessage.selected = is_enabled;
       RobotEngineManager.Instance.Message.BlockSelectedMessage = _BlockSelectedMessage;
       RobotEngineManager.Instance.SendMessage();
     }
   }
 
   private void HandleValueChanged(bool val) {
-    _BlockPoolEnabledMessage.enabled = val ? (byte)1 : (byte)0;
+    _BlockPoolEnabledMessage.enabled = val;
     RobotEngineManager.Instance.Message.BlockPoolEnabledMessage = _BlockPoolEnabledMessage;
     RobotEngineManager.Instance.SendMessage();
   }

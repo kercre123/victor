@@ -506,7 +506,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void TurnInPlace(float angle_rad, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void TurnInPlace(float angle_rad,  float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     Rotation *= Quaternion.Euler(0, 0, angle_rad);
 
     QueueCallback(0.5f, callback);
