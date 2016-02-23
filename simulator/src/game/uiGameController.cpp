@@ -244,7 +244,7 @@ namespace Anki {
     
     void UiGameController::HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg)
     {
-      PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ActiveID %d (factoryID 0x%x): %s",
+      PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ObjectID %d (factoryID 0x%x): %s",
                        msg.objectID, msg.factoryID, msg.connected ? "CONNECTED" : "DISCONNECTED");
       HandleActiveObjectConnectionState(msg);
     }

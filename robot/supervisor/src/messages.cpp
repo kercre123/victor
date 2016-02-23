@@ -142,7 +142,8 @@ namespace Anki {
         // TODO: Make this a parameters somewhere?
         robotState_.status |= (HeadController::IsMoving() ||
                                LiftController::IsMoving() ||
-                               WheelController::AreWheelsMoving() ? IS_MOVING : 0);
+                               WheelController::AreWheelsMoving() ||
+                               SteeringController::GetMode() == SteeringController::SM_POINT_TURN ? IS_MOVING : 0);
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);

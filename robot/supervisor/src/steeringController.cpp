@@ -73,7 +73,7 @@ namespace Anki {
       
       f32 pointTurnKp_ = 250;
       f32 pointTurnKd_ = 3000;
-      f32 pointTurnKi_ = 0.2;
+      f32 pointTurnKi_ = 0.3;
       f32 pointTurnMaxIntegralError_ = 100;
       f32 prevPointTurnAngleError_ = 0;
       f32 pointTurnAngleErrorSum_ = 0;
@@ -621,8 +621,6 @@ namespace Anki {
           
         }
 
-        
-
       }
 
 
@@ -637,7 +635,11 @@ namespace Anki {
                       (angularDistToCurrDesiredAngle - prevPointTurnAngleError_) * pointTurnKd_ +
                       pointTurnAngleErrorSum_ * pointTurnKi_);
       prevPointTurnAngleError_ = angularDistToCurrDesiredAngle;
-      pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
+      
+      // Only accumulate integral error if desired wheel speed is below max
+      if (ABS(arcVel) < MAX_WHEEL_SPEED_MMPS) {
+        pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
+      }
 
 
       // Compute the wheel velocities
