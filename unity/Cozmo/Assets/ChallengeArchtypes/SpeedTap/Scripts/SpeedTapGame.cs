@@ -290,14 +290,13 @@ namespace SpeedTap {
       SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
 
-    #region RandomAnims
-
-    // Temp Functions for random animation until anim groups are ready
-
+    // Sets Cozmo's original Position information, may need to also set rotation quaternion as well
     public void SetCozmoOrigPos() {
       _CozmoPos = CurrentRobot.WorldPosition;
     }
 
+    // Check to see if Cozmo should Adjust, includes hook for callback for after adjust is complete.
+    // If cozmo doesn't need to adjust, will immediately invoke callback.
     public void CheckForAdjust(RobotCallback adjustCallback = null) {
       float dist = 0.0f;
       dist = (CurrentRobot.WorldPosition - _CozmoPos).magnitude;
@@ -310,6 +309,10 @@ namespace SpeedTap {
         }
       }
     }
+
+    #region RandomAnims
+
+    // Temp Functions for random animation until anim groups are ready
 
     public string RandomWinHand() {
       string animName = "";
