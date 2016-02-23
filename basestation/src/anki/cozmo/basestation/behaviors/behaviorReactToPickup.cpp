@@ -139,6 +139,10 @@ void BehaviorReactToPickup::StopInternal(Robot& robot, double currentTime_sec)
 void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
                                          const Robot& robot)
 {
+  if( ! IsChoosable() ) {
+    return;
+  }
+
   // We want to get these messages, even when not running
   switch (event.GetData().GetTag())
   {

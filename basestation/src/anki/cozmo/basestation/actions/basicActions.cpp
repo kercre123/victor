@@ -59,10 +59,21 @@ namespace Anki {
                             "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
                             RAD_TO_DEG_F32(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _maxSpeed_radPerSec = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxSpeed_radPerSec);
+      } else if (maxSpeed_radPerSec == 0) {
+        _maxSpeed_radPerSec = _kDefaultSpeed;
       } else {
         _maxSpeed_radPerSec = maxSpeed_radPerSec;
       }
     }
+    
+    void TurnInPlaceAction::SetAccel(f32 accel_radPerSec2) {
+      if (accel_radPerSec2 == 0) {
+        _accel_radPerSec2 = _kDefaultAccel;
+      } else {
+        _accel_radPerSec2 = accel_radPerSec2;
+      }
+    }
+    
     
     void TurnInPlaceAction::SetTolerance(const Radians& angleTol_rad)
     {
@@ -1034,6 +1045,8 @@ namespace Anki {
       {
         PRINT_NAMED_ERROR("FacePoseAction.Init.PoseOriginFailure",
                           "Could not get pose w.r.t. robot pose.");
+        _poseWrtRobot.Print();
+        _poseWrtRobot.PrintNamedPathToOrigin(false);
         return ActionResult::FAILURE_ABORT;
       }
       

@@ -34,10 +34,13 @@ namespace Anki {
       namespace {
 
         const s32 TIMESTEP = 10; // ms
+
+        // Number of cycles (of length TIMESTEP) in between transmission of discovered messages
+        const u32 DISCOVERED_MESSAGE_PERIOD = 100;
         
-        // how frequently (in terms of timesteps to send messages that the block is moving)
+        // Number of cycles (of length TIMESTEP) in between transmission of motion update messages
         // (This is just to throttle movement messages a bit)
-        const s32 MOVEMENT_UPDATE_FREQUENCY = 10;
+        const s32 MOVEMENT_UPDATE_PERIOD = 10;
         
         // once we start moving, we have to stop for this long to send StoppedMoving message
         const double STOPPED_MOVING_TIME_SEC = 0.5f;
@@ -109,6 +112,12 @@ namespace Anki {
           // Zpos (Top Face on top)
           {0, 1, 2, 3}
         };
+        
+        // Mapping from activeID to FactoryID
+        // This is just what it happens to be in EP2. Changes to this mapping should
+        // also be reflected in ActiveCube::GetTypeFromFactoryID()
+        const u32 activeIDToFactoryIDMap_[MAX_NUM_CUBES] = {2, 1, 0, 3};
+        u32 factoryID_ = 0;
         
         // Flash ID params
         double flashIDStartTime_ = 0;
@@ -207,7 +216,28 @@ namespace Anki {
           printf("Failed to find blockID\n");
           return RESULT_FAIL;
         }
-        printf("Starting ActiveBlock %d\n", blockID_);
+        
+        // Get index of this block in the children list to get a globally unique identifier
+        u32 nodeIndex = 0;
+        webots::Node* rootNode = block_controller.getRoot();
+        webots::Field* rootChildren = rootNode->getField("children");
+        int numRootChildren = rootChildren->getCount();
+        for (int n = 0 ; n<numRootChildren; ++n) {
+          webots::Node* nd = rootChildren->getMFNode(n);
+          webots::Field* nameField = nd->getField("name");
+          if (nameField && nameField->getSFString().compare("LightCube") == 0) {
+            webots::Field* activeIdField = nd->getField("ID");
+            if (activeIdField && activeIdField->getSFInt32() == blockID_) {
+              nodeIndex = n;
+              break;
+            }
+          }
+        }
+        
+        // Generate a factory ID
+        factoryID_ = nodeIndex * 1000 + activeIDToFactoryIDMap_[blockID_];
+        printf("Starting ActiveBlock %d (factoryID %d)\n", blockID_, factoryID_);
+        
         
         // Get all LED handles
         for (int i=0; i<NUM_CUBE_LEDS; ++i) {
@@ -482,6 +512,15 @@ namespace Anki {
           }
 
           
+          // Send discovered message
+          static u32 discoveredSendCtr = 0;
+          if (++discoveredSendCtr == DISCOVERED_MESSAGE_PERIOD) {
+            BlockMessages::LightCubeMessage msg;
+            msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
+            msg.discovered.factory_id = blockID_;
+            emitter_->send(msg.GetBuffer(), msg.Size());
+            discoveredSendCtr = 0;
+          }
           
           
           // Run FSM
@@ -491,7 +530,7 @@ namespace Anki {
             {
               static s32 movingSendCtr = 0;
               
-              if(movingSendCtr++ == MOVEMENT_UPDATE_FREQUENCY)
+              if(++movingSendCtr == MOVEMENT_UPDATE_PERIOD)
               {
                 movingSendCtr = 0;
                 

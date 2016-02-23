@@ -59,6 +59,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleBlockPlaced, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectDiscovered,
     std::bind(&Robot::HandleActiveObjectDiscovered, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectConnectionState,
+    std::bind(&Robot::HandleActiveObjectConnectionState, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectMoved,
     std::bind(&Robot::HandleActiveObjectMoved, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectStopped,
@@ -254,6 +256,48 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
   }
 #endif
 }
+
+ 
+void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+#if(OBJECTS_HEARABLE)
+  ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
+  
+  ObjectID objID;
+  if (payload.connected) {
+    // Add cube to blockworld if not already there
+    objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
+    if (objID.IsSet()) {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
+                       "Object %d (activeID %d, factoryID 0x%x)",
+                       objID.GetValue(), payload.objectID, payload.factoryID);
+      
+      // Turn off lights upon connection
+      std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
+      SendRobotMessage<CubeLights>(lights, payload.objectID);
+    }
+  } else {
+    // Remove cube from blockworld if it exists
+    ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+    if (obj) {
+      GetBlockWorld().ClearObject(obj);
+      objID = obj->GetID();
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
+                       "Object %d (activeID %d, factoryID 0x%x)",
+                       objID.GetValue(), payload.objectID, payload.factoryID);
+    }
+  }
+  
+
+  if (objID.IsSet()) {
+    // Update the objectID to be blockworld ID
+    payload.objectID = objID.GetValue();
+  
+    // Forward on to game
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(payload)));
+  }
+#endif
+}
   
 
 void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -264,7 +308,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -334,12 +378,12 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnknownActiveID",
-                     "Could not find match for active object ID %d", payload.objectID);
+    PRINT_NAMED_WARNING("Robot.HandleActiveObjectStopped.UnknownActiveID",
+                        "Could not find match for active object ID %d", payload.objectID);
     return;
   }
   // Ignore stopped-moving messages for objects we are docking to, since we expect to bump them
@@ -392,7 +436,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -875,46 +919,15 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
 
 void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
 {
-  // SetWheelControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetWheelControllerGains,
+  // SetControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ControllerGains,
     [this] (const GameToEngineEvent& event)
     {
-      const ExternalInterface::SetWheelControllerGains& msg = event.GetData().Get_SetWheelControllerGains();
+      const ExternalInterface::ControllerGains& msg = event.GetData().Get_ControllerGains();
       
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kpLeft, msg.kiLeft, 0.0f, msg.maxIntegralErrorLeft,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel);
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError, msg.controller);
     }));
-  
-  // SetHeadControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetHeadControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetHeadControllerGains& msg = event.GetData().Get_SetHeadControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_head);
-    }));
-  
-  // SetLiftControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetLiftControllerGains& msg = event.GetData().Get_SetLiftControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift);
-    }));
-  
-  // SetSteeringControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetSteeringControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, msg.dockPathDistOffsetCap_mm, msg.dockPathAngularOffsetCap_rad,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_steering);
-    }));
-  
+
   // SetMotionModelParams
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetMotionModelParams,
     [this] (const GameToEngineEvent& event)

@@ -13,9 +13,14 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+
+#include <sstream>
 
 namespace Anki {
 namespace Cozmo {
@@ -37,33 +42,66 @@ NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTree::~NavMeshQuadTree()
 {
+  // we are destroyed, stop our rendering
+  ClearDraw();
+  
   _processor.SetRoot(nullptr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Draw() const
+void NavMeshQuadTree::Draw(size_t mapIdxHint) const
 {
   if ( _gfxDirty && kRenderNavMeshQuadTree )
   {
     // ask root to add proper quads to be rendered
     VizManager::SimpleQuadVector quadVector;
     _root.AddQuadsToDraw(quadVector);
-    _vizManager->DrawQuadVector("NavMeshQuadTree", quadVector);
+    
+    // the mapIdx hint reveals that we are not the current active map, but an old memory. Apply some offset
+    // so that we don't render on top of any other map
+    if ( mapIdxHint > 0 )
+    {
+      const float offSetPerIdx = MM_TO_M(-150.0f);
+      for( auto& q : quadVector ) {
+        q.center[2] += (mapIdxHint*offSetPerIdx);
+      }
+    }
+    
+    // since we have several maps rendering, each one render with its own id
+    std::stringstream instanceId;
+    instanceId << "NavMeshQuadTree_" << this;
+    _vizManager->DrawQuadVector(instanceId.str(), quadVector);
     
 //    // compare actual size vs max
 //    size_t actual = quadVector.size();
 //    size_t max = pow(4,_root.GetLevel()) + 1;
 //    PRINT_NAMED_INFO("RSAM", "%zu / %zu", actual, max);
-  
+    
     _gfxDirty = false;
   }
   
   // draw the processor information
-  _processor.Draw();
+  if ( mapIdxHint == 0 ) {
+    _processor.Draw();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddQuad(const Quad2f& quad, NodeContent& nodeContent)
+void NavMeshQuadTree::ClearDraw() const
+{
+  // clear previous quads
+  std::stringstream instanceId;
+  instanceId << "NavMeshQuadTree_" << this;
+  _vizManager->EraseQuadVector(instanceId.str());
+
+  _gfxDirty = true;
+  
+  // also clear processor information
+  _processor.ClearDraw();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent)
 {
   // render approx last quad added
   if ( kRenderLastAddedQuad )
@@ -91,17 +129,64 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, NodeContent& nodeContent)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::Merge(const NavMeshQuadTree& other, const Pose3d& transform)
+{
+  Pose2d transform2d(transform);
+
+  // obtain all leaf nodes from the map we are merging from
+  NavMeshQuadTreeNode::NodeCPtrVector leafNodes;
+  other._root.AddSmallestDescendantsDepthFirst(leafNodes);
+  
+  // iterate all those leaf nodes, adding them to this tree
+  for( const auto& nodeInOther : leafNodes ) {
+  
+    // if the leaf node is unkown then we don't need to add it
+    const bool isUnknown = ( nodeInOther->IsContentTypeUnknown() );
+    if ( !isUnknown ) {
+      // get transformed quad
+      Quad2f transformedQuad2d;
+      transform2d.ApplyTo(nodeInOther->MakeQuadXY(), transformedQuad2d);
+      
+      // NOTE: there's a precision problem when we add back the quads; when we add a non-axis aligned quad to the map,
+      // we modify (if applicable) all quads that intersect with that non-aa quad. When we merge this information into
+      // a different map, we have lost precision on how big the original non-aa quad was, since we have stored it
+      // with the resolution of the memory map quad size. In general, when merging information from the past, we should
+      // not rely on precision, but there ar things that we could do to mitigate this issue, for example:
+      // a) reducing the size of the aaQuad being merged by half the size of the leaf nodes
+      // or
+      // b) scaling down aaQuad to account for this error
+      // eg: transformedQuad2d.Scale(0.9f);
+      // At this moment is just a known issue
+      
+      // add to this
+      NodeContent copyOfContent = nodeInOther->GetContent();
+      AddQuad(transformedQuad2d, copyOfContent); // TODO how good it's to pass a const shared_ptr? the ctrl block is modified
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
 {
-  // Find in which direction we are expanding and upgrade root level in that direction
-  const Vec2f& direction = quadToCover.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
-  _root.UpgradeRootLevel(direction, _processor);
+  // allow expanding several times until the quad fits in the tree, as long as we can expand, we keep trying,
+  // relying on the root to tell us if we reached a limit
+  bool expanded = false;
+  bool quadFitsInMap = false;
+  
+  do {
 
-  // should be contained, otherwise more expansions are required. This can only happen if quad is too far from
-  // the root, ir it is bigger than the current root size. I don't think we'll ever need multiple expansions, but
-  // throw error in case it ever happens. If so, the solution might be as easy as changing the calling code to call
-  // expand until it's fully contained
-  if ( !_root.Contains(quadToCover) ) {
+    // Find in which direction we are expanding and upgrade root level in that direction
+    const Vec2f& direction = quadToCover.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    expanded = _root.UpgradeRootLevel(direction, _processor);
+    
+    // check if the quad now fits in the expanded root
+    quadFitsInMap = _root.Contains(quadToCover);
+    
+  } while( !quadFitsInMap && expanded );
+  
+  // the quad should be contained, if it's not, we have reached the limit of expansions and the quad does not
+  // fit, which will cause information loss
+  if ( !quadFitsInMap ) {
     PRINT_NAMED_ERROR("NavMeshQuadTree.AddCliff.InsufficientExpansion",
       "Quad caused expansion, but expansion was not enough.");
   }

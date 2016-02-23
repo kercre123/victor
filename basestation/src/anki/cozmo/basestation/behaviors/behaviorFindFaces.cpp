@@ -27,8 +27,14 @@ static const char* kUseFaceAngleCenterKey = "center_face_angle";
 static const bool kUseFaceAngleCenterDefault = true;
 static const char* kMinimumFaceAgeKey = "minimum_face_age_s";
 static const double kMinimumFaceAgeDefault = 180.0;
+static const char* kPauseMinSecKey = "minimum_pause_s";
+static const float kPauseMinSecDefault = 1.0f;
+static const char* kPauseMaxSecKey = "maximum_pause_s";
+static const float kPauseMaxSecDefault = 3.5f;
 
 using namespace ExternalInterface;
+
+#define DEBUG_BEHAVIOR_FIND_FACES_CONFIG 1
 
 BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -38,7 +44,20 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
 
   _useFaceAngleCenter = config.get(kUseFaceAngleCenterKey, kUseFaceAngleCenterDefault).asBool();
   _minimumTimeSinceSeenLastFace_sec = config.get(kMinimumFaceAgeKey, kMinimumFaceAgeDefault).asDouble();
-  
+  _pauseMin_s = config.get(kPauseMinSecKey, kPauseMinSecDefault).asFloat();
+  _pauseMax_s = config.get(kPauseMaxSecKey, kPauseMaxSecDefault).asFloat();
+
+  if(DEBUG_BEHAVIOR_FIND_FACES_CONFIG) {
+    Json::Value debugOutput;
+    debugOutput[kUseFaceAngleCenterKey] = _useFaceAngleCenter;
+    debugOutput[kMinimumFaceAgeKey] = _minimumTimeSinceSeenLastFace_sec;
+    debugOutput[kPauseMinSecKey] = _pauseMin_s;
+    debugOutput[kPauseMaxSecKey] = _pauseMax_s;
+
+    PRINT_NAMED_INFO("BehaviorFindFaces.Config.Debug", "\n%s",
+                     debugOutput.toStyledString().c_str());
+  }
+    
   SubscribeToTags({{
     EngineToGameTag::RobotCompletedAction,
     EngineToGameTag::RobotPickedUp
@@ -148,7 +167,7 @@ IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot, double current
     {
       if (_currentDriveActionID == (uint32_t)ActionConstants::INVALID_TAG)
       {
-        _lookPauseTimer = currentTime_sec + (GetRNG().RandDbl() * (kPauseMax_sec - kPauseMin_sec) + kPauseMin_sec);
+        _lookPauseTimer = currentTime_sec + (GetRNG().RandDbl() * (_pauseMax_s - _pauseMin_s) + _pauseMin_s);
         _currentState = State::PauseToSee;
       }
       return Status::Running;
