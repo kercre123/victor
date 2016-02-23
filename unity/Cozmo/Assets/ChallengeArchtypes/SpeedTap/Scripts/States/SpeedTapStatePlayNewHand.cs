@@ -59,7 +59,7 @@ namespace SpeedTap {
     public override void Update() {
       base.Update();
       // Do not run game while not ready for play
-      if (_PlayReady == false) {
+      if (_PlayReady == false || _MidHand == false) {
         return;
       }
       float currTimeMs = Time.time * 1000.0f;
@@ -70,6 +70,7 @@ namespace SpeedTap {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               _CurrentRobot.SendAnimation(_SpeedTapGame.RandomTap(), RobotCompletedTapAnimation);
               _CozmoTapping = true;
+              _MidHand = false;
             }
           }
         }
@@ -115,10 +116,10 @@ namespace SpeedTap {
       }
     }
 
+    // TODO: Figure out potential Readjust logic for mid hand
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);
-      _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
 
     void CozmoDidTap() {
