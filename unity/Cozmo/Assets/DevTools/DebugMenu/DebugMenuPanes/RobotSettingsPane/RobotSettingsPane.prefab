@@ -302,7 +302,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _VolumeSlider: {fileID: 11417302}
-  _ToggleDebugString: {fileID: 11400436}
+  _ToggleDebugStringButton: {fileID: 11400436}
   _RobotStateTextFieldPrefab: {fileID: 156360, guid: 689e303582fa0435b8ce1a821c97d2cb,
     type: 2}
 --- !u!114 &11450814
@@ -867,6 +867,10 @@ Prefab:
       propertyPath: _RobotStateTextFieldPrefab
       value: 
       objectReference: {fileID: 156360, guid: 689e303582fa0435b8ce1a821c97d2cb, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _ToggleDebugStringButton
+      value: 
+      objectReference: {fileID: 11400436}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 148378}

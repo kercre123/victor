@@ -22,13 +22,6 @@ public class SimpleFPSCounterLabel : MonoBehaviour {
     _CloseButton.onClick.RemoveListener(HandleCloseButtonClick);
   }
 
-  private void Update() {
-    // to the front
-    if (transform.GetSiblingIndex() != this.transform.parent.childCount - 1) {
-      transform.SetAsLastSibling();
-    }
-  }
-
   public void SetFPS(float newFPS) {
     _FpsLabel.text = newFPS.ToString();
   }
