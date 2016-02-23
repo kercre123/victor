@@ -32,7 +32,7 @@ namespace HAL {
     }
     else if (length > SPINE_MAX_CLAD_MSG_SIZE)
     {
-      AnkiWarn("Spine.Enqueue", "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", data[0], length, SPINE_MAX_CLAD_MSG_SIZE);
+      AnkiWarn( 128, "Spine.Enqueue", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, data[0], length, SPINE_MAX_CLAD_MSG_SIZE);
       return false;
     }
     else
@@ -51,7 +51,7 @@ namespace HAL {
     }
     else if (tag < RobotInterface::TO_RTIP_START)
     {
-      AnkiError("Spine.Manage", "Received message %x that seems bound below", tag);
+      AnkiError( 129, "Spine.Manage", 383, "Received message %x that seems bound below", 1, tag);
     }
     else if (tag > RobotInterface::TO_RTIP_END)
     {
