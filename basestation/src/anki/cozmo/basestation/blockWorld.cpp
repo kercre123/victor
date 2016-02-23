@@ -20,7 +20,6 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -41,6 +40,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
+#include "util/console/consoleInterface.h"
+#include "util/global/globalDefinitions.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
@@ -72,12 +73,14 @@
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
+
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
     , _didObjectsChange(false)
     , _canDeleteObjects(true)
     , _canAddObjects(true)
-    , _navMemoryMap( nullptr )
+    , _currentNavMemoryMapOrigin(nullptr)
     , _isOnCliff(false)
     , _enableDraw(false)
     {
@@ -140,19 +143,6 @@ namespace Cozmo {
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));
       _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE4));
       
-      if (nullptr != _robot)
-      {
-        // TODO: HACK: Manually clearing the LEDs on the active blocks here when the engine is getting set up.
-        // It isn't pretty, and it will likely change as block communication changes going forward, but for now
-        // this is as good a place as any to clear out the lights when starting up.
-        std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
-        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID0);
-        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID1);
-        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID2);
-        _robot->SendRobotMessage<CubeLights>(lights, (uint32_t)ActiveCube::kHardCodedActiveCubeID3);
-        // END_HACK
-      }
-
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
@@ -195,13 +185,7 @@ namespace Cozmo {
       {
         SetupEventHandlers(*_robot->GetExternalInterface());
       }
-      
-      //////////////////////////////////////////////////////////////////////////
-      // NavMemoryMap
-      //
-      // Uncomment this line to create and use navMemoryMap. Commented out to not enable yet in master
-      // _navMemoryMap.reset( new NavMemoryMap(_robot->GetContext()->GetVizManager()) );
-      
+            
     } // BlockWorld() Constructor
   
     void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
@@ -286,7 +270,55 @@ namespace Cozmo {
       // ID not found!
       return nullptr;
     }
+
+    ObservableObject* BlockWorld::GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const
+    {
+      const ObservableObject* object = nullptr;
+      const char* familyStr = nullptr;
+      if(inFamily == ObjectFamily::Unknown) {
+        object = GetObjectByID(objectID);
+        familyStr = EnumToString(inFamily);
+      } else {
+        object = GetObjectByIDandFamily(objectID, inFamily);
+        familyStr = "any";
+      }
+      
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not exist in %s family.",
+                          objectID.GetValue(), EnumToString(inFamily));
+        return nullptr;
+      }
+      
+      if(!object->IsActive()) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not appear to be an active object.",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      return (ObservableObject*)object;
+    } // GetActiveObject()
     
+    ObservableObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const
+    {
+      for(auto objectsByType : _existingObjects) {
+        if(inFamily == ObjectFamily::Unknown || inFamily == objectsByType.first) {
+          for(auto objectsByID : objectsByType.second) {
+            for(auto objectWithID : objectsByID.second) {
+              ObservableObject* object = objectWithID.second;
+              if(object->IsActive() && object->GetActiveID() == activeID) {
+                return object;
+              }
+            }
+          }
+        } // if(inFamily == ObjectFamily::Unknown || inFamily == objectsByFamily.first)
+      } // for each family
+      
+      return nullptr;
+    } // GetActiveObjectByActiveID()
+
+  
     void CheckForOverlapHelper(const ObservableObject* objectToMatch,
                                ObservableObject* objectToCheck,
                                std::vector<ObservableObject*>& overlappingObjects)
@@ -507,12 +539,67 @@ namespace Cozmo {
       }
     }
     
+    // if memory maps are enabled, we can merge old into new
+    if ( kEnableMapMemory )
+    {
+      // oldOrigin is the pointer/id of the current map
+      // worldOrigin is the pointer/id of the map we can merge into/from
+      ASSERT_NAMED( _navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
+      ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
+      ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
+      ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastOld");
+      ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastNew");
+
+      // grab the underlying memory map and merge them
+      NavMemoryMap* oldMap = static_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() );
+      NavMemoryMap* newMap = static_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() );
+      newMap->Merge(oldMap, *oldOrigin);
+      
+      // switch back to what is becoming the new map
+      _currentNavMemoryMapOrigin = newOrigin;
+      
+      // now we can delete what is become the old map, since we have merged its data into the new one
+      _navMemoryMaps.erase( oldOrigin );
+    }
+    
     return result;
   }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  const INavMemoryMap* BlockWorld::GetNavMemoryMap() const
+  {
+    const INavMemoryMap* curMap = nullptr;
+    if ( nullptr != _currentNavMemoryMapOrigin ) {
+      auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
+      if ( matchPair != _navMemoryMaps.end() ) {
+        curMap = matchPair->second.get();
+      } else {
+        ASSERT_NAMED(false, "BlockWorld.GetNavMemoryMap.MissingMap");
+      }
+    }
+    return curMap;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  INavMemoryMap* BlockWorld::GetNavMemoryMap()
+  {
+    INavMemoryMap* curMap = nullptr;
+    if ( nullptr != _currentNavMemoryMapOrigin ) {
+      auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
+      if ( matchPair != _navMemoryMaps.end() ) {
+        curMap = matchPair->second.get();
+      } else {
+        ASSERT_NAMED(false, "BlockWorld.GetNavMemoryMap.MissingMap");
+      }
+    }
+    return curMap;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::UpdateNavMemoryMap()
   {
-    if ( nullptr != _navMemoryMap )
+    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    if ( nullptr != currentNavMemoryMap )
     {
       // cliff quad: clear or cliff
       {
@@ -535,19 +622,69 @@ namespace Cozmo {
           NavMemoryMapQuadData_Cliff cliffData;
           Vec3f rotatedFwdVector = _robot->GetPose().GetRotation() * X_AXIS_3D();
           cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
-          _navMemoryMap->AddQuad(cliffquad, cliffData);
+          currentNavMemoryMap->AddQuad(cliffquad, cliffData);
         }
         else
         {
-          _navMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
+          currentNavMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
         }
       
       }
       
-      _navMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
+      currentNavMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
     }
   }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr)
+  {
+    // can disable the feature completely
+    if ( !kEnableMapMemory ) {
+      return;
+    }
+  
+    // clear all memory map rendering because indexHints are changing
+    #if ANKI_DEVELOPER_CODE
+    {
+      for ( const auto& memMapPair : _navMemoryMaps )
+      {
+        memMapPair.second->ClearDraw();
+      }
+    }
+    #endif
+    
+    // if the origin is null, we would never merge the map, which could leak if a new one was created
+    // do not support this by not creating one at all if the origin is null
+    ASSERT_NAMED(nullptr != worldOriginPtr, "BlockWorld.CreateLocalizedMemoryMap.NullOrigin");
+    if ( nullptr != worldOriginPtr )
+    {
+      // create a new memory map in the given origin
+      VizManager* vizMgr = _robot->GetContext()->GetVizManager();
+      _navMemoryMaps.emplace( std::make_pair(worldOriginPtr, std::unique_ptr<INavMemoryMap>(new NavMemoryMap( vizMgr ))) );
+      _currentNavMemoryMapOrigin = worldOriginPtr;
+    }
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DrawNavMemoryMap() const
+  {
+    #if ANKI_DEVELOPER_CODE
+    {
+      size_t lastIndexNonCurrent = 0;
+    
+      // rendering all current maps with indexHint
+      for (const auto& memMapPair : _navMemoryMaps)
+      {
+        const bool isCurrent = memMapPair.first == _currentNavMemoryMapOrigin;
+        
+        size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
+        memMapPair.second->Draw(indexHint);
+      }
+    }
+    #endif
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
   {
     if(!object->GetID().IsSet()) {
@@ -587,26 +724,71 @@ namespace Cozmo {
         
         //const float minDimSeen = objSeen->GetMinDim();
         
-        // Store pointers to any existing objects that overlap with this one
-        //std::vector<ObservableObject*> overlappingObjects;
-        //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        ObservableObject* matchingObject = nullptr;
         
-        // Override the default filter function to intentionally consider objects
-        // that are unknown here. Otherwise, we'd never be able to match new
-        // observations to existing objects whose pose has been set to unknown!
-        BlockWorldFilter filter;
-        filter.SetFilterFcn([] (ObservableObject*) { return true; });
+#if(OBJECTS_HEARABLE)
+        if (objSeen->IsActive()) {
+          // Find all objects of the same type
+          BlockWorldFilter filter;
+          filter.SetFilterFcn([objSeen] (ObservableObject* obj) { return objSeen->GetType() == obj->GetType(); });
+          std::vector<ObservableObject*> blocks;
+          FindMatchingObjects(filter, blocks);
+          
+          if (blocks.size() > 1) {
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForActiveObject",
+                                "Observed active object of type %d matches %lu existing objects. Multiple blocks of same type not currently supported.",
+                                objSeen->GetType(), blocks.size());
+            
+          } else if (blocks.size() == 0) {
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
+                                "Observed active object of type %d does not match an existing object. Is the battery plugged in?",
+                                objSeen->GetType());
+          } else {
+            matchingObject = blocks.front();
+            //PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.FoundMatchingActiveObject",
+            //                 "Observed active object of type %d matches existing objectID %d (activeID %d)",
+            //                 objSeen->GetType(), matchingObject->GetID().GetValue(), matchingObject->GetActiveID());
 
-        ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
-                                                                     objSeen->GetSameDistanceTolerance(),
-                                                                     objSeen->GetSameAngleTolerance(),
-                                                                     filter);
-        
-        // If this is the object we're carrying, do nothing and continue to the next observed object
-        if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
-          delete objSeen;
-          continue;
+          }
+
+          // If this is the object we're carrying observed in the carry position, do nothing and continue to the next observed object.
+          // Otherwise, it must've been moved off the lift so unset its carry state.
+          if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
+            if (matchingObject->GetPose().IsSameAs(objSeen->GetPose(),
+                                                   objSeen->GetSameDistanceTolerance(),
+                                                   objSeen->GetSameAngleTolerance())) {
+              delete objSeen;
+              continue;
+            } else {
+              _robot->UnSetCarryObject(matchingObject->GetID());
+            }
+          }
+
+        } else {
+#endif
+          // Store pointers to any existing objects that overlap with this one
+          //std::vector<ObservableObject*> overlappingObjects;
+          //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+          
+          // Override the default filter function to intentionally consider objects
+          // that are unknown here. Otherwise, we'd never be able to match new
+          // observations to existing objects whose pose has been set to unknown!
+          BlockWorldFilter filter;
+          filter.SetFilterFcn([] (ObservableObject*) { return true; });
+          
+          matchingObject = FindClosestMatchingObject(*objSeen,
+                                                     objSeen->GetSameDistanceTolerance(),
+                                                     objSeen->GetSameAngleTolerance(),
+                                                     filter);
+          
+          // If this is the object we're carrying, do nothing and continue to the next observed object
+          if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
+            delete objSeen;
+            continue;
+          }
+#if(OBJECTS_HEARABLE)
         }
+#endif
         
         
         // As of now the object will be w.r.t. the robot's origin.  If we
@@ -804,7 +986,7 @@ namespace Cozmo {
                   }
                 }
               }
-            } else if(!_robot->IsPickingOrPlacing()) { // Don't do identification if picking and placing
+            } else if(!_robot->IsPickingOrPlacing() && !_robot->GetMoveComponent().IsMoving()) { // Don't do identification if picking and placing or moving
               // Tick the fake identification process for any as-yet-unidentified active
               // objects. This is to simulate the fact that identification is not instantaneous
               // and is asynchronous.
@@ -1006,8 +1188,9 @@ namespace Cozmo {
         }
         
         // Update navMemory map
-        if ( nullptr != _navMemoryMap ) {
-          _navMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(), INavMemoryMap::EContentType::ObstacleCube);
+        INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+        if ( nullptr != currentNavMemoryMap ) {
+          currentNavMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(), INavMemoryMap::EContentType::ObstacleCube);
         }
         
         _didObjectsChange = true;
@@ -1051,7 +1234,8 @@ namespace Cozmo {
           {
             ObservableObject* object = objectIter->second;
             
-            if(object->GetLastObservedTime() < atTimestamp &&
+            if(object->GetPoseState() != ObservableObject::PoseState::Unknown &&
+               object->GetLastObservedTime() < atTimestamp &&
                &object->GetPose().FindOrigin() == _robot->GetWorldOrigin())
             {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
@@ -1797,7 +1981,8 @@ namespace Cozmo {
           object->SetPoseParent(_robot->GetWorldOrigin());
 
           // update navmesh with a quadrilateral between the robot and the seen object
-          if ( nullptr != _navMemoryMap )
+          INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+          if ( nullptr != currentNavMemoryMap )
           {
             // robot corners
             const Quad2f& robotQuad = _robot->GetBoundingQuadXY();
@@ -1816,7 +2001,7 @@ namespace Cozmo {
               // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
               // the navmesh that it should be clear, since we saw the marker
               Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
-              _navMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
+              currentNavMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
             }
           }
           
@@ -1931,6 +2116,51 @@ namespace Cozmo {
     }
     */
 
+  
+    ObjectID BlockWorld::AddLightCube(ActionableObject::ActiveID activeID, ActiveCube::FactoryID factoryID)
+    {
+      if (activeID >= 4 || activeID < 0) {
+        PRINT_NAMED_WARNING("BlockWorld.AddLightCube.InvalidActiveID", "activeID %d", activeID);
+        return ObjectID();
+      }
+      
+      // Is there an active object with the same activeID that already exists?
+      ObjectType cubeType = ActiveCube::GetTypeFromFactoryID(factoryID);
+      ObservableObject* matchingObject = GetActiveObjectByActiveID(activeID);
+      if (matchingObject == nullptr) {
+        // If no match found, find one with an invalid activeID and assume it's that
+        const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(cubeType);
+        for (auto& cubeIt : objectsOfSameType) {
+          if (cubeIt.second->GetActiveID() < 0) {
+            ActiveCube* activeObj = dynamic_cast<ActiveCube*>(cubeIt.second);
+            activeObj->SetActiveID(activeID);
+            PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingObjectWithNoActiveID",
+                             "objectID %d, activeID %d, type %d",
+                             cubeIt.second->GetID().GetValue(), cubeIt.second->GetActiveID(), cubeType);
+            return cubeIt.second->GetID();
+          } else {
+            PRINT_NAMED_WARNING("BlockWorld.AddLightCube.FoundOtherCubeOfSameType",
+                                "ActiveID %d is same type as another existing object (objectID %d, activeID %d, type %d). Multiple objects of same type not supported!",
+                                activeID, cubeIt.second->GetID().GetValue(), cubeIt.second->GetActiveID(), cubeType);
+            return ObjectID();
+          }
+        }
+      } else {
+        PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundActiveObject",
+                         "objectID %d, activeID %d, type %d",
+                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType);
+      }
+  
+      
+      // An existing object with activeID was not found so add it
+      ActiveCube* cube = new ActiveCube(activeID, factoryID);
+      cube->SetPoseParent(_robot->GetWorldOrigin());
+      cube->SetPoseState(ObservableObject::PoseState::Unknown);
+      AddNewObject(ObjectFamily::LightCube, cube);
+      PRINT_NAMED_INFO("BlockWorld.AddLightCube.Added", "objectID %d (activeID %d)", cube->GetID().GetValue(), cube->GetActiveID());
+      return cube->GetID();
+    }
+  
     Result BlockWorld::AddCliff(const Pose3d& p)
     {
       // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
@@ -2908,12 +3138,5 @@ namespace Cozmo {
       
     } // DrawAllObjects()
   
-    void BlockWorld::DrawNavMemoryMap() const
-    {
-      if ( _navMemoryMap ) {
-        _navMemoryMap->Draw();
-      }
-    }
-    
 } // namespace Cozmo
 } // namespace Anki

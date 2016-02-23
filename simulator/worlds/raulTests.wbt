@@ -1,0 +1,47 @@
+#VRML_SIM V8.2.1 utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.999988 -0.00110009 -0.00477241 5.82318
+  position -0.00196476 -1.62698 3.1936
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  showMarkers FALSE
+  xSize 0.5
+  ySize 0.5
+}
+LightCube {
+  translation 0.162799 -0.00141587 0.021993
+  rotation 1.59038e-05 -1.83704e-06 1 0.23
+  ID 3
+}
+BlockWorldComms {
+}
+DEF Cozmo_1 CozmoBot {
+  name "CozmoBot_1"
+}
+WebotsKeyboardController {
+  behaviorName "ExploreCliff"
+}
+CozmoVizDisplay {
+}

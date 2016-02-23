@@ -1,0 +1,19 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ * ROBOT_CLAD_SHARED
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 ControllerChannel
+{
+  controller_wheel,
+  controller_head,
+  controller_lift,
+  controller_steering,
+  controller_pointTurn
+}
+
+} // namespace Cozmo
+} // namespace Anki

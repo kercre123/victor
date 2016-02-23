@@ -57,21 +57,12 @@ NavMemoryMap::NavMemoryMap(VizManager* vizManager)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMap::AddQuadInternal(const Quad2f& quad, EContentType type)
+void NavMemoryMap::Merge(const INavMemoryMap* other, const Pose3d& transform)
 {
-  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
-  NodeContent nodeContent(nodeContentType);
-  _navMesh.AddQuad(quad, nodeContent);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMap::AddQuadInternal(const Quad2f& quad, const INavMemoryMapQuadData& content)
-{
-  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
-  NodeContent nodeContent(nodeContentType);
-  nodeContent.data.reset( content.Clone() );
-
-  _navMesh.AddQuad(quad, nodeContent);
+  ASSERT_NAMED(other != nullptr, "NavMemoryMap.Merge.NullMap");
+  ASSERT_NAMED(dynamic_cast<const NavMemoryMap*>(other), "NavMemoryMap.Merge.UnsupportedClass");
+  const NavMemoryMap* otherMap = static_cast<const NavMemoryMap*>(other);
+  _navMesh.Merge( otherMap->_navMesh, transform );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,9 +124,33 @@ void NavMemoryMap::CalculateBorders(EContentType innerType, const std::set<ECont
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMap::Draw() const
+void NavMemoryMap::Draw(size_t mapIdxHint) const
 {
-  _navMesh.Draw();
+  _navMesh.Draw(mapIdxHint);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMap::ClearDraw() const
+{
+  _navMesh.ClearDraw();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMap::AddQuadInternal(const Quad2f& quad, EContentType type)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
+  NodeContent nodeContent(nodeContentType);
+  _navMesh.AddQuad(quad, nodeContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMap::AddQuadInternal(const Quad2f& quad, const INavMemoryMapQuadData& content)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
+  NodeContent nodeContent(nodeContentType);
+  nodeContent.data.reset( content.Clone() );
+
+  _navMesh.AddQuad(quad, nodeContent);
 }
 
 } // namespace Cozmo
