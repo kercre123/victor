@@ -252,7 +252,8 @@ namespace Anki {
     
     void IActionRunner::UnlockTracks()
     {
-      if(!_suppressTrackLocking)
+      // Tracks aren't locked until the action starts so don't unlock them until then
+      if(!_suppressTrackLocking && _state != ActionResult::FAILURE_NOT_STARTED)
       {
         u8 tracks = GetTracksToLock();
 #         if DEBUG_ANIM_TRACK_LOCKING
@@ -279,8 +280,8 @@ namespace Anki {
       _preconditionsMet = false;
       _waitUntilTime = -1.f;
       _timeoutTime = -1.f;
-      ResetState();
       UnlockTracks();
+      ResetState();
     }
     
     ActionResult IAction::UpdateInternal()
