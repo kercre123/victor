@@ -7,7 +7,7 @@ namespace SpeedTap {
 
     private SpeedTapGame _SpeedTapGame = null;
     private const float _kAdjustTime = 1.0f;
-    private const float _kAdjustSpeed = 20.0f;
+    private const float _kAdjustSpeed = 25.0f;
     private float _adjustTimer = 0.0f;
 
     public override void Enter() {
