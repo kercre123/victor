@@ -6,7 +6,7 @@
 
 ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
-ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/
+ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/ syscon/hal
 
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h

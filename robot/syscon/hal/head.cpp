@@ -167,7 +167,7 @@ static void ProcessMessage()
   }
   else if (tag > RobotInterface::TO_BODY_END)
   {
-    AnkiError("Spine.ProcessMessage", "Body received message %x that seems bound above", tag);
+    AnkiError( 130, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, tag);
   }
   else
   {
@@ -178,7 +178,7 @@ static void ProcessMessage()
     {
       #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"
       default:
-        AnkiError("Head.ProcessMessage.BadTag", "Message to body, unhandled tag 0x%x", tag);
+        AnkiError( 131, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, tag);
     }
   }
 }

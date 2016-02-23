@@ -24,7 +24,7 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
   }
   else if ((size + 1) > SPINE_MAX_CLAD_MSG_SIZE)
   {
-    AnkiError("Spine.Enqueue.MessageTooLong", "Message %x[%d] too long to enqueue to head. MAX_SIZE = %d", msgID == 0 ? data[0] : msgID, size, SPINE_MAX_CLAD_MSG_SIZE);
+    AnkiError( 128, "Spine.Enqueue.MessageTooLong", 386, "Message %x[%d] too long to enqueue to head. MAX_SIZE = %d", 3, msgID == 0 ? data[0] : msgID, size, SPINE_MAX_CLAD_MSG_SIZE);
     return false;
   }
   else
