@@ -250,14 +250,14 @@ namespace AnimationController {
     GetFromBuffer(reinterpret_cast<u8*>(&size), 2);
     if (GetNumBytesAvailable() < size)
     {
-      AnkiError( 125, "AnimationController.BufferCorrupt", 377, "Message size header (%d) greater than available bytes (%d), assuming corrupt and clearing", 2, GetNumBytesAvailable(), size);
+      AnkiError( 136, "AnimationController.BufferCorrupt", 377, "Message size header (%d) greater than available bytes (%d), assuming corrupt and clearing", 2, GetNumBytesAvailable(), size);
       Clear();
       return 0;
     }
     GetFromBuffer(msg->GetBuffer(), size);
     if (msg->Size() != size)
     {
-      AnkiError( 125, "AnimationController.BufferCorrupt", 378, "Clad message size (%d) doesn't match stored header (%d), assuming corrupt and clearing", 2, msg->Size(), size);
+      AnkiError( 136, "AnimationController.BufferCorrupt", 378, "Clad message size (%d) doesn't match stored header (%d), assuming corrupt and clearing", 2, msg->Size(), size);
       Clear();
       return 0;
     }

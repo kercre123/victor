@@ -415,7 +415,7 @@ namespace Anki {
         // TODO: This should be _much_ smaller! Block messages are being dropped. HW team will look into why eventually.
         const u16 CONNECTION_TIMEOUT_THRESH_MS = 500;
 #endif
-        if (Messages::ReceivedInit()) {
+        /*if (Messages::ReceivedInit()) {
           for (u32 i=0; i<MAX_NUM_ACTIVE_OBJECTS; ++i) {
             if ((HAL::GetLastCubeContactTime(i) > 0) &&
                 (( lastSentCubeConnected[i] && (HAL::GetTimeStamp() - HAL::GetLastCubeContactTime(i) > CONNECTION_TIMEOUT_THRESH_MS)) ||
@@ -432,7 +432,7 @@ namespace Anki {
           for (u32 i=0; i<MAX_NUM_ACTIVE_OBJECTS; ++i) {
             lastSentCubeConnected[i] = false;
           }
-        }
+        }*/
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display

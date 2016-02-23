@@ -128,7 +128,7 @@ namespace Anki {
       pointTurnKi_ = ki;
       pointTurnMaxIntegralError_ = maxIntegralError;
       
-      AnkiInfo( 125, "SteeringController.SetPointTurnGains", 373, "New gains: kp %f, ki %f, kd %f, maxSum %f", 4, kp, ki, kd, maxIntegralError);
+      AnkiInfo( 125, "SteeringController.SetPointTurnGains", 387, "New gains: kp %f, ki %f, kd %f, maxSum %f", 4, kp, ki, kd, maxIntegralError);
     }
     
     SteerMode GetMode()
@@ -588,21 +588,21 @@ namespace Anki {
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
         if (absAngularDistToTarget < POINT_TURN_ANGLE_TOL) {
           if (inPositionStartTime_ == 0) {
-            AnkiDebug( 126, "ManagePointTurn.InRange", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+            AnkiDebug( 132, "ManagePointTurn.InRange", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
             inPositionStartTime_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS) {
 #           if(DEBUG_STEERING_CONTROLLER)
             f32 lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed;
             WheelController::GetFilteredWheelSpeeds(lWheelSpeed, rWheelSpeed);
             WheelController::GetDesiredWheelSpeeds(lDesSpeed, rDesSpeed);
-            AnkiDebug( 130, "ManagePointTurn.Stopping", 376, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
+            AnkiDebug( 133, "ManagePointTurn.Stopping", 388, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
                       currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currAngularVel_), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), 0,0,0,0);
 #           endif
             ExitPointTurn();
             return;
           }
         } else {
-          AnkiDebugPeriodic(100, 127, "ManagePointTurn.OOR", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+          AnkiDebugPeriodic(100, 134, "ManagePointTurn.OOR", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
           inPositionStartTime_ = 0;
 
           
@@ -613,7 +613,7 @@ namespace Anki {
               pointTurnIntegralPowerMaxedStartTime_ = HAL::GetTimeStamp();
               pointTurnIntegralPowerMaxedStartAngle_ = currAngle;
             } else if (HAL::GetTimeStamp() - pointTurnIntegralPowerMaxedStartTime_ > POINT_TURN_STUCK_THRESHOLD_MS) {
-              AnkiInfo( 129, "ManagePointTurn.StoppingCuzStuck", 375, "currAngle %f, currDesired %f", 2, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle));
+              AnkiInfo( 135, "ManagePointTurn.StoppingCuzStuck", 375, "currAngle %f, currDesired %f", 2, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle));
               ExitPointTurn();
               return;
             }
