@@ -63,9 +63,6 @@ namespace Cozmo {
       AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
       AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
       AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
-    
-      // // HACK: enable speed tab requests
-      // _defaultChooser->EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap, true);
     }
     
     if (_robot.HasExternalInterface())
