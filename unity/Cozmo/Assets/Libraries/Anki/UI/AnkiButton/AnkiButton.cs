@@ -117,7 +117,7 @@ namespace Anki {
 
       [SerializeField]
       private Anki.Cozmo.Audio.AudioEventParameter 
-      _UISoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+        _UISoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
 
       public Anki.Cozmo.Audio.AudioEventParameter SoundEvent {
         get { return _UISoundEvent; }
@@ -280,6 +280,7 @@ namespace Anki {
         foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (graphic.targetImage != null && graphic.enabledSprite != null) {
             SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
+            DAS.Debug(this, graphic.pressedSprite.ToString() + " " + graphic.ignoreSprite);
           }
           else {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
