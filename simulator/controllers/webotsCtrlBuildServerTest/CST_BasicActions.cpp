@@ -245,7 +245,7 @@ namespace Anki {
           // Verify robot is facing the object
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 15), 5)
+                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 20), 5)
           {
             CST_EXIT();
           }
