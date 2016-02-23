@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
-#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "anki/cozmo/basestation/block.h"

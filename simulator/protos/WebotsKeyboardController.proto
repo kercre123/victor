@@ -17,7 +17,7 @@ PROTO WebotsKeyboardController [
   field SFString behaviorGroup "RequestSpeedTap"
 
   # BehaviorChooser to send
-  field SFString behaviorChooserName "InvestorDemoFacesAndBlocks"
+  field SFString behaviorChooserName "default"
 
   field SFString emotionName "WantToPlay"
   field SFFloat emotionVal 1.0
