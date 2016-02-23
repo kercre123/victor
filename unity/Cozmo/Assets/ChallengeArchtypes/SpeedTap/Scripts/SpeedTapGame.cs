@@ -9,11 +9,16 @@ namespace SpeedTap {
 
   public class SpeedTapGame : GameBase {
 
+    private const float _kRetreatSpeed = -50.0f;
+    private const float _kRetreatTime = 1.5f;
+    private const float _kTapAdjustRange = 5.0f;
+
+    private Vector3 _CozmoPos;
+
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
     public bool PlayerTap = false;
     public bool AllRoundsOver = false;
-    public Vector3 PlayPos = Vector3.zero;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -68,12 +73,14 @@ namespace SpeedTap {
     }
 
     public void CozmoWinsHand() {
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
       _CozmoScore++;
       CheckRounds();
       UpdateUI();
     }
 
     public void PlayerWinsHand() {
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
       _PlayerScore++;
       CheckRounds();
       UpdateUI();
@@ -83,12 +90,40 @@ namespace SpeedTap {
       CozmoWinsHand();
     }
 
-    private void HandleRoundAnimationDone(bool success) {
-      _StateMachine.SetNextState(new SteerState(50.0f, 50.0f, 0.8f, new SpeedTapWaitForCubePlace(false)));
+    private void HandleRoundRetreatDone(bool success) {
+      int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
+      int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
+      int roundsLeft = _Rounds - losingScore - winningScore;
+      if (winningScore > losingScore + roundsLeft) {
+        AllRoundsOver = true;
+        if (_PlayerRoundsWon > _CozmoRoundsWon) {
+          _StateMachine.SetNextState(new AnimationState(RandomLoseSession(), HandleSessionAnimDone));
+        }
+        else {
+          _StateMachine.SetNextState(new AnimationState(RandomWinSession(), HandleSessionAnimDone));
+        }
+      }
+      else {
+        ResetScore();
+        _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
+      }
+    }
+
+    private void HandleSessionAnimDone(bool success) {
+      if (_PlayerRoundsWon > _CozmoRoundsWon) {
+        RaiseMiniGameWin();
+      }
+      else {
+        RaiseMiniGameLose();
+      }
     }
 
     private void CheckRounds() {
       if (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound) {
+        
+        if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
+          _CloseRoundCount++;
+        }
 
         if (_PlayerScore > _CozmoScore) {
           _PlayerRoundsWon++;
@@ -102,30 +137,12 @@ namespace SpeedTap {
             CurrentDifficulty++;
           }
             
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kFail, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomLoseRound(), HandleRoundRetreatDone)));
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new SteerState(-50.0f, -50.0f, 1.2f, new AnimationState(AnimationName.kSpeedTap_WinHand, HandleRoundAnimationDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, new AnimationState(RandomWinRound(), HandleRoundRetreatDone)));
         }
-
-        if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
-          _CloseRoundCount++;
-        }
-
-        int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
-        int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
-        int roundsLeft = _Rounds - losingScore - winningScore;
-        if (winningScore > losingScore + roundsLeft) {
-          AllRoundsOver = true;
-          if (_PlayerRoundsWon > _CozmoRoundsWon) {
-            RaiseMiniGameWin();
-          }
-          else {
-            RaiseMiniGameLose();
-          }
-        }
-        ResetScore();
       }
     }
 
@@ -197,7 +214,7 @@ namespace SpeedTap {
     }
 
     public void RollingBlocks() {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
     }
 
     private void UIButtonTapped() {
@@ -270,7 +287,149 @@ namespace SpeedTap {
     }
 
     public void ShowPlayerTapSlide() {
-      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
+      SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
+
+    #region RandomAnims
+
+    // Temp Functions for random animation until anim groups are ready
+
+    public void SetCozmoOrigPos() {
+      _CozmoPos = CurrentRobot.WorldPosition;
+    }
+
+    public void CheckForAdjust(RobotCallback adjustCallback = null) {
+      float dist = 0.0f;
+      dist = (CurrentRobot.WorldPosition - _CozmoPos).magnitude;
+      if (dist > _kTapAdjustRange) {
+        CurrentRobot.GotoPose(_CozmoPos, CurrentRobot.Rotation, false, false, adjustCallback);
+      }
+      else {
+        if (adjustCallback != null) {
+          adjustCallback.Invoke(false);
+        }
+      }
+    }
+
+    public string RandomWinHand() {
+      string animName = "";
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_winHand_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_winHand_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_winHand_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomLoseHand() {
+      string animName = "";
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_loseHand_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_loseHand_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_loseHand_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomWinRound() {
+      string animName = "";
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_winRound_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_winRound_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_winRound_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomLoseRound() {
+      string animName = "";
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_loseRound_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_loseRound_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_loseRound_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomWinSession() {
+      string animName = "";
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_winSession_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_winSession_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_winSession_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomLoseSession() {
+      string animName = "";
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        animName = AnimationName.kSpeedTap_loseSession_01;
+        break;
+      case 1:
+        animName = AnimationName.kSpeedTap_loseSession_02;
+        break;
+      default:
+        animName = AnimationName.kSpeedTap_loseSession_03;
+        break;
+      }
+      return animName;
+    }
+
+    public string RandomTap() {
+      string tapName = "";
+      int roll = UnityEngine.Random.Range(0, 4);
+      switch (roll) {
+      case 0:
+        tapName = AnimationName.kSpeedTap_Tap_01;
+        break;
+      case 1:
+        tapName = AnimationName.kSpeedTap_Tap_02;
+        break;
+      default:
+        tapName = AnimationName.kSpeedTap_Tap_03;
+        break;
+      }
+      return tapName;
+    }
+
+    #endregion
   }
 }

@@ -407,7 +407,7 @@ public class Robot : IRobot {
     // and try lowering lift
     foreach (var lightCube in LightCubes.Values) {
       if (IsLightCubeInPickupRange(lightCube)) {
-        TurnInPlace(Mathf.PI * 0.5f, (s) => TryResetHeadAndLift(onComplete));
+        TurnInPlace(Mathf.PI * 0.5f, 1000, 1000, (s) => TryResetHeadAndLift(onComplete));
         return;
       }
     }
@@ -1255,11 +1255,13 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void TurnInPlace(float angle_rad, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
       angle_rad, 
-      0, 
+      speed_rad_per_sec,
+      accel_rad_per_sec2,
+      0,
       ID
     ), 
       callback, 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using UnityEngine;
 using Anki.Cozmo.Audio;
 
@@ -11,15 +12,15 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
+      _SpeedTapGame.PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
       for (int i = 0; i < 4; i++) {
         _SpeedTapGame.CozmoBlock.Lights[i].SetFlashingLED(_SpeedTapGame.CozmoWinColors[i], 100, 100, 0);
       }
-      _CurrentRobot.GotoPose(_SpeedTapGame.PlayPos, _CurrentRobot.Rotation, false, false, HandleAdjustDone);
+      _SpeedTapGame.CheckForAdjust(HandleAdjustDone);
     }
 
     private void HandleAdjustDone(bool success) {
-      _CurrentRobot.SendAnimation(AnimationName.kSuccess, HandleAnimationDone);
+      _StateMachine.SetNextState(new AnimationState(_SpeedTapGame.RandomWinHand(), HandleAnimationDone));
     }
 
     private void HandleAnimationDone(bool success) {
