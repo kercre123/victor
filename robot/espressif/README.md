@@ -45,12 +45,12 @@ We have build custom copies of the GCC toolchain for the Xtensa LX106 CPU for bo
 1. [Download from Dropbox](https://www.dropbox.com/sh/7zmuion2gti5bed/AABrkJ5n9XsZ91mWlCU9w09qa?dl=0)
 2. Make a destination directory for the toolchain
 ```
-sudo mkdir -p /opt/Espressif
-sudo chown `whoami`: /opt/Espressif
+sudo mkdir -p /opt
+sudo chown `whoami`: /opt
 ```
 3. Extract the toolchain there
 ```
-cd /opt/Espressif
+cd /opt
 tar xjf <PATH TO DOWNLOADED TOOLCHAIN>
 ```
 
@@ -60,10 +60,10 @@ You don't want to do this, but if you have to, look at the _README.md_ in the Dr
 ## Build the firmware
 
 ```
-cd <PRODUCTS COZMO REPOSITORY>/robot/espressif
-./build.sh
+cd <PRODUCTS COZMO REPOSITORY>/robot
+make esp
 ```
-The build.sh script sets the appropriate variables for our project before calling the Espressif Makefile.
+The Makefile sets the appropriate variables for our project.
 
 Firmware may be installed onto a module by running:
 ```
