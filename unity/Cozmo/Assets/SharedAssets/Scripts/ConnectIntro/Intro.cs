@@ -139,7 +139,9 @@ public class Intro : MonoBehaviour {
       return;
     }
 
+    #if UNITY_EDITOR
     _Robot.SetRobotVolume(0.06f);
+    #endif
 
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
