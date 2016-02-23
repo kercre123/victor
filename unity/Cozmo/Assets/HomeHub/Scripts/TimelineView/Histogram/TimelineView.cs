@@ -12,7 +12,7 @@ using Anki.Cozmo.Audio;
 namespace Cozmo.HomeHub {
   public class TimelineView : BaseView {
 
-    public static int kGeneratedTimelineHistoryLength = 21;
+    public const int kGeneratedTimelineHistoryLength = 21;
 
     [SerializeField]
     private float _TimelineStartOffset = 150f;
@@ -249,13 +249,12 @@ namespace Cozmo.HomeHub {
         }
 
         // start a new session
-        StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
-
         TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
           StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
           StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
         };
 
+        StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
         newSession.Goals.Set(goals);
 
         currentRobot.SetProgressionStats(newSession.Progress);
@@ -277,12 +276,13 @@ namespace Cozmo.HomeHub {
       int stat_count = (int)Anki.Cozmo.ProgressionStatType.Count; 
       for (int i = 0; i < stat_count; ++i) {
         var targetStat = (Anki.Cozmo.ProgressionStatType)i;
-        if (timelineEntry.Goals[targetStat] > 0 && timelineEntry.Goals[targetStat] > timelineEntry.Progress[targetStat]) {
-          DAS.Event("game.goal_complete", targetStat.ToString(), new Dictionary<string,string> { {
-              "$data",
-              timelineEntry.Goals[targetStat].ToString()
-            }
-          });
+        if (timelineEntry.Goals[targetStat] > 0) {
+          DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date), 
+            new Dictionary<string,string> { {
+                "$data",
+                DASUtil.FormatGoal(targetStat, timelineEntry.Progress[targetStat], timelineEntry.Goals[targetStat])
+              }
+            });
         }
       }
 

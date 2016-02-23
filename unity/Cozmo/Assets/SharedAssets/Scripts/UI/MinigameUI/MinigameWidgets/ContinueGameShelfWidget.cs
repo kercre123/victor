@@ -21,6 +21,10 @@ namespace Cozmo {
         _ContinueButton.onClick.AddListener(HandleContinueButtonClicked);
       }
 
+      private void OnDestroy() {
+        _ContinueButton.onClick.RemoveListener(HandleContinueButtonClicked);
+      }
+
       public void Initialize(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
                              string buttonText, string shelfText, Color shelfColor) {
         _ContinueButton.Text = buttonText;

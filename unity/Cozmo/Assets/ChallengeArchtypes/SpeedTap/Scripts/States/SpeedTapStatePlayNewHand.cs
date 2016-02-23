@@ -7,7 +7,7 @@ namespace SpeedTap {
   public class SpeedTapStatePlayNewHand : State {
 
     private SpeedTapGame _SpeedTapGame = null;
-    private float _StartTimeMs = 0;
+    private float _StartTimeMs = -1.0f;
     private float _OnDelayTimeMs = 2000.0f;
     private float _OffDelayTimeMs = 2000.0f;
     private float _PeekMinTimeMs = 500.0f;
@@ -25,35 +25,50 @@ namespace SpeedTap {
     private bool _TriedFake = false;
     private bool _TryFake = false;
     private bool _TryPeek = false;
+    private bool _MidHand = false;
+    private bool _PlayReady = false;
     private float _CozmoTapDelayTimeMs = 0f;
 
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _StartTimeMs = Time.time * 1000.0f;
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
       _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
+      _StartTimeMs = -1.0f;
       _LightsOn = false;
       _SpeedTapGame.PlayerTap = false;
-
-      GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
+      _MidHand = false;
+      _PlayReady = false;
 
       _CurrentRobot.SetLiftHeight(1.0f);
-      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+      _SpeedTapGame.CheckForAdjust(AdjustDone);
+    }
 
-      _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
+    void AdjustDone(bool success) {
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      _StartTimeMs = Time.time * 1000.0f;
+      _PlayReady = true;
+      if (_MidHand == false) {
+        GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
+        _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+        _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
+        _MidHand = true;
+      }
     }
 
     public override void Update() {
       base.Update();
-
+      // Do not run game while not ready for play
+      if (_PlayReady == false) {
+        return;
+      }
       float currTimeMs = Time.time * 1000.0f;
 
       if (_LightsOn) {
         if (_GotMatch) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(RandomTap(), RobotCompletedTapAnimation);
+              _CurrentRobot.SendAnimation(_SpeedTapGame.RandomTap(), RobotCompletedTapAnimation);
               _CozmoTapping = true;
             }
           }
@@ -81,26 +96,9 @@ namespace SpeedTap {
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_Peek);
+          _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_LookAtPlayer);
         }
       }
-    }
-
-    private string RandomTap() {
-      string tapName = "";
-      int roll = UnityEngine.Random.Range(0, 4);
-      switch (roll) {
-      case 0:
-        tapName = AnimationName.kSpeedTap_Tap_01;
-        break;
-      case 1:
-        tapName = AnimationName.kSpeedTap_Tap_02;
-        break;
-      default:
-        tapName = AnimationName.kSpeedTap_Tap_03;
-        break;
-      }
-      return tapName;
     }
 
     public override void Exit() {
@@ -120,6 +118,7 @@ namespace SpeedTap {
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);
+      _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
 
     void CozmoDidTap() {
@@ -134,7 +133,7 @@ namespace SpeedTap {
         _StateMachine.SetNextState(new SpeedTapPlayerWins());
       }
       else if (_LightsOn) {
-        _StateMachine.SetNextState(new SpeedTapPlayerLoses());
+        _StateMachine.SetNextState(new SpeedTapCozmoWins());
       }
     }
 
