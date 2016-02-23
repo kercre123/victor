@@ -379,7 +379,9 @@ namespace Anki {
       // If endVel not yet reached then update velocity
       if (currVel_ != endVel_) {
         currVel_ += deltaVelPerTimeStepStart_;
-        if ((maxReachableVel_ > endVel_) != (currVel_ > endVel_)) {
+        if ( ((maxReachableVel_ > endVel_) != (currVel_ > endVel_)) ||
+             ((maxReachableVel_ == endVel_) && ((currVel_ > endVel_) == (currVel_ > startVel_)))
+           ) {
           currVel_ = endVel_;
         }
       }
@@ -403,7 +405,9 @@ namespace Anki {
       // If we're not already at endVel_...
       if (currVel_ != endVel_) {
         currVel_ += deltaVelPerTimeStepEnd_;
-        if ((maxReachableVel_ > endVel_) != (currVel_ > endVel_)) {
+        if ( ((maxReachableVel_ > endVel_) != (currVel_ > endVel_)) ||
+            ((maxReachableVel_ == endVel_) && ((currVel_ > endVel_) == (currVel_ > startVel_)))
+           ) {
           currVel_ = endVel_;
         }
       }
