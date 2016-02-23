@@ -168,12 +168,12 @@ namespace SpeedTap
 		{ 
 
 			InitialCubesState initCubeState = new InitialCubesState (
-				                                     new SelectDifficultyState (
-					                                     new SpeedTapWaitForCubePlace (true),
-					                                     DifficultyOptions,
-					                                     Mathf.Max (DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
-				                                     ), 
-				                                     cubesRequired);
+				                                  new SelectDifficultyState (
+					                                  new SpeedTapWaitForCubePlace (true),
+					                                  DifficultyOptions,
+					                                  Mathf.Max (DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
+				                                  ), 
+				                                  cubesRequired);
 			_StateMachine.SetNextState (initCubeState);
 
 			CurrentRobot.VisionWhileMoving (true);
