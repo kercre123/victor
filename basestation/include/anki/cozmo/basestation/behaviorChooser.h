@@ -76,7 +76,11 @@ class SimpleBehaviorChooser : public IBehaviorChooser
 {
 public:
   
-  SimpleBehaviorChooser();
+  SimpleBehaviorChooser(Robot& robot, const Json::Value& config);
+  
+  bool ReadFromJson(Robot& robot, const Json::Value& config);
+  
+  bool AddFactoryBehaviors(const Robot& robot, const Json::Value& config);
   
   // For IBehaviorChooser
   virtual Result AddBehavior(IBehavior *newBehavior) override;
@@ -104,12 +108,14 @@ public:
   
 protected:
   
-  float MinMarginToSwapRunningBehavior(float runningDuration) const;
+  float ScoreBonusForCurrentBehavior(float runningDuration) const;
 
   using NameToBehaviorMap = std::map<std::string, IBehavior*>;
   NameToBehaviorMap _nameToBehaviorMap;
   
-  Util::GraphEvaluator2d  _minMarginToSwapRunningBehavior;
+  Util::GraphEvaluator2d  _scoreBonusForCurrentBehavior;
+  
+  IBehavior* _behaviorNone = nullptr;
 };
   
 // Builds upon the SimpleBehaviorChooser to also directly trigger a specific behavior on certain events
