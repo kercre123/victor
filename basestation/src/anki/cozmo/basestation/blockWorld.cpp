@@ -749,7 +749,20 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
             //                 objSeen->GetType(), matchingObject->GetID().GetValue(), matchingObject->GetActiveID());
 
           }
-          
+
+          // If this is the object we're carrying observed in the carry position, do nothing and continue to the next observed object.
+          // Otherwise, it must've been moved off the lift so unset its carry state.
+          if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
+            if (matchingObject->GetPose().IsSameAs(objSeen->GetPose(),
+                                                   objSeen->GetSameDistanceTolerance(),
+                                                   objSeen->GetSameAngleTolerance())) {
+              delete objSeen;
+              continue;
+            } else {
+              _robot->UnSetCarryObject(matchingObject->GetID());
+            }
+          }
+
         } else {
           
           // Store pointers to any existing objects that overlap with this one
@@ -766,14 +779,13 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
                                                      objSeen->GetSameDistanceTolerance(),
                                                      objSeen->GetSameAngleTolerance(),
                                                      filter);
-        }
-        
-        
-        
-        // If this is the object we're carrying, do nothing and continue to the next observed object
-        if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
-          delete objSeen;
-          continue;
+          
+          // If this is the object we're carrying, do nothing and continue to the next observed object
+          if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
+            delete objSeen;
+            continue;
+          }
+           
         }
         
         
