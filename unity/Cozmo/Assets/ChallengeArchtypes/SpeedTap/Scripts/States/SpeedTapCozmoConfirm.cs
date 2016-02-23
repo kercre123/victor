@@ -24,7 +24,7 @@ namespace SpeedTap {
       }
       else {
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
-        _StateMachine.SetNextState(new AnimationState(_SpeedTapGame.RandomTap(), HandleTapDone));
+        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_Tap, HandleTapDone));
       }
     }
 

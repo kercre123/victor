@@ -68,7 +68,7 @@ namespace SpeedTap {
         if (_GotMatch) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(_SpeedTapGame.RandomTap(), RobotCompletedTapAnimation);
+              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, RobotCompletedTapAnimation);
               _CozmoTapping = true;
             }
           }
@@ -76,7 +76,7 @@ namespace SpeedTap {
         else if (_TryFake) {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_FakeOut, RobotCompletedFakeTapAnimation);
+              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, RobotCompletedFakeTapAnimation);
               _TriedFake = true;
             }
           }
@@ -96,7 +96,7 @@ namespace SpeedTap {
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_LookAtPlayer);
+          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek);
         }
       }
     }
