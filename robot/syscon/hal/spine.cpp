@@ -11,7 +11,7 @@
 extern void EnterRecovery(void);
 
 static const int QUEUE_DEPTH = 4;
-static u8 spinebuffer[QUEUE_DEPTH][SPINE_MAX_CLAD_MSG_SIZE];
+static CladBuffer spinebuffer[QUEUE_DEPTH];
 static volatile int spine_enter = 0;
 static volatile int spine_exit  = 0;
 
@@ -29,25 +29,26 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
   }
   else
   {
-    u8* dest = spinebuffer[spine_exit];
+    u8* dest = spinebuffer[spine_exit].data;
     if (msgID != 0) {
       *dest = msgID;
       ++dest;
     }
     memcpy(dest, buffer, size);
+    spinebuffer[spine_exit].length = size + 1;
     spine_exit = exit;
     return true;
   }
 }
 
-void Spine::Dequeue(u8* dest) {
+void Spine::Dequeue(CladBuffer* dest) {
   if (spine_enter == spine_exit)
   {
-    *dest = 0; // Invalid tag
+    dest->length = 0;
   }
   else
   {
-    memcpy(dest, spinebuffer[spine_enter], SPINE_MAX_CLAD_MSG_SIZE);
+    memcpy(dest, spinebuffer[spine_enter], sizeof(CladBuffer));
     spine_enter = (spine_enter + 1) % QUEUE_DEPTH;
   }
 }

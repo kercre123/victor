@@ -2,9 +2,10 @@
 #define __SPINE_H
 
 #include "portable.h"
+#include "anki/cozmo/robot/spineData.h"
 
 namespace Spine {
-  void Dequeue(u8* dest);
+  void Dequeue(CladBuffer* dest);
 }
 
 namespace Anki {

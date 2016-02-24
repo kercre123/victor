@@ -12,17 +12,17 @@ namespace Cozmo {
 namespace HAL {
   static const int QUEUE_DEPTH = 8;
   
-  static u8 spinebuffer[QUEUE_DEPTH][SPINE_MAX_CLAD_MSG_SIZE];
+  static CladBuffer spinebuffer[QUEUE_DEPTH];
   static volatile int spine_enter = 0;
   static volatile int spine_exit = 0;
 
-  void Spine::Dequeue(u8* dest) {
+  void Spine::Dequeue(CladBuffer* dest) {
     if (spine_enter == spine_exit) {
-      *dest = RobotInterface::GLOBAL_INVALID_TAG;
+      dest->length = 0;
     }
     else
     {
-      memcpy(dest, spinebuffer[spine_enter], SPINE_MAX_CLAD_MSG_SIZE);
+      memcpy(dest, spinebuffer[spine_enter], sizeof(CladBuffer));
       spine_enter = (spine_enter+1) % QUEUE_DEPTH;
     }
   }
@@ -39,7 +39,8 @@ namespace HAL {
     }
     else
     {
-      memcpy(spinebuffer[spine_exit], data, length);
+      memcpy(spinebuffer[spine_exit].data, data, length);
+      spinebuffer[spine_exit].length = length;
       spine_exit = exit;
       return true;
     }
@@ -47,7 +48,7 @@ namespace HAL {
 
   void Spine::Manage() {
     const u8 tag = g_dataToHead.cladBuffer[0];
-    if (tag == RobotInterface::GLOBAL_INVALID_TAG)
+    if (g_dataToHead.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
     {
       // pass
     }
@@ -57,17 +58,15 @@ namespace HAL {
     }
     else if (tag > RobotInterface::TO_RTIP_END)
     {
-      RadioSendMessage(g_dataToHead.cladBuffer+1, SPINE_MAX_CLAD_MSG_SIZE-1, tag);
+      RadioSendMessage(g_dataToHead.cladBuffer.data + 1, g_dataToHead.cladBuffer.length, g_dataToHead.cladBuffer[0]);
     }
     else
     {
-      u8 cladBuffer[SPINE_MAX_CLAD_MSG_SIZE + 4];
-      RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
-      memcpy(msg->GetBuffer(), g_dataToHead.cladBuffer, SPINE_MAX_CLAD_MSG_SIZE);
+      RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToHead.cladBuffer.data);
       Messages::ProcessMessage(*msg);
     }
-    // Prevent same messagr from getting processed twice (if the spine desyncs)
-    g_dataToHead.cladBuffer[0] = RobotInterface::GLOBAL_INVALID_TAG;
+    // Prevent same message from getting processed twice (if the spine desyncs)
+    g_dataToHead.cladBuffer.length = 0;
   }
 
 }

@@ -125,8 +125,9 @@ inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
-  Spine::Dequeue(g_dataToHead.cladBuffer);
-  memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
+  GlobalDataToHead* txBufferStruct = reinterpret_cast<GlobalDataToHead*>(txRxBuffer);
+  memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead)-sizeof(CladBuffer));
+  Spine::Dequeue(*(txBufferStruct->cladBuffer));
   g_dataToHead.cladBuffer[0] = Anki::Cozmo::RobotInterface::GLOBAL_INVALID_TAG;
   txRxIndex = 0;
 
