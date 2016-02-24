@@ -5,6 +5,9 @@ namespace SpeedTap {
 
   public class SpeedTapWaitForCubePlace : State {
 
+    private const float _kArriveAtCubeThreshold = 90.0f;
+    private const float _kTargetDistanceToCube = 70.0f;
+
     private SpeedTapGame _SpeedTapGame = null;
 
     private bool _ShowHowToPlay = false;
@@ -30,8 +33,8 @@ namespace SpeedTap {
       if (_SpeedTapGame.AllRoundsOver) {
         return;
       }
-
-      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, 50f, HandleGotoObjectComplete);
+      _GotoObjectComplete = false;
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete);
 
       if (_ShowHowToPlay) {
         _StateMachine.PushSubState(new HowToPlayState(null));
@@ -44,11 +47,12 @@ namespace SpeedTap {
 
     public override void Update() {
       if (_GotoObjectComplete) {
-        if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < 80f) {
+        if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < _kArriveAtCubeThreshold) {
           _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
         }
         else {
           // restart this state
+          _SpeedTapGame.InitialCubesDone();
           _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
         }
       }

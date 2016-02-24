@@ -12,8 +12,28 @@ public class DebugMenuManager : MonoBehaviour {
 
   private int _LastOpenedDebugTab = 0;
 
+  private static DebugMenuManager _Instance;
+
+  public static DebugMenuManager Instance {
+    get {
+      return _Instance;
+    }
+    private set {
+      if (_Instance == null) {
+        _Instance = value;
+      }    
+    }
+  }
+
+  public Canvas DebugOverlayCanvas {
+    get {
+      return _DebugMenuCanvas;
+    }
+  }
+
   void Start() {
     // TODO: Destroy self if not production
+    _Instance = this;
   }
   
   // TODO: Pragma out this code for production

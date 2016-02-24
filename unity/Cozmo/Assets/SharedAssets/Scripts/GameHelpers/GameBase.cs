@@ -13,14 +13,6 @@ using Cozmo.Util;
 // ending and to start/restart games. Also has interface for killing games
 public abstract class GameBase : MonoBehaviour {
 
-  private const string kDasGameStartUUID = "game.start";
-  private const string kDasGameStartType = "game.type";
-  private const string kDasGameEnd = "game.end";
-  private const string kDasGameQuit = "game.quit";
-  private const string kDasGameEndWithRank = "game.end.player_rank";
-  private const string kDasRankPlayerLose = "1";
-  private const string kDasRankPlayerWon = "0";
-  private const string kDasGameEndRewards = "game.end.goalPoints_earned.{0}";
   private System.Guid? _GameUUID;
 
   public delegate void MiniGameQuitHandler();
@@ -83,8 +75,8 @@ public abstract class GameBase : MonoBehaviour {
     InitializeView(challengeData);
     _SharedMinigameViewInstance.OpenView();
 
-    DAS.Event(kDasGameStartUUID, GetGameUUID());
-    DAS.Event(kDasGameStartType, GetDasGameName());
+    DAS.Event(DASConstants.Game.kStart, GetGameUUID());
+    DAS.Event(DASConstants.Game.kType, GetDasGameName());
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
@@ -124,12 +116,15 @@ public abstract class GameBase : MonoBehaviour {
   protected abstract void CleanUpOnDestroy();
 
   public void OnDestroy() {
-    DAS.Event(kDasGameEnd, GetGameTimeElapsedAsStr());
+    DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
 
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(() => {
         RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
+        CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
+        CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
+        CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
       });
     }
     if (_SharedMinigameViewInstance != null) {
@@ -202,7 +197,7 @@ public abstract class GameBase : MonoBehaviour {
   protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
 
-    DAS.Event(kDasGameQuit, GetQuitGameState());
+    DAS.Event(DASConstants.Game.kQuit, GetQuitGameState());
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
@@ -275,13 +270,13 @@ public abstract class GameBase : MonoBehaviour {
 
     // Pass icons and xp to HomeHub
     if (_WonChallenge) {
-      DAS.Event(kDasGameEndWithRank, kDasRankPlayerWon);
+      DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
       if (OnMiniGameWin != null) {
         OnMiniGameWin(_RewardedXp, rewardIconObjects);
       } 
     }
     else {
-      DAS.Event(kDasGameEndWithRank, kDasRankPlayerLose);
+      DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerLose);
       if (OnMiniGameLose != null) {
         OnMiniGameLose(_RewardedXp, rewardIconObjects);
       }
@@ -348,8 +343,8 @@ public abstract class GameBase : MonoBehaviour {
     foreach (var statType in StatContainer.sKeys) {
       if (rewards.TryGetValue(statType, out rewardAmount)) {
         DAS.Event(
-          string.Format(kDasGameEndRewards, statType), 
-          StatContainer.FormatForDasStatEvent(statType, rewardAmount));
+          string.Format(DASConstants.Game.kEndPointsEarned, statType.ToString().ToLower()), 
+          DASUtil.FormatStatAmount(statType, rewardAmount));
       }
     }
   }
