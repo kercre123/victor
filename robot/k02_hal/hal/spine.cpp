@@ -47,7 +47,7 @@ namespace HAL {
   }
 
   void Spine::Manage() {
-    const RobotInterface::EngineToRobot* const msg = reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToHead.cladBuffer.data);
+    RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToHead.cladBuffer.data);
     const u8 tag = msg->tag;
     if (g_dataToHead.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
     {
@@ -55,12 +55,16 @@ namespace HAL {
     }
     else if (tag < RobotInterface::TO_RTIP_START)
     {
-      AnkiError( 129, "Spine.Manage", 383, "Received message %x that seems bound below", 1, tag);
+      AnkiError( 129, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, tag, g_dataToHead.cladBuffer.length);
     }
     else if (tag > RobotInterface::TO_RTIP_END)
     {
-      RadioSendMessage(g_dataToHead.cladBuffer.data + 1, g_dataToHead.cladBuffer.length, g_dataToHead.cladBuffer.data[0]);
+      RadioSendMessage(g_dataToHead.cladBuffer.data + 1, g_dataToHead.cladBuffer.length-1, g_dataToHead.cladBuffer.data[0]);
     }
+		else if (msg->Size() != g_dataToHead.cladBuffer.length)
+		{
+			AnkiError( 129, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, tag, g_dataToHead.cladBuffer.length, msg->Size());
+		}
     else
     {
       Messages::ProcessMessage(*msg);
