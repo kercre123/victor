@@ -59,7 +59,7 @@ struct CladBuffer
   uint16_t PADDING;
   uint8_t  length;
   uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE];
-}
+};
 
 struct GlobalDataToHead
 {

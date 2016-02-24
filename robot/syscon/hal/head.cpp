@@ -127,8 +127,8 @@ inline void transmitByte() {
 void Head::manage(void* userdata) {
   GlobalDataToHead* txBufferStruct = reinterpret_cast<GlobalDataToHead*>(txRxBuffer);
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead)-sizeof(CladBuffer));
-  Spine::Dequeue(*(txBufferStruct->cladBuffer));
-  g_dataToHead.cladBuffer[0] = Anki::Cozmo::RobotInterface::GLOBAL_INVALID_TAG;
+  Spine::Dequeue(&(txBufferStruct->cladBuffer));
+  g_dataToHead.cladBuffer.length = 0;
   txRxIndex = 0;
 
   setTransmitMode(TRANSMIT_SEND);
@@ -161,8 +161,8 @@ static void Process_assignCubeSlots(const Anki::Cozmo::CubeSlots& msg)
 static void ProcessMessage()
 {
   using namespace Anki::Cozmo;
-  const u8 tag = g_dataToBody.cladBuffer[0];
-  if (tag == RobotInterface::GLOBAL_INVALID_TAG)
+  const u8 tag = g_dataToBody.cladBuffer.data[0];
+  if (g_dataToBody.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
   {
     // pass
   }
@@ -172,9 +172,7 @@ static void ProcessMessage()
   }
   else
   {
-    u8 cladBuffer[SPINE_MAX_CLAD_MSG_SIZE + 4];
-    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
-    memcpy(msg.GetBuffer(), g_dataToBody.cladBuffer, SPINE_MAX_CLAD_MSG_SIZE);
+    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToBody.cladBuffer.data);
     switch(tag)
     {
       #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"

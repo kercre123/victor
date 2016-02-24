@@ -22,7 +22,7 @@ namespace HAL {
     }
     else
     {
-      memcpy(dest, spinebuffer[spine_enter], sizeof(CladBuffer));
+      memcpy(dest, &spinebuffer[spine_enter], sizeof(CladBuffer));
       spine_enter = (spine_enter+1) % QUEUE_DEPTH;
     }
   }
@@ -47,7 +47,7 @@ namespace HAL {
   }
 
   void Spine::Manage() {
-    const u8 tag = g_dataToHead.cladBuffer[0];
+    const u8 tag = g_dataToHead.cladBuffer.data[0];
     if (g_dataToHead.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
     {
       // pass
@@ -58,7 +58,7 @@ namespace HAL {
     }
     else if (tag > RobotInterface::TO_RTIP_END)
     {
-      RadioSendMessage(g_dataToHead.cladBuffer.data + 1, g_dataToHead.cladBuffer.length, g_dataToHead.cladBuffer[0]);
+      RadioSendMessage(g_dataToHead.cladBuffer.data + 1, g_dataToHead.cladBuffer.length, g_dataToHead.cladBuffer.data[0]);
     }
     else
     {

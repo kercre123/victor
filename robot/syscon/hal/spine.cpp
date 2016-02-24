@@ -48,7 +48,7 @@ void Spine::Dequeue(CladBuffer* dest) {
   }
   else
   {
-    memcpy(dest, spinebuffer[spine_enter], sizeof(CladBuffer));
+    memcpy(dest, &spinebuffer[spine_enter], sizeof(CladBuffer));
     spine_enter = (spine_enter + 1) % QUEUE_DEPTH;
   }
 }
