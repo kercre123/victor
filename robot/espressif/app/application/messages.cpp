@@ -50,66 +50,65 @@ namespace Anki {
         }
         else
         {
-          u8 alignedBuffer[260];
-          RobotInterface::EngineToRobot* const msg = reinterpret_cast<RobotInterface::EngineToRobot*>(alignedBuffer);
-          AnkiConditionalWarnAndReturn(bufferSize <= msg->MAX_SIZE, 1, "Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg->MAX_SIZE);
+          RobotInterface::EngineToRobot msg;
+          AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 1, "Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
           switch(buffer[0])
           {
             case RobotInterface::EngineToRobot::Tag_eraseFlash:
             {
-              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::EraseFlash(msg->eraseFlash);
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              UpgradeController::EraseFlash(msg.eraseFlash);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_writeFlash:
             {
-              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::WriteFlash(msg->writeFlash);
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              UpgradeController::WriteFlash(msg.writeFlash);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
             {
-              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::Trigger(msg->triggerOTAUpgrade);
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              UpgradeController::Trigger(msg.triggerOTAUpgrade);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_writeNV:
             {
-              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               NVStorage::NVOpResult result;
-              result.tag    = msg->writeNV.tag;
+              result.tag    = msg.writeNV.tag;
               result.write  = true;
-              result.result = NVStorage::Write(msg->writeNV);
+              result.result = NVStorage::Write(msg.writeNV);
               RobotInterface::SendMessage(result);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_readNV:
             {
-              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              switch (msg->readNV.to)
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              switch (msg.readNV.to)
               {
                 case NVStorage::ENGINE:
                 {
-                  foregroundTaskPost(taskReadNVAndSend, msg->readNV.tag);
+                  foregroundTaskPost(taskReadNVAndSend, msg.readNV.tag);
                   break;
                 }
                 default:
                 {
-                  AnkiError( 126, "Messages.readNV", 379, "Reading to target %d not yet supported.", 1, msg->readNV.to)
+                  AnkiError( 126, "Messages.readNV", 379, "Reading to target %d not yet supported.", 1, msg.readNV.to);
                 }
               }
               break;
             }
             case RobotInterface::EngineToRobot::Tag_rtipVersion:
             {
-              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              RTIP::Version = msg->rtipVersion.version;
-              RTIP::Date    = msg->rtipVersion.date;
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              RTIP::Version = msg.rtipVersion.version;
+              RTIP::Date    = msg.rtipVersion.date;
               int i = 0;
-              msg->rtipVersion.description_length = MIN(msg->rtipVersion.description_length, VERSION_DESCRIPTION_SIZE-1);
-              while (i < msg->rtipVersion.description_length)
+              msg.rtipVersion.description_length = MIN(msg.rtipVersion.description_length, VERSION_DESCRIPTION_SIZE-1);
+              while (i < msg.rtipVersion.description_length)
               {
-                RTIP::VersionDescription[i] = msg->rtipVersion.description[i];
+                RTIP::VersionDescription[i] = msg.rtipVersion.description[i];
                 i++;
               }
               while (i < VERSION_DESCRIPTION_SIZE)
@@ -144,14 +143,14 @@ namespace Anki {
             }
             case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
             {
-              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              AnimationController::DisableTracks(msg->disableAnimTracks.whichTracks);
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              AnimationController::DisableTracks(msg.disableAnimTracks.whichTracks);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_enableAnimTracks:
             {
-              memcpy(msg->GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              AnimationController::EnableTracks(msg->enableAnimTracks.whichTracks);
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
               break;
             }
             default:

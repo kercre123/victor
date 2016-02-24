@@ -61,7 +61,7 @@ LOCAL bool TaskI2SPISwitchMode(uint32 mode)
   }
   else
   {
-#ifdef DEBUG_OTA
+#ifdef DEBUG_OTA__
     os_printf("w");
 #endif
     return true;
@@ -91,6 +91,9 @@ LOCAL bool TaskDoEraseFlash(uint32 param)
       }
       else // We're done erasing
       {
+#ifdef DEBUG_OTA
+        os_printf("Finished erase\r\n");
+#endif
         resp.address = msg->start;
         resp.length  = msg->size;
         resp.writeNotErase = false;
@@ -158,6 +161,9 @@ LOCAL bool TaskWriteFlash(uint32 param)
 {
   RobotInterface::WriteFlash* msg = reinterpret_cast<RobotInterface::WriteFlash*>(param);
   RobotInterface::FlashWriteAcknowledge resp;
+#ifdef DEBUG_OTA
+  os_printf("w");
+#endif
   switch(spi_flash_write(msg->address, reinterpret_cast<uint32*>(msg->data), msg->data_length))
   {
     case SPI_FLASH_RESULT_OK:
@@ -184,7 +190,6 @@ LOCAL bool TaskWriteFlash(uint32 param)
     {
       if (retries-- > 0)
       {
-        foregroundTaskPost(TaskWriteFlash, param);
         return true;
       }
       else
@@ -718,10 +723,8 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
   }
   else
   {
-    Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
-    rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
-    rtipMsg.radioConnected.wifiConnected = false;
-    Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+    u8 radioConnectedMsg[] = {Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected, false};
+    Anki::Cozmo::RTIP::SendMessage(radioConnectedMsg, 2);
     
     RobotInterface::EraseFlash* taskMsg = static_cast<RobotInterface::EraseFlash*>(os_zalloc(msg.Size()));
     if (taskMsg == NULL)
@@ -754,7 +757,16 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
     {
       os_memcpy(taskMsg, &msg, msg.Size());
       retries = MAX_RETRIES;
-      foregroundTaskPost(TaskWriteFlash, reinterpret_cast<uint32>(taskMsg));
+#ifdef DEBUG_OTA__
+      os_printf("Posting TaskWriteFlash\r\n");
+#endif
+      if (foregroundTaskPost(TaskWriteFlash, reinterpret_cast<uint32>(taskMsg)) == false)
+      {
+        AnkiError( 29, "UpgradeController", 389, "Failed to post TaskWriteFlash", 0);
+      }
+#ifdef DEBUG_OTA__
+      os_printf("\tdone\r\n");
+#endif
     }
   }
 }

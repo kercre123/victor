@@ -1,4 +1,4 @@
-#include "messages.h"
+%#include "messages.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include <math.h>
@@ -94,7 +94,7 @@ namespace Anki {
             Process_animBackpackLights(msg.animBackpackLights);
             break;
           default:
-            AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %z", 1, msg.tag);
+            AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %x", 1, msg.tag);
         }
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
