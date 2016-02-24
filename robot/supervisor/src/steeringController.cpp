@@ -71,7 +71,11 @@ namespace Anki {
       
       // Amount by which theoretical wheel velocities are scaled
       // to compensate for tread slip.
+#ifdef SIMULATOR
+      const f32 POINT_TURN_SLIP_COMP_FACTOR = 1.f;
+#else
       const f32 POINT_TURN_SLIP_COMP_FACTOR = 1.5f;
+#endif
       
       f32 pointTurnSpeedKp_ = 20;
       f32 pointTurnSpeedKd_ = 0;
