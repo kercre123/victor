@@ -43,7 +43,7 @@ namespace Anki {
       
       void ProcessMessage(u8* buffer, u16 bufferSize)
       {
-        AnkiConditionalWarnAndReturn(buffer[0] > RobotInterface::TO_WIFI_END, 1, "Messages", 373, "ToRobot message %x[%d] looks has tag for engine (> 0x%x)", 3, buffer[0], bufferSize, (int)RobotInterface::TO_WIFI_END);
+        AnkiConditionalWarnAndReturn(buffer[0] <= RobotInterface::TO_WIFI_END, 1, "Messages", 373, "ToRobot message %x[%d] like like it has tag for engine (> 0x%x)", 3, buffer[0], bufferSize, (int)RobotInterface::TO_WIFI_END);
         if (buffer[0] < RobotInterface::TO_WIFI_START) // Message for someone further down than us
         {
           RTIP::SendMessage(buffer, bufferSize);
