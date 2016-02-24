@@ -20,61 +20,84 @@
 #define _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/math/poseBase.h"
 
 namespace Anki {
-
-  //template<class PoseNd>
-  //std::list<PoseNd> PoseBase<PoseNd>::Origins = {{PoseNd(
-  
-  //template<class PoseNd>
-  //const PoseNd* PoseBase<PoseNd>::_sWorld = &PoseBase<PoseNd>::Origins.front();
-  
-  /*
-  template<class PoseNd>
-  PoseNd& PoseBase<PoseNd>::AddOrigin()
-  {
-    PoseBase<PoseNd>::Origins.emplace_back();
-    PoseBase<PoseNd>::Origins.back().SetParent(nullptr);
-    PoseBase<PoseNd>::Origins.back().SetName("Origin_" + std::to_string(PoseBase<PoseNd>::Origins.size()));
-    
-    // TODO: If this gets too long, trigger cleanup?
-    
-    return PoseBase<PoseNd>::Origins.back();
-  }
-  
-  template<class PoseNd>
-  PoseNd& PoseBase<PoseNd>::AddOrigin(const PoseNd &origin)
-  {
-    if(origin.GetParent() != nullptr) {
-      PRINT_NAMED_WARNING("PoseBase.AddOrigin.NonNullParent",
-                          "Adding an origin whose parent is non-NULL. This may be ok, but may be a sign of something wrong.\n");
-    }
-    
-    PoseBase<PoseNd>::Origins.emplace_back(origin);
-    PoseBase<PoseNd>::Origins.back().SetName("Origin" + std::to_string(PoseBase<PoseNd>::Origins.size()));
-    
-    // TODO: If this gets too long, trigger cleanup?
-    
-    return PoseBase<PoseNd>::Origins.back();
-  }
-  */
-  
+ 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd>
   PoseBase<PoseNd>::PoseBase()
-  : PoseBase<PoseNd>(nullptr, "")
+  : PoseBase<PoseNd>(nullptr, "") // note this calls another constructor, so do not notify of creation here
   {
-    
   }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd>
   PoseBase<PoseNd>::PoseBase(const PoseNd* parentPose, const std::string& name)
-  : _parent(parentPose), _name(name)
+  : _parentPtr(nullptr)
+  , _name(name)
   {
-    
+    // valid pose
+    Dev_PoseCreated(this);
+  
+    // use accessors to set parent
+    SetParent(parentPose);
   }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // destructor
+  template<class PoseNd>
+  PoseBase<PoseNd>::~PoseBase()
+  {
+    // clear parent to remove reference count
+    SetParent(nullptr);
+    
+    // notify we are destroyed
+    Dev_PoseDestroyed(this);
+  }
+    
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // copy constructor
+  template<class PoseNd>
+  PoseBase<PoseNd>::PoseBase(const PoseBase& other)
+  : _parentPtr(nullptr)
+  , _name(other._name)
+  {
+    // valid pose
+    Dev_PoseCreated(this);
+  
+    // use accessors for parent switch
+    SetParent( other.GetParent() );
+
+    // copy rest
+    _name = other._name;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // assignment op
+  template<class PoseNd>
+  PoseBase<PoseNd>& PoseBase<PoseNd>::operator=(const PoseBase& other)
+  {
+    // use accessors for parent switch
+    SetParent( other.GetParent() );
+    
+    // copy rest and return
+    _name = other._name;
+    return *this;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd>
+  void PoseBase<PoseNd>::SetParent(const PoseNd* otherPose)
+  {
+    CORETECH_ASSERT(otherPose != this);
+    Dev_SwitchParent(_parentPtr, otherPose, this);
+    _parentPtr = otherPose;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   template<class PoseNd>
   const PoseNd& PoseBase<PoseNd>::FindOrigin(const PoseNd& forPose) const
@@ -84,9 +107,9 @@ namespace Anki {
     {  
       // The only way the current originPose's _parent is null is if it is an
       // origin, which means we should have already exited the while loop.
-      CORETECH_ASSERT(originPose->_parent != nullptr);
+      CORETECH_ASSERT(originPose->GetParent() != nullptr);
       
-      originPose = originPose->_parent;
+      originPose = originPose->GetParent();
     }
     
     return *originPose;
@@ -204,18 +227,18 @@ namespace Anki {
     
     BOUNDED_WHILE(1000, depthDiff > 0)
     {
-      CORETECH_ASSERT(from->_parent != nullptr);
+      CORETECH_ASSERT(from->GetParent() != nullptr);
       
-      P_from.PreComposeWith( *(from->_parent) );
-      from = from->_parent;
+      P_from.PreComposeWith( *(from->GetParent()) );
+      from = from->GetParent();
       
-      if(from->_parent == to) {
+      if(from->GetParent() == to) {
         // We bumped into the "to" pose on the way up to the common _parent, so
         // we've got the the chained transform ready to go, and there's no
         // need to walk past the "to" pose, up to the common _parent, and right
         // back down, which would unnecessarily compose two more poses which
         // are the inverse of one another by construction.
-        P_from._parent = new_parent;
+        P_from.SetParent(new_parent);
         P_wrt_other = P_from;
         return true;
       }
@@ -225,12 +248,12 @@ namespace Anki {
     
     BOUNDED_WHILE(1000, depthDiff < 0)
     {
-      CORETECH_ASSERT(to->_parent != nullptr);
+      CORETECH_ASSERT(to->GetParent() != nullptr);
       
-      P_to.PreComposeWith( *(to->_parent) );
-      to = to->_parent;
+      P_to.PreComposeWith( *(to->GetParent()) );
+      to = to->GetParent();
       
-      if(to->_parent == from) {
+      if(to->GetParent() == from) {
         // We bumped into the "from" pose on the way up to the common _parent,
         // so we've got the the (inverse of the) chained transform ready to
         // go, and there's no need to walk past the "from" pose, up to the
@@ -238,7 +261,7 @@ namespace Anki {
         // compose two more poses which are the inverse of one another by
         // construction.
         P_to.Invert();
-        P_to._parent = new_parent;
+        P_to.SetParent(new_parent);
         P_wrt_other = P_to;
         return true;
       }
@@ -253,15 +276,15 @@ namespace Anki {
     // Now that we are pointing to the nodes of the same depth, keep moving up
     // until those nodes have the same _parent, totalling up the transformations
     // along the way
-    BOUNDED_WHILE(1000, to->_parent != from->_parent)
+    BOUNDED_WHILE(1000, to->GetParent() != from->GetParent())
     {
-      CORETECH_ASSERT(from->_parent != nullptr && to->_parent != nullptr);
+      CORETECH_ASSERT(from->GetParent() != nullptr && to->GetParent() != nullptr);
       
-      P_from.PreComposeWith( *(from->_parent) );
-      P_to.PreComposeWith( *(to->_parent) );
+      P_from.PreComposeWith( *(from->GetParent()) );
+      P_to.PreComposeWith( *(to->GetParent()) );
       
-      to = to->_parent;
-      from = from->_parent;
+      to = to->GetParent();
+      from = from->GetParent();
     }
     
     // Now compute the total transformation from this pose, up the "from" path
@@ -275,11 +298,120 @@ namespace Anki {
     
     // The Pose we are about to return is w.r.t. the "other" pose provided (that
     // was the whole point of the exercise!), so set its _parent accordingly:
-    P_wrt_other._parent = new_parent;
+    P_wrt_other.SetParent(new_parent);
     
     return true;
     
   } // GetWithRespectToHelper()
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd>
+  void PoseBase<PoseNd>::Dev_SwitchParent(const PoseNd* oldParent, const PoseNd* newParent, const PoseBase<PoseNd>* childBasePointer)
+  {
+    if ( ANKI_DEVELOPER_CODE )
+    {
+      const PoseNd* castedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
+    
+      // if there's an old parent, we have to tell it we are not a child anymore
+      if ( oldParent )
+      {
+        // if the parent is not a valid pose anymore it's not an error, we had a bad pointer but we are not using it,
+        // we are actually switching to a different one
+        auto match = Dev_GetValidPoses().find(oldParent);
+        if ( match != Dev_GetValidPoses().end() )
+        {
+          // if it's still a valid parent, we notify
+          const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(oldParent);
+          upCastedParent->_devChildrenPtrs.erase(castedChild);
+        }
+      }
+    
+      // if we have a new parent, add ourselves as a child
+      if ( newParent )
+      {
+        // check if it can be a parent
+        auto match = Dev_GetValidPoses().find(newParent);
+        if ( match != Dev_GetValidPoses().end() )
+        {
+          // make sure we were not there before
+          ASSERT_NAMED(newParent->_devChildrenPtrs.find(castedChild) == newParent->_devChildrenPtrs.end(),
+            "PoseBase.Dev_SwitchParent.DuplicatedChildOfParent");
+          
+          // add now
+          const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(newParent);
+          upCastedParent->_devChildrenPtrs.insert(castedChild);
+        }
+        else
+        {
+          // this pose can't be a parent, how did you get the pointer?!
+          ASSERT_NAMED(false, "PoseBase.Dev_SwitchParent.NewParentIsNotAValidPose");
+        }
+      }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd>
+  void PoseBase<PoseNd>::Dev_AssertIsValidParentPointer(const PoseNd* parent, const PoseBase<PoseNd>* childBasePointer)
+  {
+    if ( ANKI_DEVELOPER_CODE )
+    {
+      if ( nullptr != parent ) {
+        // if we have a parent, check that:
+        // a) the parent is a valid pose
+        ASSERT_NAMED(Dev_GetValidPoses().find(parent) != Dev_GetValidPoses().end(), "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose");
+        // b) we are a current child of it
+        const PoseNd* downCastedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
+        const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(parent);
+        ASSERT_NAMED(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
+          "PoseBase.Dev_AssertIsValidParentPointer.ChildOfOldParent");
+
+        // Note on b): If you crash on b), it means that the child is pointing at this parent, and this parent
+        // is indeed a valid pose, but it is not a valid parent of this child. This can happen by this series of steps:
+        // Create pose A
+        // Create pose B
+        // Set A as B's parent
+        // Destroy A - note B's parent is a bad pointer
+        // Create C (C could get allocated in A's released pointer)
+        // Create D
+        // Set C as D's parent
+        // Try to use B's parent.
+        // -> In that case B's pointer says that it's a valid pose, however is not a valid child of C,
+        // B did not intend to point to C, and using B's parent pointer is an error
+      }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd>
+  void PoseBase<PoseNd>::Dev_PoseDestroyed(const PoseBase<PoseNd>* basePointer)
+  {
+    if ( ANKI_DEVELOPER_CODE )
+    {
+      // nonsense to ask for nullptr
+      assert( nullptr != basePointer );
+
+      // remove from validPoses and make sure we were a valid pose
+      const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
+      const size_t removedCount = Dev_GetValidPoses().erase(castedSelf);
+      ASSERT_NAMED(removedCount == 1, "PoseBase.Dev_PoseDestroyed.DestroyingInvalidPose");
+    }
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd>
+  void PoseBase<PoseNd>::Dev_PoseCreated(const PoseBase<PoseNd>* basePointer)
+  {
+    if ( ANKI_DEVELOPER_CODE )
+    {
+      // nonsense to ask for nullptr
+      assert( nullptr != basePointer );
+     
+      const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
+      const auto insertRetInfo = Dev_GetValidPoses().insert(castedSelf);
+      ASSERT_NAMED(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer");
+    }
+  }
   
   
 } // namespace Anki
