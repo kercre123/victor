@@ -225,6 +225,7 @@
       'dependencies': [
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
+        '<(ce-cti_gyp_path):ctiVision',
         '<(ce-util_gyp_path):jsoncpp',
         '<(ce-util_gyp_path):util',
       ],
