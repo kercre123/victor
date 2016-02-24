@@ -12,7 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking.h"
 
-#define DRAW_LINE_FITS 1
+#define DRAW_LINE_FITS 0
 
 #if DRAW_LINE_FITS
 #  include "anki/vision/basestation/image_impl.h"
@@ -20,12 +20,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <set>
 
-typedef struct
-{
-  f32 slope;
-  f32 intercept;
-  bool switched;
-} LineFits;
+#define LINE_FIT_METHOD_KMEANS 0
+#define LINE_FIT_METHOD_HIST   1
+#define LINE_FIT_METHOD LINE_FIT_METHOD_KMEANS
 
 namespace Anki
 {
@@ -81,6 +78,7 @@ namespace Anki
       
       // Circular convolution
       // TODO: may be slow? If/when openCv circular convolution is fixed, switch to that
+      // cv::filter2D(dB, dB, -1, dg, cv::Point(-1,-1), 0, cv::BORDER_WRAP); // assertion failure: not supported?
       {
         const f32 * restrict pDg = dg.ptr<f32>();
         
@@ -112,9 +110,32 @@ namespace Anki
           
           pDB0[xBoundary] = curSum0;
           pDB1[xBoundary] = curSum1;
+       
+#         if LINE_FIT_METHOD == LINE_FIT_METHOD_KMEANS
+          // Store resulting derivatives as a unit vector, since we are doing
+          // k-means clustering on unit vectors on the unit circle instead of
+          // clustering angle values directly
+          if(pDB0[xBoundary] != 0 || pDB1[xBoundary] != 0) {
+            const f32 invLength = 1.f/std::sqrt(pDB0[xBoundary]*pDB0[xBoundary] +
+                                                pDB1[xBoundary]*pDB1[xBoundary]);
+            pDB0[xBoundary] *= invLength;
+            pDB1[xBoundary] *= invLength;
+          }
+#         endif
         }
       }
   
+      struct LineFits
+      {
+        f32  slope;
+        f32  intercept;
+        bool switched;
+      };
+      
+      LineFits lineFits[4];
+      bool didFitFourLines = true;
+      
+#     if LINE_FIT_METHOD == LINE_FIT_METHOD_HIST
       cv::Mat_<f32> bin(1, boundaryLength);
       
       const f32 * restrict pDB0 = dB.ptr<f32>(0,0);
@@ -123,37 +144,51 @@ namespace Anki
       for(s32 i=0; i<boundaryLength; i++) {
         pBin[i] = atan2f(pDB1[i], pDB0[i]);
       }
-
+      
       // Compute the histogram of orientations, and find the top 4 bins
       // NOTE: this histogram is a bit different than matlab's
       s32 histSize = 16;
       f32 range[] = {-PI_F, PI_F + 1e-6f};
       const f32 *ranges[] = { range };
-
+      
       cv::Mat hist;
       cv::calcHist(&bin, 1, 0, cv::Mat(), hist, 1, &histSize, ranges, true, false);
-
+      
       cv::Mat maxBins;
       cv::sortIdx(hist, maxBins, CV_SORT_EVERY_COLUMN | CV_SORT_DESCENDING);
       
-      bool didFitFourLines = true;
-      
-      LineFits lineFits[4];
-
+      // Compute bin centers
       std::vector<Radians> binCenters(histSize);
       for(s32 iBin=0; iBin<histSize; ++iBin) {
         binCenters[iBin] = (2.f*PI_F / (f32)histSize) * ((f32)iBin + 0.5f) - PI_F;
       }
       
-      // DEBUG
-      //std::map<s32, std::pair<s32, f32> > assigned;
-      /*
-      cv::Mat binLookup;
-      for(s32 iBin=0; iBin<histSize; ++iBin) {
-        hist.at<f32>(iBin,0) = iBin;
+#     elif LINE_FIT_METHOD == LINE_FIT_METHOD_KMEANS
+
+      const s32 numTries = 2;
+      cv::TermCriteria criteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 10, .1);
+      cv::Mat labels(boundaryLength,1,CV_32SC1);
+      s32* restrict pLabels = labels.ptr<s32>(0,0);
+      s32 i;
+      for(i=0; i<boundaryLength/2; ++i) {
+        pLabels[i] = 0;
       }
-      cv::calcBackProject(&bin,1, 0, hist, binLookup, ranges);
-      */
+      for( ; i<boundaryLength/2; ++i) {
+        pLabels[i] = 1;
+      }
+      for( ; i<boundaryLength*3/4; ++i) {
+        pLabels[i] = 2;
+      }
+      for( ; i<boundaryLength; ++i) {
+        pLabels[i] = 3;
+      }
+      cv::kmeans(dB.t(), 4, labels, criteria, numTries,
+                 cv::KMEANS_USE_INITIAL_LABELS | cv::KMEANS_PP_CENTERS);
+
+#     else 
+#     error Unknown LINE_FIT_METHOD
+#     endif
+      
       
 #     if DRAW_LINE_FITS
       static const ColorRGBA colorList[4] = {
@@ -166,49 +201,27 @@ namespace Anki
         // boundaryIndex = find(bin==maxBins(iBin));
         std::vector<s32> boundaryIndex;
         
-        /*
-        const f32* restrict pBinLookup = binLookup.ptr<f32>(0,0);
+#       if LINE_FIT_METHOD == LINE_FIT_METHOD_KMEANS
         for(s32 i=0; i<boundaryLength; i++) {
-          if((s32)pBinLookup[i] == iBin) {
+          if(pLabels[i] == iBin) {
             boundaryIndex.push_back(i);
-          
 #           if DRAW_LINE_FITS
-            {
-              static const ColorRGBA colorList[4] = {
-                NamedColors::GREEN, NamedColors::ORANGE, NamedColors::WHITE, NamedColors::CYAN
-              };
-              blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[iBin], 2);
-            }
+            blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[iBin], 2);
 #           endif
           }
         }
-        */
-
+        
+#       elif LINE_FIT_METHOD == LINE_FIT_METHOD_HIST
         // WARNING: May have some corner cases
         const s32 thisBin  = maxBins.at<s32>(iBin,0);
-
-        maxBinsSet.insert(thisBin);
         
-//        const f32 minAngle = -PI_F + PI_F/16*2* binBelow;
-//        const f32 maxAngle = -PI_F + PI_F/16*2* binAbove;
-        
-        
-        
+        // Assign each boundary sample to close bin centers (note: can contribute to
+        // multiple edges)
         for(s32 i=0; i<boundaryLength; i++) {
           const f32 angDist = (Radians(pBin[i])-binCenters[thisBin]).getAbsoluteVal().ToFloat();
           if(angDist < (2*PI_F)/histSize)
           {
             boundaryIndex.push_back(i);
-            
-            /*
-            auto iter = assigned.find(i);
-            if(iter != assigned.end()) {
-              PRINT_NAMED_DEBUG("barf!","orientation %f(%fdeg) already assigned to bin %d with distance %f (current distance = %f)",
-                                pBin[i], RAD_TO_DEG(pBin[i]), iter->second.first,
-                                iter->second.second, angDist);
-            }
-            assigned.emplace(i, std::make_pair(thisBin, angDist));
-            */
             
 #           if DRAW_LINE_FITS
             {
@@ -221,11 +234,14 @@ namespace Anki
 #       if DRAW_LINE_FITS
         blankImg.DrawText(Point2f(0,imageHeight/2+iBin*15), std::to_string(binCenters[thisBin].getDegrees()), colorList[iBin], 0.5);
 #       endif
-  
+#       endif // LINE_FIT_METHOD
+        
         const s32 numSide = static_cast<s32>(boundaryIndex.size());
         
-        // Solve all the line fit equations in slope-intercept format
-        // TODO: what about horizontal lines?
+        // Solve all the line fit equations in slope-intercept format, choosing
+        // the most numerical stable by picking whether we have more variation in
+        // X or Y direciton. "isVertical" indiciates that we're solving x = my +b
+        // instead of the more standard y = mx + b
         if(numSide > 1) {
           // all(boundary(boundaryIndex,2)==boundary(boundaryIndex(1),2))
           s32 minX = s32_MAX, maxX = s32_MIN, minY = s32_MAX, maxY = s32_MIN;
@@ -245,75 +261,37 @@ namespace Anki
               maxY = curY;
             }
           }
-          const bool isVerticalLine = (maxX - minX) < (maxY - minY);
           
-          /*
-           bool isVerticalLine = true;
-          for(s32 i=1; i<numSide; i++) {
-            if(pBoundary[boundaryIndex[i]].x != pBoundary[boundaryIndex[0]].x) {
-              isVerticalLine = false;
-              break;
-            }
-          }
-           */
-
+          lineFits[iBin].switched = (maxX - minX) < (maxY - minY);
+          
+          // Build and solve system of equations for the line fit
+          // A = [boundary(boundaryIndex,2) ones(numSide,1)];
+          // p{iBin} = A \ boundary(boundaryIndex,1);
+          
           const s32 nrows = static_cast<s32>(boundaryIndex.size());
           cv::Mat_<f32> A(nrows, 2);
           cv::Mat_<f32> b(nrows, 1);
           cv::Mat_<f32> x(2, 1);
           
-          if(isVerticalLine) {
+          if(lineFits[iBin].switched) {
             for(s32 i=0; i<boundaryIndex.size(); i++) {
               A.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->y;
               A.at<f32>(i,1) = 1;
               b.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->x;
             }
-            
-            /*
-            p[iBin][0] = 0;
-            p[iBin][1] = boundary.Pointer(boundaryIndex[0])->x;
-            lineFits[iBin].switched = true;
-            
-            PRINT_NAMED_DEBUG("ExtractLineFitsPeaks.VerticalParams",
-                              "p=[%f;%f]",
-                              p[iBin][0], p[iBin][1]);
-             */
           } else {
-            // A = [boundary(boundaryIndex,2) ones(numSide,1)];
-            // p{iBin} = A \ boundary(boundaryIndex,1);
-          
-
-
             for(s32 i=0; i<boundaryIndex.size(); i++) {
               A.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->x;
               A.at<f32>(i,1) = 1;
               b.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->y;
             }
           }
-            // TODO: for speed, switch to QR with Gram
-            cv::solve(A, b, x, cv::DECOMP_SVD);
-            /*
-            p[iBin][0] = x.at<f32>(0,0);
-            p[iBin][1] = x.at<f32>(1,0);
           
-            {
-              cv::Mat AtA = A.t() * A;
-              cv::Mat Atb = A.t() * b;
-              PRINT_NAMED_DEBUG("ExtractLineFitsPeaks.NonVerticalSystemOfEqs",
-                                "A=[%f %f; %f %f]; b=[%f; %f]; p=[%f;%f]",
-                                AtA.at<f32>(0,0), AtA.at<f32>(0,1),
-                                AtA.at<f32>(1,0), AtA.at<f32>(1,1),
-                                Atb.at<f32>(0,0), Atb.at<f32>(1,0),
-                                p[iBin][0], p[iBin][1]);
-            }
-            
-            lineFits[iBin].switched = false;
-          }
-          */
+          // TODO: for speed, switch to QR with Gram
+          cv::solve(A, b, x, cv::DECOMP_SVD);
           
           lineFits[iBin].slope = x.at<f32>(0,0);
           lineFits[iBin].intercept = x.at<f32>(1,0);
-          lineFits[iBin].switched = isVerticalLine;
           
 #         if DRAW_LINE_FITS
           {
@@ -334,8 +312,6 @@ namespace Anki
           break;
         } // if(numSide > 1) ... else
       } // for(s32 iBin=0; iBin<4; iBin++)
-      
-      ASSERT_NAMED(!didFitFourLines || maxBinsSet.size()==4, "Expecting 4 different maxBins");
       
       std::vector<cv::Point_<f32> > corners;
       
