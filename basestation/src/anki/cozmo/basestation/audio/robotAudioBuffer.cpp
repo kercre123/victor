@@ -33,12 +33,23 @@ void RobotAudioBuffer::PrepareAudioBuffer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, size_t sampleCount )
 {
+  // Ignore updates if we are waiting for the plug-in to reset
+  if ( _isWaitingForReset ) {
+    if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+      PRINT_NAMED_WARNING("RobotAudioBuffer.UpdateBuffer", "Ignore buffer update!");
+    }
+    return;
+  }
+  
   // Create Robot AnkiKey Frame AudioSample struct
-  ASSERT_NAMED( sampleCount <= static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ), ("RobotAudioBuffer.UpdateBuffer buffer is too big!"+ std::to_string(sampleCount) + " > " + std::to_string(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ))).c_str() );
+  ASSERT_NAMED( sampleCount <= static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ),
+                ("RobotAudioBuffer.UpdateBuffer buffer is too big!"+ std::to_string(sampleCount) + " > " +
+                 std::to_string(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ))).c_str() );
   
   // Create Audio Frame
   AnimKeyFrame::AudioSample audioFrame = AnimKeyFrame::AudioSample();
-  ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= audioFrame.Size(), "Block size must be less or equal to audioSameple size");
+  ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= audioFrame.Size(),
+                "Block size must be less or equal to audioSameple size");
   // Copy samples into audioSample
   memcpy(audioFrame.sample.data(), samples, sampleCount * sizeof(uint8_t));
   
@@ -72,11 +83,24 @@ void RobotAudioBuffer::ClearBufferStreams()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioBuffer::ResetAudioBuffer()
+{
+  if ( _currentStream != nullptr ) {
+    _isWaitingForReset = true;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::ClearCache()
 {
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_NAMED_WARNING("RobotAudioBuffer.ClearCache", "CLEAR!");
+  }
+  
   // No more samples to cache, create final Audio Message
   _currentStream->SetIsComplete();
   _currentStream = nullptr;
+  _isWaitingForReset = false;
 }
 
   

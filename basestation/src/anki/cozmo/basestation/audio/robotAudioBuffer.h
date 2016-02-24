@@ -24,6 +24,7 @@
 #include <queue>
 #include <mutex>
 
+#define DEBUG_ROBOT_ANIMATION_AUDIO 0
 
 namespace Anki {
 namespace Cozmo {
@@ -61,6 +62,13 @@ public:
   // Clear the Audio buffer stream queue
   void ClearBufferStreams();
   
+  // Begin reseting the audio buffer. The buffer will ignore update buffer calls and wait for the audio controller
+  // to clear cache
+  void ResetAudioBuffer();
+  
+  // Check if the buffer is in the reset audio buffer state
+  bool IsWaitingForReset() const { return _isWaitingForReset; }
+  
 private:
   
   // A queue of robot audio messages (continuous audio data)
@@ -68,6 +76,9 @@ private:
   
   // Track what stream is in uses
   RobotAudioMessageStream* _currentStream = nullptr;
+  
+  // Flag to identify we are waiting for current update buffer session to complete
+  bool _isWaitingForReset = false;
   
 };
 

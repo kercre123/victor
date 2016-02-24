@@ -174,7 +174,7 @@ namespace Cozmo {
       robot.AbortAnimation();
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
-//      _audioClient.ClearAnimation();
+      _audioClient.AbortAnimation();
     }
   } // Abort()
   
@@ -985,7 +985,7 @@ namespace Cozmo {
     // any co-timed keyframes from other tracks).
     while( _sendBuffer.empty() &&
           ( (anim->HasFramesLeft() && !_audioClient.IsPlayingAnimation() ) ||
-            (_audioClient.IsFirstBufferReady() && _audioClient.PrepareRobotAudioMessage(_startTime_ms, _streamingTime_ms)) ) )
+            (_audioClient.UpdateFirstBuffer() && _audioClient.PrepareRobotAudioMessage(_startTime_ms, _streamingTime_ms)) ) )
     {
 #     if DEBUG_ANIMATIONS
       //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",

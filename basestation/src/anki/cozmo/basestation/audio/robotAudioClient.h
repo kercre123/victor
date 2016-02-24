@@ -53,9 +53,8 @@ public:
   // Return empty string if no animation is playing
   const std::string& GetCurrentAnimationName() const { return _animationName; }
   
-  // TODO: This currently just clears all metadata and audio buffered data. It is not pleasant to the ears.
-  // This is called after the last audio messages has been proccessed or animation is aborted
-  void ClearAnimation();
+  // Abort current playing animation
+  void AbortAnimation();
   
   // Return false if we expect to have buffer however it is not ready yet
   bool PrepareRobotAudioMessage( TimeStamp_t startTime_ms,
@@ -76,8 +75,10 @@ public:
   
   // Check if there is enough initial audio buffer to begin streaming animation
   // This returns true if there is no RobotAudioBuffer
-  bool IsFirstBufferReady();
+  bool UpdateFirstBuffer();
 
+  // Value between ( 0.0 - 1.0 )
+  void SetRobotVolume(float volume);
   
 private:
   
@@ -86,6 +87,11 @@ private:
   
   // Dispatch event
   Util::Dispatch::Queue* _postEventTimerQueue;
+  
+  // Track specific animation instance
+  using AnimationPlayId = uint16_t;
+  AnimationPlayId _currentAnimationPlayId = 0;
+  
   
   // Amount of audio messages that need to be buffered before starting animation
   uint8_t _PreBufferRobotAudioMessageCount = 0;
@@ -114,17 +120,27 @@ private:
   // State Flags
   bool _isPlayingAnimation = false;
   bool _isFirstBufferLoaded = false;
+  bool _didBeginPostingEvents = false;
+  
   // Animation id
   std::string _animationName = "";
   // Track Queue's front stream
   RobotAudioMessageStream* _currentBufferStream = nullptr;
   
-  // Audio buffer time shift, this allow us to buffer audio as soon as the animation is loaded and play
-  // events relevant to each other.
-  uint32_t _firstAudioEventOffset = 0;
+  // Begin to post audio events to audio controller
+  void BeginBufferingAudioEvents();
+  
+  // TODO: This currently just clears all metadata and audio buffered data. It is not pleasant to the ears.
+  // This is called after the last audio messages has been proccessed
+  void ClearAnimation();
   
   // Handle Cozmo event callbacks, specifically errors
-  void HandleCozmoEventCallback( AnimationEvent::AnimationEventId eventId, AudioCallback& callback );
+  void HandleCozmoEventCallback( AnimationEvent::AnimationEventId eventId,
+                                 GameEvent::GenericEvent audioEvent,
+                                 AudioCallback& callback );
+  
+  // Remove Events which have been marked as invalid
+  void RemoveInvalidEvents();
   
 };
   
