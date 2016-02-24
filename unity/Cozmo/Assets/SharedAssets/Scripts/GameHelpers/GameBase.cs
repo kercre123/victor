@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -131,9 +131,11 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
     }
+    DAS.Info(this, "Finished GameBase On Destroy");
   }
 
   public void CloseMinigameImmediately() {
+    DAS.Info(this, "Close Minigame Immediately");
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
     CleanUpOnDestroy();
     Destroy(gameObject);
@@ -286,6 +288,7 @@ public abstract class GameBase : MonoBehaviour {
 
     // Close minigame UI
     CloseMinigameImmediately();
+    DAS.Info(this, "HandleChallengeResultViewClosed");
   }
 
   private void HandleQuitConfirmed() {
