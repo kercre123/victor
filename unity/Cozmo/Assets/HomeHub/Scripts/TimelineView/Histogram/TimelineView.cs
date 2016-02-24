@@ -70,9 +70,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private AnkiButton _EndSessionButton;
 
-    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
+    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
 
-    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -108,6 +108,7 @@ namespace Cozmo.HomeHub {
     }
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, Transform[] rewardIcons = null) {
+      DAS.Info(this, "Initializing Timeline...");
       _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<HomeHubChallengeListView>();
       _ChallengeListViewInstance.Initialize(challengeStatesById);
       _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
@@ -130,6 +131,7 @@ namespace Cozmo.HomeHub {
       // Locking and expanding daily goals init
       _ScrollRect.onValueChanged.AddListener(HandleTimelineViewScroll);
       _MiddlePane.minWidth = _MaxDailyGoalWidth; 
+      DAS.Info(this, "TimelineView Initialized");
     }
 
     private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
