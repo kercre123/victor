@@ -15,8 +15,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define DRAW_LINE_FITS 1
 
 #if DRAW_LINE_FITS
-#  include "anki/vision/basestation/image.h"
+#  include "anki/vision/basestation/image_impl.h"
 #endif
+
+#include <set>
 
 typedef struct
 {
@@ -48,7 +50,8 @@ namespace Anki
       const f32 sigma = static_cast<f32>(boundaryLength) / 64.0f;
 
 #     if DRAW_LINE_FITS
-      Vision::Image blankImg(imageHeight, imageWidth);
+      Vision::ImageRGB blankImg(imageHeight, imageWidth);
+      blankImg.FillWith(Vision::PixelRGB(0,0,0));
 #     endif
       
       // Copy the boundary to a f32 openCV array
@@ -59,10 +62,6 @@ namespace Anki
       for(s32 i=0; i<boundaryLength; i++) {
         pBoundaryCv0[i] = pBoundary[i].y; // Note that order is (y,x)
         pBoundaryCv1[i] = pBoundary[i].x;
-        
-#       if DRAW_LINE_FITS
-        blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), NamedColors::GREEN, 2);
-#       endif
       }
       
       // Create a DoG filter kernel
@@ -128,7 +127,7 @@ namespace Anki
       // Compute the histogram of orientations, and find the top 4 bins
       // NOTE: this histogram is a bit different than matlab's
       s32 histSize = 16;
-      f32 range[] = {-PI_F, PI_F};
+      f32 range[] = {-PI_F, PI_F + 1e-6f};
       const f32 *ranges[] = { range };
 
       cv::Mat hist;
@@ -140,73 +139,188 @@ namespace Anki
       bool didFitFourLines = true;
       
       LineFits lineFits[4];
-      f32 p[4][2];
+
+      std::vector<Radians> binCenters(histSize);
+      for(s32 iBin=0; iBin<histSize; ++iBin) {
+        binCenters[iBin] = (2.f*PI_F / (f32)histSize) * ((f32)iBin + 0.5f) - PI_F;
+      }
       
+      // DEBUG
+      //std::map<s32, std::pair<s32, f32> > assigned;
+      /*
+      cv::Mat binLookup;
+      for(s32 iBin=0; iBin<histSize; ++iBin) {
+        hist.at<f32>(iBin,0) = iBin;
+      }
+      cv::calcBackProject(&bin,1, 0, hist, binLookup, ranges);
+      */
+      
+#     if DRAW_LINE_FITS
+      static const ColorRGBA colorList[4] = {
+        NamedColors::GREEN, NamedColors::ORANGE, NamedColors::WHITE, NamedColors::CYAN
+      };
+#     endif
+      
+      std::set<s32> maxBinsSet;
       for(s32 iBin=0; iBin<4; iBin++) {
         // boundaryIndex = find(bin==maxBins(iBin));
         std::vector<s32> boundaryIndex;
         
-        // WARNING: May have some corner cases
-        const f32 minAngle = -PI_F + PI_F/16*2*  maxBins.at<s32>(iBin,0);
-        const f32 maxAngle = -PI_F + PI_F/16*2* (maxBins.at<s32>(iBin,0)+1);
-        
+        /*
+        const f32* restrict pBinLookup = binLookup.ptr<f32>(0,0);
         for(s32 i=0; i<boundaryLength; i++) {
-          if(pBin[i] >= minAngle && pBin[i] <= maxAngle) {
+          if((s32)pBinLookup[i] == iBin) {
             boundaryIndex.push_back(i);
+          
+#           if DRAW_LINE_FITS
+            {
+              static const ColorRGBA colorList[4] = {
+                NamedColors::GREEN, NamedColors::ORANGE, NamedColors::WHITE, NamedColors::CYAN
+              };
+              blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[iBin], 2);
+            }
+#           endif
           }
         }
+        */
+
+        // WARNING: May have some corner cases
+        const s32 thisBin  = maxBins.at<s32>(iBin,0);
+
+        maxBinsSet.insert(thisBin);
         
+//        const f32 minAngle = -PI_F + PI_F/16*2* binBelow;
+//        const f32 maxAngle = -PI_F + PI_F/16*2* binAbove;
+        
+        
+        
+        for(s32 i=0; i<boundaryLength; i++) {
+          const f32 angDist = (Radians(pBin[i])-binCenters[thisBin]).getAbsoluteVal().ToFloat();
+          if(angDist < (2*PI_F)/histSize)
+          {
+            boundaryIndex.push_back(i);
+            
+            /*
+            auto iter = assigned.find(i);
+            if(iter != assigned.end()) {
+              PRINT_NAMED_DEBUG("barf!","orientation %f(%fdeg) already assigned to bin %d with distance %f (current distance = %f)",
+                                pBin[i], RAD_TO_DEG(pBin[i]), iter->second.first,
+                                iter->second.second, angDist);
+            }
+            assigned.emplace(i, std::make_pair(thisBin, angDist));
+            */
+            
+#           if DRAW_LINE_FITS
+            {
+              blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[iBin], 2);
+            }
+#           endif
+
+          }
+        }
+#       if DRAW_LINE_FITS
+        blankImg.DrawText(Point2f(0,imageHeight/2+iBin*15), std::to_string(binCenters[thisBin].getDegrees()), colorList[iBin], 0.5);
+#       endif
+  
         const s32 numSide = static_cast<s32>(boundaryIndex.size());
         
         // Solve all the line fit equations in slope-intercept format
         // TODO: what about horizontal lines?
         if(numSide > 1) {
           // all(boundary(boundaryIndex,2)==boundary(boundaryIndex(1),2))
-          bool isVerticalLine = true;
+          s32 minX = s32_MAX, maxX = s32_MIN, minY = s32_MAX, maxY = s32_MIN;
+          for(s32 i=0; i<numSide; ++i) {
+            const s32 curX = pBoundary[boundaryIndex[i]].x;
+            const s32 curY = pBoundary[boundaryIndex[i]].y;
+            if(curX < minX) {
+              minX = curX;
+            }
+            if(curY < minY) {
+              minY = curY;
+            }
+            if(curX > maxX) {
+              maxX = curX;
+            }
+            if(curY > maxY) {
+              maxY = curY;
+            }
+          }
+          const bool isVerticalLine = (maxX - minX) < (maxY - minY);
+          
+          /*
+           bool isVerticalLine = true;
           for(s32 i=1; i<numSide; i++) {
             if(pBoundary[boundaryIndex[i]].x != pBoundary[boundaryIndex[0]].x) {
               isVerticalLine = false;
               break;
             }
           }
+           */
 
+          const s32 nrows = static_cast<s32>(boundaryIndex.size());
+          cv::Mat_<f32> A(nrows, 2);
+          cv::Mat_<f32> b(nrows, 1);
+          cv::Mat_<f32> x(2, 1);
+          
           if(isVerticalLine) {
+            for(s32 i=0; i<boundaryIndex.size(); i++) {
+              A.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->y;
+              A.at<f32>(i,1) = 1;
+              b.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->x;
+            }
+            
+            /*
             p[iBin][0] = 0;
             p[iBin][1] = boundary.Pointer(boundaryIndex[0])->x;
             lineFits[iBin].switched = true;
+            
+            PRINT_NAMED_DEBUG("ExtractLineFitsPeaks.VerticalParams",
+                              "p=[%f;%f]",
+                              p[iBin][0], p[iBin][1]);
+             */
           } else {
             // A = [boundary(boundaryIndex,2) ones(numSide,1)];
             // p{iBin} = A \ boundary(boundaryIndex,1);
           
-            const s32 nrows = static_cast<s32>(boundaryIndex.size());
-            cv::Mat_<f32> A(nrows, 2);
-            cv::Mat_<f32> b(nrows, 1);
-            cv::Mat_<f32> x(2, 1);
+
 
             for(s32 i=0; i<boundaryIndex.size(); i++) {
               A.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->x;
               A.at<f32>(i,1) = 1;
               b.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->y;
             }
-            
+          }
             // TODO: for speed, switch to QR with Gram
             cv::solve(A, b, x, cv::DECOMP_SVD);
-            
+            /*
             p[iBin][0] = x.at<f32>(0,0);
             p[iBin][1] = x.at<f32>(1,0);
+          
+            {
+              cv::Mat AtA = A.t() * A;
+              cv::Mat Atb = A.t() * b;
+              PRINT_NAMED_DEBUG("ExtractLineFitsPeaks.NonVerticalSystemOfEqs",
+                                "A=[%f %f; %f %f]; b=[%f; %f]; p=[%f;%f]",
+                                AtA.at<f32>(0,0), AtA.at<f32>(0,1),
+                                AtA.at<f32>(1,0), AtA.at<f32>(1,1),
+                                Atb.at<f32>(0,0), Atb.at<f32>(1,0),
+                                p[iBin][0], p[iBin][1]);
+            }
             
             lineFits[iBin].switched = false;
           }
+          */
           
-          lineFits[iBin].slope = p[iBin][0];
-          lineFits[iBin].intercept = p[iBin][1];
+          lineFits[iBin].slope = x.at<f32>(0,0);
+          lineFits[iBin].intercept = x.at<f32>(1,0);
+          lineFits[iBin].switched = isVerticalLine;
           
 #         if DRAW_LINE_FITS
           {
             if(lineFits[iBin].switched) {
               blankImg.DrawLine(Point2f(lineFits[iBin].intercept, 0),
-                                Point2f(lineFits[iBin].intercept, imageHeight-1),
-                                NamedColors::RED, 1);
+                                Point2f(lineFits[iBin].slope*(imageHeight-1) + lineFits[iBin].intercept, imageHeight-1),
+                                NamedColors::MAGENTA, 1);
             } else {
               blankImg.DrawLine(Point2f(0, lineFits[iBin].intercept),
                                 Point2f(imageWidth-1, lineFits[iBin].slope*(imageWidth-1) + lineFits[iBin].intercept),
@@ -220,6 +334,8 @@ namespace Anki
           break;
         } // if(numSide > 1) ... else
       } // for(s32 iBin=0; iBin<4; iBin++)
+      
+      ASSERT_NAMED(!didFitFourLines || maxBinsSet.size()==4, "Expecting 4 different maxBins");
       
       std::vector<cv::Point_<f32> > corners;
       
@@ -237,11 +353,11 @@ namespace Anki
                 std::swap(xInt, yInt);
               }
             } else if(lineFits[iLine].switched == true && lineFits[jLine].switched == false) {
-              yInt = (lineFits[iLine].slope*lineFits[jLine].intercept + lineFits[iLine].intercept) / (1 - lineFits[iLine].slope*lineFits[jLine].slope);
-              xInt = lineFits[jLine].slope*yInt + lineFits[jLine].intercept;
+              yInt = (lineFits[jLine].slope * lineFits[iLine].intercept + lineFits[jLine].intercept) / (1.f - lineFits[iLine].slope*lineFits[jLine].slope);
+              xInt = lineFits[iLine].slope * yInt + lineFits[iLine].intercept;
             } else if(lineFits[iLine].switched == false && lineFits[jLine].switched == true) {
-              yInt = (lineFits[jLine].slope*lineFits[iLine].intercept + lineFits[jLine].intercept) / (1 - lineFits[iLine].slope*lineFits[jLine].slope);
-              xInt = lineFits[iLine].slope*yInt + lineFits[iLine].intercept;
+              yInt = (lineFits[iLine].slope * lineFits[jLine].intercept + lineFits[iLine].intercept)/ (1.f - lineFits[iLine].slope*lineFits[jLine].slope);
+              xInt = lineFits[jLine].slope * yInt + lineFits[jLine].intercept;
             }
             
             if(xInt >= 0 && xInt < imageWidth && yInt >= 0 && yInt < imageHeight) {
