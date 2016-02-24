@@ -90,8 +90,6 @@ int main(void)
   Head::init();
   RTOS::schedule(MotorsUpdate);   
 
-  Radio::assignProp(0, 0x99);
-
   // Start the scheduler
   RTOS::run();
 }
