@@ -15,7 +15,7 @@ public class BlockPoolPane : MonoBehaviour {
   // Use this for initialization
 
   [SerializeField]
-  public RectTransform _UIContainer;
+  private RectTransform _UIContainer;
   
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
