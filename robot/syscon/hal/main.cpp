@@ -89,7 +89,9 @@ int main(void)
   // Only use Head/body if tests are not enabled
   Head::init();
   RTOS::schedule(MotorsUpdate);   
-  
+
+  Radio::assignProp(0, 0x99);
+
   // Start the scheduler
   RTOS::run();
 }

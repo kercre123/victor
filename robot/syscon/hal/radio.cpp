@@ -32,7 +32,6 @@ enum AccessoryType {
 };
 
 enum RadioState {
-  RADIO_FIND_CHANNEL,   // We are locating an empty channel to broadcast on
   RADIO_PAIRING,        // We are listening for pairing results
   RADIO_TALKING         // We are communicating to cubes
 };
@@ -196,16 +195,20 @@ void Radio::init() {
   };
 
   // Generate target address for the robot
-  //Random::get(&TalkAddress.base1, sizeof(TalkAddress.base1));
+  Random::get(&TalkAddress.base1, sizeof(TalkAddress.base1));
   TalkAddress.base1 = fixAddress(TalkAddress.base1);
-
+  
+  do {
+    Random::get(&TalkAddress.rf_channel, sizeof(TalkAddress.rf_channel));
+  } while(TalkAddress.rf_channel > MAX_TX_CHANNEL);
+  
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
   
   // Start the radio stack
   uesb_init(&uesb_config);
-  EnterState(RADIO_FIND_CHANNEL);
+  EnterState(RADIO_PAIRING);
   uesb_start();
 
   RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
@@ -249,12 +252,6 @@ static void EnterState(RadioState state) {
   radioState = state;
 
   switch (state) {
-    case RADIO_FIND_CHANNEL:
-      locateTimeout = LOCATE_TIMEOUT;  
-      TalkAddress.rf_channel = BASE_CHANNEL;
-      memset(currentNoiseLevel, 0, sizeof(currentNoiseLevel));
-      uesb_set_rx_address(&TalkAddress);
-      break ;
     case RADIO_PAIRING:
       uesb_set_rx_address(&AdvertiseAddress);
       break;
@@ -298,9 +295,6 @@ extern "C" void uesb_event_handler(void)
     uesb_read_rx_payload(&rx_payload);
 
     switch (radioState) {
-    case RADIO_FIND_CHANNEL:
-      currentNoiseLevel[TalkAddress.rf_channel]++;
-      break ;
     case RADIO_PAIRING:      
       if (rx_payload.pipe != CUBE_ADVERT_PIPE) {
         break ;
@@ -428,42 +422,6 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 void Radio::manage(void* userdata) {
   // Handle per 5ms channel updates
   switch (radioState) {
-  case RADIO_FIND_CHANNEL:
-    if (locateTimeout-- <= 0) {
-      locateTimeout = LOCATE_TIMEOUT;
-
-      uesb_stop();
-      if (currentNoiseLevel[TalkAddress.rf_channel] == 0) {
-        // Found a quiet place to sleep in
-        EnterState(RADIO_PAIRING);
-      } else {
-        if ((TalkAddress.rf_channel += 13) > MAX_TX_CHANNEL) {
-          // This trys to space the robots apart (the 7 is carefully picked)
-          TalkAddress.rf_channel -= MAX_TX_CHANNEL + 1;
-        }
-
-        // a zero means a wrap around
-        if (TalkAddress.rf_channel == BASE_CHANNEL) {
-          // We've reached the end of the usable frequency range, simply
-          // pick quietest spot
-          uint8_t noiseLevel = ~0;
-          
-          // Run to the quietest channel
-          for (int i = 0; i <= MAX_TX_CHANNEL; i++) {
-            if (currentNoiseLevel[i] < noiseLevel) {
-              TalkAddress.rf_channel = i;
-              noiseLevel = currentNoiseLevel[i];
-            }
-          }
-
-          EnterState(RADIO_PAIRING);
-        }
-      }
-      uesb_start();
-    }
-
-    break ;
-  
   default:
     // Transmit to accessories round-robin
     currentAccessory = (currentAccessory + 1) % TICK_LOOP;

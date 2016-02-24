@@ -45,12 +45,12 @@ namespace Spine {
   void processMessage(SpineProtocol& msg) {
     switch (msg.opcode) {
     case ASSIGN_PROP:
-      Radio::assignProp(msg.AssignProp.slot, msg.AssignProp.prop_id);
+      //Radio::assignProp(msg.AssignProp.slot, msg.AssignProp.prop_id);
       break ;
     case SET_PROP_STATE:
       uint16_t colors[4];
       memcpy(&colors, (void*)&msg.SetPropState.colors, sizeof(colors));
-      Radio::setPropState(msg.SetPropState.slot, colors);
+      //Radio::setPropState(msg.SetPropState.slot, colors);
       break ;
     case ENTER_RECOVERY:
       EnterRecovery();
