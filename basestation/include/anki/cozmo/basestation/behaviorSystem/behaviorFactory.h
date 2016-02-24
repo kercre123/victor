@@ -58,14 +58,7 @@ public:
   
   IBehavior* FindBehaviorByName(const std::string& inName);
   
-  // temp hack to give a public method for adding behaviors not created via the factory.
-  // NOTE: can modify newBehavior address (e.g. on name collision if rule is to reuse existing behavior)
-  void DEMO_HACK_AddToFactory(IBehavior*& newBehavior, NameCollisionRule nameCollisionRule = NameCollisionRule::ReuseOld)
-  {
-    newBehavior = AddToFactory(newBehavior, nameCollisionRule);
-  }
-  
-  const NameToBehaviorMap& GetBehaviorMap() { return _nameToBehaviorMap; }
+  const NameToBehaviorMap& GetBehaviorMap() const { return _nameToBehaviorMap; }
   
 private:
 
