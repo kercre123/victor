@@ -280,7 +280,6 @@ namespace Anki {
         foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (graphic.targetImage != null && graphic.enabledSprite != null) {
             SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
-            DAS.Debug(this, graphic.pressedSprite.ToString() + " " + graphic.ignoreSprite);
           }
           else {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
