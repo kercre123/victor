@@ -89,7 +89,7 @@ int main(void)
   // Only use Head/body if tests are not enabled
   Head::init();
   RTOS::schedule(MotorsUpdate);   
-  
+
   // Start the scheduler
   RTOS::run();
 }
