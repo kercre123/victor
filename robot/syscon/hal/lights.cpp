@@ -133,7 +133,7 @@ void Lights::init()
 
 void Lights::setLights(const uint16_t* lights) {
   uint8_t newState[] = {
-    UNPACK_COLORS(lights[0]),
+    0, UNPACK_RED(lights[0]), UNPACK_RED(lights[4]),
     UNPACK_COLORS(lights[1]),
     UNPACK_COLORS(lights[2]),
     UNPACK_COLORS(lights[3])

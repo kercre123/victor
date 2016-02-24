@@ -5,6 +5,7 @@
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
+#include "lights.h"
 
 #include "radio.h"
 #include "rtos.h"
@@ -143,16 +144,31 @@ static void Process_bootloadBody(const Anki::Cozmo::RobotInterface::BootloadBody
 }
 static void Process_setBackpackLights(const Anki::Cozmo::RobotInterface::BackpackLights& msg)
 {
-  // TODO poke this into LED controller running down here
+  uint16_t lights[5] = {
+    msg.lights[0].onColor,
+    msg.lights[1].onColor,
+    msg.lights[2].onColor,
+    msg.lights[3].onColor,
+    msg.lights[4].onColor
+  };
+
+  Lights::setLights(lights);
 }
 static void Process_setCubeLights(const Anki::Cozmo::CubeLights& msg)
 {
-  // TODO poke this into LED controller running down here
+  uint16_t lights[4] = {
+    msg.lights[0].onColor,
+    msg.lights[1].onColor,
+    msg.lights[2].onColor,
+    msg.lights[3].onColor
+  };
+
+  Radio::setPropState(msg.objectID, lights);
 }
+
 static void Process_assignCubeSlots(const Anki::Cozmo::CubeSlots& msg)
 {
-  int i;
-  for (i=0; i<7; ++i) // 7 is the number supported in messageToActiveObject.clad
+  for (int i=0; i<7; ++i) // 7 is the number supported in messageToActiveObject.clad
   {
     Radio::assignProp(i, msg.factory_id[i]);
   }
@@ -172,7 +188,7 @@ static void ProcessMessage()
   }
   else
   {
-    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToBody.cladBuffer.data);
+    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToBody.cladBuffer);
     switch(tag)
     {
       #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"

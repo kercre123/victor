@@ -47,7 +47,7 @@ namespace HAL {
   }
 
   void Spine::Manage() {
-    RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToHead.cladBuffer.data);
+    RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToHead.cladBuffer);
     const u8 tag = msg->tag;
     if (g_dataToHead.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
     {
