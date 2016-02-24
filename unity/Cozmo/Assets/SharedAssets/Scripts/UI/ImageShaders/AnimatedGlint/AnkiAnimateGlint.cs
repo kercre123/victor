@@ -20,6 +20,7 @@ namespace Cozmo.UI {
     }
 
     public void EnableGlint(bool enable) {
+      Debug.Log("Enable Glint!");
       Color maskColor = _MaskImage.color;
       maskColor.a = enable ? 1 : 0;
       _MaskImage.color = maskColor;
