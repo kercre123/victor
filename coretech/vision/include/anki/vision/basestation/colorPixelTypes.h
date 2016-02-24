@@ -19,7 +19,7 @@
 namespace Anki {
 namespace Vision {
   
-  class PixelRGB : private cv::Vec3b
+  class PixelRGB : public cv::Vec3b
   {
   public:
     
@@ -38,7 +38,7 @@ namespace Vision {
     
     // Convert to gray
     u8 gray() const {
-      u16 gray = r() + (g() << 1) + b(); // give gray double weight
+      u16 gray = r() + (g() << 1) + b(); // give green double weight
       gray = gray >> 2; // divide by 4
       assert(gray <= u8_MAX);
       return static_cast<u8>(gray);
@@ -56,7 +56,7 @@ namespace Vision {
   static_assert(sizeof(PixelRGB)==3, "PixelRGB not 3 bytes!");
   
   
-  class PixelRGBA : private cv::Vec4b
+  class PixelRGBA : public cv::Vec4b
   {
   public:
     
@@ -80,7 +80,7 @@ namespace Vision {
     
     // Convert to gray
     u8 gray() const {
-      u16 gray = r() + (g() << 1) + b(); // give gray double weight
+      u16 gray = r() + (g() << 1) + b(); // give green double weight
       gray = gray >> 2; // divide by 4
       assert(gray <= u8_MAX);
       return static_cast<u8>(gray);
