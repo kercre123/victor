@@ -172,7 +172,7 @@ static void ProcessMessage()
   }
   else
   {
-    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToBody.cladBuffer.data);
+    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToBody.cladBuffer);
     switch(tag)
     {
       #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"
