@@ -20,6 +20,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleChannelFile.h"
+#include "anki/messaging/basestation/IComms.h"
 
 #include <assert.h>
 
@@ -54,7 +55,6 @@ namespace Cozmo {
       ExternalInterface::InitDebugConsoleVarMessage message;
       message.varData = dataVals;
       externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-      
       dataVals.clear();
     }
   }
@@ -105,6 +105,7 @@ namespace Cozmo {
       string_size += varObject.varName.length() + varObject.category.length();
       if( string_size >= kMaxFlushSize)
       {
+        ASSERT_NAMED(string_size < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
         FlushBuffer(dataVals,_externalInterface);
         string_size = 0;
       }
@@ -123,6 +124,7 @@ namespace Cozmo {
       string_size += varObject.varName.length() + varObject.category.length();
       if( string_size >= kMaxFlushSize)
       {
+        ASSERT_NAMED(string_size < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
         FlushBuffer(dataVals,_externalInterface);
         string_size = 0;
       }
