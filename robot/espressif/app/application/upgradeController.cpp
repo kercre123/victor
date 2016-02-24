@@ -718,8 +718,10 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
   }
   else
   {
-    // TODO tell the RTIP we're going away, in the mean time, at least tell it the connection is going away
-    i2spiQueueMessage((u8*)"\x31\x00", 2); // FC is the tag for a radio connection state message to the robot
+    Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+    rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+    rtipMsg.radioConnected.wifiConnected = false;
+    Anki::Cozmo::RTIP::SendMessage(rtipMsg);
     
     RobotInterface::EraseFlash* taskMsg = static_cast<RobotInterface::EraseFlash*>(os_zalloc(msg.Size()));
     if (taskMsg == NULL)

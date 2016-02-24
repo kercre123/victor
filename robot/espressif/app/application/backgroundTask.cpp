@@ -235,7 +235,10 @@ extern "C" void backgroundTaskOnConnect(void)
 {
   const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
-  i2spiQueueMessage((u8*)"\x31\x01", 2); // FC is the tag for a radio connection state message to the robot
+  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+  rtipMsg.radioConnected.wifiConnected = true;
+  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
   Anki::Cozmo::Face::FaceUnPrintf();
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
@@ -249,5 +252,8 @@ extern "C" void backgroundTaskOnConnect(void)
 
 extern "C" void backgroundTaskOnDisconnect(void)
 {
-  i2spiQueueMessage((u8*)"\x31\x00", 2); // FC is the tag for a radio connection state message to the robot
+  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+  rtipMsg.radioConnected.wifiConnected = false;
+  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
 }

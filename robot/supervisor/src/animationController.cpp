@@ -213,7 +213,7 @@ namespace AnimationController {
 
   static inline RobotInterface::EngineToRobot::Tag PeekBufferTag()
   {
-    int nextTagIndex = _currentBufferPos;
+    int nextTagIndex = _currentBufferPos + 2;
     if (nextTagIndex > KEYFRAME_BUFFER_SIZE) nextTagIndex -= KEYFRAME_BUFFER_SIZE;
     return _keyFrameBuffer[nextTagIndex];
   }
