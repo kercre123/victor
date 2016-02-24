@@ -63,16 +63,23 @@ namespace Anki {
       f32 maxAngularVel_;
       f32 angularAccel_;
       bool isPointTurnWithTarget_;
-
-      f32 currAngularVel_;
       bool startedPointTurn_;
 
       Radians prevAngle_;
       f32 angularDistExpected_;
       f32 angularDistTraversed_;
       
-      f32 pointTurnKp_ = 250;
-      f32 pointTurnKd_ = 3000;
+      // Amount by which theoretical wheel velocities are scaled
+      // to compensate for tread slip.
+      const f32 POINT_TURN_SLIP_COMP_FACTOR = 1.5f;
+      
+      f32 pointTurnSpeedKp_ = 20;
+      f32 pointTurnSpeedKd_ = 0;
+      f32 pointTurnSpeedKi_ = 0.5;
+      f32 pointTurnSpeedMaxIntegralError_ = 100;
+      
+      f32 pointTurnKp_ = 150;
+      f32 pointTurnKd_ = 4000;
       f32 pointTurnKi_ = 0.3;
       f32 pointTurnMaxIntegralError_ = 100;
       f32 prevPointTurnAngleError_ = 0;
@@ -127,7 +134,12 @@ namespace Anki {
       pointTurnKd_ = kd;
       pointTurnKi_ = ki;
       pointTurnMaxIntegralError_ = maxIntegralError;
-      
+      /*
+      pointTurnSpeedKp_ = kp;
+      pointTurnSpeedKd_ = kd;
+      pointTurnSpeedKi_ = ki;
+      pointTurnSpeedMaxIntegralError_ = maxIntegralError;
+      */
       AnkiInfo( 125, "SteeringController.SetPointTurnGains", 373, "New gains: kp %f, ki %f, kd %f, maxSum %f", 4, kp, ki, kd, maxIntegralError);
     }
     
@@ -498,7 +510,6 @@ namespace Anki {
     void ExitPointTurn()
     {
       WheelController::SetDesiredWheelSpeeds(0,0);
-      currAngularVel_ = 0;
       startedPointTurn_ = false;
       SetSteerMode(SM_PATH_FOLLOW);
     }
@@ -568,11 +579,16 @@ namespace Anki {
 
 
       // Update current angular velocity
-      f32 currDesiredAngle;
-      vpg_.Step(currAngularVel_, currDesiredAngle);
+      f32 currDesiredAngularVel, currDesiredAngle;
+      vpg_.Step(currDesiredAngularVel, currDesiredAngle);
 
       Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
-
+      
+      // Compute the velocity along the arc length equivalent of currAngularVel.
+      // currDesiredAngularVel / PI = arcVel / (PI * R)
+      s16 arcVel = (s16)(currDesiredAngularVel * WHEEL_DIST_HALF_MM * POINT_TURN_SLIP_COMP_FACTOR); // mm/s
+      
+      
       if (isPointTurnWithTarget_) {
 
         angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
@@ -596,7 +612,7 @@ namespace Anki {
             WheelController::GetFilteredWheelSpeeds(lWheelSpeed, rWheelSpeed);
             WheelController::GetDesiredWheelSpeeds(lDesSpeed, rDesSpeed);
             AnkiDebug( 130, "ManagePointTurn.Stopping", 376, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
-                      currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currAngularVel_), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), 0,0,0,0);
+                      currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), 0,0,0,0);
 #           endif
             ExitPointTurn();
             return;
@@ -621,37 +637,45 @@ namespace Anki {
           
         }
 
+        
+        // PID control for maintaining desired orientation
+        f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
+        arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_
+                     + (angularDistToCurrDesiredAngle - prevPointTurnAngleError_) * pointTurnKd_
+                     + pointTurnAngleErrorSum_ * pointTurnKi_);
+        prevPointTurnAngleError_ = angularDistToCurrDesiredAngle;
+        
+        // Only accumulate integral error if desired wheel speed is below max
+        if (ABS(arcVel) < MAX_WHEEL_SPEED_MMPS) {
+          pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
+        }
+
+        
+      } else {
+        
+        // PID control for maintaining desired speed
+        f32 currAngularSpeed = IMUFilter::GetRotationSpeed();
+        f32 angularSpeedError = currDesiredAngularVel - currAngularSpeed;
+        arcVel += (s16)(angularSpeedError * pointTurnSpeedKp_
+               + (angularSpeedError - prevPointTurnAngleError_) * pointTurnSpeedKd_
+               + pointTurnAngleErrorSum_ * pointTurnSpeedKi_);
+        
+        prevPointTurnAngleError_ = angularSpeedError;
+        
+        // Only accumulate integral error if desired wheel speed is below max
+        if (ABS(arcVel) < MAX_WHEEL_SPEED_MMPS) {
+          pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularSpeedError, -pointTurnSpeedMaxIntegralError_, pointTurnSpeedMaxIntegralError_);
+        }
+        
+        //AnkiDebugPeriodic(100, 131, "PointTurnSpeed", 377, "des %f deg/s, meas: %f deg/s, arcVel %d mm/s, errorSum %f", 4, RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(currAngularSpeed), arcVel, pointTurnAngleErrorSum_ );
       }
-
-
-      // Compute the velocity along the arc length equivalent of currAngularVel.
-      // currAngularVel_ / PI = arcVel / (PI * R)
-      s16 arcVel = (s16)(currAngularVel_ * WHEEL_DIST_HALF_MM); // mm/s
-
-
-      // PID control for maintaining heading
-      f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
-      arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_ +
-                      (angularDistToCurrDesiredAngle - prevPointTurnAngleError_) * pointTurnKd_ +
-                      pointTurnAngleErrorSum_ * pointTurnKi_);
-      prevPointTurnAngleError_ = angularDistToCurrDesiredAngle;
-      
-      // Only accumulate integral error if desired wheel speed is below max
-      if (ABS(arcVel) < MAX_WHEEL_SPEED_MMPS) {
-        pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
-      }
-
-
-      // Compute the wheel velocities
-      s16 wleft = -arcVel;
-      s16 wright = arcVel;
 
 
 #if(DEBUG_STEERING_CONTROLLER)
       AnkiDebug( 12, "POINT TURN", 112, "angularDistToTarget: %f radians, arcVel: %d mm/s", 2, angularDistToTarget, arcVel);
 #endif
 
-      WheelController::SetDesiredWheelSpeeds(wleft, wright);
+      WheelController::SetDesiredWheelSpeeds(-arcVel, arcVel);
       //WheelController::ResetIntegralGainSums();
 
       // If target velocity is zero then we might need to stop
