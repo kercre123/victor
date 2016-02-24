@@ -161,9 +161,6 @@ LOCAL bool TaskWriteFlash(uint32 param)
 {
   RobotInterface::WriteFlash* msg = reinterpret_cast<RobotInterface::WriteFlash*>(param);
   RobotInterface::FlashWriteAcknowledge resp;
-#ifdef DEBUG_OTA
-  os_printf("w");
-#endif
   switch(spi_flash_write(msg->address, reinterpret_cast<uint32*>(msg->data), msg->data_length))
   {
     case SPI_FLASH_RESULT_OK:

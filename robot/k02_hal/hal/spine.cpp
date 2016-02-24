@@ -47,7 +47,8 @@ namespace HAL {
   }
 
   void Spine::Manage() {
-    const u8 tag = g_dataToHead.cladBuffer.data[0];
+    const RobotInterface::EngineToRobot* const msg = reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToHead.cladBuffer.data);
+    const u8 tag = msg->tag;
     if (g_dataToHead.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
     {
       // pass
@@ -62,7 +63,6 @@ namespace HAL {
     }
     else
     {
-      RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(g_dataToHead.cladBuffer.data);
       Messages::ProcessMessage(*msg);
     }
     // Prevent same message from getting processed twice (if the spine desyncs)

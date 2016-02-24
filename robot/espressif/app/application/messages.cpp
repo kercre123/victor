@@ -43,7 +43,7 @@ namespace Anki {
       
       void ProcessMessage(u8* buffer, u16 bufferSize)
       {
-        AnkiConditionalWarnAndReturn(buffer[0] <= RobotInterface::TO_WIFI_END, 1, "Messages", 373, "ToRobot message %x[%d] like like it has tag for engine (> 0x%x)", 3, buffer[0], bufferSize, (int)RobotInterface::TO_WIFI_END);
+        AnkiConditionalWarnAndReturn(buffer[0] <= RobotInterface::TO_WIFI_END, 137, "WiFi.Messages", 373, "ToRobot message %x[%d] like like it has tag for engine (> 0x%x)", 3, buffer[0], bufferSize, (int)RobotInterface::TO_WIFI_END);
         if (buffer[0] < RobotInterface::TO_WIFI_START) // Message for someone further down than us
         {
           RTIP::SendMessage(buffer, bufferSize);
@@ -51,7 +51,7 @@ namespace Anki {
         else
         {
           RobotInterface::EngineToRobot msg;
-          AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 1, "Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
+          AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 137, "WiFi.Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
           switch(buffer[0])
           {
             case RobotInterface::EngineToRobot::Tag_eraseFlash:
@@ -136,7 +136,7 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
             {
               if(AnimationController::BufferKeyFrame(buffer, bufferSize) != RESULT_OK) {
-                AnkiWarn( 1, "Messages", 258, "Failed to buffer a keyframe! Clearing Animation buffer!\n", 0);
+                AnkiWarn( 137, "WiFi.Messages", 258, "Failed to buffer a keyframe! Clearing Animation buffer!\n", 0);
                 AnimationController::Clear();
               }
               break;
@@ -155,7 +155,7 @@ namespace Anki {
             }
             default:
             {
-              AnkiWarn( 1, "Messages", 259, "Received message not expected here tag=%02x\n", 1, buffer[0]);
+              AnkiWarn( 137, "WiFi.Messages", 259, "Received message not expected here tag=%02x\n", 1, buffer[0]);
             }
           }
         }

@@ -104,7 +104,7 @@ static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t
   }
   else if (unlikely(connection->numPendingReliableMessages >= ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH))
   {
-    printf("WARN: No slots left for pending reliable messages %x[%d]\r\n", tag, bufferSize);
+    printf("WARN: No slots left for pending reliable messages %x[%x...%d]\r\n", tag, buffer[0], bufferSize);
     return false;
   }
   else if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > /* +1 for tag, easier to assume it's there than check. */

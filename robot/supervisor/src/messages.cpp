@@ -1,4 +1,4 @@
-%#include "messages.h"
+#include "messages.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include <math.h>
