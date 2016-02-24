@@ -47,7 +47,9 @@ namespace Anki.Cozmo {
       #endregion
     }
 
-    private ChannelBase<MessageVizWrapper, MessageVizWrapper> _Channel = null;
+    private class VizUdpChannel : UdpChannel<MessageVizWrapper, MessageVizWrapper> { }
+
+    private VizUdpChannel _Channel = null;
 
     private DisconnectionReason _LastDisconnectionReason;
 
@@ -66,6 +68,18 @@ namespace Anki.Cozmo {
     private Texture2D _OverlayImage;
     public Texture2D RobotCameraOverlay { get { return _OverlayImage; } }
     private Color32[] _OverlayClearBuffer = null;
+
+
+    [SerializeField]
+    private VizQuad _VizQuadPrefab;
+
+    [SerializeField]
+    private VizPath _VizPathPrefab;
+
+    private readonly Dictionary<uint, VizQuad> _Quads = new Dictionary<uint, VizQuad>();
+    private readonly Dictionary<uint, VizQuad> _Objects = new Dictionary<uint, VizQuad>();
+
+    private VizPath _PathInstance;
 
 
     public float[] Emotions { get; private set; }
@@ -93,7 +107,7 @@ namespace Anki.Cozmo {
         DontDestroyOnLoad(gameObject);
       }
         
-      _Channel = new UdpChannel<MessageVizWrapper, MessageVizWrapper>();
+      _Channel = new VizUdpChannel();
       _Channel.ConnectedToClient += Connected;
       _Channel.DisconnectedFromClient += Disconnected;
       _Channel.MessageReceived += ReceivedMessage;
@@ -195,7 +209,13 @@ namespace Anki.Cozmo {
 
       // World Drawing
       case MessageViz.Tag.Quad:
-
+        DrawQuad(message.Quad);
+        break;
+      case MessageViz.Tag.EraseQuad:
+        EraseQuad(message.EraseQuad);
+        break;
+      case MessageViz.Tag.Object:
+        DrawObject(message.Object);
         break;
       // Information
       case MessageViz.Tag.RobotMood:
@@ -213,6 +233,138 @@ namespace Anki.Cozmo {
         break;
       }
     }
+
+    #region WorldDrawing
+
+    public void DrawQuad(Quad quad) {
+      VizQuad vizQuad;
+      if (!_Quads.TryGetValue(quad.quadID, out vizQuad)) {
+        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, transform).GetComponent<VizQuad>();
+        vizQuad.Initialize("Quad_"+quad.quadID.ToString());
+        _Quads.Add(quad.quadID, vizQuad);
+      }
+
+      var a = new Vector3(quad.xUpperLeft, quad.yUpperLeft, quad.zUpperLeft);
+      var b = new Vector3(quad.xUpperRight, quad.yUpperRight, quad.zUpperRight);
+      var c = new Vector3(quad.xLowerRight, quad.yLowerRight, quad.zLowerRight);
+      var d = new Vector3(quad.xLowerLeft, quad.yLowerLeft, quad.zLowerLeft);
+
+      // lets move the position of this vizQuad to the center of our points
+      // and adjust the points accordingly.
+
+      var center = (a + b + c + d) * 0.25f;
+
+      vizQuad.UpdateQuad(
+        a - center,
+        b - center,
+        c - center,
+        d - center,
+        Color.clear,
+        quad.color.ToColor());
+      vizQuad.transform.localPosition = center;
+    }
+
+    public void EraseQuad(EraseQuad eraseQuad) {
+      VizQuad vizQuad;
+      if (_Quads.TryGetValue(eraseQuad.quadID, out vizQuad)) {
+        _Quads.Remove(eraseQuad.quadID);
+        Destroy(vizQuad.gameObject);
+      }
+    }
+
+    public void DrawObject(Anki.Cozmo.VizInterface.Object obj) {
+      VizQuad vizQuad;
+      if (!_Objects.TryGetValue(obj.objectID, out vizQuad)) {
+        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, transform).GetComponent<VizQuad>();
+        vizQuad.Initialize("Object_"+obj.objectID.ToString());
+        _Objects.Add(obj.objectID, vizQuad);
+      }
+
+      vizQuad.StartUpdateQuadList();
+
+      var rotation = Quaternion.Euler(obj.rot_axis_x, obj.rot_axis_y, obj.rot_axis_z);
+      var origin = new Vector3(obj.x_trans_m, obj.y_trans_m, obj.z_trans_m);
+      var size = new Vector3(obj.x_size_m, obj.y_size_m, obj.z_size_m);
+
+      var d = size * 0.5f;
+
+      // set the position and rotation using transform, set size using mesh deformation
+
+      vizQuad.transform.rotation = rotation;
+      vizQuad.transform.localPosition = origin;
+
+      var innerColor = Color.clear;
+      var outerColor = obj.color.ToColor();
+
+      vizQuad.StartUpdateQuadList();
+      // front
+      vizQuad.AddToQuadList(
+        new Vector3(-d.x, d.y, d.z),
+        new Vector3(d.x, d.y, d.z),
+        new Vector3(d.x, -d.y, d.z),
+        new Vector3(-d.x, -d.y, d.z),
+        innerColor,
+        outerColor);
+
+      // back
+      vizQuad.AddToQuadList(
+        new Vector3(d.x, d.y, -d.z),
+        new Vector3(-d.x, d.y, -d.z),
+        new Vector3(-d.x, -d.y, -d.z),
+        new Vector3(d.x, -d.y, -d.z),
+        innerColor,
+        outerColor);
+
+      // right
+      vizQuad.AddToQuadList(
+        new Vector3(d.x, d.y, d.z),
+        new Vector3(d.x, d.y, -d.z),
+        new Vector3(d.x, -d.y, -d.z),
+        new Vector3(d.x, -d.y, d.z),
+        innerColor,
+        outerColor);
+
+      // left
+      vizQuad.AddToQuadList(
+        new Vector3(-d.x, d.y, -d.z),
+        new Vector3(-d.x, d.y, d.z),
+        new Vector3(-d.x, -d.y, d.z),
+        new Vector3(-d.x, -d.y, -d.z),
+        innerColor,
+        outerColor);
+
+      // top
+      vizQuad.AddToQuadList(
+        new Vector3(-d.x, d.y, -d.z),
+        new Vector3(d.x, d.y, -d.z),
+        new Vector3(d.x, d.y, d.z),
+        new Vector3(-d.x, d.y, d.z),
+        innerColor,
+        outerColor);
+
+      // bottom
+      vizQuad.AddToQuadList(
+        new Vector3(d.x, -d.y, -d.z),
+        new Vector3(-d.x, -d.y, -d.z),
+        new Vector3(-d.x, -d.y, d.z),
+        new Vector3(d.x, -d.y, d.z),
+        innerColor,
+        outerColor);
+
+      vizQuad.EndUpdateQuadList();
+    }
+
+    public void EraseObject(EraseObject eraseObj) {
+      VizQuad vizQuad;
+      if (_Objects.TryGetValue(eraseObj.objectID, out vizQuad)) {
+        _Objects.Remove(eraseObj.objectID);
+        Destroy(vizQuad.gameObject);
+      }
+    }
+
+    #endregion // WorldDrawing
+
+    #region OverlayRender
 
     private void ClearOverlay() {
       if (_OverlayImage == null) {
@@ -324,6 +476,10 @@ namespace Anki.Cozmo {
       _OverlayImage.SetPixel(x, y + 1, c);
       _OverlayImage.SetPixel(x + 1, y + 1, c);
     }
+
+    #endregion // OverlayRender
+    #region ImageChunk
+
 
     // Pre-baked JPEG header for grayscale, Q50
     static readonly byte[] _Header50 = {
@@ -507,6 +663,7 @@ namespace Anki.Cozmo {
         }
       }
     }
+    #endregion // ImageChunk
   }
 }
 
