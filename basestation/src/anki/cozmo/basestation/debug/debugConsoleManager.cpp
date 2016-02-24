@@ -49,11 +49,14 @@ namespace Cozmo {
   
   void FlushBuffer(std::vector<ExternalInterface::DebugConsoleVar>& dataVals, IExternalInterface* externalInterface )
   {
-    ExternalInterface::InitDebugConsoleVarMessage message;
-    message.varData = dataVals;
-    externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-    
-    dataVals.clear();
+    if( dataVals.size() > 0 )
+    {
+      ExternalInterface::InitDebugConsoleVarMessage message;
+      message.varData = dataVals;
+      externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+      
+      dataVals.clear();
+    }
   }
   
   // Used for init of window.
@@ -66,7 +69,7 @@ namespace Cozmo {
     
     // Flush when we're about half full of the clad buffer it doesn't go over...
     uint32_t string_size = 0;
-    constexpr uint32_t FLUSH_SIZE = 1024;
+    constexpr uint32_t kMaxFlushSize = 1024;
     
     for ( auto& entry : varDatabase )
     {
@@ -100,7 +103,7 @@ namespace Cozmo {
       dataVals.push_back(varObject);
       
       string_size += varObject.varName.length() + varObject.category.length();
-      if( string_size >= FLUSH_SIZE)
+      if( string_size >= kMaxFlushSize)
       {
         FlushBuffer(dataVals,_externalInterface);
         string_size = 0;
@@ -118,13 +121,13 @@ namespace Cozmo {
       dataVals.push_back(varObject);
       
       string_size += varObject.varName.length() + varObject.category.length();
-      if( string_size >= FLUSH_SIZE)
+      if( string_size >= kMaxFlushSize)
       {
         FlushBuffer(dataVals,_externalInterface);
         string_size = 0;
       }
     }
-    
+    // Flush remaining...
     FlushBuffer(dataVals,_externalInterface);
   }
   
