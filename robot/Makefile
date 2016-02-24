@@ -39,14 +39,16 @@ esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
 
-$(BINARY_RELEASE_DIR)/esp.user.bin: esp
-	cp espressif/bin/upgrade/user1.2048.new.3.bin $@
+espressif/bin/upgrade/user1.2048.new.3.bin: esp
 
-$(BINARY_RELEASE_DIR)/robot.safe:
-	cp build/41/robot.safe $@
+$(BINARY_RELEASE_DIR)/esp.user.bin: espressif/bin/upgrade/user1.2048.new.3.bin
+	cp $< $@
 
-$(BINARY_RELEASE_DIR)/syscon.safe:
-	cp syscon/build/syscon.safe $@
+$(BINARY_RELEASE_DIR)/robot.safe: build/41/robot.safe
+	cp $< $@
+
+$(BINARY_RELEASE_DIR)/syscon.safe: syscon/build/syscon.safe
+	cp $< $@
 
 otaBinaries: $(BINARY_RELEASE_DIR)/esp.user.bin $(BINARY_RELEASE_DIR)/robot.safe $(BINARY_RELEASE_DIR)/syscon.safe
 
