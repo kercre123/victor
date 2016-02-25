@@ -27,30 +27,6 @@ enum SPISource
   SPI_SOURCE_BODY    = 0x79646f62
 };
 
-struct AcceleratorPacket {
-  int8_t    x, y, z;
-  uint8_t   shockCount;
-  uint16_t  timestamp;
-};
-
-#define UNPACK_COLORS(w) \
-  UNPACK_RED(w), \
-  UNPACK_GREEN(w), \
-  UNPACK_BLUE(w)
-
-#define UNPACK_RED(w)     ((((w >> 10) & 0x1F) * 0x21) >> 2)
-#define UNPACK_GREEN(w)   ((((w >>  5) & 0x1F) * 0x21) >> 2)
-#define UNPACK_BLUE(w)    ((((w >>  0) & 0x1F) * 0x21) >> 2)
-
-#define UNPACK_IR(w) (w & 0x8000 ? 0xFF : 0)
-
-#define PACK_COLORS(i,r,g,b) (  \
-  (i ? 0x8000 : 0) |            \
-  (((b >> 3) & 0x1F) <<  0) |   \
-  (((g >> 3) & 0x1F) <<  5) |   \
-  (((r >> 3) & 0x1F) << 10)     \
-)
-
 // 32 bytes of payload plus tag
 #define SPINE_MAX_CLAD_MSG_SIZE (33)
 
@@ -62,7 +38,7 @@ typedef enum {
 
 struct CladBuffer
 {
-	uint16_t flags;
+  uint16_t flags;
   uint8_t  length;
   uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE];
 };

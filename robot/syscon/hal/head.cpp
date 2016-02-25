@@ -10,12 +10,15 @@
 #include "radio.h"
 #include "rtos.h"
 #include "hardware.h"
+#include "lights.h"
 
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "spine.h"
+
+using namespace Anki::Cozmo;
 
 #define MAX(a, b) ((a > b) ? a : b)
 
@@ -148,35 +151,20 @@ static void On_WiFiDisconnected(void)
   
 }
 
-static void Process_bootloadBody(const Anki::Cozmo::RobotInterface::BootloadBody& msg)
+static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
 {
   EnterRecovery();
 }
-static void Process_setBackpackLights(const Anki::Cozmo::RobotInterface::BackpackLights& msg)
+static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
-  uint16_t lights[5] = {
-    msg.lights[0].onColor,
-    msg.lights[1].onColor,
-    msg.lights[2].onColor,
-    msg.lights[3].onColor,
-    msg.lights[4].onColor
-  };
-
-  Lights::setLights(lights);
+  Lights::setLights(msg.lights);
 }
-static void Process_setCubeLights(const Anki::Cozmo::CubeLights& msg)
+static void Process_setCubeLights(const CubeLights& msg)
 {
-  uint16_t lights[4] = {
-    msg.lights[0].onColor,
-    msg.lights[1].onColor,
-    msg.lights[2].onColor,
-    msg.lights[3].onColor
-  };
-
-  Radio::setPropState(msg.objectID, lights);
+  Radio::setPropLights(msg.objectID, msg.lights);
 }
 
-static void Process_assignCubeSlots(const Anki::Cozmo::CubeSlots& msg)
+static void Process_assignCubeSlots(const CubeSlots& msg)
 {
   for (int i=0; i<7; ++i) // 7 is the number supported in messageToActiveObject.clad
   {

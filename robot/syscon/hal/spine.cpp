@@ -4,9 +4,11 @@
 #include "nrf.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
+#include "lights.h"
 #include "radio.h"
 #include "spine.h"
-#include "lights.h"
+
+using namespace Anki::Cozmo;
 
 extern void EnterRecovery(void);
 
@@ -16,7 +18,7 @@ static volatile int spine_enter = 0;
 static volatile int spine_exit  = 0;
 
 
-bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
+bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
 {
   const int exit = (spine_exit+1) % QUEUE_DEPTH;
   if (spine_enter == exit) {

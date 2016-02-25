@@ -13,7 +13,8 @@
 #include "uart.h"
 
 #define MAX_CUBES 7
-AcceleratorPacket g_AccelStatus[MAX_CUBES];
+
+static uint8_t g_shockCount[MAX_CUBES];
 
 namespace Anki
 {
@@ -21,18 +22,14 @@ namespace Anki
   {
     namespace HAL
     {
-      void GetPropState(int id, int x, int y, int z, int shocks) {
+      void GetPropState(int id, int ax, int ay, int az, int shocks) {
         // Tap detection
         if (id >= MAX_CUBES) {
           return ;
         }
 
-        uint8_t count = shocks - g_AccelStatus[id].shockCount;
-
-        g_AccelStatus[id].x = x;
-        g_AccelStatus[id].y = y;
-        g_AccelStatus[id].z = z;
-        g_AccelStatus[id].shockCount = shocks;
+        uint8_t count = shocks - g_shockCount[id];
+        g_shockCount[id] = shocks;
 
         //DisplayStatus(id);
 
@@ -50,11 +47,6 @@ namespace Anki
         static u8 movingTimeoutCtr[MAX_CUBES] = {0};
         static bool isMoving[MAX_CUBES] = {false};
         static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};
-
-        s8 ax = g_AccelStatus[id].x;
-        s8 ay = g_AccelStatus[id].y;
-        s8 az = g_AccelStatus[id].z;
-
 
         // Compute upAxis
         // Send ObjectMoved message if upAxis changes
