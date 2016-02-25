@@ -39,20 +39,33 @@ namespace HAL {
   {
     const uint16_t sizeWHeader = size+1;
     const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
-		AnkiConditionalErrorAndReturnValue(sizeWHeader <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
-		const uint8_t rind = txRind;
-		uint8_t wind = txWind;
-		const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
-		while (available < (sizeWHeader + 2)) // Wait for room for message plus tag plus header plus one more so we can tell empty from full
-		{
-			if (!reliable) return false;
-		}
-		const u8* msgPtr = (u8*)buffer;
-		txBuf[wind++] = sizeWHeader;
-		txBuf[wind++] = msgID;
-		for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
-		txWind = wind;
-    return true;
+    const u8 tag = ((msgID == RobotInterface::GLOBAL_INVALID_TAG) ? *reinterpret_cast<u8*>(buffer) : msgID);
+    if (tag < RobotInterface::TO_RTIP_START)
+    {
+      Spine.Enqueue(buffer, size, msgID);
+    }
+    else if (tag <= RobotInterface::TO_RTIP_END)
+    {
+      AnkiWarn( 143, "WiFi.RadioSendMessage", 395, "Refusing to send message %x[%d] to self!", 2, tag, size);
+      return false;
+    }
+    else
+    {
+      AnkiConditionalErrorAndReturnValue(sizeWHeader <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
+      const uint8_t rind = txRind;
+      uint8_t wind = txWind;
+      const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
+      while (available < (sizeWHeader + 2)) // Wait for room for message plus tag plus header plus one more so we can tell empty from full
+      {
+      	if (!reliable) return false;
+      }
+      const u8* msgPtr = (u8*)buffer;
+      txBuf[wind++] = sizeWHeader;
+      txBuf[wind++] = msgID;
+      for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
+      txWind = wind;
+      return true;
+    }
   }
 
   bool RadioIsConnected()

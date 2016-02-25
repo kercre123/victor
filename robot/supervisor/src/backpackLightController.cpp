@@ -16,8 +16,12 @@
 #include "backpackLightController.h"
 
 #include "anki/cozmo/robot/hal.h"
+#ifdef SIMULATOR
 #include "anki/cozmo/robot/ledController.h"
+#endif
 #include <string.h>
+#include "clad/robotInterface/messageEngineToRobot.h"
+
 
 #define MS_TO_LED_FRAMES(ms) ((ms+29)/30)
 
@@ -28,35 +32,37 @@ namespace BackpackLightController {
   namespace {
 
     // User-defined light params
-    LightState  _ledParams[NUM_BACKPACK_LEDS];
+    RobotInterface::BackpackLights  _ledParams;
+#ifdef SIMULATOR
     TimeStamp_t _ledPhases[NUM_BACKPACK_LEDS];
+#endif
     
     // Light params when off charger
-    const LightState  _defaultOffChargerParams[NUM_BACKPACK_LEDS] = {
+    const RobotInterface::BackpackLights _defaultOffChargerParams = { .lights = {
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
       {0x03e0, 0x0200, 10, 10, 50, 50}, // LED_BACKPACK_FRONT
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_MIDDLE
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_BACK
       {0, 0, 0, 0, 0, 0}  // LED_BACKPACK_BACK
-    };
+    }};
 
     // Light params when charging
-    const LightState  _chargingParams[NUM_BACKPACK_LEDS] = {
+    const RobotInterface::BackpackLights _chargingParams = { .lights = {
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
       {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_FRONT
       {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_MIDDLE
       {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_BACK
       {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
-    };
+    }};
 
     // Light when charged
-    const LightState  _chargedParams[NUM_BACKPACK_LEDS] = {
+    const RobotInterface::BackpackLights _chargedParams = { .lights = {
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_FRONT
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_MIDDLE
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_BACK
       {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
-    };
+    }};
 
     // Voltage at which it is considered charged
     // TODO: Should there be a HAL::IsFastCharging()?
@@ -67,10 +73,20 @@ namespace BackpackLightController {
     s32 _isChargedCount = 0;
 
     // The current LED params being played
-    const LightState* _currParams = _ledParams;
+    const RobotInterface::BackpackLights* _currParams = &_ledParams;
 
     bool       _enable;
   };
+
+  void SetParams(const RobotInterface::BackpackLights& params)
+  {
+    _currParams = &params;
+#ifdef SIMULATOR
+    memset(_ledPhases, 0, sizeof(_ledPhases));
+#else
+    RobotInterface::SendMessage(params);
+#endif
+  }
 
   void Enable()
   {
@@ -84,8 +100,7 @@ namespace BackpackLightController {
 
   Result Init()
   {
-    memcpy(_ledParams, _defaultOffChargerParams, sizeof(_ledParams));
-    memset(_ledPhases, 0, sizeof(_ledPhases));
+    memcpy(&_ledParams, &_defaultOffChargerParams, sizeof(_ledParams));
     _enable = true;
 
     return RESULT_OK;
@@ -114,24 +129,21 @@ namespace BackpackLightController {
     }
 
     if (HAL::BatteryIsOnCharger()) {
-      if ((_currParams != _chargingParams) && _isChargedCount <= 0)
+      if ((_currParams != &_chargingParams) && _isChargedCount <= 0)
       {
         // Reset current lights and switch to charging lights
-        _currParams = _chargingParams;
-        memset(_ledPhases, 0, sizeof(_ledPhases));
+        SetParams(_chargingParams);
       }
-      else if ((_currParams != _chargedParams) && _isChargedCount > 0)
+      else if ((_currParams != &_chargedParams) && _isChargedCount > 0)
       {
         // Reset current lights and switch to charged lights
-        _currParams = _chargedParams;
-        memset(_ledPhases, 0, sizeof(_ledPhases));
+        SetParams(_chargedParams);
       }
     }
-    else if (!HAL::BatteryIsOnCharger() && _currParams != _ledParams)
+    else if (!HAL::BatteryIsOnCharger() && _currParams != &_ledParams)
     {
       // Reset current lights and switch to user-defined lights
-      _currParams = _ledParams;
-      memset(_ledPhases, 0, sizeof(_ledPhases));
+      SetParams(_ledParams);
     }
   }
 
@@ -143,17 +155,17 @@ namespace BackpackLightController {
 
     SetCurrParams();
 
+#ifdef SIMULATOR
     TimeStamp_t currentTime = HAL::GetTimeStamp();
-
     for(int i=0; i<NUM_BACKPACK_LEDS; ++i)
     {
       u16 newColor;
-      const bool colorUpdated = GetCurrentLEDcolor(_currParams[i], currentTime, _ledPhases[i], newColor);
+      const bool colorUpdated = GetCurrentLEDcolor(_currParams->lights[i], currentTime, _ledPhases[i], newColor);
       if(colorUpdated) {
         HAL::SetLED((LEDId)i, newColor);
       }
     } // for each LED
-
+#endif
 
     return RESULT_OK;
   }
@@ -161,7 +173,7 @@ namespace BackpackLightController {
   void SetParams(const LEDId whichLED, const u16 onColor, const u16 offColor,
                  const u8 onFrames, const u8 offFrames, const u8 transitionOnFrames, const u8 transitionOffFrames)
   {
-    LightState& params = _ledParams[whichLED];
+    LightState& params = _ledParams.lights[whichLED];
 
     params.onColor = onColor;
     params.offColor = offColor;
@@ -169,13 +181,25 @@ namespace BackpackLightController {
     params.offFrames = offFrames;
     params.transitionOnFrames = transitionOnFrames;
     params.transitionOffFrames = transitionOffFrames;
+#ifdef SIMULATOR
     _ledPhases[whichLED] = HAL::GetTimeStamp();
+#else
+    if (_currParams == &_ledParams)
+    {
+      SetParams(_ledParams);
+    }
+#endif
   }
 
   void TurnOffAll() {
+#ifdef SIMULATOR
     for (u8 i = 0; i <NUM_BACKPACK_LEDS; ++i) {
       HAL::SetLED((LEDId)i,0);
     }
+#else
+    memset(&_ledParams, 0, sizeof(_ledParams));
+    SetParams(_ledParams);
+#endif
   }
 
 } // namespace BackpackLightController

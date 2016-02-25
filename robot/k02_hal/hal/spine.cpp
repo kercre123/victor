@@ -27,19 +27,25 @@ namespace HAL {
     }
   }
   
-  bool Spine::Enqueue(const u8* data, const u8 length) {
+  bool Spine::Enqueue(const u8* data, const u8 length, const u8 tag) {
     const int exit = (spine_exit+1) % QUEUE_DEPTH;
     if (spine_enter == exit) {
       return false;
     }
-    else if (length > SPINE_MAX_CLAD_MSG_SIZE)
+    else if ((length+1) > SPINE_MAX_CLAD_MSG_SIZE)
     {
       AnkiError( 128, "Spine.Enqueue.MessageTooLong", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, data[0], length, SPINE_MAX_CLAD_MSG_SIZE);
       return false;
     }
     else
     {
-      memcpy(spinebuffer[spine_exit].data, data, length);
+      u8* dest = spinebuffer[spine_exit].data;
+      if (tag != RobotInterface::GLOBAL_INVALID_TAG)
+      {
+        *dest = tag;
+        dest++;
+      }
+      memcpy(dest, data, length);
       spinebuffer[spine_exit].length = length;
       spine_exit = exit;
       return true;
