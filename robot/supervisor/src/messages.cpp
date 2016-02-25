@@ -79,6 +79,7 @@ namespace Anki {
       {
         switch(msg.tag)
         {
+#ifdef TARGET_K02
           #include "clad/robotInterface/messageEngineToRobot_switch_from_0x30_to_0x7f.def"
           // Need to add additional messages for special cases handled both on the Espressif and K02
           case RobotInterface::EngineToRobot::Tag_animHeadAngle:
@@ -93,6 +94,9 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_animBackpackLights:
             Process_animBackpackLights(msg.animBackpackLights);
             break;
+#else
+            #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
+#endif
           default:
             AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %x", 1, msg.tag);
         }
