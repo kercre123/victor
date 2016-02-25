@@ -28,6 +28,7 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include <list>
+#include <mutex>
 #include <set>
 #include <string>
 
@@ -76,7 +77,6 @@ namespace Anki {
     PoseBase(const PoseNd* parentPose, const std::string& name);
     PoseBase(const PoseBase& other);
     PoseBase& operator=(const PoseBase& other);
-    PoseBase(const PoseBase&& other) = delete;
    
     unsigned int GetTreeDepth(const PoseNd* poseNd) const;
     
@@ -87,6 +87,9 @@ namespace Anki {
     static void        PrintNamedPathToOrigin(const PoseNd& startPose, bool showTranslations);
     
   private:
+
+    PoseBase(PoseBase&& other) = delete;
+    PoseBase& operator=(PoseBase&& other) = delete;
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Dev methods
@@ -102,11 +105,21 @@ namespace Anki {
     // note I'm alive, and people can ask me about my children
     static void Dev_PoseCreated(const PoseBase<PoseNd>* basePointer);
 
+    // funny note: because plugins create PoseNds on load/creation, we can't rely on static variables being initialized,
+    // so we need all static variables here to be created on demand, which should be guaranteed by using static local
+    // variables returned from a method. I say funny because now it's funny, but believe it was not funny before.
+
     // static set of valid poses
     using PoseCPtrSet = std::set<const PoseNd*>;
     static PoseCPtrSet& Dev_GetValidPoses() {
       static PoseCPtrSet sDev_ValidPoses;
       return sDev_ValidPoses;
+    }
+    
+    // mutex because we create poses like bunnies from different threads
+    static std::mutex& Dev_GetMutex() {
+      static std::mutex sDev_Mutex;
+      return sDev_Mutex;
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

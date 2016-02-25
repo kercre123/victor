@@ -310,15 +310,18 @@ namespace Anki {
   {
     if ( ANKI_DEVELOPER_CODE )
     {
+      std::lock_guard<std::mutex> lock( Dev_GetMutex() );
+      
       const PoseNd* castedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
+      PoseCPtrSet& validPoses = Dev_GetValidPoses();
     
       // if there's an old parent, we have to tell it we are not a child anymore
       if ( oldParent )
       {
         // if the parent is not a valid pose anymore it's not an error, we had a bad pointer but we are not using it,
         // we are actually switching to a different one
-        auto match = Dev_GetValidPoses().find(oldParent);
-        if ( match != Dev_GetValidPoses().end() )
+        auto match = validPoses.find(oldParent);
+        if ( match != validPoses.end() )
         {
           // if it's still a valid parent, we notify
           const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(oldParent);
@@ -330,8 +333,8 @@ namespace Anki {
       if ( newParent )
       {
         // check if it can be a parent
-        auto match = Dev_GetValidPoses().find(newParent);
-        if ( match != Dev_GetValidPoses().end() )
+        auto match = validPoses.find(newParent);
+        if ( match != validPoses.end() )
         {
           // make sure we were not there before
           ASSERT_NAMED(newParent->_devChildrenPtrs.find(castedChild) == newParent->_devChildrenPtrs.end(),
@@ -356,10 +359,14 @@ namespace Anki {
   {
     if ( ANKI_DEVELOPER_CODE )
     {
-      if ( nullptr != parent ) {
+      if ( nullptr != parent )
+      {
+        std::lock_guard<std::mutex> lock( Dev_GetMutex() );
+      
         // if we have a parent, check that:
         // a) the parent is a valid pose
-        ASSERT_NAMED(Dev_GetValidPoses().find(parent) != Dev_GetValidPoses().end(), "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose");
+        PoseCPtrSet& validPoses = Dev_GetValidPoses();
+        ASSERT_NAMED(validPoses.find(parent) != validPoses.end(), "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose");
         // b) we are a current child of it
         const PoseNd* downCastedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
         const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(parent);
@@ -388,12 +395,15 @@ namespace Anki {
   {
     if ( ANKI_DEVELOPER_CODE )
     {
+      std::lock_guard<std::mutex> lock( Dev_GetMutex() );
+    
       // nonsense to ask for nullptr
       assert( nullptr != basePointer );
 
       // remove from validPoses and make sure we were a valid pose
+      PoseCPtrSet& validPoses = Dev_GetValidPoses();
       const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
-      const size_t removedCount = Dev_GetValidPoses().erase(castedSelf);
+      const size_t removedCount = validPoses.erase(castedSelf);
       ASSERT_NAMED(removedCount == 1, "PoseBase.Dev_PoseDestroyed.DestroyingInvalidPose");
     }
   }
@@ -404,11 +414,14 @@ namespace Anki {
   {
     if ( ANKI_DEVELOPER_CODE )
     {
+      std::lock_guard<std::mutex> lock( Dev_GetMutex() );
+    
       // nonsense to ask for nullptr
       assert( nullptr != basePointer );
      
+      PoseCPtrSet& validPoses = Dev_GetValidPoses();
       const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
-      const auto insertRetInfo = Dev_GetValidPoses().insert(castedSelf);
+      const auto insertRetInfo = validPoses.insert(castedSelf);
       ASSERT_NAMED(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer");
     }
   }
