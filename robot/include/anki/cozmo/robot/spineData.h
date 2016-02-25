@@ -28,7 +28,8 @@ enum SPISource
 };
 
 // 32 bytes of payload plus tag
-#define SPINE_MAX_CLAD_MSG_SIZE (33)
+#define SPINE_MAX_CLAD_MSG_SIZE_DOWN (41)
+#define SPINE_MAX_CLAD_MSG_SIZE_UP (29)
 
 typedef enum {
   SF_WiFi_Connected = 0x01,
@@ -36,11 +37,18 @@ typedef enum {
   SF_OBJ_Connected  = 0x04,
 } SpineFlags;
 
-struct CladBuffer
+struct CladBufferDown
 {
   uint16_t flags;
   uint8_t  length;
-  uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE];
+  uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
+};
+
+struct CladBufferUp
+{
+  uint16_t flags;
+  uint8_t  length;
+  uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_UP];
 };
 
 struct GlobalDataToHead
@@ -49,14 +57,14 @@ struct GlobalDataToHead
   Fixed speeds[4];
   Fixed positions[4];
   uint32_t cliffLevel;
-  CladBuffer cladBuffer;
+  CladBufferUp cladBuffer;
 };
 
 struct GlobalDataToBody
 {
   uint32_t source;
   int16_t motorPWM[4];
-  CladBuffer cladBuffer;
+  CladBufferDown cladBuffer;
 };
 
 static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 128, "Spine transport payload too large");

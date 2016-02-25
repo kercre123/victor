@@ -39,10 +39,10 @@ namespace HAL {
   {
     const uint16_t sizeWHeader = size+1;
     const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
-    const u8 tag = ((msgID == RobotInterface::GLOBAL_INVALID_TAG) ? *reinterpret_cast<u8*>(buffer) : msgID);
+    const u8 tag = ((msgID == RobotInterface::GLOBAL_INVALID_TAG) ? *reinterpret_cast<const u8*>(buffer) : msgID);
     if (tag < RobotInterface::TO_RTIP_START)
     {
-      Spine.Enqueue(buffer, size, msgID);
+      return Spine::Enqueue(reinterpret_cast<const u8*>(buffer), size, msgID);
     }
     else if (tag <= RobotInterface::TO_RTIP_END)
     {

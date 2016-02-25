@@ -64,6 +64,15 @@ static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
   return calcResult(scale);
 }
 
+void SendPowerStateUpdate(void *userdata)
+{
+	Anki::Cozmo::PowerState msg;
+	msg.VBatFixed = vBat;
+	msg.VExtFixed = vExt;
+	msg.chargeStat = Battery::onContacts;
+	Anki::Cozmo::RobotInterface::SendMessage(msg);
+}
+
 void Battery::init()
 {
   // Configure charge pins
@@ -108,6 +117,7 @@ void Battery::init()
   startADCsample(ANALOG_CLIFF_SENSE);
 
   RTOS::schedule(Battery::manage);
+	RTOS::schedule(SendPowerStateUpdate, CYCLES_MS(60.0f));
 }
 
 void Battery::setHeadlight(bool status) {
@@ -156,8 +166,6 @@ static inline void sampleCliffSensor() {
 
 void Battery::manage(void* userdata)
 {
-  using namespace Anki::Cozmo;
-
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }
@@ -197,12 +205,6 @@ void Battery::manage(void* userdata)
       
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD;
-
-        PowerState msg;
-        msg.VBatFixed = vBat;
-        msg.VExtFixed = vExt;
-        msg.chargeStat = onContacts;
-        RobotInterface::SendMessage(msg);
 
         startADCsample(ANALOG_CLIFF_SENSE);
       }

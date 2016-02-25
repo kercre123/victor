@@ -5,7 +5,7 @@
 #include "anki/cozmo/robot/spineData.h"
 
 namespace Spine {
-  void Dequeue(CladBuffer* dest);
+  void Dequeue(CladBufferUp* dest);
 }
 
 namespace Anki {

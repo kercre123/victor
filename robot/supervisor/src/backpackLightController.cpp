@@ -21,6 +21,7 @@
 #endif
 #include <string.h>
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 
 #define MS_TO_LED_FRAMES(ms) ((ms+29)/30)
@@ -38,7 +39,7 @@ namespace BackpackLightController {
 #endif
     
     // Light params when off charger
-    const RobotInterface::BackpackLights _defaultOffChargerParams = { .lights = {
+    const RobotInterface::BackpackLights _defaultOffChargerParams = {{
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
       {0x03e0, 0x0200, 10, 10, 50, 50}, // LED_BACKPACK_FRONT
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_MIDDLE
@@ -47,7 +48,7 @@ namespace BackpackLightController {
     }};
 
     // Light params when charging
-    const RobotInterface::BackpackLights _chargingParams = { .lights = {
+    const RobotInterface::BackpackLights _chargingParams = {{
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
       {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_FRONT
       {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_MIDDLE
@@ -56,7 +57,7 @@ namespace BackpackLightController {
     }};
 
     // Light when charged
-    const RobotInterface::BackpackLights _chargedParams = { .lights = {
+    const RobotInterface::BackpackLights _chargedParams = {{
       {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_FRONT
       {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_MIDDLE

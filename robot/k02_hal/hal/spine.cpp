@@ -12,17 +12,17 @@ namespace Cozmo {
 namespace HAL {
   static const int QUEUE_DEPTH = 8;
   
-  static CladBuffer spinebuffer[QUEUE_DEPTH];
+  static CladBufferDown spinebuffer[QUEUE_DEPTH];
   static volatile int spine_enter = 0;
   static volatile int spine_exit = 0;
 
-  void Spine::Dequeue(CladBuffer* dest) {
+  void Spine::Dequeue(CladBufferDown* dest) {
     if (spine_enter == spine_exit) {
       dest->length = 0;
     }
     else
     {
-      memcpy(dest, &spinebuffer[spine_enter], sizeof(CladBuffer));
+      memcpy(dest, &spinebuffer[spine_enter], sizeof(CladBufferDown));
       spine_enter = (spine_enter+1) % QUEUE_DEPTH;
     }
   }
@@ -32,9 +32,9 @@ namespace HAL {
     if (spine_enter == exit) {
       return false;
     }
-    else if ((length+1) > SPINE_MAX_CLAD_MSG_SIZE)
+    else if ((length+1) > SPINE_MAX_CLAD_MSG_SIZE_DOWN)
     {
-      AnkiError( 128, "Spine.Enqueue.MessageTooLong", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, data[0], length, SPINE_MAX_CLAD_MSG_SIZE);
+      AnkiError( 128, "Spine.Enqueue.MessageTooLong", 382, "Message %x[%x...%d] is too long to enqueue to body. MAX_SIZE = %d", 4, tag, data[0], length, SPINE_MAX_CLAD_MSG_SIZE_DOWN);
       return false;
     }
     else
