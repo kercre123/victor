@@ -22,6 +22,7 @@ enum uint_32 EventGroupType
   DevRobot,
   GenericEvent,
   Music,
+  PlugInControl,
   Robot,
   SFX,
   UI,
@@ -36,6 +37,8 @@ enum uint_32 GenericEvent
   Dev_Robot_Tone_1K_1Sec_Play = 1083086921,
   Dev_Robot_Tone_1K_5Sec_Play = 1323780941,
   Dev_Robot_Tone_440Hz_5Sec_Play = 1348811033,
+  Hijack_Audio_Disable_Bypass = 3535474666,  // This is only used by Robot Audio Clinet
+  Hijack_Audio_Enable_Bypass = 2589144983,  // This is only used by Robot Audio Clinet
   Invalid = 0,  // Use this to check for Invalid events
   Mid_Gp_St_Hum_Lp_Play = 3404130802,
   Mid_Gp_St_Hum_Lp_Stop = 820824172,
@@ -105,6 +108,13 @@ enum uint_32 Music
   Invalid = 0,  // Use this to check for Invalid events
   Play = 202194903,
   Stop = 3227181061,
+}
+
+enum uint_32 PlugInControl
+{
+  HijackAudioDisableBypass = 3535474666,  // This is only used by Robot Audio Clinet
+  HijackAudioEnableBypass = 2589144983,  // This is only used by Robot Audio Clinet
+  Invalid = 0,  // Use this to check for Invalid events
 }
 
 enum uint_32 Robot
