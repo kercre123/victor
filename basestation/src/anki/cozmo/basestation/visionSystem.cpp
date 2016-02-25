@@ -728,7 +728,7 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     AnkiAssert(_trackerParameters.isInitialized);
-    AnkiAssert(_markerToTrack.width_mm > 0);
+    AnkiAssert(_markerToTrack.size_mm > 0);
 
     MemoryStack ccmScratch = _memory._ccmScratch;
     MemoryStack &onchipMemory = _memory._onchipScratch; //< NOTE: onchip is a reference
