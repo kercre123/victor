@@ -39,9 +39,9 @@ RobotAudioClient::~RobotAudioClient()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event )
+AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback )
 {
-  const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation );
+  const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation, callback );
   
   return callbackId;
 }
@@ -49,6 +49,10 @@ AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::G
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RobotAudioClient::LoadAnimationAudio(Animation* anAnimation)
 {
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_NAMED_WARNING("RobotAudioClient.LoadAnimationAudio", "Animation %s", anAnimation->GetName().c_str());
+  }
+  
   if ( nullptr == _audioBuffer ) {
     return false;
   }
@@ -57,8 +61,12 @@ bool RobotAudioClient::LoadAnimationAudio(Animation* anAnimation)
   // Set defaults
   _isPlayingAnimation = true;
   _isFirstBufferLoaded = false;
+  _didBeginPostingEvents = false;
   _animationName = anAnimation->GetName();
-  _firstAudioEventOffset = 0;
+  
+  // Note: It's okay if this value rolls over
+  ++_currentAnimationPlayId;
+
   
   // Clear Audio Buffer Data
   if ( _audioBuffer->HasAudioBufferStream() ) {
@@ -68,56 +76,50 @@ bool RobotAudioClient::LoadAnimationAudio(Animation* anAnimation)
   }
 
   // Loop through tracks
-  // Prep sound
+  // Prep animation audio events
   Animations::Track<RobotAudioKeyFrame>& audioTrack = anAnimation->GetTrack<RobotAudioKeyFrame>();
 
+  AnimationEvent::AnimationEventId eventId = AnimationEvent::kInvalidAnimationEventId;
   while ( audioTrack.HasFramesLeft() ) {
     RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
     audioTrack.MoveToNextKeyFrame();
     
     const GameEvent::GenericEvent event = aFrame.GetAudioRef().audioEvent;
     if ( GameEvent::GenericEvent::Invalid != event ) {
-      _animationEventList.emplace_back( aFrame.GetAudioRef().audioEvent, aFrame.GetTriggerTime() );
+      _animationEventList.emplace_back( ++eventId, aFrame.GetAudioRef().audioEvent, aFrame.GetTriggerTime() );
     }
   }
   
-  // Setup timers to process audio events relevant to each other
-  if ( _animationEventList.size() > 0 ) {
-    // Schedule the events
-    bool firstEvent = true;
-    for ( auto& anEvent : _animationEventList ) {
-      if ( firstEvent ) {
-        firstEvent = false;
-        _firstAudioEventOffset = anEvent.TimeInMS;
-      }
-      
-      const GameEvent::GenericEvent event = anEvent.AudioEvent;
-      Util::Dispatch::After( _postEventTimerQueue, std::chrono::milliseconds( anEvent.TimeInMS - _firstAudioEventOffset ), [this, event] ()
-      {
-        // Trigger events
-        PostCozmoEvent( event );
-      } );
-    }
-  }
-  else {
-    // There are no audio events
+  if ( _animationEventList.empty() ) {
     ClearAnimation();
+  }
+  else if ( !_audioBuffer->IsWaitingForReset() ) {
+    BeginBufferingAudioEvents();
   }
   
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::ClearAnimation()
+void RobotAudioClient::AbortAnimation()
 {
-  _isPlayingAnimation = false;
-  _isFirstBufferLoaded = false;
-  _animationName = "";
-  _animationEventList.clear();
-  _currentBufferStream = nullptr;
-  if ( nullptr != _audioBuffer ) {
-    _audioBuffer->ClearBufferStreams();
+  // Ignore about animation calls if audio client isn't active
+  if ( !_isPlayingAnimation ) {
+    return;
   }
+  
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_NAMED_WARNING("RobotAudioClient.AbortAnimation", "Animation: %s", _animationName.c_str());
+  }
+
+  // Tell buffer to reset
+  if ( nullptr != _audioBuffer ) {
+    _audioBuffer->ResetAudioBuffer();
+  }
+  
+  // Clear current animations and silence current playing audio
+  ClearAnimation();
+  StopAllEvents( GameObjectType::CozmoAnimation );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,6 +135,8 @@ bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeSt
   if ( nullptr == _currentBufferStream ) {
     // Check if we need the next stream
     if ( !_animationEventList.empty() ) {
+      // Check for invalid audio events
+      RemoveInvalidEvents();
       // Check if it's time for the next audio buffer stream to start
       if ( _animationEventList.front().TimeInMS <= relevantTimeMS ) {
         // Get next buffer stream if available && pop pending animation event
@@ -148,7 +152,7 @@ bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeSt
       }
       else if ( !_isFirstBufferLoaded ) {
         // See if buffer is ready now
-        IsFirstBufferReady();
+        UpdateFirstBuffer();
       }
       
     } // if ( !_animationEventList.empty() )
@@ -160,8 +164,8 @@ bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeSt
     
   } // if ( nullptr == _currentBufferStream )
   
-  // This can be set by code above  check if buffer has key frame
-  if (nullptr != _currentBufferStream && _isFirstBufferLoaded) {
+  // This can be set by code above, check if buffer has key frame
+  if ( nullptr != _currentBufferStream && _isFirstBufferLoaded ) {
     // Have Current Stream
     isMsgReady = _currentBufferStream->HasRobotAudioMessage();
   }
@@ -220,24 +224,131 @@ bool RobotAudioClient::PopRobotAudioMessage( RobotInterface::EngineToRobot*& out
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::IsFirstBufferReady()
+bool RobotAudioClient::UpdateFirstBuffer()
 {
   // Either the first buffer is loaded or there is no audio buffer, therefore, audio is ready
   if ( _isFirstBufferLoaded || nullptr == _audioBuffer ) {
     return true;
   }
   
+  // Wait until audio buffer is ready for next animation sessions
+  if ( _audioBuffer->IsWaitingForReset() ) {
+    return false;
+  }
+  // Now that the audio buffer is ready start buffering the audio events
+  else if ( _isPlayingAnimation && !_didBeginPostingEvents ) {
+    BeginBufferingAudioEvents();
+    return false;
+  }
+  
   // Check if buffer is ready
   if ( _audioBuffer->HasAudioBufferStream() ) {
     RobotAudioMessageStream* stream = _audioBuffer->GetFrontAudioBufferStream();
     if ( stream->RobotAudioMessageCount() > _PreBufferRobotAudioMessageCount || stream->IsComplete() ) {
+      
       _isFirstBufferLoaded = true;
+      
+      if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+        PRINT_NAMED_WARNING("RobotAudioClient.UpdateFirstBuffer", "Set _isFirstBufferLoaded = true");
+      }
     }
   }
   return _isFirstBufferLoaded;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::SetRobotVolume(float volume)
+{
+  PostParameter(GameParameter::ParameterType::Robot_Volume, volume, GameObjectType::Invalid);
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Private Methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::BeginBufferingAudioEvents()
+{
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_NAMED_WARNING("RobotAudioClient.BeginBufferingAudioEvents", "Animation %s", _animationName.c_str());
+  }
+  // Setup timers to process audio events relevant to each other
+  ASSERT_NAMED( !_animationEventList.empty(), "Must have animation evnts!");
+  
+  // Schedule the events
+  const AnimationPlayId animationPlayId = _currentAnimationPlayId;
+  const uint32_t firstAudioEventOffset = _animationEventList.front().TimeInMS;
+  for ( auto& anEvent : _animationEventList ) {
+    const GameEvent::GenericEvent animationEvent = anEvent.AudioEvent;
+    const AnimationEvent::AnimationEventId animationEventId = anEvent.EventId;
+    Util::Dispatch::After( _postEventTimerQueue,
+                          std::chrono::milliseconds( anEvent.TimeInMS - firstAudioEventOffset ),
+                          [this, animationPlayId, animationEvent, animationEventId] ()
+                          {
+                            // Trigger events if aniation is still active
+                            if ( _isPlayingAnimation && ( _currentAnimationPlayId == animationPlayId ) ) {
+                              PostCozmoEvent( animationEvent,
+                                             [this, animationEventId, animationEvent]( AudioCallback callback )
+                                             { HandleCozmoEventCallback( animationEventId, animationEvent, callback ); } );
+                            }
+                          } );
+  }
+  
+  _didBeginPostingEvents = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::ClearAnimation()
+{
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_NAMED_WARNING("RobotAudioClient.ClearAnimation", "Animation %s", _animationName.c_str());\
+  }
+  
+  _isPlayingAnimation = false;
+  _isFirstBufferLoaded = false;
+  _animationName = "";
+  _animationEventList.clear();
+  _currentBufferStream = nullptr;
+  if ( nullptr != _audioBuffer ) {
+    _audioBuffer->ClearBufferStreams();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::HandleCozmoEventCallback( AnimationEvent::AnimationEventId eventId,
+                                                 GameEvent::GenericEvent audioEvent,
+                                                 AudioCallback& callback )
+{
+  // Cancel this animation event if the audio event has an error.
+  if ( callback.callbackInfo.GetTag() == AudioCallbackInfoTag::callbackError ) {
+    PRINT_STREAM_WARNING( "RobotAudioClient.HandleCozmoEventCallback",
+                          "Animation Event Id: " + std::to_string(eventId) +
+                          " - Audio Event Id: " + std::to_string( static_cast<uint32_t>( audioEvent ) ) +
+                          " failed to play" );
+  
+    // Add event to Invalid Id list
+    std::lock_guard<std::mutex> lock ( _invalidAnimationIdLock );
+    _invalidAnimationIds.emplace_back(eventId);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::RemoveInvalidEvents()
+{
+  std::lock_guard<std::mutex> lock ( _invalidAnimationIdLock );
+  if ( !_invalidAnimationIds.empty() ) {
+    // Remove events from animation event list
+    for ( auto& anInvalidEventId : _invalidAnimationIds ) {
+      // Find and remove animation event
+      for ( auto animationEventIt = _animationEventList.begin(); animationEventIt != _animationEventList.end(); ++animationEventIt ) {
+        if ( animationEventIt->EventId == anInvalidEventId ) {
+          _animationEventList.erase( animationEventIt );
+          break;
+        }
+      } // iterate _animationEventList
+    } // iterate _invalidAnimationIds
+    _invalidAnimationIds.clear();
+  }
+}
+  
 } // Audio
 } // Cozmo
 } // Anki

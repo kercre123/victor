@@ -496,7 +496,13 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     case ExternalInterface::MessageGameToEngineTag::SetRobotVolume:
     {
       const ExternalInterface::SetRobotVolume& msg = event.GetData().Get_SetRobotVolume();
+      // DEPRECATED: This is the old sound engine
       SoundManager::getInstance()->SetRobotVolume(msg.volume);
+      // New method
+      Robot* robot = GetRobotByID(msg.robotId);
+      if(robot != nullptr) {
+        robot->GetRobotAudioClient()->SetRobotVolume(msg.volume);
+      }
       break;
     }
     default:

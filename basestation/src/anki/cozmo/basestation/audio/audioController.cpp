@@ -301,7 +301,7 @@ bool AudioController::RegisterGameObject( AudioEngine::AudioGameObject gameObjec
 // THIS IS TEMP
 void AudioController::StartUpSetDefaults()
 {
-  SetParameter( static_cast<AudioEngine::AudioParameterId>( GameParameter::ParameterType::Robot_Volume ), 0.2, kInvalidAudioGameObject );
+  SetParameter( static_cast<AudioEngine::AudioParameterId>( GameParameter::ParameterType::Robot_Volume ), 0.1, kInvalidAudioGameObject );
 }
 
 
