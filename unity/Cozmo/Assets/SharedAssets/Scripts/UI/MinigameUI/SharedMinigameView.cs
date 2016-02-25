@@ -126,10 +126,6 @@ namespace Cozmo {
         _HowToPlayContentLocKey = howToPlayContentLocKey;
       }
 
-      private void OnDestroy() {
-        DAS.Info(this, "SharedMinigameView OnDestroy " + gameObject.name);
-      }
-
       #region Base View
 
       protected override void CleanUp() {

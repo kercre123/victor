@@ -38,7 +38,7 @@ namespace Cozmo {
 
       private Sequence _TransitionAnimation;
 
-      public void OnDestroy() {
+      void OnDestroy() {
         if (_TransitionAnimation != null) {
           _TransitionAnimation.Kill();
         }
