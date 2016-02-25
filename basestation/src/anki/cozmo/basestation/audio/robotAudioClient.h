@@ -43,7 +43,7 @@ public:
   CallbackIdType PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback = nullptr );
   
   // Load animation and begin to buffer audio
-  bool LoadAnimationAudio( Animation* anAnimation );
+  bool LoadAnimationAudio( Animation* anAnimation, bool streamAudioToRobot );
   
   // This returns true after LoadAnimationAudio() is performed and remains true until the last audio message
   // is completed
@@ -121,6 +121,7 @@ private:
   bool _isPlayingAnimation = false;
   bool _isFirstBufferLoaded = false;
   bool _didBeginPostingEvents = false;
+  bool _streamAudioToRobot = false;
   
   // Animation id
   std::string _animationName = "";
