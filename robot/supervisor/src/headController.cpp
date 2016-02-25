@@ -296,10 +296,6 @@ namespace HeadController {
       accel_rad_per_sec2 = accelRad_;
     }
 
-    void SetDesiredAngle(f32 angle) {
-      SetDesiredAngle(angle, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0);
-    }
-
     // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
     static void SetDesiredAngle_internal(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
     {
@@ -313,6 +309,7 @@ namespace HeadController {
         #if(DEBUG_HEAD_CONTROLLER)
         AnkiDebug( 7, "HeadController", 93, "Already at desired angle %f degrees", 1, RAD_TO_DEG_F32(angle));
         #endif
+        HAL::MotorSetPower(HAL::MOTOR_HEAD,0);
         return;
       }
 
@@ -335,6 +332,7 @@ namespace HeadController {
           #if(DEBUG_HEAD_CONTROLLER)
           AnkiDebug( 7, "HeadController", 95, "(fixedDuration): Already at desired position", 0);
           #endif
+          HAL::MotorSetPower(HAL::MOTOR_HEAD,0);
           return;
         }
 
@@ -380,6 +378,9 @@ namespace HeadController {
       SetDesiredAngle_internal(angle, acc_start_frac, acc_end_frac, duration_seconds);
     }
 
+    void SetDesiredAngle(f32 angle) {
+      SetDesiredAngle(angle, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0);
+    }
 
     bool IsInPosition(void) {
       return inPosition_;
