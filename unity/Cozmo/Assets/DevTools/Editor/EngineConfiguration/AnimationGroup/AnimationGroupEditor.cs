@@ -15,8 +15,6 @@ public class AnimationGroupEditor : EditorWindow {
   private static string[] _AnimationNameOptions;
   private static string[] _AnimationGroupNameOptions;
 
-  private static Dictionary<object, bool> _ExpandedFoldouts = new Dictionary<object, bool>();
-
   private static AnimationGroup _CurrentAnimationGroup;
   private static string _CurrentAnimationGroupFile;
   private static string _CurrentAnimationGroupName;
@@ -184,7 +182,7 @@ public class AnimationGroupEditor : EditorWindow {
   }
 
   private AnimationGroup DrawAnimationGroup(AnimationGroup animGroup) {
-    EditorDrawingUtility.DrawList("Animations", animGroup.Animations, DrawAnimationGroupEntry, () => new AnimationGroup.AnimationGroupEntry());
+    EditorDrawingUtility.DrawGroupedList("Animations", animGroup.Animations, DrawAnimationGroupEntry, () => new AnimationGroup.AnimationGroupEntry(), x => x.Mood, m => m.ToString());
     return animGroup;
   }
 
@@ -192,16 +190,12 @@ public class AnimationGroupEditor : EditorWindow {
     EditorGUILayout.BeginVertical();
     entry.Name = _AnimationNameOptions[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(_AnimationNameOptions, entry.Name)), _AnimationNameOptions)];
 
-    bool unfolded = false;
-    _ExpandedFoldouts.TryGetValue(entry, out unfolded);
-    unfolded = EditorGUILayout.Foldout(unfolded, "Emotion Scorers ("+entry.MoodScorer.Count+")");
-    if (unfolded) {
-      EditorGUI.indentLevel++;
-      EditorDrawingUtility.DrawList("", entry.MoodScorer, EditorDrawingUtility.DrawEmotionScorer, () => new EmotionScorer());
-      EditorGUI.indentLevel--;
-    }
-    _ExpandedFoldouts[entry] = unfolded;
+    EditorGUILayout.BeginHorizontal();
+    entry.Mood = (Anki.Cozmo.SimpleMoodType)EditorGUILayout.EnumPopup("Mood", entry.Mood);
 
+    entry.Weight = EditorGUILayout.FloatField("Weight", entry.Weight);
+    entry.CooldownTime_Sec = EditorGUILayout.FloatField("Cooldown (Seconds)", entry.CooldownTime_Sec);   
+    EditorGUILayout.EndHorizontal();
     EditorGUILayout.EndVertical();
     return entry;
   }

@@ -7,6 +7,12 @@ public class RobotSettingsPane : MonoBehaviour {
   [SerializeField]
   private Slider _VolumeSlider;
 
+  [SerializeField]
+  private Button _ToggleDebugStringButton;
+
+  [SerializeField]
+  private GameObject _RobotStateTextFieldPrefab;
+
   private void Start() {
     _VolumeSlider.minValue = 0;
     _VolumeSlider.maxValue = 1;
@@ -16,6 +22,9 @@ public class RobotSettingsPane : MonoBehaviour {
       _VolumeSlider.value = robot.GetRobotVolume();
     }
     _VolumeSlider.onValueChanged.AddListener(OnVolumeSliderChanged);
+
+    _ToggleDebugStringButton.onClick.AddListener(OnToggleDebugString);
+    
   }
 
   private void OnVolumeSliderChanged(float newValue) {
@@ -24,4 +33,19 @@ public class RobotSettingsPane : MonoBehaviour {
       robot.SetRobotVolume(_VolumeSlider.value);
     }
   }
+
+  private void OnToggleDebugString() {
+    Canvas debug_canvas = DebugMenuManager.Instance.DebugOverlayCanvas;
+    if (debug_canvas != null) {
+      RobotStateTextField old_instance = debug_canvas.GetComponentInChildren<RobotStateTextField>();
+      if (old_instance == null) {
+        UIManager.CreateUIElement(_RobotStateTextFieldPrefab, debug_canvas.transform);
+      }
+      else {
+        Destroy(old_instance.gameObject);
+      }
+    }
+    
+  }
+
 }

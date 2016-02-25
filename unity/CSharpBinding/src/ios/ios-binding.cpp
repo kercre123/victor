@@ -56,6 +56,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
 {
   Anki::Util::DasLoggerProvider* loggerProvider = new Anki::Util::DasLoggerProvider();
   Anki::Util::gLoggerProvider = loggerProvider;
+  Anki::Util::gEventProvider = loggerProvider;
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 
   dataPlatform = CreateDataPlatform();

@@ -13,6 +13,7 @@ using G2U = Anki.Cozmo.ExternalInterface;
 ///   also wraps most messages related solely to him
 /// </summary>
 public class Robot : IRobot {
+
   public class Light : ILight {
     private uint _LastOnColor;
 
@@ -406,7 +407,7 @@ public class Robot : IRobot {
     // and try lowering lift
     foreach (var lightCube in LightCubes.Values) {
       if (IsLightCubeInPickupRange(lightCube)) {
-        TurnInPlace(Mathf.PI * 0.5f, (s) => TryResetHeadAndLift(onComplete));
+        TurnInPlace(Mathf.PI * 0.5f, 1000, 1000, (s) => TryResetHeadAndLift(onComplete));
         return;
       }
     }
@@ -539,7 +540,7 @@ public class Robot : IRobot {
     );
     RobotEngineManager.Instance.SendMessage();
 
-    DAS.Event("world.friendship.add_points", FriendshipPoints.ToString());
+    DAS.Event(DASConstants.Friendship.kAddPoints, FriendshipPoints.ToString());
     ComputeFriendshipLevel();
   }
 
@@ -585,7 +586,7 @@ public class Robot : IRobot {
       );
       RobotEngineManager.Instance.SendMessage();
 
-      DAS.Event("world.friendship.level_up", FriendshipLevel.ToString());
+      DAS.Event(DASConstants.Friendship.kLevelUp, FriendshipLevel.ToString());
     }
   }
 
@@ -675,7 +676,11 @@ public class Robot : IRobot {
   private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
     bool valueChanged = ProgressionStats[index] != value;
     if (valueChanged) {
+      TrySendGoalCompleteDasEvent(index, value);
+
+      // Update data and save to actually grant progress.
       ProgressionStats[index] = value;
+
       var session = DataPersistence.DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
@@ -683,6 +688,20 @@ public class Robot : IRobot {
       DataPersistence.DataPersistenceManager.Instance.Save();
     }
 
+  }
+
+  private void TrySendGoalCompleteDasEvent(Anki.Cozmo.ProgressionStatType index, int value) {
+    // If the goal has been completed for the first time, send a DAS event on goal complete
+    DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
+    StatContainer goals = currentSession.Goals;
+    bool wasGoalComplete = ProgressionStats[index] >= goals[index];
+    bool isGoalCompleteNow = value >= goals[index];
+    if (!wasGoalComplete && isGoalCompleteNow) {
+      string goalDate = DASUtil.FormatDate(currentSession.Date);
+      DAS.Event(DASConstants.Goal.kComplete, goalDate, new Dictionary<string,string> { 
+        { "$data", DASUtil.FormatGoal(index, value, goals[index]) } 
+      });
+    }
   }
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
@@ -1236,11 +1255,13 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void TurnInPlace(float angle_rad, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
       angle_rad, 
-      0, 
+      speed_rad_per_sec,
+      accel_rad_per_sec2,
+      0,
       ID
     ), 
       callback, 
