@@ -228,7 +228,7 @@ public class DailyGoalManager : MonoBehaviour {
       // Avoid dupes
       return;
     }
-
+   
     ChallengeData data = _LastChallengeData;
     // Do not send the minigame message if the challenge is invalid.
     if (data == null) {
@@ -241,7 +241,7 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
     alertView.SetIcon(data.ChallengeIcon);
-    alertView.ViewClosed += HandleUnexpectedClose;
+    alertView.ViewClosed += HandleRequestDialogClose;
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
     alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
@@ -250,7 +250,6 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
-    SetMinigameNeed();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
@@ -263,17 +262,18 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
-    DAS.Info(this, "HandleExternalRejection"); 
-    SetMinigameNeed();
+    DAS.Info(this, "HandleExternalRejection");
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
   }
 
-  private void HandleUnexpectedClose() {
+  private void HandleRequestDialogClose() {
     DAS.Info(this, "HandleUnexpectedClose");
     SetMinigameNeed();
-    _RequestDialog.ViewClosed -= HandleUnexpectedClose;
+    if (_RequestDialog != null) {
+      _RequestDialog.ViewClosed -= HandleRequestDialogClose;
+    }
   }
 
   #region Calculate Friendship Points and DailyGoal Progress
