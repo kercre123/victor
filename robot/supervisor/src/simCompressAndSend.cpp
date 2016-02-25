@@ -62,7 +62,7 @@ namespace Anki {
         }
 
         static u32 imgID = 0;
-        const cv::vector<int> compressionParams = {
+        const std::vector<int> compressionParams = {
           CV_IMWRITE_JPEG_QUALITY, IMAGE_SEND_JPEG_COMPRESSION_QUALITY
         };
 
@@ -70,7 +70,7 @@ namespace Anki {
         cvImg = cv::Mat(captureHeight, captureWidth/3, CV_8UC3, (void*)img);
         cvtColor(cvImg, cvImg, CV_BGR2RGB);
 
-        cv::vector<u8> compressedBuffer;
+        std::vector<u8> compressedBuffer;
         cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
 
         const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());

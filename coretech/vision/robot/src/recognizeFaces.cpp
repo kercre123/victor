@@ -7,6 +7,9 @@ Copyright Anki, Inc. 2014
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
+// Deprecate?
+#if 0
+
 #include "anki/vision/robot/recognize.h"
 
 #include "anki/common/robot/hostIntrinsics_m4.h"
@@ -331,3 +334,6 @@ namespace Anki
     } // namespace Recognize
   } // namespace Embedded
 } // namespace Anki
+
+#endif // #if 0
+

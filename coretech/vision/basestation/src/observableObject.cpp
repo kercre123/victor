@@ -61,7 +61,7 @@ namespace Vision {
   
   Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                          const Pose3d&        atPose,
-                                                         const f32            size_mm)
+                                                         const Point2f&       size_mm)
   {
     // Copy the pose and set this object's pose as its parent
     Pose3d poseCopy(atPose);

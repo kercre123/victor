@@ -11,7 +11,8 @@
 #ifndef __image_dechunker_h_
 #define __image_dechunker_h_
 
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
+
 #include "anki/common/types.h"
 #include "util/logging/logging.h"
 #include "anki/vision/CameraSettings.h"

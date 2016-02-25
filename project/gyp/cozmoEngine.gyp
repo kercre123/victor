@@ -58,6 +58,7 @@
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
     ],
 
+    # Make sure these are always _after_ our opencv_includes!
     'webots_includes': [
       '<(webots_path)/include/controller/cpp',
       '<(webots_path)/include/ode',
@@ -212,7 +213,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_debug)',
-                    '<@(opencv_lib_search_path_ios_debug)',
+                    '<@(opencv_lib_search_path_debug)',
                     '<(webots_path)/lib/',
                 ],
               },
@@ -221,7 +222,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_debug)',
-                    '<@(opencv_lib_search_path_mac_debug)',
+                    '<@(opencv_lib_search_path_debug)',
                     '<(webots_path)/lib/',
                 ],
               },
@@ -245,7 +246,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_release)',
-                    '<@(opencv_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/'
                 ],
               },
@@ -254,7 +255,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_release)',
-                    '<@(opencv_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/'
                 ],
               },
@@ -278,7 +279,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_release)',
-                    '<@(opencv_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/'
                 ],
               },
@@ -287,7 +288,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_release)',
-                    '<@(opencv_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/'
                 ],
               },
@@ -372,8 +373,8 @@
             'type': 'shared_library',
             'include_dirs': [
               '../../include',
-              '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',
@@ -425,10 +426,10 @@
             'target_name': 'webotsCtrlViz',
             'type': 'executable',
             'include_dirs': [
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
               '../../include',
               '../../robot/include',
-              '<@(webots_includes)',
-              '<@(opencv_includes)',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -474,11 +475,11 @@
             'target_name': 'webotsCtrlRobot',
             'type': 'executable',
             'include_dirs': [
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
               '../../robot/include',
               '../../include',
               '../../simulator/include',
-              '<@(webots_includes)',
-              '<@(opencv_includes)',
             ],
             'dependencies': [
               '<(ce-cti_gyp_path):ctiCommonRobot',
@@ -521,8 +522,8 @@
             'target_name': 'webotsCtrlGameEngine',
             'type': 'executable',
             'include_dirs': [
-              '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',
@@ -596,9 +597,9 @@
             'target_name': 'webotsCtrlKeyboard',
             'type': 'executable',
             'include_dirs': [
-              '<@(webots_includes)',
+              '<(cti-cozmo_engine_path)/simulator/include',
               '<@(opencv_includes)',
-              '<(cti-cozmo_engine_path)/simulator/include'
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',
@@ -644,9 +645,9 @@
             'target_name': 'webotsCtrlBuildServerTest',
             'type': 'executable',
             'include_dirs': [
-              '<@(webots_includes)',
+            '<(cti-cozmo_engine_path)/simulator/include',
               '<@(opencv_includes)',
-              '<(cti-cozmo_engine_path)/simulator/include',
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',
@@ -989,8 +990,8 @@
             'type': 'shared_library',
             'include_dirs': [
               '../../include',
-              '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',
@@ -1040,8 +1041,8 @@
             'include_dirs': [
               '../../include',
               '../../robot/include',
-              '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
               'cozmoEngine',

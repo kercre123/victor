@@ -18,12 +18,6 @@
 
 #include "anki/common/types.h"
 
-// Forward declaration
-namespace cv {
-  class Mat;
-  template<typename T> class Mat_;
-}
-
 namespace Anki {
   
   // Forward declaration
@@ -31,6 +25,10 @@ namespace Anki {
   namespace Data {
     class DataPlatform;
   }
+  }
+  
+  namespace Vision {
+    class Image;
   }
   
 namespace Cozmo {
@@ -58,7 +56,7 @@ namespace Cozmo {
     u32  GetNumFrames(const std::string& animName);
     
     // Ability to add keyframes at runtime, for procedural face streaming
-    Result AddImage(const std::string& animName, const cv::Mat& faceImg);
+    Result AddImage(const std::string& animName, const Vision::Image& faceImg);
     
     // Remove all frames from an existing animation
     Result ClearAnimation(const std::string& animName);
@@ -70,8 +68,8 @@ namespace Cozmo {
     size_t GetNumAvailableAnimations() const;
     
     // Convert back and forth between an OpenCV image and our compressed RLE format:
-    static Result CompressRLE(const cv::Mat& image, std::vector<u8>& rleData);
-    static void   DrawFaceRLE(const std::vector<u8>& rleData, cv::Mat_<u8>& outImg);
+    static Result CompressRLE(const Vision::Image& image, std::vector<u8>& rleData);
+    static void   DrawFaceRLE(const std::vector<u8>& rleData, Vision::Image& outImg);
     
   protected:
     

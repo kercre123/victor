@@ -5,6 +5,7 @@ PROTO VisionMarker [
   field SFRotation rotation     0 0 1 0
   
   field SFFloat    markerWidth  0.025
+  field SFFloat    markerHeight -1     # -1 means same as markerWidth
   field SFFloat    padding      0.002
   
   #field SFBool     isDockable   FALSE
@@ -16,9 +17,13 @@ PROTO VisionMarker [
 ]
 {
   %{
+    if fields.markerHeight.value < 0 then
+      fields.markerHeight.value = fields.markerWidth.value
+    end
     imageURL = "textures/" .. fields.image.value
     if fields.useWhiteBackground.value then 
-      whiteFaceSize = fields.markerWidth.value+2*fields.padding.value
+      whiteFaceWidth  = fields.markerWidth.value+2*fields.padding.value
+      whiteFaceHeight = fields.markerHeight.value+2*fields.padding.value 
     end 
   }%  
  
@@ -36,7 +41,7 @@ PROTO VisionMarker [
               }
             }
             geometry DEF MARKER_BOX Box {
-              size %{= fields.markerWidth.value }% 0.0001 %{= fields.markerWidth.value }%
+              size %{= fields.markerWidth.value }% 0.0001 %{= fields.markerHeight.value }%
             }
           }
           %{ if fields.useWhiteBackground then }%
@@ -47,7 +52,7 @@ PROTO VisionMarker [
               }
             }
             geometry Box {
-              size %{=whiteFaceSize}% 0.00005 %{=whiteFaceSize}%
+              size %{=whiteFaceWidth}% 0.00005 %{=whiteFaceHeight}%
             }
           }
           %{ end }%        

@@ -4,7 +4,7 @@
  * Author: Kevin Yoon
  * Date:   6/5/2015
  *
- * Description: Defines a charger base object, which is a type of DockableObject
+ * Description: Defines a charger base object, which is a type of ActionableObject
  *
  *
  * Copyright: Anki, Inc. 2015
@@ -53,8 +53,8 @@ namespace Anki {
       // TODO: Support multiple Charger types
       
       Pose3d frontPose(-M_PI_2, Z_AXIS_3D(),
-                       {{SlopeLength+PlatformLength, 0, MarkerHeight}});
-      _marker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Charger::MarkerSize);
+                       {{SlopeLength+PlatformLength, 0, MarkerZPosition}});
+      _marker = &AddMarker(Vision::MARKER_CHARGER, frontPose, Point2f(MarkerWidth, MarkerHeight));
 
       // PreActionPose, initialized to be with respect to charger
       Pose3d preActionPose(0, Z_AXIS_3D(),

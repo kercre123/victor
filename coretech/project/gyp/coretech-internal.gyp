@@ -196,7 +196,7 @@
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
             'LIBRARY_SEARCH_PATHS': [
-                '<@(opencv_lib_search_path_mac_release)',
+                '<@(opencv_lib_search_path_debug)',
             ],
            },
           'defines': [
@@ -211,7 +211,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
-              '<@(opencv_lib_search_path_mac_release)',
+              '<@(opencv_lib_search_path_release)',
             ],
            },
           'defines': [
@@ -226,7 +226,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
-              '<@(opencv_lib_search_path_mac_release)',
+              '<@(opencv_lib_search_path_release)',
             ],
            },
           'defines': [
