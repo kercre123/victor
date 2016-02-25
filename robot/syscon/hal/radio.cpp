@@ -83,24 +83,24 @@ static const uint8_t CUBE_TO_ROBOT_PREFIX = 0x52;
 static const uint32_t UNUSED_BASE = 0xE6E6E6E6;
 static const uint32_t ADVERTISE_BASE = 0xC2C2C2C2;
 
-#define ADVERTISE_PREFIX    {0xE6, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX, 1, 2, 3, 4, 5}
-#define COMMUNICATE_PREFIX  {CUBE_TO_ROBOT_PREFIX, 0x95, 0x97, 0x99, 0xA3, 0xA5, 0xA7, 0xA9}
+#define ADVERTISE_PREFIX    {0, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX}
+#define COMMUNICATE_PREFIX  {0, CUBE_TO_ROBOT_PREFIX}
 
+// These are the pipes allocated to communication
 static const int ROBOT_PAIR_PIPE = 1;
-static const int CUBE_ADVERT_PIPE = 2;
-static const int CUBE_TALK_PIPE = 0;
+static const int CUBE_PAIR_PIPE = 2;
+
+static const int ROBOT_TALK_PIPE = 0;
+static const int CUBE_TALK_PIPE = 1;
 
 static const int ADV_CHANNEL = 81;
 
 // This is for initial channel selection (do not use advertisement channel)
-static const int MAX_TX_CHANNEL = 80;
+static const int MAX_TX_CHANNELS = 64;
 
 static const int RADIO_INTERVAL_DELAY = 0xB6;
 static const int RADIO_TIMEOUT_MSB = 20;
 static const int RADIO_WAKEUP_OFFSET = 18;
-
-static const int MAX_ADDRESS_BIT_RUN = 3;
-static const int BASE_PIPE = 1;
 
 // Global head / body sync values
 extern GlobalDataToHead g_dataToHead;
@@ -117,37 +117,18 @@ static const uesb_address_desc_t PairingAddress = {
   0xFF
 };
 
+static const uesb_address_desc_t TalkingAddress = {
+  0,
+  UNUSED_BASE,
+  ADVERTISE_BASE,
+  COMMUNICATE_PREFIX,
+  0x03
+};
+
 static AccessorySlot accessories[MAX_ACCESSORIES];
 
 // Variables for talking to an accessory
 static uint8_t currentAccessory;
-
-// Generate a random address
-static inline uint32_t getAddress() {
-  uint32_t word = UNUSED_BASE;
-  //Random::get(&address.base1, sizeof(address.base1));
-  
-  int run = 0;
-  bool bit;
-  
-  // Trim MSB
-  word &= 0xFFFFFFFE;
-  
-  for (int i = 1; i < 32; i++) {
-    bool found = (word >> i) & 1;
-    
-    if (found != bit) {
-      bit = found;
-      run = 1;
-    } else if (++run > MAX_ADDRESS_BIT_RUN) {
-      word ^= 1 << i;
-      bit = !bit;
-      run = 1;
-    }
-  }
-  
-  return word;
-}
 
 // Integer square root calculator
 uint32_t isqrt(uint32_t a_nInput)
@@ -176,6 +157,26 @@ uint32_t isqrt(uint32_t a_nInput)
     return res;
 }
 
+static void createAddress(uesb_address_desc_t& address) {
+  uint8_t data[4];
+  
+  // Generate random values
+  Random::get(&data, sizeof(data));
+  Random::get(&address.prefix[0], address.prefix[0]);
+  address.base0 = 0xE7E7E7E7;
+  
+  // Create a random RF channel
+  Random::get(&address.rf_channel, sizeof(address.rf_channel));
+  address.rf_channel %= MAX_TX_CHANNELS;
+}
+
+// This will move to the next frequency (channel hopping)
+#ifdef CHANNEL_HOP
+static inline uint8_t next_channel(uint8_t channel) {
+  return (channel >> 1) ^ ((channel & 1) ? 0x2D : 0);
+}
+#endif
+
 void Radio::init() {
   const uesb_config_t uesb_config = {
     UESB_BITRATE_1MBPS,
@@ -189,25 +190,11 @@ void Radio::init() {
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
-  
+
   // Generate target address for the robot
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    uesb_address_desc_t address = {
-      0,
-      ADVERTISE_BASE,
-      UNUSED_BASE,
-      COMMUNICATE_PREFIX,
-      0xFF
-    };
-
-    address.base1 = getAddress();
-    
-    // Generate a random starting frequency (0-63)
-    Random::get(&address.rf_channel, sizeof(address.rf_channel));
-    address.rf_channel %= MAX_TX_CHANNEL;
-    
-    // Copy to it's appropriate location
-    memcpy(&accessories[i].address, &address, sizeof(address));
+    accessories[i].address = TalkingAddress;
+    createAddress(accessories[i].address);
 
     // Clear the lights to a known state
     static const uint16_t reset_state[] = {
@@ -268,19 +255,21 @@ static void EnterState(RadioState state) {
 static void send_dummy_byte(void) {
   // This just send garbage and return to pairing mode when finished
   EnterState(RADIO_PAIRING);
-  uesb_write_tx_payload(&accessories[currentAccessory].address, 0, NULL, 0);
+  uesb_write_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
 }
 
 static void send_capture_packet(void* userdata) {
   int slot = (int) userdata;
 
+  uesb_address_desc_t& address = accessories[slot].address;
+  
   // Send a pairing packet
   CapturePacket pair;
 
-  pair.target_channel = accessories[slot].address.rf_channel;
+  pair.target_channel = address.rf_channel;
   pair.interval_delay = RADIO_INTERVAL_DELAY;
-  pair.prefix = accessories[slot].address.prefix[BASE_PIPE+slot];
-  memcpy(&pair.base, &accessories[slot].address.base1, sizeof(accessories[slot].address.base1));
+  pair.prefix = address.prefix[ROBOT_TALK_PIPE];
+  memcpy(&pair.base, &address.base0, sizeof(address.base0));
   pair.timeout_msb = RADIO_TIMEOUT_MSB;
   pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
 
@@ -302,7 +291,7 @@ extern "C" void uesb_event_handler(void)
 
   switch (radioState) {
   case RADIO_PAIRING:      
-    if (rx_payload.pipe != CUBE_ADVERT_PIPE) {
+    if (rx_payload.pipe != CUBE_PAIR_PIPE) {
       break ;
     }
 
@@ -441,10 +430,17 @@ void Radio::manage(void* userdata) {
   AccessorySlot* acc = &accessories[currentAccessory];
 
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
+    uesb_address_desc_t& address = accessories[currentAccessory].address;
+    
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
     memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
-    uesb_write_tx_payload(&accessories[currentAccessory].address, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
+    uesb_write_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
+
+    #ifdef CHANNEL_HOP
+    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
+    address.rf_channel = next_channel(address.rf_channel);
+    #endif
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     acc->active = false;
