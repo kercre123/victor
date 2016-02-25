@@ -75,8 +75,6 @@ namespace UnityEditor {
 
     private static MethodInfo _EditorGUI_ObjectIconDropDown;
 
-    private static MethodInfo _EditorGUI_DelayedTextField;
-
     private static MethodInfo _EditorGUI_EnumMaskField;
 
     private static MethodInfo _EditorGUIUtility_TempContent;
@@ -126,15 +124,6 @@ namespace UnityEditor {
       _HandleUtility_ignoreRaySnapObjects = typeof(HandleUtility).GetField("ignoreRaySnapObjects", BindingFlags.NonPublic | BindingFlags.Static);
       if (_HandleUtility_ignoreRaySnapObjects == null) {
         sDAS.Error("Error Reflecting _HandleUtility_ignoreRaySnapObjects");
-      }
-      _EditorGUI_DelayedTextField = typeof(EditorGUI).GetMethod("DelayedTextField", BindingFlags.NonPublic | BindingFlags.Static, null, new Type[] {
-        typeof(Rect),
-        typeof(string),
-        typeof(string),
-        typeof(GUIStyle)
-      }, null);
-      if (_EditorGUI_DelayedTextField == null) {
-        sDAS.Error("Error Reflecting _EditorGUI_DelayedTextField");
       }
       _EditorGUI_EnumMaskField = typeof(EditorGUI).GetMethod("EnumMaskField", BindingFlags.NonPublic | BindingFlags.Static, null, new Type[] {
         typeof(Rect),
@@ -188,7 +177,8 @@ namespace UnityEditor {
     }
 
     private static string EditorGUI_DelayedTextField(Rect position, string value, string allowedLetters, GUIStyle style) {
-      return (string)_EditorGUI_DelayedTextField.Invoke(null, new object[]{ position, value, allowedLetters, style });
+      
+      return (string)EditorGUI.DelayedTextField(position, value, allowedLetters, style);
     }
 
     private static Enum EditorGUI_EnumMaskField(Rect position, Enum enumValue, GUIStyle style, out int changedFlags, out bool changedToValue) {
