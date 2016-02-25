@@ -1,0 +1,58 @@
+﻿using UnityEngine;
+using System.Collections;
+using UnityEngine.UI;
+using System.Collections.Generic;
+using Anki.UI;
+
+public class RemoteControlPane : MonoBehaviour {
+
+  [SerializeField]
+  private AnkiButton _Forward;
+
+  [SerializeField]
+  private AnkiButton _Backwards;
+
+  [SerializeField]
+  private AnkiButton _Left;
+
+  [SerializeField]
+  private AnkiButton _Right;
+
+  private float _Speed = 40.0f;
+
+  // Use this for initialization
+  void Start() {
+    _Forward.onPress.AddListener(OnForward);
+    _Forward.onRelease.AddListener(OnStop);
+
+    _Backwards.onPress.AddListener(OnBackwards);
+    _Backwards.onRelease.AddListener(OnStop);
+
+    _Left.onPress.AddListener(OnLeft);
+    _Left.onRelease.AddListener(OnStop);
+
+    _Right.onPress.AddListener(OnRight);
+    _Right.onRelease.AddListener(OnStop);
+  }
+
+  private void OnForward() {
+    RobotEngineManager.Instance.CurrentRobot.DriveWheels(_Speed, _Speed);
+  }
+
+  private void OnBackwards() {
+    RobotEngineManager.Instance.CurrentRobot.DriveWheels(-_Speed, -_Speed);
+  }
+
+  private void OnLeft() {
+    RobotEngineManager.Instance.CurrentRobot.DriveWheels(-_Speed, _Speed);
+  }
+
+  private void OnRight() {
+    RobotEngineManager.Instance.CurrentRobot.DriveWheels(_Speed, -_Speed);
+  }
+
+  private void OnStop() {
+    RobotEngineManager.Instance.CurrentRobot.DriveWheels(0.0f, 0.0f);
+  }
+ 
+}
