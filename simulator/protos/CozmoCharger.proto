@@ -38,7 +38,8 @@ Robot {
       children [
         VisionMarker {
           #rotation 0 0 1 1.5708
-          image "symbols/rampFront.png"
+          #image "symbols/rampFront.png"
+          image "charger.png"
           markerWidth IS dockMarkerWidth
           markerHeight IS dockMarkerHeight
         }
