@@ -198,13 +198,6 @@ message EnableLiftPower
   bool enable
 }
 
-message SetBodyLights // XXX Remove this and pipe BackpackLights all the way down
-{
-  uint_16 spineColors[3],
-  uint_8  turnSignals[2],
-  bool    flashlight,
-}
-
 message RTIPVersionInfo
 {
   uint_32 version,

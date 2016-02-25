@@ -703,7 +703,7 @@ void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   
   void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
   {
-    NVStorage::NVStorageBlob nvBlob = message.GetData().Get_nvData();
+    NVStorage::NVStorageBlob nvBlob = message.GetData().Get_nvData().blob;
 
     switch((NVStorage::NVEntryTag)nvBlob.tag)
     {

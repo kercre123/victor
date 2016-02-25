@@ -32,6 +32,13 @@ static inline u32 system_get_time() { return Anki::Cozmo::HAL::GetTimeStamp(); }
 
 #define DEBUG_ANIMATION_CONTROLLER 0
 
+/// Converts 32 bit RGBA color to 16 bit
+#define ENCODED_COLOR(color) (((color << 24) & (u32)LED_IR) ? (u16)LED_ENC_IR : 0) | \
+                             ((((color >> 8) & (u32)LED_RED)   >> (16 + 3)) << (u32)LED_ENC_RED_SHIFT) | \
+                             ((((color >> 8) & (u32)LED_GREEN) >> ( 8 + 3)) << (u32)LED_ENC_GRN_SHIFT) | \
+                             ((((color >> 8) & (u32)LED_BLUE)  >> ( 0 + 3)) << (u32)LED_ENC_BLU_SHIFT)
+
+
 namespace Anki {
 namespace Cozmo {
 namespace AnimationController {
@@ -620,6 +627,12 @@ namespace AnimationController {
 #               endif
 
               #ifdef TARGET_ESPRESSIF
+                RobotInterface::BackpackLights bplm;
+                for (int l=0; l<NUM_BACKPACK_LEDS; ++l)
+                {
+                  bplm.lights[l].offColor = bplm.lights[l].onColor = ENCODED_COLOR(msg.animBackpackLights.colors[l]);
+                  bplm.lights[l].onFrames = 0xff;
+                }
                 RTIP::SendMessage(msg);
               #else
                 for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {

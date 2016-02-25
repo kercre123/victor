@@ -91,9 +91,6 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_animLiftHeight:
             Process_animLiftHeight(msg.animLiftHeight);
             break;
-          case RobotInterface::EngineToRobot::Tag_animBackpackLights:
-            Process_animBackpackLights(msg.animBackpackLights);
-            break;
 #else
             #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
 #endif
@@ -554,7 +551,7 @@ namespace Anki {
       // Group processor for all animation key frame messages
       void Process_anim(const RobotInterface::EngineToRobot& msg)
       {
-        if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
+        if(AnimationController::BufferKeyFrame(msg.GetBuffer(), msg.Size()) != RESULT_OK) {
           //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
           AnimationController::Clear();
         }
@@ -652,12 +649,14 @@ namespace Anki {
       {
         // Handled on the Espressif
       }
+#ifndef TARGET_K02
       void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
       {
         for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
           HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
         }
       }
+#endif
       void Process_powerState(const PowerState& msg)
       {
         vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
@@ -666,20 +665,71 @@ namespace Anki {
       }
       void Process_getPropState(const PropState& msg)
       {
-        HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
       }
       void Process_radioConnected(const RobotInterface::RadioState& state)
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
       }
-			void Process_bootloadRTIP(const RobotInterface::BootloadRTIP&)
-			{
-				// Handled in HAL SPI not here
-			}
-			void Process_bodyUpgradeData(const RobotInterface::BodyUpgradeData&)
-			{
-				// Handled in HAL SPI not here
-			}
+      void Process_bootloadRTIP(const RobotInterface::BootloadRTIP&)
+      {
+        // Handled in HAL SPI not here
+      }
+      void Process_bodyUpgradeData(const RobotInterface::BodyUpgradeData&)
+      {
+        // Handled in HAL SPI not here
+      }
+
+#ifdef SIMULATOR
+      /// Stub message handlers to satisfy simulator build
+      void Process_eraseFlash(Anki::Cozmo::RobotInterface::EraseFlash const&)
+      {
+        // Nothing to do here
+      }
+      void Process_writeFlash(RobotInterface::WriteFlash const&)
+      {
+        // Nothing to do here
+      }
+      void Process_triggerOTAUpgrade(Anki::Cozmo::RobotInterface::OTAUpgrade const&)
+      {
+        // Nothing to do here
+      }
+      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageBlob const&)
+      {
+        // Nothing to do here
+      }
+      void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const&)
+      {
+        // Nothing to do here
+      }
+      void Process_bodyState(Anki::Cozmo::RobotInterface::BodyFirmwareState const&)
+      {
+        // Nothing to do here
+      }
+      void Process_rtipVersion(Anki::Cozmo::RobotInterface::RTIPVersionInfo const&)
+      {
+        // Nothing to do here
+      }
+      void Process_bootloadBody(Anki::Cozmo::RobotInterface::BootloadBody const&)
+      {
+        // Nothing to do here
+      }
+      void Process_assignCubeSlots(const CubeSlots& msg)
+      {
+        HAL::AssignCubeSlots(7, msg.factory_id);
+      }
+      void Process_setCubeLights(const CubeLights& msg)
+      {
+        BlockLightController::SetLights(msg.objectID, msg.lights);
+      }
+      void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
+      {
+        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
+          BackpackLightController::SetParams((LEDId)i, msg.lights[i].onColor, msg.lights[i].offColor,
+                                             msg.lights[i].onFrames, msg.lights[i].offFrames,
+                                             msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
+        }
+      }
+#endif
 
 // ----------- Send messages -----------------
 
@@ -818,6 +868,7 @@ namespace Anki {
     } // namespace RobotInterface
 
     namespace HAL {
+#ifdef TARGET_K02
       u8 BatteryGetVoltage10x()
       {
         return static_cast<u8>(Messages::vBat * 10.0f);
@@ -829,11 +880,12 @@ namespace Anki {
       bool BatteryIsOnCharger()
       {
         return Messages::vExt > 4.0f;
-      }
-      
-#ifndef TARGET_K02
-      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+      }  
+#else
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {
+        const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
+        const bool hot = false;
         if (RadioIsConnected())
         {
           if (reliable)
