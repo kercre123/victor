@@ -16,11 +16,11 @@ public class VizCameraControls : MonoBehaviour {
 
   private Camera _myCamera;
 
-  private const float _kDragScale = 0.001f;
+  private const float _kDragScale = 1f;
 
   private const float _kRotateScale = 0.2f;
 
-  private const float _kZoomScale = 0.1f;
+  private const float _kZoomScale = 100f;
 
   private void Awake() {
     _RectTransform = GetComponent<RectTransform>();
@@ -42,6 +42,14 @@ public class VizCameraControls : MonoBehaviour {
     if (highestCanvas != null) {
       _myCamera = highestCanvas.worldCamera;
     }
+  }
+
+  private void OnEnable() {
+    VizManager.Instance.Camera.enabled = true;
+  }
+
+  private void OnDisable() {
+    VizManager.Instance.Camera.enabled = false;
   }
 	
   private class FingerState {
@@ -77,7 +85,7 @@ public class VizCameraControls : MonoBehaviour {
       if (_LastTouchCount == 1) {
         var delta = _LastTouchCenter - localPoint;
 
-        if (left) {
+        if (right) {
           UpdatePan(cameraTransform, delta);
         }
         else {
@@ -187,12 +195,12 @@ public class VizCameraControls : MonoBehaviour {
 	}
 
   private void UpdatePan(Transform cameraTransform, Vector2 delta) {
-    var scaledDelta = delta * _kDragScale * cameraTransform.localPosition.y;
+    var scaledDelta = delta * _kDragScale * cameraTransform.localPosition.z;
 
-    var cRight = cameraTransform.InverseTransformVector(cameraTransform.right).normalized;
-    var cUp = cameraTransform.InverseTransformVector(cameraTransform.up).normalized;
+    var cRight = cameraTransform.right;
+    var cUp = cameraTransform.up;
 
-    cameraTransform.localPosition += cRight * scaledDelta.x + cUp * scaledDelta.y;
+    cameraTransform.position += cRight * scaledDelta.x + cUp * scaledDelta.y;
   }
 
   private void UpdateRotation(Transform cameraTransform, Vector2 delta) {
@@ -217,10 +225,10 @@ public class VizCameraControls : MonoBehaviour {
   }
 
   private void UpdateZoom(Transform cameraTransform, float zoomFactor) {
-    var zoom = _kZoomScale * zoomFactor;
+    var zoom = _kZoomScale * zoomFactor * cameraTransform.localPosition.z;
 
-    var cForward = cameraTransform.InverseTransformVector(cameraTransform.forward).normalized;
-    cameraTransform.localPosition += cForward * zoom;
+    var cForward = cameraTransform.forward;
+    cameraTransform.position += cForward * zoom;
 
   }
 

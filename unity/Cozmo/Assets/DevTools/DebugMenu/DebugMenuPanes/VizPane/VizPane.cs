@@ -1,15 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Anki.Cozmo;
+using UnityEngine.UI;
 
 public class VizPane : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-	
-	}
+  [SerializeField]
+  private Text _InfoLabel;
+
 	
 	// Update is called once per frame
-	void Update () {
-	
+	private void Update () {
+
+    _InfoLabel.text = string.Format("Current Behavior: {0}\n" +
+      "Recent Mood Events: {1}\n",
+      VizManager.Instance.Behavior,
+      VizManager.Instance.RecentMoodEvents != null ? string.Join(", ", VizManager.Instance.RecentMoodEvents) : "");
+
 	}
 }
