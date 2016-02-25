@@ -113,7 +113,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       debugSafeWords = DEBUG_BYTES;
       uart_mode = TRANSMIT_DEBUG;
       
-      NRF_UART0->TXD = UART::DebugChar();
+      UART::DebugChar();
       break;
   }
   
@@ -261,7 +261,7 @@ void UART0_IRQHandler()
         if (debugSafeWords-- > 0) {
           // We are stuffing debug words
           if (UART::DebugQueue()) {
-            NRF_UART0->TXD = UART::DebugChar();
+            UART::DebugChar();
             return ;
           }
         }

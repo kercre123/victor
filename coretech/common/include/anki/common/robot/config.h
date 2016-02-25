@@ -119,7 +119,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if defined(__ARM_ARCH_7A__) // GCC on ARM Cortex A
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 #else // GCC on a PC
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(DEBUG)
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 #else
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
