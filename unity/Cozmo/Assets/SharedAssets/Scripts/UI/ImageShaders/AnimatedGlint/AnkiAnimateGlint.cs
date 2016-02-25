@@ -32,9 +32,9 @@ namespace Cozmo.UI {
     }
 
     private void OnDestroy() {
-      DAS.Info(this, "AnkiAnimateGlint.OnDestroy START! Returning material");
+      DAS.Info(this, "AnkiAnimateGlint.OnDestroy START! Returning material: " + this.gameObject.name);
       MaterialPool.ReturnMaterial(_GlintMaterial);
-      DAS.Info(this, "AnkiAnimateGlint.OnDestroy END! Finished returning material");
+      DAS.Info(this, "AnkiAnimateGlint.OnDestroy END! Finished returning material: " + this.gameObject.name);
     }
   }
 }
