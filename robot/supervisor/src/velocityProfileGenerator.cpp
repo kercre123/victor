@@ -374,12 +374,14 @@ namespace Anki {
 
     // If in noTargetMode, the logic is much simpler
     if (noTargetMode_) {
+      AnkiAssert(maxReachableVel_ == endVel_, 378);
       currPos_ += currVel_ * timeStep_;
 
       // If endVel not yet reached then update velocity
       if (currVel_ != endVel_) {
         currVel_ += deltaVelPerTimeStepStart_;
-        if ((maxReachableVel_ > endVel_) != (currVel_ > endVel_)) {
+
+        if ((currVel_ > endVel_) == (currVel_ > startVel_)) {
           currVel_ = endVel_;
         }
       }
@@ -403,7 +405,14 @@ namespace Anki {
       // If we're not already at endVel_...
       if (currVel_ != endVel_) {
         currVel_ += deltaVelPerTimeStepEnd_;
-        if ((maxReachableVel_ > endVel_) != (currVel_ > endVel_)) {
+        
+        // If maxReachableVel == endVel, currVel approaches endVel from startVel
+        const bool currVelHasPassedEndVelFromStartVel = (maxReachableVel_ == endVel_) && ((currVel_ > endVel_) == (currVel_ > startVel_));
+        
+        // If maxReachableVel != endVel, currVel approaches endVel from maxReachableVel
+        const bool currVelHasPassedEndVelFromMaxReachableVel = (maxReachableVel_ != endVel_) && ((currVel_ > endVel_) == (currVel_ > maxReachableVel_));
+        
+        if (currVelHasPassedEndVelFromStartVel || currVelHasPassedEndVelFromMaxReachableVel) {
           currVel_ = endVel_;
         }
       }

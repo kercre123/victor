@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/messaging/basestation/IChannel.h"
 #include "anki/messaging/basestation/IComms.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -64,13 +65,13 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
 void MessageHandler::Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message)
 {
   u32 type = static_cast<u32>(message.GetTag());
-  _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(type, message));
+  _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, message));
 }
 
 void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message)
 {
   u32 type = static_cast<u32>(message.GetTag());
-  _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(type, std::move(message)));
+  _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
 }
 
 void MessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
