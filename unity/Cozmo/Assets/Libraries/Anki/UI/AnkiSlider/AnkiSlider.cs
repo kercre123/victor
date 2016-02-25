@@ -14,50 +14,100 @@ namespace Anki.UI {
       BottomToTop,
       TopToBottom,
     }
-    
+
     [Serializable]
     public class SliderEvent : UnityEvent<float> {
     }
-    
+
     [SerializeField]
     private RectTransform
       m_FillRect;
-    public RectTransform fillRect { get { return m_FillRect; } set { if (SetPropertyUtility.SetClass(ref m_FillRect, value)) {UpdateCachedReferences(); UpdateVisuals(); } } }
-    
+
+    public RectTransform fillRect {
+      get { return m_FillRect; }
+      set {
+        if (SetPropertyUtility.SetClass(ref m_FillRect, value)) {
+          UpdateCachedReferences();
+          UpdateVisuals();
+        }
+      }
+    }
+
     [SerializeField]
     private RectTransform m_HandleRect;
-    public RectTransform handleRect { get { return m_HandleRect; } set { if (SetPropertyUtility.SetClass(ref m_HandleRect, value)) { UpdateCachedReferences(); UpdateVisuals(); } } }
-    
+
+    public RectTransform handleRect {
+      get { return m_HandleRect; }
+      set {
+        if (SetPropertyUtility.SetClass(ref m_HandleRect, value)) {
+          UpdateCachedReferences();
+          UpdateVisuals();
+        }
+      }
+    }
+
     [Space(6)]
     
     [SerializeField]
     private Direction m_Direction = Direction.LeftToRight;
-    public Direction direction { get { return m_Direction; } set { if (SetPropertyUtility.SetStruct(ref m_Direction, value)) UpdateVisuals(); } }
-    
+
+    public Direction direction {
+      get { return m_Direction; }
+      set {
+        if (SetPropertyUtility.SetStruct(ref m_Direction, value))
+          UpdateVisuals();
+      }
+    }
+
     [SerializeField]
     private float m_MinValue = 0;
-    public float minValue { get { return m_MinValue; } set { if (SetPropertyUtility.SetStruct(ref m_MinValue, value)) { Set(m_Value); UpdateVisuals(); } } }
-    
+
+    public float minValue {
+      get { return m_MinValue; }
+      set {
+        if (SetPropertyUtility.SetStruct(ref m_MinValue, value)) {
+          Set(m_Value);
+          UpdateVisuals();
+        }
+      }
+    }
+
     [SerializeField]
     private float m_MaxValue = 1;
-    public float maxValue { get { return m_MaxValue; } set { if (SetPropertyUtility.SetStruct(ref m_MaxValue, value)) { Set(m_Value); UpdateVisuals(); } } }
-    
+
+    public float maxValue {
+      get { return m_MaxValue; }
+      set {
+        if (SetPropertyUtility.SetStruct(ref m_MaxValue, value)) {
+          Set(m_Value);
+          UpdateVisuals();
+        }
+      }
+    }
+
     [SerializeField]
     private bool m_WholeNumbers = false;
-    public bool wholeNumbers { get { return m_WholeNumbers; } set { if (SetPropertyUtility.SetStruct(ref m_WholeNumbers, value)) { Set(m_Value); UpdateVisuals(); } } }
+
+    public bool wholeNumbers {
+      get { return m_WholeNumbers; }
+      set {
+        if (SetPropertyUtility.SetStruct(ref m_WholeNumbers, value)) {
+          Set(m_Value);
+          UpdateVisuals();
+        }
+      }
+    }
 
     [SerializeField]
     private float m_Value = 1f;
-    public float value
-    {
-      get
-      {
+
+    public float value {
+      get {
         if (wholeNumbers)
           return Mathf.Round(m_Value);
         return m_Value;
       }
-      set
-      {
+      set {
         Set(value);
       }
     }
@@ -66,27 +116,34 @@ namespace Anki.UI {
     //Flag to optionally disable touch recognition outside of the handle
     [SerializeField]
     private bool m_DisableTap = false;
-    public bool allowTapValueChange { get { return m_DisableTap; } set { if (SetPropertyUtility.SetStruct(ref m_DisableTap, value)) { Set(m_Value); UpdateVisuals(); } } }
-    
-    public float normalizedValue
-    {
-      get
-      {
+
+    public bool allowTapValueChange {
+      get { return m_DisableTap; }
+      set {
+        if (SetPropertyUtility.SetStruct(ref m_DisableTap, value)) {
+          Set(m_Value);
+          UpdateVisuals();
+        }
+      }
+    }
+
+    public float normalizedValue {
+      get {
         if (Mathf.Approximately(minValue, maxValue))
           return 0;
         return Mathf.InverseLerp(minValue, maxValue, value);
       }
-      set
-      {
+      set {
         this.value = Mathf.Lerp(minValue, maxValue, value);
       }
     }
-    
+
     [Space(6)]
     
     // Allow for delegate-based subscriptions for faster events than 'eventReceiver', and allowing for multiple receivers.
     [SerializeField]
     private SliderEvent m_OnValueChanged = new SliderEvent();
+
     public SliderEvent onValueChanged { get { return m_OnValueChanged; } set { m_OnValueChanged = value; } }
     
     // Private fields
@@ -104,24 +161,21 @@ namespace Anki.UI {
     
     // Size of each step.
     float stepSize { get { return wholeNumbers ? 1 : (maxValue - minValue) * 0.1f; } }
-    
-    protected AnkiSlider()
-    {}
+
+    protected AnkiSlider() {
+    }
     
     #if UNITY_EDITOR
-    protected override void OnValidate()
-    {
+    protected override void OnValidate() {
       base.OnValidate();
       
-      if (wholeNumbers)
-      {
+      if (wholeNumbers) {
         m_MinValue = Mathf.Round(m_MinValue);
         m_MaxValue = Mathf.Round(m_MaxValue);
       }
       
       //Onvalidate is called before OnEnabled. We need to make sure not to touch any other objects before OnEnable is run.
-      if (IsActive())
-      {
+      if (IsActive()) {
         UpdateCachedReferences();
         Set(m_Value, false);
         // Update rects since other things might affect them even if value didn't change.
@@ -135,64 +189,54 @@ namespace Anki.UI {
     
     #endif // if UNITY_EDITOR
     
-    public virtual void Rebuild(CanvasUpdate executing)
-    {
+    public virtual void Rebuild(CanvasUpdate executing) {
       #if UNITY_EDITOR
       if (executing == CanvasUpdate.Prelayout)
         onValueChanged.Invoke(value);
       #endif
     }
-    
-    protected override void OnEnable()
-    {
+
+    protected override void OnEnable() {
       base.OnEnable();
       UpdateCachedReferences();
       Set(m_Value, false);
       // Update rects since they need to be initialized correctly.
       UpdateVisuals();
     }
-    
-    protected override void OnDisable()
-    {
+
+    protected override void OnDisable() {
       m_Tracker.Clear();
       base.OnDisable();
     }
-    
-    void UpdateCachedReferences()
-    {
-      if (m_FillRect)
-      {
+
+    void UpdateCachedReferences() {
+      if (m_FillRect) {
         m_FillTransform = m_FillRect.transform;
         m_FillImage = m_FillRect.GetComponent<Image>();
         if (m_FillTransform.parent != null)
           m_FillContainerRect = m_FillTransform.parent.GetComponent<RectTransform>();
       }
-      else
-      {
+      else {
         m_FillContainerRect = null;
         m_FillImage = null;
       }
       
-      if (m_HandleRect)
-      {
+      if (m_HandleRect) {
         m_HandleTransform = m_HandleRect.transform;
         if (m_HandleTransform.parent != null)
           m_HandleContainerRect = m_HandleTransform.parent.GetComponent<RectTransform>();
       }
-      else
-      {
+      else {
         m_HandleContainerRect = null;
       }
     }
     
     // Set the valueUpdate the visible Image.
-    void Set(float input)
-    {
+    void Set(float input) {
       Set(input, true);
     }
-    
-    void Set(float input, bool sendCallback)
-    {
+
+    void Set(float input, bool sendCallback) {
       // Clamp the input
       float newValue = Mathf.Clamp(input, minValue, maxValue);
       if (wholeNumbers)
@@ -207,9 +251,8 @@ namespace Anki.UI {
       if (sendCallback)
         m_OnValueChanged.Invoke(newValue);
     }
-    
-    protected override void OnRectTransformDimensionsChange()
-    {
+
+    protected override void OnRectTransformDimensionsChange() {
       base.OnRectTransformDimensionsChange();
       
       //This can be invoked before OnEnabled is called. So we shouldn't be accessing other objects, before OnEnable is called.
@@ -218,19 +261,18 @@ namespace Anki.UI {
       
       UpdateVisuals();
     }
-    
-    enum Axis
-    {
+
+    enum Axis {
       Horizontal = 0,
       Vertical = 1
     }
-    
+
     Axis axis { get { return (m_Direction == Direction.LeftToRight || m_Direction == Direction.RightToLeft) ? Axis.Horizontal : Axis.Vertical; } }
+
     bool reverseValue { get { return m_Direction == Direction.RightToLeft || m_Direction == Direction.TopToBottom; } }
     
     // Force-update the slider. Useful if you've changed the properties and want it to update visually.
-    private void UpdateVisuals()
-    {
+    private void UpdateVisuals() {
       #if UNITY_EDITOR
       if (!Application.isPlaying)
         UpdateCachedReferences();
@@ -238,18 +280,15 @@ namespace Anki.UI {
       
       m_Tracker.Clear();
       
-      if (m_FillContainerRect != null)
-      {
+      if (m_FillContainerRect != null) {
         m_Tracker.Add(this, m_FillRect, DrivenTransformProperties.Anchors);
         Vector2 anchorMin = Vector2.zero;
         Vector2 anchorMax = Vector2.one;
         
-        if (m_FillImage != null && m_FillImage.type == Image.Type.Filled)
-        {
+        if (m_FillImage != null && m_FillImage.type == Image.Type.Filled) {
           m_FillImage.fillAmount = normalizedValue;
         }
-        else
-        {
+        else {
           if (reverseValue)
             anchorMin[(int)axis] = 1 - normalizedValue;
           else
@@ -260,8 +299,7 @@ namespace Anki.UI {
         m_FillRect.anchorMax = anchorMax;
       }
       
-      if (m_HandleContainerRect != null)
-      {
+      if (m_HandleContainerRect != null) {
         m_Tracker.Add(this, m_HandleRect, DrivenTransformProperties.Anchors);
         Vector2 anchorMin = Vector2.zero;
         Vector2 anchorMax = Vector2.one;
@@ -272,76 +310,66 @@ namespace Anki.UI {
     }
     
     // Update the slider's position based on the mouse.
-    void UpdateDrag(PointerEventData eventData, Camera cam)
-    {
-      if(!RectTransformUtility.RectangleContainsScreenPoint(m_HandleRect, eventData.position, eventData.enterEventCamera)){
+    void UpdateDrag(PointerEventData eventData, Camera cam) {
+      if (!RectTransformUtility.RectangleContainsScreenPoint(m_HandleRect, eventData.position, eventData.enterEventCamera)) {
         eventData.dragging = false;
         value = 0;
       }
 
-      if(m_DisableTap && m_HandleContainerRect != null && !RectTransformUtility.RectangleContainsScreenPoint(m_HandleRect, eventData.position, eventData.enterEventCamera)){
+      if (m_DisableTap && m_HandleContainerRect != null && !RectTransformUtility.RectangleContainsScreenPoint(m_HandleRect, eventData.position, eventData.enterEventCamera)) {
         return;
       }
 
-        RectTransform clickRect = m_HandleContainerRect ?? m_FillContainerRect;
-        if (clickRect != null && clickRect.rect.size[(int)axis] > 0)
-        {
-          Vector2 localCursor;
-          if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(clickRect, eventData.position, cam, out localCursor))
-            return;
-          localCursor -= clickRect.rect.position;
+      RectTransform clickRect = m_HandleContainerRect ?? m_FillContainerRect;
+      if (clickRect != null && clickRect.rect.size[(int)axis] > 0) {
+        Vector2 localCursor;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(clickRect, eventData.position, cam, out localCursor))
+          return;
+        localCursor -= clickRect.rect.position;
           
-          float val = Mathf.Clamp01((localCursor - m_Offset)[(int)axis] / clickRect.rect.size[(int)axis]);
-          normalizedValue = (reverseValue ? 1f - val : val);
-        }
+        float val = Mathf.Clamp01((localCursor - m_Offset)[(int)axis] / clickRect.rect.size[(int)axis]);
+        normalizedValue = (reverseValue ? 1f - val : val);
+      }
     }
-    
-    private bool MayDrag(PointerEventData eventData)
-    {
+
+    private bool MayDrag(PointerEventData eventData) {
       return IsActive() && IsInteractable() && eventData.button == PointerEventData.InputButton.Left;
     }
-    
-    public override void OnPointerDown(PointerEventData eventData)
-    {
+
+    public override void OnPointerDown(PointerEventData eventData) {
       if (!MayDrag(eventData))
         return;
       
       base.OnPointerDown(eventData);
       
       m_Offset = Vector2.zero;
-      if (m_HandleContainerRect != null && RectTransformUtility.RectangleContainsScreenPoint(m_HandleRect, eventData.position, eventData.enterEventCamera))
-      {
+      if (m_HandleContainerRect != null && RectTransformUtility.RectangleContainsScreenPoint(m_HandleRect, eventData.position, eventData.enterEventCamera)) {
         Vector2 localMousePos;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(m_HandleRect, eventData.position, eventData.pressEventCamera, out localMousePos))
           m_Offset = localMousePos;
       }
-      else
-      {
+      else {
         // Outside the slider handle - jump to this point instead if flag is set to false
-        if(!m_DisableTap){
+        if (!m_DisableTap) {
           UpdateDrag(eventData, eventData.pressEventCamera);
         }
       }
     }
-    
-    public virtual void OnDrag(PointerEventData eventData)
-    {
+
+    public virtual void OnDrag(PointerEventData eventData) {
       if (!MayDrag(eventData))
         return;
       
       UpdateDrag(eventData, eventData.pressEventCamera);
     }
-    
-    public override void OnMove(AxisEventData eventData)
-    {
-      if (!IsActive() || !IsInteractable())
-      {
+
+    public override void OnMove(AxisEventData eventData) {
+      if (!IsActive() || !IsInteractable()) {
         base.OnMove(eventData);
         return;
       }
       
-      switch (eventData.moveDir)
-      {
+      switch (eventData.moveDir) {
       case MoveDirection.Left:
         if (axis == Axis.Horizontal && FindSelectableOnLeft() == null)
           Set(reverseValue ? value + stepSize : value - stepSize);
@@ -368,42 +396,36 @@ namespace Anki.UI {
         break;
       }
     }
-    
-    public override Selectable FindSelectableOnLeft()
-    {
+
+    public override Selectable FindSelectableOnLeft() {
       if (navigation.mode == Navigation.Mode.Automatic && axis == Axis.Horizontal)
         return null;
       return base.FindSelectableOnLeft();
     }
-    
-    public override Selectable FindSelectableOnRight()
-    {
+
+    public override Selectable FindSelectableOnRight() {
       if (navigation.mode == Navigation.Mode.Automatic && axis == Axis.Horizontal)
         return null;
       return base.FindSelectableOnRight();
     }
-    
-    public override Selectable FindSelectableOnUp()
-    {
+
+    public override Selectable FindSelectableOnUp() {
       if (navigation.mode == Navigation.Mode.Automatic && axis == Axis.Vertical)
         return null;
       return base.FindSelectableOnUp();
     }
-    
-    public override Selectable FindSelectableOnDown()
-    {
+
+    public override Selectable FindSelectableOnDown() {
       if (navigation.mode == Navigation.Mode.Automatic && axis == Axis.Vertical)
         return null;
       return base.FindSelectableOnDown();
     }
-    
-    public virtual void OnInitializePotentialDrag(PointerEventData eventData)
-    {
+
+    public virtual void OnInitializePotentialDrag(PointerEventData eventData) {
       eventData.useDragThreshold = false;
     }
-    
-    public void SetDirection(Direction direction, bool includeRectLayouts)
-    {
+
+    public void SetDirection(Direction direction, bool includeRectLayouts) {
       Axis oldAxis = axis;
       bool oldReverse = reverseValue;
       this.direction = direction;
@@ -418,12 +440,11 @@ namespace Anki.UI {
         RectTransformUtility.FlipLayoutOnAxis(transform as RectTransform, (int)axis, true, true);
     }
 
-    #if UNITY_5_2
     public void LayoutComplete() {
     }
-      
+
     public void GraphicUpdateComplete() {
     }
-    #endif
+
   }
 }

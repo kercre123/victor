@@ -18,7 +18,7 @@ public class SingleStat : MonoBehaviour {
     _StatInputField.text = progress.ToString("D");
     _StatEnum = statEnum;
 
-    _StatInputField.onValueChange.AddListener(HandleValueChanged);
+    _StatInputField.onValueChanged.AddListener(HandleValueChanged);
   }
 
   private void HandleValueChanged(string newValue) {
