@@ -74,6 +74,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::nvData,                      &Robot::HandleNVData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,                    &Robot::HandleNVOpResult);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,              &Robot::HandleRobotSetID);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::motorCalibration,            &Robot::HandleMotorCalibration);
   
 
   // lambda wrapper to call internal handler
@@ -163,6 +164,12 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
                                                         //       and/or when we do on-engine calibration with images of tool code.
   
   SetPhysicalRobot(payload.isPhysicalRobots);  
+}
+  
+void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const RobotInterface::MotorCalibration& payload = message.GetData().Get_motorCalibration();
+  PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", payload.motorID, payload.calibStarted);
 }
   
 void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)

@@ -36,6 +36,12 @@ message RTIPVersionInfo
   string  description
 }
 
+message MotorCalibration
+{
+  uint_8 motorID,
+  bool calibStarted
+}
+
 /// *************** WiFi to Engine messages ******************************* ///
 
 // These two messages bookend animations as they are played on the robot
@@ -109,6 +115,7 @@ union RobotToEngine {
   ObjectDiscovered           activeObjectDiscovered = 0x19,
   IMURawDataChunk            imuRawDataChunk        = 0x20,
   ObjectConnectionState      activeObjectConnectionState  = 0x21,
+  MotorCalibration           motorCalibration       = 0x22,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,

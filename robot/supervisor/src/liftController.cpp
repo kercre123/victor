@@ -192,6 +192,7 @@ namespace Anki {
         AnkiEvent( 16, "LiftController", 144, "Starting calibration", 0);
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
+        Messages::SendMotorCalibrationMsg(HAL::MOTOR_LIFT, true);
       }
 
       bool IsCalibrated()
@@ -248,6 +249,7 @@ namespace Anki {
                 AnkiEvent( 16, "LiftController", 91, "Calibrated", 0);
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT);
                 calState_ = LCS_IDLE;
+                Messages::SendMotorCalibrationMsg(HAL::MOTOR_LIFT, false);
               }
               break;
           }

@@ -122,6 +122,7 @@ namespace HeadController {
 #else
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
+      Messages::SendMotorCalibrationMsg(HAL::MOTOR_HEAD, true);
 #endif
     }
 
@@ -178,6 +179,7 @@ namespace HeadController {
                 AnkiEvent( 7, "HeadController", 91, "Calibrated", 0);
                 ResetLowAnglePosition();
                 calState_ = HCS_IDLE;
+                Messages::SendMotorCalibrationMsg(HAL::MOTOR_HEAD, false);
                 break;
 #endif
                 // Set timestamp to be used in next state to wait for motor to "relax"
@@ -196,6 +198,7 @@ namespace HeadController {
               AnkiEvent( 7, "HeadController", 91, "Calibrated", 0);
               ResetLowAnglePosition();
               calState_ = HCS_IDLE;
+              Messages::SendMotorCalibrationMsg(HAL::MOTOR_HEAD, false);
             }
             break;
         }
