@@ -115,7 +115,7 @@
     "translation": "player score: {0:N0}"
   },
   "speedTap.text.howToPlay": {
-    "translation": "The cubes will show different colors. When both cubes show the same color, slap your cube as fast as you can! If you beat Cozmo, you'll win a point. Watch out: Tap a Red cube and you'll lose a point!"
+    "translation": "The cubes will show different patterns. When both cubes show the same pattern, slap your cube as fast as you can! If you beat Cozmo, you'll win a point.\nWatch out: Tap a Red cube and Cozmo wins the point!"
   },
   "speedTap.text.howToPlayNoRed": {
     "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
@@ -127,7 +127,7 @@
     "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap The lit cube when you're ready to play!"
+    "translation": "Tap the flashing cube to begin the round!"
   },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
