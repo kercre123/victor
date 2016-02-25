@@ -89,6 +89,10 @@ if length(outsideBorderSize)==1
   outsideBorderSize = [outsideBorderSize outsideBorderSize];
 end
 
+if length(backgroundColor)==1
+  backgroundColor = backgroundColor*[1 1 1];
+end
+
 % For now, assume all the training images were in a "rotated" subdir and
 % we want to create the test image from the parent of that subdir
 upOneDir = '';
@@ -173,9 +177,9 @@ for iFile = 1:numImages
     
     iPos = mod(iFile-1, numRows*numCols) + 1;
     
-    if outsideBorderWidth > 0
+    if any(outsideBorderSize > 0)
       h_rect = rectangle('Position', [xgrid(iPos)-outsideBorderSize(1)/20 ....
-        ygrid(iPos)-outsideBorderSize(2)/20 outsideBorderBorderSize/10*[1 1]], ...
+        ygrid(iPos)-outsideBorderSize(2)/20 outsideBorderSize/10], ...
         'Parent', h_axes, 'EdgeColor', [0.8 0.8 0.8], ...
         'LineWidth', .5, 'LineStyle', ':');
       if whiteOnBlack
