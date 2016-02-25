@@ -249,7 +249,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
-    DisableRequestGameBehaviorGroups();
+    SetMinigameNeed();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
@@ -258,13 +258,12 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleMiniGameConfirm() {
     DAS.Info(this, "HandleMiniGameConfirm");
-    DisableRequestGameBehaviorGroups();
     MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
     DAS.Info(this, "HandleExternalRejection"); 
-    DisableRequestGameBehaviorGroups();
+    SetMinigameNeed();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
