@@ -234,13 +234,14 @@ public class DailyGoalManager : MonoBehaviour {
     if (data == null) {
       return;
     }
-    // TODO: When the message has the appropriate 
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon) as AlertView;
+    // Create alert view with Icon
+    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon, true, true, false) as AlertView;
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
     alertView.SetIcon(data.ChallengeIcon);
+    alertView.ViewClosed += HandleUnexpectedClose;
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
     alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
@@ -267,6 +268,12 @@ public class DailyGoalManager : MonoBehaviour {
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
+  }
+
+  private void HandleUnexpectedClose() {
+    DAS.Info(this, "HandleUnexpectedClose");
+    SetMinigameNeed();
+    _RequestDialog.ViewClosed -= HandleUnexpectedClose;
   }
 
   #region Calculate Friendship Points and DailyGoal Progress
