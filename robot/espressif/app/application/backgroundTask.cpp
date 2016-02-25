@@ -235,6 +235,7 @@ extern "C" void backgroundTaskOnConnect(void)
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   i2spiQueueMessage((u8*)"\xfc\x01", 2); // FC is the tag for a radio connection state message to the robot
   Anki::Cozmo::Face::FaceUnPrintf();
+  Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);

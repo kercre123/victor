@@ -103,9 +103,9 @@ namespace Cozmo {
     
     void   SwitchToNextBehavior(double currentTime_sec);
     Result InitNextBehaviorHelper(float currentTime_sec);
-    void   SetupOctDemoBehaviorChooser(const Json::Value &config);
     void   AddReactionaryBehavior(IReactionaryBehavior* behavior);
-    
+
+    void   StopCurrentBehavior(double currentTime_sec);
     void   SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec);
     
     // Factory creates and tracks data-driven behaviors etc
@@ -113,6 +113,8 @@ namespace Cozmo {
     
     // How we store and choose next behavior
     IBehaviorChooser* _behaviorChooser = nullptr;
+    // The default chooser is created once on startup
+    IBehaviorChooser* _defaultChooser = nullptr;
     
     IBehavior* _currentBehavior = nullptr;
     IBehavior* _nextBehavior = nullptr;
@@ -121,8 +123,6 @@ namespace Cozmo {
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;
     float _lastSwitchTime_sec;
-
-    bool _demoBehaviorChooserRunning = false;
     
     // For random numbers
     Util::RandomGenerator _rng;

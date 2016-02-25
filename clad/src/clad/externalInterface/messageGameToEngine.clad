@@ -16,6 +16,7 @@
 #include "clad/types/progressionStatTypes.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
+#include "clad/types/controllerChannels.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
@@ -51,10 +52,8 @@ message ForceAddRobot {
 }
 
 // StartEngine
-// Tell game to start the engine with the configuration specified by the message members.
+// Tell the engine to start running.
 message StartEngine {
-    uint_8 asHost,
-    uint_8 vizHostIP[16] // if first char is '\0' disables viz
 }
 
 // DriveWheels
@@ -68,6 +67,8 @@ message DriveWheels {
 // If isAbsolute != 0, turns to the specified absolute orientation.
 message TurnInPlace {
     float_32 angle_rad, // relative mode: postive turns left negative turns right
+    float_32 speed_rad_per_sec = 0.0,
+    float_32 accel_rad_per_sec2 = 0.0,
     uint_8 isAbsolute,    // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
     uint_8 robotID
 }
@@ -478,6 +479,16 @@ message DrawPoseMarker {
 message ErasePoseMarker {
 }
 
+// ControllerGains
+message ControllerGains
+{
+  float_32 kp,
+  float_32 ki,
+  float_32 kd,
+  float_32 maxIntegralError,
+  ControllerChannel controller
+}
+
 // SetWheelControllerGains
 message SetWheelControllerGains {
   float_32 kpLeft,
@@ -806,6 +817,18 @@ message GetDebugConsoleVarMessage {
   ConsoleVarUnion varValue
 }
 message GetAllDebugConsoleVarMessage {
+}
+
+message BlockPoolEnabledMessage {
+  bool enabled
+}
+
+message BlockSelectedMessage {
+  uint_32 blockId,
+  bool   selected
+}
+// Query for E2Gmessage: InitBlockPoolMessage
+message GetBlockPoolMessage {
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

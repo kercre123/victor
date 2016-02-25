@@ -18,12 +18,17 @@ class Camera;
 
 namespace Cozmo {
 
+  using FactoryID = u32;
+  
   class ActiveCube : public Block
   {
   public:
     static const s32 NUM_LEDS = 4;
     
     ActiveCube(Type type);
+    ActiveCube(ActiveID activeID, FactoryID factoryID);
+    
+    static Type GetTypeFromFactoryID(FactoryID id);
     
     virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
     
@@ -87,7 +92,10 @@ namespace Cozmo {
     
     virtual bool CanBeUsedForLocalization() const override;
     
-    virtual s32 GetActiveID() const override { return _activeID; }
+    void SetActiveID(ActiveID activeID) { _activeID = activeID; }
+    virtual ActiveID GetActiveID() const override { return _activeID; }
+    
+    FactoryID GetFactoryID() const { return _factoryID; }
     
     static void RegisterAvailableID(s32 activeID);
     static void ClearAvailableIDs();
@@ -134,14 +142,10 @@ namespace Cozmo {
 
     const LEDstate& GetLEDState(s32 whichLED) const;
     
-    static constexpr int kHardCodedActiveCubeID0 = 0;
-    static constexpr int kHardCodedActiveCubeID1 = 1;
-    static constexpr int kHardCodedActiveCubeID2 = 2;
-    static constexpr int kHardCodedActiveCubeID3 = 3;
-    
   protected:
     
-    s32 _activeID;
+    ActiveID _activeID;
+    FactoryID _factoryID;
     
     bool        _isMoving = false;
     TimeStamp_t _movingTime = 0;

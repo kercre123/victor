@@ -44,51 +44,37 @@ using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
 void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId)
 {
+  using localHandlerType = void(Robot::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
+  // Create a helper lambda for subscribing to a tag with a local handler
+  auto doRobotSubscribe = [this, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+  {
+    _signalHandles.push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
+  };
+  
   // bind to specific handlers in the robot class
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::cameraCalibration,
-    std::bind(&Robot::HandleCameraCalibration, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::printText,
-    std::bind(&Robot::HandlePrint, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::trace,
-    std::bind(&Robot::HandleTrace, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::crashReport,
-    std::bind(&Robot::HandleCrashReport, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPickedUp,
-    std::bind(&Robot::HandleBlockPickedUp, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPlaced,
-    std::bind(&Robot::HandleBlockPlaced, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectDiscovered,
-    std::bind(&Robot::HandleActiveObjectDiscovered, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectMoved,
-    std::bind(&Robot::HandleActiveObjectMoved, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectStopped,
-    std::bind(&Robot::HandleActiveObjectStopped, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectTapped,
-    std::bind(&Robot::HandleActiveObjectTapped, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::goalPose,
-    std::bind(&Robot::HandleGoalPose, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::cliffEvent,
-    std::bind(&Robot::HandleCliffEvent, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::proxObstacle,
-    std::bind(&Robot::HandleProxObstacle, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerEvent,
-   std::bind(&Robot::HandleChargerEvent, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::image,
-    std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
-    std::bind(&Robot::HandleImuData, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuRawDataChunk,
-    std::bind(&Robot::HandleImuRawData, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::syncTimeAck,
-    std::bind(&Robot::HandleSyncTimeAck, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::robotPoked,
-    std::bind(&Robot::HandleRobotPoked, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::nvData,
-    std::bind(&Robot::HandleNVData, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::nvResult,
-    std::bind(&Robot::HandleNVOpResult, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::robotAvailable,
-                                                     std::bind(&Robot::HandleRobotSetID, this, std::placeholders::_1)));
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::cameraCalibration,           &Robot::HandleCameraCalibration);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::printText,                   &Robot::HandlePrint);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                       &Robot::HandleTrace);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                 &Robot::HandleCrashReport);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPickedUp,               &Robot::HandleBlockPickedUp);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPlaced,                 &Robot::HandleBlockPlaced);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered,      &Robot::HandleActiveObjectDiscovered);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectConnectionState, &Robot::HandleActiveObjectConnectionState);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectMoved,           &Robot::HandleActiveObjectMoved);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectStopped,         &Robot::HandleActiveObjectStopped);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectTapped,          &Robot::HandleActiveObjectTapped);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::goalPose,                    &Robot::HandleGoalPose);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::cliffEvent,                  &Robot::HandleCliffEvent);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObstacle,                &Robot::HandleProxObstacle);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::chargerEvent,                &Robot::HandleChargerEvent);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::image,                       &Robot::HandleImageChunk);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::imuDataChunk,                &Robot::HandleImuData);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::imuRawDataChunk,             &Robot::HandleImuRawData);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::syncTimeAck,                 &Robot::HandleSyncTimeAck);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::robotPoked,                  &Robot::HandleRobotPoked);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvData,                      &Robot::HandleNVData);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,                    &Robot::HandleNVOpResult);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,              &Robot::HandleRobotSetID);
   
 
   // lambda wrapper to call internal handler
@@ -254,6 +240,48 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
   }
 #endif
 }
+
+ 
+void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+#if(OBJECTS_HEARABLE)
+  ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
+  
+  ObjectID objID;
+  if (payload.connected) {
+    // Add cube to blockworld if not already there
+    objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
+    if (objID.IsSet()) {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
+                       "Object %d (activeID %d, factoryID 0x%x)",
+                       objID.GetValue(), payload.objectID, payload.factoryID);
+      
+      // Turn off lights upon connection
+      std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
+      SendRobotMessage<CubeLights>(lights, payload.objectID);
+    }
+  } else {
+    // Remove cube from blockworld if it exists
+    ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+    if (obj) {
+      GetBlockWorld().ClearObject(obj);
+      objID = obj->GetID();
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
+                       "Object %d (activeID %d, factoryID 0x%x)",
+                       objID.GetValue(), payload.objectID, payload.factoryID);
+    }
+  }
+  
+
+  if (objID.IsSet()) {
+    // Update the objectID to be blockworld ID
+    payload.objectID = objID.GetValue();
+  
+    // Forward on to game
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(payload)));
+  }
+#endif
+}
   
 
 void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -264,7 +292,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -334,12 +362,12 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnknownActiveID",
-                     "Could not find match for active object ID %d", payload.objectID);
+    PRINT_NAMED_WARNING("Robot.HandleActiveObjectStopped.UnknownActiveID",
+                        "Could not find match for active object ID %d", payload.objectID);
     return;
   }
   // Ignore stopped-moving messages for objects we are docking to, since we expect to bump them
@@ -392,7 +420,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -561,6 +589,35 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
       g_queueImages_queueIndex = 0;
 #   endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
 
+    #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
+    #define TRACK_MULTIPLE_IMAGES_PER_TICK 1
+    #else
+    #define TRACK_MULTIPLE_IMAGES_PER_TICK 0
+    #endif
+    if (TRACK_MULTIPLE_IMAGES_PER_TICK)
+    {
+      static uint32_t repeatTimeCount = 0;
+      static double lastImageTime = -1.0;
+      
+      double currentMessageTime = SEC_TO_MILIS(message.GetCurrentTime());
+      if (currentMessageTime != lastImageTime)
+      {
+        lastImageTime = currentMessageTime;
+        repeatTimeCount = 0;
+      }
+      else
+      {
+        ++repeatTimeCount;
+        if (repeatTimeCount >= 3)
+        {
+          PRINT_NAMED_WARNING("Robot.HandleImageChunk",
+                              "%d robot images (latest=%dms) processed in basestation tick at %fms.",
+                              repeatTimeCount,
+                              payload.frameTimeStamp,
+                              currentMessageTime);
+        }
+      }
+    }
     ProcessImage(image);
 
   } // if(isImageReady)
@@ -714,25 +771,25 @@ void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
 void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
 {
-  auto helper = AnkiEventUtil<Robot, decltype(_signalHandles)>(externalInterface, *this, _signalHandles);
+  auto helper = MakeAnkiEventUtil(externalInterface, *this, _signalHandles);
   
   using namespace ExternalInterface;
-  helper.SubscribeInternal<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
-  helper.SubscribeInternal<MessageGameToEngineTag::CancelAction>();
-  helper.SubscribeInternal<MessageGameToEngineTag::DrawPoseMarker>();
-  helper.SubscribeInternal<MessageGameToEngineTag::IMURequest>();
-  helper.SubscribeInternal<MessageGameToEngineTag::EnableRobotPickupParalysis>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetBackpackLEDs>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetIdleAnimation>();
-  helper.SubscribeInternal<MessageGameToEngineTag::ReplayLastAnimation>();
-  helper.SubscribeInternal<MessageGameToEngineTag::ExecuteTestPlan>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SaveImages>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SaveRobotState>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetRobotCarryingObject>();
-  helper.SubscribeInternal<MessageGameToEngineTag::AbortPath>();
-  helper.SubscribeInternal<MessageGameToEngineTag::AbortAll>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetActiveObjectLEDs>();
-  helper.SubscribeInternal<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetIdleAnimation>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReplayLastAnimation>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveRobotState>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
 }
 
 template<>
@@ -872,46 +929,15 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
 
 void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
 {
-  // SetWheelControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetWheelControllerGains,
+  // SetControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ControllerGains,
     [this] (const GameToEngineEvent& event)
     {
-      const ExternalInterface::SetWheelControllerGains& msg = event.GetData().Get_SetWheelControllerGains();
+      const ExternalInterface::ControllerGains& msg = event.GetData().Get_ControllerGains();
       
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kpLeft, msg.kiLeft, 0.0f, msg.maxIntegralErrorLeft,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel);
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError, msg.controller);
     }));
-  
-  // SetHeadControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetHeadControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetHeadControllerGains& msg = event.GetData().Get_SetHeadControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_head);
-    }));
-  
-  // SetLiftControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetLiftControllerGains& msg = event.GetData().Get_SetLiftControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift);
-    }));
-  
-  // SetSteeringControllerGains
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetSteeringControllerGains,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
-      
-      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, msg.dockPathDistOffsetCap_mm, msg.dockPathAngularOffsetCap_rad,
-                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_steering);
-    }));
-  
+
   // SetMotionModelParams
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetMotionModelParams,
     [this] (const GameToEngineEvent& event)

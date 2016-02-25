@@ -22,6 +22,7 @@
 
 #include "anki/vision/basestation/observableObjectLibrary.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -70,6 +71,11 @@ namespace Anki
       // Adds a cliff (detected with cliff detector)
       Result AddCliff(const Pose3d& p);
       
+      // Adds a light cube object with the specified activeID and factoryID at
+      // an unknown pose. To be used when the cube first comes into radio contact.
+      // This function does nothing if a cube with the active ID already exists.
+      ObjectID AddLightCube(ObservableObject::ActiveID activeID, FactoryID factoryID);
+      
       //
       // Object Access
       //
@@ -104,7 +110,17 @@ namespace Anki
       // Same as above, but only searches a given family of objects
       ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily);
       const ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
-
+      
+      // Dynamically cast the given object ID into the templated active object type
+      // Return nullptr on failure to find ActiveObject
+      ObservableObject* GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily = ObjectFamily::Unknown);
+      const ObservableObject* GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily = ObjectFamily::Unknown) const;
+      
+      // Same as above, but search by active ID instead of (BlockWorld-assigned) object ID.
+      ObservableObject* GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily = ObjectFamily::Unknown);
+      const ObservableObject* GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily = ObjectFamily::Unknown) const;
+      
+      
       // returns (in arguments) all objects matching a filter
       // NOTE: does not clear result (thus can be used multiple times with the same vector)
       void FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result) const;
@@ -209,11 +225,17 @@ namespace Anki
       void SetIsOnCliff(bool value) { _isOnCliff = value; }
 
       // return pointer to current INavMemoryMap (it may be null if not enabled)
-      const INavMemoryMap* GetNavMemoryMap() const { return _navMemoryMap.get(); }
-      INavMemoryMap* GetNavMemoryMap() { return _navMemoryMap.get(); }
+      const INavMemoryMap* GetNavMemoryMap() const;
+      INavMemoryMap* GetNavMemoryMap();
       
       // update memory map
       void UpdateNavMemoryMap();      
+
+      // create a new memory map from current robot frame of reference. The pointer is used as an identifier
+      void CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr);
+      
+      // Visualize the navigation memory information
+      void DrawNavMemoryMap() const;
       
       //
       // Visualization
@@ -227,9 +249,6 @@ namespace Anki
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
       void DrawAllObjects() const;
-      
-      // Visualize the navigation memory information
-      void DrawNavMemoryMap() const;
       
     protected:
       
@@ -246,6 +265,8 @@ namespace Anki
       // Note these are marked const but return non-const pointers.
       ObservableObject* GetObjectByIdHelper(const ObjectID objectID) const;
       ObservableObject* GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
+      ObservableObject* GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
+      ObservableObject* GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const;
       
       bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
@@ -366,7 +387,9 @@ namespace Anki
       u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
       
       // Map the world knows the robot has traveled
-      std::unique_ptr<INavMemoryMap> _navMemoryMap;
+      using NavMemoryMapTable = std::map<const Pose3d*, std::unique_ptr<INavMemoryMap>>;
+      NavMemoryMapTable _navMemoryMaps;
+      const Pose3d* _currentNavMemoryMapOrigin;
       
       // set to true/false upon cliff sensor notifications
       bool _isOnCliff;
@@ -439,6 +462,22 @@ namespace Anki
     
     inline ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) {
       return GetObjectByIDandFamilyHelper(objectID, inFamily); // returns non-const*
+    }
+
+    inline ObservableObject* BlockWorld::GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily) {
+      return GetActiveObjectByIDHelper(objectID, inFamily); // returns non-const*
+    }
+    
+    inline const ObservableObject* BlockWorld::GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily) const {
+      return GetActiveObjectByIDHelper(objectID, inFamily); // returns const*
+    }
+    
+    inline ObservableObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily) {
+      return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns non-const*
+    }
+    
+    inline const ObservableObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily) const {
+      return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns const*
     }
     
     inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, ObservableObject* object)

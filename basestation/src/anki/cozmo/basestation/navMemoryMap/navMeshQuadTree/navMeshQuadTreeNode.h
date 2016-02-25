@@ -73,8 +73,12 @@ void TESTDONOTCOMITRec();
   uint8_t GetLevel() const { return _level; }
   float GetSideLen() const { return _sideLen; }
   const Point3f& GetCenter() const { return _center; }
-  ENodeContentType GetContentType() const { return _content.type; }
   const NodeContent& GetContent() const { return _content; }
+
+  // consider using the concrete checks if you are going to do GetContentType() == X, in case the meaning of that
+  // comparison changes
+  ENodeContentType GetContentType() const { return _content.type; }
+  bool IsContentTypeUnknown() const { return _content.type == ENodeContentType::Unknown; }
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
   bool Contains(const Quad2f& quad) const;
@@ -88,7 +92,7 @@ void TESTDONOTCOMITRec();
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // helper for the specific add functions. It properly processes the quad down the tree for the given content
-  bool AddQuad(const Quad2f& quad, NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddQuad(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
@@ -110,6 +114,10 @@ void TESTDONOTCOMITRec();
   // iterationDirection: when there're more than one neighbor in that direction, which one comes first in the list
   // NOTE: this method is expected to NOT clear the vector before adding neighbors
   void AddSmallestNeighbors(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& neighbors) const;
+ 
+  // adds to the given vector the smallest descendants of every branch. If a node is a leaf, it adds itself,
+  // otherwise it recursively asks children to do the same
+  void AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -156,7 +164,7 @@ private:
 
   // subdivide/merge children
   void Subdivide(NavMeshQuadTreeProcessor& processor);
-  void Merge(NodeContent& newContent, NavMeshQuadTreeProcessor& processor);
+  void Merge(const NodeContent& newContent, NavMeshQuadTreeProcessor& processor);
   void ClearDescendants(NavMeshQuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
@@ -164,9 +172,9 @@ private:
   
   // sets the content type to the detected one.
   // try checks por priority first, then calls force
-  void TrySetDetectedContentType(NodeContent& detectedContent, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
+  void TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
   // force sets the type and updates shared container
-  void ForceSetDetectedContentType(NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  void ForceSetDetectedContentType(const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
   
   // sets a new parent to this node. Used on expansions
   void ChangeParent(const NavMeshQuadTreeNode* newParent) { _parent = newParent; }

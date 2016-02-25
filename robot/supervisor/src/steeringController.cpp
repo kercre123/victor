@@ -63,20 +63,49 @@ namespace Anki {
       f32 maxAngularVel_;
       f32 angularAccel_;
       bool isPointTurnWithTarget_;
-
-      f32 currAngularVel_;
       bool startedPointTurn_;
 
       Radians prevAngle_;
       f32 angularDistExpected_;
       f32 angularDistTraversed_;
       
+      // Amount by which theoretical wheel velocities are scaled
+      // to compensate for tread slip.
+#ifdef SIMULATOR
+      const f32 POINT_TURN_SLIP_COMP_FACTOR = 1.f;
+#else
+      const f32 POINT_TURN_SLIP_COMP_FACTOR = 1.5f;
+#endif
+      
+      f32 pointTurnSpeedKp_ = 20;
+      f32 pointTurnSpeedKd_ = 0;
+      f32 pointTurnSpeedKi_ = 0.5;
+      f32 pointTurnSpeedMaxIntegralError_ = 100;
+      
+      f32 pointTurnKp_ = 150;
+      f32 pointTurnKd_ = 4000;
+      f32 pointTurnKi_ = 0.3;
+      f32 pointTurnMaxIntegralError_ = 100;
+      f32 prevPointTurnAngleError_ = 0;
+      f32 pointTurnAngleErrorSum_ = 0;
+      TimeStamp_t inPositionStartTime_ = 0;
+      
+      // Amount of time orientation is within tolerance of target angle before
+      // the controller is considered to have reached the target point turn angle.
+      const u32 IN_POSITION_THRESHOLD_MS = 100;
+      
+      // For checking if robot is not turning despite maxed integral power being applied
+      TimeStamp_t pointTurnIntegralPowerMaxedStartTime_ = 0;
+      Radians pointTurnIntegralPowerMaxedStartAngle_ = 0;
+      const u32 POINT_TURN_STUCK_THRESHOLD_MS = 500;
+      const f32 POINT_TURN_STUCK_THRESHOLD_RAD = DEG_TO_RAD(0.5);
+      
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
 
       VelocityProfileGenerator vpg_;
 
-      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = DEG_TO_RAD(20.f);
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0;
 
     } // Private namespace
 
@@ -103,7 +132,21 @@ namespace Anki {
       PATH_ANGULAR_OFFSET_CAP_RAD = dockPathAngularOffsetCap_rad;
     }
 
-
+    void SetPointTurnGains(f32 kp, f32 ki, f32 kd, f32 maxIntegralError)
+    {
+      pointTurnKp_ = kp;
+      pointTurnKd_ = kd;
+      pointTurnKi_ = ki;
+      pointTurnMaxIntegralError_ = maxIntegralError;
+      /*
+      pointTurnSpeedKp_ = kp;
+      pointTurnSpeedKd_ = kd;
+      pointTurnSpeedKi_ = ki;
+      pointTurnSpeedMaxIntegralError_ = maxIntegralError;
+      */
+      AnkiInfo( 125, "SteeringController.SetPointTurnGains", 373, "New gains: kp %f, ki %f, kd %f, maxSum %f", 4, kp, ki, kd, maxIntegralError);
+    }
+    
     SteerMode GetMode()
     {
       return currSteerMode_;
@@ -433,6 +476,8 @@ namespace Anki {
 
       maxAngularVel_ = maxAngularVel;
       angularAccel_ = angularAccel;
+      prevPointTurnAngleError_ = 0;
+      pointTurnAngleErrorSum_ = 0;
 
       // Check that the maxAngularVel is greater than the terminal speed
       // If not, make it at least that big.
@@ -468,9 +513,9 @@ namespace Anki {
 
     void ExitPointTurn()
     {
-      SetSteerMode(SM_PATH_FOLLOW);
-      currAngularVel_ = 0;
+      WheelController::SetDesiredWheelSpeeds(0,0);
       startedPointTurn_ = false;
+      SetSteerMode(SM_PATH_FOLLOW);
     }
 
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
@@ -538,78 +583,116 @@ namespace Anki {
 
 
       // Update current angular velocity
-      f32 currDesiredAngle;
-      vpg_.Step(currAngularVel_, currDesiredAngle);
+      f32 currDesiredAngularVel, currDesiredAngle;
+      vpg_.Step(currDesiredAngularVel, currDesiredAngle);
 
       Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
-
+      
+      // Compute the velocity along the arc length equivalent of currAngularVel.
+      // currDesiredAngularVel / PI = arcVel / (PI * R)
+      s16 arcVel = (s16)(currDesiredAngularVel * WHEEL_DIST_HALF_MM * POINT_TURN_SLIP_COMP_FACTOR); // mm/s
+      
+      
       if (isPointTurnWithTarget_) {
 
+        angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
+        prevAngle_ = currAngle;
+
+        
         // Compute distance to target
-        float angularDistToTarget = currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
-
-
-        //PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
-        //          currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle);
-
-
+        float angularDistToTarget = ABS(angularDistTraversed_) > POINT_TURN_ANGLE_TOL ?
+                                    (targetRad_ - currAngle).ToFloat() :
+                                    currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
+        
         // Check for stop condition
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
         if (absAngularDistToTarget < POINT_TURN_ANGLE_TOL) {
-          ExitPointTurn();
-  #if(DEBUG_STEERING_CONTROLLER)
-          AnkiDebug( 12, "POINT TURN", 110, "Stopping", 0);
-  #endif
+          if (inPositionStartTime_ == 0) {
+            AnkiDebug( 126, "ManagePointTurn.InRange", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+            inPositionStartTime_ = HAL::GetTimeStamp();
+          } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS) {
+#           if(DEBUG_STEERING_CONTROLLER)
+            f32 lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed;
+            WheelController::GetFilteredWheelSpeeds(lWheelSpeed, rWheelSpeed);
+            WheelController::GetDesiredWheelSpeeds(lDesSpeed, rDesSpeed);
+            AnkiDebug( 130, "ManagePointTurn.Stopping", 376, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
+                      currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), 0,0,0,0);
+#           endif
+            ExitPointTurn();
+            return;
+          }
+        } else {
+          AnkiDebugPeriodic(100, 127, "ManagePointTurn.OOR", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+          inPositionStartTime_ = 0;
+
+          
+          // Check if robot has stopped turning despite integral gain maxing out.
+          // Something might be physically obstructing the robot from turning.
+          if (ABS(pointTurnAngleErrorSum_) == pointTurnMaxIntegralError_) {
+            if (pointTurnIntegralPowerMaxedStartTime_ == 0 || ABS((pointTurnIntegralPowerMaxedStartAngle_ - currAngle).ToFloat()) < POINT_TURN_STUCK_THRESHOLD_RAD) {
+              pointTurnIntegralPowerMaxedStartTime_ = HAL::GetTimeStamp();
+              pointTurnIntegralPowerMaxedStartAngle_ = currAngle;
+            } else if (HAL::GetTimeStamp() - pointTurnIntegralPowerMaxedStartTime_ > POINT_TURN_STUCK_THRESHOLD_MS) {
+              AnkiInfo( 129, "ManagePointTurn.StoppingCuzStuck", 375, "currAngle %f, currDesired %f", 2, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle));
+              ExitPointTurn();
+              return;
+            }
+          }
+          
         }
 
-
-        // Check if the angular dist to target is growing
-        angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
-        prevAngle_ = currAngle;
-        if (ABS(angularDistTraversed_) > ABS(angularDistExpected_) ) {
-          ExitPointTurn();
-  #if(DEBUG_STEERING_CONTROLLER)
-          AnkiDebug( 12, "POINT TURN", 111, "Stopping because turned more than expected", 0);
-  #endif
+        
+        // PID control for maintaining desired orientation
+        f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
+        arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_
+                     + (angularDistToCurrDesiredAngle - prevPointTurnAngleError_) * pointTurnKd_
+                     + pointTurnAngleErrorSum_ * pointTurnKi_);
+        prevPointTurnAngleError_ = angularDistToCurrDesiredAngle;
+        
+        // Only accumulate integral error if desired wheel speed is below max
+        if (ABS(arcVel) < MAX_WHEEL_SPEED_MMPS) {
+          pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
         }
+
+        
+      } else {
+        
+        // PID control for maintaining desired speed
+        f32 currAngularSpeed = IMUFilter::GetRotationSpeed();
+        f32 angularSpeedError = currDesiredAngularVel - currAngularSpeed;
+        arcVel += (s16)(angularSpeedError * pointTurnSpeedKp_
+               + (angularSpeedError - prevPointTurnAngleError_) * pointTurnSpeedKd_
+               + pointTurnAngleErrorSum_ * pointTurnSpeedKi_);
+        
+        prevPointTurnAngleError_ = angularSpeedError;
+        
+        // Only accumulate integral error if desired wheel speed is below max
+        if (ABS(arcVel) < MAX_WHEEL_SPEED_MMPS) {
+          pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularSpeedError, -pointTurnSpeedMaxIntegralError_, pointTurnSpeedMaxIntegralError_);
+        }
+        
+        //AnkiDebugPeriodic(100, 131, "PointTurnSpeed", 377, "des %f deg/s, meas: %f deg/s, arcVel %d mm/s, errorSum %f", 4, RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(currAngularSpeed), arcVel, pointTurnAngleErrorSum_ );
       }
-
-
-      // Compute the velocity along the arc length equivalent of currAngularVel.
-      // currAngularVel_ / PI = arcVel / (PI * R)
-      s16 arcVel = (s16)(currAngularVel_ * WHEEL_DIST_HALF_MM); // mm/s
-
-
-      // PID control for maintaining heading
-      f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
-      const f32 pointTurnKp_ = 500;
-      //PRINT("PT comp: arcVel %d, comp %f\n", arcVel, angularDistToCurrDesiredAngle * pointTurnKp_);
-      arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_);
-
-
-      // Compute the wheel velocities
-      s16 wleft = -arcVel;
-      s16 wright = arcVel;
 
 
 #if(DEBUG_STEERING_CONTROLLER)
       AnkiDebug( 12, "POINT TURN", 112, "angularDistToTarget: %f radians, arcVel: %d mm/s", 2, angularDistToTarget, arcVel);
 #endif
 
-      WheelController::SetDesiredWheelSpeeds(wleft, wright);
+      WheelController::SetDesiredWheelSpeeds(-arcVel, arcVel);
+      //WheelController::ResetIntegralGainSums();
 
       // If target velocity is zero then we might need to stop
       if (!isPointTurnWithTarget_) {
         if (arcVel == 0 && maxAngularVel_ == 0) {
-          WheelController::SetDesiredWheelSpeeds(0,0);
           ExitPointTurn();
 #if(DEBUG_STEERING_CONTROLLER)
           AnkiDebug( 12, "POINT TURN", 113, "Stopping because 0 vel reached", 0);
 #endif
+          return;
         }
       }
     }
-
 
   } // namespace SteeringController
   } // namespace Cozmo

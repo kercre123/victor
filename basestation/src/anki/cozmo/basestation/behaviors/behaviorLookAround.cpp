@@ -23,8 +23,9 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#define DISABLE_IDLE_DURING_LOOK_AROUND 1
 
-#define SAFE_ZONE_VIZ (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS)
+#define SAFE_ZONE_VIZ 0 // (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS)
 
 #if SAFE_ZONE_VIZ
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -127,6 +128,10 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
   
 Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec)
 {
+  if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
+    robot.PushIdleAnimation("NONE");
+  }
+  
   // Update explorable area center to current robot pose
   ResetSafeRegion(robot);
   
@@ -352,6 +357,10 @@ Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_se
   
 void BehaviorLookAround::StopInternal(Robot& robot, double currentTime_sec)
 {
+  if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
+    robot.PopIdleAnimation();
+  }
+
   ResetBehavior(robot, currentTime_sec);
 }
   

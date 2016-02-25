@@ -65,16 +65,17 @@ private:
   constexpr static float kTiltMin = 17;
   // Max absolute angle to move head to, in degrees
   constexpr static float kTiltMax = 23;
-  // Min time to pause after moving
-  constexpr static float kPauseMin_sec = 1;
-  // Max time to pause after moving
-  constexpr static float kPauseMax_sec = 3.5;
   // Width of zone to focus on
   constexpr static float kFocusAreaAngle_deg = 120;
   
   // The length of time in seconds it has to have been since we last
   // saw a face in order to enter this behavior
   double _minimumTimeSinceSeenLastFace_sec;
+
+  // Min time to pause after moving
+  float _pauseMin_s;
+  // Max time to pause after moving
+  float _pauseMax_s;
 
   State _currentState = State::Inactive;
   uint32_t _currentDriveActionID; // Init in cpp to not have constants include in header

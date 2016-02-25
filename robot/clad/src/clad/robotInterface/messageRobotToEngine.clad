@@ -108,6 +108,7 @@ union RobotToEngine {
   ProxObstacle               proxObstacle           = 0x18,
   ObjectDiscovered           activeObjectDiscovered = 0x19,
   IMURawDataChunk            imuRawDataChunk        = 0x20,
+  ObjectConnectionState      activeObjectConnectionState  = 0x21,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,

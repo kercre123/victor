@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_GameRequest_BehaviorRequestGameSimple_H__
 
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorGameRequest.h"
+#include "clad/types/pathMotionProfile.h"
 #include <string>
 
 namespace Anki {
@@ -36,6 +37,7 @@ protected:
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
+  virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
 
   virtual void HandleGameDeniedRequest(Robot& robot) override;
   
@@ -66,15 +68,28 @@ private:
     std::string preDriveAnimationName;
     std::string requestAnimationName;
     std::string denyAnimationName;
-    float       minRequestDelay = 5.0f;
+    float       minRequestDelay;
+    float       scoreFactor;
   };
 
   ConfigPerNumBlocks _zeroBlockConfig;
   ConfigPerNumBlocks _oneBlockConfig;
 
+  PathMotionProfile _driveToPickupProfile;
+  PathMotionProfile _driveToPlaceProfile;
+
+  float _driveToPlacePoseThreshold_mm;
+  float _driveToPlacePoseThreshold_rads;
+
+  float _afterPlaceBackupDist_mm;
+  float _afterPlaceBackupSpeed_mmps;
+
   ConfigPerNumBlocks* _activeConfig = nullptr;
   
-  float       _verifyStartTime_s = 0.0f;
+  float  _verifyStartTime_s = 0.0f;
+
+  Pose3d _faceInteractionPose;
+  bool   _hasFaceInteractionPose = false;
 
   void SetState_internal(State state, const std::string& stateName);
 
@@ -90,8 +105,8 @@ private:
   void TransitionToTrackingFace(Robot& robot);
   void TransitionToPlayingDenyAnim(Robot& robot);
 
-  
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
+  void ComputeFaceInteractionPose(Robot& robot);
 
 };
 

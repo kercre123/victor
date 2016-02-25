@@ -8,6 +8,8 @@ ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
 ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/
 
+BINARY_RELEASE_DIR=releases
+
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
 
@@ -37,10 +39,21 @@ esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
 
-otaBinaries: esp
-	cp espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
-	cp build/41/robot.safe releases/robot.safe
-	cp syscon/build/syscon.safe releases/syscon.safe
+espressif/bin/upgrade/user1.2048.new.3.bin: esp
+
+$(BINARY_RELEASE_DIR)/esp.user.bin: espressif/bin/upgrade/user1.2048.new.3.bin
+	cp $< $@
+
+$(BINARY_RELEASE_DIR)/robot.safe: build/41/robot.safe
+	cp $< $@
+
+$(BINARY_RELEASE_DIR)/syscon.safe: syscon/build/syscon.safe
+	cp $< $@
+
+otaBinaries: $(BINARY_RELEASE_DIR)/esp.user.bin $(BINARY_RELEASE_DIR)/robot.safe $(BINARY_RELEASE_DIR)/syscon.safe
+
+onBuildServer: k02 $(BINARY_RELEASE_DIR)/esp.user.bin
+
 
 clean:
 	make -C clad clean

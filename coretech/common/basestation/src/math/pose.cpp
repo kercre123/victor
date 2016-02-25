@@ -117,8 +117,8 @@ namespace Anki {
                   GetName().empty() ? "" : " ", GetName().c_str(),
                   _translation.x(), _translation.y(),
                   _angle.ToFloat(), _angle.getDegrees(),
-                  _parent,
-                  _parent != nullptr ? _parent->GetName().c_str() : "NULL"
+                  GetParent(),
+                  GetParent() != nullptr ? GetParent()->GetName().c_str() : "NULL"
                   );
   }
     
@@ -178,7 +178,7 @@ namespace Anki {
   } // Constructor: Pose3d(angle, axis, T)
   
   Pose3d::Pose3d(const Pose3d &otherPose)
-  : Pose3d(otherPose._rotation, otherPose._translation, otherPose._parent) // NOTE: *not* copying name
+  : Pose3d(otherPose._rotation, otherPose._translation, otherPose.GetParent()) // NOTE: *not* copying name
   {
     
   }
@@ -274,7 +274,7 @@ namespace Anki {
     _rotation.Invert();
     _translation *= -1.f;
     _translation = _rotation * _translation;
-    _parent = nullptr;
+    SetParent(nullptr);
     
     return *this;
   }
@@ -517,8 +517,8 @@ namespace Anki {
                   _translation.x(), _translation.y(), _translation.z(),
                   GetRotationAxis().x(), GetRotationAxis().y(), GetRotationAxis().z(),
                   GetRotationAngle().ToFloat(), GetRotationAngle().getDegrees(),
-                  _parent,
-                  _parent != nullptr ? _parent->GetName().c_str() : "NULL"
+                  GetParent(),
+                  GetParent() != nullptr ? GetParent()->GetName().c_str() : "NULL"
                   );
   }
   

@@ -137,7 +137,8 @@ namespace Anki {
       const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
       
-      virtual s32 GetActiveID() const { return -1; }
+      using ActiveID = s32;
+      virtual ActiveID GetActiveID() const { return -1; }
       
       void SetID();
       void SetColor(const ColorRGBA& color);

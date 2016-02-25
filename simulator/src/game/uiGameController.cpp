@@ -242,6 +242,12 @@ namespace Anki {
       HandleImageChunk(msg);
     } // HandleImageChunk()
     
+    void UiGameController::HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg)
+    {
+      PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ObjectID %d (factoryID 0x%x): %s",
+                       msg.objectID, msg.factoryID, msg.connected ? "CONNECTED" : "DISCONNECTED");
+      HandleActiveObjectConnectionState(msg);
+    }
     
     void UiGameController::HandleActiveObjectMovedBase(ObjectMoved const& msg)
     {
@@ -371,6 +377,9 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::RobotCompletedAction:
             HandleRobotCompletedActionBase(message.Get_RobotCompletedAction());
             break;
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectConnectionState:
+            HandleActiveObjectConnectionStateBase(message.Get_ObjectConnectionState());
+            break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectMoved:
             HandleActiveObjectMovedBase(message.Get_ObjectMoved());
             break;
@@ -474,14 +483,8 @@ namespace Anki {
             // robot if necessary, and switch states in the UI
             
             PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.");
-            ExternalInterface::StartEngine msg;
-            msg.asHost = 1; // TODO: Support running as client?
-            std::string vizIpStr = "127.0.0.1";
-            std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
-            std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_StartEngine(msg);
-            _msgHandler.SendMessage(1, message); // TODO: don't hardcode ID here
+            // TODO: don't hardcode ID here
+            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(ExternalInterface::StartEngine{}));
             
             bool didForceAdd = ForceAddRobotIfSpecified();
             
@@ -692,11 +695,13 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendTurnInPlace(const f32 angle_rad)
+    void UiGameController::SendTurnInPlace(const f32 angle_rad, const f32 speed_radPerSec, const f32 accel_radPerSec2)
     {
       ExternalInterface::TurnInPlace m;
       m.robotID = 1;
       m.angle_rad = angle_rad;
+      m.speed_rad_per_sec = speed_radPerSec;
+      m.accel_rad_per_sec2 = accel_radPerSec2;
       m.isAbsolute = false;
       ExternalInterface::MessageGameToEngine message;
       message.Set_TurnInPlace(m);
@@ -1193,56 +1198,17 @@ namespace Anki {
       message.Set_ErasePoseMarker(m);
       SendMessage(message);
     }
-
-    void UiGameController::SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
-                                  const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight)
-    {
-      ExternalInterface::SetWheelControllerGains m;
-      m.kpLeft = kpLeft;
-      m.kiLeft = kiLeft;
-      m.maxIntegralErrorLeft = maxErrorSumLeft;
-      m.kpRight = kpRight;
-      m.kiRight = kiRight;
-      m.maxIntegralErrorRight = maxErrorSumRight;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetWheelControllerGains(m);
-      SendMessage(message);
-    }
-
     
-    void UiGameController::SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum)
+    void UiGameController::SendControllerGains(ControllerChannel channel, f32 kp, f32 ki, f32 kd, f32 maxErrorSum)
     {
-      ExternalInterface::SetHeadControllerGains m;
+      ExternalInterface::ControllerGains m;
+      m.controller = channel;
       m.kp = kp;
       m.ki = ki;
       m.kd = kd;
       m.maxIntegralError = maxErrorSum;
       ExternalInterface::MessageGameToEngine message;
-      message.Set_SetHeadControllerGains(m);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum)
-    {
-      ExternalInterface::SetLiftControllerGains m;
-      m.kp = kp;
-      m.ki = ki;
-      m.kd = kd;
-      m.maxIntegralError = maxErrorSum;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetLiftControllerGains(m);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendSteeringControllerGains(const f32 k1, const f32 k2, const f32 dockPathDistOffsetCap_mm, const f32 dockPathAngularOffsetCap_rad)
-    {
-      ExternalInterface::SetSteeringControllerGains m;
-      m.k1 = k1;
-      m.k2 = k2;
-      m.dockPathDistOffsetCap_mm = dockPathDistOffsetCap_mm;
-      m.dockPathAngularOffsetCap_rad = dockPathAngularOffsetCap_rad;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetSteeringControllerGains(m);
+      message.Set_ControllerGains(m);
       SendMessage(message);
     }
     

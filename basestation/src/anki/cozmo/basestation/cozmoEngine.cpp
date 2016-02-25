@@ -28,6 +28,9 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/multiClientChannel.h"
+#include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
 
@@ -35,22 +38,19 @@
 namespace Anki {
 namespace Cozmo {
 
-CozmoEngine::CozmoEngine(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
+CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   : _loggerProvider({ new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider() })
-  , _isInitialized(false)
-#if DEVICE_VISION_MODE != DEVICE_VISION_MODE_OFF
-  ,_deviceVisionThread(dataPlatform)
-#endif
-  , _isListeningForRobots(false)
-  , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
-  , _context(new CozmoContext(dataPlatform, externalInterface))
+  , _robotChannel(new MultiClientChannel{})
+  , _uiMsgHandler(new UiMessageHandler(1))
+  , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
+  , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
 {
   ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
   
-  PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
+  PRINT_NAMED_INFO("CozmoEngine.Constructor",
                    "Starting RobotAdvertisementService, reg port %d, ad port %d",
                    ROBOT_ADVERTISEMENT_REGISTRATION_PORT, ROBOT_ADVERTISING_PORT);
   
@@ -71,21 +71,26 @@ CozmoEngine::CozmoEngine(IExternalInterface* externalInterface, Util::Data::Data
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
   
+  // Use a separate callback for StartEngine
+  auto startEngineCallback = std::bind(&CozmoEngine::HandleStartEngine, this, std::placeholders::_1);
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
+  
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }
   
 
 CozmoEngine::~CozmoEngine()
 {
-  _robotChannel.Stop();
+  _robotChannel->Stop();
   
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
     Anki::Util::gTickTimeProvider = nullptr;
   }
   
   BaseStationTimer::removeInstance();
-  Util::SafeDelete(_keywordRecognizer);
   _context->GetVizManager()->Disconnect();
+  
+  SoundManager::removeInstance();
 }
 
 Result CozmoEngine::Init(const Json::Value& config) {
@@ -111,28 +116,11 @@ Result CozmoEngine::Init(const Json::Value& config) {
     return RESULT_FAIL;
   }
   
-  Vision::CameraCalibration deviceCamCalib;
-  if(!_config.isMember(AnkiUtil::kP_DEVICE_CAMERA_CALIBRATION)) {
-    PRINT_NAMED_WARNING("CozmoEngine.Init",
-                        "No DeviceCameraCalibration defined in Json config. Using bogus settings.");
-  } else {
-    deviceCamCalib.Set(_config[AnkiUtil::kP_DEVICE_CAMERA_CALIBRATION]);
-  }
-  
-  Result lastResult = RESULT_OK;
-  const char *ipString = _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
-  int port =_config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
-  if (port < 0 || port >= 0x10000) {
-    PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms; bad port.");
-    return RESULT_FAIL;
-  }
-  Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
-  PRINT_STREAM_DEBUG("CozmoEngine.Init", "Initializing on address: " << address << ": " << address.GetIPAddress() << ":" << address.GetIPPort() << "; originals: " << ipString << ":" << port);
-  
-  _robotChannel.Start(address);
-  if(!_robotChannel.IsStarted()) {
-    PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms.");
-    return RESULT_FAIL;
+  Result lastResult = _uiMsgHandler->Init(_config);
+  if (RESULT_OK != lastResult)
+  {
+    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing UIMessageHandler");
+    return lastResult;
   }
   
   if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
@@ -167,16 +155,40 @@ Result CozmoEngine::Init(const Json::Value& config) {
     return lastResult;
   }
   
-# if DEVICE_VISION_MODE == DEVICE_VISION_MODE_ASYNC
-  // TODO: Only start when needed?
-  _deviceVisionThread.Start(deviceCamCalib);
-# elif DEVICE_VISION_MODE == DEVICE_VISION_MODE_SYNC
-  _deviceVisionThread.SetCameraCalibration(deviceCamCalib);
-# endif
-  
   _isInitialized = true;
   
+  _blockFilter.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
+  
   return RESULT_OK;
+}
+  
+void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  if (EngineState::Running == _engineState) {
+    PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine.AlreadyStarted", "");
+    return;
+  }
+  
+  ListenForRobotConnections(true);
+  
+  const char *ipString = _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
+  int port =_config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
+  if (port < 0 || port >= 0x10000) {
+    PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine", "Failed to initialize RobotComms; bad port %d", port);
+    return;
+  }
+  Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
+  PRINT_STREAM_DEBUG("CozmoEngine.HandleStartEngine", "Initializing on address: " << address << ": " << address.GetIPAddress() << ":" << address.GetIPPort() << "; originals: " << ipString << ":" << port);
+  
+  _robotChannel->Start(address);
+  if(!_robotChannel->IsStarted()) {
+    PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine", "Failed to initialize RobotComms.");
+    return;
+  }
+  
+  _context->GetRobotMsgHandler()->Init(_robotChannel.get(), _context->GetRobotManager());
+  
+  SetEngineState(EngineState::WaitingForUIDevices);
 }
   
 bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
@@ -192,7 +204,7 @@ bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
   // robots from the advertising service manually (if they could do this, they also
   // could have registered itself)
   Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
-  bool result = _robotChannel.AcceptAdvertisingConnection(id);
+  bool result = _robotChannel->AcceptAdvertisingConnection(id);
   if(_forceAddedRobots.count(whichRobot) > 0) {
     PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot",
                      "Manually deregistering force-added robot %d from advertising service.", whichRobot);
@@ -201,69 +213,91 @@ bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
   
   // Another exception for hosts: have to tell the basestation to add the robot as well
   AddRobot(whichRobot);
-  _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotConnected(
-                                                                                                         whichRobot, result
-                                                                                                         )));
+  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(whichRobot, result);
   return result;
 }
   
 void CozmoEngine::DisconnectFromRobot(RobotID_t whichRobot)
 {
   Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
-  _robotChannel.RemoveConnection(id);
+  _robotChannel->RemoveConnection(id);
 }
   
 Result CozmoEngine::Update(const float currTime_sec)
 {
-  BaseStationTime_t currTime_ns = SEC_TO_NANOS(currTime_sec);
   if(!_isInitialized) {
-    PRINT_NAMED_ERROR("CozmoEngine.Update", "Cannot update CozmoEngine before it is initialized.\n");
+    PRINT_NAMED_ERROR("CozmoEngine.Update", "Cannot update CozmoEngine before it is initialized.");
     return RESULT_FAIL;
   }
   
-  // Notify any listeners that robots are advertising
-  std::vector<Comms::ConnectionId> advertisingRobots;
-  _robotChannel.GetAdvertisingConnections(advertisingRobots);
-  for(auto robot : advertisingRobots) {
-    _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotAvailable(robot)));
+  // Handle UI
+  Result lastResult = _uiMsgHandler->Update();
+  if (RESULT_OK != lastResult)
+  {
+    PRINT_NAMED_ERROR("CozmoEngine.Update", "Error updating UIMessageHandler");
+    return lastResult;
   }
   
-  // TODO: Handle images coming from connected robots
-  /*
-   for(auto & robotKeyPair : _connectedRobots) {
-   robotKeyPair.second.visionMsgHandler.ProcessMessages();
-   }
-   */
+  switch (_engineState)
+  {
+    case EngineState::Stopped:
+    {
+      break;
+    }
+    case EngineState::WaitingForUIDevices:
+    {
+      if (_uiMsgHandler->HasDesiredNumUiDevices()) {
+        SetEngineState(EngineState::Running);
+      }
+      break;
+    }
+    case EngineState::Running:
+    {
+      // Notify any listeners that robots are advertising
+      std::vector<Comms::ConnectionId> advertisingRobots;
+      _robotChannel->GetAdvertisingConnections(advertisingRobots);
+      for(auto robot : advertisingRobots) {
+        _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotAvailable>(robot);
+      }
+      
+      _robotChannel->Update();
+      
+      if(_isListeningForRobots) {
+        _context->GetRobotAdvertisementService()->Update();
+      }
+      
+      // Update time
+      BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(currTime_sec));
+      
+      _context->GetRobotMsgHandler()->ProcessMessages();
+      
+      // Let the robot manager do whatever it's gotta do to update the
+      // robots in the world.
+      _context->GetRobotManager()->UpdateAllRobots();
+      
+      _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
+      break;
+    }
+    default:
+      PRINT_NAMED_ERROR("CozmoEngine.Update.UnexpectedState","Running Update in an unexpected state!");
+  }
   
-  Result lastResult = UpdateInternal(currTime_ns);
-  return lastResult;
+  return RESULT_OK;
 }
-
-
-
-void CozmoEngine::ProcessDeviceImage(const Vision::Image &image)
+  
+void CozmoEngine::SetEngineState(EngineState newState)
 {
-  // Process image within the detection rectangle with vision processing thread:
-  
-# if DEVICE_VISION_MODE == DEVICE_VISION_MODE_ASYNC
-  static const Cozmo::RobotState bogusState; // req'd by API, but not really necessary for marker detection
-  _deviceVisionThread.SetNextImage(image, bogusState);
-# elif DEVICE_VISION_MODE == DEVICE_VISION_MODE_SYNC
-  static const Cozmo::RobotState bogusState; // req'd by API, but not really necessary for marker detection
-  _deviceVisionThread.Update(image, bogusState);
-  
-  MessageVisionMarker msg;
-  while(_deviceVisionThread.CheckMailbox(msg)) {
-    // Pass marker detections along to UI/game for use
-    _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DeviceDetectedVisionMarker(
-                                                                                                                       msg.markerType,
-                                                                                                                       msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
-                                                                                                                       msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
-                                                                                                                       msg.x_imgUpperRight, msg.y_imgUpperRight,
-                                                                                                                       msg.x_imgLowerRight, msg.y_imgLowerRight
-                                                                                                                       )));
+  EngineState oldState = _engineState;
+  if (oldState == newState)
+  {
+    return;
   }
-# endif // DEVICE_VISION_MODE
+  
+  _engineState = newState;
+  
+  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdateEngineState>(oldState, newState);
+  
+  PRINT_NAMED_EVENT("app.engine.state","%s => %s", EngineStateToString(oldState), EngineStateToString(newState));
 }
 
 void CozmoEngine::ReadAnimationsFromDisk()
@@ -281,7 +315,6 @@ Result CozmoEngine::InitInternal()
   std::string keywordFile = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
   std::string dictFile = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
   _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
-  _context->GetRobotMsgHandler()->Init(&_robotChannel, _context->GetRobotManager());
   
   // Setup Audio Controller
   using namespace Audio;
@@ -293,30 +326,6 @@ Result CozmoEngine::InitInternal()
   
   return RESULT_OK;
 }
-  
-Result CozmoEngine::UpdateInternal(const BaseStationTime_t currTime_ns)
-{
-  
-  // Update robot comms
-  _robotChannel.Update();
-  
-  if(_isListeningForRobots) {
-    _context->GetRobotAdvertisementService()->Update();
-  }
-  
-  // Update time
-  BaseStationTimer::getInstance()->UpdateTime(currTime_ns);
-  
-  
-  _context->GetRobotMsgHandler()->ProcessMessages();
-  
-  // Let the robot manager do whatever it's gotta do to update the
-  // robots in the world.
-  _context->GetRobotManager()->UpdateAllRobots();
-  
-  _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
-  return RESULT_OK;
-} // UpdateInternal()
 
 void CozmoEngine::ForceAddRobot(AdvertisingRobot robotID,
                                         const char*      robotIP,

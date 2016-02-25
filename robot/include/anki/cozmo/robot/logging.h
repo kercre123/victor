@@ -140,8 +140,8 @@ namespace Anki {
 #else
       #define AnkiError(...)
       #define AnkiConditionalError (...)
-      #define AnkiConditionalErrorAndReturn (...)
-      #define AnkiConditionalErrorAndReturnValue(...)
+      #define AnkiConditionalErrorAndReturn (expression, ...) if (!(expression)) return
+      #define AnkiConditionalErrorAndReturnValue(expression, returnValue, ...) if (!(expression)) return returnValue
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
@@ -167,8 +167,8 @@ namespace Anki {
 #else
       #define AnkiWarn(...)
       #define AnkiConditionalWarn(...)
-      #define AnkiConditionalWarnAndReturn(...)
-      #define AnkiConditionalWarnAndReturnValue(...)
+      #define AnkiConditionalWarnAndReturn(expression, ...) if (!(expression)) return
+      #define AnkiConditionalWarnAndReturnValue(expression, returnValue, ...) if (!(expression)) return returnValue
 #endif
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS

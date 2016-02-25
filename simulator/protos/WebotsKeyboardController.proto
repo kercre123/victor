@@ -17,7 +17,7 @@ PROTO WebotsKeyboardController [
   field SFString behaviorGroup "RequestSpeedTap"
 
   # BehaviorChooser to send
-  field SFString behaviorChooserName "InvestorDemoFacesAndBlocks"
+  field SFString behaviorChooserName "default"
 
   field SFString emotionName "WantToPlay"
   field SFFloat emotionVal 1.0
@@ -40,8 +40,10 @@ PROTO WebotsKeyboardController [
   # Turbo speed in mm/s (hold alt)
   field SFFloat driveSpeedTurbo 150
 
-  # Point turn speed (deg/s), no target angle 
-  field SFFloat pointTurnSpeed_degPerSec 45
+  # Point turn angle (deg) and speed (deg/s)
+  field SFFloat pointTurnAngle_deg        45
+  field SFFloat pointTurnSpeed_degPerSec  250
+  field SFFloat pointTurnAccel_degPerSec2 10000 
   
   # Path speeds
   field SFFloat pathSpeed_mmps  60
@@ -80,12 +82,9 @@ PROTO WebotsKeyboardController [
   field SFFloat alignWithObjectDistToMarker_mm 20
 
   # Hacky way for me to modify values that I want to send to robot via keyboard controller
-  field SFFloat lWheelKp 0.0005
-  field SFFloat lWheelKi 0.00005
-  field SFFloat lWheelMaxErrorSum 5000
-  field SFFloat rWheelKp 0.0005
-  field SFFloat rWheelKi 0.00005
-  field SFFloat rWheelMaxErrorSum 5000
+  field SFFloat wheelKp 0.0005
+  field SFFloat wheelKi 0.00005
+  field SFFloat wheelMaxErrorSum 5000
 
   field SFFloat headKp 4
   field SFFloat headKi 0.02
@@ -96,6 +95,11 @@ PROTO WebotsKeyboardController [
   field SFFloat liftKi 0.1
   field SFFloat liftKd 1250
   field SFFloat liftMaxErrorSum 4
+
+  field SFFloat pointTurnKp 250
+  field SFFloat pointTurnKi 0.2
+  field SFFloat pointTurnKd 3000
+  field SFFloat pointTurnMaxErrorSum 100
 
   field SFFloat headSpeedDegPerSec 360
   field SFFloat headAccelDegPerSec2 2500
