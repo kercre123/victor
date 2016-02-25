@@ -166,7 +166,7 @@ namespace Anki {
           angleErrorSum_ = 0.f;
 
           power_ = 0;
-          HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+          HAL::MotorSetPower(MOTOR_LIFT, power_);
           
           if (autoReEnable) {
             enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
@@ -182,8 +182,8 @@ namespace Anki {
         currDesiredAngle_ = currentAngle_.ToFloat();
         desiredHeight_ = Rad2Height(currAngle);
 
-        HAL::MotorResetPosition(HAL::MOTOR_LIFT);
-        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
+        HAL::MotorResetPosition(MOTOR_LIFT);
+        prevHalPos_ = HAL::MotorGetPosition(MOTOR_LIFT);
         isCalibrated_ = true;
       }
 
@@ -192,7 +192,7 @@ namespace Anki {
         AnkiEvent( 16, "LiftController", 144, "Starting calibration", 0);
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
-        Messages::SendMotorCalibrationMsg(HAL::MOTOR_LIFT, true);
+        Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true);
       }
 
       bool IsCalibrated()
@@ -218,7 +218,7 @@ namespace Anki {
 
             case LCS_LOWER_LIFT:
               power_ = -0.3;
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+              HAL::MotorSetPower(MOTOR_LIFT, power_);
               lastLiftMovedTime_ms = HAL::GetTimeStamp();
               calState_ = LCS_WAIT_FOR_STOP;
               break;
@@ -230,7 +230,7 @@ namespace Anki {
                 if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_STOP_TIME_MS) {
                   // Turn off motor
                   power_ = 0;  // Not strong enough to lift motor, but just enough to unwind backlash. Not sure if this is actually helping.
-                  HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+                  HAL::MotorSetPower(MOTOR_LIFT, power_);
 
                   // Set timestamp to be used in next state to wait for motor to "relax"
                   lastLiftMovedTime_ms = HAL::GetTimeStamp();
@@ -249,7 +249,7 @@ namespace Anki {
                 AnkiEvent( 16, "LiftController", 91, "Calibrated", 0);
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT);
                 calState_ = LCS_IDLE;
-                Messages::SendMotorCalibrationMsg(HAL::MOTOR_LIFT, false);
+                Messages::SendMotorCalibrationMsg(MOTOR_LIFT, false);
               }
               break;
           }
@@ -327,20 +327,20 @@ namespace Anki {
       void PoseAndSpeedFilterUpdate()
       {
         // Get encoder speed measurements
-        f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+        f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(MOTOR_LIFT);
 
         radSpeed_ = (measuredSpeed *
                      (1.0f - SPEED_FILTERING_COEFF) +
                      (radSpeed_ * SPEED_FILTERING_COEFF));
 
         // Update position
-        currentAngle_ += (HAL::MotorGetPosition(HAL::MOTOR_LIFT) - prevHalPos_);
+        currentAngle_ += (HAL::MotorGetPosition(MOTOR_LIFT) - prevHalPos_);
 
 #if(DEBUG_LIFT_CONTROLLER)
         AnkiDebug( 16, "LiftController", 308, "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n", 6,
-              measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(HAL::MOTOR_LIFT), prevHalPos_, power_);
+              measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MOTOR_LIFT), prevHalPos_, power_);
 #endif
-        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
+        prevHalPos_ = HAL::MotorGetPosition(MOTOR_LIFT);
       }
 
       void SetDesiredHeight(f32 height_mm)
@@ -582,7 +582,7 @@ namespace Anki {
 #endif
 
         power_ = CLIP(power_, -1.0, 1.0);
-        HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+        HAL::MotorSetPower(MOTOR_LIFT, power_);
 
         return RESULT_OK;
       }

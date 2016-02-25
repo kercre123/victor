@@ -105,7 +105,7 @@ namespace HeadController {
         angleErrorSum_ = 0.f;
 
         power_ = 0;
-        HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
+        HAL::MotorSetPower(MOTOR_HEAD, power_);
       }
     }
 
@@ -122,7 +122,7 @@ namespace HeadController {
 #else
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
-      Messages::SendMotorCalibrationMsg(HAL::MOTOR_HEAD, true);
+      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true);
 #endif
     }
 
@@ -135,8 +135,8 @@ namespace HeadController {
     void ResetLowAnglePosition()
     {
       currentAngle_ = MAX_HEAD_ANGLE + HEAD_CAL_OFFSET;
-      HAL::MotorResetPosition(HAL::MOTOR_HEAD);
-      prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
+      HAL::MotorResetPosition(MOTOR_HEAD);
+      prevHalPos_ = HAL::MotorGetPosition(MOTOR_HEAD);
       isCalibrated_ = true;
     }
 
@@ -161,7 +161,7 @@ namespace HeadController {
 
           case HCS_LOWER_HEAD:
             power_ = HEAD_CALIB_POWER;
-            HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
+            HAL::MotorSetPower(MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             calState_ = HCS_WAIT_FOR_STOP;
             break;
@@ -173,13 +173,13 @@ namespace HeadController {
               if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
                 // Turn off motor
                 power_ = 0.0;
-                HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
+                HAL::MotorSetPower(MOTOR_HEAD, power_);
 
 #ifdef          CALIB_WHILE_APPLYING_POWER
                 AnkiEvent( 7, "HeadController", 91, "Calibrated", 0);
                 ResetLowAnglePosition();
                 calState_ = HCS_IDLE;
-                Messages::SendMotorCalibrationMsg(HAL::MOTOR_HEAD, false);
+                Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
                 break;
 #endif
                 // Set timestamp to be used in next state to wait for motor to "relax"
@@ -198,7 +198,7 @@ namespace HeadController {
               AnkiEvent( 7, "HeadController", 91, "Calibrated", 0);
               ResetLowAnglePosition();
               calState_ = HCS_IDLE;
-              Messages::SendMotorCalibrationMsg(HAL::MOTOR_HEAD, false);
+              Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
             }
             break;
         }
@@ -235,20 +235,20 @@ namespace HeadController {
     void PoseAndSpeedFilterUpdate()
     {
       // Get encoder speed measurements
-      f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
+      f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(MOTOR_HEAD);
 
       radSpeed_ = (measuredSpeed *
                    (1.0f - SPEED_FILTERING_COEFF) +
                    (radSpeed_ * SPEED_FILTERING_COEFF));
 
       // Update position
-      currentAngle_ += (HAL::MotorGetPosition(HAL::MOTOR_HEAD) - prevHalPos_);
+      currentAngle_ += (HAL::MotorGetPosition(MOTOR_HEAD) - prevHalPos_);
 
 #if(DEBUG_HEAD_CONTROLLER)
       AnkiDebug( 7, "HeadController", 92, "HEAD FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f", 6,
-            measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(HAL::MOTOR_HEAD), prevHalPos_, power_);
+            measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MOTOR_HEAD), prevHalPos_, power_);
 #endif
-      prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
+      prevHalPos_ = HAL::MotorGetPosition(MOTOR_HEAD);
     }
 
     f32 GetAngularVelocity()
@@ -263,7 +263,7 @@ namespace HeadController {
       // NOTE: You can use this to test if it's possible to make Cozmo head skip gear teeth by
       //       driving the motor too hard.
       f32 power = CLIP(rad_per_sec / HAL::MAX_HEAD_SPEED, -1.0, 1.0);
-      HAL::MotorSetPower(HAL::MOTOR_HEAD, power);
+      HAL::MotorSetPower(MOTOR_HEAD, power);
       inPosition_ = true;
        */
        
@@ -312,7 +312,7 @@ namespace HeadController {
         #if(DEBUG_HEAD_CONTROLLER)
         AnkiDebug( 7, "HeadController", 93, "Already at desired angle %f degrees", 1, RAD_TO_DEG_F32(angle));
         #endif
-        HAL::MotorSetPower(HAL::MOTOR_HEAD,0);
+        HAL::MotorSetPower(MOTOR_HEAD,0);
         return;
       }
 
@@ -335,7 +335,7 @@ namespace HeadController {
           #if(DEBUG_HEAD_CONTROLLER)
           AnkiDebug( 7, "HeadController", 95, "(fixedDuration): Already at desired position", 0);
           #endif
-          HAL::MotorSetPower(HAL::MOTOR_HEAD,0);
+          HAL::MotorSetPower(MOTOR_HEAD,0);
           return;
         }
 
@@ -482,7 +482,7 @@ namespace HeadController {
         power_ = CLIP(power_, -1.0, 1.0);
 
 
-        HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
+        HAL::MotorSetPower(MOTOR_HEAD, power_);
       } // if not in position
 
       return RESULT_OK;

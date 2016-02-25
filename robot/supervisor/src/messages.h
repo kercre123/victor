@@ -27,11 +27,11 @@
 #define COZMO_MESSAGE_ROBOT_H
 
 #include "anki/types.h"
+#include "clad/types/motorTypes.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "anki/cozmo/robot/hal.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -70,7 +70,7 @@ namespace Anki {
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
 
-      Result SendMotorCalibrationMsg(HAL::MotorID motor, bool calibStarted);
+      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted);
       
 #ifndef TARGET_K02
       // For sending text message to basestation

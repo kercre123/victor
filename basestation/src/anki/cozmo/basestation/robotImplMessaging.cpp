@@ -169,7 +169,7 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
 void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const RobotInterface::MotorCalibration& payload = message.GetData().Get_motorCalibration();
-  PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", payload.motorID, payload.calibStarted);
+  PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", (int)payload.motorID, payload.calibStarted);
 }
   
 void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)

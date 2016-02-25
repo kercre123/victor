@@ -1,5 +1,6 @@
 #include "messages.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/robot/hal.h"
 #include <math.h>
 
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -743,7 +744,8 @@ namespace Anki {
         }
       }
 
-      Result SendMotorCalibrationMsg(HAL::MotorID motor, bool calibStarted)
+      
+      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted)
       {
         RobotInterface::MotorCalibration m;
         m.motorID = motor;

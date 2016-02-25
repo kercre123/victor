@@ -568,8 +568,8 @@ namespace Anki {
 
           wheelTargetDir_ = wheelPower_ <= wheelTargetPower_ ? 1 : -1;
 
-          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LEFT_WHEEL);
-          f32 rSpeed = HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
+          f32 lSpeed = HAL::MotorGetSpeed(MOTOR_LEFT_WHEEL);
+          f32 rSpeed = HAL::MotorGetSpeed(MOTOR_RIGHT_WHEEL);
           if (enableDirectHALTest_) {
             AnkiInfo( 75, "TestModeController.DriveTestUpdate", 315, "Applying %.3f power (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)", 5,
                   wheelTargetPower_*0.01f,
@@ -593,16 +593,16 @@ namespace Anki {
             if (wheelPower_ > wheelTargetPower_) {
               wheelPower_ = wheelTargetPower_;
             }
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
             //PRINT("WheelPower = %f (increasing)\n", 0.01f*wheelPower_);
           } else if (wheelTargetDir_ < 0 && wheelPower_ > wheelTargetPower_) {
             wheelPower_ -= WHEEL_POWER_PERCENT_ACCEL;
             if (wheelPower_ < wheelTargetPower_) {
               wheelPower_ = wheelTargetPower_;
             }
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
             //PRINT("WheelPower = %f (decreasing)\n", 0.01f*wheelPower_);
           }
         } else {
@@ -680,10 +680,10 @@ namespace Anki {
                 up = !up;
                 if (up) {
                   AnkiInfo( 77, "TestModeController.LiftTestUpdate", 320, "Lift UP %f power", 1, liftPower_);
-                  HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
+                  HAL::MotorSetPower(MOTOR_LIFT, liftPower_);
                 } else {
                   AnkiInfo( 77, "TestModeController.LiftTestUpdate", 321, "Lift DOWN %f power", 1, -liftPower_);
-                  HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
+                  HAL::MotorSetPower(MOTOR_LIFT, -liftPower_);
                 }
 
 
@@ -712,7 +712,7 @@ namespace Anki {
 
 
         // Print speed at the end of a continuous segment of non-zero speeds
-        f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+        f32 lSpeed = HAL::MotorGetSpeed(MOTOR_LIFT);
         if (ABS(lSpeed) > 0.001f) {
           // Is this the start of a sequence of non-zero lift speeds?
           if (avgLiftSpeed_ == 0) {
@@ -763,7 +763,7 @@ namespace Anki {
 
         // Print height and speed
         if (ticCnt2_++ >= printCyclePeriod_) {
-          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+          f32 lSpeed = HAL::MotorGetSpeed(MOTOR_LIFT);
           f32 lPos = LiftController::GetHeightMM();
 
           AnkiInfo( 79, "TestModeController.LiftToggleTestUpdate", 325, "Lift speed %f rad/s, height %f mm", 2, lSpeed, lPos);
@@ -815,10 +815,10 @@ namespace Anki {
                 up = !up;
                 if (up) {
                   AnkiInfo( 81, "TestModeController.HeadTestUpdate", 328, "Head UP %f power", 1, headPower_);
-                  HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
+                  HAL::MotorSetPower(MOTOR_HEAD, headPower_);
                 } else {
                   AnkiInfo( 81, "TestModeController.HeadTestUpdate", 329, "Head DOWN %f power", 1, -headPower_);
-                  HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
+                  HAL::MotorSetPower(MOTOR_HEAD, -headPower_);
                 }
 
                 // Cycle through different power levels
@@ -859,7 +859,7 @@ namespace Anki {
 
         // Print speed
         if (ticCnt2_++ >= printCyclePeriod_) {
-          f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
+          f32 hSpeed = HAL::MotorGetSpeed(MOTOR_HEAD);
           f32 hSpeed_filt = HeadController::GetAngularVelocity();
           f32 hPos = HeadController::GetAngleRad();
 
@@ -1065,8 +1065,8 @@ namespace Anki {
           } else {
             // Stopping
             SteeringController::ExecuteDirectDrive(0, 0);
-            HAL::MotorResetPosition(HAL::MOTOR_LEFT_WHEEL);
-            HAL::MotorResetPosition(HAL::MOTOR_RIGHT_WHEEL);
+            HAL::MotorResetPosition(MOTOR_LEFT_WHEEL);
+            HAL::MotorResetPosition(MOTOR_RIGHT_WHEEL);
             ST_prevLeftPos = 1000;
             ST_prevRightPos = 1000;
             ST_slowDownTics = 0;
@@ -1077,13 +1077,13 @@ namespace Anki {
 
         // Report stopping distance once it has come to a complete stop
         if(ST_slowingDown) {
-          if (HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL) == ST_prevLeftPos &&
-              HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL) == ST_prevRightPos) {
+          if (HAL::MotorGetPosition(MOTOR_LEFT_WHEEL) == ST_prevLeftPos &&
+              HAL::MotorGetPosition(MOTOR_RIGHT_WHEEL) == ST_prevRightPos) {
             AnkiInfo( 89, "TestModeController.StopTestUpdate", 341, "STOPPED: (%f, %f) mm in %d tics", 3, ST_prevLeftPos, ST_prevRightPos, ST_slowDownTics);
             ST_slowingDown = false;
           }
-          ST_prevLeftPos = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
-          ST_prevRightPos = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
+          ST_prevLeftPos = HAL::MotorGetPosition(MOTOR_LEFT_WHEEL);
+          ST_prevRightPos = HAL::MotorGetPosition(MOTOR_RIGHT_WHEEL);
           ST_slowDownTics++;
         }
 
@@ -1108,11 +1108,11 @@ namespace Anki {
         static f32 pwr = 1.0;
         if (ticCnt_++ > 5000 / TIME_STEP) {
           AnkiInfo( 91, "TestModeController.MaxPowerTestUpdate", 342, "SWITCHING POWER: %f", 1, pwr);
-          HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 1.0);
-          HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.0);
-          //HAL::MotorSetPower(HAL::MOTOR_LIFT, pwr);
-          //HAL::MotorSetPower(HAL::MOTOR_HEAD, pwr);
-          //HAL::MotorSetPower(HAL::MOTOR_GRIP, pwr);
+          HAL::MotorSetPower(MOTOR_LEFT_WHEEL, 1.0);
+          HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, 1.0);
+          //HAL::MotorSetPower(MOTOR_LIFT, pwr);
+          //HAL::MotorSetPower(MOTOR_HEAD, pwr);
+          //HAL::MotorSetPower(MOTOR_GRIP, pwr);
           pwr *= -1;
           ticCnt_ = 0;
         }
