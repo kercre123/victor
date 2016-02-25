@@ -105,6 +105,7 @@ bool RobotAudioClient::LoadAnimationAudio( Animation* anAnimation, bool streamAu
   else if ( !_streamAudioToRobot ) {
     // Bypass queing events to play through robot buffer
     _didBeginPostingEvents = true;
+    _isFirstBufferLoaded = true;
   }
   else if ( !_audioBuffer->IsWaitingForReset() ) {
     BeginBufferingAudioEvents();
@@ -138,15 +139,19 @@ void RobotAudioClient::AbortAnimation()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms)
 {
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO && DEBUG_ROBOT_ANIMATION_AUDIO_LEVEL > 0 ) {
+    PRINT_NAMED_WARNING("RobotAudioClient.PrepareRobotAudioMessage", "Animation %s - StartTime: %d ms - streamingTime: %d ms", _animationName.c_str(), startTime_ms, streamingTime_ms);
+  }
+  
   // No audio buffer therefore no audio to play
   if ( nullptr == _audioBuffer ) {
     return true;
   }
   
-  // Prepare audio stream for events if using audio plug-in buffer
   bool isMsgReady = false;
   const TimeStamp_t relevantTimeMS = streamingTime_ms - startTime_ms;
   if ( _streamAudioToRobot ) {
+    // Prepare audio stream for events if using audio plug-in buffer
     if ( nullptr == _currentBufferStream ) {
       // Check if we need the next stream
       if ( !_animationEventList.empty() ) {
@@ -194,8 +199,16 @@ bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeSt
         Util::Dispatch::After( _postEventTimerQueue, std::chrono::milliseconds( kPlayRobotOnDeviceDelayMS ), [this, animationPlayId, event] ()
                                {
                                  // Trigger events
-                                 if ( _isPlayingAnimation && ( _currentAnimationPlayId == animationPlayId ) ) {
-                                   PostCozmoEvent( event );
+                                 if (  _currentAnimationPlayId == animationPlayId ) {
+                                   PostCozmoEvent( event, [this] ( AudioCallback callback )
+                                                   {
+                                                     if ( callback.callbackInfo.GetTag() == AudioCallbackInfoTag::callbackError ||
+                                                          callback.callbackInfo.GetTag() == AudioCallbackInfoTag::callbackComplete ) {
+                                                       if (_animationEventList.empty()) {
+                                                         ClearAnimation();
+                                                       }
+                                                     }
+                                                   } );
                                  }
                                } );
         _animationEventList.pop_front();
@@ -212,6 +225,11 @@ bool RobotAudioClient::PopRobotAudioMessage( RobotInterface::EngineToRobot*& out
                                              TimeStamp_t startTime_ms,
                                              TimeStamp_t streamingTime_ms )
 {
+  
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO && DEBUG_ROBOT_ANIMATION_AUDIO_LEVEL > 0 ) {
+    PRINT_NAMED_WARNING("RobotAudioClient.PopRobotAudioMessage", "Animation %s - StartTime: %d ms - streamingTime: %d ms", _animationName.c_str(), startTime_ms, streamingTime_ms);
+  }
+  
   // No audio buffer therefore no audio to play
   if ( nullptr == _audioBuffer ) {
     out_RobotAudioMessagePtr = nullptr;
@@ -260,8 +278,12 @@ bool RobotAudioClient::PopRobotAudioMessage( RobotInterface::EngineToRobot*& out
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RobotAudioClient::UpdateFirstBuffer()
 {
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO && DEBUG_ROBOT_ANIMATION_AUDIO_LEVEL > 0 ) {
+    PRINT_NAMED_WARNING("RobotAudioClient.UpdateFirstBuffer", "Animation %s", _animationName.c_str());
+  }
+  
   // Either the first buffer is loaded or there is no audio buffer, therefore, audio is ready
-  if ( _isFirstBufferLoaded || !_streamAudioToRobot || nullptr == _audioBuffer ) {
+  if ( _isFirstBufferLoaded || nullptr == _audioBuffer ) {
     return true;
   }
   
@@ -311,17 +333,17 @@ void RobotAudioClient::BeginBufferingAudioEvents()
   const AnimationPlayId animationPlayId = _currentAnimationPlayId;
   const uint32_t firstAudioEventOffset = _animationEventList.front().TimeInMS;
   for ( auto& anEvent : _animationEventList ) {
-    const GameEvent::GenericEvent animationEvent = anEvent.AudioEvent;
+    const GameEvent::GenericEvent audioEvent = anEvent.AudioEvent;
     const AnimationEvent::AnimationEventId animationEventId = anEvent.EventId;
     Util::Dispatch::After( _postEventTimerQueue,
                            std::chrono::milliseconds( anEvent.TimeInMS - firstAudioEventOffset ),
-                           [this, animationPlayId, animationEvent, animationEventId] ()
+                           [this, animationPlayId, audioEvent, animationEventId] ()
                            {
                              // Trigger events if aniation is still active
                              if ( _isPlayingAnimation && ( _currentAnimationPlayId == animationPlayId ) ) {
-                               PostCozmoEvent( animationEvent,
-                                              [this, animationEventId, animationEvent]( AudioCallback callback )
-                                              { HandleCozmoEventCallback( animationEventId, animationEvent, callback ); } );
+                               PostCozmoEvent( audioEvent,
+                                              [this, animationEventId, audioEvent]( AudioCallback callback )
+                                              { HandleCozmoEventCallback( animationEventId, audioEvent, callback ); } );
                              }
                            } );
   }
