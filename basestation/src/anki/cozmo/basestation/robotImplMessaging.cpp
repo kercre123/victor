@@ -603,10 +603,10 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
         if (repeatTimeCount >= 3)
         {
           PRINT_NAMED_WARNING("Robot.HandleImageChunk",
-                              "Multiple image frames processed at %fms, %d repeat(s). Latest robot frametime %dms.",
-                              currentMessageTime,
+                              "%d robot images (latest=%dms) processed in basestation tick at %fms.",
                               repeatTimeCount,
-                              payload.frameTimeStamp);
+                              payload.frameTimeStamp,
+                              currentMessageTime);
         }
       }
     }
