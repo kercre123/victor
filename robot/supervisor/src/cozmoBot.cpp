@@ -11,8 +11,6 @@
 #include "imuFilter.h"
 #include "proxSensors.h"
 #include "version.h"
-#include "backpackLightController.h"
-#include "blockLightController.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
@@ -25,6 +23,8 @@
 #ifndef TARGET_K02
 #include "animationController.h"
 #include "anki/common/shared/utilities_shared.h"
+#include "backpackLightController.h"
+#include "blockLightController.h"
 #endif
 
 #ifdef SIMULATOR
@@ -159,10 +159,10 @@ namespace Anki {
 
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 244, "PathFollower System init failed.\n", 0);
-
+#ifndef TARGET_K02
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 245, "BackpackLightController init failed.\n", 0);
-
+#endif
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == RESULT_FAIL) {
@@ -277,17 +277,19 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           AnkiEvent( 40, "Radio", 250, "Robot radio is connected.", 0);
           wasConnected_ = true;
+#ifndef TARGET_K02
           BackpackLightController::TurnOffAll();
+#endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           AnkiEvent( 40, "Radio", 251, "Radio disconnected", 0);
           Messages::ResetInit();
           SteeringController::ExecuteDirectDrive(0,0);
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
-          BackpackLightController::Init();
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
 #ifndef TARGET_K02
+          BackpackLightController::Init();
           TestModeController::Start(TM_NONE);
           AnimationController::EnableTracks(ALL_TRACKS);
           HAL::FaceClear();
@@ -339,9 +341,10 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
+#ifndef TARGET_K02
         BackpackLightController::Update();
         BlockLightController::Update();
-
+#endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();

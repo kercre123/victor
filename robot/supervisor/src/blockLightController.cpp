@@ -25,6 +25,7 @@ namespace BlockLightController {
   namespace {
 
     // Assumes a block comms resolution of TIME_STEP
+    const u8 MAX_NUM_CUBES = 4; // This whole module needs to be refactored. Hard code this for now
 
     // Parameters for each LED on each block
     LightState _ledParams[MAX_NUM_CUBES][NUM_CUBE_LEDS];
@@ -57,8 +58,7 @@ namespace BlockLightController {
     }
 
     if (blockLEDsUpdated) {
-			// Stubbed out for now TODO move all this functionality to body.
-      //HAL::SetBlockLight(blockID, m);
+      HAL::SetBlockLight(blockID, m);
     }
   }
 
