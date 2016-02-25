@@ -62,6 +62,7 @@ typedef enum {
 
 struct CladBuffer
 {
+	uint16_t flags;
   uint8_t  length;
   uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE];
 };
@@ -71,7 +72,6 @@ struct GlobalDataToHead
   uint32_t source;
   Fixed speeds[4];
   Fixed positions[4];
-  uint16_t flags;
   uint32_t cliffLevel;
   CladBuffer cladBuffer;
 };
@@ -80,7 +80,6 @@ struct GlobalDataToBody
 {
   uint32_t source;
   int16_t motorPWM[4];
-  uint16_t flags;
   CladBuffer cladBuffer;
 };
 

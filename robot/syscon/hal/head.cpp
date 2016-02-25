@@ -189,12 +189,12 @@ static void ProcessMessage()
   using namespace Anki::Cozmo;
   
   static bool wifiConnected;
-  if ((g_dataToBody.flags & SF_WiFi_Connected) && wifiConnected == false)
+  if ((g_dataToBody.cladBuffer.flags & SF_WiFi_Connected) && wifiConnected == false)
   {
     On_WiFiConnected();
     wifiConnected = true;
   }
-  else if (!(g_dataToBody & SF_WiFi_Connected)) && wifiConnected == true)
+  else if ((!(g_dataToBody.cladBuffer.flags & SF_WiFi_Connected)) && (wifiConnected == true))
   {
     On_WiFiDisconnected();
     wifiConnected = false;

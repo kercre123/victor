@@ -458,7 +458,7 @@ static void sendNthPropState(void* userdata)
   msg.factoryID = accessories[n].id;
   msg.connected = accessories[n].active;
   Anki::Cozmo::RobotInterface::SendMessage(msg);
-  if (n + 1 < MAX_ACCESSORIES) RTOS::schedule(sendNthPropState, CYCLES_MS(20.0f), n+1, false);
+  if (n + 1 < MAX_ACCESSORIES) RTOS::schedule(sendNthPropState, CYCLES_MS(20.0f), (void*)(n+1), false);
 }
 
 void Radio::sendPropConnectionState(void)
