@@ -1146,12 +1146,39 @@ Supervisor {
 									Transform {
 										translation 0.001 0 -0.0235
 										children [
-										DEF GRIPPER_BOTTOM Shape {
-											geometry Box {
-											size 0.005 0.029 0.005
-											}
-											appearance USE MAIN_BODY_APPEARANCE
-										}
+                      DEF GRIPPER_BOTTOM Shape {
+                        geometry Box {
+                          size 0.005 0.029 0.005
+                        }
+                        appearance USE MAIN_BODY_APPEARANCE
+                      }
+										]
+									}
+									
+									# Tool code dots (varying y in Transform translation moves the dots L/R)
+									Transform {
+									  rotation 1 0 0 1.5708
+										translation 0.001 0.01 -0.021
+										children [
+                      DEF TOOL_CODE_DOT Shape {
+                        geometry Cylinder {
+                          height .00025
+                          radius .001
+                        }
+                        appearance Appearance {
+                          material Material {
+                            diffuseColor 0.1 0.1 0.1
+                            shininess 0.5
+                          }
+                        }
+                      }                        
+										]
+									}
+									Transform {
+									  rotation 1 0 0 1.5708
+										translation 0.001 -0.01 -0.021
+										children [
+                      USE TOOL_CODE_DOT
 										]
 									}
 								
