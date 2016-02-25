@@ -45,6 +45,11 @@ cpp: $(OUTPUT_H_AND_CPP)
 
 python: $(OUTPUT_PYTHON)
 
+%_switch_group_anim.def : %.clad $(CLAD_CPP_SWITCH)
+	if test -f $(OUTPUT_DIR)robot/$*_switch_group_anim.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_group_anim.def; fi
+	python $(CLAD_CPP_SWITCH) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_group_anim.def
+
 %_switch.def : %.clad $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR)robot/$*_switch.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch.def; fi
 	python $(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
@@ -100,6 +105,8 @@ k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(RTIP_START_TAG)_to_$(RTIP_E
 esp: cpp $(ENGINE_TO_ROBOT_UNION)_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
 
 lightCube: $(LIGHT_CUBE_UNION)_declarations.def $(LIGHT_CUBE_UNION)_send_helper.h $(LIGHT_CUBE_UNION)_switch.def
+
+fourzero: cpp $(ENGINE_TO_ROBOT_UNION)_switch_group_anim.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h
 
 show:
 	echo "*** input files ***"

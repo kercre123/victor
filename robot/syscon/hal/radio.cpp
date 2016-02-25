@@ -449,3 +449,19 @@ void Radio::manage(void* userdata) {
     send_dummy_byte();
   }
 }
+
+static void sendNthPropState(void* userdata)
+{
+  const int n = (int)userdata;
+  Anki::Cozmo::ObjectConnectionState msg;
+  msg.objectID = n;
+  msg.factoryID = accessories[n].id;
+  msg.connected = accessories[n].active;
+  Anki::Cozmo::RobotInterface::SendMessage(msg);
+  if (n + 1 < MAX_ACCESSORIES) RTOS::schedule(sendNthPropState, CYCLES_MS(20.0f), n+1, false);
+}
+
+void Radio::sendPropConnectionState(void)
+{
+  RTOS::schedule(sendNthPropState, CYCLES_MS(1000.0f), 0, false);
+}

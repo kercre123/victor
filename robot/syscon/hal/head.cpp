@@ -138,6 +138,16 @@ void Head::manage(void* userdata) {
 
 extern void EnterRecovery(void);
 
+static void On_WiFiConnected(void)
+{
+  Radio::sendPropConnectionState();
+}
+
+static void On_WiFiDisconnected(void)
+{
+  
+}
+
 static void Process_bootloadBody(const Anki::Cozmo::RobotInterface::BootloadBody& msg)
 {
   EnterRecovery();
@@ -177,6 +187,19 @@ static void Process_assignCubeSlots(const Anki::Cozmo::CubeSlots& msg)
 static void ProcessMessage()
 {
   using namespace Anki::Cozmo;
+  
+  static bool wifiConnected;
+  if ((g_dataToBody.flags & SF_WiFi_Connected) && wifiConnected == false)
+  {
+    On_WiFiConnected();
+    wifiConnected = true;
+  }
+  else if (!(g_dataToBody & SF_WiFi_Connected)) && wifiConnected == true)
+  {
+    On_WiFiDisconnected();
+    wifiConnected = false;
+  }
+  
   const u8 tag = g_dataToBody.cladBuffer.data[0];
   if (g_dataToBody.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
   {
@@ -184,7 +207,7 @@ static void ProcessMessage()
   }
   else if (tag > RobotInterface::TO_BODY_END)
   {
-    AnkiError( 130, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, tag);
+    AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, tag);
   }
   else
   {
@@ -193,7 +216,7 @@ static void ProcessMessage()
     {
       #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"
       default:
-        AnkiError( 131, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, tag);
+        AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, tag);
     }
   }
 }

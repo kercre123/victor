@@ -9,6 +9,7 @@ namespace Radio {
   void discover();
   void setPropState(unsigned int slot, const uint16_t *state);
   void assignProp(unsigned int slot, uint32_t accessory);
+  void sendPropConnectionState();
 }
 
 #endif

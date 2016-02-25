@@ -54,9 +54,14 @@ struct AcceleratorPacket {
 // 32 bytes of payload plus tag
 #define SPINE_MAX_CLAD_MSG_SIZE (33)
 
+typedef enum {
+  SF_WiFi_Connected = 0x01,
+  SF_BLE_Connected  = 0x02,
+  SF_OBJ_Connected  = 0x04,
+} SpineFlags;
+
 struct CladBuffer
 {
-  uint16_t PADDING;
   uint8_t  length;
   uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE];
 };
@@ -66,6 +71,7 @@ struct GlobalDataToHead
   uint32_t source;
   Fixed speeds[4];
   Fixed positions[4];
+  uint16_t flags;
   uint32_t cliffLevel;
   CladBuffer cladBuffer;
 };
@@ -74,6 +80,7 @@ struct GlobalDataToBody
 {
   uint32_t source;
   int16_t motorPWM[4];
+  uint16_t flags;
   CladBuffer cladBuffer;
 };
 

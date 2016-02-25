@@ -5,6 +5,7 @@
 #include "wifi.h"
 #include "messages.h"
 #include "spine.h"
+#include "uart.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
 #include "anki/cozmo/robot/logging.h"
@@ -61,6 +62,8 @@ namespace HAL {
 
   void RadioUpdateState(u8 wifi, u8 blue)
   {
+    if (wifi) g_dataToBody.flags |= SF_WiFi_Connected;
+    else      g_dataToBody.flags &= ~SF_WiFi_Connected;
     wifiState = wifi;
     blueState = blue;
   }
@@ -118,7 +121,7 @@ namespace HAL {
           available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
           if (msgTag > RobotInterface::TO_RTIP_END)
           {
-            AnkiError( 127, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg->tag);
+            AnkiError( 141, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg->tag);
           }
           else if (msgTag < RobotInterface::TO_RTIP_START)
           {
@@ -126,7 +129,7 @@ namespace HAL {
           }
           else if (msg->Size() != msgLen)
           {
-            AnkiError( 127, "WiFi.Update", 381, "CLAD message 0x%x size %d doesn't match size in buffer %d", 3, msg->tag, msg->Size(), msgLen);
+            AnkiError( 141, "WiFi.Update", 381, "CLAD message 0x%x size %d doesn't match size in buffer %d", 3, msg->tag, msg->Size(), msgLen);
           }
           else
           {

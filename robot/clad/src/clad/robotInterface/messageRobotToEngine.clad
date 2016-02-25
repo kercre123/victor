@@ -112,6 +112,7 @@ union RobotToEngine {
   NVReadResult               nvData                 = 0xCD,
   NVStorage::NVOpResult      nvResult               = 0xCE,
   CrashReport                crashReport            = 0xCF,
+  ObjectConnectionState activeObjectConnectionState = 0xD0,
   
   //0xF0 to 0x FE: Unreliable message to the Engine
   RobotState                 state                  = 0xF0,

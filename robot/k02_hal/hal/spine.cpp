@@ -55,7 +55,7 @@ namespace HAL {
     }
     else if (tag < RobotInterface::TO_RTIP_START)
     {
-      AnkiError( 129, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, tag, g_dataToHead.cladBuffer.length);
+      AnkiError( 138, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, tag, g_dataToHead.cladBuffer.length);
     }
     else if (tag > RobotInterface::TO_RTIP_END)
     {
@@ -63,7 +63,7 @@ namespace HAL {
     }
 		else if (msg->Size() != g_dataToHead.cladBuffer.length)
 		{
-			AnkiError( 129, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, tag, g_dataToHead.cladBuffer.length, msg->Size());
+			AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, tag, g_dataToHead.cladBuffer.length, msg->Size());
 		}
     else
     {
