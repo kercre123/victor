@@ -18,16 +18,250 @@ For internal use only. No part of this code may be used without a signed non-dis
 #  include "anki/vision/basestation/image_impl.h"
 #endif
 
-#include <set>
-
-#define LINE_FIT_METHOD_KMEANS 0
-#define LINE_FIT_METHOD_HIST   1
+#define LINE_FIT_METHOD_KMEANS 0 // Works, but needs profiling to see if termination parameters (and initialization) are good and fast enough
+#define LINE_FIT_METHOD_HIST   1 // Has issues with certain edge cases (b/c of fixed bin centers?)
+#define LINE_FIT_METHOD_RANSAC 2 // Sampling scheme needs work
 #define LINE_FIT_METHOD LINE_FIT_METHOD_KMEANS
 
 namespace Anki
 {
   namespace Embedded
   {
+#   if DRAW_LINE_FITS
+    static const ColorRGBA colorList[4] = {
+      NamedColors::GREEN, NamedColors::ORANGE, NamedColors::WHITE, NamedColors::CYAN
+    };
+#   endif
+    
+    struct LineFits
+    {
+      f32  slope;
+      f32  intercept;
+      bool switched;
+    };
+    
+    Result ExtractLineFitsPeaks_Ransac(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, const s32 imageHeight, const s32 imageWidth)
+    {
+#     if DRAW_LINE_FITS
+      Vision::ImageRGB blankImg(imageHeight, imageWidth);
+      blankImg.FillWith(Vision::PixelRGB(0,0,0));
+#     endif
+      
+      // Look for four lines that each account for at least inlierFraction of the boundary
+      const s32 boundaryLength = boundary.get_size();
+      const f32 inlierFraction = 0.125f;
+      const s32 numInliersRequired = std::round(inlierFraction * boundaryLength);
+      const f32 inlierDistThresh = 1.5f;
+      
+      LineFits lineFits[4];
+      s32 numLinesFit = 0;
+      const Point<s16> * restrict pBoundary = boundary.Pointer(0);
+      
+      std::vector<u8> used;
+      used.resize(boundaryLength, 0);
+      
+      for(s32 iStart = 0; numLinesFit < 4 && iStart < boundaryLength; iStart+=3)
+      {
+        if(used[iStart]) {
+          continue;
+        }
+        
+        s32 dir = 1;
+        for(s32 iSampleDist=boundaryLength/4; numLinesFit < 4 && iSampleDist >=2; iSampleDist -= (dir == 1 ? 0 : 3), dir = -dir)
+        {
+          if(iSampleDist >= boundaryLength) {
+            continue;
+          }
+          
+          // Pick a second point
+          s32 iEnd = iStart + dir*iSampleDist;
+          if(iEnd < 0) {
+            iEnd += boundaryLength;
+          } else if(iEnd >= boundaryLength) {
+            iEnd -= boundaryLength;
+          }
+          
+          assert(iEnd >= 0 && iEnd < boundaryLength);
+          
+          if(used[iEnd]) {
+            continue;
+          }
+          //CoreTechPrint("RansacLineFit: iStart=%d, iEnd=%d, sampleDist=%d, length=%d\n", iStart, iEnd, iSampleDist, boundaryLength);
+          
+          // Compute the line
+          const s32 dx = pBoundary[iEnd].x - pBoundary[iStart].x;
+          const s32 dy = pBoundary[iEnd].y - pBoundary[iStart].y;
+          if(dx == 0) {
+            assert(numLinesFit >= 0 && numLinesFit < 4);
+            lineFits[numLinesFit].switched = true;
+            lineFits[numLinesFit].slope = (f32)dx / (f32)dy;
+            lineFits[numLinesFit].intercept = pBoundary[iStart].x - lineFits[numLinesFit].slope*pBoundary[iStart].y;
+          } else {
+            assert(numLinesFit >= 0 && numLinesFit < 4);
+            lineFits[numLinesFit].switched = false;
+            lineFits[numLinesFit].slope = (f32)dy / (f32)dx;
+            lineFits[numLinesFit].intercept = pBoundary[iStart].y - lineFits[numLinesFit].slope*pBoundary[iStart].x;
+          }
+          
+          // Count number of inliers
+          std::vector<s32> inlierIndex;
+          cv::Point2f lineVec(dx,dy);
+          for(s32 iPt=0; iPt<boundaryLength; ++iPt) {
+            if(!used[iPt])
+            {
+              cv::Point2f pointVec(pBoundary[iPt].x - pBoundary[iStart].x, pBoundary[iPt].y - pBoundary[iStart].y);
+              
+              const f32 area = pointVec.cross(lineVec);
+              const f32 dist = std::abs(area / cv::norm(lineVec));
+              if(dist < inlierDistThresh) {
+                inlierIndex.push_back(iPt);
+              }
+            }
+          }
+          
+          if(inlierIndex.size() >= numInliersRequired) {
+            //CoreTechPrint("RansacLineFit: Found %lu inliers (> %d) for line %d\n", inlierIndex.size(), numInliersRequired, numLinesFit);
+            
+            cv::Mat_<f32> A(2,2);
+            A.setTo(0.f);
+            
+            cv::Mat_<f32> b(2,1);
+            b.setTo(0.f);
+            
+            // Mark all inliers as used and do final line fits using all the inlier data
+            for(auto index : inlierIndex)
+            {
+              assert(index>=0 && index<used.size());
+              used[index] = (u8)true;
+#             if DRAW_LINE_FITS
+              blankImg.DrawPoint(Point2f(pBoundary[index].x, pBoundary[index].y), colorList[numLinesFit], 2);
+#             endif
+              
+              if(lineFits[numLinesFit].switched) {
+                A(0,0) += (pBoundary[index].y * pBoundary[index].y);
+                A(0,1) += pBoundary[index].y;
+                A(1,1) += 1.f;
+                b(0,0) += (pBoundary[index].y * pBoundary[index].x);
+                b(1,0) += pBoundary[index].x;
+              } else {
+                A(0,0) += (pBoundary[index].x * pBoundary[index].x);
+                A(0,1) += pBoundary[index].x;
+                A(1,1) += 1.f;
+                b(0,0) += (pBoundary[index].x * pBoundary[index].y);
+                b(1,0) += pBoundary[index].y;
+              }
+            }
+            
+            cv::Mat_<f32> p;
+            A(1,0) = A(0,1);
+            cv::solve(A, b, p);
+            assert(p.rows == 2 && p.cols == 1);
+            assert(numLinesFit >= 0 && numLinesFit < 4);
+            lineFits[numLinesFit].slope = p(0,0);
+            lineFits[numLinesFit].intercept = p(1,0);
+            
+//            CoreTechPrint("RansacLineFit: Fit %sline %d from inliers. Slope=%f, Int=%f\n",
+//                          lineFits[numLinesFit].switched ? "switched " : "", numLinesFit,
+//                          lineFits[numLinesFit].slope, lineFits[numLinesFit].intercept);
+            
+#           if DRAW_LINE_FITS
+            {
+              if(lineFits[numLinesFit].switched) {
+                blankImg.DrawLine(Point2f(lineFits[numLinesFit].intercept, 0),
+                                  Point2f(lineFits[numLinesFit].slope*(imageHeight-1) + lineFits[numLinesFit].intercept, imageHeight-1),
+                                  NamedColors::MAGENTA, 1);
+              } else {
+                blankImg.DrawLine(Point2f(0, lineFits[numLinesFit].intercept),
+                                  Point2f(imageWidth-1, lineFits[numLinesFit].slope*(imageWidth-1) + lineFits[numLinesFit].intercept),
+                                  NamedColors::RED, 1);
+              }
+            }
+#           endif
+            
+            //CoreTechPrint("RansacLineFit: incrementing numLinesFit from %d to %d\n",
+            //              numLinesFit, numLinesFit+1);
+            ++numLinesFit;
+          }
+        }
+      }
+      
+      std::vector<cv::Point_<f32> > corners;
+      
+      if(numLinesFit == 4)
+      {
+        //CoreTechPrint("RansacLineFit: Found 4 Lines\n");
+        
+        for(s32 iLine=0; iLine<4; iLine++) {
+          for(s32 jLine=iLine+1; jLine<4; jLine++) {
+            f32 xInt = 0;
+            f32 yInt = 0;
+            assert(iLine>=0 && iLine<4);
+            assert(jLine>=0 && jLine<4);
+            
+            if(lineFits[iLine].switched == lineFits[jLine].switched) {
+              xInt = (lineFits[jLine].intercept - lineFits[iLine].intercept) / (lineFits[iLine].slope - lineFits[jLine].slope);
+              yInt = lineFits[iLine].slope*xInt + lineFits[iLine].intercept;
+              
+              if(lineFits[iLine].switched == true) {
+                std::swap(xInt, yInt);
+              }
+            } else if(lineFits[iLine].switched == true && lineFits[jLine].switched == false) {
+              yInt = (lineFits[jLine].slope * lineFits[iLine].intercept + lineFits[jLine].intercept) / (1.f - lineFits[iLine].slope*lineFits[jLine].slope);
+              xInt = lineFits[iLine].slope * yInt + lineFits[iLine].intercept;
+            } else if(lineFits[iLine].switched == false && lineFits[jLine].switched == true) {
+              yInt = (lineFits[iLine].slope * lineFits[jLine].intercept + lineFits[iLine].intercept)/ (1.f - lineFits[iLine].slope*lineFits[jLine].slope);
+              xInt = lineFits[jLine].slope * yInt + lineFits[jLine].intercept;
+            }
+            
+            if(xInt >= 0 && xInt < imageWidth && yInt >= 0 && yInt < imageHeight) {
+              //CoreTechPrint("RansacLineFit: Found corner at (%.1f,%.1f) using lines %d and %d\n", xInt, yInt, iLine, jLine);
+              corners.push_back(cv::Point_<f32>(xInt, yInt));
+              
+#             if DRAW_LINE_FITS
+              blankImg.DrawPoint(Point2f(xInt,yInt), NamedColors::BLUE, 3);
+#             endif
+            }
+          } // for(s32 jLine=0; jLine<4; jLine++)
+        } // for(s32 iLine=0; iLine<4; iLine++)
+      } // if(didFitFourLines)
+      
+      if(corners.size() == 4) {
+//        CoreTechPrint("RansacLineFit: populating peaks\n");
+        
+        Quadrilateral<f32> quad(
+                                Point<f32>(corners[0].x, corners[0].y),
+                                Point<f32>(corners[1].x, corners[1].y),
+                                Point<f32>(corners[2].x, corners[2].y),
+                                Point<f32>(corners[3].x, corners[3].y));
+        
+        Quadrilateral<f32> sortedQuad = quad.ComputeClockwiseCorners<f32>();
+        
+        peaks.set_size(4);
+        
+        for(s32 i=0; i<4; i++) {
+          peaks[i] = Point<s16>(saturate_cast<s16>(sortedQuad.corners[i].x), saturate_cast<s16>(sortedQuad.corners[i].y));
+        }
+        
+        // NOTE: The output is not reordered like the matlab version, because the next step
+        //       after ExtractLaplacianPeaks() or ExtractLineFitsPeaks() expects sorted corners.
+      } else {
+        corners.clear();
+        
+        for(s32 i=0; i<4; i++) {
+          peaks[i] = Point<s16>(0, 0);
+        }
+        
+        peaks.Clear();
+      }
+      
+#     if DRAW_LINE_FITS
+      blankImg.Display("LineFits");
+#     endif
+      
+      return RESULT_OK;
+      
+    } // ExtractLineFitsPeaks_Ransac()
+    
     Result ExtractLineFitsPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, const s32 imageHeight, const s32 imageWidth, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
@@ -41,6 +275,10 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(peaks.get_maximumSize() == 4,
           RESULT_FAIL_INVALID_PARAMETER, "ComputeQuadrilateralsFromConnectedComponents", "Currently only four peaks supported");
+
+#     if LINE_FIT_METHOD == LINE_FIT_METHOD_RANSAC
+      return ExtractLineFitsPeaks_Ransac(boundary, peaks, imageHeight, imageWidth);
+#     endif
       
       const s32 boundaryLength = boundary.get_size();
         
@@ -124,13 +362,6 @@ namespace Anki
 #         endif
         }
       }
-  
-      struct LineFits
-      {
-        f32  slope;
-        f32  intercept;
-        bool switched;
-      };
       
       LineFits lineFits[4];
       bool didFitFourLines = true;
@@ -185,18 +416,14 @@ namespace Anki
       cv::kmeans(dB.t(), 4, labels, criteria, numTries,
                  cv::KMEANS_USE_INITIAL_LABELS | cv::KMEANS_PP_CENTERS);
 
-#     else 
+#     elif LINE_FIT_METHOD == LINE_FIT_METHOD_RANSAC
+      
+      // Nothing to do (returned result above)
+      
+#     else
 #     error Unknown LINE_FIT_METHOD
 #     endif
       
-      
-#     if DRAW_LINE_FITS
-      static const ColorRGBA colorList[4] = {
-        NamedColors::GREEN, NamedColors::ORANGE, NamedColors::WHITE, NamedColors::CYAN
-      };
-#     endif
-      
-      std::set<s32> maxBinsSet;
       for(s32 iBin=0; iBin<4; iBin++) {
         // boundaryIndex = find(bin==maxBins(iBin));
         std::vector<s32> boundaryIndex;
@@ -224,9 +451,7 @@ namespace Anki
             boundaryIndex.push_back(i);
             
 #           if DRAW_LINE_FITS
-            {
-              blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[iBin], 2);
-            }
+            blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[iBin], 2);
 #           endif
 
           }
