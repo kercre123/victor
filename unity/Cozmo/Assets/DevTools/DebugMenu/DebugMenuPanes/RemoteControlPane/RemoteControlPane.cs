@@ -18,6 +18,12 @@ public class RemoteControlPane : MonoBehaviour {
   [SerializeField]
   private AnkiButton _Right;
 
+  [SerializeField]
+  private Slider _HeadAngle;
+
+  [SerializeField]
+  private Slider _LiftHeight;
+
   private float _Speed = 40.0f;
 
   // Use this for initialization
@@ -33,6 +39,23 @@ public class RemoteControlPane : MonoBehaviour {
 
     _Right.onPress.AddListener(OnRight);
     _Right.onRelease.AddListener(OnStop);
+
+    _HeadAngle.minValue = CozmoUtil.kMinHeadAngle;
+    _HeadAngle.maxValue = CozmoUtil.kMaxHeadAngle;
+
+    _LiftHeight.minValue = 0.0f;
+    _LiftHeight.maxValue = 1.0f;
+
+    _HeadAngle.onValueChanged.AddListener(OnHeadValueChanged);
+    _LiftHeight.onValueChanged.AddListener(OnLiftHeightChanged);
+  }
+
+  private void OnHeadValueChanged(float value) {
+    RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(value * Mathf.Deg2Rad, useExactAngle: true);
+  }
+
+  private void OnLiftHeightChanged(float value) {
+    RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(value);
   }
 
   private void OnForward() {
