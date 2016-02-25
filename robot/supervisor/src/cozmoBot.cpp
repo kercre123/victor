@@ -20,10 +20,10 @@
 #include "pathFollower.h"
 #include "testModeController.h"
 #include "anki/cozmo/robot/logging.h"
+#include "backpackLightController.h"
 #ifndef TARGET_K02
 #include "animationController.h"
 #include "anki/common/shared/utilities_shared.h"
-#include "backpackLightController.h"
 #include "blockLightController.h"
 #endif
 
@@ -159,10 +159,8 @@ namespace Anki {
 
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 244, "PathFollower System init failed.\n", 0);
-#ifndef TARGET_K02
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 245, "BackpackLightController init failed.\n", 0);
-#endif
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == RESULT_FAIL) {
@@ -277,9 +275,7 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           AnkiEvent( 40, "Radio", 250, "Robot radio is connected.", 0);
           wasConnected_ = true;
-#ifndef TARGET_K02
           BackpackLightController::TurnOffAll();
-#endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           AnkiEvent( 40, "Radio", 251, "Radio disconnected", 0);
           Messages::ResetInit();
@@ -288,8 +284,8 @@ namespace Anki {
           HeadController::SetAngularVelocity(0);
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
-#ifndef TARGET_K02
           BackpackLightController::Init();
+#ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
           AnimationController::EnableTracks(ALL_TRACKS);
           HAL::FaceClear();
@@ -341,8 +337,8 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
-#ifndef TARGET_K02
         BackpackLightController::Update();
+#ifndef TARGET_K02
         BlockLightController::Update();
 #endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
