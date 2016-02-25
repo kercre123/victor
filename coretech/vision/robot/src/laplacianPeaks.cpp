@@ -28,8 +28,8 @@ namespace Anki
   namespace Embedded
   {
 #   if DRAW_LINE_FITS
-    static const ColorRGBA colorList[4] = {
-      NamedColors::GREEN, NamedColors::ORANGE, NamedColors::WHITE, NamedColors::CYAN
+    static const ColorRGBA colorList[5] = {
+      NamedColors::GREEN, NamedColors::ORANGE, NamedColors::WHITE, NamedColors::CYAN, NamedColors::DARKGRAY
     };
 #   endif
     
@@ -413,9 +413,23 @@ namespace Anki
       for( ; i<boundaryLength; ++i) {
         pLabels[i] = 3;
       }
-      cv::kmeans(dB.t(), 4, labels, criteria, numTries,
-                 cv::KMEANS_USE_INITIAL_LABELS | cv::KMEANS_PP_CENTERS);
+      cv::Mat_<f32> centers;
+      dB = dB.t();
+      cv::kmeans(dB, 4, labels, criteria, numTries,
+                 cv::KMEANS_USE_INITIAL_LABELS | cv::KMEANS_PP_CENTERS,
+                 centers);
 
+      const f32 dotProdThresh = std::cos(DEG_TO_RAD(25));
+      for(s32 i=0; i<boundaryLength; ++i) {
+        // Remove from consideration those points which are not near enough to
+        // the centers (expecting some "outliers" on the rounded corners and we
+        // don't want those to affect the final line fits below)
+        const f32 dotProd = dB.row(i).dot(centers.row(pLabels[i]));
+        if(dotProd < dotProdThresh)
+        {
+          pLabels[i] = -1;
+        }
+      }
 #     elif LINE_FIT_METHOD == LINE_FIT_METHOD_RANSAC
       
       // Nothing to do (returned result above)
@@ -434,6 +448,11 @@ namespace Anki
             boundaryIndex.push_back(i);
 #           if DRAW_LINE_FITS
             blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[iBin], 2);
+#           endif
+          } else if(pLabels[i] == -1) {
+#           if DRAW_LINE_FITS
+            // Show ignored points in dark gray
+            blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[4], 2);
 #           endif
           }
         }
