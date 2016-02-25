@@ -504,7 +504,7 @@ namespace Cozmo {
 #     if USE_MATLAB_DETECTOR
       const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
 #     else
-      const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+      const CornerMethod cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
       
       // Convert "basestation" detection parameters to "embedded" parameters
       // TODO: Merge the fiducial detection parameters structs

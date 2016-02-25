@@ -113,7 +113,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   params.returnInvalidMarkers             = static_cast<bool>(Round<s32>(mxGetScalar(prhs[20])));
   params.doCodeExtraction                 = true;
   
-  params.cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+  params.cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
   if(nrhs >= 21) {
     params.cornerMethod = static_cast<CornerMethod>(Round<s32>(mxGetScalar(prhs[21])));
   }
