@@ -6,8 +6,6 @@ Event,,Dev_Robot_Tone_1760Hz_5Sec_Play,1500105173,DevRobot,Tone_1760HZ_5Sec,
 Event,,Dev_Robot_Tone_1K_1Sec_Play,1083086921,DevRobot,Tone_1K_1Sec,
 Event,,Dev_Robot_Tone_1K_5Sec_Play,1323780941,DevRobot,Tone_1K_5Sec,
 Event,,Dev_Robot_Tone_440Hz_5Sec_Play,1348811033,DevRobot,Tone_440HZ_5Sec,
-Event,,Hijack_Audio_Disable_Bypass,3535474666,PlugInControl,HijackAudioDisableBypass,This is only used by Robot Audio Clinet
-Event,,Hijack_Audio_Enable_Bypass,2589144983,PlugInControl,HijackAudioEnableBypass,This is only used by Robot Audio Clinet
 Event,,Mid_Gp_St_Hum_Lp_Play,3404130802,Robot,SingSpeedTapPlay,
 Event,,Mid_Gp_St_Hum_Lp_Stop,820824172,Robot,SingSpeedTapStop,
 Event,,Music_Play,202194903,Music,Play,
