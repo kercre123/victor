@@ -16,6 +16,7 @@ ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
 EXTERNAL_ROOT = os.path.join(GAME_ROOT, 'EXTERNALS')
 sys.path.insert(0, ENGINE_ROOT)
+PRODUCT_NAME = 'Cozmo'
 
 from configure import BUILD_TOOLS_ROOT, print_header, print_status
 from configure import ArgumentParser, generate_gyp, configure
@@ -23,11 +24,57 @@ from configure import ArgumentParser, generate_gyp, configure
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.ios_deploy
 import ankibuild.util
+import ankibuild.unity
 import ankibuild.xcode
 import importlib
 
 dependencies = importlib.import_module("project.build-scripts.dependencies")
 
+
+####################
+# HELPER FUNCTIONS #
+####################
+
+def check_unity_version():
+    unity_project_dir = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME)
+    project_ver = ankibuild.unity.UnityBuildConfig.get_unity_project_version(unity_project_dir)
+
+    app_path = os.path.join(os.path.dirname(options.with_unity), '..', '..')
+    app = ankibuild.unity.UnityApp(app_path)
+    app_ver = app.bundle_version()
+
+    return project_ver == app_ver
+
+def find_unity_app_path():
+    unity_project_dir = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME)
+    project_ver = ankibuild.unity.UnityBuildConfig.get_unity_project_version(unity_project_dir)
+    project_ver_short = project_ver.replace('.', '')
+
+    unity_search_paths = [
+        os.path.join('/', 'Applications', 'Unity'),
+        os.path.join('/', 'Applications', 'Unity%s' % project_ver_short),
+        os.path.join('/', 'Applications', 'Unity%s' % project_ver),
+        os.path.join('/', 'Applications', 'Unity-%s' % project_ver),
+        os.path.join('/', 'Applications', 'Unity-%s' % project_ver_short)
+    ]
+
+    unity_app_path = None
+    for unity_path in unity_search_paths:
+        if not os.path.exists(unity_path):
+            continue
+
+        app_path = os.path.join(unity_path, 'Unity.app')
+        app = ankibuild.unity.UnityApp(app_path)
+        app_ver = app.bundle_version()
+
+        if app_ver == project_ver:
+            unity_app_path = app_path
+            break
+
+    if not unity_app_path:
+        sys.exit("[ERROR] Could not find Unity.app match project version %s" % project_ver)
+
+    return unity_app_path
 
 ####################
 # ARGUMENT PARSING #
@@ -41,7 +88,7 @@ def add_unity_arguments(parser):
     elif platform.system() == 'Darwin':
         unity_binary_path_prefix = '/Applications'
         unity_binary_path_suffix = 'Unity.app/Contents/MacOS/Unity'
-        default_unity_dir = 'Unity'
+        default_unity_dir = 'place_holder' #if this was None -u would not be an option
     else:
         unity_binary_path_prefix = None
         unity_binary_path_suffix = None
@@ -54,16 +101,19 @@ def add_unity_arguments(parser):
             '--unity-dir',
             metavar='path',
             default=default_unity_dir,
-            help='The name of the Unity folder (default "%(default)s) if it is in a standard location.')
+            help='Choose unity default directory.  Bypasses version check.')
     group.add_argument(
         '--unity-binary-path',
         metavar='path',
-        help='the full path to the Unity executable')
+        help='the full path to the Unity executable. Bypasses version check.')
 
     def postprocess_unity(args):
         if hasattr(args, 'unity_dir'):
-            if not args.unity_binary_path and unity_binary_path_prefix:
-                args.unity_binary_path = os.path.join(unity_binary_path_prefix, args.unity_dir,
+            if args.unity_dir is "place_holder":
+                args.unity_binary_path = os.path.join(find_unity_app_path(), 'Contents', 'MacOS', 'Unity')
+            else:
+                if not args.unity_binary_path and unity_binary_path_prefix:
+                    args.unity_binary_path = os.path.join(unity_binary_path_prefix, args.unity_dir,
                                                       unity_binary_path_suffix)
             del args.unity_dir
 
@@ -145,7 +195,7 @@ class GamePlatformConfiguration(object):
         self.platform_build_dir = os.path.join(options.build_dir, self.platform)
         self.platform_output_dir = os.path.join(options.output_dir, self.platform)
 
-        self.workspace_name = 'CozmoWorkspace_{0}'.format(self.platform.upper())
+        self.workspace_name = '{0}Workspace_{1}'.format(PRODUCT_NAME, self.platform.upper())
         self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
 
         self.scheme = 'BUILD_WORKSPACE'
@@ -156,7 +206,7 @@ class GamePlatformConfiguration(object):
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
-                                                         'CozmoUnity_{0}.xcodeproj'.format(self.platform.upper()))
+                                                         '{0}Unity_{1}.xcodeproj'.format(PRODUCT_NAME, self.platform.upper()))
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
             try:
                 if self.options.provision_profile is not None:
@@ -191,7 +241,7 @@ class GamePlatformConfiguration(object):
 
             self.unity_build_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
             self.artifact_dir = os.path.join(self.platform_build_dir, 'app-{0}'.format(self.platform))
-            self.artifact_path = os.path.join(self.artifact_dir, 'cozmo.app')
+            self.artifact_path = os.path.join(self.artifact_dir, '{0}.app'.format(PRODUCT_NAME.lower()))
 
     def process(self):
         if self.options.verbose:
@@ -230,7 +280,7 @@ class GamePlatformConfiguration(object):
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
             xcconfig = [
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
-                'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
+                'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo', #{0}'.format(PRODUCT_NAME),
                 'ANKI_BUILD_TARGET={0}'.format(self.platform),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
                 '']
@@ -247,7 +297,7 @@ class GamePlatformConfiguration(object):
 
             xcconfig = [
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
-                'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
+                'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo', #{0}'.format(PRODUCT_NAME),
                 'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
                 'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
@@ -351,6 +401,7 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.rm_rf(self.platform_output_dir)
 
 
+
 ###############
 # ENTRY POINT #
 ###############
@@ -368,7 +419,7 @@ def recursive_delete(options):
 def main():
     options = parse_game_arguments()
 
-    clad_csharp = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'Scripts', 'Generated')
+    clad_csharp = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
     clad_folders = [os.path.join(options.output_dir, 'clad'), clad_csharp, clad_csharp + '.meta']
     shared_generated_folders = [options.build_dir, options.output_dir]
     configure(options, GAME_ROOT, GamePlatformConfiguration, clad_folders, shared_generated_folders)

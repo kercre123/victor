@@ -65,6 +65,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
+  public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
 
   #region Audio Callback events
 
@@ -277,9 +278,6 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotObservedNothing:
       ReceivedSpecificMessage(message.RobotObservedNothing);
       break;
-    case G2U.MessageEngineToGame.Tag.DeviceDetectedVisionMarker:
-      ReceivedSpecificMessage(message.DeviceDetectedVisionMarker);
-      break;
     case G2U.MessageEngineToGame.Tag.PlaySound:
       ReceivedSpecificMessage(message.PlaySound);
       break;
@@ -345,6 +343,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.DenyGameStart:
       ReceivedSpecificMessage(message.DenyGameStart);
+      break;
+    case G2U.MessageEngineToGame.Tag.InitBlockPoolMessage:
+      ReceivedSpecificMessage(message.InitBlockPoolMessage);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -567,10 +568,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(G2U.DeviceDetectedVisionMarker message) {
-
-  }
-
   private void ReceivedSpecificMessage(G2U.PlaySound message) {
     
   }
@@ -612,6 +609,12 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.InitBlockPoolMessage message) {
+    if (OnInitBlockPoolMsg != null) {
+      OnInitBlockPoolMsg(message);
+    }
+  }
+
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     if (OnRequestGameStart != null) {
       OnRequestGameStart(message);
@@ -632,18 +635,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  public void StartEngine(string vizHostIP) {
-    StartEngineMessage.asHost = 1;
-    int length = 0;
-    if (!string.IsNullOrEmpty(vizHostIP)) {
-      length = Encoding.UTF8.GetByteCount(vizHostIP);
-      if (length + 1 > StartEngineMessage.vizHostIP.Length) {
-        throw new ArgumentException("vizHostIP is too long. (" + (length + 1).ToString() + " bytes provided, max " + StartEngineMessage.vizHostIP.Length + ".)");
-      }
-      Encoding.UTF8.GetBytes(vizHostIP, 0, vizHostIP.Length, StartEngineMessage.vizHostIP, 0);
-    }
-    StartEngineMessage.vizHostIP[length] = 0;
-
+  public void StartEngine() {
     Message.StartEngine = StartEngineMessage;
     SendMessage();
   }

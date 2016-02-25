@@ -19,7 +19,7 @@ void ConfigureDASForPlatform(Anki::Util::Data::DataPlatform * platform)
       DASConfigure(dasConfigPath.UTF8String, dasLogPath.c_str(), gameLogPath.c_str());
       
       NSString *dasVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.das.version"];
-      [[DASClientInfo sharedInfo] eventsMainStart:"build" appVersion:dasVersion.UTF8String];
+      [[DASClientInfo sharedInfo] eventsMainStart:"build" appVersion:dasVersion.UTF8String product:"cozmo"];
     } else {
       NSLog(@"[WARNING] DAS configuration file does not exist (%@). DAS reporting is disabled.", dasConfigPath);
     }

@@ -6,13 +6,11 @@ public class Intro : MonoBehaviour {
   [SerializeField] protected InputField _EngineIPInputField;
   [SerializeField] protected InputField _RobotIPInputField;
   [SerializeField] protected InputField _SimIPInputField;
-  [SerializeField] protected InputField _VisualizerIPInputField;
   [SerializeField] protected Text _Error;
 
   private bool _Simulated = false;
   private string _CurrentRobotIP;
   private string _CurrentScene;
-  private string _CurrentVizHostIP;
 
   private const int kRobotID = 1;
 
@@ -42,23 +40,15 @@ public class Intro : MonoBehaviour {
     set { PlayerPrefs.SetString("LastID", value); }
   }
 
-  private string LastVisualizerIP {
-    get { return PlayerPrefs.GetString("LastVisualizerIp", "127.0.0.1"); }
-    
-    set { PlayerPrefs.SetString("LastVisualizerIp", value); }
-  }
-
   protected void OnEnable() {
 
     _EngineIPInputField.text = LastEngineIP;
     _RobotIPInputField.text = LastIP;
     _SimIPInputField.text = LastSimIP;
-    _VisualizerIPInputField.text = LastVisualizerIP;
 
     _EngineIPInputField.Rebuild(CanvasUpdate.PreRender);
     _RobotIPInputField.Rebuild(CanvasUpdate.PreRender);
     _SimIPInputField.Rebuild(CanvasUpdate.PreRender);
-    _VisualizerIPInputField.Rebuild(CanvasUpdate.PreRender);
 
   }
 
@@ -113,7 +103,6 @@ public class Intro : MonoBehaviour {
 
     if (string.IsNullOrEmpty(errorText)) {
       _CurrentRobotIP = ipText;
-      _CurrentVizHostIP = _VisualizerIPInputField.text;
 
       SaveData();
       RobotEngineManager.Instance.Connect(_EngineIPInputField.text);
@@ -132,12 +121,11 @@ public class Intro : MonoBehaviour {
     LastIP = _RobotIPInputField.text;
     LastSimIP = _SimIPInputField.text;
     LastEngineIP = _EngineIPInputField.text;
-    LastVisualizerIP = _VisualizerIPInputField.text;
   }
 
   private void Connected(string connectionIdentifier) {
     _Error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
-    RobotEngineManager.Instance.StartEngine(_CurrentVizHostIP);
+    RobotEngineManager.Instance.StartEngine();
     RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
   }
 
