@@ -208,8 +208,6 @@ void Radio::init() {
 
   // Generate target address for the robot
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    // Copy to it's appropriate location
-    memcpy(&accessories[i].address, &address, sizeof(address));
     accessories[i].address = TalkingAddress;
     createAddress(accessories[i].address);
   }
@@ -383,12 +381,19 @@ void Radio::manage(void* userdata) {
   AccessorySlot* acc = &accessories[currentAccessory];
 
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
-<<<<<<< HEAD
     // We send the previous LED state (so we don't get jitter on radio)
+    uesb_address_desc_t& address = accessories[currentAccessory].address;
+    
+    // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
     memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
-    uesb_write_tx_payload(&accessories[currentAccessory].address, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
-    
+    uesb_write_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
+
+    #ifdef CHANNEL_HOP
+    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
+    address.rf_channel = next_channel(address.rf_channel);
+    #endif
+
     // Update the color status of the 
     uint32_t currentFrame = GetFrame();
 
@@ -412,19 +417,6 @@ void Radio::manage(void* userdata) {
 
     // THIS IS PROBABLY WRONG
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
-=======
-    uesb_address_desc_t& address = accessories[currentAccessory].address;
-    
-    // Broadcast to the appropriate device
-    EnterState(RADIO_TALKING);
-    memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
-    uesb_write_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
-
-    #ifdef CHANNEL_HOP
-    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
-    address.rf_channel = next_channel(address.rf_channel);
-    #endif
->>>>>>> master
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     acc->active = false;
