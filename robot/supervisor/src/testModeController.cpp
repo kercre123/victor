@@ -30,12 +30,16 @@ namespace Anki {
       // "Private Member Variables"
       namespace {
 
-#if(ENABLE_TEST_MODES)
+
         // Some common vars that can be used across multiple tests
         u32 ticCnt_, ticCnt2_;   // Multi-purpose tic counters
-        bool pathStarted_;       // Flag for whether or not we started to traverse a path
+        
+        // The number of cycles in between printouts
+        // in those tests that print something out.
+        u32 printCyclePeriod_;
+        
 
-
+#if(ENABLE_TEST_MODES)
         //////// DriveTest /////////
         bool enableToggleDir_ = false;   // false: Only drive forward
                                          // true: Switch between driving forward and reverse
@@ -117,7 +121,7 @@ namespace Anki {
 
         ////// End of DriveTest ////////
 
-
+#endif
         /////// LiftTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired lift height (i.e. use LiftController)
@@ -181,8 +185,8 @@ namespace Anki {
         HeadTestFlags headTestMode_ = HTF_TEST_POWER;
         s32 headNodCycleTime_ms_ = 2000;
         //// End of HeadTest //////
-
-
+#if(ENABLE_TEST_MODES)
+        
         //////// DockPathTest /////////
         enum {
           DT_STOP,
@@ -203,6 +207,7 @@ namespace Anki {
         const f32 PF_TARGET_SPEED_MMPS = 100 * (PATH_FOLLOW_BACKWARDS ? -1 : 1);
         const f32 PF_ACCEL_MMPS2 = 200;
         const f32 PF_DECEL_MMPS2 = 500;
+        bool pathStarted_;       // Flag for whether or not we started to traverse a path
 
         ////// End of PathFollowTest ////
 
@@ -247,10 +252,6 @@ namespace Anki {
         bool ledCycleTest_ = true;
         ///// End of LightTest ///
 
-
-        // The number of cycles in between printouts
-        // in those tests that print something out.
-        u32 printCyclePeriod_;
 #endif
         // Current test mode
         TestMode testMode_ = TM_NONE;
@@ -613,7 +614,7 @@ namespace Anki {
 
        return RESULT_OK;
       }
-
+#endif
 
       Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
       {
@@ -870,6 +871,7 @@ namespace Anki {
 
         return RESULT_OK;
       }
+#if(ENABLE_TEST_MODES)
 
       Result IMUTestInit(s32 flags)
       {
@@ -1122,7 +1124,7 @@ namespace Anki {
       {
         Result ret = RESULT_OK;
         
-#if(ENABLE_TEST_MODES)
+
         testMode_ = mode;
 
         switch(testMode_) {
@@ -1130,6 +1132,7 @@ namespace Anki {
             ret = Reset();
             updateFunc = NULL;
             break;
+#if(ENABLE_TEST_MODES)
           case TM_PLACE_BLOCK_ON_GROUND:
             ret = PlaceOnGroundTestInit(p1,p2,p3);
             updateFunc = PlaceOnGroundTestUpdate;
@@ -1150,6 +1153,7 @@ namespace Anki {
             ret = DriveTestInit(p1,p2,p3);
             updateFunc = DriveTestUpdate;
             break;
+#endif
           case TM_LIFT:
             ret = LiftTestInit(p1,p2,p3);
             updateFunc = LiftTestUpdate;
@@ -1162,6 +1166,7 @@ namespace Anki {
             ret = HeadTestInit(p1,p2,p3);
             updateFunc = HeadTestUpdate;
             break;
+#if(ENABLE_TEST_MODES)
           case TM_IMU:
             ret = IMUTestInit(p1);
             updateFunc = IMUTestUpdate;
@@ -1188,12 +1193,14 @@ namespace Anki {
             ret = MaxPowerTestInit();
             updateFunc = MaxPowerTestUpdate;
             break;
+#endif
           default:
             AnkiWarn( 92, "TestModeController.Start", 344, "Undefined test mode %d\n", 1, testMode_);
+            Reset();
             ret = RESULT_FAIL;
             break;
         }
-#endif
+
         return ret;
       }
 
