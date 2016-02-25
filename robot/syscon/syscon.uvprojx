@@ -497,6 +497,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\logging.cpp</FilePath>
             </File>
+            <File>
+              <FileName>led.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\led.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

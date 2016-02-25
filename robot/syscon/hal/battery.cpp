@@ -156,7 +156,9 @@ static inline void sampleCliffSensor() {
 
 void Battery::manage(void* userdata)
 {
-	if (!NRF_ADC->EVENTS_END) {
+  using namespace Anki::Cozmo;
+
+  if (!NRF_ADC->EVENTS_END) {
     return ;
   }
 
@@ -196,12 +198,12 @@ void Battery::manage(void* userdata)
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD;
 
-				Anki::Cozmo::PowerState msg;
-				msg.VBatFixed = vBat;
-				msg.VExtFixed = vExt;
-				msg.chargeStat = onContacts;
-				Anki::Cozmo::RobotInterface::SendMessage(msg);
-				
+        PowerState msg;
+        msg.VBatFixed = vBat;
+        msg.VExtFixed = vExt;
+        msg.chargeStat = onContacts;
+        RobotInterface::SendMessage(msg);
+
         startADCsample(ANALOG_CLIFF_SENSE);
       }
       break ;
