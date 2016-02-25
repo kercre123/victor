@@ -54,7 +54,7 @@ namespace Anki {
       
       Pose3d frontPose(-M_PI_2, Z_AXIS_3D(),
                        {{SlopeLength+PlatformLength, 0, MarkerZPosition}});
-      _marker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Point2f(MarkerWidth, MarkerHeight));
+      _marker = &AddMarker(Vision::MARKER_CHARGER, frontPose, Point2f(MarkerWidth, MarkerHeight));
 
       // PreActionPose, initialized to be with respect to charger
       Pose3d preActionPose(0, Z_AXIS_3D(),
