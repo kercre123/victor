@@ -99,12 +99,12 @@ static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t
   }
   if (unlikely(bufferSize+1 > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)) // + 1 for tag byte. Easier to assume it's there than check
   {
-    printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\r\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
+    //printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\r\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
     return false;
   }
   else if (unlikely(connection->numPendingReliableMessages >= ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH))
   {
-    printf("WARN: No slots left for pending reliable messages %x[%x...%d]\r\n", tag, buffer[0], bufferSize);
+    // For some reason, this debug print crashes the espressif printf("WARN: No slots left for pending reliable messages %x[%x...%d]\r\n", tag, buffer[0], bufferSize);
     return false;
   }
   else if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > /* +1 for tag, easier to assume it's there than check. */
