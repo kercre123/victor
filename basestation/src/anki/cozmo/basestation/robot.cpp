@@ -1739,6 +1739,23 @@ namespace Anki {
         // by this origin switch and notify the outside world of the change.
         _blockWorld.UpdateObjectOrigins(oldOrigin, _worldOrigin);
         
+        // after updating all block world objects, no one should be pointing to the oldOrigin
+        bool removed = false;
+        auto listIter = _poseOrigins.begin();
+        auto listEnd  = _poseOrigins.end();
+        for(; listIter != listEnd; ++listIter )
+        {
+          if ( &(*listIter) == oldOrigin )
+          {
+            listIter = _poseOrigins.erase(listIter);
+            removed = true;
+            break;
+          }
+        }
+        if ( !removed ) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject", "Could not remove old origin from _poseOrigins");
+        }
+        
       } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       
       
