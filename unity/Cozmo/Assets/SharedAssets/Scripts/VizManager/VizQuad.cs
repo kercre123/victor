@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class VizQuad : MonoBehaviour {
 
   [SerializeField]
-  private float borderWidth = 1f;
+  private float borderWidth = -0.002f;
 
   [SerializeField]
   private MeshRenderer _Renderer;
@@ -18,6 +18,10 @@ public class VizQuad : MonoBehaviour {
   private const int _kVerticesPerQuad = 6;
   private const int _kVerticesPerBorderedQuad = 30;
   private const int _kTrainglesPerBorderedQuad = 10;
+
+  // Used for rendering objects so we don't have regenerate meshes all the time.
+  public Vector3 DrawScale { get; set; }
+  public Color DrawColor { get; set; }
 
   private int _Index = 0;
 
@@ -67,6 +71,13 @@ public class VizQuad : MonoBehaviour {
   }
 
   public void EndUpdateQuadList() {
+
+    if (_Index < _Vertices.Count) {
+      _Vertices.RemoveRange(_Index, _Vertices.Count - _Index);
+      _Normals.RemoveRange(_Index, _Normals.Count - _Index);
+      _Colors.RemoveRange(_Index, _Colors.Count - _Index);
+      _Triangles.RemoveRange(_Index, _Triangles.Count - _Index);
+    }
     
     _Mesh.SetVertices(_Vertices);
     _Mesh.SetNormals(_Normals);

@@ -76,17 +76,26 @@ namespace Anki.Cozmo {
     [SerializeField]
     private VizPath _VizPathPrefab;
 
-    private readonly Dictionary<uint, VizQuad> _Quads = new Dictionary<uint, VizQuad>();
+    [SerializeField]
+    private Camera _Camera;
+
+    private readonly Dictionary<uint, Dictionary<uint, VizQuad>> _Quads = new Dictionary<uint, Dictionary<uint, VizQuad>>();
     private readonly Dictionary<uint, VizQuad> _Objects = new Dictionary<uint, VizQuad>();
+    private readonly Dictionary<string, VizQuad> _SimpleQuadVectors = new Dictionary<string, VizQuad>();
 
-    private VizPath _PathInstance;
+    private readonly Dictionary<uint, VizPath> _Paths = new Dictionary<uint, VizPath>();
+    private readonly Dictionary<string, VizPath> _SegmentPrimatives = new Dictionary<string, VizPath>();
 
+    // temp list used for clearing ranges of items.
+    private readonly List<uint> _TmpList = new List<uint>();
 
     public float[] Emotions { get; private set; }
     public string[] RecentMoodEvents { get; private set; }
     public string Behavior { get; private set; }
     public BehaviorScoreData[] BehaviorScoreData { get; private set; }
     public RobotInterface.AnimationState AnimationState { get; private set; }
+
+    public Camera Camera { get { return _Camera; } }
 
 
     private MemoryStream _MemStream = new MemoryStream();
@@ -165,6 +174,11 @@ namespace Anki.Cozmo {
       if (DisconnectedFromClient != null) {
         DisconnectedFromClient(reason);
       }
+
+      ClearAllVizObjects();
+
+      // Reconnect
+      _Channel.Connect(_UIDeviceID, _UILocalPort);
     }
 
     private void ReceivedMessage(MessageVizWrapper messageWrapper) {
@@ -177,34 +191,22 @@ namespace Anki.Cozmo {
         break;
       //Camera Overlay
       case MessageViz.Tag.CameraLine:
-        var camLine = message.CameraLine;
-        DrawOverlayLine((int)(camLine.xStart - 0.5f), (int)(camLine.yStart - 0.5f), (int)(camLine.xEnd - 0.5f), (int)(camLine.yEnd - 0.5f), camLine.color.ToColor());
+        DrawCameraLine(message.CameraLine);
         break;
       case MessageViz.Tag.CameraOval:
-        var camOval = message.CameraOval;
-        DrawOverlayOval((int)(camOval.xCen - 0.5f), (int)(camOval.yCen - 0.5f), (int)(camOval.xRad - 0.5f), (int)(camOval.yRad - 0.5f), camOval.color.ToColor());
+        DrawCameraOval(message.CameraOval);
         break;
       case MessageViz.Tag.CameraQuad:
-        var camQuad = message.CameraQuad;
-        DrawOverlayLine((int)(camQuad.xLowerLeft - 0.5f), (int)(camQuad.yLowerLeft - 0.5f), (int)(camQuad.xLowerRight - 0.5f), (int)(camQuad.yLowerRight - 0.5f), camQuad.color.ToColor());
-        DrawOverlayLine((int)(camQuad.xLowerLeft - 0.5f), (int)(camQuad.yLowerLeft - 0.5f), (int)(camQuad.xUpperLeft - 0.5f), (int)(camQuad.yUpperLeft - 0.5f), camQuad.color.ToColor());
-        DrawOverlayLine((int)(camQuad.xUpperRight - 0.5f), (int)(camQuad.xUpperRight - 0.5f), (int)(camQuad.xLowerRight - 0.5f), (int)(camQuad.yLowerRight - 0.5f), camQuad.color.ToColor());
-        DrawOverlayLine((int)(camQuad.xUpperRight - 0.5f), (int)(camQuad.xUpperRight - 0.5f), (int)(camQuad.xUpperLeft - 0.5f), (int)(camQuad.yUpperLeft - 0.5f), camQuad.color.ToColor());
+        DrawCameraQuad(message.CameraQuad);
         break;
       case MessageViz.Tag.CameraText:
         // This will require magic
         break;
       case MessageViz.Tag.VisionMarker:
-        var visionMarker = message.VisionMarker;
-        DrawOverlayLine((int)visionMarker.bottomLeft_x, (int)visionMarker.bottomLeft_y, (int)visionMarker.bottomRight_x, (int)visionMarker.bottomRight_y, Color.red);
-        DrawOverlayLine((int)visionMarker.bottomLeft_x, (int)visionMarker.bottomLeft_y, (int)visionMarker.topLeft_x, (int)visionMarker.topLeft_y, Color.red);
-        DrawOverlayLine((int)visionMarker.topRight_x, (int)visionMarker.topRight_y, (int)visionMarker.bottomRight_x, (int)visionMarker.bottomRight_y, Color.red);
-        DrawOverlayLine((int)visionMarker.topRight_x, (int)visionMarker.topRight_y, (int)visionMarker.topLeft_x, (int)visionMarker.topLeft_y, Color.red);
-
+        DrawVisionMarker(message.VisionMarker);
         break;
       case MessageViz.Tag.FaceDetection:
-        var faceDetection = message.FaceDetection;
-        DrawOverlayOval((int)(faceDetection.x_upperLeft + 0.5f + 0.5f * faceDetection.width), (int)(faceDetection.y_upperLeft + 0.5f + 0.5f * faceDetection.height), (int)(0.5f * faceDetection.width), (int)(0.5f * faceDetection.height), Color.green);
+        DrawFaceDetection(message.FaceDetection);
         break;
 
       // World Drawing
@@ -214,9 +216,45 @@ namespace Anki.Cozmo {
       case MessageViz.Tag.EraseQuad:
         EraseQuad(message.EraseQuad);
         break;
+
       case MessageViz.Tag.Object:
         DrawObject(message.Object);
         break;
+      case MessageViz.Tag.EraseObject:
+        EraseObject(message.EraseObject);
+        break;
+
+      case MessageViz.Tag.SimpleQuadVectorMessageBegin:
+        BeginSimpleQuadVector(message.SimpleQuadVectorMessageBegin);
+        break;
+      case MessageViz.Tag.SimpleQuadVectorMessage:
+        SimpleQuadVector(message.SimpleQuadVectorMessage);
+        break;
+      case MessageViz.Tag.SimpleQuadVectorMessageEnd:
+        EndSimpleQuadVector(message.SimpleQuadVectorMessageEnd);
+        break;
+
+      case MessageViz.Tag.AppendPathSegmentArc:
+        AppendPathSegmentArc(message.AppendPathSegmentArc);
+        break;
+      case MessageViz.Tag.AppendPathSegmentLine:
+        AppendPathSegmentLine(message.AppendPathSegmentLine);
+        break;
+      case MessageViz.Tag.SetPathColor:
+        SetPathColor(message.SetPathColor);
+        break;
+      case MessageViz.Tag.ErasePath:
+        ErasePath(message.ErasePath);
+        break;
+
+      case MessageViz.Tag.SegmentPrimitive:
+        DrawSegmentPrimative(message.SegmentPrimitive);
+        break;
+      case MessageViz.Tag.EraseSegmentPrimitives:
+        EraseSegmentPrimitives(message.EraseSegmentPrimitives);
+        break;
+
+
       // Information
       case MessageViz.Tag.RobotMood:
         Emotions = message.RobotMood.emotion;
@@ -231,17 +269,75 @@ namespace Anki.Cozmo {
       case MessageViz.Tag.AnimationState:
         AnimationState = message.AnimationState;
         break;
+        // TODO: Implement any missing Tags
       }
     }
 
     #region WorldDrawing
 
+    private void ClearAllVizObjects() {
+      foreach (var dict in _Quads.Values) {
+        EraseItem(dict, (uint)VizConstants.ALL_OBJECT_IDs);
+      }
+      EraseItem(_Objects, (uint)VizConstants.ALL_OBJECT_IDs);
+      EraseItem(_Paths, (uint)VizConstants.ALL_OBJECT_IDs);
+
+      foreach (var obj in _SegmentPrimatives.Values) {
+        Destroy(obj.gameObject);
+      }
+      _SegmentPrimatives.Clear();
+
+      foreach (var obj in _SimpleQuadVectors.Values) {
+        Destroy(obj.gameObject);
+      }
+      _SimpleQuadVectors.Clear();
+
+    }
+
+    // Shared Erase Function.
+    public void EraseItem<T>(Dictionary<uint, T> dict, uint id, uint lower_bound_id = 0, uint upper_bound_id = 0) where T : Component {
+
+      switch (id) {
+      case (uint)VizConstants.ALL_OBJECT_IDs:
+        foreach (var obj in dict.Values) {
+          Destroy(obj.gameObject);
+        }
+        dict.Clear();
+        break;
+      case (uint)VizConstants.OBJECT_ID_RANGE:
+        _TmpList.Clear();
+        foreach (var kvp in _Objects) {
+          if (kvp.Key >= lower_bound_id && kvp.Key < upper_bound_id) {
+            Destroy(kvp.Value.gameObject);
+            _TmpList.Add(kvp.Key);
+          }
+        }
+        foreach (var key in _TmpList) {
+          dict.Remove(key);
+        }
+        break;
+      default:
+        T vizObj;
+        if (dict.TryGetValue(id, out vizObj)) {
+          dict.Remove(id);
+          Destroy(vizObj.gameObject);
+        }
+        break;
+      }
+    }
+
     public void DrawQuad(Quad quad) {
       VizQuad vizQuad;
-      if (!_Quads.TryGetValue(quad.quadID, out vizQuad)) {
+      Dictionary<uint, VizQuad> quadDict;
+      if (!_Quads.TryGetValue((uint)quad.quadType, out quadDict)) {
+        quadDict = new Dictionary<uint, VizQuad>();
+        _Quads.Add((uint)quad.quadType, quadDict);
+      }
+
+      if (!quadDict.TryGetValue(quad.quadID, out vizQuad)) {
         vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, transform).GetComponent<VizQuad>();
         vizQuad.Initialize("Quad_"+quad.quadID.ToString());
-        _Quads.Add(quad.quadID, vizQuad);
+        quadDict.Add(quad.quadID, vizQuad);
       }
 
       var a = new Vector3(quad.xUpperLeft, quad.yUpperLeft, quad.zUpperLeft);
@@ -265,10 +361,19 @@ namespace Anki.Cozmo {
     }
 
     public void EraseQuad(EraseQuad eraseQuad) {
-      VizQuad vizQuad;
-      if (_Quads.TryGetValue(eraseQuad.quadID, out vizQuad)) {
-        _Quads.Remove(eraseQuad.quadID);
-        Destroy(vizQuad.gameObject);
+
+      if (eraseQuad.quadType == (uint)VizConstants.ALL_QUAD_TYPEs) {
+        // Erase all quads
+        foreach (var dict in _Quads.Values) {
+          EraseItem(dict, (uint)VizConstants.ALL_QUAD_IDs);
+        }
+      }
+      else {
+        // Erase the specific quad
+        Dictionary<uint, VizQuad> quadDict;
+        if (_Quads.TryGetValue(eraseQuad.quadType, out quadDict)) {
+          EraseItem(quadDict, eraseQuad.quadID);
+        }
       }
     }
 
@@ -276,25 +381,48 @@ namespace Anki.Cozmo {
       VizQuad vizQuad;
       if (!_Objects.TryGetValue(obj.objectID, out vizQuad)) {
         vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, transform).GetComponent<VizQuad>();
-        vizQuad.Initialize("Object_"+obj.objectID.ToString());
+        vizQuad.Initialize("Object_" + obj.objectID.ToString());
         _Objects.Add(obj.objectID, vizQuad);
       }
 
-      vizQuad.StartUpdateQuadList();
+      var halfAngle = obj.rot_deg * Mathf.Deg2Rad * 0.5f;
+      var sin = Mathf.Sin(halfAngle);
+      var cos = Mathf.Cos(halfAngle);
 
-      var rotation = Quaternion.Euler(obj.rot_axis_x, obj.rot_axis_y, obj.rot_axis_z);
+      var rotation = new Quaternion(obj.rot_axis_x * sin, obj.rot_axis_y * sin, obj.rot_axis_z * sin, cos);
       var origin = new Vector3(obj.x_trans_m, obj.y_trans_m, obj.z_trans_m);
       var size = new Vector3(obj.x_size_m, obj.y_size_m, obj.z_size_m);
-
-      var d = size * 0.5f;
+      var color = obj.color.ToColor();
 
       // set the position and rotation using transform, set size using mesh deformation
-
-      vizQuad.transform.rotation = rotation;
+      vizQuad.transform.localRotation = rotation;
       vizQuad.transform.localPosition = origin;
 
+      if (vizQuad.DrawColor != color || !vizQuad.DrawScale.Approximately(size)) {
+        switch (obj.objectTypeID) {
+        case VizObjectType.VIZ_OBJECT_CUBOID:
+          DrawCuboidObject(vizQuad, size, color);
+          break;
+        case VizObjectType.VIZ_OBJECT_ROBOT:
+          DrawRobotObject(vizQuad, size, color);
+          break;
+        case VizObjectType.VIZ_OBJECT_HUMAN_HEAD:
+          DrawHumanHeadObject(vizQuad, size, color);
+          break;
+
+        // TODO: Implement any other VizObjects that we don't make primitives
+        }
+        vizQuad.DrawColor = color;
+        vizQuad.DrawScale = size;
+      }
+    }
+
+    private void DrawCuboidObject(VizQuad vizQuad, Vector3 size, Color color) {
+      var d = size * 0.5f;
+      vizQuad.StartUpdateQuadList();
+
       var innerColor = Color.clear;
-      var outerColor = obj.color.ToColor();
+      var outerColor = color;
 
       vizQuad.StartUpdateQuadList();
       // front
@@ -354,11 +482,206 @@ namespace Anki.Cozmo {
       vizQuad.EndUpdateQuadList();
     }
 
+    private void DrawRobotObject(VizQuad vizQuad, Vector3 size, Color color) {
+      var innerColor = color;
+      var outerColor = color;
+
+      var heightOffset = Vector3.forward * CozmoUtil.kHeadHeightMM * 0.001f;
+
+      vizQuad.StartUpdateQuadList();
+      // top
+      vizQuad.AddToQuadList(
+        Vector3.right * 0.02f + heightOffset,
+        Vector3.right * 0.02f + heightOffset,
+        new Vector3(-0.01f, -0.01f, 0.01f) + heightOffset,
+        new Vector3(-0.01f, 0.01f, 0.01f) + heightOffset, 
+        innerColor,
+        outerColor);
+
+      // right
+      vizQuad.AddToQuadList(
+        Vector3.right * 0.02f + heightOffset,
+        Vector3.right * 0.02f + heightOffset,
+        new Vector3(-0.01f, 0.01f, 0.01f) + heightOffset,
+        new Vector3(-0.01f, 0.01f, -0.01f) + heightOffset, 
+        innerColor,
+        outerColor);
+
+      // bottom
+      vizQuad.AddToQuadList(
+        Vector3.right * 0.02f + heightOffset,
+        Vector3.right * 0.02f + heightOffset,
+        new Vector3(-0.01f, 0.01f, -0.01f) + heightOffset,
+        new Vector3(-0.01f, -0.01f, -0.01f) + heightOffset, 
+        innerColor,
+        outerColor);
+
+      // left
+      vizQuad.AddToQuadList(
+        Vector3.right * 0.02f + heightOffset,
+        Vector3.right * 0.02f + heightOffset,
+        new Vector3(-0.01f, -0.01f, -0.01f) + heightOffset,
+        new Vector3(-0.01f, -0.01f, 0.01f) + heightOffset, 
+        innerColor,
+        outerColor);
+
+      // back
+      vizQuad.AddToQuadList(
+        new Vector3(-0.01f, -0.01f, 0.01f) + heightOffset, 
+        new Vector3(-0.01f, 0.01f, 0.01f) + heightOffset, 
+        new Vector3(-0.01f, 0.01f, -0.01f) + heightOffset,
+        new Vector3(-0.01f, -0.01f, -0.01f) + heightOffset, 
+        innerColor,
+        outerColor);
+
+      vizQuad.EndUpdateQuadList();
+    }
+
+    private void DrawHumanHeadObject(VizQuad vizQuad, Vector3 size, Color color) {
+      var innerColor = Color.clear;
+      var outerColor = color;
+
+      vizQuad.StartUpdateQuadList();
+
+      var d = size * 0.5f;
+
+      Vector2 lastXZ = new Vector2(d.x, 0);
+
+      //Draw the head as a huge oval in space.
+      for (int i = 1; i <= 18; i++) {
+        float angle = Mathf.PI * i / 9f;
+
+        Vector2 nextXZ = new Vector2(d.x * Mathf.Cos(angle), d.z * Mathf.Sin(angle));
+
+        vizQuad.AddToQuadList(
+          new Vector3(nextXZ.x, -d.y, nextXZ.y),
+          new Vector3(nextXZ.x, d.y, nextXZ.y),
+          new Vector3(lastXZ.x, d.y, lastXZ.y),
+          new Vector3(lastXZ.x, -d.y, lastXZ.y),
+          innerColor,
+          outerColor);
+        lastXZ = nextXZ;
+      }
+
+      vizQuad.EndUpdateQuadList();
+    }
+
+
     public void EraseObject(EraseObject eraseObj) {
+      EraseItem(_Objects, eraseObj.objectID, eraseObj.lower_bound_id, eraseObj.upper_bound_id);
+    }
+
+    public void BeginSimpleQuadVector(SimpleQuadVectorMessageBegin begin) {
       VizQuad vizQuad;
-      if (_Objects.TryGetValue(eraseObj.objectID, out vizQuad)) {
-        _Objects.Remove(eraseObj.objectID);
-        Destroy(vizQuad.gameObject);
+      if (!_SimpleQuadVectors.TryGetValue(begin.identifier, out vizQuad)) {
+        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, transform).GetComponent<VizQuad>();
+        vizQuad.Initialize("SimpleQuadVector_" + begin.identifier);
+        _SimpleQuadVectors.Add(begin.identifier, vizQuad);
+      }
+      vizQuad.StartUpdateQuadList();
+    }
+
+    public void SimpleQuadVector(SimpleQuadVectorMessage msg) {
+      VizQuad vizQuad;
+      if (!_SimpleQuadVectors.TryGetValue(msg.identifier, out vizQuad)) {
+        DAS.Error(this, "Could not find SimpleQuadVector with identifier " + msg.identifier);
+        return;
+      }
+      foreach (var quad in msg.quads) {
+        Vector3 center = new Vector3(quad.center[0], quad.center[1], quad.center[2]);
+        float r = quad.sideSize * 0.5f;
+
+        var a = center + new Vector3(-r, r, 0);
+        var b = center + new Vector3(r, r, 0);
+        var c = center + new Vector3(r, -r, 0);
+        var d = center + new Vector3(-r, -r, 0);
+
+        // lets move the position of this vizQuad to the center of our points
+        // and adjust the points accordingly.
+
+        vizQuad.AddToQuadList(
+          a,
+          b,
+          c,
+          d,
+          quad.color.ToColor(),
+          Color.clear);
+      }
+    }
+
+    public void EndSimpleQuadVector(SimpleQuadVectorMessageEnd end) {
+      VizQuad vizQuad;
+      if (!_SimpleQuadVectors.TryGetValue(end.identifier, out vizQuad)) {
+        DAS.Error(this, "Could not find SimpleQuadVector with identifier " + end.identifier);
+        return;
+      }
+      vizQuad.EndUpdateQuadList();
+    }
+
+    public void AppendPathSegmentLine(AppendPathSegmentLine line) {
+      VizPath vizPath;
+      if (!_Paths.TryGetValue(line.pathID, out vizPath)) {
+        vizPath = UIManager.CreateUIElement(_VizPathPrefab, transform).GetComponent<VizPath>();
+        vizPath.Initialize("Path_" + line.pathID);
+        _Paths.Add(line.pathID, vizPath);
+        vizPath.BeginPath();
+      }
+      vizPath.AppendLine(
+        new Vector3(line.x_start_m, line.y_start_m, line.z_start_m), 
+        new Vector3(line.x_end_m, line.y_end_m, line.z_end_m));
+    }
+
+    public void AppendPathSegmentArc(AppendPathSegmentArc arc) {
+      VizPath vizPath;
+      if (!_Paths.TryGetValue(arc.pathID, out vizPath)) {
+        vizPath = UIManager.CreateUIElement(_VizPathPrefab, transform).GetComponent<VizPath>();
+        vizPath.Initialize("Path_" + arc.pathID);
+        _Paths.Add(arc.pathID, vizPath);
+        vizPath.BeginPath();
+      }
+      vizPath.AppendArc(
+        new Vector2(arc.x_center_m, arc.y_center_m), 
+        arc.radius_m, 
+        arc.start_rad, 
+        arc.sweep_rad);
+    }
+
+    public void SetPathColor(SetPathColor path) {
+      VizPath vizPath;
+      if (!_Paths.TryGetValue(path.pathID, out vizPath)) {
+        DAS.Warn(this, "Could not set color for path " + path.pathID);
+        return;
+      }
+      // Not sure if we are using the color as raw color, as a lookup
+      vizPath.Color = path.colorID.ToColor();
+    }
+
+    public void ErasePath(ErasePath path) {
+      EraseItem(_Paths, path.pathID);
+    }
+
+    public void DrawSegmentPrimative(SegmentPrimitive segment) {
+      VizPath vizPath;
+      if (!_SegmentPrimatives.TryGetValue(segment.identifier, out vizPath)) {
+        vizPath = UIManager.CreateUIElement(_VizPathPrefab, transform).GetComponent<VizPath>();
+        vizPath.Initialize("SegmentPrimative_" + segment.identifier);
+        _SegmentPrimatives.Add(segment.identifier, vizPath);
+      }
+      var a = new Vector3(segment.origin[0], segment.origin[1], segment.origin[2]);
+      var b = new Vector3(segment.dest[0], segment.dest[1], segment.dest[2]);
+      if (segment.clearPrevious) {
+        vizPath.SetSegment(a, b, segment.color.ToColor());
+      }
+      else {
+        vizPath.AppendLine(a, b);
+      }
+    }
+
+    public void EraseSegmentPrimitives(EraseSegmentPrimitives eraseSegment) {
+      VizPath vizPath;
+      if (_SegmentPrimatives.TryGetValue(eraseSegment.identifier, out vizPath)) {
+        _SegmentPrimatives.Remove(eraseSegment.identifier);
+        Destroy(vizPath.gameObject);
       }
     }
 
@@ -376,15 +699,50 @@ namespace Anki.Cozmo {
 
       _OverlayImage.SetPixels32(_OverlayClearBuffer);
     }
+    private void DrawCameraLine(CameraLine camLine) {
 
-    private void DrawOverlayLine(int x0, int y0, int x1, int y1, Color col) {
+      DrawOverlayLine(camLine.xStart, camLine.yStart, camLine.xEnd, camLine.yEnd, camLine.color.ToColor());
+    }
+
+    private void DrawCameraOval(CameraOval camOval) {
+      DrawOverlayOval(camOval.xCen, camOval.yCen, camOval.xRad, camOval.yRad, camOval.color.ToColor());
+    }
+
+    private void DrawCameraQuad(CameraQuad camQuad) {
+      DrawOverlayLine(camQuad.xLowerLeft, camQuad.yLowerLeft, camQuad.xLowerRight, camQuad.yLowerRight, camQuad.color.ToColor());
+      DrawOverlayLine(camQuad.xLowerLeft, camQuad.yLowerLeft, camQuad.xUpperLeft, camQuad.yUpperLeft, camQuad.color.ToColor());
+      DrawOverlayLine(camQuad.xUpperRight, camQuad.yUpperRight, camQuad.xLowerRight, camQuad.yLowerRight, camQuad.color.ToColor());
+      DrawOverlayLine(camQuad.xUpperRight, camQuad.yUpperRight, camQuad.xUpperLeft, camQuad.yUpperLeft, camQuad.color.ToColor());
+    }
+
+    private void DrawVisionMarker(VisionMarker visionMarker) {
+      DrawOverlayLine(visionMarker.bottomLeft_x, visionMarker.bottomLeft_y, visionMarker.bottomRight_x, visionMarker.bottomRight_y, Color.red);
+      DrawOverlayLine(visionMarker.bottomLeft_x, visionMarker.bottomLeft_y, visionMarker.topLeft_x, visionMarker.topLeft_y, Color.red);
+      DrawOverlayLine(visionMarker.topRight_x, visionMarker.topRight_y, visionMarker.bottomRight_x, visionMarker.bottomRight_y, Color.red);
+      DrawOverlayLine(visionMarker.topRight_x, visionMarker.topRight_y, visionMarker.topLeft_x, visionMarker.topLeft_y, Color.red);
+    }
+
+    private void DrawFaceDetection(FaceDetection faceDetection) {      
+      DrawOverlayOval((faceDetection.x_upperLeft + 0.5f * faceDetection.width), (faceDetection.y_upperLeft + 0.5f * faceDetection.height), (0.5f * faceDetection.width), (0.5f * faceDetection.height), Color.blue);
+    }
+
+
+    private void DrawOverlayLine(float x0f, float y0f, float x1f, float y1f, Color col) {
+
       if (_OverlayImage == null) {
         return;
       }
+
       int h = _OverlayImage.height;
       // invert our y
-      y0 = h - y0 - 1;
-      y1 = h - y1 - 1;
+      y0f = h - y0f - 1;
+      y1f = h - y1f - 1;
+
+      int x0 = (int)(x0f - 0.5f);
+      int y0 = (int)(y0f - 0.5f);
+      int x1 = (int)(x1f - 0.5f);
+      int y1 = (int)(y1f - 0.5f);
+
 
       // Bresenham's algorithm, taken from here: http://wiki.unity3d.com/index.php?title=TextureDrawLine
       var dy = y1 - y0;
@@ -434,16 +792,30 @@ namespace Anki.Cozmo {
       _OverlayDirty = true;
     }
 
-    private void DrawOverlayOval(int cx, int cy, int rx, int ry, Color col) {
+    private void DrawOverlayOval(float cxf, float cyf, float rx, float ry, Color col) {
+
       if (_OverlayImage == null) {
         return;
       }
 
+      int h = _OverlayImage.height;
+      // invert our y
+      cyf = h - cyf - 1;
+
+      int cx = (int)(cxf - 0.5f);
+      int cy = (int)(cyf - 0.5f);
+
       var y = Mathf.Max(rx, ry);
+
+      if (y == 0) {
+        SetOverlayPixel(cx, cy, col);
+        return;
+      }
+
       float xratio = rx / y;
       float yratio = ry / y;
 
-      var d = 1/4 - y;
+      var d = 0.25f - y;
       var end = Mathf.Ceil(y/Mathf.Sqrt(2));
 
       for (var x = 0; x <= end; x++) {
