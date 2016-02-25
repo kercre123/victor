@@ -255,7 +255,7 @@ namespace Cozmo {
       
 #     if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       // Prep sound
-      _audioClient.LoadAnimationAudio(anim);
+      _audioClient.LoadAnimationAudio(anim, robot.IsPhysical());
       // Set Pre Buffer Key Frame Size
       _audioClient.SetPreBufferRobotAudioMessageCount(0);
 #     endif
@@ -1027,19 +1027,6 @@ namespace Cozmo {
       }
 
 #     else // if (!USE_SOUND_MANAGER_FOR_ROBOT_AUDIO)
-      
-
-      // FIXME: Need to handle playing audio on the device
-#     if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-      // Queue up audio frame for playing locally if
-      // it's not already in the queued and it wasn't already played.
-      if ((&audioKF != _lastPlayedOnDeviceRobotAudioKeyFrame) &&
-          (_onDeviceRobotAudioKeyFrameQueue.empty() || &audioKF != _onDeviceRobotAudioKeyFrameQueue.back()))
-      {
-        _onDeviceRobotAudioKeyFrameQueue.push_back(&audioKF);
-      }
-#     endif
-
       
       // Stream a single audio sample from the audio manager (or silence if there isn't one)
       // (Have to *always* send an audio frame to keep time, whether that's the next
