@@ -391,6 +391,8 @@ MonoBehaviour:
     panePrefab: {fileID: 113112, guid: 3bd508acfffff402bb84d7e68c9e2964, type: 2}
   - name: Data Persistence
     panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
+  - name: Viz
+    panePrefab: {fileID: 179792, guid: ea3140e2d4dfa4e66bc09d5abd8813ee, type: 2}
   - name: The Rest
     panePrefab: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
@@ -577,7 +579,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.size
-      value: 9
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: tabButtonPrefab_
@@ -655,12 +657,12 @@ Prefab:
       objectReference: {fileID: 113112, guid: 6edfb651b8cff462981b4979e7dd82f4, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[8].name
-      value: The Rest
+      value: Viz
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[8].panePrefab
       value: 
-      objectReference: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
+      objectReference: {fileID: 179792, guid: ea3140e2d4dfa4e66bc09d5abd8813ee, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[3].name
       value: Animation

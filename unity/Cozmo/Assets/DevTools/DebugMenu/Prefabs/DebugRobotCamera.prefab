@@ -10,7 +10,7 @@ GameObject:
   - 224: {fileID: 22445638}
   - 114: {fileID: 11486786}
   m_Layer: 5
-  m_Name: TestDisplayCamera
+  m_Name: DebugRobotCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

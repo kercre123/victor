@@ -78,17 +78,10 @@ public class VizCameraControls : MonoBehaviour {
         var delta = _LastTouchCenter - localPoint;
 
         if (left) {
-          var scaledDelta = delta * _kDragScale * cameraTransform.localPosition.magnitude;
-
-          var cRight = cameraTransform.InverseTransformVector(cameraTransform.right).normalized;
-          var cUp = cameraTransform.InverseTransformVector(cameraTransform.up).normalized;
-
-          cameraTransform.localPosition += cRight * scaledDelta.x + cUp * scaledDelta.y;
+          UpdatePan(cameraTransform, delta);
         }
         else {
-          var scaledDelta = (Vector3)(delta * _kRotateScale);
-          var rotation = Quaternion.Euler(scaledDelta.y, -scaledDelta.x, 0);
-          cameraTransform.localRotation *= rotation;
+          UpdateRotation(cameraTransform, delta);
         }
       }
       else if(_LastTouchCount == 0) {
@@ -106,10 +99,10 @@ public class VizCameraControls : MonoBehaviour {
 
     _LastTouchCenter = localPoint;
 
-    float zoom = scrollWheel * _kZoomScale;
-    var cForward = cameraTransform.InverseTransformVector(cameraTransform.forward).normalized;
-    cameraTransform.localPosition += cForward * zoom;
+    UpdateZoom(cameraTransform, scrollWheel);
   }
+
+
 
   private void ProcessTouches() {
     var cameraTransform = VizManager.Instance.Camera.transform;
@@ -164,12 +157,8 @@ public class VizCameraControls : MonoBehaviour {
     }
 
     if (touchCount == 1) {
-      var scaledDelta = ((first.LastPosition - first.CurrentPosition) * _kDragScale) * cameraTransform.localPosition.magnitude;
+      UpdatePan(cameraTransform, (first.LastPosition - first.CurrentPosition));
 
-      var cRight = cameraTransform.InverseTransformVector(cameraTransform.right).normalized;
-      var cUp = cameraTransform.InverseTransformVector(cameraTransform.up).normalized;
-
-      cameraTransform.localPosition += cRight * scaledDelta.x + cUp * scaledDelta.y;
       return;
     }
 
@@ -179,28 +168,61 @@ public class VizCameraControls : MonoBehaviour {
 
       if (!lastSize.Approximately(Vector2.zero)) {
 
-        var zoom = _kZoomScale * (currentSize.magnitude / lastSize.magnitude - 1);
+        UpdateZoom(cameraTransform, (currentSize.magnitude / lastSize.magnitude - 1));
 
-        var cForward = cameraTransform.InverseTransformVector(cameraTransform.forward).normalized;
-        cameraTransform.localPosition += cForward * zoom;
       }
+      return;
+    }
+
+    touchCenter /= touchCount;
+
+    if (touchCount == _LastTouchCount) {
+      var delta = (_LastTouchCenter - touchCenter);
+
+      UpdateRotation(cameraTransform, delta);
+    }
+
+    _LastTouchCount = touchCount;
+    _LastTouchCenter = touchCenter;
+	}
+
+  private void UpdatePan(Transform cameraTransform, Vector2 delta) {
+    var scaledDelta = delta * _kDragScale * cameraTransform.localPosition.y;
+
+    var cRight = cameraTransform.InverseTransformVector(cameraTransform.right).normalized;
+    var cUp = cameraTransform.InverseTransformVector(cameraTransform.up).normalized;
+
+    cameraTransform.localPosition += cRight * scaledDelta.x + cUp * scaledDelta.y;
+  }
+
+  private void UpdateRotation(Transform cameraTransform, Vector2 delta) {
+    var scaledDelta = (Vector3)(delta * _kRotateScale);
+
+    if (!cameraTransform.forward.xz().Approximately(Vector2.zero)) {
+      cameraTransform.forward = Quaternion.Euler(0, -scaledDelta.x, 0) * cameraTransform.forward;
     }
     else {
-      touchCenter /= touchCount;
-
-      if (touchCount == _LastTouchCount) {
-        var delta = (_LastTouchCenter - touchCenter) * _kRotateScale;
-
-        var rotation = Quaternion.Euler(delta.y, -delta.x, 0);
-        VizManager.Instance.Camera.transform.localRotation *= rotation;
-      }
-
-      _LastTouchCount = touchCount;
-      _LastTouchCenter = touchCenter;
+      cameraTransform.localRotation *= Quaternion.Euler(0, 0, -scaledDelta.x);
     }
 
+    var lastRotation = cameraTransform.localRotation;
+    var lastUp = cameraTransform.up;
 
-	}
+    cameraTransform.localRotation *= Quaternion.Euler(scaledDelta.y, 0, 0);
+
+    // don't allow going past the bottom, because we always want up to be positive
+    if ((lastUp.y > 0) != (cameraTransform.up.y > 0)) {
+      cameraTransform.localRotation = lastRotation;
+    }
+  }
+
+  private void UpdateZoom(Transform cameraTransform, float zoomFactor) {
+    var zoom = _kZoomScale * zoomFactor;
+
+    var cForward = cameraTransform.InverseTransformVector(cameraTransform.forward).normalized;
+    cameraTransform.localPosition += cForward * zoom;
+
+  }
 
 
 }
