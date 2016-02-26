@@ -806,6 +806,18 @@ message GetDebugConsoleVarMessage {
 message GetAllDebugConsoleVarMessage {
 }
 
+message BlockPoolEnabledMessage {
+  bool enabled
+}
+
+message BlockSelectedMessage {
+  uint_32 blockId,
+  bool   selected
+}
+// Query for E2Gmessage: InitBlockPoolMessage
+message GetBlockPoolMessage {
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union MessageGameToEngine { }

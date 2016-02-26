@@ -27,6 +27,7 @@
 #define COZMO_MESSAGE_ROBOT_H
 
 #include "anki/types.h"
+#include "clad/types/motorTypes.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -69,6 +70,8 @@ namespace Anki {
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
 
+      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted);
+      
 #ifndef TARGET_K02
       // For sending text message to basestation
       int SendText(const char *format, ...);
