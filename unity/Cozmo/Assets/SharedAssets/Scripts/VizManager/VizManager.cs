@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Anki.Cozmo.VizInterface;
 using System.IO;
+using Cozmo.Util;
 
 namespace Anki.Cozmo.Viz {
   public class VizManager : MonoBehaviour {
@@ -85,6 +86,8 @@ namespace Anki.Cozmo.Viz {
     [SerializeField]
     private RectTransform _LabelCanvas;
 
+    [SerializeField]
+    private Font _CameraFont;
 
     [SerializeField]
     private Transform _VizScene;
@@ -218,7 +221,7 @@ namespace Anki.Cozmo.Viz {
         DrawCameraQuad(message.CameraQuad);
         break;
       case MessageViz.Tag.CameraText:
-        // This will require magic
+        DrawCameraText(message.CameraText);
         break;
       case MessageViz.Tag.VisionMarker:
         DrawVisionMarker(message.VisionMarker);
@@ -912,6 +915,83 @@ namespace Anki.Cozmo.Viz {
       _OverlayImage.SetPixel(x + 1, y, c);
       _OverlayImage.SetPixel(x, y + 1, c);
       _OverlayImage.SetPixel(x + 1, y + 1, c);
+    }
+
+    private void DrawCameraText(CameraText camText) {
+      if (_OverlayImage == null) {
+        return;
+      }
+
+      string text = camText.text.FirstOrDefault() ?? string.Empty;
+
+      // valid chars only needs to be populated if there are invalid ascii chars
+      List<char> validChars = null;
+
+      for(int i = 0; i < text.Length; i++) {
+        if (!_CameraFont.HasCharacter(text[i])) {
+          if (validChars == null) {
+            validChars = new List<char>();
+            validChars.AddRange(text.Substring(0, i));
+          }
+          validChars.Add('?');
+        }
+        else if (validChars != null) {
+          validChars.Add(text[i]);
+        }
+      }
+      if (validChars != null) {
+        text = new string(validChars.ToArray());
+      }
+      var fontTexture = (Texture2D)_CameraFont.material.mainTexture;
+
+      int x = camText.x, y = _OverlayImage.height - 1 - camText.y - _CameraFont.lineHeight;
+
+      var color = camText.color.ToColor();
+
+      for (int i = 0; i < text.Length; i++) {
+        CharacterInfo charInfo;
+        _CameraFont.GetCharacterInfo(text[i], out charInfo);
+
+        var uvBottomRight = charInfo.uvBottomRight;
+        var uvBottomLeft = charInfo.uvBottomLeft;
+        var uvTopLeft = charInfo.uvTopLeft;
+
+
+        int minX = Mathf.RoundToInt(uvBottomRight.x * fontTexture.width);
+        int maxX = Mathf.RoundToInt(uvTopLeft.x * fontTexture.width);
+        int minY = Mathf.RoundToInt(uvBottomRight.y * fontTexture.height);
+        int maxY = Mathf.RoundToInt(uvTopLeft.y * fontTexture.height);
+
+        int stepX = minX < maxX ? 1 : -1;
+        int stepY = minY < maxY ? 1 : -1;
+
+        // if the bottom y changes, it means we need to swap x/y when writing to our texture
+        bool swapXY = !Mathf.Approximately(uvBottomRight.y, uvBottomLeft.y);
+
+        int xRange = Mathf.Abs(minX - maxX);
+        int yRange = Mathf.Abs(minY - maxY);
+
+        for(int j = 0; j < xRange; j++) {
+          for (int k = 0; k < yRange; k++) {
+
+            int jf = minX + stepX * j;
+            int kf = minY + stepY * k;
+
+            int jo = x + charInfo.bearing + charInfo.glyphWidth - (swapXY ? 1 + k : j) - charInfo.minX;
+            int ko = y + (swapXY ? 1 + j : k) + charInfo.minY;
+
+            Color oldColor = _OverlayImage.GetPixel(jo, ko);
+
+            Color fontColor = fontTexture.GetPixel(jf, kf);
+
+            var newColor = oldColor * (1 - fontColor.a) + color * fontColor.a;
+
+            _OverlayImage.SetPixel(jo, ko, newColor);
+          }
+        }
+
+        x += charInfo.advance;
+      }
     }
 
     #endregion // OverlayRender

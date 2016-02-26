@@ -130,8 +130,8 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 103070}
-  m_LocalRotation: {x: 0.5828324, y: 0, z: 0, w: 0.8125924}
-  m_LocalPosition: {x: 0, y: 1011, z: -369}
+  m_LocalRotation: {x: 0.5204137, y: 0, z: 0, w: 0.85391426}
+  m_LocalPosition: {x: 45.4, y: 1029.66, z: -369}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 22415616}
@@ -316,6 +316,7 @@ MonoBehaviour:
   _VizPathPrefab: {fileID: 11438868, guid: 87dac7395334f4d3ca1e0ac783dc2a99, type: 2}
   _Camera: {fileID: 2099804}
   _LabelCanvas: {fileID: 22415616}
+  _CameraFont: {fileID: 12800000, guid: ff2d2640f1e5b46a6a39203ead36ca4e, type: 2}
   _VizScene: {fileID: 438812}
 --- !u!223 &22350156
 Canvas:
