@@ -137,8 +137,6 @@ public class VizCameraControls : MonoBehaviour {
       Vector2 localPoint;
       RectTransformUtility.ScreenPointToLocalPointInRectangle(_RectTransform, touch.position, _myCamera, out localPoint);
 
-      Debug.Log(localPoint);
-
       if (touch.phase == TouchPhase.Began) {
         state.StartPosition = localPoint;
         state.CurrentPosition = localPoint;
