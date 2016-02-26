@@ -11,7 +11,8 @@
 *
 */
 
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -917,6 +918,8 @@ void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
   
 void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
 {
+  // TODO: Just move these handlers to VisionComponent and have it handle them directly
+  
   // StartFaceTracking
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::EnableVisionMode,
     [this] (const GameToEngineEvent& event)
@@ -930,7 +933,7 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
     [this] (const GameToEngineEvent& event)
     {
       const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
-      EnableVisionWhileMoving(msg.enable);
+      _visionComponent.EnableVisionWhileMoving(msg.enable);
     }));
 }
 

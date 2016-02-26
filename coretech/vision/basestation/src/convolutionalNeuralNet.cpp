@@ -22,8 +22,8 @@
 #include "util/logging/logging.h"
 #include "json/json.h"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
 
 // Includes for vl CNN stuff
 #include <nnconv.hpp>

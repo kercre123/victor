@@ -4,8 +4,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/matrix.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-
-#include <opencv2/core/core.hpp>
+#include "anki/vision/basestation/image.h"
 
 namespace Anki {
   
@@ -26,7 +25,7 @@ namespace Cozmo {
     static bool GetNextBlinkFrame(ProceduralFace& _faceData, TimeStamp_t& offset);
     
     // Actually draw the face with the current parameters
-    static cv::Mat_<u8> DrawFace(const ProceduralFace& _faceData);
+    static Vision::Image DrawFace(const ProceduralFace& _faceData);
     
   private:
     
@@ -34,7 +33,7 @@ namespace Cozmo {
     using WhichEye = ProceduralFace::WhichEye;
     using Value = ProceduralFace::Value;
     
-    static void DrawEye(const ProceduralFace& _faceData, WhichEye whichEye, cv::Mat_<u8>& faceImg);
+    static void DrawEye(const ProceduralFace& _faceData, WhichEye whichEye, Vision::Image& faceImg);
     
     static SmallMatrix<2,3,f32> GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
                                                         f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);

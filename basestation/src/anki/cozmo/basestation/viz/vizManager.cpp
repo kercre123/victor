@@ -27,7 +27,7 @@
 #include <fstream>
 
 #if ANKICORETECH_USE_OPENCV
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui.hpp>
 #endif
 
 

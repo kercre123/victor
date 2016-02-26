@@ -17,21 +17,23 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities_c.h"
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-namespace cv {
-  class Mat;
-  template<typename Type> class Mat_;
+//#if ANKICORETECH_EMBEDDED_USE_OPENCV
+//namespace cv {
+//  class Mat;
+//  template<typename Type> class Mat_;
+//
+//  template<typename Type> class Point_;
+//  template<typename Type> class Point3_;
+//
+//  typedef Point_<int> Point2i;
+//  typedef Point2i Point;
+//
+//  template<typename Type> class Scalar_;
+//  typedef Scalar_<double> Scalar;
+//}
+//#endif
 
-  template<typename Type> class Point_;
-  template<typename Type> class Point3_;
-
-  typedef Point_<int> Point2i;
-  typedef Point2i Point;
-
-  template<typename Type> class Scalar_;
-  typedef Scalar_<double> Scalar;
-}
-#endif
+#include <opencv2/core.hpp>
 
 namespace Anki
 {

@@ -88,7 +88,7 @@ namespace Anki {
       const Quadrilateral<f32>& initialQuad,
       const Array<f32>& initialHomography,
       const Array<u8> &image,
-      const f32 squareWidthFraction,
+      const Point<f32>& squareSizeFraction,
       const s32 maxIterations,
       const f32 darkGray,
       const f32 brightGray,
@@ -171,7 +171,8 @@ namespace Anki {
       const f32 outerInc = 1.f / static_cast<f32>(N-1);
       //LinearSequence<f32> OuterOneToN = LinearSequence<f32>(0.f, outerInc, 1.f);
 
-      const f32 innerInc = (1.f - 2.f*squareWidthFraction) / static_cast<f32>(N-1);
+      const f32 innerIncX = (1.f - 2.f*squareSizeFraction.x) / static_cast<f32>(N-1);
+      const f32 innerIncY = (1.f - 2.f*squareSizeFraction.y) / static_cast<f32>(N-1);
       //LinearSequence<f32> InnerOneToN = LinearSequence<f32>(squareWidthFraction, innerInc, 1.f-squareWidthFraction);
 
       // Template coordinates
@@ -253,14 +254,14 @@ namespace Anki {
         f32 * restrict pTXbtm = Tx.Pointer(0,5*N);
         f32 * restrict pTYbtm = Ty.Pointer(0,5*N);
 
-        f32 x = squareWidthFraction;
-        for(s32 index = 0; index < N; x += innerInc, ++index)
+        f32 x = squareSizeFraction.x;
+        for(s32 index = 0; index < N; x += innerIncX, ++index)
         {
           pXtop[index] = x;
-          pYtop[index] = squareWidthFraction;
+          pYtop[index] = squareSizeFraction.y;
 
           pXbtm[index] = x;
-          pYbtm[index] = 1.f - squareWidthFraction;
+          pYbtm[index] = 1.f - squareSizeFraction.y;
 
           pTXtop[index] = 0.f;
           pTYtop[index] = derivMagnitude;
@@ -331,13 +332,13 @@ namespace Anki {
         f32 * restrict pTXright = Tx.Pointer(0,7*N);
         f32 * restrict pTYright = Ty.Pointer(0,7*N);
 
-        f32 y = squareWidthFraction;
-        for(s32 index = 0; index < N; y += innerInc, ++index)
+        f32 y = squareSizeFraction.y;
+        for(s32 index = 0; index < N; y += innerIncY, ++index)
         {
-          pXleft[index] = squareWidthFraction;
+          pXleft[index] = squareSizeFraction.x;
           pYleft[index] = y;
 
-          pXright[index] = 1.f - squareWidthFraction;
+          pXright[index] = 1.f - squareSizeFraction.x;
           pYright[index] = y;
 
           pTXleft[index] = derivMagnitude;

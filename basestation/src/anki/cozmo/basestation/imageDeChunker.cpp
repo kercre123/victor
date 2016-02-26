@@ -10,8 +10,8 @@
  **/
 
 #include "anki/cozmo/basestation/imageDeChunker.h"
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 
 
 namespace Anki {
