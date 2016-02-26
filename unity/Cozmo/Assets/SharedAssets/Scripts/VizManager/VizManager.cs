@@ -110,16 +110,18 @@ namespace Anki.Cozmo {
 
     public Camera Camera { get { return _Camera; } }
 
+    private Vector3 _InitialCameraPosition;
+    private Quaternion _InitialCameraRotation;
 
     private MemoryStream _MemStream = new MemoryStream();
     // required for Minimized Jpeg
     private MemoryStream _MemStream2 = new MemoryStream();
-
-  
+      
     public static VizManager Instance { get; private set; }
       
     private void OnEnable() {
-      DAS.Info("VizManager", "Enabling Robot Engine Manager");
+      
+      DAS.Info(this, "Enabling VizManager");
       if (Instance != null && Instance != this) {
         Destroy(gameObject);
         return;
@@ -133,6 +135,9 @@ namespace Anki.Cozmo {
       _Channel.ConnectedToClient += Connected;
       _Channel.DisconnectedFromClient += Disconnected;
       _Channel.MessageReceived += ReceivedMessage;
+
+      _InitialCameraPosition = _Camera.transform.localPosition;
+      _InitialCameraRotation = _Camera.transform.localRotation;
 
       Listen();
     }
@@ -302,6 +307,13 @@ namespace Anki.Cozmo {
     }
 
     #region WorldDrawing
+
+
+    public void ResetCamera() {
+      _Camera.transform.localPosition = _InitialCameraPosition;
+      _Camera.transform.localRotation = _InitialCameraRotation;
+    }
+
 
     private void ClearAllVizObjects() {
       foreach (var dict in _Quads.Values) {

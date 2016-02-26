@@ -16,6 +16,9 @@ public class VizCameraControls : MonoBehaviour {
 
   private Camera _myCamera;
 
+  [SerializeField]
+  private Button _ResetButton;
+
   private const float _kDragScale = 0.001f;
 
   private const float _kRotateScale = 0.2f;
@@ -28,6 +31,9 @@ public class VizCameraControls : MonoBehaviour {
 
   private void Awake() {
     _RectTransform = GetComponent<RectTransform>();
+    if (_ResetButton != null) {
+      _ResetButton.onClick.AddListener(Reset);
+    }
   }
 
   private void Start() {
@@ -54,6 +60,10 @@ public class VizCameraControls : MonoBehaviour {
 
   private void OnDisable() {
     VizManager.Instance.Camera.enabled = false;
+  }
+
+  private void Reset() {
+    VizManager.Instance.ResetCamera();
   }
 	
   private class FingerState {
