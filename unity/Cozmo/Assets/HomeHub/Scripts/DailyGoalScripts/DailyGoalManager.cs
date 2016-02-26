@@ -228,19 +228,20 @@ public class DailyGoalManager : MonoBehaviour {
       // Avoid dupes
       return;
     }
-
+   
     ChallengeData data = _LastChallengeData;
     // Do not send the minigame message if the challenge is invalid.
     if (data == null) {
       return;
     }
-    // TODO: When the message has the appropriate 
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon) as AlertView;
+    // Create alert view with Icon
+    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon, true, true, false) as AlertView;
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
     alertView.SetIcon(data.ChallengeIcon);
+    alertView.ViewClosed += HandleRequestDialogClose;
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
     alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
@@ -249,7 +250,6 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
-    SetMinigameNeed();
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
     }
@@ -262,10 +262,17 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
-    DAS.Info(this, "HandleExternalRejection"); 
-    SetMinigameNeed();
+    DAS.Info(this, "HandleExternalRejection");
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
+    }
+  }
+
+  private void HandleRequestDialogClose() {
+    DAS.Info(this, "HandleUnexpectedClose");
+    SetMinigameNeed();
+    if (_RequestDialog != null) {
+      _RequestDialog.ViewClosed -= HandleRequestDialogClose;
     }
   }
 
