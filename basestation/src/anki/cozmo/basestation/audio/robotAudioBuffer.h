@@ -25,6 +25,7 @@
 #include <mutex>
 
 #define DEBUG_ROBOT_ANIMATION_AUDIO 0
+#define DEBUG_ROBOT_ANIMATION_AUDIO_LEVEL 0
 
 namespace Anki {
 namespace Cozmo {
