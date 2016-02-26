@@ -30,6 +30,13 @@
 //       possible to do rolling shutter correction on the engine. Then we can take this stuff out.
 #define DOCK_ANGLE_DAMPING 1
 
+// Whether or not to use Dubins path. If 0, just uses marker normal vector as approach path.
+#define USE_DUBINS_PATH 0
+
+// Whether or not to only use the first error signal
+#define USE_FIRST_ERROR_SIGNAL_ONLY 1
+
+
 namespace Anki {
   namespace Cozmo {
     namespace DockingController {
@@ -44,12 +51,14 @@ namespace Anki {
           APPROACH_FOR_DOCK
         };
 
+#if(USE_DUBINS_PATH)
         // Turning radius of docking path
         f32 DOCK_PATH_START_RADIUS_MM = WHEEL_DIST_HALF_MM;
 
         // Set of radii to try when generating Dubins path to marker
         const u8 NUM_END_RADII = 3;
         f32 DOCK_PATH_END_RADII_MM[NUM_END_RADII] = {100, 40, WHEEL_DIST_HALF_MM};
+#endif
 
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
@@ -543,12 +552,13 @@ namespace Anki {
           return;
         }
         
+#if(USE_FIRST_ERROR_SIGNAL_ONLY)
         // TEMP (maybe): Just use the first error signal that starts docking.
         //               This way we skip error signals that were potentially generated from a wonky marker due to motion.
         if (PathFollower::IsTraversingPath()) {
           return;
         }
-        
+#endif
 
 
         // Ignore error signals received while turning "fast" since they're generated
@@ -702,7 +712,7 @@ namespace Anki {
         Localization::ConvertToDriveCenterPose(dockPose_, dockPose_);
 
 
-
+#if(USE_DUBINS_PATH)
         s8 endRadiiIdx = -1;
         f32 path_length;
         u8 numPathSegments;
@@ -748,10 +758,11 @@ namespace Anki {
         //PRINT("numPathSegments: %d, path_length: %f, distToBlock: %f, followBlockNormalPath: %d\n",
         //      numPathSegments, path_length, distToBlock, followingBlockNormalPath_);
 
-
+#else
         // Skipping Dubins path since the straight line path seems to work fine as long as the steeringController gains
         // are set appropriately according to docking speed.
         followingBlockNormalPath_ = true;
+#endif // #if(USE_DUBINS_PATH)
 
         // No reasonable Dubins path exists.
         // Either try again with smaller radii or just let the controller
