@@ -221,7 +221,7 @@ namespace AnimationController {
   static inline RobotInterface::EngineToRobot::Tag PeekBufferTag()
   {
     int nextTagIndex = _currentBufferPos + 2;
-    if (nextTagIndex > KEYFRAME_BUFFER_SIZE) nextTagIndex -= KEYFRAME_BUFFER_SIZE;
+    if (nextTagIndex >= KEYFRAME_BUFFER_SIZE) nextTagIndex -= KEYFRAME_BUFFER_SIZE;
     return _keyFrameBuffer[nextTagIndex];
   }
 
@@ -244,10 +244,6 @@ namespace AnimationController {
       memcpy(data+firstChunk, _keyFrameBuffer, numBytes - firstChunk);
       _currentBufferPos = numBytes-firstChunk;
     }
-
-    // Increment total number of bytes played since startup
-    _numBytesPlayed += numBytes;
-
     return numBytes;
   }
 
@@ -268,6 +264,8 @@ namespace AnimationController {
       Clear();
       return 0;
     }
+    // Increment total number of bytes played since startup
+    _numBytesPlayed += size;
     return size+2;
   }
 
@@ -292,13 +290,14 @@ namespace AnimationController {
     AnkiAssert(numBytesNeeded < KEYFRAME_BUFFER_SIZE, 8);
 
     _keyFrameBuffer[_lastBufferPos++] = bufferSize & 0xff;
+    if (_lastBufferPos >= KEYFRAME_BUFFER_SIZE) _lastBufferPos -= KEYFRAME_BUFFER_SIZE;
     _keyFrameBuffer[_lastBufferPos++] = bufferSize >> 8;
 
-    if(_lastBufferPos + numBytesNeeded < KEYFRAME_BUFFER_SIZE) {
+    if(_lastBufferPos + bufferSize < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current end position to end of buffer to just
       // copy directly
-      memcpy(_keyFrameBuffer + _lastBufferPos, buffer, numBytesNeeded);
-      _lastBufferPos += numBytesNeeded;
+      memcpy(_keyFrameBuffer + _lastBufferPos, buffer, bufferSize);
+      _lastBufferPos += bufferSize;
     } else {
       // Copy the first chunk into whatever fits from current position to end of
       // the buffer
@@ -306,8 +305,8 @@ namespace AnimationController {
       memcpy(_keyFrameBuffer + _lastBufferPos, buffer, firstChunk);
 
       // Copy the remaining data starting at the beginning of the buffer
-      memcpy(_keyFrameBuffer, buffer+firstChunk, numBytesNeeded - firstChunk);
-      _lastBufferPos = numBytesNeeded-firstChunk;
+      memcpy(_keyFrameBuffer, buffer+firstChunk, bufferSize - firstChunk);
+      _lastBufferPos = bufferSize-firstChunk;
      }
     switch(buffer[0]) {
       case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
@@ -426,6 +425,7 @@ namespace AnimationController {
                 u8 header[3];
                 GetFromBuffer(header, 3); // Get the size + audio sample header
                 GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the first MAX_AUDIO_BYTES_PER_DROP from the buffer
+                _numBytesPlayed += 1 + MAX_AUDIO_BYTES_PER_DROP; // Advance by header plus the bytes we just consumed
                 _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
                 return true; // Play audio
               #else
@@ -459,6 +459,7 @@ namespace AnimationController {
         if (!_playSilence)
         {
           GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
+          _numBytesPlayed += MAX_AUDIO_BYTES_PER_DROP;
         }
         _audioReadInd += MAX_AUDIO_BYTES_PER_DROP;
         if (_audioReadInd >= AUDIO_SAMPLE_SIZE)
