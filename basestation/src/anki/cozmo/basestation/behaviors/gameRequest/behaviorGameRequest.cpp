@@ -120,7 +120,7 @@ ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot) const
   BlockWorldFilter filter;
   filter.OnlyConsiderLatestUpdate(false);
   filter.SetFilterFcn( [](ObservableObject* obj) {
-      return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known;
+      return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known && obj->GetFamily() == ObjectFamily::LightCube;;
     } );
 
   ObservableObject* closestObj = robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
