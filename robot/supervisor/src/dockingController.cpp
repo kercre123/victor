@@ -702,7 +702,7 @@ namespace Anki {
           dockPose_.angle() = dockPose_.GetAngle() + CLIP(angDiff, -0.01, 0.01);
         }
 #else
-        dockPose_.angle = blockPose_.angle;
+        dockPose_.angle() = blockPose_.angle();
 #endif
 
         // Send goal pose up to engine for viz
