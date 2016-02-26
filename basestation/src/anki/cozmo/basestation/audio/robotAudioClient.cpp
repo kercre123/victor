@@ -153,10 +153,9 @@ bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeSt
   if ( _streamAudioToRobot ) {
     // Prepare audio stream for events if using audio plug-in buffer
     if ( nullptr == _currentBufferStream ) {
+      RemoveInvalidEvents();
       // Check if we need the next stream
       if ( !_animationEventList.empty() ) {
-        // Check for invalid audio events
-        RemoveInvalidEvents();
         // Check if it's time for the next audio buffer stream to start
         if ( _animationEventList.front().TimeInMS <= relevantTimeMS ) {
           // Get next buffer stream if available && pop pending animation event
@@ -179,7 +178,6 @@ bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeSt
       else {
         // Animation Event List is empty. Send last frame and clear animation.
         ClearAnimation();
-        isMsgReady = true;
       } // _animationEventList is empty
     } // if ( nullptr == _currentBufferStream )
     
@@ -282,8 +280,9 @@ bool RobotAudioClient::UpdateFirstBuffer()
     PRINT_NAMED_WARNING("RobotAudioClient.UpdateFirstBuffer", "Animation %s", _animationName.c_str());
   }
   
-  // Either the first buffer is loaded or there is no audio buffer, therefore, audio is ready
-  if ( _isFirstBufferLoaded || nullptr == _audioBuffer ) {
+  RemoveInvalidEvents();
+  // Either the first buffer is loaded, there is no audio buffer, or we had events but they werent valid. Therefore, audio is ready
+  if ( _isFirstBufferLoaded || nullptr == _audioBuffer || (!_isFirstBufferLoaded && _didBeginPostingEvents && _animationEventList.empty())) {
     return true;
   }
   
