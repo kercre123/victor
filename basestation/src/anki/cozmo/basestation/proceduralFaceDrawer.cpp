@@ -46,10 +46,10 @@ namespace Cozmo {
   } // GetTransformationMatrix()
 
   
-  void ProceduralFaceDrawer::DrawEye(const ProceduralFace& _faceData, WhichEye whichEye, cv::Mat_<u8>& faceImg)
+  void ProceduralFaceDrawer::DrawEye(const ProceduralFace& _faceData, WhichEye whichEye, Vision::Image& faceImg)
   {
-    assert(faceImg.rows == ProceduralFace::HEIGHT &&
-           faceImg.cols == ProceduralFace::WIDTH);
+    assert(faceImg.GetNumRows() == ProceduralFace::HEIGHT &&
+           faceImg.GetNumCols() == ProceduralFace::WIDTH);
     
     const s32 eyeWidth  = ProceduralFace::NominalEyeWidth;
     const s32 eyeHeight = ProceduralFace::NominalEyeHeight;
@@ -193,22 +193,23 @@ namespace Cozmo {
     }
 
     // Draw eye
-    cv::fillConvexPoly(faceImg, eyePoly, 255, 4);
+    cv::fillConvexPoly(faceImg.get_CvMat_(), eyePoly, 255, 4);
     
     // Black out lids
     if(!upperLidPoly.empty()) {
-      cv::fillConvexPoly(faceImg, upperLidPoly, 0, 4);
+      cv::fillConvexPoly(faceImg.get_CvMat_(), upperLidPoly, 0, 4);
     }
     if(!lowerLidPoly.empty()) {
-      cv::fillConvexPoly(faceImg, lowerLidPoly, 0, 4);
+      cv::fillConvexPoly(faceImg.get_CvMat_(), lowerLidPoly, 0, 4);
     }
     
   } // DrawEye()
   
-  cv::Mat_<u8> ProceduralFaceDrawer::DrawFace(const ProceduralFace& _faceData)
+  Vision::Image ProceduralFaceDrawer::DrawFace(const ProceduralFace& _faceData)
   {
-    cv::Mat_<u8> faceImg(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
-    faceImg.setTo(0);
+    Vision::Image faceImg(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
+    
+    faceImg.FillWith(0);
     
     DrawEye(_faceData, WhichEye::Left, faceImg);
     DrawEye(_faceData, WhichEye::Right, faceImg);
@@ -222,12 +223,13 @@ namespace Cozmo {
                                                            static_cast<f32>(ProceduralFace::WIDTH)*0.5f,
                                                            static_cast<f32>(ProceduralFace::HEIGHT)*0.5f);
       
-      cv::warpAffine(faceImg, faceImg, W.get_CvMatx_(), cv::Size(ProceduralFace::WIDTH, ProceduralFace::HEIGHT), cv::INTER_NEAREST);
+      cv::warpAffine(faceImg.get_CvMat_(), faceImg.get_CvMat_(), W.get_CvMatx_(),
+                     cv::Size(ProceduralFace::WIDTH, ProceduralFace::HEIGHT), cv::INTER_NEAREST);
     }
 
     // Apply interlacing / scanlines at the end
     for(s32 i=_firstScanLine; i<ProceduralFace::HEIGHT; i+=2) {
-      faceImg.row(i).setTo(0);
+      memset(faceImg.GetRow(i), 0, ProceduralFace::WIDTH);
     }
 
     return faceImg;

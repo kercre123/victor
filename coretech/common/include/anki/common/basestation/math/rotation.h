@@ -116,6 +116,7 @@ namespace Anki {
     UnitQuaternion();
     UnitQuaternion(const UnitQuaternion& other);
     UnitQuaternion(const T w, const T x, const T y, const T z); // will normalize the inputs
+    UnitQuaternion(const Point<4,T>& vals);
     
     // Named accessors for the four elements of the quatnerion (w,x,y,z)
     inline T w() const { return this->operator[](0); }
