@@ -28,6 +28,7 @@ INPUT_VIZ_FILES=$(shell cd $(INPUT_VIZ_DIR); find . -type f -iname '*.clad')
 OUTPUT_VIZ_CPP=$(patsubst %.clad, %.cpp, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_H=$(patsubst %.clad, %.h, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_H_AND_CPP=$(OUTPUT_VIZ_H) $(OUTPUT_VIZ_CPP)
+OUTPUT_VIZ_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_LST=../generated/clad/viz.lst
 
 INPUT_ROBOT_DIR=../robot/clad/src/
@@ -55,9 +56,10 @@ cpp: engineCpp robotCpp vizCpp
 robotCpp: $(OUTPUT_ROBOT_CPP)
 engineCpp: $(OUTPUT_ENGINE_H_AND_CPP)
 vizCpp: $(OUTPUT_VIZ_H_AND_CPP) 
-csharp: engineCsharp robotCsharp
+csharp: engineCsharp robotCsharp vizCsharp
 robotCsharp: $(OUTPUT_ROBOT_CSHARP)
 engineCsharp: $(OUTPUT_ENGINE_CSHARP)
+vizCsharp: $(OUTPUT_VIZ_CSHARP)
 robotPython: $(OUTPUT_ROBOT_PYTHON)
 enginePython: $(OUTPUT_ENGINE_PYTHON)
 python: enginePython robotPython
@@ -108,6 +110,13 @@ $(OUTPUT_ENGINE_CSHARP): $(INPUT_ENGINE_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CSHAR
 	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$@
 
 # in this target stem does not work. probably issue with patsubst,
+# instead of $*.clad use $(@:.cs=.clad)
+$(OUTPUT_VIZ_CSHARP): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CSHARP)
+	if test -f $(OUTPUT_DIR_CSHARP)/$@; then chmod -f 777 $(OUTPUT_DIR_CSHARP)/$@; fi
+	$(CLAD_CSHARP) -C $(INPUT_VIZ_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_ENGINE_DIR) -o $(OUTPUT_DIR_CSHARP)/ $(@:.cs=.clad)
+	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$@
+
+# in this target stem does not work. probably issue with patsubst,
 # instead of $*.clad use $(@:.py=.clad)
 $(OUTPUT_ROBOT_PYTHON): $(INPUT_ROBOT_SHARED_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
 	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
@@ -141,6 +150,8 @@ show:
 	echo $(OUTPUT_ENGINE_CSHARP)
 	echo "*** output robot C# ***"
 	echo $(OUTPUT_ROBOT_CSHARP)
+	echo "*** output viz C# ***"
+	echo $(OUTPUT_VIZ_CSHARP)
 	echo "*** output engine python ***"
 	echo $(OUTPUT_ENGINE_PYTHON)
 	echo "*** output robot python ***"
