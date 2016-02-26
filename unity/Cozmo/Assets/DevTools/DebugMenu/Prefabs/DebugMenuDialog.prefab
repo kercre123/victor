@@ -400,6 +400,8 @@ MonoBehaviour:
     panePrefab: {fileID: 113112, guid: caced7547f49649ddb9e729689c70d39, type: 2}
   - name: RemoteControl
     panePrefab: {fileID: 113112, guid: 8c3f37331342f4f9ea1f27702db99db0, type: 2}
+  - name: Behavior
+    panePrefab: {fileID: 113112, guid: b053830e566d3424a96bbb0aef9ec596, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 121806}
