@@ -104,7 +104,8 @@ u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
   BlockWorldFilter filter;
   filter.OnlyConsiderLatestUpdate(false);
   filter.SetFilterFcn( [](ObservableObject* obj) {
-      return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known;
+    // Observable Objects includes "markerlessObject" cliffs.
+    return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known && obj->GetFamily() == ObjectFamily::LightCube;
     } );
 
   std::vector<ObservableObject*> blocks;
@@ -119,7 +120,7 @@ ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot) const
   BlockWorldFilter filter;
   filter.OnlyConsiderLatestUpdate(false);
   filter.SetFilterFcn( [](ObservableObject* obj) {
-      return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known;
+      return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known && obj->GetFamily() == ObjectFamily::LightCube;;
     } );
 
   ObservableObject* closestObj = robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
