@@ -71,6 +71,9 @@ namespace Anki.Cozmo {
 
 
     [SerializeField]
+    private VizLabel _VizLabelPrefab;
+
+    [SerializeField]
     private VizQuad _VizQuadPrefab;
 
     [SerializeField]
@@ -79,8 +82,18 @@ namespace Anki.Cozmo {
     [SerializeField]
     private Camera _Camera;
 
+    [SerializeField]
+    private RectTransform _LabelCanvas;
+
+
+    [SerializeField]
+    private Transform _VizScene;
+
+    private bool _ShowingObjects = true;
+
     private readonly Dictionary<uint, Dictionary<uint, VizQuad>> _Quads = new Dictionary<uint, Dictionary<uint, VizQuad>>();
     private readonly Dictionary<uint, VizQuad> _Objects = new Dictionary<uint, VizQuad>();
+    private readonly Dictionary<uint, VizLabel> _ObjectLabels = new Dictionary<uint, VizLabel>();
     private readonly Dictionary<string, VizQuad> _SimpleQuadVectors = new Dictionary<string, VizQuad>();
 
     private readonly Dictionary<uint, VizPath> _Paths = new Dictionary<uint, VizPath>();
@@ -223,6 +236,9 @@ namespace Anki.Cozmo {
       case MessageViz.Tag.EraseObject:
         EraseObject(message.EraseObject);
         break;
+      case MessageViz.Tag.ShowObjects:
+        ShowObjects(message.ShowObjects);
+        break;
 
       case MessageViz.Tag.SimpleQuadVectorMessageBegin:
         BeginSimpleQuadVector(message.SimpleQuadVectorMessageBegin);
@@ -269,7 +285,19 @@ namespace Anki.Cozmo {
       case MessageViz.Tag.AnimationState:
         AnimationState = message.AnimationState;
         break;
-        // TODO: Implement any missing Tags
+
+        // TODO: None of the following are implemented
+        // Not sure which ones we actually use
+      case MessageViz.Tag.DefineColor:
+      case MessageViz.Tag.DockingErrorSignal:
+      case MessageViz.Tag.RobotStateMessage:
+      case MessageViz.Tag.SetLabel:
+      case MessageViz.Tag.SetRobot:
+      case MessageViz.Tag.SetVizOrigin:
+      case MessageViz.Tag.StartRobotUpdate:
+      case MessageViz.Tag.EndRobotUpdate:
+      case MessageViz.Tag.TrackerQuad:
+        break;
       }
     }
 
@@ -280,6 +308,7 @@ namespace Anki.Cozmo {
         EraseItem(dict, (uint)VizConstants.ALL_OBJECT_IDs);
       }
       EraseItem(_Objects, (uint)VizConstants.ALL_OBJECT_IDs);
+      EraseItem(_ObjectLabels, (uint)VizConstants.ALL_OBJECT_IDs);
       EraseItem(_Paths, (uint)VizConstants.ALL_OBJECT_IDs);
 
       foreach (var obj in _SegmentPrimatives.Values) {
@@ -306,7 +335,7 @@ namespace Anki.Cozmo {
         break;
       case (uint)VizConstants.OBJECT_ID_RANGE:
         _TmpList.Clear();
-        foreach (var kvp in _Objects) {
+        foreach (var kvp in dict) {
           if (kvp.Key >= lower_bound_id && kvp.Key < upper_bound_id) {
             Destroy(kvp.Value.gameObject);
             _TmpList.Add(kvp.Key);
@@ -335,7 +364,7 @@ namespace Anki.Cozmo {
       }
 
       if (!quadDict.TryGetValue(quad.quadID, out vizQuad)) {
-        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, transform).GetComponent<VizQuad>();
+        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, _VizScene).GetComponent<VizQuad>();
         vizQuad.Initialize("Quad_"+quad.quadID.ToString());
         quadDict.Add(quad.quadID, vizQuad);
       }
@@ -380,10 +409,17 @@ namespace Anki.Cozmo {
     public void DrawObject(Anki.Cozmo.VizInterface.Object obj) {
       VizQuad vizQuad;
       if (!_Objects.TryGetValue(obj.objectID, out vizQuad)) {
-        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, transform).GetComponent<VizQuad>();
+        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, _VizScene).GetComponent<VizQuad>();
         vizQuad.Initialize("Object_" + obj.objectID.ToString());
+        vizQuad.gameObject.SetActive(_ShowingObjects);
         _Objects.Add(obj.objectID, vizQuad);
+
+        var label = UIManager.CreateUIElement(_VizLabelPrefab, _LabelCanvas).GetComponent<VizLabel>();
+        label.Text = obj.objectID == 1 ? "" : (obj.objectID % 1000).ToString();
+        label.Initialize("ObjectLabel_" + obj.objectID.ToString(), _Camera, _VizScene);
+        _ObjectLabels.Add(obj.objectID, label);
       }
+      var vizLabel = _ObjectLabels[obj.objectID];
 
       var halfAngle = obj.rot_deg * Mathf.Deg2Rad * 0.5f;
       var sin = Mathf.Sin(halfAngle);
@@ -398,6 +434,9 @@ namespace Anki.Cozmo {
       vizQuad.transform.localRotation = rotation;
       vizQuad.transform.localPosition = origin;
 
+      vizLabel.SetPosition(origin + rotation * (size * 0.5f));
+      vizLabel.Color = color;
+
       if (vizQuad.DrawColor != color || !vizQuad.DrawScale.Approximately(size)) {
         switch (obj.objectTypeID) {
         case VizObjectType.VIZ_OBJECT_CUBOID:
@@ -411,6 +450,9 @@ namespace Anki.Cozmo {
           break;
 
         // TODO: Implement any other VizObjects that we don't make primitives
+        default:
+          DrawCuboidObject(vizQuad, size, color);
+          break;
         }
         vizQuad.DrawColor = color;
         vizQuad.DrawScale = size;
@@ -569,12 +611,24 @@ namespace Anki.Cozmo {
 
     public void EraseObject(EraseObject eraseObj) {
       EraseItem(_Objects, eraseObj.objectID, eraseObj.lower_bound_id, eraseObj.upper_bound_id);
+      EraseItem(_ObjectLabels, eraseObj.objectID, eraseObj.lower_bound_id, eraseObj.upper_bound_id);
+    }
+
+    public void ShowObjects(ShowObjects showObjects){
+      
+      _ShowingObjects = (showObjects.show == 0 ? false : true);
+      foreach (var obj in _Objects.Values) {
+        obj.gameObject.SetActive(_ShowingObjects);
+      }
+      foreach (var obj in _ObjectLabels.Values) {
+        obj.gameObject.SetActive(_ShowingObjects);
+      }
     }
 
     public void BeginSimpleQuadVector(SimpleQuadVectorMessageBegin begin) {
       VizQuad vizQuad;
       if (!_SimpleQuadVectors.TryGetValue(begin.identifier, out vizQuad)) {
-        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, transform).GetComponent<VizQuad>();
+        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, _VizScene).GetComponent<VizQuad>();
         vizQuad.Initialize("SimpleQuadVector_" + begin.identifier);
         _SimpleQuadVectors.Add(begin.identifier, vizQuad);
       }
@@ -621,7 +675,7 @@ namespace Anki.Cozmo {
     public void AppendPathSegmentLine(AppendPathSegmentLine line) {
       VizPath vizPath;
       if (!_Paths.TryGetValue(line.pathID, out vizPath)) {
-        vizPath = UIManager.CreateUIElement(_VizPathPrefab, transform).GetComponent<VizPath>();
+        vizPath = UIManager.CreateUIElement(_VizPathPrefab, _VizScene).GetComponent<VizPath>();
         vizPath.Initialize("Path_" + line.pathID);
         _Paths.Add(line.pathID, vizPath);
         vizPath.BeginPath();
@@ -634,7 +688,7 @@ namespace Anki.Cozmo {
     public void AppendPathSegmentArc(AppendPathSegmentArc arc) {
       VizPath vizPath;
       if (!_Paths.TryGetValue(arc.pathID, out vizPath)) {
-        vizPath = UIManager.CreateUIElement(_VizPathPrefab, transform).GetComponent<VizPath>();
+        vizPath = UIManager.CreateUIElement(_VizPathPrefab, _VizScene).GetComponent<VizPath>();
         vizPath.Initialize("Path_" + arc.pathID);
         _Paths.Add(arc.pathID, vizPath);
         vizPath.BeginPath();
@@ -663,7 +717,7 @@ namespace Anki.Cozmo {
     public void DrawSegmentPrimative(SegmentPrimitive segment) {
       VizPath vizPath;
       if (!_SegmentPrimatives.TryGetValue(segment.identifier, out vizPath)) {
-        vizPath = UIManager.CreateUIElement(_VizPathPrefab, transform).GetComponent<VizPath>();
+        vizPath = UIManager.CreateUIElement(_VizPathPrefab, _VizScene).GetComponent<VizPath>();
         vizPath.Initialize("SegmentPrimative_" + segment.identifier);
         _SegmentPrimatives.Add(segment.identifier, vizPath);
       }
