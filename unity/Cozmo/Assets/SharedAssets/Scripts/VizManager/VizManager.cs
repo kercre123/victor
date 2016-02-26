@@ -900,9 +900,9 @@ namespace Anki.Cozmo.Viz {
         SetOverlayPixel(cx + xdy, cy - ydx, col);
         SetOverlayPixel(cx - xdy, cy - ydx, col);
 
-        d += 2*x+1;
+        d += 2 * x + 1;
         if (d > 0) {
-          d += 2 - 2*y--;
+          d += 2 - 2 * y--;
         }
       }
       _OverlayDirty = true;
@@ -924,24 +924,6 @@ namespace Anki.Cozmo.Viz {
 
       string text = camText.text.FirstOrDefault() ?? string.Empty;
 
-      // valid chars only needs to be populated if there are invalid ascii chars
-      List<char> validChars = null;
-
-      for(int i = 0; i < text.Length; i++) {
-        if (!_CameraFont.HasCharacter(text[i])) {
-          if (validChars == null) {
-            validChars = new List<char>();
-            validChars.AddRange(text.Substring(0, i));
-          }
-          validChars.Add('?');
-        }
-        else if (validChars != null) {
-          validChars.Add(text[i]);
-        }
-      }
-      if (validChars != null) {
-        text = new string(validChars.ToArray());
-      }
       var fontTexture = (Texture2D)_CameraFont.material.mainTexture;
 
       int x = camText.x, y = _OverlayImage.height - 1 - camText.y - _CameraFont.lineHeight;
@@ -950,7 +932,10 @@ namespace Anki.Cozmo.Viz {
 
       for (int i = 0; i < text.Length; i++) {
         CharacterInfo charInfo;
-        _CameraFont.GetCharacterInfo(text[i], out charInfo);
+        // our font is ASCII, so if we can't draw a character just draw a ?
+        if (!_CameraFont.GetCharacterInfo(text[i], out charInfo)) {
+          _CameraFont.GetCharacterInfo('?', out charInfo);
+        }
 
         var uvBottomRight = charInfo.uvBottomRight;
         var uvBottomLeft = charInfo.uvBottomLeft;
