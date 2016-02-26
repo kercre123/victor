@@ -538,7 +538,7 @@ namespace Anki.Cozmo {
 
     private void DrawRobotObject(VizQuad vizQuad, Vector3 size, Color color) {
       var innerColor = color;
-      var outerColor = color;
+      var outerColor = Color.clear;
 
       var heightOffset = Vector3.forward * CozmoUtil.kHeadHeightMM * 0.001f;
 
