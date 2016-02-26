@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Anki.Cozmo.VizInterface;
 using System.IO;
 
-namespace Anki.Cozmo {
+namespace Anki.Cozmo.Viz {
   public class VizManager : MonoBehaviour {
 
     private class MessageVizWrapper : IMessageWrapper {
@@ -829,8 +829,7 @@ namespace Anki.Cozmo {
       dx <<= 1;
 
       SetOverlayPixel(x0, y0, col);
-      if (dx > dy) 
-      {
+      if (dx > dy) {
         var fraction = dy - (dx >> 1);
         while (x0 != x1) {
           if (fraction >= 0) {
