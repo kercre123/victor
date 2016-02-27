@@ -32,7 +32,7 @@ static const float kPauseMinSecDefault = 1.0f;
 static const char* kPauseMaxSecKey = "maximum_pause_s";
 static const float kPauseMaxSecDefault = 3.5f;
 
-#define DISABLE_IDLE_DURING_FIND_FACES 1
+#define DISABLE_IDLE_DURING_FIND_FACES 0
 
 using namespace ExternalInterface;
 

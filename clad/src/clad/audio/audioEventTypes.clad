@@ -22,6 +22,7 @@ enum uint_32 EventGroupType
   DevRobot,
   GenericEvent,
   Music,
+  PlugInControl,
   Robot,
   SFX,
   UI,
@@ -36,7 +37,11 @@ enum uint_32 GenericEvent
   Dev_Robot_Tone_1K_1Sec_Play = 1083086921,
   Dev_Robot_Tone_1K_5Sec_Play = 1323780941,
   Dev_Robot_Tone_440Hz_5Sec_Play = 1348811033,
+  Hijack_Audio_Disable_Bypass = 3535474666,  // This is only used by Robot Audio Clinet
+  Hijack_Audio_Enable_Bypass = 2589144983,  // This is only used by Robot Audio Clinet
   Invalid = 0,  // Use this to check for Invalid events
+  Mid_Gp_St_Hum_Lp_Play = 3404130802,
+  Mid_Gp_St_Hum_Lp_Stop = 820824172,
   Music_Play = 202194903,
   Music_Stop = 3227181061,
   Sfx_Gp_Simon_Light_Blue_Play = 2758838978,
@@ -46,7 +51,7 @@ enum uint_32 GenericEvent
   Sfx_Gp_Simon_Light_Yellow_Play = 3420921906,
   Sfx_Gp_St_Lightup_Play = 3029762013,
   Sfx_Gp_St_Lose_Play = 3132723231,
-  Sfx_Gp_St_Win = 1181355013,
+  Sfx_Gp_St_Win_Play = 2930798326,
   Sfx_Placeholder_Play = 1074988205,
   Sfx_Srcn_Angry_Play = 2970495120,
   Sfx_Srcn_Curious_Play = 2929357367,
@@ -79,13 +84,21 @@ enum uint_32 GenericEvent
   Vo_Coz_Gp_Shared_Win_Level1_Play = 1576554633,
   Vo_Coz_Gp_Shared_Win_Level2_Play = 4000568596,
   Vo_Coz_Gp_Shared_Win_Level3_Play = 2406171243,
+  Vo_Coz_Gp_St_Tap_Effort_Play = 1227708849,
   Vo_Coz_Placeholder_Play = 1720370564,
   Vo_Coz_Shared_Effort_Lift_Play = 2460792037,
   Vo_Coz_Shared_Excited_Play = 2632256753,
   Vo_Coz_Shared_Fussy_Play = 566465057,
   Vo_Coz_Shared_Happy_Play = 201496157,
   Vo_Coz_Shared_Idea_Play = 1539283944,
+  Vo_Coz_Shared_React_To_Face1_Play = 1544570445,
+  Vo_Coz_Shared_React_To_Face2_Play = 1241463592,
+  Vo_Coz_Shared_React_To_Face3_Play = 715610799,
+  Vo_Coz_Shared_React_To_Face4_Play = 4168344386,
   Vo_Coz_Shared_Sad_Play = 3608646555,
+  Vo_Coz_Shared_Snore_Lp_Play = 2976137179,
+  Vo_Coz_Shared_Snore_Lp_Stop = 1845599889,
+  Vo_Coz_Shared_Snore_Wakeup_Play = 3115193198,
   Vo_Coz_Word_Cube_Play = 1343489429,
   Vo_Coz_Word_Speedtap_Play = 569647932,
 }
@@ -97,10 +110,18 @@ enum uint_32 Music
   Stop = 3227181061,
 }
 
+enum uint_32 PlugInControl
+{
+  HijackAudioDisableBypass = 3535474666,  // This is only used by Robot Audio Clinet
+  HijackAudioEnableBypass = 2589144983,  // This is only used by Robot Audio Clinet
+  Invalid = 0,  // Use this to check for Invalid events
+}
+
 enum uint_32 Robot
 {
   Dev_Placeholder = 1720370564,
   EffortLift = 2460792037,
+  EffortTap = 1227708849,
   Excited = 2632256753,
   Fussy = 566465057,
   Happy = 201496157,
@@ -109,6 +130,10 @@ enum uint_32 Robot
   Lose1 = 1274627492,
   Lose2 = 2780324953,
   Lose3 = 62862858,
+  ReactFace1 = 1544570445,
+  ReactFace2 = 1241463592,
+  ReactFace3 = 715610799,
+  ReactFace4 = 4168344386,
   Sad = 3608646555,
   ScreenAngry = 2970495120,
   ScreenCurious = 2929357367,
@@ -120,7 +145,12 @@ enum uint_32 Robot
   ServoHappy = 1625478856,
   ServoSad = 2993802690,
   ServoSurprised = 963363667,
+  SingSpeedTapPlay = 3404130802,
+  SingSpeedTapStop = 820824172,
+  SnorePlay = 2976137179,
+  SnoreStop = 1845599889,
   Takeout = 2145308968,
+  WakeUp = 3115193198,
   Win1 = 1576554633,
   Win2 = 4000568596,
   Win3 = 2406171243,
@@ -148,7 +178,7 @@ enum uint_32 SFX
   SimonLightYellow = 3420921906,
   SpeedTapLightup = 3029762013,
   SpeedTapLose = 3132723231,
-  SpeedTapWin = 1181355013,
+  SpeedTapWin = 2930798326,
 }
 
 enum uint_32 UI

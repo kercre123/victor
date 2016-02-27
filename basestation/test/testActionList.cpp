@@ -154,7 +154,7 @@ public:
   virtual ~TestActionWithinAction() { actionsDestroyed.push_back(_name); }
   virtual const std::string& GetName() const override { return _name; }
   virtual RobotActionType GetType() const override { return _type; }
-  virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
+  virtual u8 GetTracksToLock() const override { return track1 | track2; }
   TestCompoundActionSequential* GetAction() { return &_compoundAction; }
   bool _complete;
 protected:
@@ -180,6 +180,7 @@ ActionResult TestActionWithinAction::Init()
 {
   _compoundAction.AddAction(new TestAction(_robot, "Test1", RobotActionType::WAIT, track1));
   _compoundAction.AddAction(new TestAction(_robot, "Test2", RobotActionType::WAIT, track2));
+  _compoundAction.ShouldSuppressTrackLocking(true);
   
   _compoundAction.Update();
   
@@ -1008,7 +1009,7 @@ TEST(QueueAction, ActionFailureRetry)
   testAction1->_complete = true;
   testAction2->_complete = true;
   testAction2->SetNumRetries(3);
-  testAction2->_numRetries = 1;
+  testAction2->_numRetries = 2;
   
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
@@ -1028,8 +1029,12 @@ TEST(QueueAction, ActionFailureRetry)
   auto actions = compoundAction->GetActions();
   EXPECT_EQ(actions.size(), 1);
   EXPECT_EQ(actions.front()->GetName(), "Test2");
-  
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  
+  // Make sure the action that is being retried relocks its tracks
+  r.GetActionList().Update();
+  CheckTracksUnlocked(r, track1);
+  CheckTracksLocked(r, track2);
   
   r.GetActionList().Update();
   CheckTracksUnlocked(r, track1 | track2);

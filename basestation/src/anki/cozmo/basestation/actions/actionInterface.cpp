@@ -106,8 +106,6 @@ namespace Anki {
     {
       if(InterruptInternal())
       {
-        Reset();
-        
         // Only need to unlock tracks if this is running because Update() locked tracks
         if(!_suppressTrackLocking && _state == ActionResult::RUNNING)
         {
@@ -122,6 +120,7 @@ namespace Anki {
 
           _robot.GetMoveComponent().UnlockTracks(tracks);
         }
+        Reset(false);
         _state = ActionResult::INTERRUPTED;
         return true;
       }
@@ -275,12 +274,15 @@ namespace Anki {
       Reset();
     }
     
-    void IAction::Reset()
+    void IAction::Reset(bool shouldUnlockTracks)
     {
       _preconditionsMet = false;
       _waitUntilTime = -1.f;
       _timeoutTime = -1.f;
-      UnlockTracks();
+      if(shouldUnlockTracks)
+      {
+        UnlockTracks();
+      }
       ResetState();
     }
     
@@ -359,7 +361,8 @@ namespace Anki {
                            _robot.GetID(), GetName().c_str());
         }
         
-        Reset();
+        // Don't unlock the tracks if retrying
+        Reset(false);
         result = ActionResult::RUNNING;
       }
 

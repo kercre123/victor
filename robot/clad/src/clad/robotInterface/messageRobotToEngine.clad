@@ -7,6 +7,7 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotLogging.clad"
 #include "clad/types/imageTypes.clad"
+#include "clad/types/motorTypes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/proxMessages.clad"
@@ -34,6 +35,12 @@ message RTIPVersionInfo
   uint_32 version,
   uint_32 date,
   string  description
+}
+
+message MotorCalibration
+{
+  MotorID motorID,
+  bool calibStarted
 }
 
 /// *************** WiFi to Engine messages ******************************* ///
@@ -109,6 +116,7 @@ union RobotToEngine {
   ObjectDiscovered           activeObjectDiscovered = 0x19,
   IMURawDataChunk            imuRawDataChunk        = 0x20,
   ObjectConnectionState      activeObjectConnectionState  = 0x21,
+  MotorCalibration           motorCalibration       = 0x22,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,

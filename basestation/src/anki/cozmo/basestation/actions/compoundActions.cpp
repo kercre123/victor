@@ -39,11 +39,11 @@ namespace Anki {
       DeleteActions();
     }
     
-    void ICompoundAction::Reset()
+    void ICompoundAction::Reset(bool shouldUnlockTracks)
     {
       ResetState();
       for(auto & action : _actions) {
-        action->Reset();
+        action->Reset(shouldUnlockTracks);
       }
     }
     
@@ -102,9 +102,9 @@ namespace Anki {
       Reset();
     }
     
-    void CompoundActionSequential::Reset()
+    void CompoundActionSequential::Reset(bool shouldUnlockTracks)
     {
-      ICompoundAction::Reset();
+      ICompoundAction::Reset(shouldUnlockTracks);
       _waitUntilTime = -1.f;
       _currentAction = _actions.begin();
       _wasJustReset = true;
