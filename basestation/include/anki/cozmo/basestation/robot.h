@@ -243,6 +243,7 @@ public:
     const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
     const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
     Pose3d                 GetCameraPose(f32 atAngle) const;
+    Pose3d                 GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
   
     // These change the robot's internal (basestation) representation of its
     // pose, head angle, and lift angle, but do NOT actually command the
@@ -266,6 +267,10 @@ public:
     // Conversion functions between lift height and angle
     static f32 ConvertLiftHeightToLiftAngleRad(f32 height_mm);
     static f32 ConvertLiftAngleToLiftHeightMM(f32 angle_rad);
+  
+    // Leaves input liftPose's parent alone and computes its position w.r.t.
+    // liftBasePose, given the angle
+    static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
   
     // Get pitch angle of robot
     f32 GetPitchAngle();
@@ -813,11 +818,7 @@ public:
     // Takes startPose and moves it forward as if it were a robot pose by distance mm and
     // puts result in movedPose.
     static void MoveRobotPoseForward(const Pose3d &startPose, const f32 distance, Pose3d &movedPose);
-    
-    // Leaves input liftPose's parent alone and computes its position w.r.t.
-    // liftBasePose, given the angle
-    static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
-    
+  
     // Docking / Carrying
     // Note that we don't store a pointer to the object because it
     // could deleted, but it is ok to hang onto a pointer to the

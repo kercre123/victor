@@ -2038,5 +2038,99 @@ namespace Cozmo {
     _faceDetectionParameters.maxWidth = maxObjectWidth;
   }
   
+  Result VisionSystem::ReadToolCode(const Vision::Image& image)
+  {
+    // If we expect the tool code to be visible _and_ we haven't checked it
+    // too recently, then try to read the tool code (and update calibration data)
+    if(image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms)
+    {
+      // Center points of the calibration dots, in lift coordinate frame
+      // TODO: Move these to be defined elsewhere
+      const std::vector<Point3f> toolCodeDotsWrtLift = {
+        {1.f, -10.f, -21.f},
+        {1.f,  10.f, -21.f},
+      };
+      
+      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
+      
+      Pose3d liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &liftBasePose, "RobotLift");
+
+      Robot::ComputeLiftPose(_poseData.poseStamp.GetLiftAngle(), liftPose);
+      
+      
+      Pose3d liftPoseWrtCam;
+      if(false == liftPose.GetWithRespectTo(_poseData.cameraPose, liftPoseWrtCam)) {
+        PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.PoseTreeError",
+                          "Could not get lift pose w.r.t. camera pose.");
+        return RESULT_FAIL;
+      }
+      
+      // Put tool code dots in camera coordinate frame
+      std::vector<Point3f> toolCodeDotsWrtCam;
+      liftPoseWrtCam.ApplyTo(toolCodeDotsWrtLift, toolCodeDotsWrtCam);
+      
+      // Project into camera
+      std::vector<Anki::Point2f> projectedToolCodeDots;
+      _camera.Project3dPoints(toolCodeDotsWrtCam, projectedToolCodeDots);
+      
+      // Only proceed if all dots are visible with the current head/lift pose
+      bool allVisible = true;
+      for(auto & point : projectedToolCodeDots) {
+        if(!_camera.IsWithinFieldOfView(point)) {
+          allVisible = false;
+          break;
+        }
+      }
+      
+      if(allVisible)
+      {
+        Anki::Point2f camCen;
+        for(size_t i=0; i<projectedToolCodeDots.size(); ++i)
+        {
+          // Get an ROI around where we expect to see the dot in the image
+          const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[i];
+          const f32 quadPad_mm = 1.5f;
+          Quad3f dotQuadRoi3d = {
+            {dotWrtLift3d.x() - quadPad_mm, dotWrtLift3d.y() - quadPad_mm, dotWrtLift3d.z()},
+            {dotWrtLift3d.x() - quadPad_mm, dotWrtLift3d.y() + quadPad_mm, dotWrtLift3d.z()},
+            {dotWrtLift3d.x() + quadPad_mm, dotWrtLift3d.y() - quadPad_mm, dotWrtLift3d.z()},
+            {dotWrtLift3d.x() + quadPad_mm, dotWrtLift3d.y() + quadPad_mm, dotWrtLift3d.z()},
+          };
+          
+          Quad2f dotQuadRoi2d;
+          _camera.Project3dPoints(dotQuadRoi3d, dotQuadRoi2d);
+          
+          Anki::Rectangle<s32> dotRectRoi(dotQuadRoi2d);
+          const Vision::Image dotRoi = image.GetROI(dotRectRoi);
+          cv::Moments m = cv::moments(255-dotRoi.get_CvMat_(), false);
+          
+          const Anki::Point2f  observedPoint(m.m10/m.m00, m.m01/m.m00);
+          const Anki::Point2f& expectedPoint = projectedToolCodeDots[i];
+          
+          camCen += observedPoint - expectedPoint;
+        }
+        
+        // Compute the average:
+        camCen *= 1.f / (f32)projectedToolCodeDots.size();
+        
+        // Update the camera calibration
+        PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCenterUpdated",
+                         "Old=(%f,%f), New=(%f,%f), t=%dms",
+                         _camera.GetCalibration().GetCenter_x(),
+                         _camera.GetCalibration().GetCenter_y(),
+                         camCen.x(), camCen.y(),
+                         image.GetTimestamp());
+        
+        Vision::CameraCalibration calib(_camera.GetCalibration());
+        calib.SetCenter(camCen);
+        _camera.SetCalibration(calib);
+        
+        _lastToolCodeReadTime_ms = image.GetTimestamp();
+      }
+    }
+    
+    return RESULT_OK;
+  } // ReadToolCode()
+  
 } // namespace Cozmo
 } // namespace Anki

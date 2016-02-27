@@ -344,6 +344,10 @@ namespace Cozmo {
     // We hold a reference to the VizManager since we often want to draw to it
     VizManager*                   _vizManager = nullptr;
 
+    // Tool code stuff
+    TimeStamp_t                   _lastToolCodeReadTime_ms = 0;
+    const TimeStamp_t             kToolCodeReadPeriod_ms = 5000; // TODO: Increase
+    
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
        static const s32 OFFCHIP_BUFFER_SIZE = 20000000;
@@ -412,6 +416,8 @@ namespace Cozmo {
                        const std::vector<Quad2f>& markerQuads);
     
     Result DetectMotion(const Vision::ImageRGB& image);
+    
+    Result ReadToolCode(const Vision::Image& image);
     
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,

@@ -2916,7 +2916,21 @@ namespace Anki {
     
     f32 Robot::GetLiftHeight() const
     {
-      return (std::sin(GetLiftAngle()) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+      return ConvertLiftAngleToLiftHeightMM(GetLiftAngle());
+    }
+    
+    Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
+    {
+      Pose3d liftPose(_liftPose);
+      ComputeLiftPose(atLiftAngle, liftPose);
+      
+      Pose3d camPose = GetCameraPose(atHeadAngle);
+      
+      Pose3d liftPoseWrtCam;
+      bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
+      ASSERT_NAMED(result == true, "Lift and camera poses should be in same pose tree");
+      
+      return liftPoseWrtCam;
     }
     
     f32 Robot::ConvertLiftHeightToLiftAngleRad(f32 height_mm)
