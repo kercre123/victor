@@ -174,7 +174,9 @@ namespace Cozmo {
       robot.AbortAnimation();
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
+#if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       _audioClient.AbortAnimation();
+#endif
     }
   } // Abort()
   
