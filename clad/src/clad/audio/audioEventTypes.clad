@@ -40,8 +40,6 @@ enum uint_32 GenericEvent
   Hijack_Audio_Disable_Bypass = 3535474666,  // This is only used by Robot Audio Clinet
   Hijack_Audio_Enable_Bypass = 2589144983,  // This is only used by Robot Audio Clinet
   Invalid = 0,  // Use this to check for Invalid events
-  Mid_Gp_St_Hum_Lp_Play = 3404130802,
-  Mid_Gp_St_Hum_Lp_Stop = 820824172,
   Music_Play = 202194903,
   Music_Stop = 3227181061,
   Sfx_Gp_Simon_Light_Blue_Play = 2758838978,
@@ -96,10 +94,12 @@ enum uint_32 GenericEvent
   Vo_Coz_Shared_React_To_Face3_Play = 715610799,
   Vo_Coz_Shared_React_To_Face4_Play = 4168344386,
   Vo_Coz_Shared_Sad_Play = 3608646555,
-  Vo_Coz_Shared_Snore_Lp_Play = 2976137179,
-  Vo_Coz_Shared_Snore_Lp_Stop = 1845599889,
-  Vo_Coz_Shared_Snore_Wakeup_Play = 3115193198,
-  Vo_Coz_Word_Cube_Play = 1343489429,
+  Vo_Coz_Shared_Snore_Play = 4264057356,
+  Vo_Coz_Shared_Wakeup_01_Play = 2791888938,
+  Vo_Coz_Shared_Wakeup_02_Play = 3053926619,
+  Vo_Coz_Word_Cube_Happy_Play = 1191391304,
+  Vo_Coz_Word_Cube_Neutral_Play = 2400301061,
+  Vo_Coz_Word_Cube_Sad_Play = 35990338,
   Vo_Coz_Word_Speedtap_Play = 569647932,
 }
 
@@ -145,16 +145,16 @@ enum uint_32 Robot
   ServoHappy = 1625478856,
   ServoSad = 2993802690,
   ServoSurprised = 963363667,
-  SingSpeedTapPlay = 3404130802,
-  SingSpeedTapStop = 820824172,
-  SnorePlay = 2976137179,
-  SnoreStop = 1845599889,
+  Snore = 4264057356,
   Takeout = 2145308968,
-  WakeUp = 3115193198,
+  WakeUp01 = 2791888938,
+  WakeUp02 = 3053926619,
   Win1 = 1576554633,
   Win2 = 4000568596,
   Win3 = 2406171243,
-  WordCube = 1343489429,
+  WordCubeHappy = 1191391304,
+  WordCubeNeutral = 2400301061,
+  WordCubeSad = 35990338,
   WordSpeedTap = 569647932,
 }
 

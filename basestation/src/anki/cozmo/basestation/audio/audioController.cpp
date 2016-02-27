@@ -120,7 +120,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
       "Music.bnk",
       "UI.bnk",
       "SFX.bnk",
-      "VO_Cozmo.bnk",
+      "Cozmo.bnk",
       "Dev_Debug.bnk",
     };
     const std::string sceneTitle = "InitScene";
