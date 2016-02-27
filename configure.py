@@ -233,8 +233,7 @@ class GamePlatformConfiguration(object):
 
             if not os.environ.get("CORETECH_EXTERNAL_DIR"):
                 sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
-            self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'build',
-                                                            'opencv-ios', 'multiArchLibs')
+            self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'build', 'opencv-ios')
             self.unity_sphinx_symlink = os.path.join(self.unity_xcode_project_dir, 'sphinx')
             self.unity_sphinx_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"),
                                                             'pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos')
