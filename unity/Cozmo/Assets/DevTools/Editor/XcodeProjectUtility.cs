@@ -244,6 +244,16 @@ namespace Xcode {
       return new FileId() { Value = NewGuid(path + "%" + name +"%"+ group), FileName = name, Group = group };
     }
 
+    private static void AddXcodeNamedVariable<TKey, TValue>(List<XcodeNamedVariable<TKey, TValue>> list, XcodeNamedVariable<TKey, TValue> entry) where TKey : XcodeString {
+      for (int i = 0; i < list.Count; i++) {
+        if (entry.GetName().CompareTo(list[i].GetName()) < 0) {
+          list.Insert(i, entry);
+          return;
+        }
+      }
+      list.Add(entry);
+    }
+
     private static PBXGroup EnsureFolderExists(this XcodeProject project, string groupId, string folderPath, string relativePath) {
 
       string[] groupPath = folderPath.Split('/');
@@ -265,7 +275,7 @@ namespace Xcode {
           fileId = NewFileId(relativePath, folder);
           var newGroup = new PBXGroup() { name = folder, sourceTree = "<group>" };
 
-          project.objects.PBXGroupSection.Add(new XcodeNamedVariable<FileId, PBXGroup> {
+          AddXcodeNamedVariable(project.objects.PBXGroupSection, new XcodeNamedVariable<FileId, PBXGroup> {
             Name = fileId,
             Value = newGroup
           });
@@ -385,7 +395,7 @@ namespace Xcode {
 
       var fileReference = new PBXFileReference() { fileEncoding = fileType.FileEncoding, lastKnownFileType = fileType.LastKnownFileType, path = relativePath, name = name, sourceTree = "<group>" };
 
-      project.objects.PBXFileReferenceSection.Add(new XcodeNamedVariable<FileId, PBXFileReference>() {
+      AddXcodeNamedVariable(project.objects.PBXFileReferenceSection, new XcodeNamedVariable<FileId, PBXFileReference>() {
         Name = fileId,
         Value = fileReference
       });
@@ -394,7 +404,7 @@ namespace Xcode {
       var buildFileId = NewFileId(relativePath, name, fileType.Category.ToString());
       var buildFile = new PBXBuildFile() { fileRef = fileId };
 
-      project.objects.PBXBuildFileSection.Add(new XcodeNamedVariable<FileId, PBXBuildFile>() {
+      AddXcodeNamedVariable(project.objects.PBXBuildFileSection, new XcodeNamedVariable<FileId, PBXBuildFile>() {
         Name = buildFileId,
         Value = buildFile
       });
