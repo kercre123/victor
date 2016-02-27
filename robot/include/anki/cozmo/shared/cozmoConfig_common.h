@@ -136,8 +136,11 @@ const f32 MAX_WHEEL_ACCEL_MMPS2 = 10000.f;  // TODO: Actually measure this!
 
 // Maximum angular velocity
 // Determined experimentally by turning robot in place at max speed.
-// Speed, in radians, should be (MAX_WHEEL_SPEED_MMPS / WHEEL_DIST_HALF_MM), but tread slip makes this not true.
-const f32 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC = 250;
+// It can actually spin closer to 360 deg/s, but we use a conservative limit to be sure
+// the robot can actually achieve this top speed. If it can't, point turns could look jerky because
+// the robot can't keep up with the rotation profile.
+// Ideally, speed, in radians, should be (MAX_WHEEL_SPEED_MMPS / WHEEL_DIST_HALF_MM), but tread slip makes this not true.
+const f32 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC = 300;
 const f32 MAX_BODY_ROTATION_SPEED_RAD_PER_SEC = DEG_TO_RAD_F32(MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
 const f32 MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2 = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC * MAX_WHEEL_ACCEL_MMPS2 / MAX_WHEEL_SPEED_MMPS;
 
