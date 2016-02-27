@@ -141,8 +141,10 @@ PROTO WebotsKeyboardController [
   field SFInt32 driveTest_wheel_power 20
   field SFInt32 liftTest_flags 0  
   field SFInt32 liftTest_nodCycleTimeMS 2000  
+  field SFInt32 liftTest_powerPercent 0             # 0-100: If 0 then cycles through increasing power levels
   field SFInt32 headTest_flags 0
   field SFInt32 headTest_nodCycleTimeMS 2000  
+  field SFInt32 headTest_powerPercent 0             # 0-100: If 0 then cycles through increasing power levels
 
   # Force-add robot options
   field SFBool   forceAddRobot FALSE
