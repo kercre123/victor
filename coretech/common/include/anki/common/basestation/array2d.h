@@ -61,6 +61,9 @@ namespace Anki
     template<typename T_rect>
     Array2d<T> GetROI(const Rectangle<T_rect>& roiRect);
     
+    template<typename T_rect>
+    const Array2d<T> GetROI(const Rectangle<T_rect>& roiRect) const;
+    
     // Access by row, col (for isolated access):
     T  operator() (const int row, const int col) const;
     T& operator() (const int row, const int col);

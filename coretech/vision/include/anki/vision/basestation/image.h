@@ -90,6 +90,9 @@ namespace Vision {
   protected:
     template<typename DerivedType>
     DerivedType GetROI(const Rectangle<s32>& roiRect);
+    
+    template<typename DerivedType>
+    const DerivedType GetROI(const Rectangle<s32>& roiRect) const;
 
   private:
     TimeStamp_t     _timeStamp;
@@ -114,6 +117,7 @@ namespace Vision {
     Image(const ImageBase<u8>&& imageBase) : ImageBase<u8>(imageBase) { }
     
     Image GetROI(const Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    const Image GetROI(const Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
     
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<u8>
@@ -213,6 +217,15 @@ namespace Vision {
   template<typename T>
   template<typename DerivedType>
   DerivedType ImageBase<T>::GetROI(const Rectangle<s32>& roiRect)
+  {
+    DerivedType roi(Array2d<T>::GetROI(roiRect));
+    roi.SetTimestamp(GetTimestamp());
+    return roi;
+  }
+  
+  template<typename T>
+  template<typename DerivedType>
+  const DerivedType ImageBase<T>::GetROI(const Rectangle<s32>& roiRect) const
   {
     DerivedType roi(Array2d<T>::GetROI(roiRect));
     roi.SetTimestamp(GetTimestamp());
