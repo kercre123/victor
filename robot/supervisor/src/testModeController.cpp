@@ -37,7 +37,10 @@ namespace Anki {
         // The number of cycles in between printouts
         // in those tests that print something out.
         u32 printCyclePeriod_;
-        
+
+        // On motor power tests, whether or not to cycle through increasing power or to
+        // use set power level
+        bool increasePower_ = true;
 
 #if(ENABLE_TEST_MODES)
         //////// DriveTest /////////
@@ -162,7 +165,7 @@ namespace Anki {
         // 0.95    14               15
         // 1.0     15               16
 
-        f32 liftPower_ = 1;
+        f32 liftPower_;
         const f32 LIFT_POWER_CMD = 0.2f;
         const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_CARRY - 10;
         const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
@@ -178,12 +181,13 @@ namespace Anki {
         // 1: Command a desired head angle (i.e. use HeadController)
         #define HEAD_POSITION_TEST 1
 
-        f32 headPower_ = 0;
+        f32 headPower_;
         const f32 HEAD_POWER_CMD = 0.2;
         const f32 HEAD_DES_HIGH_ANGLE = MAX_HEAD_ANGLE;
         const f32 HEAD_DES_LOW_ANGLE = MIN_HEAD_ANGLE;
         HeadTestFlags headTestMode_ = HTF_TEST_POWER;
         s32 headNodCycleTime_ms_ = 2000;
+        
         //// End of HeadTest //////
 #if(ENABLE_TEST_MODES)
         
@@ -616,13 +620,20 @@ namespace Anki {
       }
 #endif
 
-      Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
+      Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 powerPercent)
       {
-        AnkiInfo( 76, "TestModeController.LiftTestInit", 317, "flags = %d, printPeriod_ms = %d", 2, mode, printPeriod_ms);
+        AnkiInfo( 76, "TestModeController.LiftTestInit", 317, "flags = %d, powerPercent = %d", 2, mode, powerPercent);
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 10 : printPeriod_ms / TIME_STEP;
-        liftPower_ = LIFT_POWER_CMD;
+        printCyclePeriod_ = 250 / TIME_STEP;
+
+        increasePower_ = powerPercent == 0;
+        if (!increasePower_) {
+          liftPower_ = powerPercent * 0.01;
+        } else {
+          liftPower_ = LIFT_POWER_CMD;
+        }
+        
         liftTestMode_ = (LiftTestFlags)mode;
         liftNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 2000 : noddingCycleTime_ms;
         if (liftTestMode_ == LiftTF_TEST_POWER || liftTestMode_ == LiftTF_DISABLE_MOTOR) {
@@ -688,10 +699,12 @@ namespace Anki {
 
 
                 // Cycle through different power levels
-                if (!up) {
-                  liftPower_ += 0.05f;
-                  if (liftPower_ >=1.01f) {
-                    liftPower_ = LIFT_POWER_CMD;
+                if (increasePower_) {
+                  if (!up) {
+                    liftPower_ += 0.1f;
+                    if (liftPower_ >=1.01f) {
+                      liftPower_ = LIFT_POWER_CMD;
+                    }
                   }
                 }
               }
@@ -774,15 +787,22 @@ namespace Anki {
       }
 
 
-      Result HeadTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
+      Result HeadTestInit(s32 mode, s32 noddingCycleTime_ms, s32 powerPercent)
       {
-        AnkiInfo( 80, "TestModeController.HeadTestInit", 317, "flags = %d, printPeriod_ms = %d", 2, mode, printPeriod_ms);
+        AnkiInfo( 80, "TestModeController.HeadTestInit", 317, "flags = %d, powerPercent = %d", 2, mode, powerPercent);
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        headPower_ = HEAD_POWER_CMD;
-        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 5 : printPeriod_ms / TIME_STEP;
+        printCyclePeriod_ = 250 / TIME_STEP;
+        
+        increasePower_ = powerPercent == 0;
+        if (!increasePower_) {
+          headPower_ = powerPercent * 0.01;
+        } else {
+          headPower_ = HEAD_POWER_CMD;
+        }
+        
         headTestMode_ = (HeadTestFlags)mode;
-        headNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 2000 : noddingCycleTime_ms;
+        headNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 3000 : noddingCycleTime_ms;
         if (headTestMode_ == HTF_TEST_POWER) {
           HeadController::Disable();
         }
@@ -800,7 +820,7 @@ namespace Anki {
             static bool up = false;
 
             // Change direction
-            if (ticCnt_++ >= 3000 / TIME_STEP) {
+            if (ticCnt_++ >= headNodCycleTime_ms_ / TIME_STEP) {
 
               if (headTestMode_ == HTF_TEST_ANGLES) {
                 up = !up;
@@ -821,11 +841,13 @@ namespace Anki {
                   HAL::MotorSetPower(MOTOR_HEAD, -headPower_);
                 }
 
-                // Cycle through different power levels
-                if (!up) {
-                  headPower_ += 0.1f;
-                  if (headPower_ >=1.01f) {
-                    headPower_ = HEAD_POWER_CMD;
+                if (increasePower_) {
+                  // Cycle through different power levels
+                  if (!up) {
+                    headPower_ += 0.1f;
+                    if (headPower_ >=1.01f) {
+                      headPower_ = HEAD_POWER_CMD;
+                    }
                   }
                 }
               }
