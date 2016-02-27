@@ -335,6 +335,15 @@ namespace Anki
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight);
 
+      // Return the current scan line time
+      u16 CameraGetScanLine();
+      
+      // Get the camera frame number -- counts from camera start
+      u32 CameraGetFrameNumber();
+      
+      // Get the number of scan lines of delay due to current exposure settings
+      u16 CameraGetExposureDelay();
+
 #     ifdef SIMULATOR
       u32 GetCameraStartTime();
       bool IsVideoEnabled();
