@@ -40,7 +40,7 @@ namespace Vision {
     ImageBase() : Array2d<T>() { }
     ImageBase(s32 nrows, s32 ncols) : Array2d<T>(nrows, ncols) { }
     ImageBase(s32 nrows, s32 ncols, T* data) : Array2d<T>(nrows, ncols, data) { }
-    ImageBase(Array2d<T>&& array) : Array2d<T>(array) { }
+    ImageBase(const Array2d<T>& array) : Array2d<T>(array) { }
     
     // Read from file
     Result Load(const std::string& filename);
@@ -114,7 +114,7 @@ namespace Vision {
     // Wrap image "header" around given data pointer: no allocation.
     Image(s32 nrows, s32 ncols, u8* data);
     
-    Image(const ImageBase<u8>&& imageBase) : ImageBase<u8>(imageBase) { }
+    Image(const Array2d<u8>& array2d) : ImageBase<u8>(array2d) { }
     
     Image GetROI(const Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
     const Image GetROI(const Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
@@ -165,7 +165,10 @@ namespace Vision {
     // Replicates grayscale image across all three channels
     ImageRGB(const Image& imageGray);
     
+    ImageRGB(const Array2d<PixelRGB>& array2d) : ImageBase<PixelRGB>(array2d) { }
+    
     ImageRGB GetROI(const Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
+    const ImageRGB GetROI(const Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     
     Image ToGray() const;
     
