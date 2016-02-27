@@ -994,7 +994,7 @@ public class Robot : IRobot {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
     RobotEngineManager.Instance.Message.SetRobotVolume = 
-      Singleton<SetRobotVolume>.Instance.Initialize(volume);
+      Singleton<SetRobotVolume>.Instance.Initialize(ID, volume);
     RobotEngineManager.Instance.SendMessage();
   }
 
