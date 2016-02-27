@@ -107,7 +107,7 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
-  
+
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
   // reacted to correctly - events will be given to the Chooser which may return a behavior to force switch to
   void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)

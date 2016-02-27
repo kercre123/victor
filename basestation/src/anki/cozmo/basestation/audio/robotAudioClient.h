@@ -17,6 +17,7 @@
 #include <util/dispatchQueue/dispatchQueue.h>
 #include <list>
 #include <unordered_map>
+#include <mutex>
 
 
 namespace Anki {
@@ -39,10 +40,10 @@ public:
   void SetAudioBuffer( RobotAudioBuffer* audioBuffer ) { _audioBuffer = audioBuffer; }
   
   // Post Cozmo specific Audio events
-  CallbackIdType PostCozmoEvent( GameEvent::GenericEvent event );
+  CallbackIdType PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback = nullptr );
   
   // Load animation and begin to buffer audio
-  bool LoadAnimationAudio( Animation* anAnimation );
+  bool LoadAnimationAudio( Animation* anAnimation, bool streamAudioToRobot );
   
   // This returns true after LoadAnimationAudio() is performed and remains true until the last audio message
   // is completed
@@ -52,9 +53,8 @@ public:
   // Return empty string if no animation is playing
   const std::string& GetCurrentAnimationName() const { return _animationName; }
   
-  // TODO: This currently just clears all metadata and audio buffered data. It is not pleasant to the ears.
-  // This is called after the last audio messages has been popped
-  void ClearAnimation();
+  // Abort current playing animation
+  void AbortAnimation();
   
   // Return false if we expect to have buffer however it is not ready yet
   bool PrepareRobotAudioMessage( TimeStamp_t startTime_ms,
@@ -75,8 +75,10 @@ public:
   
   // Check if there is enough initial audio buffer to begin streaming animation
   // This returns true if there is no RobotAudioBuffer
-  bool IsFirstBufferReady();
+  bool UpdateFirstBuffer();
 
+  // Value between ( 0.0 - 1.0 )
+  void SetRobotVolume(float volume);
   
 private:
   
@@ -86,33 +88,60 @@ private:
   // Dispatch event
   Util::Dispatch::Queue* _postEventTimerQueue;
   
+  // Track specific animation instance
+  using AnimationPlayId = uint16_t;
+  AnimationPlayId _currentAnimationPlayId = 0;
+  
+  
   // Amount of audio messages that need to be buffered before starting animation
   uint8_t _PreBufferRobotAudioMessageCount = 0;
   
   // Struct to sync audio buffer streams with animation
   struct AnimationEvent {
-    GameEvent::GenericEvent AudioEvent;
-    uint32_t TimeInMS;
-    AnimationEvent( GameEvent::GenericEvent audioEvent, uint32_t timeInMS ) :
-    AudioEvent( audioEvent ),
-    TimeInMS( timeInMS ) {}
+    using AnimationEventId = uint16_t;
+    static constexpr AnimationEventId kInvalidAnimationEventId = 0;
+    
+    AnimationEventId EventId = kInvalidAnimationEventId;
+    GameEvent::GenericEvent AudioEvent = GameEvent::GenericEvent::Invalid;
+    uint32_t TimeInMS = 0;
+    AnimationEvent( AnimationEventId eventId, GameEvent::GenericEvent audioEvent, uint32_t timeInMS ) :
+      EventId( eventId ),
+      AudioEvent( audioEvent ),
+      TimeInMS( timeInMS ) {}
   };
   // Ordered list of animation audio event
   std::list<AnimationEvent> _animationEventList;
+  // List of failed animation events
+  std::list<AnimationEvent::AnimationEventId> _invalidAnimationIds;
+  // Guard against event errors on different threads
+  std::mutex _invalidAnimationIdLock;
 
-  
   // Animation properties
   // State Flags
   bool _isPlayingAnimation = false;
   bool _isFirstBufferLoaded = false;
+  bool _didBeginPostingEvents = false;
+  bool _streamAudioToRobot = false;
+  
   // Animation id
   std::string _animationName = "";
   // Track Queue's front stream
   RobotAudioMessageStream* _currentBufferStream = nullptr;
   
-  // Audio buffer time shift, this allow us to buffer audio as soon as the animation is loaded and play
-  // events relevant to each other.
-  uint32_t _firstAudioEventOffset = 0;
+  // Begin to post audio events to audio controller
+  void BeginBufferingAudioEvents();
+  
+  // TODO: This currently just clears all metadata and audio buffered data. It is not pleasant to the ears.
+  // This is called after the last audio messages has been proccessed
+  void ClearAnimation();
+  
+  // Handle Cozmo event callbacks, specifically errors
+  void HandleCozmoEventCallback( AnimationEvent::AnimationEventId eventId,
+                                 GameEvent::GenericEvent audioEvent,
+                                 AudioCallback& callback );
+  
+  // Remove Events which have been marked as invalid
+  void RemoveInvalidEvents();
   
 };
   

@@ -38,20 +38,18 @@ RobotAudioMessageStream::~RobotAudioMessageStream()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioMessageStream::PushRobotAudioMessage( RobotInterface::EngineToRobot* audioMsg )
 {
-  _lock.lock();
+  std::lock_guard<std::mutex> lock( _lock );
   ASSERT_NAMED( !_isComplete, "Do NOT add key frames after the stream is set to isComplete" );
   _messageQueue.push( audioMsg );
-  _lock.unlock();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotInterface::EngineToRobot* RobotAudioMessageStream::PopRobotAudioMessage()
 {
-  _lock.lock();
+  std::lock_guard<std::mutex> lock( _lock );
   ASSERT_NAMED( !_messageQueue.empty(), "Do Not call this methods if Key Frame Queue is empty" );
   RobotInterface::EngineToRobot* audioMsg = _messageQueue.front();
   _messageQueue.pop();
-  _lock.unlock();
   
   return audioMsg;
 }
