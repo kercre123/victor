@@ -1215,6 +1215,7 @@ namespace Anki {
     void UiGameController::SendSetRobotVolume(const f32 volume)
     {
       ExternalInterface::SetRobotVolume m;
+      m.robotId = 1;
       m.volume = volume;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetRobotVolume(m);

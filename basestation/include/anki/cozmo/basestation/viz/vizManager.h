@@ -70,7 +70,7 @@ namespace Anki {
       VizManager();
       
       // NOTE: Connect() will call Disconnect() first if already connected.
-      Result Connect(const char *udp_host_address, const unsigned short port);
+      Result Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port);
       Result Disconnect();
       
       // Whether or not to display the viz objects
@@ -391,6 +391,7 @@ namespace Anki {
 
       bool               _isInitialized;
       UdpClient          _vizClient;
+      UdpClient          _unityVizClient;
       
 
       /*

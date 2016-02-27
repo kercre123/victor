@@ -23,7 +23,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#define DISABLE_IDLE_DURING_LOOK_AROUND 1
+#define DISABLE_IDLE_DURING_LOOK_AROUND 0
 
 #define SAFE_ZONE_VIZ 0 // (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS)
 
