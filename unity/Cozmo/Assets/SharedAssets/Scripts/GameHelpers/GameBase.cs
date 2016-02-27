@@ -121,7 +121,7 @@ public abstract class GameBase : MonoBehaviour {
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(() => {
         RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
         CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
         CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
         CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);

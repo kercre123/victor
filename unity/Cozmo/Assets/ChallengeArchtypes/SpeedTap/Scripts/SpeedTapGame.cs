@@ -72,10 +72,6 @@ namespace SpeedTap {
       UpdateUI();
     }
 
-    public void PlayerLosesHand() {
-      CozmoWinsHand();
-    }
-
     public void CozmoWinsHand() {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
       _CozmoScore++;
@@ -90,9 +86,41 @@ namespace SpeedTap {
       UpdateUI();
     }
 
+    public void PlayerLosesHand() {
+      CozmoWinsHand();
+    }
+
+    private void HandleRoundRetreatDone(bool success) {
+      int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
+      int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
+      int roundsLeft = _Rounds - losingScore - winningScore;
+      if (winningScore > losingScore + roundsLeft) {
+        AllRoundsOver = true;
+        if (_PlayerRoundsWon > _CozmoRoundsWon) {
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleSessionAnimDone));
+        }
+        else {
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleSessionAnimDone));
+        }
+      }
+      else {
+        ResetScore();
+        _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
+      }
+    }
+
+    private void HandleSessionAnimDone(bool success) {
+      if (_PlayerRoundsWon > _CozmoRoundsWon) {
+        RaiseMiniGameWin();
+      }
+      else {
+        RaiseMiniGameLose();
+      }
+    }
+
     private void CheckRounds() {
       if (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound) {
-
+        
         if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
           _CloseRoundCount++;
         }
@@ -108,44 +136,16 @@ namespace SpeedTap {
           if (_DifficultyOptions.LastOrDefault().DifficultyId > CurrentDifficulty) {
             CurrentDifficulty++;
           }
-
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, HandleRoundEndAnimDone));
+            
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime,
+            new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, HandleRoundRetreatDone)));
         }
         else {
           _CozmoRoundsWon++;
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinRound, HandleRoundEndAnimDone));
-        }
-      }
-    }
 
-    private void HandleRoundEndAnimDone(bool success) {
-      int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
-      int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
-      int roundsLeft = _Rounds - losingScore - winningScore;
-      if (winningScore > losingScore + roundsLeft) {
-        AllRoundsOver = true;
-        if (_PlayerRoundsWon > _CozmoRoundsWon) {
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime,
-            new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleSessionAnimDone)));
+          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime, 
+            new AnimationGroupState(AnimationGroupName.kSpeedTap_WinRound, HandleRoundRetreatDone)));
         }
-        else {
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime,
-            new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleSessionAnimDone)));
-        }
-      }
-      else {
-        ResetScore();
-        _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime,
-          new SpeedTapWaitForCubePlace(false)));
-      }
-    }
-
-    private void HandleSessionAnimDone(bool success) {
-      if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        RaiseMiniGameWin();
-      }
-      else {
-        RaiseMiniGameLose();
       }
     }
 
@@ -285,20 +285,6 @@ namespace SpeedTap {
       }
     }
 
-    public void SpinLights(LightCube cube) {
-
-      uint color_0 = cube.Lights[3].OnColor;
-      uint color_1 = cube.Lights[0].OnColor;
-      uint color_2 = cube.Lights[1].OnColor;
-      uint color_3 = cube.Lights[2].OnColor;
-
-      cube.Lights[0].OnColor = color_0;
-      cube.Lights[1].OnColor = color_1;
-      cube.Lights[2].OnColor = color_2;
-      cube.Lights[3].OnColor = color_3;
-      
-    }
-
     protected override int CalculateExcitementStatRewards() {
       return 1 + _CloseRoundCount * 2;
     }
@@ -307,12 +293,13 @@ namespace SpeedTap {
       SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
 
-    // Temp Functions for random animation until anim groups are ready
-
+    // Sets Cozmo's original Position information, may need to also set rotation quaternion as well
     public void SetCozmoOrigPos() {
       _CozmoPos = CurrentRobot.WorldPosition;
     }
 
+    // Check to see if Cozmo should Adjust, includes hook for callback for after adjust is complete.
+    // If cozmo doesn't need to adjust, will immediately invoke callback.
     public void CheckForAdjust(RobotCallback adjustCallback = null) {
       float dist = 0.0f;
       dist = (CurrentRobot.WorldPosition - _CozmoPos).magnitude;
@@ -325,7 +312,6 @@ namespace SpeedTap {
         }
       }
     }
-
 
   }
 }
