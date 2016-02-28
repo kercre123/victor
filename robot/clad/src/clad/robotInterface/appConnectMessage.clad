@@ -1,0 +1,46 @@
+/** CLAD definition of the app connect message sent over bluetooth to activate the robot's wifi and authenticate the
+ * device.
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+/** The end of this message should always be at a 4 byte alignment so the message can grow over time without breaking
+ * backwards compatibility with older firmware. New members must be added at the end.
+ * If you don't do this carefully, you will brick Cozmos in the field!
+ */
+
+enum uint_32 APFlags
+{
+  AP_HIDDEN  = 0x00000001,
+  AP_DHCP    = 0x00000002,
+  AP_DHCP_GW = 0x00000004,
+  AP_ROUTE   = 0x00000008,
+  AP_PHY_B   = 0x00000010,
+  AP_PHY_G   = 0x00000020,
+  AP_PHY_N   = 0x00000030,
+  AP_STATION = 0x00000040,
+}
+
+message AppConnectConfig
+{
+  uint_8  ssid[32],
+  uint_8  psk[64],
+  uint_16 beaconInterval,
+  uint_8  channel,
+  uint_8  maxConnections,
+  uint_8  authMode,
+  uint_8  wifiMinRate,
+  uint_8  wifiMaxRate,
+  uint_8  wifiFixedRate,
+  APFlags apFlags,
+  uint_32 robotIp,
+  uint_32 robotNetmask,
+  uint_32 robotGateway,
+  uint_32 sessionToken[4],
+}
+
+} // RobotInterface
+} // Cozmo
+} // Anki
