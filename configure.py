@@ -12,13 +12,14 @@ import subprocess
 import time
 
 ENGINE_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
-
+EXTERNALS_ROOT = os.path.join(ENGINE_ROOT, 'EXTERNALS')
+CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
 BUILD_TOOLS_ROOT = os.path.join(ENGINE_ROOT, 'tools', 'anki-util', 'tools', 'build-tools', 'tools')
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.util
 import ankibuild.xcode
 import ankibuild.installBuildDeps
-
+from project.buildScripts.dependencies import extract_dependencies
 
 ##################
 # COLORED OUTPUT #
@@ -273,7 +274,18 @@ def parse_engine_arguments():
     parser.add_verbose_arguments()
     parser.add_argument('--mex', '-m', dest='mex', action='store_true',
                     help='builds mathlab\'s mex project')
-    
+    parser.add_argument(
+        '--do-not-check-dependencies',
+        required=False,
+        action='store_true',
+        help='Use this flag to NOT pull down the latest dependencies (i.e. audio and animation)')
+    parser.add_argument(
+        '--use-external',
+        required=False,
+        default=EXTERNALS_ROOT,
+        metavar='path',
+        help='Use this flag to specify external dependency location.')
+
     return parser.parse_args()
 
 
@@ -318,33 +330,35 @@ def wipe_all(options, root_path, kill_unity=True):
 # PLATFORM-DEPENDENT COMMANDS #
 ###############################
 
-def generate_gyp(path, platform, options):
+def generate_gyp(path, platform, options, dep_location):
 
     arguments = ['./configure.py', '--platform', platform]
-    
-    if not os.environ.get("CORETECH_EXTERNAL_DIR"):
-        sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
 
-    arguments += ['--coretechExternal', os.environ.get("CORETECH_EXTERNAL_DIR")]
+    if not options.do_not_check_dependencies:
+        extract_dependencies(dep_location, EXTERNALS_ROOT)
+
+    arguments += ['--coretechExternal', CTE_ROOT]
     if os.environ.get("EXTERNALS_DIR"):
         arguments += ['--externals', os.environ.get("EXTERNALS_DIR")]
+    else:
+        arguments += ['--externals', options.use_external]
 
     if options.verbose:
         arguments += ['--verbose']
     if options.mex:
         arguments += ['--mex']
-    
+
     cwd = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(path)
     ankibuild.util.File.execute(arguments)
     ankibuild.util.File.cd(cwd)
 
 class EnginePlatformConfiguration(object):
-    
+
     def __init__(self, platform, options):
         if options.verbose:
             print_status('Initializing paths for platform {0}...'.format(platform))
-        
+
         self.platform = platform
         self.options = options
         
@@ -372,13 +386,14 @@ class EnginePlatformConfiguration(object):
             self.delete()
     
     def generate(self):
+
         if self.options.verbose:
             print_status('Generating files for platform {0}...'.format(self.platform))
         
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
-        generate_gyp(self.gyp_dir, self.platform, self.options)
+        generate_gyp(self.gyp_dir, self.platform, self.options, "DEPS")
         if self.platform == 'mac' or self.platform == 'ios':
             ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
