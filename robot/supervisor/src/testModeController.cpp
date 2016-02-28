@@ -30,12 +30,19 @@ namespace Anki {
       // "Private Member Variables"
       namespace {
 
-#if(ENABLE_TEST_MODES)
+
         // Some common vars that can be used across multiple tests
         u32 ticCnt_, ticCnt2_;   // Multi-purpose tic counters
-        bool pathStarted_;       // Flag for whether or not we started to traverse a path
+        
+        // The number of cycles in between printouts
+        // in those tests that print something out.
+        u32 printCyclePeriod_;
 
+        // On motor power tests, whether or not to cycle through increasing power or to
+        // use set power level
+        bool increasePower_ = true;
 
+#if(ENABLE_TEST_MODES)
         //////// DriveTest /////////
         bool enableToggleDir_ = false;   // false: Only drive forward
                                          // true: Switch between driving forward and reverse
@@ -117,7 +124,7 @@ namespace Anki {
 
         ////// End of DriveTest ////////
 
-
+#endif
         /////// LiftTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired lift height (i.e. use LiftController)
@@ -158,7 +165,7 @@ namespace Anki {
         // 0.95    14               15
         // 1.0     15               16
 
-        f32 liftPower_ = 1;
+        f32 liftPower_;
         const f32 LIFT_POWER_CMD = 0.2f;
         const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_CARRY - 10;
         const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
@@ -174,15 +181,16 @@ namespace Anki {
         // 1: Command a desired head angle (i.e. use HeadController)
         #define HEAD_POSITION_TEST 1
 
-        f32 headPower_ = 0;
+        f32 headPower_;
         const f32 HEAD_POWER_CMD = 0.2;
         const f32 HEAD_DES_HIGH_ANGLE = MAX_HEAD_ANGLE;
         const f32 HEAD_DES_LOW_ANGLE = MIN_HEAD_ANGLE;
         HeadTestFlags headTestMode_ = HTF_TEST_POWER;
         s32 headNodCycleTime_ms_ = 2000;
+        
         //// End of HeadTest //////
-
-
+#if(ENABLE_TEST_MODES)
+        
         //////// DockPathTest /////////
         enum {
           DT_STOP,
@@ -203,6 +211,7 @@ namespace Anki {
         const f32 PF_TARGET_SPEED_MMPS = 100 * (PATH_FOLLOW_BACKWARDS ? -1 : 1);
         const f32 PF_ACCEL_MMPS2 = 200;
         const f32 PF_DECEL_MMPS2 = 500;
+        bool pathStarted_;       // Flag for whether or not we started to traverse a path
 
         ////// End of PathFollowTest ////
 
@@ -247,10 +256,6 @@ namespace Anki {
         bool ledCycleTest_ = true;
         ///// End of LightTest ///
 
-
-        // The number of cycles in between printouts
-        // in those tests that print something out.
-        u32 printCyclePeriod_;
 #endif
         // Current test mode
         TestMode testMode_ = TM_NONE;
@@ -567,8 +572,8 @@ namespace Anki {
 
           wheelTargetDir_ = wheelPower_ <= wheelTargetPower_ ? 1 : -1;
 
-          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LEFT_WHEEL);
-          f32 rSpeed = HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
+          f32 lSpeed = HAL::MotorGetSpeed(MOTOR_LEFT_WHEEL);
+          f32 rSpeed = HAL::MotorGetSpeed(MOTOR_RIGHT_WHEEL);
           if (enableDirectHALTest_) {
             AnkiInfo( 75, "TestModeController.DriveTestUpdate", 315, "Applying %.3f power (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)", 5,
                   wheelTargetPower_*0.01f,
@@ -592,16 +597,16 @@ namespace Anki {
             if (wheelPower_ > wheelTargetPower_) {
               wheelPower_ = wheelTargetPower_;
             }
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
             //PRINT("WheelPower = %f (increasing)\n", 0.01f*wheelPower_);
           } else if (wheelTargetDir_ < 0 && wheelPower_ > wheelTargetPower_) {
             wheelPower_ -= WHEEL_POWER_PERCENT_ACCEL;
             if (wheelPower_ < wheelTargetPower_) {
               wheelPower_ = wheelTargetPower_;
             }
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
             //PRINT("WheelPower = %f (decreasing)\n", 0.01f*wheelPower_);
           }
         } else {
@@ -613,15 +618,22 @@ namespace Anki {
 
        return RESULT_OK;
       }
+#endif
 
-
-      Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
+      Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 powerPercent)
       {
-        AnkiInfo( 76, "TestModeController.LiftTestInit", 317, "flags = %d, printPeriod_ms = %d", 2, mode, printPeriod_ms);
+        AnkiInfo( 76, "TestModeController.LiftTestInit", 317, "flags = %d, powerPercent = %d", 2, mode, powerPercent);
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 10 : printPeriod_ms / TIME_STEP;
-        liftPower_ = LIFT_POWER_CMD;
+        printCyclePeriod_ = 250 / TIME_STEP;
+
+        increasePower_ = powerPercent == 0;
+        if (!increasePower_) {
+          liftPower_ = powerPercent * 0.01;
+        } else {
+          liftPower_ = LIFT_POWER_CMD;
+        }
+        
         liftTestMode_ = (LiftTestFlags)mode;
         liftNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 2000 : noddingCycleTime_ms;
         if (liftTestMode_ == LiftTF_TEST_POWER || liftTestMode_ == LiftTF_DISABLE_MOTOR) {
@@ -679,18 +691,20 @@ namespace Anki {
                 up = !up;
                 if (up) {
                   AnkiInfo( 77, "TestModeController.LiftTestUpdate", 320, "Lift UP %f power", 1, liftPower_);
-                  HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
+                  HAL::MotorSetPower(MOTOR_LIFT, liftPower_);
                 } else {
                   AnkiInfo( 77, "TestModeController.LiftTestUpdate", 321, "Lift DOWN %f power", 1, -liftPower_);
-                  HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
+                  HAL::MotorSetPower(MOTOR_LIFT, -liftPower_);
                 }
 
 
                 // Cycle through different power levels
-                if (!up) {
-                  liftPower_ += 0.05f;
-                  if (liftPower_ >=1.01f) {
-                    liftPower_ = LIFT_POWER_CMD;
+                if (increasePower_) {
+                  if (!up) {
+                    liftPower_ += 0.1f;
+                    if (liftPower_ >=1.01f) {
+                      liftPower_ = LIFT_POWER_CMD;
+                    }
                   }
                 }
               }
@@ -711,7 +725,7 @@ namespace Anki {
 
 
         // Print speed at the end of a continuous segment of non-zero speeds
-        f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+        f32 lSpeed = HAL::MotorGetSpeed(MOTOR_LIFT);
         if (ABS(lSpeed) > 0.001f) {
           // Is this the start of a sequence of non-zero lift speeds?
           if (avgLiftSpeed_ == 0) {
@@ -762,7 +776,7 @@ namespace Anki {
 
         // Print height and speed
         if (ticCnt2_++ >= printCyclePeriod_) {
-          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+          f32 lSpeed = HAL::MotorGetSpeed(MOTOR_LIFT);
           f32 lPos = LiftController::GetHeightMM();
 
           AnkiInfo( 79, "TestModeController.LiftToggleTestUpdate", 325, "Lift speed %f rad/s, height %f mm", 2, lSpeed, lPos);
@@ -773,15 +787,22 @@ namespace Anki {
       }
 
 
-      Result HeadTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
+      Result HeadTestInit(s32 mode, s32 noddingCycleTime_ms, s32 powerPercent)
       {
-        AnkiInfo( 80, "TestModeController.HeadTestInit", 317, "flags = %d, printPeriod_ms = %d", 2, mode, printPeriod_ms);
+        AnkiInfo( 80, "TestModeController.HeadTestInit", 317, "flags = %d, powerPercent = %d", 2, mode, powerPercent);
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        headPower_ = HEAD_POWER_CMD;
-        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 5 : printPeriod_ms / TIME_STEP;
+        printCyclePeriod_ = 250 / TIME_STEP;
+        
+        increasePower_ = powerPercent == 0;
+        if (!increasePower_) {
+          headPower_ = powerPercent * 0.01;
+        } else {
+          headPower_ = HEAD_POWER_CMD;
+        }
+        
         headTestMode_ = (HeadTestFlags)mode;
-        headNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 2000 : noddingCycleTime_ms;
+        headNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 3000 : noddingCycleTime_ms;
         if (headTestMode_ == HTF_TEST_POWER) {
           HeadController::Disable();
         }
@@ -799,7 +820,7 @@ namespace Anki {
             static bool up = false;
 
             // Change direction
-            if (ticCnt_++ >= 3000 / TIME_STEP) {
+            if (ticCnt_++ >= headNodCycleTime_ms_ / TIME_STEP) {
 
               if (headTestMode_ == HTF_TEST_ANGLES) {
                 up = !up;
@@ -814,17 +835,19 @@ namespace Anki {
                 up = !up;
                 if (up) {
                   AnkiInfo( 81, "TestModeController.HeadTestUpdate", 328, "Head UP %f power", 1, headPower_);
-                  HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
+                  HAL::MotorSetPower(MOTOR_HEAD, headPower_);
                 } else {
                   AnkiInfo( 81, "TestModeController.HeadTestUpdate", 329, "Head DOWN %f power", 1, -headPower_);
-                  HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
+                  HAL::MotorSetPower(MOTOR_HEAD, -headPower_);
                 }
 
-                // Cycle through different power levels
-                if (!up) {
-                  headPower_ += 0.1f;
-                  if (headPower_ >=1.01f) {
-                    headPower_ = HEAD_POWER_CMD;
+                if (increasePower_) {
+                  // Cycle through different power levels
+                  if (!up) {
+                    headPower_ += 0.1f;
+                    if (headPower_ >=1.01f) {
+                      headPower_ = HEAD_POWER_CMD;
+                    }
                   }
                 }
               }
@@ -858,7 +881,7 @@ namespace Anki {
 
         // Print speed
         if (ticCnt2_++ >= printCyclePeriod_) {
-          f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
+          f32 hSpeed = HAL::MotorGetSpeed(MOTOR_HEAD);
           f32 hSpeed_filt = HeadController::GetAngularVelocity();
           f32 hPos = HeadController::GetAngleRad();
 
@@ -870,6 +893,7 @@ namespace Anki {
 
         return RESULT_OK;
       }
+#if(ENABLE_TEST_MODES)
 
       Result IMUTestInit(s32 flags)
       {
@@ -1063,8 +1087,8 @@ namespace Anki {
           } else {
             // Stopping
             SteeringController::ExecuteDirectDrive(0, 0);
-            HAL::MotorResetPosition(HAL::MOTOR_LEFT_WHEEL);
-            HAL::MotorResetPosition(HAL::MOTOR_RIGHT_WHEEL);
+            HAL::MotorResetPosition(MOTOR_LEFT_WHEEL);
+            HAL::MotorResetPosition(MOTOR_RIGHT_WHEEL);
             ST_prevLeftPos = 1000;
             ST_prevRightPos = 1000;
             ST_slowDownTics = 0;
@@ -1075,13 +1099,13 @@ namespace Anki {
 
         // Report stopping distance once it has come to a complete stop
         if(ST_slowingDown) {
-          if (HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL) == ST_prevLeftPos &&
-              HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL) == ST_prevRightPos) {
+          if (HAL::MotorGetPosition(MOTOR_LEFT_WHEEL) == ST_prevLeftPos &&
+              HAL::MotorGetPosition(MOTOR_RIGHT_WHEEL) == ST_prevRightPos) {
             AnkiInfo( 89, "TestModeController.StopTestUpdate", 341, "STOPPED: (%f, %f) mm in %d tics", 3, ST_prevLeftPos, ST_prevRightPos, ST_slowDownTics);
             ST_slowingDown = false;
           }
-          ST_prevLeftPos = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
-          ST_prevRightPos = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
+          ST_prevLeftPos = HAL::MotorGetPosition(MOTOR_LEFT_WHEEL);
+          ST_prevRightPos = HAL::MotorGetPosition(MOTOR_RIGHT_WHEEL);
           ST_slowDownTics++;
         }
 
@@ -1106,11 +1130,11 @@ namespace Anki {
         static f32 pwr = 1.0;
         if (ticCnt_++ > 5000 / TIME_STEP) {
           AnkiInfo( 91, "TestModeController.MaxPowerTestUpdate", 342, "SWITCHING POWER: %f", 1, pwr);
-          HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 1.0);
-          HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.0);
-          //HAL::MotorSetPower(HAL::MOTOR_LIFT, pwr);
-          //HAL::MotorSetPower(HAL::MOTOR_HEAD, pwr);
-          //HAL::MotorSetPower(HAL::MOTOR_GRIP, pwr);
+          HAL::MotorSetPower(MOTOR_LEFT_WHEEL, 1.0);
+          HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, 1.0);
+          //HAL::MotorSetPower(MOTOR_LIFT, pwr);
+          //HAL::MotorSetPower(MOTOR_HEAD, pwr);
+          //HAL::MotorSetPower(MOTOR_GRIP, pwr);
           pwr *= -1;
           ticCnt_ = 0;
         }
@@ -1122,7 +1146,7 @@ namespace Anki {
       {
         Result ret = RESULT_OK;
         
-#if(ENABLE_TEST_MODES)
+
         testMode_ = mode;
 
         switch(testMode_) {
@@ -1130,6 +1154,7 @@ namespace Anki {
             ret = Reset();
             updateFunc = NULL;
             break;
+#if(ENABLE_TEST_MODES)
           case TM_PLACE_BLOCK_ON_GROUND:
             ret = PlaceOnGroundTestInit(p1,p2,p3);
             updateFunc = PlaceOnGroundTestUpdate;
@@ -1150,6 +1175,7 @@ namespace Anki {
             ret = DriveTestInit(p1,p2,p3);
             updateFunc = DriveTestUpdate;
             break;
+#endif
           case TM_LIFT:
             ret = LiftTestInit(p1,p2,p3);
             updateFunc = LiftTestUpdate;
@@ -1162,6 +1188,7 @@ namespace Anki {
             ret = HeadTestInit(p1,p2,p3);
             updateFunc = HeadTestUpdate;
             break;
+#if(ENABLE_TEST_MODES)
           case TM_IMU:
             ret = IMUTestInit(p1);
             updateFunc = IMUTestUpdate;
@@ -1188,12 +1215,14 @@ namespace Anki {
             ret = MaxPowerTestInit();
             updateFunc = MaxPowerTestUpdate;
             break;
+#endif
           default:
             AnkiWarn( 92, "TestModeController.Start", 344, "Undefined test mode %d\n", 1, testMode_);
+            Reset();
             ret = RESULT_FAIL;
             break;
         }
-#endif
+
         return ret;
       }
 

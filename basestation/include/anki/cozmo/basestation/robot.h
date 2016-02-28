@@ -202,17 +202,11 @@ public:
     //
     VisionComponent&         GetVisionComponent() { return _visionComponent; }
     const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
-    void                     EnableVisionWhileMoving(bool enable);
     Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
     Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
     Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
   
     Result ProcessImage(const Vision::ImageRGB& image);
-  
-    // Queue an observed vision marker for processing with BlockWorld.
-    // Note that this is a NON-const reference: the marker's camera will be updated
-    // to use a pose from pose history.
-    Result QueueObservedMarker(const Vision::ObservedMarker& marker);
     
     // Get a *copy* of the current image on this robot's vision processing thread
     // TODO: Remove this method? I don't think anyone is using it...
@@ -740,9 +734,6 @@ public:
     void SelectPlanner(const Pose3d& targetPose);
     void SelectPlanner(const std::vector<Pose3d>& targetPoses);
 
-    // Sends a path to the robot to be immediately executed
-    bool                      _visionWhileMovingEnabled = false;
-
     /*
     // Proximity sensors
     std::array<u8,   NUM_PROX>  _proxVals;
@@ -919,6 +910,7 @@ public:
     void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -984,9 +976,6 @@ inline const Pose3d& Robot::GetPose(void) const
 
 inline const Pose3d& Robot::GetDriveCenterPose(void) const
 {return _driveCenterPose; }
-
-inline void Robot::EnableVisionWhileMoving(bool enable)
-{ _visionWhileMovingEnabled = enable; }
 
 inline const f32 Robot::GetHeadAngle() const
 { return _currentHeadAngle; }

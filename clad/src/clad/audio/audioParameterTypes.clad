@@ -11,7 +11,6 @@ enum uint_32 ParameterType
   Mood = 3128647864,
   Music_Volume = 1006694123,
   Relationship = 3723222599,
-  Robot_Master_Volume = 562892825,
   Robot_Volume = 1669075520,
   Sfx_Volume = 1564184899,
   Ss_Air_Fear = 1351367891,

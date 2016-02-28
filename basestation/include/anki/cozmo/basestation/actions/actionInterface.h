@@ -84,7 +84,7 @@ namespace Anki {
       bool Interrupt();
       
       // Override this to take care of anything that needs to be done on Retry/Interrupt.
-      virtual void Reset() = 0;
+      virtual void Reset(bool shouldUnlockTracks) = 0;
       
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
@@ -223,7 +223,7 @@ namespace Anki {
       // Before giving up on entire action. Optional: default is 30 seconds
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
       
-      virtual void Reset() override final;
+      virtual void Reset(bool shouldUnlockTracks = true) override final;
       
       // A random number generator all subclasses can share
       Util::RandomGenerator& GetRNG() const;

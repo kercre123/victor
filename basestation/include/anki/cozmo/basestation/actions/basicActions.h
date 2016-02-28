@@ -302,7 +302,7 @@ namespace Anki {
       
       // Update will just call the chosenAction's implementation
       virtual ActionResult UpdateInternal() override;
-      virtual void Reset() override { }
+      virtual void Reset(bool shouldUnlockTracks = true) override { }
       
       ObjectID       _objectID;
       IActionRunner* _chosenAction = nullptr;

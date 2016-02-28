@@ -43,7 +43,7 @@ namespace Anki {
     protected:
       
       // Call the constituent actions' Reset() methods and mark them each not done.
-      virtual void Reset() override;
+      virtual void Reset(bool shouldUnlockTracks = true) override;
       
       std::list<IActionRunner*> _actions;
       std::string _name;
@@ -73,7 +73,7 @@ namespace Anki {
       std::list<std::pair<ActionCompletedUnion, RobotActionType>> _completedActionInfoStack;
       
     private:
-      virtual void Reset() override;
+      virtual void Reset(bool shouldUnlockTracks = true) override final;
       
       virtual ActionResult UpdateInternal() override final;
       

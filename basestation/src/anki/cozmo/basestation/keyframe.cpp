@@ -23,7 +23,8 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/jsonTools.h"
-#include <opencv2/core/core.hpp>
+
+#include <opencv2/core.hpp>
 #include <cassert>
 
 namespace Anki {

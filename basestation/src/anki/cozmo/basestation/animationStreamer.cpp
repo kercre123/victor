@@ -174,6 +174,9 @@ namespace Cozmo {
       robot.AbortAnimation();
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
+#if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
+      _audioClient.AbortAnimation();
+#endif
     }
   } // Abort()
   
@@ -254,9 +257,9 @@ namespace Cozmo {
       
 #     if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       // Prep sound
-      _audioClient.LoadAnimationAudio(anim);
+      _audioClient.LoadAnimationAudio(anim, robot.IsPhysical());
       // Set Pre Buffer Key Frame Size
-      _audioClient.SetPreBufferRobotAudioMessageCount(10);
+      _audioClient.SetPreBufferRobotAudioMessageCount(0);
 #     endif
       
 #     if PLAY_ROBOT_AUDIO_ON_DEVICE
@@ -984,7 +987,7 @@ namespace Cozmo {
     // any co-timed keyframes from other tracks).
     while( _sendBuffer.empty() &&
           ( (anim->HasFramesLeft() && !_audioClient.IsPlayingAnimation() ) ||
-            (_audioClient.IsFirstBufferReady() && _audioClient.PrepareRobotAudioMessage(_startTime_ms, _streamingTime_ms)) ) )
+            (_audioClient.UpdateFirstBuffer() && _audioClient.PrepareRobotAudioMessage(_startTime_ms, _streamingTime_ms)) ) )
     {
 #     if DEBUG_ANIMATIONS
       //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",
@@ -1026,19 +1029,6 @@ namespace Cozmo {
       }
 
 #     else // if (!USE_SOUND_MANAGER_FOR_ROBOT_AUDIO)
-      
-
-      // FIXME: Need to handle playing audio on the device
-#     if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-      // Queue up audio frame for playing locally if
-      // it's not already in the queued and it wasn't already played.
-      if ((&audioKF != _lastPlayedOnDeviceRobotAudioKeyFrame) &&
-          (_onDeviceRobotAudioKeyFrameQueue.empty() || &audioKF != _onDeviceRobotAudioKeyFrameQueue.back()))
-      {
-        _onDeviceRobotAudioKeyFrameQueue.push_back(&audioKF);
-      }
-#     endif
-
       
       // Stream a single audio sample from the audio manager (or silence if there isn't one)
       // (Have to *always* send an audio frame to keep time, whether that's the next

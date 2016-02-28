@@ -7,6 +7,7 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotLogging.clad"
 #include "clad/types/imageTypes.clad"
+#include "clad/types/motorTypes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/proxMessages.clad"
@@ -25,6 +26,12 @@ message SyncTimeAck
 message RobotPoked
 {
   uint_32 robotID
+}
+
+message MotorCalibration
+{
+  MotorID motorID,
+  bool calibStarted
 }
 
 // These two messages bookend animations as they are played on the robot
@@ -75,7 +82,7 @@ message CrashReport
 /** Pipe from robot to engine.
  * This cannot be an auto union because we need explicit tag values by destination. The tag space is shared with
  * messageEngineToRobot.clad
- * 0x90 and up going to the engine
+ * 0xB0 and up going to the engine
  */
 union RobotToEngine {
   FlashWriteAcknowledge      flashWriteAck          = 0x85, // Special case message for OTA compatibility
@@ -113,6 +120,7 @@ union RobotToEngine {
   NVStorage::NVOpResult      nvResult               = 0xCE,
   CrashReport                crashReport            = 0xCF,
   ObjectConnectionState activeObjectConnectionState = 0xD0,
+  MotorCalibration           motorCalibration       = 0xD1,
   
   //0xF0 to 0x FE: Unreliable message to the Engine
   RobotState                 state                  = 0xF0,

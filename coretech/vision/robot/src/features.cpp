@@ -60,9 +60,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/imageProcessing.h"
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/objdetect/cascadedetect.hpp"
-#endif
+//#if ANKICORETECH_EMBEDDED_USE_OPENCV
+//#include "opencv2/objdetect/cascadedetect.hpp"
+//#endif
 
 using namespace Anki;
 using namespace Anki::Embedded;

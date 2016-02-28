@@ -449,6 +449,8 @@ trainingState.numImages     = numImages;
 trainingState.xgrid         = xgrid;
 trainingState.ygrid         = ygrid;
 
+trainingState.parameters    = varargin;
+
 fprintf('Probe extraction took %.2f seconds (%.1f minutes)\n', toc(t_start), toc(t_start)/60);
 
 % Only save what we need to re-run (not all the settings!)
