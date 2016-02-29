@@ -15,14 +15,22 @@ MonoBehaviour:
   MaxScorePerRound: 5
   DifficultyOptions:
   - DifficultyId: 1
-    DifficultyName: Easy
-    DifficultyDescription: Start with Easy Mode, unlock more over time!
+    DifficultyName:
+      Key: minigame.difficulty.easy
+    DifficultyDescription:
+      Key: speedTap.difficulty.easyDescription
   - DifficultyId: 2
-    DifficultyName: Medium
-    DifficultyDescription: Patterns may have up to 2 colors
+    DifficultyName:
+      Key: minigame.difficulty.medium
+    DifficultyDescription:
+      Key: speedTap.difficulty.mediumDescription
   - DifficultyId: 3
-    DifficultyName: Hard
-    DifficultyDescription: Patterns may have 1-2 colors and any number of lights.
+    DifficultyName:
+      Key: minigame.difficulty.hard
+    DifficultyDescription:
+      Key: speedTap.difficulty.hardDescription
   - DifficultyId: 4
-    DifficultyName: Expert
-    DifficultyDescription: Patterns may have any number of colors and lights.
+    DifficultyName:
+      Key: minigame.difficulty.expert
+    DifficultyDescription:
+      Key: speedTap.difficulty.expertDescription

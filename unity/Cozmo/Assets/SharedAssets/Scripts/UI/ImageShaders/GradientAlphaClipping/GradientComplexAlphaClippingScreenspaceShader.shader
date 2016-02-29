@@ -41,8 +41,6 @@
       float4 _ClippingEnd;
       float4 _ClippingSize;
 
-      const float _ImageRatio = 9.0 / 16.0;
-
       v2f vert (appdata v)
       {
         v2f o;
@@ -52,7 +50,9 @@
         
         //modify uv x to match screen ratio since we are using PreserveAspect.
         o.uv.x -= 0.5;
-        o.uv.x *= _ImageRatio * (_ScreenParams.x / _ScreenParams.y);
+
+        float screenRatio = (_ScreenParams.x / _ScreenParams.y);
+        o.uv.x *= 9 * screenRatio * 0.0625;
         o.uv.x += 0.5;
         o.uv *= _AtlasUV.zw;
         o.uv += _AtlasUV.xy;
@@ -80,6 +80,8 @@
 
       fixed4 frag (v2f i) : SV_Target
       {
+        //return float4(i.uv, 0, 1);
+
         fixed4 col = tex2D(_MainTex, i.uv);
 
         float2 minAlpha2 = min(i.topRightAlpha,i.bottomLeftAlpha);
