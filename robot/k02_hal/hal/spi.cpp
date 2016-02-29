@@ -115,8 +115,6 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) {
   {
     *((u32*)(drop_tx->payload + jpeglen)) = GetTimeStamp() - 70;
     jpeglen += 4;
-    *((u32*)(drop_tx->payload + jpeglen)) = CameraGetFrameNumber();
-    jpeglen += 4;
   }
 	drop_tx->droplet = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
