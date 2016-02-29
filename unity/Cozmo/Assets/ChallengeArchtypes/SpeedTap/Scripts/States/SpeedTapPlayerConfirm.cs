@@ -6,7 +6,7 @@ namespace SpeedTap {
   public class SpeedTapPlayerConfirm : State {
 
     private SpeedTapGame _SpeedTapGame = null;
-    private const float _kCycleInterval = 1.25f;
+    private const float _kCycleInterval = 0.25f;
     private float _CycleTimer = 0.0f;
 
     public override void Enter() {
