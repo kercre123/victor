@@ -129,9 +129,8 @@ inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
-  GlobalDataToHead* txBufferStruct = reinterpret_cast<GlobalDataToHead*>(txRxBuffer);
-  memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead)-sizeof(CladBufferUp));
-  Spine::Dequeue(&(txBufferStruct->cladBuffer));
+  Spine::Dequeue(&(g_dataToHead.cladBuffer));
+  memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.cladBuffer.length = 0;
   txRxIndex = 0;
 

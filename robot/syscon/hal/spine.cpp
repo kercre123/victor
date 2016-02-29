@@ -35,9 +35,13 @@ bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
     if (msgID != 0) {
       *dest = msgID;
       ++dest;
+      spinebuffer[spine_exit].length = size + 1;
+    }
+    else
+    {
+      spinebuffer[spine_exit].length = size;
     }
     memcpy(dest, buffer, size);
-    spinebuffer[spine_exit].length = size + 1;
     spine_exit = exit;
     return true;
   }
