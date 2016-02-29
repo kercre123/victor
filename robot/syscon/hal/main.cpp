@@ -57,14 +57,6 @@ void MotorsUpdate(void* userdata) {
 
     Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
   }
-
-  // Prevent overheating
-  if (Battery::onContacts) {
-    for (int i = 0; i < MOTOR_COUNT; i++)
-    {
-      Motors::setPower(i, 0);
-    }
-  }
 }
 
 int main(void)
