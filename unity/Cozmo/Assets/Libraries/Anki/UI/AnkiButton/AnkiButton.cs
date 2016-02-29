@@ -48,10 +48,8 @@ namespace Anki {
 
       private ButtonUpEvent _OnRelease = new ButtonUpEvent();
 
-      [SerializeField]
       private string _DASEventButtonName = "";
 
-      [SerializeField]
       private string _DASEventViewController = "";
 
       [SerializeField]

@@ -24,6 +24,7 @@ public class StartView : BaseView {
   public event System.Action OnConnectClicked;
 
   private void Awake() {
+    _ConnectButton.DASEventButtonName = "connect_button";
     _ConnectButton.DASEventViewController = this.DASEventViewName;
     _ConnectButton.onClick.AddListener(HandleConnectClicked);
     _SecretSkipButton.onClick.AddListener(HandleSecretSkipButtonClicked);
