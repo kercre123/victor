@@ -55,14 +55,6 @@ void MotorsUpdate(void* userdata) {
       Motors::setPower(i, g_dataToBody.motorPWM[i]);
     }
   }
-
-  // Prevent overheating
-  if (Battery::onContacts) {
-    for (int i = 0; i < MOTOR_COUNT; i++)
-    {
-      Motors::setPower(i, 0);
-    }
-  }
 }
 
 int main(void)
