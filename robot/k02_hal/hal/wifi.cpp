@@ -132,7 +132,7 @@ namespace HAL {
           for (uint8_t i=0; i<msgLen; i++) msgBuffer[i] = rxBuf[rind++];
           rxRind = rind;
           available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-          if (msgTag > RobotInterface::TO_RTIP_END)
+          if ((msgTag > RobotInterface::TO_RTIP_END) && ((msgTag < RobotInterface::ANIM_RT_START) || (msgTag > RobotInterface::ANIM_RT_END)))
           {
             AnkiError( 141, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg->tag);
           }
