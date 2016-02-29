@@ -27,12 +27,8 @@ GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
 void EnterRecovery(void) {
-  for (int i = 0; i < 32; i++) {
-    if (i == PIN_PWR_EN) continue ;
-    nrf_gpio_cfg_default(i);
-  }
-  MicroWait(250000);
-  
+  Motors::teardown();
+
   __enable_irq();
   __asm { SVC 0 };
 }
