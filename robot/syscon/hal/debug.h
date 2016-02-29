@@ -7,7 +7,7 @@ namespace UART {
   extern bool initialized;
   
   int DebugQueue();
-  uint8_t DebugChar();
+  void DebugChar();
 
   bool waitIdle();
   int get();

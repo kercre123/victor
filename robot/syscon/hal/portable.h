@@ -10,6 +10,8 @@ typedef signed short        s16;
 typedef signed int          s32;
 typedef signed long long    s64;
 
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 #define static_assert(e, msg) \
