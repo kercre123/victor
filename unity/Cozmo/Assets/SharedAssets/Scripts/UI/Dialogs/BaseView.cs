@@ -83,6 +83,7 @@ namespace Cozmo {
         }
           
         if (_OptionalCloseDialogButton != null) {
+          _OptionalCloseDialogButton.DASEventButtonName = "close_button";
           _OptionalCloseDialogButton.DASEventViewController = DASEventViewName;
           _OptionalCloseDialogButton.onClick.AddListener(HandleCloseColliderClicked);
         }
