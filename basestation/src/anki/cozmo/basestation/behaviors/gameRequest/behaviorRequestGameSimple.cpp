@@ -189,7 +189,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot
 void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
-  StartActing(new FaceObjectAction( robot, targetBlockID, PI_F ),
+  StartActing(new TurnTowardsObjectAction( robot, targetBlockID, PI_F ),
               &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
   SET_STATE(State::FacingBlock);
 }
@@ -295,7 +295,7 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 {
   Pose3d lastFacePose;
   if( GetFacePose( robot, lastFacePose ) ) {
-    StartActing(new FacePoseAction(robot, lastFacePose, PI_F),
+    StartActing(new TurnTowardsPoseAction(robot, lastFacePose, PI_F),
                 [this, &robot](ActionResult result) {
                   if( result == ActionResult::SUCCESS ) {
                     TransitionToVerifyingFace(robot);

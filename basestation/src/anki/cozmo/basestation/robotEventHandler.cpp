@@ -362,7 +362,7 @@ IActionRunner* GetTurnInPlaceActionHelper(Robot& robot, const ExternalInterface:
 }
 
   
-IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::FaceObject& msg)
+IActionRunner* GetTurnTowardsObjectActionHelper(Robot& robot, const ExternalInterface::FaceObject& msg)
 {
   ObjectID objectID;
   if(msg.objectID == u32_MAX) {
@@ -371,7 +371,7 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
     objectID = msg.objectID;
   }
 
-  FaceObjectAction* action = new FaceObjectAction(robot,
+  TurnTowardsObjectAction* action = new TurnTowardsObjectAction(robot,
                                                   objectID,
                                                   Radians(msg.maxTurnAngle),
                                                   msg.visuallyVerifyWhenDone,
@@ -387,12 +387,12 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
   return action;
 }
   
-IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::FacePose& msg)
+IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterface::FacePose& msg)
 {
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
   
-  FacePoseAction* action = new FacePoseAction(robot, pose, Radians(msg.maxTurnAngle));
+  TurnTowardsPoseAction* action = new TurnTowardsPoseAction(robot, pose, Radians(msg.maxTurnAngle));
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -481,10 +481,10 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return new MoveLiftToHeightAction(robot, actionUnion.Get_setLiftHeight().height_mm);
       
     case RobotActionUnionTag::faceObject:
-      return GetFaceObjectActionHelper(robot, actionUnion.Get_faceObject());
+      return GetTurnTowardsObjectActionHelper(robot, actionUnion.Get_faceObject());
       
     case RobotActionUnionTag::facePose:
-      return GetFacePoseActionHelper(robot, actionUnion.Get_facePose());
+      return GetTurnTowardsPoseActionHelper(robot, actionUnion.Get_facePose());
       
     case RobotActionUnionTag::rollObject:
       return GetRollObjectActionHelper(robot, actionUnion.Get_rollObject());
@@ -634,13 +634,13 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::FaceObject:
     {
-      newAction = GetFaceObjectActionHelper(robot, event.GetData().Get_FaceObject());
+      newAction = GetTurnTowardsObjectActionHelper(robot, event.GetData().Get_FaceObject());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::FacePose:
     {
       const ExternalInterface::FacePose& facePose = event.GetData().Get_FacePose();
-      newAction = GetFacePoseActionHelper(robot, facePose);
+      newAction = GetTurnTowardsPoseActionHelper(robot, facePose);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TurnInPlace:

@@ -760,24 +760,24 @@ namespace Anki {
     
 #pragma mark ---- FaceObjectAction ----
     
-    FaceObjectAction::FaceObjectAction(Robot& robot,
+    TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
                                        ObjectID objectID,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FaceObjectAction(robot, objectID, Vision::Marker::ANY_CODE,
+    : TurnTowardsObjectAction(robot, objectID, Vision::Marker::ANY_CODE,
                        maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
     {
       
     }
     
-    FaceObjectAction::FaceObjectAction(Robot& robot,
+    TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
                                        ObjectID objectID,
                                        Vision::Marker::Code whichCode,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FacePoseAction(robot, maxTurnAngle)
+    : TurnTowardsPoseAction(robot, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
     , _visuallyVerifyAction(robot, objectID, whichCode)
     , _objectID(objectID)
@@ -788,7 +788,7 @@ namespace Anki {
       
     }
     
-    Radians FaceObjectAction::GetHeadAngle(f32 heightDiff)
+    Radians TurnTowardsObjectAction::GetHeadAngle(f32 heightDiff)
     {
       // TODO: Just commanding fixed head angle depending on height of object.
       //       Verify this is ok with the wide angle lens. If not, dynamically compute
@@ -801,7 +801,7 @@ namespace Anki {
       return headAngle;
     }
     
-    ActionResult FaceObjectAction::Init()
+    ActionResult TurnTowardsObjectAction::Init()
     {
       ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
@@ -869,7 +869,7 @@ namespace Anki {
       // Have to set the parent class's pose before calling its Init()
       SetPose(objectPoseWrtRobot);
       
-      ActionResult facePoseInitResult = FacePoseAction::Init();
+      ActionResult facePoseInitResult = TurnTowardsPoseAction::Init();
       if(ActionResult::SUCCESS != facePoseInitResult) {
         return facePoseInitResult;
       }
@@ -884,11 +884,11 @@ namespace Anki {
     } // FaceObjectAction::Init()
     
     
-    ActionResult FaceObjectAction::CheckIfDone()
+    ActionResult TurnTowardsObjectAction::CheckIfDone()
     {
       // Tick the compound action until it completes
       if(!_facePoseCompoundActionDone) {
-        ActionResult compoundResult = FacePoseAction::CheckIfDone();
+        ActionResult compoundResult = TurnTowardsPoseAction::CheckIfDone();
         
         if(compoundResult != ActionResult::SUCCESS) {
           return compoundResult;
@@ -923,13 +923,13 @@ namespace Anki {
     } // FaceObjectAction::CheckIfDone()
     
     
-    const std::string& FaceObjectAction::GetName() const
+    const std::string& TurnTowardsObjectAction::GetName() const
     {
       static const std::string name("FaceObjectAction");
       return name;
     }
     
-    void FaceObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    void TurnTowardsObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
       info.numObjects = 1;
@@ -1002,7 +1002,7 @@ namespace Anki {
     
 #pragma mark ---- FacePoseAction ----
     
-    FacePoseAction::FacePoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
+    TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
     : PanAndTiltAction(robot, 0, 0, false, true)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
@@ -1010,27 +1010,27 @@ namespace Anki {
     {
     }
     
-    FacePoseAction::FacePoseAction(Robot& robot, Radians maxTurnAngle)
+    TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle)
     : PanAndTiltAction(robot, 0, 0, false, true)
     , _isPoseSet(false)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
     }
     
-    Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
+    Radians TurnTowardsPoseAction::GetHeadAngle(f32 heightDiff)
     {
       const f32 distanceXY = Point2f(_poseWrtRobot.GetTranslation()).Length();
       const Radians headAngle = std::atan2(heightDiff, distanceXY);
       return headAngle;
     }
     
-    void FacePoseAction::SetPose(const Pose3d& pose)
+    void TurnTowardsPoseAction::SetPose(const Pose3d& pose)
     {
       _poseWrtRobot = pose;
       _isPoseSet = true;
     }
     
-    ActionResult FacePoseAction::Init()
+    ActionResult TurnTowardsPoseAction::Init()
     {
       if(!_isPoseSet) {
         PRINT_NAMED_ERROR("FacePoseAction.Init.PoseNotSet", "");
@@ -1084,7 +1084,7 @@ namespace Anki {
       
     } // FacePoseAction::Init()
     
-    const std::string& FacePoseAction::GetName() const
+    const std::string& TurnTowardsPoseAction::GetName() const
     {
       static const std::string name("FacePoseAction");
       return name;
