@@ -193,6 +193,7 @@ void Motors::teardown(void) {
   NRF_TIMER1->TASKS_CLEAR = 1;
   NRF_TIMER2->TASKS_CLEAR = 1;
 
+  MicroWait(250000);
 
   for (int i = 0; i < 32; i++) {
     if (i == PIN_PWR_EN) continue ;
