@@ -35,7 +35,7 @@ public enum DisconnectionReason {
 /// <summary>
 /// Base class for channels between C++ and C#.
 /// </summary>
-public abstract class ChannelBase {
+public abstract class ChannelBase<MessageIn, MessageOut> where MessageIn : IMessageWrapper where MessageOut : IMessageWrapper {
 
   /// <summary>
   /// True if the connection is actively advertising or is established. Only valid from the main Unity thread.
@@ -60,7 +60,7 @@ public abstract class ChannelBase {
   /// <summary>
   /// Occurs when a valid message is received from the client.
   /// </summary>
-  public event Action<G2U.MessageEngineToGame> MessageReceived;
+  public event Action<MessageIn> MessageReceived;
 
   /// <summary>
   /// True when there is any network traffic (eg disconnection messages, asynchronous sends cleaning up).
@@ -79,7 +79,7 @@ public abstract class ChannelBase {
     }
   }
 
-  protected void RaiseMessageReceived(G2U.MessageEngineToGame message) {
+  protected void RaiseMessageReceived(MessageIn message) {
     if (MessageReceived != null) {
       MessageReceived(message);
     }
@@ -96,6 +96,14 @@ public abstract class ChannelBase {
   public abstract void Connect(int deviceID, int localPort, string advertisingIP, int advertisingPort);
 
   /// <summary>
+  /// Initializes the server without advertising
+  /// </summary>
+  /// <param name="deviceID">A number representing this device.</param> 
+  /// <param name="localPort">Local port to listen on.</param>
+  public abstract void Connect(int deviceID, int localPort);
+
+
+  /// <summary>
   /// Disconnects this server immediately. No DisconnectedFromClient event will be raised.
   /// </summary>
   /// <remarks>Only call this from the main Unity thread.</remarks>
@@ -106,7 +114,7 @@ public abstract class ChannelBase {
   /// </summary>
   /// <param name="message">The message to send, which is serialized immediately.</param>
   /// <remarks>Only call this from the main Unity thread.</remarks>
-  public abstract void Send(U2G.MessageGameToEngine message);
+  public abstract void Send(MessageOut message);
 
   /// <summary>
   /// Updates the connection, allowing it to send events on the main Unity thread.

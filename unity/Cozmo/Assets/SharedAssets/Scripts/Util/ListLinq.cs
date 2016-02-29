@@ -365,6 +365,29 @@ namespace Cozmo.Util {
       }
     }
 
+    public static IEnumerable<T> Unique<T>(this IList<T> list) {
+      HashSet<T> hashSet = new HashSet<T>();
+      for (int i = 0; i < list.Count; i++) {
+        hashSet.Add(list[i]);
+      }
+      return hashSet;
+    }
+
+    public static T[] UniqueArray<T>(this IList<T> list) {
+      // We can't just call Unique here because of AOT.
+      HashSet<T> hashSet = new HashSet<T>();
+      for (int i = 0; i < list.Count; i++) {
+        hashSet.Add(list[i]);
+      }
+      T[] result = new T[hashSet.Count];
+      int j = 0;
+      foreach (var item in hashSet) {
+        result[j] = item;
+        j++;
+      }
+      return result;
+    }
+
     public static IEnumerable<T> Reversed<T>(this IList<T> list) {
       for (int i = list.Count - 1; i >= 0; i--) {
         yield return list[i];
