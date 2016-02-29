@@ -32,8 +32,12 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/imageTypes.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
+
+#include "opencv2/highgui/highgui.hpp"
 
 namespace Anki {
 namespace Cozmo {
@@ -49,10 +53,31 @@ namespace Cozmo {
                                               "/config/basestation/vision");
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Constructor.NullDataPlatform",
-                          "Insantiating VisionSystem with a empty DataPath.");
+                          "Insantiating VisionSystem with no context and/or data platform.");
     }
     
     _visionSystem = new VisionSystem(dataPath, _vizManager);
+    
+    // Set up event handlers
+    if(nullptr != context && nullptr != context->GetExternalInterface())
+    {
+      using namespace ExternalInterface;
+      
+      // EnableVisionMode
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableVisionMode,
+        [this] (const AnkiEvent<MessageGameToEngine>& event)
+        {
+          auto const& payload = event.GetData().Get_EnableVisionMode();
+          EnableMode(payload.mode, payload.enable);
+        }));
+      
+      // EnableNewFaceEnrollment
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableNewFaceEnrollment,
+        [this] (const AnkiEvent<MessageGameToEngine>& event) {
+          const ExternalInterface::EnableNewFaceEnrollment& msg = event.GetData().Get_EnableNewFaceEnrollment();
+          _visionSystem->EnableNewFaceEnrollment(msg.numToEnroll);
+        }));
+    }
     
   } // VisionSystem()
 
@@ -749,15 +774,28 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     if(_visionSystem != nullptr)
     {
+      Vision::FaceTracker::UpdatedID updatedID;
+      while(true == _visionSystem->CheckMailbox(updatedID))
+      {
+        robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
+      }
+
       Vision::TrackedFace faceDetection;
-      while(true == _visionSystem->CheckMailbox(faceDetection)) {
+      while(true == _visionSystem->CheckMailbox(faceDetection))
+      {
         /*
          PRINT_NAMED_INFO("VisionComponent.Update",
-         "Robot %d reported seeing a face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
-         "at t=%d (lastImg t=%d).",
-         GetID(), faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
-         faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
-         faceDetection.GetTimeStamp(), GetLastImageTimeStamp());
+                          "Saw face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
+                          "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
+                          faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
+                          faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
+                          faceDetection.GetTimeStamp(),
+                          faceDetection.GetHeadRoll().getDegrees(),
+                          faceDetection.GetHeadPitch().getDegrees(),
+                          faceDetection.GetHeadYaw().getDegrees(),
+                          faceDetection.GetHeadPose().GetTranslation().x(),
+                          faceDetection.GetHeadPose().GetTranslation().y(),
+                          faceDetection.GetHeadPose().GetTranslation().z());
          */
         
         // Use the faceDetection to update FaceWorld:
@@ -768,6 +806,7 @@ namespace Cozmo {
           return lastResult;
         }
       }
+      
     } // if(_visionSystem != nullptr)
     return lastResult;
   } // UpdateFaces()
@@ -931,5 +970,113 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateOverheadMap()
 
+  template<class PixelType>
+  Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, const Robot& robot, s32 quality)
+  {
+    if(!robot.HasExternalInterface()) {
+      PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
+      return RESULT_FAIL;
+    }
+    
+    Result result = RESULT_OK;
+    
+    ImageChunk m;
+    
+    const s32 captureHeight = img.GetNumRows();
+    const s32 captureWidth  = img.GetNumCols();
+    
+    switch(captureHeight) {
+      case 240:
+        if (captureWidth!=320) {
+          result = RESULT_FAIL;
+        } else {
+          m.resolution = ImageResolution::QVGA;
+        }
+        break;
+        
+      case 296:
+        if (captureWidth!=400) {
+          result = RESULT_FAIL;
+        } else {
+          m.resolution = ImageResolution::CVGA;
+        }
+        break;
+        
+      case 480:
+        if (captureWidth!=640) {
+          result = RESULT_FAIL;
+        } else {
+          m.resolution = ImageResolution::VGA;
+        }
+        break;
+        
+      default:
+        result = RESULT_FAIL;
+    }
+    
+    if(RESULT_OK != result) {
+      PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage",
+                        "Unrecognized resolution: %dx%d.\n", captureWidth, captureHeight);
+      return result;
+    }
+    
+    static u32 imgID = 0;
+    const std::vector<int> compressionParams = {
+      CV_IMWRITE_JPEG_QUALITY, quality
+    };
+    
+    cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+    
+    std::vector<u8> compressedBuffer;
+    cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
+    
+    const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
+    
+    //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
+    
+    m.frameTimeStamp = img.GetTimestamp();
+    m.imageId = ++imgID;
+    m.chunkId = 0;
+    m.imageChunkCount = ceilf((f32)numTotalBytes / (f32)ImageConstants::IMAGE_CHUNK_SIZE);
+    if(img.GetNumChannels() == 1) {
+      m.imageEncoding = ImageEncoding::JPEGGray;
+    } else {
+      m.imageEncoding = ImageEncoding::JPEGColor;
+    }
+    m.data.reserve((size_t)ImageConstants::IMAGE_CHUNK_SIZE);
+    
+    u32 totalByteCnt = 0;
+    u32 chunkByteCnt = 0;
+    
+    for(s32 i=0; i<numTotalBytes; ++i)
+    {
+      m.data.push_back(compressedBuffer[i]);
+      
+      ++chunkByteCnt;
+      ++totalByteCnt;
+      
+      if (chunkByteCnt == (s32)ImageConstants::IMAGE_CHUNK_SIZE) {
+        //PRINT("Sending image chunk %d\n", m.chunkId);
+        robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+        ++m.chunkId;
+        chunkByteCnt = 0;
+      } else if (totalByteCnt == numTotalBytes) {
+        // This should be the last message!
+        //PRINT("Sending LAST image chunk %d\n", m.chunkId);
+        robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+      }
+    } // for each byte in the compressed buffer
+    
+    return RESULT_OK;
+  } // CompressAndSendImage()
+  
+  // Explicit instantiation for grayscale and RGB
+  template Result VisionComponent::CompressAndSendImage<u8>(const Vision::ImageBase<u8>& img,
+                                                            const Robot& robot, s32 quality);
+  
+  template Result VisionComponent::CompressAndSendImage<Vision::PixelRGB>(const Vision::ImageBase<Vision::PixelRGB>& img,
+                                                                          const Robot& robot, s32 quality);
+  
+  
 } // namespace Cozmo
 } // namespace Anki

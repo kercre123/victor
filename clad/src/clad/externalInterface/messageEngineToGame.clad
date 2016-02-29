@@ -148,17 +148,25 @@ message RobotObservedObject {
 
 // RobotObservedFace
 message RobotObservedFace {
-    int_64   faceID,
+    int_32   faceID,         // negative: tracked but not recognized; positive: recognized face
     uint_32  robotID,
-    uint_32 timestamp,
+    uint_32  timestamp,
     float_32 world_x,        // absolute 3D position in world coords
     float_32 world_y,        //     "
     float_32 world_z,        //     "
     float_32 quaternion_w,   // quaternion for 3D rotation (4 elements)
     float_32 quaternion_x,   //     "
     float_32 quaternion_y,   //     "
-    float_32 quaternion_z    //     "
+    float_32 quaternion_z,   //     "
 // TODO: Add expression / landmark locations
+}
+
+// RobotChangedObservedFaceID
+//  This generally happens when a tracked face (negative ID) is enrolled as a
+//  face to be recognized (positive ID)
+message RobotChangedObservedFaceID {
+    int_32   oldID,
+    int_32   newID
 }
 
 // RobotObservedMotion
@@ -174,7 +182,7 @@ message RobotObservedMotion {
 
 // RobotDeletedFace
 message RobotDeletedFace {
-    int_64  faceID,
+    int_32  faceID,
     uint_32 robotID
 }
 
@@ -194,6 +202,7 @@ message RobotMarkedObjectPoseUnknown {
     uint_32 robotID,
     uint_32 objectID
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  ACTIONS  //////////////////////////////////
