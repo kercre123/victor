@@ -1031,9 +1031,9 @@ Supervisor {
 		  children [
 				Shape {
 					geometry Cylinder {
-					height 0.048
-					radius 0.0035
-					subdivision 10
+            height 0.048
+            radius 0.0035
+            subdivision 10
 					}
 					appearance USE MAIN_BODY_APPEARANCE
 				}
@@ -1062,9 +1062,9 @@ Supervisor {
 					endPoint Solid {
 					children [
 
-					    #GRIPPER PLATE
-					    Transform {
-						translation 0.0626 0 -0.012
+					  #GRIPPER PLATE
+					  Transform {
+						  translation 0.0645 0 -0.014
 						children [
 							HingeJoint {
 							jointParameters HingeJointParameters {
@@ -1120,144 +1120,68 @@ Supervisor {
 								Transform {
 									translation 0.0035 0.017 -0.012
 									children [
-									USE GRIPPER_FINGER
+									  USE GRIPPER_FINGER
 									]
 								}
 
 								DEF LIFTER_SHAPE Group {
 									children [
-									Transform {
-										translation 0 -0.0165 -0.01155
-										children [
-										DEF GRIPPER_SIDE Shape {
-											geometry Box {
-											size 0.007 0.004 0.0289
-											}
-											appearance USE MAIN_BODY_APPEARANCE
-										}
-										]
-									}
-									Transform {
-										translation 0 0.0165 -0.01155
-										children [
-											USE GRIPPER_SIDE
-										]
-									}
-									Transform {
-										translation 0.001 0 -0.0235
-										children [
-                      DEF GRIPPER_BOTTOM Shape {
-                        geometry Box {
-                          size 0.005 0.029 0.005
-                        }
-                        appearance USE MAIN_BODY_APPEARANCE
-                      }
-										]
-									}
-									
-									# Tool code dots (varying y in Transform translation moves the dots L/R)
-									Transform {
-									  rotation 1 0 0 1.5708
-										translation 0.001 0.01 -0.021
-										children [
-                      DEF TOOL_CODE_DOT Shape {
-                        geometry Cylinder {
-                          height .00025
-                          radius .001
-                        }
-                        appearance Appearance {
-                          material Material {
-                            diffuseColor 0.1 0.1 0.1
-                            shininess 0.5
+                    Transform {
+                      translation 0 -0.0165 -0.01155
+                      children [
+                        DEF GRIPPER_SIDE Shape {
+                          geometry Box {
+                            size 0.007 0.004 0.0289
                           }
+                          appearance USE MAIN_BODY_APPEARANCE
                         }
-                      }                        
-										]
-									}
-									Transform {
-									  rotation 1 0 0 1.5708
-										translation 0.001 -0.01 -0.021
-										children [
-                      USE TOOL_CODE_DOT
-										]
-									}
-								
-									# Screws and washers
-									Transform {
-										translation 0 -0.01375 0
-										children [
-											DEF LIFTER_SCREW Shape {
-											geometry Cylinder {
-												height .0025
-												radius .00175
-											}
-											appearance Appearance {
-												material Material {
-																diffuseColor 0.7 0.7 0.7
-																shininess 0.95
-																} 
-															}
-											}
-										]
-									}
-									Transform {
-										translation 0 -0.014 0
-										children [
-											DEF LIFTER_WASHER Shape {
-											geometry Cylinder {
-												height .001
-												radius .003
-											}
-											appearance Appearance {
-												material Material {
-																diffuseColor 1.0 1.0 1.0
-																transparency 0.15
-																shininess 0
-															}
-															}
-											}
-										]
-									}
-																	
-									Transform {
-										translation 0 0.01375 0
-										children [
-											USE LIFTER_SCREW
-										]
-									}
-									Transform {
-										translation 0 0.014 0
-										children [
-											USE LIFTER_WASHER
-										]
-									}
-								
-									Transform {
-										translation 0 0.01375 -0.012
-										children [
-											USE LIFTER_SCREW
-										]
-									}
-									Transform {
-										translation 0 0.014 -0.012
-										children [
-											USE LIFTER_WASHER
-										]
-									}
-								
-									Transform {
-										translation 0 -0.01375 -0.012
-										children [
-											USE LIFTER_SCREW
-										]
-									}
-									Transform {
-										translation 0 -0.014 -0.012
-										children [
-											USE LIFTER_WASHER
-										]
-									}								
-									 
+                      ]
+                    }
+                    Transform {
+                      translation 0 0.0165 -0.01155
+                      children [
+                        USE GRIPPER_SIDE
+                      ]
+                    }
+                    Transform {
+                      translation 0.001 0 -0.024
+                      children [
+                        DEF GRIPPER_BOTTOM Shape {
+                          geometry Box {
+                            size 0.005 0.029 0.008
+                          }
+                          appearance USE MAIN_BODY_APPEARANCE
+                        }
+                      ]
+                    }
+                  
+                    # Tool code dots (varying y in Transform translation moves the dots L/R)
+                    Transform {
+                      rotation 1 0 0 1.5708
+                      translation 0.001 0.01 -0.0199
+                      children [
+                        DEF TOOL_CODE_DOT Shape {
+                          geometry Cylinder {
+                            height .00025
+                            radius .001
+                          }
+                          appearance Appearance {
+                            material Material {
+                              diffuseColor 0.1 0.1 0.1
+                              shininess 0.5
+                            }
+                          }
+                        }                        
+                      ]
+                    }
+                    Transform {
+                      rotation 1 0 0 1.5708
+                      translation 0.001 -0.01 -0.0199
+                      children [
+                        USE TOOL_CODE_DOT
+                      ]
+                    }
+                
 									] # LIFTER_SHAPE Group Children
 								} # LIFTER_SHAPE Group
 							 

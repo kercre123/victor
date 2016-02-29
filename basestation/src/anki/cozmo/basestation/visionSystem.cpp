@@ -56,6 +56,8 @@
 #define USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID 0
 #define USE_THREE_FRAME_MOTION_DETECTION 0
 
+#define DRAW_TOOL_CODE_DEBUG 0
+
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
 #endif
@@ -1980,6 +1982,11 @@ namespace Cozmo {
       }
     }
     
+    if((lastResult = ReadToolCode(inputImageGray)) != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
+      return lastResult;
+    }
+    
     /*
     // Store a copy of the current image for next time
     // NOTE: Now _prevImage should correspond to _prevRobotState
@@ -2045,8 +2052,8 @@ namespace Cozmo {
       // Center points of the calibration dots, in lift coordinate frame
       // TODO: Move these to be defined elsewhere
       const std::vector<Point3f> toolCodeDotsWrtLift = {
-        {1.f, -10.f, -21.f},
-        {1.f,  10.f, -21.f},
+        {3.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
+        {3.5f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
       };
       
       const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
@@ -2082,12 +2089,16 @@ namespace Cozmo {
       
       if(allVisible)
       {
+#       if DRAW_TOOL_CODE_DEBUG
+        Vision::ImageRGB dispImg(image);
+#       endif
+        
         Anki::Point2f camCen;
         for(size_t i=0; i<projectedToolCodeDots.size(); ++i)
         {
           // Get an ROI around where we expect to see the dot in the image
           const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[i];
-          const f32 quadPad_mm = 1.5f;
+          const f32 quadPad_mm = 2.f;
           Quad3f dotQuadRoi3d = {
             {dotWrtLift3d.x() - quadPad_mm, dotWrtLift3d.y() - quadPad_mm, dotWrtLift3d.z()},
             {dotWrtLift3d.x() - quadPad_mm, dotWrtLift3d.y() + quadPad_mm, dotWrtLift3d.z()},
@@ -2095,21 +2106,49 @@ namespace Cozmo {
             {dotWrtLift3d.x() + quadPad_mm, dotWrtLift3d.y() + quadPad_mm, dotWrtLift3d.z()},
           };
           
+          Quad3f dotQuadRoi3dWrtCam;
+          liftPoseWrtCam.ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtCam);
+          
           Quad2f dotQuadRoi2d;
-          _camera.Project3dPoints(dotQuadRoi3d, dotQuadRoi2d);
+          _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
           
           Anki::Rectangle<s32> dotRectRoi(dotQuadRoi2d);
           const Vision::Image dotRoi = image.GetROI(dotRectRoi);
-          cv::Moments m = cv::moments(255-dotRoi.get_CvMat_(), false);
+          Vision::Image invertedDotRoi = dotRoi.GetNegative();
+
+          double maxVal = 0, minVal = 0;
+          cv::minMaxIdx(invertedDotRoi.get_CvMat_(), &minVal, &maxVal);
+          invertedDotRoi.Threshold((maxVal + minVal)*0.5);
+          cv::Moments m = cv::moments(invertedDotRoi.get_CvMat_(), true);
           
-          const Anki::Point2f  observedPoint(m.m10/m.m00, m.m01/m.m00);
+          if(DRAW_TOOL_CODE_DEBUG) {
+            Vision::ImageRGB roiImgDisp(invertedDotRoi);
+            roiImgDisp.DrawPoint(Anki::Point2f(m.m10/m.m00, m.m01/m.m00), NamedColors::RED, 1);
+            roiImgDisp.Display(("DotROI_" + std::to_string(i)).c_str());
+          }
+          const Anki::Point2f  observedPoint(m.m10/m.m00 + dotRectRoi.GetX(),
+                                             m.m01/m.m00 + dotRectRoi.GetY());
           const Anki::Point2f& expectedPoint = projectedToolCodeDots[i];
           
           camCen += observedPoint - expectedPoint;
+          
+#         if DRAW_TOOL_CODE_DEBUG
+          dispImg.DrawPoint(observedPoint, NamedColors::ORANGE, 1);
+          dispImg.DrawPoint(expectedPoint, NamedColors::BLUE,   2);
+          dispImg.DrawQuad(dotQuadRoi2d, NamedColors::CYAN, 1);
+#         endif
         }
         
         // Compute the average:
         camCen *= 1.f / (f32)projectedToolCodeDots.size();
+        camCen += _camera.GetCalibration().GetCenter();
+        
+#       if DRAW_TOOL_CODE_DEBUG
+        char dispStr[256];
+        snprintf(dispStr, 255, "(%.1f,%.1f)", camCen.x(), camCen.y());
+        dispImg.DrawText(Anki::Point2f(0, image.GetNumRows()), dispStr, NamedColors::GREEN);
+        dispImg.Display("ToolCode");
+#       endif
         
         // Update the camera calibration
         PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCenterUpdated",
