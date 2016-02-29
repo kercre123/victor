@@ -369,6 +369,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
 Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   ResetBehavior(robot, currentTime_sec);
+  StopActing();
   return Result::RESULT_OK;
 }
   
