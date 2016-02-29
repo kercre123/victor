@@ -16,9 +16,6 @@ extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_w
 //#define TEST_VIDEO      // When JPEG encoder is disabled, uncomment this to send JPEG test video anyway
 //#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
 
-static u32 frameNumber = 0;
-static u16 line = 0;
-
 namespace Anki
 {
   namespace Cozmo
@@ -270,21 +267,6 @@ namespace Anki
 
         return &camCal;
       }
-			
-      u16 CameraGetScanLine()
-      {
-        return line;
-      }
-      
-      u32 CameraGetFrameNumber()
-      {
-        return frameNumber;
-    }
-      
-      u16 CameraGetExposureDelay()
-      {
-        return 500; // TODO need to figure this out more accurately / dynamically
-      }
     }
   }
 }
@@ -341,6 +323,7 @@ void FTM2_IRQHandler(void)
   */
 
   // QVGA subsample - TODO: Make dynamic
+  static u16 line = 0;
   if (line & 1) {
     // After receiving odd line, need to turn DMA back on
     DMA_TCD0_DOFF = 1;
@@ -362,10 +345,7 @@ void FTM2_IRQHandler(void)
   // If we're past end of frame, but we saw a pixel change, reset line to 0
   // TODO:  The correct way is to just ask the DMA controller if it got triggered
   if (line >= TOTAL_ROWS && 1 != dmaBuff_[BYTES_PER_PIX*(TOTAL_COLS-1)])
-  {
     line = 0;
-    frameNumber++;
-  }
   dmaBuff_[BYTES_PER_PIX*(TOTAL_COLS-1)] = 1;
 
   // Run all the register-hitting stuff

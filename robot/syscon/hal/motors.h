@@ -5,14 +5,22 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define MOTOR_COUNT 4
+enum MotorID
+{
+  MOTOR_LEFT_WHEEL,
+  MOTOR_RIGHT_WHEEL,
+  MOTOR_LIFT,
+  MOTOR_HEAD,
+  MOTOR_COUNT
+};
 
 typedef s32 Fixed;
 
 namespace Motors {
   // Initialize the PWM peripheral on the designated pins in the source file.
   void init();
-
+  void teardown(void);  // Only used for rebooting the machine
+  
   // Set the (unitless) power for a specified motor in the range [-798, 798].
   void setPower(u8 motorID, s16 power);
   Fixed getSpeed(u8 motorID);
