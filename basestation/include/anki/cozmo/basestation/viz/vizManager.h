@@ -31,7 +31,9 @@
 #include "clad/vizInterface/messageViz.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/math/numericCast.h"
+
 #include <vector>
+#include <map>
 
 namespace Anki {
   

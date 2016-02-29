@@ -24,6 +24,7 @@
 #include "DetectorComDef.h"
 
 #include <list>
+#include <map>
 #include <ctime>
 #include <thread>
 #include <mutex>
