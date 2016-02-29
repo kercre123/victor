@@ -24,6 +24,7 @@ public class StartView : BaseView {
   public event System.Action OnConnectClicked;
 
   private void Awake() {
+    _ConnectButton.DASEventViewController = this.DASEventViewName;
     _ConnectButton.onClick.AddListener(HandleConnectClicked);
     _SecretSkipButton.onClick.AddListener(HandleSecretSkipButtonClicked);
     LoopRobotSleep();
@@ -64,12 +65,12 @@ public class StartView : BaseView {
   }
 
   private void HandleSleepAnimationComplete(bool success) {
-    DAS.Info(this, "HandleSleepAnimationComplete: success: "+success);
+    DAS.Info(this, "HandleSleepAnimationComplete: success: " + success);
     LoopRobotSleep();
   }
 
   private void HandleWakeAnimationComplete(bool success) {
-    DAS.Info(this, "HandleWakeAnimationComplete: success: "+success);
+    DAS.Info(this, "HandleWakeAnimationComplete: success: " + success);
 
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
@@ -93,7 +94,7 @@ public class StartView : BaseView {
       OnConnectClicked();
     }
   }
-    
+
   #region implemented abstract members of BaseView
 
   protected override void CleanUp() {

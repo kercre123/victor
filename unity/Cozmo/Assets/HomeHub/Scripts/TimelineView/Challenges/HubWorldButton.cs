@@ -19,14 +19,15 @@ namespace Cozmo.HubWorld {
 
     private string _ChallengeId;
 
-    public virtual void Initialize(ChallengeData challengeData) {
-    
+    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName) {
       if (challengeData != null) {
         _ChallengeId = challengeData.ChallengeID;
         _IconImage.overrideSprite = challengeData.ChallengeIcon;
         _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
       }
       _ButtonScript.onClick.AddListener(HandleButtonClicked);
+      _ButtonScript.DASEventButtonName = string.Format("{0}_button", _ChallengeId);
+      _ButtonScript.DASEventViewController = dasParentViewName;
     }
 
     private void Update() {

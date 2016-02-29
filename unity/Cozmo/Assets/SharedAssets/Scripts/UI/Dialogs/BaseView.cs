@@ -24,6 +24,14 @@ namespace Cozmo {
       public event SimpleBaseViewHandler ViewClosed;
       public event SimpleBaseViewHandler ViewCloseAnimationFinished;
 
+      [SerializeField]
+      private string _DASEventViewName = "";
+
+      protected string DASEventViewName {
+        get { return _DASEventViewName; } 
+        set { _DASEventViewName = value; }
+      }
+
       /// <summary>
       /// If true, creates a full screen button behind all the elements of this
       /// dialog. The button will close this dialog on click.
@@ -75,6 +83,7 @@ namespace Cozmo {
         }
           
         if (_OptionalCloseDialogButton != null) {
+          _OptionalCloseDialogButton.DASEventViewController = DASEventViewName;
           _OptionalCloseDialogButton.onClick.AddListener(HandleCloseColliderClicked);
         }
 

@@ -10,7 +10,7 @@ using Cozmo.UI;
 
 namespace Anki {
   namespace UI {
-    [AddComponentMenu("Anki/Button", 02)]
+    [AddComponentMenu("Anki/Anki Button", 02)]
     [ExecuteInEditMode]
     public class AnkiButton : UIBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler {
 
@@ -188,7 +188,7 @@ namespace Anki {
       }
 
       private void InitializeDefaultGraphics() {
-        if (!_IsInitialized) {
+        if (!_IsInitialized && ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic.targetImage != null) {
               graphic.enabledSprite = graphic.targetImage.sprite;
@@ -323,31 +323,35 @@ namespace Anki {
       }
 
       private void ShowPressedState() {
-        foreach (AnkiButtonImage graphic in ButtonGraphics) {
-          if (graphic.targetImage != null && graphic.enabledSprite != null) {
-            SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
+        if (ButtonGraphics != null) {
+          foreach (AnkiButtonImage graphic in ButtonGraphics) {
+            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+              SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
+            }
+            else {
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+            }
           }
-          else {
-            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
-          }
-        }
 
-        PressTextPosition();
-        ShowGlint(true);
+          PressTextPosition();
+          ShowGlint(true);
+        }
       }
 
       private void ShowDisabledState() {
-        foreach (AnkiButtonImage graphic in ButtonGraphics) {
-          if (graphic.targetImage != null && graphic.enabledSprite != null) {
-            SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
+        if (ButtonGraphics != null) {
+          foreach (AnkiButtonImage graphic in ButtonGraphics) {
+            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+              SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
+            }
+            else {
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+            }
           }
-          else {
-            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
-          }
-        }
 
-        ResetTextPosition(TextDisabledColor);
-        ShowGlint(false);
+          ResetTextPosition(TextDisabledColor);
+          ShowGlint(false);
+        }
       }
 
       private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor, bool ignoreSprite) {
