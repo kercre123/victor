@@ -20,6 +20,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleChannelFile.h"
+#include "anki/messaging/basestation/IComms.h"
 
 #include <assert.h>
 
@@ -47,6 +48,17 @@ namespace Cozmo {
     }
   }
   
+  void FlushBuffer(std::vector<ExternalInterface::DebugConsoleVar>& dataVals, IExternalInterface* externalInterface )
+  {
+    if( dataVals.size() > 0 )
+    {
+      ExternalInterface::InitDebugConsoleVarMessage message;
+      message.varData = dataVals;
+      externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+      dataVals.clear();
+    }
+  }
+  
   // Used for init of window.
   void DebugConsoleManager::SendAllDebugConsoleVars()
   {
@@ -54,6 +66,11 @@ namespace Cozmo {
 
     const Anki::Util::ConsoleSystem::VariableDatabase& varDatabase = consoleSystem.GetVariableDatabase();
     std::vector<ExternalInterface::DebugConsoleVar> dataVals;
+    
+    // Flush when we're about half full of the clad buffer it doesn't go over...
+    uint32_t string_size = 0;
+    constexpr uint32_t kMaxFlushSize = 1024;
+    
     for ( auto& entry : varDatabase )
     {
       const Anki::Util::IConsoleVariable* consoleVar = entry.second;
@@ -84,7 +101,16 @@ namespace Cozmo {
       varObject.minValue = consoleVar->GetMinAsDouble();
       
       dataVals.push_back(varObject);
+      
+      string_size += varObject.varName.length() + varObject.category.length();
+      if( string_size >= kMaxFlushSize)
+      {
+        ASSERT_NAMED(string_size < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
+        FlushBuffer(dataVals,_externalInterface);
+        string_size = 0;
+      }
     }
+    
     const Anki::Util::ConsoleSystem::FunctionDatabase& funcDatabase = consoleSystem.GetFunctionDatabase();
     for ( auto& entry : funcDatabase )
     {
@@ -94,12 +120,17 @@ namespace Cozmo {
       varObject.category = consoleVar->GetCategory();
       varObject.varValue.Set_varFunction(consoleVar->GetSignature());
       dataVals.push_back(varObject);
+      
+      string_size += varObject.varName.length() + varObject.category.length();
+      if( string_size >= kMaxFlushSize)
+      {
+        ASSERT_NAMED(string_size < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
+        FlushBuffer(dataVals,_externalInterface);
+        string_size = 0;
+      }
     }
-    
-    ExternalInterface::InitDebugConsoleVarMessage message;
-    message.varData = dataVals;
-    
-    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+    // Flush remaining...
+    FlushBuffer(dataVals,_externalInterface);
   }
   
   void DebugConsoleManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)

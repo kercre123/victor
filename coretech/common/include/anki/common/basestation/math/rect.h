@@ -16,7 +16,7 @@
 #define _ANKICORETECH_COMMON_RECT_H_
 
 #if ANKICORETECH_USE_OPENCV
-#include "opencv2/core/core.hpp"
+#include "opencv2/core.hpp"
 #endif
 
 #include "anki/common/basestation/math/quad.h"

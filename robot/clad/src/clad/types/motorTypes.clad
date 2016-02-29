@@ -1,0 +1,18 @@
+/** Types and structures for controlling LEDs on the robot and accessories
+ * ROBOT_CLAD_SHARED
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 MotorID {
+  MOTOR_LEFT_WHEEL = 0,
+  MOTOR_RIGHT_WHEEL,
+  MOTOR_LIFT,
+  MOTOR_HEAD,
+  //MOTOR_GRIP,
+  MOTOR_COUNT
+}
+
+} // namespace Cozmo
+} // namespace Anki

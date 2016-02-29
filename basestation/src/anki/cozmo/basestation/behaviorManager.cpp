@@ -11,10 +11,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/demoBehaviorChooser.h"
-#include "anki/cozmo/basestation/investorDemoFacesAndBlocksBehaviorChooser.h"
-#include "anki/cozmo/basestation/investorDemoFacesChooser.h"
-#include "anki/cozmo/basestation/investorDemoMotionBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -56,13 +53,17 @@ namespace Cozmo {
   {
     BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
     
-    // TODO: Set configuration data from Json...
-    
-    // TODO: Only load behaviors specified by Json?
-    
-    const Json::Value& chooserConfigJson = config[kChooserConfigKey];
-    
-    SetupOctDemoBehaviorChooser(chooserConfigJson);
+    {
+      const Json::Value& chooserConfigJson = config[kChooserConfigKey];
+      Util::SafeDelete(_defaultChooser);
+      _defaultChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
+      SetBehaviorChooser( _defaultChooser );
+
+      BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+      AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+      AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
+      AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+    }
     
     if (_robot.HasExternalInterface())
     {
@@ -70,12 +71,14 @@ namespace Cozmo {
       _eventHandlers.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
        [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
        {
-         switch (event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType)
+         const BehaviorChooserType chooserType = event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType;
+         switch (chooserType)
          {
-           case BehaviorChooserType::Demo:
+           case BehaviorChooserType::Default:
            {
-             if( ! _demoBehaviorChooserRunning ) {
-               SetupOctDemoBehaviorChooser(config);
+             if (_behaviorChooser != _defaultChooser)
+             {
+               SetBehaviorChooser( _defaultChooser );
              }
              break;
            }
@@ -88,35 +91,11 @@ namespace Cozmo {
              SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
              break;
            }
-           case BehaviorChooserType::InvestorDemoMotion:
-           {
-             SetBehaviorChooser( new InvestorDemoMotionBehaviorChooser(_robot, config) );
-
-             // BehaviorFactory& behaviorFactory = GetBehaviorFactory();
-             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
-             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
-             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
-             break;
-           }
-           case BehaviorChooserType::InvestorDemoFacesAndBlocks:
-           {
-             SetBehaviorChooser( new InvestorDemoFacesAndBlocksBehaviorChooser(_robot, config) );
-             
-             // BehaviorFactory& behaviorFactory = GetBehaviorFactory();
-             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
-             break;
-           }
-           case BehaviorChooserType::InvestorDemoFacesOnly:
-           {
-             SetBehaviorChooser( new InvestorDemoFacesBehaviorChooser(_robot, config) );
-             break;
-           }
            default:
            {
              PRINT_NAMED_WARNING("BehaviorManager.ActivateBehaviorChooser.InvalidChooser",
                                  "don't know how to create a chooser of type '%s'",
-                                 BehaviorChooserTypeToString(
-                                   event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType));
+                                 BehaviorChooserTypeToString(chooserType));
              break;
            }
          }
@@ -128,26 +107,7 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
-  
-  void BehaviorManager::SetupOctDemoBehaviorChooser(const Json::Value &config)
-  {
-    IBehaviorChooser* chooser = new DemoBehaviorChooser(_robot, config);
-    SetBehaviorChooser( chooser );
 
-    // hack: keep track of this so we don't delete the demo chooser if it was already running
-    _demoBehaviorChooserRunning = true;
-    
-    BehaviorFactory& behaviorFactory = GetBehaviorFactory();
-    // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
-    // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
-
-    chooser->InitEnabledBehaviors(config);
-
-    // // HACK: enable speed tab requests
-    // chooser->EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap, true);
-  }
-  
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
   // reacted to correctly - events will be given to the Chooser which may return a behavior to force switch to
   void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
@@ -188,7 +148,13 @@ namespace Cozmo {
   
   BehaviorManager::~BehaviorManager()
   {
+    if (_behaviorChooser == _defaultChooser)
+    {
+      // prevent double deletion
+      _behaviorChooser = nullptr;
+    }
     Util::SafeDelete(_behaviorChooser);
+    Util::SafeDelete(_defaultChooser);
     Util::SafeDelete(_behaviorFactory);
   }
   
@@ -400,21 +366,18 @@ namespace Cozmo {
     _nextBehavior = nullptr;
     _forceSwitchBehavior = nullptr;
 
-    if( _behaviorChooser != nullptr ) {
+    if ((_behaviorChooser != nullptr) && (_behaviorChooser != _defaultChooser)) {
       PRINT_NAMED_INFO("BehaviorManager.SetBehaviorChooser.DeleteOld",
                        "deleting behavior chooser '%s'",
                        _behaviorChooser->GetName());
+      
+      Util::SafeDelete(_behaviorChooser);
     }
-    
-    Util::SafeDelete(_behaviorChooser);
     
     _behaviorChooser = newChooser;
 
     // force the new behavior chooser to select something now, instead of waiting for it to be ready
     SelectNextBehavior(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
-
-    // hack: assume this isn't the demo behavior chooser (will be reset right after this if it was)
-    _demoBehaviorChooserRunning = false;
   }
 
   void BehaviorManager::StopCurrentBehavior(double currentTime_sec)
@@ -427,14 +390,10 @@ namespace Cozmo {
 
   void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior, double currentTime_sec)
   {
-
-    // make sure the old behavior is stopped (should have been done already)
-    if( _currentBehavior != nullptr && _currentBehavior->IsRunning() ) {
-      PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.OldBehaviorStillRunning",
-                        "Behavior '%s' is still running, but should have been stopped (Trying to switch to '%s').",
-                        _currentBehavior->GetName().c_str(),
-                        newBehavior != nullptr ? newBehavior->GetName().c_str() : "<NULL>");
-      _currentBehavior->Stop(currentTime_sec);      
+    if (_currentBehavior && _currentBehavior->IsRunning())
+    {
+      // Behavior wasn't stopped yet - happens if e.g. chooser is switched
+      _currentBehavior->Stop(currentTime_sec);
     }
     
     // set current <- new

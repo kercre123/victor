@@ -19,14 +19,12 @@ int UART::DebugQueue() {
   return debug_print_count;
 }
 
-uint8_t UART::DebugChar() {
-  if (debug_print_count <= 0) return 0xFF;
+void UART::DebugChar() {
+  if (debug_print_count <= 0) return ;
   
-  uint8_t o = debug_print_out[debug_print_first];
+  NRF_UART0->TXD = debug_print_out[debug_print_first];
   debug_print_first = (debug_print_first+1) % MAX_DEBUG_PRINT;
   debug_print_count--;
-  
-  return o;
 }
 
 int UART::get() {

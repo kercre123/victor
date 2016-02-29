@@ -61,6 +61,14 @@ void MotorsUpdate(void* userdata) {
 
     Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
   }
+
+  // Prevent overheating
+  if (Battery::onContacts) {
+    for (int i = 0; i < MOTOR_COUNT; i++)
+    {
+      Motors::setPower(i, 0);
+    }
+  }
 }
 
 int main(void)
@@ -89,7 +97,8 @@ int main(void)
   // Only use Head/body if tests are not enabled
   Head::init();
   RTOS::schedule(MotorsUpdate);   
-  
+
+
   // Start the scheduler
   RTOS::run();
 }

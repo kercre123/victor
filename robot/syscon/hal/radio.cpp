@@ -32,7 +32,6 @@ enum AccessoryType {
 };
 
 enum RadioState {
-  RADIO_FIND_CHANNEL,   // We are locating an empty channel to broadcast on
   RADIO_PAIRING,        // We are listening for pairing results
   RADIO_TALKING         // We are communicating to cubes
 };
@@ -43,11 +42,13 @@ struct LEDPacket {
 };
 
 struct AccessorySlot {
-  bool              active;
-  bool              allocated;
-  int               last_received;
-  uint32_t          id;
-  LEDPacket         tx_state;
+  bool                active;
+  bool                allocated;
+  int                 last_received;
+  uint32_t            id;
+  LEDPacket           tx_state;
+  
+  uesb_address_desc_t address;
 };
 
 struct AdvertisePacket {
@@ -71,7 +72,6 @@ static const int CAPTURE_OFFSET = CYCLES_MS(0.5f);
 
 static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
 
-static const int LOCATE_TIMEOUT = TICK_LOOP;      // One entire cozmo period
 static const int ACCESSORY_TIMEOUT = 400;         // 2s timeout before accessory is considered lost
 static const int PACKET_SIZE = 17;
 static const int MAX_ACCESSORIES = TICK_LOOP;
@@ -83,26 +83,24 @@ static const uint8_t CUBE_TO_ROBOT_PREFIX = 0x52;
 static const uint32_t UNUSED_BASE = 0xE6E6E6E6;
 static const uint32_t ADVERTISE_BASE = 0xC2C2C2C2;
 
-#define ADVERTISE_PREFIX    {0xE6, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX, 1, 2, 3, 4, 5}
-#define COMMUNICATE_PREFIX  {CUBE_TO_ROBOT_PREFIX, 0x95, 0x97, 0x99, 0xA3, 0xA5, 0xA7, 0xA9}
+#define ADVERTISE_PREFIX    {0, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX}
+#define COMMUNICATE_PREFIX  {0, CUBE_TO_ROBOT_PREFIX}
 
-static const int BASE_CHANNEL = 26;
-
+// These are the pipes allocated to communication
 static const int ROBOT_PAIR_PIPE = 1;
-static const int CUBE_ADVERT_PIPE = 2;
-static const int CUBE_TALK_PIPE = 0;
+static const int CUBE_PAIR_PIPE = 2;
+
+static const int ROBOT_TALK_PIPE = 0;
+static const int CUBE_TALK_PIPE = 1;
 
 static const int ADV_CHANNEL = 81;
 
 // This is for initial channel selection (do not use advertisement channel)
-static const int MAX_TX_CHANNEL = 80;
+static const int MAX_TX_CHANNELS = 64;
 
 static const int RADIO_INTERVAL_DELAY = 0xB6;
 static const int RADIO_TIMEOUT_MSB = 20;
 static const int RADIO_WAKEUP_OFFSET = 18;
-
-static const int MAX_ADDRESS_BIT_RUN = 3;
-static const int BASE_PIPE = 1;
 
 // Global head / body sync values
 extern GlobalDataToHead g_dataToHead;
@@ -111,7 +109,7 @@ extern GlobalDataToBody g_dataToBody;
 // Current status values of cubes/chargers
 static RadioState        radioState;
 
-static const uesb_address_desc_t AdvertiseAddress = {
+static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
   UNUSED_BASE, 
   ADVERTISE_BASE,
@@ -119,44 +117,18 @@ static const uesb_address_desc_t AdvertiseAddress = {
   0xFF
 };
 
-static uesb_address_desc_t TalkAddress = {
+static const uesb_address_desc_t TalkingAddress = {
   0,
-  ADVERTISE_BASE,
   UNUSED_BASE,
+  ADVERTISE_BASE,
   COMMUNICATE_PREFIX,
-  0xFF
+  0x03
 };
 
 static AccessorySlot accessories[MAX_ACCESSORIES];
 
-// Variables for locating a quiet channel
-static uint8_t currentNoiseLevel[MAX_TX_CHANNEL+1];
+// Variables for talking to an accessory
 static uint8_t currentAccessory;
-static int locateTimeout;
-
-// This verifies there are not bit strings too long
-static inline uint32_t fixAddress(uint32_t word) {
-  int run = 0;
-  bool bit;
-  
-  // Trim MSB
-  word &= 0xFFFFFFFE;
-  
-  for (int i = 1; i < 32; i++) {
-    bool found = (word >> i) & 1;
-    
-    if (found != bit) {
-      bit = found;
-      run = 1;
-    } else if (++run > MAX_ADDRESS_BIT_RUN) {
-      word ^= 1 << i;
-      bit = !bit;
-      run = 1;
-    }
-  }
-  
-  return word;
-}
 
 // Integer square root calculator
 uint32_t isqrt(uint32_t a_nInput)
@@ -185,6 +157,26 @@ uint32_t isqrt(uint32_t a_nInput)
     return res;
 }
 
+static void createAddress(uesb_address_desc_t& address) {
+  uint8_t data[4];
+  
+  // Generate random values
+  Random::get(&data, sizeof(data));
+  Random::get(&address.prefix[0], address.prefix[0]);
+  address.base0 = 0xE7E7E7E7;
+  
+  // Create a random RF channel
+  Random::get(&address.rf_channel, sizeof(address.rf_channel));
+  address.rf_channel %= MAX_TX_CHANNELS;
+}
+
+// This will move to the next frequency (channel hopping)
+#ifdef CHANNEL_HOP
+static inline uint8_t next_channel(uint8_t channel) {
+  return (channel >> 1) ^ ((channel & 1) ? 0x2D : 0);
+}
+#endif
+
 void Radio::init() {
   const uesb_config_t uesb_config = {
     UESB_BITRATE_1MBPS,
@@ -195,32 +187,34 @@ void Radio::init() {
     2     // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
-  // Generate target address for the robot
-  //Random::get(&TalkAddress.base1, sizeof(TalkAddress.base1));
-  TalkAddress.base1 = fixAddress(TalkAddress.base1);
-
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
-  
-  // Start the radio stack
-  uesb_init(&uesb_config);
-  EnterState(RADIO_FIND_CHANNEL);
-  uesb_start();
 
-  RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
+  // Generate target address for the robot
+  for (int i = 0; i < MAX_ACCESSORIES; i++) {
+    accessories[i].address = TalkingAddress;
+    createAddress(accessories[i].address);
 
-  // Set all the cubes to white until something better comes along
-  for (int slot = 0; slot < MAX_ACCESSORIES; slot++) {
+    // Clear the lights to a known state
     static const uint16_t reset_state[] = {
       0x001F,
       0x03E0,
       0x7C00,
       0x7FFF
     };
-    setPropState(slot, reset_state);
+    
+    setPropState(i, reset_state);
   }
-  
+
+
+  // Start the radio stack
+  uesb_init(&uesb_config);
+  EnterState(RADIO_PAIRING);
+  uesb_start();
+
+  RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
+
   SpineProtocol msg;
   msg.opcode = REQUEST_PROPS;
   Spine::enqueue(msg);
@@ -249,17 +243,11 @@ static void EnterState(RadioState state) {
   radioState = state;
 
   switch (state) {
-    case RADIO_FIND_CHANNEL:
-      locateTimeout = LOCATE_TIMEOUT;  
-      TalkAddress.rf_channel = BASE_CHANNEL;
-      memset(currentNoiseLevel, 0, sizeof(currentNoiseLevel));
-      uesb_set_rx_address(&TalkAddress);
-      break ;
     case RADIO_PAIRING:
-      uesb_set_rx_address(&AdvertiseAddress);
+      uesb_set_rx_address(&PairingAddress);
       break;
     case RADIO_TALKING:
-      uesb_set_rx_address(&TalkAddress);
+      uesb_set_rx_address(&accessories[currentAccessory].address);
       break ;
   }
 }
@@ -267,101 +255,109 @@ static void EnterState(RadioState state) {
 static void send_dummy_byte(void) {
   // This just send garbage and return to pairing mode when finished
   EnterState(RADIO_PAIRING);
-  uesb_write_tx_payload(&TalkAddress, 0, NULL, 0);
+  uesb_write_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
 }
 
 static void send_capture_packet(void* userdata) {
   int slot = (int) userdata;
 
+  uesb_address_desc_t& address = accessories[slot].address;
+  
   // Send a pairing packet
   CapturePacket pair;
 
-  pair.target_channel = TalkAddress.rf_channel;
+  pair.target_channel = address.rf_channel;
   pair.interval_delay = RADIO_INTERVAL_DELAY;
-  pair.prefix = TalkAddress.prefix[BASE_PIPE+slot];
-  memcpy(&pair.base, &TalkAddress.base1, sizeof(TalkAddress.base1));
+  pair.prefix = address.prefix[ROBOT_TALK_PIPE];
+  memcpy(&pair.base, &address.base0, sizeof(address.base0));
   pair.timeout_msb = RADIO_TIMEOUT_MSB;
   pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
 
   // Tell this accessory to come over to my side
-  uesb_write_tx_payload(&AdvertiseAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
+  uesb_write_tx_payload(&PairingAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
 }
 
 extern "C" void uesb_event_handler(void)
 {
-  uint32_t rf_interrupts = uesb_get_clear_interrupts();
+  // Only respond to receive interrupts
+  if(~uesb_get_clear_interrupts() & UESB_INT_RX_DR_MSK) {
+    return ;
+  }
+
+  uesb_payload_t rx_payload;
+  uesb_read_rx_payload(&rx_payload);
+
   int slot;
-  
-  // Recevied a packet
-  if(rf_interrupts & UESB_INT_RX_DR_MSK) {
-    uesb_payload_t rx_payload;
-    uesb_read_rx_payload(&rx_payload);
 
-    switch (radioState) {
-    case RADIO_FIND_CHANNEL:
-      currentNoiseLevel[TalkAddress.rf_channel]++;
-      break ;
-    case RADIO_PAIRING:      
-      if (rx_payload.pipe != CUBE_ADVERT_PIPE) {
-        break ;
-      }
-
-      AdvertisePacket packet;
-      memcpy(&packet, &rx_payload.data, sizeof(AdvertisePacket));
-
-      // Attempt to locate existing accessory and repair
-      slot = LocateAccessory(packet.id);
-      if (slot < 0) {
-        SpineProtocol msg;
-        msg.opcode = PROP_DISCOVERED;
-        msg.PropDiscovered.prop_id = packet.id;
-                
-        Spine::enqueue(msg);
-        
-        #ifdef DUMP_DISCOVER
-        if (packet.id < 0x8000) UART::print("%x\r\n", (uint16_t) packet.id);
-        #endif
-        
-        // Attempt to allocate a slot for it
-        slot = FreeAccessory();
-
-        // We cannot find a place for it
-        if (slot < 0) {
-          break ;
-        }
-      }
-
-      // We are loading the slot
-      accessories[slot].active = true;
-      accessories[slot].id = packet.id;
-      accessories[slot].last_received = 0;
-
-      // Schedule a one time capture for this slot
-      RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
-      break ;
-      
-    case RADIO_TALKING:
-      if (rx_payload.pipe != CUBE_TALK_PIPE) {
-        break ;
-      }
-      
-      AccessorySlot* acc = &accessories[currentAccessory];
-      acc->last_received = 0;
-
-      AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
-
-      SpineProtocol msg;
-      msg.opcode = GET_PROP_STATE;
-      msg.GetPropState.slot = currentAccessory;
-      msg.GetPropState.x = ap->x;
-      msg.GetPropState.y = ap->y;
-      msg.GetPropState.z = ap->z;
-      msg.GetPropState.shockCount = ap->shockCount;
-      Spine::enqueue(msg);
-
-      send_dummy_byte();
+  switch (radioState) {
+  case RADIO_PAIRING:      
+    if (rx_payload.pipe != CUBE_PAIR_PIPE) {
       break ;
     }
+
+    AdvertisePacket packet;
+    memcpy(&packet, &rx_payload.data, sizeof(AdvertisePacket));
+
+    // Attempt to locate existing accessory and repair
+    slot = LocateAccessory(packet.id);
+    if (slot < 0) {
+      SpineProtocol msg;
+      msg.opcode = PROP_DISCOVERED;
+      msg.PropDiscovered.prop_id = packet.id;
+              
+      Spine::enqueue(msg);
+      
+      #ifdef DUMP_DISCOVER
+      if (packet.id < 0x8000) UART::print("%x\r\n", (uint16_t) packet.id);
+      #endif
+      
+      // Attempt to allocate a slot for it
+      slot = FreeAccessory();
+
+      // We cannot find a place for it
+      if (slot < 0) {
+        break ;
+      }
+    }
+
+    // We are loading the slot
+    accessories[slot].active = true;
+    accessories[slot].id = packet.id;
+    accessories[slot].last_received = 0;
+
+    // Schedule a one time capture for this slot
+    RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
+    break ;
+    
+  case RADIO_TALKING:
+    if (rx_payload.pipe != CUBE_TALK_PIPE) {
+      break ;
+    }
+
+    AccessorySlot* acc = &accessories[currentAccessory];
+
+    // XXX: START HACK
+    uint32_t id;
+    memcpy(&id, &rx_payload.data[12], 4);
+    if (id != acc->id) break ;
+    // XXX: END HACK
+
+    AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
+
+    acc->last_received = 0;
+
+    SpineProtocol msg;
+    msg.opcode = GET_PROP_STATE;
+    msg.GetPropState.slot = currentAccessory;
+    msg.GetPropState.x = ap->x;
+    msg.GetPropState.y = ap->y;
+    msg.GetPropState.z = ap->z;
+    msg.GetPropState.shockCount = ap->shockCount;
+    
+    Spine::enqueue(msg);
+
+    send_dummy_byte();
+    break ;
   }
 }
 
@@ -410,7 +406,7 @@ void Radio::setPropState(unsigned int slot, const uint16_t *state) {
     },
     (sq_sum >= 0xFF) ? 1 : (0x255 - sq_sum)
   };
-
+  
   AccessorySlot* acc = &accessories[slot];
   memcpy(&acc->tx_state, &packet, sizeof(LEDPacket));
 }
@@ -426,62 +422,28 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 }
 
 void Radio::manage(void* userdata) {
-  // Handle per 5ms channel updates
-  switch (radioState) {
-  case RADIO_FIND_CHANNEL:
-    if (locateTimeout-- <= 0) {
-      locateTimeout = LOCATE_TIMEOUT;
-
-      uesb_stop();
-      if (currentNoiseLevel[TalkAddress.rf_channel] == 0) {
-        // Found a quiet place to sleep in
-        EnterState(RADIO_PAIRING);
-      } else {
-        if ((TalkAddress.rf_channel += 13) > MAX_TX_CHANNEL) {
-          // This trys to space the robots apart (the 7 is carefully picked)
-          TalkAddress.rf_channel -= MAX_TX_CHANNEL + 1;
-        }
-
-        // a zero means a wrap around
-        if (TalkAddress.rf_channel == BASE_CHANNEL) {
-          // We've reached the end of the usable frequency range, simply
-          // pick quietest spot
-          uint8_t noiseLevel = ~0;
-          
-          // Run to the quietest channel
-          for (int i = 0; i <= MAX_TX_CHANNEL; i++) {
-            if (currentNoiseLevel[i] < noiseLevel) {
-              TalkAddress.rf_channel = i;
-              noiseLevel = currentNoiseLevel[i];
-            }
-          }
-
-          EnterState(RADIO_PAIRING);
-        }
-      }
-      uesb_start();
-    }
-
-    break ;
+  // Transmit to accessories round-robin
+  currentAccessory = (currentAccessory + 1) % TICK_LOOP;
   
-  default:
-    // Transmit to accessories round-robin
-    currentAccessory = (currentAccessory + 1) % TICK_LOOP;
+  if (currentAccessory >= MAX_ACCESSORIES) return ;
+
+  AccessorySlot* acc = &accessories[currentAccessory];
+
+  if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
+    uesb_address_desc_t& address = accessories[currentAccessory].address;
     
-    if (currentAccessory >= MAX_ACCESSORIES) break ;
+    // Broadcast to the appropriate device
+    EnterState(RADIO_TALKING);
+    memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
+    uesb_write_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
 
-    AccessorySlot* acc = &accessories[currentAccessory];
-
-    if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
-      // Broadcast to the appropriate device
-      EnterState(RADIO_TALKING);
-      uesb_write_tx_payload(&TalkAddress, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
-    } else {
-      // Timeslice is empty, send a dummy command on the channel so people know to stay away
-      acc->active = false;
-      send_dummy_byte();
-    }
-
-    break ;
+    #ifdef CHANNEL_HOP
+    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
+    address.rf_channel = next_channel(address.rf_channel);
+    #endif
+  } else {
+    // Timeslice is empty, send a dummy command on the channel so people know to stay away
+    acc->active = false;
+    send_dummy_byte();
   }
 }

@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
-#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "anki/cozmo/basestation/block.h"
@@ -411,12 +410,12 @@ namespace Anki {
                 case TestMode::TM_LIFT:
                   p1 = root_->getField("liftTest_flags")->getSFInt32();
                   p2 = root_->getField("liftTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if LiftTF_NODDING flag is set)
-                  p3 = 250;
+                  p3 = root_->getField("liftTest_powerPercent")->getSFInt32();    // Power to run motor at. If 0, cycle through increasing power. Only used during LiftTF_TEST_POWER.
                   break;
                 case TestMode::TM_HEAD:
                   p1 = root_->getField("headTest_flags")->getSFInt32();
                   p2 = root_->getField("headTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if HTF_NODDING flag is set)
-                  p3 = 250;
+                  p3 = root_->getField("headTest_powerPercent")->getSFInt32();    // Power to run motor at. If 0, cycle through increasing power. Only used during HTF_TEST_POWER.
                   break;
                 case TestMode::TM_PLACE_BLOCK_ON_GROUND:
                   p1 = 100;  // x_offset_mm
