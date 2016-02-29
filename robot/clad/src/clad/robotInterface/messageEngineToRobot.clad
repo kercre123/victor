@@ -223,7 +223,7 @@ enum uint_32 ToRobotAddressSpace
   TO_RTIP_START = 0x30,
   TO_RTIP_END   = 0x7F,
   ANIM_RT_START = 0x93,
-  ANIM_RT_STOP  = 0x99,
+  ANIM_RT_END   = 0x99,
   TO_WIFI_START = 0x80,
   TO_WIFI_END   = 0xAF,
   TO_ENG_START  = 0xB0,
