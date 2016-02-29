@@ -13,16 +13,6 @@
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-#define ABS(x) ((x) < 0 ? -(x) : (x))
-
-enum MotorID
-{
-  MOTOR_LEFT_WHEEL,
-  MOTOR_RIGHT_WHEEL,
-  MOTOR_LIFT,
-  MOTOR_HEAD
-};
-
 struct MotorInfo
 {
   // These few are constant; will refactor into separate structs again soon.
@@ -179,6 +169,37 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   // Match compare[3] (timer wrap-around)
   NRF_PPI->CH[ppiChannel + 3].EEP = (u32)&timer->EVENTS_COMPARE[3];
   NRF_PPI->CH[ppiChannel + 3].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 1];
+}
+
+void Motors::teardown(void) {
+  // Turn off our timers
+  NRF_TIMER1->TASKS_STOP = 1;
+  NRF_TIMER2->TASKS_STOP = 1;
+
+  // Tear down GPIOTE tasks
+  for (int i = 0; i < MOTOR_COUNT; i++) {
+    MotorInfo* motorInfo = &m_motors[i];
+
+    nrf_gpiote_task_disable(i);
+    nrf_gpio_pin_clear(motorInfo->n1Pin);
+    nrf_gpio_pin_clear(motorInfo->n2Pin);
+    nrf_gpio_pin_clear(motorInfo->pPin);
+  }
+  
+  // Disable PPI channels
+  NRF_PPI->CHEN = 0x00;
+
+  // Clear timers
+  NRF_TIMER1->TASKS_CLEAR = 1;
+  NRF_TIMER2->TASKS_CLEAR = 1;
+
+
+  for (int i = 0; i < 32; i++) {
+    if (i == PIN_PWR_EN) continue ;
+    nrf_gpio_cfg_default(i);
+  }
+
+  MicroWait(250000);
 }
 
 static void ConfigurePinSense(u8 pin, u32 pinState, nrf_gpio_pin_pull_t pullDirection)
