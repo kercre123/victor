@@ -131,9 +131,6 @@ MonoBehaviour:
   - ObjectPath: ButtonDropShadow/ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
     JsonValue: 40
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
-    JsonValue: 0
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: DifficultySelectOption:_Label

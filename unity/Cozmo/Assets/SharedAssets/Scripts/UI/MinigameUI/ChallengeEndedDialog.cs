@@ -48,6 +48,7 @@ public class ChallengeEndedDialog : MonoBehaviour {
   }
 
   public Transform[] GetRewardIconsByStat() {
+    DAS.Info(this, "Reward Icons reparenting");
     foreach (var reward in _RewardIconsByStat) {
       if (reward != null) {
         reward.transform.SetParent(UIManager.GetUICanvas().transform, worldPositionStays: true);

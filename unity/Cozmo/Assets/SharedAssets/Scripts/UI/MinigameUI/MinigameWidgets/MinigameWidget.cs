@@ -8,7 +8,12 @@ namespace Cozmo {
     public abstract class MinigameWidget : MonoBehaviour {
 
       public virtual void DestroyWidgetImmediately() {
+        DAS.Info(this, "Destroying Widget: " + gameObject.name);
         Destroy(gameObject);
+      }
+
+      private void OnDestroy() {
+        DAS.Info(this, "MinigameWidget OnDestroy " + gameObject.name);
       }
 
       public abstract Sequence OpenAnimationSequence();

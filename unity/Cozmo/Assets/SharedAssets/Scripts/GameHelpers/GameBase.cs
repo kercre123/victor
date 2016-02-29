@@ -131,9 +131,11 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
     }
+    DAS.Info(this, "Finished GameBase On Destroy");
   }
 
   public void CloseMinigameImmediately() {
+    DAS.Info(this, "Close Minigame Immediately");
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
     CleanUpOnDestroy();
     Destroy(gameObject);
@@ -237,8 +239,8 @@ public abstract class GameBase : MonoBehaviour {
   private void OpenChallengeEndedDialog(string subtitleText = null) {
     // Open confirmation dialog instead
     GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
-                                     UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
-                                     "ChallengeEndSlide");
+                                   UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
+                                   "ChallengeEndSlide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
@@ -286,6 +288,7 @@ public abstract class GameBase : MonoBehaviour {
 
     // Close minigame UI
     CloseMinigameImmediately();
+    DAS.Info(this, "HandleChallengeResultViewClosed");
   }
 
   private void HandleQuitConfirmed() {
