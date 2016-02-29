@@ -758,7 +758,7 @@ namespace Anki {
       return _compoundAction.Update();
     }
     
-#pragma mark ---- FaceObjectAction ----
+#pragma mark ---- TurnTowardsObjectAction ----
     
     TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
                                        ObjectID objectID,
@@ -805,7 +805,7 @@ namespace Anki {
     {
       ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
-        PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
+        PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectNotFound",
                           "Object with ID=%d no longer exists in the world.",
                           _objectID.GetValue());
         return ActionResult::FAILURE_ABORT;
@@ -814,7 +814,7 @@ namespace Anki {
       Pose3d objectPoseWrtRobot;
       if(_whichCode == Vision::Marker::ANY_CODE) {
         if(false == object->GetPose().GetWithRespectTo(_robot.GetPose(), objectPoseWrtRobot)) {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectPoseOriginProblem",
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectPoseOriginProblem",
                             "Could not get pose of object %d w.r.t. robot pose.",
                             _objectID.GetValue());
           return ActionResult::FAILURE_ABORT;
@@ -824,7 +824,7 @@ namespace Anki {
         std::vector<Vision::KnownMarker*> const& markers = object->GetMarkersWithCode(_whichCode);
         
         if(markers.empty()) {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.NoMarkersWithCode",
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoMarkersWithCode",
                             "Object %d does not have any markers with code %d.",
                             _objectID.GetValue(), _whichCode);
           return ActionResult::FAILURE_ABORT;
@@ -834,7 +834,7 @@ namespace Anki {
         if(markers.size() == 1) {
           closestMarker = markers.front();
           if(false == closestMarker->GetPose().GetWithRespectTo(_robot.GetPose(), objectPoseWrtRobot)) {
-            PRINT_NAMED_ERROR("FaceObjectAction.Init.MarkerOriginProblem",
+            PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
                               "Could not get pose of marker with code %d of object %d "
                               "w.r.t. robot pose.", _whichCode, _objectID.GetValue() );
             return ActionResult::FAILURE_ABORT;
@@ -844,7 +844,7 @@ namespace Anki {
           Pose3d markerPoseWrtRobot;
           for(auto marker : markers) {
             if(false == marker->GetPose().GetWithRespectTo(_robot.GetPose(), markerPoseWrtRobot)) {
-              PRINT_NAMED_ERROR("FaceObjectAction.Init.MarkerOriginProblem",
+              PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
                                 "Could not get pose of marker with code %d of object %d "
                                 "w.r.t. robot pose.", _whichCode, _objectID.GetValue() );
               return ActionResult::FAILURE_ABORT;
@@ -860,7 +860,7 @@ namespace Anki {
         }
         
         if(closestMarker == nullptr) {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.NoClosestMarker",
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoClosestMarker",
                             "No closest marker found for object %d.", _objectID.GetValue());
           return ActionResult::FAILURE_ABORT;
         }
@@ -881,7 +881,7 @@ namespace Anki {
       _visuallyVerifyAction.ShouldSuppressTrackLocking(true);
       
       return ActionResult::SUCCESS;
-    } // FaceObjectAction::Init()
+    } // TurnTowardsObjectAction::Init()
     
     
     ActionResult TurnTowardsObjectAction::CheckIfDone()
@@ -920,12 +920,12 @@ namespace Anki {
       }
 
       return ActionResult::SUCCESS;
-    } // FaceObjectAction::CheckIfDone()
+    } // TurnTowardsObjectAction::CheckIfDone()
     
     
     const std::string& TurnTowardsObjectAction::GetName() const
     {
-      static const std::string name("FaceObjectAction");
+      static const std::string name("TurnTowardsObjectAction");
       return name;
     }
     
@@ -1000,7 +1000,7 @@ namespace Anki {
       
     } // Update()
     
-#pragma mark ---- FacePoseAction ----
+#pragma mark ---- TurnTowardsPoseAction ----
     
     TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
     : PanAndTiltAction(robot, 0, 0, false, true)
@@ -1033,17 +1033,17 @@ namespace Anki {
     ActionResult TurnTowardsPoseAction::Init()
     {
       if(!_isPoseSet) {
-        PRINT_NAMED_ERROR("FacePoseAction.Init.PoseNotSet", "");
+        PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseNotSet", "");
         return ActionResult::FAILURE_ABORT;
       }
       
       if(_poseWrtRobot.GetParent() == nullptr) {
-        PRINT_NAMED_INFO("FacePoseAction.SetPose.AssumingRobotOriginAsParent", "");
+        PRINT_NAMED_INFO("TurnTowardsPoseAction.SetPose.AssumingRobotOriginAsParent", "");
         _poseWrtRobot.SetParent(_robot.GetWorldOrigin());
       }
       else if(false == _poseWrtRobot.GetWithRespectTo(_robot.GetPose(), _poseWrtRobot))
       {
-        PRINT_NAMED_ERROR("FacePoseAction.Init.PoseOriginFailure",
+        PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseOriginFailure",
                           "Could not get pose w.r.t. robot pose.");
         _poseWrtRobot.Print();
         _poseWrtRobot.PrintNamedPathToOrigin(false);
@@ -1056,13 +1056,13 @@ namespace Anki {
         const Radians turnAngle = std::atan2(_poseWrtRobot.GetTranslation().y(),
                                              _poseWrtRobot.GetTranslation().x());
         
-        PRINT_NAMED_INFO("FacePoseAction.Init.TurnAngle",
+        PRINT_NAMED_INFO("TurnTowardsPoseAction.Init.TurnAngle",
                          "Computed turn angle = %.1fdeg", turnAngle.getDegrees());
         
         if(turnAngle.getAbsoluteVal() <= _maxTurnAngle) {
           SetBodyPanAngle(turnAngle);
         } else {
-          PRINT_NAMED_ERROR("FacePoseAction.Init.RequiredTurnTooLarge",
+          PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.RequiredTurnTooLarge",
                             "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.",
                             turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
           return ActionResult::FAILURE_ABORT;
@@ -1082,11 +1082,11 @@ namespace Anki {
       // Proceed with base class's Init()
       return PanAndTiltAction::Init();
       
-    } // FacePoseAction::Init()
+    } // TurnTowardsPoseAction::Init()
     
     const std::string& TurnTowardsPoseAction::GetName() const
     {
-      static const std::string name("FacePoseAction");
+      static const std::string name("TurnTowardsPoseAction");
       return name;
     }
     

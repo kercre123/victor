@@ -56,8 +56,8 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       ExternalInterface::MessageGameToEngineTag::TraverseObject,
       ExternalInterface::MessageGameToEngineTag::MountCharger,
       ExternalInterface::MessageGameToEngineTag::PlayAnimation,
-      ExternalInterface::MessageGameToEngineTag::FaceObject,
-      ExternalInterface::MessageGameToEngineTag::FacePose,
+      ExternalInterface::MessageGameToEngineTag::TurnTowardsObject,
+      ExternalInterface::MessageGameToEngineTag::TurnTowardsPose,
       ExternalInterface::MessageGameToEngineTag::TurnInPlace,
       ExternalInterface::MessageGameToEngineTag::TrackToObject,
       ExternalInterface::MessageGameToEngineTag::TrackToFace,
@@ -362,7 +362,7 @@ IActionRunner* GetTurnInPlaceActionHelper(Robot& robot, const ExternalInterface:
 }
 
   
-IActionRunner* GetTurnTowardsObjectActionHelper(Robot& robot, const ExternalInterface::FaceObject& msg)
+IActionRunner* GetTurnTowardsObjectActionHelper(Robot& robot, const ExternalInterface::TurnTowardsObject& msg)
 {
   ObjectID objectID;
   if(msg.objectID == u32_MAX) {
@@ -387,7 +387,7 @@ IActionRunner* GetTurnTowardsObjectActionHelper(Robot& robot, const ExternalInte
   return action;
 }
   
-IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterface::FacePose& msg)
+IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterface::TurnTowardsPose& msg)
 {
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
@@ -480,11 +480,11 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       // TODO: Provide a means to pass in the speed/acceleration values to the action
       return new MoveLiftToHeightAction(robot, actionUnion.Get_setLiftHeight().height_mm);
       
-    case RobotActionUnionTag::faceObject:
-      return GetTurnTowardsObjectActionHelper(robot, actionUnion.Get_faceObject());
+    case RobotActionUnionTag::turnTowardsObject:
+      return GetTurnTowardsObjectActionHelper(robot, actionUnion.Get_turnTowardsObject());
       
-    case RobotActionUnionTag::facePose:
-      return GetTurnTowardsPoseActionHelper(robot, actionUnion.Get_facePose());
+    case RobotActionUnionTag::turnTowardsPose:
+      return GetTurnTowardsPoseActionHelper(robot, actionUnion.Get_turnTowardsPose());
       
     case RobotActionUnionTag::rollObject:
       return GetRollObjectActionHelper(robot, actionUnion.Get_rollObject());
@@ -632,14 +632,14 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = new PlayAnimationGroupAction(robot, msg.animationGroupName, msg.numLoops);
       break;
     }
-    case ExternalInterface::MessageGameToEngineTag::FaceObject:
+    case ExternalInterface::MessageGameToEngineTag::TurnTowardsObject:
     {
-      newAction = GetTurnTowardsObjectActionHelper(robot, event.GetData().Get_FaceObject());
+      newAction = GetTurnTowardsObjectActionHelper(robot, event.GetData().Get_TurnTowardsObject());
       break;
     }
-    case ExternalInterface::MessageGameToEngineTag::FacePose:
+    case ExternalInterface::MessageGameToEngineTag::TurnTowardsPose:
     {
-      const ExternalInterface::FacePose& facePose = event.GetData().Get_FacePose();
+      const ExternalInterface::TurnTowardsPose& facePose = event.GetData().Get_TurnTowardsPose();
       newAction = GetTurnTowardsPoseActionHelper(robot, facePose);
       break;
     }

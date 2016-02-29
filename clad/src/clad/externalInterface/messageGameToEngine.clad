@@ -80,7 +80,7 @@ message TurnInPlaceAtSpeed {
     uint_8 robotID
 }
 
-// FaceObject - Turns and tilts head to look at object in last known position
+// TurnTowardsObject - Turns and tilts head to look at object in last known position
 //   If facing the object requires less than a turnAngleTol turn, then no
 //   turn is performed. If a turn greater than maxTurnAngle is required,
 //   the action fails. For angles in between, the robot will first turn
@@ -88,7 +88,7 @@ message TurnInPlaceAtSpeed {
 //   set maxTurnAngle to zero. (All angles in radians and forced to be positive.)
 //   Set headTrackWhenDone to non-zero to enable head tracking to the specified
 //   object once the robot has successfully faced it.
-message FaceObject {
+message TurnTowardsObject {
     uint_32  objectID,
     float_32 maxTurnAngle,
 
@@ -105,10 +105,10 @@ message FaceObject {
     bool   headTrackWhenDone
 }
 
-// FacePose
+// TurnTowardsPose
 //  Tell the robot to turn and tilt his head to face a give 3D pose in world
 //  coordinates.
-message FacePose {
+message TurnTowardsPose {
     float_32 world_x,
     float_32 world_y,
     float_32 world_z,
@@ -669,8 +669,8 @@ message EraseQuad {
 }
 
 union RobotActionUnion {
-  FaceObject                faceObject,
-  FacePose                  facePose,
+  TurnTowardsObject         turnTowardsObject,
+  TurnTowardsPose           turnTowardsPose,
   GotoPose                  goToPose,
   GotoObject                goToObject,
   AlignWithObject           alignWithObject,

@@ -337,7 +337,7 @@ namespace Anki {
       bool      _isPoseSet;
       Radians   _maxTurnAngle;
       
-    }; // class FacePoseAction
+    }; // class TurnTowardsPoseAction
     
     
     // Verify that an object exists by facing tilting the head to face its
@@ -421,7 +421,7 @@ namespace Anki {
       bool                       _visuallyVerifyWhenDone;
       bool                       _headTrackWhenDone;
       
-    }; // FaceObjectAction
+    }; // TurnTowardsObjectAction
     
     
     // Waits for a specified amount of time in seconds, from the time the action
