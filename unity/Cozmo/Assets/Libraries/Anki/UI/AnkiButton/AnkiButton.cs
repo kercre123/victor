@@ -117,7 +117,7 @@ namespace Anki {
 
       [SerializeField]
       private Anki.Cozmo.Audio.AudioEventParameter 
-      _UISoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+        _UISoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
 
       public Anki.Cozmo.Audio.AudioEventParameter SoundEvent {
         get { return _UISoundEvent; }
@@ -305,10 +305,21 @@ namespace Anki {
       }
 
       private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor, bool ignoreSprite) {
+        bool targetImageExists = (graphic != null && graphic.targetImage != null);
+        string graphicName = (targetImageExists) ? graphic.targetImage.name : "(graphic or targetImage was null)";
+        string spriteName = (desiredSprite != null) ? desiredSprite.name : "(desiredSprite is null)";
+        DAS.Info(this, string.Format("AnkiButton.SetGraphic START! graphic={0}  desiredSprite={1}   desiredColor={2}   ignoreSprite={3}",
+          graphicName, spriteName, desiredColor, ignoreSprite));
+        
         if (!ignoreSprite) {
           graphic.targetImage.overrideSprite = desiredSprite ?? graphic.enabledSprite;
         }
         graphic.targetImage.color = desiredColor;
+
+        string newSpriteName = (targetImageExists && graphic.targetImage.overrideSprite != null) 
+          ? graphic.targetImage.overrideSprite.name : "(sprite is null)";
+        string newColor = (targetImageExists) ? graphic.targetImage.color.ToString() : "(graphic or targetImage was null)";
+        DAS.Info(this, string.Format("AnkiButton.SetGraphic END!   newSprite={0}   newColor={1}", newSpriteName, newColor));
       }
 
       private void ResetTextPosition(Color color) {

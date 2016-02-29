@@ -61,8 +61,7 @@ public static class EditorDrawingUtility {
   }
 
   public static void DrawGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, Func<U,string> getGroupLabel)
-    where U : IComparable
-  {
+    where U : IComparable {
     EditorGUILayout.BeginVertical();
     EditorGUILayout.BeginHorizontal();
     GUILayout.Label(label);
@@ -127,11 +126,11 @@ public static class EditorDrawingUtility {
 
   public static void DrawLocalizationString(ref string localizationKey, ref string localizedStringFile, ref string localizedString) {
     int selectedFileIndex = EditorGUILayout.Popup("Localization File", 
-                              Mathf.Max(0, 
-                                System.Array.IndexOf(
-                                  LocalizationEditorUtility.LocalizationFiles, 
-                                  localizedStringFile)), 
-                              LocalizationEditorUtility.LocalizationFiles);
+                            Mathf.Max(0, 
+                              System.Array.IndexOf(
+                                LocalizationEditorUtility.LocalizationFiles, 
+                                localizedStringFile)), 
+                            LocalizationEditorUtility.LocalizationFiles);
     localizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
        
     var lastLocKey = localizationKey;
@@ -143,8 +142,8 @@ public static class EditorDrawingUtility {
       localizedString = string.Empty;
     }
       
-    if (localizationKey != lastLocKey && (string.IsNullOrEmpty(localizedString) || 
-        localizedString == LocalizationEditorUtility.GetTranslation(localizedStringFile, lastLocKey))) {
+    if (localizationKey != lastLocKey && (string.IsNullOrEmpty(localizedString) ||
+      localizedString == LocalizationEditorUtility.GetTranslation(localizedStringFile, lastLocKey))) {
       InitializeLocalizationString(localizationKey, out localizedStringFile, out localizedString);
     }
 
@@ -219,7 +218,7 @@ public static class EditorDrawingUtility {
   }
 
   private static void AddListTypeOption<T>(string name) {
-    AddTypeOption<List<T>>("List<"+name+">", x => {
+    AddTypeOption<List<T>>("List<" + name + ">", x => {
       DrawList("", x, y => (T)_TypeDrawers[typeof(T)](y), () => default(T));
       return x;
     });
@@ -235,7 +234,7 @@ public static class EditorDrawingUtility {
     _TypeDictionary.Add("null", null);
 
     AddTypeOption<int>("int", i => EditorGUILayout.IntField(i));
-    AddTypeOption<float>("float", f =>EditorGUILayout.FloatField(f));
+    AddTypeOption<float>("float", f => EditorGUILayout.FloatField(f));
     AddTypeOption<string>("string", s => EditorGUILayout.TextArea(s ?? string.Empty));
     AddTypeOption<bool>("bool", b => EditorGUILayout.Toggle(b));
     AddConvertTypeOption<long,int>();
@@ -248,7 +247,7 @@ public static class EditorDrawingUtility {
 
     _TypeOptions = _TypeDictionary.Keys.ToArray();
   }
-    
+
   public static object DrawSelectionObjectEditor(object x) {
 
     EditorGUILayout.BeginHorizontal();
@@ -294,13 +293,13 @@ public static class EditorDrawingUtility {
     }
 
     if (x.GetType() == typeof(string)) {
-      if(newType == typeof(int)) {
+      if (newType == typeof(int)) {
         int intVal;
         if (int.TryParse((string)x, out intVal)) {
           return intVal;
         }
       }
-      if(newType == typeof(float)){
+      if (newType == typeof(float)) {
         float floatVal;
         if (float.TryParse((string)x, out floatVal)) {
           return floatVal;
@@ -312,15 +311,15 @@ public static class EditorDrawingUtility {
     }
 
     if (x.GetType() == typeof(bool)) {
-      if(newType == typeof(int)) {
+      if (newType == typeof(int)) {
         return (bool)x == true ? 1 : 0;
       }
-      if(newType == typeof(float)){
+      if (newType == typeof(float)) {
         return (bool)x == true ? 1f : 0f;
       }
     }
 
-    if(newType == typeof(bool)) {
+    if (newType == typeof(bool)) {
       if (x.GetType() == typeof(int)) {
         return (int)x != 0;
       }

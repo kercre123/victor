@@ -38,7 +38,7 @@ namespace Cozmo {
 
       private Sequence _TransitionAnimation;
 
-      public void OnDestroy() {
+      void OnDestroy() {
         if (_TransitionAnimation != null) {
           _TransitionAnimation.Kill();
         }
@@ -129,10 +129,12 @@ namespace Cozmo {
       }
 
       private void OnCloseAnimationsFinished() {
+        DAS.Info(this, "OnCloseAnimationsFinished start");
         UIManager.EnableTouchEvents();
         RaiseViewCloseAnimationFinished(this);
         CleanUp();
         GameObject.Destroy(gameObject);
+        DAS.Info(this, "OnCloseAnimationsFinished finished");
       }
 
       private static void RaiseViewOpened(BaseView view) {

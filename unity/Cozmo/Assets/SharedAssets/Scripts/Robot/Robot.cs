@@ -989,12 +989,12 @@ public class Robot : IRobot {
       callback, 
       queueActionPosition);
   }
-
+    
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
     RobotEngineManager.Instance.Message.SetRobotVolume = 
-      Singleton<SetRobotVolume>.Instance.Initialize(volume);
+      Singleton<SetRobotVolume>.Instance.Initialize(ID, volume);
     RobotEngineManager.Instance.SendMessage();
   }
 

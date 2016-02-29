@@ -16,15 +16,13 @@ MonoBehaviour:
   DifficultyOptions:
   - DifficultyId: 1
     DifficultyName: Easy
-    DifficultyDescription: Only variance is color - always show all four lights.
+    DifficultyDescription: Start with Easy Mode, unlock more over time!
   - DifficultyId: 2
     DifficultyName: Medium
-    DifficultyDescription: Cubes may have two colors, but if they do it's always two
-      lights of each color.  If both cubes have same colors then we guarantee the
-      patterns match as well.
+    DifficultyDescription: Patterns may have up to 2 colors
   - DifficultyId: 3
     DifficultyName: Hard
-    DifficultyDescription: Cubes may have 1-2 colors and any number of lights.
+    DifficultyDescription: Patterns may have 1-2 colors and any number of lights.
   - DifficultyId: 4
-    DifficultyName: Impossible
-    DifficultyDescription: Cubes may have any number of colors and lights.
+    DifficultyName: Expert
+    DifficultyDescription: Patterns may have any number of colors and lights.

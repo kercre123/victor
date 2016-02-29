@@ -36,27 +36,28 @@ namespace Simon {
           CozmoLoseGame();
         }
       }
-
-      _CurrentSequenceIndex++;
-      if (_CurrentSequenceIndex >= _CurrentSequence.Count) {
-        _ShouldWinGame = true;
-      }
       else {
-        float coinFlip = Random.Range(0f, 1f);
-        if (coinFlip > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
-          _ShouldWinGame = false;
-          int correctId = _CurrentSequence[_CurrentSequenceIndex];
-          List<int> blockIds = new List<int>();
-          foreach (LightCube cube in _GameInstance.CubesForGame) {
-            if (cube.ID != correctId) {
-              blockIds.Add(cube.ID);
-            }
-          }
-          int targetId = blockIds[Random.Range(0, blockIds.Count)];
-          StartTurnToTarget(_CurrentRobot.LightCubes[targetId]);
+        _CurrentSequenceIndex++;
+        if (_CurrentSequenceIndex >= _CurrentSequence.Count) {
+          _ShouldWinGame = true;
         }
         else {
-          StartTurnToTarget(GetCurrentTarget());
+          float coinFlip = Random.Range(0f, 1f);
+          if (coinFlip > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
+            _ShouldWinGame = false;
+            int correctId = _CurrentSequence[_CurrentSequenceIndex];
+            List<int> blockIds = new List<int>();
+            foreach (LightCube cube in _GameInstance.CubesForGame) {
+              if (cube.ID != correctId) {
+                blockIds.Add(cube.ID);
+              }
+            }
+            int targetId = blockIds[Random.Range(0, blockIds.Count)];
+            StartTurnToTarget(_CurrentRobot.LightCubes[targetId]);
+          }
+          else {
+            StartTurnToTarget(GetCurrentTarget());
+          }
         }
       }
     }

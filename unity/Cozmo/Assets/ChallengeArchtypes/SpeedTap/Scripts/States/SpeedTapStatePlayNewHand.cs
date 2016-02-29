@@ -49,7 +49,6 @@ namespace SpeedTap {
       _StartTimeMs = Time.time * 1000.0f;
       _PlayReady = true;
       if (_MidHand == false) {
-        GameAudioClient.SetMusicState(_SpeedTapGame.GetMusicState());
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
         _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
         _MidHand = true;
@@ -104,7 +103,6 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
     }
 
