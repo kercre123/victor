@@ -18,3 +18,7 @@ public static class ThreadStaticSingleton<T> where T : class, new() {
     }
   }
 }
+
+public static class Empty<T> {
+  public static readonly T[] Instance = new T[0];
+}
