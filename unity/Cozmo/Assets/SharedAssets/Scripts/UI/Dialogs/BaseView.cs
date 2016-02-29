@@ -78,8 +78,10 @@ namespace Cozmo {
 
           // Place the button underneath all the UI in this dialog
           fullScreenButton.transform.SetAsFirstSibling();
-          UnityEngine.UI.Button fullScreenCollider = fullScreenButton.GetComponent<UnityEngine.UI.Button>();
-          fullScreenCollider.onClick.AddListener(HandleCloseColliderClicked);
+          Cozmo.UI.TouchCatcher fullScreenCollider = fullScreenButton.GetComponent<Cozmo.UI.TouchCatcher>();
+          fullScreenCollider.OnTouch += (HandleCloseColliderClicked);
+          fullScreenCollider.DASEventButtonName = "fullscreen_close_button";
+          fullScreenCollider.DASEventViewController = DASEventViewName;
         }
           
         if (_OptionalCloseDialogButton != null) {
