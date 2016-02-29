@@ -6,8 +6,8 @@ using System;
 [System.Serializable]
 public class DifficultySelectOptionData {  
   public int DifficultyId;
-  public string DifficultyName;
-  public string DifficultyDescription;
+  public LocalizedString DifficultyName;
+  public LocalizedString DifficultyDescription;
 }
 
 public class DifficultySelectOption : MonoBehaviour {

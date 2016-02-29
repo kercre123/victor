@@ -203,5 +203,29 @@
   },
   "minigame.text.howToPlay": {
     "translation": "How To Play"
+  },
+  "minigame.difficulty.easy": {
+    "translation": "Easy"
+  },
+  "minigame.difficulty.medium": {
+    "translation": "Medium"
+  },
+  "minigame.difficulty.hard": {
+    "translation": "Hard"
+  },
+  "minigame.difficulty.expert": {
+    "translation": "Expert"
+  },
+  "speedTap.difficulty.easyDescription": {
+    "translation": "Start with Easy Mode, unlock more over time!"
+  },
+  "speedTap.difficulty.mediumDescription": {
+    "translation": "Patterns may have up to 2 colors"
+  },
+  "speedTap.difficulty.hardDescription": {
+    "translation": "Patterns may have 1-2 colors and any number of lights."
+  },
+  "speedTap.difficulty.expertDescription": {
+    "translation": "Patterns may have any number of colors and lights."
   }
 }
