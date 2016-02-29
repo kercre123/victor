@@ -195,13 +195,14 @@ Supervisor {
 				  ]
 				}
 
+        # if you modify the length, you need to update FORWARD_COLLISION_SENSOR_LENGTH_MM
 				DistanceSensor {
 					name "forwardProxSensor"
 					translation 0.04 0 0
 					rotation 0 1 0 0
 					type "generic"
-					lookupTable [ 0.0     0    0,
-					              0.110   150  0]      # Adding 30mm for offset of sensor origin from robot origin
+					lookupTable [ 0.0     40   0,
+					              0.120   160  0] # offset for its own translation
 					numberOfRays 1
 					aperture 0.1
 				}

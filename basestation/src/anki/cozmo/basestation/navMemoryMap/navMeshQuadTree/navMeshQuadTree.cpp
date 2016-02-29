@@ -33,7 +33,7 @@ CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
 NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager)
 : _gfxDirty(true)
 , _processor(vizManager)
-, _root({0,0,1}, 256, 4, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
+, _root({0,0,1}, 256, 5, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
 , _vizManager(vizManager)
 {
   _processor.SetRoot( &_root );

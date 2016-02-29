@@ -13,6 +13,7 @@
 #define ANKI_COZMO_NAV_MEMORY_MAP_QUAD_DATA_H
 
 #include "../navMemoryMapTypes.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -48,8 +49,9 @@ protected:
 template <class T>
 T* INavMemoryMapQuadDataCast(INavMemoryMapQuadData* ptr)
 {
-  assert( ptr->type == T().type );
-  assert( dynamic_cast<T*>(ptr) );
+  ASSERT_NAMED( ptr, "INavMemoryMapQuadDataCast.NullQuadData" );
+  ASSERT_NAMED( ptr->type == T().type, "INavMemoryMapQuadDataCast.UnexpectedQuadData" );
+  ASSERT_NAMED( dynamic_cast<T*>(ptr), "INavMemoryMapQuadDataCast.BadQuadDataDynCast" );
   return static_cast<T*>(ptr);
 }
 
