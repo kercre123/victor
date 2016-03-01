@@ -146,6 +146,13 @@ message RobotObservedObject {
     uint_8   isActive
 }
 
+// Message for the robot observing a possible object (existence hasn't been confirmed yet)
+message RobotObservedPossibleObject {
+    // objectID will always be -1
+    // markersVisible will always be true
+    RobotObservedObject possibleObject
+}
+
 // RobotObservedFace
 message RobotObservedFace {
     int_32   faceID,         // negative: tracked but not recognized; positive: recognized face
