@@ -68,6 +68,11 @@ namespace Cozmo {
       #endregion
 
       public void OpenView(bool? overrideCloseOnTapOutside = null) {
+        if (string.IsNullOrEmpty(_DASEventViewName)) {
+          DAS.Error(this, string.Format("View is missing a _DASEventViewName! Please check the prefab. name={0}", gameObject.name));
+          _DASEventViewName = gameObject.name;
+        }
+
         RaiseViewOpened(this);
 
         bool shouldCloseOnTapOutside = overrideCloseOnTapOutside.HasValue ? 
