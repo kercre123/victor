@@ -232,6 +232,13 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
 
   // add a wait action, to give the vision system a chance to see the object
   action->AddAction(new WaitAction(robot, kPossibleObjectWaitTime_s));
+
+  // if we still haven't found it, do a little search left and right
+  action->AddAction(new TurnInPlaceAction(robot, -kSearchAmoundTags, false));
+  action->AddAction(new WaitAction(robot, kPossibleObjectWaitTime_s));
+
+  action->AddAction(new TurnInPlaceAction(robot, 2 * kSearchAmoundTags, false));
+  action->AddAction(new WaitAction(robot, kPossibleObjectWaitTime_s));
   
   // Note that in the positive case, this drive to action is likely to get canceled
   // because we discover it is a real object
