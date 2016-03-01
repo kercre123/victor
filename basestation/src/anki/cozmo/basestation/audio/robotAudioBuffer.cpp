@@ -28,6 +28,7 @@ void RobotAudioBuffer::PrepareAudioBuffer()
   // Prep new Continuous Stream Buffer
   _streamQueue.emplace();
   _currentStream = &_streamQueue.back();
+  _isActive = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,6 +101,7 @@ void RobotAudioBuffer::ClearCache()
   // No more samples to cache, create final Audio Message
   _currentStream->SetIsComplete();
   _currentStream = nullptr;
+  _isActive = false;
   _isWaitingForReset = false;
 }
 
