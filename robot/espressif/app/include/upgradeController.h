@@ -25,6 +25,9 @@ namespace Anki {
       /// Command upgrade initiation
       void Trigger(RobotInterface::OTAUpgrade& msg);
       
+      /// Check if an upgrade is staged and trigger it
+      bool CheckForAndDoStaged(void);
+      
       /// Run a WiFi upgrade with default settings
       void StartWiFiUpgrade(bool reboot);
       

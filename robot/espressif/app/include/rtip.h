@@ -13,6 +13,9 @@ namespace Anki {
       bool Init();
       
       // Send a message to the RTIP
+      bool SendMessage(u8* buffer, u16 bufferSize);
+      
+      // Send a message to the RTIP
       bool SendMessage(RobotInterface::EngineToRobot& msg);
       
       extern u32 Version;

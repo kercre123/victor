@@ -1,6 +1,8 @@
-/** Clad definitions of all messages sent from the Cozmo engine to the robot
- * This file is used on both the RTIP and WiFi chips on the robot but because we use explicit union tags, we don't have
- * to recompile the code in lock step.
+/** Clad definitions of all messages sent from the Cozmo engine to the robot and from one part of the robot to another.
+ * This file name is now out of date since it should be messageToRobot since messages may not be coming from the engine.
+ *
+ * Used in the engine, all three robot processors and the test fixture, however, we don't have to build and flash in 
+ * lockstep because of strict tag space partitioning.
  */
  
 #include "clad/types/imageTypes.clad"
@@ -12,6 +14,7 @@
 #include "clad/types/imu.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/nvStorage.clad"
 
@@ -195,58 +198,106 @@ message EnableLiftPower
   bool enable
 }
 
+message RTIPVersionInfo
+{
+  uint_32 version,
+  uint_32 date,
+  string  description
+}
+
+message BodyUpgradeData
+{
+  uint_32 word
+}
+
+message RadioState
+{
+  bool wifiConnected
+}
+
+enum uint_32 ToRobotAddressSpace
+{
+  GLOBAL_INVALID_TAG = 0,
+  TO_BODY_START = 0x01,
+  TO_BODY_END   = 0x2F,
+  TO_RTIP_START = 0x30,
+  TO_RTIP_END   = 0x7F,
+  ANIM_RT_START = 0x93,
+  ANIM_RT_END   = 0x99,
+  TO_WIFI_START = 0x80,
+  TO_WIFI_END   = 0xAF,
+  TO_ENG_START  = 0xB0,
+  TO_ENG_UNREL  = 0xF0,
+  TO_ENG_END    = 0xFE
+}
+
 /// *************** Overall message pipe ******************************* ///
 
-/** Pipe from engine to robot.
- * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
- * and to make debugging from message dumps more sane.
+/** Pipe from engine to robot and within the robot
+ * This cannot be an auto union because we need explicit tag values to partition the messages between the engine (not
+ * included in this file), WiFi, RTIP, body and test fixture. And significantly to make debugging from message dumps
+ * more sane.
  */
 union EngineToRobot
 {
-  // To RTIP. 0x01 to 0x7f
-  DriveWheels                   drive                       = 0x01,
-  DriveWheelsCurvature          driveCurvature              = 0x02,
-  MoveLift                      moveLift                    = 0x03,
-  MoveHead                      moveHead                    = 0x04,
-  SetLiftHeight                 liftHeight                  = 0x05,
-  SetHeadAngle                  headAngle                   = 0x06,
-  HeadAngleUpdate               headAngleUpdate             = 0x07,
-  SetBodyAngle                  setBodyAngle                = 0x08,
-  TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x09,
-  StopAllMotors                 stop                        = 0x0A,
-  ClearPath                     clearPath                   = 0x0B,
-  AppendPathSegmentLine         appendPathSegLine           = 0x0C,
-  AppendPathSegmentArc          appendPathSegArc            = 0x0D,
-  AppendPathSegmentPointTurn    appendPathSegPointTurn      = 0x0E,
-  TrimPath                      trimPath                    = 0x0F,
-  ExecutePath                   executePath                 = 0x10,
-  DockWithObject                dockWithObject              = 0x11,
-  AbortDocking                  abortDocking                = 0x12,
-  PlaceObjectOnGround           placeObjectOnGround         = 0x13,
-  AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x14,
-  StartControllerTestMode       startControllerTestMode     = 0x15,
-  ControllerGains               setControllerGains          = 0x16,
-  DockingErrorSignal            dockingErrorSignal          = 0x17,
-  CarryState                    setCarryState               = 0x18,
-  ImuRequest                    imuRequest                  = 0x19,
-  SyncTime                      syncTime                    = 0x1A,
-  ImageRequest                  imageRequest                = 0x1B,
-  BackpackLights                setBackpackLights           = 0x1C,
-  CubeLights                    setCubeLights               = 0x1D,
-  FlashObjectIDs                flashObjectIDs              = 0x1E,
-  ObjectBeingCarried            setObjectBeingCarried       = 0x1F,
-  EnablePickupParalysis         enablePickupParalysis       = 0x20,
-  EnableLiftPower               enableLiftPower             = 0x21,
-  RawPWM                        setRawPWM                   = 0x22,
-  SetMotionModelParams          setMotionModelParams        = 0x23,
-  CubeSlots                     assignCubeSlots             = 0x24,
+  // 0x00 Is invalid message
   
-  // To WiFi 0x80 to 0xFE
+  // 0x01 to 0x2f: Messages to the body / test fixture
+  BootloadBody                  bootloadBody                = 0x01,
+  // Reserved for bootloader data message to get moved here = 0x02,
+  BackpackLights                setBackpackLights           = 0x03,
+  CubeLights                    setCubeLights               = 0x04,
+  CubeSlots                     assignCubeSlots             = 0x05,
+  
+  // 0x30 to 0x7f: To RTIP
+  BootloadRTIP                  bootloadRTIP                = 0x30,
+  RadioState                    radioConnected              = 0x31,
+  DriveWheels                   drive                       = 0x32,
+  DriveWheelsCurvature          driveCurvature              = 0x33,
+  MoveLift                      moveLift                    = 0x34,
+  MoveHead                      moveHead                    = 0x35,
+  SetLiftHeight                 liftHeight                  = 0x36,
+  SetHeadAngle                  headAngle                   = 0x37,
+  HeadAngleUpdate               headAngleUpdate             = 0x38,
+  SetBodyAngle                  setBodyAngle                = 0x39,
+  TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x3A,
+  StopAllMotors                 stop                        = 0x3B,
+  ClearPath                     clearPath                   = 0x3C,
+  AppendPathSegmentLine         appendPathSegLine           = 0x3D,
+  AppendPathSegmentArc          appendPathSegArc            = 0x3E,
+  AppendPathSegmentPointTurn    appendPathSegPointTurn      = 0x3F,
+  TrimPath                      trimPath                    = 0x40,
+  ExecutePath                   executePath                 = 0x41,
+  DockWithObject                dockWithObject              = 0x42,
+  AbortDocking                  abortDocking                = 0x43,
+  PlaceObjectOnGround           placeObjectOnGround         = 0x44,
+  AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x45,
+  StartControllerTestMode       startControllerTestMode     = 0x46,
+  ControllerGains               setControllerGains          = 0x47,
+  DockingErrorSignal            dockingErrorSignal          = 0x48,
+  CarryStateUpdate              setCarryState               = 0x49,
+  ImuRequest                    imuRequest                  = 0x4A,
+  SyncTime                      syncTime                    = 0x4B,
+  ImageRequest                  imageRequest                = 0x4C,
+  FlashObjectIDs                flashObjectIDs              = 0x4D,
+  ObjectBeingCarried            setObjectBeingCarried       = 0x4E,
+  EnablePickupParalysis         enablePickupParalysis       = 0x4F,
+  EnableLiftPower               enableLiftPower             = 0x50,
+  SetMotionModelParams          setMotionModelParams        = 0x51,
+  BodyUpgradeData               bodyUpgradeData             = 0x52,
+  PowerState                    powerState                  = 0x53,
+  PropState                     getPropState                = 0x54,
+  
+  // 0x80 to 0xAF: To WiFi
+  // Flash and OTA message must not be changed or OTA will break
   EraseFlash                    eraseFlash                  = 0x80,
   WriteFlash                    writeFlash                  = 0x81,
   OTAUpgrade                    triggerOTAUpgrade           = 0x82,
   NVStorage::NVStorageBlob      writeNV                     = 0x83,
-  NVStorage::NVEntryTag         readNV                      = 0x84,
+  NVStorage::NVStorageRead      readNV                      = 0x84,
+  // Reserved for FlashWriteAcknowledge message in OTA      = 0x85,
+  BodyFirmwareState             bodyState                   = 0x86,
+  RTIPVersionInfo               rtipVersion                 = 0x87,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
@@ -264,11 +315,7 @@ union EngineToRobot
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   // Anim future expansion                                  = 0x9F,
 
-  
-  // WiFi to RTIP messages, not actually sent by engine
-  bool                          radioConnected              = 0xFC,
-  uint_32                       bodyUpgradeData             = 0xFD,
-  EnterBootloader               enterBootloader             = 0xFE,
+  // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
 
 } // namespace Robot Interface

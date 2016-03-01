@@ -252,7 +252,6 @@ void i2spiTask(os_event_t *event)
                   // Going past the end is OKAY as that will be used to increment the buffer
                   os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
                   outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
-                  backgroundTaskOnRTIPSync();
                   foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
                 }
               }
@@ -645,13 +644,6 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
     case I2SPI_NORMAL:
     {
       os_printf("I2Spi mode Normal\r\n");
-      if (outgoingPhase == BOOTLOADER_XFER_PHASE)
-      {
-        uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-        txBuf[0] = COMMAND_HEADER;
-        txBuf[1] = COMMAND_DONE;
-        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-      }
       outgoingPhase = UNINITALIZED_PHASE;
       txFillCount = 0;
       return;
@@ -730,4 +722,18 @@ bool ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
   {
     return false;
   }
+}
+
+bool ICACHE_FLASH_ATTR i2spiBootloaderCommandDone(void)
+{
+  const int availableBuffers = DMA_BUF_COUNT - 3 - txFillCount; // Leave space for 2 in pipeline plus one more for end of firmware message
+  if (availableBuffers > 0)
+  {
+    uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    txBuf[0] = COMMAND_HEADER;
+    txBuf[1] = COMMAND_DONE;
+    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+    return true;
+  }
+  else return false;
 }

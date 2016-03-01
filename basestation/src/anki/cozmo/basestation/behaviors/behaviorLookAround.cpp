@@ -11,16 +11,14 @@
  **/
 
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
-#include "anki/common/robot/config.h"
 #include "anki/common/shared/radians.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #define DISABLE_IDLE_DURING_LOOK_AROUND 0
@@ -32,9 +30,14 @@
 #include "anki/common/basestation/math/polygon_impl.h"
 #endif
 
+#define SET_STATE(s) SetState_internal(s, #s)
+
 namespace Anki {
 namespace Cozmo {
-  
+
+// TODO:(bn) ask Mooly, maybe we can use some of the alts here as well?
+static const char* kBlockReactAnim = "ID_react2block_02";
+
 using namespace ExternalInterface;
 
 BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
@@ -45,7 +48,7 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
-    EngineToGameTag::RobotCompletedAction,
+    EngineToGameTag::RobotObservedPossibleObject,
     EngineToGameTag::RobotPutDown
   }});
 
@@ -59,12 +62,6 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   
 BehaviorLookAround::~BehaviorLookAround()
 {
-  /* Necessary? (We have no robot available in the destructor!)
-  if (_currentState != State::Inactive)
-  {
-    ResetBehavior(0);
-  }
-   */
 }
   
 bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) const
@@ -79,27 +76,12 @@ bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) 
       }
       break;
     }
-    case State::StartLooking:
-    case State::LookingForObject:
-    case State::ExamineFoundObject:
-    case State::WaitToFinishExamining:
+    default:
     {
       return true;
     }
-    default:
-    {
-      PRINT_NAMED_ERROR("LookAround_Behavior.IsRunnable.UnknownState",
-                        "Reached unknown state %d.", _currentState);
-    }
   }
   return false;
-}
-
-void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
-{
-  if( event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction ) {
-    HandleCompletedAction(event);
-  }
 }
 
 void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
@@ -107,13 +89,17 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
   switch(event.GetData().GetTag())
   {
     case EngineToGameTag::RobotObservedObject:
-      HandleObjectObserved(event, robot);
+      HandleObjectObserved(event.GetData().Get_RobotObservedObject(),
+                           true,
+                           robot);
       break;
-      
-    case EngineToGameTag::RobotCompletedAction:
-      // handled in AlwaysHandle
+
+    case EngineToGameTag::RobotObservedPossibleObject:
+      HandleObjectObserved(event.GetData().Get_RobotObservedPossibleObject().possibleObject,
+                           false,
+                           robot);
       break;
-      
+            
     case EngineToGameTag::RobotPutDown:
       HandleRobotPutDown(event, robot);
       break;
@@ -135,111 +121,22 @@ Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec)
   // Update explorable area center to current robot pose
   ResetSafeRegion(robot);
   
-  _currentState = State::StartLooking;
+  TransitionToWaitForOtherActions(robot);
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double currentTime_sec)
+void BehaviorLookAround::TransitionToWaitForOtherActions(Robot& robot)
 {
-#if SAFE_ZONE_VIZ
-  Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
-  robot.GetContext()->GetVizManager()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
-#endif
-  switch (_currentState)
-  {
-    case State::Inactive:
-    {
-      // This is the last update before we stop running, so store off time
-      _lastLookAroundTime = currentTime_sec;
-      
-      // Reset our number of destinations for next time we run this behavior
-      _numDestinationsLeft = kDestinationsToReach;
-      
-      break; // Jump down and return Status::Complete
-    }
-    case State::StartLooking:
-    {
-      IActionRunner* moveHeadAction = new MoveHeadToAngleAction(robot, _lookAroundHeadAngle_rads);
-      _actionsInProgress.insert(moveHeadAction->GetTag());
-      robot.GetActionList().QueueActionAtEnd(moveHeadAction);
-      
-      IActionRunner* moveLiftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
-      _actionsInProgress.insert(moveLiftAction->GetTag());
-      robot.GetActionList().QueueActionAtEnd(moveLiftAction);
-      
-      if (StartMoving(robot) == RESULT_OK) {
-        _currentState = State::LookingForObject;
-      }
-    }
-    // NOTE INTENTIONAL FALLTHROUGH
-    case State::LookingForObject:
-    {
-      if (0 < _recentObjects.size())
-      {
-        robot.GetMoodManager().AddToEmotion(EmotionType::Excited, kEmotionChangeVerySmall, "ExamineObject", currentTime_sec);
-        _currentState = State::ExamineFoundObject;
-      }
-      return Status::Running;
-    }
-    case State::ExamineFoundObject:
-    {
-      ClearQueuedActions(robot);
-      bool queuedFaceObjectAction = false;
-      while (!_recentObjects.empty())
-      {
-        auto iter = _recentObjects.begin();
-        ObjectID objID = *iter;
-        
-        FaceObjectAction* faceObjectAction = new FaceObjectAction(robot, objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(1440), false, false);
-        faceObjectAction->SetPanTolerance(DEG_TO_RAD(2));
-        _actionsInProgress.insert(faceObjectAction->GetTag());
-        robot.GetActionList().QueueActionAtEnd(faceObjectAction);
-        
-        IActionRunner* moveLiftHeightAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
-        _actionsInProgress.insert(moveLiftHeightAction->GetTag());
-        robot.GetActionList().QueueActionAtEnd(moveLiftHeightAction);
-        
-        queuedFaceObjectAction = true;
-        
-        ++_numObjectsToLookAt;
-        _oldBoringObjects.insert(objID);
-        _recentObjects.erase(iter);
-      }
-      
-      // If we queued up some face object actions, add a move head action at the end to go back to normal
-      if (queuedFaceObjectAction)
-      {
-        IActionRunner* moveHeadAction = new MoveHeadToAngleAction(robot, _lookAroundHeadAngle_rads);
-        _actionsInProgress.insert(moveHeadAction->GetTag());
-        robot.GetActionList().QueueActionAtEnd(moveHeadAction);
-      }
-      _currentState = State::WaitToFinishExamining;
-      
-      return Status::Running;
-    }
-    case State::WaitToFinishExamining:
-    {
-      if (0 == _numObjectsToLookAt)
-      {
-        _currentState = State::StartLooking;
-      }
-      return Status::Running;
-    }
-    default:
-    {
-      PRINT_NAMED_ERROR("LookAround_Behavior.Update.UnknownState",
-                        "Reached unknown state %d.", _currentState);
-    }
-  }
-  
-#if SAFE_ZONE_VIZ
-  robot.GetContext()->GetVizManager()->EraseCircle(robot.GetID());
-#endif
-  
-  return Status::Complete;
+  // Special state so that we can wait for other actions (from other behaviors) to complete before we do anything
+  SET_STATE(State::WaitForOtherActions);
 }
-  
-Result BehaviorLookAround::StartMoving(Robot& robot)
+
+void BehaviorLookAround::TransitionToInactive(Robot& robot)
+{
+  SET_STATE(State::Inactive);
+}
+
+void BehaviorLookAround::TransitionToRoaming(Robot& robot)
 {
   // Check for a collision-free pose
   Pose3d destPose;
@@ -260,32 +157,152 @@ Result BehaviorLookAround::StartMoving(Robot& robot)
     }
     
     if (i == 1) {
-      PRINT_NAMED_WARNING("BehaviorLookAround.StartMoving.NoDestPoseFound", "attempts %d", MAX_NUM_CONSIDERED_DEST_POSES);
+      PRINT_NAMED_WARNING("BehaviorLookAround.StartMoving.NoDestPoseFound",
+                          "attempts %d",
+                          MAX_NUM_CONSIDERED_DEST_POSES);
       
       // Try another destination
       _currentDestination = GetNextDestination(_currentDestination);
-      
-      // Kinda hacky, but if we're on the last destination to go to, just quit because we're
-      // it always returns Center on the last destination and if we couldn't get there in
-      // in this loop it probably won't happen in the next.
-      if (_numDestinationsLeft == 1) {
-        _currentState = State::Inactive;
+      if (_numDestinationsLeft == 0) {
+        TransitionToInactive(robot);
       }
-      
-      return RESULT_FAIL;
     }
   }
-  
-    IActionRunner* goToPoseAction = new DriveToPoseAction(robot,
-                                                          destPose,
-                                                          DEFAULT_PATH_MOTION_PROFILE,
-                                                          false,
-                                                          false);
-  _currentDriveActionID = goToPoseAction->GetTag();
-  _actionsInProgress.insert(_currentDriveActionID);
 
-  robot.GetActionList().QueueActionAtEnd(goToPoseAction, 3);
-  return RESULT_OK;
+  SET_STATE(State::Roaming);
+  
+  IActionRunner* goToPoseAction = new DriveToPoseAction(robot,
+                                                        destPose,
+                                                        // TODO:(bn) randomize profile
+                                                        DEFAULT_PATH_MOTION_PROFILE,
+                                                        false);
+
+  // move head and lift to reasonable place before we start Roaming
+  IActionRunner* setHeadAndLiftAction = new CompoundActionParallel(robot, {
+      new MoveHeadToAngleAction(robot, _lookAroundHeadAngle_rads),
+      new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK) });
+
+  StartActing(new CompoundActionSequential(robot, {setHeadAndLiftAction, goToPoseAction}),
+              [this, &robot](ActionResult result) {
+                if( result == ActionResult::SUCCESS || result == ActionResult::FAILURE_RETRY ) {
+                  _currentDestination = GetNextDestination(_currentDestination);
+                }
+                if (_numDestinationsLeft == 0) {
+                  TransitionToInactive(robot);
+                }
+                else {
+                  TransitionToRoaming(robot);
+                }
+              });
+}
+
+void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
+{
+  SET_STATE(State::LookingAtPossibleObject);
+
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  action->AddAction(new FacePoseAction(robot, _lastPossibleObjectPose, PI_F));
+
+  // if the pose is too far away, drive towards it 
+  Pose3d relPose;
+  if( _lastPossibleObjectPose.GetWithRespectTo( robot.GetPose(), relPose ) ) {
+    const Pose2d relPose2d(relPose);
+    float dist2 = relPose2d.GetTranslation().LengthSq();
+    if( dist2 > kMaxObservationDistanceSq_mm ) {
+      PRINT_NAMED_DEBUG("BehaviorLookAround.PossibleObject.TooFar",
+                        "Object dist^2 = %f, so moving towards it",
+                        dist2);
+
+      Vec3f newTranslation = relPose.GetTranslation();
+      float oldLength = newTranslation.MakeUnitLength();
+      
+      Pose3d newTargetPose(RotationVector3d{},
+                           newTranslation * (oldLength - kPossibleObjectViewingDist_mm),
+                           &robot.GetPose());
+      // TODO:(bn) motion profile here?
+      action->AddAction(new DriveToPoseAction(robot, newTargetPose, DEFAULT_PATH_MOTION_PROFILE, false));
+    }
+  }
+  else {
+    PRINT_NAMED_WARNING("BehaviorLookAround.PossibleObject.NoTransform",
+                        "Could not get pose of possible object W.R.T robot");
+    _lastPossibleObjectPose.Print();
+    _lastPossibleObjectPose.PrintNamedPathToOrigin(false);
+  }
+
+  // add a wait action, to give the vision system a chance to see the object
+  action->AddAction(new WaitAction(robot, kPossibleObjectWaitTime_s));
+  
+  // Note that in the positive case, this drive to action is likely to get canceled
+  // because we discover it is a real object
+  StartActing(action,
+              [this,&robot](ActionResult result) {
+                if( result != ActionResult::CANCELLED ) {
+                  // we finished without observing an object, so go back to roaming
+                  TransitionToRoaming(robot);
+                }
+              });
+}
+
+void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
+{
+  if( _recentObjects.empty() ) {
+    TransitionToRoaming(robot);
+  }
+
+  SET_STATE(State::ExaminingFoundObject);
+
+  robot.GetMoodManager().TriggerEmotionEvent("FoundObservedObject", MoodManager::GetCurrentTimeInSeconds());
+  
+  ObjectID recentObjectID = *_recentObjects.begin();
+
+  PRINT_NAMED_DEBUG("BehaviorLookAround.TransitionToExaminingFoundObject", "examining new object %d",
+                    recentObjectID.GetValue());
+  
+  StartActing(new CompoundActionSequential(robot, {
+                  new FaceObjectAction(robot, recentObjectID, PI_F),
+                  // TODO:(bn) vary animation here?
+                  new PlayAnimationAction(robot, kBlockReactAnim) }),
+               [this, &robot, recentObjectID](ActionResult result) {
+                 if( result == ActionResult::SUCCESS ) {
+                   PRINT_NAMED_DEBUG("BehaviorLookAround.Objects",
+                                     "Done examining object %d, adding to boring list",
+                                     recentObjectID.GetValue());
+                   _recentObjects.erase(recentObjectID);
+                   _oldBoringObjects.insert(recentObjectID);
+                 }
+
+                 if( result != ActionResult::CANCELLED ) {
+                   TransitionToRoaming(robot);
+                 }
+             });
+}
+
+
+IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double currentTime_sec)
+{
+
+#if SAFE_ZONE_VIZ
+  Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
+  robot.GetContext()->GetVizManager()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
+#endif
+
+  if( IsActing() ) {
+    return Status::Running;
+  }
+  
+  if( _currentState == State::WaitForOtherActions ) {
+    if( robot.GetActionList().IsEmpty() ) {
+      TransitionToRoaming(robot);
+    }
+    return Status::Running;
+  }
+  
+#if SAFE_ZONE_VIZ
+  robot.GetContext()->GetVizManager()->EraseCircle(robot.GetID());
+#endif
+  
+  return Status::Complete;
 }
   
 Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination destination)
@@ -366,29 +383,48 @@ void BehaviorLookAround::StopInternal(Robot& robot, double currentTime_sec)
   
 void BehaviorLookAround::ResetBehavior(Robot& robot, float currentTime_sec)
 {
+  // This is the last update before we stop running, so store off time
   _lastLookAroundTime = currentTime_sec;
-  _currentState = State::Inactive;
-  robot.GetMoveComponent().StopAllMotors();
-  ClearQueuedActions(robot);
+      
+  // Reset our number of destinations for next time we run this behavior
+  _numDestinationsLeft = kDestinationsToReach;
+
+  SET_STATE(State::Inactive);
+  
   _recentObjects.clear();
   _oldBoringObjects.clear();
-  _numObjectsToLookAt = 0;
 }
   
-void BehaviorLookAround::HandleObjectObserved(const EngineToGameEvent& event, Robot& robot)
+void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bool confirmed, Robot& robot)
 {
   assert(IsRunning());
-  
-  const RobotObservedObject& msg = event.GetData().Get_RobotObservedObject();
-  
+
   static const std::set<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
   
-  // We'll get continuous updates about objects in view, so only care about new ones whose markers we can see
-  if (familyList.count(msg.objectFamily) > 0 && msg.markersVisible && 0 == _oldBoringObjects.count(msg.objectID))
-  {
-    robot.GetMoodManager().AddToEmotion(EmotionType::Excited, kEmotionChangeVerySmall, "FoundObject", MoodManager::GetCurrentTimeInSeconds());
-    _recentObjects.insert(msg.objectID);
-    
+  if (familyList.count(msg.objectFamily) > 0) {
+    if( ! confirmed ) {
+      if( _currentState != State::LookingAtPossibleObject ) {
+        _lastPossibleObjectPose = Pose3d{0, Z_AXIS_3D(),
+                                         {msg.world_x, msg.world_y, msg.world_z},
+                                         robot.GetWorldOrigin()};
+        PRINT_NAMED_DEBUG("BehaviorLookAround.HandleObjectObserved.LookingAtPossibleObject",
+                          "stopping to look at possible object");
+        StopActing(false);
+        TransitionToLookingAtPossibleObject(robot);
+      }
+    }
+    else if( 0 == _oldBoringObjects.count(msg.objectID) && _currentState != State::ExaminingFoundObject) {
+
+      PRINT_NAMED_DEBUG("BehaviorLookAround.HandleObjectObserved.ExaminingFoundObject",
+                        "stopping to look at found object id %d",
+                        msg.objectID);
+
+      _recentObjects.insert(msg.objectID);
+
+      StopActing(false);
+      TransitionToExaminingFoundObject(robot);
+    }
+
     ObservableObject* object = robot.GetBlockWorld().GetObjectByID(msg.objectID);
     if (nullptr != object)
     {
@@ -396,7 +432,7 @@ void BehaviorLookAround::HandleObjectObserved(const EngineToGameEvent& event, Ro
     }
   }
 }
-  
+
 void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
 {
   Vec3f translationDiff = objectPosition - _moveAreaCenter.GetTranslation();
@@ -420,58 +456,28 @@ void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
     _safeRadius = 0.5f * (distance + _safeRadius);
   }
 }
-  
-void BehaviorLookAround::HandleCompletedAction(const EngineToGameEvent& event)
-{
-  const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
-  if (RobotActionType::FACE_OBJECT == msg.actionType)
-  {
-    if (0 == _numObjectsToLookAt)
-    {
-      PRINT_NAMED_WARNING("BehaviorLookAround.HandleCompletedAction",
-                          "Getting unexpected FaceObjectAction completion messages");
-    }
-    else
-    {
-      --_numObjectsToLookAt;
-    }
-  }
-  else if (msg.idTag == _currentDriveActionID)
-  {
-    // If we're back to center, time to go inactive
-    if (Destination::Center == _currentDestination)
-    {
-      _currentState = State::Inactive;
-    }
-    else
-    {
-      _currentState = State::StartLooking;
-    }
-    
-    if (_numDestinationsLeft > 0)
-    {
-      --_numDestinationsLeft;
-    }
-    else
-    {
-      PRINT_NAMED_WARNING("BehaviorLookAround.HandleCompletedAction", "Getting unexpected DriveAction completion messages");
-    }
-    
-    // If this was a successful drive action, move on to the next destination
-    _currentDestination = GetNextDestination(_currentDestination);
-  }
-  
-  _actionsInProgress.erase(msg.idTag);
 
+const char* BehaviorLookAround::DestinationToString(const BehaviorLookAround::Destination& dest)
+{
+  switch(dest) {
+    case Destination::North: return "north";
+    case Destination::West: return "west";
+    case Destination::South: return "south";
+    case Destination::East: return "east";
+    case Destination::Center: return "center";
+    case Destination::Count: return "count";
+  };
 }
-  
+
 BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current)
 {
   static BehaviorLookAround::Destination previous = BehaviorLookAround::Destination::Center;
   
   // If we've visited enough destinations, go back to center
-  if (1 == _numDestinationsLeft)
+  if (_numDestinationsLeft <= 1)
   {
+    _numDestinationsLeft = 0;
+    PRINT_NAMED_DEBUG("BehaviorLookAround.GetNextDestination.ReturnToCenter", "going back to center");
     return Destination::Center;
   }
   
@@ -491,6 +497,12 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   s32 randIndex = GetRNG().RandInt(static_cast<s32>(all.size()));
   auto newDestIter = all.begin();
   while (randIndex-- > 0) { newDestIter++; }
+
+  _numDestinationsLeft--;
+
+  PRINT_NAMED_DEBUG("BehaviorLookAround.GetNextDestination", "%s (%d left)",
+                    DestinationToString(*newDestIter),
+                    _numDestinationsLeft);
   
   return *newDestIter;
 }
@@ -510,18 +522,12 @@ void BehaviorLookAround::ResetSafeRegion(Robot& robot)
   _safeRadius = kDefaultSafeRadius;
 }
 
-void BehaviorLookAround::ClearQueuedActions(Robot& robot)
+void BehaviorLookAround::SetState_internal(State state, const std::string& stateName)
 {
-  BOUNDED_WHILE( 50, ! _actionsInProgress.empty() ) {
-    // The cancel function will trigger the HandleActionCompleted callback, which will erase the action from
-    // _actionsInProgress
-    if( ! robot.GetActionList().Cancel( * _actionsInProgress.begin() ) ) {
-      PRINT_NAMED_ERROR("BehaviorLookAround.CancelActionFail",
-                        "tried to cancel action with tag %d, but it wasn't found!",
-                        * _actionsInProgress.begin());
-      _actionsInProgress.erase( _actionsInProgress.begin() );
-    }
-  }
+  _currentState = state;
+  PRINT_NAMED_DEBUG("BehaviorLookAround.TransitionTo", "%s", stateName.c_str());
 }
+
+
 } // namespace Cozmo
 } // namespace Anki

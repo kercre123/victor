@@ -21,10 +21,6 @@ typedef s64 Fixed64;
 
 static const int spine_baud_rate = 350000;
 
-enum HeadToBodyFlags {
-  BODY_FLASHLIGHT = 0x01
-};
-
 enum SPISource
 {
   SPI_SOURCE_HEAD    = 0x64616568,
@@ -32,69 +28,28 @@ enum SPISource
   SPI_ENTER_RECOVERY = 0x444d7852
 };
 
-struct AcceleratorPacket {
-  int8_t    x, y, z;
-  uint8_t   shockCount;
-  uint16_t  timestamp;
+// 32 bytes of payload plus tag
+#define SPINE_MAX_CLAD_MSG_SIZE_DOWN (41)
+#define SPINE_MAX_CLAD_MSG_SIZE_UP (29)
+
+typedef enum {
+  SF_WiFi_Connected = 0x01,
+  SF_BLE_Connected  = 0x02,
+  SF_OBJ_Connected  = 0x04,
+} SpineFlags;
+
+struct CladBufferDown
+{
+  uint16_t flags;
+  uint8_t  length;
+  uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
 };
 
-#define UNPACK_COLORS(w) \
-  UNPACK_RED(w), \
-  UNPACK_GREEN(w), \
-  UNPACK_BLUE(w)
-
-#define UNPACK_RED(w)     ((((w >> 10) & 0x1F) * 0x21) >> 2)
-#define UNPACK_GREEN(w)   ((((w >>  5) & 0x1F) * 0x21) >> 2)
-#define UNPACK_BLUE(w)    ((((w >>  0) & 0x1F) * 0x21) >> 2)
-
-#define UNPACK_IR(w) (w & 0x8000 ? 0xFF : 0)
-
-#define PACK_COLORS(i,r,g,b) (  \
-  (i ? 0x8000 : 0) |            \
-  (((b >> 3) & 0x1F) <<  0) |   \
-  (((g >> 3) & 0x1F) <<  5) |   \
-  (((r >> 3) & 0x1F) << 10)     \
-)
-
-enum SpineProtocolOp {
-  NO_OPERATION,
-  REQUEST_PROPS,
-  ASSIGN_PROP,
-  SET_PROP_STATE,
-  GET_PROP_STATE,
-  PROP_DISCOVERED,
-  SET_BACKPACK_STATE,
-  ENTER_RECOVERY
-};
-
-struct SpineProtocol {
-  SpineProtocolOp opcode;
-
-  union {
-    struct {
-      uint8_t slot;
-      uint16_t colors[4];
-    } SetPropState;
-
-    struct {
-      uint8_t slot;
-      int8_t  x, y, z;
-      uint8_t shockCount;
-    } GetPropState;
-
-    struct {
-      uint8_t slot;
-      uint32_t prop_id;
-    } AssignProp;
-
-    struct {
-      uint32_t prop_id;
-    } PropDiscovered;
-
-    struct {
-      uint16_t colors[4];
-    } SetBackpackState;
-  };
+struct CladBufferUp
+{
+  uint16_t flags;
+  uint8_t  length;
+  uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_UP];
 };
 
 struct GlobalDataToHead
@@ -103,20 +58,14 @@ struct GlobalDataToHead
   Fixed speeds[4];
   Fixed positions[4];
   uint32_t cliffLevel;
-  Fixed VBat;
-  Fixed VExt;
-  u8    chargeStat;
-  SpineProtocol  spineMessage;
+  CladBufferUp cladBuffer;
 };
 
 struct GlobalDataToBody
 {
   uint32_t source;
   int16_t motorPWM[4];
-  
-  SpineProtocol  spineMessage;
-
-  u8             flags;
+  CladBufferDown cladBuffer;
 };
 
 static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 128, "Spine transport payload too large");

@@ -2,6 +2,9 @@
 #define LIGHTS_H
 
 #include <stdint.h>
+#include "clad/types/ledTypes.h"
+
+using namespace Anki::Cozmo;
 
 struct charliePlex_s
 {
@@ -11,7 +14,8 @@ struct charliePlex_s
 
 namespace Lights {
   void init();
-  void setLights(const uint16_t*);
+  void manage(void*);
+  void setLights(const LightState* lights);
 }
 
 #endif /* LIGHTS_H */

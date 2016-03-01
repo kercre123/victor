@@ -69,6 +69,9 @@ public:
   
   void UpdateVizOrigin();
   
+  // Just updates face ID to name mapping for Visualization -- does not affect engine!
+  void AssignVizFaceName(const std::string& name, Vision::TrackedFace::ID_t faceID);
+  
 protected:
   
   virtual void InitInternal() {}

@@ -405,6 +405,15 @@ namespace Cozmo {
     return retVal;
   }
   
+  bool VisionSystem::CheckMailbox(Vision::FaceTracker::UpdatedID&  msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _updatedFaceIdMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
   bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg)
   {
     bool retVal = false;
@@ -1187,10 +1196,24 @@ namespace Cozmo {
     return result;
   } // TrackerPredictionUpdate()
   
+  void VisionSystem::EnableNewFaceEnrollment(s32 numToEnroll)
+  {
+    _faceTracker->EnableNewFaceEnrollment(numToEnroll);
+  }
+  
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
                                    const std::vector<Quad2f>& markerQuads)
   {
     ASSERT_NAMED(_faceTracker != nullptr, "FaceTracker should not be null.");
+   
+    /*
+    // Periodic printouts of face tracker timings
+    static TimeStamp_t lastProfilePrint = 0;
+    if(grayImage.GetTimestamp() - lastProfilePrint > 2000) {
+      _faceTracker->PrintTiming();
+      lastProfilePrint = grayImage.GetTimestamp();
+    }
+     */
     
     Simulator::SetFaceDetectionReadyTime();
     
@@ -1199,6 +1222,9 @@ namespace Cozmo {
                         "In detecting faces mode, but face tracker is null.");
       return RESULT_FAIL;
     }
+    
+    std::list<Vision::TrackedFace> faces;
+    std::list<Vision::FaceTracker::UpdatedID> updatedIDs;
     
     if(!markerQuads.empty())
     {
@@ -1220,14 +1246,14 @@ namespace Cozmo {
       //_debugImageMailbox.putMessage({"MaskedFaceImage", maskedImage});
 #     endif
       
-      _faceTracker->Update(maskedImage);
+      _faceTracker->Update(maskedImage, faces, updatedIDs);
     } else {
       // No markers were detected, so nothing to black out before looking
       // for faces
-      _faceTracker->Update(grayImage);
+      _faceTracker->Update(grayImage, faces, updatedIDs);
     }
     
-    for(auto & currentFace : _faceTracker->GetFaces())
+    for(auto & currentFace : faces)
     {
       ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
                    "Timestamp error.");
@@ -1244,6 +1270,11 @@ namespace Cozmo {
       currentFace.SetHeadPose(headPose);
       
       _faceMailbox.putMessage(currentFace);
+    }
+    
+    for(auto & updatedID : updatedIDs)
+    {
+      _updatedFaceIdMailbox.putMessage(updatedID);
     }
 
     return RESULT_OK;
@@ -1697,7 +1728,7 @@ namespace Cozmo {
         break;
     }
     AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
-                                       "VisionSystem.InvalidCalibrationResolution",
+                                       "VisionSystem.Init.InvalidCalibrationResolution",
                                        "Unexpected calibration resolution (%dx%d)\n",
                                        camCalib.GetNcols(), camCalib.GetNrows());
     
@@ -1717,9 +1748,23 @@ namespace Cozmo {
     _wasCalledOnce             = false;
     _havePrevPoseData          = false;
     
-    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+    PRINT_NAMED_INFO("VisionSystem.Init.InstantiatingFaceTracker",
                      "With model path %s.", _dataPath.c_str());
-    _faceTracker = new Vision::FaceTracker(_dataPath);
+    
+    // Read in parameters from the Json config file:
+    Json::Value config;
+    const std::string paramsFilename(_dataPath + "/visionParameters.json");
+    std::ifstream jsonFile(paramsFilename);
+    Json::Reader reader;
+    const bool success = reader.parse(jsonFile, config);
+    jsonFile.close();
+    if(! success) {
+      PRINT_NAMED_ERROR("VisionSystem.Init.JsonReadFail",
+                        "Failed to parse Json file %s.", paramsFilename.c_str());
+      return RESULT_FAIL;
+    }
+
+    _faceTracker = new Vision::FaceTracker(_dataPath, config);
     PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
     
     _camera.SetCalibration(camCalib);

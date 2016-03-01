@@ -106,7 +106,7 @@ int main(void)
   //Bluetooth::advertise(); 
 
   Bluetooth::shutdown();
-  //Radio::advertise(); 
+  Radio::advertise();
   
   uint8_t data[4];
   Crypto::random(&data, 4);

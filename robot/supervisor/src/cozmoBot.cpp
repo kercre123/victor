@@ -11,8 +11,6 @@
 #include "imuFilter.h"
 #include "proxSensors.h"
 #include "version.h"
-#include "backpackLightController.h"
-#include "blockLightController.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
@@ -22,9 +20,11 @@
 #include "pathFollower.h"
 #include "testModeController.h"
 #include "anki/cozmo/robot/logging.h"
+#include "backpackLightController.h"
 #ifndef TARGET_K02
 #include "animationController.h"
 #include "anki/common/shared/utilities_shared.h"
+#include "blockLightController.h"
 #endif
 
 #ifdef SIMULATOR
@@ -159,10 +159,8 @@ namespace Anki {
 
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 244, "PathFollower System init failed.\n", 0);
-
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 245, "BackpackLightController init failed.\n", 0);
-
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == RESULT_FAIL) {
@@ -284,9 +282,9 @@ namespace Anki {
           SteeringController::ExecuteDirectDrive(0,0);
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
-          BackpackLightController::Init();
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
+          BackpackLightController::Init();
 #ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
           AnimationController::EnableTracks(ALL_TRACKS);
@@ -340,8 +338,9 @@ namespace Anki {
         HeadController::Update();
         LiftController::Update();
         BackpackLightController::Update();
+#ifndef TARGET_K02
         BlockLightController::Update();
-
+#endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
@@ -401,38 +400,6 @@ namespace Anki {
         SteeringController::Manage();
         WheelController::Manage();
 
-        //////////////////////////////////////////////////////////////
-        // Cubes
-        //////////////////////////////////////////////////////////////
-
-        // Send "connected" state to engine
-        MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
-        static bool lastSentCubeConnected[MAX_NUM_ACTIVE_OBJECTS] = {false};
-#ifdef SIMULATOR
-        // This amount is just higher than the rate at which ObjectDiscovered messages are being sent from sim_hal
-        const u16 CONNECTION_TIMEOUT_THRESH_MS = 1100;
-#else
-        // TODO: This should be _much_ smaller! Block messages are being dropped. HW team will look into why eventually.
-        const u16 CONNECTION_TIMEOUT_THRESH_MS = 500;
-#endif
-        if (Messages::ReceivedInit()) {
-          for (u32 i=0; i<MAX_NUM_ACTIVE_OBJECTS; ++i) {
-            if ((HAL::GetLastCubeContactTime(i) > 0) &&
-                (( lastSentCubeConnected[i] && (HAL::GetTimeStamp() - HAL::GetLastCubeContactTime(i) > CONNECTION_TIMEOUT_THRESH_MS)) ||
-                 (!lastSentCubeConnected[i] && (HAL::GetTimeStamp() - HAL::GetLastCubeContactTime(i) < CONNECTION_TIMEOUT_THRESH_MS)))) {
-              ObjectConnectionState msg;
-              msg.objectID = i;
-              msg.factoryID = HAL::GetCubeFactoryID(i);
-              msg.connected = !lastSentCubeConnected[i];
-              lastSentCubeConnected[i] = msg.connected;
-              RobotInterface::SendMessage(msg);
-            }
-          }
-        } else {
-          for (u32 i=0; i<MAX_NUM_ACTIVE_OBJECTS; ++i) {
-            lastSentCubeConnected[i] = false;
-          }
-        }
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display

@@ -548,11 +548,6 @@
               <FilePath>.\k02_hal\hal\lights.cpp</FilePath>
             </File>
             <File>
-              <FileName>battery.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\battery.cpp</FilePath>
-            </File>
-            <File>
               <FileName>cube.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\cube.cpp</FilePath>
@@ -633,21 +628,6 @@
               <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
             </File>
             <File>
-              <FileName>backpackLightController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>ledController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>blockLightController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>dockingController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
@@ -711,6 +691,11 @@
               <FileName>version.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\version.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
             </File>
           </Files>
         </Group>

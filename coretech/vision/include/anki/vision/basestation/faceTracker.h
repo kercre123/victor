@@ -18,6 +18,10 @@
 
 #include <list>
 
+// Forward declaration:
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
 namespace Vision {
@@ -28,23 +32,33 @@ namespace Vision {
   {
   public:
     
-    enum class DetectionMode : u8 {
-      SingleImage,
-      Video
-    };
-    
-    FaceTracker(const std::string& modelPath,
-                DetectionMode mode = DetectionMode::Video);
+    FaceTracker(const std::string& modelPath, const Json::Value& config);
     
     ~FaceTracker();
     
-    Result Update(const Vision::Image& frameOrig);
+    using UpdatedID = struct { TrackedFace::ID_t oldID, newID; };
     
-    std::list<TrackedFace> GetFaces() const;
+    // Returns the faces found and any IDs that may have been updated (e.g. due
+    // to a new recognition or a merge of existing records)
+    Result Update(const Vision::Image&    frameOrig,
+                  std::list<TrackedFace>& faces,
+                  std::list<UpdatedID>&   updatedIDs);
     
     void EnableDisplay(bool enabled);
     
+    // Set the number of new users to enroll.
+    // If numToEnroll == 0, new face enrollment is disabled.
+    // If numToEnroll == -1, all new faces are enrolled ongoing.
+    void EnableNewFaceEnrollment(s32 numToEnroll);
+    bool IsNewFaceEnrollmentEnabled() const;
+    
+    // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
+    
+    Result SaveAlbum(const std::string& albumName);
+    Result LoadAlbum(const std::string& albumName);
+    
+    void PrintTiming();
     
   private:
     

@@ -15,7 +15,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 //#include "animationController.h"
-#include "backpackLightController.h"
+//#include "backpackLightController.h"
 #include "proxSensors.h"
 #include <math.h>
 #include "trig_fast.h"
@@ -294,7 +294,7 @@ namespace Anki {
         HeadController::SetAngularVelocity(0);
 
         // Backpack lights
-        BackpackLightController::Enable();
+        //BackpackLightController::Enable();
         
         // Re-enable prox sensors
         ProxSensors::EnableCliffDetector(true);

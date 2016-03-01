@@ -19,7 +19,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
 
-#include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/image.h"
 
 namespace Anki {
 namespace Vision {
@@ -31,9 +31,9 @@ namespace Vision {
   {
   public:
     
-    using ID_t = int64_t;
+    using ID_t = int32_t;
     
-    static const ID_t UnknownFace = -1;
+    static const ID_t UnknownFace = 0;
     
     // Constructor:
     TrackedFace();
@@ -46,9 +46,6 @@ namespace Vision {
     void SetID(ID_t newID);
     void SetTimeStamp(TimeStamp_t timestamp);
     
-    const std::string& GetName() const;
-    void SetName(std::string&& newName);
-    
     // Returns true if tracking is happening vs. false if face was just detected
     bool IsBeingTracked() const;
     void SetIsBeingTracked(bool tf);
@@ -56,9 +53,6 @@ namespace Vision {
     const Rectangle<f32>& GetRect() const;
     
     // NOTE: Left/right are from viewer's perspective! (i.e. as seen in the image)
-    
-    const Point2f& GetLeftEyeCenter() const;
-    const Point2f& GetRightEyeCenter() const;
     
     enum FeatureName {
       LeftEye = 0,
@@ -94,10 +88,20 @@ namespace Vision {
     void AddPointToFeature(FeatureName whichFeature, Point2f&& point);
     void SetFeature(FeatureName whichFeature, Feature&& points);
     
-    void SetLeftEyeCenter(Point2f&& center);
-    void SetRightEyeCenter(Point2f&& center);
+    void SetEyeCenters(Point2f&& leftCen, Point2f&& rightCen);
+    
+    // Returns true if eye centers have been specified via SetEyeCenters, false otherwise
+    bool HasEyes() const { return _eyesDetected; }
+    
+    // Returns true if the face has eyes set and populates the left and right centers
+    // Returns false and does not change leftCen/rightCen if eyes were never set
+    bool GetEyeCenters(Point2f& leftCen, Point2f& rightCen) const;
+    f32  GetIntraEyeDistance() const;
     
     void SetRect(Rectangle<f32>&& rect);
+    
+    void SetThumbnail(const Image& image) { _thumbnailImage = image; }
+    const Image& GetThumbnail() { return _thumbnailImage; }
     
     // These are w.r.t. the original observer (i.e. the camera at observation time)
     Radians GetHeadYaw()   const;
@@ -109,9 +113,9 @@ namespace Vision {
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
     
-    void UpdateTranslation(const Vision::Camera& camera);
-    
-    f32 GetIntraEyeDistance() const;
+    // Returns true if real eye detections were used to update the translation, false
+    // if fake eye centers (based on detection rectangle) were used.
+    bool UpdateTranslation(const Vision::Camera& camera);
     
     // Return the histogram over all expressions
     std::array<f32, NumExpressions> GetExpressionValues() const;
@@ -127,7 +131,6 @@ namespace Vision {
   private:
     
     ID_t           _id;
-    std::string    _name;
     
     float          _score;
     bool           _isBeingTracked;
@@ -135,6 +138,7 @@ namespace Vision {
     
     Rectangle<f32> _rect;
     
+    bool    _eyesDetected = false;
     Point2f _leftEyeCen, _rightEyeCen;
     
     std::array<Feature, NumFeatures> _features;
@@ -143,6 +147,8 @@ namespace Vision {
     Radians _roll, _pitch, _yaw;
     
     Pose3d _headPose;
+    
+    Image _thumbnailImage;
     
   }; // class TrackedFace
   
@@ -203,14 +209,20 @@ namespace Vision {
     _features[whichFeature].emplace_back(point);
   }
   
-  inline void TrackedFace::SetLeftEyeCenter(Point2f &&center)
+  inline void TrackedFace::SetEyeCenters(Point2f&& leftCen, Point2f&& rightCen)
   {
-    _leftEyeCen = center;
+    _leftEyeCen = leftCen;
+    _rightEyeCen = rightCen;
+    _eyesDetected = true;
   }
   
-  inline void TrackedFace::SetRightEyeCenter(Point2f &&center)
+  inline bool TrackedFace::GetEyeCenters(Point2f& leftCen, Point2f& rightCen) const
   {
-    _rightEyeCen = center;
+    if(HasEyes()) {
+      leftCen = _leftEyeCen;
+      rightCen = _rightEyeCen;
+    }
+    return HasEyes();
   }
   
   inline void TrackedFace::SetRect(Rectangle<f32> &&rect)
@@ -246,21 +258,6 @@ namespace Vision {
     _headPose = pose;
   }
   
-  inline const Point2f& TrackedFace::GetLeftEyeCenter() const {
-    return _leftEyeCen;
-  }
-  
-  inline const Point2f& TrackedFace::GetRightEyeCenter() const {
-    return _rightEyeCen;
-  }
-  
-  inline const std::string& TrackedFace::GetName() const {
-    return _name;
-  }
-  
-  inline void TrackedFace::SetName(std::string&& newName) {
-    _name = newName;
-  }
   
 } // namespace Vision
 } // namespace Anki

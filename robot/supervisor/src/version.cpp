@@ -5,8 +5,8 @@
 #include "version.h"
 #include "anki/cozmo/robot/version.h"
 #include "anki/cozmo/robot/hal.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #define BUILD_DATE_SKIP 5
 

@@ -335,6 +335,15 @@ namespace Anki
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight);
 
+      // Return the current scan line time
+      u16 CameraGetScanLine();
+      
+      // Get the camera frame number -- counts from camera start
+      u32 CameraGetFrameNumber();
+      
+      // Get the number of scan lines of delay due to current exposure settings
+      u16 CameraGetExposureDelay();
+
 #     ifdef SIMULATOR
       u32 GetCameraStartTime();
       bool IsVideoEnabled();
@@ -464,11 +473,9 @@ namespace Anki
       /** Wrapper method for sending messages NOT PACKETS
        * @param msgID The ID (tag) of the message to be sent
        * @param buffer A pointer to the message to be sent
-       * @param reliable Specifify if the message should be transferred reliably. Default true.
-       * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID, const bool reliable=true, const bool hot=false);
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS

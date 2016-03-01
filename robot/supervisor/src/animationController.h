@@ -36,7 +36,7 @@ namespace Anki {
       Result Init();
 
       // Buffer up a new KeyFrame for playing, using a KeyFrame message
-      Result BufferKeyFrame(const RobotInterface::EngineToRobot& msg);
+      Result BufferKeyFrame(const u8* buffer, const u16 bufferSize);
 
       // Plays any buffered keyframes available, if enough of a pre-roll is
       // buffered up or we've received all the keyframes for the animation

@@ -1,10 +1,19 @@
 #ifndef __SPINE_H
 #define __SPINE_H
 
+#include "portable.h"
+#include "anki/cozmo/robot/spineData.h"
+
 namespace Spine {
-  void enqueue(SpineProtocol& msg);
-  void dequeue(SpineProtocol& msg);
-  void processMessage(SpineProtocol& msg);
+  void Dequeue(CladBufferUp* dest);
+}
+
+namespace Anki {
+  namespace Cozmo {
+    namespace HAL {
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID=0);
+    }
+  }
 }
 
 #endif
