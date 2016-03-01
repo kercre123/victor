@@ -103,8 +103,6 @@ namespace Anki {
         set { _OnRelease = value; }
       }
 
-      // TODO: I'm pairing DASEventButtonName and DASEventViewController a lot
-      // and only using the setter externally; maybe I should refactor setting into a method.
       public string DASEventButtonName {
         get { 
           if (string.IsNullOrEmpty(_DASEventButtonName)) {

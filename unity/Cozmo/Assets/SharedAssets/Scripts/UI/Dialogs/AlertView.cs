@@ -47,6 +47,7 @@ namespace Cozmo {
           if (_TitleKey != value && _AlertTitleText != null) {
             _TitleKey = value;
             _AlertTitleText.text = Localization.Get(value);
+            UpdateButtonViewControllerNames();
           }
         }
       }
@@ -57,6 +58,7 @@ namespace Cozmo {
           if (_DescriptionKey != value && _AlertMessageText != null) {
             _DescriptionKey = value;
             _AlertMessageText.text = Localization.Get(value);
+            UpdateButtonViewControllerNames();
           } 
         }
       }
@@ -64,10 +66,10 @@ namespace Cozmo {
       private void Awake() {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
 
-        DASEventViewName = GenerateDasName();
+        string viewName = GenerateDasName();
 
         if (_CloseButton != null) {
-          _CloseButton.DASEventViewController = DASEventViewName;
+          _CloseButton.DASEventViewController = viewName;
           _CloseButton.DASEventButtonName = "close_button";
           _CloseButton.onClick.AddListener(CloseView);
           _CloseButton.gameObject.SetActive(false);
@@ -79,13 +81,13 @@ namespace Cozmo {
 
         // Hide all buttons
         if (_PrimaryButton != null) {
-          _PrimaryButton.DASEventViewController = DASEventViewName;
+          _PrimaryButton.DASEventViewController = viewName;
           _PrimaryButton.DASEventButtonName = "primary_button";
           _PrimaryButton.gameObject.SetActive(false);
         }
 
         if (_SecondaryButton != null) {
-          _SecondaryButton.DASEventViewController = DASEventViewName;
+          _SecondaryButton.DASEventViewController = viewName;
           _SecondaryButton.DASEventButtonName = "secondary_button";
           _SecondaryButton.gameObject.SetActive(false);
         }
@@ -97,14 +99,30 @@ namespace Cozmo {
         ResetButton(_SecondaryButton);
       }
 
+      private void UpdateButtonViewControllerNames() {
+        string viewName = GenerateDasName();
+        if (_CloseButton != null) {
+          _CloseButton.DASEventViewController = viewName;
+        }
+
+        // Hide all buttons
+        if (_PrimaryButton != null) {
+          _PrimaryButton.DASEventViewController = viewName;
+        }
+
+        if (_SecondaryButton != null) {
+          _SecondaryButton.DASEventViewController = viewName;
+        }
+      }
+
       private string GenerateDasName() {
         string viewFormatting = "{0}_{1}";
         string viewName = null;
-        if (TitleLocKey != null) {
-          viewName = string.Format(viewFormatting, DASEventViewName, TitleLocKey);
+        if (_TitleKey != null) {
+          viewName = string.Format(viewFormatting, DASEventViewName, _TitleKey);
         }
-        else if (DescriptionLocKey != null) {
-          viewName = string.Format(viewFormatting, DASEventViewName, DescriptionLocKey);
+        else if (_DescriptionKey != null) {
+          viewName = string.Format(viewFormatting, DASEventViewName, _DescriptionKey);
         }
         else {
           viewName = DASEventViewName;

@@ -15,9 +15,15 @@ namespace Cozmo {
       [SerializeField]
       private AnkiButton _QuitButtonInstance;
 
+      public string DASEventViewController {
+        get { return _QuitButtonInstance.DASEventViewController; } 
+        set { _QuitButtonInstance.DASEventViewController = value; }
+      }
+
       private bool _ConfimedQuit = false;
 
       private void Start() {
+        _QuitButtonInstance.DASEventButtonName = "quit_button";
         _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
       }
 
