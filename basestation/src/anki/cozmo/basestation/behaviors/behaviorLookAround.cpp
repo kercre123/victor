@@ -404,7 +404,7 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
   
   if (familyList.count(msg.objectFamily) > 0) {
     if( ! confirmed ) {
-      if( _currentState != State::LookingAtPossibleObject ) {
+      if( _currentState != State::LookingAtPossibleObject && _currentState != State::ExaminingFoundObject ) {
         _lastPossibleObjectPose = Pose3d{0, Z_AXIS_3D(),
                                          {msg.world_x, msg.world_y, msg.world_z},
                                          robot.GetWorldOrigin()};
