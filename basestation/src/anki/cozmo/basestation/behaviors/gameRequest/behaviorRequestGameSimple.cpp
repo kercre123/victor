@@ -114,8 +114,18 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
   return RESULT_OK;
 }
 
-IBehavior::Status BehaviorRequestGameSimple::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& robot, double currentTime_sec)
 {
+  if( _state == State::SearchingForBlock ) {
+    // if we are searching for a block, stop immediately when we find one
+    if( GetNumBlocks(robot) > 0 ) {
+      PRINT_NAMED_INFO("BehaviorRequestGameSimple.FoundBlock",
+                       "found block during search");
+      StopActing(false);
+      TransitionToFacingBlock(robot);
+    }
+  }
+
   if( IsActing() ) {
     return Status::Running;
   }
@@ -189,9 +199,16 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot
 void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
-  StartActing(new FaceObjectAction( robot, targetBlockID, PI_F ),
-              &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
-  SET_STATE(State::FacingBlock);
+  if( targetBlockID.IsSet() ) {
+    StartActing(new FaceObjectAction( robot, targetBlockID, PI_F ),
+                &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
+    SET_STATE(State::FacingBlock);
+  }
+  else {
+    PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransiitonToFacingBlock.NoBlock",
+                     "block no longer exists (or has moved). Searching for block");
+    TransitionToSearchingForBlock(robot);
+  }
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robot)
@@ -221,6 +238,44 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
               } );
   SET_STATE(State::PickingUpBlock);
 }
+
+void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
+{
+  // face the last known pose, then look around a bit (left and right). The Update loop will cancel this
+  // action if a block is found
+  Pose3d lastKnownPose;
+  if( GetLastBlockPose(lastKnownPose) ) {
+    SET_STATE(State::SearchingForBlock);
+
+    CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
+
+    FacePoseAction* faceAction = new FacePoseAction(robot, lastKnownPose, PI_F);
+    faceAction->SetPanTolerance(DEG_TO_RAD(5));
+    searchAction->AddAction(faceAction);
+
+    searchAction->AddAction(new SearchSideToSideAction(robot));
+    
+    StartActing(searchAction,
+                [this, &robot](ActionResult result) {
+                  if( GetNumBlocks(robot) > 0 ) {
+                    // check one more time to see if we found a block
+                    TransitionToFacingBlock(robot);
+                  }
+                  else {
+                    // could fall back to the 0 block request here, but might not want to
+                    // TODO:(bn) shouldn't incur repetition penalty in this case?
+                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.SearchForBlock.Failed",
+                                     "block has disappeared! Giving up on behavior");
+                  }
+                });
+  }
+  else {
+    PRINT_NAMED_ERROR("BehaviorRequestGameSimple.NoLastBlockPose",
+                      "Trying to search, but never had a block pose. This is a bug");
+    StopActing(false);
+  }
+}
+
 
 void BehaviorRequestGameSimple::ComputeFaceInteractionPose(Robot& robot)
 {

@@ -73,6 +73,10 @@ message TurnInPlace {
     uint_8 robotID
 }
 
+message SearchSideToSide {
+    uint_8 robotID
+}
+
 // TurnInPlaceAtSpeed
 message TurnInPlaceAtSpeed {
     float_32 speed_rad_per_sec,
@@ -686,6 +690,7 @@ union RobotActionUnion {
   SetLiftHeight             setLiftHeight,
   SetHeadAngle              setHeadAngle,
   TurnInPlace               turnInPlace,
+  SearchSideToSide          searchSideToSide,
   TrackToFace               trackFace,
   TrackToObject             trackObject,
   DriveStraight             driveStraight,

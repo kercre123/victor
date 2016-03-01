@@ -230,8 +230,8 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
     _lastPossibleObjectPose.PrintNamedPathToOrigin(false);
   }
 
-  // add a wait action, to give the vision system a chance to see the object
-  action->AddAction(new WaitAction(robot, kPossibleObjectWaitTime_s));
+  // add a search action after driving / facing, in case we don't see the object
+  action->AddAction(new SearchSideToSideAction(robot));
   
   // Note that in the positive case, this drive to action is likely to get canceled
   // because we discover it is a real object
@@ -369,6 +369,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
 Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   ResetBehavior(robot, currentTime_sec);
+  StopActing();
   return Result::RESULT_OK;
 }
   
@@ -403,7 +404,7 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
   
   if (familyList.count(msg.objectFamily) > 0) {
     if( ! confirmed ) {
-      if( _currentState != State::LookingAtPossibleObject ) {
+      if( _currentState != State::LookingAtPossibleObject && _currentState != State::ExaminingFoundObject ) {
         _lastPossibleObjectPose = Pose3d{0, Z_AXIS_3D(),
                                          {msg.world_x, msg.world_y, msg.world_z},
                                          robot.GetWorldOrigin()};
