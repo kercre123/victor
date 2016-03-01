@@ -509,9 +509,6 @@ public class RobotEngineManager : MonoBehaviour {
     if (actionType == RobotActionType.PLAY_ANIMATION) {
       // Reset cozmo's face
       string animationCompleted = message.completionInfo.animationCompleted.animationName;
-      if (success && animationCompleted != AnimationName.kDefaultFace) {
-        CurrentRobot.SendAnimation(AnimationName.kDefaultFace, null, QueueActionPosition.NOW_AND_RESUME);
-      }
 
       if (RobotCompletedAnimation != null) {
         RobotCompletedAnimation(success, animationCompleted);
