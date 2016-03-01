@@ -113,7 +113,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.x_center_mm = t->x;
       m.y_center_mm = t->y;
       m.targetRad = t->targetAngle;
-            
+      m.angleTolerance = t->angleTolerance;
       m.speed.target = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetTargetSpeed();
       m.speed.accel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetAccel();
       m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
