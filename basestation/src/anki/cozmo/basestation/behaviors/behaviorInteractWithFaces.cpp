@@ -195,10 +195,8 @@ namespace Cozmo {
     {
       PlayAnimation(robot, kMinorFriendlyReactAnimName, QueueActionPosition::AT_END);
       dataIter->second._playedNewFaceAnim = true;
-      
-      robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
-                                           EmotionType::Social, kEmotionChangeMedium,
-                                           EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew", currentTime_sec);
+
+      robot.GetMoodManager().TriggerEmotionEvent("SeeSometingNew", currentTime_sec);
       _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
     }
     
@@ -437,10 +435,7 @@ namespace Cozmo {
         // We're just watching one face, see if it's time for cooldown
         else if(watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
-          robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
-                                               EmotionType::Excited, kEmotionChangeSmall,
-                                               EmotionType::Social,  kEmotionChangeLarge,  "LotsOfFace", currentTime_sec);
-          
+          robot.GetMoodManager().TriggerEmotionEvent("LotsOfFace", currentTime_sec);          
           _interestingFacesData[faceID]._coolDownUntil_sec = currentTime_sec + kFaceCooldownDuration_sec;
           StopTracking(robot);
           
@@ -922,9 +917,8 @@ namespace Cozmo {
           PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotCompletedAction.TimedOut",
                            "Timed out tracking face %d, attempting to switch to next.",
                            lastFaceID);
-          
-          robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  -kEmotionChangeVerySmall,
-                                               EmotionType::Social, -kEmotionChangeVerySmall, "LostFace", MoodManager::GetCurrentTimeInSeconds());
+
+          robot.GetMoodManager().TriggerEmotionEvent("LostFace", MoodManager::GetCurrentTimeInSeconds());          
         }
         
         TrackNextFace(robot, lastFaceID, event.GetCurrentTime());
