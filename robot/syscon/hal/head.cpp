@@ -35,7 +35,6 @@ bool Head::spokenTo;
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-extern void EnterRecovery(void);
 static void setTransmitMode(TRANSMIT_MODE mode);
 
 void Head::init() 
@@ -122,7 +121,18 @@ inline void transmitByte() {
   NRF_UART0->TXD = txRxBuffer[txRxIndex++];
 }
 
+#include "gatts.h"
+
 void Head::manage(void* userdata) {
+  {
+    static const uint8_t message[] = "Cozmo says hello... Cozmo says hello... ";
+    static int offset = 0;
+    drive_send msg;
+    memcpy(msg.data, &message[offset], sizeof(msg.data));
+    offset = (offset + 1) % sizeof(msg.data);
+    GATTS::transmit(&msg);
+  }
+
   Spine::dequeue(g_dataToHead.spineMessage);
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.spineMessage.opcode = NO_OPERATION;
@@ -135,21 +145,22 @@ void Head::manage(void* userdata) {
 extern "C"
 void UART0_IRQHandler()
 {
+  static int header_shift = 0;
+
   // We received a byte
   if (NRF_UART0->EVENTS_RXDRDY) {
     NRF_UART0->EVENTS_RXDRDY = 0;
 
-    txRxBuffer[txRxIndex] = NRF_UART0->RXD;
-
     // Re-sync to header
     if (txRxIndex < 4) {
-      const uint32_t head_target = SPI_SOURCE_HEAD;
-      const uint8_t header = head_target >> (txRxIndex * 8);
-
-      if(txRxBuffer[txRxIndex] != header) {
-        txRxIndex = 0;
+      header_shift = (header_shift >> 8) | (NRF_UART0->RXD << 24);
+      
+      if (header_shift == SPI_SOURCE_HEAD) {
+        txRxIndex = 4;
         return ;
       }
+    } else {
+      txRxBuffer[txRxIndex] = NRF_UART0->RXD;
     }
 
     // We received a full packet
@@ -175,6 +186,7 @@ void UART0_IRQHandler()
           setTransmitMode(TRANSMIT_DEBUG);
           #else
           setTransmitMode(TRANSMIT_RECEIVE);
+          header_shift = 0;
           #endif
         } else {
           transmitByte();

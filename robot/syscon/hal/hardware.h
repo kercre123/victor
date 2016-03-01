@@ -10,6 +10,14 @@
 // Updated for EP1
 #define ROBOT_EP1_BODY
 
+enum watchdog_channels {
+  WDOG_RTOS,
+  //WDOG_UART,
+  WDOG_TOTAL_CHANNELS
+};
+
+static const uint8_t wdog_channel_mask = (1 << WDOG_TOTAL_CHANNELS) - 1;
+
 enum e_nrf_gpio {
   // Encoders
   PIN_ENCODER_LEFT    = 13, // ENC1

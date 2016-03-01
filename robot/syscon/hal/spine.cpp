@@ -10,6 +10,8 @@
 
 extern void EnterRecovery(void);
 
+extern void EnterRecovery(void);
+
 static const int FIFO_LIMIT = 4;
 static SpineProtocol queue[FIFO_LIMIT];
 

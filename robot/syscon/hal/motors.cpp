@@ -34,7 +34,7 @@ struct MotorInfo
   s16 oldPWM;
 };
 
-const u32 IRQ_PRIORITY = 0;
+const u32 IRQ_PRIORITY = 2;
 
 // 16 MHz timer with PWM running at 20kHz
 const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
@@ -477,7 +477,6 @@ void Motors::printEncodersRaw()
   // After printing, reset encoders (this is okay because it's used for encoder testing)
   m_motors[0].position = m_motors[1].position = m_motors[2].position = m_motors[3].position = 0;
 }
-
 
 
 // Get wheel ticks

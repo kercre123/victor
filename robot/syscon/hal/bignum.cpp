@@ -1,0 +1,632 @@
+#include <stdint.h>
+#include <string.h>
+
+#include "bignum.h"
+
+void big_init(big_num_t& num) {
+  num.negative = false;
+  num.used = 0;
+}
+
+// Cheapo function for reducing used count
+static inline void bit_reduce(big_num_t& num) {
+  while (num.used > 0 && num.digits[num.used-1] == 0) {
+    num.used--;
+  }
+}
+
+// accessors for multiply
+static uint16_t big_get_index(const big_num_t& num, int index) {
+  if (index >= num.used) {
+    return 0;
+  }
+
+  return num.digits[index];
+}
+
+static void big_set_index(big_num_t& out, int index, const big_num_cell_t cell) {
+  while (index >= out.used) {
+    out.digits[out.used++] = 0;
+  }
+
+  out.digits[index] = cell;
+}
+
+// POS : A < B
+// NEG : A > B
+//  0  : A = B
+
+int big_unsigned_compare(const big_num_t& a, const big_num_t& b) {
+  // Zero values
+  if (a.used == 0 && b.used == 0) {
+    return 0;
+  }
+
+  // Check if one is significantly larger
+  int diff = a.used - b.used;
+  if (diff) {
+    return diff;
+  }
+
+  // Find word that is different
+  for (int i = a.used - 1; i >= 0; i--) {
+    int diff = a.digits[i] - b.digits[i];
+
+    if (diff) {
+      return diff;
+    }
+  }
+
+  return 0;
+}
+
+int big_compare(const big_num_t& a, const big_num_t& b) {
+  // Zero values
+  if (a.used == 0 && b.used == 0) {
+    return 0;
+  }
+
+  // Signs are different
+  if (a.negative != b.negative) {
+    return a.negative ? -1 : 1;
+  }
+
+  int diff = big_unsigned_compare(a, b);
+  return a.negative ? -diff : diff;
+}
+
+
+bool big_zero(const big_num_t& a) {
+  return a.used == 0;
+}
+
+static bool big_odd(const big_num_t& a) {
+  return big_bit_get(a, 0);
+}
+
+static bool big_mask(big_num_t& t, int bits) {
+  int index = bits / CELL_BITS;
+  big_num_cell_t mask = (1 << (bits % CELL_BITS)) - 1;
+
+  if (t.used > index) {
+    t.used = index + 1;
+  }
+
+  t.digits[index] &= mask;
+
+  return false;
+}
+
+bool big_bit_get(const big_num_t& a, int bit) {
+  int offset = bit / CELL_BITS;
+  int shift = bit % CELL_BITS;
+
+  if (offset >= a.used) return false;
+
+  return (a.digits[offset] & (1 << shift)) != 0;
+}
+
+bool big_bit_set(big_num_t& a, int bit) {
+  int offset = bit / CELL_BITS;
+  int shift = bit % CELL_BITS;
+
+  if (offset >= CELL_SIZE) {
+    return true;
+  }
+
+  while (a.used <= offset) {
+    a.digits[a.used++] = 0;
+  }
+
+  a.digits[offset] |= (1 << shift);
+  return false;
+}
+
+int big_msb(const big_num_t& a) {
+  if (a.used == 0) {
+    return -1;
+  }
+  
+  const big_num_cell_t data = a.digits[a.used - 1];
+  
+  for (int i = CELL_BITS - 1; i >= 0; i--) {
+    if (data & (1 << i)) {
+      return (a.used - 1) * CELL_BITS + i;
+    }
+  }
+
+  return -1;
+}
+
+int big_lsb(const big_num_t& a) {
+  for (int idx = 0; idx < a.used; idx++) {
+    const big_num_cell_t data = a.digits[idx];
+
+    if (data == 0) {
+      continue ;
+    }
+
+    for (int i = 0; i < CELL_BITS; i++) {
+      if (data & (1 << i)) {
+        return idx * CELL_BITS + i;
+      }
+    }
+  }
+
+  return -1;
+}
+
+bool big_shr(big_num_t& out, const big_num_t& a, const int bits) {
+  big_overflow_t carry;
+
+  int cells = a.used;
+  int offset = bits / CELL_BITS;
+  int shift = bits % CELL_BITS;
+  int index = 0;
+
+  out.used = a.used - offset;
+
+  while (offset < cells) {
+    carry.lower = a.digits[offset++];
+    carry.upper = (offset >= cells) ? 0 : a.digits[offset];
+    out.digits[index++] = carry.word >> shift;
+  }
+
+  bit_reduce(out);
+  out.negative = a.negative;
+
+  return false;
+}
+
+bool big_shl(big_num_t& out, const big_num_t& a, const int bits) {
+  big_overflow_t carry;
+
+  // Bail on life
+  if (bits == 0) {
+    memcpy(&out, &a, sizeof(big_num_t));
+    return false;
+  }
+
+  int offset = bits / CELL_BITS;
+  int shift = bits % CELL_BITS;
+  int write = a.used + offset;
+  int index = a.used;
+
+  out.used = write + 1;
+
+  // Prevent overflow
+  if (out.used > CELL_SIZE) {
+    return true;
+  }
+
+  memset(&out.digits, 0, offset * sizeof(big_num_cell_t));
+
+  carry.word = 0;
+  while (index >= 0) {
+    carry.upper = carry.lower;
+    carry.lower = (index-- >= 0) ? a.digits[index] : 0;
+
+    out.digits[write--] = carry.word >> (16 - shift);
+  }
+
+  bit_reduce(out);
+  out.negative = a.negative;
+
+  return false;
+}
+
+bool big_unsigned_add(big_num_t& out, const big_num_t& a, const big_num_t& b) {
+  big_overflow_t carry;
+
+  const big_num_t* bottom;
+  const big_num_t* top;
+  int idx;
+
+  if (a.used < b.used) {
+    bottom = &a;
+    top = &b;
+  } else {
+    bottom = &b;
+    top = &a;
+  }
+  
+  carry.word = 0;
+
+  // Lower section summation
+  for (idx = 0; idx < bottom->used; idx++) {
+    carry.word = bottom->digits[idx] + top->digits[idx] + carry.upper;
+    out.digits[idx] = carry.lower;
+  }
+  
+  // Carry through
+  for (; idx < top->used; idx++) {
+    carry.word = top->digits[idx] + carry.upper;
+    out.digits[idx] = carry.lower;
+  }
+
+  // Bit expansion
+  if (carry.upper) {
+    // Overflow error
+    if (idx+1 >= CELL_SIZE) {
+      return true;
+    }
+
+    out.digits[idx++] = carry.upper;
+  }
+
+  out.used = idx;
+
+  return false;
+}
+
+bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& b) {
+  union {
+    struct {
+      big_num_cell_t lower;
+      int16_t upper;
+    };
+
+    uint32_t word;
+  };
+
+  int idx;
+
+  // Underflow certain
+  if (a.used < b.used) {
+    return true;
+  }
+  
+  word = 0;
+
+  // Lower section summation
+  for (idx = 0; idx < b.used; idx++) {
+    word = a.digits[idx] - b.digits[idx] + upper;
+    out.digits[idx] = lower;
+  }
+  
+  // Carry through
+  for (; idx < a.used; idx++) {
+    word = a.digits[idx] + upper;
+    out.digits[idx] = lower;
+  }
+
+  // underflow
+  if (upper) {
+    return true;
+  }
+
+  out.used = idx;
+  bit_reduce(out);
+
+  return false;
+}
+
+static bool big_add_sub(big_num_t& out, const big_num_t& a, const big_num_t& b, bool b_sign) {
+  bool result;
+
+  if (a.negative == b_sign) {
+    result = big_unsigned_add(out, a, b);
+    out.negative = a.negative;
+  }
+  else if (big_unsigned_compare(a, b) > 0) {
+    result = big_unsigned_subtract(out, a, b);
+    out.negative = a.negative;
+  }
+  else {
+    result = big_unsigned_subtract(out, b, a);
+    out.negative = !a.negative;
+  }
+
+  return result;
+}
+
+bool big_add(big_num_t& out, const big_num_t& a, const big_num_t& b) {
+  return big_add_sub(out, a, b, b.negative);
+}
+
+bool big_subtract(big_num_t& out, const big_num_t& a, const big_num_t& b) {
+  return big_add_sub(out, a, b, !b.negative);
+}
+
+bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
+  big_overflow_t carry;
+
+  int amax = a.used - 1;
+  int bmax = b.used - 1;
+  int zeroed = a.used + b.used + 1; // First entry zeroed
+
+  out.used = amax + bmax;
+  out.negative = a.negative != b.negative;
+
+  // Zero term
+  if (out.used == 0) {
+    return false;
+  }
+
+  for (int ai = amax; ai >= 0; ai--) {
+    int a_value = a.digits[ai];
+
+    for (int bi = bmax; bi >= 0; bi--) {
+      int write_index = ai + bi;
+
+      // Multiply base terms and hope it's only 16-bit
+      int carry_in = (write_index >= zeroed) ? out.digits[write_index] : 0;
+      carry.word = a_value * b.digits[bi] + carry_in;
+      
+      out.digits[write_index++] = carry.lower;
+
+      // Start carry through chain
+      while (carry.upper) {
+        // Overflow check
+        if (write_index >= CELL_SIZE) {
+          return true;
+        }
+
+        carry_in = (write_index >= zeroed) ? out.digits[write_index] : 0;        
+        carry.word = carry.upper + carry_in;
+        out.digits[write_index++] = carry.lower;
+      }
+
+      // Set the new used count
+      if (write_index > out.used) {
+        out.used = write_index;
+      }
+
+      // Set the initalized count-down
+      if (ai + bi < zeroed) {
+        zeroed = ai + bi;
+      }
+    }
+  }
+
+  bit_reduce(out);
+
+  return false;
+}
+
+bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp) {
+  big_num_t working[2];
+  big_num_t *base = &working[0];
+  big_num_t *temp = &working[1];
+
+  int msb = big_msb(exp);
+  
+  *base = base_in;
+  result = BIG_ONE;
+
+  for (int bit = 0; bit <= msb; bit++) {
+    if (big_bit_get(exp, bit)) {
+      if (big_multiply(result, result, *base)) {
+        return true;
+      }
+    }
+
+    if (big_multiply(*temp, *base, *base)) {
+      return true;
+    }
+
+    big_num_t *x = base;
+    base = temp;
+    temp = x;
+  }
+
+  result.negative = big_odd(base_in) ? base_in.negative : false;
+
+  return false;
+}
+
+bool big_divide(big_num_t& result, big_num_t& modulo, const big_num_t& a, const big_num_t& b) {
+  big_num_t divisor;
+
+  // Zero out result, but say it's size is that of our divisor (maximum size)
+  memset(&result, 0, sizeof(big_num_t));
+  result.used = a.used;
+  result.negative = a.negative != b.negative;
+
+  modulo = a;
+
+  int shift = big_msb(a) - big_msb(b);
+
+  big_shl(divisor, b, shift);
+
+  for (; shift >= 0; shift--) {
+    if (big_unsigned_compare(modulo, divisor) >= 0) {
+      big_unsigned_subtract(modulo, modulo, divisor);
+      big_bit_set(result, shift);
+    }
+    
+    big_shr(divisor, divisor, 1);
+  }
+
+  bit_reduce(result);
+  bit_reduce(modulo);
+
+  return false;
+}
+
+bool big_modulo(big_num_t& modulo, const big_num_t& a, const big_num_t& b) {
+  big_num_t divisor;
+
+  modulo = a;
+
+  int shift = big_msb(a) - big_msb(b);
+
+  if (shift < 0) {
+    return false;
+  }
+
+  big_shl(divisor, b, shift);
+
+  while (shift-- >= 0) {
+    if (big_unsigned_compare(modulo, divisor) >= 0) {
+      big_unsigned_subtract(modulo, modulo, divisor);
+    }
+
+    big_shr(divisor, divisor, 1);
+  }
+
+  bit_reduce(modulo);
+
+  return false;
+}
+
+// Binary EEA
+bool big_invm(big_num_t& out, const big_num_t& a_, const big_num_t& b_) {
+  big_num_t a;
+  big_num_t b = b_;
+  big_num_t x1 = BIG_ONE;
+  big_num_t x2 = BIG_ZERO;
+
+  if (a_.negative) {
+    big_modulo(a, a_, b_);
+  } else {
+    a = a_;
+  }
+
+  while (big_compare(a, BIG_ONE) > 0 && big_compare(b, BIG_ONE) > 0) {
+    int a_lsb = big_lsb(a);
+
+    if (a_lsb > 0) {
+      big_shr(a, a, a_lsb);
+
+      while (a_lsb-- > 0) {
+        if (big_odd(x1)) {
+          if (big_add(x1, x1, b_)) {
+            return true;
+          }
+        }
+        big_shr(x1, x1, 1);
+      }
+    }
+
+    int b_lsb = big_lsb(b);
+
+    if (b_lsb > 0) {
+      big_shr(b, b, b_lsb);
+
+      while (b_lsb-- > 0) {
+        if (big_odd(x2)) {
+          if (big_add(x2, x2, b_)) {
+            return true;
+          }
+        }
+
+        big_shr(x2, x2, 1);
+      }
+    }
+
+    if (big_compare(a, b) >= 0) {
+      if (big_subtract(a, a, b)) {
+        return true;
+      }
+      if (big_subtract(x1, x1, x2)) {
+        return true;
+      }
+    }
+    else {
+      if (big_subtract(b, b, a)) {
+        return true;
+      }
+      if (big_subtract(x2, x2, x1)) {
+        return true;
+      }
+    }
+  }
+
+  if (big_compare(a, BIG_ONE) == 0) {
+    out = x1;
+  } else {
+    out = x2;
+  }
+
+  if (big_compare(out, BIG_ZERO) < 0) {
+    if (big_add(out, out, b)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/*
+ MONTGOMERY DOMAIN FUNCTIONS
+*/
+
+// TODO: overflow protection
+bool mont_init(big_mont_t& mont, const big_num_t& modulo) {
+  big_num_t temp;
+
+  mont.modulo = modulo;
+  mont.shift = big_msb(modulo);
+
+  if (mont.shift % CELL_BITS) {
+    mont.shift += CELL_BITS - mont.shift % CELL_BITS;
+  }
+
+  // R
+  mont.r = BIG_ZERO;
+  big_bit_set(mont.r, mont.shift);
+
+  // R2
+  big_multiply(mont.r2, mont.r, mont.r);
+  big_modulo(mont.r2, mont.r2, modulo);
+
+  // RINV
+  big_invm(mont.rinv, mont.r, modulo);
+
+  // MINV
+  big_multiply(temp, mont.rinv, mont.r);
+  big_subtract(temp, temp, BIG_ONE);
+  big_divide(mont.minv, temp, temp, modulo);
+  big_modulo(mont.minv, mont.minv, mont.r);
+  big_subtract(mont.minv, mont.r, mont.minv);
+
+  return false;
+}
+
+// Convert to and from montgomery domain
+bool mont_to(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
+  if (big_shl(out, in, mont.shift)) {
+    return true;
+  }
+
+  big_modulo(out, out, mont.modulo);
+
+  return false;
+}
+
+bool mont_from(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
+  if (big_multiply(out, in, mont.rinv)) {
+    return true;
+  }
+
+  big_modulo(out, out, mont.modulo);
+
+  return false;
+}
+
+// TODO: overflow protection
+bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
+  big_num_t c;
+
+  big_multiply(out, a, b);
+
+  c = out;
+  big_mask(c, mont.shift);
+  big_multiply(c, c, mont.minv);
+  big_mask(c, mont.shift);
+  big_multiply(c, c, mont.modulo);
+
+  big_subtract(out, out, c);
+  big_shr(out, out, mont.shift);
+
+  if (big_compare(out, mont.modulo) >= 0) {
+    big_subtract(out, out, mont.modulo);
+  } else if (big_compare(out, BIG_ZERO) < 0) {
+    big_add(out, out, mont.modulo);
+  }
+
+  return false;
+}
+
+// TODO: MONTGOMERY POWER

@@ -56,13 +56,13 @@ __heap_limit
                 THUMB
 
 ; Magic signature
-
 ; This is the vector table for the application
                 AREA    RESET, CODE, READONLY
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
 
+                ; Vector Table Mapped to Address 0x18000 at Reset
 __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     Reset_Handler
                 DCD     NMI_Handler
@@ -80,40 +80,6 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     PendSV_Handler
                 DCD     SysTick_Handler
 
-                ; External Interrupts
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     0                         ; Reserved
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-
 __Vectors_End
 
 __Vectors_Size  EQU     __Vectors_End - __Vectors
@@ -130,14 +96,15 @@ Reset_Handler   PROC
                 EXPORT  Reset_Handler             [WEAK]
                 IMPORT  SystemInit
                 IMPORT  __main
-                
+                CPSID   I
+
                 MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
-                
+
                 LDR     R0, =NRF_POWER_RAMON_ADDRESS
                 LDR     R2, [R0]
                 ORRS    R2, R2, R1
                 STR     R2, [R0]
-                
+
                 LDR     R0, =NRF_POWER_RAMONB_ADDRESS
                 LDR     R2, [R0]
                 ORRS    R2, R2, R1
@@ -150,39 +117,21 @@ Reset_Handler   PROC
                 BX      R0
                 ENDP
 
-
-                EXPORT ResetStack
-ResetStack      PROC
-                LDR r0, =__initial_sp
-                MOV sp, r0
-                BX LR
-                ENDP
-
-; Dummy Exception Handlers (infinite loops which can be modified)
-
-
 Default_Handler PROC
 
-                EXPORT   NMI_Handler [WEAK]
-                EXPORT   HardFault_Handler [WEAK]
-                EXPORT   SVC_Handler [WEAK]
-                EXPORT   PendSV_Handler [WEAK]
-                EXPORT   SysTick_Handler [WEAK]
+                EXPORT  NMI_Handler               [WEAK]
+                EXPORT  HardFault_Handler         [WEAK]
+                EXPORT  PendSV_Handler            [WEAK]
+                EXPORT  SVC_Handler               [WEAK]
+                EXPORT  SysTick_Handler           [WEAK]
+
+NMI_Handler 
 HardFault_Handler
-NMI_Handler
-SVC_Handler
 PendSV_Handler
+SVC_Handler
 SysTick_Handler
-                B .
-                ENDP
-                
-Trampoline      PROC
-                LDR  R1, =(0x1028)  ; Vector table offset
-                MRS  R0, IPSR       ; Get exception number
-                LSLS R0, #26        ; Clear all bits save bottom 6
-                LSRS R0, #24        ; Multiply by 4
-                LDR  R0, [R1,R0]    ; Load vector address (base+exception*4)
-                BX   R0             ; Jump to it
+
+                B       .
                 ENDP
 
                 ALIGN
@@ -194,7 +143,6 @@ Trampoline      PROC
                 EXPORT  __initial_sp
                 EXPORT  __heap_base
                 EXPORT  __heap_limit
-                EXPORT  ResetStack
 
                 ELSE
 

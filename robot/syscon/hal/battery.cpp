@@ -16,7 +16,7 @@ const u32 V_SCALE       = 0x3ff; // 10 bit ADC
 const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
 const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
-//const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
+const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
 const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
 
 //const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
@@ -149,6 +149,10 @@ static inline void sampleCliffSensor() {
   ledOn = !ledOn;
 }
 
+uint8_t Battery::getLevel(void) {
+  return (g_dataToHead.VBat - VBAT_CHGD_LO_THRESHOLD) * 100 / (VBAT_CHGD_HI_THRESHOLD - VBAT_CHGD_LO_THRESHOLD);
+}
+
 void Battery::manage(void* userdata)
 {
   if (!NRF_ADC->EVENTS_END) {
@@ -196,6 +200,9 @@ void Battery::manage(void* userdata)
       break ;
     case ANALOG_CLIFF_SENSE:
       sampleCliffSensor();
+      break ;
+    default:
+      startADCsample(ANALOG_CLIFF_SENSE);
       break ;
   }
 }

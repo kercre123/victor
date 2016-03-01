@@ -1,0 +1,26 @@
+LR_IROM1 0x1000 {
+  ; This is the magic heaer
+  ER_IROM1 0x1000 {
+    * (RESET,+FIRST)
+    *(InRoot$$Sections)
+    .ANY (+RO)
+  }
+
+  ER_SOFTDEV 0x2000 FIXED {
+    * (SOFT_DEVICE_HIGH)
+  }
+
+  ER_APPLICATION 0x18000 FIXED {
+    * (APPLICATION)
+    * (SOFT_DEVICE_LOW)
+  }
+
+  ER_BOOTLOADER 0x1F000 FIXED {
+    * (BOOTLOADER)
+  }
+
+  RW_IRAM1 0x20000000 {
+    .ANY (+RW +ZI)
+    * (RAMCODE)
+  }
+}

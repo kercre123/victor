@@ -3,12 +3,14 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "hardware.h"
 #include "rtos.h"
 #include "timer.h"
 
 static RTOS_Task *current_task;
 static RTOS_Task *free_task;
 static RTOS_Task task_pool[MAX_TASKS];
+
 static int last_counter;
 
 void RTOS::init(void) {
@@ -20,6 +22,33 @@ void RTOS::init(void) {
   for (int i = 1; i < MAX_TASKS; i++) {
     task_pool[i-1].next = &task_pool[i];
   }
+
+  // Setup the watchdog
+  NRF_WDT->CONFIG = (WDT_CONFIG_SLEEP_Run << WDT_CONFIG_SLEEP_Pos);
+  NRF_WDT->CRV = 0x8000; // .5s
+  NRF_WDT->RREN = wdog_channel_mask;
+  NRF_WDT->TASKS_START = 1;
+}
+
+void RTOS::kick(uint8_t channel) {
+  NRF_WDT->RR[channel] = WDT_RR_RR_Reload;
+}
+
+RTOS_Task* RTOS::allocate(void) {
+  if (free_task == NULL) {
+    return NULL;
+  }
+  
+  RTOS_Task *task = free_task;
+  free_task = free_task->next;
+  task->next = NULL;
+
+  return task;
+}
+
+void RTOS::release(RTOS_Task* task) {
+  task->next = free_task;
+  free_task = task;  
 }
 
 void RTOS::run(void) {
@@ -27,6 +56,7 @@ void RTOS::run(void) {
 
   for (;;) {
     __asm { WFI };
+    kick(WDOG_RTOS);
     manage();
   }
 }
@@ -92,8 +122,7 @@ void RTOS::manage(void) {
       fired->target = fired->period;
       insert(fired);
     } else {
-      fired->next = free_task;
-      free_task = fired;
+      RTOS::release(fired);
     }
   }
 }
@@ -110,27 +139,60 @@ static inline int queue_length() {
   return length;
 }
 
-bool RTOS::schedule(RTOS_TaskProc task, int period, void* userdata, bool repeating) {
+RTOS_Task* RTOS::create(RTOS_TaskProc task, bool repeating) {
+  RTOS_Task* newTask = allocate();
+
+  if (newTask == NULL) {
+    return NULL;
+  }
+
+  newTask->task = task;
+  newTask->repeating = repeating;
+  
+  return newTask;
+}
+
+void RTOS::start(RTOS_Task* task, int period, void* userdata) {
+  stop(task);
+  
+  task->period = period;
+  task->target = period;
+
+  if (task->repeating) 
+    task->target += CYCLES_MS(0.5f) * queue_length();
+
+  task->userdata = userdata;
+
+  insert(task);
+}
+
+void RTOS::stop(RTOS_Task* task) {
+  RTOS_Task** cursor = &current_task;
+
+  while (*cursor) {
+    if (*cursor != task) {
+      cursor = &(*cursor)->next;
+      continue ;
+    }
+
+    RTOS_Task* next = (*cursor)->next;
+    if (next) {
+      next->target += (*cursor)->target;
+    }
+    *cursor = next;
+
+    return ;
+  }
+}
+
+RTOS_Task* RTOS::schedule(RTOS_TaskProc task, int period, void* userdata, bool repeating) {
+  RTOS_Task* newTask = create(task, repeating);
+  
   if (free_task == NULL) {
     return false;
   }
 
-  // Allocate a task
-  RTOS_Task *newTask = free_task;
-  free_task = free_task->next;
-
-  newTask->task = task;
-  newTask->period = period;
-  newTask->userdata = userdata;
-  newTask->repeating = repeating;
-  newTask->target = period + repeating;
-
-  // This attempts to auto-spread OS tasks
-  if (repeating) {
-    newTask->target += CYCLES_MS(0.5f) * queue_length();
-  }
+  start(newTask, period, userdata);
   
-  insert(newTask);
-  
-  return true;
+  return newTask;
 }

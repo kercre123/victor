@@ -16,7 +16,7 @@
 #include "radio.h"
 #include "timer.h"
 #include "head.h"
-#include "rng.h"
+#include "crypto.h"
 #include "spine.h"
 
 #ifdef DUMP_DISCOVER
@@ -108,6 +108,7 @@ extern GlobalDataToBody g_dataToBody;
 
 // Current status values of cubes/chargers
 static RadioState        radioState;
+static RTOS_Task*        radioTask;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -157,16 +158,13 @@ uint32_t isqrt(uint32_t a_nInput)
     return res;
 }
 
-static void createAddress(uesb_address_desc_t& address) {
-  uint8_t data[4];
-  
+static void createAddress(uesb_address_desc_t& address) { 
   // Generate random values
-  Random::get(&data, sizeof(data));
-  Random::get(&address.prefix[0], address.prefix[0]);
+  Crypto::random(&address.prefix[0], address.prefix[0]);
   address.base0 = 0xE7E7E7E7;
-  
+
   // Create a random RF channel
-  Random::get(&address.rf_channel, sizeof(address.rf_channel));
+  Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
   address.rf_channel %= MAX_TX_CHANNELS;
 }
 
@@ -178,15 +176,6 @@ static inline uint8_t next_channel(uint8_t channel) {
 #endif
 
 void Radio::init() {
-  const uesb_config_t uesb_config = {
-    UESB_BITRATE_1MBPS,
-    UESB_CRC_8BIT,
-    UESB_TX_POWER_0DBM,
-    PACKET_SIZE,
-    5,    // Address length
-    2     // Service speed doesn't need to be that fast (prevent blocking encoders)
-  };
-
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
@@ -207,17 +196,36 @@ void Radio::init() {
     setPropState(i, reset_state);
   }
 
-
   // Start the radio stack
-  uesb_init(&uesb_config);
-  EnterState(RADIO_PAIRING);
-  uesb_start();
 
-  RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
+  radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
+  RTOS::stop(radioTask);
 
   SpineProtocol msg;
   msg.opcode = REQUEST_PROPS;
   Spine::enqueue(msg);
+}
+
+void Radio::advertise(void) {
+  const uesb_config_t uesb_config = {
+    UESB_BITRATE_1MBPS,
+    UESB_CRC_8BIT,
+    UESB_TX_POWER_0DBM,
+    PACKET_SIZE,
+    5,    // Address length
+    2     // Service speed doesn't need to be that fast (prevent blocking encoders)
+  };
+
+  uesb_init(&uesb_config);
+  EnterState(RADIO_PAIRING);
+  uesb_start();
+
+  RTOS::start(radioTask);
+}
+
+void Radio::shutdown(void) {
+  uesb_stop();
+  RTOS::stop(radioTask);
 }
 
 static int LocateAccessory(uint32_t id) {

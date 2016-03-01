@@ -50,7 +50,7 @@
           <OutputName>sys_boot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
-          <CreateHexFile>0</CreateHexFile>
+          <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
           <ListingPath>.\</ListingPath>
@@ -311,7 +311,7 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x0</StartAddress>
+                <StartAddress>0x1f000</StartAddress>
                 <Size>0x1000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
@@ -336,8 +336,8 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20000000</StartAddress>
-                <Size>0x4000</Size>
+                <StartAddress>0x20000008</StartAddress>
+                <Size>0x3ff8</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -369,7 +369,7 @@
               <MiscControls></MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/drivers_nrf/hal;../include;.</IncludePath>
+              <IncludePath>./components/device;./components/drivers_nrf/hal;../include;.;./components/softdevice/s110/headers</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

@@ -7,7 +7,8 @@ typedef uint16_t commandWord;
 
 #define SHA1_DIGEST_LENGTH 20
 #define TRANSMIT_BLOCK_SIZE 0x1000
-#define SECURE_SPACE 0x1000
+#define SECURE_SPACE 0x18000
+#define BOOTLOADER 0x1F000
 
 // These are used for the Head communication protocol
 static const commandWord COMMAND_HEADER = 0x5478;

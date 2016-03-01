@@ -7,10 +7,10 @@
 #include "sha1.h"
 #include "timer.h"
 #include "battery.h"
-#include "../../hal/hardware.h"
-#include "../../../include/anki/cozmo/robot/spineData.h"
+#include "hal/hardware.h"
+#include "anki/cozmo/robot/spineData.h"
 
-#include "../../../include/anki/cozmo/robot/rec_protocol.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 
 static const int MAX_TIMEOUT = 1000000;
 
@@ -36,7 +36,8 @@ static inline void setCathode(int pin, bool set) {
 
 void setLight(int channel) {
   static int clr = 0;
-  clr = (++clr == 8) ? 1 : clr;
+  clr += 2;
+  clr = (clr == 8) ? 2 : clr;
 
   static const charliePlex_s RGBLightPins[] =
   {
@@ -225,10 +226,10 @@ static inline bool FlashBlock() {
 
   sha1_final(&ctx, sig);
 
-  int writeAdddress = packet.blockAddress;
+  int writeAddress = packet.blockAddress;
 
   // We will not override the boot loader
-  if (writeAdddress < SECURE_SPACE) {
+  if (writeAddress < SECURE_SPACE || writeAddress >= BOOTLOADER) {
     return false;
   }
   
@@ -240,7 +241,7 @@ static inline bool FlashBlock() {
   // Write sectors to flash
   const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
   for (int i = 0; i < TRANSMIT_BLOCK_SIZE; i+= FLASH_BLOCK_SIZE) {
-    if (!FlashSector(writeAdddress + i,&packet.flashBlock[i / sizeof(uint32_t)])) {
+    if (!FlashSector(writeAddress + i,&packet.flashBlock[i / sizeof(uint32_t)])) {
       return false;
     }
   }
