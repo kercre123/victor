@@ -49,12 +49,6 @@ static inline void aes_key_init() {
 }
 
 void Crypto::init() {
-  const big_num_t a = {2, {0xFFFF,0xFFFF}};
-  const big_num_t b = {1, {7}};
-  big_num_t out;
-
-  big_power(out, a, b);
-  
   // Setup key
   aes_key_init();
   memcpy(ecb_data.key, AES_KEY, sizeof(ecb_data.key));

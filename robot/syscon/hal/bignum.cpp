@@ -15,23 +15,6 @@ static inline void bit_reduce(big_num_t& num) {
   }
 }
 
-// accessors for multiply
-static uint16_t big_get_index(const big_num_t& num, int index) {
-  if (index >= num.used) {
-    return 0;
-  }
-
-  return num.digits[index];
-}
-
-static void big_set_index(big_num_t& out, int index, const big_num_cell_t cell) {
-  while (index >= out.used) {
-    out.digits[out.used++] = 0;
-  }
-
-  out.digits[index] = cell;
-}
-
 // POS : A < B
 // NEG : A > B
 //  0  : A = B

@@ -165,7 +165,7 @@ static inline void sampleCliffSensor() {
 }
 
 uint8_t Battery::getLevel(void) {
-  return (g_dataToHead.VBat - VBAT_CHGD_LO_THRESHOLD) * 100 / (VBAT_CHGD_HI_THRESHOLD - VBAT_CHGD_LO_THRESHOLD);
+  return (vBat - VBAT_CHGD_LO_THRESHOLD) * 100 / (VBAT_CHGD_HI_THRESHOLD - VBAT_CHGD_LO_THRESHOLD);
 }
 
 void Battery::manage(void* userdata)
