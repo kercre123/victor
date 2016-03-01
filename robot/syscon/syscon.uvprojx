@@ -369,7 +369,7 @@
               <MiscControls>--gnu</MiscControls>
               <Define>NRF51,COZMO_ROBOT,SOFTDEVICE_PRESENT,BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/drivers_nrf/hal;./components/libraries/util/;./components/drivers_nrf/config/;./components/drivers_nrf/common/;./components/drivers_nrf/rng;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/common;./components/ble/ble_services/ble_bas;./components/ble/ble_services/ble_dis;./components/ble/ble_advertising;../include;.;./components/libraries/trace;./components/drivers_nrf/pstorage;./components/drivers_nrf/pstorage/config;./components/ble/device_manager;./components/ble/device_manager/config;./components/libraries/timer;./components/softdevice/s110/headers;./components/ble/ble_services/ble_bps</IncludePath>
+              <IncludePath>./components/device;./components/drivers_nrf/hal;./components/libraries/util/;./components/drivers_nrf/config/;./components/drivers_nrf/common/;./components/drivers_nrf/rng;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/common;./components/ble/ble_services/ble_bas;./components/ble/ble_services/ble_dis;./components/ble/ble_advertising;../include;.;./components/libraries/trace;./components/drivers_nrf/pstorage;./components/drivers_nrf/pstorage/config;./components/ble/device_manager;./components/ble/device_manager/config;./components/libraries/timer;./components/softdevice/s110/headers;./components/ble/ble_services/ble_bps;../generated/clad/robot</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -627,6 +627,16 @@
                 </FileArmAds>
               </FileOption>
             </File>
+            <File>
+              <FileName>logging.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\logging.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>led.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\led.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -666,6 +676,16 @@
               <FileName>ble_conn_params.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\components\ble\common\ble_conn_params.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>clad</GroupName>
+          <Files>
+            <File>
+              <FileName>clad.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\generated\clad\clad.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -97,7 +97,7 @@ int main(void)
   Bluetooth::init();
   Radio::init();
 
-  //Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
+  Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
 
   Battery::powerOn();
 
