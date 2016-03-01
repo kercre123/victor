@@ -51,6 +51,29 @@ Quad3f GroundPlaneROI::GetGroundQuad(f32 zHeight) const
   };
 }
 
+void GroundPlaneROI::GetVisibleX(const Matrix_3x3f& H, s32 imageWidth, s32 imageHeight,
+                                 f32& near, f32& far) const
+{
+  Matrix_3x3f invH;
+  H.GetInverse(invH);
+  
+  Point3f temp = invH * Point3f(imageWidth/2, 0/*-imageHeight/2*/, 1.f);
+  //ASSERT_NAMED(temp.z() > 0, "Projected points should have z > 0");
+  if(temp.z() <= 0) {
+    far = _dist + _length;
+  } else {
+    far = std::min(temp.x() / temp.z(), _dist + _length);
+  }
+  
+  temp = invH * Point3f(imageWidth/2, imageHeight-1/*imageHeight/2*/, 1.f);
+  //ASSERT_NAMED(temp.z() > 0, "Projected points should have z > 0");
+  if(temp.z() <= 0) {
+    near = _dist;
+  } else {
+    near = std::max(temp.x() / temp.z(), _dist);
+  }
+}
+  
 Quad2f GroundPlaneROI::GetImageQuad(const Matrix_3x3f& H) const
 {
   // Note that the z coordinate is actually 0, but in the mapping to the
@@ -79,7 +102,8 @@ Quad2f GroundPlaneROI::GetImageQuad(const Matrix_3x3f& H) const
 
 template<class PixelType>
 void GroundPlaneROI::GetOverheadImageHelper(const Vision::ImageBase<PixelType>& image, const Matrix_3x3f& H,
-                                            Vision::ImageBase<PixelType>& overheadImg) const
+                                            Vision::ImageBase<PixelType>& overheadImg,
+                                            bool useMask) const
 {
   // Need to apply a shift after the homography to put things in image
   // coordinates with (0,0) at the upper left (since groundQuad's origin
@@ -95,33 +119,37 @@ void GroundPlaneROI::GetOverheadImageHelper(const Vision::ImageBase<PixelType>& 
   cv::warpPerspective(image.get_CvMat_(), overheadImg.get_CvMat_(), (H*InvShift).get_CvMatx_(),
                       cv::Size(_length, _widthFar), cv::INTER_LINEAR | cv::WARP_INVERSE_MAP);
   
-  const Vision::Image& mask = GetOverheadMask();
-  
-  ASSERT_NAMED(overheadImg.IsContinuous() && mask.IsContinuous(),
-               "Overhead image and mask should be continous.");
-  
-  // Zero out masked regions
-  PixelType* imgData = overheadImg.GetDataPointer();
-  const u8* maskData = mask.GetDataPointer();
-  for(s32 i=0; i<_overheadMask.GetNumElements(); ++i) {
-    if(maskData[i] == 0) {
-      imgData[i] = PixelType(0);
+  if(useMask)
+  {
+    const Vision::Image& mask = GetOverheadMask();
+    
+    ASSERT_NAMED(overheadImg.IsContinuous() && mask.IsContinuous(),
+                 "Overhead image and mask should be continous.");
+    
+    // Zero out masked regions
+    PixelType* imgData = overheadImg.GetDataPointer();
+    const u8* maskData = mask.GetDataPointer();
+    for(s32 i=0; i<_overheadMask.GetNumElements(); ++i) {
+      if(maskData[i] == 0) {
+        imgData[i] = PixelType(0);
+      }
     }
   }
-  
 } // GetOverheadImage()
 
-Vision::ImageRGB GroundPlaneROI::GetOverheadImage(const Vision::ImageRGB &image, const Matrix_3x3f &H) const
+Vision::ImageRGB GroundPlaneROI::GetOverheadImage(const Vision::ImageRGB &image, const Matrix_3x3f &H,
+                                                  bool useMask) const
 {
   Vision::ImageRGB overheadImg(_overheadMask.GetNumRows(), _overheadMask.GetNumCols());
-  GetOverheadImageHelper(image, H, overheadImg);
+  GetOverheadImageHelper(image, H, overheadImg, useMask);
   return overheadImg;
 }
 
-Vision::Image GroundPlaneROI::GetOverheadImage(const Vision::Image &image, const Matrix_3x3f &H) const
+Vision::Image GroundPlaneROI::GetOverheadImage(const Vision::Image &image, const Matrix_3x3f &H,
+                                               bool useMask) const
 {
   Vision::Image overheadImg(_overheadMask.GetNumRows(), _overheadMask.GetNumCols());
-  GetOverheadImageHelper(image, H, overheadImg);
+  GetOverheadImageHelper(image, H, overheadImg, useMask);
   return overheadImg;
 }
 

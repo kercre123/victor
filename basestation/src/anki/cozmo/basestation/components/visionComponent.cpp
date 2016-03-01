@@ -39,6 +39,8 @@
 
 #include "opencv2/highgui/highgui.hpp"
 
+#define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 1
+
 namespace Anki {
 namespace Cozmo {
   
@@ -858,6 +860,20 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateMotionCentroid()
   
+  Result VisionComponent::UpdateOverheadEdges(Robot& robot)
+  {
+    auto navMap = robot.GetBlockWorld().GetNavMemoryMap();
+    if(_visionSystem != nullptr && nullptr != navMap)
+    {
+      OverheadEdgeChain edgeChain;
+      while(true == _visionSystem->CheckMailbox(edgeChain))
+      {
+        // TODO: Raul, add info to
+        //navMap->AddQuad()
+      }
+    }
+    return RESULT_OK;
+  }
   
   Result VisionComponent::UpdateOverheadMap(const Vision::ImageRGB& image,
                                             const VisionSystem::PoseData& poseData)

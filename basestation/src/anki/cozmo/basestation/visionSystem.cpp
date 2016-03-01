@@ -52,6 +52,7 @@
 
 #define DEBUG_MOTION_DETECTION 0
 #define DEBUG_FACE_DETECTION   0
+#define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
 
 #define USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID 0
 #define USE_THREE_FRAME_MOTION_DETECTION 0
@@ -410,6 +411,15 @@ namespace Cozmo {
     bool retVal = false;
     if(IsInitialized()) {
       retVal = _updatedFaceIdMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
+  bool VisionSystem::CheckMailbox(OverheadEdgeChain& msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _overheadEdgeChainMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -1637,6 +1647,150 @@ namespace Cozmo {
     return RESULT_OK;
   } // DetectMotion()
   
+  Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB& image)
+  {
+    // TODO: Expose parameters
+    // Parameters:
+    //const s32 kKernelSize = -1; // +ve for Sobel edge detection, -1 for Scharr
+    const f32 kEdgeThreshold = 50.f;
+    const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
+    const u32 kMinChainLength = 3; // in number of edge pixels
+    
+    const Matrix_3x3f& H = _poseData.groundPlaneHomography;
+    const GroundPlaneROI& roi = _poseData.groundPlaneROI;
+    Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H, false);
+    
+    f32 nearX, farX;
+    roi.GetVisibleX(H, image.GetNumCols(), image.GetNumRows(), nearX, farX);
+    
+    // Get derivatives along the X direction
+    Array2d<Vision::PixelRGB_<f32>> edgeImgX(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+    //Array2d<Vision::PixelRGB_<f32>> edgeImgY(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+    //cv::Sobel(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, 1, 0, kKernelSize);
+    //cv::Sobel(overheadImg.get_CvMat_(), edgeImgY.get_CvMat_(), CV_32F, 0, 1, kKernelSize);
+    
+    // Custom Gaussian derivative in x direction, sigma=1, with a little extra space
+    // in the middle to help detect soft edges
+    // (scaled such that each half has absolute sum of 1.0, so it's normalized)
+    SmallMatrix<5,7, f32> kernel{
+      0.0168,    0.0377,         0,0,0,   -0.0377,   -0.0168,
+      0.0754,    0.1689,         0,0,0,   -0.1689,   -0.0754,
+      0.1242,    0.2784,         0,0,0,   -0.2784,   -0.1242,
+      0.0754,    0.1689,         0,0,0,   -0.1689,   -0.0754,
+      0.0168,    0.0377,         0,0,0,   -0.0377,   -0.0168
+    };
+    //cv::Mat kx, ky;
+    //cv::getDerivKernels(kx, ky, 1, 0, 5, true);
+    
+    cv::filter2D(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, kernel.get_CvMatx_());
+    
+    // Look for the first strong edge along the x axis
+    std::list<OverheadEdgeChain> edges;
+    //const f32 edgeThresholdSq = kEdgeThreshold * kEdgeThreshold;
+    OverheadEdge* lastEdge = nullptr;
+    const s32 jNear = std::ceil(nearX) - roi.GetDist() + kernel.GetNumCols()/2;
+    const s32 jFar  = std::floor(farX) - roi.GetDist();
+    for(s32 i=0; i<edgeImgX.GetNumRows(); ++i)
+    {
+      const u8* mask_i = roi.GetOverheadMask().GetRow(i);
+      const Vision::PixelRGB_<f32>* edgeImgX_i = edgeImgX.GetRow(i);
+      //const Vision::PixelRGB_<f32>* edgeImgY_i = edgeImgY.GetRow(i);
+      for(s32 j=jNear; j<jFar; ++j)
+      {
+        if(mask_i[j] > 0 && j)
+        {
+          // An edge above threshold in _any_ channel is an edge
+          auto & edgePixelX = edgeImgX_i[j];
+          //auto & edgePixelY = edgeImgY_i[j];
+          //if(edgePixelX.r()*edgePixelX.r() + edgePixelY.r()*edgePixelY.r() > edgeThresholdSq ||
+          //   edgePixelX.g()*edgePixelX.g() + edgePixelY.g()*edgePixelY.g() > edgeThresholdSq ||
+          //   edgePixelX.b()*edgePixelX.b() + edgePixelY.b()*edgePixelY.b() > edgeThresholdSq)
+          if(std::abs(edgePixelX.r()) > kEdgeThreshold ||
+             std::abs(edgePixelX.g()) > kEdgeThreshold ||
+             std::abs(edgePixelX.b()) > kEdgeThreshold)
+          {
+            OverheadEdge edge = {
+              .position  = Anki::Point2f(j + roi.GetDist(), i - roi.GetWidthFar()*0.5f),
+              .gradient  = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()},
+              .timestamp = image.GetTimestamp(),
+            };
+            if(nullptr == lastEdge ||
+               ComputeDistanceBetween(edge.position, lastEdge->position) > kMaxDistBetweenEdges_mm)
+            {
+              // Start new edge
+              edges.push_back(OverheadEdgeChain());
+            }
+            edges.back().push_back(std::move(edge));
+            lastEdge = &edges.back().back();
+            break; // only keep first edge found in each row
+          }
+        }
+      }
+    }
+    
+    // Prune length-one chains as noise
+    for(auto iter = edges.begin(); iter != edges.end(); )
+    {
+      if(iter->size() < kMinChainLength) {
+        iter = edges.erase(iter);
+      } else {
+        
+        ++iter;
+      }
+    }
+    
+    if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
+    {
+      static const std::vector<ColorRGBA> lineColorList = {
+        NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+        NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
+      };
+      auto color = lineColorList.begin();
+      Vision::ImageRGB dispImg(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+      overheadImg.CopyTo(dispImg);
+      static const Anki::Point2f dispOffset(-roi.GetDist(), roi.GetWidthFar()*0.5f);
+      Quad2f tempQuad(roi.GetGroundQuad());
+      tempQuad += dispOffset;
+      dispImg.DrawQuad(tempQuad, NamedColors::RED, 1);
+      dispImg.DrawLine(Anki::Point2f(jNear, 0), Anki::Point2f(jNear, dispImg.GetNumRows()),
+                       NamedColors::MAGENTA, 1);
+      dispImg.DrawLine(Anki::Point2f(jFar, 0), Anki::Point2f(jFar, dispImg.GetNumRows()),
+                       NamedColors::YELLOW, 1);
+      
+      for(auto & chain : edges)
+      {
+        ASSERT_NAMED(chain.size() >= 2, "Expecting all chain length to be >= 2");
+        for(s32 i=1; i<chain.size(); ++i) {
+          ASSERT_NAMED(chain[i-1].position.y() != chain[i].position.y(),
+                       "There should only be one edge per row");
+          Anki::Point2f startPoint(chain[i-1].position);
+          startPoint += dispOffset;
+          Anki::Point2f endPoint(chain[i].position);
+          endPoint += dispOffset;
+          dispImg.DrawLine(startPoint, endPoint, *color, 1);
+        }
+        ++color;
+        if(color == lineColorList.end()) {
+          color = lineColorList.begin();
+        }
+      }
+      Vision::ImageRGB dispEdgeImg(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+      std::function<Vision::PixelRGB(const Vision::PixelRGB_<f32>&)> fcn = [](const Vision::PixelRGB_<f32>& pixelF32)
+      {
+        return Vision::PixelRGB((u8)std::abs(pixelF32.r()),
+                                (u8)std::abs(pixelF32.g()),
+                                (u8)std::abs(pixelF32.b()));
+      };
+      edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
+      //dispImg.Display("OverheadImage", 1);
+      //dispEdgeImg.Display("OverheadEdgeImage");
+      _debugImageRGBMailbox.putMessage({"OverheadImage", dispImg});
+      _debugImageRGBMailbox.putMessage({"OverheadEdgeImage", dispEdgeImg});
+    } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
+    
+    return RESULT_OK;
+  } // DetectOverheadEdges()
+  
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
 #endif
@@ -1752,9 +1906,11 @@ namespace Cozmo {
     // Initialize the VisionSystem's state (i.e. its "private member variables")
     //
     
+    // Default processing modes to enable
     EnableMode(VisionMode::DetectingMarkers, true);
     //EnableMode(VisionMode::DetectingMotion,  true);
     EnableMode(VisionMode::DetectingFaces,   true);
+    //EnableMode(VisionMode::DetectingOverheadEdges, true);
     
     _markerToTrack.Clear();
     _numTrackFailures          = 0;
@@ -2035,6 +2191,14 @@ namespace Cozmo {
     {
       if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
+        return lastResult;
+      }
+    }
+    
+    if(IsModeEnabled(VisionMode::DetectingOverheadEdges))
+    {
+      if((lastResult = DetectOverheadEdges(inputImage)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
         return lastResult;
       }
     }
