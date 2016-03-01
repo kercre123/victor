@@ -125,18 +125,31 @@ public static class EditorDrawingUtility {
   }
 
   public static void DrawLocalizationString(ref string localizationKey, ref string localizedStringFile, ref string localizedString) {
-    int selectedFileIndex = EditorGUILayout.Popup("Localization File", 
+    var rect = EditorGUILayout.GetControlRect(true, 8 * EditorGUIUtility.singleLineHeight);
+    DrawLocalizationString(rect, ref localizationKey, ref localizedStringFile, ref localizedString);
+  }
+
+  public static void DrawLocalizationString(Rect position, ref string localizationKey, ref string localizedStringFile, ref string localizedString) {
+
+    const int lineCount = 8;
+    float lineHeight = position.height / lineCount;
+
+    position.height = lineHeight;
+    int selectedFileIndex = EditorGUI.Popup(position, "Localization File", 
                             Mathf.Max(0, 
                               System.Array.IndexOf(
                                 LocalizationEditorUtility.LocalizationFiles, 
                                 localizedStringFile)), 
                             LocalizationEditorUtility.LocalizationFiles);
     localizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
+
+    position.y += lineHeight;
        
     var lastLocKey = localizationKey;
-    localizationKey = EditorGUILayout.TextField("Localization Key", localizationKey);
+    localizationKey = EditorGUI.TextField(position, "Localization Key", localizationKey);
 
-    int quickSelect = EditorGUILayout.Popup("   ", 0, LocalizationEditorUtility.LocalizationKeys);
+    position.y += lineHeight;
+    int quickSelect = EditorGUI.Popup(position, "   ", 0, LocalizationEditorUtility.LocalizationKeys);
     if (quickSelect > 0) {
       localizationKey = LocalizationEditorUtility.LocalizationKeys[quickSelect];
       localizedString = string.Empty;
@@ -147,18 +160,25 @@ public static class EditorDrawingUtility {
       InitializeLocalizationString(localizationKey, out localizedStringFile, out localizedString);
     }
 
-    GUILayout.Label("Text");
-    localizedString = GUILayout.TextArea(localizedString, GUILayout.Height(45));
+    position.y += lineHeight;
+    GUI.Label(position, "Text");
+
+    position.y += lineHeight;
+    position.height = 3 * lineHeight;
+    localizedString = GUI.TextArea(position, localizedString);
+
+    position.y += 3 * lineHeight;
+    position.height = lineHeight;
+    position.width *= 0.5f;
 
     if (LocalizationEditorUtility.GetTranslation(localizedStringFile, localizationKey) != localizedString) {
-      EditorGUILayout.BeginHorizontal();
-      if (GUILayout.Button("Reset")) {
+      if (GUI.Button(position, "Reset")) {
         localizedString = LocalizationEditorUtility.GetTranslation(localizedStringFile, localizationKey);
       }
-      if (GUILayout.Button("Save")) {
+      position.x += position.width;
+      if (GUI.Button(position, "Save")) {
         LocalizationEditorUtility.SetTranslation(localizedStringFile, localizationKey, localizedString);
       }
-      EditorGUILayout.EndHorizontal();
     }
   }
 
