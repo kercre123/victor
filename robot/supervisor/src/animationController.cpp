@@ -56,6 +56,7 @@ namespace AnimationController {
 
     s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     s32 _numBytesPlayed = 0;
+    s32 _numBytesInBuffer = 0;
     s32 _numAudioFramesPlayed = 0;
 
     u8  _currentTag = 0;
@@ -103,11 +104,7 @@ namespace AnimationController {
 
   static s32 GetNumBytesInBuffer()
   {
-    if(_lastBufferPos >= _currentBufferPos) {
-      return (_lastBufferPos - _currentBufferPos);
-    } else {
-      return KEYFRAME_BUFFER_SIZE - (_currentBufferPos - _lastBufferPos);
-    }
+    return _numBytesInBuffer;
   }
 
   s32 GetTotalNumBytesPlayed() {
@@ -124,6 +121,12 @@ namespace AnimationController {
 
   void ClearNumAudioFramesPlayed() {
     _numAudioFramesPlayed = 0;
+  }
+
+  void CountConsumedBytes(const s32 num)
+  {
+    _numBytesPlayed   += num;
+    _numBytesInBuffer -= num;
   }
 
   void StopTracksInUse()
@@ -176,6 +179,7 @@ namespace AnimationController {
 
     _numBytesPlayed += GetNumBytesInBuffer();
     _numAudioFramesPlayed += _numAudioFramesBuffered;
+    _numBytesInBuffer = 0;
 
     _currentBufferPos = 0;
     _lastBufferPos = 0;
@@ -265,7 +269,7 @@ namespace AnimationController {
       return 0;
     }
     // Increment total number of bytes played since startup
-    _numBytesPlayed += size;
+    CountConsumedBytes(size);
     return size+2;
   }
 
@@ -320,6 +324,8 @@ namespace AnimationController {
     }
 
     AnkiAssert(_lastBufferPos >= 0 && _lastBufferPos < KEYFRAME_BUFFER_SIZE, 9);
+
+    _numBytesInBuffer += bufferSize;
 
     return RESULT_OK;
   }
@@ -425,7 +431,7 @@ namespace AnimationController {
                 u8 header[3];
                 GetFromBuffer(header, 3); // Get the size + audio sample header
                 GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the first MAX_AUDIO_BYTES_PER_DROP from the buffer
-                _numBytesPlayed += 1 + MAX_AUDIO_BYTES_PER_DROP; // Advance by header plus the bytes we just consumed
+                CountConsumedBytes(1 + MAX_AUDIO_BYTES_PER_DROP); // Advance by header plus the bytes we just consumed
                 _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
                 return true; // Play audio
               #else
@@ -459,7 +465,7 @@ namespace AnimationController {
         if (!_playSilence)
         {
           GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
-          _numBytesPlayed += MAX_AUDIO_BYTES_PER_DROP;
+          CountConsumedBytes(MAX_AUDIO_BYTES_PER_DROP);
         }
         _audioReadInd += MAX_AUDIO_BYTES_PER_DROP;
         if (_audioReadInd >= AUDIO_SAMPLE_SIZE)
