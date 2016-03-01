@@ -435,10 +435,10 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
 
   Result BlockWorld::BroadcastObjectObservation(const ObservableObject* observedObject,
                                                 bool markersVisible)
-  {
+  {    
     if(_robot->HasExternalInterface())
     {
-      if(observedObject->IsExistenceConfirmed())
+      if(observedObject->IsExistenceConfirmed() || markersVisible)
       {
         // Project the observed object into the robot's camera, using its new pose
         std::vector<Point2f> projectedCorners;
@@ -465,23 +465,33 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
         
         const Vec3f& T = observedObject->GetPose().GetTranslation();
         const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
-        
+
         using namespace ExternalInterface;
-        _robot->Broadcast(MessageEngineToGame(RobotObservedObject(_robot->GetID(),
-                                                                  observedObject->GetLastObservedTime(),
-                                                                  observedObject->GetFamily(),
-                                                                  observedObject->GetType(),
-                                                                  observedObject->GetID(),
-                                                                  boundingBox.GetX(),
-                                                                  boundingBox.GetY(),
-                                                                  boundingBox.GetWidth(),
-                                                                  boundingBox.GetHeight(),
-                                                                  T.x(), T.y(), T.z(),
-                                                                  q.w(), q.x(), q.y(), q.z(),
-                                                                  topMarkerOrientation.ToFloat(),
-                                                                  markersVisible,
-                                                                  observedObject->IsActive())));
-      } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
+
+        RobotObservedObject observation(_robot->GetID(),
+                                        observedObject->GetLastObservedTime(),
+                                        observedObject->GetFamily(),
+                                        observedObject->GetType(),
+                                        observedObject->GetID(),
+                                        boundingBox.GetX(),
+                                        boundingBox.GetY(),
+                                        boundingBox.GetWidth(),
+                                        boundingBox.GetHeight(),
+                                        T.x(), T.y(), T.z(),
+                                        q.w(), q.x(), q.y(), q.z(),
+                                        topMarkerOrientation.ToFloat(),
+                                        markersVisible,
+                                        observedObject->IsActive());
+        
+        if( observedObject->IsExistenceConfirmed()) {
+          _robot->Broadcast(MessageEngineToGame(std::move(observation)));
+        }
+        else if( markersVisible ) {
+          // clear the object ID, since it isn't reliable until the existence is confirmed
+          observation.objectID = -1;
+          _robot->Broadcast(MessageEngineToGame(RobotObservedPossibleObject(std::move(observation))));
+        }
+      }
     } // if(_robot->HasExternalInterface())
     
     return RESULT_OK;
@@ -1180,12 +1190,8 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
                             "ID of new/re-observed object not set.");
           return RESULT_FAIL;
         }
-        
-        // Don't broadcast this object until it is through identifying
-        if(_unidentifiedActiveObjects.count(observedObject->GetID())==0)
-        {
-          BroadcastObjectObservation(observedObject, true);
-        }
+
+        BroadcastObjectObservation(observedObject, true);
         
         // Update navMemory map
         INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();

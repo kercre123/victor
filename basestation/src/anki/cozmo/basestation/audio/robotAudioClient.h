@@ -64,8 +64,7 @@ public:
   // Will set out_RobotAudioMessagePtr to Null if there are no messages for provided current time. Use this to identify
   // when to send a AudioSilence message.
   // Note: EngineToRobot pointer memory needs to be manage or it will leak memory.
-  // Return false if we expect to have buffer however it is not ready yet
-  bool PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
+  void PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
                              TimeStamp_t startTime_ms,
                              TimeStamp_t streamingTime_ms );
   

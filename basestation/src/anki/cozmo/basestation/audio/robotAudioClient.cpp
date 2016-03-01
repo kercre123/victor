@@ -211,15 +211,15 @@ bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeSt
                                } );
         _animationEventList.pop_front();
       }
+      isMsgReady = true;
     }
-    isMsgReady = true;
   }
   
   return isMsgReady;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
+void RobotAudioClient::PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
                                              TimeStamp_t startTime_ms,
                                              TimeStamp_t streamingTime_ms )
 {
@@ -231,7 +231,6 @@ bool RobotAudioClient::PopRobotAudioMessage( RobotInterface::EngineToRobot*& out
   // No audio buffer therefore no audio to play
   if ( nullptr == _audioBuffer ) {
     out_RobotAudioMessagePtr = nullptr;
-    return true;
   }
   
   const TimeStamp_t relevantTimeMS = streamingTime_ms - startTime_ms;
@@ -260,17 +259,10 @@ bool RobotAudioClient::PopRobotAudioMessage( RobotInterface::EngineToRobot*& out
       out_RobotAudioMessagePtr = nullptr;
     }
   }
-  else if ( isMsgReady ) {
+  else {
     // Nothing to send, insert silence key frame
     out_RobotAudioMessagePtr = nullptr;
   }
-  else {
-    // Need to wait for next Audio buffer to be created
-    out_RobotAudioMessagePtr = nullptr;
-    return false;
-  }
-  
-  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
