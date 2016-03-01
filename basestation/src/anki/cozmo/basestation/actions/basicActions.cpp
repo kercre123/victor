@@ -1253,8 +1253,11 @@ namespace Anki {
     : TurnTowardsPoseAction(robot, maxTurnAngle)
     {
       Pose3d pose;
-      robot.GetFaceWorld().GetLastObservedFace(pose);
-      SetPose(pose);
+      // If we have a last observed face set the pose of it otherwise pose wil not be set and TurnTowardsPoseAction will return failure
+      if(robot.GetFaceWorld().GetLastObservedFace(pose) != 0)
+      {
+        SetPose(pose);
+      }
     }
     
     const std::string& TurnTowardsLastFacePoseAction::GetName() const

@@ -107,6 +107,14 @@ struct DockingErrorSignal;
                           const f32                    postOffsetY_mm = 0,
                           const f32                    postOffsetAngle_rad = 0);
     
+    // Queue an observed vision marker for processing with the robot's BlockWorld.
+    // if the robot wasn't moving too much while it was observed
+    Result QueueObservedMarker(Robot& robot, const Vision::ObservedMarker& marker);
+    
+    // Set whether or not markers queued while robot is "moving" (meaning it is
+    // turning too fast or head is moving too fast) will be considered
+    void   EnableVisionWhileMoving(bool enable);
+    
     Result UpdateFaces(Robot& robot);
     Result UpdateVisionMarkers(Robot& robot);
     Result UpdateTrackingQuad(Robot& robot);
@@ -130,6 +138,22 @@ struct DockingErrorSignal;
     
     TimeStamp_t GetProcessingPeriod();
     
+    template<class PixelType>
+    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, const Robot& robot, s32 quality);
+    
+    // Detected markers will only be queued for BlockWorld processing if the robot
+    // was turning by less than these amounts when they were observed.
+    // Use values < 0 to set to defaults
+    void SetMarkerDetectionTurnSpeedThresholds(f32 bodyTurnSpeedThresh_degPerSec,
+                                               f32 headTurnSpeedThresh_degPerSec);
+
+    // Get the current thresholds in case you want to be able to restore what they
+    // were before you changed them
+    void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
+                                               f32& headTurnSpeedThresh_degPerSec) const;
+    
+    bool WasMovingTooFast(Robot& robot, Result& lastResult, TimeStamp_t t, RobotPoseStamp* p);
+    
   protected:
     
     VisionSystem* _visionSystem = nullptr;
@@ -152,10 +176,16 @@ struct DockingErrorSignal;
     Vision::ImageRGB _nextImg;
     Vision::ImageRGB _lastImg; // the last image we processed
     
+    constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
+    constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);
+    f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
+    f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
+    
     TimeStamp_t _processingPeriod = 0;
 
     VisionSystem::PoseData   _currentPoseData;
     VisionSystem::PoseData   _nextPoseData;
+    bool                     _visionWhileMovingEnabled = false;
     
     std::thread _processingThread;
     
@@ -192,6 +222,33 @@ struct DockingErrorSignal;
   
   inline const Vision::CameraCalibration& VisionComponent::GetCameraCalibration() const {
     return _camCalib;
+  }
+  
+  inline void VisionComponent::EnableVisionWhileMoving(bool enable) {
+    _visionWhileMovingEnabled = enable;
+  }
+  
+  inline void VisionComponent::SetMarkerDetectionTurnSpeedThresholds(f32 bodyTurnSpeedThresh_degPerSec,
+                                                                     f32 headTurnSpeedThresh_degPerSec)
+  {
+    if(bodyTurnSpeedThresh_degPerSec < 0) {
+      _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
+    } else {
+      _markerDetectionBodyTurnSpeedThreshold_radPerSec = DEG_TO_RAD(bodyTurnSpeedThresh_degPerSec);
+    }
+    
+    if(headTurnSpeedThresh_degPerSec < 0) {
+      _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
+    } else {
+      _markerDetectionHeadTurnSpeedThreshold_radPerSec = DEG_TO_RAD(headTurnSpeedThresh_degPerSec);
+    }
+  }
+  
+  inline void VisionComponent::GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
+                                                                     f32& headTurnSpeedThresh_degPerSec) const
+  {
+    bodyTurnSpeedThresh_degPerSec = RAD_TO_DEG(_markerDetectionBodyTurnSpeedThreshold_radPerSec);
+    headTurnSpeedThresh_degPerSec = RAD_TO_DEG(_markerDetectionHeadTurnSpeedThreshold_radPerSec);
   }
 
 } // namespace Cozmo

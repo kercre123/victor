@@ -404,6 +404,20 @@ IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterf
   
   return action;
 }
+
+IActionRunner* GetTurnTowardsLastFacePoseActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
+{
+  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle));
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
+}
   
 IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
 {
@@ -669,7 +683,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose:
     {
-      newAction = new TurnTowardsLastFacePoseAction(robot, event.GetData().Get_TurnTowardsLastFacePose().maxTurnAngle);
+      newAction = GetTurnTowardsLastFacePoseActionHelper(robot, event.GetData().Get_TurnTowardsLastFacePose());
       break;
     }
     default:
