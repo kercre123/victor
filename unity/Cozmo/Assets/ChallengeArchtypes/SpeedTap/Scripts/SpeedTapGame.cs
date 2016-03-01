@@ -105,10 +105,6 @@ namespace SpeedTap {
             DataPersistence.DataPersistenceManager.Instance.Save();
           }          
 
-          if (_DifficultyOptions.LastOrDefault().DifficultyId > CurrentDifficulty) {
-            CurrentDifficulty++;
-          }
-
           _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, HandleRoundEndAnimDone));
         }
         else {
