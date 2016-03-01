@@ -247,27 +247,14 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
   if( GetLastBlockPose(lastKnownPose) ) {
     SET_STATE(State::SearchingForBlock);
 
-    const float lookAmountRads = DEG_TO_RAD(20);
-    const float waitTime = 0.6f;
-    const float extraWaitTimeAtEnd = 0.2f;
-
     CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
-    searchAction->SetDelayBetweenActions(waitTime);
 
     FacePoseAction* faceAction = new FacePoseAction(robot, lastKnownPose, PI_F);
     faceAction->SetPanTolerance(DEG_TO_RAD(5));
     searchAction->AddAction(faceAction);
 
-    TurnInPlaceAction* turnAction = new TurnInPlaceAction( robot, -lookAmountRads, false );
-    turnAction->SetTolerance(DEG_TO_RAD(4));
-    searchAction->AddAction( turnAction );
-
-    turnAction = new TurnInPlaceAction( robot, 2 * lookAmountRads, false );
-    turnAction->SetTolerance(DEG_TO_RAD(4));
-    searchAction->AddAction( turnAction );
-
-    searchAction->AddAction( new WaitAction(robot, extraWaitTimeAtEnd) );
-
+    searchAction->AddAction(new SearchSideToSideAction(robot));
+    
     StartActing(searchAction,
                 [this, &robot](ActionResult result) {
                   if( GetNumBlocks(robot) > 0 ) {

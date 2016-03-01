@@ -98,8 +98,6 @@ private:
   constexpr static f32 kPossibleObjectViewingDist_mm = 100.0f;
   // How long to wait to try to see a possible object (might do this 3 times)
   constexpr static f32 kPossibleObjectWaitTime_s = 0.5f;
-  // If we don't see the possible object, how far to look left or right
-  constexpr static f32 kSearchAmoundTags = DEG_TO_RAD(15.0f);
   
   State _currentState = State::Inactive;
   Destination _currentDestination = Destination::North;
