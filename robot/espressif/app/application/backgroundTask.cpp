@@ -150,7 +150,17 @@ bool readPairedObjectsAndSend(uint32_t tag)
   entry.tag = tag;
   const NVStorage::NVResult result = NVStorage::Read(entry);
   AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 48, "ReadAndSendPairedObjects", 272, "Failed to paired objects: %d", 1, result);
-  const CubeSlots* const slots = (CubeSlots*)entry.blob;
+  CubeSlots* slots;
+  // XXX TODO Remove this hack once the old robots are gone
+  if (entry.blob_length == CubeSlots::MAX_SIZE) // New style CubeSlots message
+  {
+    slots = (CubeSlots*)entry.blob;
+  }
+  else // Old style slots message
+  {
+    AnkiWarn( 48, "ReadAndSendPairedObjects", 397, "Old style NV data found, please update", 0)
+    slots = (CubeSlots*)(entry.blob + 4); // Skip past padding and length field
+  }
   RobotInterface::EngineToRobot m;
   m.tag = RobotInterface::EngineToRobot::Tag_assignCubeSlots;
   memcpy(&m.assignCubeSlots, slots->GetBuffer(), slots->Size());
@@ -224,16 +234,21 @@ extern "C" int8_t backgroundTaskInit(void)
   }
 }
 
-extern "C" void backgroundTaskOnRTIPSync(void)
+extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
+  if (Anki::Cozmo::UpgradeController::CheckForAndDoStaged()) return false;
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
+  return false;
 }
 
 extern "C" void backgroundTaskOnConnect(void)
 {
   const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
-  i2spiQueueMessage((u8*)"\xfc\x01", 2); // FC is the tag for a radio connection state message to the robot
+  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+  rtipMsg.radioConnected.wifiConnected = true;
+  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
   Anki::Cozmo::Face::FaceUnPrintf();
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
@@ -247,5 +262,8 @@ extern "C" void backgroundTaskOnConnect(void)
 
 extern "C" void backgroundTaskOnDisconnect(void)
 {
-  i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
+  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+  rtipMsg.radioConnected.wifiConnected = false;
+  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
 }

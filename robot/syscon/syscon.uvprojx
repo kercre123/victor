@@ -68,9 +68,9 @@
             <nStopU2X>0</nStopU2X>
           </BeforeCompile>
           <BeforeMake>
-            <RunUserProg1>0</RunUserProg1>
+            <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
+            <UserProg1Name>bash -c "make -C ../ nrf"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -369,7 +369,7 @@
               <MiscControls>-DROBOT41</MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/drivers_nrf/hal;../include;.</IncludePath>
+              <IncludePath>./components/device;./components/drivers_nrf/hal;../include;.;../generated/clad/robot</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -492,6 +492,16 @@
               <FileType>2</FileType>
               <FilePath>.\hal\startup_nrf51.s</FilePath>
             </File>
+            <File>
+              <FileName>logging.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\logging.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>led.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\led.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -501,6 +511,16 @@
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\lib\system_nrf51.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>clad</GroupName>
+          <Files>
+            <File>
+              <FileName>clad.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\generated\clad\clad.cpp</FilePath>
             </File>
           </Files>
         </Group>

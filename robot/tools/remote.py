@@ -59,6 +59,10 @@ class Remote:
                             time.sleep(0.1)
                             self.animStreamer = None
                     elif key[pygame.K_u]:
+                        robotInterface.Send(robotInterface.RI.EngineToRobot(stop=robotInterface.RI.StopAllMotors()))
+                        for i in range(5):
+                            robotInterface.Send(robotInterface.RI.EngineToRobot(setControllerGains=robotInterface.RI.ControllerGains(0,0,0,0,i)))
+                        time.sleep(1)
                         self.upgrader = fota.Upgrader()
                         fota.UpgradeAll(self.upgrader, wifiImage="releases/esp.user.bin", rtipImage="releases/robot.safe", bodyImage="releases/syscon.safe")
                     elif key[pygame.K_j]: # J

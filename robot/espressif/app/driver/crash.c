@@ -101,7 +101,7 @@ extern void crash_dump(int* sp) {
   int usestack = STACKOK(p);
 
   os_put_str("Fatal Exception: ");
-  os_put_hex(regs->exccause, 4);
+  os_put_hex(regs->epc1, 8);
   os_put_str(" (");
   os_put_hex(regs->exccause, 2);
   os_put_str("), sp ");

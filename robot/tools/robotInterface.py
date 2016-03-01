@@ -65,7 +65,11 @@ FORMATTER_KEY = re.compile(r'(?<!%)%[0-9.-]*([{}])'.format("".join(reinterpret_c
 def formatTrace(fmt, args):
     "Returns the formatted string from a trace, doing the nesisary type reinterpretation"
     convertedArgs = tuple([reinterpret_cast[t](a) for t, a in zip(FORMATTER_KEY.findall(fmt), args)])
-    return fmt % convertedArgs
+    try:
+        ret = fmt % convertedArgs
+    except:
+        ret = "Error formatting string: {} with args {}".format(fmt, repr(convertedArgs))
+    return ret
 
 class ConnectionState:
     "An enum for connection states"

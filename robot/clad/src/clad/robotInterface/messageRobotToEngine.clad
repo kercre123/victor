@@ -19,8 +19,6 @@ namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {
 
-/// *************** RTIP to Engine messages ******************************* ///
-
 message SyncTimeAck
 {
 }
@@ -30,20 +28,11 @@ message RobotPoked
   uint_32 robotID
 }
 
-message RTIPVersionInfo
-{
-  uint_32 version,
-  uint_32 date,
-  string  description
-}
-
 message MotorCalibration
 {
   MotorID motorID,
   bool calibStarted
 }
-
-/// *************** WiFi to Engine messages ******************************* ///
 
 // These two messages bookend animations as they are played on the robot
 message AnimationStarted
@@ -59,6 +48,12 @@ message AnimationEnded
 message RobotAvailable
 {
   uint_32 robotID,
+}
+
+message NVReadResult
+{
+  uint_32 robotAddress,
+  NVStorage::NVStorageBlob blob,
 }
 
 message FlashWriteAcknowledge
@@ -85,54 +80,53 @@ message CrashReport
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
- * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
- * and to make debugging from message dumps more sane.
+ * This cannot be an auto union because we need explicit tag values by destination. The tag space is shared with
+ * messageEngineToRobot.clad
+ * 0xB0 and up going to the engine
  */
 union RobotToEngine {
-  // From RTIP 0x01 to 0x7F
-  RobotState                 state                  = 0x01,
-  PrintTrace                 trace                  = 0x02,
-  MainCycleTimeError         mainCycleTimeError     = 0x04,
-  GoalPose                   goalPose               = 0x05,
-  ObjectMoved                activeObjectMoved      = 0x06,
-  ObjectStoppedMoving        activeObjectStopped    = 0x07,
-  ObjectTapped               activeObjectTapped     = 0x08,
-  DataDump                   dataDump               = 0x09,
-  BlockPickedUp              blockPickedUp          = 0x0A,
-  BlockPlaced                blockPlaced            = 0x0B,
-  RampTraverseStart          rampTraverseStarted    = 0x0C,
-  RampTraverseComplete       rampTraverseCompleted  = 0x0D,
-  BridgeTraverseStart        bridgeTraverseStarted  = 0x0E,
-  BridgeTraverseComplete     bridgeTraverseCompleted= 0x0F,
-  TimeProfileStat            timeProfStat           = 0x10,
-  IMUDataChunk               imuDataChunk           = 0x11,
-  CliffEvent                 cliffEvent             = 0x12,
-  ChargerEvent               chargerEvent           = 0x13,
-  SyncTimeAck                syncTimeAck            = 0x14,
-  RobotPoked                 robotPoked             = 0x15,
-  ChargerMountComplete       chargerMountCompleted  = 0x16,
-  MovingLiftPostDock         movingLiftPostDock     = 0x17,
-  ProxObstacle               proxObstacle           = 0x18,
-  ObjectDiscovered           activeObjectDiscovered = 0x19,
-  IMURawDataChunk            imuRawDataChunk        = 0x20,
-  ObjectConnectionState      activeObjectConnectionState  = 0x21,
-  MotorCalibration           motorCalibration       = 0x22,
+  FlashWriteAcknowledge      flashWriteAck          = 0x85, // Special case message for OTA compatibility
   
-  // From WiFi 0x80 to 0xFE
-  AnimationState             animState              = 0x80,
-  PrintText                  printText              = 0x81,
-  ImageChunk                 image                  = 0x82,
-  CameraCalibration          cameraCalibration      = 0x83,
-  RobotAvailable             robotAvailable         = 0x84,
-  FlashWriteAcknowledge      flashWriteAck          = 0x85,
-  AnimationStarted           animStarted            = 0x86,
-  AnimationEnded             animEnded              = 0x87,
-  NVStorage::NVStorageBlob   nvData                 = 0x88,
-  NVStorage::NVOpResult      nvResult               = 0x98,
-  CrashReport                crashReport            = 0x99,
+  // 0xB0 to 0xEF: Reliable messages to the Engine
+  PrintTrace                 trace                  = 0xB0,
+  PrintText                  printText              = 0xB1,
+  MainCycleTimeError         mainCycleTimeError     = 0xB2,
+  GoalPose                   goalPose               = 0xB3,
+  ObjectMoved                activeObjectMoved      = 0xB4,
+  ObjectStoppedMoving        activeObjectStopped    = 0xB5,
+  ObjectTapped               activeObjectTapped     = 0xB6,
+  DataDump                   dataDump               = 0xB7,
+  BlockPickedUp              blockPickedUp          = 0xB8,
+  BlockPlaced                blockPlaced            = 0xB9,
+  RampTraverseStart          rampTraverseStarted    = 0xBA,
+  RampTraverseComplete       rampTraverseCompleted  = 0xBB,
+  BridgeTraverseStart        bridgeTraverseStarted  = 0xBC,
+  BridgeTraverseComplete     bridgeTraverseCompleted= 0xBD,
+  TimeProfileStat            timeProfStat           = 0xBE,
+  IMUDataChunk               imuDataChunk           = 0xBF,
+  CliffEvent                 cliffEvent             = 0xC0,
+  ChargerEvent               chargerEvent           = 0xC1,
+  SyncTimeAck                syncTimeAck            = 0xC2,
+  RobotPoked                 robotPoked             = 0xC3,
+  ChargerMountComplete       chargerMountCompleted  = 0xC4,
+  MovingLiftPostDock         movingLiftPostDock     = 0xC5,
+  ProxObstacle               proxObstacle           = 0xC6,
+  IMURawDataChunk            imuRawDataChunk        = 0xC7,
+  CameraCalibration          cameraCalibration      = 0xC8,
+  RobotAvailable             robotAvailable         = 0xC9,
+  AnimationStarted           animStarted            = 0xCA,
+  AnimationEnded             animEnded              = 0xCB,
+  NVReadResult               nvData                 = 0xCD,
+  NVStorage::NVOpResult      nvResult               = 0xCE,
+  CrashReport                crashReport            = 0xCF,
+  ObjectConnectionState activeObjectConnectionState = 0xD0,
+  MotorCalibration           motorCalibration       = 0xD1,
   
-  // From RTIP to WiFi specifically
-  RTIPVersionInfo            rtipVersion            = 0xFD
+  //0xF0 to 0x FE: Unreliable message to the Engine
+  RobotState                 state                  = 0xF0,
+  AnimationState             animState              = 0xF1,
+  ImageChunk                 image                  = 0xF2,
+  ObjectDiscovered           activeObjectDiscovered = 0xF3,
 }
 
 

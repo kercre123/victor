@@ -45,6 +45,15 @@ message ObjectTapped
   uint_32 robotID,
   uint_8  numTaps,
 }
-  
+
+structure PropState
+{
+  uint_8 slot,
+  int_8  x,
+  int_8  y,
+  int_8  z,
+  uint_8 shockCount,
+}
+
 } // Cozmo
 } // Anki
