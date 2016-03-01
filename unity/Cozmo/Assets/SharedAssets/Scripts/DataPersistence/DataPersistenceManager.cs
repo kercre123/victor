@@ -49,6 +49,7 @@ namespace DataPersistence {
     }
 
     private static DataPersistenceManager _Instance;
+
     public static DataPersistenceManager Instance {
       get {
         if (_Instance == null) {
@@ -80,7 +81,7 @@ namespace DataPersistence {
           File.Copy(sSaveFilePath, sBackupSaveFilePath);
         }
       }
-      catch(Exception ex) {
+      catch (Exception ex) {
         DAS.Error(this, "Exception backing up save file: " + ex);
       }
 

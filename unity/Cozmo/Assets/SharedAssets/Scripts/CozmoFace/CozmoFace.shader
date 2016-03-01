@@ -121,21 +121,21 @@
       const float IMAGE_WIDTH = 128;
       const float IMAGE_HEIGHT = 64;
 
-      const float2 IMAGE_SIZE = float2(IMAGE_WIDTH, IMAGE_HEIGHT);
+      const float2 IMAGE_SIZE = float2(128, 64);
 
       const float NominalEyeHeight       = 40;
       const float NominalEyeWidth        = 30;
 
-      const float2 NominalEyeSize = float2(NominalEyeWidth, NominalEyeHeight);
+      const float2 NominalEyeSize = float2(30, 40);
 
-      const float2 HalfNominalEyeSize = float2(NominalEyeWidth * 0.5, NominalEyeHeight * 0.5);
+      const float2 HalfNominalEyeSize = float2(15, 20);
 
       const float NominalLeftEyeX        = 32;
       const float NominalRightEyeX       = 96;
       const float NominalEyeY            = 32;
 
-      const float2 NominalLeftEyePosition = float2(NominalLeftEyeX, NominalEyeY);
-      const float2 NominalRightEyePosition = float2(NominalRightEyeX, NominalEyeY);
+      const float2 NominalLeftEyePosition = float2(32, 32);
+      const float2 NominalRightEyePosition = float2(96, 32);
 
       float mod(float x, float d)
       {
@@ -201,11 +201,11 @@
         float eyeHeight = scale.y * NominalEyeHeight;
         float offset = eyeHeight * (0.5 - lidY);
 
-        float2 point = float2(0, offset);
+        float2 pt = float2(0, offset);
 
         float slope = tana;
 
-        float2 delta = pos - point;
+        float2 delta = pos - pt;
 
         if(delta.y > slope * delta.x)
           return 1;
@@ -231,11 +231,11 @@
         float eyeHeight = scale.y * NominalEyeHeight;
         float offset = eyeHeight * (lidY - 0.5);
 
-        float2 point = float2(0, offset);
+        float2 pt = float2(0, offset);
 
         float slope = tana;
 
-        float2 delta = pos - point;
+        float2 delta = pos - pt;
 
         if(delta.y < slope * delta.x)
           return 1;

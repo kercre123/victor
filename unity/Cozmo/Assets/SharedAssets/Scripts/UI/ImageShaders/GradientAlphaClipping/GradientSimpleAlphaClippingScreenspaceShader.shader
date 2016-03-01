@@ -39,8 +39,6 @@
       float4 _AtlasUV;
       float4 _Clipping;
 
-      const float _ImageRatio = 9.0 / 16.0;
-
       v2f vert (appdata v)
       {
         v2f o;
@@ -49,7 +47,7 @@
         
         //modify uv x to match screen ratio since we are using PreserveAspect.
         o.uv.x -= 0.5;
-        o.uv.x *= _ImageRatio * (_ScreenParams.x / _ScreenParams.y);
+        o.uv.x *= 9 * (_ScreenParams.x / _ScreenParams.y) * 0.0625;
         o.uv.x += 0.5;
         o.uv *= _AtlasUV.zw;
         o.uv += _AtlasUV.xy;
