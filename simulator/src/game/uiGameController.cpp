@@ -648,6 +648,14 @@ namespace Anki {
       
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }
+    
+    void UiGameController::AssignVizFaceName(const std::string& name, Vision::TrackedFace::ID_t faceID)
+    {
+      ExternalInterface::AssignVizFaceName msg;
+      msg.name = name;
+      msg.faceID = faceID;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
+    }
 
     
     void UiGameController::SetDataPlatform(Util::Data::DataPlatform* dataPlatform) {

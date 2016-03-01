@@ -160,7 +160,7 @@ namespace Anki {
             m.parallel = false;
             m.numRetries = 5;
             // Pickup object 1
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(1, motionProfile2, 0, false, true, false));
+            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(2, motionProfile2, 0, false, true, false));
             // Place object 1 on object 0
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(0, motionProfile2, 0, false, true, false));
             ExternalInterface::MessageGameToEngine message;
@@ -178,7 +178,7 @@ namespace Anki {
           Pose3d pose0;
           GetObjectPose(0, pose0);
           Pose3d pose1;
-          GetObjectPose(1, pose1);
+          GetObjectPose(2, pose1);
           // Stacking the blocks can fail (rare) as the visuallyVerifyObjectAction can timeout because
           // it ends up not being able to see the second block after turning to face it. So if this happens just
           // say it completed

@@ -21,6 +21,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/types.h"
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/trackedFace.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "clad/types/imageTypes.h"
@@ -30,7 +31,9 @@
 #include "clad/vizInterface/messageViz.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/math/numericCast.h"
+
 #include <vector>
+#include <map>
 
 namespace Anki {
   
@@ -125,7 +128,7 @@ namespace Anki {
                            const Pose3d& pose,
                            const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
-      Handle_t DrawHumanHead(const u32 headID,
+      Handle_t DrawHumanHead(const s32 headID,
                              const Point3f& size,
                              const Pose3d& pose,
                              const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
@@ -405,6 +408,9 @@ namespace Anki {
       
       // TODO: Won't need this offest once Polygon is implmeneted correctly (not drawing with path)
       const u32 _polyIDOffset = 2200;
+      
+      // For displaying assigned names with faces
+      std::map<Vision::TrackedFace::ID_t, std::string> _faceNameLUT;
       
       // For handling messages:
       std::vector<Signal::SmartHandle> _eventHandlers;

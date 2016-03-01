@@ -42,14 +42,6 @@ namespace Vision {
   
 namespace Cozmo {
 
-namespace RobotInterface {
-  struct PanAndTilt;
-  class EngineToRobot;
-  class RobotToEngine;
-  enum class EngineToRobotTag : uint8_t;
-  enum class RobotToEngineTag : uint8_t;
-} // end namespace RobotInterface
-
 // Forward declaration
 class Robot;
 class CozmoContext;
@@ -138,6 +130,9 @@ struct DockingErrorSignal;
     
     TimeStamp_t GetProcessingPeriod();
     
+    template<class PixelType>
+    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, const Robot& robot, s32 quality);
+    
     // Detected markers will only be queued for BlockWorld processing if the robot
     // was turning by less than these amounts when they were observed.
     // Use values < 0 to set to defaults
@@ -183,6 +178,8 @@ struct DockingErrorSignal;
     f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
     
     std::thread _processingThread;
+    
+    std::vector<Signal::SmartHandle> _signalHandles;
     
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
     void PopulateGroundPlaneHomographyLUT(const Robot& robot, f32 angleResolution_rad = DEG_TO_RAD(0.25f));

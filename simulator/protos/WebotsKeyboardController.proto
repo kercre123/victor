@@ -22,6 +22,9 @@ PROTO WebotsKeyboardController [
   field SFString emotionName "WantToPlay"
   field SFFloat emotionVal 1.0
 
+  # Name to assign to current faceID
+  field SFString userName ""
+  
   field SFString controllerArgs ""
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0

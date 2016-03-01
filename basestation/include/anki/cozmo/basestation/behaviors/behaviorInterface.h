@@ -243,8 +243,8 @@ namespace Cozmo {
 
     // This function cancels the action started by StartActing (if there is one). Returns true if an action
     // was canceled, false otherwise. Note that if you are running, this will trigger a callback for the
-    // cancellation
-    bool StopActing();
+    // cancellation unless you set allowCallback to false
+    bool StopActing(bool allowCallback = true);
 
   private:
             

@@ -475,21 +475,16 @@ namespace Cozmo {
     if ( _audioClient.IsPlayingAnimation() ) {
       // Get Audio Key Frame
       RobotInterface::EngineToRobot* audioMsg = nullptr;
-      bool shouldSendFrame = _audioClient.PopRobotAudioMessage(audioMsg, startTime_ms, streamingTime_ms);
-      if (shouldSendFrame) {
-        if ( nullptr != audioMsg ) {
-          // Add key frame
-          BufferMessageToSend( audioMsg );
-        }
-        else {
-          // Insert Silence
-          BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-        }
+      _audioClient.PopRobotAudioMessage(audioMsg, startTime_ms, streamingTime_ms);
+      if ( nullptr != audioMsg ) {
+        // Add key frame
+        BufferMessageToSend( audioMsg );
       }
       else {
-        ASSERT_NAMED( false, "Should not fall into this condition, _audioClient.PopRobotAudioMessage() should always return true" );
+        // Insert Silence
+        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
       }
-    } // if ( _audioClient.IsPlayingAnimation() )
+    }  // if ( _audioClient.IsPlayingAnimation() )
     else if(sendSilence) {
       // No audio sample available, so send silence
       BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));

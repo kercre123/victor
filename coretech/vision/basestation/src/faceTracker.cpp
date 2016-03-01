@@ -16,7 +16,10 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/trackedFace.h"
 
+#include "util/fileUtils/fileUtils.h"
+
 #include <list>
+#include <fstream>
 
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC || \
 FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
@@ -40,8 +43,8 @@ FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
 namespace Anki {
 namespace Vision {
   
-  FaceTracker::FaceTracker(const std::string& modelPath, DetectionMode mode)
-  : _pImpl(new Impl(modelPath, mode))
+  FaceTracker::FaceTracker(const std::string& modelPath, const Json::Value& config)
+  : _pImpl(new Impl(modelPath, config))
   {
     
   }
@@ -51,20 +54,41 @@ namespace Vision {
 
   }
   
-  Result FaceTracker::Update(const Vision::Image &frameOrig)
+  Result FaceTracker::Update(const Vision::Image &frameOrig,
+                             std::list<TrackedFace>& faces,
+                             std::list<UpdatedID>&   updatedIDs)
   {
-    return _pImpl->Update(frameOrig);
-  }
- 
-  //void FaceTracker::GetFaces(std::vector<cv::Rect>& faceRects) const
-  std::list<TrackedFace> FaceTracker::GetFaces() const
-  {
-    return _pImpl->GetFaces();
+    return _pImpl->Update(frameOrig, faces, updatedIDs);
   }
   
   bool FaceTracker::IsRecognitionSupported()
   {
     return Impl::IsRecognitionSupported();
+  }
+  
+  void FaceTracker::EnableNewFaceEnrollment(s32 numToEnroll)
+  {
+    _pImpl->EnableNewFaceEnrollment(numToEnroll);
+  }
+  
+  bool FaceTracker::IsNewFaceEnrollmentEnabled() const
+  {
+    return _pImpl->IsNewFaceEnrollmentEnabled();
+  }
+  
+  Result FaceTracker::SaveAlbum(const std::string& albumName)
+  {
+    return _pImpl->SaveAlbum(albumName);
+  }
+  
+  Result FaceTracker::LoadAlbum(const std::string& albumName)
+  {
+    return _pImpl->LoadAlbum(albumName);
+  }
+  
+  void FaceTracker::PrintTiming()
+  {
+    _pImpl->Print();
   }
   
   /*
