@@ -150,7 +150,17 @@ bool readPairedObjectsAndSend(uint32_t tag)
   entry.tag = tag;
   const NVStorage::NVResult result = NVStorage::Read(entry);
   AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 48, "ReadAndSendPairedObjects", 272, "Failed to paired objects: %d", 1, result);
-  const CubeSlots* const slots = (CubeSlots*)entry.blob;
+  CubeSlots* slots;
+  // XXX TODO Remove this hack once the old robots are gone
+  if (entry.blob_length == CubeSlots::MAX_SIZE) // New style CubeSlots message
+  {
+    slots = (CubeSlots*)entry.blob;
+  }
+  else // Old style slots message
+  {
+    AnkiWarn( 48, "ReadAndSendPairedObjects", 397, "Old style NV data found, please update", 0)
+    slots = (CubeSlots*)(entry.blob + 4); // Skip past padding and length field
+  }
   RobotInterface::EngineToRobot m;
   m.tag = RobotInterface::EngineToRobot::Tag_assignCubeSlots;
   memcpy(&m.assignCubeSlots, slots->GetBuffer(), slots->Size());
