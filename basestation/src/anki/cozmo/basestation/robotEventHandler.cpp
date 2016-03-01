@@ -63,6 +63,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       ExternalInterface::MessageGameToEngineTag::TrackToFace,
       ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
       ExternalInterface::MessageGameToEngineTag::PanAndTilt,
+      ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose,
     };
     
     // Subscribe to desired events
@@ -522,6 +523,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
 
     case RobotActionUnionTag::mountCharger:
       return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
+      
+    case RobotActionUnionTag::turnTowardsLastFacePose:
+      return new TurnTowardsLastFacePoseAction(robot, actionUnion.Get_turnTowardsLastFacePose().maxTurnAngle);
 
       // TODO: Add cases for other actions
       
@@ -661,6 +665,11 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     case ExternalInterface::MessageGameToEngineTag::SetHeadAngle:
     {
       newAction = GetMoveHeadToAngleActionHelper(robot, event.GetData().Get_SetHeadAngle());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose:
+    {
+      newAction = new TurnTowardsLastFacePoseAction(robot, event.GetData().Get_TurnTowardsLastFacePose().maxTurnAngle);
       break;
     }
     default:

@@ -322,7 +322,7 @@ namespace Anki {
       TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_POSE; }
       
     protected:
       virtual ActionResult Init() override;
@@ -401,7 +401,7 @@ namespace Anki {
                        bool headTrackWhenDone = false);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_OBJECT; }
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
@@ -422,6 +422,17 @@ namespace Anki {
       bool                       _headTrackWhenDone;
       
     }; // TurnTowardsObjectAction
+    
+    
+    // Turn towards the last known face pose
+    class TurnTowardsLastFacePoseAction : public TurnTowardsPoseAction
+    {
+      public:
+        TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle);
+      
+        virtual const std::string& GetName() const override;
+        virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_LAST_FACE_POSE; }
+    }; // TurnTowardsLastFacePoseAction
     
     
     // Waits for a specified amount of time in seconds, from the time the action

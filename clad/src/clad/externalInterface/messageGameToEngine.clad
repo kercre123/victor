@@ -125,6 +125,22 @@ message TurnTowardsPose {
     uint_8   robotID
 }
 
+// TurnTowardsLastFacePose
+//  Tell the robot to turn and tilt his head to face the pose of the last known face
+message TurnTowardsLastFacePose {
+float_32 maxTurnAngle,
+
+// A value of 0 means 'Don't care' (i.e. use engine's default value)
+float_32 maxPanSpeed_radPerSec = 0.0,
+float_32 panAccel_radPerSec2 = 0.0,
+float_32 panTolerance_rad = 0.0,
+float_32 maxTiltSpeed_radPerSec = 0.0,
+float_32 tiltAccel_radPerSec2 = 0.0,
+float_32 tiltTolerance_rad = 0.0,
+
+uint_8   robotID
+}
+
 // MoveHead
 message MoveHead {
     float_32 speed_rad_per_sec
@@ -691,7 +707,8 @@ union RobotActionUnion {
   DriveStraight             driveStraight,
   PanAndTilt                panAndTilt,
   Wait                      wait,
-  MountCharger              mountCharger
+  MountCharger              mountCharger,
+  TurnTowardsLastFacePose   turnTowardsLastFacePose
 }
 
 // QueueSingleAction

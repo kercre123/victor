@@ -1247,6 +1247,22 @@ namespace Anki {
       
     } // VisuallyVerifyObjectAction::CheckIfDone()
     
+#pragma mark ---- TurnTowardsLastFacePoseAction ----
+
+    TurnTowardsLastFacePoseAction::TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle)
+    : TurnTowardsPoseAction(robot, maxTurnAngle)
+    {
+      Pose3d pose;
+      robot.GetFaceWorld().GetLastObservedFace(pose);
+      SetPose(pose);
+    }
+    
+    const std::string& TurnTowardsLastFacePoseAction::GetName() const
+    {
+      static const std::string name("TurnTowardsLastFacePoseAction");
+      return name;
+    }
+    
 #pragma mark ---- WaitAction ----
     
     WaitAction::WaitAction(Robot& robot, f32 waitTimeInSeconds)
