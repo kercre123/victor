@@ -239,8 +239,8 @@ public abstract class GameBase : MonoBehaviour {
   private void OpenChallengeEndedDialog(string subtitleText = null) {
     // Open confirmation dialog instead
     GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
-                                   UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
-                                   "ChallengeEndSlide");
+                                     UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
+                                     "challenge_end_slide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
