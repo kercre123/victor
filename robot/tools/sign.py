@@ -33,11 +33,17 @@ def rom_info(file):
 		# Locate vector table + magic header
 		for section in elffile.iter_sections():
 			if section.name == b"ER_IROM1":
+				temp = fo.tell()
+				fo.seek(section.header.sh_offset)
+				if fo.read(4) != "CZM0":
+					raise Exception("Could not locate cosmo header")
+				fo.seek(temp)
+
 				magic_location = section.header.sh_offset + 12
 
 		# flatten rom image
 		first = min(segments.keys())
-		last = max([addr+len(data) for addr, data in segments.items()])
+		last = max([addr+len(data) for addr, data in segments.items() if addr < 0x40000])
 
 		base_addr = first
 		rom_data = b"\xFF" * (last-first)

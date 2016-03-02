@@ -9,6 +9,7 @@
 
 #include "debug.h"
 #include "rtos.h"
+#include "head.h"
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
@@ -34,7 +35,7 @@ struct MotorInfo
   s16 oldPWM;
 };
 
-const u32 IRQ_PRIORITY = 0;
+const u32 IRQ_PRIORITY = 2;
 
 // 16 MHz timer with PWM running at 20kHz
 const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
@@ -387,6 +388,16 @@ Fixed Motors::getSpeed(u8 motorID)
 
 void Motors::manage(void* userdata)
 {
+  // Verify the source
+  if (Head::spokenTo)
+  {
+    // Copy (valid) data to update motors
+    for (int i = 0; i < MOTOR_COUNT; i++)
+    {
+      Motors::setPower(i, g_dataToBody.motorPWM[i]);
+    }
+  }
+
   // Stop the timer task and clear it, along with GPIO for the motors
   if ((m_motors[0].nextPWM != m_motors[0].oldPWM) ||
       (m_motors[1].nextPWM != m_motors[1].oldPWM))
@@ -477,7 +488,6 @@ void Motors::printEncodersRaw()
   // After printing, reset encoders (this is okay because it's used for encoder testing)
   m_motors[0].position = m_motors[1].position = m_motors[2].position = m_motors[3].position = 0;
 }
-
 
 
 // Get wheel ticks

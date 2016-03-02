@@ -69,15 +69,16 @@ __Signature     DCB     'C','Z','M','0'
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
 
-                ; This is the vector table for the application
+; This is the vector table for the application
+                AREA    |.text|, CODE, READONLY
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
 
 __Vectors       DCD     __initial_sp              ; Top of Stack
-                DCD     Reset_Handler             ; 1
-                DCD     NMI_Handler               ; 2
-                DCD     HardFault_Handler         ; 3
+                DCD     Reset_Handler
+                DCD     NMI_Handler
+                DCD     HardFault_Handler
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
@@ -85,46 +86,45 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
-                DCD     SVC_Handler               ; 11
+                DCD     SVC_Handler
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
-                DCD     PendSV_Handler            ; 14
-                DCD     SysTick_Handler           ; 15
-                
-                ; External Interrupts
-                DCD     POWER_CLOCK_IRQHandler    ; 16
-                DCD     RADIO_IRQHandler          ; 17
-                DCD     UART0_IRQHandler          ; 18
-                DCD     SPI0_TWI0_IRQHandler      ; 19
-                DCD     SPI1_TWI1_IRQHandler      ; 20
-                DCD     0                         ; Reserved
-                DCD     GPIOTE_IRQHandler         ; 22
-                DCD     ADC_IRQHandler            ; 23
-                DCD     TIMER0_IRQHandler         ; 24
-                DCD     TIMER1_IRQHandler         ; 25
-                DCD     TIMER2_IRQHandler         ; 26
-                DCD     RTC0_IRQHandler           ; 27
-                DCD     TEMP_IRQHandler           ; 28
-                DCD     RNG_IRQHandler            ; 29
-                DCD     ECB_IRQHandler            ; 30
-                DCD     CCM_AAR_IRQHandler        ; 31
-                DCD     WDT_IRQHandler            ; 32
-                DCD     RTC1_IRQHandler           ; 33
-                DCD     QDEC_IRQHandler           ; 34
-                DCD     LPCOMP_IRQHandler         ; 35
-                DCD     SWI0_IRQHandler           ; 36
-                DCD     SWI1_IRQHandler           ; 37
-                DCD     SWI2_IRQHandler           ; 38
-                DCD     SWI3_IRQHandler           ; 39
-                DCD     SWI4_IRQHandler           ; 40
-                DCD     SWI5_IRQHandler           ; 41
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
+                DCD     PendSV_Handler
+                DCD     SysTick_Handler
 
+                ; External Interrupts
+                DCD     POWER_CLOCK_IRQHandler
+                DCD     RADIO_IRQHandler
+                DCD     UART0_IRQHandler
+                DCD     SPI0_TWI0_IRQHandler
+                DCD     SPI1_TWI1_IRQHandler
+                DCD     0                         ; Reserved
+                DCD     GPIOTE_IRQHandler
+                DCD     ADC_IRQHandler
+                DCD     TIMER0_IRQHandler
+                DCD     TIMER1_IRQHandler
+                DCD     TIMER2_IRQHandler
+                DCD     RTC0_IRQHandler
+                DCD     TEMP_IRQHandler
+                DCD     RNG_IRQHandler
+                DCD     ECB_IRQHandler
+                DCD     CCM_AAR_IRQHandler
+                DCD     WDT_IRQHandler
+                DCD     RTC1_IRQHandler
+                DCD     QDEC_IRQHandler
+                DCD     LPCOMP_IRQHandler
+                DCD     SWI0_IRQHandler
+                DCD     SWI1_IRQHandler
+                DCD     SWI2_IRQHandler
+                DCD     SWI3_IRQHandler
+                DCD     SWI4_IRQHandler
+                DCD     SWI5_IRQHandler
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
 
 __Vectors_End
 
