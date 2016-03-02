@@ -90,9 +90,9 @@ public class UdpChannel : ChannelBase {
 
   // timers
   private const float AdvertiseTick = .25f;
-  private const float AdvertiseTimeout = 30.0f;
+  private const float AdvertiseTimeout = 60.0f;
   private const float PingTick = 0.1f;
-  private const float ReceiveTimeout = 30.0f;
+  private const float ReceiveTimeout = 60.0f;
   //dmd2do this is padded crazy long to bandaid engine hanging issues
   private float lastUpdateTime = 0;
   private float lastAdvertiseTime = 0;
