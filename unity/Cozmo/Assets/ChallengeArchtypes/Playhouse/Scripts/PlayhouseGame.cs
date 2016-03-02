@@ -5,8 +5,12 @@ using System.Collections.Generic;
 namespace Playhouse {
   public class PlayhouseGame : GameBase {
 
+    [SerializeField]
+    private PlayhousePanel _PlayhousePanelPrefab;
+    private PlayhousePanel _PlayhousePanel = null;
+
     private PlayhouseGameConfig _Config;
-    private List<string> _AnimationSequence = new List<string>();
+    private List<string> _AnimationSequence;
     private int _SequenceIndex = -1;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
@@ -19,15 +23,17 @@ namespace Playhouse {
     }
 
     protected override void CleanUpOnDestroy() {
-
+      UIManager.CloseView(_PlayhousePanel);
     }
 
     public void RequestAnimationDone() {
       // pop up UI for creating animation sequence.
+      _PlayhousePanel = UIManager.OpenView(_PlayhousePanelPrefab) as PlayhousePanel;
+      _PlayhousePanel._StartPlayButton.onClick.AddListener(HandleRunSequence);
     }
 
-
     private void HandleRunSequence() {
+      _AnimationSequence = _PlayhousePanel.GetAnimationList();
       CurrentRobot.SendAnimation(AnimationName.kCodeBreakerNewIdea, OnSequenceAnimationDone);
       _SequenceIndex = -1;
     }
@@ -45,6 +51,7 @@ namespace Playhouse {
     private void ResetGame() {
       _StateMachine.SetNextState(new RequestPlay());
       _AnimationSequence.Clear();
+      UIManager.CloseView(_PlayhousePanel);
     }
   }
 }
