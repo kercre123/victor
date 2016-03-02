@@ -258,6 +258,14 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleMiniGameConfirm() {
     DAS.Info(this, "HandleMiniGameConfirm");
+    if (_RequestDialog != null) {
+      _RequestDialog.DisableAllButtons();
+    }
+    RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleMiniGameYesAnimEnd);
+  }
+
+  private void HandleMiniGameYesAnimEnd(bool success) {
+    DAS.Info(this, "HandleMiniGameYesAnimEnd");
     MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
   }
 
