@@ -241,8 +241,10 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
   
 void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-#if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
   const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
+  Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(payload)));
+  
+#if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
   if (payload.factory_id < s32_MAX) {  // Ignore chargers which have MSB set
     PRINT_NAMED_INFO("ActiveObjectDiscovered", "%8x", payload.factory_id);
   }

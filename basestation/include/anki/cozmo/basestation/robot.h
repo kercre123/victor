@@ -581,6 +581,8 @@ public:
     
     // =========  Block messages  ============
   
+    Result ConnectToBlocks(const std::array<u32,(size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> & factory_ids);
+  
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
                            const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,

@@ -3017,6 +3017,58 @@ namespace Anki {
       }
 
     }
+    
+    Result Robot::ConnectToBlocks(const std::array<u32,(size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> & factory_ids)
+    {
+      CubeSlots msg;
+      u8 numObjects = 0;
+      u8 objectsSelectedMask = 0;
+      for (auto fid : factory_ids) {
+        
+        // End of list when zero encountered
+        if (fid == 0) {
+          break;
+        }
+        
+        // Check if there is still space in the message
+        if (numObjects >= msg.factory_id.size()) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu", msg.factory_id.size());
+          return RESULT_FAIL;
+        }
+        
+        
+        // Check if charger already added
+        bool isCharger = (fid & 0x80);
+        bool chargerAlreadyInList = (objectsSelectedMask & (fid & 0x80));
+        
+        // Check if block of this type already added
+        bool blockTypeAlreadyInList = (objectsSelectedMask & (1 << (fid & 0x3)));
+        
+        if (chargerAlreadyInList || blockTypeAlreadyInList) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.DuplicateTypeInList",
+                              "Object with factory ID 0x%x matches type of another active object in the list. Only one of each type may be connected.",
+                              fid);
+          return RESULT_FAIL;
+        }
+
+        
+        msg.factory_id[numObjects] = fid;
+        ++numObjects;
+        
+        if (isCharger) {
+          objectsSelectedMask |= 0x80;
+        } else {
+          objectsSelectedMask |= (1 << fid & 0x3);
+        }
+  
+      }
+      
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %d", numObjects);
+      
+      return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
+      
+    }
+    
       
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {

@@ -1392,6 +1392,31 @@ namespace Anki {
                 UpdateVizOrigin();
                 break;
               }
+                
+              case (s32) '!':
+              {
+                webots::Field* factoryIDs = root_->getField("activeObjectFactoryIDs");
+                if (factoryIDs) {
+                  ExternalInterface::ConnectToBlocks msg;
+                  for (int i=0; i<msg.factory_ids.size(); ++i) {
+                    msg.factory_ids[i] = factoryIDs->getMFInt32(i);
+                  }
+                  
+                  PRINT_NAMED_INFO("Connecting to blocks",
+                                   "0x%x 0x%x 0x%x 0x%x 0x%x",
+                                   msg.factory_ids[0],
+                                   msg.factory_ids[1],
+                                   msg.factory_ids[2],
+                                   msg.factory_ids[3],
+                                   msg.factory_ids[4]);
+                                   
+                  ExternalInterface::MessageGameToEngine msgWrapper;
+                  msgWrapper.Set_ConnectToBlocks(msg);
+                  SendMessage(msgWrapper);
+                }
+
+                break;
+              }
 
               case (s32)'@':
               {
