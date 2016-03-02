@@ -52,6 +52,10 @@ public static class AnimationName {
   public const string kCodeBreakerNewIdea = "MM_newIdea";
 
   public const string kSimonBlinkCube = "Simon_Cube";
+
+  public const string kSimonBlinkStart = "anim_simon_point_start_01";
+  public const string kSimonBlinkEnd = "anim_simon_point_end_01";
+
   public const string kSpeedTap_Tap_01 = "anim_speedTap_tap_01";
   public const string kSpeedTap_Tap_02 = "anim_speedTap_tap_02";
   public const string kSpeedTap_Tap_03 = "anim_speedTap_tap_03";
