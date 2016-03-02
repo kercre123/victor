@@ -615,7 +615,7 @@ namespace Anki {
             f32 lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed;
             WheelController::GetFilteredWheelSpeeds(lWheelSpeed, rWheelSpeed);
             WheelController::GetDesiredWheelSpeeds(lDesSpeed, rDesSpeed);
-            AnkiDebug( 130, "ManagePointTurn.Stopping", 376, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
+            AnkiDebug( 130, "ManagePointTurn.Stopping", 391, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
                       currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), 0,0,0,0);
 #           endif
             ExitPointTurn();

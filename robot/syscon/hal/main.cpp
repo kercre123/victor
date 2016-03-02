@@ -27,12 +27,8 @@ GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
 void EnterRecovery(void) {
-  for (int i = 0; i < 32; i++) {
-    if (i == PIN_PWR_EN) continue ;
-    nrf_gpio_cfg_default(i);
-  }
-  MicroWait(250000);
-  
+  Motors::teardown();
+
   __enable_irq();
   __asm { SVC 0 };
 }
@@ -57,16 +53,6 @@ void MotorsUpdate(void* userdata) {
     for (int i = 0; i < MOTOR_COUNT; i++)
     {
       Motors::setPower(i, g_dataToBody.motorPWM[i]);
-    }
-
-    Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
-  }
-
-  // Prevent overheating
-  if (Battery::onContacts) {
-    for (int i = 0; i < MOTOR_COUNT; i++)
-    {
-      Motors::setPower(i, 0);
     }
   }
 }

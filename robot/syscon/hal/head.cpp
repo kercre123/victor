@@ -5,14 +5,20 @@
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
+#include "lights.h"
 
 #include "radio.h"
 #include "rtos.h"
 #include "hardware.h"
+#include "lights.h"
 
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/logging.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "spine.h"
+
+using namespace Anki::Cozmo;
 
 #define MAX(a, b) ((a > b) ? a : b)
 
@@ -123,13 +129,83 @@ inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
-  Spine::dequeue(g_dataToHead.spineMessage);
+  Spine::Dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
-  g_dataToHead.spineMessage.opcode = NO_OPERATION;
+  g_dataToHead.cladBuffer.length = 0;
   txRxIndex = 0;
 
   setTransmitMode(TRANSMIT_SEND);
   transmitByte();
+}
+
+extern void EnterRecovery(void);
+
+static void On_WiFiConnected(void)
+{
+  Radio::sendPropConnectionState();
+}
+
+static void On_WiFiDisconnected(void)
+{
+  
+}
+
+static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
+{
+  EnterRecovery();
+}
+static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
+{
+  Lights::setLights(msg.lights);
+}
+static void Process_setCubeLights(const CubeLights& msg)
+{
+  Radio::setPropLights(msg.objectID, msg.lights);
+}
+
+static void Process_assignCubeSlots(const CubeSlots& msg)
+{
+  for (int i=0; i<7; ++i) // 7 is the number supported in messageToActiveObject.clad
+  {
+    Radio::assignProp(i, msg.factory_id[i]);
+  }
+}
+
+static void ProcessMessage()
+{
+  using namespace Anki::Cozmo;
+  
+  static bool wifiConnected;
+  if ((g_dataToBody.cladBuffer.flags & SF_WiFi_Connected) && wifiConnected == false)
+  {
+    On_WiFiConnected();
+    wifiConnected = true;
+  }
+  else if ((!(g_dataToBody.cladBuffer.flags & SF_WiFi_Connected)) && (wifiConnected == true))
+  {
+    On_WiFiDisconnected();
+    wifiConnected = false;
+  }
+  
+  const u8 tag = g_dataToBody.cladBuffer.data[0];
+  if (g_dataToBody.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
+  {
+    // pass
+  }
+  else if (tag > RobotInterface::TO_BODY_END)
+  {
+    AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, tag);
+  }
+  else
+  {
+    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToBody.cladBuffer);
+    switch(tag)
+    {
+      #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"
+      default:
+        AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, tag);
+    }
+  }
 }
 
 extern "C"
@@ -155,7 +231,7 @@ void UART0_IRQHandler()
     // We received a full packet
     if (++txRxIndex >= sizeof(GlobalDataToBody)) {
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
-      Spine::processMessage(g_dataToBody.spineMessage);
+      ProcessMessage();
       Head::spokenTo = true;
       
       setTransmitMode(TRANSMIT_DEBUG);

@@ -4,6 +4,8 @@
 
 #include "wifi.h"
 #include "messages.h"
+#include "spine.h"
+#include "uart.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
 #include "anki/cozmo/robot/logging.h"
@@ -33,26 +35,37 @@ static u8 blueState = 0;
 namespace Anki {
 namespace Cozmo {
 namespace HAL {
-  bool RadioSendMessage(const void* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+  bool RadioSendMessage(const void* buffer, const u16 size, const u8 msgID)
   {
-		AnkiConditionalErrorAndReturnValue(size <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
-		const uint8_t rind = txRind;
-		uint8_t wind = txWind;
-		const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
-		while (available < (size + 4))
-		{ // Wait for room for message plus tag plus header plus one more so we can tell empty from full
-			if (!reliable) return false;
-		}
-		const uint16_t sizeWHeader = size+1;
-		const u8* msgPtr = (u8*)buffer;
-		txBuf[wind++] = sizeWHeader & 0xff; // Size low byte
-		txBuf[wind++] = (reliable ? RTIP_CLAD_MSG_RELIABLE_FLAG : 0x00) |
-										(hot      ? RTIP_CLAD_MSG_HOT_FLAG      : 0x00) |
-										((sizeWHeader >> 8) & RTIP_CLAD_SIZE_HIGH_MASK); // Size high byte plus flags
-		txBuf[wind++] = msgID;
-		for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
-		txWind = wind;
-    return true;
+    const uint16_t sizeWHeader = size+1;
+    const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
+    const u8 tag = ((msgID == RobotInterface::GLOBAL_INVALID_TAG) ? *reinterpret_cast<const u8*>(buffer) : msgID);
+    if (tag < RobotInterface::TO_RTIP_START)
+    {
+      return Spine::Enqueue(reinterpret_cast<const u8*>(buffer), size, msgID);
+    }
+    else if (tag <= RobotInterface::TO_RTIP_END)
+    {
+      AnkiWarn( 143, "WiFi.RadioSendMessage", 395, "Refusing to send message %x[%d] to self!", 2, tag, size);
+      return false;
+    }
+    else
+    {
+      AnkiConditionalErrorAndReturnValue(sizeWHeader <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
+      const uint8_t rind = txRind;
+      uint8_t wind = txWind;
+      const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
+      while (available < (sizeWHeader + 2)) // Wait for room for message plus tag plus header plus one more so we can tell empty from full
+      {
+      	if (!reliable) return false;
+      }
+      const u8* msgPtr = (u8*)buffer;
+      txBuf[wind++] = sizeWHeader;
+      txBuf[wind++] = msgID;
+      for (int i=0; i<size; i++) txBuf[wind++] = msgPtr[i];
+      txWind = wind;
+      return true;
+    }
   }
 
   bool RadioIsConnected()
@@ -62,6 +75,8 @@ namespace HAL {
 
   void RadioUpdateState(u8 wifi, u8 blue)
   {
+    if (wifi) g_dataToBody.cladBuffer.flags |= SF_WiFi_Connected;
+    else      g_dataToBody.cladBuffer.flags &= ~SF_WiFi_Connected;
     wifiState = wifi;
     blueState = blue;
   }
@@ -85,9 +100,10 @@ namespace HAL {
       const uint8_t rind = rxRind;
       uint8_t wind = rxWind;
       const int available = RX_BUF_SIZE - ((wind - rind) & RX_BUF_SIZE_MASK);
-      if (length < available)
+      if ((length+1) < available)
       {
         int i;
+        rxBuf[wind++] = length;
         for (i=0; i<length; i++) rxBuf[wind++] = data[i];
         rxWind = wind;
         return true;
@@ -106,31 +122,32 @@ namespace HAL {
       else
       {
         uint8_t available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-        while (available)
+        while ((available) && (available > rxBuf[rind]))
         {
-					uint32_t cladBuffer[(DROP_TO_RTIP_MAX_VAR_PAYLOAD/4)+1];
-					RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
-					uint8_t* msgBuffer = msg->GetBuffer();
-          if (available >= msg->MIN_SIZE) // First pass, read the minimum there could possible be for any message
+          uint32_t cladBuffer[(DROP_TO_RTIP_MAX_VAR_PAYLOAD/4)+1]; // Allocate as u32 to guarantee aligntment
+          RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
+          uint8_t* msgBuffer = msg->GetBuffer();
+          const uint8_t msgLen = rxBuf[rind++];
+          const uint8_t msgTag = rxBuf[rind];
+          for (uint8_t i=0; i<msgLen; i++) msgBuffer[i] = rxBuf[rind++];
+          rxRind = rind;
+          available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
+          if ((msgTag > RobotInterface::TO_RTIP_END) && ((msgTag < RobotInterface::ANIM_RT_START) || (msgTag > RobotInterface::ANIM_RT_END)))
           {
-            uint8_t i;
-            for (i=0; i<msg->MIN_SIZE; i++) msgBuffer[i] = rxBuf[rind++];
-            uint8_t size = msg->Size();
-            if (available >= size) // Second pass, read the minimum there could possibly be for this message type
-            {
-              for (; i<size; i++) msgBuffer[i] = rxBuf[rind++];
-              size = msg->Size();
-              if (available >= size) // Final pass, read the full size of this actual message
-              {
-                for (; i<size; i++) msgBuffer[i] = rxBuf[rind++];
-                rxRind = rind;
-                available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-                Messages::ProcessMessage(*msg);
-                continue;
-              }
-            }
+            AnkiError( 141, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg->tag);
           }
-          break;
+          else if (msgTag < RobotInterface::TO_RTIP_START)
+          {
+            while (Spine::Enqueue(msgBuffer, msgLen) == false) ; // Spin until success
+          }
+          else if (msg->Size() != msgLen)
+          {
+            AnkiError( 141, "WiFi.Update", 381, "CLAD message 0x%x size %d doesn't match size in buffer %d", 3, msg->tag, msg->Size(), msgLen);
+          }
+          else
+          {
+            Messages::ProcessMessage(*msg);
+          }
         }
         return RESULT_OK;
       }

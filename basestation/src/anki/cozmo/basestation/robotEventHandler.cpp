@@ -523,6 +523,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::mountCharger:
       return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
 
+    case RobotActionUnionTag::searchSideToSide:
+      return new SearchSideToSideAction(robot);
+
       // TODO: Add cases for other actions
       
     default:

@@ -14,6 +14,7 @@
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/profiler.h"
 
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/rotation.h"
@@ -29,18 +30,34 @@
 namespace Anki {
 namespace Vision {
   
-  class FaceTracker::Impl
+  class FaceTracker::Impl : public Profiler
   {
   public:
     Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
     
-    Result Update(const Vision::Image& frameOrig);
-    
-    std::list<TrackedFace> GetFaces() const;
+    Result Update(const Vision::Image& frameOrig,
+                  std::list<TrackedFace>& faces,
+                  std::list<FaceTracker::UpdatedID>& updatedIDs);
     
     void EnableDisplay(bool enabled) { }
     
     static bool IsRecognitionSupported() { return false; }
+    
+    void EnableNewFaceEnrollment(s32 numToEnroll=0) {
+      if(numToEnroll !=0) {
+        PRINT_NAMED_ERROR("FaceTracker.Impl.NoRecognitionSupport", "");
+      }
+    }
+    
+    bool IsNewFaceEnrollmentEnabled() const { return false; }
+    
+    std::vector<u8> GetSerializedAlbum() { return std::vector<u8>(); }
+    Result SetSerializedAlbum(const std::vector<u8>& serializedAlbum) { return RESULT_FAIL; }
+    
+    // No-ops but req'd by FaceTracker
+    Result SaveAlbum(const std::string& albumName) { return RESULT_FAIL; }
+    Result LoadAlbum(const std::string& albumName) { return RESULT_FAIL; }
+    void   PrintTiming() { }
     
   private:
     
@@ -89,7 +106,9 @@ namespace Vision {
     _isInitialized = true;
   }
   
-  Result FaceTracker::Impl::Update(const Vision::Image& frame)
+  Result FaceTracker::Impl::Update(const Vision::Image& frame,
+                                   std::list<TrackedFace>& returnedFaces,
+                                   std::list<FaceTracker::UpdatedID>& updatedIDs)
   {
     if(!_isInitialized) {
       PRINT_NAMED_ERROR("FaceTracker.Impl.Update.Uninitialized", "");
@@ -223,27 +242,18 @@ namespace Vision {
                                 
       } else {
         // Otherwise, just use assumed fake eye locations
-        face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .25f*face.GetRect().GetWidth(),
-                                      face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
-        face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .25f*face.GetRect().GetWidth(),
-                                       face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+        face.SetFakeEyeCenters();
       }
       
     }
     
-    return RESULT_OK;
-  } // Update()
-  
-  std::list<TrackedFace> FaceTracker::Impl::GetFaces() const
-  {
-    std::list<TrackedFace> faces;
-    
+    // Populate the returned faces list 
     for(auto & existingFace : _faces) {
-      faces.emplace_back(existingFace.second);
+      returnedFaces.emplace_back(existingFace.second);
     }
     
-    return faces;
-  }
+    return RESULT_OK;
+  } // Update()
   
 } // namespace Vision
 } // namespace Anki

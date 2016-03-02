@@ -3111,7 +3111,7 @@ namespace Anki {
  
     Result Robot::SendSetCarryState(CarryState state)
     {
-      return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryState(state)));
+      return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryStateUpdate(state)));
     }
       
     Result Robot::SendFlashObjectIDs()

@@ -34,8 +34,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      const ActionableObject* object = dynamic_cast<const ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
-      
+      const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
       
       // Check that up axis of carried object and the desired placementPose are the same.
       // Otherwise, it's impossible for the robot to place it there!

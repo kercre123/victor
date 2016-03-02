@@ -791,12 +791,8 @@
         '<(coretech_external_path)/matconvnet/matlab/src/bits',
         '<@(face_library_includes)',
       ],
-      'conditions': [
-        ['OS=="ios" and face_library=="facesdk"', {
-          'libraries': [
-            '<@(face_library_libs)',
-          ],
-        }],
+      'libraries': [
+        '<@(face_library_libs)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

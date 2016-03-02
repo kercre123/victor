@@ -26,6 +26,9 @@ namespace Cozmo {
     Result Update();
     Result AddOrUpdateFace(Vision::TrackedFace& face);
   
+    Result ChangeFaceID(Vision::TrackedFace::ID_t oldID,
+                        Vision::TrackedFace::ID_t newID);
+    
     // Returns nullptr if not found
     const Vision::TrackedFace* GetFace(Vision::TrackedFace::ID_t faceID) const;
     
@@ -36,8 +39,8 @@ namespace Cozmo {
     Vision::TrackedFace::ID_t GetOwnerID() const                            { return _ownerID; }
     void                      SetOwnerID(Vision::TrackedFace::ID_t ownerID) { _ownerID = ownerID; }
     
-    // Returns number of known faces observed since seenSinceTime_ms
-    std::map<TimeStamp_t, Vision::TrackedFace::ID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
+    // Returns known face IDs observed since seenSinceTime_ms (inclusive)
+    std::list<Vision::TrackedFace::ID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
 
     // Returns time of the last observed face.
     // 0 if no face was ever observed.
@@ -76,8 +79,8 @@ namespace Cozmo {
     static constexpr float headCenterPointThreshold = 220.f;
     
     // Removes the face and advances the iterator. Notifies any listeners that
-    // the face was removed.
-    void RemoveFace(KnownFaceIter& faceIter);
+    // the face was removed if broadcast==true.
+    void RemoveFace(KnownFaceIter& faceIter, bool broadcast = true);
     
     void RemoveFaceByID(Vision::TrackedFace::ID_t faceID);
 

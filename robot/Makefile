@@ -6,7 +6,7 @@
 
 ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
-ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/
+ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/ syscon/hal
 
 BINARY_RELEASE_DIR=releases
 
@@ -31,6 +31,9 @@ $(VERSION_HEADER):
 
 sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make fourzero -C clad -j4
+
+nrf: $(ANKI_LOG_TABLE_JSON)
+	make $@ -C clad -j4
 
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4

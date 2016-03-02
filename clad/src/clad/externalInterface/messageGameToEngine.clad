@@ -73,6 +73,10 @@ message TurnInPlace {
     uint_8 robotID
 }
 
+message SearchSideToSide {
+    uint_8 robotID
+}
+
 // TurnInPlaceAtSpeed
 message TurnInPlaceAtSpeed {
     float_32 speed_rad_per_sec,
@@ -411,6 +415,20 @@ message SetOwnerFace {
   int_32 ownerID = -1 // Use ownerID < 0 to tell Cozmo to treat next "stable" face detection as owner
 }
 
+// Assign a name to a specific face ID
+message AssignVizFaceName {
+  int_32 faceID,
+  string name
+}
+
+// Start / stop face enrollment
+//   Use numToEnroll = 0 to stop enrollment.
+//   Use numToEnroll = -1 to enable ongoing enrollment.
+//   Use numToEnroll = N to enroll N faces and then turn off automaticall (N=1 is the mostly likely usage)
+message EnableNewFaceEnrollment {
+  int_32 numToEnroll
+}
+
 // SetBehaviorSystemEnabled
 message SetBehaviorSystemEnabled {
   bool enabled
@@ -686,6 +704,7 @@ union RobotActionUnion {
   SetLiftHeight             setLiftHeight,
   SetHeadAngle              setHeadAngle,
   TurnInPlace               turnInPlace,
+  SearchSideToSide          searchSideToSide,
   TrackToFace               trackFace,
   TrackToObject             trackObject,
   DriveStraight             driveStraight,

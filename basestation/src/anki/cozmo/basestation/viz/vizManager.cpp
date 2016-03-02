@@ -216,16 +216,19 @@ namespace Anki {
       return vizID;
     }
 
-    VizManager::Handle_t VizManager::DrawHumanHead(const u32 headID, const Point3f& size, const Pose3d& pose, const ColorRGBA& color)
+    VizManager::Handle_t VizManager::DrawHumanHead(const s32 headID, const Point3f& size, const Pose3d& pose, const ColorRGBA& color)
     {
-      if (headID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]) {
+      if (std::abs(headID) >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]) {
         PRINT_NAMED_ERROR("VizManager.DrawHumanHead.IDtooLarge", "Specified head ID=%d larger than maxID=%d",
           headID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]);
         return INVALID_HANDLE;
 
       }
       
-      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID;
+      const u32 vizID = (headID >= 0 ?
+                         VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID :
+                         _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID);
+                         
       DrawObject(vizID, VizObjectType::VIZ_OBJECT_HUMAN_HEAD, size, pose, color);
       return vizID;
     }
@@ -252,8 +255,11 @@ namespace Anki {
     
     void VizManager::DrawCameraFace(const Vision::TrackedFace& face, const ColorRGBA& color) {
       // Draw eyes
-      DrawCameraOval(face.GetLeftEyeCenter(), 1, 1, color);
-      DrawCameraOval(face.GetRightEyeCenter(), 1, 1, color);
+      Point2f leftEye, rightEye;
+      if(face.GetEyeCenters(leftEye, rightEye)) {
+        DrawCameraOval(leftEye,  1, 1, color);
+        DrawCameraOval(rightEye, 1, 1, color);
+      }
       
       // Draw features
       for(s32 iFeature=0; iFeature<(s32)Vision::TrackedFace::NumFeatures; ++iFeature)
@@ -268,12 +274,11 @@ namespace Anki {
       
       // Draw name & most likely expression
       std::string name;
-      if(face.GetID() < 0) {
-        name = "Unknown";
-      } else if(face.GetName().empty()) {
-        name = "Face" + std::to_string(face.GetID());
+      auto faceIter = _faceNameLUT.find(face.GetID());
+      if(faceIter != _faceNameLUT.end()) {
+        name = faceIter->second;
       } else {
-        name = face.GetName() + "[" + std::to_string(face.GetID()) + "]";
+        name = "Face[" + std::to_string(face.GetID()) + "]";
       }
       name += "-";
       name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
@@ -878,6 +883,7 @@ namespace Anki {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisualizeQuad>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetVizOrigin>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseQuad>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::AssignVizFaceName>();
     }
     
     template<>
@@ -915,6 +921,14 @@ namespace Anki {
       EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);
     }
     
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::AssignVizFaceName& msg)
+    {
+      PRINT_NAMED_INFO("VizManager.HandleMessage.AssignVizFaceName",
+                       "Assigning name '%s' to ID %d",
+                       msg.name.c_str(), msg.faceID);
+      _faceNameLUT[msg.faceID] = msg.name;
+    }
     
   } // namespace Cozmo
 } // namespace Anki

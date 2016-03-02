@@ -18,13 +18,18 @@
 #include "head.h"
 #include "rng.h"
 #include "spine.h"
+#include "led.h"
 
-#ifdef DUMP_DISCOVER
-#include "head.h"
-#endif
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+using namespace Anki::Cozmo;
 
 #define ABS(x)   ((x < 0) ? -x : x)
+
+static const int NUM_PROP_LIGHTS = 4;
 
 enum AccessoryType {
   ACCESSORY_CUBE    = 0x00,
@@ -41,14 +46,22 @@ struct LEDPacket {
   uint8_t ledDark;       // Dark byte
 };
 
+struct AcceleratorPacket {
+  int8_t    x, y, z;
+  uint8_t   shockCount;
+  uint16_t  timestamp;
+};
+
 struct AccessorySlot {
-  bool                active;
-  bool                allocated;
-  int                 last_received;
-  uint32_t            id;
-  LEDPacket           tx_state;
+  bool        active;
+  bool        allocated;
+  int         last_received;
+  uint32_t    id;
+  LEDPacket   tx_state;
+  LightState  lights[NUM_PROP_LIGHTS];
+  uint32_t    lightPhase[NUM_PROP_LIGHTS];
   
-  uesb_address_desc_t address;
+  uesb_address_desc_t       address;
 };
 
 struct AdvertisePacket {
@@ -131,30 +144,32 @@ static AccessorySlot accessories[MAX_ACCESSORIES];
 static uint8_t currentAccessory;
 
 // Integer square root calculator
-uint32_t isqrt(uint32_t a_nInput)
+uint8_t isqrt(uint32_t op)
 {
-    uint32_t op  = a_nInput;
-    uint32_t res = 0;
-    uint32_t one = 1uL << 30; // The second-to-top bit is set: use 1u << 14 for uint16_t type; use 1uL<<30 for uint32_t type
+  if (op >= 0xFC04) {
+    return 0xFE;
+  }
+  
+  uint32_t res = 0;
+  uint32_t one = 1uL << 18; // Second to top bit (255^2 * 16)
 
+  // "one" starts at the highest power of four <= than the argument.
+  while (one > op)
+  {
+      one >>= 2;
+  }
 
-    // "one" starts at the highest power of four <= than the argument.
-    while (one > op)
-    {
-        one >>= 2;
-    }
-
-    while (one != 0)
-    {
-        if (op >= res + one)
-        {
-            op = op - (res + one);
-            res = res +  2 * one;
-        }
-        res >>= 1;
-        one >>= 2;
-    }
-    return res;
+  while (one != 0)
+  {
+      if (op >= res + one)
+      {
+          op = op - (res + one);
+          res = res +  2 * one;
+      }
+      res >>= 1;
+      one >>= 2;
+  }
+  return res;
 }
 
 static void createAddress(uesb_address_desc_t& address) {
@@ -195,18 +210,7 @@ void Radio::init() {
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
     accessories[i].address = TalkingAddress;
     createAddress(accessories[i].address);
-
-    // Clear the lights to a known state
-    static const uint16_t reset_state[] = {
-      0x001F,
-      0x03E0,
-      0x7C00,
-      0x7FFF
-    };
-    
-    setPropState(i, reset_state);
   }
-
 
   // Start the radio stack
   uesb_init(&uesb_config);
@@ -214,10 +218,6 @@ void Radio::init() {
   uesb_start();
 
   RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
-
-  SpineProtocol msg;
-  msg.opcode = REQUEST_PROPS;
-  Spine::enqueue(msg);
 }
 
 static int LocateAccessory(uint32_t id) {
@@ -301,16 +301,10 @@ extern "C" void uesb_event_handler(void)
     // Attempt to locate existing accessory and repair
     slot = LocateAccessory(packet.id);
     if (slot < 0) {
-      SpineProtocol msg;
-      msg.opcode = PROP_DISCOVERED;
-      msg.PropDiscovered.prop_id = packet.id;
-              
-      Spine::enqueue(msg);
-      
-      #ifdef DUMP_DISCOVER
-      if (packet.id < 0x8000) UART::print("%x\r\n", (uint16_t) packet.id);
-      #endif
-      
+      ObjectDiscovered msg;
+      msg.factory_id = packet.id;
+      RobotInterface::SendMessage(msg);
+            
       // Attempt to allocate a slot for it
       slot = FreeAccessory();
 
@@ -346,69 +340,26 @@ extern "C" void uesb_event_handler(void)
 
     acc->last_received = 0;
 
-    SpineProtocol msg;
-    msg.opcode = GET_PROP_STATE;
-    msg.GetPropState.slot = currentAccessory;
-    msg.GetPropState.x = ap->x;
-    msg.GetPropState.y = ap->y;
-    msg.GetPropState.z = ap->z;
-    msg.GetPropState.shockCount = ap->shockCount;
-    
-    Spine::enqueue(msg);
+    PropState msg;
+    msg.slot = currentAccessory;
+    msg.x = ap->x;
+    msg.y = ap->y;
+    msg.z = ap->z;
+    msg.shockCount = ap->shockCount;
+    RobotInterface::SendMessage(msg);
 
     send_dummy_byte();
     break ;
   }
 }
 
-// Calculate the weight of a 16-bit color word
-static inline int colorWeight(uint16_t w) {
-  static const int squared[] = {
-    0, 64, 256, 576, 
-    1089, 1681, 2401, 3249, 
-    4356, 5476, 6724, 8100, 
-    9801, 11449, 13225, 15129, 
-    17424, 19600, 21904, 24336, 
-    27225, 29929, 32761, 35721, 
-    39204, 42436, 45796, 49284, 
-    53361, 57121, 61009, 65025
-  };
-
-  return 
-    squared[(w >> 10) & 0x1F] +
-    squared[(w >>  5) & 0x1F] +
-    squared[(w >>  0) & 0x1F] +
-    squared[(w & 0x8000) ? 0x1F : 0];
-}
-
-void Radio::setPropState(unsigned int slot, const uint16_t *state) {
+void Radio::setPropLights(unsigned int slot, const LightState *state) {
   if (slot > MAX_ACCESSORIES) {
     return ;
   }
 
-  int sum = 0;
-  for (int i = 0; i < 4; i++) {
-    sum += colorWeight(state[i]);
-  }
-
-  int sq_sum = isqrt(sum);
-
-  LEDPacket packet = {
-    {
-      UNPACK_COLORS(state[0]),
-      UNPACK_COLORS(state[1]),
-      UNPACK_COLORS(state[2]),
-      UNPACK_COLORS(state[3]),
-      UNPACK_IR(state[0]),
-      UNPACK_IR(state[1]),
-      UNPACK_IR(state[2]),
-      UNPACK_IR(state[3])
-    },
-    (sq_sum >= 0xFF) ? 1 : (0x255 - sq_sum)
-  };
-  
   AccessorySlot* acc = &accessories[slot];
-  memcpy(&acc->tx_state, &packet, sizeof(LEDPacket));
+  memcpy(acc->lights, state, sizeof(acc->lights));
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
@@ -430,6 +381,7 @@ void Radio::manage(void* userdata) {
   AccessorySlot* acc = &accessories[currentAccessory];
 
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
+    // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;
     
     // Broadcast to the appropriate device
@@ -441,9 +393,49 @@ void Radio::manage(void* userdata) {
     // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
     address.rf_channel = next_channel(address.rf_channel);
     #endif
+
+    // Update the color status of the 
+    uint32_t currentFrame = GetFrame();
+
+    int sum = 0;
+    for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
+      static const uint8_t light_index[NUM_PROP_LIGHTS][4] = {
+        {  0,  1,  2, 12},
+        {  3,  4,  5, 13},
+        {  6,  7,  8, 14},
+        {  9, 10, 11, 15}
+      };
+
+      uint8_t rgbi[4];
+      CalculateLEDColor(rgbi, acc->lights[c], currentFrame, acc->lightPhase[c]);
+
+      for (int i = 0; i < 4; i++) {
+        acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
+        sum += rgbi[i] * rgbi[i];
+      }
+    }
+
+    // THIS IS PROBABLY WRONG
+    acc->tx_state.ledDark = 0xFF - isqrt(sum);
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     acc->active = false;
     send_dummy_byte();
   }
+}
+
+static void sendNthPropState(void* userdata)
+{
+  const int n = (int)userdata;
+  ObjectConnectionState msg;
+  msg.objectID = n;
+  msg.factoryID = accessories[n].id;
+  msg.connected = accessories[n].active;
+  RobotInterface::SendMessage(msg);
+  if (n + 1 < MAX_ACCESSORIES) RTOS::schedule(sendNthPropState, CYCLES_MS(20.0f), (void*)(n+1), false);
+}
+
+void Radio::sendPropConnectionState(void)
+{
+  RTOS::schedule(sendNthPropState, CYCLES_MS(1000.0f), 0, false);
 }

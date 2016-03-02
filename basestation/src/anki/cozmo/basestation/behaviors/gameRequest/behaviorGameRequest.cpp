@@ -114,7 +114,7 @@ u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
   return Util::numeric_cast<u32>( blocks.size() );
 }
 
-ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot) const
+ObservableObject* IBehaviorRequestGame::GetClosestBlock(const Robot& robot) const
 {
   // TODO:(bn) re-ruse the filter?
   BlockWorldFilter filter;
@@ -123,8 +123,15 @@ ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot) const
       return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known && obj->GetFamily() == ObjectFamily::LightCube;;
     } );
 
-  ObservableObject* closestObj = robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
+  return robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
+}
 
+
+ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot) const
+{
+  
+  ObservableObject* closestObj = GetClosestBlock(robot);
+  
   if( closestObj != nullptr ) {
     return closestObj->GetID();
   }
@@ -133,6 +140,26 @@ ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot) const
     return {};
   }
 }
+
+bool IBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
+{
+  if( _hasBlockPose ) {
+    pose = _lastBlockPose;
+  }
+  return _hasBlockPose;
+}
+
+IBehavior::Status IBehaviorRequestGame::UpdateInternal(Robot& robot, double currentTime_sec)
+{
+  ObservableObject* obj = GetClosestBlock(robot);
+  if( obj != nullptr ) {
+    _hasBlockPose = true;
+    _lastBlockPose = obj->GetPose();
+  }
+  
+  return RequestGame_UpdateInternal(robot, currentTime_sec);
+}
+
 
 bool IBehaviorRequestGame::HasFace(const Robot& robot) const
 {

@@ -153,7 +153,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
-  ExpectPlanComplete(100, planner, 0);
+  ExpectPlanComplete(250, planner, 0);
 
   size_t selectedTargetIdx = 100;
   Planning::Path path;
