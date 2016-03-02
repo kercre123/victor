@@ -37,8 +37,12 @@ namespace Anki {
       
       bool _lastActionSucceeded = false;
       
+      TimeStamp_t _prevFaceSeenTime = 0;
+      TimeStamp_t _faceSeenTime = 0;
+      
       // Message handlers
       virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
+      virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg) override;
     };
     
     // Register class with factory
@@ -71,7 +75,7 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10) &&
-                                           GetLastObservedFaceID() == -1, 10)
+                                           _faceSeenTime != 0, 10)
           {
             SendMoveHeadToAngle(0, 20, 20);
             
@@ -114,7 +118,8 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(37), DEG_TO_RAD(2)) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10) &&
-                                           GetLastObservedFaceID() == -2, 10)
+                                           _prevFaceSeenTime < _faceSeenTime &&
+                                           _prevFaceSeenTime != 0, 10)
           {
             CST_EXIT();
           }
@@ -131,6 +136,12 @@ namespace Anki {
       if (msg.result == ActionResult::SUCCESS) {
         _lastActionSucceeded = true;
       }
+    }
+    
+    void CST_FaceActions::HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg)
+    {
+      _prevFaceSeenTime = _faceSeenTime;
+      _faceSeenTime = msg.timestamp;
     }
     
     // ================ End of message handler callbacks ==================
