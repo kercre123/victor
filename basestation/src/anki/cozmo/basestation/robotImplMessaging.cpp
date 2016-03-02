@@ -549,16 +549,23 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     payload.chunkId, payload.data.data(), (uint32_t)payload.data.size() );
 
   if (_context->GetExternalInterface() != nullptr && GetImageSendMode() != ImageSendMode::Off) {
-    ExternalInterface::MessageEngineToGame msgWrapper;
-    msgWrapper.Set_ImageChunk(payload);
-    _context->GetExternalInterface()->Broadcast(msgWrapper);
+    
+    // we don't want to start sending right in the middle of an image, wait until we hit payload 0
+    // before starting to send.
+    if(payload.chunkId == 0 || GetLastSentImageID() == payload.imageId) {
+      SetLastSentImageID(payload.imageId);
+      
+      ExternalInterface::MessageEngineToGame msgWrapper;
+      msgWrapper.Set_ImageChunk(payload);
+      _context->GetExternalInterface()->Broadcast(msgWrapper);
 
-    const bool wasLastChunk = payload.chunkId == payload.imageChunkCount-1;
+      const bool wasLastChunk = payload.chunkId == payload.imageChunkCount-1;
 
-    if(wasLastChunk && GetImageSendMode() == ImageSendMode::SingleShot) {
-      // We were just in single-image send mode, and the image got sent, so
-      // go back to "off". (If in stream mode, stay in stream mode.)
-      SetImageSendMode(ImageSendMode::Off);
+      if(wasLastChunk && GetImageSendMode() == ImageSendMode::SingleShot) {
+        // We were just in single-image send mode, and the image got sent, so
+        // go back to "off". (If in stream mode, stay in stream mode.)
+        SetImageSendMode(ImageSendMode::Off);
+      }
     }
   }
   GetContext()->GetVizManager()->SendImageChunk(GetID(), payload);
