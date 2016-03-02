@@ -23,12 +23,11 @@ namespace Playhouse {
     }
 
     protected override void CleanUpOnDestroy() {
-      UIManager.CloseView(_PlayhousePanel);
     }
 
     public void RequestAnimationDone() {
       // pop up UI for creating animation sequence.
-      _PlayhousePanel = UIManager.OpenView(_PlayhousePanelPrefab) as PlayhousePanel;
+      _PlayhousePanel = SharedMinigameView.ShowWideGameStateSlide(_PlayhousePanelPrefab, "playhouse_panel") as PlayhousePanel;
       _PlayhousePanel._StartPlayButton.onClick.AddListener(HandleRunSequence);
     }
 
@@ -51,7 +50,7 @@ namespace Playhouse {
     private void ResetGame() {
       _StateMachine.SetNextState(new RequestPlay());
       _AnimationSequence.Clear();
-      UIManager.CloseView(_PlayhousePanel);
+      SharedMinigameView.HideGameStateSlide();
     }
   }
 }
