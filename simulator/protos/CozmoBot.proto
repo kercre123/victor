@@ -1064,7 +1064,7 @@ Supervisor {
 
 					  #GRIPPER PLATE
 					  Transform {
-						  translation 0.0645 0 -0.014
+						  translation 0.065 0 -0.012
 						children [
 							HingeJoint {
 							jointParameters HingeJointParameters {
@@ -1272,14 +1272,14 @@ Supervisor {
 									0 0.00175 -0.0025
 									0 0.00175 0.0025
 									0.043 0.00175 0.0025
-									0.0626 0.00175 -0.0108
-									0.0626 0.00175 -0.0158
+									0.065 0.00175 -0.0108
+									0.065 0.00175 -0.0158
 									0.043 0.00175 -0.0025
 									0 -0.00175 -0.0025
 									0 -0.00175 0.0025
 									0.043 -0.00175 0.0025
-									0.0626 -0.00175 -0.0102
-									0.0626 -0.00175 -0.0152
+									0.065 -0.00175 -0.0102
+									0.065 -0.00175 -0.0152
 									0.043 -0.00175 -0.0025
 								]
 								}
@@ -1299,7 +1299,7 @@ Supervisor {
 							} # DEF LIFT_ARM_SHIFT
 						
 							Transform {
-								translation 0.0626 -0.0005 -0.012
+								translation 0.065 -0.0005 -0.012
 								children [
 									Shape {
 									geometry Cylinder {
@@ -1318,7 +1318,7 @@ Supervisor {
 							children [
 								USE LIFT_ARM_SHAPE
 								Transform {
-									translation 0.0626 0.0005 -0.012
+									translation 0.065 0.0005 -0.012
 									children [
 										Shape {
 										geometry Cylinder {
@@ -1388,7 +1388,7 @@ Supervisor {
 
 									# Hinge to close mechanical loop back to gripper plate
 									Transform {
-									  translation 0.0626 0 -0.012
+									  translation 0.065 0 -0.012
 									  children [
 									    HingeJoint {
 									      jointParameters HingeJointParameters {
@@ -1409,7 +1409,7 @@ Supervisor {
 										children [
 											USE LIFT_ARM_SHAPE
 											Transform {
-												translation 0.0626 0.0005 -0.012
+												translation 0.065 0.0005 -0.012
 												children [
 													Shape {
 														geometry Cylinder {
@@ -1428,7 +1428,7 @@ Supervisor {
 										children [
 											USE LIFT_ARM_SHAPE
 											Transform {
-												translation 0.0626 -0.0005 -0.012
+												translation 0.065 -0.0005 -0.012
 												children [
 													Shape {
 														geometry Cylinder {
