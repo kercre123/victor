@@ -9,6 +9,7 @@
 
 #include "debug.h"
 #include "rtos.h"
+#include "head.h"
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
@@ -387,6 +388,16 @@ Fixed Motors::getSpeed(u8 motorID)
 
 void Motors::manage(void* userdata)
 {
+  // Verify the source
+  if (Head::spokenTo)
+  {
+    // Copy (valid) data to update motors
+    for (int i = 0; i < MOTOR_COUNT; i++)
+    {
+      Motors::setPower(i, g_dataToBody.motorPWM[i]);
+    }
+  }
+
   // Stop the timer task and clear it, along with GPIO for the motors
   if ((m_motors[0].nextPWM != m_motors[0].oldPWM) ||
       (m_motors[1].nextPWM != m_motors[1].oldPWM))

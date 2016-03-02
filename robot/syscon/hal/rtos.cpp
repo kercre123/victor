@@ -54,6 +54,7 @@ void RTOS::release(RTOS_Task* task) {
 void RTOS::run(void) {
   for (;;) {
     __asm { WFI };
+		RTOS::manage();
   }
 }
 
@@ -111,8 +112,10 @@ void RTOS::manage(void) {
     RTOS_Task *fired = current_task;
     current_task = current_task->next;
 
+		int start = GetCounter();
     fired->task(fired->userdata);
-
+		fired->time = GetCounter() - start;
+		
     // Either release the task slice, or reinsert it with the period
     if (fired->repeating) {
       fired->target = fired->period;

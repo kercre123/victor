@@ -21,6 +21,8 @@ struct RTOS_Task {
   int period;
   bool repeating;
 
+	int time;
+	
   RTOS_Task *next;
 };
 

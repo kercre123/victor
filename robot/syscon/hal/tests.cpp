@@ -61,12 +61,9 @@ static void TestEncoders(void* data) {
 void TestFixtures::run() {
 #if defined(DO_ENCODER_TESTING)
   RTOS::schedule(TestEncoders, CYCLES_MS(5.0f), &g_dataToBody.backpackColors);
-  RTOS::run();
 #elif defined(DO_MOTOR_TESTING)
   RTOS::schedule(TestMotors, CYCLES_MS(1000.0f));
-  RTOS::run();
 #elif defined(DO_LIGHTS_TESTING)
   RTOS::schedule(TestLights, CYCLES_MS(5.0f), &g_dataToBody.backpackColors);
-  RTOS::run();
 #endif
 }

@@ -68,7 +68,7 @@ void Lights::init()
   NRF_RTC1->EVTENSET = RTC_EVTENCLR_TICK_Msk;
   NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
 
-  NVIC_SetPriority(RTC1_IRQn, 3);
+  NVIC_SetPriority(RTC1_IRQn, 2);
   NVIC_EnableIRQ(RTC1_IRQn);
 
   lights_off();
@@ -144,6 +144,4 @@ extern "C" void RTC1_IRQHandler() {
   
   channel = (channel + 1) % numChannels;
   #endif
-
-  RTOS::manage();
 }

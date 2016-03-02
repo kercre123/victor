@@ -36,7 +36,7 @@ static int txRxIndex;
 static int debugSafeWords;
 static TRANSMIT_MODE uart_mode;
 
-bool Head::spokenTo;
+bool Head::spokenTo = false;
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;

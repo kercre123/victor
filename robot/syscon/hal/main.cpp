@@ -49,18 +49,8 @@ extern "C" void HardFault_Handler(void) {
 }
 
 void MotorsUpdate(void* userdata) {
-  // Verify the source
-  if (Head::spokenTo)
-  {
-    // Copy (valid) data to update motors
-    for (int i = 0; i < MOTOR_COUNT; i++)
-    {
-      Motors::setPower(i, g_dataToBody.motorPWM[i]);
-    }
-
-    //Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
-    //RTOS::kick(WDOG_UART);
-  }
+	//Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
+	//RTOS::kick(WDOG_UART);
 }
 
 static void EMERGENCY_FIX(void) {
@@ -109,18 +99,13 @@ int main(void)
   Bluetooth::shutdown();
   Radio::advertise();
   
-  uint8_t data[4];
-  Crypto::random(&data, 4);
-
   // Let the test fixtures run, if nessessary
-  TestFixtures::run();
-
-  // Only use Head/body if tests are not enabled
+  #ifdef RUN_TESTS
+	TestFixtures::run();
+	#else
   Head::init();
-  RTOS::schedule(MotorsUpdate);
+	#endif
 
   // Run forever, because we are awesome.
-  for (;;) {
-    __asm { WFI };
-  }
+	RTOS::run();
 }
