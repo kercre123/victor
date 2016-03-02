@@ -100,7 +100,11 @@ def UpgradeRTIP(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_R
     up.ota(fwPathName, RI.OTACommand.OTA_RTIP, version, flashAddress)
 
 def UpgradeBody(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_body_flash_address):
+    for i in range(5):
+        up.send(RI.EngineToRobot(setControllerGains=RI.ControllerGains(0,0,0,0,i)))
+    up.send(RI.EngineToRobot(stop=RI.StopAllMotors()))
     up.send(RI.EngineToRobot(bootloadBody=RI.BootloadBody()))
+    time.sleep(2)
     up.ota(fwPathName, RI.OTACommand.OTA_body, version, flashAddress)
 
 def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
@@ -118,6 +122,10 @@ def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RT
     assert os.path.isfile(wifiImage)
     assert os.path.isfile(rtipImage)
     assert os.path.isfile(bodyImage)
+    for i in range(5):
+        up.send(RI.EngineToRobot(setControllerGains=RI.ControllerGains(0,0,0,0,i)))
+    up.send(RI.EngineToRobot(stop=RI.StopAllMotors()))
+    time.sleep(2)
     up.ota(wifiImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_WiFi_flash_address)
     up.ota(rtipImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_RTIP_flash_address)
     up.ota(bodyImage, RI.OTACommand.OTA_stage, version, RI.OTAFlashRegions.OTA_body_flash_address)
