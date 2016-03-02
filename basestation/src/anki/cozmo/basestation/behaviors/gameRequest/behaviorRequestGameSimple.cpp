@@ -460,6 +460,21 @@ void BehaviorRequestGameSimple::HandleGameDeniedRequest(Robot& robot)
 
   TransitionToPlayingDenyAnim(robot);
 }
+  
+f32 BehaviorRequestGameSimple::GetRequestMinDelayComplete_s() const
+{
+  if( _requestTime_s < 0.0f ) {
+    return -1.0f;
+  }
+  
+  float minRequestDelay = kMinRequestDelayDefault;
+  if (nullptr != _activeConfig)
+  {
+    minRequestDelay = _activeConfig->minRequestDelay;
+  }
+  
+  return _requestTime_s + minRequestDelay;
+}
 
 }
 }
