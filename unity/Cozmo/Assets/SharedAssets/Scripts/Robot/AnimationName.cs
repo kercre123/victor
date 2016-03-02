@@ -13,7 +13,6 @@ public static class AnimationName {
   public const string kMajorFail = "MajorFail";
   public const string kShocked = "shocked";
 
-  public const string kEnjoyPattern = "enjoyPattern";
   public const string kEnjoyLight = "enjoyLight";
   public const string kSeeOldPattern = "seeOldPattern";
 
@@ -31,7 +30,6 @@ public static class AnimationName {
   public const string kOpenEyes = "ID_WakeUp";
   public const string kSurprise = "ID_reactTppl_Surprise";
   public const string kThrustFwd = "ID_offCharger_thrustFwd";
-  public const string kccGotcha = "ID_catCatch_gotcha";
   public const string kHappyA = "ID_catCatch_happyB";
   public const string kccMisch = "ID_catCatch_mischievous";
   public const string kreactToMotion = "ID_MotionFollow_ReactToMotion";
