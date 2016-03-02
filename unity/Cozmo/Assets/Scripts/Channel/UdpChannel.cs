@@ -125,50 +125,15 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   }
 
   public override void Connect(int deviceID, int localPort) {
-    // dunno if 0 is good or not, so allowing it
-    if (deviceID < 0 || deviceID > byte.MaxValue) {
-      throw new ArgumentException("Device id must be 0 to 255.", "deviceID");
-    }
-
-    if (IsActive) {
-      throw new InvalidOperationException("UdpChannel is already active. Disconnect first.");
-    }
-
-    lock (sync) {
-      // should only become active through this call
-      if (connectionState != ConnectionState.Disconnected) {
-        throw new InvalidOperationException("You should only call Connect on the main Unity thread.");
-      }
-
-      lastUpdateTime = Time.realtimeSinceStartup;
-
-      try {
-        BeforeConnect((byte)deviceID);
-
-        // set up main socket
-        localEndPoint = new IPEndPoint(IPAddress.Any, localPort);
-        mainServer = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-        mainServer.Bind(localEndPoint);
-
-        ServerReceive();
-      }
-      catch (Exception e) {
-        Debug.LogException(e);
-        DestroySynchronously(DisconnectionReason.FailedToListen);
-        return;
-      }
-        
-      // set state
-      connectionState = ConnectionState.Advertising;
-      IsActive = true;
-      IsConnected = false;
-
-      DAS.Debug(this, "UdpConnection: Listening on " + mainServer.LocalEndPoint.ToString() + ".");
-    }
+    ConnectInternal(deviceID, localPort, null, 0, false);
   }
 
   // synchronous
   public override void Connect(int deviceID, int localPort, string advertisingIP, int advertisingPort) {
+    ConnectInternal(deviceID, localPort, advertisingIP, advertisingPort, true);
+  }
+
+  private void ConnectInternal(int deviceID, int localPort, string advertisingIP, int advertisingPort, bool advertise) {
     IPAddress advertisingAddress;
     if (!IPAddress.TryParse(advertisingIP, out advertisingAddress)) {
       throw new ArgumentException("Could not parse ip address.", "advertisingIP");
@@ -190,7 +155,8 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         throw new InvalidOperationException("You should only call Connect on the main Unity thread.");
       }
 
-      lastUpdateTime = Time.realtimeSinceStartup;
+      // reset lastReceiveTime so we have time to reconnect
+      lastReceiveTime = lastUpdateTime = Time.realtimeSinceStartup;
       IPAddress localAddress = GetLocalIPv4();
 
       try {
@@ -209,41 +175,43 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         return;
       }
 
-      try {
-        string localIP = (localAddress ?? IPAddress.Loopback).ToString();
-        int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
+      if (advertise) {
+        try {
+          string localIP = (localAddress ?? IPAddress.Loopback).ToString();
+          int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
-        // set up advertisement message
-        DAS.Debug(this, "Advertising IP: " + localIP);
-        int length = Encoding.UTF8.GetByteCount(localIP);
-        if (length + 1 > advertisementRegistrationMessage.Ip.Length) {
-          DAS.Error(this, "Advertising host is too long: " +
-          advertisementRegistrationMessage.Ip.Length.ToString() + " bytes allowed, " +
-          length.ToString() + " bytes used.");
+          // set up advertisement message
+          DAS.Debug(this, "Advertising IP: " + localIP);
+          int length = Encoding.UTF8.GetByteCount(localIP);
+          if (length + 1 > advertisementRegistrationMessage.Ip.Length) {
+            DAS.Error(this, "Advertising host is too long: " +
+            advertisementRegistrationMessage.Ip.Length.ToString() + " bytes allowed, " +
+            length.ToString() + " bytes used.");
+            DestroySynchronously(DisconnectionReason.FailedToAdvertise);
+            return;
+          }
+          Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.Ip, 0);
+          advertisementRegistrationMessage.Ip[length] = 0;
+          
+          advertisementRegistrationMessage.Port = (ushort)realPort;
+          advertisementRegistrationMessage.Id = (byte)deviceID;
+          advertisementRegistrationMessage.Protocol = (byte)ChannelProtocol.Udp;
+          advertisementRegistrationMessage.EnableAdvertisement = 1;
+          advertisementRegistrationMessage.OneShot = 1;
+
+          // set up advertisement socket
+          advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);
+          advertisementClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+
+          // advertise
+          startAdvertiseTime = lastUpdateTime;
+          SendAdvertisement();
+        }
+        catch (Exception e) {
+          Debug.LogException(e);
           DestroySynchronously(DisconnectionReason.FailedToAdvertise);
           return;
         }
-        Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.Ip, 0);
-        advertisementRegistrationMessage.Ip[length] = 0;
-        
-        advertisementRegistrationMessage.Port = (ushort)realPort;
-        advertisementRegistrationMessage.Id = (byte)deviceID;
-        advertisementRegistrationMessage.Protocol = (byte)ChannelProtocol.Udp;
-        advertisementRegistrationMessage.EnableAdvertisement = 1;
-        advertisementRegistrationMessage.OneShot = 1;
-
-        // set up advertisement socket
-        advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);
-        advertisementClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-
-        // advertise
-        startAdvertiseTime = lastUpdateTime;
-        SendAdvertisement();
-      }
-      catch (Exception e) {
-        Debug.LogException(e);
-        DestroySynchronously(DisconnectionReason.FailedToAdvertise);
-        return;
       }
 
       // set state
