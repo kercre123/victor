@@ -27,8 +27,8 @@ namespace Playhouse {
 
     public void RequestAnimationDone() {
       // pop up UI for creating animation sequence.
-      _PlayhousePanel = SharedMinigameView.ShowWideGameStateSlide(_PlayhousePanelPrefab, "playhouse_panel") as PlayhousePanel;
-      _PlayhousePanel._StartPlayButton.onClick.AddListener(HandleRunSequence);
+      _PlayhousePanel = SharedMinigameView.ShowWideGameStateSlide(_PlayhousePanelPrefab.gameObject, "playhouse_panel").GetComponent<PlayhousePanel>();
+      _PlayhousePanel.Initialize(HandleRunSequence);
     }
 
     private void HandleRunSequence() {

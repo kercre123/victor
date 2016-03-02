@@ -4,25 +4,26 @@ using System.Collections.Generic;
 using Cozmo.UI;
 
 namespace Playhouse {
-  public class PlayhousePanel : BaseView {
+  public class PlayhousePanel : MonoBehaviour {
 
     [SerializeField]
-    public Anki.UI.AnkiButton _StartPlayButton;
+    private Anki.UI.AnkiButton _StartPlayButton;
 
     [SerializeField]
-    public UnityEngine.UI.Dropdown _Dropdown1;
+    private UnityEngine.UI.Dropdown _Dropdown1;
 
     [SerializeField]
-    public UnityEngine.UI.Dropdown _Dropdown2;
+    private UnityEngine.UI.Dropdown _Dropdown2;
 
     [SerializeField]
-    public UnityEngine.UI.Dropdown _Dropdown3;
+    private UnityEngine.UI.Dropdown _Dropdown3;
 
-    public void Initialize() {
+    public void Initialize(UnityEngine.Events.UnityAction startPlayCallback) {
       // populate dropdowns with animations.
       PopulateAnimations(_Dropdown1);
       PopulateAnimations(_Dropdown2);
       PopulateAnimations(_Dropdown3);
+      _StartPlayButton.onClick.AddListener(startPlayCallback);
     }
 
     private void PopulateAnimations(UnityEngine.UI.Dropdown dropdown) {
@@ -42,10 +43,6 @@ namespace Playhouse {
       animationList.Add(_Dropdown2.options[_Dropdown2.value].ToString());
       animationList.Add(_Dropdown3.options[_Dropdown3.value].ToString());
       return animationList;
-    }
-
-    protected override void CleanUp() {
-
     }
   }
 
