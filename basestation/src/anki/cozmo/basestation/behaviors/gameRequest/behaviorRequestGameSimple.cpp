@@ -27,6 +27,8 @@ namespace Cozmo {
 
 #define SET_STATE(s) SetState_internal(s, #s)
 
+#define DO_FACE_VERIFICATION_STEP 0
+
 static const char* kInitialAnimationKey = "initial_animName";
 static const char* kPreDriveAnimationKey = "preDrive_animName";
 static const char* kRequestAnimNameKey = "request_animName";
@@ -369,21 +371,27 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 {
-  _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  StartActing(new WaitAction( robot, kFaceVerificationTime_s ),
-              [this, &robot](ActionResult result) {
-                if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
-                  TransitionToPlayingRequstAnim(robot);
-                }
-                else {
-                  // the face must not have been where we expected, so drop out of the behavior for now
-                  // TODO:(bn) try to bring the block to a different face if we have more than one?
-                  PRINT_NAMED_INFO("BehaviorRequestGameSimple.VerifyingFace.Failed",
-                                   "failed to verify the face, so considering this a rejection");
-                  TransitionToPlayingDenyAnim(robot);
-                }
-              } );
-  SET_STATE(State::VerifyingFace);
+  if( DO_FACE_VERIFICATION_STEP ) {
+    _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    StartActing(new WaitAction( robot, kFaceVerificationTime_s ),
+                [this, &robot](ActionResult result) {
+                  if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
+                    TransitionToPlayingRequstAnim(robot);
+                  }
+                  else {
+                    // the face must not have been where we expected, so drop out of the behavior for now
+                    // TODO:(bn) try to bring the block to a different face if we have more than one?
+                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.VerifyingFace.Failed",
+                                     "failed to verify the face, so considering this a rejection");
+                    TransitionToPlayingDenyAnim(robot);
+                  }
+                } );
+    SET_STATE(State::VerifyingFace);
+  }
+  else {
+    // just skip verification and go straight to playing the request
+    TransitionToPlayingRequstAnim(robot);
+  }
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot)
