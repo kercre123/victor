@@ -108,7 +108,7 @@ namespace WhackAMole {
     }
 
     public void InitialCubesDone() {
-      _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab).GetComponent<WhackAMolePanel>();
+      _GamePanel = UIManager.OpenView(_WhackAMolePanelPrefab);
 
       bool aDone = false;
       bool bDone = false;

@@ -319,7 +319,7 @@ namespace Cozmo.HomeHub {
         return;
       }
       DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
-      _DailySummaryInstance = UIManager.OpenView<DailySummaryPanel>(_DailySummaryPrefab, 
+      _DailySummaryInstance = UIManager.OpenView(_DailySummaryPrefab, 
         newView => {
           newView.Initialize(session);
         });
@@ -422,7 +422,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleEndSessionButtonTap() {
       // Open confirmation dialog instead
-      AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
+      AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab);
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm, AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoDisconnect));

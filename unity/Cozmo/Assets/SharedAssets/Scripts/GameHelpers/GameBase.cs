@@ -64,7 +64,7 @@ public abstract class GameBase : MonoBehaviour {
 
     Initialize(challengeData.MinigameConfig);
 
-    _SharedMinigameViewInstance = UIManager.OpenView<SharedMinigameView>(
+    _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       newView => {
         newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
