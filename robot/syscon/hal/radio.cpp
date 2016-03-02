@@ -27,8 +27,6 @@
 
 using namespace Anki::Cozmo;
 
-#define ABS(x)   ((x < 0) ? -x : x)
-
 static const int NUM_PROP_LIGHTS = 4;
 
 enum AccessoryType {
@@ -369,6 +367,7 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
 
   AccessorySlot* acc = &accessories[slot];
   memcpy(acc->lights, state, sizeof(acc->lights));
+  memset(acc->lightPhase, 0, sizeof(acc->lightPhase));
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {

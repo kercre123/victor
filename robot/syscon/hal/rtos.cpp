@@ -52,12 +52,8 @@ void RTOS::release(RTOS_Task* task) {
 }
 
 void RTOS::run(void) {
-  last_counter = GetCounter();
-
   for (;;) {
     __asm { WFI };
-    kick(WDOG_RTOS);
-    manage();
   }
 }
 
@@ -125,6 +121,8 @@ void RTOS::manage(void) {
       RTOS::release(fired);
     }
   }
+
+  kick(WDOG_RTOS);
 }
 
 static inline int queue_length() {

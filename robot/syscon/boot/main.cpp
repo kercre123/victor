@@ -13,6 +13,8 @@
 #include "hal/hardware.h"
 #include "anki/cozmo/robot/spineData.h"
 
+#include "anki/cozmo/robot/rec_protocol.h"
+
 // These are all the magic numbers for the boot loader
 struct BootLoaderSignature {
   uint32_t  sig;

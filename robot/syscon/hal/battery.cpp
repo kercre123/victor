@@ -26,11 +26,6 @@ const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
 
 const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 
-// Read battery dead state N times before we believe it is dead
-//const u8 BATTERY_DEAD_CYCLES = 60;
-// Read charger contact state N times before we believe it changed
-//const u8 CONTACT_DEBOUNCE_CYCLES = 30;
-
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
 
@@ -66,11 +61,11 @@ static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
 
 void SendPowerStateUpdate(void *userdata)
 {
-	Anki::Cozmo::PowerState msg;
-	msg.VBatFixed = vBat;
-	msg.VExtFixed = vExt;
-	msg.chargeStat = Battery::onContacts;
-	Anki::Cozmo::RobotInterface::SendMessage(msg);
+  Anki::Cozmo::PowerState msg;
+  msg.VBatFixed = vBat;
+  msg.VExtFixed = vExt;
+  msg.chargeStat = Battery::onContacts;
+  Anki::Cozmo::RobotInterface::SendMessage(msg);
 }
 
 void Battery::init()
@@ -117,7 +112,7 @@ void Battery::init()
   startADCsample(ANALOG_CLIFF_SENSE);
 
   RTOS::schedule(Battery::manage);
-	RTOS::schedule(SendPowerStateUpdate, CYCLES_MS(60.0f));
+  RTOS::schedule(SendPowerStateUpdate, CYCLES_MS(60.0f));
 }
 
 void Battery::setHeadlight(bool status) {
@@ -217,7 +212,8 @@ void Battery::manage(void* userdata)
       sampleCliffSensor();
       break ;
     default:
-      startADCsample(ANALOG_CLIFF_SENSE);
+      // Panic because something cause the stack to freak out
+      Battery::powerOff();
       break ;
   }
 }

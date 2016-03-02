@@ -24,8 +24,7 @@ static const int spine_baud_rate = 350000;
 enum SPISource
 {
   SPI_SOURCE_HEAD    = 0x64616568,
-  SPI_SOURCE_BODY    = 0x79646f62,
-  SPI_ENTER_RECOVERY = 0x444d7852
+  SPI_SOURCE_BODY    = 0x79646f62
 };
 
 // 32 bytes of payload plus tag

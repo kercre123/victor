@@ -110,6 +110,7 @@ void Lights::manage(void*) {
 
 void Lights::setLights(const LightState* update) {
   memcpy(lights, update, sizeof(lights));
+  memset(phases, 0, sizeof(phases));
 }
 
 extern "C" void RTC1_IRQHandler() {
@@ -143,4 +144,6 @@ extern "C" void RTC1_IRQHandler() {
   
   channel = (channel + 1) % numChannels;
   #endif
+
+  RTOS::manage();
 }

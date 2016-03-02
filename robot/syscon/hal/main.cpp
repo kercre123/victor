@@ -27,6 +27,7 @@ extern "C" {
 #include "bootloader.h"
 
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 
 #define SET_GREEN(v, b)  (b ? (v |= 0x00FF00) : (v &= ~0x00FF00))
 
@@ -118,6 +119,8 @@ int main(void)
   Head::init();
   RTOS::schedule(MotorsUpdate);
 
-  // Start the scheduler
-  RTOS::run();
+  // Run forever, because we are awesome.
+  for (;;) {
+    __asm { WFI };
+  }
 }
