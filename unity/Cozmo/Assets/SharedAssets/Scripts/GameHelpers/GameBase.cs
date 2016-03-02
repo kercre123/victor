@@ -69,10 +69,9 @@ public abstract class GameBase : MonoBehaviour {
       newView => {
         newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
           _ChallengeData.HowToPlayDialogContentLocKey);
+        InitializeView(newView, _ChallengeData);
       });
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-
-    InitializeView(challengeData);
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
@@ -80,12 +79,12 @@ public abstract class GameBase : MonoBehaviour {
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
 
-  protected virtual void InitializeView(ChallengeData data) {
+  protected virtual void InitializeView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    ChallengeTitleWidget titleWidget = SharedMinigameView.TitleWidget;
+    ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
     titleWidget.Icon = data.ChallengeIcon;
-    SharedMinigameView.ShowBackButton();
+    newView.ShowBackButton();
   }
 
   #endregion
