@@ -155,18 +155,17 @@ uint8_t isqrt(uint32_t op)
   // "one" starts at the highest power of four <= than the argument.
   while (one > op)
   {
-      one >>= 2;
+    one >>= 2;
   }
 
-  while (one != 0)
-  {
-      if (op >= res + one)
-      {
-          op = op - (res + one);
-          res = res +  2 * one;
-      }
-      res >>= 1;
-      one >>= 2;
+  while (one != 0) {
+    if (op >= res + one) {
+      op -= res + one;
+      res += 2 * one;
+    }
+
+    res >>= 1;
+    one >>= 2;
   }
   return res;
 }
