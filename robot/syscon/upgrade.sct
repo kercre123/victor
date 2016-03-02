@@ -1,5 +1,5 @@
 LR_IROM1 0x1000 {
-  ; This is the magic heaer
+  ; This is the magic header
   ER_IROM1 0x1000 {
     * (RESET,+FIRST)
     *(InRoot$$Sections)
@@ -14,7 +14,7 @@ LR_IROM1 0x1000 {
     * (APPLICATION)
     * (SOFT_DEVICE_LOW)
   }
-
+  
   ER_BOOTLOADER 0x1F000 FIXED {
     * (BOOTLOADER)
   }

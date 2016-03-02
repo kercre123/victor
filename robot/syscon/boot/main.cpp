@@ -30,15 +30,6 @@ static const uint32_t     HEADER_SIGNATURE = 0x304D5A43;
 
 static const BootLoaderSignature* IMAGE_HEADER = (BootLoaderSignature*) BOOT_HEADER_LOCATION;
 
-__attribute((at(0x1FFD0))) static const uint32_t AES_KEY[] = {
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF
-};
-
-__attribute((at(NRF_UICR_BASE + 0x14))) static const uint32_t BOOTLOADERADDR = 0x1F000;
-
 uint32_t* MAGIC_LOCATION = (uint32_t*) 0x20003FFC;
 
 // Boot loader info

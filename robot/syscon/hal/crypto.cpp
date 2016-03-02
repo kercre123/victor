@@ -25,7 +25,7 @@ struct ecb_data_t {
 
 static ecb_data_t ecb_data;
 
-static uint32_t* AES_KEY = (uint32_t*) 0x1FFD0;
+static uint32_t* AES_KEY = (uint32_t*) 0x1F000 + (48 * 4);
 
 static inline void aes_key_init() {
   for (int i = 0; i < 4; i++) {

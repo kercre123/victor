@@ -32,6 +32,9 @@ void TimerInit()
   
   // Start the LFCLK
   NRF_CLOCK->TASKS_LFCLKSTART = 1;
+
+	// Pause for a period so the debugger and break
+  for(int i = 1000000; i > 0; i--) __asm { nop };  
 }
 
 
@@ -98,7 +101,8 @@ __attribute((section("RAMCODE"))) void FlashSector()
 int main (void) {
   turn_on(PIN_LED2);
   TimerInit();
-  for(int i = 1000000; i > 0; i--) __asm { nop };  
 
+  turn_on(PIN_LED4);
   FlashSector();
 }
+

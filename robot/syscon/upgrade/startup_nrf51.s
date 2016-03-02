@@ -67,7 +67,7 @@ LowerSector
                 INCBIN  build/s110_high.bin
 
                 AREA    APPLICATION, DATA, READONLY, PREINIT_ARRAY
-                INCBIN  build/syscon.bin
+                INCBIN  build/app/syscon.bin
 
                 AREA    BOOTLOADER, DATA, READONLY, PREINIT_ARRAY
                 INCBIN  build/bootloader.bin

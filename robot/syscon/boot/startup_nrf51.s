@@ -113,7 +113,10 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
 
-__Vectors_End
+__Vectors_End	DCD		0xFFFFFFFF				  ; Reserved space for AES key
+				DCD		0xFFFFFFFF
+				DCD		0xFFFFFFFF
+				DCD		0xFFFFFFFF
 
 __Vectors_Size  EQU     __Vectors_End - __Vectors
 
