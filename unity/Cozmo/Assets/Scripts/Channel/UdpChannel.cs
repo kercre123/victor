@@ -215,6 +215,9 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
           return;
         }
       }
+      else {
+        startAdvertiseTime = lastUpdateTime;
+      }
 
       // set state
       connectionState = ConnectionState.Advertising;
