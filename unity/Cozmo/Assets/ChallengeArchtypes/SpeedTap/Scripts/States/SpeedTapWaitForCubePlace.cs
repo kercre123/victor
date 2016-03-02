@@ -34,7 +34,7 @@ namespace SpeedTap {
         return;
       }
       _GotoObjectComplete = false;
-      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete);
+      _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete);
 
       if (_ShowHowToPlay) {
         _StateMachine.PushSubState(new HowToPlayState(null));
