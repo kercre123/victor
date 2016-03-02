@@ -22,7 +22,7 @@ namespace Cozmo {
 
       private bool _ConfimedQuit = false;
 
-      private void Start() {
+      private void Awake() {
         _QuitButtonInstance.DASEventButtonName = "quit_button";
         _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
       }
