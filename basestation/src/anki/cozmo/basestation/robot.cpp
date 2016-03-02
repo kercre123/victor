@@ -1494,7 +1494,9 @@ namespace Anki {
     void Robot::ReadAnimationDirImpl(const std::string& animationDir)
     {
       if (_context->GetDataPlatform() == nullptr) { return; }
+#     if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
+#     endif
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
       
       const std::string animationFolder =
