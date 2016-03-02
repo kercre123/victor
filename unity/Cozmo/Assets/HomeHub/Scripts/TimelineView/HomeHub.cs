@@ -150,10 +150,11 @@ namespace Cozmo.HomeHub {
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
       // We need to initialize the dialog first before opening the view, so don't animate right away
-      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, false, verticalCanvas: true) as ChallengeDetailsDialog;
-      _ChallengeDetailsDialogInstance.Initialize(_ChallengeStatesById[challenge].data, buttonTransform);
-      _ChallengeDetailsDialogInstance.OpenView();
-
+      _ChallengeDetailsDialogInstance = UIManager.OpenView<ChallengeDetailsDialog>(_ChallengeDetailsPrefab, 
+        newView => {
+          _ChallengeDetailsDialogInstance.Initialize(_ChallengeStatesById[challenge].data, buttonTransform);
+        }, 
+        verticalCanvas: true);
 
       var timelineViewInstance = _TimelineViewInstance;
       timelineViewInstance.LockScroll(true);

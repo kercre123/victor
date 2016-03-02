@@ -319,13 +319,14 @@ namespace Cozmo.HomeHub {
         return;
       }
       DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
-      var summaryPanel = UIManager.OpenView(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
-      _DailySummaryInstance = summaryPanel;
-      summaryPanel.Initialize(session);
+      _DailySummaryInstance = UIManager.OpenView<DailySummaryPanel>(_DailySummaryPrefab, 
+        newView => {
+          newView.Initialize(session);
+        });
       if (onComplete != null) {
-        summaryPanel.FriendshipBarAnimateComplete += onComplete;
+        _DailySummaryInstance.FriendshipBarAnimateComplete += onComplete;
       }
-      summaryPanel.ViewClosed += HandleDailySummaryClosed;
+      _DailySummaryInstance.ViewClosed += HandleDailySummaryClosed;
     }
 
     private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {

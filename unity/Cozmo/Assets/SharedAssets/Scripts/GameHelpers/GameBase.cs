@@ -62,18 +62,17 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _WonChallenge = false;
 
-    _SharedMinigameViewInstance = UIManager.OpenView(
-      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
-      false) as SharedMinigameView;
-    _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
-      _ChallengeData.HowToPlayDialogContentLocKey);
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-
     Initialize(challengeData.MinigameConfig);
 
-    // Populate the view before opening it so that animations play correctly
+    _SharedMinigameViewInstance = UIManager.OpenView<SharedMinigameView>(
+      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
+      newView => {
+        newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
+          _ChallengeData.HowToPlayDialogContentLocKey);
+      });
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
+
     InitializeView(challengeData);
-    _SharedMinigameViewInstance.OpenView();
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
