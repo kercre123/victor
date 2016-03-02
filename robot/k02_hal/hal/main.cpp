@@ -60,6 +60,22 @@ namespace Anki
   }
 }
 
+// This silences exception allocations
+extern "C" 
+void * __aeabi_vec_ctor_nocookie_nodtor(   void* user_array,
+                                           void* (*constructor)(void*),
+                                           size_t element_size,
+                                           size_t element_count) 
+
+{
+    size_t ii = 0;
+    char *ptr = (char*) (user_array);
+    if ( constructor != NULL )
+        for( ; ii != element_count ; ii++, ptr += element_size )
+            constructor( ptr );
+    return user_array;
+}
+
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;

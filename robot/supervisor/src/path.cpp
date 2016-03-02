@@ -13,12 +13,21 @@
 #define ATAN2_FAST(y,x) atan2_fast(y,x)
 #define ATAN2_ACC(y,x) atan2_acc(y,x)
 
+#if defined(CORETECH_ROBOT)
+#pragma import(__use_no_heap)
+#pragma import(__use_no_heap_region)
+#endif
+
+#if defined(CORETECH_ROBOT) && defined(CORETECH_BASESTATION)
+  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+#elif !defined(CORETECH_ROBOT) && !defined(CORETECH_BASESTATION)
+  #error "CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#endif
 
 namespace Anki
 {
   namespace Planning
   {
-
     ////////////// PathSegment implementations ////////////
     void PathSegment::DefineLine(f32 x_start, f32 y_start, f32 x_end, f32 y_end,
                                  f32 targetSpeed, f32 accel, f32 decel)
@@ -244,8 +253,6 @@ namespace Anki
       return res;
     }
 
-
-
     SegmentRangeStatus PathSegment::GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
                                                          f32 &shortestDistanceToPath, f32 &radDiff,
                                                          f32 *distAlongSegmentFromClosestPointToEnd) const
@@ -387,7 +394,6 @@ namespace Anki
 
       return segStatus;
     }
-
 
 
     SegmentRangeStatus PathSegment::GetDistToArcSegment(const f32 x, const f32 y, const f32 angle,
@@ -539,8 +545,7 @@ namespace Anki
       return segStatus;
     }
 
-
-
+		
     SegmentRangeStatus PathSegment::GetDistToPointTurnSegment(const f32 x, const f32 y, const f32 angle,
                                                         f32 &shortestDistanceToPath, f32 &radDiff) const
     {
@@ -567,14 +572,9 @@ namespace Anki
       capacity_ = MAX_NUM_PATH_SEGMENTS;
 
 #ifdef CORETECH_ROBOT
-  #if defined CORETECH_BASESTATION
-  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
-  #endif
       path_ = __pathSegmentStackForRobot;
 #elif defined CORETECH_BASESTATION
       path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
-#else
-#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
 #endif
 
       Clear();
@@ -585,14 +585,9 @@ namespace Anki
       capacity_ = MAX_NUM_PATH_SEGMENTS;
 
 #ifdef CORETECH_ROBOT
-  #if defined CORETECH_BASESTATION
-  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
-  #endif
       path_ = __pathSegmentStackForRobot;
 #elif defined CORETECH_BASESTATION
       path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
-#else
-#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
 #endif
 
       Clear();
@@ -637,6 +632,7 @@ namespace Anki
       }
     }
 
+
     // Returns angle between two points on a circle
     f32 GetArcAngle(f32 start_x, f32 start_y, f32 end_x, f32 end_y, f32 center_x, f32 center_y, bool CCW)
     {
@@ -658,7 +654,6 @@ namespace Anki
 
       return theta;
     }
-
 
     // Generates a CSC Dubins curve if one exists.
     // Returns the number of segments in the path.
@@ -838,7 +833,6 @@ namespace Anki
       return num_segments;
     }
 
-
     // Generates the Dubins path between a start and end pose with a constraint
     // on the minimum radius of the curved sections.
     // Returns the number of segments in the path, which should be 3.
@@ -848,7 +842,7 @@ namespace Anki
     // the difference between start_theta and end_theta is < pi/2
     // and also when the end pose is in front of the start pose.
     // Fails automatically
-    u8 GenerateDubinsPath(Path &path,
+		u8 GenerateDubinsPath(Path &path,
                           f32 start_x, f32 start_y, f32 start_theta,
                           f32 end_x, f32 end_y, f32 end_theta,
                           f32 start_radius, f32 end_radius,
@@ -970,7 +964,6 @@ namespace Anki
 
       return false;
     }
-
 
 
     // TODO: Eventually, this function should also be made to check that
@@ -1139,7 +1132,6 @@ namespace Anki
       return true;
     }
 
-
     bool Path::AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
                                f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                bool useShortestDir)
@@ -1180,7 +1172,5 @@ namespace Anki
 
       return true;
     }
-
-
   } // namespace Cozmo
 } // namespace Anki
