@@ -38,9 +38,9 @@ namespace Playhouse {
 
     public List<string> GetAnimationList() {
       List<string> animationList = new List<string>();
-      animationList.Add(_Dropdown1.options[_Dropdown1.value]);
-      animationList.Add(_Dropdown2.options[_Dropdown2.value]);
-      animationList.Add(_Dropdown3.options[_Dropdown3.value]);
+      animationList.Add(_Dropdown1.options[_Dropdown1.value].ToString());
+      animationList.Add(_Dropdown2.options[_Dropdown2.value].ToString());
+      animationList.Add(_Dropdown3.options[_Dropdown3.value].ToString());
       return animationList;
     }
 
