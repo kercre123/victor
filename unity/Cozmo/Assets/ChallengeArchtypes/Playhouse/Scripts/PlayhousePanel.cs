@@ -24,6 +24,8 @@ namespace Playhouse {
       PopulateAnimations(_Dropdown2);
       PopulateAnimations(_Dropdown3);
       _StartPlayButton.onClick.AddListener(startPlayCallback);
+      _StartPlayButton.DASEventButtonName = "playhouse_start_button";
+      _StartPlayButton.DASEventViewController = "playhouse_panel";
     }
 
     private void PopulateAnimations(UnityEngine.UI.Dropdown dropdown) {
