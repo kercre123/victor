@@ -9,7 +9,7 @@ namespace Anki.UI {
   /// Labels are graphics that display text.
   /// </summary>
 
-  [AddComponentMenu("Anki/Text", 01)]
+  [AddComponentMenu("Anki/Anki Text", 01)]
   public class AnkiTextLabel : UnityEngine.UI.Text {
 
     [SerializeField]

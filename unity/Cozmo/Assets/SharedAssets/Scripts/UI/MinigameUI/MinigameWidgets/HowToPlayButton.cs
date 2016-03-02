@@ -18,12 +18,18 @@ namespace Cozmo {
       private string _HowToPlayLocKey = null;
       private GameObject _HowToPlayViewContentPrefab = null;
 
+      public string DASEventViewController {
+        get { return _HowToPlayButtonInstance.DASEventViewController; } 
+        set { _HowToPlayButtonInstance.DASEventViewController = value; }
+      }
+
       public void Initialize(string howToPlayTextLocKey, GameObject howToPlayViewContents) {
         _HowToPlayLocKey = howToPlayTextLocKey;
         _HowToPlayViewContentPrefab = howToPlayViewContents;
       }
 
       private void Start() {
+        _HowToPlayButtonInstance.DASEventButtonName = "how_to_play_button";
         _HowToPlayButtonInstance.onClick.AddListener(HandleHowToPlayButtonTap);
       }
 

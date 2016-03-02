@@ -302,7 +302,7 @@ namespace SpeedTap {
     }
 
     public void ShowPlayerTapSlide() {
-      SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
+      SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "speed_tap_player_tap_slide");
     }
 
     // Temp Functions for random animation until anim groups are ready
