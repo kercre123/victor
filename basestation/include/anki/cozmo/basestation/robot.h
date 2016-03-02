@@ -490,6 +490,7 @@ public:
     // Read the animations in a dir
     void ReadAnimationDir();
     void ReadAnimationDirImpl(const std::string& animationDir);
+    void ReadAnimationDirImplHelper(const std::string& animationFolder);
 
     // Read the animation groups in a dir
     void ReadAnimationGroupDir();
